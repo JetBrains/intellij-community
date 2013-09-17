@@ -58,7 +58,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     ourHeadlessEnvironment = app.isHeadlessEnvironment() || app.isUnitTestMode();
   }
 
-  private final Map<String, String> myMacros = new HashMap<String, String>();
+  private final Map<String, String> myMacros = new LinkedHashMap<String, String>();
   private final Lock myStorageLock = new ReentrantLock();
   private final Map<String, StateStorage> myStorages = new THashMap<String, StateStorage>();
   private final Map<String, StateStorage> myPathToStorage = new THashMap<String, StateStorage>();
