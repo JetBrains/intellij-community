@@ -20,10 +20,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.application.*;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.StateStorage;
-import com.intellij.openapi.components.StateStorageException;
-import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DocumentRunnable;
 import com.intellij.openapi.project.Project;
@@ -340,5 +337,9 @@ public class StorageUtil {
 
     String name = "state-" + LOG_DIR_FORMAT.format(new Date()) + "-" + ApplicationInfo.getInstance().getBuild().asString();
     return new File(statesDir, namesProvider.suggestName(name));
+  }
+
+  public static boolean isProjectOrModuleFile(@NotNull String fileSpec) {
+    return StoragePathMacros.PROJECT_FILE.equals(fileSpec) || fileSpec.startsWith(StoragePathMacros.PROJECT_CONFIG_DIR) || fileSpec.equals("$MODULE_FILE$");
   }
 }

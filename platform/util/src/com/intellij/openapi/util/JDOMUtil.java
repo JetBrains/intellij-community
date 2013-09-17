@@ -118,7 +118,8 @@ public class JDOMUtil {
       Content child = content.get(j);
       if (child instanceof Element) {
         i = addToHash(i, (Element)child);
-      } else if (child instanceof Text) {
+      }
+      else if (child instanceof Text) {
         i = addToHash(i, ((Text)child).getText());
       }
     }

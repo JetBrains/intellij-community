@@ -28,6 +28,10 @@ public final class OldStreamProviderAdapter extends StreamProvider implements Cu
   @Override
   public void saveContent(@NotNull String fileSpec, @NotNull InputStream content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
     if (myRoamingType == roamingType) {
+      if (roamingType == RoamingType.PER_USER && StorageUtil.isProjectOrModuleFile(fileSpec)) {
+        return;
+      }
+
       myProvider.saveContent(fileSpec, content, size, roamingType, async);
     }
   }
