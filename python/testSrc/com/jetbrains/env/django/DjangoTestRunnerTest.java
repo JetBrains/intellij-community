@@ -132,4 +132,8 @@ public class DjangoTestRunnerTest extends PyEnvTestCase {
     doTest(null, null, null, "/custom_settings.py");
   }
 
+  public void testInstalledApps() {
+    doTest("/InstalledApps", "/config/settings/installedapps.py", null, "/config/settings/installedapps.py");
+  }
+
 }
