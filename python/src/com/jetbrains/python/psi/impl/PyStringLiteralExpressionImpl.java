@@ -351,6 +351,16 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       myHost = host;
     }
 
+    @NotNull
+    @Override
+    public TextRange getRelevantTextRange() {
+      // We return the text range only of the first string AST node only, because of the language injection, see PY-10691.
+      // For proper injection handling for multi-node string literals we probably need our own LanguageInjector for Python,
+      // see also ConcatenationInjector for Java
+      final List<TextRange> ranges = myHost.getStringValueTextRanges();
+      return !ranges.isEmpty() ? ranges.get(0) : super.getRelevantTextRange();
+    }
+
     @Override
     public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull final StringBuilder outChars) {
       final PyDocStringOwner
