@@ -79,10 +79,10 @@ public class StartBrowserSettings {
   }
 
   public static class Builder {
-    private boolean mySelected = false;
-    private BrowsersConfiguration.BrowserFamily myBrowser = null;
+    private boolean mySelected;
+    private BrowsersConfiguration.BrowserFamily myBrowser;
     private String myUrl = "";
-    private boolean myStartJavaScriptDebugger = false;
+    private boolean myStartJavaScriptDebugger;
 
     public Builder() {
     }
@@ -125,5 +125,4 @@ public class StartBrowserSettings {
       return new StartBrowserSettings(mySelected, myBrowser, myUrl, myStartJavaScriptDebugger);
     }
   }
-
 }
