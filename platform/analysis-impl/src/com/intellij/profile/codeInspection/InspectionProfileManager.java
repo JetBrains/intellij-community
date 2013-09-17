@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.profile.ApplicationProfileManager;
 import com.intellij.profile.Profile;
 import com.intellij.profile.ProfileChangeAdapter;
+import com.intellij.profile.ProfileEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.JDOMException;
@@ -80,6 +81,9 @@ public abstract class InspectionProfileManager extends ApplicationProfileManager
 
   @Override
   public void fireProfileChanged(final Profile profile) {
+    if (profile instanceof ProfileEx) {
+      ((ProfileEx)profile).profileChanged();
+    }
     for (ProfileChangeAdapter adapter : myProfileChangeAdapters) {
       adapter.profileChanged(profile);
     }

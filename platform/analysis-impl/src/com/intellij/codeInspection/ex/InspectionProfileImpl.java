@@ -858,6 +858,11 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     }
     return myDisplayLevelMap;
   }
+  
+  @Override
+  public void profileChanged() {
+    myDisplayLevelMap = null;
+  }
 
   @NotNull
   public HighlightDisplayLevel getErrorLevel(@NotNull HighlightDisplayKey key, NamedScope scope, Project project) {

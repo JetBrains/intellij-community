@@ -99,6 +99,8 @@ public abstract class ProfileEx implements Profile {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
 
+  public void profileChanged() {}
+
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (!(o instanceof ProfileEx)) return false;
