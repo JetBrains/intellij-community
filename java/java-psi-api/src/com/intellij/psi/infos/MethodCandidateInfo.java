@@ -189,7 +189,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     }
     final PsiMethod method = getElement();
     final Pair<PsiMethod, PsiSubstitutor> alreadyThere = includeReturnConstraint
-                                                         ? map.put(myArgumentList, Pair.create(method, super.getSubstitutor())) 
+                                                         ? map.put(getMarkerList(), Pair.create(method, super.getSubstitutor())) 
                                                          : null;
     try {
       PsiTypeParameter[] typeParameters = method.getTypeParameters();
@@ -211,8 +211,12 @@ public class MethodCandidateInfo extends CandidateInfo{
         .inferTypeArguments(typeParameters, method.getParameterList().getParameters(), arguments, mySubstitutor, parent, policy, myLanguageLevel);
     }
     finally {
-      if (alreadyThere == null) map.remove(myArgumentList);
+      if (alreadyThere == null) map.remove(getMarkerList());
     }
+  }
+
+  protected PsiElement getMarkerList() {
+    return myArgumentList;
   }
 
   public boolean isInferencePossible() {

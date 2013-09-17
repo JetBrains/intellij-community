@@ -278,6 +278,11 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
           protected PsiElement getParent() {
             return parent;
           }
+
+          @Override
+          protected PsiElement getMarkerList() {
+            return parent instanceof PsiNewExpression ? ((PsiNewExpression)parent).getArgumentList() : super.getMarkerList();
+          }
         };
       return staticFactoryCandidateInfo.getSubstitutor();
     }
