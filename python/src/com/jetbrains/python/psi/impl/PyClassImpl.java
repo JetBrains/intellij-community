@@ -184,12 +184,17 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return null;
   }
 
-  public static PyExpression unfoldClass(PyExpression expression) {
+  @NotNull
+  public static PyExpression unfoldClass(@NotNull PyExpression expression) {
     if (expression instanceof PyCallExpression) {
       PyCallExpression call = (PyCallExpression)expression;
-      //noinspection ConstantConditions
-      if (call.getCallee() != null && "with_metaclass".equals(call.getCallee().getName()) && call.getArguments().length > 1) {
-        expression = call.getArguments()[1];
+      final PyExpression callee = call.getCallee();
+      final PyExpression[] arguments = call.getArguments();
+      if (callee != null && "with_metaclass".equals(callee.getName()) && arguments.length > 1) {
+        final PyExpression secondArgument = arguments[1];
+        if (secondArgument != null) {
+          return secondArgument;
+        }
       }
     }
     return expression;
@@ -1128,6 +1133,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     }
     else {
       for (PyExpression expression : getSuperClassExpressions()) {
+        expression = unfoldClass(expression);
         if (expression instanceof PyKeywordArgument) {
           continue;
         }

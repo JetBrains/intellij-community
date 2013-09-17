@@ -47,8 +47,8 @@ public class PyClassMROTest extends PyTestCase {
     assertMRO(getClass("G"), "E", "F", "object");
   }
 
-  public void testDjangoForm() {
-    assertMRO(getClass("Form"), "BaseForm", "object");
+  public void testSixWithMetaclass() {
+    assertMRO(getClass("C"), "B", "object");
   }
 
   // PY-4183

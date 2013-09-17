@@ -14,46 +14,6 @@ public class PythonIcons {
   }
 
   
-  public static class Appengine {
-    public static final Icon AppEngine = load("/icons/com/jetbrains/appengine/appEngine.png"); // 16x16
-    public static final Icon Required = load("/icons/com/jetbrains/appengine/required.png"); // 16x16
-
-  }
-  
-  public static class Django {
-    public static final Icon Django = load("/icons/com/jetbrains/django/django.png"); // 16x16
-    public static final Icon DjangoTests = load("/icons/com/jetbrains/django/djangoTests.png"); // 16x16
-    public static final Icon ModelClass = load("/icons/com/jetbrains/django/modelClass.png"); // 16x16
-    public static final Icon StructureViewDjangoTagIcon = load("/icons/com/jetbrains/django/structureViewDjangoTagIcon.png"); // 16x16
-
-  }
-
-  public static class Pyramid {
-    public static final Icon Pyramid = load("/icons/com/jetbrains/pyramid/pyramid.png"); // 16x16
-
-  }
-  
-  public static class Jinja2 {
-    public static final Icon Jinja2 = load("/icons/com/jetbrains/jinja2/jinja2.png"); // 16x16
-
-  }
-  
-  public static class Mako {
-    public static final Icon Mako = load("/icons/com/jetbrains/mako/mako.png"); // 16x16
-
-  }
-
-  public static class Web2Py {
-    public static final Icon Web2Py = load("/icons/com/jetbrains/web2py/web2py.png"); // 16x16
-
-  }
-
-
-  public static class Chameleon {
-    public static final Icon Chameleon = load("/icons/com/jetbrains/chameleon/chameleon.png"); // 16x16
-
-  }
-
   public static class Pyqt {
     public static final Icon TsFile = load("/icons/com/jetbrains/pyqt/tsFile.png"); // 16x16
     public static final Icon UiForm = load("/icons/com/jetbrains/pyqt/uiForm.png"); // 16x16
