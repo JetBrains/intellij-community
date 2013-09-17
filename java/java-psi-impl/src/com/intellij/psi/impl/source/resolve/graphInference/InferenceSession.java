@@ -136,7 +136,8 @@ public class InferenceSession {
   }
 
   private void initReturnTypeConstraint(PsiMethod method, PsiCallExpression context) {
-    if (PsiPolyExpressionUtil.isPolyExpression(context)) {
+    if (PsiPolyExpressionUtil.isPolyExpression(context) || 
+        context instanceof PsiNewExpression && PsiDiamondType.ourDiamondGuard.currentStack().contains(context)) {
       final PsiType returnType = method.getReturnType();
       if (!PsiType.VOID.equals(returnType) && returnType != null) {
         final PsiType targetType = PsiPolyExpressionUtil.getTargetType(context);//todo primitive type
