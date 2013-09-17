@@ -95,6 +95,7 @@ public class GitLogProvider implements VcsLogProvider {
       return Collections.emptyList();
     }
 
+    repository.update();
     Collection<GitLocalBranch> localBranches = repository.getBranches().getLocalBranches();
     Collection<GitRemoteBranch> remoteBranches = repository.getBranches().getRemoteBranches();
     Collection<VcsRef> refs = new ArrayList<VcsRef>(localBranches.size() + remoteBranches.size());
