@@ -1,10 +1,9 @@
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
-import com.intellij.psi.LambdaHighlightingUtil;
-import com.intellij.psi.PsiLambdaExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
+import com.intellij.psi.util.PsiUtil;
 
 import java.util.List;
 
@@ -30,7 +29,47 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
     if (LambdaHighlightingUtil.checkInterfaceFunctional(myT) != null) {
       return false;
     }
-    
+
+    if (myExpression.hasFormalParameterTypes()) {
+    }
+    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(myT);
+    if (interfaceMethod == null) {
+      return false;
+    }
+    final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, PsiUtil.resolveGenericsClassInType(myT));
+    final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
+    for (PsiParameter parameter : parameters) {
+      if (!session.isProperType(parameter.getType())) {
+        delayedConstraints.add(this);
+        return true;
+      }
+    }
+
+    final PsiParameter[] lambdaParameters = myExpression.getParameterList().getParameters();
+    if (lambdaParameters.length != parameters.length) {
+      return false;
+    }
+    if (myExpression.hasFormalParameterTypes()) {
+      for (int i = 0; i < lambdaParameters.length; i++) {
+        constraints.add(new TypeEqualityConstraint(lambdaParameters[i].getType(), substitutor.substitute(parameters[i].getType())));
+      }
+    }
+
+    final PsiType returnType = interfaceMethod.getReturnType();
+    if (returnType != null) {
+      if (returnType.equals(PsiType.VOID)) {
+        if (!myExpression.isVoidCompatible() && !(myExpression.getBody() instanceof PsiExpression)) {
+          return false;
+        }
+      } else {
+        if (myExpression.isVoidCompatible()) {  //not value-compatible
+          return false;
+        }
+        for (PsiExpression returnExpressions : LambdaUtil.getReturnExpressions(myExpression)) {
+          constraints.add(new ExpressionCompatibilityConstraint(returnExpressions, returnType));
+        }
+      }
+    }
     return true;
   }
 }

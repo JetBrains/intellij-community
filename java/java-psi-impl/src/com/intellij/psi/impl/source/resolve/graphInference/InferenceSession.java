@@ -240,6 +240,11 @@ public class InferenceSession {
       for (InferenceVariable inferenceVariable : variables) {
 
         if (inferenceVariable.getInstantiation() != null) continue;
+        final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
+        if (!eqBounds.isEmpty()) {
+          inferenceVariable.setInstantiation(eqBounds.get(0));
+          continue;
+        }
 
         final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);
         PsiType lub = null;
