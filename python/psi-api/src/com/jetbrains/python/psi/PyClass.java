@@ -95,14 +95,6 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   @NotNull
   PyExpression[] getSuperClassExpressions();
 
-  /**
-   * Returns resolved elements representing super classes from the super classes list.
-   *
-   * Operates at the AST level.
-   */
-  @NotNull
-  PsiElement[] getSuperClassElements();
-
   @NotNull
   PyFunction[] getMethods();
 
