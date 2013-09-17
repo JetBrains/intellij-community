@@ -25,7 +25,6 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiType;
@@ -109,7 +108,7 @@ public class DfaTypeValue extends DfaValue {
   }
 
   private boolean hardEquals(DfaTypeValue aType) {
-    return Comparing.equal(myCanonicalText, aType.myCanonicalText) && myNullness == aType.myNullness;
+    return myCanonicalText.equals(aType.myCanonicalText) && myNullness == aType.myNullness && myType.equals(aType.myType);
   }
 
   public boolean isAssignableFrom(DfaTypeValue dfaType) {
