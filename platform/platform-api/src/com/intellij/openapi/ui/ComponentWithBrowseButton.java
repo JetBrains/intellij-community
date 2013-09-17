@@ -52,15 +52,17 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   private boolean myButtonEnabled = true;
 
   public ComponentWithBrowseButton(Comp component, @Nullable ActionListener browseActionListener) {
-    super(new BorderLayout(SystemInfo.isMac? 0 : 2, 0));
+    super(new BorderLayout(SystemInfo.isMac ? 0 : 2, 0));
+
     myComponent = component;
     // required! otherwise JPanel will occasionally gain focus instead of the component
     setFocusable(false);
     add(myComponent, BorderLayout.CENTER);
 
-    myBrowseButton=new FixedSizeButton(myComponent);
-    if (browseActionListener != null)
+    myBrowseButton = new FixedSizeButton(myComponent);
+    if (browseActionListener != null) {
       myBrowseButton.addActionListener(browseActionListener);
+    }
     add(myBrowseButton, BorderLayout.EAST);
 
     myBrowseButton.setToolTipText(UIBundle.message("component.with.browse.button.browse.button.tooltip.text"));
@@ -82,7 +84,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     size.width = fontMetrics.charWidth('a') * charCount;
     comp.setPreferredSize(size);
     final Dimension preferredSize = myBrowseButton.getPreferredSize();
-    setPreferredSize(new Dimension(size.width + preferredSize.width + 2, SystemInfo.isMac && UIUtil.isUnderAquaLookAndFeel() ? preferredSize.height : preferredSize.height + 2));
+    setPreferredSize(new Dimension(size.width + preferredSize.width + 2, UIUtil.isUnderAquaLookAndFeel() ? preferredSize.height : preferredSize.height + 2));
   }
 
   @Override
