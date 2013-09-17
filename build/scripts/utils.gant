@@ -736,16 +736,6 @@ private void fixIdeaPropertiesEol(List paths, String eol) {
   }
 }
 
-/*
-private boolean isUnderTeamCity() {
-  return isDefined("teamcity.buildType.id")
-}
-
-private lastPinnedBuild() {
-"http://buildserver/httpAuth/repository/download/${this."teamcity.buildType.id"}/.lastPinned"
-}*/
-
-
 binding.setVariable("buildWinLauncher", { String ch, String inputPath, String outputPath, String appInfo,
                                           String launcherProperties, String pathsSelector, List resourcePaths ->
   projectBuilder.stage("winLauncher")
@@ -785,7 +775,7 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
   }
 })
 
-binding.setVariable("additionalCompilation", { ->
+binding.setVariable("additionalCompilation", {->
   projectBuilder.stage("step - additionalCompilationStep")
   if (isDefined("additionalCompilationStep")) {
     projectBuilder.info("Using additional compilation step: " + additionalCompilationStep)
@@ -793,12 +783,3 @@ binding.setVariable("additionalCompilation", { ->
     script.doCustomCompile();
   }
 })
-
-/*
-def buildTeamServer() {
-  executeExternalAnt(["dist.jars": paths.distJars,
-                       "dist.teamserver": "$paths.sandbox/dist.teamserver"],
-                     "$home/build/release_teamcity.xml")
-}*/
-
-

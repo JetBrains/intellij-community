@@ -146,13 +146,17 @@ class Build {
         def prevBuildLog = "$paths.sandbox/prevBuild/logs/ChangeLog.txt"
         if (!new File(prevBuildLog).exists()) prevBuildLog = null
         def inc = prevBuildLog != null ? "looseChangeLogFileIn=\"${prevBuildLog}\"" : ""
+
         utils.copyAndPatchFile("$home/build/conf/script.zkm.stub", "$paths.sandbox/script.zkm",
                        ["CLASSES": "\"${args.jarPath}/${args.jarName}\"",
                         "SCRAMBLED_CLASSES": args.jarPath, "INCREMENTAL": inc])
 
-        ant.mkdir(dir: "$paths.artifacts/${args.jarName}.unscrambled")
-        def unscrambledPath = "$paths.artifacts/${args.jarName}.unscramble"
-        ant.copy(file: "$args.jarPath/${args.jarName}", todir: unscrambledPath)
+
+        //[vo] should be ${product}.unscrambled
+//        def unscrambledPath = "$paths.artifacts/${args.jarName}.unscrambled"
+        def unscrambledPath = "$paths.artifacts/${product}.unscrambled"
+        ant.mkdir(dir: unscrambledPath)
+        ant.copy(file: "$args.jarPath/${args.jarName}", todir: unscrambledPath, overwrite: "true")
         utils.notifyArtifactBuilt("$unscrambledPath/${args.jarName}")
 
         // [vo] the following call is different from prodcut to product
