@@ -81,8 +81,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.*;
@@ -433,17 +431,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private Project myProject;
     private JPanel myMainPanel = new JPanel(new BorderLayout());
     private JLabel myTitle = new JLabel();
-    private JPanel myLeftPanel = new JPanel(new BorderLayout()) {
-      @Override
-      public Dimension getMinimumSize() {
-        return new Dimension(myLeftWidth, super.getMinimumSize().height);
-      }
-
-      @Override
-      public Dimension getPreferredSize() {
-        return new Dimension(myLeftWidth, super.getPreferredSize().height);
-      }
-    };
 
     @Override
     public void clear() {
@@ -489,14 +476,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         cmp = panel;
       }
 
-      cmp.setBackground(isSelected ? UIUtil.getListSelectionBackground() : getRightBackground());
+      final Color bg = isSelected ? UIUtil.getListSelectionBackground() : getRightBackground();
+      cmp.setBackground(bg);
+      myMainPanel.setBorder(new CustomLineBorder(bg, 0, 0, 1, 0));
       String title = myTitleIndexes.getTitle(index);
-      myTitle.setText(title == null ? "" : title);
-      myLeftPanel.removeAll();
-      myLeftPanel.setBackground(getTitlePanelBackground());
       myMainPanel.removeAll();
-      myLeftPanel.add(myTitle, BorderLayout.EAST);
-      myMainPanel.add(myLeftPanel, BorderLayout.WEST);
+      if (title != null) {
+        myTitle.setText(title);
+        myMainPanel.add(SeparatorComponent.createLabeledLineSeparator(" " + title, getRightBackground()), BorderLayout.NORTH);
+      }
       myMainPanel.add(cmp, BorderLayout.CENTER);
       return myMainPanel;
     }
@@ -582,7 +570,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       //myLeftWidth += 10;
       myTitle.setForeground(Gray._122);
       myTitle.setAlignmentY(BOTTOM_ALIGNMENT);
-      myLeftPanel.setBorder(new CompoundBorder(new CustomLineBorder(getSeparatorColor(), 0, 0, 0, 1), new EmptyBorder(0, 0, 0, 5)));
     }
 
     private Font getTitleFont() {
@@ -667,21 +654,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       List<MatchResult> matches = collectResults(pattern, myActions, myActionModel);
 
       for (MatchResult o : matches) {
-        //if (actionsCount > 15) break;
         myProgressIndicator.checkCanceled();
         Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
         for (Object object : objects) {
           myProgressIndicator.checkCanceled();
-          if (isSetting(object)) {
+          if (isSetting(object) && settings.size() < 15) {
             settings.add(object);
           }
-          else if (isToolWindowAction(object)) {
+          else if (isToolWindowAction(object) && toolWindows.size() < 10) {
             toolWindows.add((AnAction)((Map.Entry)object).getKey());
           }
-          else if (isActionValue(object)) {
+          else if (isActionValue(object) && actions.size() < 15) {
             actions.add((AnAction)((Map.Entry)object).getKey());
           }
-          if (actions.size() + settings.size() + toolWindows.size() > 15) break;
         }
       }
 
@@ -981,6 +966,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                   myBalloon.hide();
                   myBalloon = null;
                 }
+                myFileModel = null;
+                myClassModel = null;
+                myActionModel = null;
+                myActions = null;
+                myFiles = null;
+                myClasses = null;
+                myConfigurables.clear();
               }
             });
             if (getField() == field) {
@@ -1026,7 +1018,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               x = screen.x - myLeftWidth - 5;
             }
 
-            myPopup.setLocation(new Point(x, myPopup.getLocationOnScreen().y));
+            //myPopup.setLocation(new Point(x, myPopup.getLocationOnScreen().y));
           }
         }
       });
