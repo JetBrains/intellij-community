@@ -2,14 +2,17 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyClassType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * User: catherine
@@ -57,9 +60,13 @@ public class PyOldStyleClassesInspection extends PyInspection {
     public void visitPyCallExpression(final PyCallExpression node) {
       PyClass klass = PsiTreeUtil.getParentOfType(node, PyClass.class);
       if (klass != null && !klass.isNewStyleClass()) {
-        PyExpression[] superClassExprs = klass.getSuperClassExpressions();
-        PsiElement[] superClasses = klass.getSuperClassElements();
-        if (superClasses.length != superClassExprs.length) return;
+        final List<PyClassLikeType> types = klass.getSuperClassTypes(myTypeEvalContext);
+        for (PyClassLikeType type : types) {
+          final String qName = type.getClassQName();
+          if (qName != null && qName.contains("PyQt")) return;
+          if (!(type instanceof PyClassType)) return;
+        }
+
         if (PyUtil.isSuperCall(node))
           registerProblem(node.getCallee(), "Old-style class contains call for super method");
       }
