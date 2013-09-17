@@ -116,6 +116,28 @@ class Inheritor extends A {
 ''', '''\
 class Inheritor extends A {
     def abc() {
+        baz(2)
+        print bar()
+        baz(bar() + 1)
+        baz(bar() + 1)
+    }
+}
+''', true, true, 'bar', 'baz', true)
+  }
+
+  void testFieldUsageInClassInheritor() {
+    doJavaTest('''\
+class Inheritor extends A {
+    def abc() {
+        foo = 2
+        print foo
+        foo += 1
+        foo ++
+    }
+}
+''', '''\
+class Inheritor extends A {
+    def abc() {
         foo = 2
         print foo
         foo += 1
@@ -123,6 +145,52 @@ class Inheritor extends A {
     }
 }
 ''', true, true, 'bar', 'baz', false)
+  }
+
+  void testFieldUsageInClassInheritor2() {
+    doJavaTest('''\
+class Inheritor extends A {
+    def abc() {
+        foo = 2
+        print foo
+        foo += 1
+        foo ++
+    }
+}
+''', '''\
+class Inheritor extends A {
+    def abc() {
+        this.@foo = 2
+        print this.@foo
+        this.@foo += 1
+        this.@foo ++
+    }
+}
+''', true, true, 'getFoo', 'setFoo', false)
+  }
+
+  void testInnerClass() {
+    doJavaTest('''\
+class X extends A {
+    def bar() {
+        new Runnable() {
+            void run() {
+                print foo
+            }
+        }
+    }
+}
+''', '''\
+class X extends A {
+    def bar() {
+        new Runnable() {
+            void run() {
+                print X.this.@foo
+            }
+        }
+    }
+}
+''', null, true, true, 'getFoo', 'setFoo', false)
   }
 
   private void doJavaTest(String before,
