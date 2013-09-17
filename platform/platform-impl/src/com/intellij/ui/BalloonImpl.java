@@ -65,6 +65,17 @@ import static java.awt.event.MouseEvent.MOUSE_PRESSED;
 
 public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
 
+  public static final int DIALOG_ARC = 6;
+  public static final int ARC = 3;
+  public static final int DIALOG_TOPBOTTOM_POINTER_WIDTH = 24;
+  public static final int DIALOG_POINTER_WIDTH = 17;
+  public static final int TOPBOTTOM_POINTER_WIDTH = 14;
+  public static final int POINTER_WIDTH = 11;
+  public static final int DIALOG_TOPBOTTOM_POINTER_LENGTH = 16;
+  public static final int DIALOG_POINTER_LENGTH = 14;
+  public static final int TOPBOTTOM_POINTER_LENGTH = 10;
+  public static final int POINTER_LENGTH = 8;
+
   private final Alarm myFadeoutAlarm = new Alarm(this);
   private long myFadeoutRequestMillis = 0;
   private int myFadeoutRequestDelay = 0;
@@ -566,7 +577,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
     myCloseRec = new CloseButton();
 
     myComp.clear();
-    myComp.myAlpha = 0f;
+    myComp.myAlpha = myAnimationEnabled ? 0f : -1;
 
     final int borderSize = getShadowBorderSize();
     myComp.setBorder(new EmptyBorder(borderSize, borderSize, borderSize, borderSize));
@@ -640,7 +651,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
     }
     myAnimator = new Animator("Balloon", 8, myAnimationEnabled ? myAnimationCycle : 0, false, forward) {
       public void paintNow(final int frame, final int totalFrames, final int cycle) {
-        if (myComp == null || myComp.getParent() == null) return;
+        if (myComp == null || myComp.getParent() == null || !myAnimationEnabled) return;
         myComp.setAlpha(((float)frame) / ((float)totalFrames));
       }
 
@@ -692,14 +703,14 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
 
 
   int getArc() {
-    return myDialogMode ? 6 : 3;
+    return myDialogMode ? DIALOG_ARC : ARC;
   }
 
   int getPointerWidth(AbstractPosition position) {
     if (myDialogMode) {
-      return position.isTopBottomPointer() ? 24 : 17;
+      return position.isTopBottomPointer() ? DIALOG_TOPBOTTOM_POINTER_WIDTH : DIALOG_POINTER_WIDTH;
     } else {
-      return position.isTopBottomPointer() ? 14 : 11;
+      return position.isTopBottomPointer() ? TOPBOTTOM_POINTER_WIDTH : POINTER_WIDTH;
     }
   }
 
@@ -713,9 +724,9 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
 
   static int getPointerLength(AbstractPosition position, boolean dialogMode) {
     if (dialogMode) {
-      return position.isTopBottomPointer() ? 16 : 14;
+      return position.isTopBottomPointer() ? DIALOG_TOPBOTTOM_POINTER_LENGTH : DIALOG_POINTER_LENGTH;
     } else {
-      return position.isTopBottomPointer() ? 10 : 8;
+      return position.isTopBottomPointer() ? TOPBOTTOM_POINTER_LENGTH : POINTER_LENGTH;
     }
   }
 
@@ -1180,7 +1191,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
     @Override
     protected Shape getPointingShape(final Rectangle bounds, final Graphics2D g, final Point pointTarget, final BalloonImpl balloon) {
       final Shaper shaper = new Shaper(balloon, bounds, pointTarget, RIGHT);
-      shaper.line(-balloon.getPointerLength(this), balloon.getPointerWidth(this) / 2);
+      shaper.line(-balloon.getPointerLength(this) - 1, balloon.getPointerWidth(this) / 2);
       shaper.toBottomCurve().roundLeftDown().toLeftCurve().roundLeftUp().toTopCurve().roundUpRight().toRightCurve().roundRightDown()
         .lineTo(shaper.getCurrent().x, pointTarget.y - balloon.getPointerWidth(this) / 2).lineTo(pointTarget.x, pointTarget.y).close();
       return shaper.getShape();

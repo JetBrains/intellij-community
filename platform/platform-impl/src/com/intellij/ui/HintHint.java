@@ -48,6 +48,7 @@ public class HintHint {
   private int myPositionChangeX;
   private int myPositionChangeY;
   private boolean myShowImmediately = false;
+  private boolean myAnimationEnabled;
 
   public HintHint() {
   }
@@ -254,6 +255,20 @@ public class HintHint {
    */
   public HintHint setShowImmediately(boolean showImmediately) {
     myShowImmediately = showImmediately;
+    return this;
+  }
+
+  public boolean isAnimationEnabled() {
+    return myAnimationEnabled;
+  }
+
+  /**
+   *
+   * @param enabled is <code>true</code> by default and balloon appears with transparency animation. <code>false</code> means instant opaque showing.
+   * @return current instance of HintHint
+   */
+  public HintHint setAnimationEnabled(boolean enabled){
+    myAnimationEnabled = enabled;
     return this;
   }
 }
