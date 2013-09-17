@@ -22,13 +22,13 @@
 
 package org.jetbrains.plugins.terminal;
 
-import apple.awt.CImage;
 import com.google.common.base.Predicate;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.util.AppleHiDPIScaledImage;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
@@ -140,7 +140,7 @@ public class JBTerminalPanel extends TerminalPanel {
       newG.scale(1, 1);
       newG.dispose();
     }
-    else if (image instanceof CImage.HiDPIScaledImage) {
+    else if (AppleHiDPIScaledImage.is(image)) {
       g.drawImage(image, dx1, dy1, dx2, dy2, sx1 * 2, sy1 * 2, sx2 * 2, sy2 * 2, observer);
     }
     else {
