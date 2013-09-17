@@ -100,7 +100,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
 
   @Nullable
   @Override
-  public State collectionInformation(@NotNull PsiFile file) {
+  public State collectInformation(@NotNull PsiFile file) {
     VirtualFile vFile = file.getVirtualFile();
     if (vFile == null || vFile.getFileType() != PythonFileType.INSTANCE) {
       return null;
