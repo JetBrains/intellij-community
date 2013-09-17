@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,14 +98,18 @@ public class SeparatorComponent extends JComponent {
   /**
    * Create control what consist of label with <strong>title</strong> text in the left side and single line at all rest space.
    * @param titleText text for a label.
-   * @param containerBackgroungColor background color of container in that control will be putted on.
+   * @param containerBackgroundColor background color of container in that control will be putted on.
    */
-  public static JComponent createLabbeledLineSeparator(final String titleText, final Color containerBackgroungColor) {
+  public static JComponent createLabeledLineSeparator(final String titleText, final Color containerBackgroundColor) {
+    return createLabeledLineSeparator(titleText, containerBackgroundColor, new JBColor(Colors.DARK_BLUE, containerBackgroundColor.brighter().brighter()));
+  }
+
+  public static JComponent createLabeledLineSeparator(final String titleText, final Color containerBackgroundColor, Color foregroundColor) {
     JLabel titleLabel = new JLabel(titleText);
     titleLabel.setFont(UIUtil.getLabelFont());
-    titleLabel.setForeground(Colors.DARK_BLUE);
+    titleLabel.setForeground(foregroundColor);
 
-    SeparatorComponent separatorComponent = new SeparatorComponent(5, containerBackgroungColor.darker(), containerBackgroungColor.brighter());
+    SeparatorComponent separatorComponent = new SeparatorComponent(5, containerBackgroundColor.darker(), containerBackgroundColor.brighter());
 
     int hgap = titleText.length() > 0 ? 5 : 0;
     JPanel result = new JPanel(new BorderLayout(hgap, 10));
@@ -114,4 +118,12 @@ public class SeparatorComponent extends JComponent {
 
     return result;
   }
+
+  /**
+   * @deprecated use #createLabeledLineSeparator(String, Color) (to remove in IntelliJ 14)
+   */
+  public static JComponent createLabbeledLineSeparator(final String titleText, final Color containerBackgroundColor) {
+    return createLabeledLineSeparator(titleText, containerBackgroundColor);
+  }
+
 }
