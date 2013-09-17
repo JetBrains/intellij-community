@@ -132,4 +132,8 @@ public class PyJavaClassType implements PyClassLikeType {
   public boolean isValid() {
     return myClass.isValid();
   }
+
+  public PsiClass getPsiClass() {
+    return myClass;
+  }
 }

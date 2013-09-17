@@ -36,20 +36,64 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   @NotNull
   PyStatementList getStatementList();
 
-  @Nullable
-  PyArgumentList getSuperClassExpressionList();
-
+  /**
+   * Returns types of all ancestors from the hierarchy.
+   */
   @NotNull
-  PyExpression[] getSuperClassExpressions();
+  List<PyClassLikeType> getAncestorTypes(@NotNull TypeEvalContext context);
 
+  /**
+   * Returns only those ancestors from the hierarchy, that are resolved to PyClass PSI elements.
+   *
+   * @see #getAncestorTypes(TypeEvalContext) for the full list of ancestors.
+   */
   @NotNull
-  PsiElement[] getSuperClassElements();
+  List<PyClass> getAncestorClasses(@NotNull TypeEvalContext context);
 
+  /**
+   * Returns only those ancestors from the hierarchy, that are resolved to PyClass PSI elements, using the default type evaluation context.
+   *
+   * @see #getAncestorClasses(TypeEvalContext) if a more detailed TypeEvalContext is available.
+   */
+  @NotNull
+  List<PyClass> getAncestorClasses();
+
+  /**
+   * Returns types of expressions in the super classes list.
+   *
+   * If no super classes are specified, returns the type of the implicit super class for old- and new-style classes.
+   *
+   * @see #getAncestorTypes(TypeEvalContext) for the full list of ancestors.
+   */
   @NotNull
   List<PyClassLikeType> getSuperClassTypes(@NotNull TypeEvalContext context);
 
+  /**
+   * Returns only those super classes for expressions from the super classes list, that are resolved to PyClass PSI elements.
+   *
+   * If no super classes are specified, returns the implicit super class for old- and new-style classes.
+   *
+   * @see #getSuperClassTypes(TypeEvalContext) for the full list of super classes.
+   * @see #getAncestorTypes(TypeEvalContext) for the full list of ancestors.
+   */
   @NotNull
   PyClass[] getSuperClasses();
+
+  /**
+   * Returns a PSI element for the super classes list.
+   *
+   * Operates at the AST level.
+   */
+  @Nullable
+  PyArgumentList getSuperClassExpressionList();
+
+  /**
+   * Returns PSI elements for the expressions in the super classes list.
+   *
+   * Operates at the AST level.
+   */
+  @NotNull
+  PyExpression[] getSuperClassExpressions();
 
   @NotNull
   PyFunction[] getMethods();
@@ -110,18 +154,6 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    * @return true if the class is new-style and descends from 'object'.
    */
   boolean isNewStyleClass();
-
-  @NotNull
-  List<PyClass> getAncestorClasses();
-
-  @NotNull
-  List<PyClass> getAncestorClasses(@NotNull TypeEvalContext context);
-
-  /**
-   * Get a list of all ancestor types.
-   */
-  @NotNull
-  List<PyClassLikeType> getAncestorTypes(@NotNull TypeEvalContext context);
 
   /**
    * Scan properties in order of definition, until processor returns true for one of them.
