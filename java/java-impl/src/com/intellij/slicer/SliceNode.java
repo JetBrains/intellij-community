@@ -51,6 +51,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     this.targetEqualUsages = targetEqualUsages;
   }
 
+  @NotNull
   SliceNode copy() {
     SliceUsage newUsage = getValue().copy();
     SliceNode newNode = new SliceNode(getProject(), newUsage, targetEqualUsages);
@@ -88,6 +89,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
     return index == 0 ? null : (SliceNode)parentChildren.get(index - 1);
   }
 
+  @NotNull
   protected List<? extends AbstractTreeNode> getChildrenUnderProgress(ProgressIndicator progress) {
     if (isUpToDate()) return myCachedChildren == null ? Collections.<AbstractTreeNode>emptyList() : myCachedChildren;
     final List<SliceNode> children = new ArrayList<SliceNode>();
@@ -207,7 +209,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   }
 
   @Override
-  public void customizeCellRenderer(SliceUsageCellRenderer renderer, JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+  public void customizeCellRenderer(@NotNull SliceUsageCellRenderer renderer, @NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     renderer.setIcon(getPresentation().getIcon(expanded));
     if (isValid()) {
       SliceUsage sliceUsage = getValue();
@@ -226,6 +228,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
   @Override
   public String toString() {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+            @Override
             public String compute() {
               return getValue()==null?"<null>":getValue().toString();
             }

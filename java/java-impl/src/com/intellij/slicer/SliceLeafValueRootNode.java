@@ -69,8 +69,8 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
   }
 
   @Override
-  public void customizeCellRenderer(SliceUsageCellRenderer renderer,
-                                    JTree tree,
+  public void customizeCellRenderer(@NotNull SliceUsageCellRenderer renderer,
+                                    @NotNull JTree tree,
                                     Object value,
                                     boolean selected,
                                     boolean expanded,
@@ -99,8 +99,9 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
                                         @NotNull final SliceUsageCellRenderer renderer) {
     PsiFile file = element.getContainingFile();
     List<TextChunk> result = new ArrayList<TextChunk>();
-    ChunkExtractor.getExtractor(element.getContainingFile()).createTextChunks(usage, file.getText(), element.getTextRange().getStartOffset(), element.getTextRange().getEndOffset(),
-                                                                              false, result);
+    ChunkExtractor.getExtractor(element.getContainingFile())
+      .createTextChunks(usage, file.getText(), element.getTextRange().getStartOffset(), element.getTextRange().getEndOffset(),
+                        false, result);
 
     for (TextChunk chunk : result) {
       renderer.append(chunk.getText(), chunk.getSimpleAttributesIgnoreBackground());
