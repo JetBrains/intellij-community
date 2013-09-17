@@ -204,7 +204,7 @@ private layoutPlugins(layouts) {
 }
 
 private String appInfoFile() {
-  return "$home/out/pycharm/classes/production/python-community/idea/PyCharmCoreApplicationInfo.xml"
+  return "$home/out/pycharmCE/classes/production/python-community/idea/PyCharmCoreApplicationInfo.xml"
 }
 
 private layoutFull(Map args, String target, Set usedJars) {
