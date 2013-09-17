@@ -43,6 +43,17 @@ public class ResourceCopyingTest extends JpsBuildTestCase {
     rebuildAll();
     assertOutput(m, fs().file("a.xml"));
   }
+
+  public void testCaseChange() {
+    String file = createFile("src/a.xml");
+    JpsModule m = addModule("m", PathUtil.getParentPath(file));
+    rebuildAll();
+    assertOutput(m, fs().file("a.xml"));
+    rename(file, "A.xml");
+    makeAll();
+    assertOutput(m, fs().file("A.xml"));
+  }
+
   public void testPackagePrefix() {
     String file = createFile("src/a.xml");
     JpsModule m = addModule("m", PathUtil.getParentPath(file));
