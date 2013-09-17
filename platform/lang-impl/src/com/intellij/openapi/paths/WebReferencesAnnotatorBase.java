@@ -78,7 +78,7 @@ public abstract class WebReferencesAnnotatorBase extends ExternalAnnotator<WebRe
   }
 
   @Override
-  public MyInfo[] collectionInformation(@NotNull PsiFile file) {
+  public MyInfo[] collectInformation(@NotNull PsiFile file) {
     final WebReference[] references = collectWebReferences(file);
     final MyInfo[] infos = new MyInfo[references.length];
 

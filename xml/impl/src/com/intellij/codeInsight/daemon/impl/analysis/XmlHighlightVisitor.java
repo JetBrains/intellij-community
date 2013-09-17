@@ -675,15 +675,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
   @Override
   public void addMessage(PsiElement context, String message, int type) {
-    if (message != null && !message.isEmpty()) {
-      if (context instanceof XmlTag && XmlExtension.getExtension(context.getContainingFile()).shouldBeHighlightedAsTag((XmlTag)context)) {
-        HighlightInfoType infoType = type == ERROR ? HighlightInfoType.ERROR : type == WARNING ? HighlightInfoType.WARNING : HighlightInfoType.WEAK_WARNING;
-        addElementsForTag((XmlTag)context, message, infoType, null);
-      }
-      else {
-        addToResults(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(message).create());
-      }
-    }
+    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -692,7 +684,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   @Override
-  public void addMessageWithFixes(final PsiElement context, final String message, @NotNull final ErrorType type, final IntentionAction... fixes) {
+  public void addMessageWithFixes(final PsiElement context, final String message, @NotNull final ErrorType type, @NotNull final IntentionAction... fixes) {
     if (message != null && !message.isEmpty()) {
       final PsiFile containingFile = context.getContainingFile();
       final HighlightInfoType defaultInfoType = type == ErrorType.ERROR ? HighlightInfoType.ERROR : type == ErrorType.WARNING ? HighlightInfoType.WARNING : HighlightInfoType.WEAK_WARNING;
@@ -713,11 +705,9 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
             HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(context).descriptionAndTooltip(message).create();
         }
 
-        if (fixes != null) {
-          for (final IntentionAction quickFixAction : fixes) {
-            if (quickFixAction == null) continue;
-            QuickFixAction.registerQuickFixAction(highlightInfo, quickFixAction);
-          }
+        for (final IntentionAction quickFixAction : fixes) {
+          if (quickFixAction == null) continue;
+          QuickFixAction.registerQuickFixAction(highlightInfo, quickFixAction);
         }
         addToResults(highlightInfo);
       }
