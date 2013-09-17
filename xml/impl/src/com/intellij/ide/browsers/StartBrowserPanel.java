@@ -16,15 +16,15 @@ import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.AncestorListenerAdapter;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.AncestorEvent;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 public class StartBrowserPanel {
   private JCheckBox myStartBrowserCheckBox;
@@ -36,16 +36,8 @@ public class StartBrowserPanel {
   private BrowserSelector myBrowserSelector;
 
   private JPanel myRoot;
-  private JLabel urlFieldLabel;
 
   public StartBrowserPanel() {
-    myStartBrowserCheckBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        setPanelEnabled(myStartBrowserCheckBox.isSelected());
-      }
-    });
-
     myStartJavaScriptDebuggerCheckBox.setVisible(JavaScriptDebuggerStarter.Util.EP_NAME.getExtensions().length > 0);
     myRoot.addAncestorListener(new AncestorListenerAdapter() {
       @Override
@@ -81,14 +73,6 @@ public class StartBrowserPanel {
 
   public void setSelected(boolean value) {
     myStartBrowserCheckBox.setSelected(value);
-    setPanelEnabled(value);
-  }
-
-  private void setPanelEnabled(boolean enabled) {
-    myBrowserComboBox.setEnabled(enabled);
-    myStartJavaScriptDebuggerCheckBox.setEnabled(enabled);
-    myUrlField.setEnabled(enabled);
-    urlFieldLabel.setEnabled(enabled);
   }
 
   public JCheckBox getStartJavaScriptDebuggerCheckBox() {
@@ -102,6 +86,9 @@ public class StartBrowserPanel {
   private void createUIComponents() {
     myBrowserSelector = new BrowserSelector(true);
     myBrowserComboBox = myBrowserSelector.getMainComponent();
+    if (UIUtil.isUnderAquaLookAndFeel()) {
+      myBrowserComboBox.setBorder(new EmptyBorder(3, 0, 0, 0));
+    }
   }
 
   private static Url virtualFileToUrl(VirtualFile file, Project project) {
