@@ -40,7 +40,7 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
 
   public SliceLeafValueRootNode(@NotNull Project project, PsiElement leafExpression, SliceNode root, List<SliceNode> children,
                                 SliceAnalysisParams params) {
-    super(project, new SliceUsage(leafExpression, params), root.targetEqualUsages);
+    super(project, SliceUsage.createRootUsage(leafExpression, params), root.targetEqualUsages);
     myCachedChildren = children;
   }
 

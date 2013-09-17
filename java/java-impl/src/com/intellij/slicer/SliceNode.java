@@ -20,7 +20,6 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -69,7 +68,7 @@ public class SliceNode extends AbstractTreeNode<SliceUsage> implements Duplicate
       indicator.start();
     }
     final Collection[] nodes = new Collection[1];
-    ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(new Runnable(){
+    ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
       @Override
       public void run() {
         nodes[0] = getChildrenUnderProgress(ProgressManager.getInstance().getProgressIndicator());
