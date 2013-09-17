@@ -36,6 +36,7 @@ import static hg4idea.test.HgExecutor.hg;
  */
 public class HgHistoryTest extends HgPlatformTest {
   static final String[] names = {"f1.txt", "f2.txt", "f3.txt"};
+  static final String subDirName = "sub";
 
   @Override
   protected void setUp() throws Exception {
@@ -44,6 +45,8 @@ public class HgHistoryTest extends HgPlatformTest {
     File hgrc = new File(new File(myRepository.getPath(), ".hg"), "hgrc");
     FileUtil.appendToFile(hgrc, "[extensions]\n" +
                                 "largefiles=!\n");
+    mkdir(subDirName);
+    cd(subDirName);
     touch(names[0], "f1");
     myRepository.refresh(false, true);
     hg("add " + names[0]);
@@ -60,15 +63,19 @@ public class HgHistoryTest extends HgPlatformTest {
   public void testFileNameInTargetRevisionAfterRename() throws HgCommandException {
     cd(myRepository);
     int namesSize = names.length;
-    VirtualFile vFile = myRepository.findFileByRelativePath(names[namesSize - 1]);
+    VirtualFile subDir = myRepository.findFileByRelativePath(subDirName);
+    assert subDir != null;
+    VirtualFile vFile = subDir.findFileByRelativePath(names[namesSize - 1]);
     assert vFile != null;
     HgFile hgFile = new HgFile(myRepository, VfsUtilCore.virtualToIoFile(vFile));
     HgLogCommand logCommand = new HgLogCommand(myProject);
     logCommand.setFollowCopies(true);
     List<HgFileRevision> revisions = logCommand.execute(hgFile, -1, true);
     for (int i = 0; i < revisions.size(); ++i) {
+      HgFile expectedFile = new HgFile(myRepository, new File(subDir.getPath(), names[namesSize - i - 1]));
       HgFile targetFileName = HgUtil.getFileNameInTargetRevision(myProject, revisions.get(i).getRevisionNumber(), hgFile);
-      assertEquals(names[namesSize - i - 1], targetFileName.getRelativePath());
+      assertEquals(expectedFile.getRelativePath(),
+                   targetFileName.getRelativePath());
     }
   }
 
@@ -79,31 +86,38 @@ public class HgHistoryTest extends HgPlatformTest {
     //update filenames size which is in use
     int namesSize = names.length - 1;
     //find file with parent revision name
-    VirtualFile vFile = myRepository.findFileByRelativePath(names[namesSize - 1]);
+    VirtualFile subDir = myRepository.findFileByRelativePath(subDirName);
+    assert subDir != null;
+    VirtualFile vFile = subDir.findFileByRelativePath(names[namesSize - 1]);
     assert vFile != null;
     HgFile hgFile = new HgFile(myRepository, VfsUtilCore.virtualToIoFile(vFile));
     HgLogCommand logCommand = new HgLogCommand(myProject);
     logCommand.setFollowCopies(true);
     List<HgFileRevision> revisions = logCommand.execute(hgFile, -1, true);
     for (int i = 0; i < revisions.size(); ++i) {
+      HgFile expectedFile = new HgFile(myRepository, new File(subDir.getPath(), names[namesSize - i - 1]));
       HgFile targetFileName = HgUtil.getFileNameInTargetRevision(myProject, revisions.get(i).getRevisionNumber(), hgFile);
-      assertEquals(names[namesSize - i - 1], targetFileName.getRelativePath());
+      assertEquals(expectedFile.getRelativePath(),
+                   targetFileName.getRelativePath());
     }
   }
 
   public void testFileNameInTargetRevisionFromAffectedFiles() throws HgCommandException {
     cd(myRepository);
     int namesSize = names.length;
-    VirtualFile currentVirtualFile = myRepository.findFileByRelativePath(names[namesSize - 1]);
+    VirtualFile subDir = myRepository.findFileByRelativePath(subDirName);
+    assert subDir != null;
+    VirtualFile currentVirtualFile = subDir.findFileByRelativePath(names[namesSize - 1]);
     assert currentVirtualFile != null;
     HgFile localFile = new HgFile(myRepository, VfsUtilCore.virtualToIoFile(currentVirtualFile));
     HgLogCommand logCommand = new HgLogCommand(myProject);
     logCommand.setFollowCopies(true);
     List<HgFileRevision> revisions = logCommand.execute(localFile, -1, true);
     for (int i = 0; i < namesSize; ++i) {
-      HgFile hgFile = new HgFile(myRepository, new File(myRepository.getPath(), names[namesSize - i - 1]));
+      HgFile hgFile = new HgFile(myRepository, new File(subDir.getPath(), names[namesSize - i - 1]));
       HgFile targetFileName = HgUtil.getFileNameInTargetRevision(myProject, revisions.get(i).getRevisionNumber(), hgFile);
-      assertEquals(names[namesSize - i - 1], targetFileName.toFilePath().getName());
+      assertEquals(hgFile.getRelativePath(),
+                   targetFileName.getRelativePath());
     }
   }
 }
