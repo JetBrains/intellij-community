@@ -1140,6 +1140,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         myEditorPreviewHint = new LightweightHint(editorFragmentPreviewPanel);
       }
       Point point = hintInfo.getOriginalPoint();
+      hintInfo.setTextBg(myEditor.getColorsScheme().getDefaultBackground());
+      hintInfo.setBorderColor(new JBColor(Gray._0, Gray._111));
       point = SwingUtilities.convertPoint(((EditorImpl)editor).getVerticalScrollBar(), point, myEditor.getComponent().getRootPane());
       hintManager.showEditorHint(myEditorPreviewHint, myEditor, point, HintManager.HIDE_BY_ANY_KEY |
                                                                            HintManager.HIDE_BY_TEXT_CHANGE |
