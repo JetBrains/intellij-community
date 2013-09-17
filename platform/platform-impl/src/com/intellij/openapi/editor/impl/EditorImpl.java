@@ -3382,7 +3382,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         x = EditorUtil.nextTabStop(x, this);
       }
       else {
-        x += c == '!' || c == ' ' ? EditorUtil.charWidth('c', fontType, this) : EditorUtil.charWidth(c, fontType, this);
+        x += EditorUtil.charWidth(c, fontType, this);
       }
       if (x > clip.x + clip.width) {
         break;

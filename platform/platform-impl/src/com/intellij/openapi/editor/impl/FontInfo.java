@@ -126,8 +126,8 @@ public class FontInfo {
 
   public int charWidth(char c) {
     final FontMetrics metrics = fontMetrics();
-    //if (c < 128) return charWidth[c];
-    return GraphicsUtil.charWidth(c, getFont());
+    if (c < 128) return charWidth[c];
+    return metrics.charWidth(c);
   }
 
   private FontMetrics fontMetrics() {
