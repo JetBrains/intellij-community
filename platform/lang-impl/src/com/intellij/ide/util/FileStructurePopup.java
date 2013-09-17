@@ -508,7 +508,7 @@ public class FileStructurePopup implements Disposable {
 
   @Nullable
   protected PsiFile getPsiFile(final Project project) {
-    return PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
+    return myEditor == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
   }
 
   @Override
