@@ -99,7 +99,8 @@ public class PyStatementMover extends LineMover {
   }
 
   private static boolean moveOutsideFile(@NotNull final PsiElement elementToMove, @NotNull final Document document, int lineNumber) {
-    if (lineNumber >= document.getLineCount() || lineNumber < 0) {
+    if (lineNumber < 0) return true;
+    if (lineNumber >= document.getLineCount()) {
       final int elementOffset = elementToMove.getTextRange().getStartOffset();
       final int lineStartOffset = document.getLineStartOffset(document.getLineNumber(elementOffset));
       final int insertIndex = lineNumber < 0 ? 0 : document.getTextLength();
