@@ -174,7 +174,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!myVariableStates.isEmpty()) {
       result.append("\n  vars: ");
       for (Map.Entry<DfaVariableValue, DfaVariableState> entry : myVariableStates.entrySet()) {
-        result.append("[").append(entry.getKey()).append("->").append(entry.getValue()).append("]");
+        result.append("\n[").append(entry.getKey()).append("->").append(entry.getValue()).append("]");
       }
     }
     if (!myUnknownVariables.isEmpty()) {
@@ -701,7 +701,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean isUnknownState(DfaValue val) {
-    return val instanceof DfaVariableValue && (myUnknownVariables.contains(val) || myUnknownVariables.contains(val.createNegated()));
+    if (val instanceof DfaBoxedValue) return isUnknownState(((DfaBoxedValue)val).getWrappedValue());
+    if (val instanceof DfaUnboxedValue) return isUnknownState(((DfaUnboxedValue)val).getVariable());
+    if (val instanceof DfaVariableValue) {
+      if (myUnknownVariables.contains(val)) return true;
+      DfaVariableValue negatedValue = ((DfaVariableValue)val).getNegatedValue();
+      if (negatedValue != null && myUnknownVariables.contains(negatedValue)) return true;
+    }
+    return false;
   }
 
   @Override
