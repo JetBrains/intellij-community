@@ -553,21 +553,16 @@ public class MavenProjectImporter {
   }
 
   private boolean removeUnusedProjectLibraries() {
-    Set<Library> allLibraries = new THashSet<Library>();
-    Collections.addAll(allLibraries, myModelsProvider.getAllLibraries());
+    Set<Library> unusedLibraries = new HashSet<Library>();
+    Collections.addAll(unusedLibraries, myModelsProvider.getAllLibraries());
 
-    Set<Library> usedLibraries = new THashSet<Library>();
     for (ModuleRootModel eachModel : collectModuleModels()) {
       for (OrderEntry eachEntry : eachModel.getOrderEntries()) {
         if (eachEntry instanceof LibraryOrderEntry) {
-          Library lib = ((LibraryOrderEntry)eachEntry).getLibrary();
-          if (MavenRootModelAdapter.isMavenLibrary(lib)) usedLibraries.add(lib);
+          unusedLibraries.remove(((LibraryOrderEntry)eachEntry).getLibrary());
         }
       }
     }
-
-    Set<Library> unusedLibraries = new THashSet<Library>(allLibraries);
-    unusedLibraries.removeAll(usedLibraries);
 
     boolean removed = false;
     for (Library each : unusedLibraries) {
