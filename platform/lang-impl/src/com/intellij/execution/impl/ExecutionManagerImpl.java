@@ -283,20 +283,11 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
   }
 
   @Override
-  public void restartRunProfile(@NotNull Project project,
-                                @NotNull DataContext context,
-                                @NotNull Executor executor,
-                                @NotNull ExecutionTarget target,
-                                @Nullable RunnerAndConfigurationSettings configuration,
-                                @Nullable RunContentDescriptor currentDescriptor) {
-    restartRunProfile(project, context, null, null, null, null, executor, target, configuration, currentDescriptor);
-  }
-
-  @Override
   public void restartRunProfile(@Nullable ProgramRunner runner,
                                 @NotNull ExecutionEnvironment environment,
                                 @Nullable RunContentDescriptor currentDescriptor) {
-    restartRunProfile(environment.getProject(), null,
+    restartRunProfile(environment.getProject(),
+                      environment.getDataContext(),
                       runner,
                       environment.getRunProfile(),
                       environment.getRunnerSettings(),
@@ -376,10 +367,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       try {
         ExecutionEnvironmentBuilder builder = new ExecutionEnvironmentBuilder(project, executor);
         builder.setRunProfile(runProfile).setRunnerSettings(runnerSettings).setContentToReuse(descriptor)
-          .setTarget(target).setConfigurationSettings(configurationPerRunnerSettings);
-        if (context != null) {
-          builder.setDataContext(HackyDataContext.hackIfNeed(context));
-        }
+          .setTarget(target).setConfigurationSettings(configurationPerRunnerSettings).setDataContext(context);
         if (configuration != null)        {
           builder.setRunnerAndSettings(runner, configuration);
         } else {

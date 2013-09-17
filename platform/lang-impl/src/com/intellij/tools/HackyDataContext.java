@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.execution.impl;
+package com.intellij.tools;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
+
+import static com.intellij.openapi.actionSystem.LangDataKeys.*;
 
 /**
  * Stores main keys from DataContext.
@@ -33,27 +32,11 @@ import java.util.Map;
  *
  * @author Konstantin Bulenkov
  */
-public class HackyDataContext implements DataContext {
-  private static final DataKey[] keys = {
-    PlatformDataKeys.PROJECT,
-    PlatformDataKeys.PROJECT_FILE_DIRECTORY,
-    PlatformDataKeys.EDITOR,
-    PlatformDataKeys.VIRTUAL_FILE,
-    LangDataKeys.MODULE,
-    LangDataKeys.PSI_FILE
-  };
-
-
+class HackyDataContext implements DataContext {
+  private static final DataKey[] keys = {PROJECT, PROJECT_FILE_DIRECTORY, EDITOR, VIRTUAL_FILE, MODULE, PSI_FILE};
   private final Map<String, Object> values = new HashMap<String, Object>();
 
-  @NotNull
-  public static HackyDataContext hackIfNeed(@NotNull DataContext context) {
-    if (context instanceof HackyDataContext)
-      return (HackyDataContext)context;
-    return new HackyDataContext(context);
-  }
-
-  private HackyDataContext(DataContext context) {
+  HackyDataContext(DataContext context) {
     for (DataKey key : keys) {
       values.put(key.getName(), key.getData(context));
     }

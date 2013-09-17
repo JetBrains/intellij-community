@@ -21,7 +21,6 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
@@ -94,16 +93,9 @@ public abstract class ExecutionManager {
 
   //currentDescriptor is null for toolbar/popup action and not null for actions in run/debug toolwindows
   /**
-   * @deprecated use similar one with DataContext parameter {@link #restartRunProfile(com.intellij.openapi.project.Project, com.intellij.openapi.actionSystem.DataContext, Executor, ExecutionTarget, RunnerAndConfigurationSettings, com.intellij.execution.ui.RunContentDescriptor)}
+   * @deprecated use {@link #restartRunProfile(com.intellij.execution.runners.ProgramRunner, com.intellij.execution.runners.ExecutionEnvironment, com.intellij.execution.ui.RunContentDescriptor)}
    */
   public abstract void restartRunProfile(@NotNull Project project,
-                                         @NotNull Executor executor,
-                                         @NotNull ExecutionTarget target,
-                                         @Nullable RunnerAndConfigurationSettings configuration,
-                                         @Nullable RunContentDescriptor currentDescriptor);
-
-  public abstract void restartRunProfile(@NotNull Project project,
-                                         @NotNull DataContext context,
                                          @NotNull Executor executor,
                                          @NotNull ExecutionTarget target,
                                          @Nullable RunnerAndConfigurationSettings configuration,
