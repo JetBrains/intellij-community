@@ -150,6 +150,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   public SearchEverywhereAction() {
     myContentPanel = new JPanel(new BorderLayout());
+    myContentPanel.setOpaque(false);
     mySearchLabel = new JBLabel(AllIcons.Actions.Find) {
       {
         enableEvents(AWTEvent.MOUSE_EVENT_MASK);
