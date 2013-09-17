@@ -16,6 +16,7 @@
 package org.jetbrains.jps.incremental.resources;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
@@ -23,10 +24,7 @@ import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.java.ResourceRootDescriptor;
 import org.jetbrains.jps.builders.java.ResourcesTargetType;
-import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ProjectBuildException;
-import org.jetbrains.jps.incremental.ResourcesTarget;
-import org.jetbrains.jps.incremental.TargetBuilder;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -65,6 +63,11 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
 
     if (!isResourceProcessingEnabled(target.getModule())) {
       return;
+    }
+    if (!SystemInfo.isFileSystemCaseSensitive) {
+      // keep up with case changes in file names  for case-insensitive OSes: 
+      // deleting the output before copying is the only way to ensure the case of the output file's name is exactly the same as source file's case
+      BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, holder);
     }
 
     try {

@@ -1,5 +1,6 @@
 package org.jetbrains.jps.maven.compiler;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -7,6 +8,7 @@ import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.storage.BuildDataPaths;
+import org.jetbrains.jps.incremental.BuildOperations;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.ProjectBuildException;
 import org.jetbrains.jps.incremental.TargetBuilder;
@@ -49,6 +51,13 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
     final Set<String> filteringExcludedExtensions = config.getFilteringExcludedExtensions();
     final JpsEncodingProjectConfiguration encodingConfig =
       JpsEncodingConfigurationService.getInstance().getEncodingConfiguration(target.getModule().getProject());
+
+    if (!SystemInfo.isFileSystemCaseSensitive) {
+      // keep up with case changes in file names  for case-insensitive OSes: 
+      // deleting the output before copying is the only way to ensure the case of the output file's name is exactly the same as source file's case
+      BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, holder);
+    }
+
     final Date timestamp = new Date();
 
     holder.processDirtyFiles(new FileProcessor<MavenResourceRootDescriptor, MavenResourcesTarget>() {
