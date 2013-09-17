@@ -36,6 +36,7 @@ public class InferenceSession {
 
   private Map<PsiTypeParameter, InferenceVariable> myInferenceVariables = new LinkedHashMap<PsiTypeParameter, InferenceVariable>();
   private final List<ConstraintFormula> myConstraints = new ArrayList<ConstraintFormula>();
+  private final List<ConstraintFormula> myDelayedConstraints = new ArrayList<ConstraintFormula>();
 
   private final PsiSubstitutor mySiteSubstitutor;
   private PsiManager myManager;
@@ -222,7 +223,7 @@ public class InferenceSession {
     List<ConstraintFormula> newConstraints = new ArrayList<ConstraintFormula>();
     for (int i = myConstraintIdx; i < myConstraints.size(); i++) {
       ConstraintFormula constraint = myConstraints.get(i);
-      if (!constraint.reduce(this, newConstraints)) {
+      if (!constraint.reduce(this, newConstraints, myDelayedConstraints)) {
         return false;
       }
     }

@@ -36,7 +36,7 @@ public class ExpressionCompatibilityConstraint implements ConstraintFormula {
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints, List<ConstraintFormula> delayedConstraints) {
     if (session.isProperType(myT)) {
       return TypeConversionUtil.areTypesAssignmentCompatible(myT, myExpression);
     }
@@ -77,7 +77,8 @@ public class ExpressionCompatibilityConstraint implements ConstraintFormula {
     }
     
     if (myExpression instanceof PsiLambdaExpression) {
-      //todo
+      constraints.add(new LambdaExpressionCompatibilityConstraint((PsiLambdaExpression)myExpression, myT));
+      return true;
     }
     
     

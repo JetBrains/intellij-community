@@ -39,7 +39,7 @@ public class SubtypingConstraint implements ConstraintFormula {
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints, List<ConstraintFormula> delayedConstraints) {
     if (myIsRefTypes) {
       if (session.isProperType(myS) && session.isProperType(myT)) {
         return TypeConversionUtil.isAssignable(myT, myS);

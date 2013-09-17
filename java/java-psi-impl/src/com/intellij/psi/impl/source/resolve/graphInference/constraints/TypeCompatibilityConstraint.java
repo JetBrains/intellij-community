@@ -37,7 +37,7 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints, List<ConstraintFormula> delayedConstraints) {
     if (session.isProperType(myT) && session.isProperType(myS)) {
       return TypeConversionUtil.isAssignable(myS, myT);
     }
