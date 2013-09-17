@@ -1,0 +1,1 @@
+<selection>public class Selection {}</selection>

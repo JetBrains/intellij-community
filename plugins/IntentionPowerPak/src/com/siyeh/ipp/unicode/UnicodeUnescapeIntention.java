@@ -18,6 +18,7 @@ package com.siyeh.ipp.unicode;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -37,20 +38,93 @@ public class UnicodeUnescapeIntention extends Intention {
 
   @Override
   protected void processIntention(Editor editor, @NotNull PsiElement element) {
-    final CaretModel caretModel = editor.getCaretModel();
-    final Document document = editor.getDocument();
-    int offset = caretModel.getOffset();
-    if (offset == document.getTextLength() - 1) {
-      offset--;
+    final SelectionModel selectionModel = editor.getSelectionModel();
+    if (selectionModel.hasSelection()) {
+      // does not check if octal escape is inside char or string literal (garbage in, garbage out)
+      final Document document = editor.getDocument();
+      final int start = selectionModel.getSelectionStart();
+      final int end = selectionModel.getSelectionEnd();
+      final String text = document.getText(new TextRange(start, end));
+      final int textLength = end - start;
+      final StringBuilder replacement = new StringBuilder(textLength);
+      int anchor = 0;
+      while (true) {
+        final int index = indexOfUnicodeEscape(text, anchor + 1);
+        if (index < 0) {
+          break;
+        }
+        replacement.append(text.substring(anchor, index));
+        int hexStart = index + 1;
+        while (text.charAt(hexStart) == 'u') {
+          hexStart++;
+        }
+        anchor = hexStart + 4;
+        final int c = Integer.parseInt(text.substring(hexStart, anchor), 16);
+        replacement.appendCodePoint(c);
+      }
+      replacement.append(text.substring(anchor, textLength));
+      document.replaceString(start, end, replacement);
     }
-    String text = document.getText(new TextRange(offset, offset + 1));
-    while (!text.equals("\\")) {
-      offset--;
-      text = document.getText(new TextRange(offset, offset + 1));
+    else {
+      final CaretModel caretModel = editor.getCaretModel();
+      final Document document = editor.getDocument();
+      final int lineNumber = document.getLineNumber(caretModel.getOffset());
+      final int lineStartOffset = document.getLineStartOffset(lineNumber);
+      final String line = document.getText(new TextRange(lineStartOffset, document.getLineEndOffset(lineNumber)));
+      final int column = caretModel.getLogicalPosition().column;
+      final int index1 = indexOfUnicodeEscape(line, column);
+      final int index2 = indexOfUnicodeEscape(line, column + 1);
+      final int escapeStart = index2 == column ? index2 : index1; // if caret is between two unicode escape, replace the right one
+      int hexStart = escapeStart + 1;
+      while (line.charAt(hexStart) == 'u') {
+        hexStart++;
+      }
+      final int c = Integer.parseInt(line.substring(hexStart, hexStart + 4), 16);
+      document.replaceString(lineStartOffset + escapeStart, lineStartOffset + hexStart + 4, String.valueOf((char) c));
     }
-    text = document.getText(new TextRange(offset, offset + 6));
-    final int c = Integer.parseInt(text.substring(2), 16);
-    document.replaceString(offset, offset + 6, String.valueOf((char)c));
+  }
+
+  /**
+   * see JLS 3.3. Unicode Escapes
+   */
+  private static int indexOfUnicodeEscape(String text, int offset) {
+    final int length = text.length();
+    for (int i = 0; i < length; i++) {
+      final char c = text.charAt(i);
+      if (c != '\\') {
+        continue;
+      }
+      boolean isEscape = true;
+      int previousChar = i - 1;
+      while (previousChar >= 0 && text.charAt(previousChar) == '\\') {
+        isEscape = !isEscape;
+        previousChar--;
+      }
+      if (!isEscape) {
+        continue;
+      }
+      int nextChar = i;
+      do {
+        nextChar++;
+        if (nextChar >= length) {
+          break;
+        }
+      }
+      while (text.charAt(nextChar) == 'u'); // \uuuu0061 is a legal unicode escape
+      if (nextChar + 3 >= length) {
+        break;
+      }
+      if (StringUtil.isHexDigit(text.charAt(nextChar)) &&
+          StringUtil.isHexDigit(text.charAt(nextChar + 1)) &&
+          StringUtil.isHexDigit(text.charAt(nextChar + 2)) &&
+          StringUtil.isHexDigit(text.charAt(nextChar + 3))) {
+        final int escapeEnd = nextChar + 4;
+        if (offset <= escapeEnd) {
+          return i;
+        }
+      }
+    }
+    return -1;
   }
 
   @NotNull
@@ -65,26 +139,20 @@ public class UnicodeUnescapeIntention extends Intention {
       if (editor == null) {
         return false;
       }
-      final CaretModel caretModel = editor.getCaretModel();
-      final Document document = editor.getDocument();
-      final int offset = caretModel.getOffset();
-      final String text = document.getText(new TextRange(Math.max(offset - 6, 0), Math.min(offset + 6, document.getTextLength())));
-      final int textLength = text.length();
-      final int max = Math.min(7, textLength);
-      for (int i = 0; i < max; i++) {
-        if (i + 5 >= textLength) {
-          return false;
-        }
-        if (text.charAt(i) == '\\' &&
-            text.charAt(i + 1) == 'u' &&
-            StringUtil.isHexDigit(text.charAt(i + 2)) &&
-            StringUtil.isHexDigit(text.charAt(i + 3)) &&
-            StringUtil.isHexDigit(text.charAt(i + 4)) &&
-            StringUtil.isHexDigit(text.charAt(i + 5))) {
-          return true;
-        }
+      final SelectionModel selectionModel = editor.getSelectionModel();
+      if (selectionModel.hasSelection()) {
+        final String text = selectionModel.getSelectedText();
+        return indexOfUnicodeEscape(text, 1) >= 0;
       }
-      return false;
+      else {
+        final CaretModel caretModel = editor.getCaretModel();
+        final Document document = editor.getDocument();
+        final int lineNumber = document.getLineNumber(caretModel.getOffset());
+        final String line = document.getText(new TextRange(document.getLineStartOffset(lineNumber), document.getLineEndOffset(lineNumber)));
+        final int column = caretModel.getLogicalPosition().column;
+        final int index = indexOfUnicodeEscape(line, column);
+        return index >= 0 && column >= index;
+      }
     }
   }
 }
