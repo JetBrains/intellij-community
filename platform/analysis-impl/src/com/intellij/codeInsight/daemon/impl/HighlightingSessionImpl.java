@@ -16,11 +16,11 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.Pass;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -44,7 +44,6 @@ public class HighlightingSessionImpl implements HighlightingSession {
   private final Project myProject;
   private final Document myDocument;
   private Map<TextRange,RangeMarker> myRanges2markersCache;
-  private TransferToEDTQueue<HighlightInfo> myTransferToEDTQueue;
 
   public HighlightingSessionImpl(@NotNull PsiFile psiFile,
                                  @Nullable Editor editor,
@@ -98,29 +97,43 @@ public class HighlightingSessionImpl implements HighlightingSession {
     return myPassId;
   }
 
+  private TransferToEDTQueue<HighlightInfo> myAddHighlighterInEDTQueue;
+  private TransferToEDTQueue<RangeHighlighterEx> myDisposeHighlighterInEDTQueue;
   void init(@NotNull final TextRange restrictRange) {
     myRanges2markersCache = new THashMap<TextRange, RangeMarker>();
-    myTransferToEDTQueue = new TransferToEDTQueue<HighlightInfo>("Apply highlighting results", new Processor<HighlightInfo>() {
-    @Override
-    public boolean process(HighlightInfo info) {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-      final EditorColorsScheme colorsScheme = getColorsScheme();
-      UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, getPsiFile(), restrictRange.getStartOffset(),
-                                                                 restrictRange.getEndOffset(),
-                                                                 info, colorsScheme, Pass.UPDATE_ALL, myRanges2markersCache);
+    Condition<Object> stopCondition = new Condition<Object>() {
+      @Override
+      public boolean value(Object o) {
+        return myProject.isDisposed() || getProgressIndicator().isCanceled();
+      }
+    };
+    myAddHighlighterInEDTQueue = new TransferToEDTQueue<HighlightInfo>("Apply highlighting results", new Processor<HighlightInfo>() {
+      @Override
+      public boolean process(HighlightInfo info) {
+        final EditorColorsScheme colorsScheme = getColorsScheme();
+        UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, getPsiFile(), restrictRange.getStartOffset(),
+                                                                   restrictRange.getEndOffset(),
+                                                                   info, colorsScheme, Pass.UPDATE_ALL, myRanges2markersCache);
 
-      return true;
-    }
-  }, new Condition<Object>() {
-    @Override
-    public boolean value(Object o) {
-      return myProject.isDisposed() || getProgressIndicator().isCanceled();
-    }
-  }, 200);
+        return true;
+      }
+    }, stopCondition, 200);
 
+    myDisposeHighlighterInEDTQueue = new TransferToEDTQueue<RangeHighlighterEx>("Dispose abandoned highlighter", new Processor<RangeHighlighterEx>() {
+      @Override
+      public boolean process(@NotNull RangeHighlighterEx highlighter) {
+        highlighter.dispose();
+        return true;
+      }
+    }, stopCondition, 200);
   }
 
   void queueHighlightInfo(@NotNull HighlightInfo info) {
-    myTransferToEDTQueue.offer(info);
+    myAddHighlighterInEDTQueue.offer(info);
+  }
+
+  void queueDisposeHighlighter(RangeHighlighterEx highlighter) {
+    if (highlighter == null) return;
+    myDisposeHighlighterInEDTQueue.offer(highlighter);
   }
 }
