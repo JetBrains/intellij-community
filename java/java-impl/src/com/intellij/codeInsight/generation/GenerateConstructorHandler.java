@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -185,9 +185,7 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
       assert superClass != null;
       PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(superClass, aClass, PsiSubstitutor.EMPTY);
       for (PsiMethod baseConstructor : baseConstructors) {
-        if (substitutor != PsiSubstitutor.EMPTY) {
-          baseConstructor = GenerateMembersUtil.substituteGenericMethod(baseConstructor, substitutor, aClass);
-        }
+        baseConstructor = GenerateMembersUtil.substituteGenericMethod(baseConstructor, substitutor, aClass);
         constructors.add(new PsiGenerationInfo(generateConstructorPrototype(aClass, baseConstructor, myCopyJavadoc, fields)));
       }
       return filterOutAlreadyInsertedConstructors(aClass, constructors);

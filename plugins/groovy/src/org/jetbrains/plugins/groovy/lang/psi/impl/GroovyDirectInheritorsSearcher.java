@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.psi.stubs.StubIndex;
 import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -54,7 +53,7 @@ class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectCl
                                                       GrReferenceList.class)) {
       final PsiElement parent = list.getParent();
       if (parent instanceof GrTypeDefinition) {
-        inheritors.add(GrClassSubstitutor.getSubstitutedClass(((GrTypeDefinition)parent)));
+        inheritors.add((PsiClass)parent);
       }
     }
     final Collection<GrAnonymousClassDefinition> classes =

@@ -118,7 +118,7 @@ f.mk<caret>
     myFixture.completeBasic()
     assertSameElements myFixture.lookupElementStrings, "mkdir", "mkdirs"
   }
-  
+
   public void testDeclaredVariableTypeIsMoreImportantThanTheInitializerOne2() throws Exception {
     myFixture.addClass """
 public class Some {
@@ -293,22 +293,6 @@ class Foo {
 """
     myFixture.completeBasic()
     assertSameElements myFixture.lookupElementStrings, "subSequence", "substring", "substring"
-  }
-
-  public void testTraitHighlighting() throws Exception {
-    myFixture.configureByText "a.groovy", """
-@Trait
-abstract class Intf {
-  abstract void foo()
-  void bar() {}
-}
-<error descr="Method 'foo' is not implemented">class Foo implements Intf</error> {}
-<error descr="Method 'foo' is not implemented">class Wrong extends Foo</error> {}
-class Bar implements Intf {
-  void foo() {}
-}
-"""
-    myFixture.testHighlighting(true, false, false, myFixture.file.virtualFile)
   }
 
   public void testResolveToStdLib() throws Exception {
