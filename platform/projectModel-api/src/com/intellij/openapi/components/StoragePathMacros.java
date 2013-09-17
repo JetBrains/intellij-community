@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,18 +26,17 @@ import org.jetbrains.annotations.NotNull;
  * i.e. special markers that are mapped to the current file system environment at runtime.
  * <p/>
  * This class holds those markers and utility method for working with them.
- * 
+ *
  * @author Denis Zhdanov
  * @since 5/2/12 12:57 PM
  */
 public class StoragePathMacros {
-
   /** Points to the application-level settings root directory. */
   @NonNls @NotNull public static final String APP_CONFIG = "$APP_CONFIG$";
-  
+
   /** <code>'.ipr'</code> file path key. */
   @NonNls @NotNull public static final String PROJECT_FILE = "$PROJECT_FILE$";
-  
+
   /** <code>'.idea'</code> directory path key. */
   @NonNls @NotNull public static final String PROJECT_CONFIG_DIR = "$PROJECT_CONFIG_DIR$";
 
@@ -56,19 +55,15 @@ public class StoragePathMacros {
    * Allows to extract macro name from the given macro definition.
    * <p/>
    * Basically, performs conversion like {@code '$NAME$' -> 'NAME'}.
-   * 
+   *
    * @param macro  macro definition which name should be extracted.
    * @return       name of the given macro definition
    * @throws IllegalArgumentException   if given macro definition has unexpected format
    */
   @NotNull
   public static String getMacroName(@NotNull String macro) throws IllegalArgumentException {
-    if (macro.length() <= 0) {
-      throw new IllegalArgumentException("Can't extract name from the given macro definition. Reason: it's empty");
-    }
-    if (macro.charAt(0) != '$' || macro.charAt(macro.length() - 1) != '$') {
-      throw new IllegalArgumentException("Can't extract name from the given macro definition (" + macro + ")." +
-                                         " Reason: it doesn't conform to the expected format ($NAME$)");
+    if (macro.length() < 3 || macro.charAt(0) != '$' || macro.charAt(macro.length() - 1) != '$') {
+      throw new IllegalArgumentException("Malformed macro definition (" + macro + ")");
     }
     return macro.substring(1, macro.length() - 1);
   }

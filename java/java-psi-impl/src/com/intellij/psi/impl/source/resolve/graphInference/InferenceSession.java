@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.constraints.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,9 +36,11 @@ public class InferenceSession {
 
   private Map<PsiTypeParameter, InferenceVariable> myInferenceVariables = new LinkedHashMap<PsiTypeParameter, InferenceVariable>();
   private final List<ConstraintFormula> myConstraints = new ArrayList<ConstraintFormula>();
+  private final List<ConstraintFormula> myDelayedConstraints = new ArrayList<ConstraintFormula>();
 
   private final PsiSubstitutor mySiteSubstitutor;
   private PsiManager myManager;
+  private int myConstraintIdx = 0;
 
   private final InferenceIncorporationPhase myIncorporationPhase = new InferenceIncorporationPhase(this);
 
@@ -53,7 +56,7 @@ public class InferenceSession {
 
     LOG.assertTrue(leftTypes.length == rightTypes.length);
     for (int i = 0; i < leftTypes.length; i++) {
-      myConstraints.add(new TypeCompatibilityConstraint(rightTypes[i], mySiteSubstitutor.substitute(rightTypes[i])));
+      myConstraints.add(new TypeCompatibilityConstraint(leftTypes[i], mySiteSubstitutor.substitute(rightTypes[i])));
     }
   }
   
@@ -70,21 +73,22 @@ public class InferenceSession {
 
     if (parameters.length > 0) {
       for (int i = 0; i < args.length; i++) {
-        if (i >= parameters.length) break;
-        PsiType parameterType = mySiteSubstitutor.substitute(parameters[i].getType());
+        PsiType parameterType = mySiteSubstitutor.substitute(parameters[i < parameters.length ? i : parameters.length - 1].getType());
         if (parameterType instanceof PsiEllipsisType) {
-          if (args.length != parameters.length || !(args[i].getType() instanceof PsiArrayType)) {
+          if (args.length != parameters.length || args[i] != null && !(args[i].getType() instanceof PsiArrayType)) {
             parameterType = ((PsiEllipsisType)parameterType).getComponentType();
           }
         }
-        myConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
+        if (args[i] != null) {
+          myConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
+        }
       }
     }
 
     if (parent instanceof PsiCallExpression) {
       final Map<PsiElement, Pair<PsiMethod, PsiSubstitutor>> map = MethodCandidateInfo.CURRENT_CANDIDATE.get();
       if (map != null) {
-        final Pair<PsiMethod, PsiSubstitutor> pair = map.get(parent);
+        final Pair<PsiMethod, PsiSubstitutor> pair = map.get(((PsiCallExpression)parent).getArgumentList());
         if (pair != null) {
           initReturnTypeConstraint(pair.first, (PsiCallExpression)parent);
         }
@@ -133,12 +137,13 @@ public class InferenceSession {
   }
 
   private void initReturnTypeConstraint(PsiMethod method, PsiCallExpression context) {
-    if (PsiPolyExpressionUtil.isPolyExpression(context)) {
+    if (PsiPolyExpressionUtil.isPolyExpression(context) || 
+        context instanceof PsiNewExpression && PsiDiamondType.ourDiamondGuard.currentStack().contains(context)) {
       final PsiType returnType = method.getReturnType();
       if (!PsiType.VOID.equals(returnType) && returnType != null) {
         final PsiType targetType = PsiPolyExpressionUtil.getTargetType(context);//todo primitive type
         if (targetType != null) {
-          myConstraints.add(new TypeCompatibilityConstraint(returnType, targetType));
+          myConstraints.add(new TypeCompatibilityConstraint(targetType, returnType));
         }
       }
     }
@@ -202,30 +207,30 @@ public class InferenceSession {
   }
 
   private void repeatInferencePhases() {
-    if (!reduceConstraints()) {
-      //inference error occurred
-      return;
-    }
+    do {
+      if (!reduceConstraints()) {
+        //inference error occurred
+        return;
+      }
+      myIncorporationPhase.incorporate();
 
-    myIncorporationPhase.incorporate();
+    } while (!myIncorporationPhase.isFullyIncorporated() || myConstraintIdx < myConstraints.size());
 
-    if (!myConstraints.isEmpty()) {
-      repeatInferencePhases();
-    } else {
-      resolveBounds();
-    }
+    resolveBounds();
   }
 
   private boolean reduceConstraints() {
     List<ConstraintFormula> newConstraints = new ArrayList<ConstraintFormula>();
-    for (Iterator<ConstraintFormula> iterator = myConstraints.iterator(); iterator.hasNext(); ) {
-      ConstraintFormula constraint = iterator.next();
-      if (!constraint.reduce(this, newConstraints)) {
+    for (int i = myConstraintIdx; i < myConstraints.size(); i++) {
+      ConstraintFormula constraint = myConstraints.get(i);
+      if (!constraint.reduce(this, newConstraints, myDelayedConstraints)) {
         return false;
       }
-      iterator.remove();
     }
-    myConstraints.addAll(newConstraints);
+    myConstraintIdx = myConstraints.size();
+    for (ConstraintFormula constraint : newConstraints) {
+      addConstraint(constraint);
+    }
     return true;
   }
 
@@ -235,6 +240,11 @@ public class InferenceSession {
       for (InferenceVariable inferenceVariable : variables) {
 
         if (inferenceVariable.getInstantiation() != null) continue;
+        final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
+        if (!eqBounds.isEmpty()) {
+          inferenceVariable.setInstantiation(eqBounds.get(0));
+          continue;
+        }
 
         final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);
         PsiType lub = null;
@@ -244,7 +254,7 @@ public class InferenceSession {
               lub = lowerBound;
             }
             else {
-              lub = GenericsUtil.getLeastUpperBound(lowerBound, lub, myManager);
+              lub = GenericsUtil.getLeastUpperBound(lub, lowerBound, myManager);
             }
           }
         }
@@ -284,6 +294,8 @@ public class InferenceSession {
   }
 
   public void addConstraint(ConstraintFormula constraint) {
-    myConstraints.add(constraint);
+    if (!myConstraints.contains(constraint)) {
+        myConstraints.add(constraint);
+      }
   }
 }

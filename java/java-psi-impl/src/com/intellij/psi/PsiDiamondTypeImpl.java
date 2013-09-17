@@ -23,7 +23,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -130,7 +130,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     final PsiExpressionList argumentList = newExpression.getArgumentList();
     if (argumentList == null) return DiamondInferenceResult.NULL_RESULT;
     final Ref<PsiMethod> staticFactoryRef = new Ref<PsiMethod>();
-    final PsiSubstitutor inferredSubstitutor = ourDiamondGuard.doPreventingRecursion(newExpression, false, new Computable<PsiSubstitutor>() {
+    final PsiSubstitutor inferredSubstitutor = ourDiamondGuard.doPreventingRecursion(context, false, new Computable<PsiSubstitutor>() {
       @Override
       public PsiSubstitutor compute() {
         final PsiMethod constructor = findConstructor(psiClass, newExpression);
@@ -268,14 +268,27 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
 
   private static PsiSubstitutor inferTypeParametersForStaticFactory(@NotNull PsiMethod staticFactoryMethod,
                                                                     PsiNewExpression expression,
-                                                                    PsiElement parent) {
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(staticFactoryMethod.getProject());
-    final PsiResolveHelper resolveHelper = facade.getResolveHelper();
-    final PsiParameter[] parameters = staticFactoryMethod.getParameterList().getParameters();
+                                                                    final PsiElement parent) {
     final PsiExpressionList argumentList = expression.getArgumentList();
-    final PsiExpression[] expressions = argumentList.getExpressions();
-    return resolveHelper
-      .inferTypeArguments(staticFactoryMethod.getTypeParameters(), parameters, expressions, PsiSubstitutor.EMPTY, parent, DefaultParameterTypeInferencePolicy.INSTANCE);
+    if (argumentList != null) {
+      final MethodCandidateInfo staticFactoryCandidateInfo =
+        new MethodCandidateInfo(staticFactoryMethod, PsiSubstitutor.EMPTY, false, false, argumentList, parent,
+                                argumentList.getExpressionTypes(), null) {
+          @Override
+          protected PsiElement getParent() {
+            return parent;
+          }
+
+          @Override
+          protected PsiElement getMarkerList() {
+            return parent instanceof PsiNewExpression ? ((PsiNewExpression)parent).getArgumentList() : super.getMarkerList();
+          }
+        };
+      return staticFactoryCandidateInfo.getSubstitutor();
+    }
+    else {
+      return PsiSubstitutor.EMPTY;
+    }
   }
 
   public static boolean hasDefaultConstructor(@NotNull final PsiClass psiClass) {

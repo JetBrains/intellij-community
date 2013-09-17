@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.encapsulateFields.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
@@ -28,10 +29,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.JavaStylePropertiesUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -92,7 +95,6 @@ public class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
     boolean findSet = descriptor.isToEncapsulateSet();
     boolean findGet = descriptor.isToEncapsulateGet();
     GrReferenceExpression ref = (GrReferenceExpression)reference;
-    // [Jeka] to avoid recursion in the field's accessors
     if (findGet &&
         JavaEncapsulateFieldHelper.isUsedInExistingAccessor(descriptor.getTargetClass(), fieldDescriptor.getGetterPrototype(), ref)) {
       return null;
@@ -107,14 +109,14 @@ public class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
     if (!findSet || fieldDescriptor.getField().hasModifierProperty(PsiModifier.FINAL)) {
       if (!PsiUtil.isAccessedForReading(ref)) return null;
     }
-    if (!descriptor.isToUseAccessorsWhenAccessible()) {
+    /*if (!descriptor.isToUseAccessorsWhenAccessible()) {
       PsiModifierList newModifierList = JavaEncapsulateFieldHelper.createNewModifierList(descriptor);
       PsiClass accessObjectClass = getAccessObject(ref);
       final PsiResolveHelper helper = JavaPsiFacade.getInstance(((GrReferenceExpression)reference).getProject()).getResolveHelper();
       if (helper.isAccessible(fieldDescriptor.getField(), newModifierList, ref, accessObjectClass, null)) {
         return null;
       }
-    }
+    }*/
     return new EncapsulateFieldUsageInfo(ref, fieldDescriptor);
   }
 
@@ -134,8 +136,6 @@ public class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
     final PsiElement element = usage.getElement();
     if (!(element instanceof GrReferenceExpression)) return false;
 
-
-
     final FieldDescriptor fieldDescriptor = usage.getFieldDescriptor();
     PsiField field = fieldDescriptor.getField();
     boolean processGet = descriptor.isToEncapsulateGet();
@@ -147,6 +147,18 @@ public class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(descriptor.getTargetClass().getProject());
 
     try {
+      if (!descriptor.isToUseAccessorsWhenAccessible()) {
+        PsiModifierList newModifierList = JavaEncapsulateFieldHelper.createNewModifierList(descriptor);
+        PsiClass accessObjectClass = getAccessObject(expr);
+        final PsiResolveHelper helper = JavaPsiFacade.getInstance((expr).getProject()).getResolveHelper();
+        if (helper.isAccessible(fieldDescriptor.getField(), newModifierList, expr, accessObjectClass, null)) {
+          if (expr.resolve() instanceof PsiMethod) {
+            addMemberOperator(expr, field);
+          }
+          return true;
+        }
+      }
+
       final PsiElement parent = expr.getParent();
       if (parent instanceof GrAssignmentExpression && expr.equals(((GrAssignmentExpression)parent).getLValue())) {
         GrAssignmentExpression assignment = (GrAssignmentExpression)parent;
@@ -253,6 +265,41 @@ public class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
       LOG.error(e);
     }
     return true;
+  }
+
+  private static void addMemberOperator(@NotNull GrReferenceExpression ref, @NotNull PsiField field) {
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(ref.getProject());
+
+    GrExpression qualifier = ref.getQualifier();
+    if (qualifier == null) {
+      PsiClass parentClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
+      PsiClass containingClass = findContainingClass(ref, field);
+      GrReferenceExpression thisRef = !ref.getManager().areElementsEquivalent(parentClass, containingClass)
+                                      ? factory.createThisExpression(containingClass)
+                                      : factory.createThisExpression(null);
+      ref.setQualifier(thisRef);
+    }
+
+    ref.getNode().addLeaf(GroovyTokenTypes.mAT, "@", ref.getDotToken().getNode().getTreeNext());
+  }
+
+  private static PsiClass findContainingClass(@NotNull GrReferenceExpression ref, @NotNull PsiField field) {
+    PsiElement context = ref;
+    while (true) {
+      PsiClass aClass = PsiUtil.getContextClass(context);
+      if (aClass == null) return null;
+
+      PsiManager manager = context.getManager();
+      PsiField found = aClass.findFieldByName(field.getName(), true);
+      if (manager.areElementsEquivalent(found, field)) {
+        return aClass;
+      }
+
+      if (context instanceof GroovyScriptClass) return null;
+      if (context.getParent() instanceof GroovyFile) return null;
+
+      context = aClass.getParent();
+    }
   }
 
   private static boolean checkAccessorsAreSimpleAndFieldIsInaccessible(@NotNull PsiField field,

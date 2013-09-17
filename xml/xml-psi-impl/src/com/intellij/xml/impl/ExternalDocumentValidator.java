@@ -84,9 +84,15 @@ public class ExternalDocumentValidator {
   private static final String ATTRIBUTE_MESSAGE_PREFIX = "cvc-attribute.";
 
   private static class ValidationInfo {
-    PsiElement element;
-    String message;
-    int type;
+    final PsiElement element;
+    final String message;
+    final Validator.ValidationHost.ErrorType type;
+
+    private ValidationInfo(PsiElement element, String message, Validator.ValidationHost.ErrorType type) {
+      this.element = element;
+      this.message = message;
+      this.type = type;
+    }
   }
 
   private WeakReference<List<ValidationInfo>> myInfos; // last jaxp validation result
@@ -115,17 +121,13 @@ public class ExternalDocumentValidator {
     myHost = new Validator.ValidationHost() {
       @Override
       public void addMessage(PsiElement context, String message, int type) {
-        final ValidationInfo o = new ValidationInfo();
-
-        results.add(o);
-        o.element = context;
-        o.message = message;
-        o.type = type;
+        addMessage(context, message, type==ERROR?ErrorType.ERROR : type==WARNING?ErrorType.WARNING : ErrorType.INFO);
       }
 
       @Override
       public void addMessage(final PsiElement context, final String message, @NotNull final ErrorType type) {
-        addMessage(context, message, type.ordinal());
+        final ValidationInfo o = new ValidationInfo(context, message, type);
+        results.add(o);
       }
     };
 
@@ -154,7 +156,7 @@ public class ExternalDocumentValidator {
                 return;
               }
 
-              int problemType = getProblemType(warning);
+              Validator.ValidationHost.ErrorType problemType = getProblemType(warning);
               int offset = Math.max(0, document.getLineStartOffset(e.getLineNumber() - 1) + e.getColumnNumber() - 2);
               if (offset >= document.getTextLength()) return;
               PsiElement currentElement = PsiDocumentManager.getInstance(project).getPsiFile(document).findElementAt(offset);
@@ -245,7 +247,7 @@ public class ExternalDocumentValidator {
                   }
                 } else if (localizedMessage.startsWith(STRING_ERROR_PREFIX)) {
                   if (currentElement != null) {
-                    myHost.addMessage(currentElement,localizedMessage,Validator.ValidationHost.WARNING);
+                    myHost.addMessage(currentElement,localizedMessage, Validator.ValidationHost.ErrorType.WARNING);
                   }
                 }
                 else {
@@ -277,8 +279,8 @@ public class ExternalDocumentValidator {
     addAllInfos(host,results);
   }
 
-  private int getProblemType(ValidateXmlActionHandler.ProblemType warning) {
-    return warning == ValidateXmlActionHandler.ProblemType.WARNING ? Validator.ValidationHost.WARNING : Validator.ValidationHost.ERROR;
+  private static Validator.ValidationHost.ErrorType getProblemType(ValidateXmlActionHandler.ProblemType warning) {
+    return warning == ValidateXmlActionHandler.ProblemType.WARNING ? Validator.ValidationHost.ErrorType.WARNING : Validator.ValidationHost.ErrorType.ERROR;
   }
 
   private static PsiElement getNodeForMessage(final PsiElement currentElement) {

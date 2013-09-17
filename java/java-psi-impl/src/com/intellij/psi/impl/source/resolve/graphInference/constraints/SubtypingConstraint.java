@@ -39,7 +39,7 @@ public class SubtypingConstraint implements ConstraintFormula {
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints, List<ConstraintFormula> delayedConstraints) {
     if (myIsRefTypes) {
       if (session.isProperType(myS) && session.isProperType(myT)) {
         return TypeConversionUtil.isAssignable(myT, myS);
@@ -80,15 +80,12 @@ public class SubtypingConstraint implements ConstraintFormula {
           }
   
           if (!(myS instanceof PsiClassType)) return false;
-          final PsiClassType.ClassResolveResult SResult = ((PsiClassType)myS).resolveGenerics();
-          final PsiClass SClass = SResult.getElement();
-          if (!((PsiClassType)myT).hasParameters()) {
-            return SClass == CClass;//todo 
-          }
-          final PsiSubstitutor tSubstitutor = SClass != null ? TypeConversionUtil.getClassSubstitutor(SClass,CClass,  TResult.getSubstitutor()) : null;
-          final PsiSubstitutor sSubstitutor = SResult.getSubstitutor();
-          if (tSubstitutor != null) {
-            for (PsiTypeParameter parameter : SClass.getTypeParameters()) {
+          PsiClassType.ClassResolveResult SResult = ((PsiClassType)myS).resolveGenerics();
+          PsiClass SClass = SResult.getElement();
+          final PsiSubstitutor tSubstitutor = TResult.getSubstitutor();
+          final PsiSubstitutor sSubstitutor = SClass != null ? TypeConversionUtil.getClassSubstitutor(CClass, SClass, SResult.getSubstitutor()) : null;
+          if (sSubstitutor != null) {
+            for (PsiTypeParameter parameter : CClass.getTypeParameters()) {
               final PsiType tSubstituted = tSubstitutor.substitute(parameter);
               final PsiType sSubstituted = sSubstitutor.substitute(parameter);
               if (tSubstituted != null && sSubstituted != null) {
@@ -153,5 +150,27 @@ public class SubtypingConstraint implements ConstraintFormula {
       }
     }
     return true;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    SubtypingConstraint that = (SubtypingConstraint)o;
+
+    if (myIsRefTypes != that.myIsRefTypes) return false;
+    if (!myS.equals(that.myS)) return false;
+    if (!myT.equals(that.myT)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myS.hashCode();
+    result = 31 * result + myT.hashCode();
+    result = 31 * result + (myIsRefTypes ? 1 : 0);
+    return result;
   }
 }

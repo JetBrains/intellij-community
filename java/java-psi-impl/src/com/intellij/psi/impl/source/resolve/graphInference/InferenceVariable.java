@@ -52,13 +52,17 @@ public class InferenceVariable {
     myCaptured = captured;
   }
 
-  public void addBound(PsiType classType, InferenceBound inferenceBound) {
+  public boolean addBound(PsiType classType, InferenceBound inferenceBound) {
     List<PsiType> list = myBounds.get(inferenceBound);
     if (list == null) {
       list = new ArrayList<PsiType>();
       myBounds.put(inferenceBound, list);
     }
-    if (!list.contains(classType)) list.add(classType);
+    if (!list.contains(classType)) {
+      list.add(classType);
+      return true;
+    }
+    return false;
   }
 
   public List<PsiType> getBounds(InferenceBound inferenceBound) {

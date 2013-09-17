@@ -120,6 +120,10 @@ public class GroovyGenerateConstructorHandler extends GenerateConstructorHandler
       final String[] paramTypes = ArrayUtil.toStringArray(parametersTypes);
       assert constructorName != null;
       GrMethod grConstructor = factory.createConstructorFromText(constructorName, paramTypes, paramNames, body);
+      PsiReferenceList throwsList = grConstructor.getThrowsList();
+      for (PsiJavaCodeReferenceElement element : constructor.getThrowsList().getReferenceElements()) {
+        throwsList.add(element);
+      }
       codeStyleManager.shortenClassReferences(grConstructor);
 
       grConstructors.add(new GroovyGenerationInfo<GrMethod>(grConstructor));

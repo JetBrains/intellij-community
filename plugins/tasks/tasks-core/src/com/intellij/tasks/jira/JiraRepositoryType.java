@@ -26,7 +26,7 @@ public class JiraRepositoryType extends BaseRepositoryType<JiraRepository> {
 
   @NotNull
   public Icon getIcon() {
-    return TasksIcons.JIRA;
+    return TasksIcons.Jira;
   }
 
   @NotNull

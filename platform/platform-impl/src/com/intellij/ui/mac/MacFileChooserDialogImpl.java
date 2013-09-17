@@ -25,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.mac.foundation.Foundation;
@@ -296,7 +297,7 @@ public class MacFileChooserDialogImpl implements PathChooserDialog {
 
   @Nullable
   private static IdeMenuBar getMenuBar() {
-    Window cur = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+    Window cur = WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow();
 
     while (cur != null) {
       if (cur instanceof JFrame) {

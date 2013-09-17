@@ -181,7 +181,9 @@ public class MavenModuleImporter {
       if (depProject != null) {
         if (depProject == myMavenProject) continue;
 
-        if (myMavenTree.isIgnored(depProject)) {
+        String moduleName = myMavenProjectToModuleName.get(depProject);
+
+        if (moduleName == null || myMavenTree.isIgnored(depProject)) {
           MavenArtifact projectsArtifactInRepository = new MavenArtifact(
             artifact.getGroupId(),
             artifact.getArtifactId(),
@@ -201,7 +203,7 @@ public class MavenModuleImporter {
         }
         else {
           boolean isTestJar = MavenConstants.TYPE_TEST_JAR.equals(dependencyType) || "tests".equals(artifact.getClassifier());
-          myRootModelAdapter.addModuleDependency(myMavenProjectToModuleName.get(depProject), scope, isTestJar);
+          myRootModelAdapter.addModuleDependency(moduleName, scope, isTestJar);
 
           Element buildHelperCfg = depProject.getPluginGoalConfiguration("org.codehaus.mojo", "build-helper-maven-plugin", "attach-artifact");
           if (buildHelperCfg != null) {

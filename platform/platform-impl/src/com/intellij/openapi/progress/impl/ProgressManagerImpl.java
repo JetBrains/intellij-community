@@ -265,7 +265,7 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
     return runProcessWithProgressSynchronously(task, parentComponent);
   }
 
-  private static boolean runProcessWithProgressSynchronously(final Task task, @Nullable final JComponent parentComponent) {
+  private static boolean runProcessWithProgressSynchronously(@NotNull final Task task, @Nullable final JComponent parentComponent) {
     final long start = System.currentTimeMillis();
     final boolean result = ((ApplicationEx)ApplicationManager.getApplication())
         .runProcessWithProgressSynchronously(new TaskContainer(task) {
@@ -434,10 +434,11 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
   private abstract static class TaskContainer implements Runnable {
     private final Task myTask;
 
-    protected TaskContainer(final Task task) {
+    protected TaskContainer(@NotNull Task task) {
       myTask = task;
     }
 
+    @NotNull
     public Task getTask() {
       return myTask;
     }

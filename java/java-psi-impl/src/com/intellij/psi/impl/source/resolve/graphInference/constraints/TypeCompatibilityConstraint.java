@@ -37,7 +37,7 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints, List<ConstraintFormula> delayedConstraints) {
     if (session.isProperType(myT) && session.isProperType(myS)) {
       return TypeConversionUtil.isAssignable(myS, myT);
     }
@@ -57,5 +57,25 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
     }
     constraints.add(new SubtypingConstraint(myT, myS, true));
     return true;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    TypeCompatibilityConstraint that = (TypeCompatibilityConstraint)o;
+
+    if (!myS.equals(that.myS)) return false;
+    if (!myT.equals(that.myT)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myT.hashCode();
+    result = 31 * result + myS.hashCode();
+    return result;
   }
 }

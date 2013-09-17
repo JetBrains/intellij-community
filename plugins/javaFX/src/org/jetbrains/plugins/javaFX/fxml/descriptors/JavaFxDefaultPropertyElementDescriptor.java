@@ -286,7 +286,8 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
     final String contextName = context.getName();
     if (FxmlConstants.FX_ROOT.equals(contextName)) {
       if (context.getParentTag() != null) {
-        host.addMessage(context.getNavigationElement(), "<fx:root> is valid only as the root node of an FXML document", ValidationHost.ERROR);
+        host.addMessage(context.getNavigationElement(), "<fx:root> is valid only as the root node of an FXML document",
+                        ValidationHost.ErrorType.ERROR);
       }
     } else {
       final XmlTag referencedTag = getReferencedTag(context);
@@ -310,7 +311,8 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
                 }
               }
               if (!copyConstructorFound) {
-                host.addMessage(context.getNavigationElement(), "Copy constructor not found for \'" + psiClass.getName() + "\'", ValidationHost.ERROR);
+                host.addMessage(context.getNavigationElement(), "Copy constructor not found for \'" + psiClass.getName() + "\'",
+                                ValidationHost.ErrorType.ERROR);
               }
             }
           }

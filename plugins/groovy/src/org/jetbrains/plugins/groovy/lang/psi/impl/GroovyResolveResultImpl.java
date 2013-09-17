@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,12 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.PsiSubstitutor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 
@@ -60,7 +62,7 @@ public class GroovyResolveResultImpl implements GroovyResolveResult {
                                  boolean staticsOK,
                                  boolean isInvokedOnProperty) {
     myCurrentFileResolveContext = resolveContext;
-    myElement = element instanceof PsiClass? GrClassSubstitutor.getSubstitutedClass((PsiClass)element) : element;
+    myElement = element;
     myIsAccessible = isAccessible;
     mySubstitutor = substitutor;
     myIsStaticsOK = staticsOK;

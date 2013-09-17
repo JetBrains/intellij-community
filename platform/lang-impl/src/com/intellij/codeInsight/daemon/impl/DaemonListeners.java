@@ -292,6 +292,7 @@ public class DaemonListeners implements Disposable {
     inspectionProfileManager.addProfileChangeListener(new MyProfileChangeListener(), this);
     inspectionProjectProfileManager.addProfilesListener(new MyProfileChangeListener(), this);
     todoConfiguration.addPropertyChangeListener(new MyTodoListener(), this);
+    todoConfiguration.colorSettingsChanged();
     actionManagerEx.addAnActionListener(new MyAnActionListener(), this);
     virtualFileManager.addVirtualFileListener(new VirtualFileAdapter() {
       @Override
@@ -474,6 +475,7 @@ public class DaemonListeners implements Disposable {
   private class MyEditorColorsListener implements EditorColorsListener {
     @Override
     public void globalSchemeChange(EditorColorsScheme scheme) {
+      TodoConfiguration.getInstance().colorSettingsChanged();
       stopDaemonAndRestartAllFiles();
     }
   }

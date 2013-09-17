@@ -84,6 +84,7 @@ public abstract class Task implements TaskInfo, Progressive {
     return myTitle;
   }
 
+  @NotNull
   public final Task setTitle(@NotNull String title) {
     myTitle = title;
     return this;
@@ -94,6 +95,7 @@ public abstract class Task implements TaskInfo, Progressive {
     return myCancelText;
   }
 
+  @NotNull
   public final Task setCancelText(final String cancelText) {
     myCancelText = cancelText;
     return this;
@@ -113,6 +115,7 @@ public abstract class Task implements TaskInfo, Progressive {
     return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
   }
 
+  @NotNull
   public final Task setCancelTooltipText(final String cancelTooltipText) {
     myCancelTooltipText = cancelTooltipText;
     return this;

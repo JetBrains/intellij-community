@@ -39,7 +39,7 @@ public class JavaResourceRootEditHandler extends JavaResourceRootEditHandlerBase
   @NotNull
   @Override
   public Icon getRootIcon() {
-    return AllIcons.Nodes.ResourceBundle;
+    return AllIcons.Modules.ResourcesRoot;
   }
 
   @NotNull
@@ -56,7 +56,7 @@ public class JavaResourceRootEditHandler extends JavaResourceRootEditHandlerBase
 
   @NotNull
   @Override
-  public String getUnmarkRootActionName() {
+  public String getUnmarkRootButtonText() {
     return "Unmark Resource";
   }
 }

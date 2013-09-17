@@ -48,9 +48,13 @@ public class GradleSourceSetsContributor implements GradleMethodContextContribut
     if (methodCallInfo.isEmpty()) {
       return;
     }
-    final String methodCall = ContainerUtil.getLastItem(methodCallInfo);
+    String methodCall = ContainerUtil.getLastItem(methodCallInfo);
     if (methodCall == null) {
       return;
+    }
+    if (methodCallInfo.size() > 1 && methodCall.equals("project")) {
+      methodCallInfo.remove(methodCallInfo.size() - 1);
+      methodCall = ContainerUtil.getLastItem(methodCallInfo);
     }
 
     if (methodCallInfo.size() > SOURCE_DIRECTORY_CLOSURE_LEVEL || !StringUtil.startsWith(methodCall, SOURCE_SETS)) {

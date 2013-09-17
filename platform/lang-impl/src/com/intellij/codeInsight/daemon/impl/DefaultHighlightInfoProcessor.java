@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.impl.EditorMarkupModelImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -39,7 +38,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.List;
 
 public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
@@ -120,12 +118,13 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
   public void allHighlightsForRangeAreProduced(@NotNull HighlightingSession highlightingSession, @NotNull TextRange elementRange,
                                                @Nullable List<HighlightInfo> infos) {
     PsiFile psiFile = highlightingSession.getPsiFile();
-    killAbandonedHighlightsUnder(psiFile, elementRange, infos);
+    killAbandonedHighlightsUnder(psiFile, elementRange, infos, highlightingSession);
   }
 
   private static void killAbandonedHighlightsUnder(@NotNull PsiFile psiFile,
                                                    @NotNull final TextRange range,
-                                                   @Nullable final List<HighlightInfo> infos) {
+                                                   @Nullable final List<HighlightInfo> infos,
+                                                   @NotNull final HighlightingSession highlightingSession) {
     final Project project = psiFile.getProject();
     final Document document = PsiDocumentManager.getInstance(project).getDocument(psiFile);
     if (document == null) return;
@@ -144,15 +143,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
             }
             // seems that highlight info "existing" is going to disappear
             // remove it earlier
-            SwingUtilities.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                RangeHighlighterEx highlighter = existing.highlighter;
-                if (progress != null && !progress.isCanceled() && highlighter != null) {
-                  highlighter.dispose();
-                }
-              }
-            });
+            ((HighlightingSessionImpl)highlightingSession).queueDisposeHighlighter(existing.highlighter);
           }
           return true;
         }

@@ -133,7 +133,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       final List<BeforeRunTask> activeTasks = new ArrayList<BeforeRunTask>();
       activeTasks.addAll(runManager.getBeforeRunTasks(runConfiguration));
 
-      final DataContext projectContext = SimpleDataContext.getProjectContext(myProject);
+      DataContext context = env.getDataContext();
+      final DataContext projectContext = context != null ? context : SimpleDataContext.getProjectContext(myProject);
 
       if (!activeTasks.isEmpty()) {
         final long finalId = id;
@@ -264,12 +265,12 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       for (RunContentDescriptor descriptor : getContentManager().getAllDescriptors()) {
         final ProcessHandler handler = descriptor.getProcessHandler();
         if (handler == processHandler) {
-          restartRunProfile(project, null, null, null, null, executor, target, configuration, descriptor);
+          restartRunProfile(project, null, null, null, null, null, executor, target, configuration, descriptor);
           return;
         }
       }
     }
-    restartRunProfile(project, null, null, null, null, executor, target, configuration, null);
+    restartRunProfile(project, null, null, null, null, null, executor, target, configuration, null);
   }
 
   @Override
@@ -278,7 +279,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                                 @NotNull ExecutionTarget target,
                                 @Nullable RunnerAndConfigurationSettings configuration,
                                 @Nullable RunContentDescriptor currentDescriptor) {
-    restartRunProfile(project, null, null, null, null, executor, target, configuration, currentDescriptor);
+    restartRunProfile(project, null, null, null, null, null, executor, target, configuration, currentDescriptor);
   }
 
   @Override
@@ -286,6 +287,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
                                 @NotNull ExecutionEnvironment environment,
                                 @Nullable RunContentDescriptor currentDescriptor) {
     restartRunProfile(environment.getProject(),
+                      environment.getDataContext(),
                       runner,
                       environment.getRunProfile(),
                       environment.getRunnerSettings(),
@@ -297,6 +299,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
 
 
   private void restartRunProfile(@NotNull final Project project,
+                                @Nullable final DataContext context,
                                 @Nullable ProgramRunner r,
                                 @Nullable final RunProfile runProfile,
                                 @Nullable final RunnerSettings runnerSettings,
@@ -343,13 +346,14 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
             return;
           }
         }
-        start(project, runner, runProfile, runnerSettings, configurationPerRunnerSettings, configuration, executor, target, currentDescriptor);
+        start(project, context, runner, runProfile, runnerSettings, configurationPerRunnerSettings, configuration, executor, target, currentDescriptor);
       }
     };
     awaitingTerminationAlarm.addRequest(runnable, 50);
   }
 
   private static void start(@NotNull Project project,
+                            @Nullable DataContext context,
                             @Nullable ProgramRunner runner,
                             @Nullable RunProfile runProfile,
                             @Nullable RunnerSettings runnerSettings,
@@ -361,15 +365,16 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
     Runnable restarter = descriptor != null ? descriptor.getRestarter() : null;
     if (runner != null && runProfile != null) {
       try {
-        runner.execute(new ExecutionEnvironment(runProfile,
-                                                          executor,
-                                                          target,
-                                                          project,
-                                                          runnerSettings,
-                                                          configurationPerRunnerSettings,
-                                                          descriptor,
-                                                          configuration,
-                                                          runner.getRunnerId()));
+        ExecutionEnvironmentBuilder builder = new ExecutionEnvironmentBuilder(project, executor);
+        builder.setRunProfile(runProfile).setRunnerSettings(runnerSettings).setContentToReuse(descriptor)
+          .setTarget(target).setConfigurationSettings(configurationPerRunnerSettings).setDataContext(context);
+        if (configuration != null)        {
+          builder.setRunnerAndSettings(runner, configuration);
+        } else {
+          builder.setRunnerId(runner.getRunnerId());
+        }
+
+        runner.execute(builder.build());
       }
       catch (RunCanceledByUserException ignore) {
       }
@@ -378,7 +383,7 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
       }
     }
     else if (configuration != null) {
-      ProgramRunnerUtil.executeConfiguration(project, configuration, executor, target, descriptor, true);
+      ProgramRunnerUtil.executeConfiguration(project, context, configuration, executor, target, descriptor, true);
     }
     else if (restarter != null) {
       restarter.run();

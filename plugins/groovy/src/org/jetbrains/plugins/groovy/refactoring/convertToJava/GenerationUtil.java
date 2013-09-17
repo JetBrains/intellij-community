@@ -28,7 +28,6 @@ import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -276,7 +275,7 @@ public class GenerationUtil {
     }
 
     final PsiClass psiClass = method.getContainingClass();
-    return psiClass != null && GrClassSubstitutor.getSubstitutedClass(psiClass).isInterface();
+    return psiClass != null && psiClass.isInterface();
   }
 
   static void writeTypeParameters(StringBuilder text,

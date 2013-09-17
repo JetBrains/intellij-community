@@ -292,6 +292,7 @@ public class DataFlowRunner {
     for (DfaVariableValue value : vars) {
       copy.flushDependencies(value);
     }
+    copy.emptyStack();
     return copy;
   }
 }

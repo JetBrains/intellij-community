@@ -586,10 +586,11 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
   @Override
   public void paint(Graphics g) {
     super.paint(g);
-
-    //IDEA-112093
-    g.setColor(UIUtil.getPanelBackground());
-    g.drawLine(0, getHeight(), getWidth(), getHeight());
+    if (UIUtil.isUnderDarcula()) {
+      //IDEA-112093
+      g.setColor(UIUtil.getPanelBackground());
+      g.drawLine(0, getHeight(), getWidth(), getHeight());
+    }
   }
 
   @Override

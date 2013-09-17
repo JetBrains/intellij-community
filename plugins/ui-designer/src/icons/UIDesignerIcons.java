@@ -68,7 +68,7 @@ public class UIDesignerIcons {
   public static final Icon Scrollbar = load("/com/intellij/uiDesigner/icons/scrollbar.png"); // 16x16
   
   @SuppressWarnings("unused")
-  public static final Icon ScrollPane = load("/com/intellij/uiDesigner/icons/scrollPane.png"); // 18x18
+  public static final Icon ScrollPane = load("/com/intellij/uiDesigner/icons/scrollPane.png"); // 16x16
   
   @SuppressWarnings("unused")
   public static final Icon Separator = load("/com/intellij/uiDesigner/icons/separator.png"); // 16x16
@@ -109,7 +109,7 @@ public class UIDesignerIcons {
   @SuppressWarnings("unused")
   public static final Icon Tree = load("/com/intellij/uiDesigner/icons/tree.png"); // 16x16
   public static final Icon Unknown_small = load("/com/intellij/uiDesigner/icons/unknown-small.png"); // 16x16
-  public static final Icon Unknown = load("/com/intellij/uiDesigner/icons/unknown.png"); // 18x18
+  public static final Icon Unknown = load("/com/intellij/uiDesigner/icons/unknown.png"); // 16x16
   
   @SuppressWarnings("unused")
   public static final Icon Vspacer = load("/com/intellij/uiDesigner/icons/vspacer.png"); // 16x16

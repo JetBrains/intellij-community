@@ -29,7 +29,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
 import gnu.trove.*;
@@ -43,7 +42,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private final DfaValueFactory myFactory;
 
   private final List<SortedIntSet> myEqClasses = new ArrayList<SortedIntSet>();
-  private int myStateSize = 0;
   private final Stack<DfaValue> myStack = new Stack<DfaValue>();
   private TIntStack myOffsetStack = new TIntStack(1);
   private final TLongHashSet myDistinctClasses = new TLongHashSet();
@@ -69,7 +67,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     newState.myStack.addAll(myStack);
     newState.myDistinctClasses.addAll(myDistinctClasses.toArray());
     newState.myUnknownVariables.addAll(myUnknownVariables);
-    newState.myStateSize = myStateSize;
     newState.myOffsetStack = new TIntStack(myOffsetStack);
 
     for (int i = 0; i < myEqClasses.size(); i++) {
@@ -88,7 +85,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!(obj instanceof DfaMemoryStateImpl)) return false;
     DfaMemoryStateImpl that = (DfaMemoryStateImpl)obj;
 
-    if (myStateSize != that.myStateSize) return false;
     if (myDistinctClasses.size() != that.myDistinctClasses.size()) return false;
     if (myStack.size() != that.myStack.size()) return false;
     if (myOffsetStack.size() != that.myOffsetStack.size()) return false;
@@ -99,79 +95,32 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!myOffsetStack.equals(that.myOffsetStack)) return false;
     if (!myVariableStates.equals(that.myVariableStates)) return false;
     if (!myUnknownVariables.equals(that.myUnknownVariables)) return false;
-
-    int[] permutation = getPermutationToSortedState();
-    int[] thatPermutation = that.getPermutationToSortedState();
-
-    for (int i = 0; i < myStateSize; i++) {
-      SortedIntSet thisClass = myEqClasses.get(permutation[i]);
-      SortedIntSet thatClass = that.myEqClasses.get(thatPermutation[i]);
-      if (thisClass == null) break;
-      if (thisClass.compareTo(thatClass) != 0) return false;
-    }
-
-    long[] pairs = getSortedDistinctClasses(permutation);
-    long[] thatPairs = that.getSortedDistinctClasses(thatPermutation);
-
-    for (int i = 0; i < pairs.length; i++) {
-      if (pairs[i] != thatPairs[i]) {
-        return false;
-      }
-    }
+    
+    if (!getNonTrivialEqClasses().equals(that.getNonTrivialEqClasses())) return false;
+    if (!getDistinctClassPairs().equals(that.getDistinctClassPairs())) return false;
 
     return true;
   }
 
-  private long[] getSortedDistinctClasses(int[] permutation) {
-    long[] pairs = myDistinctClasses.toArray();
-    for (int i = 0; i < pairs.length; i++) {
-      pairs[i] = convert(pairs[i], permutation);
+  private Set<Set<SortedIntSet>> getDistinctClassPairs() {
+    Set<Set<SortedIntSet>> result = ContainerUtil.newHashSet();
+    for (long encodedPair : myDistinctClasses.toArray()) {
+      THashSet<SortedIntSet> pair = new THashSet<SortedIntSet>(2);
+      pair.add(myEqClasses.get(low(encodedPair)));
+      pair.add(myEqClasses.get(high(encodedPair)));
+      result.add(pair);
     }
-    Arrays.sort(pairs);
-    return pairs;
+    return result;
   }
 
-  private long convert(long pair, int[] permutation) {
-    if (myEqClasses.get(low(pair)) == null || myEqClasses.get(high(pair)) == null) {
-      return -1L;
-    }
-    return createPair(inversePermutation(permutation, low(pair)), inversePermutation(permutation, high(pair)));
-  }
-
-  private static int inversePermutation(int[] permutation, int idx) {
-    for (int i = 0; i < permutation.length; i++) {
-      if (idx == permutation[i]) return i;
-    }
-    return -1;
-  }
-
-  private int[] getPermutationToSortedState() {
-    int size = myEqClasses.size();
-    int[] permutation = ArrayUtil.newIntArray(size);
-    for (int i = 0; i < size; i++) {
-      permutation[i] = i;
-    }
-
-    for (int i = 0; i < permutation.length; i++) {
-      for (int j = i + 1; j < permutation.length; j++) {
-        if (compare(permutation[i], permutation[j]) > 0) {
-          int t = permutation[i];
-          permutation[i] = permutation[j];
-          permutation[j] = t;
-        }
+  private Set<SortedIntSet> getNonTrivialEqClasses() {
+    Set<SortedIntSet> result = ContainerUtil.newHashSet();
+    for (SortedIntSet eqClass : myEqClasses) {
+      if (eqClass != null && eqClass.size() > 1) {
+        result.add(eqClass);
       }
     }
-
-    return permutation;
-  }
-
-  private int compare(int i1, int i2) {
-    SortedIntSet s1 = myEqClasses.get(i1);
-    SortedIntSet s2 = myEqClasses.get(i2);
-    if (s1 == null && s2 == null) return 0;
-    if (s1 == null) return 1;
-    if (s2 == null) return -1;
-    return s1.compareTo(s2);
+    return result;
   }
 
   public int hashCode() {
@@ -179,45 +128,44 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     //return ((myEqClasses.hashCode() * 31 + myStack.hashCode()) * 31 + myVariableStates.hashCode()) * 31 + myUnknownVariables.hashCode();
   }
 
-  private void appendClass(StringBuffer buf, int aClassIndex) {
-    SortedIntSet aClass = myEqClasses.get(aClassIndex);
-    if (aClass != null) {
-      buf.append("(");
+  private void appendClass(StringBuilder buf, @Nullable SortedIntSet aClass) {
+    if (aClass == null) return;
+    
+    buf.append("(");
 
-      for (int i = 0; i < aClass.size(); i++) {
-        if (i > 0) buf.append(", ");
-        int value = aClass.get(i);
-        DfaValue dfaValue = myFactory.getValue(value);
-        buf.append(dfaValue);
-      }
-      buf.append(")");
+    for (int i = 0; i < aClass.size(); i++) {
+      if (i > 0) buf.append(", ");
+      int value = aClass.get(i);
+      DfaValue dfaValue = myFactory.getValue(value);
+      buf.append(dfaValue);
     }
+    buf.append(")");
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
-    StringBuffer result = new StringBuffer();
+    StringBuilder result = new StringBuilder();
     result.append('<');
 
-    for (int i = 0; i < myEqClasses.size(); i++) {
-      appendClass(result, i);
+    for (SortedIntSet set : getNonTrivialEqClasses()) {
+      appendClass(result, set);
     }
 
     if (!myDistinctClasses.isEmpty()) {
       result.append("\n  distincts: ");
-      List<String> distincs = new ArrayList<String>();
-      long[] dclasses = myDistinctClasses.toArray();
-      for (long pair : dclasses) {
-        StringBuffer one = new StringBuffer();
+      List<String> distincts = new ArrayList<String>();
+      for (Set<SortedIntSet> pair : getDistinctClassPairs()) {
+        ArrayList<SortedIntSet> list = new ArrayList<SortedIntSet>(pair);
+        StringBuilder one = new StringBuilder();
         one.append("{");
-        appendClass(one, low(pair));
+        appendClass(one, list.get(0));
         one.append(", ");
-        appendClass(one, high(pair));
+        appendClass(one, list.get(1));
         one.append("}");
-        distincs.add(one.toString());
+        distincts.add(one.toString());
       }
-      Collections.sort(distincs);
-      result.append(StringUtil.join(distincs, " "));
+      Collections.sort(distincts);
+      result.append(StringUtil.join(distincts, " "));
     }
 
     if (!myStack.isEmpty()) {
@@ -315,7 +263,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     SortedIntSet aClass = new SortedIntSet();
     aClass.add(dfaValue.getID());
     myEqClasses.add(aClass);
-    myStateSize++;
 
     return myEqClasses.size() - 1;
   }
@@ -476,7 +423,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       myDistinctClasses.add(createPair(c1Index, low(c) == c2Index ? high(c) : low(c)));
     }
     myEqClasses.set(c2Index, null);
-    myStateSize--;
 
     return true;
   }
@@ -838,10 +784,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void doFlush(DfaVariableValue varPlain) {
-    DfaVariableValue varNegated = varPlain.createNegated();
+    DfaVariableValue varNegated = varPlain.getNegatedValue();
 
     final int idPlain = varPlain.getID();
-    final int idNegated = varNegated.getID();
+    final int idNegated = varNegated == null ? -1 : varNegated.getID();
 
     int size = myEqClasses.size();
     int interruptCount = 0;
@@ -855,7 +801,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         }
         int cl = varClass.get(i);
         DfaValue value = myFactory.getValue(cl);
-        if (mine(idPlain, value) || mine(idNegated, value)) {
+        if (mine(idPlain, value) || idNegated >= 0 && mine(idNegated, value)) {
           varClass.remove(i);
           break;
         }
@@ -863,7 +809,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
       if (varClass.isEmpty()) {
         myEqClasses.set(varClassIndex, null);
-        myStateSize--;
         long[] pairs = myDistinctClasses.toArray();
         for (long pair : pairs) {
           if (low(pair) == varClassIndex || high(pair) == varClassIndex) {
@@ -882,7 +827,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
 
     myVariableStates.remove(varPlain);
-    myVariableStates.remove(varNegated);
+    if (varNegated != null) {
+      myVariableStates.remove(varNegated);
+    }
   }
 
   @Nullable private static DfaConstValue asConstantValue(DfaValue value) {

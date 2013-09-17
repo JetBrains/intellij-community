@@ -58,7 +58,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
             host.addMessage(
               attr.getNameElement(),
               XmlErrorMessages.message("xml.schema.validation.attr.not.allowed.with.ref", name),
-              ValidationHost.ERROR
+              ValidationHost.ErrorType.ERROR
             );
           }
         }
@@ -75,7 +75,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
             host.addMessage(
               tag.getAttribute(MAX_OCCURS_ATTR_VALUE, null).getValueElement(),
               XmlErrorMessages.message("xml.schema.validation.max.occurs.should.be.not.less.than.min.occurs"),
-              Validator.ValidationHost.ERROR
+              ValidationHost.ErrorType.ERROR
             );
           }
         }
@@ -88,7 +88,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
         host.addMessage(
           tag,
           XmlErrorMessages.message("xml.schema.validation.name.or.ref.should.present"),
-          Validator.ValidationHost.ERROR
+          ValidationHost.ErrorType.ERROR
         );
       }
     }
@@ -102,7 +102,7 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
         host.addMessage(
           tag,
           XmlErrorMessages.message("xml.schema.validation.name.or.ref.should.present"),
-          Validator.ValidationHost.ERROR
+          ValidationHost.ErrorType.ERROR
         );
       }
 
@@ -110,13 +110,13 @@ public class SchemaNSDescriptor extends XmlNSDescriptorImpl {
         host.addMessage(
           tag.getAttribute(DEFAULT_ATTR_NAME, null).getNameElement(),
           XmlErrorMessages.message("xml.schema.validation.default.or.fixed.should.be.specified.but.not.both"),
-          Validator.ValidationHost.ERROR
+          ValidationHost.ErrorType.ERROR
         );
 
         host.addMessage(
           tag.getAttribute(FIXED_ATTR_NAME, null).getNameElement(),
           XmlErrorMessages.message("xml.schema.validation.default.or.fixed.should.be.specified.but.not.both"),
-          Validator.ValidationHost.ERROR
+          ValidationHost.ErrorType.ERROR
         );
       }
     }

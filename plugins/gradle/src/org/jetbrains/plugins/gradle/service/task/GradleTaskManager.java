@@ -50,6 +50,7 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                            @NotNull String projectPath,
                            @Nullable final GradleExecutionSettings settings,
                            @Nullable final String vmOptions,
+                           @Nullable final String debuggerSetup,
                            @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
 
     if(settings != null && settings.getDistributionType() == DistributionType.WRAPPED) {
@@ -60,14 +61,14 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       @Override
       public Void fun(ProjectConnection connection) {
         BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, settings, listener);
-        if (!StringUtil.isEmpty(vmOptions)) {
+        if (!StringUtil.isEmpty(debuggerSetup)) {
           try {
             final File tempFile = FileUtil.createTempFile("init", ".gradle");
             tempFile.deleteOnExit();
             final String[] lines = {
               "gradle.taskGraph.beforeTask { Task task ->",
               "    if (task instanceof JavaForkOptions) {",
-              "        task.jvmArgs '" + vmOptions.trim() + '\'',
+              "        task.jvmArgs '" + debuggerSetup.trim() + '\'',
               "}}",
             };
             FileUtil.writeToFile(tempFile, StringUtil.join(lines, SystemProperties.getLineSeparator()));
@@ -76,6 +77,9 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
           catch (IOException e) {
             throw new ExternalSystemException(e);
           }
+        }
+        if (!StringUtil.isEmpty(vmOptions)) {
+          launcher.setJvmArguments(vmOptions.trim());
         }
         launcher.forTasks(ArrayUtil.toStringArray(taskNames));
         launcher.run();

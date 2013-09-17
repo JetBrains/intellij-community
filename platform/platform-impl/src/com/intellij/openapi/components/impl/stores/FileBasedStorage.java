@@ -133,10 +133,9 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   public void resetProviderCache() {
-    myProviderUpToDateHash = null;
+    myProviderUpToDateHash = -1;
     myProviderVersions = null;
   }
-
 
   private class FileSaveSession extends MySaveSession {
     protected FileSaveSession(MyExternalizationSession externalizationSession) {
@@ -152,11 +151,10 @@ public class FileBasedStorage extends XmlElementStorage {
     }
 
     @Override
-    protected Integer calcHash() {
+    protected int calcHash() {
       int hash = myStorageData.getHash();
-
       if (myPathMacroSubstitutor != null) {
-        hash = 31*hash + myPathMacroSubstitutor.hashCode();
+        hash = 31 * hash + myPathMacroSubstitutor.hashCode();
       }
       return hash;
     }
@@ -170,6 +168,7 @@ public class FileBasedStorage extends XmlElementStorage {
         throw new StateStorageException("It seems like some macros were not expanded for path: " + myFile.getPath());
       }
 
+      LOG.assertTrue(myFile != null);
       myCachedVirtualFile = StorageUtil.save(myFile, getDocumentToSave(), this);
     }
 
@@ -285,7 +284,7 @@ public class FileBasedStorage extends XmlElementStorage {
   }
 
   private boolean isProjectOrModuleFile() {
-    return myIsProjectSettings || myFileSpec.equals("$MODULE_FILE$");
+    return StorageUtil.isProjectOrModuleFile(myFileSpec);
   }
 
   private String getInvalidContentMessage(boolean contentTruncated) {

@@ -23,14 +23,21 @@ import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.configurations.RunnerSettings;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+
+import static com.intellij.openapi.actionSystem.LangDataKeys.*;
 
 
 public class ExecutionEnvironment extends UserDataHolderBase {
@@ -48,6 +55,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   @Nullable private RunContentDescriptor myContentToReuse;
   @Nullable private String myRunnerId;
   private long myExecutionId = 0;
+  @Nullable private DataContext myDataContext;
 
   @TestOnly
   public ExecutionEnvironment() {
@@ -202,5 +210,37 @@ public class ExecutionEnvironment extends UserDataHolderBase {
       return myContentToReuse.getDisplayName();
     }
     return super.toString();
+  }
+
+  void setDataContext(@NotNull DataContext dataContext) {
+    myDataContext = CachingDataContext.cacheIfNeed(dataContext);
+  }
+
+  @Nullable
+  public DataContext getDataContext() {
+    return myDataContext;
+  }
+
+  private static class CachingDataContext implements DataContext {
+    private static final DataKey[] keys = {PROJECT, PROJECT_FILE_DIRECTORY, EDITOR, VIRTUAL_FILE, MODULE, PSI_FILE};
+    private final Map<String, Object> values = new HashMap<String, Object>();
+
+    @NotNull
+    static CachingDataContext cacheIfNeed(@NotNull DataContext context) {
+      if (context instanceof CachingDataContext)
+        return (CachingDataContext)context;
+      return new CachingDataContext(context);
+    }
+
+    private CachingDataContext(DataContext context) {
+      for (DataKey key : keys) {
+        values.put(key.getName(), key.getData(context));
+      }
+    }
+
+    @Override
+    public Object getData(@NonNls String dataId) {
+        return values.get(dataId);
+    }
   }
 }

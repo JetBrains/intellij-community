@@ -28,6 +28,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -54,6 +55,7 @@ public class ProgramRunnerUtil {
   }
 
   public static void executeConfiguration(@NotNull final Project project,
+                                          @Nullable final DataContext context,
                                           @NotNull final RunnerAndConfigurationSettings configuration,
                                           @NotNull final Executor executor,
                                           @NotNull final ExecutionTarget target,
@@ -98,8 +100,10 @@ public class ProgramRunnerUtil {
     }
 
     try {
-      runner.execute(new ExecutionEnvironmentBuilder(project, executor).setRunnerAndSettings(runner, configuration).setTarget(target)
-        .setContentToReuse(contentToReuse).assignNewId().build());
+      ExecutionEnvironmentBuilder builder =
+        new ExecutionEnvironmentBuilder(project, executor).setRunnerAndSettings(runner, configuration).setTarget(target)
+          .setContentToReuse(contentToReuse).assignNewId().setDataContext(context);
+      runner.execute(builder.build());
     }
     catch (ExecutionException e) {
       ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), configuration.getConfiguration(), e);
@@ -110,7 +114,7 @@ public class ProgramRunnerUtil {
   public static void executeConfiguration(@NotNull Project project,
                                           @NotNull RunnerAndConfigurationSettings configuration,
                                           @NotNull Executor executor) {
-    executeConfiguration(project, configuration, executor, ExecutionTargetManager.getActiveTarget(project), null, true);
+    executeConfiguration(project, null, configuration, executor, ExecutionTargetManager.getActiveTarget(project), null, true);
   }
 
   public static Icon getConfigurationIcon(final RunnerAndConfigurationSettings settings,

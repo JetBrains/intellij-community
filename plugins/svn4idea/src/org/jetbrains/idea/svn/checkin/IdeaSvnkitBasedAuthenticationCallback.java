@@ -28,7 +28,9 @@ import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.proxy.CommonProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.SvnAuthenticationManager;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.commandLine.AuthenticationCallback;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.auth.*;
@@ -91,7 +93,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
         authentication = (SVNAuthentication)data;
       } else {
         // ask user for credentials
-        authentication = myVcs.getSvnConfiguration().getInteractiveManager(myVcs).getProvider()
+        authentication = myVcs.getSvnConfiguration().getInteractiveManager(myVcs).getInnerProvider()
           .requestClientAuthentication(type, repositoryUrl, realm, null, null, true);
 
         if (authentication != null) {

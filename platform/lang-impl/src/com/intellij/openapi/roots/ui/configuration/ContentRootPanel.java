@@ -243,7 +243,7 @@ public abstract class ContentRootPanel extends JPanel {
     final String tooltipText;
     if (folder.getFile() != null && getContentEntry().getFile() != null) {
       if (editor != null) {
-        tooltipText = editor.getUnmarkRootActionName();
+        tooltipText = editor.getUnmarkRootButtonText();
       }
       else if (folder instanceof ExcludeFolder) {
         tooltipText = ProjectBundle.message("module.paths.include.excluded.tooltip");

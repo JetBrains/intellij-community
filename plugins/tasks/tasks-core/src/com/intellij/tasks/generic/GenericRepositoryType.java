@@ -123,7 +123,7 @@ public class GenericRepositoryType extends BaseRepositoryType<GenericRepository>
 
   public final class SprintlyRepository extends GenericSubtype {
     public SprintlyRepository() {
-      super("Sprintly", TasksIcons.SPRINTLY);
+      super("Sprintly", TasksIcons.Sprintly);
     }
   }
 }

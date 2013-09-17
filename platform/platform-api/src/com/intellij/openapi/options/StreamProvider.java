@@ -22,9 +22,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 
+@Deprecated
 public interface StreamProvider {
-  StreamProvider[] EMPTY_ARRAY = new StreamProvider[0];
-
   void saveContent(@NotNull String fileSpec, @NotNull InputStream content, long size, @NotNull RoamingType roamingType, boolean async) throws IOException;
 
   @Nullable

@@ -1050,7 +1050,7 @@ public class FileUtil extends FileUtilRt {
   private static void writeToFile(@NotNull File file, @NotNull byte[] text, final int off, final int len, boolean append)
     throws IOException {
     createParentDirs(file);
-    OutputStream stream = new BufferedOutputStream(new FileOutputStream(file, append));
+    OutputStream stream = new FileOutputStream(file, append);
     try {
       stream.write(text, off, len);
     }

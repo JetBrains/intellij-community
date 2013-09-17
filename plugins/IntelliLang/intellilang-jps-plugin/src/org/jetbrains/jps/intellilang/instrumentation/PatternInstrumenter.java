@@ -221,6 +221,10 @@ class PatternInstrumenter extends ClassVisitor implements Opcodes {
   }
 
   public boolean acceptAnnotation(String annotationClassName) {
+    if (annotationClassName == null) {
+      // unfortunately sometimes ASM may return null values
+      return false; 
+    }
     processAnnotation(annotationClassName);
     return myAnnotationNameToPatternMap.containsKey(annotationClassName);
   }

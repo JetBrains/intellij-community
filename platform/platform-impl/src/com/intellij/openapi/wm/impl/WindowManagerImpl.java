@@ -89,6 +89,9 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
   }
 
+  private static final boolean ORACLE_BUG_8007219 = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7");
+  private static final int ORACLE_BUG_8007219_THRESHOLD = 10;
+
   private Boolean myAlphaModeSupported = null;
 
   private final EventDispatcher<WindowManagerListener> myEventDispatcher = EventDispatcher.create(WindowManagerListener.class);
@@ -532,16 +535,42 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     myProject2Frame.put(null, frame);
 
     if (myFrameBounds == null || !ScreenUtil.isVisible(myFrameBounds)) { //avoid situations when IdeFrame is out of all screens
-      Rectangle rect = ScreenUtil.getMainScreenBounds();
+      final Rectangle rect = ScreenUtil.getMainScreenBounds();
       int yParts = rect.height / 6;
       int xParts = rect.width / 5;
       myFrameBounds = new Rectangle(xParts, yParts, xParts * 3, yParts * 4);
     }
 
+    fixForOracleBug8007219(frame);
+
     frame.setBounds(myFrameBounds);
     frame.setExtendedState(myFrameExtendedState);
     frame.setVisible(true);
 
+  }
+
+  private void fixForOracleBug8007219(IdeFrameImpl frame) {
+    if ((myFrameExtendedState & Frame.MAXIMIZED_BOTH) > 0 && ORACLE_BUG_8007219) {
+      final Rectangle rect = ScreenUtil.getMainScreenBounds();
+      final Insets screenInsets = ScreenUtil.getScreenInsets(frame.getGraphicsConfiguration());
+
+
+      myFrameBounds.x = myFrameBounds.x - screenInsets.left > ORACLE_BUG_8007219_THRESHOLD ?
+                        myFrameBounds.x :
+                        screenInsets.left + ORACLE_BUG_8007219_THRESHOLD + 1;
+
+      myFrameBounds.y = myFrameBounds.y - screenInsets.top > ORACLE_BUG_8007219_THRESHOLD ?
+                        myFrameBounds.y :
+                        screenInsets.top + ORACLE_BUG_8007219_THRESHOLD + 1;
+
+      myFrameBounds.width = rect.width - (myFrameBounds.width + myFrameBounds.x) > ORACLE_BUG_8007219_THRESHOLD ?
+                            myFrameBounds.width :
+                            rect.width - ORACLE_BUG_8007219_THRESHOLD - 1;
+
+      myFrameBounds.height = rect.height - (myFrameBounds.height + myFrameBounds.y) > ORACLE_BUG_8007219_THRESHOLD ?
+                             myFrameBounds.height :
+                             rect.height - ORACLE_BUG_8007219_THRESHOLD - 1;
+    }
   }
 
   public final IdeFrameImpl allocateFrame(final Project project) {
@@ -557,11 +586,15 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     else {
       frame = new IdeFrameImpl((ApplicationInfoEx)ApplicationInfo.getInstance(), ActionManagerEx.getInstanceEx(), UISettings.getInstance(),
                                DataManager.getInstance(), ApplicationManager.getApplication());
+
       final Rectangle bounds = ProjectFrameBounds.getInstance(project).getBounds();
+
       if (bounds != null) {
-        frame.setBounds(bounds);
+        myFrameBounds = bounds;
       }
-      else if (myFrameBounds != null) {
+
+      if (myFrameBounds != null) {
+        fixForOracleBug8007219(frame);
         frame.setBounds(myFrameBounds);
       }
       frame.setProject(project);

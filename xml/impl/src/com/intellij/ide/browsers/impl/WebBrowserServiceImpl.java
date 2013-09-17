@@ -105,4 +105,25 @@ public class WebBrowserServiceImpl extends WebBrowserService {
     }
     return null;
   }
+
+  @Nullable
+  public static Url getUrlForContext(@NotNull PsiElement sourceElement) {
+    PsiFile psiFile = sourceElement.getContainingFile();
+    if (psiFile == null) {
+      return null;
+    }
+
+    Url url = WebBrowserService.getInstance().getUrlToOpen(sourceElement);
+    if (url == null) {
+      return null;
+    }
+
+    VirtualFile virtualFile = psiFile.getVirtualFile();
+    if (virtualFile == null) {
+      return null;
+    }
+
+    boolean isRemote = !url.isInLocalFileSystem();
+    return isRemote || HtmlUtil.isHtmlFile(virtualFile) ? url : null;
+  }
 }

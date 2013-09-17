@@ -60,8 +60,9 @@ public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
   @Nullable
   public abstract Icon getFolderUnderRootIcon();
 
-  public boolean showMarkActionOnToolbar() {
-    return true;
+  @Nullable
+  public String getMarkRootGroupName() {
+    return null;
   }
 
   @Nullable
@@ -75,7 +76,12 @@ public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
 
 
   @NotNull
-  public abstract String getUnmarkRootActionName();
+  public String getMarkRootButtonText() {
+    return getRootTypeName();
+  }
+
+  @NotNull
+  public abstract String getUnmarkRootButtonText();
 
   @NotNull
   public abstract P createDefaultProperties();

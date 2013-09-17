@@ -157,7 +157,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
 
     @Override
     protected int computeHash() {
-      return super.computeHash()*31 + myOptions.hashCode();
+      return super.computeHash() * 31 + myOptions.hashCode();
     }
 
     @Override

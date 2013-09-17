@@ -1,7 +1,11 @@
 package com.intellij.ide.browsers;
 
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.net.URI;
+import java.net.URISyntaxException;
 
 public final class LocalFileUrl implements Url {
   private final String path;
@@ -30,6 +34,21 @@ public final class LocalFileUrl implements Url {
   @Override
   public String toExternalForm() {
     return path;
+  }
+
+  @NotNull
+  @Override
+  public URI toJavaUriWithoutParameters() {
+    try {
+      String externalPath = path;
+      if (SystemInfo.isWindows && externalPath.charAt(0) != '/') {
+        externalPath = '/' + externalPath;
+      }
+      return new URI("file", "", externalPath, null, null);
+    }
+    catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @NotNull

@@ -92,6 +92,9 @@ public abstract class ExecutionManager {
                                          @Nullable ProcessHandler processHandler);
 
   //currentDescriptor is null for toolbar/popup action and not null for actions in run/debug toolwindows
+  /**
+   * @deprecated use {@link #restartRunProfile(com.intellij.execution.runners.ProgramRunner, com.intellij.execution.runners.ExecutionEnvironment, com.intellij.execution.ui.RunContentDescriptor)}
+   */
   public abstract void restartRunProfile(@NotNull Project project,
                                          @NotNull Executor executor,
                                          @NotNull ExecutionTarget target,

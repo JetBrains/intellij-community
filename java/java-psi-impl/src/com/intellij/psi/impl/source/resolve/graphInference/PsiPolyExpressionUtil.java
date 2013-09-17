@@ -16,9 +16,8 @@
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,36 +82,7 @@ public class PsiPolyExpressionUtil {
   }
 
   public static PsiType getTargetType(@NotNull PsiCallExpression expression) {
-    final PsiElement parent = expression.getParent();
-    if (parent instanceof PsiVariable) {
-      return ((PsiVariable)parent).getType();
-    }
-    if (parent instanceof PsiAssignmentExpression) {
-      return ((PsiAssignmentExpression)parent).getLExpression().getType();
-    }
-    if (parent instanceof PsiReturnStatement) {
-      //todo lambda
-      final PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
-      return method != null ? method.getReturnType() : null;
-    }
-    if (parent instanceof PsiExpressionList) {
-      final PsiElement gParent = parent.getParent(); //todo parenthesis
-      if (gParent instanceof PsiCallExpression) {
-        final PsiExpressionList argumentList = ((PsiCallExpression)gParent).getArgumentList();
-        if (argumentList != null) {
-          final PsiExpression[] expressions = argumentList.getExpressions();
-          final int idx = ArrayUtilRt.find(expressions, expression);
-          final PsiMethod method = ((PsiCallExpression)gParent).resolveMethod();
-          if (method != null) {
-            final PsiParameter[] parameters = method.getParameterList().getParameters();
-            if (idx > -1 && idx < parameters.length) { //todo varargs
-              return parameters[idx].getType();
-            }
-          }
-        }
-      }
-    }
-    return null;
+    return PsiTypesUtil.getExpectedTypeByParent(expression);
   }
   
   private static Boolean returnTypeMentionsTypeParameters(final Set<PsiTypeParameter> typeParameters, PsiType returnType) {
@@ -120,6 +90,16 @@ public class PsiPolyExpressionUtil {
       @Nullable
       @Override
       public Boolean visitType(PsiType type) {
+        return false;
+      }
+
+      @Nullable
+      @Override
+      public Boolean visitWildcardType(PsiWildcardType wildcardType) {
+        final PsiType bound = wildcardType.getBound();
+        if (bound != null) {
+          return bound.accept(this);
+        }
         return false;
       }
 

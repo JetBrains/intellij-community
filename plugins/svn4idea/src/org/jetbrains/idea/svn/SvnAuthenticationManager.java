@@ -177,6 +177,24 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     return myProvider;
   }
 
+  /**
+   * Gets authentication provider without looking into thread local storage for providers.
+   *
+   * TODO:
+   * Thread local storage is used "for some interaction with SVNKit" and is not always cleared correctly. So some threads contain
+   * "passive provider" in thread local storage - and getProvider() returns this "passive provider". This occurs, for instance when
+   * RemoteRevisionsCache is refreshed in background - after its execution, corresponding thread has "passive provider" in thread local
+   * storage.
+   *
+   * As a result authentication fails in such cases (at least for command line implementation). To fix this, command line implementation is
+   * updated not to check thread local storage at all.
+   *
+   * @return
+   */
+  public ISVNAuthenticationProvider getInnerProvider() {
+    return myProvider;
+  }
+
   @Override
   public ISVNAuthenticationStorage getRuntimeAuthStorage() {
     return super.getRuntimeAuthStorage();

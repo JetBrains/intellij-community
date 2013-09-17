@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2006-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,15 +33,13 @@ public class ComparatorNotSerializableInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "comparator.not.serializable.display.name");
+    return InspectionGadgetsBundle.message("comparator.not.serializable.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "comparator.not.serializable.problem.descriptor");
+    return InspectionGadgetsBundle.message("comparator.not.serializable.problem.descriptor");
   }
 
   @Override
@@ -55,20 +53,12 @@ public class ComparatorNotSerializableInspection extends BaseInspection {
     return new ComparatorNotSerializableVisitor();
   }
 
-  private static class ComparatorNotSerializableVisitor
-    extends BaseInspectionVisitor {
+  private static class ComparatorNotSerializableVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(PsiClass aClass) {
-      //note, no call to super, avoiding drilldown
-      if (aClass instanceof PsiAnonymousClass) {
-        return;
-      }
-      if (!InheritanceUtil.isInheritor(aClass,
-                                       CommonClassNames.JAVA_UTIL_COMPARATOR)) {
-        return;
-      }
-      if (SerializationUtils.isSerializable(aClass)) {
+      if (aClass instanceof PsiAnonymousClass || !InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_COMPARATOR) ||
+          SerializationUtils.isSerializable(aClass)) {
         return;
       }
       registerClassError(aClass);

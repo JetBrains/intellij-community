@@ -75,7 +75,7 @@ public class ToolAction extends AnAction implements DumbAware {
   static boolean runTool(String actionId, DataContext context, @Nullable AnActionEvent e, long executionId, @Nullable ProcessListener processListener) {
     Tool tool = findTool(actionId, context);
     if (tool != null) {
-      return tool.execute(e, new HackyDataContext(context, e), executionId, processListener);
+      return tool.execute(e, new HackyDataContext(context), executionId, processListener);
     }
     return false;
   }

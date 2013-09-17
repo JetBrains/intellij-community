@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
@@ -42,9 +41,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static com.intellij.openapi.util.io.IoTestUtil.createSubst;
-import static com.intellij.openapi.util.io.IoTestUtil.createTestDir;
-import static com.intellij.openapi.util.io.IoTestUtil.createTestFile;
+import static com.intellij.openapi.util.io.IoTestUtil.*;
 
 public class FileWatcherTest extends PlatformLangTestCase {
   private static final int INTER_RESPONSE_DELAY = 500;  // time to wait for a next event in a sequence
@@ -470,7 +467,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
     finally {
       delete(targetDir);
-      IoTestUtil.deleteSubst(rootFile.getPath());
+      deleteSubst(rootFile.getPath());
       if (vfsRoot != null) {
         ((NewVirtualFile)vfsRoot).markDirty();
         myFileSystem.refresh(false);
@@ -646,13 +643,14 @@ public class FileWatcherTest extends PlatformLangTestCase {
     LocalFileSystem.WatchRequest request = watch(topDir);
     try {
       myAccept = true;
-      IoTestUtil.setHidden(testFile.getPath(), true);
+      setHidden(testFile.getPath(), true);
       assertEvent(VFilePropertyChangeEvent.class, testFile.getPath());
     }
     finally {
       unwatch(request);
     }
   }
+
 
   @NotNull
   private LocalFileSystem.WatchRequest watch(File watchFile) {

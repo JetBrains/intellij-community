@@ -41,7 +41,7 @@ public class StorageData {
 
   final Map<String, Element> myComponentStates;
   protected final String myRootElementName;
-  private Integer myHash;
+  private int myHash = -1;
 
   public StorageData(final String rootElementName) {
     myComponentStates = new THashMap<String, Element>();
@@ -104,7 +104,7 @@ public class StorageData {
 
       if (element.getAttribute(NAME) == null) element.setAttribute(NAME, componentName);
 
-      rootElement.addContent((Element)element.clone());
+      rootElement.addContent(element.clone());
     }
 
     return rootElement;
@@ -131,17 +131,15 @@ public class StorageData {
     element.setName(COMPONENT);
 
     //componentName should be first!
-    final List attributes = new ArrayList(element.getAttributes());
-    for (Object attribute : attributes) {
-      Attribute attr = (Attribute)attribute;
-      element.removeAttribute(attr);
+    final List<Attribute> attributes = new ArrayList<Attribute>(element.getAttributes());
+    for (Attribute attribute : attributes) {
+      element.removeAttribute(attribute);
     }
 
     element.setAttribute(NAME, componentName);
 
-    for (Object attribute : attributes) {
-      Attribute attr = (Attribute)attribute;
-      element.setAttribute(attr.getName(), attr.getValue());
+    for (Attribute attribute : attributes) {
+      element.setAttribute(attribute.getName(), attribute.getValue());
     }
 
     myComponentStates.put(componentName, element);
@@ -154,25 +152,26 @@ public class StorageData {
   }
 
   public final int getHash() {
-    if (myHash == null) {
+    if (myHash == -1) {
       myHash = computeHash();
+      if (myHash == -1) {
+        myHash = 0;
+      }
     }
-    return myHash.intValue();
+    return myHash;
   }
 
   protected int computeHash() {
     int result = 0;
-
     for (String name : myComponentStates.keySet()) {
-      result = 31*result + name.hashCode();
-      result = 31*result + JDOMUtil.getTreeHash(myComponentStates.get(name));
+      result = 31 * result + name.hashCode();
+      result = 31 * result + JDOMUtil.getTreeHash(myComponentStates.get(name));
     }
-
     return result;
   }
 
   protected void clearHash() {
-    myHash = null;
+    myHash = -1;
   }
 
   public Set<String> getDifference(final StorageData storageData, PathMacroSubstitutor substitutor) {

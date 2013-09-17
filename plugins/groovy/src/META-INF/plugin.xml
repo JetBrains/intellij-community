@@ -40,7 +40,6 @@
     <extensionPoint name="typeConverter" interface="org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrTypeConverter"/>
     <extensionPoint name="expectedTypesContributor"
                     interface="org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesContributor"/>
-    <extensionPoint name="classSubstitutor" interface="org.jetbrains.plugins.groovy.lang.psi.GrClassSubstitutor"/>
 
     <extensionPoint name="positionManagerDelegate"
                     interface="org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper"/>
@@ -163,8 +162,6 @@
 
     <expectedTypesContributor implementation="org.jetbrains.plugins.groovy.gpp.GppExpectedTypesContributor"/>
     <variableEnhancer implementation="org.jetbrains.plugins.groovy.gpp.GppClosureParameterTypeProvider"/>
-    <classSubstitutor implementation="org.jetbrains.plugins.groovy.gpp.GppClassSubstitutor"/>
-    <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gpp.GppPositionManager"/>
 
     <mvc.framework implementation="org.jetbrains.plugins.groovy.griffon.GriffonFramework"/>
     <groovyFrameworkConfigNotification implementation="org.jetbrains.plugins.groovy.griffon.GriffonConfigureNotification"/>

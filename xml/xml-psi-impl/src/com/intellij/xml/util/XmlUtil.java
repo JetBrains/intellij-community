@@ -467,10 +467,10 @@ public class XmlUtil {
         if (psiElement != null) {
           presentNames.put(nameKey, null);
 
-          host.addMessage(provider.getNodeForMessage(psiElement), message, Validator.ValidationHost.ERROR);
+          host.addMessage(provider.getNodeForMessage(psiElement), message, Validator.ValidationHost.ErrorType.ERROR);
         }
 
-        host.addMessage(provider.getNodeForMessage(t), message, Validator.ValidationHost.ERROR);
+        host.addMessage(provider.getNodeForMessage(t), message, Validator.ValidationHost.ErrorType.ERROR);
       }
       else {
         presentNames.put(nameKey, t);

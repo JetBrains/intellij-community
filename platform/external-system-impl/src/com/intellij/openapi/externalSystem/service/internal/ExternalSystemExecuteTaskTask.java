@@ -49,15 +49,18 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
 
   @NotNull private final List<ExternalTaskPojo> myTasksToExecute;
   @Nullable private final String myVmOptions;
+  @Nullable private final String myDebuggerSetup;
 
   public ExternalSystemExecuteTaskTask(@NotNull ProjectSystemId externalSystemId,
                                        @NotNull Project project,
                                        @NotNull List<ExternalTaskPojo> tasksToExecute,
-                                       @Nullable String vmOptions) throws IllegalArgumentException
+                                       @Nullable String vmOptions,
+                                       @Nullable String debuggerSetup) throws IllegalArgumentException
   {
     super(externalSystemId, ExternalSystemTaskType.EXECUTE_TASK, project, getLinkedExternalProjectPath(tasksToExecute));
     myTasksToExecute = tasksToExecute;
     myVmOptions = vmOptions;
+    myDebuggerSetup = debuggerSetup;
   }
 
   @NotNull
@@ -97,7 +100,7 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
 
     setState(ExternalSystemTaskState.IN_PROGRESS);
     try {
-      taskManager.executeTasks(getId(), taskNames, getExternalProjectPath(), settings, myVmOptions);
+      taskManager.executeTasks(getId(), taskNames, getExternalProjectPath(), settings, myVmOptions, myDebuggerSetup);
     }
     finally {
       setState(ExternalSystemTaskState.FINISHED);

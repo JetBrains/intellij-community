@@ -90,7 +90,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     @Override
     protected int computeHash() {
       int result = super.computeHash();
-      result = result*31 + myVersion;
+      result = result * 31 + myVersion;
       return result;
     }
 

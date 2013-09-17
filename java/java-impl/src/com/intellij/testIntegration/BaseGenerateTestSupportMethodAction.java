@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -177,7 +178,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
 
     public void invoke(@NotNull Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
       final PsiClass targetClass = findTargetClass(editor, file);
-      final List<TestFramework> frameworks = TestIntegrationUtils.findSuitableFrameworks(targetClass);
+      final List<TestFramework> frameworks = new ArrayList<TestFramework>(TestIntegrationUtils.findSuitableFrameworks(targetClass));
       for (Iterator<TestFramework> iterator = frameworks.iterator(); iterator.hasNext(); ) {
         if (myMethodKind.getFileTemplateDescriptor(iterator.next()) == null) {
           iterator.remove();

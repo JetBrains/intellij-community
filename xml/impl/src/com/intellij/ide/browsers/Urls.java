@@ -11,6 +11,7 @@ import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.net.URI;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -38,6 +39,22 @@ public final class Urls {
       return new LocalFileUrl(url);
     }
     return parseUrl(VfsUtil.toIdeaUrl(url), true);
+  }
+
+  @Nullable
+  public static URI parseAsJavaUriWithoutParameters(@NotNull String url) {
+    Url asUrl = parseUrl(url, false);
+    if (asUrl == null) {
+      return null;
+    }
+
+    try {
+      return asUrl.toJavaUriWithoutParameters();
+    }
+    catch (Exception e) {
+      LOG.info("Can't parse " + url, e);
+      return null;
+    }
   }
 
   @Nullable

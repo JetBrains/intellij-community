@@ -36,7 +36,7 @@ public class ExpressionCompatibilityConstraint implements ConstraintFormula {
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
+  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints, List<ConstraintFormula> delayedConstraints) {
     if (session.isProperType(myT)) {
       return TypeConversionUtil.areTypesAssignmentCompatible(myT, myExpression);
     }
@@ -77,10 +77,31 @@ public class ExpressionCompatibilityConstraint implements ConstraintFormula {
     }
     
     if (myExpression instanceof PsiLambdaExpression) {
-      //todo
+      constraints.add(new LambdaExpressionCompatibilityConstraint((PsiLambdaExpression)myExpression, myT));
+      return true;
     }
     
     
     return true;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    ExpressionCompatibilityConstraint that = (ExpressionCompatibilityConstraint)o;
+
+    if (!myExpression.equals(that.myExpression)) return false;
+    if (!myT.equals(that.myT)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myExpression.hashCode();
+    result = 31 * result + myT.hashCode();
+    return result;
   }
 }

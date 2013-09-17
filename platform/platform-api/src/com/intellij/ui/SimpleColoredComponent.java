@@ -387,7 +387,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         font = font.deriveFont(attributes.getFontStyle(), isSmaller ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : baseSize);
       }
       wasSmaller = isSmaller;
-      result += GraphicsUtil.stringWidth(myFragments.get(i), font);
+      final String text = myFragments.get(i);
+      result += isOracleRetina ? GraphicsUtil.stringWidth(text, font) : getFontMetrics(font).stringWidth(text);
 
       final int fixedWidth = myFixedWidths.get(i);
       if (fixedWidth > 0 && result < fixedWidth) {

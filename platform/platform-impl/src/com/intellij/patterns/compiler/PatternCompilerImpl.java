@@ -33,6 +33,7 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
@@ -83,7 +84,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
 
   @Override
   public synchronized ElementPattern<T> compileElementPattern(final String text) {
-    final Node node = processElementPatternText(text, new Function<Frame, Object>() {
+    Node node = processElementPatternText(text, new Function<Frame, Object>() {
       public Node fun(final Frame frame) {
         final Object[] args = frame.params.toArray();
         for (int i = 0, argsLength = args.length; i < argsLength; i++) {
@@ -92,7 +93,8 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
         return new Node((Node)frame.target, myStringInterner.intern(frame.methodName), args.length == 0 ? ArrayUtil.EMPTY_OBJECT_ARRAY : args);
       }
     });
-    return new LazyPresentablePattern(node);
+    if (node == null) node = new Node(ERROR_NODE, text, null);
+    return new LazyPresentablePattern<T>(node);
   }
 
   private static Set<Method> getStaticMethods(List<Class> patternClasses) {
@@ -110,7 +112,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     }));
   }
 
-  private static enum State {
+  private enum State {
     init, name, name_end,
     param_start, param_end, literal, escape,
     invoke, invoke_end
@@ -123,6 +125,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     ArrayList<Object> params = new ArrayList<Object>();
   }
 
+  @Nullable
   private static <T> T processElementPatternText(final String text, final Function<Frame, Object> executor) {
     final Stack<Frame> stack = new Stack<Frame>();
     int curPos = 0;
@@ -583,7 +586,7 @@ public class PatternCompilerImpl<T> implements PatternCompiler<T> {
     private final Node myNode;
     private final long myHashCode;
 
-    public LazyPresentablePattern(final Node node) {
+    public LazyPresentablePattern(@NotNull Node node) {
       myNode = node;
       myHashCode = StringHash.calc(toString());
     }
