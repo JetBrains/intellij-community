@@ -55,7 +55,7 @@ public class InferenceSession {
 
     LOG.assertTrue(leftTypes.length == rightTypes.length);
     for (int i = 0; i < leftTypes.length; i++) {
-      myConstraints.add(new TypeCompatibilityConstraint(rightTypes[i], mySiteSubstitutor.substitute(rightTypes[i])));
+      myConstraints.add(new TypeCompatibilityConstraint(leftTypes[i], mySiteSubstitutor.substitute(rightTypes[i])));
     }
   }
   
@@ -141,7 +141,7 @@ public class InferenceSession {
       if (!PsiType.VOID.equals(returnType) && returnType != null) {
         final PsiType targetType = PsiPolyExpressionUtil.getTargetType(context);//todo primitive type
         if (targetType != null) {
-          myConstraints.add(new TypeCompatibilityConstraint(returnType, targetType));
+          myConstraints.add(new TypeCompatibilityConstraint(targetType, returnType));
         }
       }
     }
