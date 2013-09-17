@@ -97,9 +97,7 @@ public class PasswordSafeImpl extends PasswordSafe {
   }
 
 
-  /**
-   * {@inheritDoc}
-   */
+  @Nullable
   public String getPassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException {
     if (mySettings.getProviderType().equals(PasswordSafeSettings.ProviderType.MASTER_PASSWORD)) {
       String password = getMemoryProvider().getPassword(project, requester, key);
