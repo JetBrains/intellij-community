@@ -367,7 +367,9 @@ public abstract class HgUtil {
     //--follow could be changed to --branch filter, but the last one is slower
     logCommand.setFollowCopies(true);
     List<HgFileRevision> revisions = Collections.emptyList();
-    String targetName = localHgFile.getRelativePath();
+    //mercurial returns file paths depends on command and os. for log command hg uses portable format, so all file path should be with '/'.
+    //localHgFile have system dependent path, so it should be converted
+    String targetName = FileUtil.toSystemIndependentName(localHgFile.getRelativePath());
     int targetRevNumber = Integer.valueOf(vcsRevisionNumber.getRevision());
     try {
       //usually when 'compare' 2 revision or 'compare with local' performed the localHgFile - is really local copy,
