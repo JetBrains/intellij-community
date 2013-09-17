@@ -19,7 +19,6 @@ package com.intellij.execution;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.execution.impl.HackyDataContext;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
@@ -103,10 +102,7 @@ public class ProgramRunnerUtil {
     try {
       ExecutionEnvironmentBuilder builder =
         new ExecutionEnvironmentBuilder(project, executor).setRunnerAndSettings(runner, configuration).setTarget(target)
-          .setContentToReuse(contentToReuse).assignNewId();
-      if (context != null) {
-        builder.setDataContext(HackyDataContext.hackIfNeed(context));
-      }
+          .setContentToReuse(contentToReuse).assignNewId().setDataContext(context);
       runner.execute(builder.build());
     }
     catch (ExecutionException e) {
