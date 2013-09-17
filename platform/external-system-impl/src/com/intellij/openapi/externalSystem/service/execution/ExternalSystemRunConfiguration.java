@@ -146,20 +146,16 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
       if (tasks.isEmpty()) {
         throw new ExecutionException(ExternalSystemBundle.message("run.error.undefined.task"));
       }
-      String vmOptions;
+      String debuggerSetup = null;
       if (myDebugPort > 0) {
-        String debuggerSetup = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=" + myDebugPort;
-        String regular = mySettings.getVmOptions();
-        vmOptions = regular == null ? debuggerSetup : regular + " " + debuggerSetup;
-      }
-      else {
-        vmOptions = mySettings.getVmOptions();
+        debuggerSetup = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=" + myDebugPort;
       }
       
       final ExternalSystemExecuteTaskTask task = new ExternalSystemExecuteTaskTask(mySettings.getExternalSystemId(),
                                                                                    myProject,
                                                                                    tasks,
-                                                                                   vmOptions);
+                                                                                   mySettings.getVmOptions(),
+                                                                                   debuggerSetup);
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         @Override
         public void run() {
