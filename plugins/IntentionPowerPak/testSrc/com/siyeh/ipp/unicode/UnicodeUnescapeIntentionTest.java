@@ -10,6 +10,7 @@ public class UnicodeUnescapeIntentionTest extends IPPTestCase {
 
   public void testSimple() { doTest(); }
   public void testNoException() { assertIntentionNotAvailable(); }
+  public void testSelection() { doTest(); }
 
   @Override
   protected String getRelativePath() {
