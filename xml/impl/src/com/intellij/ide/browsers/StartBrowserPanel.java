@@ -11,11 +11,14 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.AncestorListenerAdapter;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.util.HtmlUtil;
@@ -56,7 +59,11 @@ public class StartBrowserPanel {
 
   @NotNull
   public String getUrl() {
-    return myUrlField.getText().trim();
+    String url = myUrlField.getText();
+    if (!url.isEmpty() && !URLUtil.containsScheme(url)) {
+      return VirtualFileManager.constructUrl(StandardFileSystems.HTTP_PROTOCOL, url);
+    }
+    return url;
   }
 
   public void setUrl(@Nullable String url) {
