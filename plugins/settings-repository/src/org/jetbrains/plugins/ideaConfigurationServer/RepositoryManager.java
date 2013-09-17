@@ -18,7 +18,7 @@ public interface RepositoryManager {
   @Nullable
   InputStream read(@NotNull String path) throws IOException;
 
-  void write(@NotNull String path, @NotNull InputStream content, int size, boolean async);
+  void write(@NotNull String path, @NotNull byte[] content, int size, boolean async);
 
   void deleteAsync(@NotNull String path);
 

@@ -3,7 +3,6 @@ package org.jetbrains.plugins.ideaConfigurationServer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
@@ -13,7 +12,10 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 
 public abstract class BaseRepositoryManager implements RepositoryManager {
@@ -59,7 +61,7 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
   }
 
   @Override
-  public void write(@NotNull final String path, @NotNull final InputStream content, final int size, boolean async) {
+  public void write(@NotNull final String path, @NotNull final byte[] content, final int size, boolean async) {
     synchronized (filesToAdd) {
       filesToAdd.add(path);
     }
@@ -89,22 +91,8 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
     }
   }
 
-  private void doWrite(String path, InputStream content, int size) throws IOException {
-    File file = new File(dir, path);
-
-    if (content instanceof BufferExposingByteArrayInputStream) {
-      FileUtil.writeToFile(file, ((BufferExposingByteArrayInputStream)content).getInternalBuffer(), 0, size);
-      return;
-    }
-
-    FileUtil.createParentDirs(file);
-    FileOutputStream out = new FileOutputStream(file);
-    try {
-      FileUtil.copy(content, size, out);
-    }
-    finally {
-      out.close();
-    }
+  private void doWrite(String path, byte[] content, int size) throws IOException {
+    FileUtil.writeToFile(new File(dir, path), content, 0, size);
   }
 
   @NotNull

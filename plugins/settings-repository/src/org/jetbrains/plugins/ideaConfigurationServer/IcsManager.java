@@ -276,7 +276,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     }
 
     @Override
-    public void saveContent(@NotNull String fileSpec, @NotNull InputStream content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
+    public void saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
       if (!isShareable(fileSpec, roamingType)) {
         return;
       }
