@@ -25,7 +25,6 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.stubs.PropertyStubStorage;
@@ -157,31 +156,6 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       return argList.getArguments();
     }
     return PyExpression.EMPTY_ARRAY;
-  }
-
-  @NotNull
-  public PsiElement[] getSuperClassElements() {
-    final PyExpression[] superExpressions = getSuperClassExpressions();
-    List<PsiElement> superClasses = new ArrayList<PsiElement>();
-    for (PyExpression expr : superExpressions) {
-      if (expr instanceof PyKeywordArgument) {
-        continue;
-      }
-      superClasses.add(classElementFromExpression(expr));
-    }
-    return PsiUtilCore.toPsiElementArray(superClasses);
-  }
-
-  @Nullable
-  public static PsiElement classElementFromExpression(@NotNull PyExpression expression) {
-    expression = unfoldClass(expression);
-    if (expression instanceof PyReferenceExpression) {
-      final PsiPolyVariantReference ref = ((PyReferenceExpression)expression).getReference(PyResolveContext.noProperties());
-      if (ref != null) {
-        return ref.resolve();
-      }
-    }
-    return null;
   }
 
   @NotNull

@@ -2,11 +2,12 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,12 +58,21 @@ public class PyOldStyleClassesInspection extends PyInspection {
     public void visitPyCallExpression(final PyCallExpression node) {
       PyClass klass = PsiTreeUtil.getParentOfType(node, PyClass.class);
       if (klass != null && !klass.isNewStyleClass()) {
-        PyExpression[] superClassExprs = klass.getSuperClassExpressions();
-        PsiElement[] superClasses = klass.getSuperClassElements();
-        if (superClasses.length != superClassExprs.length) return;
+        if (hasUnknownAncestors(klass, myTypeEvalContext)) {
+          return;
+        }
         if (PyUtil.isSuperCall(node))
           registerProblem(node.getCallee(), "Old-style class contains call for super method");
       }
     }
+  }
+
+  private static boolean hasUnknownAncestors(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    for (PyClassLikeType type : cls.getAncestorTypes(context)) {
+      if (type == null) {
+        return true;
+      }
+    }
+    return false;
   }
 }
