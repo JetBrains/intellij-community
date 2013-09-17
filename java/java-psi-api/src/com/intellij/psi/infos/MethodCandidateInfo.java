@@ -142,7 +142,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     return GenericsUtil.isTypeArgumentsApplicable(typeParams, substitutor, getParent());
   }
 
-  private PsiElement getParent() {
+  protected PsiElement getParent() {
     return myArgumentList != null ? myArgumentList.getParent() : myArgumentList;
   }
 
