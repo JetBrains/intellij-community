@@ -534,15 +534,24 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
                                                 ApplicationManager.getApplication());
     myProject2Frame.put(null, frame);
 
-    final Rectangle rect = ScreenUtil.getMainScreenBounds();
-
     if (myFrameBounds == null || !ScreenUtil.isVisible(myFrameBounds)) { //avoid situations when IdeFrame is out of all screens
+      final Rectangle rect = ScreenUtil.getMainScreenBounds();
       int yParts = rect.height / 6;
       int xParts = rect.width / 5;
       myFrameBounds = new Rectangle(xParts, yParts, xParts * 3, yParts * 4);
     }
 
+    fixForOracleBug8007219(frame);
+
+    frame.setBounds(myFrameBounds);
+    frame.setExtendedState(myFrameExtendedState);
+    frame.setVisible(true);
+
+  }
+
+  private void fixForOracleBug8007219(IdeFrameImpl frame) {
     if ((myFrameExtendedState & Frame.MAXIMIZED_BOTH) > 0 && ORACLE_BUG_8007219) {
+      final Rectangle rect = ScreenUtil.getMainScreenBounds();
       final Insets screenInsets = ScreenUtil.getScreenInsets(frame.getGraphicsConfiguration());
 
 
@@ -562,11 +571,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
                              myFrameBounds.height :
                              rect.height - ORACLE_BUG_8007219_THRESHOLD - 1;
     }
-
-    frame.setBounds(myFrameBounds);
-    frame.setExtendedState(myFrameExtendedState);
-    frame.setVisible(true);
-
   }
 
   public final IdeFrameImpl allocateFrame(final Project project) {
@@ -582,11 +586,15 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     else {
       frame = new IdeFrameImpl((ApplicationInfoEx)ApplicationInfo.getInstance(), ActionManagerEx.getInstanceEx(), UISettings.getInstance(),
                                DataManager.getInstance(), ApplicationManager.getApplication());
+
       final Rectangle bounds = ProjectFrameBounds.getInstance(project).getBounds();
+
       if (bounds != null) {
-        frame.setBounds(bounds);
+        myFrameBounds = bounds;
       }
-      else if (myFrameBounds != null) {
+
+      if (myFrameBounds != null) {
+        fixForOracleBug8007219(frame);
         frame.setBounds(myFrameBounds);
       }
       frame.setProject(project);
