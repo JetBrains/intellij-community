@@ -28,7 +28,6 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -264,13 +263,7 @@ public class StorageUtil {
 
     // we should use standard line-separator (\n) - stream provider can share file content on any OS
     BufferExposingByteArrayOutputStream content = documentToBytes(copy, false);
-    BufferExposingByteArrayInputStream in = new BufferExposingByteArrayInputStream(content.getInternalBuffer(), content.size());
-    try {
-      provider.saveContent(fileSpec, in, content.size(), type, async);
-    }
-    finally {
-      in.close();
-    }
+    provider.saveContent(fileSpec, content.getInternalBuffer(), content.size(), type, async);
   }
 
   public static void logStateDiffInfo(Set<Pair<VirtualFile, StateStorage>> changedFiles, Set<String> componentNames) throws IOException {

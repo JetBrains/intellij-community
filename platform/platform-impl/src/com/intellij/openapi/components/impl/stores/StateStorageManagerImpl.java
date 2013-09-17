@@ -90,7 +90,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
 
     @Override
-    public void saveContent(@NotNull String fileSpec, @NotNull InputStream content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
+    public void saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
       for (StreamProvider streamProvider : getStreamProviders()) {
         try {
           if (streamProvider.isEnabled()) {

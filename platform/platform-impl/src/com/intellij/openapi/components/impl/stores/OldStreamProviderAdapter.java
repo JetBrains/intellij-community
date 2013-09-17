@@ -2,6 +2,7 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.options.CurrentUserHolder;
+import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,13 +27,13 @@ public final class OldStreamProviderAdapter extends StreamProvider implements Cu
   }
 
   @Override
-  public void saveContent(@NotNull String fileSpec, @NotNull InputStream content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
+  public void saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
     if (myRoamingType == roamingType) {
       if (roamingType == RoamingType.PER_USER && StorageUtil.isProjectOrModuleFile(fileSpec)) {
         return;
       }
 
-      myProvider.saveContent(fileSpec, content, size, roamingType, async);
+      myProvider.saveContent(fileSpec, new BufferExposingByteArrayInputStream(content, size), size, roamingType, async);
     }
   }
 

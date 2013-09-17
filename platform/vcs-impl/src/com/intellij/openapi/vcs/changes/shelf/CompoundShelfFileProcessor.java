@@ -169,15 +169,12 @@ public class CompoundShelfFileProcessor {
   }
 
   private static void copyFileContentToProviders(final String newFilePath, final StreamProvider serverStreamProvider, final File file) throws IOException {
-    FileInputStream input = new FileInputStream(file);
-    try {
-      if (serverStreamProvider.isEnabled()) {
-        serverStreamProvider.saveContent(newFilePath, input, (int)file.length(), RoamingType.PER_USER, true);
-      }
+    if (!serverStreamProvider.isEnabled()) {
+      return;
     }
-    finally {
-      input.close();
-    }
+
+    byte[] content = FileUtil.loadFileBytes(file);
+    serverStreamProvider.saveContent(newFilePath, content, content.length, RoamingType.PER_USER, true);
   }
 
   private static void copyFileToStream(final InputStream stream, final File file) throws IOException {
