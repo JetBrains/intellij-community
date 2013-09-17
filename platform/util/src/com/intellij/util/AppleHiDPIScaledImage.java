@@ -2,6 +2,7 @@ package com.intellij.util;
 
 import apple.awt.CImage;
 
+import java.awt.*;
 import java.awt.image.BufferedImage;
 
 /**
@@ -14,5 +15,9 @@ public class AppleHiDPIScaledImage {
       protected void drawIntoImage(BufferedImage image, float scale) {
       }
     };
+  }
+
+  public static boolean is(Image image) {
+    return image instanceof CImage.HiDPIScaledImage;
   }
 }

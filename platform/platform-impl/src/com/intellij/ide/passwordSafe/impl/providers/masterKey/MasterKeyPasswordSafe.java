@@ -23,6 +23,7 @@ import com.intellij.ide.passwordSafe.impl.providers.EncryptionUtil;
 import com.intellij.ide.passwordSafe.impl.providers.masterKey.windows.WindowsCryptUtils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -163,12 +164,10 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
     return TEST_PASSWORD_KEY + password;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   protected byte[] key(@Nullable final Project project) throws PasswordSafeException {
-    if (!isTestMode() && ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
+    if (!isTestMode() && application.isHeadlessEnvironment()) {
       throw new MasterPasswordUnavailableException("The provider is not available in headless environment");
     }
     if (key.get() == null) {
@@ -183,7 +182,10 @@ public class MasterKeyPasswordSafe extends BasePasswordSafeProvider {
       }
       if (key.get() == null) {
         final Ref<PasswordSafeException> ex = new Ref<PasswordSafeException>();
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        if (application.holdsReadLock()) {
+          throw new IllegalStateException("Access from read action is not allowed, because it might lead to a deadlock.");
+        }
+        application.invokeAndWait(new Runnable() {
           public void run() {
             if (key.get() == null) {
               try {

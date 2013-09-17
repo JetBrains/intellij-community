@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.passwordSafe;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,13 +25,21 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PasswordStorage {
   /**
-   * Get password stored in a password safe
+   * <p>Get password stored in a password safe.</p>
+   *
+   * <p><b>NB: </b>
+   *    This method may be called from the background,
+   *    and it may need to ask user to enter the master password to access the database by calling
+   *    {@link Application#invokeAndWait(Runnable, ModalityState) invokeAndWait()} to show a modal dialog.
+   *    So make sure not to call it from the read action.
+   *    Calling this method from the dispatch thread is allowed.</p>
    *
    * @param project   the project, that is used to ask for the master password if this is the first access to password safe
    * @param requester the requester class
    * @param key       the key for the password
    * @return the stored password or null if the password record was not found or was removed
    * @throws PasswordSafeException if password safe cannot be accessed
+   * @throws IllegalStateException if the method is called from the read action.
    */
   @Nullable
   String getPassword(@Nullable Project project, Class requester, String key) throws PasswordSafeException;

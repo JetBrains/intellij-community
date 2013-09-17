@@ -112,6 +112,12 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
         fileset(dir: "${home}/lib/rt", includesfile: "${home}/lib/rt/required_for_dist.txt")
       }
 
+      dir("groovy") {
+        dir("lib") {
+          fileset(dir:"$home/lib/groovy/lib")
+        }
+      }
+
       jar("util.jar") {
         module("util")
         module("util-rt")

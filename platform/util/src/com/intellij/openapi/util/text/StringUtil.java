@@ -2035,7 +2035,7 @@ public class StringUtil extends StringUtilRt {
           cmp = new Integer(p).compareTo(0);
         }
         else {
-          cmp = p.compareTo("0");
+          cmp = 1;
         }
         if (cmp != 0) return left ? cmp : -cmp;
       }

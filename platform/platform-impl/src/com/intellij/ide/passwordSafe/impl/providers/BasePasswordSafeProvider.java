@@ -17,6 +17,8 @@ package com.intellij.ide.passwordSafe.impl.providers;
 
 import com.intellij.ide.passwordSafe.PasswordSafeException;
 import com.intellij.ide.passwordSafe.impl.PasswordSafeProvider;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,10 +28,18 @@ import org.jetbrains.annotations.Nullable;
 public abstract class BasePasswordSafeProvider extends PasswordSafeProvider {
 
   /**
-   * Get secret key for the provider
+   * <p>Get secret key for the provider.</p>
+   * <p><b>NB: </b>
+   *    This method may be called from the background,
+   *    and it may need to ask user to enter the master password to access the database by calling
+   *    {@link Application#invokeAndWait(Runnable, ModalityState) invokeAndWait()} to show a modal dialog.
+   *    So make sure not to call it from the read action.
+   *    Calling this method from the dispatch thread is allowed.</p>
    *
    * @param project the project to use
    * @return the secret key to use
+   * @throws PasswordSafeException in case of problems with access to the password database.
+   * @throws IllegalStateException if the method is called from the read action.
    */
   protected abstract byte[] key(@Nullable Project project) throws PasswordSafeException;
 

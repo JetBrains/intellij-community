@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
-import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementEditorPredicate;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -61,7 +60,7 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends Intention {
       replacement.append(text.substring(anchor, textLength));
       document.replaceString(start, end, replacement);
     }
-    else if ((element instanceof PsiLiteralExpression)) {
+    else if (element instanceof PsiLiteralExpression) {
       final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
       final String text = literalExpression.getText();
       final CaretModel model = editor.getCaretModel();
@@ -100,7 +99,7 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends Intention {
     final int textLength = text.length();
     int escapeStart = -1;
     outer: while (true) {
-      escapeStart = text.indexOf((int)'\\', escapeStart + 1);
+      escapeStart = text.indexOf('\\', escapeStart + 1);
       if (escapeStart < 0) {
         break;
       }

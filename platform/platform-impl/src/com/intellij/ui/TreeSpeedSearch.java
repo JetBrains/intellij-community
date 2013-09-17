@@ -24,6 +24,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import javax.swing.*;
 import javax.swing.text.Position;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
   private boolean myCanExpand;
 
   private static final Convertor<TreePath, String> TO_STRING = new Convertor<TreePath, String>() {
+    @Override
     public String convert(TreePath object) {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)object.getLastPathComponent();
       return node.toString();
@@ -39,6 +41,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
   };
   private final Convertor<TreePath, String> myToStringConvertor;
   public static final Convertor<TreePath, String> NODE_DESCRIPTOR_TOSTRING = new Convertor<TreePath, String>() {
+    @Override
     public String convert(TreePath path) {
       final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path.getLastPathComponent();
       final Object userObject = node.getUserObject();
@@ -75,10 +78,12 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     myCanExpand = canExpand;
   }
 
+  @Override
   protected void selectElement(Object element, String selectedText) {
     TreeUtil.selectPath(myComponent, (TreePath)element);
   }
 
+  @Override
   protected int getSelectedIndex() {
     if (myCanExpand) {
       return ArrayUtil.find(getAllElements(), myComponent.getSelectionPath());
@@ -87,16 +92,20 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     return selectionRows == null || selectionRows.length == 0 ? -1 : selectionRows[0];
   }
 
+  @Override
   protected Object[] getAllElements() {
     if (myCanExpand) {
       final Object root = myComponent.getModel().getRoot();
-      if (root instanceof DefaultMutableTreeNode) {
+      if (root instanceof DefaultMutableTreeNode || root instanceof PathAwareTreeNode) {
         final List<TreePath> paths = new ArrayList<TreePath>();
-        TreeUtil.traverseDepth((DefaultMutableTreeNode)root, new TreeUtil.Traverse() {
+        TreeUtil.traverseDepth((TreeNode)root, new TreeUtil.Traverse() {
+          @Override
           public boolean accept(Object node) {
-            if (node instanceof DefaultMutableTreeNode){
-              final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
-              paths.add(new TreePath(treeNode.getPath()));
+            if (node instanceof DefaultMutableTreeNode) {
+              paths.add(new TreePath(((DefaultMutableTreeNode)node).getPath()));
+            }
+            else if (node instanceof PathAwareTreeNode) {
+              paths.add(((PathAwareTreeNode)node).getPath());
             }
             return true;
           }
@@ -112,10 +121,15 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
 
   }
 
+  @Override
   protected String getElementText(Object element) {
     TreePath path = (TreePath)element;
     String string = myToStringConvertor.convert(path);
     if (string == null) return TO_STRING.convert(path);
     return string;
+  }
+
+  public interface PathAwareTreeNode extends TreeNode {
+    TreePath getPath();
   }
 }

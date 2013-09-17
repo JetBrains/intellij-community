@@ -28,6 +28,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.util.AppleHiDPIScaledImage;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
@@ -135,9 +136,12 @@ public class JBTerminalPanel extends TerminalPanel {
       if (img == null) {
         img = image;
       }
-      newG.drawImage(img, 2 * dx1, 2 * dy1, 2 * dx2, 2 * dy2, sx1, sy1, sx2, sy2, observer);
+      newG.drawImage(img, 2 * dx1, 2 * dy1, 2 * dx2, 2 * dy2, sx1 * 2, sy1 * 2, sx2 * 2, sy2 * 2, observer);
       newG.scale(1, 1);
       newG.dispose();
+    }
+    else if (AppleHiDPIScaledImage.is(image)) {
+      g.drawImage(image, dx1, dy1, dx2, dy2, sx1 * 2, sy1 * 2, sx2 * 2, sy2 * 2, observer);
     }
     else {
       g.drawImage(image, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, observer);
