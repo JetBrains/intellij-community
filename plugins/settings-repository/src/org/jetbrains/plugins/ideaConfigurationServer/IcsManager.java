@@ -11,6 +11,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.FileBasedStorage;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
+import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.components.impl.stores.XmlElementStorage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SchemesManagerFactory;
@@ -152,9 +153,15 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     manager.registerStreamProvider(new IcsStreamProvider(projectId) {
       @Override
       protected boolean isShareable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-        return roamingType != RoamingType.PER_USER ||
-               settings.shareProjectWorkspace ||
-               (!fileSpec.equals(StoragePathMacros.WORKSPACE_FILE) && !fileSpec.equals(WORKSPACE_VERSION_FILE));
+        if (roamingType != RoamingType.PER_USER) {
+          return true;
+        }
+
+        if (StorageUtil.isProjectOrModuleFile(fileSpec)) {
+          return false;
+        }
+
+        return settings.shareProjectWorkspace || (!fileSpec.equals(StoragePathMacros.WORKSPACE_FILE) && !fileSpec.equals(WORKSPACE_VERSION_FILE));
       }
     });
   }
