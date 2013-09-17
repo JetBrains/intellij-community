@@ -89,6 +89,9 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     }
   }
 
+  private static final boolean ORACLE_BUG_8007219 = SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast("1.7");
+  private static final int ORACLE_BUG_8007219_THRESHOLD = 10;
+
   private Boolean myAlphaModeSupported = null;
 
   private final EventDispatcher<WindowManagerListener> myEventDispatcher = EventDispatcher.create(WindowManagerListener.class);
@@ -531,11 +534,33 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
                                                 ApplicationManager.getApplication());
     myProject2Frame.put(null, frame);
 
+    final Rectangle rect = ScreenUtil.getMainScreenBounds();
+
     if (myFrameBounds == null || !ScreenUtil.isVisible(myFrameBounds)) { //avoid situations when IdeFrame is out of all screens
-      Rectangle rect = ScreenUtil.getMainScreenBounds();
       int yParts = rect.height / 6;
       int xParts = rect.width / 5;
       myFrameBounds = new Rectangle(xParts, yParts, xParts * 3, yParts * 4);
+    }
+
+    if ((myFrameExtendedState & Frame.MAXIMIZED_BOTH) > 0 && ORACLE_BUG_8007219) {
+      final Insets screenInsets = ScreenUtil.getScreenInsets(frame.getGraphicsConfiguration());
+
+
+      myFrameBounds.x = myFrameBounds.x - screenInsets.left > ORACLE_BUG_8007219_THRESHOLD ?
+                        myFrameBounds.x :
+                        screenInsets.left + ORACLE_BUG_8007219_THRESHOLD + 1;
+
+      myFrameBounds.y = myFrameBounds.y - screenInsets.top > ORACLE_BUG_8007219_THRESHOLD ?
+                        myFrameBounds.y :
+                        screenInsets.top + ORACLE_BUG_8007219_THRESHOLD + 1;
+
+      myFrameBounds.width = rect.width - (myFrameBounds.width + myFrameBounds.x) > ORACLE_BUG_8007219_THRESHOLD ?
+                            myFrameBounds.width :
+                            rect.width - ORACLE_BUG_8007219_THRESHOLD - 1;
+
+      myFrameBounds.height = rect.height - (myFrameBounds.height + myFrameBounds.y) > ORACLE_BUG_8007219_THRESHOLD ?
+                             myFrameBounds.height :
+                             rect.height - ORACLE_BUG_8007219_THRESHOLD - 1;
     }
 
     frame.setBounds(myFrameBounds);
