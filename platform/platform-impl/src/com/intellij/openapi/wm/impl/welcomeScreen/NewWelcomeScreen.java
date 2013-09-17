@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,10 +43,10 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     super(new BorderLayout());
     add(createHeaderPanel(), BorderLayout.NORTH);
     add(createFooterPanel(), BorderLayout.SOUTH);
-    add(createInnerPanel(), BorderLayout.CENTER);
+    add(createInnerPanel(this), BorderLayout.CENTER);
   }
 
-  private static WelcomePane createInnerPanel() {
+  private static WelcomePane createInnerPanel(WelcomeScreen screen) {
     WelcomeScreenGroup root = new WelcomeScreenGroup(null, "Root");
 
     ActionManager actionManager = ActionManager.getInstance();
@@ -58,7 +58,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     root.add(buildRootGroup(AllIcons.General.Configure, "Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE));
     root.add(buildRootGroup(AllIcons.General.ReadHelp, "Docs and How-Tos", IdeActions.GROUP_WELCOME_SCREEN_DOC));
 
-    return new WelcomePane(root);
+    return new WelcomePane(root, screen);
   }
 
   private static WelcomeScreenGroup buildRootGroup(Icon groupIcon, String groupText, String groupId) {

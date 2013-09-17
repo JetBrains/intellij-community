@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,13 @@ import com.intellij.ide.ReopenProjectAction;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
@@ -49,7 +51,7 @@ public class RecentProjectPanel extends JPanel {
   private final JBList myList;
   private final UniqueNameBuilder<ReopenProjectAction> myPathShortener;
 
-  public RecentProjectPanel() {
+  public RecentProjectPanel(WelcomeScreen screen) {
     super(new BorderLayout());
 
     final AnAction[] recentProjectActions = RecentProjectsManagerBase.getInstance().getRecentProjectsActions(false);
@@ -93,9 +95,9 @@ public class RecentProjectPanel extends JPanel {
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
 
-    ActionListener deleteAction = new ActionListener() {
+    new AnAction() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void actionPerformed(AnActionEvent e) {
         Object[] selection = myList.getSelectedValues();
 
         if (selection != null && selection.length > 0) {
@@ -105,7 +107,7 @@ public class RecentProjectPanel extends JPanel {
                                                        public String fun(Object action) {
                                                          return ((ReopenProjectAction)action).getTemplatePresentation().getText();
                                                        }
-                                                     }, "'\n'") + 
+                                                     }, "'\n'") +
                                                      "' from recent projects list?",
                                                      "Remove Recent Project",
                                                      Messages.getQuestionIcon());
@@ -118,10 +120,7 @@ public class RecentProjectPanel extends JPanel {
           }
         }
       }
-    };
-
-    myList.registerKeyboardAction(deleteAction, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
-    myList.registerKeyboardAction(deleteAction, KeyStroke.getKeyStroke(KeyEvent.VK_BACK_SPACE, 0), WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("DELETE", "BACK_SPACE"), myList, screen);
 
     myList.addMouseMotionListener(new MouseMotionAdapter() {
       boolean myIsEngaged = false;
@@ -206,6 +205,7 @@ public class RecentProjectPanel extends JPanel {
     private MyList(@NotNull Object... listData) {
       super(listData);
       setEmptyText("  No Project Open Yet  ");
+      setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     }
 
     @Override
@@ -230,8 +230,8 @@ public class RecentProjectPanel extends JPanel {
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       ReopenProjectAction item = (ReopenProjectAction)value;
 
-      Color fore = isSelected ? UIUtil.getListSelectionForeground() : list.getForeground();
-      Color back = isSelected ? cellHasFocus ? UIUtil.getListSelectionBackground() : UIUtil.getListUnfocusedSelectionBackground() : list.getBackground();
+      Color fore = UIUtil.getListForeground(isSelected);
+      Color back = UIUtil.getListBackground(isSelected);
 
       myName.setForeground(fore);
       myPath.setForeground(isSelected ? fore : UIUtil.getInactiveTextColor());
