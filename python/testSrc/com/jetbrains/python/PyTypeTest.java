@@ -745,6 +745,15 @@ public class PyTypeTest extends PyTestCase {
            "    expr = x if isinstance(x, str) else 10\n");
   }
 
+  // PY-9334
+  public void testEnumerateListOfTuples() {
+    doTest("str",
+           "def f():\n" +
+           "    xs = [('foo', [])]\n" +
+           "    for i, (expr, v) in enumerate(xs):\n" +
+           "        print(expr)\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }
