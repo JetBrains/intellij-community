@@ -745,7 +745,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         boolean isClassmethod = false;
         if (decoratorList != null) {
           for (PyDecorator decorator : decoratorList.getDecorators()) {
-            if (PyNames.CLASSMETHOD.equals(decorator.getCallee().getText()))
+            final PyExpression callee = decorator.getCallee();
+            if (callee != null && PyNames.CLASSMETHOD.equals(callee.getText()))
               isClassmethod = true;
           }
         }
