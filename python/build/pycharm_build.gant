@@ -162,7 +162,7 @@ target('default': "Build artifacts") {
 }
 
 private communityEdition(Set usedJars) {
-  Script s = groovyShell.parse(new File("$home/python/community/pycharm_community_build.gant"))
+  Script s = groovyShell.parse(new File("$pythonCommunityHome/build/pycharm_community_build.gant"))
   s.setBinding(binding)
 
   s.layoutCommunity(usedJars)
