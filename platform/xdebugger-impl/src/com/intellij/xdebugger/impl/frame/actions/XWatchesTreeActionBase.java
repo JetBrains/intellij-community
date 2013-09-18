@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.frame.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,21 +46,23 @@ public abstract class XWatchesTreeActionBase extends AnAction {
 
   public void update(final AnActionEvent e) {
     final XDebuggerTree tree = XDebuggerTree.getTree(e);
-    boolean enabled = tree != null && isEnabled(e, tree);
+    XWatchesView watchesView = e.getData(XWatchesView.DATA_KEY);
+    boolean enabled = tree != null && watchesView != null && isEnabled(e, tree);
     e.getPresentation().setEnabled(enabled);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     final XDebuggerTree tree = XDebuggerTree.getTree(e);
-    if (tree != null) {
-      perform(e, tree);
+    XWatchesView watchesView = e.getData(XWatchesView.DATA_KEY);
+    if (tree != null && watchesView != null) {
+      perform(e, tree, watchesView);
     }
   }
 
-  protected abstract void perform(AnActionEvent e, XDebuggerTree tree);
+  protected abstract void perform(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree, @NotNull XWatchesView watchesView);
 
-  protected boolean isEnabled(AnActionEvent e, @NotNull XDebuggerTree tree) {
+  protected boolean isEnabled(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree) {
     return true;
   }
 }

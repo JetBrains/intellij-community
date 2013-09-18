@@ -15,9 +15,11 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.xdebugger.frame.XNavigatable;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
@@ -29,7 +31,7 @@ public class XJumpToSourceAction extends XJumpToSourceActionBase {
   }
 
   @Override
-  protected boolean isEnabled(XValueNodeImpl node) {
-    return super.isEnabled(node) && node.getValueContainer().canNavigateToSource();
+  protected boolean isEnabled(@NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
+    return super.isEnabled(node, e) && node.getValueContainer().canNavigateToSource();
   }
 }

@@ -15,9 +15,11 @@
  */
 package com.intellij.xdebugger.impl.ui.tree.nodes;
 
+import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.impl.frame.WatchInplaceEditor;
+import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
@@ -33,12 +35,19 @@ import java.util.List;
  * @author nik
  */
 public class WatchesRootNode extends XDebuggerTreeNode {
+  private final XDebugSession mySession;
+  private final XWatchesView myWatchesView;
   private List<WatchNode> myChildren;
   private List<XDebuggerTreeNode> myLoadedChildren;
   private XDebuggerEvaluator myCurrentEvaluator;
 
-  public WatchesRootNode(final XDebuggerTree tree, String[] watchExpressions) {
+  public WatchesRootNode(final @NotNull XDebuggerTree tree,
+                         @NotNull XDebugSession session,
+                         @NotNull XWatchesView watchesView,
+                         @NotNull String[] watchExpressions) {
     super(tree, null, false);
+    mySession = session;
+    myWatchesView = watchesView;
     myChildren = new ArrayList<WatchNode>();
     for (String watchExpression : watchExpressions) {
       myChildren.add(WatchMessageNode.createMessageNode(tree, this, watchExpression));
@@ -177,7 +186,7 @@ public class WatchesRootNode extends XDebuggerTreeNode {
       myChildren.set(index, messageNode);
       fireNodeStructureChanged(messageNode);
     }
-    WatchInplaceEditor editor = new WatchInplaceEditor(this, messageNode, "watch", node);
+    WatchInplaceEditor editor = new WatchInplaceEditor(this, mySession, myWatchesView, messageNode, "watch", node);
     editor.show();
   }
 

@@ -17,16 +17,14 @@ package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.xdebugger.XStackFrameAwareSession;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionAdapter;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeInplaceEditor;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -36,20 +34,19 @@ import javax.swing.*;
  */
 public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
   private final WatchesRootNode myRootNode;
+  private final XWatchesView myWatchesView;
   @Nullable private final WatchNode myOldNode;
 
-  public WatchInplaceEditor(WatchesRootNode rootNode,
-                            final WatchNode node,
+  public WatchInplaceEditor(@NotNull WatchesRootNode rootNode,
+                            @NotNull XDebugSession session, XWatchesView watchesView, final WatchNode node,
                             @NonNls final String historyId,
                             final @Nullable WatchNode oldNode) {
     super((XDebuggerTreeNode)node, historyId);
     myRootNode = rootNode;
+    myWatchesView = watchesView;
     myOldNode = oldNode;
     myExpressionEditor.setText(oldNode != null ? oldNode.getExpression() : "");
-    final XStackFrameAwareSession session = rootNode.getTree().getSession();
-    if (session instanceof XDebugSession) {
-      new WatchEditorSessionListener((XDebugSession)session).install();
-    }
+    new WatchEditorSessionListener(session).install();
   }
 
   protected JComponent createInplaceEditorComponent() {
@@ -61,7 +58,7 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     super.cancelEditing();
     int index = myRootNode.removeChildNode(getNode());
     if (myOldNode != null && index != -1) {
-      getWatchesView().addWatchExpression(myOldNode.getExpression(), index, false);
+      myWatchesView.addWatchExpression(myOldNode.getExpression(), index, false);
     }
   }
 
@@ -71,24 +68,14 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     super.doOKAction();
     int index = myRootNode.removeChildNode(getNode());
     if (!StringUtil.isEmpty(expression) && index != -1) {
-      getWatchesView().addWatchExpression(expression, index, false);
-    }
-  }
-
-  private XWatchesView getWatchesView() {
-    if (myRootNode.getTree().getSession() instanceof XDebugSessionImpl) {
-      XDebugSessionTab tab = ((XDebugSessionImpl)myRootNode.getTree().getSession()).getSessionTab();
-      return tab.getWatchesView();
-    }
-    else {
-      return null;
+      myWatchesView.addWatchExpression(expression, index, false);
     }
   }
 
   private class WatchEditorSessionListener extends XDebugSessionAdapter {
     private final XDebugSession mySession;
 
-    public WatchEditorSessionListener(XDebugSession session) {
+    public WatchEditorSessionListener(@NotNull XDebugSession session) {
       mySession = session;
     }
 

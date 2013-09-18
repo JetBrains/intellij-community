@@ -17,12 +17,13 @@ package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.xdebugger.XStackFrameAwareSession;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.xdebugger.XStackFrameAwareSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
@@ -49,7 +50,8 @@ public class XVariablesView extends XDebugViewBase {
   public XVariablesView(@NotNull XStackFrameAwareSession session, @Nullable final Disposable parentDisposable) {
     super(session, parentDisposable);
     XDebuggerEditorsProvider editorsProvider = session.getEditorsProvider();
-    myDebuggerTreePanel = new XDebuggerTreePanel(session, editorsProvider, this, null, XDebuggerActions.VARIABLES_TREE_POPUP_GROUP);
+    XValueMarkers<?,?> markers = session instanceof XDebugSessionImpl ? ((XDebugSessionImpl)session).getValueMarkers() : null;
+    myDebuggerTreePanel = new XDebuggerTreePanel(session.getProject(), editorsProvider, this, null, XDebuggerActions.VARIABLES_TREE_POPUP_GROUP, markers);
     myDebuggerTreePanel.getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.variables.not.available"));
     DnDManager.getInstance().registerSource(myDebuggerTreePanel, myDebuggerTreePanel.getTree());
   }

@@ -16,8 +16,7 @@
 package com.intellij.xdebugger.impl.frame.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,15 +25,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public class XRemoveAllWatchesAction extends XWatchesTreeActionBase {
   @Override
-  protected boolean isEnabled(AnActionEvent e, @NotNull XDebuggerTree tree) {
-    return tree.getRoot().getChildCount() > 0 && (tree.getSession() instanceof XDebugSessionImpl);
+  protected boolean isEnabled(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree) {
+    return tree.getRoot().getChildCount() > 0;
   }
 
   @Override
-  protected void perform(AnActionEvent e, XDebuggerTree tree) {
-    if (tree.getSession() instanceof XDebugSessionImpl) {
-      XDebugSessionTab tab = ((XDebugSessionImpl)tree.getSession()).getSessionTab();
-      tab.getWatchesView().removeAllWatches();
-    }
+  protected void perform(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree, @NotNull XWatchesView watchesView) {
+    watchesView.removeAllWatches();
   }
 }

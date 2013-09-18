@@ -16,8 +16,7 @@
 package com.intellij.xdebugger.impl.frame.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
-import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NotNull;
@@ -28,16 +27,13 @@ import java.util.List;
  * @author nik
  */
 public class XRemoveWatchAction extends XWatchesTreeActionBase {
-  protected boolean isEnabled(final AnActionEvent e, @NotNull XDebuggerTree tree) {
-    return !getSelectedNodes(tree, XDebuggerTreeNode.class).isEmpty() && (tree.getSession() instanceof XDebugSessionImpl);
+  protected boolean isEnabled(@NotNull final AnActionEvent e, @NotNull XDebuggerTree tree) {
+    return !getSelectedNodes(tree, XDebuggerTreeNode.class).isEmpty();
   }
 
   @Override
-  protected void perform(AnActionEvent e, XDebuggerTree tree) {
+  protected void perform(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree, @NotNull XWatchesView watchesView) {
     List<? extends XDebuggerTreeNode> nodes = getSelectedNodes(tree, XDebuggerTreeNode.class);
-    if (tree.getSession() instanceof XDebugSessionImpl) {
-      XDebugSessionTab tab = ((XDebugSessionImpl)tree.getSession()).getSessionTab();
-      tab.getWatchesView().removeWatches(nodes);
-    }
+    watchesView.removeWatches(nodes);
   }
 }

@@ -42,8 +42,8 @@ public class XSetValueAction extends XDebuggerTreeActionBase {
   }
 
   @Override
-  protected boolean isEnabled(XValueNodeImpl node) {
-    return super.isEnabled(node) && node.getValueContainer().getModifier() != null;
+  protected boolean isEnabled(@NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
+    return super.isEnabled(node, e) && node.getValueContainer().getModifier() != null;
   }
 
   protected void perform(final XValueNodeImpl node, @NotNull final String nodeName, final AnActionEvent e) {

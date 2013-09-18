@@ -28,10 +28,10 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.XStackFrameAwareSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
+import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.tree.nodes.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -73,14 +73,14 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   private final XDebuggerEditorsProvider myEditorsProvider;
   private XSourcePosition mySourcePosition;
   private final List<XDebuggerTreeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final XStackFrameAwareSession mySession;
+  private final XValueMarkers<?,?> myValueMarkers;
 
-  public XDebuggerTree(final @NotNull XStackFrameAwareSession session,
+  public XDebuggerTree(final @NotNull Project project,
                        final @NotNull XDebuggerEditorsProvider editorsProvider,
                        final @Nullable XSourcePosition sourcePosition,
-                       final @NotNull String popupActionGroupId) {
-    mySession = session;
-    myProject = session.getProject();
+                       final @NotNull String popupActionGroupId, @Nullable XValueMarkers<?, ?> valueMarkers) {
+    myValueMarkers = valueMarkers;
+    myProject = project;
     myEditorsProvider = editorsProvider;
     mySourcePosition = sourcePosition;
     myTreeModel = new DefaultTreeModel(null);
@@ -176,9 +176,9 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     return myProject;
   }
 
-  @NotNull
-  public XStackFrameAwareSession getSession() {
-    return mySession;
+  @Nullable
+  public XValueMarkers<?, ?> getValueMarkers() {
+    return myValueMarkers;
   }
 
   public DefaultTreeModel getTreeModel() {

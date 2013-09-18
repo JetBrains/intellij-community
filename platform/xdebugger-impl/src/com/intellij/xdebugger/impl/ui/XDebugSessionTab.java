@@ -41,12 +41,10 @@ import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.frame.XDebugViewBase;
-import com.intellij.xdebugger.impl.frame.XFramesView;
-import com.intellij.xdebugger.impl.frame.XVariablesView;
-import com.intellij.xdebugger.impl.frame.XWatchesView;
+import com.intellij.xdebugger.impl.frame.*;
 import com.intellij.xdebugger.impl.ui.tree.actions.SortValuesToggleAction;
 import com.intellij.xdebugger.ui.XDebugTabLayouter;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +56,7 @@ import java.util.List;
  * @author spleaner
  */
 public class XDebugSessionTab extends DebuggerSessionTabBase {
-  private XWatchesView myWatchesView;
+  private XWatchesViewImpl myWatchesView;
   private final List<XDebugViewBase> myViews = new ArrayList<XDebugViewBase>();
 
   public XDebugSessionTab(@NotNull final Project project, @NotNull final XDebugSessionImpl session, final @Nullable Icon icon,
@@ -88,7 +86,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
   }
 
   private Content createWatchesContent(final XDebugSession session, final XDebugSessionData sessionData) {
-    myWatchesView = new XWatchesView(session, this, sessionData);
+    myWatchesView = new XWatchesViewImpl(session, this, sessionData);
     myViews.add(myWatchesView);
     Content watchesContent = myUi.createContent(DebuggerContentInfo.WATCHES_CONTENT, myWatchesView.getMainPanel(),
                                          XDebuggerBundle.message("debugger.session.tab.watches.title"), AllIcons.Debugger.Watches, null);
@@ -127,6 +125,16 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     myUi.addContent(createFramesContent(session), 0, PlaceInGrid.left, false);
     myUi.addContent(createVariablesContent(session), 0, PlaceInGrid.center, false);
     myUi.addContent(createWatchesContent(session, sessionData), 0, PlaceInGrid.right, false);
+    myUi.getContentManager().addDataProvider(new DataProvider() {
+      @Nullable
+      @Override
+      public Object getData(@NonNls String dataId) {
+        if (XWatchesView.DATA_KEY.is(dataId)) {
+          return myWatchesView;
+        }
+        return null;
+      }
+    });
     XDebugTabLayouter layouter = debugProcess.createTabLayouter();
     Content consoleContent = layouter.registerConsoleContent(myUi, myConsole);
     attachNotificationTo(consoleContent);

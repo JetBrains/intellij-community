@@ -23,7 +23,6 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.NotNullFunction;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
-import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
@@ -133,14 +132,12 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   private void updateText() {
     myText.clear();
-    if (myTree.getSession() instanceof XDebugSessionImpl) {
-    XValueMarkers<?,?> markers = ((XDebugSessionImpl)myTree.getSession()).getValueMarkers();
+    XValueMarkers<?, ?> markers = myTree.getValueMarkers();
     if (markers != null) {
       ValueMarkup markup = markers.getMarkup(myValueContainer);
       if (markup != null) {
         myText.append("[" + markup.getText() + "] ", new SimpleTextAttributes(SimpleTextAttributes.STYLE_BOLD, markup.getColor()));
       }
-    }
     }
     appendName();
     buildText(myValuePresentation, myText);

@@ -32,10 +32,12 @@ import com.intellij.xdebugger.frame.XFullValueEvaluator;
 import com.intellij.xdebugger.frame.XValue;
 import com.intellij.xdebugger.frame.XValuePlace;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.actions.handlers.XDebuggerEvaluateActionHandler;
 import com.intellij.xdebugger.impl.evaluate.quick.common.AbstractValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
+import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
@@ -128,8 +130,9 @@ public class XValueHint extends AbstractValueHint {
   }
 
   private void showTree(final XValue value, final String name) {
-    XDebuggerTree tree = new XDebuggerTree(myDebugSession, myDebugSession.getDebugProcess().getEditorsProvider(),
-                                           myDebugSession.getCurrentPosition(), XDebuggerActions.INSPECT_TREE_POPUP_GROUP);
+    XValueMarkers<?,?> valueMarkers = ((XDebugSessionImpl)myDebugSession).getValueMarkers();
+    XDebuggerTree tree = new XDebuggerTree(myDebugSession.getProject(), myDebugSession.getDebugProcess().getEditorsProvider(),
+                                           myDebugSession.getCurrentPosition(), XDebuggerActions.INSPECT_TREE_POPUP_GROUP, valueMarkers);
     tree.getModel().addTreeModelListener(createTreeListener(tree));
     XValueHintTreeComponent component = new XValueHintTreeComponent(this, tree, Pair.create(value, name));
     showTreePopup(component, tree, name);

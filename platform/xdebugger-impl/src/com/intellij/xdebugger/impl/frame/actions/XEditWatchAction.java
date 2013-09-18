@@ -16,10 +16,12 @@
 package com.intellij.xdebugger.impl.frame.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -35,7 +37,7 @@ public class XEditWatchAction extends XWatchesTreeActionBase {
   }
 
   @Override
-  protected void perform(AnActionEvent e, XDebuggerTree tree) {
+  protected void perform(@NotNull AnActionEvent e, @NotNull XDebuggerTree tree, @NotNull XWatchesView watchesView) {
     List<? extends WatchNode> watchNodes = getSelectedNodes(tree, WatchNode.class);
     if (watchNodes.size() != 1) return;
 
