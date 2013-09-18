@@ -48,7 +48,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
-import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -395,12 +394,6 @@ public class XDebugSessionImpl implements XDebugSession {
   @Override
   public void removeSessionListener(@NotNull final XDebugSessionListener listener) {
     myDispatcher.removeListener(listener);
-  }
-
-  @NotNull
-  @Override
-  public XDebuggerEditorsProvider getEditorsProvider() {
-    return myDebugProcess.getEditorsProvider();
   }
 
   @Override

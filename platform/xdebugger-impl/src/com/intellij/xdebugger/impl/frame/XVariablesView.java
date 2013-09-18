@@ -20,7 +20,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerBundle;
-import com.intellij.xdebugger.XStackFrameAwareSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -47,9 +46,9 @@ public class XVariablesView extends XDebugViewBase {
   private Object myFrameEqualityObject;
   private XDebuggerTreeRestorer myTreeRestorer;
 
-  public XVariablesView(@NotNull XStackFrameAwareSession session, @Nullable final Disposable parentDisposable) {
+  public XVariablesView(@NotNull XDebugSession session, @Nullable final Disposable parentDisposable) {
     super(session, parentDisposable);
-    XDebuggerEditorsProvider editorsProvider = session.getEditorsProvider();
+    XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
     XValueMarkers<?,?> markers = session instanceof XDebugSessionImpl ? ((XDebugSessionImpl)session).getValueMarkers() : null;
     myDebuggerTreePanel = new XDebuggerTreePanel(session.getProject(), editorsProvider, this, null, XDebuggerActions.VARIABLES_TREE_POPUP_GROUP, markers);
     myDebuggerTreePanel.getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.variables.not.available"));
