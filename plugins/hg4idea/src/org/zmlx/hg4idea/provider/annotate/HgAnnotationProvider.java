@@ -29,6 +29,7 @@ import org.zmlx.hg4idea.command.HgAnnotateCommand;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.List;
 
@@ -52,10 +53,12 @@ public class HgAnnotationProvider implements AnnotationProvider {
       throw new VcsException("vcs root is null for " + file);
     }
     final HgFile hgFile = new HgFile(vcsRoot, VfsUtilCore.virtualToIoFile(file));
-    final List<HgAnnotationLine> annotationResult = (new HgAnnotateCommand(myProject)).execute(hgFile, revision);
+    HgFile fileToAnnotate = revision instanceof HgFileRevision ? HgUtil
+      .getFileNameInTargetRevision(myProject, ((HgFileRevision)revision).getRevisionNumber(), hgFile) : hgFile;
+    final List<HgAnnotationLine> annotationResult = (new HgAnnotateCommand(myProject)).execute(fileToAnnotate, revision);
     final List<HgFileRevision> logResult;
     try {
-      logResult = (new HgLogCommand(myProject)).execute(hgFile, DEFAULT_LIMIT, false);
+      logResult = (new HgLogCommand(myProject)).execute(fileToAnnotate, DEFAULT_LIMIT, false);
     }
     catch (HgCommandException e) {
       throw new VcsException("Can not annotate, " + HgVcsMessages.message("hg4idea.error.log.command.execution"), e);
@@ -69,5 +72,4 @@ public class HgAnnotationProvider implements AnnotationProvider {
   public boolean isAnnotationValid(VcsFileRevision rev) {
     return true;
   }
-
 }
