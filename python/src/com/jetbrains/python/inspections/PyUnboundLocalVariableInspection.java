@@ -123,6 +123,9 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
             return;
           }
         }
+        if (PyUnreachableCodeInspection.isUnreachable(node)) {
+          return;
+        }
         if (owner instanceof PyFile) {
           if (isBuiltin) {
             return;
