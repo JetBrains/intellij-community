@@ -237,6 +237,30 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
   }
 
   @Override
+  public void visitPyConditionalExpression(PyConditionalExpression node) {
+    myBuilder.startNode(node);
+    final PyExpression condition = node.getCondition();
+    final PyTypeAssertionEvaluator assertionEvaluator = new PyTypeAssertionEvaluator();
+    if (condition != null) {
+      condition.accept(this);
+      condition.accept(assertionEvaluator);
+    }
+    final Instruction branchingPoint = myBuilder.prevInstruction;
+    final PyExpression truePart = node.getTruePart();
+    final PyExpression falsePart = node.getFalsePart();
+    if (truePart != null) {
+      InstructionBuilder.addAssertInstructions(myBuilder, assertionEvaluator);
+      truePart.accept(this);
+      myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
+    }
+    if (falsePart != null) {
+      myBuilder.prevInstruction = branchingPoint;
+      falsePart.accept(this);
+      myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
+    }
+  }
+
+  @Override
   public void visitPyIfStatement(final PyIfStatement node) {
     myBuilder.startNode(node);
     final PyIfPart ifPart = node.getIfPart();
