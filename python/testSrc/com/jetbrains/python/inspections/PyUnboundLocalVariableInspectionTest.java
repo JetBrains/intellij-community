@@ -173,6 +173,11 @@ public class PyUnboundLocalVariableInspectionTest extends PyTestCase {
     doTest();
   }
 
+  // PY-6114
+  public void testUnboundUnreachable() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(false) + ".py");
     myFixture.enableInspections(PyUnboundLocalVariableInspection.class);

@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.HashSet;
@@ -111,12 +112,19 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         if (!isFirstUnboundRead(node, owner)) {
           return;
         }
-        final PsiElement resolved = node.getReference(resolveWithoutImplicits()).resolve();
+        final PsiPolyVariantReference ref = node.getReference(resolveWithoutImplicits());
+        if (ref == null) {
+          return;
+        }
+        final PsiElement resolved = ref.resolve();
         final boolean isBuiltin = PyBuiltinCache.getInstance(node).hasInBuiltins(resolved);
         if (owner instanceof PyClass) {
           if (isBuiltin || ScopeUtil.getDeclarationScopeOwner(owner, name) != null) {
             return;
           }
+        }
+        if (PyUnreachableCodeInspection.hasAnyInterruptedControlFlowPaths(node)) {
+          return;
         }
         if (owner instanceof PyFile) {
           if (isBuiltin) {
@@ -192,5 +200,5 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
                       PyBundle.message("INSP.unbound.function.too.large", owner.getName()),
                       ProblemHighlightType.WEAK_WARNING);
     }
-  };
+  }
 }

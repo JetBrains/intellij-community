@@ -426,6 +426,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           if ((object_type != null) && object_type.getPossibleInstanceMembers().contains(refname)) return;
         }
         else {
+          if (PyUnreachableCodeInspection.hasAnyInterruptedControlFlowPaths(refex)) {
+            return;
+          }
           if (LanguageLevel.forElement(node).isOlderThan(LanguageLevel.PYTHON26)) {
             if ("with".equals(refname)) {
               actions.add(new UnresolvedRefAddFutureImportQuickFix());
