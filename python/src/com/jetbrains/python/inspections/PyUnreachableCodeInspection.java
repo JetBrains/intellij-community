@@ -52,7 +52,7 @@ public class PyUnreachableCodeInspection extends PyInspection {
           ControlFlowUtil.iteratePrev(instructions.length - 1, instructions, new Function<Instruction, ControlFlowUtil.Operation>() {
             @Override
             public ControlFlowUtil.Operation fun(Instruction instruction) {
-              if (instruction.allPred().isEmpty() && instruction.num() != 0) {
+              if (instruction.allPred().isEmpty() && !isFirstInstruction(instruction)) {
                 unreachable.add(instruction.getElement());
               }
               return ControlFlowUtil.Operation.NEXT;
@@ -77,7 +77,7 @@ public class PyUnreachableCodeInspection extends PyInspection {
         ControlFlowUtil.iteratePrev(start, instructions, new Function<Instruction, ControlFlowUtil.Operation>() {
           @Override
           public ControlFlowUtil.Operation fun(Instruction instruction) {
-            if (instruction.allPred().isEmpty() && instruction.num() != 0) {
+            if (instruction.allPred().isEmpty() && !isFirstInstruction(instruction)) {
               resultRef.set(true);
               return ControlFlowUtil.Operation.BREAK;
             }
@@ -88,5 +88,9 @@ public class PyUnreachableCodeInspection extends PyInspection {
       }
     }
     return false;
+  }
+
+  private static boolean isFirstInstruction(Instruction instruction) {
+    return instruction.num() == 0;
   }
 }
