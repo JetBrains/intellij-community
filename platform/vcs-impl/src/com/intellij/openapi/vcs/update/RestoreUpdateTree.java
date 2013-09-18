@@ -41,8 +41,10 @@ public class RestoreUpdateTree implements ProjectComponent, JDOMExternalizable {
     myProject = project;
   }
 
+  @Override
   public void projectOpened() {
     StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
+      @Override
       public void run() {
         if (myUpdateInfo != null && !myUpdateInfo.isEmpty() && ProjectReloadState.getInstance(myProject).isAfterAutomaticReload()) {
           ActionInfo actionInfo = myUpdateInfo.getActionInfo();
@@ -61,20 +63,25 @@ public class RestoreUpdateTree implements ProjectComponent, JDOMExternalizable {
     });
   }
 
+  @Override
   public void projectClosed() {
 
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "RestoreUpdateTree";
   }
 
+  @Override
   public void initComponent() { }
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     Element child = element.getChild(UPDATE_INFO);
     if (child != null) {
@@ -84,6 +91,7 @@ public class RestoreUpdateTree implements ProjectComponent, JDOMExternalizable {
       }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     if (myUpdateInfo != null) {
       Element child = new Element(UPDATE_INFO);

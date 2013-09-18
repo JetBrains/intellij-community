@@ -241,7 +241,6 @@
     <editorActionHandler action="EditorEscape" implementationClass="com.intellij.codeInsight.hint.EscapeHandler" id="hide-hints"/>
     <ComponentRoamingType component="ChangeListManager" type="DISABLED"/>
     <ComponentRoamingType component="RestoreUpdateTree" type="DISABLED"/>
-    <ComponentRoamingType component="PropertiesComponent" type="DISABLED"/>
 
     <projectConfigurable instance="com.intellij.javaee.ExternalResourceConfigurable" key="display.name.edit.external.resource"
                          bundle="messages.XmlBundle" id="preferences.externalResources">

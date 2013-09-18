@@ -62,6 +62,7 @@ import java.util.*;
 
 @State(
   name = "SvnConfiguration",
+  roamingType = RoamingType.DISABLED,
   storages = {
     @Storage(
       file = StoragePathMacros.WORKSPACE_FILE

@@ -16,10 +16,7 @@
 package git4idea.config;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import git4idea.ui.branch.GitBranchSyncSetting;
@@ -34,7 +31,7 @@ import java.util.Map;
 /**
  * Git VCS settings
  */
-@State(name = "Git.Settings", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "Git.Settings", roamingType = RoamingType.DISABLED, storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
 public class GitVcsSettings implements PersistentStateComponent<GitVcsSettings.State> {
 
   private static final int PREVIOUS_COMMIT_AUTHORS_LIMIT = 16; // Limit for previous commit authors
