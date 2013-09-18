@@ -46,13 +46,16 @@ import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.impl.frame.XVariablesView;
+import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
+import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
 import com.jetbrains.python.debugger.PySourcePosition;
+import com.jetbrains.python.debugger.PyStackFrame;
+import com.jetbrains.python.debugger.PyStackFrameInfo;
 import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.ProcessRunner;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -681,16 +684,16 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       mySelected = state;
       
       if (mySelected) {
-        PyConsoleStackFrameConnector session = new PyConsoleStackFrameConnector(getProject(), myPydevConsoleCommunication);
-        final XVariablesView view = new XVariablesView(session, null);
-        session.resume();
-        
+        final XStandaloneVariablesView view = new XStandaloneVariablesView(getProject(), new PyDebuggerEditorsProvider());
+        PyStackFrame stackFrame = new PyStackFrame(getProject(), myPydevConsoleCommunication, new PyStackFrameInfo("", "", "", null), null);
+        view.showVariables(stackFrame);
+
         getConsoleView().showVariables(view);
         
         myPydevConsoleCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
           @Override
           public void executionFinished() {
-            view.rebuildView();
+            view.showMessage("Execution finished");
           }
 
           @Override
