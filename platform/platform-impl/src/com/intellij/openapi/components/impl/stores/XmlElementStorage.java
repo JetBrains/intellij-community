@@ -405,7 +405,11 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       try {
         if (myStreamProvider != null && myStreamProvider.isEnabled() && (myProviderUpToDateHash == -1 || myProviderUpToDateHash != hash)) {
           try {
-            saveForProviders(myStreamProvider);
+            //noinspection IfStatementWithIdenticalBranches
+            if (saveForProviders(myStreamProvider)) {
+              //noinspection UnnecessaryReturnStatement
+              return;
+            }
           }
           finally {
             myProviderUpToDateHash = hash;
@@ -419,10 +423,8 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
     private void saveLocally(final Integer hash) {
       try {
-        if (!isHashUpToDate(hash)) {
-          if (_needsSave(hash)) {
-            doSave();
-          }
+        if (!isHashUpToDate(hash) && _needsSave(hash)) {
+          doSave();
         }
       }
       finally {
@@ -430,7 +432,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       }
     }
 
-    private void saveForProviders(@NotNull StreamProvider streamProvider) {
+    private boolean saveForProviders(@NotNull StreamProvider streamProvider) {
       for (final RoamingType roamingType : RoamingType.values()) {
         if (roamingType == RoamingType.DISABLED) {
           continue;
@@ -466,17 +468,20 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
         }
 
         try {
-          StorageUtil.sendContent(streamProvider, myFileSpec, actualDocument, roamingType, true);
+          boolean result = StorageUtil.sendContent(streamProvider, myFileSpec, actualDocument, roamingType, true);
           TObjectLongHashMap<String> versions = loadVersions(actualDocument.getRootElement().getChildren(StorageData.COMPONENT));
           if (!versions.isEmpty()) {
             Document versionDoc = new Document(StateStorageManagerImpl.createComponentVersionsXml(versions));
             StorageUtil.sendContent(streamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
           }
+          return result;
         }
         catch (IOException e) {
           LOG.warn(e);
         }
       }
+
+      return false;
     }
 
     private boolean isHashUpToDate(final Integer hash) {

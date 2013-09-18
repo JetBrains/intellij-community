@@ -90,11 +90,14 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
 
     @Override
-    public void saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
+    public boolean saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
+      boolean result = false;
       for (StreamProvider streamProvider : getStreamProviders()) {
         try {
           if (streamProvider.isEnabled()) {
-            streamProvider.saveContent(fileSpec, content, size, roamingType, async);
+            if (streamProvider.saveContent(fileSpec, content, size, roamingType, async)) {
+              result = true;
+            }
           }
         }
         catch (ConnectException e) {
@@ -104,6 +107,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
           LOG.debug(e);
         }
       }
+      return result;
     }
 
     @Override

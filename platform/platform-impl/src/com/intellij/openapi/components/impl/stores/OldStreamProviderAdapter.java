@@ -27,14 +27,15 @@ public final class OldStreamProviderAdapter extends StreamProvider implements Cu
   }
 
   @Override
-  public void saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
+  public boolean saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
     if (myRoamingType == roamingType) {
       if (roamingType == RoamingType.PER_USER && StorageUtil.isProjectOrModuleFile(fileSpec)) {
-        return;
+        return false;
       }
 
       myProvider.saveContent(fileSpec, new BufferExposingByteArrayInputStream(content, size), size, roamingType, async);
     }
+    return false;
   }
 
   @Nullable
