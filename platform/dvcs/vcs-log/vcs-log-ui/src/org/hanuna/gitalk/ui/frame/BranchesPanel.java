@@ -6,7 +6,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
 import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.ui.VcsLogUI;
@@ -82,18 +81,12 @@ public class BranchesPanel extends JPanel {
 
   private List<VcsRef> getRefsToDisplayOnPanel() {
     Collection<VcsRef> allRefs = myDataHolder.getDataPack().getRefsModel().getAllRefs();
-    final List<VcsRef> localRefs = ContainerUtil.filter(allRefs, new Condition<VcsRef>() {
-      @Override
-      public boolean value(VcsRef ref) {
-        return ref.getType().isLocalOrHead();
-      }
-    });
 
     List<VcsRef> refsToShow = ContainerUtil.filter(allRefs, new Condition<VcsRef>() {
       @Override
       public boolean value(VcsRef ref) {
         if (ref.getType() == VcsRef.RefType.REMOTE_BRANCH) {
-          return thereIsLocalRefOfHash(ref.getCommitHash(), localRefs);
+          return true;
         }
         if (ref.getType().isLocalOrHead()) {
           return true;
@@ -123,15 +116,6 @@ public class BranchesPanel extends JPanel {
       map.putValue(ref.getRoot(), ref);
     }
     return map;
-  }
-
-  private static boolean thereIsLocalRefOfHash(Hash commitHash, List<VcsRef> localRefs) {
-    for (VcsRef localRef : localRefs) {
-      if (localRef.getCommitHash().equals(commitHash)) {
-        return true;
-      }
-    }
-    return false;
   }
 
 }
