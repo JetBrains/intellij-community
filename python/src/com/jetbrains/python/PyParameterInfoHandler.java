@@ -39,7 +39,9 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
   public PyArgumentList findElementForParameterInfo(final CreateParameterInfoContext context) {
     PyArgumentList arglist = findArgumentList(context);
     if (arglist != null) {
-      CallArgumentsMapping result = arglist.analyzeCall(PyResolveContext.noImplicits());
+      final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(arglist.getContainingFile());
+      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(typeEvalContext);
+      CallArgumentsMapping result = arglist.analyzeCall(resolveContext);
       if (result.getMarkedCallee() != null) {
         context.setItemsToShow(new Object[] { result });
         return arglist;
