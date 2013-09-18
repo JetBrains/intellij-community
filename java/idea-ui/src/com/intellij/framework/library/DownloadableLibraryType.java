@@ -16,9 +16,7 @@
 package com.intellij.framework.library;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.libraries.LibraryType;
-import com.intellij.openapi.roots.libraries.NewLibraryConfiguration;
-import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
+import com.intellij.openapi.roots.libraries.*;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
 import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,19 +25,41 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.net.URL;
+import java.util.List;
 
 /**
  * @author nik
  */
-public class DownloadableLibraryType extends LibraryType<LibraryVersionProperties> {
+public abstract class DownloadableLibraryType extends LibraryType<LibraryVersionProperties> {
+  protected final Icon myIcon;
   private final String myLibraryCategoryName;
   private final DownloadableLibraryDescription myLibraryDescription;
 
-  public DownloadableLibraryType(@NotNull PersistentLibraryKind<LibraryVersionProperties> kind, @NotNull String libraryCategoryName,
-                                 @NotNull DownloadableLibraryDescription description) {
-    super(kind);
+  public DownloadableLibraryType(@NotNull String libraryCategoryName,
+                                          @NotNull String libraryTypeId,
+                                          @NotNull String groupId,
+                                          @NotNull Icon icon,
+                                          @NotNull URL... localUrls) {
+    super(new PersistentLibraryKind<LibraryVersionProperties>(libraryTypeId) {
+      @NotNull
+      @Override
+      public LibraryVersionProperties createDefaultProperties() {
+        return new LibraryVersionProperties();
+      }
+    });
     myLibraryCategoryName = libraryCategoryName;
-    myLibraryDescription = description;
+    myLibraryDescription = DownloadableLibraryService.getInstance().createLibraryDescription(groupId, localUrls);
+    myIcon = icon;
+  }
+
+  @Nullable
+  private static LibraryVersionProperties detectVersion(List<VirtualFile> classesRoots, String detectionClass) {
+    if (!LibraryUtil.isClassAvailableInLibrary(classesRoots, detectionClass)) {
+      return null;
+    }
+    final String version = JarVersionDetectionUtil.detectJarVersion(detectionClass, classesRoots);
+    return new LibraryVersionProperties(version);
   }
 
   @Override
@@ -74,8 +94,19 @@ public class DownloadableLibraryType extends LibraryType<LibraryVersionPropertie
     return DownloadableLibraryService.getInstance().createDownloadableLibraryEditor(myLibraryDescription, editorComponent, this);
   }
 
-  @Override
+  @NotNull
   public Icon getIcon() {
+    return myIcon;
+  }
+
+  protected abstract String[] getDetectionClassNames();
+
+  @Override
+  public LibraryVersionProperties detect(@NotNull List<VirtualFile> classesRoots) {
+    for (String className : getDetectionClassNames()) {
+      final LibraryVersionProperties versionProperties = detectVersion(classesRoots, className);
+      if (versionProperties != null) return versionProperties;
+    }
     return null;
   }
 }
