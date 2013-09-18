@@ -32,7 +32,7 @@ public class NewProjectWizard extends AbstractWizard<Step> {
   public NewProjectWizard(String title, @Nullable Project project) {
     super(title, project);
     myContext = new WizardContext(project);
-    addStep(new ProjectTypeStep(project));
+    addStep(new ProjectTypeStep(project, getDisposable()));
     init();
   }
 

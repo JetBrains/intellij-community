@@ -59,9 +59,11 @@ public class AddSupportForFrameworksPanel implements Disposable {
   @NonNls private static final String EMPTY_CARD = "empty";
   private JPanel myMainPanel;
   private JPanel myFrameworksPanel;
+
+  private List<FrameworkSupportInModuleProvider> myProviders;
   private List<FrameworkSupportNodeBase> myRoots;
+
   private final LibrariesContainer myLibrariesContainer;
-  private final List<FrameworkSupportInModuleProvider> myProviders;
   private final FrameworkSupportModelBase myModel;
   private final JPanel myOptionsPanel;
   private final FrameworksTree myFrameworksTree;
@@ -69,14 +71,13 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private final Map<FrameworkGroup<?>, JPanel> myInitializedGroupPanels = new HashMap<FrameworkGroup<?>, JPanel>();
   private FrameworkSupportNodeBase myLastSelectedNode;
 
-  public AddSupportForFrameworksPanel(final List<FrameworkSupportInModuleProvider> providers, final FrameworkSupportModelBase model) {
+  public AddSupportForFrameworksPanel(final List<FrameworkSupportInModuleProvider> providers,
+                                      final FrameworkSupportModelBase model, boolean vertical) {
     myModel = model;
     myLibrariesContainer = model.getLibrariesContainer();
-    myProviders = providers;
-    createNodes();
 
-    final Splitter splitter = new Splitter(false, 0.30f, 0.1f, 0.7f);
-    myFrameworksTree = new FrameworksTree(myRoots) {
+    final Splitter splitter = new Splitter(vertical, 0.30f, 0.1f, 0.7f);
+    myFrameworksTree = new FrameworksTree() {
       @Override
       protected void onNodeStateChanged(CheckedTreeNode node) {
         if (!(node instanceof FrameworkSupportNode)) return;
@@ -91,6 +92,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
         onFrameworkStateChanged();
       }
     };
+    setProviders(providers);
+
     myFrameworksTree.addTreeSelectionListener(new TreeSelectionListener() {
       public void valueChanged(TreeSelectionEvent e) {
         onSelectionChanged();
@@ -105,6 +108,12 @@ public class AddSupportForFrameworksPanel implements Disposable {
     myFrameworksPanel.add(splitter, BorderLayout.CENTER);
 
     myFrameworksTree.setSelectionRow(0);    
+  }
+
+  public void setProviders(List<FrameworkSupportInModuleProvider> providers) {
+    myProviders = providers;
+    createNodes();
+    myFrameworksTree.setRoots(myRoots);
   }
 
   protected void onFrameworkStateChanged() {}

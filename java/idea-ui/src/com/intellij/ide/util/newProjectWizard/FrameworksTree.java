@@ -23,9 +23,11 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -34,10 +36,20 @@ import java.util.List;
 public class FrameworksTree extends CheckboxTree {
   private boolean myProcessingMouseEventOnCheckbox;
 
+  public FrameworksTree() {
+    this(Collections.<FrameworkSupportNodeBase>emptyList());
+  }
+
   public FrameworksTree(List<FrameworkSupportNodeBase> roots) {
     super(new FrameworksTreeRenderer(), new FrameworksRootNode(roots), new CheckPolicy(false, true, true, false));
     setRootVisible(false);
     setShowsRootHandles(false);
+    putClientProperty("JTree.lineStyle", "None");
+    TreeUtil.expandAll(this);
+  }
+
+  public void setRoots(List<FrameworkSupportNodeBase> roots) {
+    setModel(new DefaultTreeModel(new FrameworksRootNode(roots)));
     TreeUtil.expandAll(this);
   }
 

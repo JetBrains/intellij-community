@@ -42,6 +42,11 @@ public class CheckboxTree extends CheckboxTreeBase {
 
     installSpeedSearch();
   }
+
+  // for designer
+  public CheckboxTree() {
+  }
+
   public CheckboxTree(final CheckboxTreeCellRenderer cellRenderer, CheckedTreeNode root, final CheckPolicy checkPolicy) {
     super(cellRenderer, root, checkPolicy);
 

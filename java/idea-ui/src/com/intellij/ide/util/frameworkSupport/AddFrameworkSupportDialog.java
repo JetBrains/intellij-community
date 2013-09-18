@@ -37,7 +37,7 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
     myModule = module;
     final LibrariesContainer container = LibrariesContainerFactory.createContainer(module.getProject());
     final FrameworkSupportModelBase model = new FrameworkSupportModelImpl(module.getProject(), contentRootPath, container);
-    myAddSupportPanel = new AddSupportForFrameworksPanel(providers, model) {
+    myAddSupportPanel = new AddSupportForFrameworksPanel(providers, model, false) {
       @Override
       protected void onFrameworkStateChanged() {
         setOKActionEnabled(isOKActionEnabled());

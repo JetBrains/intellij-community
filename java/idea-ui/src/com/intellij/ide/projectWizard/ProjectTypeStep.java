@@ -20,12 +20,14 @@ import com.intellij.framework.FrameworkTypeEx;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelImpl;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
+import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ide.wizard.StepAdapter;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
-import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
@@ -33,8 +35,10 @@ import com.intellij.util.ArrayUtil;
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -45,13 +49,12 @@ public class ProjectTypeStep extends StepAdapter {
 
   private JPanel myPanel;
   private JBList myProjectTypeList;
-  private JPanel myFrameworksPanel;
-  private JPanel myHeader;
+  private JPanel myOptionsPanel;
 
-  private final List<FrameworkPanel> myFrameworks = new ArrayList<FrameworkPanel>();
+  private final AddSupportForFrameworksPanel myFrameworksPanel;
   private final FrameworkSupportModelBase myModel;
 
-  public ProjectTypeStep(Project project) {
+  public ProjectTypeStep(Project project, Disposable disposable) {
 
     final LibrariesContainer container = LibrariesContainerFactory.createContainer(project);
     myModel = new FrameworkSupportModelImpl(project, "", container);
@@ -63,27 +66,24 @@ public class ProjectTypeStep extends StepAdapter {
         updateFrameworks((ProjectCategory)myProjectTypeList.getSelectedValue());
       }
     });
-    myProjectTypeList.setSelectedIndex(0);
 
-    myFrameworksPanel.setLayout(new VerticalFlowLayout());
-    myHeader.setLayout(new VerticalFlowLayout());
+    myFrameworksPanel = new AddSupportForFrameworksPanel(Collections.<FrameworkSupportInModuleProvider>emptyList(), myModel, true);
+    Disposer.register(disposable, myFrameworksPanel);
+
+    myOptionsPanel.add(myFrameworksPanel.getMainPanel(), BorderLayout.CENTER);
+    myProjectTypeList.setSelectedIndex(0);
   }
 
   private void updateFrameworks(ProjectCategory projectCategory) {
-    myFrameworks.clear();
-    myFrameworksPanel.removeAll();
-    myHeader.removeAll();
+    List<FrameworkSupportInModuleProvider> providers = new ArrayList<FrameworkSupportInModuleProvider>();
     if (projectCategory != null) {
-      List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getAllProviders();
-      for (FrameworkSupportInModuleProvider framework : providers) {
+      for (FrameworkSupportInModuleProvider framework : FrameworkSupportUtil.getAllProviders()) {
         if (matchFramework(projectCategory, framework)) {
-          addFramework(framework, projectCategory);
+          providers.add(framework);
         }
       }
     }
-    myHeader.setVisible(myHeader.getComponentCount() > 0);
-    myPanel.revalidate();
-    myPanel.repaint();
+    myFrameworksPanel.setProviders(providers);
   }
 
   private static boolean matchFramework(ProjectCategory projectCategory, FrameworkSupportInModuleProvider framework) {
@@ -112,20 +112,6 @@ public class ProjectTypeStep extends StepAdapter {
     }
 
     return framework.isEnabledForModuleBuilder(projectCategory.createModuleBuilder());
-  }
-
-  private void addFramework(final FrameworkSupportInModuleProvider framework, ProjectCategory category) {
-
-    FrameworkPanel frameworkPanel;
-    if (ArrayUtil.contains(framework.getFrameworkType().getId(), category.getAssociatedFrameworkIds())) {
-      frameworkPanel = new FrameworkPanel(framework, myModel, true);
-      myHeader.add(frameworkPanel);
-    }
-    else {
-      frameworkPanel = new FrameworkPanel(framework, myModel, false);
-      myFrameworksPanel.add(frameworkPanel);
-    }
-    myFrameworks.add(frameworkPanel);
   }
 
   @Override
