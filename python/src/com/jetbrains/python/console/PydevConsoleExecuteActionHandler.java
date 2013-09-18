@@ -229,7 +229,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   }
 
   @Override
-  public void executionFinished() {
+  public void commandExecuted() {
     final LanguageConsoleImpl console = myConsoleView.getConsole();
     final Editor currentEditor = console.getConsoleEditor();
     ordinaryPrompt(console, currentEditor);
