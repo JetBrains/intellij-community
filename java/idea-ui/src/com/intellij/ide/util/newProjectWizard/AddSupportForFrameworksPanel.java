@@ -59,6 +59,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
   @NonNls private static final String EMPTY_CARD = "empty";
   private JPanel myMainPanel;
   private JPanel myFrameworksPanel;
+  private JLabel myLabel;
 
   private List<FrameworkSupportInModuleProvider> myProviders;
   private List<FrameworkSupportNodeBase> myRoots;
@@ -76,7 +77,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
     myModel = model;
     myLibrariesContainer = model.getLibrariesContainer();
 
-    final Splitter splitter = new Splitter(vertical, 0.30f, 0.1f, 0.7f);
+    myLabel.setVisible(!vertical);
+    final Splitter splitter = new Splitter(vertical, 0.3f, 0.1f, 0.7f);
     myFrameworksTree = new FrameworksTree() {
       @Override
       protected void onNodeStateChanged(CheckedTreeNode node) {
