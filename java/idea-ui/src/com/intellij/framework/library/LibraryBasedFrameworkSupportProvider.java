@@ -14,11 +14,11 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class UnderlyingFrameworkSupportProviderBase extends FrameworkSupportInModuleProvider {
+public class LibraryBasedFrameworkSupportProvider extends FrameworkSupportInModuleProvider {
   private final FrameworkTypeEx myFrameworkType;
   private final Class<? extends DownloadableLibraryType> myLibraryTypeClass;
 
-  public UnderlyingFrameworkSupportProviderBase(FrameworkTypeEx frameworkType, Class<? extends DownloadableLibraryType> libraryTypeClass) {
+  public LibraryBasedFrameworkSupportProvider(FrameworkTypeEx frameworkType, Class<? extends DownloadableLibraryType> libraryTypeClass) {
     myFrameworkType = frameworkType;
     myLibraryTypeClass = libraryTypeClass;
   }
