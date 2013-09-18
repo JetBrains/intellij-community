@@ -1061,4 +1061,32 @@ public final class PsiUtil extends PsiUtilCore {
     if (className == null) return null;
     return className + "." + member.getName();
   }
+
+  static boolean checkSameExpression(PsiExpression templateExpr, final PsiExpression expression) {
+    return templateExpr.equals(skipParenthesizedExprDown(expression));
+  }
+
+  public static boolean isCondition(PsiExpression expr, PsiElement parent) {
+    if (parent instanceof PsiIfStatement) {
+      if (checkSameExpression(expr, ((PsiIfStatement)parent).getCondition())) {
+        return true;
+      }
+    }
+    else if (parent instanceof PsiWhileStatement) {
+      if (checkSameExpression(expr, ((PsiWhileStatement)parent).getCondition())) {
+        return true;
+      }
+    }
+    else if (parent instanceof PsiForStatement) {
+      if (checkSameExpression(expr, ((PsiForStatement)parent).getCondition())) {
+        return true;
+      }
+    }
+    else if (parent instanceof PsiDoWhileStatement) {
+      if (checkSameExpression(expr, ((PsiDoWhileStatement)parent).getCondition())) {
+        return true;
+      }
+    }
+    return false;
+  }
 }

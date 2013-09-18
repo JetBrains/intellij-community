@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,12 +55,12 @@ public class PsiPolyExpressionUtil {
         if (parameterList != null) {
           final PsiTypeElement[] typeElements = parameterList.getTypeParameterElements();
           if (typeElements.length == 1 && typeElements[0].getType() instanceof PsiDiamondType) {
-            return isAssignmentOrInvocationContext(expression.getParent());
+            return isInAssignmentOrInvocationContext(expression);
           }
         }
       }
     } else if (expression instanceof PsiMethodCallExpression) {
-      if (isAssignmentOrInvocationContext(expression.getParent()) && ((PsiMethodCallExpression)expression).getTypeArguments().length == 0) {
+      if (isInAssignmentOrInvocationContext(expression) && ((PsiMethodCallExpression)expression).getTypeArguments().length == 0) {
         final PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
         if (method != null) {
           final Set<PsiTypeParameter> typeParameters = new HashSet<PsiTypeParameter>(Arrays.asList(method.getTypeParameters()));
@@ -75,7 +76,7 @@ public class PsiPolyExpressionUtil {
     else if (expression instanceof PsiConditionalExpression) {
       final ConditionalKind conditionalKind = isBooleanOrNumeric(expression);
       if (conditionalKind == null) {
-        return isAssignmentOrInvocationContext(expression.getParent());
+        return isInAssignmentOrInvocationContext(expression);
       }
     }
     return false;
@@ -121,12 +122,14 @@ public class PsiPolyExpressionUtil {
     });
   }
 
-  private static boolean isAssignmentOrInvocationContext(PsiElement context) {
-    return context instanceof PsiExpressionList || isAssignmentContext(context);
+  private static boolean isInAssignmentOrInvocationContext(PsiExpression expr) {
+    final PsiElement context = expr.getParent();
+    return context instanceof PsiExpressionList || isAssignmentContext(expr, context);
   }
 
-  private static boolean isAssignmentContext(PsiElement context) {
-    return context instanceof PsiReturnStatement ||
+  private static boolean isAssignmentContext(PsiExpression expr, PsiElement context) {
+    return PsiUtil.isCondition(expr, context) ||
+           context instanceof PsiReturnStatement ||
            context instanceof PsiAssignmentExpression ||
            context instanceof PsiVariable;
   }
