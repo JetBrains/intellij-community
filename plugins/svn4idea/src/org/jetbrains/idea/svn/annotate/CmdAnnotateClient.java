@@ -37,9 +37,6 @@ public class CmdAnnotateClient extends BaseSvnClient implements AnnotateClient {
                        boolean includeMergedRevisions,
                        @Nullable SVNDiffOptions diffOptions,
                        @Nullable final ISVNAnnotateHandler handler) throws VcsException {
-    // TODO: after merge remove setting includeMergedRevisions to false and update parsing
-    includeMergedRevisions = false;
-
     List<String> parameters = new ArrayList<String>();
     CommandUtil.put(parameters, target.getPathOrUrlString(), pegRevision);
     parameters.add("--revision");
@@ -75,7 +72,10 @@ public class CmdAnnotateClient extends BaseSvnClient implements AnnotateClient {
 
   private static void invokeHandler(ISVNAnnotateHandler handler, LineEntry entry) throws SVNException {
     // line numbers in our api start from 0 - not from 1 like in svn output
-    handler.handleLine(entry.date(), entry.revision(), entry.author(), null, null, 0, null, null, entry.lineNumber - 1);
+    // "line" value is not used in handlers - so null is passed
+    handler
+      .handleLine(entry.date(), entry.revision(), entry.author(), null, entry.mergedDate(), entry.mergedRevision(), entry.mergedAuthor(),
+                  entry.mergedPath(), entry.lineNumber - 1);
   }
 
   @XmlRootElement(name = "blame")
@@ -99,15 +99,53 @@ public class CmdAnnotateClient extends BaseSvnClient implements AnnotateClient {
     @XmlElement(name = "commit")
     public CommitEntry commit;
 
+    @XmlElement(name = "merged")
+    public MergedEntry merged;
+
     public long revision() {
+      return revision(commit);
+    }
+
+    @Nullable
+    public String author() {
+      return author(commit);
+    }
+
+    @Nullable
+    public Date date() {
+      return date(commit);
+    }
+
+    @Nullable
+    public String mergedPath() {
+      return merged != null ? merged.path : null;
+    }
+
+    public long mergedRevision() {
+      return merged != null ? revision(merged.commit) : 0;
+    }
+
+    @Nullable
+    public String mergedAuthor() {
+      return merged != null ? author(merged.commit) : null;
+    }
+
+    @Nullable
+    public Date mergedDate() {
+      return merged != null ? date(merged.commit) : null;
+    }
+
+    private static long revision(@Nullable CommitEntry commit) {
       return commit != null ? commit.revision : 0;
     }
 
-    public String author() {
+    @Nullable
+    private static String author(@Nullable CommitEntry commit) {
       return commit != null ? commit.author : null;
     }
 
-    public Date date() {
+    @Nullable
+    private static Date date(@Nullable CommitEntry commit) {
       return commit != null ? commit.date : null;
     }
   }
@@ -122,5 +160,14 @@ public class CmdAnnotateClient extends BaseSvnClient implements AnnotateClient {
 
     @XmlElement(name = "date")
     public Date date;
+  }
+
+  public static class MergedEntry {
+
+    @XmlAttribute(name = "path")
+    public String path;
+
+    @XmlElement(name = "commit")
+    public CommitEntry commit;
   }
 }
