@@ -191,8 +191,8 @@ private layoutPlugins(layouts) {
     layouts.layoutPlugin("python-localization")
     */
     layouts.layoutPlugin("rest")
-    /*
     layouts.layoutPlugin("python-rest")
+    /*
     layouts.layoutPlugin("pycharm-flask")
     layouts.layoutPlugin("pycharm-numpy")
     layouts.layoutPlugin("textmate") {
