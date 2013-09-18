@@ -66,7 +66,7 @@ public class PyUnreachableCodeInspection extends PyInspection {
     }
   }
 
-  public static boolean isUnreachable(@NotNull PsiElement element) {
+  public static boolean hasAnyInterruptedControlFlowPaths(@NotNull PsiElement element) {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(element);
     if (owner != null) {
       final ControlFlow flow = ControlFlowCache.getControlFlow(owner);
