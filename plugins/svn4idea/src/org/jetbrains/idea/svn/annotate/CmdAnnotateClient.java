@@ -52,9 +52,7 @@ public class CmdAnnotateClient extends BaseSvnClient implements AnnotateClient {
 
   public void parseOutput(@NotNull String output, @Nullable ISVNAnnotateHandler handler) throws VcsException {
     try {
-      JAXBContext context = JAXBContext.newInstance(BlameInfo.class);
-      Unmarshaller unmarshaller = context.createUnmarshaller();
-      BlameInfo info = (BlameInfo)unmarshaller.unmarshal(new StringReader(output));
+      BlameInfo info = CommandUtil.parse(output, BlameInfo.class);
 
       if (handler != null && info != null && info.target != null && info.target.lineEntries != null) {
         for (LineEntry entry : info.target.lineEntries) {
