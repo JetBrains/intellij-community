@@ -158,6 +158,7 @@
     <pluginDescriptor mavenId="org.apache.maven.plugins:maven-surefire-plugin">
       <param name="additionalClasspathElements/additionalClasspathElement" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$DirPath"/>
       <param name="classpathDependencyExcludes/classpathDependencyExclude" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$DependencyWithoutVersion"/>
+      <param name="dependenciesToScan/dependency" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$DependencyWithoutVersion"/>
       <param name="forkMode" values="never, once, always, perthread" soft="true"/>
       <param name="junitArtifactName" refProvider="org.jetbrains.idea.maven.plugins.api.common.MavenCommonParamReferenceProviders$DependencyWithoutVersion"/>
       <param name="reportFormat" values="brief, plain" soft="true"/>
