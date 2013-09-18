@@ -18,7 +18,9 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.graphInference.constraints.*;
+import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula;
+import com.intellij.psi.impl.source.resolve.graphInference.constraints.ExpressionCompatibilityConstraint;
+import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompatibilityConstraint;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
@@ -265,7 +267,7 @@ public class InferenceSession {
             }
           }
           if (lub != null) {
-            inferenceVariable.setInstantiation(lub);
+            inferenceVariable.setInstantiation(lub instanceof PsiCapturedWildcardType ? ((PsiCapturedWildcardType)lub).getWildcard() : lub);
           }
           else {
             PsiType glb = null;
