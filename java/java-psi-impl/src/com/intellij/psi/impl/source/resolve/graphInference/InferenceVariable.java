@@ -32,7 +32,7 @@ public class InferenceVariable {
   private Map<InferenceBound, List<PsiType>> myBounds = new HashMap<InferenceBound, List<PsiType>>();
   private PsiTypeParameter myParameter;
 
-  private PsiType myInstantiation;
+  private PsiType myInstantiation = PsiType.NULL;
   public InferenceVariable(PsiTypeParameter parameter) {
     myParameter = parameter;
   }

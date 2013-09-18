@@ -86,7 +86,8 @@ public class PsiPolyExpressionUtil {
     return PsiTypesUtil.getExpectedTypeByParent(expression);
   }
   
-  public static Boolean mentionsTypeParameters(PsiType returnType, final Set<PsiTypeParameter> typeParameters) {
+  public static Boolean mentionsTypeParameters(@Nullable PsiType returnType, final Set<PsiTypeParameter> typeParameters) {
+    if (returnType == null) return false;
     return returnType.accept(new PsiTypeVisitor<Boolean>() {
       @Nullable
       @Override
