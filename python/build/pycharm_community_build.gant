@@ -107,7 +107,7 @@ target('default': "Build artifacts") {
   def normalizedHome = ch.replace('\\', '/')
   def normalizedPythonHome = pythonCommunityHome.replace('\\', '/')
   def approvedJars = ["$normalizedHome/lib/", "$normalizedPythonHome/lib/", "$normalizedHome/xml/relaxng/lib/"]
-  def usedJars = buildModulesAndCollectUsedJars(modules, approvedJars, [])
+  def usedJars = buildModulesAndCollectUsedJars(modules, approvedJars, ["/ant/"])
 
   layoutCommunity(usedJars)
 
