@@ -123,7 +123,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
             return;
           }
         }
-        if (PyUnreachableCodeInspection.isUnreachable(node)) {
+        if (PyUnreachableCodeInspection.hasAnyInterruptedControlFlowPaths(node)) {
           return;
         }
         if (owner instanceof PyFile) {
