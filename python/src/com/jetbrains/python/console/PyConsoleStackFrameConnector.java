@@ -64,7 +64,7 @@ public class PyConsoleStackFrameConnector implements XStackFrameAwareSession {
 
   @Override
   public void reportError(@NotNull String message) {
-    throw new NotImplementedException();
+    throw new UnsupportedOperationException();
   }
 
   @Override
