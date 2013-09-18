@@ -388,6 +388,7 @@
     <xml.xmlExtension implementation="com.jetbrains.pyramid.templates.highlighting.ChameleonXmlExtension" order="first"/>
     <highlightErrorFilter implementation="com.jetbrains.pyramid.templates.highlighting.ChameleonErrorFilter"/>
     <psi.fileReferenceHelper implementation="com.jetbrains.pyramid.templates.ref.PyramidStaticFileReferenceHelper"/>
+    <lang.commenter language="Chameleon" implementationClass="com.jetbrains.pyramid.templates.editor.ChameleonCommenter"/>
   </extensions>
 
   <extensionPoints>
