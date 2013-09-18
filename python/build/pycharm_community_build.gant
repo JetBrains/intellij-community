@@ -109,7 +109,7 @@ target('default': "Build artifacts") {
   def approvedJars = ["$normalizedHome/lib/", "$normalizedPythonHome/lib/", "$normalizedHome/xml/relaxng/lib/"]
   def usedJars = buildModulesAndCollectUsedJars(modules, approvedJars, [])
 
-  layoutCommunity(paths, usedJars)
+  layoutCommunity(usedJars)
 
 
   buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin])
@@ -119,18 +119,14 @@ target('default': "Build artifacts") {
             "pycharm", false, true, system_selector)
   */
 
-  String tarRoot = isEap() ? "pycharm-community-$buildNumber" : "pycharm-community-${p("component.version.major")}.${p("component.version.minor")}"
-  buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
-
   /*
-  String macAppRoot = isEap() ? "PyCharm ${p("component.version.major")}.${p("component.version.minor")} EAP.app" : "PyCharm.app"
-  buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll], paths.distMac)
   signMacZip("pycharm")
   buildDmg("pycharm", "${home}/python/build/DMG_background.png")
   */
 }
 
-public layoutCommunity(Paths paths, Set usedJars) {
+public layoutCommunity(Set usedJars) {
+  def paths = Paths(home)
   buildSearchableOptions("${projectBuilder.moduleOutput(findModule("platform-resources"))}/search", [], {
     projectBuilder.moduleRuntimeClasspath(findModule("main_pycharm_ce"), false).each {
       ant.pathelement(location: it)
@@ -166,6 +162,12 @@ public layoutCommunity(Paths paths, Set usedJars) {
     "$pythonCommunityHome/resources"]
   buildWinLauncher("$ch", "$ch/bin/WinLauncher/WinLauncher.exe", launcher,
                    appInfoFile(), "$pythonCommunityHome/build/pycharm_community_launcher.properties", system_selector, resourcePaths)
+
+  String tarRoot = isEap() ? "pycharm-community-$buildNumber" : "pycharm-community-${p("component.version.major")}.${p("component.version.minor")}"
+  buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
+
+  String macAppRoot = isEap() ? "PyCharm Community Edition ${p("component.version.major")}.${p("component.version.minor")} EAP.app" : "PyCharm Community Edition.app"
+  buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll], paths.distMac)
 }
 
 private layoutPlugins(layouts) {
