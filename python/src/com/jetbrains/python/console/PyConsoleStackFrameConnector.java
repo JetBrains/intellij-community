@@ -2,8 +2,8 @@ package com.jetbrains.python.console;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.EventDispatcher;
-import com.intellij.xdebugger.XStackFrameAwareSession;
 import com.intellij.xdebugger.XDebugSessionListener;
+import com.intellij.xdebugger.XStackFrameAwareSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -13,7 +13,6 @@ import com.jetbrains.python.debugger.PyStackFrame;
 import com.jetbrains.python.debugger.PyStackFrameInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 /**
  * @author traff
