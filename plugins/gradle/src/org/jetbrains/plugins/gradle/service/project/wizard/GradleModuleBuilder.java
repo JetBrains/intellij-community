@@ -56,10 +56,10 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   protected String getTemplateConfigName(@NotNull GradleProjectSettings settings) {
     final String templateName;
     if (settings.getDistributionType() == DistributionType.WRAPPED) {
-      templateName = "Gradle_with_custom_wrapper.gradle";
+      templateName = "Gradle Build Script with wrapper.gradle";
     }
     else {
-      templateName = "Gradle_default.gradle";
+      templateName = "Gradle Build Script.gradle";
     }
     return templateName;
   }
