@@ -739,6 +739,12 @@ public class PyTypeTest extends PyTestCase {
            "        expr = x\n");
   }
 
+  public void testIsInstanceInConditionalExpression() {
+    doTest("str | int",
+           "def f(x):\n" +
+           "    expr = x if isinstance(x, str) else 10\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }
