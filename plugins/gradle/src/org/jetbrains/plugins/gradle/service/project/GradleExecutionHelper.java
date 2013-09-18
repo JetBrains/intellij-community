@@ -87,7 +87,8 @@ public class GradleExecutionHelper {
                                         @Nullable final String vmOptions)
   {
     BuildLauncher result = connection.newBuild();
-    prepare(result, id, settings, listener, ContainerUtil.newArrayList(vmOptions == null ? "" : vmOptions.trim()));
+    List<String> extraJvmArgs = vmOptions == null ? ContainerUtil.<String>emptyList() : ContainerUtil.newArrayList(vmOptions.trim());
+    prepare(result, id, settings, listener, extraJvmArgs);
     return result;
   }
 
