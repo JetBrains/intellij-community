@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.gradle.StartParameter;
 import org.gradle.tooling.*;
@@ -82,10 +83,11 @@ public class GradleExecutionHelper {
   public BuildLauncher getBuildLauncher(@NotNull final ExternalSystemTaskId id,
                                         @NotNull ProjectConnection connection,
                                         @Nullable GradleExecutionSettings settings,
-                                        @NotNull ExternalSystemTaskNotificationListener listener)
+                                        @NotNull ExternalSystemTaskNotificationListener listener,
+                                        @Nullable final String vmOptions)
   {
     BuildLauncher result = connection.newBuild();
-    prepare(result, id, settings, listener, Collections.<String>emptyList());
+    prepare(result, id, settings, listener, ContainerUtil.newArrayList(vmOptions == null ? "" : vmOptions.trim()));
     return result;
   }
 
@@ -191,7 +193,7 @@ public class GradleExecutionHelper {
     }
     ProjectConnection connection = getConnection(projectPath, settings);
     try {
-      BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
+      BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener, null);
       try {
         final File tempFile = FileUtil.createTempFile("wrap", ".gradle");
         tempFile.deleteOnExit();

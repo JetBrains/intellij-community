@@ -53,14 +53,14 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                            @Nullable final String debuggerSetup,
                            @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
 
-    //if(settings != null && settings.getDistributionType() == DistributionType.WRAPPED) {
+    if(settings != null) {
       myHelper.ensureInstalledWrapper(id, projectPath, settings, listener);
-    //}
+    }
 
     Function<ProjectConnection, Void> f = new Function<ProjectConnection, Void>() {
       @Override
       public Void fun(ProjectConnection connection) {
-        BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, settings, listener);
+        BuildLauncher launcher = myHelper.getBuildLauncher(id, connection, settings, listener, vmOptions);
         if (!StringUtil.isEmpty(debuggerSetup)) {
           try {
             final File tempFile = FileUtil.createTempFile("init", ".gradle");
@@ -77,9 +77,6 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
           catch (IOException e) {
             throw new ExternalSystemException(e);
           }
-        }
-        if (!StringUtil.isEmpty(vmOptions)) {
-          launcher.setJvmArguments(vmOptions.trim());
         }
         launcher.forTasks(ArrayUtil.toStringArray(taskNames));
         launcher.run();
