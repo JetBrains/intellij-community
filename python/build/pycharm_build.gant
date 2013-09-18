@@ -244,6 +244,7 @@ private layoutFull(Map args, String target, Set usedJars) {
           }
         }
         zipfileset(src: "${home}/lib/client-api.jar")
+        zipfileset(src: "${home}/lib/ls-client-api.jar")
         zipfileset(src: "${home}/lib/ideaLicenseDecoder.jar")
         zipfileset(src: "${home}/lib/y.jar")
         zipfileset(src: "${home}/lib/ysvg.jar")

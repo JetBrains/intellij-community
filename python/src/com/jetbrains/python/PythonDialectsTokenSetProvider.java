@@ -4,6 +4,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.tree.TokenSet;
 
 /**
+ * Provides element types of various kinds for known Python dialects.
+ *
  * @author vlan
  */
 public class PythonDialectsTokenSetProvider {
@@ -47,34 +49,58 @@ public class PythonDialectsTokenSetProvider {
     myReferenceExpressionTokens = referenceExpressions;
   }
 
+  /**
+   * Returns all element types of Python dialects that are subclasses of {@link com.jetbrains.python.psi.PyStatement}.
+   */
   public TokenSet getStatementTokens() {
     return myStatementTokens;
   }
 
+  /**
+   * Returns all element types of Python dialects that are subclasses of {@link com.jetbrains.python.psi.PyExpression}.
+   */
   public TokenSet getExpressionTokens() {
     return myExpressionTokens;
   }
 
+  /**
+   * Returns all element types of Python dialects that are subclasses of {@link com.jetbrains.python.psi.NameDefiner}.
+   */
   public TokenSet getNameDefinerTokens() {
     return myNameDefinerTokens;
   }
 
+  /**
+   * Returns all element types of Python dialects that are language keywords.
+   */
   public TokenSet getKeywordTokens() {
     return myKeywordTokens;
   }
 
+  /**
+   * Returns all element types of Python dialects that are subclasses of {@link com.jetbrains.python.psi.PyParameter}.
+   */
   public TokenSet getParameterTokens() {
     return myParameterTokens;
   }
 
+  /**
+   * Returns all element types of Python dialects that are subclasses of {@link com.jetbrains.python.psi.PyFunction}.
+   */
   public TokenSet getFunctionDeclarationTokens() {
     return myFunctionDeclarationTokens;
   }
 
+  /**
+   * Returns all element types of Python dialects that can be used as unbalanced braces recovery tokens in the lexer.
+   */
   public TokenSet getUnbalancedBracesRecoveryTokens() {
     return myUnbalancedBracesRecoveryTokens;
   }
 
+  /**
+   * Returns all element types of Python dialects that are subclasses of {@link com.jetbrains.python.psi.PyReferenceExpression}.
+   */
   public TokenSet getReferenceExpressionTokens() {
     return myReferenceExpressionTokens;
   }
