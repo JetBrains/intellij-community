@@ -144,13 +144,13 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
         return !fileSpec.equals(STAT_FILE) && !fileSpec.equals(STAT_VERSION_FILE);
       }
     };
-    ((ApplicationImpl)application).getStateStore().getStateStorageManager().registerStreamProvider(streamProvider);
+    ((ApplicationImpl)application).getStateStore().getStateStorageManager().setStreamProvider(streamProvider);
   }
 
   public void registerProjectLevelProviders(Project project) {
     StateStorageManager manager = ((ProjectEx)project).getStateStore().getStateStorageManager();
     String projectId = getProjectId(project);
-    manager.registerStreamProvider(new IcsStreamProvider(projectId) {
+    manager.setStreamProvider(new IcsStreamProvider(projectId) {
       @Override
       protected boolean isShareable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
         if (roamingType != RoamingType.PER_USER) {
