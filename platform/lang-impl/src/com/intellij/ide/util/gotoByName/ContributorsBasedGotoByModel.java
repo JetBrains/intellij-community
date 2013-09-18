@@ -35,9 +35,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
-import com.intellij.util.SynchronizedCollectConsumer;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -107,7 +107,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
                   }
                   return true;
                 }
-              }, DefaultFileNavigationContributor.getScope(myProject, checkBoxState), DefaultFileNavigationContributor.getFilter(myProject, checkBoxState));
+              }, DefaultFileNavigationContributor.getScope(myProject, checkBoxState), IdFilter.getProjectIdFilter(myProject, checkBoxState));
             } else {
               String[] names = contributor.getNames(myProject, checkBoxState);
               for (String element : names) {

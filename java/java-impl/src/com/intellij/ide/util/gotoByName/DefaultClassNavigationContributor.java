@@ -39,7 +39,7 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
     if (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping) {
       GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
       CommonProcessors.CollectProcessor<String> processor = new CommonProcessors.CollectProcessor<String>();
-      processNames(processor, scope, DefaultFileNavigationContributor.getFilter(project, includeNonProjectItems));
+      processNames(processor, scope, IdFilter.getProjectIdFilter(project, includeNonProjectItems));
 
       return ArrayUtil.toStringArray(processor.getResults());
     }

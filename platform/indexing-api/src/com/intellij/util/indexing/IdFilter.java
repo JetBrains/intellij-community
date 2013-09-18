@@ -15,9 +15,53 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentIterator;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileWithId;
+
+import java.util.BitSet;
+
 /**
-* Created by Maxim.Mossienko on 8/14/13.
-*/
+ * Created by Maxim.Mossienko on 8/14/13.
+ */
 public abstract class IdFilter {
+  public static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor");
+
+  public static IdFilter getProjectIdFilter(Project project, boolean includeNonProjectItems) {
+    long started = System.currentTimeMillis();
+    final BitSet idSet = new BitSet();
+
+    ContentIterator iterator = new ContentIterator() {
+      @Override
+      public boolean processFile(VirtualFile fileOrDir) {
+        idSet.set(
+          ((VirtualFileWithId)fileOrDir).getId()
+        );
+        ProgressManager.checkCanceled();
+        return true;
+      }
+    };
+
+    if (!includeNonProjectItems) {
+      ProjectRootManager.getInstance(project).getFileIndex().iterateContent(iterator);
+    } else {
+      FileBasedIndex.getInstance().iterateIndexableFiles(iterator, project, null);
+    }
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Done filter " + (System.currentTimeMillis()  -started) + ":" + idSet.size());
+    }
+    return new IdFilter() {
+      @Override
+      public boolean contains(int id) {
+        return idSet.get(id);
+      }
+    };
+  }
+
   public abstract boolean contains(int id);
 }
