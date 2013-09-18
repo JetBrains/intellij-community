@@ -50,16 +50,14 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
         final PyReferenceExpression target = (PyReferenceExpression)args[0];
         final PyExpression typeElement = args[1];
         final boolean positive = myPositive;
-        if (!processTuple(target, typeElement)) {
-          pushAssertion(target, new InstructionTypeCallback() {
-            @Override
-            public PyType getType(TypeEvalContext context, PsiElement anchor) {
-              final List<PyType> types = new ArrayList<PyType>();
-              types.add(context.getType(typeElement));
-              return createAssertionType(context.getType(target), types, positive, context);
-            }
-          });
-        }
+        pushAssertion(target, new InstructionTypeCallback() {
+          @Override
+          public PyType getType(TypeEvalContext context, PsiElement anchor) {
+            final List<PyType> types = new ArrayList<PyType>();
+            types.add(context.getType(typeElement));
+            return createAssertionType(context.getType(target), types, positive, context);
+          }
+        });
       }
     }
     else if (node.isCalleeText(PyNames.CALLABLE_BUILTIN)) {
@@ -120,34 +118,11 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     super.visitPyBinaryExpression(node);
   }
 
-  private boolean processTuple(final PyReferenceExpression target, PyExpression typeElement) {
-    boolean pushed = false;
-    if (typeElement instanceof PyParenthesizedExpression) {
-      final PyExpression contained = ((PyParenthesizedExpression)typeElement).getContainedExpression();
-      if (contained instanceof PyTupleExpression) {
-        final PyTupleExpression tuple = (PyTupleExpression)contained;
-        final boolean positive = myPositive;
-        pushAssertion(target, new InstructionTypeCallback() {
-          @Override
-          public PyType getType(TypeEvalContext context, @Nullable PsiElement anchor) {
-            final List<PyType> types = new ArrayList<PyType>();
-            for (PyExpression e : tuple.getElements()) {
-              types.add(context.getType(e));
-            }
-            return createAssertionType(context.getType(target), types, positive, context);
-          }
-        });
-        pushed = true;
-      }
-    }
-    return pushed;
-  }
-
   @Nullable
   private static PyType createAssertionType(PyType initial, List<PyType> types, boolean positive, TypeEvalContext context) {
     final List<PyType> members = new ArrayList<PyType>();
     for (PyType t : types) {
-      members.add(t instanceof PyClassType ? ((PyClassType)t).toInstance() : t);
+      members.add(transformTypeFromAssertion(t));
     }
     final PyType union = PyUnionType.union(members);
     if (positive) {
@@ -160,6 +135,23 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       return null;
     }
     return initial;
+  }
+
+  @Nullable
+  private static PyType transformTypeFromAssertion(@Nullable PyType type) {
+    if (type instanceof PyTupleType) {
+      final List<PyType> members = new ArrayList<PyType>();
+      final PyTupleType tupleType = (PyTupleType)type;
+      final int count = tupleType.getElementCount();
+      for (int i = 0; i < count; i++) {
+        members.add(transformTypeFromAssertion(tupleType.getElementType(i)));
+      }
+      return PyUnionType.union(members);
+    }
+    else if (type instanceof PyClassType) {
+      return ((PyClassType)type).toInstance();
+    }
+    return type;
   }
 
   private void pushAssertion(PyReferenceExpression element, InstructionTypeCallback getType) {
