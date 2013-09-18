@@ -15,12 +15,8 @@
  */
 package org.intellij.images.options.impl;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
-import com.intellij.openapi.components.StoragePathMacros;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.RoamingTypeDisabled;
 import com.intellij.openapi.util.WriteExternalException;
 import org.intellij.images.options.Options;
 import org.intellij.images.options.OptionsManager;
@@ -33,17 +29,20 @@ import org.jdom.Element;
  */
 @State(
     name = "Images.OptionsManager",
+    roamingType = RoamingType.DISABLED,
     storages = {
         @Storage(file = StoragePathMacros.APP_CONFIG + "/images.support.xml")
     }
 )
-final class OptionsManagerImpl extends OptionsManager implements PersistentStateComponent<Element>, RoamingTypeDisabled {
+final class OptionsManagerImpl extends OptionsManager implements PersistentStateComponent<Element> {
   private final OptionsImpl options = new OptionsImpl();
 
+  @Override
   public Options getOptions() {
     return options;
   }
 
+  @Override
   public Element getState() {
     Element element = new Element("state");
     try {
@@ -55,6 +54,7 @@ final class OptionsManagerImpl extends OptionsManager implements PersistentState
     return element;
   }
 
+  @Override
   public void loadState(final Element state) {
     try {
       options.readExternal(state);
