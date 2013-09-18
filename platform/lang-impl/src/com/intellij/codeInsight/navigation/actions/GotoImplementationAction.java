@@ -22,7 +22,6 @@ import com.intellij.codeInsight.navigation.GotoImplementationHandler;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.search.searches.DefinitionsScopedSearch;
-import com.intellij.psi.search.searches.DefinitionsSearch;
 import org.jetbrains.annotations.NotNull;
 
 public class GotoImplementationAction extends BaseCodeInsightAction implements DumbAware {
