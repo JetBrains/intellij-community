@@ -59,13 +59,13 @@ public class DetachExternalProjectAction extends AnAction implements DumbAware {
 
   @Override
   public void update(AnActionEvent e) {
-    MyInfo info = getProcessingInfo(e.getDataContext());
+    ExternalActionUtil.MyInfo info = ExternalActionUtil.getProcessingInfo(e.getDataContext());
     e.getPresentation().setEnabled(info.externalProject != null);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    MyInfo info = getProcessingInfo(e.getDataContext());
+    ExternalActionUtil.MyInfo info = ExternalActionUtil.getProcessingInfo(e.getDataContext());
     if (info.settings == null || info.localSettings == null || info.externalProject == null || info.ideProject == null
         || info.externalSystemId == null)
     {
@@ -106,58 +106,6 @@ public class DetachExternalProjectAction extends AnAction implements DumbAware {
 
     if (!orphanModules.isEmpty()) {
       ExternalSystemUtil.ruleOrphanModules(orphanModules, info.ideProject, info.externalSystemId);
-    }
-  }
-
-  @NotNull
-  private static MyInfo getProcessingInfo(@NotNull DataContext context) {
-    ExternalProjectPojo externalProject = ExternalSystemDataKeys.SELECTED_PROJECT.getData(context);
-    if (externalProject == null) {
-      return MyInfo.EMPTY;
-    }
-    
-    ProjectSystemId externalSystemId = ExternalSystemDataKeys.EXTERNAL_SYSTEM_ID.getData(context);
-    if (externalSystemId == null) {
-      return MyInfo.EMPTY;
-    }
-
-    Project ideProject = PlatformDataKeys.PROJECT.getData(context);
-    if (ideProject == null) {
-      return MyInfo.EMPTY;
-    }
-
-    AbstractExternalSystemSettings<?, ?, ?> settings = ExternalSystemApiUtil.getSettings(ideProject, externalSystemId);
-    ExternalProjectSettings externalProjectSettings = settings.getLinkedProjectSettings(externalProject.getPath());
-    AbstractExternalSystemLocalSettings localSettings = ExternalSystemApiUtil.getLocalSettings(ideProject, externalSystemId);
-    
-    return new MyInfo(externalProjectSettings == null ? null : settings,
-                      localSettings == null ? null : localSettings,
-                      externalProjectSettings == null ? null : externalProject,
-                      ideProject,
-                      externalSystemId);
-  }
-  
-  private static class MyInfo {
-
-    public static final MyInfo EMPTY = new MyInfo(null, null, null, null, null);
-
-    @Nullable public final AbstractExternalSystemSettings<?, ?, ?> settings;
-    @Nullable public final AbstractExternalSystemLocalSettings  localSettings;
-    @Nullable public final ExternalProjectPojo                  externalProject;
-    @Nullable public final Project                              ideProject;
-    @Nullable public final ProjectSystemId                      externalSystemId;
-
-    MyInfo(@Nullable AbstractExternalSystemSettings<?, ?, ?> settings,
-           @Nullable AbstractExternalSystemLocalSettings localSettings,
-           @Nullable ExternalProjectPojo externalProject,
-           @Nullable Project ideProject,
-           @Nullable ProjectSystemId externalSystemId)
-    {
-      this.settings = settings;
-      this.localSettings = localSettings;
-      this.externalProject = externalProject;
-      this.ideProject = ideProject;
-      this.externalSystemId = externalSystemId;
     }
   }
 }

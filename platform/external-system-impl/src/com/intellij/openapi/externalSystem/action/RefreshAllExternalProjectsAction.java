@@ -2,6 +2,7 @@ package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
@@ -39,7 +40,7 @@ public class RefreshAllExternalProjectsAction extends AnAction implements DumbAw
     e.getPresentation().setText(ExternalSystemBundle.message("action.refresh.all.projects.text", name));
     e.getPresentation().setDescription(ExternalSystemBundle.message("action.refresh.all.projects.description", name));
 
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) {
       e.getPresentation().setEnabled(false);
       return;
@@ -56,7 +57,7 @@ public class RefreshAllExternalProjectsAction extends AnAction implements DumbAw
       return;
     }
     
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) {
       e.getPresentation().setEnabled(false);
       return;
