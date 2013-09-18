@@ -140,9 +140,9 @@ class Build {
     projectBuilder.stage("- scramble -")
     if (steps.scramble) {
       if (ultimate_utils.isUnderTeamCity()) {
-        projectBuilder.stage("Scrambling - getPreviousLogs")
+//        projectBuilder.stage("Scrambling - getPreviousLogs")
         getPreviousLogs()
-        projectBuilder.stage("Scrambling - prevBuildLog")
+//        projectBuilder.stage("Scrambling - prevBuildLog")
         def prevBuildLog = "$paths.sandbox/prevBuild/logs/ChangeLog.txt"
         if (!new File(prevBuildLog).exists()) prevBuildLog = null
         def inc = prevBuildLog != null ? "looseChangeLogFileIn=\"${prevBuildLog}\"" : ""
