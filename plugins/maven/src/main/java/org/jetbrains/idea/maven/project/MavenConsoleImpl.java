@@ -102,6 +102,7 @@ public class MavenConsoleImpl extends MavenConsole {
 
     builder.addFilter(new MavenGroovyConsoleFilter(project));
     builder.addFilter(new MavenScalaConsoleFilter(project));
+    builder.addFilter(new MavenTestConsoleFilter(project));
     return builder;
   }
 
