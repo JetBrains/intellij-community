@@ -126,7 +126,7 @@ target('default': "Build artifacts") {
 }
 
 public layoutCommunity(Set usedJars) {
-  def paths = Paths(home)
+  def paths = new Paths(home)
   buildSearchableOptions("${projectBuilder.moduleOutput(findModule("platform-resources"))}/search", [], {
     projectBuilder.moduleRuntimeClasspath(findModule("main_pycharm_ce"), false).each {
       ant.pathelement(location: it)
