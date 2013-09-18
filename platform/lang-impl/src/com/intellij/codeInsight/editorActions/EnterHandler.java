@@ -222,6 +222,9 @@ public class EnterHandler extends BaseEnterHandler {
       if (tokenType == commenter.getDocumentationCommentTokenType() || tokenType == commenter.getBlockCommentTokenType()) {
         return false;
       }
+      if (tokenType == commenter.getLineCommentTokenType() && lexer.getTokenText().contains(commentPrefix)) {
+        return false;
+      }
       if (lexer.getTokenEnd() == commentText.length()) {
         if (tokenType == commenter.getLineCommentTokenType()) {
           String prefix = commenter.getLineCommentPrefix();

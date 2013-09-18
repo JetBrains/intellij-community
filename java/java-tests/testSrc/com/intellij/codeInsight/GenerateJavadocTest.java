@@ -16,6 +16,8 @@ public class GenerateJavadocTest extends CodeInsightTestCase {
   public void test3() throws Exception { doTest(); }
   public void testIdeadev2328() throws Exception { doTest(); }
   public void testIdeadev2328_2() throws Exception { doTest(); }
+  public void testBeforeCommentedJavadoc() throws Exception { doTest(); }
+  public void testDoubleSlashInJavadoc() throws Exception { doTest(); }
 
   private void doTest() throws Exception {
     String name = getTestName(false);
