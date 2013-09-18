@@ -259,7 +259,9 @@ public class HighlightClassUtil {
     if (virtualFile != null && !aClass.getName().equals(virtualFile.getNameWithoutExtension())) {
       String message = JavaErrorMessages.message("public.class.should.be.named.after.file", aClass.getName());
       TextRange range = HighlightNamesUtil.getClassDeclarationTextRange(aClass);
-      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create();
+      errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).
+        range(aClass, range.getStartOffset(), range.getEndOffset()).
+        descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(errorResult,
                                             QUICK_FIX_FACTORY.createModifierListFix(psiModifierList, PsiModifier.PUBLIC, false, false));
       PsiClass[] classes = file.getClasses();
