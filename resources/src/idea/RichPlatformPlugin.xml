@@ -65,6 +65,7 @@
     <extensionPoint name="packaging.elementType" interface="com.intellij.packaging.elements.PackagingElementType"/>
     <extensionPoint name="packaging.artifactPropertiesProvider" interface="com.intellij.packaging.artifacts.ArtifactPropertiesProvider"/>
     <extensionPoint name="packaging.sourceItemProvider" interface="com.intellij.packaging.ui.PackagingSourceItemsProvider"/>
+    <extensionPoint name="packaging.sourceItemFilter" interface="com.intellij.packaging.ui.PackagingSourceItemFilter"/>
     <extensionPoint name="packaging.artifactType" interface="com.intellij.packaging.artifacts.ArtifactType"/>
 
     <extensionPoint name="frameworkSupport" interface="com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider"/>
