@@ -12,7 +12,6 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.FileBasedStorage;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
-import com.intellij.openapi.components.impl.stores.XmlElementStorage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -41,10 +40,8 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
   private static final String PROJECT_ID_KEY = "IDEA_SERVER_PROJECT_ID";
 
-  private static final String WORKSPACE_VERSION_FILE = StoragePathMacros.WORKSPACE_FILE + XmlElementStorage.VERSION_FILE_SUFFIX;
   // todo must be configurable - should be in Storage annotation
   private static final String STAT_FILE = StoragePathMacros.APP_CONFIG + "/statistics.application.usages.xml";
-  private static final String STAT_VERSION_FILE = STAT_FILE + XmlElementStorage.VERSION_FILE_SUFFIX;
 
   public static final String PLUGIN_NAME = "Idea Configuration Server";
 
@@ -131,17 +128,13 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
       @Override
       public void deleteFile(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-        if (!isShareable(fileSpec, roamingType)) {
-          return;
-        }
-
         repositoryManager.deleteAsync(IcsUrlBuilder.buildPath(fileSpec, roamingType, null));
         commitAlarm.cancelAndRequest();
       }
 
       @Override
-      protected boolean isShareable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-        return !fileSpec.equals(STAT_FILE) && !fileSpec.equals(STAT_VERSION_FILE);
+      public boolean isApplicable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
+        return !fileSpec.equals(STAT_FILE);
       }
     };
     ((ApplicationImpl)application).getStateStore().getStateStorageManager().setStreamProvider(streamProvider);
@@ -152,7 +145,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     String projectId = getProjectId(project);
     manager.setStreamProvider(new IcsStreamProvider(projectId) {
       @Override
-      protected boolean isShareable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
+      public boolean isApplicable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
         if (roamingType != RoamingType.PER_USER) {
           return true;
         }
@@ -161,7 +154,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
           return false;
         }
 
-        return settings.shareProjectWorkspace || (!fileSpec.equals(StoragePathMacros.WORKSPACE_FILE) && !fileSpec.equals(WORKSPACE_VERSION_FILE));
+        return settings.shareProjectWorkspace || (!fileSpec.equals(StoragePathMacros.WORKSPACE_FILE));
       }
     });
   }
@@ -271,16 +264,8 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
       this.projectId = projectId;
     }
 
-    protected boolean isShareable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-      return true;
-    }
-
     @Override
     public boolean saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
-      if (!isShareable(fileSpec, roamingType)) {
-        return false;
-      }
-
       repositoryManager.write(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId), content, size, async);
       commitAlarm.cancelAndRequest();
       return false;
@@ -289,10 +274,6 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     @Override
     @Nullable
     public InputStream loadContent(@NotNull String fileSpec, @NotNull RoamingType roamingType) throws IOException {
-      if (!isShareable(fileSpec, roamingType)) {
-        return null;
-      }
-
       return repositoryManager.read(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId));
     }
 
