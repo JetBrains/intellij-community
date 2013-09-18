@@ -40,9 +40,6 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
   private static final String PROJECT_ID_KEY = "IDEA_SERVER_PROJECT_ID";
 
-  // todo must be configurable - should be in Storage annotation
-  private static final String STAT_FILE = StoragePathMacros.APP_CONFIG + "/statistics.application.usages.xml";
-
   public static final String PLUGIN_NAME = "Idea Configuration Server";
 
   private final IcsSettings settings = new IcsSettings();
@@ -130,11 +127,6 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
       public void deleteFile(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
         repositoryManager.deleteAsync(IcsUrlBuilder.buildPath(fileSpec, roamingType, null));
         commitAlarm.cancelAndRequest();
-      }
-
-      @Override
-      public boolean isApplicable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-        return !fileSpec.equals(STAT_FILE);
       }
     };
     ((ApplicationImpl)application).getStateStore().getStateStorageManager().setStreamProvider(streamProvider);
