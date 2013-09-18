@@ -62,6 +62,6 @@ public class ImportFromGradleControl
 
   @Override
   protected void onLinkedProjectPathChange(@NotNull String path) {
-    ((GradleProjectSettingsControl)getProjectSettingsControl()).updateWrapperControls(path);
+    ((GradleProjectSettingsControl)getProjectSettingsControl()).updateWrapperControls(path, false);
   }
 }

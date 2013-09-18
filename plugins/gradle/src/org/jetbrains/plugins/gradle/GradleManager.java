@@ -19,18 +19,23 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.externalSystem.JavaProjectData;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemConfigurableAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.service.project.autoimport.CachingExternalSystemAutoImportAware;
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -42,6 +47,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
@@ -84,13 +90,12 @@ import java.util.Map;
  * @since 4/10/13 1:19 PM
  */
 public class GradleManager
-implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSystemAutoImportAware, StartupActivity, ExternalSystemManager<
+  implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSystemAutoImportAware, StartupActivity, ExternalSystemManager<
   GradleProjectSettings,
   GradleSettingsListener,
   GradleSettings,
   GradleLocalSettings,
-  GradleExecutionSettings>
-{
+  GradleExecutionSettings> {
 
   private static final Logger LOG = Logger.getInstance("#" + GradleManager.class.getName());
 
@@ -173,7 +178,8 @@ implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSyste
             GradleUtil.isGradleDefaultWrapperFilesExist(pair.second) ? DistributionType.DEFAULT_WRAPPED : DistributionType.LOCAL;
         }
         else {
-          distributionType = projectLevelSettings.getDistributionType() == null ? DistributionType.LOCAL : projectLevelSettings.getDistributionType();
+          distributionType =
+            projectLevelSettings.getDistributionType() == null ? DistributionType.LOCAL : projectLevelSettings.getDistributionType();
         }
 
         GradleExecutionSettings result = new GradleExecutionSettings(localGradlePath,
@@ -303,6 +309,38 @@ implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSyste
       @Override
       public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) {
         ExternalSystemUtil.refreshProjects(project, GradleConstants.SYSTEM_ID, true);
+      }
+
+      @Override
+      public void onProjectsLinked(@NotNull Collection<GradleProjectSettings> settings) {
+        final ProjectDataManager projectDataManager = ServiceManager.getService(ProjectDataManager.class);
+        for (GradleProjectSettings gradleProjectSettings : settings) {
+          ExternalSystemUtil.refreshProject(
+            project, GradleConstants.SYSTEM_ID, gradleProjectSettings.getExternalProjectPath(),
+            new ExternalProjectRefreshCallback() {
+              @Override
+              public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
+                if (externalProject == null) {
+                  return;
+                }
+                ExternalSystemApiUtil.executeProjectChangeAction(true, new Runnable() {
+                  @Override
+                  public void run() {
+                    ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
+                      @Override
+                      public void run() {
+                        projectDataManager.importData(externalProject.getKey(), Collections.singleton(externalProject), project, true);
+                      }
+                    });
+                  }
+                });
+              }
+
+              @Override
+              public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
+              }
+            }, true, true);
+        }
       }
     });
 

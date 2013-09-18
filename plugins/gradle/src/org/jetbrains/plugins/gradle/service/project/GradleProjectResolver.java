@@ -62,9 +62,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException
   {
     if (settings != null) {
-      if(settings.getDistributionType() == DistributionType.WRAPPED) {
-        myHelper.ensureInstalledWrapper(id, projectPath, settings, listener);
-      }
+      myHelper.ensureInstalledWrapper(id, projectPath, settings, listener);
       List<ClassHolder<? extends GradleProjectResolverExtension>> extensionClasses = settings.getResolverExtensions();
       if (myCachedExtensions == null || !myCachedExtensions.first.equals(extensionClasses)) {
         List<GradleProjectResolverExtension> extensions = ContainerUtilRt.newArrayList();

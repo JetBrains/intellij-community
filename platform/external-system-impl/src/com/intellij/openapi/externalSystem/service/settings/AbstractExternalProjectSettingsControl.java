@@ -64,11 +64,15 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   protected abstract boolean isExtraSettingModified();
 
   public void reset() {
-    myUseAutoImportBox.setSelected(getInitialSettings().isUseAutoImport());
-    resetExtraSettings();
+    reset(false);
   }
 
-  protected abstract void resetExtraSettings();
+  public void reset(boolean isDefaultModuleCreation) {
+    myUseAutoImportBox.setSelected(getInitialSettings().isUseAutoImport());
+    resetExtraSettings(isDefaultModuleCreation);
+  }
+
+  protected abstract void resetExtraSettings(boolean isDefaultModuleCreation);
 
   @Override
   @Nullable

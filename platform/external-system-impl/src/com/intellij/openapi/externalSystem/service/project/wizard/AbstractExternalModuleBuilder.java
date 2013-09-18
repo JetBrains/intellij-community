@@ -18,6 +18,7 @@ package com.intellij.openapi.externalSystem.service.project.wizard;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.ModuleBuilderListener;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -56,14 +57,11 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
   @NotNull private final ProjectSystemId               myExternalSystemId;
 
   @Nullable private final AbstractExternalProjectSettingsControl<S> myExternalProjectSettingsControl;
-  @Nullable private final String                                    myTemplateConfigName;
 
   protected AbstractExternalModuleBuilder(@NotNull ProjectSystemId externalSystemId,
-                                          @Nullable AbstractExternalProjectSettingsControl<S> externalProjectSettingsControl,
-                                          @Nullable String templateConfigName)
+                                          @Nullable AbstractExternalProjectSettingsControl<S> externalProjectSettingsControl)
   {
     myExternalSystemId = externalSystemId;
-    myTemplateConfigName = templateConfigName;
     myExternalProjectSettingsControl = externalProjectSettingsControl;
     Icon icon = ExternalSystemUiUtil.getUiAware(externalSystemId).getProjectIcon();
     myIcon = icon == null ? super.getNodeIcon() : icon;
@@ -95,7 +93,7 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
     String contentPath = getContentEntryPath();
     if (myExternalProjectSettingsControl != null && contentPath != null) {
       myExternalProjectSettingsControl.getInitialSettings().setExternalProjectPath(contentPath);
-      myExternalProjectSettingsControl.reset();
+      myExternalProjectSettingsControl.reset(true);
     }
   }
 
@@ -123,11 +121,21 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
     model.addContentEntry(vContentRootDir);
     model.inheritSdk();
 
+    AbstractExternalSystemSettings settings = ExternalSystemApiUtil.getSettings(model.getProject(), myExternalSystemId);
+    S externalProjectSettings = createSettings();
+    if (myExternalProjectSettingsControl != null) {
+      String errorMessage = myExternalProjectSettingsControl.apply(externalProjectSettings);
+      myExternalProjectSettingsControl.disposeUIResources();
+      if (errorMessage != null) {
+        throw new ConfigurationException(errorMessage);
+      }
+    }
 
     VirtualFile configFile = getExternalProjectConfigFile(vContentRootDir);
-    if (configFile != null && myTemplateConfigName != null) {
+    final String templateConfigName = getTemplateConfigName(externalProjectSettings);
+    if (configFile != null && templateConfigName != null) {
       FileTemplateManager manager = FileTemplateManager.getInstance();
-      FileTemplate template = manager.getInternalTemplate(myTemplateConfigName);
+      FileTemplate template = manager.getInternalTemplate(templateConfigName);
       try {
         VfsUtil.saveText(configFile, template.getText());
       }
@@ -140,15 +148,6 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
       }
     }
 
-    AbstractExternalSystemSettings settings = ExternalSystemApiUtil.getSettings(model.getProject(), myExternalSystemId);
-    S externalProjectSettings = createSettings();
-    if (myExternalProjectSettingsControl != null) {
-      String errorMessage = myExternalProjectSettingsControl.apply(externalProjectSettings);
-      myExternalProjectSettingsControl.disposeUIResources();
-      if (errorMessage != null) {
-        throw new ConfigurationException(errorMessage);
-      }
-    }
     //noinspection unchecked
     settings.linkProject(externalProjectSettings);
   }
@@ -165,4 +164,7 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
    */
   @Nullable
   protected abstract VirtualFile getExternalProjectConfigFile(@NotNull VirtualFile contentRootDir);
+
+  @Nullable
+  protected abstract String getTemplateConfigName(@NotNull S settings);
 }

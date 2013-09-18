@@ -27,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.settings.GradleProjectSettingsControl;
+import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -39,7 +40,7 @@ import java.io.File;
 public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradleProjectSettings> {
 
   public GradleModuleBuilder() {
-    super(GradleConstants.SYSTEM_ID, new GradleProjectSettingsControl(new GradleProjectSettings()), "Gradle File.gradle");
+    super(GradleConstants.SYSTEM_ID, new GradleProjectSettingsControl(new GradleProjectSettings()));
   }
 
   @Nullable
@@ -50,16 +51,29 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(gradleScript);
   }
 
+  @Nullable
+  @Override
+  protected String getTemplateConfigName(@NotNull GradleProjectSettings settings) {
+    final String templateName;
+    if (settings.getDistributionType() == DistributionType.WRAPPED) {
+      templateName = "Gradle_with_custom_wrapper.gradle";
+    }
+    else {
+      templateName = "Gradle_default.gradle";
+    }
+    return templateName;
+  }
+
   @Override
   public boolean isSuitableSdkType(SdkTypeId sdk) {
     return sdk == JavaSdk.getInstance();
   }
-  
+
   @Override
   public String getGroupName() {
     return JavaModuleType.JAVA_GROUP;
   }
-  
+
   @Override
   public ModuleType getModuleType() {
     return StdModuleTypes.JAVA;

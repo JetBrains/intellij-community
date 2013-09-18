@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -181,6 +182,13 @@ public class GradleExecutionHelper {
                                      @NotNull String projectPath,
                                      @NotNull GradleExecutionSettings settings,
                                      @NotNull ExternalSystemTaskNotificationListener listener) {
+
+    if (!settings.getDistributionType().isWrapped()) return;
+
+    if (settings.getDistributionType() == DistributionType.DEFAULT_WRAPPED &&
+        GradleUtil.findDefaultWrapperPropertiesFile(projectPath) != null) {
+      return;
+    }
     ProjectConnection connection = getConnection(projectPath, settings);
     try {
       BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
@@ -253,15 +261,17 @@ public class GradleExecutionHelper {
           }
           break;
         case WRAPPED:
-          if(settings.getWrapperPropertyFile() != null) {
+          if (settings.getWrapperPropertyFile() != null) {
             File propertiesFile = new File(settings.getWrapperPropertyFile());
-            Distribution distribution =
-              new DistributionFactoryExt(StartParameter.DEFAULT_GRADLE_USER_HOME).getWrappedDistribution(propertiesFile);
-            try {
-              setField(connector, "distribution", distribution);
-            }
-            catch (Exception e) {
-              throw new ExternalSystemException(e);
+            if (propertiesFile.exists()) {
+              Distribution distribution =
+                new DistributionFactoryExt(StartParameter.DEFAULT_GRADLE_USER_HOME).getWrappedDistribution(propertiesFile);
+              try {
+                setField(connector, "distribution", distribution);
+              }
+              catch (Exception e) {
+                throw new ExternalSystemException(e);
+              }
             }
           }
           break;

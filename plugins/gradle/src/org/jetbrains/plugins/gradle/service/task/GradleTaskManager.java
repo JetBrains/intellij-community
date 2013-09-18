@@ -53,9 +53,9 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
                            @Nullable final String debuggerSetup,
                            @NotNull final ExternalSystemTaskNotificationListener listener) throws ExternalSystemException {
 
-    if(settings != null && settings.getDistributionType() == DistributionType.WRAPPED) {
+    //if(settings != null && settings.getDistributionType() == DistributionType.WRAPPED) {
       myHelper.ensureInstalledWrapper(id, projectPath, settings, listener);
-    }
+    //}
 
     Function<ProjectConnection, Void> f = new Function<ProjectConnection, Void>() {
       @Override

@@ -164,6 +164,19 @@ public class ExternalSystemUtil {
    * @param force             flag which defines if external project refresh should be performed if it's config is up-to-date
    */
   public static void refreshProjects(@NotNull final Project project, @NotNull final ProjectSystemId externalSystemId, boolean force) {
+    refreshProjects(project, externalSystemId, force, false);
+  }
+
+  /**
+   * Asks to refresh all external projects of the target external system linked to the given ide project.
+   * <p/>
+   * 'Refresh' here means 'obtain the most up-to-date version and apply it to the ide'.
+   *
+   * @param project           target ide project
+   * @param externalSystemId  target external system which projects should be refreshed
+   * @param force             flag which defines if external project refresh should be performed if it's config is up-to-date
+   */
+  public static void refreshProjects(@NotNull final Project project, @NotNull final ProjectSystemId externalSystemId, boolean force, boolean modal) {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     if (manager == null) {
       return;
@@ -175,7 +188,7 @@ public class ExternalSystemUtil {
     }
 
     final ProjectDataManager projectDataManager = ServiceManager.getService(ProjectDataManager.class);
-    final int[] counter = new int[1]; 
+    final int[] counter = new int[1];
 
     ExternalProjectRefreshCallback callback = new ExternalProjectRefreshCallback() {
 
@@ -244,7 +257,7 @@ public class ExternalSystemUtil {
     if (!toRefresh.isEmpty()) {
       counter[0] = toRefresh.size();
       for (String path : toRefresh) {
-        refreshProject(project, externalSystemId, path, callback, true, false);
+        refreshProject(project, externalSystemId, path, callback, true, modal);
       }
     }
   }

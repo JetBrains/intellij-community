@@ -45,5 +45,13 @@ public enum DistributionType {
   /**
    * Locally installed gradle to be used
    */
-  LOCAL
+  LOCAL;
+
+  /**
+   * Check for wrapped mode
+   * @return true in case of DEFAULT_WRAPPED or WRAPPED mode
+   */
+  public boolean isWrapped() {
+    return this == DEFAULT_WRAPPED || this == WRAPPED;
+  }
 }

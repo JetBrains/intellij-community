@@ -272,13 +272,13 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
   }
 
   @Override
-  protected void resetExtraSettings() {
+  protected void resetExtraSettings(boolean isDefaultModuleCreation) {
     myGradleHomeModifiedByUser = false;
     String gradleHome = getInitialSettings().getGradleHome();
     myGradleHomePathField.setText(gradleHome == null ? "" : gradleHome);
     myGradleHomePathField.getTextField().setForeground(LocationSettingType.EXPLICIT_CORRECT.getColor());
     
-    updateWrapperControls(getInitialSettings().getExternalProjectPath());
+    updateWrapperControls(getInitialSettings().getExternalProjectPath(), isDefaultModuleCreation);
     if (!myUseLocalDistributionButton.isSelected()) {
       myGradleHomePathField.setEnabled(false);
       return;
@@ -300,7 +300,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     }
   }
 
-  public void updateWrapperControls(@Nullable String linkedProjectPath) {
+  public void updateWrapperControls(@Nullable String linkedProjectPath, boolean isDefaultModuleCreation) {
     if(StringUtil.isEmpty(linkedProjectPath)) {
         myUseLocalDistributionButton.setSelected(true);
         myGradleHomePathField.setEnabled(true);
@@ -308,7 +308,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     }
 
     final boolean isGradleDefaultWrapperFilesExist = GradleUtil.isGradleDefaultWrapperFilesExist(linkedProjectPath);
-    if (isGradleDefaultWrapperFilesExist) {
+    if (isGradleDefaultWrapperFilesExist || isDefaultModuleCreation) {
       myUseWrapperButton.setEnabled(true);
       myUseWrapperButton.setSelected(true);
       myGradleHomePathField.setEnabled(false);

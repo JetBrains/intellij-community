@@ -70,7 +70,7 @@ public class GradleUtil {
    */
   @Nullable
   public static WrapperConfiguration getWrapperConfiguration(@Nullable String gradleProjectPath) {
-    final VirtualFile wrapperPropertiesFile = findWrapperPropertiesFile(gradleProjectPath);
+    final VirtualFile wrapperPropertiesFile = findDefaultWrapperPropertiesFile(gradleProjectPath);
     if (wrapperPropertiesFile == null) return null;
 
     final WrapperConfiguration wrapperConfiguration = new WrapperConfiguration();
@@ -190,7 +190,7 @@ public class GradleUtil {
   }
 
   @Nullable
-  public static VirtualFile findWrapperPropertiesFile(@Nullable String gradleProjectPath) {
+  public static VirtualFile findDefaultWrapperPropertiesFile(@Nullable String gradleProjectPath) {
     if (gradleProjectPath == null) {
       return null;
     }
