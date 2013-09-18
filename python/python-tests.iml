@@ -27,6 +27,7 @@
     <orderEntry type="module" module-name="duplicates" scope="TEST" />
     <orderEntry type="module" module-name="duplicates-xml" scope="TEST" />
     <orderEntry type="module" module-name="IntelliLang-js" scope="TEST" />
+    <orderEntry type="module" module-name="python-community-tests" exported="" />
   </component>
 </module>
 

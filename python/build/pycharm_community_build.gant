@@ -189,7 +189,9 @@ private layoutPlugins(layouts) {
     layouts.layoutPlugin("python-uml")
     layouts.layoutPlugin("localization")
     layouts.layoutPlugin("python-localization")
+    */
     layouts.layoutPlugin("rest")
+    /*
     layouts.layoutPlugin("python-rest")
     layouts.layoutPlugin("pycharm-flask")
     layouts.layoutPlugin("pycharm-numpy")
