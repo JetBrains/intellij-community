@@ -692,7 +692,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
         
         myPydevConsoleCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
           @Override
-          public void executionFinished() {
+          public void commandExecuted() {
             view.showMessage("Execution finished");
           }
 
