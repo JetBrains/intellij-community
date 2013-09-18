@@ -66,7 +66,7 @@ public class PsiPolyExpressionUtil {
           if (typeParameters.size() > 0) {
             final PsiType returnType = method.getReturnType();
             if (returnType != null) {
-              return returnTypeMentionsTypeParameters(typeParameters, returnType);
+              return mentionsTypeParameters(returnType, typeParameters);
             }
           }
         }
@@ -85,7 +85,7 @@ public class PsiPolyExpressionUtil {
     return PsiTypesUtil.getExpectedTypeByParent(expression);
   }
   
-  private static Boolean returnTypeMentionsTypeParameters(final Set<PsiTypeParameter> typeParameters, PsiType returnType) {
+  public static Boolean mentionsTypeParameters(PsiType returnType, final Set<PsiTypeParameter> typeParameters) {
     return returnType.accept(new PsiTypeVisitor<Boolean>() {
       @Nullable
       @Override

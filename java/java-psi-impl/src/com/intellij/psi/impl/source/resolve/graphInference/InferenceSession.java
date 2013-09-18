@@ -241,10 +241,11 @@ public class InferenceSession {
       for (InferenceVariable inferenceVariable : variables) {
 
         if (inferenceVariable.getInstantiation() != null) continue;
+        final PsiTypeParameter typeParameter = inferenceVariable.getParameter();
         PsiType bound = null;
         final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
         for (PsiType eqBound : eqBounds) {
-          eqBound = mySiteSubstitutor.substitute(eqBound);
+          eqBound = acceptBoundsWithRecursiveDependencies(typeParameter, eqBound);
           if (isProperType(eqBound)) {
             bound = eqBound;
             break;
@@ -256,7 +257,7 @@ public class InferenceSession {
           final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);
           PsiType lub = null;
           for (PsiType lowerBound : lowerBounds) {
-            lowerBound = mySiteSubstitutor.substitute(lowerBound);
+            lowerBound = acceptBoundsWithRecursiveDependencies(typeParameter, lowerBound);
             if (isProperType(lowerBound)) {
               if (lub == null) {
                 lub = lowerBound;
@@ -272,7 +273,7 @@ public class InferenceSession {
           else {
             PsiType glb = null;
             for (PsiType upperBound : inferenceVariable.getBounds(InferenceBound.UPPER)) {
-              upperBound = mySiteSubstitutor.substitute(upperBound);
+              upperBound = acceptBoundsWithRecursiveDependencies(typeParameter, upperBound);
               if (isProperType(upperBound)) {
                 if (glb == null) {
                   glb = upperBound;
@@ -290,10 +291,17 @@ public class InferenceSession {
 
         final PsiType instantiation = inferenceVariable.getInstantiation();
         if (instantiation != null) {
-          mySiteSubstitutor = mySiteSubstitutor.put(inferenceVariable.getParameter(), instantiation);
+          mySiteSubstitutor = mySiteSubstitutor.put(typeParameter, instantiation);
         }
       }
     }
+  }
+
+  private PsiType acceptBoundsWithRecursiveDependencies(PsiTypeParameter typeParameter, PsiType bound) {
+    if (PsiPolyExpressionUtil.mentionsTypeParameters(bound, Collections.singleton(typeParameter))) {
+      return mySiteSubstitutor.put(typeParameter, null).substitute(bound);
+    }
+    return bound;
   }
 
   public PsiManager getManager() {
