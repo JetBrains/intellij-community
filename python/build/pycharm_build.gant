@@ -61,8 +61,8 @@ setProperty("buildName", "PY-$buildNumber")
 
 target('default': "Build artifacts") {
   def modules = [
-          "python-pydev", "colorSchemes", pycharmPlatformApiModules(), platformUltimateImplementationModules, pycharmImplementationModules(), pluginFilter
-  ].flatten()
+    "python-pydev", "colorSchemes", pycharmPlatformApiModules(), platformUltimateImplementationModules,
+    pycharmImplementationModules(), pluginFilter, "platform-main"].flatten()
 
   loadProject()
 
