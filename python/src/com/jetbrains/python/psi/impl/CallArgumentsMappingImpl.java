@@ -79,12 +79,12 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
     PyNamedParameter kwd_par = null;   // **param
     PyNamedParameter tuple_par = null; // *param
     Set<PyExpression> mapped_args = new HashSet<PyExpression>();
-    final int implicit_offset = resolved_callee.getImplicitOffset();
+    final int implicitOffset = resolved_callee.getImplicitOffset();
     int positional_index = 0; // up to this index parameters are positional
     // check positional arguments, fill slots
     int i = 0;
     for (PyParameter par : parameters) {
-      if (tuple_par == null && kwd_par == null && positional_index < implicit_offset) {
+      if (tuple_par == null && kwd_par == null && positional_index < implicitOffset) {
         positional_index += 1;
         continue;
       }
@@ -107,14 +107,14 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
       i += 1;
     }
     // rule out 'self' or other implicit params
-    for (i=0; i < implicit_offset && i < parameters.size(); i+=1) {
+    for (i=0; i < implicitOffset && i < parameters.size(); i+=1) {
       slots.remove(parameters.get(i).getAsNamed());
       positional_index += 1;
     }
     // now params to the left of positional_index are positional.
     // map positional args to positional params.
     // we assume that implicitly skipped parameters are never nested tuples. no idea when they could ever be.
-    int cnt = implicit_offset;
+    int cnt = implicitOffset;
     int positional_bound = arguments.length; // to the right of this pos args are verboten
     ListIterator<PyExpression> unmatched_arg_iter = unmatched_args.listIterator();
     while (unmatched_arg_iter.hasNext()) {
@@ -290,10 +290,12 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
     }
     // map unmapped named params to **kwarg
     if (myKwdArg != null) {
-      for (PyParameter par : parameters) {
-        PyNamedParameter n_par = par.getAsNamed();
-        if (n_par != null && !n_par.isKeywordContainer() && !n_par.isPositionalContainer() && slots.get(n_par) == null) {
-          slots.put(n_par, myKwdArg);
+      for (int j = implicitOffset; j != parameters.size(); ++j) {
+        final PyParameter par = parameters.get(j);
+        final PyNamedParameter namedParameter = par.getAsNamed();
+        if (namedParameter != null && !namedParameter.isKeywordContainer()
+            && !namedParameter.isPositionalContainer() && slots.get(namedParameter) == null) {
+          slots.put(namedParameter, myKwdArg);
         }
       }
     }

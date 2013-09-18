@@ -132,6 +132,11 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg2a>").getTextOffset()).check("a, b, c", new String[]{"b, ","c"});
   }
 
+  public void testKwdArgInClass() {
+    Map<String, PsiElement> marks = loadTest(1);
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("self, **kw", new String[]{"**kw"}, new String[]{"self, "});
+  }
+
   public void testKwdArgOutOfOrder() {
     Map<String, PsiElement> marks = loadTest(3);
 
