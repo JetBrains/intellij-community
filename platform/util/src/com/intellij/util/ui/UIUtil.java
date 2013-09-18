@@ -139,6 +139,10 @@ public class UIUtil {
     return isUnderDarcula() ? DARCULA_GRAY_FILTER : DEFAULT_GRAY_FILTER;
   }
 
+  public static boolean isAppleRetina() {
+    return isRetina() && SystemInfo.isAppleJvm;
+  }
+
   public enum FontSize {NORMAL, SMALL, MINI}
 
   public enum ComponentStyle {REGULAR, SMALL, MINI}
