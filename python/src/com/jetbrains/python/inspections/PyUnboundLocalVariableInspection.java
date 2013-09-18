@@ -197,5 +197,5 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
                       PyBundle.message("INSP.unbound.function.too.large", owner.getName()),
                       ProblemHighlightType.WEAK_WARNING);
     }
-  };
+  }
 }
