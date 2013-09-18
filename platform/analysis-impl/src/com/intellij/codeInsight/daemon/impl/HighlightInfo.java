@@ -421,6 +421,16 @@ public class HighlightInfo implements Segment {
     HighlightInfo createUnconditionally();
   }
 
+  public static boolean isAcceptedByFilters(@NotNull HighlightInfo info, @Nullable PsiElement psiElement) {
+    PsiFile file = psiElement == null ? null : psiElement.getContainingFile();
+    for (HighlightInfoFilter filter : FILTERS) {
+      if (!filter.accept(info, file)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   private static class B implements Builder {
     private Boolean myNeedsUpdateOnTyping;
     private TextAttributes forcedTextAttributes;
@@ -593,12 +603,7 @@ public class HighlightInfo implements Segment {
       LOG.assertTrue(psiElement != null || severity == HighlightInfoType.SYMBOL_TYPE_SEVERITY || severity == HighlightInfoType.INJECTED_FRAGMENT_SEVERITY || ArrayUtilRt.find(HighlightSeverity.DEFAULT_SEVERITIES, severity) != -1,
                      "Custom type demands element to detect its text attributes");
 
-      PsiFile file = psiElement == null ? null : psiElement.getContainingFile();
-      for (HighlightInfoFilter filter : FILTERS) {
-        if (!filter.accept(info, file)) {
-          return null;
-        }
-      }
+      if (!isAcceptedByFilters(info, psiElement)) return null;
 
       return info;
     }

@@ -439,6 +439,9 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     TextAttributes attributes = mySeverityRegistrar.getTextAttributesBySeverity(severity);
     HighlightInfo highlightInfo = new HighlightInfo(attributes, null, highlightInfoType, textRange.getStartOffset(), textRange.getEndOffset(), message, toolTip,
                                                     severity, problemDescriptor.isAfterEndOfLine(), null, isFileLevel, 0);
+    if (!HighlightInfo.isAcceptedByFilters(highlightInfo, psiElement)) {
+      return null;
+    }
     highlightInfo.setProblemGroup(problemDescriptor.getProblemGroup());
     return highlightInfo;
   }
