@@ -78,7 +78,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     myLibrariesContainer = model.getLibrariesContainer();
 
     myLabel.setVisible(!vertical);
-    final Splitter splitter = new Splitter(vertical, 0.3f, 0.1f, 0.7f);
+    final Splitter splitter = vertical ? new Splitter(vertical, 0.3f, 0.1f, 0.7f) : new Splitter(vertical, 0.3f, 0.1f, 0.7f);
     myFrameworksTree = new FrameworksTree() {
       @Override
       protected void onNodeStateChanged(CheckedTreeNode node) {

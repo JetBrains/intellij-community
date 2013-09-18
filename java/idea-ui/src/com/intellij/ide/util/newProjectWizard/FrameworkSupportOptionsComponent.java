@@ -57,32 +57,19 @@ public class FrameworkSupportOptionsComponent {
                                           Disposable parentDisposable,
                                           FrameworkSupportInModuleProvider provider,
                                           final FrameworkSupportInModuleConfigurable configurable) {
-    this(model, container, parentDisposable, provider, configurable, false);
-  }
-
-  public FrameworkSupportOptionsComponent(FrameworkSupportModelBase model,
-                                          LibrariesContainer container,
-                                          Disposable parentDisposable,
-                                          FrameworkSupportInModuleProvider provider,
-                                          final FrameworkSupportInModuleConfigurable configurable,
-                                          boolean inline) {
     myModel = model;
     myConfigurable = configurable;
-    LayoutManager layout = inline ? new BorderLayout() : new VerticalFlowLayout(false, true);
+    VerticalFlowLayout layout = new VerticalFlowLayout();
+    layout.setVerticalFill(true);
     myMainPanel = new JPanel(layout);
     myModel.registerOptionsComponent(provider, this);
     List<FrameworkVersion> versions = provider.getFrameworkType().getVersions();
     if (!versions.isEmpty()) {
       myFrameworkVersionComponent = new FrameworkVersionComponent(model, provider.getFrameworkType().getId(), versions, provider.getVersionLabel());
-      if (inline) {
-        myMainPanel.add(myFrameworkVersionComponent.getMainPanel(), BorderLayout.WEST);
-      }
-      else {
-        myMainPanel.add(myFrameworkVersionComponent.getMainPanel());
-      }
+      myMainPanel.add(myFrameworkVersionComponent.getMainPanel());
     }
 
-    final JComponent component = myConfigurable.createComponent(inline);
+    final JComponent component = myConfigurable.createComponent(false);
     if (component != null) {
       myMainPanel.add(component);
     }
