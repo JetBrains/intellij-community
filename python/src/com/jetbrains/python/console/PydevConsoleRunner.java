@@ -684,26 +684,10 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
       mySelected = state;
       
       if (mySelected) {
-        final XStandaloneVariablesView view = new XStandaloneVariablesView(getProject(), new PyDebuggerEditorsProvider());
-        PyStackFrame stackFrame = new PyStackFrame(getProject(), myPydevConsoleCommunication, new PyStackFrameInfo("", "", "", null), null);
-        view.showVariables(stackFrame);
-
-        getConsoleView().showVariables(view);
-        
-        myPydevConsoleCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
-          @Override
-          public void commandExecuted() {
-            view.showMessage("Execution finished");
-          }
-
-          @Override
-          public void inputRequested() {
-
-          }
-        });
+        getConsoleView().showVariables(myPydevConsoleCommunication);
       }
       else {
-        getConsoleView().hideVariables();
+        getConsoleView().restoreWindow();
       }
     }
   }
