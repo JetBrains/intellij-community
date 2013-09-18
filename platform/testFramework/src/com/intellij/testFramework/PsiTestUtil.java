@@ -54,6 +54,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static com.intellij.openapi.roots.ModuleRootModificationUtil.updateModel;
+
 @NonNls
 public class PsiTestUtil {
   public static VirtualFile createTestProjectStructure(Project project,
@@ -399,29 +401,5 @@ public class PsiTestUtil {
         model.getModuleExtension(CompilerModuleExtension.class).setExcludeOutput(exclude);
       }
     });
-  }
-
-  private static void updateModel(Module module, Consumer<ModifiableRootModel> task) {
-    updateModel(ModuleRootManager.getInstance(module).getModifiableModel(), task);
-  }
-
-  private static void updateModel(ModifiableRootModel model, Consumer<ModifiableRootModel> task) {
-    try {
-      task.consume(model);
-      commitModel(model);
-    }
-    catch (Throwable t) {
-      model.dispose();
-      throw new RuntimeException(t);
-    }
-  }
-
-  private static void commitModel(final ModifiableRootModel model) {
-    new WriteCommandAction.Simple(model.getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        model.commit();
-      }
-    }.execute().throwException();
   }
 }
