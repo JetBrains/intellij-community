@@ -43,8 +43,6 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
                     @Nullable String[] revisionProperties,
                     @Nullable ISVNLogEntryHandler handler) throws VcsException {
     // TODO: add revision properties parameter if necessary
-    // TODO: after merge remove setting includeMergedRevisions to false and update parsing
-    includeMergedRevisions = false;
 
     List<String> parameters =
       prepareCommand(path, startRevision, endRevision, pegRevision, stopOnCopy, discoverChangedPaths, includeMergedRevisions, limit);
@@ -67,12 +65,25 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
 
       if (handler != null && log != null) {
         for (LogEntry entry : log.entries) {
-          handler.handleLogEntry(entry.toLogEntry());
+          iterateRecursively(entry, handler);
         }
       }
     }
     catch (JAXBException e) {
       throw new VcsException(e);
+    }
+  }
+
+  private static void iterateRecursively(@NotNull LogEntry entry, @NotNull ISVNLogEntryHandler handler) throws SVNException {
+    handler.handleLogEntry(entry.toLogEntry());
+
+    for (LogEntry childEntry : entry.childEntries) {
+      iterateRecursively(childEntry, handler);
+    }
+
+    if (entry.hasChildren()) {
+      // empty log entry passed to handler to fully correspond to SVNKit behavior.
+      handler.handleLogEntry(SVNLogEntry.EMPTY_ENTRY);
     }
   }
 
@@ -123,8 +134,19 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
     @XmlElement(name = "paths")
     public ChangedPaths changedPaths;
 
+    @XmlElement(name = "logentry")
+    public List<LogEntry> childEntries = new ArrayList<LogEntry>();
+
+    public boolean hasChildren() {
+      return !childEntries.isEmpty();
+    }
+
     public SVNLogEntry toLogEntry() {
-      return new SVNLogEntry(toChangedPathsMap(), revision, author, date, message);
+      SVNLogEntry entry = new SVNLogEntry(toChangedPathsMap(), revision, author, date, message);
+
+      entry.setHasChildren(hasChildren());
+
+      return entry;
     }
 
     public Map<String, SVNLogEntryPath> toChangedPathsMap() {
