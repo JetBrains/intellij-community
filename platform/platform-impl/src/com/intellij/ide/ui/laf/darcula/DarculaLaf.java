@@ -20,6 +20,7 @@ import com.intellij.ide.ui.laf.IdeaLaf;
 import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.containers.hash.HashMap;
@@ -87,7 +88,7 @@ public final class DarculaLaf extends BasicLookAndFeel {
       superMethod.setAccessible(true);
       final UIDefaults metalDefaults = (UIDefaults)superMethod.invoke(new MetalLookAndFeel());
       final UIDefaults defaults = (UIDefaults)superMethod.invoke(base);
-      if (SystemInfo.isLinux) {
+      if (SystemInfo.isLinux && !Registry.is("darcula.use.native.fonts.on.linux")) {
         Font font = findFont("DejaVu Sans");
         if (font != null) {
           for (Object key : defaults.keySet()) {
