@@ -87,7 +87,7 @@ public class SubtypingConstraint implements ConstraintFormula {
           if (sSubstitutor != null) {
             for (PsiTypeParameter parameter : CClass.getTypeParameters()) {
               final PsiType tSubstituted = tSubstitutor.substitute(parameter);
-              final PsiType sSubstituted = sSubstitutor.substitute(parameter);
+              final PsiType sSubstituted = sSubstitutor.substituteWithBoundsPromotion(parameter);
               if (tSubstituted != null && sSubstituted != null) {
                 constraints.add(new SubtypingConstraint(tSubstituted, sSubstituted, false));
               }
