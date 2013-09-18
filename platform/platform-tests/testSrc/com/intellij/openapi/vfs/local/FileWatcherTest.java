@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
@@ -645,6 +646,28 @@ public class FileWatcherTest extends PlatformLangTestCase {
       myAccept = true;
       setHidden(testFile.getPath(), true);
       assertEvent(VFilePropertyChangeEvent.class, testFile.getPath());
+    }
+    finally {
+      unwatch(request);
+    }
+  }
+
+  public void testFileCaseChange() throws Exception {
+    if (SystemInfo.isFileSystemCaseSensitive) {
+      System.err.println("Ignored: case-insensitive FS required");
+      return;
+    }
+
+    File topDir = createTestDir("topDir");
+    File testFile = createTestFile(topDir, "file.txt", "123");
+    refresh(topDir);
+
+    LocalFileSystem.WatchRequest request = watch(topDir);
+    try {
+      myAccept = true;
+      File newFile = new File(testFile.getParent(), StringUtil.capitalize(testFile.getName()));
+      FileUtil.rename(testFile, newFile);
+      assertEvent(VFilePropertyChangeEvent.class, newFile.getPath());
     }
     finally {
       unwatch(request);

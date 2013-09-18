@@ -20,6 +20,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -401,5 +402,36 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     topDir.refresh(false, true);
     assertTrue(topDir.exists());
     assertEquals(2, topDir.getChildren().length);
+  }
+
+  public void testFileCaseChange() throws Exception {
+    if (SystemInfo.isFileSystemCaseSensitive) {
+      System.err.println("Ignored: case-insensitive FS required");
+      return;
+    }
+
+    File top = createTempDirectory(false);
+    File file = IoTestUtil.createTestFile(top, "file.txt", "test");
+
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    VirtualFile topDir = lfs.refreshAndFindFileByIoFile(top);
+    assertNotNull(topDir);
+    VirtualFile sourceFile = lfs.refreshAndFindFileByIoFile(file);
+    assertNotNull(sourceFile);
+
+    String newName = StringUtil.capitalize(file.getName());
+    FileUtil.rename(file, new File(top, newName));
+    topDir.refresh(false, true);
+    assertFalse(((VirtualDirectoryImpl)topDir).allChildrenLoaded());
+    assertTrue(sourceFile.isValid());
+    assertEquals(newName, sourceFile.getName());
+
+    topDir.getChildren();
+    newName = newName.toLowerCase();
+    FileUtil.rename(file, new File(top, newName));
+    topDir.refresh(false, true);
+    assertTrue(((VirtualDirectoryImpl)topDir).allChildrenLoaded());
+    assertTrue(sourceFile.isValid());
+    assertEquals(newName, sourceFile.getName());
   }
 }

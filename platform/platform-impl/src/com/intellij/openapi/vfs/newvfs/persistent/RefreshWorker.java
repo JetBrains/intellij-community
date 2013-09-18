@@ -30,17 +30,15 @@ import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.openapi.diagnostic.LogUtil.debug;
-import static com.intellij.util.containers.ContainerUtil.newHashSet;
+import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 
 /**
  * @author max
@@ -122,10 +120,14 @@ public class RefreshWorker {
         if (fullSync) {
           String[] currentNames = persistence.list(file);
           String[] upToDateNames = VfsUtil.filterNames(fs.list(file));
-          Set<String> newNames = newHashSet(upToDateNames);
+          Set<String> newNames = newTroveSet(FileUtil.PATH_HASHING_STRATEGY, upToDateNames);
           ContainerUtil.removeAll(newNames, currentNames);
-          Set<String> deletedNames = newHashSet(currentNames);
+          Set<String> deletedNames = newTroveSet(FileUtil.PATH_HASHING_STRATEGY, currentNames);
           ContainerUtil.removeAll(deletedNames, upToDateNames);
+          OpenTHashSet<String> actualNames = null;
+          if (!SystemInfo.isFileSystemCaseSensitive) {
+            actualNames = new OpenTHashSet<String>(FileUtil.PATH_HASHING_STRATEGY, upToDateNames);
+          }
           debug(LOG, "current=%s +%s -%s", currentNames, newNames, deletedNames);
 
           for (String name : deletedNames) {
@@ -149,6 +151,7 @@ public class RefreshWorker {
               FileAttributes childAttributes = fs.getAttributes(child);
               if (childAttributes != null) {
                 checkAndScheduleChildRefresh(file, child, childAttributes);
+                checkAndScheduleFileNameChange(actualNames, child);
               }
               else {
                 LOG.warn("fs=" + fs + " dir=" + file + " name=" + child.getName());
@@ -159,12 +162,18 @@ public class RefreshWorker {
         }
         else {
           Collection<VirtualFile> cachedChildren = file.getCachedChildren();
-          debug(LOG, "cached=%s", cachedChildren);
+          OpenTHashSet<String> actualNames = null;
+          if (!SystemInfo.isFileSystemCaseSensitive) {
+            actualNames = new OpenTHashSet<String>(FileUtil.PATH_HASHING_STRATEGY, VfsUtil.filterNames(fs.list(file)));
+          }
+          debug(LOG, "cached=%s actual=%s", cachedChildren, actualNames);
+
           for (VirtualFile child : cachedChildren) {
             checkCancelled();
             FileAttributes childAttributes = fs.getAttributes(child);
             if (childAttributes != null) {
               checkAndScheduleChildRefresh(file, child, childAttributes);
+              checkAndScheduleFileNameChange(actualNames, child);
             }
             else {
               scheduleDeletion(child);
@@ -220,6 +229,16 @@ public class RefreshWorker {
       }
 
       file.markClean();
+    }
+  }
+
+  private void checkAndScheduleFileNameChange(@Nullable OpenTHashSet<String> actualNames, VirtualFile child) {
+    if (actualNames != null) {
+      String currentName = child.getName();
+      String actualName = actualNames.get(currentName);
+      if (!currentName.equals(actualName)) {
+        scheduleAttributeChange(child, VirtualFile.PROP_NAME, currentName, actualName);
+      }
     }
   }
 
