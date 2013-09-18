@@ -30,7 +30,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xdebugger.impl.frame.XVariablesView;
+import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
@@ -59,7 +59,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
   private boolean myHyperlink;
 
   private final MyLanguageConsoleViewImpl myLanguageConsoleView;
-  private XVariablesView myVariablesView;
+  private XStandaloneVariablesView myVariablesView;
 
   public PythonConsoleView(final Project project, final String title, Sdk sdk) {
     super(new BorderLayout());
@@ -361,7 +361,7 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     return myProject;
   }
 
-  public void showVariables(XVariablesView view) {
+  public void showVariables(XStandaloneVariablesView view) {
     removeAll();
     JSplitPane p = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
     p.add(myLanguageConsoleView.getComponent(), JSplitPane.LEFT);
