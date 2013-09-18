@@ -168,7 +168,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
     myCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
       @Override
-      public void executionFinished() {
+      public void commandExecuted() {
         mySemaphore.release();
       }
 
