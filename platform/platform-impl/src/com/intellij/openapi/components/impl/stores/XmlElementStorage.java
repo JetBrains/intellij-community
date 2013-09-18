@@ -468,7 +468,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
         }
 
         try {
-          boolean result = StorageUtil.sendContent(streamProvider, myFileSpec, actualDocument, roamingType, true);
+          boolean result = StorageUtil.doSendContent(streamProvider, myFileSpec, actualDocument, roamingType, true);
           TObjectLongHashMap<String> versions = loadVersions(actualDocument.getRootElement().getChildren(StorageData.COMPONENT));
           if (!versions.isEmpty()) {
             Document versionDoc = new Document(StateStorageManagerImpl.createComponentVersionsXml(versions));

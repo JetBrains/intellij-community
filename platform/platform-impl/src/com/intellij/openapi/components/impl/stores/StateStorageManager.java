@@ -58,14 +58,13 @@ public interface StateStorageManager {
   @Nullable
   String expandMacros(String file);
 
+  @Deprecated
   void registerStreamProvider(StreamProvider streamProvider, final RoamingType type);
 
-  void registerStreamProvider(@NotNull com.intellij.openapi.components.impl.stores.StreamProvider streamProvider);
+  void setStreamProvider(@Nullable com.intellij.openapi.components.impl.stores.StreamProvider streamProvider);
 
-  void unregisterStreamProvider(@NotNull com.intellij.openapi.components.impl.stores.StreamProvider streamProvider);
-
-  @NotNull
-  com.intellij.openapi.components.impl.stores.StreamProvider[] getStreamProviders();
+  @Nullable
+  com.intellij.openapi.components.impl.stores.StreamProvider getStreamProvider();
 
   void reset();
 

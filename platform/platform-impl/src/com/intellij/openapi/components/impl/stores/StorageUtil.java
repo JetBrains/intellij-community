@@ -256,17 +256,23 @@ public class StorageUtil {
     }
   }
 
-  public static boolean sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Document copy, @NotNull RoamingType type, boolean async) throws IOException {
-    if (!provider.isEnabled()) {
+  public static boolean sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Document copy, @NotNull RoamingType type, boolean async) {
+    try {
+      return doSendContent(provider, fileSpec, copy, type, async);
+    }
+    catch (IOException e) {
+      LOG.warn(e);
       return false;
     }
+  }
 
+  public static boolean doSendContent(StreamProvider provider, String fileSpec, Document copy, RoamingType type, boolean async) throws IOException {
     // we should use standard line-separator (\n) - stream provider can share file content on any OS
     BufferExposingByteArrayOutputStream content = documentToBytes(copy, false);
     return provider.saveContent(fileSpec, content.getInternalBuffer(), content.size(), type, async);
   }
 
-  public static void logStateDiffInfo(Set<Pair<VirtualFile, StateStorage>> changedFiles, Set<String> componentNames) throws IOException {
+  public static void logStateDiffInfo(Set<Pair<VirtualFile, StateStorage>> changedFiles, Set<String> componentNames) {
     if (componentNames.isEmpty() || !(DUMP_COMPONENT_STATES || ApplicationManager.getApplication().isInternal())) {
       return;
     }

@@ -25,18 +25,18 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.LinkedHashSet;
+import java.util.Collections;
 import java.util.List;
 
 public class CompoundShelfFileProcessor {
   private final String mySubdirName;
-  private final StreamProvider[] myServerStreamProviders;
+  private final StreamProvider myServerStreamProvider;
   private final String FILE_SPEC;
   private final String myShelfPath;
 
@@ -44,19 +44,18 @@ public class CompoundShelfFileProcessor {
 
   public CompoundShelfFileProcessor(final String subdirName) {
     mySubdirName = subdirName;
-    myServerStreamProviders = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProviders();
+    myServerStreamProvider = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager().getStreamProvider();
 
     FILE_SPEC = "$ROOT_CONFIG$/" + subdirName + "/";
     myShelfPath = PathManager.getConfigPath() + File.separator + mySubdirName;
   }
 
-  public CompoundShelfFileProcessor(final StreamProvider[] serverStreamProviders, final String shelfPath) {
-    myServerStreamProviders = serverStreamProviders;
+  public CompoundShelfFileProcessor(@Nullable StreamProvider serverStreamProvider, String shelfPath) {
+    myServerStreamProvider = serverStreamProvider;
     myShelfPath = shelfPath;
     mySubdirName = new File(myShelfPath).getName();
     FILE_SPEC = "$ROOT_CONFIG$/" + mySubdirName + "/";
   }
-
 
   /*
   public void onWriteExternal() {
@@ -98,39 +97,33 @@ public class CompoundShelfFileProcessor {
   }
 
   public Collection<String> getServerFiles() {
-    Collection<String> result = new LinkedHashSet<String>();
-    for (StreamProvider serverStreamProvider : myServerStreamProviders) {
-      if (serverStreamProvider.isEnabled()) {
-        ContainerUtil.addAll(result, serverStreamProvider.listSubFiles(FILE_SPEC, RoamingType.PER_USER));
-      }
+    if (myServerStreamProvider == null || !myServerStreamProvider.isEnabled()) {
+      return Collections.emptyList();
     }
-    return result;
+    return myServerStreamProvider.listSubFiles(FILE_SPEC, RoamingType.PER_USER);
   }
 
   public String copyFileFromServer(final String serverFileName, final List<String> localFileNames) {
-    for (StreamProvider serverStreamProvider : myServerStreamProviders) {
-      if (serverStreamProvider.isEnabled()) {
-        try {
-          File file = new File(new File(myShelfPath), serverFileName);
-          if (!file.exists()) {
-            InputStream stream = serverStreamProvider.loadContent(FILE_SPEC + serverFileName, RoamingType.PER_USER);
-            if (stream != null) {
-              //noinspection ResultOfMethodCallIgnored
-              file.getParentFile().mkdirs();
-              FileOutputStream out = new FileOutputStream(file);
-              try {
-                FileUtil.copy(stream, out);
-              }
-              finally {
-                out.close();
-                stream.close();
-              }
+    if (myServerStreamProvider != null && myServerStreamProvider.isEnabled()) {
+      try {
+        File file = new File(new File(myShelfPath), serverFileName);
+        if (!file.exists()) {
+          InputStream stream = myServerStreamProvider.loadContent(FILE_SPEC + serverFileName, RoamingType.PER_USER);
+          if (stream != null) {
+            //noinspection ResultOfMethodCallIgnored
+            file.getParentFile().mkdirs();
+            FileOutputStream out = new FileOutputStream(file);
+            try {
+              FileUtil.copy(stream, out);
+            }
+            finally {
+              out.close();
+              stream.close();
             }
           }
         }
-        catch (IOException e) {
-          //ignore
-        }
+      }
+      catch (IOException ignored) {
       }
     }
     localFileNames.add(serverFileName);
@@ -139,12 +132,9 @@ public class CompoundShelfFileProcessor {
 
   public String renameFileOnServer(final String serverFileName, final Collection<String> serverFileNames, final Collection<String> localFileNames) {
     String newName = getNewFileName(serverFileName, serverFileNames, localFileNames);
-    String oldFilePath = FILE_SPEC + serverFileName;
-    String newFilePath = FILE_SPEC + newName;
-    for (StreamProvider serverStreamProvider : myServerStreamProviders) {
-      renameFileOnProvider(newName, oldFilePath, newFilePath, serverStreamProvider);
+    if (myServerStreamProvider != null && myServerStreamProvider.isEnabled()) {
+      renameFileOnProvider(newName, FILE_SPEC + serverFileName, FILE_SPEC + newName, myServerStreamProvider);
     }
-
     return newName;
 
   }
@@ -205,7 +195,6 @@ public class CompoundShelfFileProcessor {
   }
 
   public void savePathFile(ContentProvider contentProvider, final File patchPath, CommitContext commitContext) throws IOException {
-
     OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(patchPath), CharsetToolkit.UTF8_CHARSET);
     try {
       contentProvider.writeContentTo(writer, commitContext);
@@ -214,13 +203,9 @@ public class CompoundShelfFileProcessor {
       writer.close();
     }
 
-
-
-    for (StreamProvider serverStreamProvider : myServerStreamProviders) {
-      copyFileContentToProviders(FILE_SPEC + patchPath.getName(), serverStreamProvider, patchPath);
+    if (myServerStreamProvider != null && myServerStreamProvider.isEnabled()) {
+      copyFileContentToProviders(FILE_SPEC + patchPath.getName(), myServerStreamProvider, patchPath);
     }
-
-
   }
 
   public File getBaseIODir() {
@@ -228,23 +213,16 @@ public class CompoundShelfFileProcessor {
   }
 
   public void saveFile(final File from, final File to) throws IOException {
-    for (StreamProvider serverStreamProvider : myServerStreamProviders) {
-      copyFileContentToProviders(FILE_SPEC + to.getName(), serverStreamProvider, from);
+    if (myServerStreamProvider != null && myServerStreamProvider.isEnabled()) {
+      copyFileContentToProviders(FILE_SPEC + to.getName(), myServerStreamProvider, from);
     }
-
-
     FileUtil.copy(from, to);
-
-
   }
 
   public void delete(final String name) {
     FileUtil.delete(new File(getBaseIODir(), name));
-    for (StreamProvider serverStreamProvider : myServerStreamProviders) {
-      if (serverStreamProvider.isEnabled()) {
-        serverStreamProvider.deleteFile(FILE_SPEC + name, RoamingType.PER_USER);
-      }
+    if (myServerStreamProvider != null && myServerStreamProvider.isEnabled()) {
+      myServerStreamProvider.deleteFile(FILE_SPEC + name, RoamingType.PER_USER);
     }
-
   }
 }

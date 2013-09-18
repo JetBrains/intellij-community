@@ -26,7 +26,6 @@ import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.apply.ApplyFilePatchBase;
@@ -87,7 +86,7 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
     super(project);
     myBus = bus;
     if (project.isDefault()) {
-      myFileProcessor = new CompoundShelfFileProcessor(StreamProvider.EMPTY_ARRAY, PathManager.getConfigPath() + File.separator + "shelf");
+      myFileProcessor = new CompoundShelfFileProcessor(null, PathManager.getConfigPath() + File.separator + "shelf");
     }
     else {
       myFileProcessor = new CompoundShelfFileProcessor("shelf");

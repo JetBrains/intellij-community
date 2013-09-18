@@ -23,6 +23,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
@@ -38,9 +39,9 @@ public class ShelfManagerConfigurationMerger implements XmlConfigurationMerger {
   }
 
   @TestOnly
-  public ShelfManagerConfigurationMerger(final String configPath, final StreamProvider[] streamProviders) {
+  public ShelfManagerConfigurationMerger(final String configPath, @Nullable StreamProvider streamProvider) {
     myConfigPath = configPath;
-    myFileProcessor = new CompoundShelfFileProcessor(streamProviders, configPath);
+    myFileProcessor = new CompoundShelfFileProcessor(streamProvider, configPath);
   }
 
   @Override

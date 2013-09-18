@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.Condition;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +39,7 @@ public class ObjectUtils {
     return t;
   }
 
-  @Nullable
+  @Contract("null, null -> null")
   public static <T> T chooseNotNull(@Nullable T t1, @Nullable T t2) {
     return t1 == null? t2 : t1;
   }

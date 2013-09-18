@@ -176,18 +176,13 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       }
 
       @Override
-      public void registerStreamProvider(@NotNull com.intellij.openapi.components.impl.stores.StreamProvider streamProvider) {
-        throw new UnsupportedOperationException("Method registerStreamProvider not implemented in " + getClass());
+      public void setStreamProvider(@Nullable com.intellij.openapi.components.impl.stores.StreamProvider streamProvider) {
+        throw new UnsupportedOperationException("Method setStreamProvider not implemented in " + getClass());
       }
 
+      @Nullable
       @Override
-      public void unregisterStreamProvider(@NotNull com.intellij.openapi.components.impl.stores.StreamProvider streamProvider) {
-        throw new UnsupportedOperationException("Method unregisterStreamProvider not implemented in " + getClass());
-      }
-
-      @NotNull
-      @Override
-      public com.intellij.openapi.components.impl.stores.StreamProvider[] getStreamProviders() {
+      public com.intellij.openapi.components.impl.stores.StreamProvider getStreamProvider() {
         throw new UnsupportedOperationException("Method getStreamProviders not implemented in " + getClass());
       }
 
