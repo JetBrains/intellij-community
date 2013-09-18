@@ -151,7 +151,7 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends Intention {
       final SelectionModel selectionModel = editor.getSelectionModel();
       if (selectionModel.hasSelection()) {
         final String selectedText = selectionModel.getSelectedText();
-        return indexOfOctalEscape(selectedText, 1) >= 0;
+        return selectedText != null && indexOfOctalEscape(selectedText, 1) >= 0;
       }
       else if (element instanceof PsiLiteralExpression) {
         final PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
