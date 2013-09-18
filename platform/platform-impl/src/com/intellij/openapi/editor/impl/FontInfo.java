@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntHashSet;
@@ -136,7 +137,9 @@ public class FontInfo {
       // width is not equal to the antialiased one (IDEA-81539).
       final Graphics graphics = UIUtil.createImage(1, 1, BufferedImage.TYPE_INT_RGB).getGraphics();
       UISettings.setupAntialiasing(graphics);
-      GraphicsUtil.setupFractionalMetrics(graphics);
+      if (UIUtil.isRetina() && SystemInfo.isJavaVersionAtLeast("1.7.0.40")) {
+        GraphicsUtil.setupFractionalMetrics(graphics);
+      }
       graphics.setFont(myFont);
       myFontMetrics = graphics.getFontMetrics();
       for (int i = 0; i < 128; i++) {
