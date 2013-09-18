@@ -557,14 +557,22 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
 
     @Override
+    public boolean isApplicable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
+      for (StreamProvider provider : myStreamProviders) {
+        if (provider.isApplicable(fileSpec, roamingType)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    @Override
     public boolean saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
       boolean result = false;
       for (StreamProvider streamProvider : myStreamProviders) {
         try {
-          if (streamProvider.isEnabled()) {
-            if (streamProvider.saveContent(fileSpec, content, size, roamingType, async)) {
-              result = true;
-            }
+          if (streamProvider.isEnabled() && streamProvider.isApplicable(fileSpec, roamingType) && streamProvider.saveContent(fileSpec, content, size, roamingType, async)) {
+            result = true;
           }
         }
         catch (ConnectException e) {
@@ -581,7 +589,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     public InputStream loadContent(@NotNull final String fileSpec, @NotNull final RoamingType roamingType) throws IOException {
       for (StreamProvider streamProvider : myStreamProviders) {
         try {
-          if (streamProvider.isEnabled()) {
+          if (streamProvider.isEnabled() && streamProvider.isApplicable(fileSpec, roamingType)) {
             InputStream content = streamProvider.loadContent(fileSpec, roamingType);
             if (content != null) {
               return content;
@@ -603,7 +611,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     public void deleteFile(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
       for (StreamProvider streamProvider : myStreamProviders) {
         try {
-          if (streamProvider.isEnabled()) {
+          if (streamProvider.isEnabled() && streamProvider.isApplicable(fileSpec, roamingType)) {
             streamProvider.deleteFile(fileSpec, roamingType);
           }
         }
@@ -616,6 +624,10 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     @Override
     public String getCurrentUserName() {
       for (OldStreamProviderAdapter provider : myStreamProviders) {
+        if (!provider.isEnabled()) {
+          continue;
+        }
+
         String userName = provider.getCurrentUserName();
         if (userName != null) {
           return userName;

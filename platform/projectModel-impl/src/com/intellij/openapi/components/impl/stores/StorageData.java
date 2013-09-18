@@ -53,7 +53,6 @@ public class StorageData {
     myComponentStates = new THashMap<String, Element>(storageData.myComponentStates);
   }
 
-
   public void load(@NotNull Element rootElement) throws IOException {
     final Element[] elements = JDOMUtil.getElements(rootElement);
     for (Element element : elements) {

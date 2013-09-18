@@ -695,6 +695,11 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
 
     Document document = myProcessor.writeScheme(scheme);
     if (document != null) {
+      String fileSpec = getFileFullPath(UniqueFileNamesProvider.convertName(scheme.getName())) + mySchemeExtension;
+      if (!provider.isApplicable(fileSpec, RoamingType.GLOBAL)) {
+        return;
+      }
+
       Document wrapped = wrap(document, name, description);
       if (provider instanceof CurrentUserHolder) {
         wrapped = wrapped.clone();
@@ -703,8 +708,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
           wrapped.getRootElement().setAttribute(USER, userName);
         }
       }
-      StorageUtil.doSendContent(provider, getFileFullPath(UniqueFileNamesProvider.convertName(scheme.getName())) + mySchemeExtension,
-                                wrapped, RoamingType.GLOBAL, false);
+      StorageUtil.doSendContent(provider, fileSpec, wrapped, RoamingType.GLOBAL, false);
     }
   }
 
@@ -849,11 +853,9 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
   }
 
   private void deleteServerFiles(final String fileName) {
-    if (myProvider == null || !myProvider.isEnabled()) {
-      return;
+    if (myProvider != null && myProvider.isEnabled()) {
+      StorageUtil.deleteContent(myProvider, getFileFullPath(fileName), myRoamingType);
     }
-
-    myProvider.deleteFile(getFileFullPath(fileName), myRoamingType);
   }
 
   private void saveSchemes(final Collection<T> schemes, final UniqueFileNamesProvider fileNameProvider) throws WriteExternalException {

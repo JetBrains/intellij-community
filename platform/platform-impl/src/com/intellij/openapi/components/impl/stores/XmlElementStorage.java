@@ -42,7 +42,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.XmlElementStorage");
 
   @NonNls private static final String ATTR_NAME = "name";
-  public static final String VERSION_FILE_SUFFIX = ".ver";
+  private static final String VERSION_FILE_SUFFIX = ".ver";
 
   protected TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   @NotNull private final String myRootElementName;
@@ -406,7 +406,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
         if (myStreamProvider != null && myStreamProvider.isEnabled() && (myProviderUpToDateHash == -1 || myProviderUpToDateHash != hash)) {
           try {
             //noinspection IfStatementWithIdenticalBranches
-            if (saveForProviders(myStreamProvider)) {
+            if (saveForProvider(myStreamProvider)) {
               //noinspection UnnecessaryReturnStatement
               return;
             }
@@ -432,9 +432,12 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       }
     }
 
-    private boolean saveForProviders(@NotNull StreamProvider streamProvider) {
+    private boolean saveForProvider(@NotNull StreamProvider streamProvider) {
+      // it is not really correctly implemented - stream provider can save not the whole document, but only filtered (per roaming type)
+      // but right now it is not our case, so, we should refine it later, but it not leads to bug now
+      boolean result = false;
       for (final RoamingType roamingType : RoamingType.values()) {
-        if (roamingType == RoamingType.DISABLED) {
+        if (roamingType == RoamingType.DISABLED || !streamProvider.isApplicable(myFileSpec, roamingType)) {
           continue;
         }
 
@@ -468,20 +471,21 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
         }
 
         try {
-          boolean result = StorageUtil.doSendContent(streamProvider, myFileSpec, actualDocument, roamingType, true);
+          if (StorageUtil.doSendContent(streamProvider, myFileSpec, actualDocument, roamingType, true)) {
+            result = true;
+          }
           TObjectLongHashMap<String> versions = loadVersions(actualDocument.getRootElement().getChildren(StorageData.COMPONENT));
           if (!versions.isEmpty()) {
             Document versionDoc = new Document(StateStorageManagerImpl.createComponentVersionsXml(versions));
-            StorageUtil.sendContent(streamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
+            StorageUtil.doSendContent(streamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
           }
-          return result;
         }
         catch (IOException e) {
           LOG.warn(e);
         }
       }
 
-      return false;
+      return result;
     }
 
     private boolean isHashUpToDate(final Integer hash) {

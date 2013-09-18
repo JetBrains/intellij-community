@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.impl.stores.StorageUtil;
 import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
@@ -159,12 +160,10 @@ public class CompoundShelfFileProcessor {
   }
 
   private static void copyFileContentToProviders(final String newFilePath, final StreamProvider serverStreamProvider, final File file) throws IOException {
-    if (!serverStreamProvider.isEnabled()) {
-      return;
+    if (serverStreamProvider.isEnabled() && serverStreamProvider.isApplicable(newFilePath, RoamingType.PER_USER)) {
+      byte[] content = FileUtil.loadFileBytes(file);
+      serverStreamProvider.saveContent(newFilePath, content, content.length, RoamingType.PER_USER, true);
     }
-
-    byte[] content = FileUtil.loadFileBytes(file);
-    serverStreamProvider.saveContent(newFilePath, content, content.length, RoamingType.PER_USER, true);
   }
 
   private static void copyFileToStream(final InputStream stream, final File file) throws IOException {
@@ -222,7 +221,7 @@ public class CompoundShelfFileProcessor {
   public void delete(final String name) {
     FileUtil.delete(new File(getBaseIODir(), name));
     if (myServerStreamProvider != null && myServerStreamProvider.isEnabled()) {
-      myServerStreamProvider.deleteFile(FILE_SPEC + name, RoamingType.PER_USER);
+      StorageUtil.deleteContent(myServerStreamProvider, FILE_SPEC + name, RoamingType.PER_USER);
     }
   }
 }

@@ -27,14 +27,13 @@ final class OldStreamProviderAdapter extends StreamProvider implements CurrentUs
   }
 
   @Override
-  public boolean saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
-    if (myRoamingType == roamingType) {
-      if (roamingType == RoamingType.PER_USER && StorageUtil.isProjectOrModuleFile(fileSpec)) {
-        return false;
-      }
+  public boolean isApplicable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
+    return myRoamingType == roamingType && !(roamingType == RoamingType.PER_USER && StorageUtil.isProjectOrModuleFile(fileSpec));
+  }
 
-      myProvider.saveContent(fileSpec, new BufferExposingByteArrayInputStream(content, size), size, roamingType, async);
-    }
+  @Override
+  public boolean saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
+    myProvider.saveContent(fileSpec, new BufferExposingByteArrayInputStream(content, size), size, roamingType, async);
     return false;
   }
 

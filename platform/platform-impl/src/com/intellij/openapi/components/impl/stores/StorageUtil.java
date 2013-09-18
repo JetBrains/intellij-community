@@ -257,6 +257,10 @@ public class StorageUtil {
   }
 
   public static boolean sendContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull Document copy, @NotNull RoamingType type, boolean async) {
+    if (!provider.isApplicable(fileSpec, type)) {
+      return false;
+    }
+
     try {
       return doSendContent(provider, fileSpec, copy, type, async);
     }
@@ -266,6 +270,15 @@ public class StorageUtil {
     }
   }
 
+  public static void deleteContent(@NotNull StreamProvider provider, @NotNull String fileSpec, @NotNull RoamingType type) {
+    if (provider.isApplicable(fileSpec, type)) {
+      provider.deleteFile(fileSpec, type);
+    }
+  }
+
+  /**
+   * You must call {@link StreamProvider#isApplicable(String, com.intellij.openapi.components.RoamingType)} before
+   */
   public static boolean doSendContent(StreamProvider provider, String fileSpec, Document copy, RoamingType type, boolean async) throws IOException {
     // we should use standard line-separator (\n) - stream provider can share file content on any OS
     BufferExposingByteArrayOutputStream content = documentToBytes(copy, false);

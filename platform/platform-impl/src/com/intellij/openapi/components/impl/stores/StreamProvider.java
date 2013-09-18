@@ -15,6 +15,13 @@ public abstract class StreamProvider {
   public abstract boolean isEnabled();
 
   /**
+   * fileSpec Only main fileSpec, not version
+   */
+  public boolean isApplicable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
+    return true;
+  }
+
+  /**
    * @param fileSpec
    * @param content bytes of content, size of array is not actual size of data, you must use {@code size}
    * @param size actual size of data
