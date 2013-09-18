@@ -787,7 +787,7 @@ binding.setVariable("buildModulesAndCollectUsedJars", { List modules, List appro
           String path = file.canonicalPath.replace('\\', '/')
           if (path.endsWith(".jar") && approvedJars.any { path.startsWith(it) } && !forbiddenJars.any { path.contains(it) }) {
             if (usedJars.add(path)) {
-              projectBuilder.info("\tADDED: $path")
+              projectBuilder.info("\tADDED: $path for ${module.getName()}")
             }
           }
         }
