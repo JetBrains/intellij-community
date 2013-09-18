@@ -430,7 +430,8 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       }
       wasSmaller = isSmaller;
 
-      final int curWidth = GraphicsUtil.stringWidth(myFragments.get(i), font);
+      final String text = myFragments.get(i);
+      final int curWidth = isOracleRetina ? GraphicsUtil.stringWidth(text, font) : getFontMetrics(font).stringWidth(text);
       if (x >= curX && x < curX + curWidth) {
         return i;
       }
@@ -623,7 +624,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       final FontMetrics metrics = g.getFontMetrics(font);
 
       final String fragment = myFragments.get(i);
-      final int fragmentWidth = GraphicsUtil.stringWidth(fragment, font);
+      final int fragmentWidth = isOracleRetina ? GraphicsUtil.stringWidth(fragment, font) : metrics.stringWidth(fragment);
 
       final Color bgColor = attributes.getBgColor();
       if ((attributes.isOpaque() || isOpaque()) && bgColor != null) {
