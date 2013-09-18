@@ -3,6 +3,7 @@ package com.intellij.vcs.log;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -59,5 +60,15 @@ public interface VcsLogProvider {
    */
   @NotNull
   VcsLogRefSorter getRefSorter();
+
+  /**
+   * <p>Starts listening to events from the certain VCS, which should lead to the log refresh.</p>
+   * <p>It is the responsibility of the certain VcsLogProvider to carefully unsubscribe on project dispose.
+   *    Using a {@link MessageBus} topic can help to avoid this task.</p>
+   *
+   * @param roots     VCS roots which should be listened to.
+   * @param refresher The refresher which should be notified about the need of refresh.
+   */
+  void subscribeToRootRefreshEvents(@NotNull Collection<VirtualFile> roots, @NotNull VcsLogRefresher refresher);
 
 }

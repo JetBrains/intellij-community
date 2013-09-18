@@ -31,6 +31,7 @@ import git4idea.commands.GitSimpleHandler;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.GitLogParser;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryChangeListener;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -138,6 +139,19 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public VcsLogRefSorter getRefSorter() {
     return myRefSorter;
+  }
+
+  @Override
+  public void subscribeToRootRefreshEvents(@NotNull final Collection<VirtualFile> roots, @NotNull final VcsLogRefresher refresher) {
+    myProject.getMessageBus().connect(myProject).subscribe(GitRepository.GIT_REPO_CHANGE, new GitRepositoryChangeListener() {
+      @Override
+      public void repositoryChanged(@NotNull GitRepository repository) {
+        VirtualFile root = repository.getRoot();
+        if (roots.contains(root)) {
+          refresher.refresh(root);
+        }
+      }
+    });
   }
 
 }

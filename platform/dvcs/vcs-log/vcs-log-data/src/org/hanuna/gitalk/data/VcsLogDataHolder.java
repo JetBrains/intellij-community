@@ -49,7 +49,7 @@ import java.util.Map;
  *
  * @author Kirill Likhodedov
  */
-public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
+public class VcsLogDataHolder implements Disposable {
 
   public static final Topic<Runnable> REFRESH_COMPLETED = Topic.create("Vcs.Log.Completed", Runnable.class);
 
@@ -214,7 +214,7 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
     });
   }
 
-  public void refresh(@NotNull final Runnable onSuccess) {
+  private void refresh(@NotNull final Runnable onSuccess) {
     loadFirstPart(new Consumer<DataPack>() {
       @Override
       public void consume(DataPack dataPack) {
@@ -223,7 +223,10 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
     }, false);
   }
 
-  @Override
+  /**
+   * Makes the log perform complete refresh for all roots.
+   * It fairly retrieves the data from the VCS and rebuilds the whole log.
+   */
   public void refreshCompletely() {
     initialize(new Consumer<VcsLogDataHolder>() {
       @Override
@@ -233,7 +236,10 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
     });
   }
 
-  @Override
+  /**
+   * Makes the log perform refresh for the given root.
+   * This refresh can be optimized, i. e. it can query VCS just for the part of the log.
+   */
   public void refresh(@NotNull VirtualFile root) {
     refresh(new Runnable() {
       @Override
@@ -243,9 +249,12 @@ public class VcsLogDataHolder implements VcsLogRefresher, Disposable {
     });
   }
 
-  @Override
+  /**
+   * Makes the log refresh only the reference labels for the given root.
+   */
   public void refreshRefs(@NotNull VirtualFile root) {
-    refresh(root); // TODO no need to query the VCS for commit & rebuild the whole log; just replace refs labels.
+    // TODO no need to query the VCS for commit & rebuild the whole log; just replace refs labels.
+    refresh(root);
   }
 
   @NotNull

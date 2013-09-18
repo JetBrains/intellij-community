@@ -19,6 +19,7 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
 import org.hanuna.gitalk.data.VcsLogDataHolder;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -70,14 +72,36 @@ public class VcsLogManager extends AbstractProjectComponent {
           @Override
           public void consume(VcsLogDataHolder vcsLogDataHolder) {
             Disposer.register(myProject, vcsLogDataHolder);
-            myProject.getMessageBus().connect(myProject).subscribe(VcsLogRefresher.TOPIC, vcsLogDataHolder);
             VcsLogUI logUI = new VcsLogUI(vcsLogDataHolder, myProject, new VcsLogColorManagerImpl(logProviders.keySet()));
             mainPanel.init(logUI.getMainFrame().getMainComponent());
+            refreshLogOnVcsEvents(vcsLogDataHolder, logProviders);
           }
         });
 
       }
     });
+  }
+
+  private static void refreshLogOnVcsEvents(@NotNull final VcsLogDataHolder vcsLogDataHolder,
+                                            @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
+    MultiMap<VcsLogProvider, VirtualFile> providers2roots = MultiMap.create();
+    for (Map.Entry<VirtualFile, VcsLogProvider> entry : logProviders.entrySet()) {
+      providers2roots.putValue(entry.getValue(), entry.getKey());
+    }
+
+    for (Map.Entry<VcsLogProvider, Collection<VirtualFile>> entry : providers2roots.entrySet()) {
+      entry.getKey().subscribeToRootRefreshEvents(entry.getValue(), new VcsLogRefresher() {
+        @Override
+        public void refresh(@NotNull VirtualFile root) {
+          vcsLogDataHolder.refresh(root);
+        }
+
+        @Override
+        public void refreshRefs(@NotNull VirtualFile root) {
+          vcsLogDataHolder.refreshRefs(root);
+        }
+      });
+    }
   }
 
   @NotNull

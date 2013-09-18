@@ -1,23 +1,14 @@
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Refreshes the VCS Log, completely, or partly.
+ * Tells the VCS Log, that some data has possibly become obsolete and needs to be refreshed.
  *
  * @author Kirill Likhodedov
  */
 public interface VcsLogRefresher {
-
-  Topic<VcsLogRefresher> TOPIC = Topic.create(VcsLogRefresher.class.getName(), VcsLogRefresher.class);
-
-  /**
-   * Makes the log perform complete refresh for all roots.
-   * It retrieves the data from the VCS and rebuilds the whole log.
-   */
-  void refreshCompletely();
 
   /**
    * Makes the log perform refresh for the given root.
