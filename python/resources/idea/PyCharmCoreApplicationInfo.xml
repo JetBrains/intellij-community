@@ -4,7 +4,7 @@
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/pycharm_core_logo.png" textcolor="ffffff" progressColor="ffaa16" progressY="230" progressTailIcon="/community_progress_tail.png"/>
   <about url="/pycharm_core_about.png" logoX="300" logoY="265" logoW="75" logoH="30" foreground="ffffff" linkColor="fca11a"/>
-  <icon size32="/PyCharm_32.png" size16="/PyCharm_16.png" size32opaque="/PyCharm_32.png" size12="/PyCharm_13.png" ico="PyCharm.ico"/>
+  <icon size32="/PyCharm_32.png" size16="/PyCharm_16.png" size32opaque="/PyCharm_32.png" size12="/PyCharm_13.png" ico="PyCharmCore.ico"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="PyCharm Core" fullname="PyCharm Core" script="charm"/>
   <install-over minbuild="0" maxbuild="0" version="1.x"/>
