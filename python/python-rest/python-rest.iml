@@ -11,10 +11,10 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="rest" />
-    <orderEntry type="module" module-name="python" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="module" module-name="python-tests" scope="TEST" />
+    <orderEntry type="module" module-name="python-community" />
   </component>
 </module>
 
