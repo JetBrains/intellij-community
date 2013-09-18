@@ -276,13 +276,14 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     }
 
     @Override
-    public void saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
+    public boolean saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
       if (!isShareable(fileSpec, roamingType)) {
-        return;
+        return false;
       }
 
       repositoryManager.write(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId), content, size, async);
       commitAlarm.cancelAndRequest();
+      return false;
     }
 
     @Override
