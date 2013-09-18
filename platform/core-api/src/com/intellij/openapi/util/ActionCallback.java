@@ -185,6 +185,16 @@ public class ActionCallback implements Disposable {
     }
 
     @NotNull
+    public ActionCallback create() {
+      ActionCallback result = new ActionCallback(myCallbacks.size());
+      Runnable doneRunnable = result.createSetDoneRunnable();
+      for (ActionCallback each : myCallbacks) {
+        each.doWhenDone(doneRunnable).notifyWhenRejected(result);
+      }
+      return result;
+    }
+
+    @NotNull
     public ActionCallback getWhenProcessed() {
       final ActionCallback result = new ActionCallback(myCallbacks.size());
       Runnable setDoneRunnable = result.createSetDoneRunnable();
