@@ -64,7 +64,8 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
     return myExternalName;
   }
 
-  public int compareTo(TextAttributesKey key) {
+  @Override
+  public int compareTo(@NotNull TextAttributesKey key) {
     return myExternalName.compareTo(key.myExternalName);
   }
 
@@ -79,10 +80,12 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey>, J
     return find(externalName);
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
   }
