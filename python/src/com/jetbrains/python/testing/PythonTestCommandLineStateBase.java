@@ -20,6 +20,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.run.AbstractPythonRunConfiguration;
@@ -79,9 +81,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
   public GeneralCommandLine generateCommandLine() throws ExecutionException {
     GeneralCommandLine cmd = super.generateCommandLine();
 
-    if (!StringUtil.isEmptyOrSpaces(myConfiguration.getWorkingDirectory())) {
-      cmd.setWorkDirectory(myConfiguration.getWorkingDirectory());
-    }
+    setWorkingDirectory(cmd);
 
     ParamsGroup exe_options = cmd.getParametersList().getParamsGroup(GROUP_EXE_OPTIONS);
     assert exe_options != null;
@@ -89,6 +89,25 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     addTestRunnerParameters(cmd);
 
     return cmd;
+  }
+
+  private void setWorkingDirectory(@NotNull final GeneralCommandLine cmd) {
+    if (!StringUtil.isEmptyOrSpaces(myConfiguration.getWorkingDirectory())) {
+      cmd.setWorkDirectory(myConfiguration.getWorkingDirectory());
+    }
+    else if (myConfiguration instanceof AbstractPythonTestRunConfiguration) {
+      final String folderName = ((AbstractPythonTestRunConfiguration)myConfiguration).getFolderName();
+      if (!StringUtil.isEmptyOrSpaces(folderName)) {
+        cmd.setWorkDirectory(folderName);
+      }
+      else {
+        final String scriptName = ((AbstractPythonTestRunConfiguration)myConfiguration).getScriptName();
+        if (StringUtil.isEmptyOrSpaces(scriptName)) return;
+        final VirtualFile script = LocalFileSystem.getInstance().findFileByPath(scriptName);
+        if (script == null) return;
+        cmd.setWorkDirectory(script.getParent().getPath());
+      }
+    }
   }
 
   @Override
