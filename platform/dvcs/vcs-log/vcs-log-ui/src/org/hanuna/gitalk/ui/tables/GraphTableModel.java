@@ -62,7 +62,12 @@ public class GraphTableModel extends AbstractTableModel {
     }
     switch (columnIndex) {
       case ROOT_COLUMN:
-        return commitNode.getBranch().getRepositoryRoot();
+        if (commitNode != null) {
+          return commitNode.getBranch().getRepositoryRoot();
+        }
+        else {
+          return null;
+        }
       case COMMIT_COLUMN:
         GraphPrintCell graphPrintCell = dataPack.getPrintCellModel().getGraphPrintCell(rowIndex);
         GraphCommitCell.Kind cellKind = getCellKind(PositionUtil.getNode(graphPrintCell));
