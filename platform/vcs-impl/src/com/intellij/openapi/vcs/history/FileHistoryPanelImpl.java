@@ -782,7 +782,9 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     });
     if (additionalActions != null) {
       for (AnAction additionalAction : additionalActions) {
-        result.add(additionalAction);
+        if (popup || additionalAction.getTemplatePresentation().getIcon() != null) {
+          result.add(additionalAction);
+        }
       }
     }
     result.add(new RefreshFileHistoryAction());
