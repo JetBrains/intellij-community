@@ -28,7 +28,7 @@ public class VcsLogJoinerTest {
 
     List<TimeCommitParents> expected = CommitParser.log(ArrayUtil.mergeArrays(new String[]{"6|-e|-a2", "5|-f|-b1"}, INITIAL));
 
-    List<? extends TimeCommitParents> result = new VcsLogJoiner().addCommits(fullLog, firstBlock, refs);
+    List<? extends TimeCommitParents> result = new VcsLogJoiner().addCommits(fullLog, refs, firstBlock, refs);
 
     assertEquals(expected, result);
   }

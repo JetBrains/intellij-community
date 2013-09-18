@@ -28,6 +28,7 @@ import java.util.*;
 /**
  * Attaches the block of latest commits, which was read from the VCS, to the existing log structure.
  *
+ * @author Stanislav Erokhin
  * @author Kirill Likhodedov
  */
 public class VcsLogJoiner {
@@ -36,14 +37,17 @@ public class VcsLogJoiner {
    *
    *
    * @param savedLog       currently available part of the log.
+   * @param previousRefs   references saved from the previous refresh.
    * @param firstBlock     the first n commits read from the VCS.
-   * @param refs           all references (branches) of the repository.
-   * @return New commits attached to the existing log structure.
+   * @param newRefs        all references (branches) of the repository.
+   * @return Total saved log with new commits properly attached to it.
    */
   @NotNull
-  public List<? extends TimeCommitParents> addCommits(@NotNull List<TimeCommitParents> savedLog,
-                                                      @NotNull List<? extends TimeCommitParents> firstBlock, @NotNull Collection<VcsRef> refs) {
-    int unsafeBlockSize = getFirstSafeIndex(savedLog, firstBlock, refs);
+  public List<TimeCommitParents> addCommits(@NotNull List<TimeCommitParents> savedLog,
+                                            @NotNull Collection<VcsRef> previousRefs,
+                                            @NotNull List<? extends TimeCommitParents> firstBlock,
+                                            @NotNull Collection<VcsRef> newRefs) {
+    int unsafeBlockSize = getFirstSafeIndex(savedLog, firstBlock, newRefs);
     if (unsafeBlockSize == -1) { // firstBlock not enough
       //TODO
       throw new IllegalStateException();

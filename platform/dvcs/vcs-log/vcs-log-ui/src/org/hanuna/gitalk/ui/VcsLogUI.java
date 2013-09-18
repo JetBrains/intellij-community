@@ -166,8 +166,8 @@ public class VcsLogUI {
     if (row != -1) {
       jumpToRow(row);
     }
-    else if (myLogDataHolder.isAllLogReady()) {
-      myLogDataHolder.rebuildLog(new Runnable() {
+    else if (myLogDataHolder.isFullLogReady()) {
+      myLogDataHolder.showFullLog(new Runnable() {
         @Override
         public void run() {
           jumpToCommit(commitHash);
