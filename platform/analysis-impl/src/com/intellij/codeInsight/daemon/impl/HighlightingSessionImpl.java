@@ -41,20 +41,23 @@ public class HighlightingSessionImpl implements HighlightingSession {
   @NotNull private final ProgressIndicator myProgressIndicator;
   private final EditorColorsScheme myEditorColorsScheme;
   private final int myPassId;
+  @NotNull private final TextRange myRestrictRange;
   private final Project myProject;
   private final Document myDocument;
-  private Map<TextRange,RangeMarker> myRanges2markersCache;
+  private final Map<TextRange,RangeMarker> myRanges2markersCache = new THashMap<TextRange, RangeMarker>();
 
   public HighlightingSessionImpl(@NotNull PsiFile psiFile,
                                  @Nullable Editor editor,
                                  @NotNull ProgressIndicator progressIndicator,
                                  EditorColorsScheme editorColorsScheme,
-                                 int passId) {
+                                 int passId,
+                                 @NotNull TextRange restrictRange) {
     myPsiFile = psiFile;
     myEditor = editor;
     myProgressIndicator = progressIndicator;
     myEditorColorsScheme = editorColorsScheme;
     myPassId = passId;
+    myRestrictRange = restrictRange;
     myProject = psiFile.getProject();
     myDocument = PsiDocumentManager.getInstance(myProject).getDocument(psiFile);
   }
@@ -97,36 +100,34 @@ public class HighlightingSessionImpl implements HighlightingSession {
     return myPassId;
   }
 
-  private TransferToEDTQueue<HighlightInfo> myAddHighlighterInEDTQueue;
-  private TransferToEDTQueue<RangeHighlighterEx> myDisposeHighlighterInEDTQueue;
-  void init(@NotNull final TextRange restrictRange) {
-    myRanges2markersCache = new THashMap<TextRange, RangeMarker>();
-    Condition<Object> stopCondition = new Condition<Object>() {
-      @Override
-      public boolean value(Object o) {
-        return myProject.isDisposed() || getProgressIndicator().isCanceled();
-      }
-    };
-    myAddHighlighterInEDTQueue = new TransferToEDTQueue<HighlightInfo>("Apply highlighting results", new Processor<HighlightInfo>() {
-      @Override
-      public boolean process(HighlightInfo info) {
-        final EditorColorsScheme colorsScheme = getColorsScheme();
-        UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, getPsiFile(), restrictRange.getStartOffset(),
-                                                                   restrictRange.getEndOffset(),
-                                                                   info, colorsScheme, Pass.UPDATE_ALL, myRanges2markersCache);
+  private final TransferToEDTQueue<HighlightInfo> myAddHighlighterInEDTQueue = new TransferToEDTQueue<HighlightInfo>("Apply highlighting results", new Processor<HighlightInfo>() {
+    @Override
+    public boolean process(HighlightInfo info) {
+      final EditorColorsScheme colorsScheme = getColorsScheme();
+      UpdateHighlightersUtil.addHighlighterToEditorIncrementally(myProject, myDocument, getPsiFile(), myRestrictRange.getStartOffset(),
+                                                                 myRestrictRange.getEndOffset(),
+                                                                 info, colorsScheme, Pass.UPDATE_ALL, myRanges2markersCache);
 
-        return true;
-      }
-    }, stopCondition, 200);
-
-    myDisposeHighlighterInEDTQueue = new TransferToEDTQueue<RangeHighlighterEx>("Dispose abandoned highlighter", new Processor<RangeHighlighterEx>() {
-      @Override
-      public boolean process(@NotNull RangeHighlighterEx highlighter) {
-        highlighter.dispose();
-        return true;
-      }
-    }, stopCondition, 200);
-  }
+      return true;
+    }
+  }, new Condition<Object>() {
+    @Override
+    public boolean value(Object o) {
+      return myProject.isDisposed() || getProgressIndicator().isCanceled();
+    }
+  }, 200);
+  private final TransferToEDTQueue<RangeHighlighterEx> myDisposeHighlighterInEDTQueue = new TransferToEDTQueue<RangeHighlighterEx>("Dispose abandoned highlighter", new Processor<RangeHighlighterEx>() {
+    @Override
+    public boolean process(@NotNull RangeHighlighterEx highlighter) {
+      highlighter.dispose();
+      return true;
+    }
+  }, new Condition<Object>() {
+    @Override
+    public boolean value(Object o) {
+      return myProject.isDisposed() || getProgressIndicator().isCanceled();
+    }
+  }, 200);
 
   void queueHighlightInfo(@NotNull HighlightInfo info) {
     myAddHighlighterInEDTQueue.offer(info);
