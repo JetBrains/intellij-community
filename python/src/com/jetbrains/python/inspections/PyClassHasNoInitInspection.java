@@ -3,17 +3,19 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.AddMethodQuickFix;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * User: ktisha
@@ -42,12 +44,14 @@ public class PyClassHasNoInitInspection extends PyInspection {
 
     @Override
     public void visitPyClass(PyClass node) {
-      final PyExpression[] classes = node.getSuperClassExpressions();
-      for (PyExpression pyClass : classes) {
-        final PsiReference reference = pyClass.getReference();
-        if (reference == null || reference.resolve() == null) return;
-        if (reference.getCanonicalText().contains(PyNames.TEST_CASE)) return;
+      final List<PyClassLikeType> types = node.getSuperClassTypes(myTypeEvalContext);
+      for (PyClassLikeType type : types) {
+        if (type == null) return;
+        final String qName = type.getClassQName();
+        if (qName != null && qName.contains(PyNames.TEST_CASE)) return;
+        if (!(type instanceof PyClassType)) return;
       }
+
       final PyFunction init = node.findInitOrNew(true);
       if (init == null) {
         registerProblem(node.getNameIdentifier(), PyBundle.message("INSP.class.has.no.init"),

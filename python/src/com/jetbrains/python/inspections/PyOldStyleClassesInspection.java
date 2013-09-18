@@ -62,6 +62,7 @@ public class PyOldStyleClassesInspection extends PyInspection {
       if (klass != null && !klass.isNewStyleClass()) {
         final List<PyClassLikeType> types = klass.getSuperClassTypes(myTypeEvalContext);
         for (PyClassLikeType type : types) {
+          if (type == null) return;
           final String qName = type.getClassQName();
           if (qName != null && qName.contains("PyQt")) return;
           if (!(type instanceof PyClassType)) return;
