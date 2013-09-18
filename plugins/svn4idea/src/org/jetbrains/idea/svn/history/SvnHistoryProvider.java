@@ -502,6 +502,8 @@ public class SvnHistoryProvider
           }
           SVNLogEntryPath entryPath = null;
           String copyPath = null;
+          final int mergeLevel = svnLogEntryIntegerPair.getSecond();
+
           if (! myLastPathCorrector.isRoot()) {
             myLastPathCorrector.handleLogEntry(logEntry);
             entryPath = myLastPathCorrector.getDirectlyMentioned();
@@ -511,11 +513,16 @@ public class SvnHistoryProvider
             } else {
               // if there are no path with exact match, check whether parent or child paths had changed
               // "entry path" is allowed to be null now; if it is null, last path would be taken for revision construction
-              if (! checkForChildChanges(logEntry) && ! checkForParentChanges(logEntry)) return;
+
+              // Separate SVNLogEntry is issued for each "merge source" revision. These "merge source" revisions are treated as child
+              // revisions of some other revision - this way we construct merge hierarchy.
+              // mergeLevel >= 0 indicates that we are currently processing some "merge source" revision. This "merge source" revision
+              // contains changes from some other branch - so checkForChildChanges() and checkForParentChanges() return "false".
+              // Because of this case we apply these methods only for non-"merge source" revisions - this means mergeLevel < 0.
+              if (mergeLevel < 0 && !checkForChildChanges(logEntry) && !checkForParentChanges(logEntry)) return;
             }
           }
 
-          final int mergeLevel = svnLogEntryIntegerPair.getSecond();
           final SvnFileRevision revision = createRevision(logEntry, copyPath, entryPath);
           if (mergeLevel >= 0) {
             addToListByLevel((SvnFileRevision)myPrevious, revision, mergeLevel);
