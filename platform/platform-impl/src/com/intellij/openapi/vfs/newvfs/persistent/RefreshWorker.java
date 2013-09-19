@@ -237,7 +237,12 @@ public class RefreshWorker {
       String currentName = child.getName();
       String actualName = actualNames.get(currentName);
       if (!currentName.equals(actualName)) {
-        scheduleAttributeChange(child, VirtualFile.PROP_NAME, currentName, actualName);
+        if (actualName != null) {
+          scheduleAttributeChange(child, VirtualFile.PROP_NAME, currentName, actualName);
+        }
+        else {
+          LOG.warn("fs=" + child.getFileSystem() + " cn=" + currentName + " act=" + actualNames);
+        }
       }
     }
   }
