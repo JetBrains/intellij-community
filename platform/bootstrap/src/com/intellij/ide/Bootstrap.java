@@ -24,11 +24,13 @@ import java.lang.reflect.Method;
  */
 public class Bootstrap {
   private static final String PLUGIN_MANAGER = "com.intellij.ide.plugins.PluginManager";
+  public static final String NO_SPLASH = "nosplash";
 
   private Bootstrap() { }
 
   public static void main(String[] args, String mainClass, String methodName) throws Exception {
-    UrlClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader(args.length == 0);
+    UrlClassLoader newClassLoader = BootstrapClassLoaderUtil.initClassLoader(args.length == 0 || args.length == 1 &&
+                                                                                                 NO_SPLASH.equals(args[0]));
 
     WindowsCommandLineProcessor.ourMirrorClass = Class.forName(WindowsCommandLineProcessor.class.getName(), true, newClassLoader);
 
