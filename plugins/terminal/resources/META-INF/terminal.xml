@@ -13,5 +13,14 @@
 
     <applicationService serviceInterface="org.jetbrains.plugins.terminal.TerminalView"
                         serviceImplementation="org.jetbrains.plugins.terminal.TerminalView"/>
+
+    <projectConfigurable instance="org.jetbrains.plugins.terminal.TerminalOptionsConfigurable"/>
   </extensions>
+
+  <application-components>
+    <component>
+      <interface-class>org.jetbrains.plugins.terminal.TerminalOptionsProvider</interface-class>
+      <implementation-class>org.jetbrains.plugins.terminal.TerminalOptionsProvider</implementation-class>
+    </component>
+  </application-components>
 </idea-plugin>
