@@ -82,11 +82,6 @@ public class GraphTableModel extends AbstractTableModel {
             refs = dataPack.getRefsModel().refsToCommit(data.getHash());
           }
         }
-        else {
-          if (rowIndex == getRowCount() - 1) {
-            message = "load more commits";
-          }
-        }
         return new GraphCommitCell(graphPrintCell, cellKind, message, refs);
       case AUTHOR_COLUMN:
         if (data == null) {
