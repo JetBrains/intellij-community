@@ -103,6 +103,7 @@ public class InferenceSession {
     repeatInferencePhases();
  
     for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
+      if (inferenceVariable.isCaptured()) continue;
       final PsiTypeParameter typeParameter = inferenceVariable.getParameter();
       PsiType instantiation = inferenceVariable.getInstantiation();
       if (instantiation == PsiType.NULL) {
@@ -135,6 +136,12 @@ public class InferenceSession {
                           InferenceBound.UPPER);
       }
     }
+  }
+  
+  public void addCapturedVariable(PsiTypeParameter param) {
+    final InferenceVariable variable = new InferenceVariable(param);
+    variable.setCaptured(true);
+    myInferenceVariables.put(param, variable);
   }
 
   private void initReturnTypeConstraint(PsiMethod method, PsiCallExpression context) {
@@ -241,7 +248,7 @@ public class InferenceSession {
     for (List<InferenceVariable> variables : independentVars) {
       for (InferenceVariable inferenceVariable : variables) {
 
-        if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
+        if (inferenceVariable.isCaptured() || inferenceVariable.getInstantiation() != PsiType.NULL) continue;
         final PsiTypeParameter typeParameter = inferenceVariable.getParameter();
         try {
           final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
@@ -329,5 +336,9 @@ public class InferenceSession {
     if (!myConstraints.contains(constraint)) {
         myConstraints.add(constraint);
       }
+  }
+
+  public Collection<PsiTypeParameter> getTypeParams() {
+    return myInferenceVariables.keySet();
   }
 }
