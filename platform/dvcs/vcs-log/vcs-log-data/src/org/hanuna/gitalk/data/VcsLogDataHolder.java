@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
@@ -31,6 +32,7 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -95,8 +97,8 @@ public class VcsLogDataHolder implements Disposable {
   @NotNull private final VcsLogMultiRepoJoiner myMultiRepoJoiner;
 
   // all write-access to myDataPack & myLogData is performed only via the myDataLoaderQueue
-  @NotNull private volatile DataPack myDataPack;
-  @NotNull private volatile LogData myLogData;
+  @Nullable private volatile DataPack myDataPack;
+  @Nullable private volatile LogData myLogData;
   private volatile boolean myFullLogShowing;
 
   public VcsLogDataHolder(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
@@ -199,24 +201,31 @@ public class VcsLogDataHolder implements Disposable {
           myMiniDetailsGetter.saveInCache(firstBlock);
 
           List<TimeCommitParents> refreshedLog;
+          int newCommitsCount;
           if (ordered) {
             // the whole log is not loaded before the first refresh
             refreshedLog = new ArrayList<TimeCommitParents>(firstBlock);
+            newCommitsCount = 0;
           }
           else {
-            refreshedLog = myLogJoiner.addCommits(myLogData.getLog(root), myLogData.getRefs(root), firstBlock, newRefs);
+            Pair<List<TimeCommitParents>,Integer> joinResult = myLogJoiner.addCommits(myLogData.getLog(root), myLogData.getRefs(root),
+                                                                                      firstBlock, newRefs);
+            refreshedLog = joinResult.getFirst();
+            newCommitsCount = joinResult.getSecond();
           }
 
           if (myFullLogShowing) {
             logsToBuild.put(root, refreshedLog);
           }
           else {
-            int bottomIndex = firstBlock.size() - 1;
+            int commitsToShow;
             if (myDataPack != null) {
-              // TODO identify the bottom commit which was showing previously and show the part of the log up to it
-              bottomIndex = myDataPack.getGraphModel().getGraph().getNodeRows().size() - 1;
+              commitsToShow = myDataPack.getGraphModel().getGraph().getNodeRows().size() + newCommitsCount;
             }
-            logsToBuild.put(root, refreshedLog.subList(0, Math.min(bottomIndex, refreshedLog.size())));
+            else {
+              commitsToShow = firstBlock.size();
+            }
+            logsToBuild.put(root, refreshedLog.subList(0, Math.min(commitsToShow, refreshedLog.size())));
           }
           allRefs.addAll(newRefs);
 

@@ -15,12 +15,13 @@
  */
 package org.hanuna.gitalk.data;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.TimeCommitParents;
+import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -34,19 +35,19 @@ import java.util.*;
 public class VcsLogJoiner {
 
   /**
-   *
+   * Attaches the block of latest commits, which was read from the VCS, to the existing log structure.
    *
    * @param savedLog       currently available part of the log.
    * @param previousRefs   references saved from the previous refresh.
    * @param firstBlock     the first n commits read from the VCS.
    * @param newRefs        all references (branches) of the repository.
-   * @return Total saved log with new commits properly attached to it.
+   * @return Total saved log with new commits properly attached to it + number of new commits attached to the log.
    */
   @NotNull
-  public List<TimeCommitParents> addCommits(@NotNull List<TimeCommitParents> savedLog,
-                                            @NotNull Collection<VcsRef> previousRefs,
-                                            @NotNull List<? extends TimeCommitParents> firstBlock,
-                                            @NotNull Collection<VcsRef> newRefs) {
+  public Pair<List<TimeCommitParents>, Integer> addCommits(@NotNull List<TimeCommitParents> savedLog,
+                                                           @NotNull Collection<VcsRef> previousRefs,
+                                                           @NotNull List<? extends TimeCommitParents> firstBlock,
+                                                           @NotNull Collection<VcsRef> newRefs) {
     int unsafeBlockSize = getFirstSafeIndex(savedLog, firstBlock, newRefs);
     if (unsafeBlockSize == -1) { // firstBlock not enough
       //TODO
@@ -57,7 +58,8 @@ public class VcsLogJoiner {
     Set<TimeCommitParents> allNewsCommits = getAllNewCommits(unsafePartSavedLog, firstBlock);
     unsafePartSavedLog = new NewCommitIntegrator(unsafePartSavedLog, allNewsCommits).getResultList();
 
-    return ContainerUtil.concat(unsafePartSavedLog, savedLog.subList(unsafeBlockSize, savedLog.size()));
+    return Pair.create(ContainerUtil.concat(unsafePartSavedLog, savedLog.subList(unsafeBlockSize, savedLog.size())),
+                       allNewsCommits.size());
   }
 
   /**
