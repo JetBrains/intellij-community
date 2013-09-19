@@ -19,16 +19,11 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RawCommandLineEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,8 +38,8 @@ public class MavenRunnerPanel {
   private JCheckBox myRunInBackgroundCheckbox;
   private RawCommandLineEditor myVMParametersEditor;
   private EnvironmentVariablesComponent myEnvVariablesComponent;
-  private JComboBox myJdkCombo;
-  private final DefaultComboBoxModel myJdkComboModel = new DefaultComboBoxModel();
+  private MavenJdkCombobox myJdkCombo;
+
   private JCheckBox mySkipTestsCheckBox;
   private MavenPropertiesPanel myPropertiesPanel;
 
@@ -93,7 +88,7 @@ public class MavenRunnerPanel {
 
     JLabel jdkLabel = new JLabel("JRE:");
     jdkLabel.setDisplayedMnemonic('j');
-    jdkLabel.setLabelFor(myJdkCombo = new JComboBox());
+    jdkLabel.setLabelFor(myJdkCombo = new MavenJdkCombobox(myProject));
     c.gridx = 0;
     c.gridy++;
     c.weightx = 0;
@@ -153,17 +148,7 @@ public class MavenRunnerPanel {
     myVMParametersEditor.setText(data.getVmOptions());
     mySkipTestsCheckBox.setSelected(data.isSkipTests());
 
-    Map<String, String> jdkMap = collectJdkNamesAndDescriptions();
-    if (!jdkMap.containsKey(data.getJreName())) {
-      jdkMap.put(data.getJreName(), data.getJreName());
-    }
-
-    myJdkComboModel.removeAllElements();
-    for (Map.Entry<String, String> entry : jdkMap.entrySet()) {
-      ComboBoxUtil.addToModel(myJdkComboModel, entry.getKey(), entry.getValue());
-    }
-    myJdkCombo.setModel(myJdkComboModel);
-    ComboBoxUtil.select(myJdkComboModel, data.getJreName());
+    myJdkCombo.refreshData(data.getJreName());
 
     myPropertiesPanel.setDataFromMap(data.getMavenProperties());
 
@@ -171,37 +156,12 @@ public class MavenRunnerPanel {
     myEnvVariablesComponent.setPassParentEnvs(data.isPassParentEnv());
   }
 
-  private Map<String, String> collectJdkNamesAndDescriptions() {
-    Map<String, String> result = new LinkedHashMap<String, String>();
-
-    for (Sdk projectJdk : ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance())) {
-      String name = projectJdk.getName();
-      result.put(name, name);
-    }
-
-    result.put(MavenRunnerSettings.USE_INTERNAL_JAVA, RunnerBundle.message("maven.java.internal"));
-
-    String projectJdkTitle;
-
-    String projectJdk = ProjectRootManager.getInstance(myProject).getProjectSdkName();
-    if (projectJdk == null) {
-      projectJdkTitle = "Use Project JDK (not defined yet)";
-    }
-    else {
-      projectJdkTitle = "Use Project JDK (" + projectJdk + ')';
-    }
-
-    result.put(MavenRunnerSettings.USE_PROJECT_JDK, projectJdkTitle);
-    result.put(MavenRunnerSettings.USE_JAVA_HOME, RunnerBundle.message("maven.java.home.env"));
-
-    return result;
-  }
 
   protected void setData(MavenRunnerSettings data) {
     data.setRunMavenInBackground(myRunInBackgroundCheckbox.isSelected());
     data.setVmOptions(myVMParametersEditor.getText().trim());
     data.setSkipTests(mySkipTestsCheckBox.isSelected());
-    data.setJreName(ComboBoxUtil.getSelectedString(myJdkComboModel));
+    data.setJreName(myJdkCombo.getSelectedValue());
 
     data.setMavenProperties(myPropertiesPanel.getDataAsMap());
 
