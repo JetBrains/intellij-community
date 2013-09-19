@@ -15,12 +15,12 @@ import java.util.Map;
 /**
  * @author Sergey Evdokimov
  */
-public class MavenJdkCombobBox extends JComboBox {
+public class MavenJdkComboBox extends JComboBox {
 
   @Nullable
   private final Project myProject;
 
-  public MavenJdkCombobBox(@Nullable Project project) {
+  public MavenJdkComboBox(@Nullable Project project) {
     myProject = project;
   }
 
