@@ -25,7 +25,7 @@ public class RefPainter {
   private static final int FLAG_PADDING = 8;
   private static final int FLAG_TOP_INDENT = 2;
 
-  private static final int ROUND_RADIUS = 10;
+  private static final int ROUND_RADIUS = 5;
 
   private static final Font DEFAULT_FONT = new Font("Arial", Font.PLAIN, 12);
   private static final Color DEFAULT_FONT_COLOR = Color.black;
