@@ -55,7 +55,7 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider {
 
   @Override
   public ColorPalette getTerminalColorPalette() {
-    return SystemInfo.isWindows ? ColorPalette.WINDOWS_PALETTE : ColorPalette.XTERM_PALETTE;
+    return new JBTerminalSchemeColorPalette(myColorScheme);
   }
 
   private KeyStroke[] getKeyStrokesByActionId(String actionId) {
