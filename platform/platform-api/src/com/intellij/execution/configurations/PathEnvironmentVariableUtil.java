@@ -147,8 +147,7 @@ public class PathEnvironmentVariableUtil {
   @NotNull
   public static String findAbsolutePathOnMac(@NotNull String exePath) {
     if (SystemInfo.isMac) {
-      File exeFile = new File(exePath);
-      if (!exeFile.isAbsolute() && !exePath.contains(File.separator)) {
+      if (!exePath.contains(File.separator)) {
         File originalResolvedExeFile = findInOriginalPath(exePath);
         // don't modify exePath if the absolute path can be found in the original PATH
         if (originalResolvedExeFile == null) {
