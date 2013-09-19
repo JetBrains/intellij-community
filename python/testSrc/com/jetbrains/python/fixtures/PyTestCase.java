@@ -147,6 +147,6 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   public static void initPlatformPrefix() {
-    PlatformTestCase.initPlatformPrefix(IDEA_MARKER_CLASS, PlatformUtils.PYCHARM_PREFIX);
+    PlatformTestCase.initPlatformPrefix(UsefulTestCase.IDEA_MARKER_CLASS, PlatformUtils.PYCHARM_PREFIX);
   }
 }

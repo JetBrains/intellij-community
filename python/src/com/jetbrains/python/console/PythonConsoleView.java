@@ -34,6 +34,10 @@ import com.intellij.xdebugger.impl.frame.XStandaloneVariablesView;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.console.completion.PythonConsoleAutopopupBlockingHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
+import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
+import com.jetbrains.python.debugger.PyDebuggerEditorsProvider;
+import com.jetbrains.python.debugger.PyStackFrame;
+import com.jetbrains.python.debugger.PyStackFrameInfo;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -59,7 +63,8 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
   private boolean myHyperlink;
 
   private final MyLanguageConsoleViewImpl myLanguageConsoleView;
-  private XStandaloneVariablesView myVariablesView;
+  
+  private Disposable mySplittedDisposable;
 
   public PythonConsoleView(final Project project, final String title, Sdk sdk) {
     super(new BorderLayout());
@@ -361,27 +366,43 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
     return myProject;
   }
 
-  public void showVariables(XStandaloneVariablesView view) {
+  public void showVariables(PydevConsoleCommunication consoleCommunication) {
+    PyStackFrame stackFrame = new PyStackFrame(myProject, consoleCommunication, new PyStackFrameInfo("", "", "", null), null);
+    final XStandaloneVariablesView view = new XStandaloneVariablesView(myProject, new PyDebuggerEditorsProvider(), stackFrame);
+    consoleCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
+      @Override
+      public void commandExecuted() {
+        view.rebuildView();
+      }
+
+      @Override
+      public void inputRequested() {
+      }
+    });
+    splitWindow(view.getPanel(), view);
+  }
+
+  private void splitWindow(JComponent component, Disposable componentDisposable) {
     removeAll();
     JSplitPane p = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
     p.add(myLanguageConsoleView.getComponent(), JSplitPane.LEFT);
-    myVariablesView = view;
-    p.add(myVariablesView.getPanel(), JSplitPane.RIGHT);
+    mySplittedDisposable = componentDisposable;
+    p.add(component, JSplitPane.RIGHT);
     p.setDividerLocation((int)getSize().getWidth()*2/3);
     add(p, BorderLayout.CENTER);
-    
+
     validate();
     repaint();
   }
 
-  public void hideVariables() {
+  public void restoreWindow() {
     removeAll();
     add(myLanguageConsoleView.getComponent(), BorderLayout.CENTER);
     validate();
     repaint();
-    if (myVariablesView != null) {
-      Disposer.dispose(myVariablesView);
-      myVariablesView = null;
+    if (mySplittedDisposable != null) {
+      Disposer.dispose(mySplittedDisposable);
+      mySplittedDisposable = null;
     }
   }
 

@@ -737,6 +737,21 @@ public class PyTypeTest extends PyTestCase {
            "    expr = x\n");
   }
 
+  public void testIsInstanceExpressionResolvedToTuple() {
+    doTest("str | unicode",
+           "string_types = str, unicode\n" +
+           "\n" +
+           "def f(x):\n" +
+           "    if isinstance(x, string_types):\n" +
+           "        expr = x\n");
+  }
+
+  public void testIsInstanceInConditionalExpression() {
+    doTest("str | int",
+           "def f(x):\n" +
+           "    expr = x if isinstance(x, str) else 10\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }

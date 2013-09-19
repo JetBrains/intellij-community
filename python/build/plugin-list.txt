@@ -11,3 +11,9 @@ tasks-core
 tasks-api
 github
 terminal
+IntelliLang
+IntelliLang-xml
+IntelliLang-js
+IntelliLang-python
+rest
+python-rest

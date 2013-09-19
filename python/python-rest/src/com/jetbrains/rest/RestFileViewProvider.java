@@ -10,7 +10,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
-import com.jetbrains.django.lang.template.DjangoTemplateLanguage;
 import com.jetbrains.python.PythonLanguage;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,7 +50,10 @@ public class RestFileViewProvider extends MultiplePsiFilesPerDocumentFileViewPro
     if (myLanguages == null) {
       myLanguages = Sets.newLinkedHashSet();
       myLanguages.add(getBaseLanguage());
-      myLanguages.add(DjangoTemplateLanguage.INSTANCE);
+      Language djangoTemplateLanguage = Language.findLanguageByID("DjangoTemplate");
+      if (djangoTemplateLanguage != null) {
+        myLanguages.add(djangoTemplateLanguage);
+      }
       myLanguages.add(getTemplateDataLanguage());
     }
     return myLanguages;
@@ -66,7 +68,7 @@ public class RestFileViewProvider extends MultiplePsiFilesPerDocumentFileViewPro
       file.setContentElementType(RestPythonElementTypes.PYTHON_BLOCK_DATA);
       return file;
     }
-    else if (lang == DjangoTemplateLanguage.INSTANCE) {
+    else if (lang.getID().equals("DjangoTemplate")) {
       PsiFileImpl file = (PsiFileImpl)def.createFile(this);
       file.setContentElementType(RestPythonElementTypes.DJANGO_BLOCK_DATA);
       return file;

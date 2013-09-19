@@ -60,8 +60,8 @@ setProperty("buildName", "PY-$buildNumber")
 
 target('default': "Build artifacts") {
   def modules = [
-          "python-pydev", "colorSchemes", pycharmPlatformApiModules(), platformUltimateImplementationModules, pycharmImplementationModules(), pluginFilter
-  ].flatten()
+    "python-pydev", "colorSchemes", pycharmPlatformApiModules(), platformUltimateImplementationModules,
+    pycharmImplementationModules(), pluginFilter, "platform-main"].flatten()
 
   loadProject()
 
@@ -156,7 +156,25 @@ target('default': "Build artifacts") {
   buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll], paths.distMac)
   signMacZip("pycharm")
   buildDmg("pycharm", "${home}/python/build/DMG_background.png")
+
+  communityEdition(usedJars)
 }
+
+private communityEdition(Set usedJars) {
+  Script s = groovyShell.parse(new File("$pythonCommunityHome/build/pycharm_community_build.gant"))
+  s.setBinding(binding)
+
+  s.layoutCommunity(usedJars)
+
+  // todo: get rid of copying
+  //ant.copy(file: "$paths.artifacts/ideaIC-${buildNumber}.mac.zip", tofile: "$paths.artifacts/ideaIC-${buildNumber}.sit")
+  //def extraArgs = ["build.number": "IC-$buildNumber"]
+  //signMacZip("idea", extraArgs)
+  //notifyArtifactBuilt("$paths.artifacts/ideaIC-${buildNumber}.sit")
+  //buildDmg("idea", getDmgImage(true), extraArgs)
+  //ant.delete(file: "$paths.artifacts/ideaIC-${buildNumber}.sit")
+}
+
 
 private layoutPlugins(layouts) {
   dir("plugins") {
