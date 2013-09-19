@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.portable;
+package org.jetbrains.idea.svn.update;
 
 import org.jetbrains.idea.svn.api.SvnClient;
 import org.tmatesoft.svn.core.SVNDepth;
@@ -30,7 +30,7 @@ import java.io.File;
  * Date: 2/1/12
  * Time: 11:59 AM
  */
-public interface SvnUpdateClientI extends SvnClient {
+public interface UpdateClient extends SvnClient {
 
   long[] doUpdate(File[] paths, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky, boolean makeParents) throws SVNException;
 

@@ -25,7 +25,6 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.ClientFactory;
-import org.jetbrains.idea.svn.portable.SvnUpdateClientI;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.io.SVNRepository;
@@ -83,11 +82,11 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       final boolean isSwitch = rootInfo != null && rootInfo.getUrl() != null && ! rootInfo.getUrl().equals(sourceUrl);
       final SVNRevision updateTo = rootInfo != null && rootInfo.isUpdateToRevision() ? rootInfo.getRevision() : SVNRevision.HEAD;
       if (isSwitch) {
-        final SvnUpdateClientI updateClient = createUpdateClient(configuration, root, true, sourceUrl);
+        final UpdateClient updateClient = createUpdateClient(configuration, root, true, sourceUrl);
         myHandler.addToSwitch(root, sourceUrl);
         rev = updateClient.doSwitch(root, rootInfo.getUrl(), SVNRevision.UNDEFINED, updateTo, configuration.UPDATE_DEPTH, configuration.FORCE_UPDATE, false);
       } else {
-        final SvnUpdateClientI updateClient = createUpdateClient(configuration, root, false, sourceUrl);
+        final UpdateClient updateClient = createUpdateClient(configuration, root, false, sourceUrl);
         rev = updateClient.doUpdate(root, updateTo, configuration.UPDATE_DEPTH, configuration.FORCE_UPDATE, false);
       }
 
@@ -96,14 +95,14 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
       return rev;
     }
 
-    private SvnUpdateClientI createUpdateClient(SvnConfiguration configuration, File root, boolean isSwitch, SVNURL sourceUrl) {
+    private UpdateClient createUpdateClient(SvnConfiguration configuration, File root, boolean isSwitch, SVNURL sourceUrl) {
       boolean is17 = WorkingCopyFormat.ONE_DOT_SEVEN.equals(myVcs.getWorkingCopyFormat(root));
       boolean isSupportedProtocol =
         SvnAuthenticationManager.HTTP.equals(sourceUrl.getProtocol()) || SvnAuthenticationManager.HTTPS.equals(sourceUrl.getProtocol());
 
       // TODO: Update this with just myVcs.getFactory(root) when switch and authentication protocols are implemented for command line
       ClientFactory factory = is17 && (isSwitch || !isSupportedProtocol) ? myVcs.getSvnKitFactory() : myVcs.getFactory(root);
-      final SvnUpdateClientI updateClient = factory.createUpdateClient();
+      final UpdateClient updateClient = factory.createUpdateClient();
 
       if (! isSwitch) {
         updateClient.setIgnoreExternals(configuration.IGNORE_EXTERNALS);

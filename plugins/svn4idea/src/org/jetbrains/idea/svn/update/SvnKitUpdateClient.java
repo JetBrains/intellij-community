@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.portable;
+package org.jetbrains.idea.svn.update;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,7 +33,7 @@ import java.io.File;
  * Date: 2/1/12
  * Time: 12:11 PM
  */
-public class SvnSvnkitUpdateClient extends BaseSvnClient implements SvnUpdateClientI {
+public class SvnKitUpdateClient extends BaseSvnClient implements UpdateClient {
 
   @Nullable protected ISVNEventHandler myDispatcher;
   protected boolean myIgnoreExternals;

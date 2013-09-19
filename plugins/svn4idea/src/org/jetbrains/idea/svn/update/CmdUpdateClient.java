@@ -13,13 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.commandLine;
+package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.portable.SvnSvnkitUpdateClient;
+import org.jetbrains.idea.svn.commandLine.BaseUpdateCommandListener;
+import org.jetbrains.idea.svn.commandLine.CommandUtil;
+import org.jetbrains.idea.svn.commandLine.SvnCommandLineInfoClient;
+import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
@@ -41,7 +44,7 @@ import java.util.regex.Pattern;
  * Time: 12:13 PM
  */
 // TODO: Currently make inherit SVNKit update implementation not to duplicate setXxx() methods.
-public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
+public class CmdUpdateClient extends SvnKitUpdateClient {
   private static final Pattern ourExceptionPattern = Pattern.compile("svn: E(\\d{6}): .+");
   private static final String ourAuthenticationRealm = "Authentication realm:";
 
