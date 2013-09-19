@@ -173,14 +173,14 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     return result != WorkingCopyFormat.UNKNOWN;
   }
 
-  @Nullable
+  @NotNull
   private static WorkingCopyFormat promptForWCopyFormat(final File target, final Project project) {
     WorkingCopyFormat format = WorkingCopyFormat.UNKNOWN;
     final Ref<Boolean> wasOk = new Ref<Boolean>();
     while ((format == WorkingCopyFormat.UNKNOWN) && (! Boolean.FALSE.equals(wasOk.get()))) {
       format = SvnFormatSelector.showUpgradeDialog(target, project, true, WorkingCopyFormat.ONE_DOT_SEVEN, wasOk);
     }
-    return Boolean.TRUE.equals(wasOk.get()) ? format : null;
+    return Boolean.TRUE.equals(wasOk.get()) ? format : WorkingCopyFormat.UNKNOWN;
   }
 
   public static void doExport(final Project project, final File target, final String url, final SVNDepth depth,
