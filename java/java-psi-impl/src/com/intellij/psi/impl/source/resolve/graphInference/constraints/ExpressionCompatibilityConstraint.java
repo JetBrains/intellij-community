@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
+import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,7 +70,38 @@ public class ExpressionCompatibilityConstraint implements ConstraintFormula {
     }
     
     if (myExpression instanceof PsiCallExpression) {
-      //todo
+      final JavaResolveResult resolveResult = ((PsiCallExpression)myExpression).resolveMethodGenerics();
+      final PsiMethod method = (PsiMethod)resolveResult.getElement();
+      if (method != null) {
+        final PsiTypeParameter[] typeParameters = method.getTypeParameters();
+        if (typeParameters.length == 0) {
+          final PsiType exprType = myExpression.getType();
+          if (exprType != null && !exprType.equals(PsiType.NULL)) {
+            constraints.add(new TypeCompatibilityConstraint(myT, exprType));
+          }
+        } else {
+          final PsiExpressionList argumentList = ((PsiCallExpression)myExpression).getArgumentList();
+          PsiType returnType = method.getReturnType();
+          if (argumentList != null && returnType != null) { //todo constructor
+            final InferenceSession callSession = new InferenceSession(typeParameters, method.getParameterList().getParameters(),
+                                                                      argumentList.getExpressions(),
+                                                                      PsiSubstitutor.EMPTY, null, myExpression.getManager());
+            for (PsiTypeParameter typeParameter : session.getTypeParams()) {
+              callSession.addCapturedVariable(typeParameter);
+            }
+            callSession.addConstraint(new TypeCompatibilityConstraint(myT, returnType));
+            final PsiSubstitutor callSubstitutor = callSession.infer();
+            if (myExpression instanceof PsiMethodCallExpression) {
+              returnType =
+                PsiMethodCallExpressionImpl.captureReturnType((PsiMethodCallExpression)myExpression, method, returnType, callSubstitutor);
+            } else {
+              returnType = callSubstitutor.substitute(returnType);
+            }
+            constraints.add(new TypeCompatibilityConstraint(myT, returnType));  //todo primitive types
+          }
+        }
+      }
+      return true;
     }
     
     if (myExpression instanceof PsiMethodReferenceExpression) {
