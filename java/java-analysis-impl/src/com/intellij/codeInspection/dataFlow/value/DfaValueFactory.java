@@ -25,32 +25,26 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Map;
 
 public class DfaValueFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.value.DfaValueFactory");
-
-  private int myLastID;
-  private final TIntObjectHashMap<DfaValue> myValues;
+  private final List<DfaValue> myValues = ContainerUtil.newArrayList();
   private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myAssignableCache = ContainerUtil.newHashMap();
   private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myConvertibleCache = ContainerUtil.newHashMap();
   private final Map<PsiType, DfaPsiType> myDfaTypes = ContainerUtil.newHashMap();
 
   public DfaValueFactory() {
-    myValues = new TIntObjectHashMap<DfaValue>();
-    myLastID = 0;
-
+    myValues.add(null);
     myVarFactory = new DfaVariableValue.Factory(this);
     myConstFactory = new DfaConstValue.Factory(this);
     myBoxedFactory = new DfaBoxedValue.Factory(this);
@@ -71,14 +65,9 @@ public class DfaValueFactory {
     return dfaType;
   }
 
-   int createID() {
-    myLastID++;
-    LOG.assertTrue(myLastID >= 0, "Overflow");
-    return myLastID;
-  }
-
-  void registerValue(DfaValue value) {
-    myValues.put(value.getID(), value);
+  int registerValue(DfaValue value) {
+    myValues.add(value);
+    return myValues.size() - 1;
   }
 
   public DfaValue getValue(int id) {

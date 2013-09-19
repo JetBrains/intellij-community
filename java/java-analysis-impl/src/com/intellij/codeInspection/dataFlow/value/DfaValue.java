@@ -21,13 +21,7 @@ public class DfaValue {
 
   protected DfaValue(final DfaValueFactory factory) {
     myFactory = factory;
-    if (factory == null) {
-      myID = 0;
-    }
-    else {
-      myID = factory.createID();
-      factory.registerValue(this);
-    }
+    myID = factory == null ? 0 : factory.registerValue(this);
   }
 
   public int getID() {
