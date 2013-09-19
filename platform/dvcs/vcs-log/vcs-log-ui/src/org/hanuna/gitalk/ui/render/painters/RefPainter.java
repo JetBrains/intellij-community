@@ -21,8 +21,9 @@ public class RefPainter {
   private static final int RECTANGLE_Y_PADDING = 3;
   private static final int REF_PADDING = 13;
 
-  private static final int FLAG_WIDTH = 10;
+  private static final int FLAG_WIDTH = 8;
   private static final int FLAG_PADDING = 8;
+  private static final int FLAG_TOP_INDENT = 2;
 
   private static final int ROUND_RADIUS = 10;
 
@@ -30,9 +31,11 @@ public class RefPainter {
   private static final Color DEFAULT_FONT_COLOR = Color.black;
 
   @NotNull private final VcsLogColorManager myColorManager;
+  private final boolean myDrawMultiRepoIndicator;
 
-  public RefPainter(@NotNull VcsLogColorManager manager) {
+  public RefPainter(@NotNull VcsLogColorManager manager, boolean drawMultiRepoIndicator) {
     myColorManager = manager;
+    myDrawMultiRepoIndicator = drawMultiRepoIndicator;
   }
 
   private double paddingStr(@NotNull String str, @NotNull FontRenderContext renderContext) {
@@ -40,10 +43,10 @@ public class RefPainter {
   }
 
   private int flagWidth() {
-    return myColorManager.isMultipleRoots() ? FLAG_WIDTH + FLAG_PADDING : 0;
+    return myColorManager.isMultipleRoots() && myDrawMultiRepoIndicator ? FLAG_WIDTH + FLAG_PADDING : 0;
   }
 
-  private void drawText(@NotNull Graphics2D g2, @NotNull String str, int padding) {
+  private static void drawText(@NotNull Graphics2D g2, @NotNull String str, int padding) {
     FontMetrics metrics = g2.getFontMetrics();
     g2.setColor(DEFAULT_FONT_COLOR);
     int x = padding + REF_PADDING / 2;
@@ -65,7 +68,7 @@ public class RefPainter {
     g2.setColor(myColorManager.getReferenceBorderColor());
     g2.draw(rectangle2D);
 
-    if (myColorManager.isMultipleRoots()) {
+    if (myColorManager.isMultipleRoots() && myDrawMultiRepoIndicator) {
       drawRootIndicator(g2, ref, padding, y, height);
     }
 
@@ -80,7 +83,7 @@ public class RefPainter {
     int xMid = x0 + FLAG_WIDTH / 2;
     int xRight = x0 + FLAG_WIDTH;
 
-    int y0 = y + 1;
+    int y0 = y - FLAG_TOP_INDENT;
     int yMid = y0 + 2 * height / 3 - 2;
     int yBottom = y0 + height - 4;
 
@@ -88,7 +91,7 @@ public class RefPainter {
     Polygon polygon = new Polygon(new int[]{ x0, xRight, xRight,    xMid,   x0 },
                                   new int[]{ y0,     y0,   yMid, yBottom, yMid }, 5);
     g2.fillPolygon(polygon);
-    g2.setColor(Color.BLACK);
+    g2.setColor(myColorManager.getReferenceBorderColor());
     g2.drawPolygon(polygon);
   }
 

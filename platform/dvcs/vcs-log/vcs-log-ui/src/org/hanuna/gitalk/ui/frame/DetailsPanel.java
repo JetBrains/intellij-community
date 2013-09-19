@@ -174,7 +174,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     @NotNull private List<VcsRef> myRefs;
 
     RefsPanel(@NotNull VcsLogColorManager colorManager) {
-      myRefPainter = new RefPainter(colorManager);
+      myRefPainter = new RefPainter(colorManager, false);
       myRefs = Collections.emptyList();
       setPreferredSize(new Dimension(-1, PrintParameters.HEIGHT_CELL + UIUtil.DEFAULT_VGAP));
       setOpaque(false);

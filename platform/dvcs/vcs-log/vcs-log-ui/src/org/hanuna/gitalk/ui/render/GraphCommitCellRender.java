@@ -42,7 +42,7 @@ public class GraphCommitCellRender implements TableCellRenderer {
                                @NotNull VcsLogColorManager colorManager) {
     this.graphPainter = graphPainter;
     myDataHolder = logDataHolder;
-    refPainter = new RefPainter(colorManager);
+    refPainter = new RefPainter(colorManager, false);
     cellRender = new ExtDefaultCellRender();
   }
 

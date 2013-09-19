@@ -40,7 +40,7 @@ public class BranchesPanel extends JPanel {
     myDataHolder = dataHolder;
     myUI = UI;
     myRefs = getRefsToDisplayOnPanel();
-    myRefPainter = new RefPainter(myUI.getColorManager());
+    myRefPainter = new RefPainter(myUI.getColorManager(), true);
 
     setPreferredSize(new Dimension(-1, PrintParameters.HEIGHT_CELL + UIUtil.DEFAULT_VGAP));
 
