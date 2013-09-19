@@ -267,9 +267,11 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private void doClick(final MouseEvent e) {
     RangeHighlighter marker = getNearestRangeHighlighter(e);
     int offset;
+    LogicalPosition logicalPositionToScroll = null;
     if (marker == null) {
       if (myEditorPreviewHint != null) {
-        offset = myEditor.getDocument().getLineStartOffset(getLineByEvent(e)/*myEditorFragmentRenderer.myLine*/);
+        logicalPositionToScroll = myEditor.visualToLogicalPosition(new VisualPosition(myEditorFragmentRenderer.myStartLine, 0));
+        offset = myEditor.getDocument().getLineStartOffset(logicalPositionToScroll.line);
       } else {
         return;
       }
@@ -281,7 +283,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     if (doc.getLineCount() > 0 && myEditorPreviewHint == null) {
       // Necessary to expand folded block even if navigating just before one
       // Very useful when navigating to first unused import statement.
-      int lineEnd = doc.getLineEndOffset(myEditorFragmentRenderer.myLine);
+      int lineEnd = doc.getLineEndOffset(doc.getLineNumber(offset));
       myEditor.getCaretModel().moveToOffset(lineEnd);
     }
 
@@ -289,8 +291,8 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     myEditor.getSelectionModel().removeSelection();
     ScrollingModel scrollingModel = myEditor.getScrollingModel();
     scrollingModel.disableAnimation();
-    if (myEditorPreviewHint != null) {
-      int lineY = myEditor.logicalPositionToXY(new LogicalPosition(myEditorFragmentRenderer.myStartLine, 0)).y;
+    if (logicalPositionToScroll != null) {
+      int lineY = myEditor.logicalPositionToXY(logicalPositionToScroll).y;
       int relativePopupOffset = myEditorFragmentRenderer.myRelativeY;
       scrollingModel.scrollVertically(lineY - relativePopupOffset);
     }
