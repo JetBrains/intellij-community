@@ -128,6 +128,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (type instanceof PyClassType) {
           final PyClass pyClass = ((PyClassType)type).getPyClass();
           if (pyClass.isNewStyleClass()) {
+            if (pyClass.getOwnSlots() == null) {
+              return;
+            }
             final List<String> slots = pyClass.getSlots();
             final String attrName = node.getReferencedName();
             if (slots != null && !slots.contains(attrName) && !slots.contains(PyNames.DICT)) {

@@ -133,4 +133,9 @@ public class PyArgumentListInspectionTest extends PyTestCase {
   public void testFloatConstructor() {
     doTest();
   }
+
+  // PY-10601
+  public void testDecoratedChangedParameters() {
+    doTest();
+  }
 }
