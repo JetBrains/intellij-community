@@ -50,7 +50,7 @@ public class FrameworkSupportOptionsComponent {
   private LibraryCompositionSettings myLibraryCompositionSettings;
   private LibraryOptionsPanel myLibraryOptionsPanel;
   private final FrameworkSupportInModuleConfigurable myConfigurable;
-  private JPanel myLibraryOptionsPanelWrapper;
+  private final JPanel myLibraryOptionsPanelWrapper;
 
   public FrameworkSupportOptionsComponent(FrameworkSupportModelBase model,
                                           LibrariesContainer container,
@@ -65,42 +65,42 @@ public class FrameworkSupportOptionsComponent {
     myModel.registerOptionsComponent(provider, this);
     List<FrameworkVersion> versions = provider.getFrameworkType().getVersions();
     if (!versions.isEmpty()) {
-      myFrameworkVersionComponent = new FrameworkVersionComponent(model, provider.getFrameworkType().getId(), versions, provider.getVersionLabel());
+      myFrameworkVersionComponent = new FrameworkVersionComponent(model, provider.getFrameworkType().getId(), versions, "Versions:");
       myMainPanel.add(myFrameworkVersionComponent.getMainPanel());
     }
 
-    final JComponent component = myConfigurable.createComponent(false);
+    final JComponent component = myConfigurable.createComponent();
     if (component != null) {
       myMainPanel.add(component);
     }
 
+    final boolean addSeparator = component != null || myFrameworkVersionComponent != null;
+    myLibraryOptionsPanelWrapper = new JPanel(new BorderLayout());
+    myMainPanel.add(myLibraryOptionsPanelWrapper);
+    if (myConfigurable instanceof OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper) {
+      ((OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper)myConfigurable).getConfigurable().addListener(
+        new FrameworkSupportConfigurableListener() {
+          public void frameworkVersionChanged() {
+            updateLibrariesPanel();
+          }
+        });
+    }
+    model.addFrameworkListener(new FrameworkSupportModelAdapter() {
+      @Override
+      public void wizardStepUpdated() {
+        updateLibrariesPanel();
+      }
+    }, parentDisposable);
+
     final CustomLibraryDescription description = myConfigurable.createLibraryDescription();
     if (description != null) {
-      final boolean addSeparator = component != null || myFrameworkVersionComponent != null;
-      myLibraryOptionsPanelWrapper = new JPanel(new BorderLayout());
-      myMainPanel.add(myLibraryOptionsPanelWrapper);
-      if (myConfigurable instanceof OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper) {
-        ((OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper)myConfigurable).getConfigurable().addListener(
-          new FrameworkSupportConfigurableListener() {
-            public void frameworkVersionChanged() {
-              updateLibrariesPanel();
-            }
-          });
-      }
-      model.addFrameworkListener(new FrameworkSupportModelAdapter() {
-        @Override
-        public void wizardStepUpdated() {
-          updateLibrariesPanel();
-        }
-      }, parentDisposable);
-
       myLibraryOptionsPanel = new LibraryOptionsPanel(description, myModel.getBaseDirectoryForLibrariesPath(), createLibraryVersionFilter(),
                                                       container, !myConfigurable.isOnlyLibraryAdded());
       Disposer.register(myConfigurable, myLibraryOptionsPanel);
       if (addSeparator) {
-        JComponent separator = SeparatorFactory.createSeparator("Libraries", null);
-        separator.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 5));
-        myLibraryOptionsPanelWrapper.add(BorderLayout.NORTH, separator);
+        JComponent separator1 = SeparatorFactory.createSeparator("Libraries", null);
+        separator1.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 5));
+        myLibraryOptionsPanelWrapper.add(BorderLayout.NORTH, separator1);
       }
       myLibraryOptionsPanelWrapper.add(BorderLayout.CENTER, myLibraryOptionsPanel.getMainPanel());
       myLibraryOptionsPanelWrapper.setVisible(myConfigurable.isVisible());

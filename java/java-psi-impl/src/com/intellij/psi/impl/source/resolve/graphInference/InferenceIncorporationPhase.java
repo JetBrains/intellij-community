@@ -34,7 +34,7 @@ public class InferenceIncorporationPhase {
 
   public void incorporate() {
     for (InferenceVariable inferenceVariable : mySession.getInferenceVariables()) {
-      if (inferenceVariable.getInstantiation() != null) continue;
+      if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
       final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
       final List<PsiType> upperBounds = inferenceVariable.getBounds(InferenceBound.UPPER);
       final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);
@@ -67,7 +67,7 @@ public class InferenceIncorporationPhase {
   boolean isFullyIncorporated() {
     boolean needFurtherIncorporation = false;
     for (InferenceVariable inferenceVariable : mySession.getInferenceVariables()) {
-      if (inferenceVariable.getInstantiation() != null) continue;
+      if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
       final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
       final List<PsiType> upperBounds = inferenceVariable.getBounds(InferenceBound.UPPER);
       final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);
@@ -143,7 +143,9 @@ public class InferenceIncorporationPhase {
    */
   private void upDown(List<PsiType> eqBounds, List<PsiType> upperBounds) {
     for (PsiType upperBound : upperBounds) {
+      final boolean properType = mySession.isProperType(upperBound);
       for (PsiType eqBound : eqBounds) {
+        if (properType && mySession.isProperType(eqBound)) continue;
         if (!upperBound.equals(eqBound)) {
           addConstraint(new SubtypingConstraint(upperBound, eqBound, true));
         }
@@ -156,8 +158,9 @@ public class InferenceIncorporationPhase {
    */
   private void upperLower(List<PsiType> upperBounds, List<PsiType> lowerBounds) {
     for (PsiType upperBound : upperBounds) {
+      final boolean properType = mySession.isProperType(upperBound);
       for (PsiType lowerBound : lowerBounds) {
-        if (mySession.isProperType(upperBound) && mySession.isProperType(lowerBound)) continue;
+        if (properType && mySession.isProperType(lowerBound)) continue;
         if (!upperBound.equals(lowerBound)) {
           addConstraint(new SubtypingConstraint(upperBound, lowerBound, true));
         }

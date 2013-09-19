@@ -32,7 +32,7 @@ public class SubtypingConstraint implements ConstraintFormula {
   private PsiType myT;
   private boolean myIsRefTypes;
 
-  public SubtypingConstraint(@NotNull PsiType t, @NotNull PsiType s, boolean isRefTypes) {
+  public SubtypingConstraint(PsiType t, PsiType s, boolean isRefTypes) {
     myT = t;
     myS = s;
     myIsRefTypes = isRefTypes;
@@ -42,6 +42,7 @@ public class SubtypingConstraint implements ConstraintFormula {
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints, List<ConstraintFormula> delayedConstraints) {
     if (myIsRefTypes) {
       if (session.isProperType(myS) && session.isProperType(myT)) {
+        if (myT == null || myS == null) return myS == myT;
         return TypeConversionUtil.isAssignable(myT, myS);
       }
       InferenceVariable inferenceVariable = session.getInferenceVariable(myS);
@@ -49,7 +50,7 @@ public class SubtypingConstraint implements ConstraintFormula {
         inferenceVariable.addBound(myT, InferenceBound.UPPER);
         return true;
       }
-      if (myS.equals(PsiType.NULL)) return true;
+      if (PsiType.NULL.equals(myS)) return true;
       inferenceVariable = session.getInferenceVariable(myT);
       if (inferenceVariable != null) {
         inferenceVariable.addBound(myS, InferenceBound.LOWER);
@@ -88,9 +89,7 @@ public class SubtypingConstraint implements ConstraintFormula {
             for (PsiTypeParameter parameter : CClass.getTypeParameters()) {
               final PsiType tSubstituted = tSubstitutor.substitute(parameter);
               final PsiType sSubstituted = sSubstitutor.substituteWithBoundsPromotion(parameter);
-              if (tSubstituted != null && sSubstituted != null) {
-                constraints.add(new SubtypingConstraint(tSubstituted, sSubstituted, false));
-              }
+              constraints.add(new SubtypingConstraint(tSubstituted, sSubstituted, false));
             }
             return true;
           }
@@ -105,7 +104,7 @@ public class SubtypingConstraint implements ConstraintFormula {
         return true;
       }
 
-      if (myT.equals(PsiType.NULL)) return false;
+      if (PsiType.NULL.equals(myT)) return false;
     } else {
       if (myT instanceof PsiWildcardType) {
         final PsiType tBound = ((PsiWildcardType)myT).getBound();
@@ -160,16 +159,16 @@ public class SubtypingConstraint implements ConstraintFormula {
     SubtypingConstraint that = (SubtypingConstraint)o;
 
     if (myIsRefTypes != that.myIsRefTypes) return false;
-    if (!myS.equals(that.myS)) return false;
-    if (!myT.equals(that.myT)) return false;
+    if (myS != null ? !myS.equals(that.myS) : that.myS != null) return false;
+    if (myT != null ? !myT.equals(that.myT) : that.myT != null) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myS.hashCode();
-    result = 31 * result + myT.hashCode();
+    int result = myS != null ? myS.hashCode() : 0;
+    result = 31 * result + (myT != null ? myT.hashCode() : 0);
     result = 31 * result + (myIsRefTypes ? 1 : 0);
     return result;
   }

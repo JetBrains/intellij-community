@@ -863,7 +863,9 @@ public class HighlightMethodUtil {
                                                  JavaHighlightUtil.formatMethod(method),
                                                  HighlightUtil.formatClass(aClass));
       TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
-      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).
+        range(method, textRange.getStartOffset(), textRange.getEndOffset()).
+        descriptionAndTooltip(description).create();
     }
     return null;
   }

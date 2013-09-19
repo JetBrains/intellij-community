@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -80,7 +81,7 @@ public class AboutDialog extends JDialog {
     setContentPane(mainPanel);
     final Ref<Long> showTime = Ref.create(System.currentTimeMillis());
 
-    new AnAction() {
+    new DumbAwareAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {
         if (infoSurface != null) {
@@ -89,7 +90,7 @@ public class AboutDialog extends JDialog {
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("meta C", "control C"), mainPanel);
 
-    new AnAction() {
+    new DumbAwareAction() {
 
       @Override
       public void actionPerformed(AnActionEvent e) {

@@ -105,7 +105,7 @@ public class InferenceSession {
     for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
       final PsiTypeParameter typeParameter = inferenceVariable.getParameter();
       PsiType instantiation = inferenceVariable.getInstantiation();
-      if (instantiation == null) {
+      if (instantiation == PsiType.NULL) {
         //failed inference
         mySiteSubstitutor = mySiteSubstitutor
           .put(typeParameter, JavaPsiFacade.getInstance(typeParameter.getProject()).getElementFactory().createType(typeParameter));
@@ -161,11 +161,12 @@ public class InferenceSession {
     return null;
   }
 
-  public boolean isProperType(@NotNull PsiType type) {
+  public boolean isProperType(@Nullable PsiType type) {
     return collectDependencies(type, null);
   }
 
-  public boolean collectDependencies(@NotNull PsiType type, @Nullable final Set<InferenceVariable> dependencies) {
+  public boolean collectDependencies(@Nullable PsiType type, @Nullable final Set<InferenceVariable> dependencies) {
+    if (type == null) return true;
     final Boolean isProper = type.accept(new PsiTypeVisitor<Boolean>() {
       @Nullable
       @Override
@@ -240,58 +241,66 @@ public class InferenceSession {
     for (List<InferenceVariable> variables : independentVars) {
       for (InferenceVariable inferenceVariable : variables) {
 
-        if (inferenceVariable.getInstantiation() != null) continue;
+        if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
         final PsiTypeParameter typeParameter = inferenceVariable.getParameter();
-        PsiType bound = null;
-        final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
-        for (PsiType eqBound : eqBounds) {
-          eqBound = acceptBoundsWithRecursiveDependencies(typeParameter, eqBound);
-          if (isProperType(eqBound)) {
-            bound = eqBound;
-            break;
-          }
-        }
-        if (bound != null) {
-          inferenceVariable.setInstantiation(bound);
-        } else {
+        try {
+          final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
           final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);
-          PsiType lub = null;
-          for (PsiType lowerBound : lowerBounds) {
-            lowerBound = acceptBoundsWithRecursiveDependencies(typeParameter, lowerBound);
-            if (isProperType(lowerBound)) {
-              if (lub == null) {
-                lub = lowerBound;
-              }
-              else {
-                lub = GenericsUtil.getLeastUpperBound(lub, lowerBound, myManager);
-              }
+          final List<PsiType> upperBounds = inferenceVariable.getBounds(InferenceBound.UPPER);
+          if (/*eqBounds.contains(null) || lowerBounds.contains(null) || */upperBounds.contains(null)) {
+            inferenceVariable.setInstantiation(null);
+            continue;
+          }
+          PsiType bound = null;
+          for (PsiType eqBound : eqBounds) {
+            eqBound = acceptBoundsWithRecursiveDependencies(typeParameter, eqBound);
+            if (isProperType(eqBound)) {
+              bound = eqBound;
+              break;
             }
           }
-          if (lub != null) {
-            inferenceVariable.setInstantiation(lub instanceof PsiCapturedWildcardType ? ((PsiCapturedWildcardType)lub).getWildcard() : lub);
-          }
-          else {
-            PsiType glb = null;
-            for (PsiType upperBound : inferenceVariable.getBounds(InferenceBound.UPPER)) {
-              upperBound = acceptBoundsWithRecursiveDependencies(typeParameter, upperBound);
-              if (isProperType(upperBound)) {
-                if (glb == null) {
-                  glb = upperBound;
+          if (bound != null) {
+            inferenceVariable.setInstantiation(bound);
+          } else {
+            PsiType lub = null;
+            for (PsiType lowerBound : lowerBounds) {
+              lowerBound = acceptBoundsWithRecursiveDependencies(typeParameter, lowerBound);
+              if (isProperType(lowerBound)) {
+                if (lub == null) {
+                  lub = lowerBound;
                 }
                 else {
-                  glb = GenericsUtil.getGreatestLowerBound(glb, upperBound);
+                  lub = GenericsUtil.getLeastUpperBound(lub, lowerBound, myManager);
                 }
               }
             }
-            if (glb != null) {
-              inferenceVariable.setInstantiation(glb);
+            if (lub != null) {
+              inferenceVariable.setInstantiation(lub instanceof PsiCapturedWildcardType ? ((PsiCapturedWildcardType)lub).getWildcard() : lub);
+            }
+            else {
+              PsiType glb = null;
+              for (PsiType upperBound : upperBounds) {
+                upperBound = acceptBoundsWithRecursiveDependencies(typeParameter, upperBound);
+                if (isProperType(upperBound)) {
+                  if (glb == null) {
+                    glb = upperBound;
+                  }
+                  else {
+                    glb = GenericsUtil.getGreatestLowerBound(glb, upperBound);
+                  }
+                }
+              }
+              if (glb != null) {
+                inferenceVariable.setInstantiation(glb);
+              }
             }
           }
         }
-
-        final PsiType instantiation = inferenceVariable.getInstantiation();
-        if (instantiation != null) {
-          mySiteSubstitutor = mySiteSubstitutor.put(typeParameter, instantiation);
+        finally {
+          final PsiType instantiation = inferenceVariable.getInstantiation();
+          if (instantiation != PsiType.NULL) {
+            mySiteSubstitutor = mySiteSubstitutor.put(typeParameter, instantiation);
+          }
         }
       }
     }

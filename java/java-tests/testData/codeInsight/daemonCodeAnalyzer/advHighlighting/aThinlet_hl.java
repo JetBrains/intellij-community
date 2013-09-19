@@ -20,7 +20,7 @@
 //package thinlet; //java
 //midp package thinlet.midp;
 
-import java.<error descr="Cannot resolve symbol 'applet'">applet</error>.*; //java
+import java.applet.*; //java
 import java.awt.*; //java
 import java.awt.<error descr="Cannot resolve symbol 'datatransfer'">datatransfer</error>.*; //java
 import java.awt.<error descr="Cannot resolve symbol 'image'">image</error>.*; //java

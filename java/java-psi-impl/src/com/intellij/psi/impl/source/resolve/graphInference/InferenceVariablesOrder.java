@@ -36,7 +36,7 @@ public class InferenceVariablesOrder {
     }
 
     for (InferenceVariable var : vars) {
-      if (var.getInstantiation() != null) continue;
+      if (var.getInstantiation() != PsiType.NULL) continue;
       final InferenceGraphNode<InferenceVariable> node = nodes.get(var);
       for (InferenceBound inferenceBound : InferenceBound.values()) {
         for (PsiType bound : var.getBounds(inferenceBound)) {

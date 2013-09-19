@@ -34,6 +34,7 @@ import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +78,7 @@ public class InspectionEngine {
   }
 
   @NotNull
-  public static List<ProblemDescriptor> inspect(@NotNull final List<LocalInspectionTool> tools,
+  private static List<ProblemDescriptor> inspect(@NotNull final List<LocalInspectionTool> tools,
                                                 @NotNull final PsiFile file,
                                                 @NotNull final InspectionManager iManager,
                                                 final boolean isOnTheFly,
@@ -92,7 +93,7 @@ public class InspectionEngine {
   }
 
   @NotNull
-  public static Map<String, List<ProblemDescriptor>> inspectEx(@NotNull final List<LocalInspectionTool> tools,
+  private static Map<String, List<ProblemDescriptor>> inspectEx(@NotNull final List<LocalInspectionTool> tools,
                                                                @NotNull final PsiFile file,
                                                                @NotNull final InspectionManager iManager,
                                                                final boolean isOnTheFly,
@@ -107,25 +108,32 @@ public class InspectionEngine {
     Divider.divideInsideAndOutside(file, range.getStartOffset(), range.getEndOffset(), range, elements, new ArrayList<ProperTextRange>(),
                                    Collections.<PsiElement>emptyList(), Collections.<ProperTextRange>emptyList(), true, Condition.TRUE);
 
-    boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tools, indicator, failFastOnAcquireReadAction,
-                                                                               new Processor<LocalInspectionTool>() {
-                                                                                 @Override
-                                                                                 public boolean process(LocalInspectionTool tool) {
-                                                                                   ProblemsHolder holder =
-                                                                                     new ProblemsHolder(iManager, file, isOnTheFly);
-                                                                                   createVisitorAndAcceptElements(tool, holder, isOnTheFly,
-                                                                                                                  session, elements, null);
+    boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
+      tools, indicator, failFastOnAcquireReadAction,
+      new Processor<LocalInspectionTool>() {
+        @Override
+        public boolean process(final LocalInspectionTool tool) {
+          ProblemsHolder holder = new ProblemsHolder(iManager, file, isOnTheFly);
+          createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, null);
 
-                                                                                   tool.inspectionFinished(session, holder);
+          tool.inspectionFinished(session, holder);
 
-                                                                                   if (holder.hasResults()) {
-                                                                                     resultDescriptors
-                                                                                       .put(tool.getShortName(), holder.getResults());
-                                                                                   }
+          if (holder.hasResults()) {
+            resultDescriptors.put(tool.getShortName(), ContainerUtil.filter(holder.getResults(), new Condition<ProblemDescriptor>() {
+              @Override
+              public boolean value(ProblemDescriptor descriptor) {
+                PsiElement element = descriptor.getPsiElement();
+                if (element != null) {
+                  return !SuppressionUtil.inspectionResultSuppressed(element, tool);
+                }
+                return true;
+              }
+            }));
+          }
 
-                                                                                   return true;
-                                                                                 }
-                                                                               });
+          return true;
+        }
+      });
 
     return resultDescriptors;
   }
