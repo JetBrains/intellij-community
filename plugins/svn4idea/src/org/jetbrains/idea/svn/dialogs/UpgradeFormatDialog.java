@@ -33,6 +33,7 @@ import java.io.File;
 public class UpgradeFormatDialog extends DialogWrapper  {
   private JRadioButton myUpgradeAuto16Button;
   private JRadioButton myUpgradeAuto17Button;
+  private JRadioButton myUpgradeAuto18Button;
 
   protected File myPath;
 
@@ -62,7 +63,9 @@ public class UpgradeFormatDialog extends DialogWrapper  {
   }
 
   public void setData(final WorkingCopyFormat selectedFormat) {
-    if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(selectedFormat)) {
+    if (WorkingCopyFormat.ONE_DOT_EIGHT.equals(selectedFormat)) {
+      myUpgradeAuto18Button.setSelected(true);
+    } else if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(selectedFormat)) {
       myUpgradeAuto17Button.setSelected(true);
     } else {
       myUpgradeAuto16Button.setSelected(true);
@@ -104,13 +107,17 @@ public class UpgradeFormatDialog extends DialogWrapper  {
 
     myUpgradeAuto16Button = new JRadioButton(SvnBundle.message("radio.configure." + label + ".auto.16format"));
     myUpgradeAuto17Button = new JRadioButton(SvnBundle.message("radio.configure." + label + ".auto.17format"));
+    myUpgradeAuto18Button = new JRadioButton(SvnBundle.message("radio.configure." + label + ".auto.18format"));
 
     ButtonGroup group = new ButtonGroup();
     group.add(myUpgradeAuto16Button);
     group.add(myUpgradeAuto17Button);
+    group.add(myUpgradeAuto18Button);
     panel.add(myUpgradeAuto16Button, gb);
     gb.gridy += 1;
     panel.add(myUpgradeAuto17Button, gb);
+    gb.gridy += 1;
+    panel.add(myUpgradeAuto18Button, gb);
     gb.gridy += 1;
 
     final JPanel auxiliaryPanel = getBottomAuxiliaryPanel();
@@ -137,7 +144,9 @@ public class UpgradeFormatDialog extends DialogWrapper  {
 
   @NotNull
   public WorkingCopyFormat getUpgradeMode() {
-    if (myUpgradeAuto17Button.isSelected()) {
+    if (myUpgradeAuto18Button.isSelected()) {
+      return WorkingCopyFormat.ONE_DOT_EIGHT;
+    } else if (myUpgradeAuto17Button.isSelected()) {
       return WorkingCopyFormat.ONE_DOT_SEVEN;
     } else if (myUpgradeAuto16Button.isSelected()) {
       return WorkingCopyFormat.ONE_DOT_SIX;
