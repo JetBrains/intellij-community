@@ -105,32 +105,6 @@ public class ExternalSystemUiUtil {
     component.add(Box.createVerticalGlue(), new GridBag().weightx(1).weighty(1).fillCell().coverLine());
   }
 
-  public static void sort(@NotNull DefaultMutableTreeNode parent,
-                          @NotNull DefaultTreeModel model,
-                          @NotNull Comparator<TreeNode> comparator)
-  {
-    List<MutableTreeNode> children = ContainerUtilRt.newArrayList();
-    THashMap<TreeNode, Integer> initialOrder = ContainerUtil.newIdentityTroveMap();
-    for (int i = 0; i < parent.getChildCount(); i++) {
-      MutableTreeNode child = (MutableTreeNode)parent.getChildAt(i);
-      children.add(child);
-      initialOrder.put(child, i);
-    }
-    Collections.sort(children, comparator);
-    parent.removeAllChildren();
-
-    for (MutableTreeNode child : children) {
-      parent.add(child);
-    }
-    for (int i = 0; i < children.size(); i++) {
-      MutableTreeNode child = children.get(i);
-      Integer initialIndex = initialOrder.get(child);
-      if (initialIndex != i) {
-        model.nodeChanged(child);
-      }
-    }
-  }
-
   /**
    * Applies data from the given settings object to the given model.
    * 
