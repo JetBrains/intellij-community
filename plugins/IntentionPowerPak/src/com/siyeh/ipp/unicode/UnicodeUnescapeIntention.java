@@ -111,7 +111,7 @@ public class UnicodeUnescapeIntention extends Intention {
         }
       }
       while (text.charAt(nextChar) == 'u'); // \uuuu0061 is a legal unicode escape
-      if (nextChar + 3 >= length) {
+      if (nextChar == i + 1 || nextChar + 3 >= length) {
         break;
       }
       if (StringUtil.isHexDigit(text.charAt(nextChar)) &&
