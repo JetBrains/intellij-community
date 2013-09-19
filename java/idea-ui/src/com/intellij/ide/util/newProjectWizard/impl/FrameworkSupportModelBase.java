@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.newProjectWizard.impl;
 
+import com.intellij.facet.impl.ui.libraries.FrameworkLibraryProvider;
 import com.intellij.framework.FrameworkGroup;
 import com.intellij.framework.FrameworkGroupVersion;
 import com.intellij.framework.FrameworkVersion;
@@ -51,6 +52,7 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
   private final Map<String, FrameworkSupportNode> mySettingsMap = new HashMap<String, FrameworkSupportNode>();
   private final Map<String, FrameworkSupportOptionsComponent> myOptionsComponentsMap = new HashMap<String, FrameworkSupportOptionsComponent>();
   private final Map<String, FrameworkVersion> mySelectedVersions = new HashMap<String, FrameworkVersion>();
+  private FrameworkLibraryProvider myLibraryProvider;
 
   public FrameworkSupportModelBase(final @Nullable Project project, @Nullable ModuleBuilder builder, @NotNull LibrariesContainer librariesContainer) {
     myProject = project;
@@ -157,6 +159,17 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
       current = current.getParentNode();
     }
     return false;
+  }
+
+  public FrameworkLibraryProvider getLibraryProvider() {
+    return myLibraryProvider;
+  }
+
+  public void setLibraryProvider(FrameworkLibraryProvider libraryProvider) {
+    myLibraryProvider = libraryProvider;
+    for (FrameworkSupportOptionsComponent optionsComponent : myOptionsComponentsMap.values()) {
+      optionsComponent.updateLibrariesPanel();
+    }
   }
 
   @Nullable

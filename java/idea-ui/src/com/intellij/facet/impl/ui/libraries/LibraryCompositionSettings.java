@@ -53,6 +53,7 @@ public class LibraryCompositionSettings implements Disposable {
   private LibraryDownloadSettings myDownloadSettings;
   private Map<Library, ExistingLibraryEditor> myExistingLibraryEditors =
     ContainerUtil.newIdentityTroveMap();
+  private FrameworkLibraryProvider myLibraryProvider;
 
   public LibraryCompositionSettings(final @NotNull CustomLibraryDescription libraryDescription,
                                     final @NotNull String baseDirectoryPath,
@@ -182,16 +183,16 @@ public class LibraryCompositionSettings implements Disposable {
   @Nullable
   public Library addLibraries(final @NotNull ModifiableRootModel rootModel, final @NotNull List<Library> addedLibraries,
                               final @Nullable LibrariesContainer librariesContainer) {
-    Library library = createLibrary(rootModel, librariesContainer);
+    Library newLibrary = createLibrary(rootModel, librariesContainer);
 
-    if (library != null) {
-      addedLibraries.add(library);
-      DependencyScope scope = LibraryDependencyScopeSuggester.getDefaultScope(library);
+    if (newLibrary != null) {
+      addedLibraries.add(newLibrary);
+      DependencyScope scope = LibraryDependencyScopeSuggester.getDefaultScope(newLibrary);
       if (getLibraryLevel() != LibrariesContainer.LibraryLevel.MODULE) {
-        rootModel.addLibraryEntry(library).setScope(scope);
+        rootModel.addLibraryEntry(newLibrary).setScope(scope);
       }
       else {
-        LibraryOrderEntry orderEntry = rootModel.findLibraryOrderEntry(library);
+        LibraryOrderEntry orderEntry = rootModel.findLibraryOrderEntry(newLibrary);
         assert orderEntry != null;
         orderEntry.setScope(scope);
       }
@@ -200,11 +201,20 @@ public class LibraryCompositionSettings implements Disposable {
       addedLibraries.add(mySelectedLibrary);
       rootModel.addLibraryEntry(mySelectedLibrary).setScope(LibraryDependencyScopeSuggester.getDefaultScope(mySelectedLibrary));
     }
-    return library;
+    if (myLibraryProvider != null) {
+      Library library = myLibraryProvider.createLibrary(myLibraryDescription.getSuitableLibraryKinds());
+      addedLibraries.add(library);
+      rootModel.addLibraryEntry(library).setScope(LibraryDependencyScopeSuggester.getDefaultScope(library));
+    }
+    return newLibrary;
   }
 
   public void setNewLibraryEditor(@Nullable NewLibraryEditor libraryEditor) {
     myNewLibraryEditor = libraryEditor;
+  }
+
+  public void setLibraryProvider(FrameworkLibraryProvider libraryProvider) {
+    myLibraryProvider = libraryProvider;
   }
 
   @Override

@@ -42,7 +42,7 @@ import java.util.Map;
  * @author nik
  */
 public class LibraryDownloadSettings {
-  private FrameworkLibraryVersion myVersion;
+  private final FrameworkLibraryVersion myVersion;
   private final DownloadableLibraryType myLibraryType;
   private String myDirectoryForDownloadedLibrariesPath;
   private final String myLibraryName;
@@ -114,10 +114,6 @@ public class LibraryDownloadSettings {
 
   public DownloadableLibraryType getLibraryType() {
     return myLibraryType;
-  }
-
-  public void setVersion(FrameworkLibraryVersion version) {
-    myVersion = version;
   }
 
   public void setDirectoryForDownloadedLibrariesPath(String directoryForDownloadedLibrariesPath) {
