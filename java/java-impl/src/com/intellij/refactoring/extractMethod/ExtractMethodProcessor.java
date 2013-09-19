@@ -330,7 +330,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private boolean isNotNull(PsiVariable outputVariable) {
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(false);
+    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner();
     final PsiCodeBlock block = myElementFactory.createCodeBlock();
     for (PsiElement element : myElements) {
       block.add(element);

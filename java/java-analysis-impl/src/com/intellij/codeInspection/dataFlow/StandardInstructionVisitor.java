@@ -115,15 +115,15 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     if (dfaDest instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue) dfaDest;
-      if (var.getInherentNullability() == Nullness.NOT_NULL && !memState.checkNotNullable(dfaSource)) {
-        onAssigningToNotNullableVariable(instruction);
+      if (var.getInherentNullability() == Nullness.NOT_NULL) {
+        checkNotNullable(memState, dfaSource, NullabilityProblem.assigningToNotNull, instruction.getRExpression());
       }
       final PsiModifierListOwner psi = var.getPsiVariable();
       if (!(psi instanceof PsiField) || !psi.hasModifierProperty(PsiModifier.VOLATILE)) {
         memState.setVarValue(var, dfaSource);
       }
-    } else if (dfaDest instanceof DfaTypeValue && ((DfaTypeValue)dfaDest).isNotNull() && !memState.checkNotNullable(dfaSource)) {
-      onAssigningToNotNullableVariable(instruction);
+    } else if (dfaDest instanceof DfaTypeValue && ((DfaTypeValue)dfaDest).isNotNull()) {
+      checkNotNullable(memState, dfaSource, NullabilityProblem.assigningToNotNull, instruction.getRExpression());
     }
 
     memState.push(dfaDest);
@@ -131,27 +131,19 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return nextInstruction(instruction, runner, memState);
   }
 
-  protected void onAssigningToNotNullableVariable(AssignInstruction instruction) {}
-
   @Override
   public DfaInstructionState[] visitCheckReturnValue(CheckReturnValueInstruction instruction,
                                                      DataFlowRunner runner,
                                                      DfaMemoryState memState) {
     final DfaValue retValue = memState.pop();
-    if (!memState.checkNotNullable(retValue)) {
-      onNullableReturn(instruction);
-    }
+    checkNotNullable(memState, retValue, NullabilityProblem.nullableReturn, instruction.getReturn());
     return nextInstruction(instruction, runner, memState);
   }
-
-  protected void onNullableReturn(CheckReturnValueInstruction instruction) {}
 
   @Override
   public DfaInstructionState[] visitFieldReference(FieldReferenceInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     final DfaValue qualifier = memState.pop();
-    if (!memState.checkNotNullable(qualifier)) {
-      onInstructionProducesNPE(instruction);
-
+    if (!checkNotNullable(memState, qualifier, NullabilityProblem.fieldAccessNPE, instruction.getElementToAssert())) {
       if (qualifier instanceof DfaVariableValue) {
         memState.setVarValue((DfaVariableValue)qualifier, runner.getFactory()
           .createTypeValue(((DfaVariableValue)qualifier).getVariableType(), Nullness.NOT_NULL));
@@ -216,23 +208,24 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       final DfaValue arg = memState.pop();
       PsiExpression expr = args[(args.length - i - 1)];
       if (map.get(expr) == Nullness.NOT_NULL) {
-        if (!memState.checkNotNullable(arg)) {
-          onPassingNullParameter(expr);
+        if (!checkNotNullable(memState, arg, NullabilityProblem.passingNullableToNotNullParameter, expr)) {
           if (arg instanceof DfaVariableValue) {
             memState.setVarValue((DfaVariableValue)arg, runner.getFactory()
               .createTypeValue(((DfaVariableValue)arg).getVariableType(), Nullness.NOT_NULL));
           }
         }
       }
-      else if (map.get(expr) == Nullness.UNKNOWN && !memState.checkNotNullable(arg)) {
-        onPassingNullParameterToNonAnnotated(runner, expr);
+      else if (map.get(expr) == Nullness.UNKNOWN) {
+        checkNotNullable(memState, arg, NullabilityProblem.passingNullableArgumentToNonAnnotatedParameter, expr);
       }
     }
 
     @NotNull final DfaValue qualifier = memState.pop();
     try {
-      if (!memState.checkNotNullable(qualifier)) {
-        onInstructionProducesNPE(instruction);
+      boolean unboxing = instruction.getMethodType() == MethodCallInstruction.MethodType.UNBOXING;
+      NullabilityProblem problem = unboxing ? NullabilityProblem.unboxingNullable : NullabilityProblem.callNPE;
+      PsiExpression anchor = unboxing ? instruction.getContext() : instruction.getCallExpression();
+      if (!checkNotNullable(memState, qualifier, problem, anchor)) {
         if (qualifier instanceof DfaVariableValue) {
           memState.setVarValue((DfaVariableValue)qualifier, runner.getFactory().createTypeValue(
             ((DfaVariableValue)qualifier).getVariableType(), Nullness.NOT_NULL));
@@ -294,11 +287,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     return TypeConversionUtil.computeCastTo(o, PsiType.LONG);
   }
 
-
-  protected void onInstructionProducesNPE(Instruction instruction) {}
-
-  protected void onPassingNullParameter(PsiExpression arg) {}
-  protected void onPassingNullParameterToNonAnnotated(DataFlowRunner runner, PsiExpression arg) {}
+  protected boolean checkNotNullable(DfaMemoryState state,
+                                     DfaValue value, NullabilityProblem problem,
+                                     PsiElement anchor) {
+    return state.checkNotNullable(value);
+  }
 
   @Override
   public DfaInstructionState[] visitBinop(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
