@@ -143,10 +143,6 @@ public class DfaVariableValue extends DfaValue {
     return myQualifier;
   }
 
-  public boolean isViaMethods() {
-    return myVariable instanceof PsiMethod || myQualifier != null && myQualifier.isViaMethods();
-  }
-
   public Nullness getInherentNullability() {
     if (myInherentNullability != null) {
       return myInherentNullability;

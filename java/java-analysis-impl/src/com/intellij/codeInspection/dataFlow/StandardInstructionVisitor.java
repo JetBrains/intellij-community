@@ -349,9 +349,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       return null;
     }
 
-    if (isViaMethods(dfaLeft) || isViaMethods(dfaRight)) {
-      skipConstantConditionReporting(instruction.getPsiAnchor());
-    }
     myCanBeNullInInstanceof.add(instruction);
 
     ArrayList<DfaInstructionState> states = new ArrayList<DfaInstructionState>();
@@ -385,10 +382,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   public void skipConstantConditionReporting(@Nullable PsiElement anchor) {
     ContainerUtil.addIfNotNull(myNotToReportReachability, anchor);
-  }
-
-  private static boolean isViaMethods(DfaValue dfa) {
-    return dfa instanceof DfaVariableValue && ((DfaVariableValue)dfa).isViaMethods();
   }
 
   private void handleInstanceof(InstanceofInstruction instruction, DfaValue dfaRight, DfaValue dfaLeft) {
