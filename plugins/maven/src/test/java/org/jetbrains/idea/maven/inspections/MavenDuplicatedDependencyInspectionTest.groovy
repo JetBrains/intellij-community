@@ -21,7 +21,7 @@ import org.jetbrains.idea.maven.dom.inspections.MavenDuplicateDependenciesInspec
 /**
  * @author Sergey Evdokimov
  */
-class MavenDuplicatedInspectionTest extends MavenDomTestCase {
+class MavenDuplicatedDependencyInspectionTest extends MavenDomTestCase {
 
   public void testDuplicatedInSameFile() {
     myFixture.enableInspections(MavenDuplicateDependenciesInspection)
