@@ -115,22 +115,12 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
   }
 
   private static String createLinkText(@NotNull MavenDomProjectModel model, @NotNull MavenDomDependency dependency) {
-    StringBuilder sb = new StringBuilder();
-
     XmlTag tag = dependency.getXmlTag();
     if (tag == null) return getProjectName(model);
     VirtualFile file = tag.getContainingFile().getVirtualFile();
     if (file == null) return getProjectName(model);
 
-    sb.append("<a href ='#navigation/");
-    sb.append(file.getPath());
-    sb.append(":");
-    sb.append(tag.getTextRange().getStartOffset());
-    sb.append("'>");
-    sb.append(getProjectName(model));
-    sb.append("</a>");
-
-    return sb.toString();
+    return "<a href ='#navigation/" + file.getPath() + ":" + tag.getTextRange().getStartOffset() + "'>" + getProjectName(model) + "</a>";
   }
 
   @NotNull
