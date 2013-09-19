@@ -547,4 +547,23 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     runFindInCommentsAndLiterals(findManager, findModel, text, "cs");
   }
+
+  public void testFindInLiteralToSkipQuotes() throws Exception{
+    FindManager findManager = FindManager.getInstance(myProject);
+
+    FindModel findModel = new FindModel();
+    findModel.setStringToFind("^done$");
+    findModel.setWholeWordsOnly(false);
+    findModel.setRegularExpressions(true);
+    findModel.setFromCursor(false);
+    findModel.setGlobal(true);
+    findModel.setMultipleFiles(false);
+    findModel.setProjectScope(true);
+
+    String text = "\"done\"; 'done'; 'done' \"done2\"";
+
+    findModel.setInStringLiteralsOnly(true);
+    findModel.setInCommentsOnly(false);
+    runFindForwardAndBackward(findManager, findModel, text, "java");
+  }
 }
