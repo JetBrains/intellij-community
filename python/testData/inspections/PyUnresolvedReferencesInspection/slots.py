@@ -8,7 +8,7 @@ class C(B):
     pass
 
 c = C()
-c.<warning descr="'C' object has no attribute 'bar'">bar</warning> = 1
+c.bar = 1
 
 def test_slots_with_dict():
     class C(object):

@@ -49,7 +49,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     final PyStringLiteralExpression docStringExpression = psi.getDocStringExpression();
     return new PyClassStubImpl(psi.getName(), parentStub,
                                superClasses.toArray(new PyQualifiedName[superClasses.size()]),
-                               ((PyClassImpl)psi).getOwnSlots(),
+                               psi.getOwnSlots(),
                                PyPsiUtils.strValue(docStringExpression),
                                getStubElementType());
   }
