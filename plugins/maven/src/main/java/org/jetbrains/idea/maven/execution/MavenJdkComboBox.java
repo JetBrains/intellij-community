@@ -4,7 +4,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.ComboBoxUtil;
 
@@ -16,6 +18,8 @@ import java.util.Map;
  * @author Sergey Evdokimov
  */
 public class MavenJdkComboBox extends JComboBox {
+
+  private static final int MAX_PATH_LENGTH = 50;
 
   @Nullable
   private final Project myProject;
@@ -54,28 +58,45 @@ public class MavenJdkComboBox extends JComboBox {
 
     for (Sdk projectJdk : ProjectJdkTable.getInstance().getSdksOfType(JavaSdk.getInstance())) {
       String name = projectJdk.getName();
-      result.put(name, name);
-    }
 
-    result.put(MavenRunnerSettings.USE_INTERNAL_JAVA, RunnerBundle.message("maven.java.internal"));
+      String label;
 
-    if (myProject != null) {
-      String projectJdkTitle;
-
-      String projectJdk = ProjectRootManager.getInstance(myProject).getProjectSdkName();
-      if (projectJdk == null) {
-        projectJdkTitle = "Use Project JDK (not defined yet)";
+      String path = projectJdk.getHomePath();
+      if (path == null) {
+        label = name;
       }
       else {
-        projectJdkTitle = "Use Project JDK (" + projectJdk + ')';
+        label = String.format("<html>%s <font color=gray>(%s)</font></html>", name, truncateLongPath(path));
       }
 
+      result.put(name, label);
+    }
+
+    String internalJdkPath = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk().getHomePath();
+    assert internalJdkPath != null;
+    result.put(MavenRunnerSettings.USE_INTERNAL_JAVA, RunnerBundle.message("maven.java.internal", truncateLongPath(internalJdkPath)));
+
+    if (myProject != null) {
+      String projectJdk = ProjectRootManager.getInstance(myProject).getProjectSdkName();
+      String projectJdkTitle = String.format("<html>Use Project JDK <font color=gray>(%s)</font></html>", projectJdk == null ? "not defined yet" : projectJdk);
       result.put(MavenRunnerSettings.USE_PROJECT_JDK, projectJdkTitle);
     }
 
-    result.put(MavenRunnerSettings.USE_JAVA_HOME, RunnerBundle.message("maven.java.home.env"));
+    String javaHomePath = System.getenv("JAVA_HOME");
+    String javaHomeLabel = RunnerBundle.message("maven.java.home.env", javaHomePath == null ? "not defined yet" : truncateLongPath(javaHomePath));
+
+    result.put(MavenRunnerSettings.USE_JAVA_HOME, javaHomeLabel);
 
     return result;
+  }
+
+  @NotNull
+  private static String truncateLongPath(@NotNull String path) {
+    if (path.length() > MAX_PATH_LENGTH) {
+      return path.substring(0, MAX_PATH_LENGTH / 2) + "..." + path.substring(path.length() - MAX_PATH_LENGTH / 2 - 3);
+    }
+
+    return path;
   }
 
 }
