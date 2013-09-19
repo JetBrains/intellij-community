@@ -83,7 +83,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
         });
       }
     };
-    mySession.addSessionListener(mySessionListener);
+    mySession.addSessionListener(mySessionListener, myDisposable);
 
     myTreePanel = new XDebuggerTreePanel(session.getProject(), editorsProvider, myDisposable, sourcePosition, XDebuggerActions.EVALUATE_DIALOG_TREE_POPUP_GROUP,
                                          ((XDebugSessionImpl)session).getValueMarkers());
@@ -119,12 +119,6 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     }
     switchToMode(mode, text);
     init();
-  }
-
-  @Override
-  protected void dispose() {
-    mySession.removeSessionListener(mySessionListener);
-    super.dispose();
   }
 
   @Override
