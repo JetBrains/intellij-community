@@ -378,6 +378,7 @@
     <completion.contributor language="HTML" implementationClass="com.jetbrains.pyramid.templates.completion.ChameleonNamespaceCompletionContributor"/>
     <completion.contributor language="Chameleon" implementationClass="com.jetbrains.pyramid.templates.completion.ChameleonNamespaceCompletionContributor"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.pyramid.templates.completion.ChameleonPrefixTypesCompletionContributor"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.pyramid.templates.completion.ChameleonGlobalsCompletionContributor"/>
 
     <lang.formatter language="Chameleon"
                     implementationClass="com.jetbrains.pyramid.templates.formatter.ChameleonFormattingModelBuilder"/>
