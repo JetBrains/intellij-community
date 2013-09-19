@@ -88,6 +88,9 @@
     <localInspection language="XML" shortName="MavenDuplicateDependenciesInspection" bundle="MavenDomBundle" key="inspection.duplicate.dependencies.name"
                      groupKey="inspection.group" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenDuplicateDependenciesInspection"/>
+    <localInspection language="XML" shortName="MavenDuplicatePluginInspection" bundle="MavenDomBundle" key="inspection.duplicate.plugin.declaration"
+                     groupKey="inspection.group" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenDuplicatePluginInspection"/>
     <localInspection language="XML" shortName="MavenRedundantGroupId" bundle="MavenDomBundle" key="inspection.redundant.groupId.name"
                      groupKey="inspection.group" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection"/>
