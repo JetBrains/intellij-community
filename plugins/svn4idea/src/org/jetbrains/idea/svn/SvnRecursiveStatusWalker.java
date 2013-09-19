@@ -129,7 +129,7 @@ public class SvnRecursiveStatusWalker {
       myConfiguration17 = SvnConfiguration.getInstance(myProject);
       myPath = path;
       myDepth = depth;
-      mySvnClient = new SvnkitSvnStatusClient(client);
+      mySvnClient = new SvnkitSvnStatusClient(myVcs, client);
       myCommandLineClient = new SvnCommandLineStatusClient(myVcs);
       myIsInnerCopyRoot = isInnerCopyRoot;
     }
