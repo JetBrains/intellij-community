@@ -260,11 +260,7 @@ public class InferenceSession {
           }
           PsiType bound = null;
           for (PsiType eqBound : eqBounds) {
-            eqBound = acceptBoundsWithRecursiveDependencies(typeParameter, eqBound);
-            if (isProperType(eqBound)) {
-              bound = eqBound;
-              break;
-            }
+            bound = acceptBoundsWithRecursiveDependencies(typeParameter, eqBound);
           }
           if (bound != null) {
             if (bound instanceof PsiCapturedWildcardType && eqBounds.size() > 1) {
@@ -318,7 +314,8 @@ public class InferenceSession {
 
   private PsiType acceptBoundsWithRecursiveDependencies(PsiTypeParameter typeParameter, PsiType bound) {
     if (!isProperType(bound)) {
-      return mySiteSubstitutor.put(typeParameter, null).substitute(bound);
+      final PsiSubstitutor substitutor = PsiUtil.resolveClassInType(bound) != typeParameter ? mySiteSubstitutor.put(typeParameter, null) : mySiteSubstitutor;
+      return substitutor.substitute(bound);
     }
     return bound;
   }
