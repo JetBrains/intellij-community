@@ -129,6 +129,7 @@ public class VcsLogDataHolder implements Disposable {
   }
 
   private void initialize(@NotNull final Consumer<VcsLogDataHolder> onInitialized) {
+    myDataLoaderQueue.clear();
     loadFirstPart(new Consumer<DataPack>() {
       @Override
       public void consume(DataPack dataPack) {
@@ -136,7 +137,7 @@ public class VcsLogDataHolder implements Disposable {
         // after first part is loaded and shown to the user, load the whole log in background
         loadAllLog();
       }
-    });
+    }, true);
   }
 
   private void loadAllLog() {
@@ -181,11 +182,15 @@ public class VcsLogDataHolder implements Disposable {
    *
    * @param onSuccess this task is called {@link UIUtil.invokeAndWaitIfNeeded(Runnable) on the EDT} after loading and graph
    *                  building completes.
+   * @param invalidateWholeLog if the whole log data should be invalidated and will be retrieved in onSuccess.
    */
-  private void loadFirstPart(@NotNull final Consumer<DataPack> onSuccess) {
+  private void loadFirstPart(@NotNull final Consumer<DataPack> onSuccess, final boolean invalidateWholeLog) {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
+        if (invalidateWholeLog) {
+          myLogData = null;
+        }
         boolean ordered = !isFullLogReady(); // full log is not ready (or it is initial loading) => need to fairly query the VCS
 
         Map<VirtualFile, List<TimeCommitParents>> logsToBuild = ContainerUtil.newHashMap();
@@ -208,8 +213,8 @@ public class VcsLogDataHolder implements Disposable {
             newCommitsCount = 0;
           }
           else {
-            Pair<List<TimeCommitParents>,Integer> joinResult = myLogJoiner.addCommits(myLogData.getLog(root), myLogData.getRefs(root),
-                                                                                      firstBlock, newRefs);
+            Pair<List<TimeCommitParents>, Integer> joinResult = myLogJoiner.addCommits(myLogData.getLog(root), myLogData.getRefs(root),
+                                                                                       firstBlock, newRefs);
             refreshedLog = joinResult.getFirst();
             newCommitsCount = joinResult.getSecond();
           }
@@ -231,7 +236,7 @@ public class VcsLogDataHolder implements Disposable {
 
           if (myLogData != null) {
             myLogData.setRefs(root, newRefs); // update references, because the joiner needs to know reference changes after each refresh
-                                              // log is not updated: once loaded, joiner always join to the old part of it
+            // log is not updated: once loaded, joiner always join to the old part of it
           }
         }
 
@@ -268,7 +273,7 @@ public class VcsLogDataHolder implements Disposable {
       public void consume(DataPack dataPack) {
         onSuccess.run();
       }
-    });
+    }, false);
   }
 
   /**
