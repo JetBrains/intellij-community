@@ -16,6 +16,7 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +34,12 @@ public class XStandaloneVariablesView extends XVariablesViewBase {
   }
 
   public void rebuildView() {
-    saveCurrentTreeState(myStackFrame);
-    buildTreeAndRestoreState(myStackFrame);
+    AppUIUtil.invokeLaterIfProjectAlive(getTree().getProject(), new Runnable() {
+      @Override
+      public void run() {
+        saveCurrentTreeState(myStackFrame);
+        buildTreeAndRestoreState(myStackFrame);
+      }
+    });
   }
 }
