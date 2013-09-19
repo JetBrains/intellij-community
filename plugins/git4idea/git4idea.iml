@@ -10,6 +10,7 @@
       <sourceFolder url="file://$MODULE_DIR$/testFramework" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/test-stepdefs" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/test-features" isTestSource="true" />
+      <sourceFolder url="file://$MODULE_DIR$/gitlog" isTestSource="false" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -67,6 +68,9 @@
     <orderEntry type="library" name="JSch" level="project" />
     <orderEntry type="module" module-name="spellchecker" />
     <orderEntry type="module" module-name="cucumber-test-runner" scope="RUNTIME" />
+    <orderEntry type="module" module-name="vcs-log-api" />
+    <orderEntry type="module" module-name="vcs-log-data" />
+    <orderEntry type="module" module-name="vcs-log-graph" />
   </component>
 </module>
 

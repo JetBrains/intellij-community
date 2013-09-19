@@ -64,4 +64,6 @@ public interface RepositoryManager<T extends Repository> {
   void updateRepository(VirtualFile root);
 
   void updateAllRepositories();
+
+  void waitUntilInitialized();
 }

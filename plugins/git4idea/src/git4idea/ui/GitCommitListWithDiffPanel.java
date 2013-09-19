@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -45,7 +46,7 @@ public class GitCommitListWithDiffPanel extends JPanel {
     myCommitListPanel = new GitCommitListPanel(commits, null);
     myCommitListPanel.addListSelectionListener(new Consumer<GitCommit>() {
       @Override public void consume(GitCommit commit) {
-        myChangesBrowser.setChangesToDisplay(commit.getChanges());
+        myChangesBrowser.setChangesToDisplay(new ArrayList<Change>(commit.getChanges()));
       }
     });
 

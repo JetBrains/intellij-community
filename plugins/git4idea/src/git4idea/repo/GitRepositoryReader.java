@@ -21,10 +21,10 @@ import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Processor;
+import com.intellij.vcs.log.Hash;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
-import git4idea.Hash;
 import git4idea.branch.GitBranchUtil;
 import git4idea.branch.GitBranchesCollection;
 import org.jetbrains.annotations.NonNls;
@@ -77,7 +77,7 @@ class GitRepositoryReader {
 
   @NotNull
   private static Hash createHash(@Nullable String hash) {
-    return hash == null ? GitBranch.DUMMY_HASH : Hash.create(hash);
+    return hash == null ? GitBranch.DUMMY_HASH : Hash.build(hash);
   }
 
   @NotNull
@@ -163,7 +163,7 @@ class GitRepositoryReader {
     if (!branchFile.exists()) { // can happen when rebasing from detached HEAD: IDEA-93806
       return null;
     }
-    Hash hash = Hash.create(readBranchFile(branchFile));
+    Hash hash = Hash.build(readBranchFile(branchFile));
     if (branchName.startsWith(REFS_HEADS_PREFIX)) {
       branchName = branchName.substring(REFS_HEADS_PREFIX.length());
     }
@@ -321,7 +321,7 @@ class GitRepositoryReader {
     FileUtil.processFilesRecursively(myRefsRemotesDir, new Processor<File>() {
       @Override
       public boolean process(File file) {
-        if (!file.isDirectory()) {
+        if (!file.isDirectory() && !file.getName().equalsIgnoreCase(GitRepositoryFiles.HEAD)) {
           final String relativePath = FileUtil.getRelativePath(myGitDir, file);
           if (relativePath != null) {
             String branchName = FileUtil.toSystemIndependentName(relativePath);
@@ -357,10 +357,10 @@ class GitRepositoryReader {
         }
         hash = shortBuffer(hash);
         if (branchName.startsWith(REFS_HEADS_PREFIX)) {
-          localBranches.add(new GitLocalBranch(branchName, Hash.create(hash)));
+          localBranches.add(new GitLocalBranch(branchName, Hash.build(hash)));
         }
         else if (branchName.startsWith(REFS_REMOTES_PREFIX)) {
-          GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, Hash.create(hash), remotes);
+          GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, Hash.build(hash), remotes);
           if (remoteBranch != null) {
             remoteBranches.add(remoteBranch);
           }

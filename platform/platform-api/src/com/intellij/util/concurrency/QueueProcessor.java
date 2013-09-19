@@ -253,6 +253,17 @@ public class QueueProcessor<T> {
     }
   }
 
+  /**
+   * Removes several last tasks in the queue, leaving only {@code remaining} amount of them, counted from the head of the queue.
+   */
+  public void dismissLastTasks(int remaining) {
+    synchronized (myQueue) {
+      while (myQueue.size() > remaining) {
+        myQueue.pollLast();
+      }
+    }
+  }
+
   public boolean hasPendingItemsToProcess() {
     synchronized (myQueue) {
       return !myQueue.isEmpty();

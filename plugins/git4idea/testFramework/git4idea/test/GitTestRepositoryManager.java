@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.test
+package git4idea.test;
 
-import com.intellij.dvcs.repo.RepositoryManager
-import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vfs.VirtualFile
-import git4idea.repo.GitRepository
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
+import com.intellij.dvcs.repo.RepositoryManager;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.repo.GitRepository;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author Kirill Likhodedov
  */
 public class GitTestRepositoryManager implements RepositoryManager<GitRepository> {
-
   private final List<GitRepository> myRepositories = new ArrayList<GitRepository>();
 
   public void add(GitRepository repository) {
@@ -39,6 +42,7 @@ public class GitTestRepositoryManager implements RepositoryManager<GitRepository
         return repository;
       }
     }
+
     return null;
   }
 
@@ -55,12 +59,12 @@ public class GitTestRepositoryManager implements RepositoryManager<GitRepository
   @NotNull
   @Override
   public List<GitRepository> getRepositories() {
-    myRepositories
+    return myRepositories;
   }
 
   @Override
   public boolean moreThanOneRoot() {
-    myRepositories.size() > 1
+    return myRepositories.size() > 1;
   }
 
   @Override
@@ -72,4 +76,9 @@ public class GitTestRepositoryManager implements RepositoryManager<GitRepository
   public void updateAllRepositories() {
     throw new UnsupportedOperationException();
   }
+
+  @Override
+  public void waitUntilInitialized() {
+  }
+
 }

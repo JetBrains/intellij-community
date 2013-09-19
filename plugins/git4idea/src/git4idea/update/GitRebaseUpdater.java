@@ -27,16 +27,16 @@ import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.Notificator;
 import git4idea.branch.GitBranchPair;
-import git4idea.commands.*;
-import git4idea.rebase.GitRebaseProblemDetector;
+import git4idea.commands.Git;
+import git4idea.commands.GitCommandResult;
 import git4idea.rebase.GitRebaser;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Handles 'git pull --rebase'
@@ -60,42 +60,13 @@ public class GitRebaseUpdater extends GitUpdater {
   protected GitUpdateResult doUpdate() {
     LOG.info("doUpdate ");
     String remoteBranch = getRemoteBranchToMerge();
-
-    final GitLineHandler rebaseHandler = new GitLineHandler(myProject, myRoot, GitCommand.REBASE);
-    rebaseHandler.addParameters(remoteBranch);
-    final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
-    rebaseHandler.addLineListener(rebaseConflictDetector);
-    GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector = new GitUntrackedFilesOverwrittenByOperationDetector(myRoot);
-    rebaseHandler.addLineListener(untrackedFilesDetector);
-
-    String progressTitle = makeProgressTitle("Rebasing");
-    GitTask rebaseTask = new GitTask(myProject, rebaseHandler, progressTitle);
-    rebaseTask.setProgressIndicator(myProgressIndicator);
-    rebaseTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
-    final AtomicReference<GitUpdateResult> updateResult = new AtomicReference<GitUpdateResult>();
-    final AtomicBoolean failure = new AtomicBoolean();
-    rebaseTask.executeInBackground(true, new GitTaskResultHandlerAdapter() {
+    List<String> params = Arrays.asList(remoteBranch);
+    return myRebaser.rebase(myRoot, params, new Runnable() {
       @Override
-      protected void onSuccess() {
-        updateResult.set(GitUpdateResult.SUCCESS);
-      }
-
-      @Override
-      protected void onCancel() {
+      public void run() {
         cancel();
-        updateResult.set(GitUpdateResult.CANCEL);
       }
-
-      @Override
-      protected void onFailure() {
-        failure.set(true);
-      }
-    });
-
-    if (failure.get()) {
-      updateResult.set(myRebaser.handleRebaseFailure(rebaseHandler, myRoot, rebaseConflictDetector, untrackedFilesDetector));
-    }
-    return updateResult.get();
+    }, null);
   }
 
   @NotNull

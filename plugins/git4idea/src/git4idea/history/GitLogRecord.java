@@ -86,7 +86,6 @@ class GitLogRecord {
 
   // trivial access methods
   String getHash() { return lookup(HASH); }
-  String getShortHash() { return lookup(SHORT_HASH); }
   String getAuthorName() { return lookup(AUTHOR_NAME); }
   String getAuthorEmail() { return lookup(AUTHOR_EMAIL); }
   String getCommitterName() { return lookup(COMMITTER_NAME); }
@@ -103,11 +102,11 @@ class GitLogRecord {
   }
 
   long getLongTimeStamp() {
-    return Long.parseLong(myOptions.get(COMMIT_TIME).trim());
+    return Long.parseLong(myOptions.get(COMMIT_TIME).trim()) * 1000;
   }
 
   long getAuthorTimeStamp() {
-    return Long.parseLong(myOptions.get(AUTHOR_TIME).trim());
+    return Long.parseLong(myOptions.get(AUTHOR_TIME).trim()) * 1000;
   }
 
   String getAuthorAndCommitter() {
@@ -118,12 +117,6 @@ class GitLogRecord {
 
   String getFullMessage() {
     return mySupportsRawBody ? getRawBody().trim() : ((getSubject() + "\n\n" + getBody()).trim());
-  }
-
-  String[] getParentsShortHashes() {
-    final String parents = lookup(SHORT_PARENTS);
-    if (parents.trim().length() == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
-    return parents.split(" ");
   }
 
   String[] getParentsHashes() {
@@ -191,9 +184,9 @@ class GitLogRecord {
   }
 
   private List<GitRevisionNumber> prepareParentRevisions() {
-    final String[] parentHashes = myOptions.containsKey(SHORT_PARENTS) ? getParentsShortHashes() : getParentsHashes();
-    final List<AbstractHash> parents = new ArrayList<AbstractHash>(parentHashes.length);
-    for (String parentsShortHash : parentHashes) {
+    final String[] parentsHashes = getParentsHashes();
+    final List<AbstractHash> parents = new ArrayList<AbstractHash>(parentsHashes.length);
+    for (String parentsShortHash : parentsHashes) {
       parents.add(AbstractHash.create(parentsShortHash));
     }
 

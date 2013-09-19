@@ -16,6 +16,7 @@
 package git4idea;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.vcs.log.Hash;
 import git4idea.branch.GitBranchUtil;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NonNls;
@@ -46,7 +47,7 @@ public abstract class GitBranch extends GitReference {
    * @deprecated All usages should be reviewed and substituted with actual GitBranch objects with Hashes retrieved from the GitRepository.
    */
   @Deprecated
-  public static final Hash DUMMY_HASH = Hash.create("");
+  public static final Hash DUMMY_HASH = Hash.build("");
 
   private static final Logger LOG = Logger.getInstance(GitBranch.class);
 
@@ -65,7 +66,7 @@ public abstract class GitBranch extends GitReference {
    */
   @NotNull
   public String getHash() {
-    return myHash.asString();
+    return myHash.toStrHash();
   }
 
   /**

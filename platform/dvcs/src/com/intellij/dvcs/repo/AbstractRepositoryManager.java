@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -32,6 +33,7 @@ public abstract class AbstractRepositoryManager<T extends Repository> extends Ab
   @NotNull protected final Map<VirtualFile, T> myRepositories = new HashMap<VirtualFile, T>();
 
   @NotNull protected final ReentrantReadWriteLock REPO_LOCK = new ReentrantReadWriteLock();
+  @NotNull private final CountDownLatch myInitializationWaiter = new CountDownLatch(1);
 
   protected AbstractRepositoryManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager, @NotNull AbstractVcs vcs,
                                       @NotNull String repoDirName) {
@@ -187,6 +189,7 @@ public abstract class AbstractRepositoryManager<T extends Repository> extends Ab
     try {
       myRepositories.clear();
       myRepositories.putAll(repositories);
+      myInitializationWaiter.countDown();
     }
     finally {
       REPO_LOCK.writeLock().unlock();
@@ -206,4 +209,15 @@ public abstract class AbstractRepositoryManager<T extends Repository> extends Ab
   public String toString() {
     return "RepositoryManager{myRepositories: " + myRepositories + '}';
   }
+
+  @Override
+  public void waitUntilInitialized() {
+    try {
+      myInitializationWaiter.await();
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+    }
+  }
+
 }

@@ -49,14 +49,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * @author Kirill Likhodedov
  */
-class GitBranchUiHandlerImpl implements GitBranchUiHandler {
+public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
   @NotNull private final GitPlatformFacade myFacade;
   @NotNull private final ProgressIndicator myProgressIndicator;
 
-  GitBranchUiHandlerImpl(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull Git git, @NotNull ProgressIndicator indicator) {
+  public GitBranchUiHandlerImpl(@NotNull Project project, @NotNull GitPlatformFacade facade, @NotNull Git git, @NotNull ProgressIndicator indicator) {
     myProject = project;
     myGit = git;
     myFacade = facade;

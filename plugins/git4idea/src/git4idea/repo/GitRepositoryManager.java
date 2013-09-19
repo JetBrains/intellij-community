@@ -16,7 +16,6 @@
 package git4idea.repo;
 
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
-import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -29,11 +28,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Kirill Likhodedov
  */
-public class GitRepositoryManager extends AbstractRepositoryManager<GitRepository> implements RepositoryManager<GitRepository> {
+public class GitRepositoryManager extends AbstractRepositoryManager<GitRepository> {
 
   @NotNull private final GitPlatformFacade myPlatformFacade;
 
-  public GitRepositoryManager(@NotNull Project project, @NotNull GitPlatformFacade platformFacade,
+  public GitRepositoryManager(@NotNull Project project,
+                              @NotNull GitPlatformFacade platformFacade,
                               @NotNull ProjectLevelVcsManager vcsManager) {
     super(project, vcsManager, platformFacade.getVcs(project), GitUtil.DOT_GIT);
     myPlatformFacade = platformFacade;
@@ -52,4 +52,5 @@ public class GitRepositoryManager extends AbstractRepositoryManager<GitRepositor
   protected GitRepository createRepository(@NotNull VirtualFile root) {
     return GitRepositoryImpl.getFullInstance(root, myProject, myPlatformFacade, this);
   }
+
 }

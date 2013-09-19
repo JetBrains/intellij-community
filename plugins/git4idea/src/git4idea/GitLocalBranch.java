@@ -15,6 +15,7 @@
  */
 package git4idea;
 
+import com.intellij.vcs.log.Hash;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;

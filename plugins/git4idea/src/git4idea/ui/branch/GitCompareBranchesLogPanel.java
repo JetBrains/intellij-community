@@ -149,7 +149,7 @@ class GitCompareBranchesLogPanel extends JPanel {
     sourcePanel.addListSelectionListener(new Consumer<GitCommit>() {
       @Override
       public void consume(GitCommit commit) {
-        changesBrowser.setChangesToDisplay(commit.getChanges());
+        changesBrowser.setChangesToDisplay(new ArrayList<Change>(commit.getChanges()));
         otherPanel.clearSelection();
       }
     });

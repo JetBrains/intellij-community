@@ -48,8 +48,8 @@ import static org.testng.Assert.assertTrue;
 public class GitLogParserTest extends GitTest {
 
   public static final GitLogOption[] GIT_LOG_OPTIONS =
-    new GitLogOption[]{SHORT_HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
-      COMMITTER_EMAIL, SUBJECT, BODY, SHORT_PARENTS, PARENTS, RAW_BODY
+    new GitLogOption[]{HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
+      COMMITTER_EMAIL, SUBJECT, BODY, PARENTS, PARENTS, RAW_BODY
     };
   private VirtualFile myRoot;
   private GitLogParser myParser;
@@ -189,8 +189,7 @@ public class GitLogParserTest extends GitTest {
 
   private void assertRecord(GitLogRecord actual, GitTestLogRecord expected, GitTestLogRecord.NameStatusOption option) throws VcsException {
     assertEquals(actual.getHash(), expected.getHash());
-    assertEquals(actual.getShortHash(), expected.shortHash());
-    
+
     assertEquals(actual.getCommitterName(), expected.getCommitterName());
     assertEquals(actual.getCommitterEmail(), expected.getCommitterEmail());
     assertEquals(actual.getDate(), expected.getCommitTime());
@@ -208,8 +207,7 @@ public class GitLogParserTest extends GitTest {
     assertEquals(actual.getRawBody(), expected.rawBody());
 
     assertEquals(actual.getParentsHashes(), expected.getParents());
-    assertEquals(actual.getParentsShortHashes(), expected.shortParents());
-    
+
     if (option == GitTestLogRecord.NameStatusOption.NAME) {
       assertPaths(actual.getFilePaths(myRoot), expected.paths());
     } else if (option == GitTestLogRecord.NameStatusOption.STATUS) {
@@ -328,10 +326,6 @@ public class GitLogParserTest extends GitTest {
       return (GitTestChange[])myData.get(GitTestLogRecordInfo.CHANGES);
     }
 
-    String shortHash() {
-      return getHash().substring(0, 7);
-    }
-    
     String[] shortParents() {
       String[] parents = getParents();
       String[] shortParents = new String[parents.length];
@@ -428,10 +422,6 @@ public class GitLogParserTest extends GitTest {
           return rawBody();
         case COMMIT_TIME:
           return String.valueOf(getCommitTime().getTime() / 1000);
-        case SHORT_PARENTS:
-          return shortParentsAsString();
-        case SHORT_HASH:
-          return shortHash();
         case AUTHOR_NAME:
           return getAuthorName();
         case AUTHOR_TIME:
