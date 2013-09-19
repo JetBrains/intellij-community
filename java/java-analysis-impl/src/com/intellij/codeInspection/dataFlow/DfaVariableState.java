@@ -24,27 +24,27 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.psi.*;
-import gnu.trove.THashSet;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 public class DfaVariableState implements Cloneable {
-  private final Set<DfaTypeValue> myInstanceofValues;
-  private final Set<DfaTypeValue> myNotInstanceofValues;
+  private final Set<DfaPsiType> myInstanceofValues;
+  private final Set<DfaPsiType> myNotInstanceofValues;
   private Nullness myNullability;
 
   public DfaVariableState(@NotNull DfaVariableValue dfaVar) {
-    myInstanceofValues = new HashSet<DfaTypeValue>();
-    myNotInstanceofValues = new HashSet<DfaTypeValue>();
+    myInstanceofValues = ContainerUtil.newTroveSet();
+    myNotInstanceofValues = ContainerUtil.newTroveSet();
 
     myNullability = dfaVar.getInherentNullability();
     DfaTypeValue initialType = dfaVar.getTypeValue();
@@ -54,8 +54,8 @@ public class DfaVariableState implements Cloneable {
   }
 
   protected DfaVariableState(final DfaVariableState toClone) {
-    myInstanceofValues = new THashSet<DfaTypeValue>(toClone.myInstanceofValues);
-    myNotInstanceofValues = new THashSet<DfaTypeValue>(toClone.myNotInstanceofValues);
+    myInstanceofValues = ContainerUtil.newTroveSet(toClone.myInstanceofValues);
+    myNotInstanceofValues = ContainerUtil.newTroveSet(toClone.myNotInstanceofValues);
     myNullability = toClone.myNullability;
   }
 
@@ -63,14 +63,14 @@ public class DfaVariableState implements Cloneable {
     return myNullability == Nullness.NULLABLE;
   }
 
-  private boolean checkInstanceofValue(DfaTypeValue dfaType) {
+  private boolean checkInstanceofValue(DfaPsiType dfaType) {
     if (myInstanceofValues.contains(dfaType)) return true;
 
-    for (DfaTypeValue dfaTypeValue : myNotInstanceofValues) {
+    for (DfaPsiType dfaTypeValue : myNotInstanceofValues) {
       if (dfaTypeValue.isAssignableFrom(dfaType)) return false;
     }
 
-    for (DfaTypeValue dfaTypeValue : myInstanceofValues) {
+    for (DfaPsiType dfaTypeValue : myInstanceofValues) {
       if (!dfaType.isConvertibleFrom(dfaTypeValue)) return false;
     }
 
@@ -82,10 +82,10 @@ public class DfaVariableState implements Cloneable {
       myNullability = Nullness.NULLABLE;
     }
 
-    if (dfaType.getType() instanceof PsiPrimitiveType) return true;
+    if (dfaType.getDfaType().getPsiType() instanceof PsiPrimitiveType) return true;
 
-    if (checkInstanceofValue(dfaType)) {
-      myInstanceofValues.add(dfaType);
+    if (checkInstanceofValue(dfaType.getDfaType())) {
+      myInstanceofValues.add(dfaType.getDfaType());
       return true;
     }
 
@@ -93,13 +93,13 @@ public class DfaVariableState implements Cloneable {
   }
 
   public boolean addNotInstanceofValue(DfaTypeValue dfaType) {
-    if (myNotInstanceofValues.contains(dfaType)) return true;
+    if (myNotInstanceofValues.contains(dfaType.getDfaType())) return true;
 
-    for (DfaTypeValue dfaTypeValue : myInstanceofValues) {
-      if (dfaType.isAssignableFrom(dfaTypeValue)) return false;
+    for (DfaPsiType dfaTypeValue : myInstanceofValues) {
+      if (dfaType.getDfaType().isAssignableFrom(dfaTypeValue)) return false;
     }
 
-    myNotInstanceofValues.add(dfaType);
+    myNotInstanceofValues.add(dfaType.getDfaType());
     return true;
   }
 
@@ -124,24 +124,14 @@ public class DfaVariableState implements Cloneable {
   public String toString() {
     @NonNls StringBuilder buf = new StringBuilder();
 
+    buf.append(myNullability);
     if (!myInstanceofValues.isEmpty()) {
-      buf.append("instanceof ");
-      for (Iterator<DfaTypeValue> iterator = myInstanceofValues.iterator(); iterator.hasNext();) {
-        DfaTypeValue dfaTypeValue = iterator.next();
-        buf.append("{").append(dfaTypeValue).append("}");
-        if (iterator.hasNext()) buf.append(", ");
-      }
+      buf.append(" instanceof ").append(StringUtil.join(myInstanceofValues, ","));
     }
 
     if (!myNotInstanceofValues.isEmpty()) {
-      buf.append("not instanceof ");
-      for (Iterator<DfaTypeValue> iterator = myNotInstanceofValues.iterator(); iterator.hasNext();) {
-        DfaTypeValue dfaTypeValue = iterator.next();
-        buf.append("{").append(dfaTypeValue).append("}");
-        if (iterator.hasNext()) buf.append(", ");
-      }
+      buf.append(" not instanceof ").append(StringUtil.join(myNotInstanceofValues, ","));
     }
-    buf.append(myNullability);
     return buf.toString();
   }
 

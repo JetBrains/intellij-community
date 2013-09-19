@@ -74,6 +74,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
+import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerManagerImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
@@ -89,6 +90,7 @@ import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.templateLanguages.TemplateDataLanguageMappings;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.containers.ContainerUtil;
@@ -109,11 +111,16 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.util.*;
 
+import static com.intellij.openapi.roots.ModuleRootModificationUtil.updateModel;
+
 /**
  * @author yole
  */
 public abstract class LightPlatformTestCase extends UsefulTestCase implements DataProvider {
-  public static final String PROFILE = "Configurable";
+  @NonNls public static final String PROFILE = "Configurable";
+
+  @NonNls private static final String LIGHT_PROJECT_MARK = "Light project: ";
+
   private static IdeaTestApplication ourApplication;
   protected static Project ourProject;
   private static Module ourModule;
@@ -123,9 +130,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static TestCase ourTestCase = null;
   public static Thread ourTestThread;
   private static LightProjectDescriptor ourProjectDescriptor;
-  @NonNls private static final String LIGHT_PROJECT_MARK = "Light project: ";
-  private final Map<String, InspectionToolWrapper> myAvailableInspectionTools = new THashMap<String, InspectionToolWrapper>();
   private static boolean ourHaveShutdownHook;
+
+  private final Map<String, InspectionToolWrapper> myAvailableInspectionTools = new THashMap<String, InspectionToolWrapper>();
   private ThreadTracker myThreadTracker;
 
   /**
@@ -202,9 +209,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   private static void initProject(@NotNull final LightProjectDescriptor descriptor) throws Exception {
     ourProjectDescriptor = descriptor;
+
     final File projectFile = FileUtil.createTempFile("light_temp_", ProjectFileType.DOT_DEFAULT_EXTENSION);
 
     new WriteCommandAction.Simple(null) {
+      @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
       @Override
       protected void run() throws Throwable {
         if (ourProject != null) {
@@ -227,14 +236,13 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         ourPsiManager = null;
         ourModule = createMainModule(descriptor.getModuleType());
 
-
-        //ourSourceRoot = DummyFileSystem.getInstance().createRoot("src");
-
-        final VirtualFile dummyRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
+        VirtualFile dummyRoot = VirtualFileManager.getInstance().findFileByUrl("temp:///");
+        assert dummyRoot != null;
         dummyRoot.refresh(false, false);
 
         try {
           ourSourceRoot = dummyRoot.createChildDirectory(this, "src");
+          cleanSourceRoot();
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -255,39 +263,35 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
               @Override
               public boolean visitFile(@NotNull VirtualFile file) {
                 iterator.processFile(file);
-
                 return true;
               }
             });
           }
         }, null);
 
-        final ModuleRootManager rootManager = ModuleRootManager.getInstance(ourModule);
-
-        final ModifiableRootModel rootModel = rootManager.getModifiableModel();
-
-
-        if (descriptor.getSdk() != null) {
-          rootModel.setSdk(descriptor.getSdk());
-        }
-
-        final ContentEntry contentEntry = rootModel.addContentEntry(ourSourceRoot);
-        contentEntry.addSourceFolder(ourSourceRoot, false);
-
-        descriptor.configureModule(ourModule, rootModel, contentEntry);
-
-        rootModel.commit();
-
-        final MessageBusConnection connection = ourProject.getMessageBus().connect();
-        connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+        updateModel(ourModule, new Consumer<ModifiableRootModel>() {
           @Override
-          public void beforeRootsChange(ModuleRootEvent event) {
-            if (!event.isCausedByFileTypesChange()) {
-              //TODO: uncomment fail("Root modification in LightIdeaTestCase is not allowed.");
+          public void consume(ModifiableRootModel model) {
+            if (descriptor.getSdk() != null) {
+              model.setSdk(descriptor.getSdk());
             }
+
+            ContentEntry contentEntry = model.addContentEntry(ourSourceRoot);
+            contentEntry.addSourceFolder(ourSourceRoot, false);
+
+            descriptor.configureModule(ourModule, model, contentEntry);
           }
         });
 
+        MessageBusConnection connection = ourProject.getMessageBus().connect();
+        connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+          @Override
+          public void beforeRootsChange(ModuleRootEvent event) {
+            /*if (!event.isCausedByFileTypesChange()) {
+              fail("Root modification in LightIdeaTestCase is not allowed.");
+            }*/
+          }
+        });
         connection.subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
           @Override
           public void moduleAdded(Project project, Module module) {
@@ -295,12 +299,22 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
           }
         });
 
-
-        final StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(ourProject);
+        StartupManagerImpl startupManager = (StartupManagerImpl)StartupManager.getInstance(ourProject);
         startupManager.runStartupActivities();
         startupManager.startCacheUpdate();
       }
+
+      private void cleanSourceRoot() throws IOException {
+        TempFileSystem tempFs = (TempFileSystem)ourSourceRoot.getFileSystem();
+        for (VirtualFile child : ourSourceRoot.getChildren()) {
+          if (!tempFs.exists(child)) {
+            tempFs.createChildFile(this, ourSourceRoot, child.getName());
+          }
+          child.delete(this);
+        }
+      }
     }.execute().throwException();
+
     // project creation may make a lot of pointers, do not regard them as leak
     ((VirtualFilePointerManagerImpl)VirtualFilePointerManager.getInstance()).storePointers();
   }
@@ -339,12 +353,11 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
   public static void doSetup(@NotNull LightProjectDescriptor descriptor,
                              @NotNull LocalInspectionTool[] localInspectionTools,
-                             @NotNull final Map<String, InspectionToolWrapper> availableInspectionTools)
-    throws Exception {
+                             @NotNull final Map<String, InspectionToolWrapper> availableInspectionTools) throws Exception {
     assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
     IdeaLogger.ourErrorsOccurred = null;
 
-    if (ourProject == null || !ourProjectDescriptor.equals(descriptor)) {
+    if (ourProject == null || ourProjectDescriptor == null || !ourProjectDescriptor.equals(descriptor)) {
       initProject(descriptor);
     }
     ((ProjectImpl)ourProject).setTemporarilyDisposed(false);
@@ -762,24 +775,24 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     return PsiDocumentManager.getInstance(getProject()).getDocument(file);
   }
 
+  @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
   public static synchronized void closeAndDeleteProject() {
     if (ourProject != null) {
       ApplicationManager.getApplication().assertWriteAccessAllowed();
+      ourApplication.setDataProvider(null);
+
       ((ProjectImpl)ourProject).setTemporarilyDisposed(false);
-      final VirtualFile projFile = ((ProjectEx)ourProject).getStateStore().getProjectFile();
-      final File projectFile = projFile == null ? null : VfsUtilCore.virtualToIoFile(projFile);
+      VirtualFile projectFile = ((ProjectEx)ourProject).getStateStore().getProjectFile();
+      File ioFile = projectFile == null ? null : VfsUtilCore.virtualToIoFile(projectFile);
       if (!ourProject.isDisposed()) Disposer.dispose(ourProject);
 
-      if (projectFile != null) {
-        FileUtil.delete(projectFile);
+      if (ioFile != null) {
+        FileUtil.delete(ioFile);
       }
+
+      ProjectManagerEx.getInstanceEx().closeTestProject(ourProject);
       ourProject = null;
     }
-  }
-
-
-  static {
-    System.setProperty("jbdt.test.fixture", "com.intellij.designer.dt.IJTestFixture");
   }
 
   private static void registerShutdownHook() {

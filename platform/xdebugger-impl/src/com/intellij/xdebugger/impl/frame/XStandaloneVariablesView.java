@@ -15,51 +15,31 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.XDebuggerBundle;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.impl.actions.XDebuggerActions;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
-import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
-import com.intellij.xdebugger.impl.ui.tree.nodes.XStackFrameNode;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
  * @author nik
  */
-public class XStandaloneVariablesView implements Disposable {
-  private final XDebuggerTreePanel myDebuggerTreePanel;
+public class XStandaloneVariablesView extends XVariablesViewBase {
+  private final XStackFrame myStackFrame;
 
-  public XStandaloneVariablesView(@NotNull Project project, @NotNull XDebuggerEditorsProvider editorsProvider) {
-    myDebuggerTreePanel = new XDebuggerTreePanel(project, editorsProvider, this, null, XDebuggerActions.VARIABLES_TREE_POPUP_GROUP, null);
-    getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.variables.not.available"));
+  public XStandaloneVariablesView(@NotNull Project project, @NotNull XDebuggerEditorsProvider editorsProvider, @NotNull XStackFrame stackFrame) {
+    super(project, editorsProvider, null);
+    myStackFrame = stackFrame;
+    buildTreeAndRestoreState(stackFrame);
   }
 
-  public void showVariables(@NotNull XStackFrame stackFrame) {
-    getTree().setSourcePosition(stackFrame.getSourcePosition());
-    getTree().setRoot(new XStackFrameNode(getTree(), stackFrame), false);
-  }
-
-  public void showMessage(@NotNull String message) {
-    getTree().setSourcePosition(null);
-    getTree().setRoot(MessageTreeNode.createInfoMessage(getTree(), message), true);
-  }
-
-  private XDebuggerTree getTree() {
-    return myDebuggerTreePanel.getTree();
-  }
-
-  @Override
-  public void dispose() {
-
-  }
-
-  public JComponent getPanel() {
-    return myDebuggerTreePanel.getMainPanel();
+  public void rebuildView() {
+    AppUIUtil.invokeLaterIfProjectAlive(getTree().getProject(), new Runnable() {
+      @Override
+      public void run() {
+        saveCurrentTreeState(myStackFrame);
+        buildTreeAndRestoreState(myStackFrame);
+      }
+    });
   }
 }

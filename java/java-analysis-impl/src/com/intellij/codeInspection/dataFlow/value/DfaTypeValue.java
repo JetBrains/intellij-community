@@ -25,72 +25,51 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiKeyword;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 public class DfaTypeValue extends DfaValue {
   public static class Factory {
-    private final DfaTypeValue mySharedInstance;
-    private final HashMap<String,ArrayList<DfaTypeValue>> myStringToObject;
+    private final Map<DfaPsiType,ArrayList<DfaTypeValue>> myCache = ContainerUtil.newHashMap();
     private final DfaValueFactory myFactory;
 
     Factory(DfaValueFactory factory) {
       myFactory = factory;
-      mySharedInstance = new DfaTypeValue(factory);
-      myStringToObject = new HashMap<String, ArrayList<DfaTypeValue>>();
     }
 
     @NotNull
-    public DfaTypeValue createTypeValue(@NotNull PsiType type, @NotNull Nullness nullable) {
-      type = TypeConversionUtil.erasure(type);
-      mySharedInstance.myType = type;
-      mySharedInstance.myCanonicalText = StringUtil.notNullize(type.getCanonicalText(), PsiKeyword.NULL);
-      mySharedInstance.myNullness = nullable;
-
-      String id = mySharedInstance.toString();
-      ArrayList<DfaTypeValue> conditions = myStringToObject.get(id);
+    public DfaTypeValue createTypeValue(@NotNull DfaPsiType type, @NotNull Nullness nullness) {
+      ArrayList<DfaTypeValue> conditions = myCache.get(type);
       if (conditions == null) {
         conditions = new ArrayList<DfaTypeValue>();
-        myStringToObject.put(id, conditions);
+        myCache.put(type, conditions);
       } else {
         for (DfaTypeValue aType : conditions) {
-          if (aType.hardEquals(mySharedInstance)) return aType;
+          if (aType.myNullness == nullness) return aType;
         }
       }
 
-      DfaTypeValue result = new DfaTypeValue(type, nullable, myFactory, mySharedInstance.myCanonicalText);
+      DfaTypeValue result = new DfaTypeValue(type, nullness, myFactory);
       conditions.add(result);
-      return result;
+      return new DfaTypeValue(type, nullness, myFactory);
     }
 
-    public DfaTypeValue createTypeValue(@NotNull PsiType type) {
-      return createTypeValue(type, Nullness.UNKNOWN);
-    }
   }
 
-  private PsiType myType;
-  private String myCanonicalText;
+  private DfaPsiType myType;
   private Nullness myNullness;
 
-  private DfaTypeValue(DfaValueFactory factory) {
-    super(factory);
-  }
-
-  private DfaTypeValue(PsiType type, Nullness nullness, DfaValueFactory factory, String canonicalText) {
+  private DfaTypeValue(DfaPsiType type, Nullness nullness, DfaValueFactory factory) {
     super(factory);
     myType = type;
     myNullness = nullness;
-    myCanonicalText = canonicalText;
   }
 
-  public PsiType getType() {
+  public DfaPsiType getDfaType() {
     return myType;
   }
 
@@ -104,21 +83,7 @@ public class DfaTypeValue extends DfaValue {
 
   @NonNls
   public String toString() {
-    return myCanonicalText + ", nullable=" + myNullness;
+    return myType + ", nullable=" + myNullness;
   }
 
-  private boolean hardEquals(DfaTypeValue aType) {
-    return myCanonicalText.equals(aType.myCanonicalText) && myNullness == aType.myNullness && myType.equals(aType.myType);
-  }
-
-  public boolean isAssignableFrom(DfaTypeValue dfaType) {
-    return dfaType != null && myType.isAssignableFrom(dfaType.myType);
-  }
-
-  public boolean isConvertibleFrom(DfaTypeValue dfaType) {
-    if (dfaType == null) return false;
-    assert myType.isValid() : "my type invalid";
-    assert dfaType.myType.isValid() : " their type invalid";
-    return myType.isConvertibleFrom(dfaType.myType);
-  }
 }

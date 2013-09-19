@@ -16,7 +16,6 @@
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.CommonActionsManager;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -34,7 +33,6 @@ import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -51,19 +49,20 @@ import java.util.List;
 /**
  * @author nik
  */
-public class XFramesView extends XDebugViewBase {
+public class XFramesView implements XDebugView {
   private final JPanel myMainPanel;
   private final XDebuggerFramesList myFramesList;
   private final JComboBox myThreadComboBox;
   private final Set<XExecutionStack> myExecutionStacks = ContainerUtil.newHashSet();
+  @NotNull private final XDebugSession mySession;
   private XExecutionStack mySelectedStack;
   private boolean myListenersEnabled;
   private final Map<XExecutionStack, StackFramesListBuilder> myBuilders = new HashMap<XExecutionStack, StackFramesListBuilder>();
   private final ActionToolbarImpl myToolbar;
   private final Wrapper myThreadsPanel;
 
-  public XFramesView(@NotNull final XDebugSession session, @Nullable final Disposable parentDisposable) {
-    super(session, parentDisposable);
+  public XFramesView(@NotNull final XDebugSession session) {
+    mySession = session;
 
     myMainPanel = new JPanel(new BorderLayout());
 
@@ -97,7 +96,7 @@ public class XFramesView extends XDebugViewBase {
     myThreadsPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
     myMainPanel.add(myThreadsPanel, BorderLayout.NORTH);
 
-    rebuildView(SessionEvent.RESUMED);
+    processSessionEvent(SessionEvent.RESUMED);
   }
 
   private ActionToolbarImpl createToolbar() {
@@ -125,7 +124,7 @@ public class XFramesView extends XDebugViewBase {
   }
 
   @Override
-  protected void rebuildView(final SessionEvent event) {
+  public void processSessionEvent(@NotNull final SessionEvent event) {
     if (event == SessionEvent.BEFORE_RESUME) return;
     if (event == SessionEvent.FRAME_CHANGED) {
       XStackFrame currentStackFrame = mySession.getCurrentStackFrame();
@@ -189,6 +188,10 @@ public class XFramesView extends XDebugViewBase {
         onFrameSelected(executionStack, topFrame);
       }
     }
+  }
+
+  @Override
+  public void dispose() {
   }
 
   public XDebuggerFramesList getFramesList() {

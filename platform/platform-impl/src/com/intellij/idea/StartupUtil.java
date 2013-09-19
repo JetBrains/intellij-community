@@ -15,6 +15,7 @@
  */
 package com.intellij.idea;
 
+import com.intellij.ide.Bootstrap;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
@@ -45,7 +46,7 @@ import java.util.List;
  * @author yole
  */
 public class StartupUtil {
-  @NonNls public static final String NO_SPLASH = "nosplash";
+  @NonNls public static final String NO_SPLASH = Bootstrap.NO_SPLASH;
 
   private static SocketLock ourLock;
   private static String myDefaultLAF;

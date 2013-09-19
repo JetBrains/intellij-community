@@ -288,7 +288,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
 
     LocalFileSystem local = LocalFileSystem.getInstance();
     VirtualFile virtualDir = local.findFileByIoFile(testDir);
-    assert virtualDir != null : virtualDir;
+    assert virtualDir != null : testDir;
     virtualDir.getChildren();
     virtualDir.refresh(false, true);
     checkChildCount(virtualDir, 1);

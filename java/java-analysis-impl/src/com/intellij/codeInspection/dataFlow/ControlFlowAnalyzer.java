@@ -1275,7 +1275,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       if (type instanceof PsiClassType) {
         type = ((PsiClassType)type).rawType();
       }
-      addInstruction(new PushInstruction(myFactory.getTypeFactory().createTypeValue(type), null));
+      addInstruction(new PushInstruction(myFactory.createTypeValue(type, Nullness.UNKNOWN), null));
       addInstruction(new InstanceofInstruction(expression, expression.getProject(), operand, type));
     }
     else {
@@ -1594,7 +1594,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     final DfaValue dfaValue;
     if (type instanceof PsiClassType) {
-      dfaValue = myFactory.getTypeFactory().createTypeValue(type);
+      dfaValue = myFactory.createTypeValue(type, Nullness.UNKNOWN);
     }
     else {
       dfaValue = null;

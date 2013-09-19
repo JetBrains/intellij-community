@@ -96,6 +96,7 @@ public class FrameworkSupportOptionsComponent {
     if (description != null) {
       myLibraryOptionsPanel = new LibraryOptionsPanel(description, myModel.getBaseDirectoryForLibrariesPath(), createLibraryVersionFilter(),
                                                       container, !myConfigurable.isOnlyLibraryAdded());
+      myLibraryOptionsPanel.setLibraryProvider(myModel.getLibraryProvider());
       Disposer.register(myConfigurable, myLibraryOptionsPanel);
       if (addSeparator) {
         JComponent separator1 = SeparatorFactory.createSeparator("Libraries", null);
@@ -111,6 +112,7 @@ public class FrameworkSupportOptionsComponent {
     if (myLibraryOptionsPanel != null) {
       myLibraryOptionsPanel.changeBaseDirectoryPath(myModel.getBaseDirectoryForLibrariesPath());
       myLibraryOptionsPanel.setVersionFilter(createLibraryVersionFilter());
+      myLibraryOptionsPanel.setLibraryProvider(myModel.getLibraryProvider());
       myLibraryOptionsPanelWrapper.setVisible(myConfigurable.isVisible());
     }
   }

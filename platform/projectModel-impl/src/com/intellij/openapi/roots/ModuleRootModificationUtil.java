@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
@@ -118,7 +119,7 @@ public class ModuleRootModificationUtil {
     });
   }
 
-  private static void updateModel(Module module, Consumer<ModifiableRootModel> task) {
+  public static void updateModel(@NotNull Module module, @NotNull Consumer<ModifiableRootModel> task) {
     final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
     try {
       task.consume(model);

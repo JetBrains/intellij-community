@@ -19,9 +19,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.DnDNativeTarget;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.AnActionButton;
 import com.intellij.ui.AnActionButtonRunnable;
@@ -56,18 +54,17 @@ import java.util.List;
 /**
  * @author nik
  */
-public class XWatchesViewImpl extends XDebugViewBase implements DnDNativeTarget, XWatchesView {
+public class XWatchesViewImpl implements DnDNativeTarget, XWatchesView, XDebugView {
   private final XDebuggerTreePanel myTreePanel;
   private XDebuggerTreeState myTreeState;
   private XDebuggerTreeRestorer myTreeRestorer;
   private final WatchesRootNode myRootNode;
+  @NotNull private final XDebugSession mySession;
   private final XDebugSessionData mySessionData;
   private final JPanel myDecoratedPanel;
 
-  public XWatchesViewImpl(@NotNull final XDebugSession session,
-                          @NotNull final Disposable parentDisposable,
-                          final XDebugSessionData sessionData) {
-    super(session, parentDisposable);
+  public XWatchesViewImpl(@NotNull final XDebugSession session, final @NotNull XDebugSessionData sessionData) {
+    mySession = session;
     mySessionData = sessionData;
     myTreePanel = new XDebuggerTreePanel(session.getProject(), session.getDebugProcess().getEditorsProvider(), this, null,
                                          XDebuggerActions.WATCHES_TREE_POPUP_GROUP, ((XDebugSessionImpl)session).getValueMarkers());
@@ -82,12 +79,6 @@ public class XWatchesViewImpl extends XDebugViewBase implements DnDNativeTarget,
     actionManager.getAction(XDebuggerActions.XEDIT_WATCH).registerCustomShortcutSet(f2Shortcut, tree);
 
     DnDManager.getInstance().registerTarget(this, tree);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        DnDManager.getInstance().unregisterTarget(XWatchesViewImpl.this, myTreePanel.getTree());
-      }
-    });
     myRootNode = new WatchesRootNode(tree, session, this, sessionData.getWatchExpressions());
     tree.setRoot(myRootNode, false);
 
@@ -115,6 +106,11 @@ public class XWatchesViewImpl extends XDebugViewBase implements DnDNativeTarget,
 
   }
 
+  @Override
+  public void dispose() {
+    DnDManager.getInstance().unregisterTarget(this, myTreePanel.getTree());
+  }
+
   private void executeAction(final String watch) {
     AnAction action = ActionManager.getInstance().getAction(watch);
     Presentation presentation = action.getTemplatePresentation().clone();
@@ -133,7 +129,7 @@ public class XWatchesViewImpl extends XDebugViewBase implements DnDNativeTarget,
   }
 
   @Override
-  protected void rebuildView(final SessionEvent event) {
+  public void processSessionEvent(@NotNull final SessionEvent event) {
     XStackFrame stackFrame = mySession.getCurrentStackFrame();
     XDebuggerTree tree = myTreePanel.getTree();
 

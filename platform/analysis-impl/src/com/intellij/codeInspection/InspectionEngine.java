@@ -78,7 +78,7 @@ public class InspectionEngine {
   }
 
   @NotNull
-  private static List<ProblemDescriptor> inspect(@NotNull final List<LocalInspectionTool> tools,
+  public static List<ProblemDescriptor> inspect(@NotNull final List<LocalInspectionTool> tools,
                                                 @NotNull final PsiFile file,
                                                 @NotNull final InspectionManager iManager,
                                                 final boolean isOnTheFly,
@@ -92,8 +92,9 @@ public class InspectionEngine {
     return result;
   }
 
+  // public accessibility for Upsource
   @NotNull
-  private static Map<String, List<ProblemDescriptor>> inspectEx(@NotNull final List<LocalInspectionTool> tools,
+  public static Map<String, List<ProblemDescriptor>> inspectEx(@NotNull final List<LocalInspectionTool> tools,
                                                                @NotNull final PsiFile file,
                                                                @NotNull final InspectionManager iManager,
                                                                final boolean isOnTheFly,

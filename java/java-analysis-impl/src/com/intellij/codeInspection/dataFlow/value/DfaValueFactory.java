@@ -25,24 +25,26 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PsiTreeUtil;
-import gnu.trove.TIntObjectHashMap;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DfaValueFactory {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.value.DfaValueFactory");
+import java.util.List;
+import java.util.Map;
 
-  private int myLastID;
-  private final TIntObjectHashMap<DfaValue> myValues;
+public class DfaValueFactory {
+  private final List<DfaValue> myValues = ContainerUtil.newArrayList();
+  private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myAssignableCache = ContainerUtil.newHashMap();
+  private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myConvertibleCache = ContainerUtil.newHashMap();
+  private final Map<PsiType, DfaPsiType> myDfaTypes = ContainerUtil.newHashMap();
 
   public DfaValueFactory() {
-    myValues = new TIntObjectHashMap<DfaValue>();
-    myLastID = 0;
-
+    myValues.add(null);
     myVarFactory = new DfaVariableValue.Factory(this);
     myConstFactory = new DfaConstValue.Factory(this);
     myBoxedFactory = new DfaBoxedValue.Factory(this);
@@ -52,17 +54,20 @@ public class DfaValueFactory {
 
   public DfaValue createTypeValue(@Nullable PsiType type, Nullness nullability) {
     if (type == null) return DfaUnknownValue.getInstance();
-    return getTypeFactory().createTypeValue(type, nullability);
+    return getTypeFactory().createTypeValue(internType(type), nullability);
   }
 
-   int createID() {
-    myLastID++;
-    LOG.assertTrue(myLastID >= 0, "Overflow");
-    return myLastID;
+  private DfaPsiType internType(@NotNull PsiType psiType) {
+    DfaPsiType dfaType = myDfaTypes.get(psiType);
+    if (dfaType == null) {
+      myDfaTypes.put(psiType, dfaType = new DfaPsiType(TypeConversionUtil.erasure(psiType), myAssignableCache, myConvertibleCache));
+    }
+    return dfaType;
   }
 
-  void registerValue(DfaValue value) {
-    myValues.put(value.getID(), value);
+  int registerValue(DfaValue value) {
+    myValues.add(value);
+    return myValues.size() - 1;
   }
 
   public DfaValue getValue(int id) {

@@ -527,12 +527,20 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
         ) {
 
         int start = lexer.getTokenStart();
+        int end = lexer.getTokenEnd();
+        if (model.isInStringLiteralsOnly()) {
+          char c = text.charAt(start);
+          if (c == '"' || c == '\'') {
+            ++start;
+            if (c == text.charAt(end - 1)) --end;
+          }
+        }
 
         while(true) {
           FindResultImpl findResult = null;
 
           if (data.searcher != null) {
-            int i = data.searcher.scan(text, textArray, start, lexer.getTokenEnd());
+            int i = data.searcher.scan(text, textArray, start, end);
 
             if (i != -1 && i >= start) {
               final int matchEnd = i + model.getStringToFind().length();
@@ -544,7 +552,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
               }
             }
           } else {
-            data.matcher.reset(text.subSequence(start, lexer.getTokenEnd()));
+            data.matcher.reset(text.subSequence(start, end));
             if (data.matcher.find()) {
               final int matchEnd = start + data.matcher.end();
               if (start >= offset || !scanningForward) {

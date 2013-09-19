@@ -115,13 +115,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     if (dfaDest instanceof DfaVariableValue) {
       DfaVariableValue var = (DfaVariableValue) dfaDest;
-      final PsiModifierListOwner psiVariable = var.getPsiVariable();
-      if (DfaPsiUtil.getElementNullability(var.getVariableType(), psiVariable) == Nullness.NOT_NULL) {
-        if (!memState.checkNotNullable(dfaSource)) {
-          onAssigningToNotNullableVariable(instruction);
-        }
+      if (var.getInherentNullability() == Nullness.NOT_NULL && !memState.checkNotNullable(dfaSource)) {
+        onAssigningToNotNullableVariable(instruction);
       }
-      if (!(psiVariable instanceof PsiField) || !psiVariable.hasModifierProperty(PsiModifier.VOLATILE)) {
+      final PsiModifierListOwner psi = var.getPsiVariable();
+      if (!(psi instanceof PsiField) || !psi.hasModifierProperty(PsiModifier.VOLATILE)) {
         memState.setVarValue(var, dfaSource);
       }
     } else if (dfaDest instanceof DfaTypeValue && ((DfaTypeValue)dfaDest).isNotNull() && !memState.checkNotNullable(dfaSource)) {
@@ -194,7 +192,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     final DfaValueFactory factory = runner.getFactory();
     DfaValue dfaExpr = factory.createValue(instruction.getCasted());
     if (dfaExpr != null) {
-      DfaTypeValue dfaType = factory.getTypeFactory().createTypeValue(instruction.getCastTo());
+      DfaTypeValue dfaType = (DfaTypeValue)factory.createTypeValue(instruction.getCastTo(), Nullness.UNKNOWN);
       DfaRelationValue dfaInstanceof = factory.getRelationFactory().createRelation(dfaExpr, dfaType, JavaTokenType.INSTANCEOF_KEYWORD, false);
       if (dfaInstanceof != null && !memState.applyInstanceofOrNull(dfaInstanceof)) {
         onInstructionProducesCCE(instruction);
@@ -399,7 +397,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         myCanBeNullInInstanceof.add(instruction);
       }
 
-      if (((DfaTypeValue)dfaRight).getType().isAssignableFrom(((DfaTypeValue)dfaLeft).getType())) {
+      if (((DfaTypeValue)dfaRight).getDfaType().isAssignableFrom(((DfaTypeValue)dfaLeft).getDfaType())) {
         return;
       }
     }
