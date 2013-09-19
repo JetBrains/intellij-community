@@ -367,7 +367,18 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
   }
 
   public void showVariables(PydevConsoleCommunication consoleCommunication) {
-    PythonConsoleVariablesView view = new PythonConsoleVariablesView(myProject, consoleCommunication);
+    PyStackFrame stackFrame = new PyStackFrame(myProject, consoleCommunication, new PyStackFrameInfo("", "", "", null), null);
+    final XStandaloneVariablesView view = new XStandaloneVariablesView(myProject, new PyDebuggerEditorsProvider(), stackFrame);
+    consoleCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
+      @Override
+      public void commandExecuted() {
+        view.rebuildView();
+      }
+
+      @Override
+      public void inputRequested() {
+      }
+    });
     splitWindow(view.getPanel(), view);
   }
 
@@ -453,33 +464,6 @@ public class PythonConsoleView extends JPanel implements LanguageConsoleView, Ob
 
     public void beforeExternalAddContentToDocument(int length, ConsoleViewContentType contentType) {
       super.beforeExternalAddContentToDocument(length, contentType);
-    }
-  }
-  
-  
-  private static class PythonConsoleVariablesView extends XStandaloneVariablesView {
-
-    public PythonConsoleVariablesView(final @NotNull Project project,
-                                      final @NotNull PydevConsoleCommunication consoleCommunication) {
-      super(project, new PyDebuggerEditorsProvider());
-      show(project, consoleCommunication);
-
-      consoleCommunication.addCommunicationListener(new ConsoleCommunicationListener() {
-        @Override
-        public void commandExecuted() {
-          show(project, consoleCommunication); //TODO: use rebuild
-        }
-
-        @Override
-        public void inputRequested() {
-
-        }
-      });
-    }
-
-    private void show(Project project, PydevConsoleCommunication consoleCommunication) {
-      PyStackFrame stackFrame = new PyStackFrame(project, consoleCommunication, new PyStackFrameInfo("", "", "", null), null);
-      showVariables(stackFrame);
     }
   }
 }
