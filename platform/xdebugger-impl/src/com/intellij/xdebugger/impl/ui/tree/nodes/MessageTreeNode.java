@@ -68,8 +68,9 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     myEllipsis = false;
   }
 
+  @NotNull
   @Override
-  protected List<? extends TreeNode> getChildren() {
+  public List<? extends TreeNode> getChildren() {
     return Collections.emptyList();
   }
 

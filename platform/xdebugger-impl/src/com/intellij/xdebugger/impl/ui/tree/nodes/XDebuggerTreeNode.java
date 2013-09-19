@@ -87,7 +87,8 @@ public abstract class XDebuggerTreeNode implements TreeNode, TreeSpeedSearch.Pat
     return Collections.enumeration(getChildren());
   }
 
-  protected abstract List<? extends TreeNode> getChildren();
+  @NotNull
+  public abstract List<? extends TreeNode> getChildren();
 
   protected void setIcon(final Icon icon) {
     myIcon = icon;

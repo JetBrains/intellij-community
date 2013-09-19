@@ -16,9 +16,9 @@
 package com.intellij.ui;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.Convertor;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
@@ -86,7 +86,7 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
   @Override
   protected int getSelectedIndex() {
     if (myCanExpand) {
-      return ArrayUtil.find(getAllElements(), myComponent.getSelectionPath());
+      return ArrayUtilRt.find(getAllElements(), myComponent.getSelectionPath());
     }
     int[] selectionRows = myComponent.getSelectionRows();
     return selectionRows == null || selectionRows.length == 0 ? -1 : selectionRows[0];

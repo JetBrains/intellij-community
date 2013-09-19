@@ -195,8 +195,9 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     fireNodesInserted(messages);
   }
 
+  @NotNull
   @Override
-  protected List<? extends TreeNode> getChildren() {
+  public List<? extends TreeNode> getChildren() {
     loadChildren();
 
     if (myCachedAllChildren == null) {
