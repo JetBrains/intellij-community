@@ -290,9 +290,28 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
 
   @Nullable
   private PyType getTypeFromTupleAssignment(@NotNull PyTupleExpression tuple, @NotNull PyTupleType tupleType) {
-    if (tuple.getElements().length == tupleType.getElementCount()) {
-      int selfIndex = ArrayUtil.indexOf(tuple.getElements(), this);
-      return tupleType.getElementType(selfIndex);
+    final int count = tupleType.getElementCount();
+    final PyExpression[] elements = tuple.getElements();
+    if (elements.length == count) {
+      final int index = ArrayUtil.indexOf(elements, this);
+      if (index >= 0) {
+        return tupleType.getElementType(index);
+      }
+      for (int i = 0; i < count; i++) {
+        PyExpression element = elements[i];
+        while (element instanceof PyParenthesizedExpression) {
+          element = ((PyParenthesizedExpression)element).getContainedExpression();
+        }
+        if (element instanceof PyTupleExpression) {
+          final PyType elementType = tupleType.getElementType(i);
+          if (elementType instanceof PyTupleType) {
+            final PyType result = getTypeFromTupleAssignment((PyTupleExpression)element, (PyTupleType)elementType);
+            if (result != null) {
+              return result;
+            }
+          }
+        }
+      }
     }
     return null;
   }
@@ -319,12 +338,11 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
         }
       }
     }
-    if (source != null && target != null) {
+    if (source != null) {
       final PyType sourceType = context.getType(source);
       final PyType type = getIterationType(sourceType, source, context);
-      final PsiElement parent = getParent();
-      if (type instanceof PyTupleType && parent instanceof PyTupleExpression) {
-        return getTypeFromTupleAssignment((PyTupleExpression)parent, (PyTupleType)type);
+      if (type instanceof PyTupleType && target instanceof PyTupleExpression) {
+        return getTypeFromTupleAssignment((PyTupleExpression)target, (PyTupleType)type);
       }
       if (target == this && type != null) {
         return type;
