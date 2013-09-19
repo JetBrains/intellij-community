@@ -24,7 +24,7 @@ public class ColoredOutputTypeRegistry {
 
   private final Map<String, Key> myRegisteredKeys = new HashMap<String, Key>();
 
-  private final TextAttributesKey[] myAnsiColorKeys = new TextAttributesKey[] {
+  private static final TextAttributesKey[] myAnsiColorKeys = new TextAttributesKey[] {
     ConsoleViewContentType.NORMAL_OUTPUT_KEY,
     ConsoleHighlighter.RED, ConsoleHighlighter.GREEN, ConsoleHighlighter.YELLOW, ConsoleHighlighter.BLUE,
     ConsoleHighlighter.MAGENTA, ConsoleHighlighter.CYAN
@@ -106,7 +106,7 @@ public class ColoredOutputTypeRegistry {
       }
       else if (value >= 91 && value < 96) {
         // TODO separate colors for high intensity?
-        attrs.setForegroundColor(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(myAnsiColorKeys [value-90]).getForegroundColor());
+        attrs.setForegroundColor(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(getAnsiColorKey(value-90)).getForegroundColor());
       }
     }
     if (attrs.getEffectType() == EffectType.LINE_UNDERSCORE) {
@@ -119,10 +119,14 @@ public class ColoredOutputTypeRegistry {
     return newKey;
   }
 
-  private Color getAnsiColor(final int value) {
+  private static Color getAnsiColor(final int value) {
     if (value == 7) {
       return JBColor.WHITE;
     }
-    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(myAnsiColorKeys[value]).getForegroundColor();
+    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(getAnsiColorKey(value)).getForegroundColor();
+  }
+
+  public static TextAttributesKey getAnsiColorKey(int value) {
+    return myAnsiColorKeys[value];
   }
 }
