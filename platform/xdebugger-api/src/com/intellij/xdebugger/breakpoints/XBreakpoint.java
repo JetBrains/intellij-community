@@ -16,9 +16,9 @@
 
 package com.intellij.xdebugger.breakpoints;
 
-import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.pom.Navigatable;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.pom.Navigatable;
+import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +38,7 @@ public interface XBreakpoint<P extends XBreakpointProperties> extends UserDataHo
   @NotNull
   XBreakpointType<?,P> getType();
 
+  @Nullable
   P getProperties();
 
   @Nullable
