@@ -58,7 +58,8 @@ public class InferenceVariable {
       list = new ArrayList<PsiType>();
       myBounds.put(inferenceBound, list);
     }
-    if (!list.contains(classType)) {
+    final int idx = list.indexOf(classType);
+    if (idx < 0 || inferenceBound == InferenceBound.EQ && classType instanceof PsiCapturedWildcardType && list.get(idx) != classType) {
       list.add(classType);
       return true;
     }

@@ -267,6 +267,9 @@ public class InferenceSession {
             }
           }
           if (bound != null) {
+            if (bound instanceof PsiCapturedWildcardType && eqBounds.size() > 1) {
+              continue;
+            }
             inferenceVariable.setInstantiation(bound);
           } else {
             PsiType lub = null;
