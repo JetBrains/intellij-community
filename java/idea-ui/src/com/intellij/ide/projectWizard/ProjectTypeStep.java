@@ -18,19 +18,25 @@ package com.intellij.ide.projectWizard;
 import com.intellij.framework.FrameworkGroup;
 import com.intellij.framework.FrameworkTypeEx;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
-import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelImpl;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.FactoryMap;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -47,22 +53,41 @@ import java.util.List;
  */
 public class ProjectTypeStep extends StepAdapter {
 
+  private final WizardContext myContext;
   private JPanel myPanel;
   private JBList myProjectTypeList;
   private JPanel myOptionsPanel;
 
+  @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
+  private final FactoryMap<ProjectCategory, ModuleBuilder> myBuilders = new FactoryMap<ProjectCategory, ModuleBuilder>() {
+    @Nullable
+    @Override
+    protected ModuleBuilder create(ProjectCategory key) {
+      return key.createModuleBuilder();
+    }
+  };
+
   private final AddSupportForFrameworksPanel myFrameworksPanel;
   private final FrameworkSupportModelBase myModel;
 
-  public ProjectTypeStep(Project project, Disposable disposable) {
-
+  public ProjectTypeStep(WizardContext context, Disposable disposable) {
+    myContext = context;
+    Project project = context.getProject();
     final LibrariesContainer container = LibrariesContainerFactory.createContainer(project);
-    myModel = new FrameworkSupportModelImpl(project, "", container);
+    myModel = new FrameworkSupportModelBase(project, null, container) {
+      @NotNull
+      @Override
+      public String getBaseDirectoryForLibrariesPath() {
+        return StringUtil.notNullize(getSelectedBuilder().getContentEntryPath());
+      }
+    };
+
     ProjectCategory[] projectCategories = ProjectCategory.EXTENSION_POINT_NAME.getExtensions();
     myProjectTypeList.setModel(new CollectionListModel<ProjectCategory>(Arrays.asList(projectCategories)));
     myProjectTypeList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
+        myContext.setProjectBuilder(getSelectedBuilder());
         updateFrameworks((ProjectCategory)myProjectTypeList.getSelectedValue());
       }
     });
@@ -74,16 +99,26 @@ public class ProjectTypeStep extends StepAdapter {
     myProjectTypeList.setSelectedIndex(0);
   }
 
+  private ModuleBuilder getSelectedBuilder() {
+    ProjectCategory projectCategory = (ProjectCategory)myProjectTypeList.getSelectedValue();
+    return myBuilders.get(projectCategory);
+  }
+
   private void updateFrameworks(ProjectCategory projectCategory) {
+    if (projectCategory == null) return;
     List<FrameworkSupportInModuleProvider> providers = new ArrayList<FrameworkSupportInModuleProvider>();
-    if (projectCategory != null) {
-      for (FrameworkSupportInModuleProvider framework : FrameworkSupportUtil.getAllProviders()) {
-        if (matchFramework(projectCategory, framework)) {
-          providers.add(framework);
-        }
+    for (FrameworkSupportInModuleProvider framework : FrameworkSupportUtil.getAllProviders()) {
+      if (matchFramework(projectCategory, framework)) {
+        providers.add(framework);
       }
     }
     myFrameworksPanel.setProviders(providers);
+    for (FrameworkSupportInModuleProvider provider : providers) {
+      if (ArrayUtil.contains(provider.getFrameworkType().getId(), projectCategory.getAssociatedFrameworkIds())) {
+        CheckedTreeNode treeNode = myFrameworksPanel.findNodeFor(provider);
+        treeNode.setChecked(true);
+      }
+    }
   }
 
   private static boolean matchFramework(ProjectCategory projectCategory, FrameworkSupportInModuleProvider framework) {

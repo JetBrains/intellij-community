@@ -16,13 +16,19 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.impl.NewProjectUtil;
+import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
+import com.intellij.ide.util.newProjectWizard.AddModuleWizardPro;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.util.registry.Registry;
 
 public class NewProjectAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
-    NewProjectUtil.createNewProject(PlatformDataKeys.PROJECT.getData(e.getDataContext()), null);
+    NewProjectUtil.createNewProject(CommonDataKeys.PROJECT.getData(e.getDataContext()), Registry.is("new.project.wizard")
+                                   ? new AddModuleWizardPro(null, ModulesProvider.EMPTY_MODULES_PROVIDER, null)
+                                   : new AddModuleWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, null));
   }
 }

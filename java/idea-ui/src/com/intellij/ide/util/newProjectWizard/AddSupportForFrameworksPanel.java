@@ -40,6 +40,7 @@ import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -109,13 +111,13 @@ public class AddSupportForFrameworksPanel implements Disposable {
     splitter.setSecondComponent(myOptionsPanel);
     myFrameworksPanel.add(splitter, BorderLayout.CENTER);
 
-    myFrameworksTree.setSelectionRow(0);    
   }
 
   public void setProviders(List<FrameworkSupportInModuleProvider> providers) {
     myProviders = providers;
     createNodes();
     myFrameworksTree.setRoots(myRoots);
+    myFrameworksTree.setSelectionRow(0);
   }
 
   protected void onFrameworkStateChanged() {}
@@ -350,5 +352,9 @@ public class AddSupportForFrameworksPanel implements Disposable {
         return comparator.compare(o1.getProvider(), o2.getProvider());
       }
     });
+  }
+
+  public CheckedTreeNode findNodeFor(FrameworkSupportInModuleProvider provider) {
+    return (CheckedTreeNode)TreeUtil.findNodeWithObject((DefaultMutableTreeNode)myFrameworksTree.getModel().getRoot(), provider);
   }
 }
