@@ -7,9 +7,8 @@
             icon="AllIcons.Actions.Refresh"/>
     <action id="ExternalSystem.RefreshProject"
             class="com.intellij.openapi.externalSystem.action.RefreshExternalProjectAction"
-            icon="AllIcons.Actions.Refresh">
-      <keyboard-shortcut first-keystroke="F5" keymap="$default"/>
-    </action>
+            icon="AllIcons.Actions.Refresh"
+            use-shortcut-of="Refresh"/>
     <action id="ExternalSystem.AttachProject"
             class="com.intellij.openapi.externalSystem.action.AttachExternalProjectAction"/>
     <action id="ExternalSystem.DetachProject"
