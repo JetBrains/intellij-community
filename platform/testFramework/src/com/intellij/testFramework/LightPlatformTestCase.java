@@ -117,7 +117,10 @@ import static com.intellij.openapi.roots.ModuleRootModificationUtil.updateModel;
  * @author yole
  */
 public abstract class LightPlatformTestCase extends UsefulTestCase implements DataProvider {
-  public static final String PROFILE = "Configurable";
+  @NonNls public static final String PROFILE = "Configurable";
+
+  @NonNls private static final String LIGHT_PROJECT_MARK = "Light project: ";
+
   private static IdeaTestApplication ourApplication;
   protected static Project ourProject;
   private static Module ourModule;
@@ -127,9 +130,9 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static TestCase ourTestCase = null;
   public static Thread ourTestThread;
   private static LightProjectDescriptor ourProjectDescriptor;
-  @NonNls private static final String LIGHT_PROJECT_MARK = "Light project: ";
-  private final Map<String, InspectionToolWrapper> myAvailableInspectionTools = new THashMap<String, InspectionToolWrapper>();
   private static boolean ourHaveShutdownHook;
+
+  private final Map<String, InspectionToolWrapper> myAvailableInspectionTools = new THashMap<String, InspectionToolWrapper>();
   private ThreadTracker myThreadTracker;
 
   /**
@@ -790,11 +793,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       ProjectManagerEx.getInstanceEx().closeTestProject(ourProject);
       ourProject = null;
     }
-  }
-
-
-  static {
-    System.setProperty("jbdt.test.fixture", "com.intellij.designer.dt.IJTestFixture");
   }
 
   private static void registerShutdownHook() {
