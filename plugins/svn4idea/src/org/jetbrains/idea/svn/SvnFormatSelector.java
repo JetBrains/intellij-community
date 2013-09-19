@@ -136,17 +136,20 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
     return result;
   }
 
-  public static String showUpgradeDialog(final File path, final Project project, final boolean display13format, final String mode,
-                                         @NotNull final Ref<Boolean> wasOk) {
+  public static WorkingCopyFormat showUpgradeDialog(final File path,
+                                                    final Project project,
+                                                    final boolean display13format,
+                                                    @NotNull final WorkingCopyFormat defaultSelection,
+                                                    @NotNull final Ref<Boolean> wasOk) {
     assert ! ApplicationManager.getApplication().isUnitTestMode();
-    final String[] newMode = new String[] {mode};
+    final Ref<WorkingCopyFormat> format = new Ref<WorkingCopyFormat>(defaultSelection);
     WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(new Runnable() {
       public void run() {
-        wasOk.set(displayUpgradeDialog(project, path, display13format, newMode));
+        wasOk.set(displayUpgradeDialog(project, path, display13format, format));
       }
     });
     ApplicationManager.getApplication().getMessageBus().syncPublisher(SvnVcs.WC_CONVERTED).run();
-    return newMode[0];
+    return format.get();
   }
 
   public static WorkingCopyFormat findRootAndGetFormat(final File path) {
@@ -187,12 +190,12 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
     return WorkingCopyFormat.getInstance(format);
   }
 
-  private static boolean displayUpgradeDialog(Project project, File path, final boolean dispay13format, String[] newMode) {
+  private static boolean displayUpgradeDialog(Project project, File path, final boolean dispay13format, Ref<WorkingCopyFormat> format) {
     UpgradeFormatDialog dialog = new UpgradeFormatDialog(project, path, false);
-    dialog.setData(newMode[0]);
+    dialog.setData(format.get());
     dialog.show();
     if (dialog.isOK()) {
-      newMode[0] = dialog.getUpgradeMode();
+      format.set(dialog.getUpgradeMode());
     }
     return dialog.isOK();
   }

@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
-import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 
 import javax.swing.*;
@@ -61,8 +61,8 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     return "svn.upgradeDialog";
   }
 
-  public void setData(final String selectedFormat) {
-    if (SvnConfiguration.UPGRADE_AUTO_17.equals(selectedFormat)) {
+  public void setData(final WorkingCopyFormat selectedFormat) {
+    if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(selectedFormat)) {
       myUpgradeAuto17Button.setSelected(true);
     } else {
       myUpgradeAuto16Button.setSelected(true);
@@ -135,14 +135,13 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     return true;
   }
 
-  @Nullable
-  public String getUpgradeMode() {
+  @NotNull
+  public WorkingCopyFormat getUpgradeMode() {
     if (myUpgradeAuto17Button.isSelected()) {
-      return SvnConfiguration.UPGRADE_AUTO_17;
+      return WorkingCopyFormat.ONE_DOT_SEVEN;
     } else if (myUpgradeAuto16Button.isSelected()) {
-      return SvnConfiguration.UPGRADE_AUTO_16;
+      return WorkingCopyFormat.ONE_DOT_SIX;
     }
-    return null;
+    return WorkingCopyFormat.UNKNOWN;
   }
-
 }
