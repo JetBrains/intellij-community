@@ -15,6 +15,11 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
+import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -76,4 +81,41 @@ public class ProblemDescriptorUtil {
   public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, PsiElement element) {
     return renderDescriptionMessage(descriptor, element, false);
   }
+
+  @NotNull
+  public static HighlightInfoType highlightTypeFromDescriptor(@NotNull ProblemDescriptor problemDescriptor, @NotNull HighlightSeverity severity, @NotNull SeverityRegistrar severityRegistrar) {
+    final ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
+    switch (highlightType) {
+      case GENERIC_ERROR_OR_WARNING:
+        return severityRegistrar.getHighlightInfoTypeBySeverity(severity);
+      case LIKE_DEPRECATED:
+        return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.DEPRECATED.getAttributesKey());
+      case LIKE_UNKNOWN_SYMBOL:
+        if (severity == HighlightSeverity.ERROR) {
+          return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.WRONG_REF.getAttributesKey());
+        }
+        if (severity == HighlightSeverity.WARNING) {
+          return new HighlightInfoType.HighlightInfoTypeImpl(severity, CodeInsightColors.WEAK_WARNING_ATTRIBUTES);
+        }
+        return severityRegistrar.getHighlightInfoTypeBySeverity(severity);
+      case LIKE_UNUSED_SYMBOL:
+        return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
+      case INFO:
+        return HighlightInfoType.INFO;
+      case WEAK_WARNING:
+        return HighlightInfoType.WEAK_WARNING;
+      case ERROR:
+        return HighlightInfoType.WRONG_REF;
+      case GENERIC_ERROR:
+        return HighlightInfoType.ERROR;
+      case INFORMATION:
+        final TextAttributesKey attributes = ((ProblemDescriptorBase)problemDescriptor).getEnforcedTextAttributes();
+        if (attributes != null) {
+          return new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, attributes);
+        }
+        return HighlightInfoType.INFORMATION;
+    }
+    throw new RuntimeException("Cannot map " + highlightType);
+  }
+
 }

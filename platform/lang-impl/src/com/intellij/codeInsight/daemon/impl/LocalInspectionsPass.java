@@ -513,42 +513,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  @NotNull
-  private HighlightInfoType highlightTypeFromDescriptor(@NotNull ProblemDescriptor problemDescriptor, @NotNull HighlightSeverity severity) {
-    final ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
-    switch (highlightType) {
-      case GENERIC_ERROR_OR_WARNING:
-        return mySeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
-      case LIKE_DEPRECATED:
-        return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.DEPRECATED.getAttributesKey());
-      case LIKE_UNKNOWN_SYMBOL:
-        if (severity == HighlightSeverity.ERROR) {
-          return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.WRONG_REF.getAttributesKey());
-        }
-        if (severity == HighlightSeverity.WARNING) {
-          return new HighlightInfoType.HighlightInfoTypeImpl(severity, CodeInsightColors.WEAK_WARNING_ATTRIBUTES);
-        }
-        return mySeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
-      case LIKE_UNUSED_SYMBOL:
-        return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
-      case INFO:
-        return HighlightInfoType.INFO;
-       case WEAK_WARNING:
-        return HighlightInfoType.WEAK_WARNING;
-      case ERROR:
-        return HighlightInfoType.WRONG_REF;
-      case GENERIC_ERROR:
-        return HighlightInfoType.ERROR;
-      case INFORMATION:
-        final TextAttributesKey attributes = ((ProblemDescriptorBase)problemDescriptor).getEnforcedTextAttributes();
-        if (attributes != null) {
-          return new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, attributes);
-        }
-        return HighlightInfoType.INFORMATION;
-    }
-    throw new RuntimeException("Cannot map " + highlightType);
-  }
-
   @Override
   protected void applyInformationWithProgress() {
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myInfos, getColorsScheme(), getId());
@@ -592,7 +556,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                              PsiElement element) {
     if (element == null) return;
     if (myIgnoreSuppressed && SuppressionUtil.inspectionResultSuppressed(element, tool.getTool())) return;
-    HighlightInfoType level = highlightTypeFromDescriptor(descriptor, severity);
+    HighlightInfoType level = ProblemDescriptorUtil.highlightTypeFromDescriptor(descriptor, severity, mySeverityRegistrar);
     HighlightInfo info = createHighlightInfo(descriptor, tool, level, emptyActionRegistered, element);
     if (info == null) return;
 
