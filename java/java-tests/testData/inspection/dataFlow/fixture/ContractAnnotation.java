@@ -6,14 +6,22 @@ import java.lang.AssertionError;
 import java.lang.IllegalArgumentException;
 
 public class AssertIsNotNull {
-  void bar(String s) {
+  void bar(String s, String s1) {
     if (<warning descr="Condition 's == null && trimIfNotNull(s) != null' is always 'false'">s == null && <warning descr="Condition 'trimIfNotNull(s) != null' is always 'false' when reached">trimIfNotNull(s) != null</warning></warning>) {
       throw new AssertionError();
     }
 
     final Object o = call();
     assertIsNotNull(o);
+    System.out.println(o.toString());
     if(<warning descr="Condition 'o == null' is always 'false'">o == null</warning>) {}
+    
+    if (trimIfNotNull(s1) != null) {
+      System.out.println(s1.charAt(0));
+      if (<warning descr="Condition 's1 == null' is always 'false'">s1 == null</warning>) {
+        
+      }
+    }
   }
   
   @Contract("null -> fail")
