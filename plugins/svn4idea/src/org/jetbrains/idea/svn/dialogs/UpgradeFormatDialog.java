@@ -29,11 +29,13 @@ import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UpgradeFormatDialog extends DialogWrapper  {
-  private JRadioButton myUpgradeAuto16Button;
-  private JRadioButton myUpgradeAuto17Button;
-  private JRadioButton myUpgradeAuto18Button;
+
+  private ButtonGroup formatGroup = new ButtonGroup();
+  private List<JRadioButton> formatButtons = new ArrayList<JRadioButton>();
 
   protected File myPath;
 
@@ -63,12 +65,11 @@ public class UpgradeFormatDialog extends DialogWrapper  {
   }
 
   public void setData(final WorkingCopyFormat selectedFormat) {
-    if (WorkingCopyFormat.ONE_DOT_EIGHT.equals(selectedFormat)) {
-      myUpgradeAuto18Button.setSelected(true);
-    } else if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(selectedFormat)) {
-      myUpgradeAuto17Button.setSelected(true);
-    } else {
-      myUpgradeAuto16Button.setSelected(true);
+    for (JRadioButton button : formatButtons) {
+      if (selectedFormat == getFormat(button)) {
+        button.setSelected(true);
+        break;
+      }
     }
   }
 
@@ -104,21 +105,9 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     panel.add(topLabel, gb);
     gb.gridy += 1;
 
-
-    myUpgradeAuto16Button = new JRadioButton(SvnBundle.message("radio.configure." + label + ".auto.16format"));
-    myUpgradeAuto17Button = new JRadioButton(SvnBundle.message("radio.configure." + label + ".auto.17format"));
-    myUpgradeAuto18Button = new JRadioButton(SvnBundle.message("radio.configure." + label + ".auto.18format"));
-
-    ButtonGroup group = new ButtonGroup();
-    group.add(myUpgradeAuto16Button);
-    group.add(myUpgradeAuto17Button);
-    group.add(myUpgradeAuto18Button);
-    panel.add(myUpgradeAuto16Button, gb);
-    gb.gridy += 1;
-    panel.add(myUpgradeAuto17Button, gb);
-    gb.gridy += 1;
-    panel.add(myUpgradeAuto18Button, gb);
-    gb.gridy += 1;
+    registerFormat(WorkingCopyFormat.ONE_DOT_SIX, label, panel, gb);
+    registerFormat(WorkingCopyFormat.ONE_DOT_SEVEN, label, panel, gb);
+    registerFormat(WorkingCopyFormat.ONE_DOT_EIGHT, label, panel, gb);
 
     final JPanel auxiliaryPanel = getBottomAuxiliaryPanel();
     if (auxiliaryPanel != null) {
@@ -127,6 +116,24 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     }
 
     return panel;
+  }
+
+  private void registerFormat(@NotNull WorkingCopyFormat format,
+                              @NotNull String label,
+                              @NotNull JPanel panel,
+                              @NotNull GridBagConstraints gb) {
+    JRadioButton button = new JRadioButton(SvnBundle.message("radio.configure." + label + ".auto." + getKey(format) + "format"));
+    button.putClientProperty("format", format);
+
+    panel.add(button, gb);
+    gb.gridy += 1;
+
+    formatGroup.add(button);
+    formatButtons.add(button);
+  }
+
+  private static String getKey(@NotNull WorkingCopyFormat format) {
+    return String.format("%d%d", format.getVersion().major, format.getVersion().minor);
   }
 
   @Nullable
@@ -143,14 +150,23 @@ public class UpgradeFormatDialog extends DialogWrapper  {
   }
 
   @NotNull
+  private static WorkingCopyFormat getFormat(@NotNull JRadioButton button) {
+    Object format = button.getClientProperty("format");
+
+    return format instanceof WorkingCopyFormat ? (WorkingCopyFormat)format : WorkingCopyFormat.UNKNOWN;
+  }
+
+  @NotNull
   public WorkingCopyFormat getUpgradeMode() {
-    if (myUpgradeAuto18Button.isSelected()) {
-      return WorkingCopyFormat.ONE_DOT_EIGHT;
-    } else if (myUpgradeAuto17Button.isSelected()) {
-      return WorkingCopyFormat.ONE_DOT_SEVEN;
-    } else if (myUpgradeAuto16Button.isSelected()) {
-      return WorkingCopyFormat.ONE_DOT_SIX;
+    WorkingCopyFormat result = WorkingCopyFormat.UNKNOWN;
+
+    for (JRadioButton button : formatButtons) {
+      if (button.isSelected()) {
+        result = getFormat(button);
+        break;
+      }
     }
-    return WorkingCopyFormat.UNKNOWN;
+
+    return result;
   }
 }
