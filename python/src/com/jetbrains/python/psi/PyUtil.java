@@ -44,6 +44,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.*;
@@ -661,6 +662,20 @@ public class PyUtil {
     final boolean isAtLeast30 = LanguageLevel.forElement(comprehension).isAtLeast(LanguageLevel.PYTHON30);
     final boolean isListComprehension = comprehension instanceof PyListCompExpression;
     return !isListComprehension || isAtLeast30;
+  }
+
+  public static boolean hasCustomDecorators(@NotNull PyDecoratable decoratable) {
+    PyDecoratorList decoratorList = decoratable.getDecoratorList();
+    if (decoratorList == null) {
+      return false;
+    }
+    for (PyDecorator decorator : decoratorList.getDecorators()) {
+      PyQualifiedName name = decorator.getQualifiedName();
+      if (name == null || (!PyNames.CLASSMETHOD.equals(name.toString()) && !PyNames.STATICMETHOD.equals(name.toString()))) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static class KnownDecoratorProviderHolder {
