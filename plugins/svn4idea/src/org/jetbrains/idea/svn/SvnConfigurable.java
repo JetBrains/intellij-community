@@ -282,10 +282,6 @@ public class SvnConfigurable implements Configurable {
     return SvnConfiguration.UseAcceleration.nothing;
   }
 
-  private void setAcceleration(SvnConfiguration.UseAcceleration acceleration) {
-    myWithCommandLineClient.setSelected(SvnConfiguration.UseAcceleration.commandLine.equals(acceleration));
-  }
-
   public void apply() throws ConfigurationException {
     SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
     configuration.setConfigurationDirParameters(myUseDefaultCheckBox.isSelected(), myConfigurationDirectoryText.getText());
@@ -351,7 +347,7 @@ public class SvnConfigurable implements Configurable {
     mySSHConnectionTimeout.setValue(Long.valueOf(configuration.mySSHConnectionTimeout / 1000));
     mySSHReadTimeout.setValue(Long.valueOf(configuration.mySSHReadTimeout / 1000));
     myHttpTimeout.setValue(Long.valueOf(configuration.getHttpTimeout() / 1000));
-    setAcceleration(configuration.myUseAcceleration);
+    myWithCommandLineClient.setSelected(configuration.isCommandLine());
     final SvnApplicationSettings applicationSettings17 = SvnApplicationSettings.getInstance();
     myCommandLineClient.setText(applicationSettings17.getCommandLinePath());
 

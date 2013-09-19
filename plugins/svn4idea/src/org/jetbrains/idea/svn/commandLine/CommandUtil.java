@@ -103,9 +103,18 @@ public class CommandUtil {
   }
 
   public static void put(@NotNull List<String> parameters, @Nullable SVNDepth depth) {
+    put(parameters, depth, false);
+  }
+
+  public static void put(@NotNull List<String> parameters, @Nullable SVNDepth depth, boolean sticky) {
     if (depth != null && !SVNDepth.UNKNOWN.equals(depth)) {
       parameters.add("--depth");
       parameters.add(depth.getName());
+
+      if (sticky) {
+        parameters.add("--set-depth");
+        parameters.add(depth.getName());
+      }
     }
   }
 

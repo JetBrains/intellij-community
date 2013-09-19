@@ -362,7 +362,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public boolean checkCommandLineVersion() {
     boolean isValid = true;
 
-    if (!isProject16() && (SvnConfiguration.UseAcceleration.commandLine.equals(myConfiguration.myUseAcceleration) || isProject18())) {
+    if (!isProject16() && (myConfiguration.isCommandLine() || isProject18())) {
       isValid = myChecker.checkExecutableAndNotifyIfNeeded();
     }
 
@@ -1349,7 +1349,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   private WorkingCopyFormat getProjectRootFormat() {
-    return getWorkingCopyFormat(new File(getProject().getBaseDir().getPath()));
+    return !getProject().isDefault() ? getWorkingCopyFormat(new File(getProject().getBaseDir().getPath())) : WorkingCopyFormat.UNKNOWN;
   }
 
   /**
@@ -1395,6 +1395,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @NotNull
   public ClientFactory getFactoryFromSettings() {
-    return myConfiguration.myUseAcceleration.equals(SvnConfiguration.UseAcceleration.commandLine) ? cmdClientFactory : svnKitClientFactory;
+    return myConfiguration.isCommandLine() ? cmdClientFactory : svnKitClientFactory;
   }
 }

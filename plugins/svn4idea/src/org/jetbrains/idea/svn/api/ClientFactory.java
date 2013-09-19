@@ -15,7 +15,7 @@ import org.jetbrains.idea.svn.history.HistoryClient;
 import org.jetbrains.idea.svn.integrate.MergeClient;
 import org.jetbrains.idea.svn.lock.LockClient;
 import org.jetbrains.idea.svn.portable.SvnStatusClientI;
-import org.jetbrains.idea.svn.portable.SvnUpdateClientI;
+import org.jetbrains.idea.svn.update.UpdateClient;
 import org.jetbrains.idea.svn.portable.SvnWcClientI;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.revert.RevertClient;
@@ -94,7 +94,7 @@ public abstract class ClientFactory {
   // TODO: Update this in same like other clients - move to corresponding package, rename clients
   // New instances should be always created by this method, as setXxx() methods are currently used in update logic
   @NotNull
-  public abstract SvnUpdateClientI createUpdateClient();
+  public abstract UpdateClient createUpdateClient();
 
   @NotNull
   public DeleteClient createDeleteClient() {

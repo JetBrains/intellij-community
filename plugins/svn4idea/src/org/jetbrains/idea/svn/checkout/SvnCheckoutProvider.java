@@ -62,13 +62,11 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       target.mkdirs();
     }
 
-    final String selectedFormat = promptForWCopyFormat(target, project);
-    if (selectedFormat == null) {
-      // cancelled
-      return;
+    final WorkingCopyFormat selectedFormat = promptForWCopyFormat(target, project);
+    // UNKNOWN here means operation was cancelled
+    if (selectedFormat != WorkingCopyFormat.UNKNOWN) {
+      checkout(project, target, url, revision, depth, ignoreExternals, listener, selectedFormat);
     }
-
-    checkout(project, target, url, revision, depth, ignoreExternals, listener, WorkingCopyFormat.getInstance(selectedFormat));
   }
 
   public static void checkout(final Project project,
@@ -168,21 +166,21 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   }
 
   public static boolean promptForWCFormatAndSelect(final File target, final Project project) {
-    final String result = promptForWCopyFormat(target, project);
-    if (result != null) {
-      SvnWorkingCopyFormatHolder.setPresetFormat(WorkingCopyFormat.getInstance(result));
+    final WorkingCopyFormat result = promptForWCopyFormat(target, project);
+    if (result != WorkingCopyFormat.UNKNOWN) {
+      SvnWorkingCopyFormatHolder.setPresetFormat(result);
     }
-    return result != null;
+    return result != WorkingCopyFormat.UNKNOWN;
   }
 
-  @Nullable
-  private static String promptForWCopyFormat(final File target, final Project project) {
-    String formatMode = null;
+  @NotNull
+  private static WorkingCopyFormat promptForWCopyFormat(final File target, final Project project) {
+    WorkingCopyFormat format = WorkingCopyFormat.UNKNOWN;
     final Ref<Boolean> wasOk = new Ref<Boolean>();
-    while ((formatMode == null) && (! Boolean.FALSE.equals(wasOk.get()))) {
-      formatMode = SvnFormatSelector.showUpgradeDialog(target, project, true, SvnConfiguration.UPGRADE_AUTO_17, wasOk);
+    while ((format == WorkingCopyFormat.UNKNOWN) && (! Boolean.FALSE.equals(wasOk.get()))) {
+      format = SvnFormatSelector.showUpgradeDialog(target, project, true, WorkingCopyFormat.ONE_DOT_SEVEN, wasOk);
     }
-    return Boolean.TRUE.equals(wasOk.get()) ? formatMode : null;
+    return Boolean.TRUE.equals(wasOk.get()) ? format : WorkingCopyFormat.UNKNOWN;
   }
 
   public static void doExport(final Project project, final File target, final String url, final SVNDepth depth,

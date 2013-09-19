@@ -7,9 +7,9 @@ import org.jetbrains.idea.svn.annotate.CmdAnnotateClient;
 import org.jetbrains.idea.svn.change.CmdChangeListClient;
 import org.jetbrains.idea.svn.checkout.CmdCheckoutClient;
 import org.jetbrains.idea.svn.cleanup.CmdCleanupClient;
+import org.jetbrains.idea.svn.update.CmdUpdateClient;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineInfoClient;
 import org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient;
-import org.jetbrains.idea.svn.commandLine.SvnCommandLineUpdateClient;
 import org.jetbrains.idea.svn.conflict.CmdConflictClient;
 import org.jetbrains.idea.svn.content.CmdContentClient;
 import org.jetbrains.idea.svn.copy.CmdCopyMoveClient;
@@ -17,7 +17,7 @@ import org.jetbrains.idea.svn.delete.CmdDeleteClient;
 import org.jetbrains.idea.svn.history.CmdHistoryClient;
 import org.jetbrains.idea.svn.integrate.CmdMergeClient;
 import org.jetbrains.idea.svn.lock.CmdLockClient;
-import org.jetbrains.idea.svn.portable.SvnUpdateClientI;
+import org.jetbrains.idea.svn.update.UpdateClient;
 import org.jetbrains.idea.svn.properties.CmdPropertyClient;
 import org.jetbrains.idea.svn.revert.CmdRevertClient;
 import org.jetbrains.idea.svn.update.CmdRelocateClient;
@@ -48,13 +48,13 @@ public class CmdClientFactory extends ClientFactory {
     myLockClient = new CmdLockClient();
     myCleanupClient = new CmdCleanupClient();
     myRelocateClient = new CmdRelocateClient();
-    statusClient = new SvnCommandLineStatusClient(myVcs.getProject());
-    infoClient = new SvnCommandLineInfoClient(myVcs.getProject());
+    statusClient = new SvnCommandLineStatusClient(myVcs);
+    infoClient = new SvnCommandLineInfoClient(myVcs);
   }
 
   @NotNull
   @Override
-  public SvnUpdateClientI createUpdateClient() {
-    return new SvnCommandLineUpdateClient(myVcs, null);
+  public UpdateClient createUpdateClient() {
+    return prepare(new CmdUpdateClient());
   }
 }
