@@ -178,7 +178,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       return;
     }
     if (WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) || WorkingCopyFormat.ONE_DOT_SEVEN.equals(format) &&
-        SvnConfiguration.UseAcceleration.commandLine.equals(SvnConfiguration.getInstance(mySvnVcs.getProject()).myUseAcceleration) &&
+        SvnConfiguration.getInstance(mySvnVcs.getProject()).isCommandLine() &&
         (SvnAuthenticationManager.HTTP.equals(url.getProtocol()) || SvnAuthenticationManager.HTTPS.equals(url.getProtocol()))) {
       doWithCommandLine(committables, comment, exception, feedback);
       return;

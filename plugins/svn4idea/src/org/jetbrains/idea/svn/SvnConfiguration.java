@@ -129,6 +129,10 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   private SvnInteractiveAuthenticationProvider myInteractiveProvider;
   private IdeaSVNConfigFile myConfigFile;
 
+  public boolean isCommandLine() {
+    return UseAcceleration.commandLine.equals(myUseAcceleration);
+  }
+
   @Override
   public Element getState() {
     Element element = new Element("state");
