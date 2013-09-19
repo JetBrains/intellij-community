@@ -314,7 +314,7 @@ public class InferenceSession {
   }
 
   private PsiType acceptBoundsWithRecursiveDependencies(PsiTypeParameter typeParameter, PsiType bound) {
-    if (PsiPolyExpressionUtil.mentionsTypeParameters(bound, Collections.singleton(typeParameter))) {
+    if (!isProperType(bound)) {
       return mySiteSubstitutor.put(typeParameter, null).substitute(bound);
     }
     return bound;
