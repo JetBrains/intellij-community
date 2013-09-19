@@ -38,7 +38,7 @@ public class MavenRunnerPanel {
   private JCheckBox myRunInBackgroundCheckbox;
   private RawCommandLineEditor myVMParametersEditor;
   private EnvironmentVariablesComponent myEnvVariablesComponent;
-  private MavenJdkCombobox myJdkCombo;
+  private MavenJdkCombobBox myJdkCombo;
 
   private JCheckBox mySkipTestsCheckBox;
   private MavenPropertiesPanel myPropertiesPanel;
@@ -88,7 +88,7 @@ public class MavenRunnerPanel {
 
     JLabel jdkLabel = new JLabel("JRE:");
     jdkLabel.setDisplayedMnemonic('j');
-    jdkLabel.setLabelFor(myJdkCombo = new MavenJdkCombobox(myProject));
+    jdkLabel.setLabelFor(myJdkCombo = new MavenJdkCombobBox(myProject));
     c.gridx = 0;
     c.gridy++;
     c.weightx = 0;
