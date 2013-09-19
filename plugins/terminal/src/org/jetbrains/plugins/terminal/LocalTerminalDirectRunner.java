@@ -39,18 +39,20 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
     super(project);
     myDefaultCharset = Charset.forName("UTF-8");
 
+    String shellPath = TerminalOptionsProvider.getInstance().getShellPath();
+    
     if (SystemInfo.isUnix) {
       File rcFile = findRCFile();
-
+      
       if (rcFile != null) {
-        myCommand = new String[]{"/bin/bash", "--rcfile", rcFile.getAbsolutePath(), "-i"};
+        myCommand = new String[]{shellPath, "--rcfile", rcFile.getAbsolutePath(), "-i"};
       }
       else {
-        myCommand = new String[]{"/bin/bash", "--login"};
+        myCommand = new String[]{shellPath, "--login"};
       }
     }
     else {
-      myCommand = new String[]{"cmd.exe"};
+      myCommand = new String[]{shellPath};
     }
   }
 
