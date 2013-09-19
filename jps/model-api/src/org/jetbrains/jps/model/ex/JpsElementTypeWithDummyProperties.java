@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.model.java;
+package org.jetbrains.jps.model.ex;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.ex.JpsElementTypeWithDummyProperties;
-import org.jetbrains.jps.model.library.JpsLibraryType;
+import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
 
 /**
  * @author nik
  */
-public class JpsJavaLibraryType extends JpsElementTypeWithDummyProperties implements JpsLibraryType<JpsDummyElement> {
-  public static final JpsJavaLibraryType INSTANCE = new JpsJavaLibraryType();
-
+public abstract class JpsElementTypeWithDummyProperties extends JpsElementTypeBase<JpsDummyElement> implements JpsElementTypeWithDefaultProperties<JpsDummyElement> {
   @NotNull
   @Override
   public JpsDummyElement createDefaultProperties() {

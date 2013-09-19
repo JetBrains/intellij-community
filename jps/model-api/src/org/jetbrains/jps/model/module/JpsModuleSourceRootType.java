@@ -17,9 +17,10 @@ package org.jetbrains.jps.model.module;
 
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementType;
+import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
 
 /**
  * @author nik
  */
-public abstract class JpsModuleSourceRootType<P extends JpsElement> extends JpsElementType<P> {
+public interface JpsModuleSourceRootType<P extends JpsElement> extends JpsElementType<P>, JpsElementTypeWithDefaultProperties<P> {
 }

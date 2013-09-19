@@ -16,11 +16,12 @@
 package org.jetbrains.plugins.javaFX.preloader;
 
 import org.jetbrains.jps.model.artifact.JpsArtifactType;
+import org.jetbrains.jps.model.ex.JpsElementTypeBase;
 
 /**
  * User: anna
  * Date: 3/13/13
  */
-public class JpsJavaFxPreloaderArtifactType extends JpsArtifactType<JpsJavaFxPreloaderArtifactProperties> {
+public class JpsJavaFxPreloaderArtifactType extends JpsElementTypeBase<JpsJavaFxPreloaderArtifactProperties> implements JpsArtifactType<JpsJavaFxPreloaderArtifactProperties> {
   public static final JpsJavaFxPreloaderArtifactType INSTANCE = new JpsJavaFxPreloaderArtifactType();
 }

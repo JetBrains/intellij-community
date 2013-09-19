@@ -21,5 +21,5 @@ import org.jetbrains.jps.model.JpsElementType;
 /**
  * @author nik
  */
-public abstract class JpsModuleType<P extends JpsElement> extends JpsElementType<P> {
+public interface JpsModuleType<P extends JpsElement> extends JpsElementType<P> {
 }
