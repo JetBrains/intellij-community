@@ -179,12 +179,13 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
     }
     for (PsiElement parent = element.getParent(); parent != null; parent = parent.getParent()) {
       ASTNode parentNode = parent.getNode();
-      if (parentNode == null || parentNode.getStartOffset() != offset) {
+      if (parentNode == null || (parentNode.getStartOffset() != offset && parentNode.getStartOffset() != offset - 2)) {
+        // (offset - 2) means that parent block starts with opening brace and hence should be ends with closing brace
         break;
       }
       element = parent;
     }
-    if (element.getTextOffset() != offset) {
+    if (element.getTextOffset() != offset && element.getTextOffset() != offset - 2) {
       return CharArrayUtil.shiftForwardUntil(text, offset, "\n");
     }
     else {
