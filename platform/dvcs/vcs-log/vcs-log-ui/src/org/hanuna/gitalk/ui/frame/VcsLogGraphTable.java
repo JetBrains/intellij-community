@@ -1,9 +1,11 @@
 package org.hanuna.gitalk.ui.frame;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsLogLogger;
 import org.hanuna.gitalk.data.VcsLogDataHolder;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.GraphElement;
@@ -185,6 +187,8 @@ public class VcsLogGraphTable extends JBTable {
 
   private static class RootCellRenderer extends JPanel implements TableCellRenderer {
 
+    private static final Logger LOG = VcsLogLogger.LOG;
+
     @NotNull private final VcsLogUI myUi;
     @NotNull private final VcsLogDataHolder myDataHolder;
 
@@ -206,7 +210,12 @@ public class VcsLogGraphTable extends JBTable {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Node commitNode = myDataHolder.getDataPack().getGraphModel().getGraph().getCommitNodeInRow(row);
-      myColor = myUi.getColorManager().getRootColor(commitNode.getBranch().getRepositoryRoot());
+      if (commitNode == null) {
+        LOG.warn("Commit node not found for row " + row);
+      }
+      else {
+        myColor = myUi.getColorManager().getRootColor(commitNode.getBranch().getRepositoryRoot());
+      }
       return this;
     }
   }
