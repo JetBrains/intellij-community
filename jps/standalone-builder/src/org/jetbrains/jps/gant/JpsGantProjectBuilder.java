@@ -93,11 +93,11 @@ public class JpsGantProjectBuilder {
   }
 
   public void setUseInProcessJavac(boolean value) {
-    //doesn't make sense for new builders
+    warning("projectBuilder.useInProcessJavac option is ignored because it doesn't make sense for new JPS builders");
   }
 
   public void setArrangeModuleCyclesOutputs(boolean value) {
-    //doesn't make sense for new builders
+    warning("projectBuilder.arrangeModuleCyclesOutputs option is ignored because it doesn't make sense for new JPS builders");
   }
 
   public void error(String message) {

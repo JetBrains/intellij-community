@@ -27,7 +27,6 @@ target(compile: "Compile project") {
   }
 
   loadProject()
-  projectBuilder.useInProcessJavac = false
   projectBuilder.targetFolder = out
   projectBuilder.cleanOutput()
   projectBuilder.buildAll()
