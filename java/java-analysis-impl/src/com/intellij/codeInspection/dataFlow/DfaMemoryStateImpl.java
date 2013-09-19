@@ -65,6 +65,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public DfaMemoryStateImpl createCopy() {
     DfaMemoryStateImpl newState = createNew();
 
+    newState.myEphemeral = myEphemeral;
     newState.myStack.addAll(myStack);
     newState.myDistinctClasses.addAll(myDistinctClasses.toArray());
     newState.myUnknownVariables.addAll(myUnknownVariables);
@@ -148,6 +149,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public String toString() {
     StringBuilder result = new StringBuilder();
     result.append('<');
+    if (myEphemeral) {
+      result.append("ephemeral, ");
+    }
 
     for (SortedIntSet set : getNonTrivialEqClasses()) {
       appendClass(result, set);

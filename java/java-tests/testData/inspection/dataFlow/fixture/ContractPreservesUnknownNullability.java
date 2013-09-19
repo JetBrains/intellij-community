@@ -13,7 +13,15 @@ public class Foo {
     s.hashCode();
     goo(foo(s2));
   }
-  
+
+  void bar2(String s, String s2) {
+    foo(s);
+    if (equals(s2)) {
+      s.hashCode();
+    }
+  }
+
+
   void goo(@NotNull String s) {}
 
 }
