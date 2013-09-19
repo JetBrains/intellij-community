@@ -44,7 +44,7 @@ public class PyClassHasNoInitInspection extends PyInspection {
 
     @Override
     public void visitPyClass(PyClass node) {
-      final List<PyClassLikeType> types = node.getSuperClassTypes(myTypeEvalContext);
+      final List<PyClassLikeType> types = node.getAncestorTypes(myTypeEvalContext);
       for (PyClassLikeType type : types) {
         if (type == null) return;
         final String qName = type.getClassQName();
