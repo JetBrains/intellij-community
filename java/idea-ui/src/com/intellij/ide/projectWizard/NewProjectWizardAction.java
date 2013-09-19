@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.projectWizard;
 
+import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 
@@ -25,6 +26,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 public class NewProjectWizardAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    new NewProjectWizard("New Project", getEventProject(e)).show();
+    NewProjectWizard wizard = new NewProjectWizard("New Project", getEventProject(e));
+    NewProjectUtil.createNewProject(getEventProject(e), wizard);
   }
 }

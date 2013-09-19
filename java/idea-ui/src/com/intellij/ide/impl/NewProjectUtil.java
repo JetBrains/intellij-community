@@ -20,8 +20,7 @@
 package com.intellij.ide.impl;
 
 import com.intellij.ide.GeneralSettings;
-import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
-import com.intellij.ide.util.newProjectWizard.AddModuleWizardPro;
+import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -44,7 +43,6 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
@@ -62,25 +60,22 @@ public class NewProjectUtil {
   private NewProjectUtil() {
   }
 
-  public static void createNewProject(Project projectToClose, @Nullable final String defaultPath) {
+  public static void createNewProject(Project projectToClose, AbstractProjectWizard wizard) {
     final boolean proceed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         ProjectManager.getInstance().getDefaultProject(); //warm up components
       }
     }, ProjectBundle.message("project.new.wizard.progress.title"), true, null);
     if (!proceed) return;
-    final AddModuleWizard dialog = Registry.is("new.project.wizard")
-                                   ? new AddModuleWizardPro(null, ModulesProvider.EMPTY_MODULES_PROVIDER, defaultPath)
-                                   : new AddModuleWizard(null, ModulesProvider.EMPTY_MODULES_PROVIDER, defaultPath);
-    dialog.show();
-    if (!dialog.isOK()) {
+    wizard.show();
+    if (!wizard.isOK()) {
       return;
     }
 
-    createFromWizard(dialog, projectToClose);
+    createFromWizard(wizard, projectToClose);
   }
 
-  public static Project createFromWizard(AddModuleWizard dialog, Project projectToClose) {
+  public static Project createFromWizard(AbstractProjectWizard dialog, Project projectToClose) {
     try {
       return doCreate(dialog, projectToClose);
     }
@@ -95,7 +90,7 @@ public class NewProjectUtil {
     }
   }
 
-  private static Project doCreate(final AddModuleWizard dialog, @Nullable Project projectToClose) throws IOException {
+  private static Project doCreate(final AbstractProjectWizard dialog, @Nullable Project projectToClose) throws IOException {
     final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
     final String projectFilePath = dialog.getNewProjectFilePath();
     final ProjectBuilder projectBuilder = dialog.getProjectBuilder();

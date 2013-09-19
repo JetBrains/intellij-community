@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -68,9 +69,9 @@ public class ImportModuleAction extends AnAction {
     return createFromWizard(project, wizard);
   }
 
-  public static List<Module> createFromWizard(Project project, AddModuleWizard wizard) {
+  public static List<Module> createFromWizard(Project project, AbstractProjectWizard wizard) {
     if (project == null && wizard.getStepCount() > 0) {
-      Project newProject = NewProjectUtil.createFromWizard(wizard, project);
+      Project newProject = NewProjectUtil.createFromWizard(wizard, null);
       return newProject == null ? Collections.<Module>emptyList() : Arrays.asList(ModuleManager.getInstance(newProject).getModules());
     }
 

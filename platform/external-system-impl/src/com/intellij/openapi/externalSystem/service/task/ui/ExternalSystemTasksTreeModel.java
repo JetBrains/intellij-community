@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.*;
 
@@ -63,11 +64,8 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
     }
   };
 
-  @NotNull private final TreeNode[] myNodeHolder  = new TreeNode[1];
-  @NotNull private final int[]      myIndexHolder = new int[1];
-
   @NotNull private final ExternalSystemUiAware myUiAware;
-  @NotNull private final ProjectSystemId       myExternalSystemId;
+  @NotNull private final ProjectSystemId myExternalSystemId;
 
   public ExternalSystemTasksTreeModel(@NotNull ProjectSystemId externalSystemId) {
     super(new ExternalSystemNode<String>(new ExternalSystemNodeDescriptor<String>("", "", "", null)));
@@ -82,7 +80,7 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
   /**
    * Ensures that current model has a top-level node which corresponds to the given external project info holder
    *
-   * @param project  target external project info holder
+   * @param project target external project info holder
    */
   @SuppressWarnings("unchecked")
   @NotNull
@@ -108,17 +106,15 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
     }
     ExternalProjectPojo element = new ExternalProjectPojo(project.getName(), project.getPath());
     ExternalSystemNodeDescriptor<ExternalProjectPojo> descriptor = descriptor(element, myUiAware.getProjectIcon());
-    myIndexHolder[0] = root.getChildCount();
     ExternalSystemNode<ExternalProjectPojo> result = new ExternalSystemNode<ExternalProjectPojo>(descriptor);
-    root.add(result);
-    nodesWereInserted(root, myIndexHolder);
+    insertNodeInto(result, root);
     return result;
   }
 
   /**
    * Asks current model to remove all nodes which have given data as a {@link ExternalSystemNodeDescriptor#getElement() payload}.
    *
-   * @param payload  target payload
+   * @param payload target payload
    */
   public void pruneNodes(@NotNull Object payload) {
     Deque<ExternalSystemNode<?>> toProcess = new ArrayDeque<ExternalSystemNode<?>>();
@@ -137,8 +133,7 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
   }
 
   public void ensureSubProjectsStructure(@NotNull ExternalProjectPojo topLevelProject,
-                                         @NotNull Collection<ExternalProjectPojo> subProjects)
-  {
+                                         @NotNull Collection<ExternalProjectPojo> subProjects) {
     ExternalSystemNode<ExternalProjectPojo> topLevelProjectNode = ensureProjectNodeExists(topLevelProject);
     Map<String/*config path*/, ExternalProjectPojo> toAdd = ContainerUtilRt.newHashMap();
     for (ExternalProjectPojo subProject : subProjects) {
@@ -154,12 +149,8 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
         taskWeights.put(childElement, subProjects.size() + i);
         continue;
       }
-      
       if (toAdd.remove(((ExternalProjectPojo)childElement).getPath()) == null) {
-        topLevelProjectNode.remove(child);
-        myIndexHolder[0] = i;
-        myNodeHolder[0] = child;
-        nodesWereRemoved(topLevelProjectNode, myIndexHolder, myNodeHolder);
+        removeNodeFromParent(child);
         //noinspection AssignmentToForLoopParameter
         i--;
       }
@@ -168,13 +159,10 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
       for (Map.Entry<String, ExternalProjectPojo> entry : toAdd.entrySet()) {
         ExternalProjectPojo
           element = new ExternalProjectPojo(entry.getValue().getName(), entry.getValue().getPath());
-        topLevelProjectNode.add(new ExternalSystemNode<ExternalProjectPojo>(descriptor(element, myUiAware.getProjectIcon())));
-        myIndexHolder[0] = topLevelProjectNode.getChildCount() - 1;
-        nodesWereInserted(topLevelProjectNode, myIndexHolder);
+        insertNodeInto(new ExternalSystemNode<ExternalProjectPojo>(descriptor(element, myUiAware.getProjectIcon())),
+                       topLevelProjectNode);
       }
     }
-
-    ExternalSystemUiUtil.sort(topLevelProjectNode, this, NODE_COMPARATOR);
   }
 
   public void ensureTasks(@NotNull String externalProjectConfigPath, @NotNull Collection<ExternalTaskPojo> tasks) {
@@ -198,10 +186,7 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
       Object element = childNode.getDescriptor().getElement();
       if (element instanceof ExternalTaskExecutionInfo) {
         if (!toAdd.remove(element)) {
-          moduleNode.remove(childNode);
-          myIndexHolder[0] = i;
-          myNodeHolder[0] = childNode;
-          nodesWereRemoved(moduleNode, myIndexHolder, myNodeHolder);
+          removeNodeFromParent(childNode);
           //noinspection AssignmentToForLoopParameter
           i--;
         }
@@ -210,12 +195,11 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
 
     if (!toAdd.isEmpty()) {
       for (ExternalTaskExecutionInfo taskInfo : toAdd) {
-        moduleNode.add(new ExternalSystemNode<ExternalTaskExecutionInfo>(descriptor(taskInfo, taskInfo.getDescription(), myUiAware.getTaskIcon())));
-        myIndexHolder[0] = moduleNode.getChildCount() - 1;
-        nodesWereInserted(moduleNode, myIndexHolder);
+        insertNodeInto(
+          new ExternalSystemNode<ExternalTaskExecutionInfo>(descriptor(taskInfo, taskInfo.getDescription(), myUiAware.getTaskIcon())),
+          moduleNode);
       }
     }
-    ExternalSystemUiUtil.sort(moduleNode, this, NODE_COMPARATOR);
   }
 
   @NotNull
@@ -241,8 +225,7 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
         ExternalSystemNode<?> grandChild = child.getChildAt(j);
         Object grandChildElement = grandChild.getDescriptor().getElement();
         if (grandChildElement instanceof ExternalProjectPojo
-            && ((ExternalProjectPojo)grandChildElement).getPath().equals(configPath))
-        {
+            && ((ExternalProjectPojo)grandChildElement).getPath().equals(configPath)) {
           return (ExternalSystemNode<ExternalProjectPojo>)grandChild;
         }
       }
@@ -259,9 +242,40 @@ public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
   private static <T> ExternalSystemNodeDescriptor<T> descriptor(@NotNull T element, @NotNull String description, @Nullable Icon icon) {
     return new ExternalSystemNodeDescriptor<T>(element, element.toString(), description, icon);
   }
-  
+
   @NotNull
   public ExternalSystemNode<?> getRoot() {
     return (ExternalSystemNode<?>)super.getRoot();
+  }
+
+  public void insertNodeInto(MutableTreeNode child, MutableTreeNode parent) {
+    int index = findIndexFor(child, parent);
+    super.insertNodeInto(child, parent, index);
+  }
+
+  public void insertNodeInto(MutableTreeNode child, MutableTreeNode parent, int i) {
+    insertNodeInto(child, parent);
+  }
+
+  private static int findIndexFor(MutableTreeNode child, MutableTreeNode parent) {
+    int childCount = parent.getChildCount();
+    if (childCount == 0) {
+      return 0;
+    }
+    if (childCount == 1) {
+      return NODE_COMPARATOR.compare(child, parent.getChildAt(0)) <= 0 ? 0 : 1;
+    }
+    return findIndexFor(child, parent, 0, childCount - 1);
+  }
+
+  private static int findIndexFor(MutableTreeNode child, MutableTreeNode parent, int i1, int i2) {
+    if (i1 == i2) {
+      return NODE_COMPARATOR.compare(child, parent.getChildAt(i1)) <= 0 ? i1 : i1 + 1;
+    }
+    int half = (i1 + i2) / 2;
+    if (NODE_COMPARATOR.compare(child, parent.getChildAt(half)) <= 0) {
+      return findIndexFor(child, parent, i1, half);
+    }
+    return findIndexFor(child, parent, half + 1, i2);
   }
 }

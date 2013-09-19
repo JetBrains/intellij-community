@@ -21,65 +21,53 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode;
 import com.intellij.ide.util.newProjectWizard.modes.ImportMode;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.ide.wizard.AbstractWizard;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.ide.wizard.Step;
-import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 
-public class AddModuleWizard extends AbstractWizard<ModuleWizardStep>
-{
+public class AddModuleWizard extends AbstractProjectWizard<ModuleWizardStep> {
   private static final String ADD_MODULE_TITLE = IdeBundle.message("title.add.module");
   private static final String NEW_PROJECT_TITLE = IdeBundle.message("title.new.project");
   private final Project myCurrentProject;
   private ProjectImportProvider[] myImportProviders;
   private final ModulesProvider myModulesProvider;
-  private WizardContext myWizardContext;
   private WizardMode myWizardMode;
 
   /**
    * @param project if null, the wizard will start creating new project, otherwise will add a new module to the existing project.
    */
   public AddModuleWizard(@Nullable final Project project, final @NotNull ModulesProvider modulesProvider, @Nullable String defaultPath) {
-    super(project == null ? NEW_PROJECT_TITLE : ADD_MODULE_TITLE, project);
+    super(project == null ? NEW_PROJECT_TITLE : ADD_MODULE_TITLE, project, defaultPath);
     myCurrentProject = project;
     myModulesProvider = modulesProvider;
     initModuleWizard(project, defaultPath);
   }
 
   /**
-   * @param project if null, the wizard will start creating new project, otherwise will add a new module to the existing proj.
+   * @param project if null, the wizard will start creating new project, otherwise will add a new module to the existing project.
    */
   public AddModuleWizard(Component parent, final Project project, @NotNull ModulesProvider modulesProvider) {
     super(project == null ? NEW_PROJECT_TITLE : ADD_MODULE_TITLE, parent);
@@ -90,7 +78,7 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep>
 
   /** Import mode */
   public AddModuleWizard(@Nullable Project project, String filePath, ProjectImportProvider... importProviders) {
-    super(getImportWizardTitle(project, importProviders), project);
+    super(getImportWizardTitle(project, importProviders), project, filePath);
     myCurrentProject = project;
     myImportProviders = importProviders;
     myModulesProvider = DefaultModulesProvider.createForProject(project);
@@ -116,11 +104,6 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep>
   }
 
   private void initModuleWizard(@Nullable final Project project, @Nullable final String defaultPath) {
-    myWizardContext = new WizardContext(project);
-    if (defaultPath != null) {
-      myWizardContext.setProjectFileDirectory(defaultPath);
-      myWizardContext.setProjectName(defaultPath.substring(FileUtil.toSystemIndependentName(defaultPath).lastIndexOf("/") + 1));
-    }
     myWizardContext.addContextListener(new WizardContext.Listener() {
       public void buttonsUpdateRequested() {
         updateButtons();
@@ -299,38 +282,6 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep>
     return myWizardMode;
   }
 
-  @NotNull
-  public String getNewProjectFilePath() {
-    if (myWizardContext.getProjectStorageFormat() == StorageScheme.DEFAULT) {
-      return myWizardContext.getProjectFileDirectory() + File.separator + myWizardContext.getProjectName() + ProjectFileType.DOT_DEFAULT_EXTENSION;
-    }
-    else {
-      return myWizardContext.getProjectFileDirectory();
-    }
-  }
-
-  @NotNull
-  public StorageScheme getStorageScheme() {
-    return myWizardContext.getProjectStorageFormat();
-  }
-
-  @Nullable
-  public static Sdk getNewProjectJdk(WizardContext context) {
-    if (context.getProjectJdk() != null) {
-      return context.getProjectJdk();
-    }
-    return getProjectSdkByDefault(context);
-  }
-
-  public static Sdk getProjectSdkByDefault(WizardContext context) {
-    final Project project = context.getProject() == null ? ProjectManager.getInstance().getDefaultProject() : context.getProject();
-    final Sdk projectJdk = ProjectRootManager.getInstance(project).getProjectSdk();
-    if (projectJdk != null) {
-      return projectJdk;
-    }
-    return null;
-  }
-
   @Nullable
   public static Sdk getMostRecentSuitableSdk(final WizardContext context) {
     if (context.getProject() == null) {
@@ -347,34 +298,6 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep>
   @NotNull
   public WizardContext getWizardContext() {
     return myWizardContext;
-  }
-
-  @Nullable
-  public Sdk getNewProjectJdk() {
-    return getNewProjectJdk(myWizardContext);
-  }
-
-  @NotNull
-  public String getNewCompileOutput() {
-    final String projectFilePath = myWizardContext.getProjectFileDirectory();
-    @NonNls String path = myWizardContext.getCompilerOutputDirectory();
-    if (path == null) {
-      path = StringUtil.endsWithChar(projectFilePath, '/') ? projectFilePath + "out" : projectFilePath + "/out";
-    }
-    return path;
-  }
-
-  @NonNls
-  public String getModuleFilePath() {
-    return myWizardContext.getProjectFileDirectory() + File.separator + myWizardContext.getProjectName() + ModuleFileType.DOT_DEFAULT_EXTENSION;
-  }
-
-  public ProjectBuilder getProjectBuilder() {
-    return myWizardContext.getProjectBuilder();
-  }
-
-  public String getProjectName() {
-    return myWizardContext.getProjectName();
   }
 
   @Override
@@ -402,20 +325,6 @@ public class AddModuleWizard extends AbstractWizard<ModuleWizardStep>
       return true;
     }
     return false;
-  }
-
-  public ProjectImportProvider[] getImportProviders() {
-    return myImportProviders;
-  }
-
-  @TestOnly
-  public void doOk() {
-    doOKAction();
-  }
-
-  @TestOnly
-  public boolean isLast() {
-    return isLastStep();
   }
 
   @TestOnly

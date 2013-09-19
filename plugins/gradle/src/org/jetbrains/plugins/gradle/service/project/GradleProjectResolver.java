@@ -444,9 +444,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     ProjectData projectData = rootProjectNode.getData();
     final String rootProjectPath = projectData.getLinkedExternalProjectPath();
     Map<String/* module name */, Collection<TaskData>> tasksByModule = ContainerUtilRt.newHashMap();
-    TObjectIntHashMap<Pair<String/* task name */, String /* task description */>> rootProjectTaskCandidates
-      = new TObjectIntHashMap<Pair<String, String>>();
-    final Collection<TaskData> rootProjectTasks = ContainerUtilRt.newArrayList();
+    Set<Pair<String/* task name */, String /* task description */>> rootProjectTaskCandidates = ContainerUtilRt.newHashSet();
     final DomainObjectSet<? extends IdeaModule> modules = project.getModules();
     for (IdeaModule module : modules) {
       String moduleConfigPath = GradleUtil.getConfigPath(module.getGradleProject(), rootProjectPath);
@@ -462,39 +460,28 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         }
 
         TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, name, moduleConfigPath, task.getDescription());
-        
-        if (rootProjectPath.equals(moduleConfigPath)) {
-          rootProjectTasks.add(taskData);
+
+        Collection<TaskData> tasks = tasksByModule.get(module.getName());
+        if (tasks == null) {
+          tasksByModule.put(module.getName(), tasks = ContainerUtilRt.newArrayList());
         }
-        else {
-          Collection<TaskData> tasks = tasksByModule.get(module.getName());
-          if (tasks == null) {
-            tasksByModule.put(module.getName(), tasks = ContainerUtilRt.newArrayList());
-          }
-          tasks.add(taskData);
-          Pair<String, String> key = Pair.create(name, task.getDescription());
-          rootProjectTaskCandidates.put(key, rootProjectTaskCandidates.get(key) + 1);
-        }
+        tasks.add(taskData);
+        rootProjectTaskCandidates.add(Pair.create(name, task.getDescription()));
       }
     }
-    rootProjectTaskCandidates.forEachEntry(new TObjectIntProcedure<Pair<String, String>>() {
-      @Override
-      public boolean execute(Pair<String, String> p, int occurrenceNumber) {
-        if (modules.size() == 1 || occurrenceNumber >= modules.size() - 1) {
-          rootProjectTasks.add(new TaskData(GradleConstants.SYSTEM_ID, p.first, rootProjectPath, p.second));
-        }
-        return true;
-      }
-    });
-    for (TaskData task : rootProjectTasks) {
-      rootProjectNode.createChild(ProjectKeys.TASK, task);
+
+    for(Pair<String, String> p : rootProjectTaskCandidates) {
+      rootProjectNode.createChild(ProjectKeys.TASK, new TaskData(GradleConstants.SYSTEM_ID, p.first, rootProjectPath, p.second));
     }
 
     Collection<DataNode<ModuleData>> moduleNodes = ExternalSystemApiUtil.findAll(rootProjectNode, ProjectKeys.MODULE);
     for (DataNode<ModuleData> moduleNode : moduleNodes) {
       ModuleData moduleData = moduleNode.getData();
-      if (rootProjectPath.equals(moduleData.getLinkedExternalProjectPath()) && !projectData.getName().equals(moduleData.getName())) {
-        moduleData.setName(projectData.getName());
+      if (rootProjectPath.equals(moduleData.getLinkedExternalProjectPath())) {
+        if (!projectData.getName().equals(moduleData.getName())) {
+          moduleData.setName(projectData.getName());
+        }
+        continue;
       }
       Collection<TaskData> tasks = tasksByModule.get(moduleData.getName());
       if (tasks != null && !tasks.isEmpty()) {

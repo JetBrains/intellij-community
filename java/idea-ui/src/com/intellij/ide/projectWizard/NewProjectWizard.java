@@ -15,24 +15,29 @@
  */
 package com.intellij.ide.projectWizard;
 
-import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.ide.wizard.AbstractWizard;
+import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
+import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
 import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
  *         Date: 04.09.13
  */
-public class NewProjectWizard extends AbstractWizard<Step> {
-
-  private final WizardContext myContext;
+public class NewProjectWizard extends AbstractProjectWizard<Step> {
 
   public NewProjectWizard(String title, @Nullable Project project) {
-    super(title, project);
-    myContext = new WizardContext(project);
-    addStep(new ProjectTypeStep(project, getDisposable()));
+    super(title, null, null);
+    addStep(new ProjectTypeStep(myWizardContext, getDisposable()));
+    addStep(new ProjectNameStep(myWizardContext, null) {
+      @Override
+      public Icon getIcon() {
+        return null;
+      }
+    });
     init();
   }
 

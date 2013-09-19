@@ -16,7 +16,7 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
-import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
+import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.SourcePathsStep;
 import com.intellij.ide.util.newProjectWizard.SupportForFrameworksStep;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -114,7 +114,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
     }
     projectSdkStep = new ProjectJdkStep(wizardContext) {
       public boolean isStepVisible() {
-        final Sdk newProjectJdk = AddModuleWizard.getProjectSdkByDefault(wizardContext);
+        final Sdk newProjectJdk = AbstractProjectWizard.getProjectSdkByDefault(wizardContext);
         if (newProjectJdk == null) return true;
         final ProjectBuilder projectBuilder = wizardContext.getProjectBuilder();
         return projectBuilder != null && !projectBuilder.isSuitableSdk(newProjectJdk);
@@ -127,7 +127,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   @Nullable
   @Override
   public Sdk getNewProjectSdk(WizardContext wizardContext) {
-    return AddModuleWizard.getNewProjectJdk(wizardContext);
+    return AbstractProjectWizard.getNewProjectJdk(wizardContext);
   }
 
   @Override
