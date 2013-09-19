@@ -1,6 +1,8 @@
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -53,7 +55,12 @@ public class CommitParents {
 
   @Override
   public String toString() {
-    return myHash + "|-" + StringUtil.join(myParents, ",");
+    return myHash.toShortString() + "|-" + StringUtil.join(ContainerUtil.map(myParents, new Function<Hash, String>() {
+      @Override
+      public String fun(Hash hash) {
+        return hash.toShortString();
+      }
+    }), ",");
   }
 
 }
