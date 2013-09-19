@@ -746,11 +746,10 @@ public class PyTypeTest extends PyTestCase {
   }
 
   // PY-9334
-  public void testEnumerateListOfTuples() {
+  public void testIterateOverListOfNestedTuples() {
     doTest("str",
            "def f():\n" +
-           "    xs = [('foo', [])]\n" +
-           "    for i, (expr, v) in enumerate(xs):\n" +
+           "    for i, (expr, v) in [(0, ('foo', []))]:\n" +
            "        print(expr)\n");
   }
 
