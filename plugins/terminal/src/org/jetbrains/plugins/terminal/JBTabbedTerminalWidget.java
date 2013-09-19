@@ -9,6 +9,7 @@ import com.jediterm.terminal.ui.TabbedTerminalWidget;
 import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalWidget;
 import com.jediterm.terminal.ui.settings.SettingsProvider;
+import com.jediterm.terminal.ui.settings.TabbedSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,7 @@ import java.util.List;
  */
 public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
 
-  public JBTabbedTerminalWidget(@NotNull SettingsProvider settingsProvider, @NotNull Predicate<TerminalWidget> createNewSessionAction) {
+  public JBTabbedTerminalWidget(@NotNull TabbedSettingsProvider settingsProvider, @NotNull Predicate<TerminalWidget> createNewSessionAction) {
     super(settingsProvider, createNewSessionAction);
 
     convertActions(this, getActions());
