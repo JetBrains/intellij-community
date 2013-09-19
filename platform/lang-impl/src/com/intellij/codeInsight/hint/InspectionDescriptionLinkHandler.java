@@ -27,6 +27,9 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 /**
  * Handles tooltip links in format <code>#inspection/inspection_short_name</code>.
  * On a click or expend acton returns more detailed description for given inspection.
@@ -37,7 +40,7 @@ public class InspectionDescriptionLinkHandler extends TooltipLinkHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.hint.InspectionDescriptionLinkHandler");
 
   @Override
-  public String getDescription(@NotNull final String refSuffix, @NotNull final Editor editor) {
+  public String getDescription(@NotNull String refSuffix, @NotNull final Editor editor) {
     final Project project = editor.getProject();
     if (project == null) {
       LOG.error(editor);
@@ -50,10 +53,24 @@ public class InspectionDescriptionLinkHandler extends TooltipLinkHandler {
     }
 
     final InspectionProfile profile = (InspectionProfile)InspectionProfileManager.getInstance().getRootProfile();
+
+    URL u;
+    String urlTail = null;
+    if (refSuffix.contains("?"))
+      try {
+        u = new URL("http://" + refSuffix);
+        urlTail = u.getQuery().split("=")[1];
+        refSuffix = u.getHost();
+      }
+      catch (MalformedURLException e) { }
+
     final InspectionToolWrapper toolWrapper = profile.getInspectionTool(refSuffix, file);
     if (toolWrapper == null) return null;
 
-    String description = toolWrapper.loadDescription();
+    String description;
+    if (toolWrapper.getTool().hasUrlTailForTooltipMoreHyperlink())
+      description = toolWrapper.getTool().descriptionFor(urlTail);
+    else description = toolWrapper.loadDescription();
     if (description == null) {
       LOG.warn("No description for inspection '" + refSuffix + "'");
       description = InspectionsBundle.message("inspection.tool.description.under.construction.text");

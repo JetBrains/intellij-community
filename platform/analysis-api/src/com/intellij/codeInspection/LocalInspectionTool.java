@@ -195,5 +195,8 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
     return holder.getResults();
   }
 
+  // Is tip of hierarchy here?
+  public boolean hasUrlTailForTooltipMoreHyperlink() { return false; }
 
+  public String urlTailForTooltipMoreHyperlinkFor() { return ""; } /* to make compiler happy */
 }

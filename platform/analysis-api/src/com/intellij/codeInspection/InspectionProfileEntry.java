@@ -138,6 +138,10 @@ public abstract class InspectionProfileEntry {
     return StringUtil.trimEnd(className, "Inspection");
   }
 
+  public boolean hasUrlTailForTooltipMoreHyperlink() { return false; }
+
+  public String urlTailForTooltipMoreHyperlinkFor(ProblemDescriptor descriptor) { return "FIXME"; }
+
   /**
    * DO NOT OVERRIDE this method.
    *
@@ -336,4 +340,6 @@ public abstract class InspectionProfileEntry {
 
     return null;
   }
+
+  public String descriptionFor(String urlTail) { return "FIXME"; }
 }

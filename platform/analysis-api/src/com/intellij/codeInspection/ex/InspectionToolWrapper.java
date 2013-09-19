@@ -19,6 +19,8 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -107,6 +109,14 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   @NotNull
   public String getShortName() {
     return myEP != null ? myEP.getShortName() : getTool().getShortName();
+  }
+
+  @NotNull
+  public String getShortName(ProblemDescriptor descriptor) {
+    if (getTool().hasUrlTailForTooltipMoreHyperlink())
+      return getTool().urlTailForTooltipMoreHyperlinkFor(descriptor);
+    else
+      return myEP != null ? myEP.getShortName() : getTool().getShortName();
   }
 
   @NotNull

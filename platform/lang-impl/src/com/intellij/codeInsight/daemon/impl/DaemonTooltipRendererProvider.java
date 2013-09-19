@@ -156,7 +156,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
               }
             } else {
               description = description.substring(0, descriptionEnd);
-            }
+            } /* url is constructed here */
             text += UIUtil.getHtmlBody(problem).replace(DaemonBundle.message("inspection.extended.description"),
                                                         DaemonBundle.message("inspection.collapse.description")) +
                     END_MARKER + "<p>" + description + BORDER_LINE;
