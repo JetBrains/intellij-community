@@ -174,8 +174,10 @@ public class InferenceIncorporationPhase {
   private void eqEq(List<PsiType> eqBounds) {
     for (int i = 0; i < eqBounds.size(); i++) {
       PsiType sBound= eqBounds.get(i);
+      if (sBound == null) continue;
       for (int j = i + 1; j < eqBounds.size(); j++) {
         final PsiType tBound = eqBounds.get(j);
+        if (tBound == null) continue;
         addConstraint(new TypeEqualityConstraint(tBound, sBound));
       }
     }
