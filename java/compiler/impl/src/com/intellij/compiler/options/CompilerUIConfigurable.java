@@ -40,7 +40,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.*;
 
-import static com.intellij.compiler.options.CompilerOptionsFilter.*;
+import static com.intellij.compiler.options.CompilerOptionsFilter.Setting;
 
 public class CompilerUIConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.options.CompilerUIConfigurable");
@@ -166,7 +166,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myCbAutoShowFirstError.setSelected(workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
     myCbClearOutputDirectory.setSelected(workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
     myCbAssertNotNull.setSelected(configuration.isAddNotNullAssertions());
-    myCbUseExternalBuild.setSelected(workspaceConfiguration.USE_COMPILE_SERVER);
+    myCbUseExternalBuild.setSelected(workspaceConfiguration.useOutOfProcessBuild());
     myCbEnableAutomake.setSelected(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
     myCbParallelCompilation.setSelected(workspaceConfiguration.PARALLEL_COMPILATION);
     myCbRebuildOnDependencyChange.setSelected(workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE);
@@ -201,7 +201,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     if (!myDisabledSettings.contains(Setting.CLEAR_OUTPUT_DIR_ON_REBUILD)) {
       workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY = myCbClearOutputDirectory.isSelected();
     }
-    boolean wasUsingExternalMake = workspaceConfiguration.USE_COMPILE_SERVER;
+    boolean wasUsingExternalMake = workspaceConfiguration.useOutOfProcessBuild();
     if (!myDisabledSettings.contains(Setting.EXTERNAL_BUILD)) {
       workspaceConfiguration.USE_COMPILE_SERVER = myCbUseExternalBuild.isSelected();
       if (!myDisabledSettings.contains(Setting.AUTO_MAKE)) {
@@ -234,10 +234,10 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
       String extensionString = myResourcePatternsField.getText().trim();
       applyResourcePatterns(extensionString, (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject));
     }
-    if (wasUsingExternalMake != workspaceConfiguration.USE_COMPILE_SERVER) {
-      myProject.getMessageBus().syncPublisher(ExternalBuildOptionListener.TOPIC).externalBuildOptionChanged(workspaceConfiguration.USE_COMPILE_SERVER);
+    if (wasUsingExternalMake != workspaceConfiguration.useOutOfProcessBuild()) {
+      myProject.getMessageBus().syncPublisher(ExternalBuildOptionListener.TOPIC).externalBuildOptionChanged(workspaceConfiguration.useOutOfProcessBuild());
     }
-    if (workspaceConfiguration.USE_COMPILE_SERVER) {
+    if (workspaceConfiguration.useOutOfProcessBuild()) {
       BuildManager.getInstance().clearState(myProject);
     }
   }
@@ -278,7 +278,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     boolean isModified = !myDisabledSettings.contains(Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR)
                          && ComparingUtils.isModified(myCbAutoShowFirstError, workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
     isModified |= !myDisabledSettings.contains(Setting.EXTERNAL_BUILD)
-                  && ComparingUtils.isModified(myCbUseExternalBuild, workspaceConfiguration.USE_COMPILE_SERVER);
+                  && ComparingUtils.isModified(myCbUseExternalBuild, workspaceConfiguration.useOutOfProcessBuild());
     isModified |= !myDisabledSettings.contains(Setting.AUTO_MAKE)
                   && ComparingUtils.isModified(myCbEnableAutomake, workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
     isModified |= !myDisabledSettings.contains(Setting.PARALLEL_COMPILATION)
