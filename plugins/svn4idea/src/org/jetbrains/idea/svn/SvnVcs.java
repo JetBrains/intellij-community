@@ -1349,7 +1349,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   private WorkingCopyFormat getProjectRootFormat() {
-    return getWorkingCopyFormat(new File(getProject().getBaseDir().getPath()));
+    return !getProject().isDefault() ? getWorkingCopyFormat(new File(getProject().getBaseDir().getPath())) : WorkingCopyFormat.UNKNOWN;
   }
 
   /**
