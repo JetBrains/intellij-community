@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.ModuleAdapter;
 import com.intellij.openapi.project.Project;
@@ -246,12 +246,18 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
         @Override
         public void run() {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              runActions();
-            }
-          }, ModalityState.NON_MODAL);
+          Application app = ApplicationManager.getApplication();
+          if (!app.isUnitTestMode()) {
+            app.invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                runActions();
+              }
+            }, ModalityState.NON_MODAL);
+          }
+          else {
+            runActions();
+          }
         }
       });
     }
@@ -270,7 +276,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
     if (o instanceof VirtualFile) {
       final VirtualFile file = (VirtualFile)o;
       if (file.isValid()) {
-        final Module module = ModuleUtil.findModuleForFile(file, myProject);
+        final Module module = ModuleUtilCore.findModuleForFile(file, myProject);
         if (module == null) {
           return Collections.emptyList();
         }
@@ -296,7 +302,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
         return;
       }
 
-      Pair<Object, SyncAction>[] actions = myActions.toArray(new Pair[myActions.size()]);
+      @SuppressWarnings("unchecked") Pair<Object, SyncAction>[] actions = myActions.toArray(new Pair[myActions.size()]);
       //get module by object and kill duplicates
 
       final Set<Trinity<Module, SyncAction, MvcFramework>> rawActions = new LinkedHashSet<Trinity<Module, SyncAction, MvcFramework>>();
@@ -379,7 +385,7 @@ public class MvcModuleStructureSynchronizer extends AbstractProjectComponent {
       @Override
       void doAction(Module module, MvcFramework framework) {
         final Project project = module.getProject();
-        final MvcModuleStructureSynchronizer mvcModuleStructureSynchronizer = MvcModuleStructureSynchronizer.getInstance(project);
+        final MvcModuleStructureSynchronizer mvcModuleStructureSynchronizer = getInstance(project);
 
         if (mvcModuleStructureSynchronizer.myOutOfModuleDirectoryCreatedActionAdded) {
           mvcModuleStructureSynchronizer.myOutOfModuleDirectoryCreatedActionAdded = false;
