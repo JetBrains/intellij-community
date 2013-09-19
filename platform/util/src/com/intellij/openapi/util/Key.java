@@ -59,12 +59,10 @@ public class Key<T> {
     return new Key<T>(name);
   }
 
-  @Nullable
   public T get(@Nullable UserDataHolder holder) {
     return holder == null ? null : holder.getUserData(this);
   }
 
-  @Nullable
   public T get(@Nullable Map<Key, ?> holder) {
     //noinspection unchecked
     return holder == null ? null : (T)holder.get(this);
