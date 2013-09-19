@@ -131,7 +131,7 @@ public class DataFlowRunner {
       WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(shouldCheckTimeLimit() ? ourTimeLimit : ourTimeLimit * 42);
       int count = 0;
       while (!queue.isEmpty()) {
-        if (count % 64 == 0 && measurer.isTimeOver()) {
+        if (count % 1024 == 0 && measurer.isTimeOver()) {
           LOG.debug("Too complex because the analysis took too long");
           psiBlock.putUserData(TOO_EXPENSIVE_HASH, psiBlock.getText().hashCode());
           return RunnerResult.TOO_COMPLEX;
