@@ -994,6 +994,7 @@ public class ListUtils {
   public void testNewGenericClass() throws Throwable { doTest('\n') }
   public void testNewGenericInterface() throws Throwable { doTest() }
   public void testEnumPrivateFinal() throws Throwable { doTest() }
+  public void testNoFieldsInImplements() throws Throwable { doTest() }
 
   public void testSwitchConstantsFromReferencedClass() throws Throwable { doTest('\n') }
 
