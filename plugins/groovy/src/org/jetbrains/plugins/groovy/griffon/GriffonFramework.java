@@ -36,7 +36,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.IgnoredBeanFactory;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -76,7 +75,7 @@ public class GriffonFramework extends MvcFramework {
   }
 
   public boolean hasSupport(@NotNull Module module) {
-    return getSdkRoot(module) != null && findAppRoot(module) != null && !isAuxModule(module);
+    return findAppRoot(module) != null && !isAuxModule(module) && getSdkRoot(module) != null;
   }
 
   @Override
