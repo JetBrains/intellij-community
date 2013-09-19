@@ -19,6 +19,7 @@ package com.intellij.tools;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunnerRegistry;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
@@ -341,6 +342,7 @@ public class Tool implements SchemeElement {
         commandLine.getParametersList().prependAll("-a", exePath);
       }
       else {
+        exePath = PathEnvironmentVariableUtil.findAbsolutePathOnMac(exePath);
         commandLine.setExePath(exePath);
       }
     }
