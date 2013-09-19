@@ -47,6 +47,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   private final TLongHashSet myDistinctClasses = new TLongHashSet();
   private final THashMap<DfaVariableValue,DfaVariableState> myVariableStates = new THashMap<DfaVariableValue, DfaVariableState>();
   private final THashSet<DfaVariableValue> myUnknownVariables = new THashSet<DfaVariableValue>();
+  private boolean myEphemeral;
 
   public DfaMemoryStateImpl(final DfaValueFactory factory) {
     myFactory = factory;
@@ -85,6 +86,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!(obj instanceof DfaMemoryStateImpl)) return false;
     DfaMemoryStateImpl that = (DfaMemoryStateImpl)obj;
 
+    if (myEphemeral != that.myEphemeral) return false;
     if (myDistinctClasses.size() != that.myDistinctClasses.size()) return false;
     if (myStack.size() != that.myStack.size()) return false;
     if (myOffsetStack.size() != that.myOffsetStack.size()) return false;
@@ -504,6 +506,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       result = constValue;
     }
     return result;
+  }
+
+  @Override
+  public void markEphemeral() {
+    myEphemeral = true;
+  }
+
+  @Override
+  public boolean isEphemeral() {
+    return myEphemeral;
   }
 
   @Override

@@ -344,12 +344,17 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     myCanBeNullInInstanceof.add(instruction);
 
+    boolean specialContractTreatment = isUnknownComparisonWithNullInContract(instruction, dfaLeft, dfaRight, factory, memState);
+
     ArrayList<DfaInstructionState> states = new ArrayList<DfaInstructionState>();
 
     final DfaMemoryState trueCopy = memState.createCopy();
     if (trueCopy.applyCondition(dfaRelation)) {
       if (!dfaRelation.isNegated()) {
         checkOneOperandNotNull(dfaRight, dfaLeft, factory, trueCopy);
+      }
+      if (specialContractTreatment && !dfaRelation.isNegated()) {
+        trueCopy.markEphemeral();
       }
       trueCopy.push(factory.getConstFactory().getTrue());
       instruction.setTrueReachable();
@@ -362,6 +367,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       if (dfaRelation.isNegated()) {
         checkOneOperandNotNull(dfaRight, dfaLeft, factory, falseCopy);
       }
+      if (specialContractTreatment && dfaRelation.isNegated()) {
+        falseCopy.markEphemeral();
+      }
       falseCopy.push(factory.getConstFactory().getFalse());
       instruction.setFalseReachable();
       states.add(new DfaInstructionState(next, falseCopy));
@@ -371,6 +379,23 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
 
     return states.toArray(new DfaInstructionState[states.size()]);
+  }
+
+  private static boolean isUnknownComparisonWithNullInContract(BinopInstruction instruction,
+                                                               DfaValue dfaLeft,
+                                                               DfaValue dfaRight,
+                                                               DfaValueFactory factory,
+                                                               DfaMemoryState memoryState) {
+    if (instruction.getPsiAnchor() != null || dfaRight != factory.getConstFactory().getNull()) {
+      return false;
+    }
+    if (dfaLeft instanceof DfaVariableValue) {
+      return ((DfaMemoryStateImpl)memoryState).getVariableState((DfaVariableValue)dfaLeft).getNullability() == Nullness.UNKNOWN;
+    }
+    if (dfaLeft instanceof DfaTypeValue) {
+      return ((DfaTypeValue)dfaLeft).getNullness() == Nullness.UNKNOWN;
+    }
+    return false;
   }
 
   public void skipConstantConditionReporting(@Nullable PsiElement anchor) {

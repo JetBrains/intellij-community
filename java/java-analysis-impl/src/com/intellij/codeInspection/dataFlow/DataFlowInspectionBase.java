@@ -36,6 +36,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,6 +49,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -696,6 +698,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
   private static class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     private final StandardDataFlowRunner myRunner;
     private final MultiMap<NullabilityProblem, PsiElement> myProblems = new MultiMap<NullabilityProblem, PsiElement>();
+    private final Map<Pair<NullabilityProblem, PsiElement>, StateInfo> myStateInfos = ContainerUtil.newHashMap();
 
     private DataFlowInstructionVisitor(StandardDataFlowRunner runner) {
       myRunner = runner;
@@ -706,8 +709,17 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       myRunner.onInstructionProducesCCE(instruction);
     }
     
-    Collection<PsiElement> getProblems(NullabilityProblem kind) {
-      return myProblems.get(kind);
+    Collection<PsiElement> getProblems(final NullabilityProblem kind) {
+      return ContainerUtil.filter(myProblems.get(kind), new Condition<PsiElement>() {
+        @Override
+        public boolean value(PsiElement psiElement) {
+          StateInfo info = myStateInfos.get(Pair.create(kind, psiElement));
+          // non-ephemeral NPE should be reported
+          // ephemeral NPE should also be reported if only ephemeral states have reached a particular problematic instruction
+          //  (e.g. if it's inside "if (var == null)" check after contract method invocation
+          return info.normalNpe || info.ephemeralNpe && !info.normalOk;
+        }
+      });
     }
 
     @Override
@@ -716,7 +728,24 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
       if (!ok && anchor != null) {
         myProblems.putValue(problem, anchor);
       }
+      Pair<NullabilityProblem, PsiElement> key = Pair.create(problem, anchor);
+      StateInfo info = myStateInfos.get(key);
+      if (info == null) {
+        myStateInfos.put(key, info = new StateInfo());
+      }
+      if (state.isEphemeral() && !ok) {
+        info.ephemeralNpe = true;
+      } else if (!state.isEphemeral()) {
+        if (ok) info.normalOk = true;
+        else info.normalNpe = true;
+      }
       return ok;
+    }
+    
+    private static class StateInfo {
+      boolean ephemeralNpe;
+      boolean normalNpe;
+      boolean normalOk;
     }
   }
 }

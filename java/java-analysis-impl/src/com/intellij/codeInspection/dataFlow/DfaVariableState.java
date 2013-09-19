@@ -135,6 +135,10 @@ public class DfaVariableState implements Cloneable {
     return buf.toString();
   }
 
+  public Nullness getNullability() {
+    return myNullability;
+  }
+
   public boolean isNotNull() {
     return myNullability == Nullness.NOT_NULL;
   }
