@@ -55,6 +55,6 @@ public class SvnKitClientFactory extends ClientFactory {
   @NotNull
   @Override
   public SvnUpdateClientI createUpdateClient() {
-    return new SvnSvnkitUpdateClient(myVcs.createUpdateClient());
+    return new SvnSvnkitUpdateClient(myVcs);
   }
 }

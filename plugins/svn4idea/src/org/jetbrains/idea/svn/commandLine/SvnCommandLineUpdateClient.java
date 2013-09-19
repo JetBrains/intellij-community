@@ -48,11 +48,10 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
   private static final String ourAuthenticationRealm = "Authentication realm:";
   private final Project myProject;
   private final VirtualFile myCommonAncestor;
-  private boolean myIgnoreExternals;
   private SvnVcs myVcs;
 
   public SvnCommandLineUpdateClient(final SvnVcs vcs, VirtualFile commonAncestor) {
-    super(vcs.createUpdateClient());
+    super(vcs);
     myVcs = vcs;
     myProject = vcs.getProject();
     myCommonAncestor = commonAncestor;
@@ -106,7 +105,7 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
   private BaseUpdateCommandListener createCommandListener(final File[] paths,
                                                           final AtomicReference<long[]> updatedToRevision,
                                                           final File base) {
-    return new BaseUpdateCommandListener(base, getEventHandler()) {
+    return new BaseUpdateCommandListener(base, myDispatcher) {
       final long[] myRevisions = new long[paths.length];
 
       @Override
@@ -193,10 +192,5 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
     long[] revisions = run(new File[]{path}, parameters, SvnCommandName.switchCopy);
 
     return revisions != null && revisions.length > 0 ? revisions[0] : -1;
-  }
-
-  @Override
-  public void setIgnoreExternals(boolean ignoreExternals) {
-    myIgnoreExternals = ignoreExternals;
   }
 }

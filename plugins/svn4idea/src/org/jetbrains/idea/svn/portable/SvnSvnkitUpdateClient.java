@@ -15,6 +15,9 @@
  */
 package org.jetbrains.idea.svn.portable;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -31,11 +34,14 @@ import java.io.File;
  * Time: 12:11 PM
  */
 public class SvnSvnkitUpdateClient implements SvnUpdateClientI {
-  private final SVNUpdateClient myClient;
-  private ISVNEventHandler myDispatcher;
 
-  public SvnSvnkitUpdateClient(SVNUpdateClient client) {
-    myClient = client;
+  @NotNull private final SvnVcs myVcs;
+  @Nullable protected ISVNEventHandler myDispatcher;
+  protected boolean myIgnoreExternals;
+  protected boolean myLocksOnDemand;
+
+  public SvnSvnkitUpdateClient(@NotNull SvnVcs vcs) {
+    myVcs = vcs;
   }
 
   @Override
@@ -45,18 +51,13 @@ public class SvnSvnkitUpdateClient implements SvnUpdateClientI {
                          boolean allowUnversionedObstructions,
                          boolean depthIsSticky,
                          boolean makeParents) throws SVNException {
-    return myClient.doUpdate(paths, revision, depth, allowUnversionedObstructions, depthIsSticky, makeParents);
+    return getClient().doUpdate(paths, revision, depth, allowUnversionedObstructions, depthIsSticky, makeParents);
   }
 
   @Override
   public long doUpdate(File path, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
     throws SVNException {
-    return myClient.doUpdate(path, revision, depth, allowUnversionedObstructions, depthIsSticky);
-  }
-
-  @Override
-  public void setUpdateLocksOnDemand(boolean locksOnDemand) {
-    myClient.setUpdateLocksOnDemand(locksOnDemand);
+    return getClient().doUpdate(path, revision, depth, allowUnversionedObstructions, depthIsSticky);
   }
 
   @Override
@@ -66,21 +67,32 @@ public class SvnSvnkitUpdateClient implements SvnUpdateClientI {
                        SVNRevision revision,
                        SVNDepth depth,
                        boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException {
-    return myClient.doSwitch(path, url, pegRevision, revision, depth, allowUnversionedObstructions, depthIsSticky);
+    return getClient().doSwitch(path, url, pegRevision, revision, depth, allowUnversionedObstructions, depthIsSticky);
+  }
+
+  @Override
+  public void setUpdateLocksOnDemand(boolean locksOnDemand) {
+    myLocksOnDemand = locksOnDemand;
   }
 
   @Override
   public void setEventHandler(ISVNEventHandler dispatcher) {
     myDispatcher = dispatcher;
-    myClient.setEventHandler(dispatcher);
   }
 
   @Override
   public void setIgnoreExternals(boolean ignoreExternals) {
-    myClient.setIgnoreExternals(ignoreExternals);
+    myIgnoreExternals = ignoreExternals;
   }
 
-  public ISVNEventHandler getEventHandler() {
-    return myDispatcher;
+  @NotNull
+  private SVNUpdateClient getClient() {
+    SVNUpdateClient client = myVcs.createUpdateClient();
+
+    client.setEventHandler(myDispatcher);
+    client.setIgnoreExternals(myIgnoreExternals);
+    client.setUpdateLocksOnDemand(myLocksOnDemand);
+
+    return client;
   }
 }
