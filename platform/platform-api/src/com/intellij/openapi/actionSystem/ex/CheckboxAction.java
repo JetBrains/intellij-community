@@ -48,6 +48,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
     checkBox.setToolTipText(presentation.getDescription());
     checkBox.setMnemonic(presentation.getMnemonic());
     checkBox.setDisplayedMnemonicIndex(presentation.getDisplayedMnemonicIndex());
+    checkBox.setSelected(Boolean.TRUE.equals(presentation.getClientProperty(SELECTED_PROPERTY)));
 
     checkBox.addActionListener(new ActionListener() {
       @Override
