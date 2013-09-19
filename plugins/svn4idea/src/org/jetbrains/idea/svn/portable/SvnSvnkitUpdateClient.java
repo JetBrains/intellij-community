@@ -39,25 +39,6 @@ public class SvnSvnkitUpdateClient implements SvnUpdateClientI {
   }
 
   @Override
-  public long doUpdate(File file, SVNRevision revision, boolean recursive) throws SVNException {
-    return myClient.doUpdate(file, revision, recursive);
-  }
-
-  @Override
-  public long doUpdate(File file, SVNRevision revision, boolean recursive, boolean force) throws SVNException {
-    return myClient.doUpdate(file, revision, recursive, force);
-  }
-
-  @Override
-  public long[] doUpdate(File[] paths,
-                         SVNRevision revision,
-                         SVNDepth depth,
-                         boolean allowUnversionedObstructions,
-                         boolean depthIsSticky) throws SVNException {
-    return myClient.doUpdate(paths, revision, depth, allowUnversionedObstructions, depthIsSticky);
-  }
-
-  @Override
   public long[] doUpdate(File[] paths,
                          SVNRevision revision,
                          SVNDepth depth,
@@ -79,22 +60,6 @@ public class SvnSvnkitUpdateClient implements SvnUpdateClientI {
   }
 
   @Override
-  public long doSwitch(File file, SVNURL url, SVNRevision revision, boolean recursive) throws SVNException {
-    return myClient.doSwitch(file, url, revision, recursive);
-  }
-
-  @Override
-  public long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive) throws SVNException {
-    return myClient.doSwitch(file, url, pegRevision, revision, recursive);
-  }
-
-  @Override
-  public long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, boolean force)
-    throws SVNException {
-    return myClient.doSwitch(file, url, pegRevision, revision, recursive, force);
-  }
-
-  @Override
   public long doSwitch(File path,
                        SVNURL url,
                        SVNRevision pegRevision,
@@ -102,96 +67,6 @@ public class SvnSvnkitUpdateClient implements SvnUpdateClientI {
                        SVNDepth depth,
                        boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException {
     return myClient.doSwitch(path, url, pegRevision, revision, depth, allowUnversionedObstructions, depthIsSticky);
-  }
-
-  @Override
-  public long doSwitch(File path,
-                       SVNURL url,
-                       SVNRevision pegRevision,
-                       SVNRevision revision,
-                       SVNDepth depth,
-                       boolean allowUnversionedObstructions, boolean depthIsSticky, boolean ignoreAncestry) throws SVNException {
-    return myClient.doSwitch(path, url, pegRevision, revision, depth, allowUnversionedObstructions, depthIsSticky, ignoreAncestry);
-  }
-
-  @Override
-  public long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, boolean recursive) throws SVNException {
-    return myClient.doCheckout(url, dstPath, pegRevision, revision, recursive);
-  }
-
-  @Override
-  public long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, boolean recursive, boolean force)
-    throws SVNException {
-    return myClient.doCheckout(url, dstPath, pegRevision, revision, recursive, force);
-  }
-
-  @Override
-  public long doCheckout(SVNURL url,
-                         File dstPath,
-                         SVNRevision pegRevision,
-                         SVNRevision revision,
-                         SVNDepth depth,
-                         boolean allowUnversionedObstructions) throws SVNException {
-    return myClient.doCheckout(url, dstPath, pegRevision, revision, depth, allowUnversionedObstructions);
-  }
-
-  @Override
-  public long doExport(SVNURL url,
-                       File dstPath,
-                       SVNRevision pegRevision,
-                       SVNRevision revision,
-                       String eolStyle,
-                       boolean force,
-                       boolean recursive) throws SVNException {
-    return myClient.doExport(url, dstPath, pegRevision, revision, eolStyle, force, recursive);
-  }
-
-  @Override
-  public long doExport(SVNURL url,
-                       File dstPath,
-                       SVNRevision pegRevision,
-                       SVNRevision revision,
-                       String eolStyle,
-                       boolean overwrite,
-                       SVNDepth depth) throws SVNException {
-    return myClient.doExport(url, dstPath, pegRevision, revision, eolStyle, overwrite, depth);
-  }
-
-  @Override
-  public long doExport(File srcPath,
-                       File dstPath,
-                       SVNRevision pegRevision,
-                       SVNRevision revision,
-                       String eolStyle,
-                       boolean force,
-                       boolean recursive) throws SVNException {
-    return myClient.doExport(srcPath, dstPath, pegRevision, revision, eolStyle, force, recursive);
-  }
-
-  @Override
-  public long doExport(File srcPath,
-                       File dstPath,
-                       SVNRevision pegRevision,
-                       SVNRevision revision,
-                       String eolStyle,
-                       boolean overwrite,
-                       SVNDepth depth) throws SVNException {
-    return myClient.doExport(srcPath, dstPath, pegRevision, revision, eolStyle, overwrite, depth);
-  }
-
-  @Override
-  public void doRelocate(File dst, SVNURL oldURL, SVNURL newURL, boolean recursive) throws SVNException {
-    myClient.doRelocate(dst, oldURL, newURL, recursive);
-  }
-
-  @Override
-  public void doCanonicalizeURLs(File dst, boolean omitDefaultPort, boolean recursive) throws SVNException {
-    myClient.doCanonicalizeURLs(dst, omitDefaultPort, recursive);
-  }
-
-  @Override
-  public void setExportExpandsKeywords(boolean expand) {
-    myClient.setExportExpandsKeywords(expand);
   }
 
   @Override

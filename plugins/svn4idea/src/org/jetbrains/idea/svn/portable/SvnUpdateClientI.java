@@ -30,11 +30,6 @@ import java.io.File;
  * Time: 11:59 AM
  */
 public interface SvnUpdateClientI extends SvnMarkerInterface {
-  long doUpdate(File file, SVNRevision revision, boolean recursive) throws SVNException;
-
-  long doUpdate(File file, SVNRevision revision, boolean recursive, boolean force) throws SVNException;
-
-  long[] doUpdate(File[] paths, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException;
 
   long[] doUpdate(File[] paths, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky, boolean makeParents) throws SVNException;
 
@@ -42,35 +37,8 @@ public interface SvnUpdateClientI extends SvnMarkerInterface {
 
   void setUpdateLocksOnDemand(boolean locksOnDemand);
 
-  long doSwitch(File file, SVNURL url, SVNRevision revision, boolean recursive) throws SVNException;
-
-  long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive) throws SVNException;
-
-  long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, boolean force) throws SVNException;
-
   long doSwitch(File path, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky) throws SVNException;
 
-  long doSwitch(File path, SVNURL url, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky, boolean ignoreAncestry) throws SVNException;
-
-  long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, boolean recursive) throws SVNException;
-
-  long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, boolean recursive, boolean force) throws SVNException;
-
-  long doCheckout(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions) throws SVNException;
-
-  long doExport(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, boolean force, boolean recursive) throws SVNException;
-
-  long doExport(SVNURL url, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, boolean overwrite, SVNDepth depth) throws SVNException;
-
-  long doExport(File srcPath, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, boolean force, boolean recursive) throws SVNException;
-
-  long doExport(File srcPath, File dstPath, SVNRevision pegRevision, SVNRevision revision, String eolStyle, boolean overwrite, SVNDepth depth) throws SVNException;
-
-  void doRelocate(File dst, SVNURL oldURL, SVNURL newURL, boolean recursive) throws SVNException;
-
-  void doCanonicalizeURLs(File dst, boolean omitDefaultPort, boolean recursive) throws SVNException;
-
-  void setExportExpandsKeywords(boolean expand);
   void setEventHandler(ISVNEventHandler dispatcher);
   void setIgnoreExternals(boolean ignoreExternals);
 }

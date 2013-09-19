@@ -59,24 +59,6 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
   }
 
   @Override
-  public long doUpdate(File file, SVNRevision revision, boolean recursive) throws SVNException {
-    final long[] longs = doUpdate(new File[]{file}, revision, SVNDepth.fromRecurse(recursive), false, false, false);
-    return longs[0];
-  }
-
-  @Override
-  public long doUpdate(File file, SVNRevision revision, boolean recursive, boolean force) throws SVNException {
-    final long[] longs = doUpdate(new File[]{file}, revision, SVNDepth.fromRecurse(recursive), force, false, false);
-    return longs[0];
-  }
-
-  @Override
-  public long[] doUpdate(File[] paths, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky)
-    throws SVNException {
-    return doUpdate(paths, revision, depth, allowUnversionedObstructions, depthIsSticky, false);
-  }
-
-  @Override
   public long[] doUpdate(final File[] paths, final SVNRevision revision, final SVNDepth depth, final boolean allowUnversionedObstructions,
                          final boolean depthIsSticky, final boolean makeParents) throws SVNException {
     // since one revision is passed -> I assume same repository here
@@ -192,25 +174,6 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
   }
 
   @Override
-  public long doSwitch(File file, SVNURL url, SVNRevision revision, boolean recursive) throws SVNException {
-    throw new UnsupportedOperationException();
-    //return super.doSwitch(file, url, revision, recursive);
-  }
-
-  @Override
-  public long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive) throws SVNException {
-    throw new UnsupportedOperationException();
-    //return super.doSwitch(file, url, pegRevision, revision, recursive);
-  }
-
-  @Override
-  public long doSwitch(File file, SVNURL url, SVNRevision pegRevision, SVNRevision revision, boolean recursive, boolean force)
-    throws SVNException {
-    throw new UnsupportedOperationException();
-    //return super.doSwitch(file, url, pegRevision, revision, recursive, force);
-  }
-
-  @Override
   public long doSwitch(File path,
                        SVNURL url,
                        SVNRevision pegRevision,
@@ -230,20 +193,6 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
     long[] revisions = run(new File[]{path}, parameters, SvnCommandName.switchCopy);
 
     return revisions != null && revisions.length > 0 ? revisions[0] : -1;
-  }
-
-  @Override
-  public long doSwitch(File path,
-                       SVNURL url,
-                       SVNRevision pegRevision,
-                       SVNRevision revision,
-                       SVNDepth depth,
-                       boolean allowUnversionedObstructions,
-                       boolean depthIsSticky,
-                       boolean ignoreAncestry) throws SVNException {
-    throw new UnsupportedOperationException();
-    // todo MAIN
-    //return super.doSwitch(path, url, pegRevision, revision, depth, allowUnversionedObstructions, depthIsSticky, ignoreAncestry);
   }
 
   @Override
