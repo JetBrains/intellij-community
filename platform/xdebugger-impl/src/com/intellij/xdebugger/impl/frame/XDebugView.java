@@ -15,25 +15,14 @@
  */
 package com.intellij.xdebugger.impl.frame;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
-import com.intellij.xdebugger.frame.XStackFrame;
+import com.intellij.openapi.Disposable;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
-public class XStandaloneVariablesView extends XVariablesViewBase {
-  private final XStackFrame myStackFrame;
+public interface XDebugView extends Disposable {
+  enum SessionEvent {PAUSED, BEFORE_RESUME, RESUMED, STOPPED, FRAME_CHANGED, SETTINGS_CHANGED}
 
-  public XStandaloneVariablesView(@NotNull Project project, @NotNull XDebuggerEditorsProvider editorsProvider, @NotNull XStackFrame stackFrame) {
-    super(project, editorsProvider, null);
-    myStackFrame = stackFrame;
-    buildTreeAndRestoreState(stackFrame);
-  }
-
-  public void rebuildView() {
-    saveCurrentTreeState(myStackFrame);
-    buildTreeAndRestoreState(myStackFrame);
-  }
+  void processSessionEvent(@NotNull SessionEvent event);
 }
