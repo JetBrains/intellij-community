@@ -83,9 +83,6 @@ public abstract class ModuleSourceRootEditHandler<P extends JpsElement> {
   @NotNull
   public abstract String getUnmarkRootButtonText();
 
-  @NotNull
-  public abstract P createDefaultProperties();
-
   @Nullable
   public String getPropertiesString(@NotNull P properties) {
     return null;

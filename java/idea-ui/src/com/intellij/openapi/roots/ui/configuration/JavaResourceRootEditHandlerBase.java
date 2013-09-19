@@ -16,10 +16,8 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsDummyElement;
-import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
@@ -48,11 +46,5 @@ public abstract class JavaResourceRootEditHandlerBase extends ModuleSourceRootEd
   @Override
   public CustomShortcutSet getMarkRootShortcutSet() {
     return null;
-  }
-
-  @NotNull
-  @Override
-  public JpsDummyElement createDefaultProperties() {
-    return JpsElementFactory.getInstance().createDummyElement();
   }
 }

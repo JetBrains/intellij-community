@@ -185,16 +185,26 @@ public class JpsContentEntry implements ContentEntry, Disposable {
   private SourceFolder addSourceFolder(final String url, boolean isTestSource, String packagePrefix) {
     final JavaSourceRootType rootType = isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     JpsSimpleElement<JavaSourceRootProperties> properties = JpsElementFactory.getInstance().createSimpleElement(new JavaSourceRootProperties(packagePrefix));
-    final JpsModuleSourceRoot sourceRoot = myModule.addSourceRoot(url, rootType, properties);
-    final JpsSourceFolder sourceFolder = new JpsSourceFolder(sourceRoot, this);
-    mySourceFolders.add(sourceFolder);
-    return sourceFolder;
+    return addSourceFolder(url, rootType, properties);
   }
 
   @NotNull
   @Override
   public SourceFolder addSourceFolder(@NotNull String url, boolean isTestSource) {
     return addSourceFolder(url, isTestSource, "");
+  }
+
+  @NotNull
+  @Override
+  public <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url, @NotNull JpsModuleSourceRootType<P> type) {
+    return addSourceFolder(url, type, type.createDefaultProperties());
+  }
+
+  private <P extends JpsElement> SourceFolder addSourceFolder(final String url, JpsModuleSourceRootType<P> type, P properties) {
+    final JpsModuleSourceRoot sourceRoot = myModule.addSourceRoot(url, type, properties);
+    final JpsSourceFolder sourceFolder = new JpsSourceFolder(sourceRoot, this);
+    mySourceFolders.add(sourceFolder);
+    return sourceFolder;
   }
 
   @Override
