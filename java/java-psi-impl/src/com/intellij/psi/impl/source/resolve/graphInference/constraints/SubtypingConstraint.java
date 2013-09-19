@@ -127,6 +127,11 @@ public class SubtypingConstraint implements ConstraintFormula {
           }
           return false;
         } else {
+
+          if (myS instanceof PsiCapturedWildcardType) {
+            myS = ((PsiCapturedWildcardType)myS).getWildcard();
+          }
+
           if (myS instanceof PsiWildcardType) {
             final PsiType sBound = ((PsiWildcardType)myS).getBound();
             if (sBound != null && ((PsiWildcardType)myS).isSuper()) {
