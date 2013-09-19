@@ -219,14 +219,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (var == value) return;
 
     flushVariable(var);
+    DfaVariableState varState = getVariableState(var);
     if (value instanceof DfaUnknownValue) {
-      getVariableState(var).setNullable(false);
+      varState.setNullable(false);
       return;
     }
 
-    getVariableState(var).setValue(value);
+    varState.setValue(value);
     if (value instanceof DfaTypeValue) {
-      getVariableState(var).setNullable(((DfaTypeValue)value).isNullable());
+      varState.setNullable(((DfaTypeValue)value).isNullable());
       DfaRelationValue dfaInstanceof = myFactory.getRelationFactory().createRelation(var, value, JavaTokenType.INSTANCEOF_KEYWORD, false);
       if (((DfaTypeValue)value).isNotNull()) {
         applyCondition(dfaInstanceof);
@@ -240,15 +241,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       applyCondition(dfaEqual);
 
       if (value instanceof DfaVariableValue) {
-        myVariableStates.put(var, getVariableState((DfaVariableValue)value).clone());
+        myVariableStates.put(var, varState = getVariableState((DfaVariableValue)value).clone());
       }
       else if (value instanceof DfaBoxedValue) {
-        getVariableState(var).setNullable(false);
+        varState.setNullable(false);
         applyCondition(compareToNull(var, true));
       }
     }
 
-    if (getVariableState(var).isNotNull()) {
+    if (varState.isNotNull()) {
       applyCondition(compareToNull(var, true));
     }
   }
@@ -520,8 +521,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     DfaVariableValue dfaVar = (DfaVariableValue)left;
     DfaTypeValue dfaType = (DfaTypeValue)dfaCond.getRightOperand();
 
-    final DfaVariableState varState = getVariableState(dfaVar);
-    return isNull(dfaVar) || varState.setInstanceofValue(dfaType);
+    return isNull(dfaVar) || getVariableState(dfaVar).setInstanceofValue(dfaType);
   }
 
   @Override
