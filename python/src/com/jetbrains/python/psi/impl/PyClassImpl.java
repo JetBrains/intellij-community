@@ -246,20 +246,25 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @Override
   public List<String> getSlots() {
-    List<String> slots = getOwnSlots();
-    if (slots != null) {
-      return slots;
+    final Set<String> result = new LinkedHashSet<String>();
+    boolean found = false;
+    final List<String> ownSlots = getOwnSlots();
+    if (ownSlots != null) {
+      found = true;
+      result.addAll(ownSlots);
     }
     for (PyClass cls : getAncestorClasses()) {
-      slots = ((PyClassImpl)cls).getOwnSlots();
-      if (slots != null) {
-        return slots;
+      final List<String> ancestorSlots = cls.getOwnSlots();
+      if (ancestorSlots != null) {
+        found = true;
+        result.addAll(ancestorSlots);
       }
     }
-    return null;
+    return found ? new ArrayList<String>(result) : null;
   }
 
   @Nullable
+  @Override
   public List<String> getOwnSlots() {
     final PyClassStub stub = getStub();
     if (stub != null) {

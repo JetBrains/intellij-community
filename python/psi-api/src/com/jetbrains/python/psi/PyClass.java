@@ -182,13 +182,19 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   boolean isSubclass(@NotNull String superClassQName);
 
   /**
+   * Returns the aggregated list of names defined in __slots__ attributes of the class and its ancestors.
+   */
+  @Nullable
+  List<String> getSlots();
+
+  /**
    * Returns the list of names in the class' __slots__ attribute, or null if the class
    * does not define such an attribute.
    *
    * @return the list of names or null.
    */
   @Nullable
-  List<String> getSlots();
+  List<String> getOwnSlots();
 
   @Nullable
   String getDocStringValue();
