@@ -84,6 +84,7 @@ covariant
 cron
 ctrl
 customizer
+cyclomatic
 datafile
 datafiles
 datetime
