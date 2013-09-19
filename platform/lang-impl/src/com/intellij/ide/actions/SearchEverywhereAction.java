@@ -71,6 +71,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -88,6 +89,8 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.intellij.ui.popup.PopupPositionManager.Position.*;
 
 /**
  * @author Konstantin Bulenkov
@@ -112,16 +115,34 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
   private JBList myList = new JBList(myListModel) {
+    private Dimension oldSize;
     {
       setOpaque(false);
     }
     @Override
     protected void paintComponent(Graphics g) {
+      System.out.println(getPreferredSize());
       g.setColor(getTitlePanelBackground());
       g.fillRect(0, 0, myLeftWidth - 1, getHeight());
       g.setColor(getSeparatorColor());
       g.drawLine(myLeftWidth-1, 0, myLeftWidth-1, getHeight());
       super.paintComponent(g);
+    }
+
+    @Override
+    public Dimension getPreferredSize() {
+      final Dimension size = super.getPreferredSize();
+      if (size != null && !size.equals(oldSize) && myPopup != null && myPopup.isVisible()) {
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            oldSize = getPreferredSize();
+            updatePopupBounds();
+          }
+        });
+      }
+      return size;
     }
   };
   private AnActionEvent myActionEvent;
@@ -997,29 +1018,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             //rebuildList("");
           }
           else {
-            final Dimension size = myList.getPreferredSize();
-            Dimension sz = new Dimension(Math.max(getField().getWidth(), size.width), size.height);
-            if (sz.width > 800 || sz.height > 800) {
-              final int extra = new JBScrollPane().getVerticalScrollBar().getWidth();
-              sz = new Dimension(Math.min(800, Math.max(getField().getWidth(), size.width + extra)), Math.min(800, size.height + extra));
-              sz.width += 16;
-            }
-            else {
-              sz.height++;
-              sz.height++;
-              sz.width++;
-              sz.width++;
-            }
-            myPopup.setSize(sz);
-            final Point screen = getField().getLocationOnScreen();
-            final int x;
-            if (getField() == field) {
-               x = screen.x + getField().getWidth() - myPopup.getSize().width;
-            } else {
-              x = screen.x - myLeftWidth - 5;
-            }
-
-            //myPopup.setLocation(new Point(x, myPopup.getLocationOnScreen().y));
+            updatePopupBounds();
+            //final Point screen = getField().getLocationOnScreen();
+            //final int x;
+            //if (getField() == field) {
+            //   x = screen.x + getField().getWidth() - myPopup.getSize().width;
+            //} else {
+            //  x = screen.x - myLeftWidth - 5;
+            //}
+            //
+            ////myPopup.setLocation(new Point(x, myPopup.getLocationOnScreen().y));
           }
         }
       });
@@ -1081,6 +1089,31 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         ProgressManager.getInstance().runProcess(this, myProgressIndicator);
       }
     }
+  }
+
+  private void updatePopupBounds() {
+    if (myPopup == null || !myPopup.isVisible()) {
+      return;
+    }
+    final Dimension size = myList.getPreferredSize();
+    Dimension sz = new Dimension(Math.max(getField().getWidth(), size.width), size.height);
+    if (sz.width > 800 || sz.height > 800) {
+      final int extra = new JBScrollPane().getVerticalScrollBar().getWidth();
+      sz = new Dimension(Math.min(800, Math.max(getField().getWidth(), size.width + extra)), Math.min(800, size.height + extra));
+      sz.width += 16;
+    }
+    else {
+      sz.height++;
+      sz.height++;
+      sz.width++;
+      sz.width++;
+    }
+    myPopup.setSize(sz);
+    adjustPopup();
+  }
+
+  private void adjustPopup() {
+    new PopupPositionManager.PositionAdjuster(getField().getTextEditor().getParent()).adjust(myPopup, BOTTOM, RIGHT, LEFT, TOP);
   }
 
   private static boolean isToolWindowAction(Object o) {
