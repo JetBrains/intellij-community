@@ -26,18 +26,26 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 public class DfaValueFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.value.DfaValueFactory");
 
   private int myLastID;
   private final TIntObjectHashMap<DfaValue> myValues;
+  private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myAssignableCache = ContainerUtil.newHashMap();
+  private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myConvertibleCache = ContainerUtil.newHashMap();
+  private final Map<PsiType, DfaPsiType> myDfaTypes = ContainerUtil.newHashMap();
 
   public DfaValueFactory() {
     myValues = new TIntObjectHashMap<DfaValue>();
@@ -52,7 +60,15 @@ public class DfaValueFactory {
 
   public DfaValue createTypeValue(@Nullable PsiType type, Nullness nullability) {
     if (type == null) return DfaUnknownValue.getInstance();
-    return getTypeFactory().createTypeValue(type, nullability);
+    return getTypeFactory().createTypeValue(internType(type), nullability);
+  }
+
+  private DfaPsiType internType(@NotNull PsiType psiType) {
+    DfaPsiType dfaType = myDfaTypes.get(psiType);
+    if (dfaType == null) {
+      myDfaTypes.put(psiType, dfaType = new DfaPsiType(TypeConversionUtil.erasure(psiType), myAssignableCache, myConvertibleCache));
+    }
+    return dfaType;
   }
 
    int createID() {

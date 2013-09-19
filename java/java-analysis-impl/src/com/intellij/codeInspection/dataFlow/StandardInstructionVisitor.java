@@ -194,7 +194,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     final DfaValueFactory factory = runner.getFactory();
     DfaValue dfaExpr = factory.createValue(instruction.getCasted());
     if (dfaExpr != null) {
-      DfaTypeValue dfaType = factory.getTypeFactory().createTypeValue(instruction.getCastTo());
+      DfaTypeValue dfaType = (DfaTypeValue)factory.createTypeValue(instruction.getCastTo(), Nullness.UNKNOWN);
       DfaRelationValue dfaInstanceof = factory.getRelationFactory().createRelation(dfaExpr, dfaType, JavaTokenType.INSTANCEOF_KEYWORD, false);
       if (dfaInstanceof != null && !memState.applyInstanceofOrNull(dfaInstanceof)) {
         onInstructionProducesCCE(instruction);
@@ -399,7 +399,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
         myCanBeNullInInstanceof.add(instruction);
       }
 
-      if (((DfaTypeValue)dfaRight).getType().isAssignableFrom(((DfaTypeValue)dfaLeft).getType())) {
+      if (((DfaTypeValue)dfaRight).getDfaType().isAssignableFrom(((DfaTypeValue)dfaLeft).getDfaType())) {
         return;
       }
     }
