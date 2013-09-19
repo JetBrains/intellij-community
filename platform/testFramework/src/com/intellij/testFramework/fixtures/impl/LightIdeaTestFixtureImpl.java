@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import gnu.trove.THashMap;
 /**
  * @author mike
  */
+@SuppressWarnings("TestOnlyProblems")
 public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTestFixture {
   private final LightProjectDescriptor myProjectDescriptor;
   private CodeStyleSettings myOldCodeStyleSettings;
@@ -73,9 +74,8 @@ public class LightIdeaTestFixtureImpl extends BaseFixture implements LightIdeaTe
     super.tearDown();
     InjectedLanguageManagerImpl.checkInjectorsAreDisposed(project);
     PersistentFS.getInstance().clearIdCache();
-      ((DirectoryIndexImpl)DirectoryIndex.getInstance(project)).assertAncestorConsistent();
+    ((DirectoryIndexImpl)DirectoryIndex.getInstance(project)).assertAncestorConsistent();
   }
-
 
   @Override
   public Project getProject() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public abstract class UsefulTestCase extends TestCase {
   protected static boolean OVERWRITE_TESTDATA = false;
 
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
-  private static final Random PRNG = new SecureRandom();
+  private static final Random RNG = new SecureRandom();
   private static final String ORIGINAL_TEMP_DIR = FileUtil.getTempDirectory();
   public static final String IDEA_MARKER_CLASS = "com.intellij.openapi.components.impl.stores.IdeaProjectStoreImpl";
 
@@ -111,6 +111,10 @@ public abstract class UsefulTestCase extends TestCase {
     return true;
   }
 
+  protected static File getOriginalTempDir() {
+    return new File(ORIGINAL_TEMP_DIR);
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -119,7 +123,7 @@ public abstract class UsefulTestCase extends TestCase {
       String testName = getTestName(true);
       if (StringUtil.isEmptyOrSpaces(testName)) testName = "";
       testName = new File(testName).getName(); // in case the test name contains file separators
-      myTempDir = ORIGINAL_TEMP_DIR + "/unitTest_" + testName + "_"+ PRNG.nextInt(1000);
+      myTempDir = ORIGINAL_TEMP_DIR + "/unitTest_" + testName + "_"+ RNG.nextInt(1000);
       FileUtil.resetCanonicalTempPathCache(myTempDir);
     }
     DocumentImpl.CHECK_DOCUMENT_CONSISTENCY = !isPerformanceTest();
