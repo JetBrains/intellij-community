@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -47,14 +46,12 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
   private static final Pattern ourExceptionPattern = Pattern.compile("svn: E(\\d{6}): .+");
   private static final String ourAuthenticationRealm = "Authentication realm:";
   private final Project myProject;
-  private final VirtualFile myCommonAncestor;
   private SvnVcs myVcs;
 
-  public SvnCommandLineUpdateClient(final SvnVcs vcs, VirtualFile commonAncestor) {
+  public SvnCommandLineUpdateClient(@NotNull final SvnVcs vcs) {
     super(vcs);
     myVcs = vcs;
     myProject = vcs.getProject();
-    myCommonAncestor = commonAncestor;
   }
 
   @Override
@@ -83,7 +80,7 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
   }
 
   private long[] run(@NotNull File[] paths, @NotNull List<String> parameters, @NotNull SvnCommandName command) throws SVNException {
-    File base = myCommonAncestor == null ? paths[0] : new File(myCommonAncestor.getPath());
+    File base = paths[0];
     base = base.isDirectory() ? base : base.getParentFile();
 
     final AtomicReference<long[]> updatedToRevision = new AtomicReference<long[]>();

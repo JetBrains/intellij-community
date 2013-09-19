@@ -55,6 +55,6 @@ public class CmdClientFactory extends ClientFactory {
   @NotNull
   @Override
   public SvnUpdateClientI createUpdateClient() {
-    return new SvnCommandLineUpdateClient(myVcs, null);
+    return new SvnCommandLineUpdateClient(myVcs);
   }
 }
