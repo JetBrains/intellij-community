@@ -10,7 +10,10 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.psi.types.PyABCUtil;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -88,6 +91,14 @@ public class PyArgumentListInspection extends PyInspection {
   public static void inspectPyArgumentList(PyArgumentList node, ProblemsHolder holder, final TypeEvalContext context, int implicitOffset) {
     if (node.getParent() instanceof PyClass) return; // class Foo(object) is also an arg list
     CallArgumentsMapping result = node.analyzeCall(PyResolveContext.noImplicits().withTypeEvalContext(context), implicitOffset);
+    final PyCallExpression.PyMarkedCallee callee = result.getMarkedCallee();
+    if (callee != null) {
+      final Callable callable = callee.getCallable();
+      // Decorate functions may have different parameter lists. We don't match arguments with parameters of decorators yet
+      if (callable instanceof PyFunction && PyUtil.hasCustomDecorators((PyFunction)callable)) {
+        return;
+      }
+    }
     highlightIncorrectArguments(holder, result, context);
     highlightMissingArguments(node, holder, result);
     highlightStarArgumentTypeMismatch(node, holder, context);
