@@ -202,6 +202,8 @@ public class JpsGantProjectBuilder {
   private void runBuild(final Set<String> modulesSet, final boolean allModules, boolean includeTests) {
     if (!myDryRun) {
       final AntMessageHandler messageHandler = new AntMessageHandler();
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      AntLoggerFactory.ourMessageHandler = new AntMessageHandler();
       Logger.setFactory(AntLoggerFactory.class);
       boolean forceBuild = true;
 
@@ -321,14 +323,10 @@ public class JpsGantProjectBuilder {
     }
   }
 
-  private class AntLoggerFactory implements Logger.Factory {
+  private static class AntLoggerFactory implements Logger.Factory {
     private static final String COMPILER_NAME = "build runner";
 
-    private final AntMessageHandler myMessageHandler;
-
-    public AntLoggerFactory() {
-      myMessageHandler = new AntMessageHandler();
-    }
+    private static AntMessageHandler ourMessageHandler;
 
     @Override
     public Logger getLoggerInstance(String category) {
@@ -336,16 +334,16 @@ public class JpsGantProjectBuilder {
         @Override
         public void error(@NonNls String message, @Nullable Throwable t, @NotNull @NonNls String... details) {
           if (t != null) {
-            myMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, t));
+            ourMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, t));
           }
           else {
-            myMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.ERROR, message));
+            ourMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.ERROR, message));
           }
         }
 
         @Override
         public void warn(@NonNls String message, @Nullable Throwable t) {
-          myMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.WARNING, message));
+          ourMessageHandler.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.WARNING, message));
         }
       };
     }
