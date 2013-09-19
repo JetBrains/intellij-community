@@ -24,7 +24,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,7 +33,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.nio.charset.Charset;
 
 /**
@@ -114,18 +112,7 @@ public final class ScriptRunnerUtil {
                                          @Nullable VirtualFile scriptFile,
                                          String[] parameters,
                                          @Nullable Charset charset) throws ExecutionException {
-    if (SystemInfo.isMac) {
-      File exeFile = new File(exePath);
-      if (!exeFile.isAbsolute() && !exePath.contains(File.separator)) {
-        File originalResolvedExeFile = PathEnvironmentVariableUtil.findInOriginalPath(exePath);
-        if (originalResolvedExeFile == null) {
-          File resolvedExeFile = PathEnvironmentVariableUtil.findInPath(exePath);
-          if (resolvedExeFile != null) {
-            exePath = resolvedExeFile.getAbsolutePath();
-          }
-        }
-      }
-    }
+    exePath = PathEnvironmentVariableUtil.findAbsolutePathOnMac(exePath);
     return doExecute(exePath, workingDirectory, scriptFile, parameters, charset);
   }
 
