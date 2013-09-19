@@ -230,13 +230,13 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
     if (fun != null) {
       String docStub = provider.generateDocumentationContentStub(fun, false);
       docStub += element.getParent().getText().substring(0,3);
-      if (docStub != null && docStub.length() != 0) {
+      if (docStub.length() != 0) {
         editor.getDocument().insertString(editor.getCaretModel().getOffset(), docStub);
         return;
       }
     }
     PyElement klass = PsiTreeUtil.getParentOfType(element, PyClass.class, PyFile.class);
-    if (klass != null) {
+    if (klass != null && element != null) {
       editor.getDocument().insertString(editor.getCaretModel().getOffset(),
                       PythonDocCommentUtil.generateDocForClass(klass, element.getParent().getText().substring(0, 3)));
     }
