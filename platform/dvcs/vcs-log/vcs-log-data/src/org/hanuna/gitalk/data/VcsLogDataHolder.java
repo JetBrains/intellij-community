@@ -219,8 +219,11 @@ public class VcsLogDataHolder implements Disposable {
             logsToBuild.put(root, refreshedLog.subList(0, Math.min(bottomIndex, refreshedLog.size())));
           }
           allRefs.addAll(newRefs);
-          myLogData.setRefs(root, newRefs); // update references, because the joiner needs to know reference changes after each refresh
-                                            // log is not updated: once loaded, joiner always join to the old part of it
+
+          if (myLogData != null) {
+            myLogData.setRefs(root, newRefs); // update references, because the joiner needs to know reference changes after each refresh
+                                              // log is not updated: once loaded, joiner always join to the old part of it
+          }
         }
 
         List<TimeCommitParents> compoundLog = myMultiRepoJoiner.join(logsToBuild.values());
