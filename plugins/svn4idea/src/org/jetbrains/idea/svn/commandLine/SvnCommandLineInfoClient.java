@@ -56,12 +56,11 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
 
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.commandLine.SvnCommandLineInfoClient");
 
-  @NotNull
-  private final Project myProject;
+  @NotNull private final SvnVcs myVcs;
 
-  public SvnCommandLineInfoClient(@NotNull final Project project) {
-    super(SvnVcs.getInstance(project));
-    myProject = project;
+  public SvnCommandLineInfoClient(@NotNull final SvnVcs vcs) {
+    super(vcs);
+    myVcs = vcs;
   }
 
   @Override
@@ -118,8 +117,7 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     };
 
     try {
-      SvnCommand command =
-        CommandUtil.execute(SvnVcs.getInstance(myProject), SvnTarget.fromFile(path), SvnCommandName.info, parameters, listener);
+      SvnCommand command = CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.info, parameters, listener);
 
       return command.getOutput();
     }
@@ -217,7 +215,7 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     fillParameters(path, pegRevision, revision, depth, parameters);
     SvnCommand command;
     try {
-      command = CommandUtil.execute(SvnVcs.getInstance(myProject), SvnTarget.fromURL(url), SvnCommandName.info, parameters, null);
+      command = CommandUtil.execute(myVcs, SvnTarget.fromURL(url), SvnCommandName.info, parameters, null);
     }
     catch (VcsException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);

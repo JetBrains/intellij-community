@@ -48,8 +48,8 @@ public class CmdClientFactory extends ClientFactory {
     myLockClient = new CmdLockClient();
     myCleanupClient = new CmdCleanupClient();
     myRelocateClient = new CmdRelocateClient();
-    statusClient = new SvnCommandLineStatusClient(myVcs.getProject());
-    infoClient = new SvnCommandLineInfoClient(myVcs.getProject());
+    statusClient = new SvnCommandLineStatusClient(myVcs);
+    infoClient = new SvnCommandLineInfoClient(myVcs);
   }
 
   @NotNull

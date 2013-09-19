@@ -65,7 +65,7 @@ public class CmdUpdateClient extends SvnKitUpdateClient {
   }
 
   private void checkWorkingCopy(@NotNull File path) throws SVNException {
-    final SvnCommandLineInfoClient infoClient = new SvnCommandLineInfoClient(myVcs.getProject());
+    final SvnCommandLineInfoClient infoClient = new SvnCommandLineInfoClient(myVcs);
     final SVNInfo info = infoClient.doInfo(path, SVNRevision.UNDEFINED);
 
     if (info == null || info.getURL() == null) {

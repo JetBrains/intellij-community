@@ -16,7 +16,6 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,12 +52,12 @@ import java.util.*;
 public class SvnCommandLineStatusClient implements SvnStatusClientI {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.commandLine.SvnCommandLineStatusClient");
 
-  private final Project myProject;
   private final SvnCommandLineInfoClient myInfoClient;
+  @NotNull private final SvnVcs myVcs;
 
-  public SvnCommandLineStatusClient(Project project) {
-    myProject = project;
-    myInfoClient = new SvnCommandLineInfoClient(project);
+  public SvnCommandLineStatusClient(@NotNull SvnVcs vcs) {
+    myVcs = vcs;
+    myInfoClient = new SvnCommandLineInfoClient(vcs);
   }
 
   @Override
@@ -111,7 +110,7 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
 
     SvnCommand command;
     try {
-      command = CommandUtil.execute(SvnVcs.getInstance(myProject), SvnTarget.fromFile(path), SvnCommandName.st, parameters, null);
+      command = CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.st, parameters, null);
     }
     catch (VcsException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e), e);
@@ -139,7 +138,7 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
       SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
       parser.parse(new ByteArrayInputStream(result.getBytes(CharsetToolkit.UTF8_CHARSET)), svnHandl[0]);
       if (!svnHandl[0].isAnythingReported()) {
-        if (!SvnUtil.isSvnVersioned(myProject, path)) {
+        if (!SvnUtil.isSvnVersioned(myVcs, path)) {
           throw new SVNException(
             SVNErrorMessage.create(SVNErrorCode.WC_NOT_DIRECTORY, "Command - " + command.getCommandText() + ". Result - " + result));
         } else {

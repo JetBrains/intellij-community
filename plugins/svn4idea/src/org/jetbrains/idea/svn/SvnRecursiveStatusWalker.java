@@ -130,7 +130,7 @@ public class SvnRecursiveStatusWalker {
       myPath = path;
       myDepth = depth;
       mySvnClient = new SvnkitSvnStatusClient(client);
-      myCommandLineClient = new SvnCommandLineStatusClient(myProject);
+      myCommandLineClient = new SvnCommandLineStatusClient(myVcs);
       myIsInnerCopyRoot = isInnerCopyRoot;
     }
 
