@@ -2,9 +2,12 @@ package org.jetbrains.plugins.terminal;
 
 import com.intellij.application.options.OptionsConstants;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.options.FontSize;
@@ -131,6 +134,17 @@ class JBTerminalSystemSettingsProvider extends DefaultSettingsProvider {
     return (float)myColorScheme.getConsoleFontSize();
   }
 
+
+  @Override
+  public boolean useAntialiasing() {
+    return UISettings.getInstance().ANTIALIASING_IN_EDITOR;
+  }
+
+  @Override
+  public int caretBlinkingMs() {
+    return EditorSettingsExternalizable.getInstance().getBlinkPeriod();
+  }
+  
   public EditorColorsScheme getColorScheme() {
     return createBoundColorSchemeDelegate(null);
   }
