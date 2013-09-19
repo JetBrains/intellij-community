@@ -461,7 +461,7 @@ public class ExternalSystemUtil {
       public void run() {
         if (modal) {
           String title = ExternalSystemBundle.message("progress.import.text", projectName, externalSystemId.getReadableName());
-          ProgressManager.getInstance().run(new Task.Modal(project, title, false) {
+          ProgressManager.getInstance().run(new Task.Modal(project, title, true) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
               refreshProjectStructureTask.execute(indicator);
