@@ -534,8 +534,11 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     }
     String docContent = ws + generateDocumentationContentStub(function, ws, true);
     PyExpressionStatement string = elementGenerator.createDocstring("\"\"\"" + docContent + "\"\"\"");
-    if (insertPlace.getStatements().length != 0) {
-      insertPlace.addBefore(string, insertPlace.getStatements()[0]);
+    if (insertPlace != null) {
+      final PyStatement[] statements = insertPlace.getStatements();
+      if (statements.length != 0) {
+        insertPlace.addBefore(string, statements[0]);
+      }
     }
     PyStringLiteralExpression docstring = function.getDocStringExpression();
     if (editor != null && docstring != null) {
@@ -563,12 +566,14 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     final StringBuilder builder = new StringBuilder(offset);
     final TypeEvalContext context = TypeEvalContext.userInitiated(function.getContainingFile());
     PySignature signature = PySignatureCacheManager.getInstance(function.getProject()).findSignature(function);
-
+    final PyDecoratorList decoratorList = function.getDecoratorList();
+    final PyDecorator classMethod = decoratorList == null ? null : decoratorList.findDecorator(PyNames.CLASSMETHOD);
     for (PyParameter p : PyUtil.getParameters(function, context)) {
       final String parameterName = p.getName();
       if (p.getText().equals(PyNames.CANONICAL_SELF) || parameterName == null) {
         continue;
       }
+      if (classMethod != null && parameterName.equals(PyNames.CANONICAL_CLS)) continue;
       String argType = signature == null ? null : signature.getArgTypeQualifiedName(parameterName);
 
       if (argType == null) {
@@ -583,7 +588,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
         builder.append("type ");
         builder.append(parameterName);
         builder.append(": ");
-        if (signature != null) {
+        if (signature != null && argType != null) {
           builder.append(PySignatureUtil.getShortestImportableName(function, argType));
         }
         builder.append(offset);

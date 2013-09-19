@@ -328,6 +328,7 @@ public class PyNames {
 
   // canonical names, not forced by interpreter
   public static final String CANONICAL_SELF = "self";
+  public static final String CANONICAL_CLS = "cls";
   public static final String BASESTRING = "basestring";
 
   /**
