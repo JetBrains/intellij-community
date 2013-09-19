@@ -21,7 +21,6 @@
 package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode;
 import com.intellij.ide.util.newProjectWizard.modes.ImportMode;
 import com.intellij.ide.util.newProjectWizard.modes.WizardMode;
@@ -42,14 +41,12 @@ import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.Function;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 
 public class AddModuleWizard extends AbstractProjectWizard<ModuleWizardStep> {
   private static final String ADD_MODULE_TITLE = IdeBundle.message("title.add.module");
@@ -303,11 +300,6 @@ public class AddModuleWizard extends AbstractProjectWizard<ModuleWizardStep> {
     return myWizardContext;
   }
 
-  @NonNls
-  public String getModuleFilePath() {
-    return myWizardContext.getProjectFileDirectory() + File.separator + myWizardContext.getProjectName() + ModuleFileType.DOT_DEFAULT_EXTENSION;
-  }
-
   @Override
   protected String getDimensionServiceKey() {
     return "NewModule_or_Project.wizard";
@@ -333,16 +325,6 @@ public class AddModuleWizard extends AbstractProjectWizard<ModuleWizardStep> {
       return true;
     }
     return false;
-  }
-
-  @TestOnly
-  public void doOk() {
-    doOKAction();
-  }
-
-  @TestOnly
-  public boolean isLast() {
-    return isLastStep();
   }
 
   @TestOnly

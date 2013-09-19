@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
+import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -30,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.io.File;
@@ -113,5 +115,24 @@ public abstract class AbstractProjectWizard<T extends Step> extends AbstractWiza
       path = StringUtil.endsWithChar(projectFilePath, '/') ? projectFilePath + "out" : projectFilePath + "/out";
     }
     return path;
+  }
+
+  public void doNextAction() {
+    super.doNextAction();
+  }
+
+  @TestOnly
+  public void doOk() {
+    doOKAction();
+  }
+
+  @TestOnly
+  public boolean isLast() {
+    return isLastStep();
+  }
+
+  @NonNls
+  public String getModuleFilePath() {
+    return myWizardContext.getProjectFileDirectory() + File.separator + myWizardContext.getProjectName() + ModuleFileType.DOT_DEFAULT_EXTENSION;
   }
 }

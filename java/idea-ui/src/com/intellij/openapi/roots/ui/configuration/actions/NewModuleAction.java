@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.actions;
 
+import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.newProjectWizard.AddModuleWizardPro;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
@@ -68,7 +69,7 @@ public class NewModuleAction extends AnAction implements DumbAware {
   }
 
   @Nullable
-  public Module createModuleFromWizard(Project project, @Nullable Object dataFromContext, AddModuleWizard wizard) {
+  public Module createModuleFromWizard(Project project, @Nullable Object dataFromContext, AbstractProjectWizard wizard) {
     final ProjectBuilder builder = wizard.getProjectBuilder();
     if (builder instanceof ModuleBuilder) {
       final ModuleBuilder moduleBuilder = (ModuleBuilder)builder;
