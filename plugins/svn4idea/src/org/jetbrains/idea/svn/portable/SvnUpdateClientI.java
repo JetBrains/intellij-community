@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.portable;
 
+import org.jetbrains.idea.svn.api.SvnClient;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -29,7 +30,7 @@ import java.io.File;
  * Date: 2/1/12
  * Time: 11:59 AM
  */
-public interface SvnUpdateClientI extends SvnMarkerInterface {
+public interface SvnUpdateClientI extends SvnClient {
 
   long[] doUpdate(File[] paths, SVNRevision revision, SVNDepth depth, boolean allowUnversionedObstructions, boolean depthIsSticky, boolean makeParents) throws SVNException;
 

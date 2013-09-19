@@ -17,7 +17,7 @@ package org.jetbrains.idea.svn.portable;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
@@ -33,16 +33,11 @@ import java.io.File;
  * Date: 2/1/12
  * Time: 12:11 PM
  */
-public class SvnSvnkitUpdateClient implements SvnUpdateClientI {
+public class SvnSvnkitUpdateClient extends BaseSvnClient implements SvnUpdateClientI {
 
-  @NotNull private final SvnVcs myVcs;
   @Nullable protected ISVNEventHandler myDispatcher;
   protected boolean myIgnoreExternals;
   protected boolean myLocksOnDemand;
-
-  public SvnSvnkitUpdateClient(@NotNull SvnVcs vcs) {
-    myVcs = vcs;
-  }
 
   @Override
   public long[] doUpdate(File[] paths,

@@ -15,12 +15,10 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.portable.SvnSvnkitUpdateClient;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -42,17 +40,10 @@ import java.util.regex.Pattern;
  * Date: 2/1/12
  * Time: 12:13 PM
  */
+// TODO: Currently make inherit SVNKit update implementation not to duplicate setXxx() methods.
 public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
   private static final Pattern ourExceptionPattern = Pattern.compile("svn: E(\\d{6}): .+");
   private static final String ourAuthenticationRealm = "Authentication realm:";
-  private final Project myProject;
-  private SvnVcs myVcs;
-
-  public SvnCommandLineUpdateClient(@NotNull final SvnVcs vcs) {
-    super(vcs);
-    myVcs = vcs;
-    myProject = vcs.getProject();
-  }
 
   @Override
   public long[] doUpdate(final File[] paths, final SVNRevision revision, final SVNDepth depth, final boolean allowUnversionedObstructions,
@@ -71,7 +62,7 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
   }
 
   private void checkWorkingCopy(@NotNull File path) throws SVNException {
-    final SvnCommandLineInfoClient infoClient = new SvnCommandLineInfoClient(myProject);
+    final SvnCommandLineInfoClient infoClient = new SvnCommandLineInfoClient(myVcs.getProject());
     final SVNInfo info = infoClient.doInfo(path, SVNRevision.UNDEFINED);
 
     if (info == null || info.getURL() == null) {
