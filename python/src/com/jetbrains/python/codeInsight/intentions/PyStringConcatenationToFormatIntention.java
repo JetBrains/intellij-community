@@ -109,9 +109,10 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiElement element = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyBinaryExpression.class, false);
-    while (element.getParent() instanceof PyBinaryExpression) {
+    while (element != null && element.getParent() instanceof PyBinaryExpression) {
       element = element.getParent();
     }
+    if (element == null) return;
     final LanguageLevel languageLevel = LanguageLevel.forElement(element);
     final boolean useFormatMethod = languageLevel.isAtLeast(LanguageLevel.PYTHON27);
 
@@ -133,7 +134,7 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
         }
         stringLiteral.append(escaper.fun(value));
       } else {
-        addParamToString(stringLiteral, paramCount, languageLevel);
+        addParamToString(stringLiteral, paramCount, useFormatMethod);
         parameters.add(expression.getText());
         ++paramCount;
       }
@@ -166,8 +167,8 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
     }
   }
 
-  private static void addParamToString(StringBuilder stringLiteral, int i, LanguageLevel level) {
-    if (level.isPy3K())
+  private static void addParamToString(StringBuilder stringLiteral, int i, boolean useFormatMethod) {
+    if (useFormatMethod)
       stringLiteral.append("{").append(i).append("}");
     else
       stringLiteral.append("%s");
