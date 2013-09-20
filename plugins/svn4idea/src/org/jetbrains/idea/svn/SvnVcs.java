@@ -244,6 +244,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration, final SvnLoadedBrachesStorage storage) {
     super(project, VCS_NAME);
 
+    cmdClientFactory = new CmdClientFactory(this);
+    svnKitClientFactory = new SvnKitClientFactory(this);
+
     myLoadedBranchesStorage = storage;
     myRootsToWorkingCopies = new RootsToWorkingCopies(this);
     myConfiguration = svnConfiguration;
@@ -500,9 +503,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     else if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       checkCommandLineVersion();
     }
-
-    cmdClientFactory = new CmdClientFactory(this);
-    svnKitClientFactory = new SvnKitClientFactory(this);
 
     // do one time after project loaded
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
