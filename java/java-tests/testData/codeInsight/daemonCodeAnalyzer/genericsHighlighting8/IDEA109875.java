@@ -8,6 +8,6 @@ public class Test<Y> {
     }
 
     public static void main(String[] args) {
-        Test.<Set<String>>doTest<error descr="'doTest(java.util.Set<java.lang.String>)' in 'Test' cannot be applied to '(java.util.Set<java.lang.Object>)'">(Collections.emptySet())</error>;
+        Test.<Set<String>>doTest(Collections.emptySet());
     }
 }

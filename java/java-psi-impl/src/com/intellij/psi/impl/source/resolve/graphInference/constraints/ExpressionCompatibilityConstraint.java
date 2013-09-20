@@ -15,14 +15,17 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * User: anna
@@ -70,8 +73,10 @@ public class ExpressionCompatibilityConstraint implements ConstraintFormula {
     }
     
     if (myExpression instanceof PsiCallExpression) {
-      final JavaResolveResult resolveResult = ((PsiCallExpression)myExpression).resolveMethodGenerics();
-      final PsiMethod method = (PsiMethod)resolveResult.getElement();
+      final PsiExpressionList argumentList = ((PsiCallExpression)myExpression).getArgumentList();
+      final Map<PsiElement,Pair<PsiMethod,PsiSubstitutor>> map = MethodCandidateInfo.CURRENT_CANDIDATE.get();
+      final Pair<PsiMethod,PsiSubstitutor> pair = map != null ? map.get(argumentList) : null;
+      final PsiMethod method = pair != null ? pair.first : ((PsiCallExpression)myExpression).resolveMethod();
       if (method != null) {
         final PsiTypeParameter[] typeParameters = method.getTypeParameters();
         if (typeParameters.length == 0) {
@@ -80,7 +85,6 @@ public class ExpressionCompatibilityConstraint implements ConstraintFormula {
             constraints.add(new TypeCompatibilityConstraint(myT, exprType));
           }
         } else {
-          final PsiExpressionList argumentList = ((PsiCallExpression)myExpression).getArgumentList();
           PsiType returnType = method.getReturnType();
           if (argumentList != null && returnType != null) { //todo constructor
             final InferenceSession callSession = new InferenceSession(typeParameters, method.getParameterList().getParameters(),
