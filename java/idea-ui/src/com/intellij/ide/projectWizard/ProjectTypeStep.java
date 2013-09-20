@@ -37,6 +37,8 @@ import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,7 +104,16 @@ public class ProjectTypeStep extends StepAdapter {
     });
 
     ProjectCategory[] projectCategories = ProjectCategory.EXTENSION_POINT_NAME.getExtensions();
-    myProjectTypeList.setModel(new CollectionListModel<ProjectCategory>(Arrays.asList(projectCategories)));
+    List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
+
+    List<ProjectCategory> categories = new ArrayList<ProjectCategory>(Arrays.asList(projectCategories));
+    categories.addAll(ContainerUtil.map(builders, new Function<ModuleBuilder, ProjectCategory>() {
+      @Override
+      public ProjectCategory fun(ModuleBuilder builder) {
+        return new BuilderBasedProjectType(builder);
+      }
+    }));
+    myProjectTypeList.setModel(new CollectionListModel<ProjectCategory>(categories));
     myProjectTypeList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
