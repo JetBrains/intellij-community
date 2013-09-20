@@ -50,7 +50,7 @@ class Paths {
     distWin = "$sandbox/win"
     distMac = "$sandbox/mac"
     distUnix = "$sandbox/unix"
-    artifacts = "$home/out/pycharmCE/artifacts"
+    artifacts = "$sandbox/artifacts"
 
     ideaSystem = "$sandbox/system"
     ideaConfig = "$sandbox/config"
