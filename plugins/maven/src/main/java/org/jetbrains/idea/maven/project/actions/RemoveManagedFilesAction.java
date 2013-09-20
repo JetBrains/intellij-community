@@ -15,9 +15,13 @@
  */
 package org.jetbrains.idea.maven.project.actions;
 
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
 
@@ -26,16 +30,35 @@ public class RemoveManagedFilesAction extends MavenAction {
   protected boolean isAvailable(AnActionEvent e) {
     if (!super.isAvailable(e)) return false;
 
-    final DataContext context = e.getDataContext();
-    for (VirtualFile each : MavenActionUtil.getMavenProjectsFiles(context)) {
-      if (MavenActionUtil.getProjectsManager(context).isManagedFile(each)) return true;
-    }
-    return false;
+    return !MavenActionUtil.getMavenProjectsFiles(e.getDataContext()).isEmpty();
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext context = e.getDataContext();
-    MavenActionUtil.getProjectsManager(context).removeManagedFiles(MavenActionUtil.getMavenProjectsFiles(context));
+
+    boolean hasManagedFiles = false;
+
+    MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
+
+    for (VirtualFile each : MavenActionUtil.getMavenProjectsFiles(context)) {
+      if (projectsManager.isManagedFile(each)) {
+        hasManagedFiles = true;
+        break;
+      }
+    }
+
+    if (!hasManagedFiles) {
+      Notification notification = new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "Failed to remove project",
+                                                   "You can not remove selected project because it's " +
+                                                   "imported as module of other project. You can ignore it. Only root project can be removed.",
+                                                   NotificationType.ERROR);
+
+      notification.setImportant(true);
+      notification.notify(MavenActionUtil.getProject(context));
+      return;
+    }
+
+    projectsManager.removeManagedFiles(MavenActionUtil.getMavenProjectsFiles(context));
   }
 }
