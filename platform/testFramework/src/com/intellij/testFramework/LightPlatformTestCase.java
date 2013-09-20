@@ -210,7 +210,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static void initProject(@NotNull final LightProjectDescriptor descriptor) throws Exception {
     ourProjectDescriptor = descriptor;
 
-    final File projectFile = FileUtil.createTempFile(UsefulTestCase.getOriginalTempDir(), "light_temp_", ProjectFileType.DOT_DEFAULT_EXTENSION);
+    final File projectFile = FileUtil.createTempFile("light_temp_", ProjectFileType.DOT_DEFAULT_EXTENSION);
 
     new WriteCommandAction.Simple(null) {
       @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
@@ -229,6 +229,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
 
         ourProject = PlatformTestCase.createProject(projectFile, LIGHT_PROJECT_MARK + buffer.toString());
+        ourPathToKeep = projectFile.getPath();
         if (!ourHaveShutdownHook) {
           ourHaveShutdownHook = true;
           registerShutdownHook();
@@ -792,6 +793,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
 
       ProjectManagerEx.getInstanceEx().closeTestProject(ourProject);
       ourProject = null;
+      ourPathToKeep = null;
     }
   }
 

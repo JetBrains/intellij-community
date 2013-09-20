@@ -69,17 +69,17 @@ import java.util.regex.Pattern;
  * @author peter
  */
 public abstract class UsefulTestCase extends TestCase {
+  public static final String IDEA_MARKER_CLASS = "com.intellij.openapi.components.impl.stores.IdeaProjectStoreImpl";
+
   protected static boolean OVERWRITE_TESTDATA = false;
 
   private static final String DEFAULT_SETTINGS_EXTERNALIZED;
   private static final Random RNG = new SecureRandom();
   private static final String ORIGINAL_TEMP_DIR = FileUtil.getTempDirectory();
-  public static final String IDEA_MARKER_CLASS = "com.intellij.openapi.components.impl.stores.IdeaProjectStoreImpl";
 
   protected final Disposable myTestRootDisposable = new Disposable() {
     @Override
-    public void dispose() {
-    }
+    public void dispose() { }
 
     @Override
     public String toString() {
@@ -87,6 +87,9 @@ public abstract class UsefulTestCase extends TestCase {
       return UsefulTestCase.this.getClass() + (StringUtil.isEmpty(testName) ? "" : ".test" + testName);
     }
   };
+
+  protected static String ourPathToKeep = null;
+
   private CodeStyleSettings myOldCodeStyleSettings;
   private String myTempDir;
 
@@ -111,10 +114,6 @@ public abstract class UsefulTestCase extends TestCase {
     return true;
   }
 
-  protected static File getOriginalTempDir() {
-    return new File(ORIGINAL_TEMP_DIR);
-  }
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -123,9 +122,10 @@ public abstract class UsefulTestCase extends TestCase {
       String testName = getTestName(true);
       if (StringUtil.isEmptyOrSpaces(testName)) testName = "";
       testName = new File(testName).getName(); // in case the test name contains file separators
-      myTempDir = ORIGINAL_TEMP_DIR + "/unitTest_" + testName + "_"+ RNG.nextInt(1000);
+      myTempDir = FileUtil.toSystemDependentName(ORIGINAL_TEMP_DIR + "/unitTest_" + testName + "_"+ RNG.nextInt(1000));
       FileUtil.resetCanonicalTempPathCache(myTempDir);
     }
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
     DocumentImpl.CHECK_DOCUMENT_CONSISTENCY = !isPerformanceTest();
   }
 
@@ -138,7 +138,19 @@ public abstract class UsefulTestCase extends TestCase {
     finally {
       if (shouldContainTempFiles()) {
         FileUtil.resetCanonicalTempPathCache(ORIGINAL_TEMP_DIR);
-        FileUtil.delete(new File(myTempDir));
+        if (ourPathToKeep != null && FileUtil.isAncestor(myTempDir, ourPathToKeep, false)) {
+          File[] files = new File(myTempDir).listFiles();
+          if (files != null) {
+            for (File file : files) {
+              if (!FileUtil.pathsEqual(file.getPath(), ourPathToKeep)) {
+                FileUtil.delete(file);
+              }
+            }
+          }
+        }
+        else {
+          FileUtil.delete(new File(myTempDir));
+        }
       }
     }
 
