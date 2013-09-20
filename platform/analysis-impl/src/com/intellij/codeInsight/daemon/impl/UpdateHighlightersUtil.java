@@ -423,6 +423,9 @@ public class UpdateHighlightersUtil {
     else if (severity == HighlightInfoType.INJECTED_FRAGMENT_SEVERITY) {
       layer = HighlighterLayer.CARET_ROW-1;
     }
+    else if (severity == HighlightSeverity.SEMANTIC) {
+      layer = HighlighterLayer.SEMANTIC;
+    }
     else {
       layer = HighlighterLayer.ADDITIONAL_SYNTAX;
     }

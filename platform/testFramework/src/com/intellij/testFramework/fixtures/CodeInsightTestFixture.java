@@ -252,6 +252,12 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   long testHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @TestDataFile @NonNls String... filePaths);
 
+  long testHighlighting(boolean checkWarnings,
+                        boolean checkInfos,
+                        boolean checkWeakWarnings,
+                        boolean checkSemantics,
+                        @TestDataFile @NonNls String... filePaths);
+
   long testHighlightingAllFiles(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @TestDataFile @NonNls String... filePaths);
 
   long testHighlightingAllFiles(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, @TestDataFile @NonNls VirtualFile... files);

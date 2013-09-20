@@ -72,6 +72,7 @@ public class ExpectedHighlightingData {
   @NonNls private static final String END_LINE_HIGHLIGHT_MARKER = "EOLError";
   @NonNls private static final String END_LINE_WARNING_MARKER = "EOLWarning";
   @NonNls private static final String LINE_MARKER = "lineMarker";
+  @NonNls private static final String SEMANTIC_MARKER = "semantic";
 
   @NotNull private final Document myDocument;
   private final PsiFile myFile;
@@ -133,6 +134,7 @@ public class ExpectedHighlightingData {
         highlightingTypes.put("inject", new ExpectedHighlightingSet(HighlightInfoType.INJECTED_FRAGMENT_SEVERITY, false, checkInfos));
         highlightingTypes.put(INFO_MARKER, new ExpectedHighlightingSet(HighlightSeverity.INFORMATION, false, checkInfos));
         highlightingTypes.put("symbolName", new ExpectedHighlightingSet(HighlightInfoType.SYMBOL_TYPE_SEVERITY, false, false));
+        highlightingTypes.put(SEMANTIC_MARKER, new ExpectedHighlightingSet(HighlightSeverity.SEMANTIC, false, false));
         for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
           for (HighlightInfoType type : provider.getSeveritiesHighlightInfoTypes()) {
             final HighlightSeverity severity = type.getSeverity(null);
@@ -171,6 +173,10 @@ public class ExpectedHighlightingData {
   }
   public void checkSymbolNames() {
     highlightingTypes.put("symbolName", new ExpectedHighlightingSet(HighlightInfoType.SYMBOL_TYPE_SEVERITY, false, true));
+  }
+
+  public void checkSemantics() {
+    highlightingTypes.put(SEMANTIC_MARKER, new ExpectedHighlightingSet(HighlightSeverity.SEMANTIC, false, true));
   }
 
   private void refreshLineMarkers() {

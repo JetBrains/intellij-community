@@ -326,11 +326,21 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                final boolean checkInfos,
                                final boolean checkWeakWarnings,
                                final String... filePaths) {
+    return testHighlighting(checkWarnings, checkInfos, checkWeakWarnings, false, filePaths);
+  }
+
+
+  @Override
+  public long testHighlighting(boolean checkWarnings,
+                               boolean checkInfos,
+                               boolean checkWeakWarnings,
+                               boolean checkSemantics,
+                               @TestDataFile @NonNls String... filePaths) {
     if (filePaths.length > 0) {
       configureByFilesInner(filePaths);
     }
     try {
-      return collectAndCheckHighlighting(checkWarnings, checkInfos, checkWeakWarnings);
+      return collectAndCheckHighlighting(checkWarnings, checkInfos, checkWeakWarnings, checkSemantics);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -1409,7 +1419,14 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   private long collectAndCheckHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) throws Exception {
-    ExpectedHighlightingData data = new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, getHostFile());
+    return collectAndCheckHighlighting(checkWarnings, checkInfos, checkWeakWarnings, false);
+  }
+
+  private long collectAndCheckHighlighting(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings, boolean checkSemantics)
+    throws Exception {
+    ExpectedHighlightingData data =
+      new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, getHostFile());
+    if (checkSemantics) data.checkSemantics();
     data.init();
     return collectAndCheckHighlighting(data);
   }
