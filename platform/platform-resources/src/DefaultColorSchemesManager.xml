@@ -858,7 +858,7 @@
       </option>
       <option name="LOG_WARNING_OUTPUT">
         <value>
-          <option name="FOREGROUND" value="80A000"/>
+          <option name="FOREGROUND" value="ffa500"/>
         </value>
       </option>
       <option name="LOG_ERROR_OUTPUT">
