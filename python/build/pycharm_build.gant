@@ -33,6 +33,7 @@ private List pycharmImplementationModules() {   //modules to put into pycharm.ja
 
 class Paths {
   final sandbox
+  final sandboxCE
   final distAll
   final distWin
   final distMac
