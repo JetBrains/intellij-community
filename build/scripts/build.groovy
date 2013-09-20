@@ -140,9 +140,7 @@ class Build {
     projectBuilder.stage("- scramble -")
     if (steps.scramble) {
       if (ultimate_utils.isUnderTeamCity()) {
-//        projectBuilder.stage("Scrambling - getPreviousLogs")
         getPreviousLogs()
-//        projectBuilder.stage("Scrambling - prevBuildLog")
         def prevBuildLog = "$paths.sandbox/prevBuild/logs/ChangeLog.txt"
         if (!new File(prevBuildLog).exists()) prevBuildLog = null
         def inc = prevBuildLog != null ? "looseChangeLogFileIn=\"${prevBuildLog}\"" : ""
@@ -152,8 +150,6 @@ class Build {
                         "SCRAMBLED_CLASSES": args.jarPath, "INCREMENTAL": inc])
 
 
-        //[vo] should be ${product}.unscrambled
-//        def unscrambledPath = "$paths.artifacts/${args.jarName}.unscrambled"
         def unscrambledPath = "$paths.artifacts/${product}.unscrambled"
         ant.mkdir(dir: unscrambledPath)
         ant.copy(file: "$args.jarPath/${args.jarName}", todir: unscrambledPath, overwrite: "true")
@@ -196,6 +192,28 @@ class Build {
           include(name: "ChangeLog.txt")
         }
       }
+    }
+  }
+
+/*  private String getDmgImage(){
+    return "${home}/${product}/branding/DMG_background.png"
+  }*/
+
+  def mac_installation(){
+    def extraArgs = ["build.code": "${product}-${suffix}"]
+    if (steps.sit) {
+      projectBuilder.stage(" - buildMacZip - ")
+      String macAppRoot = utils.isEap() ? "${system_selector} EAP.app" : "${product}.app"
+      utils.buildMacZip(macAppRoot, "${paths.artifacts}/${product}-${suffix}.sit",
+                        [paths.distAll], paths.distMac)
+
+      projectBuilder.stage(" - signMacZip - ")
+      ultimate_utils.signMacZip("webide", extraArgs)
+    }
+    if (steps.dmg) {
+      projectBuilder.stage(" - buildDmg - ")
+//      ultimate_utils.buildDmg(product, "${home}/${product}/branding/DMG_background.png", extraArgs)
+      ultimate_utils.buildDmg(product, getDmgImage(), extraArgs)
     }
   }
 }
