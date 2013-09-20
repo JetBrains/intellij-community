@@ -1,9 +1,12 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
+ *
  * http://www.apache.org/licenses/LICENSE-2.0
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -21,7 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.console.GroovyShellAction;
+import org.jetbrains.plugins.groovy.console.GroovyShellActionBase;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -71,7 +74,7 @@ public class GroovyCompletionConfidence extends CompletionConfidence {
       final GrExpression qualifier = ref.getQualifierExpression();
       if (qualifier == null) {
         if (isPossibleClosureParameter(ref)) return ThreeState.NO;
-        if (parameters.getOriginalFile().getUserData(GroovyShellAction.GROOVY_SHELL_FILE) == Boolean.TRUE) {
+        if (parameters.getOriginalFile().getUserData(GroovyShellActionBase.GROOVY_SHELL_FILE) == Boolean.TRUE) {
           return ThreeState.NO;
         }
 
