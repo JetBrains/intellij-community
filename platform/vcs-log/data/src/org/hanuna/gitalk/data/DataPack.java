@@ -7,7 +7,6 @@ import com.intellij.util.containers.Predicate;
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
-import org.hanuna.gitalk.common.MyTimer;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.data.rebase.FakeCommitParents;
 import org.hanuna.gitalk.graph.Graph;
@@ -74,9 +73,7 @@ public class DataPack {
   }
 
   public void appendCommits(@NotNull List<? extends CommitParents> commitParentsList) {
-    MyTimer timer = new MyTimer("append commits");
     myGraphModel.appendCommitsToGraph(commitParentsList);
-    timer.print();
   }
 
   @NotNull
