@@ -780,7 +780,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   public static synchronized void closeAndDeleteProject() {
     if (ourProject != null) {
       ApplicationManager.getApplication().assertWriteAccessAllowed();
-      ourApplication.setDataProvider(null);
 
       ((ProjectImpl)ourProject).setTemporarilyDisposed(false);
       VirtualFile projectFile = ((ProjectEx)ourProject).getStateStore().getProjectFile();
