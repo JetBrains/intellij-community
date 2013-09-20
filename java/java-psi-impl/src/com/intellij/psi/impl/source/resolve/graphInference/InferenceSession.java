@@ -147,6 +147,7 @@ public class InferenceSession {
   }
   
   public void addCapturedVariable(PsiTypeParameter param) {
+    if (myInferenceVariables.containsKey(param)) return; //same method call
     final InferenceVariable variable = new InferenceVariable(param);
     variable.setCaptured(true);
     myInferenceVariables.put(param, variable);
