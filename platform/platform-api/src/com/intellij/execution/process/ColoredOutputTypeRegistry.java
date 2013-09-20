@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
-import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NonNls;
 
 import java.awt.*;
@@ -24,10 +23,24 @@ public class ColoredOutputTypeRegistry {
 
   private final Map<String, Key> myRegisteredKeys = new HashMap<String, Key>();
 
-  private static final TextAttributesKey[] myAnsiColorKeys = new TextAttributesKey[] {
-    ConsoleViewContentType.NORMAL_OUTPUT_KEY,
-    ConsoleHighlighter.RED, ConsoleHighlighter.GREEN, ConsoleHighlighter.YELLOW, ConsoleHighlighter.BLUE,
-    ConsoleHighlighter.MAGENTA, ConsoleHighlighter.CYAN
+  private static final TextAttributesKey[] myAnsiColorKeys = new TextAttributesKey[]{
+    ConsoleHighlighter.BLACK,
+    ConsoleHighlighter.RED,
+    ConsoleHighlighter.GREEN,
+    ConsoleHighlighter.YELLOW,
+    ConsoleHighlighter.BLUE,
+    ConsoleHighlighter.MAGENTA,
+    ConsoleHighlighter.CYAN,
+    ConsoleHighlighter.GRAY,
+
+    ConsoleHighlighter.DARKGRAY,
+    ConsoleHighlighter.RED_BRIGHT,
+    ConsoleHighlighter.GREEN_BRIGHT,
+    ConsoleHighlighter.YELLOW_BRIGHT,
+    ConsoleHighlighter.BLUE_BRIGHT,
+    ConsoleHighlighter.MAGENTA_BRIGHT,
+    ConsoleHighlighter.CYAN_BRIGHT,
+    ConsoleHighlighter.WHITE,
   };
 
   /*
@@ -73,7 +86,7 @@ public class ColoredOutputTypeRegistry {
       attribute = attribute.substring(1);
     }
     if (attribute.endsWith("m")) {
-      attribute = attribute.substring(0, attribute.length()-1);
+      attribute = attribute.substring(0, attribute.length() - 1);
     }
     if (attribute.equals("0")) {
       return ProcessOutputTypes.STDOUT;
@@ -88,25 +101,43 @@ public class ColoredOutputTypeRegistry {
       catch (NumberFormatException e) {
         continue;
       }
-      if (value == 4) {
+      if (value == 1) {
+        attrs.setFontType(Font.BOLD);
+      }
+      else if (value == 4) {
         attrs.setEffectType(EffectType.LINE_UNDERSCORE);
       }
-      else if (value == 1) {
-        attrs.setFontType(Font.BOLD);
+      else if (value == 22) {
+        attrs.setFontType(Font.PLAIN);
+      }
+      else if (value == 24) {  //not underlined
+        attrs.setEffectType(null);
       }
       else if (value >= 30 && value <= 37) {
         attrs.setForegroundColor(getAnsiColor(value - 30));
       }
+      else if (value == 38) {
+        //TODO: 256 colors foreground
+      }
+      else if (value == 39) {
+        attrs.setForegroundColor(getColorByKey(ConsoleViewContentType.NORMAL_OUTPUT_KEY));
+      }
       else if (value >= 40 && value <= 47) {
         attrs.setBackgroundColor(getAnsiColor(value - 40));
       }
-      else if (value == 90) {
-        // black, high intensity
-        attrs.setForegroundColor(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(ConsoleHighlighter.GRAY).getForegroundColor());
+      else if (value == 48) {
+        //TODO: 256 colors background
       }
-      else if (value >= 91 && value < 96) {
-        // TODO separate colors for high intensity?
-        attrs.setForegroundColor(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(getAnsiColorKey(value-90)).getForegroundColor());
+      else if (value == 49) {
+        attrs.setBackgroundColor(getColorByKey(ConsoleViewContentType.NORMAL_OUTPUT_KEY));
+      }
+      else if (value >= 90 && value <= 97) {
+        attrs.setForegroundColor(
+          getAnsiColor(value - 82));
+      }
+      else if (value >= 100 && value <= 107) {
+        attrs.setBackgroundColor(
+          getAnsiColor(value - 92));
       }
     }
     if (attrs.getEffectType() == EffectType.LINE_UNDERSCORE) {
@@ -120,13 +151,17 @@ public class ColoredOutputTypeRegistry {
   }
 
   private static Color getAnsiColor(final int value) {
-    if (value == 7) {
-      return JBColor.WHITE;
-    }
-    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(getAnsiColorKey(value)).getForegroundColor();
+    return getColorByKey(getAnsiColorKey(value));
+  }
+
+  private static Color getColorByKey(TextAttributesKey colorKey) {
+    return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(colorKey).getForegroundColor();
   }
 
   public static TextAttributesKey getAnsiColorKey(int value) {
+    if (value >= 16) {
+      return ConsoleViewContentType.NORMAL_OUTPUT_KEY;
+    }
     return myAnsiColorKeys[value];
   }
 }
