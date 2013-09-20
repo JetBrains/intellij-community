@@ -159,7 +159,7 @@ target('default': "Build artifacts") {
   signMacZip("pycharm")
   buildDmg("pycharm", "${home}/python/build/DMG_background.png")
 
-  communityEdition(usedJars)
+  //communityEdition(usedJars)
 }
 
 private communityEdition(Set usedJars) {
