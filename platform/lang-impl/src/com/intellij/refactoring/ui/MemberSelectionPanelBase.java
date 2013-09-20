@@ -13,47 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * Created by IntelliJ IDEA.
- * User: dsl
- * Date: 18.06.2002
- * Time: 13:19:44
- * To change template for new class use
- * Code Style | Class Templates options (Tools | IDE Options).
- */
 package com.intellij.refactoring.ui;
 
-import com.intellij.psi.PsiMember;
-import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.psi.PsiElement;
+import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
-public class MemberSelectionPanel extends AbstractMemberSelectionPanel<PsiMember, MemberInfo> {
-  private final MemberSelectionTable myTable;
+/**
+ * @author Max Medvedev
+ */
+public class MemberSelectionPanelBase<Member extends PsiElement,
+                                      MemberInfo extends MemberInfoBase<Member>,
+                                      Table extends AbstractMemberSelectionTable<Member, MemberInfo>> extends AbstractMemberSelectionPanel<Member, MemberInfo> {
+  private final Table myTable;
 
   /**
    * @param title if title contains 'm' - it would look and feel as mnemonic
    */
-  public MemberSelectionPanel(String title, List<MemberInfo> memberInfo, String abstractColumnHeader) {
+  public MemberSelectionPanelBase(String title, Table table) {
     super();
     setLayout(new BorderLayout());
 
-    myTable = createMemberSelectionTable(memberInfo, abstractColumnHeader);
+    myTable = table;
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTable);
     add(SeparatorFactory.createSeparator(title, myTable), BorderLayout.NORTH);
     add(scrollPane, BorderLayout.CENTER);
   }
 
-  protected MemberSelectionTable createMemberSelectionTable(List<MemberInfo> memberInfo, String abstractColumnHeader) {
-    return new MemberSelectionTable(memberInfo, abstractColumnHeader);
-  }
-
-  public MemberSelectionTable getTable() {
+  public Table getTable() {
     return myTable;
   }
 }
+

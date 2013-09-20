@@ -27,11 +27,13 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -201,24 +203,15 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
 
     final int caretOffset = editor.getCaretModel().getOffset();
 
-    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(0);
-    while (!iterator.atEnd()) {
-      int start = iterator.getStart();
-      int end = iterator.getEnd();
-      if ((start > caretOffset || end < caretOffset) &&  //skip prefix itself
-          end - start > matcher.getPrefix().length() && isWordLike(chars, start, end)) {
-        final String word = chars.subSequence(start, end).toString();
-        if (matcher.prefixMatches(word)) {
-          CompletionVariant v = new CompletionVariant(word, start);
-          if (end > caretOffset) {
-            afterWords.add(v);
-          }
-          else {
-            words.add(v);
-          }
+    addWordsForEditor((EditorEx)editor, matcher, chars, words, afterWords, caretOffset);
+
+    for(FileEditor fileEditor: FileEditorManager.getInstance(file.getProject()).getAllEditors()) {
+      if (fileEditor instanceof TextEditor) {
+        Editor anotherEditor = ((TextEditor)fileEditor).getEditor();
+        if (anotherEditor != editor) {
+          addWordsForEditor((EditorEx)anotherEditor, matcher, anotherEditor.getDocument().getCharsSequence(), words, afterWords, 0);
         }
       }
-      iterator.advance();
     }
 
     Set<String> allWords = new HashSet<String>();
@@ -246,6 +239,32 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     return result;
   }
 
+  private static void addWordsForEditor(EditorEx editor,
+                                        CamelHumpMatcher matcher,
+                                        CharSequence chars,
+                                        ArrayList<CompletionVariant> words,
+                                        List<CompletionVariant> afterWords, int caretOffset) {
+    HighlighterIterator iterator = editor.getHighlighter().createIterator(0);
+    while (!iterator.atEnd()) {
+      int start = iterator.getStart();
+      int end = iterator.getEnd();
+      if ((start > caretOffset || end < caretOffset) &&  //skip prefix itself
+          end - start > matcher.getPrefix().length() && isWordLike(chars, start, end)) {
+        final String word = chars.subSequence(start, end).toString();
+        if (matcher.prefixMatches(word)) {
+          CompletionVariant v = new CompletionVariant(word, start);
+          if (end > caretOffset) {
+            afterWords.add(v);
+          }
+          else {
+            words.add(v);
+          }
+        }
+      }
+      iterator.advance();
+    }
+  }
+
   private static boolean prefixMatches(String prefix, String word) {
     return new CamelHumpMatcher(prefix == null ? "" : prefix).isStartMatch(word);
   }
@@ -254,8 +273,6 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     final int offset = editor.getCaretModel().getOffset();
 
     final CompletionData data = new CompletionData();
-
-    final int caretOffset = editor.getCaretModel().getOffset();
 
     HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset - 1);
     int start = iterator.getStart();

@@ -133,7 +133,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
 
   @Override
   public int getVersion() {
-    return 4;
+    return 5;
   }
 
   @Override

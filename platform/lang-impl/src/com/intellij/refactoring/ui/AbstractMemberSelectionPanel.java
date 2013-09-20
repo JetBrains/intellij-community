@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions;
+package com.intellij.refactoring.ui;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPolyVariantReference;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
+import com.intellij.refactoring.classMembers.MemberInfoBase;
+
+import javax.swing.*;
 
 /**
- * @author Maxim.Medvedev
+ * Nikolay.Tropin
+ * 8/20/13
  */
-public interface GrThisSuperReferenceExpression extends GrExpression, PsiPolyVariantReference, GrQualifiedReference<GrReferenceExpression> {
-  @NotNull
-  @Override
-  PsiElement getReferenceNameElement();
-
-  @NotNull
-  @Override
-  String getReferenceName();
+public abstract class AbstractMemberSelectionPanel<T extends PsiElement, M extends MemberInfoBase<T>> extends JPanel {
+  public abstract AbstractMemberSelectionTable<T, M> getTable();
 }

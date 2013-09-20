@@ -547,6 +547,11 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     private final List<OldStreamProviderAdapter> myStreamProviders = new SmartList<OldStreamProviderAdapter>();
 
     @Override
+    public boolean isVersioningRequired() {
+      return true;
+    }
+
+    @Override
     public boolean isEnabled() {
       for (StreamProvider provider : myStreamProviders) {
         if (provider.isEnabled()) {

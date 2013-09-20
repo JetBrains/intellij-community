@@ -1600,4 +1600,22 @@ def groovy2 = '''print <error descr="String end expected">'abc\\\\' </error>'''
 
 """)
   }
+
+  void testAnnotationAsAnnotationValue() {
+    testHighlighting('''\
+@interface A {}
+@interface B {
+  A[] foo()
+}
+@interface C {
+  A foo()
+}
+
+@B(foo = @A)
+@B(foo = [@A])
+@C(foo = @A)
+@C(foo = <error descr="Cannot assign 'Integer' to 'A'">2</error>)
+def foo
+''')
+  }
 }

@@ -34,4 +34,17 @@ $some_long_variable_name<caret>
 '''
   }
 
+  public void testFromAnotherFile() {
+    myFixture.configureByText "b.txt", '''
+$some_long_variable_name = Obj::instance();
+'''
+    myFixture.configureByText "a.txt", '''
+$some_lon<caret>
+'''
+
+    myFixture.performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
+    myFixture.checkResult '''
+$some_long_variable_name<caret>
+'''
+  }
 }

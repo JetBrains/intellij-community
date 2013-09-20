@@ -132,7 +132,7 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
         for (String child : children) {
           if (child.endsWith(ZIP)) {
             URL templateUrl = new URL(url.first.toExternalForm() + "/" + child);
-            String name = child.substring(0, child.length() - ZIP.length()).replace('_', ' ');
+            String name = getTemplateName(child);
             templates.add(new LocalArchivedTemplate(name, templateUrl, url.second));
           }
         }
@@ -142,6 +142,10 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
       }
     }
     return templates.toArray(new ProjectTemplate[templates.size()]);
+  }
+
+  public static String getTemplateName(String child) {
+    return child.substring(0, child.length() - ZIP.length()).replace('_', ' ');
   }
 
   @Override

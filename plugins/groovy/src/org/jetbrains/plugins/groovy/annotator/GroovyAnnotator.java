@@ -1430,6 +1430,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   private boolean checkAnnotationAttributeValue(GrAnnotationMemberValue value, PsiElement toHighlight) {
     if (value instanceof GrLiteral) return false;
     if (value instanceof GrClosableBlock) return false;
+    if (value instanceof GrAnnotation) return false;
 
     if (value instanceof GrReferenceExpression) {
       PsiElement resolved = ((GrReferenceExpression)value).resolve();

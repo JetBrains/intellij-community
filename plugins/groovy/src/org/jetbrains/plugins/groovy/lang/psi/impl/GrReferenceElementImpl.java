@@ -191,4 +191,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
     return whiteSpaceAndComments;
   }
 
+  public boolean isQualified() {
+    return getQualifier() != null;
+  }
 }

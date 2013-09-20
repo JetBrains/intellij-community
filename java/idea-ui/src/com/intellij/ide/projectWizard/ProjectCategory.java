@@ -24,6 +24,7 @@ import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -44,6 +45,10 @@ public abstract class ProjectCategory {
 
   public String getDisplayName() {
     return createModuleBuilder().getPresentableName();
+  }
+
+  public Icon getIcon() {
+    return createModuleBuilder().getNodeIcon();
   }
 
   public String getDescription() {

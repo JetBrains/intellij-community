@@ -47,8 +47,8 @@ import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalS
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -461,21 +461,21 @@ public class ExternalSystemUtil {
       public void run() {
         if (modal) {
           String title = ExternalSystemBundle.message("progress.import.text", projectName, externalSystemId.getReadableName());
-          ProgressManager.getInstance().run(new Task.Modal(project, title, true) {
+          new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
               refreshProjectStructureTask.execute(indicator);
             }
-          });
+          }.queue();
         }
         else {
           String title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
-          ProgressManager.getInstance().run(new Task.Backgroundable(project, title) {
+          new Task.Backgroundable(project, title) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
               refreshProjectStructureTask.execute(indicator);
             }
-          });
+          }.queue();
         }
       }
     });

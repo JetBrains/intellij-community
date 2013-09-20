@@ -173,7 +173,7 @@ public abstract class PlatformIdTableBuilding {
         }
 
         final int documentLength = chars.length();
-        BaseFilterLexer.TodoScanningData[] todoScanningDatas = null;
+        BaseFilterLexer.TodoScanningState todoScanningState = null;
         final HighlighterIterator iterator = highlighter.createIterator(0);
 
         while (!iterator.atEnd()) {
@@ -184,10 +184,10 @@ public abstract class PlatformIdTableBuilding {
             if (start >= documentLength) break;
             int end = iterator.getEnd();
 
-            todoScanningDatas = BaseFilterLexer.advanceTodoItemsCount(
+            todoScanningState = BaseFilterLexer.advanceTodoItemsCount(
               chars.subSequence(start, Math.min(end, documentLength)),
               occurrenceConsumer,
-              todoScanningDatas
+              todoScanningState
             );
             if (end > documentLength) break;
           }
