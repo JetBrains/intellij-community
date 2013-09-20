@@ -898,15 +898,6 @@ public abstract class ChooseByNameBase {
         cancelCalcElementsThread();
       }
     });
-    ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
-      @Override
-      public void beforeWriteActionStart(Object action) {
-        CalcElementsThread prevThread = cancelCalcElementsThread();
-        if (prevThread != null) {
-          prevThread.scheduleRestart();
-        }
-      }
-    }, myTextPopup);
     myTextPopup.show(layeredPane);
   }
 
@@ -1503,7 +1494,7 @@ public abstract class ChooseByNameBase {
 
     private final Alarm myShowCardAlarm = new Alarm();
 
-    void scheduleRestart() {
+    private void scheduleRestart() {
       scheduleCalcElements(new CalcElementsThread(myPattern, myCheckboxState, myCallback, myModalityState, myCanCancel, myScopeExpanded));
     }
 
@@ -1520,6 +1511,15 @@ public abstract class ChooseByNameBase {
               ApplicationManager.getApplication().runReadAction(new Runnable() {
                 @Override
                 public void run() {
+                  ApplicationAdapter listener = new ApplicationAdapter() {
+                    @Override
+                    public void beforeWriteActionStart(Object action) {
+                      cancel();
+                      scheduleRestart();
+                      ApplicationManager.getApplication().removeApplicationListener(this);
+                    }
+                  };
+                  ApplicationManager.getApplication().addApplicationListener(listener);
                   try {
                     boolean everywhere = myCheckboxState;
                     if (!ourLoadNamesEachTime) ensureNamesLoaded(everywhere);
@@ -1527,6 +1527,9 @@ public abstract class ChooseByNameBase {
                   }
                   catch (ProcessCanceledException e) {
                     //OK
+                  }
+                  finally {
+                    ApplicationManager.getApplication().removeApplicationListener(listener);
                   }
                 }
               });
