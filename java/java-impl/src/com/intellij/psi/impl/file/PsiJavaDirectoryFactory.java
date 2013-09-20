@@ -34,6 +34,7 @@ public class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
     myManager = manager;
   }
 
+  @NotNull
   @Override
   public PsiDirectory createDirectory(@NotNull final VirtualFile file) {
     return new PsiJavaDirectoryImpl(myManager, file);
@@ -61,7 +62,7 @@ public class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
   }
 
   @Override
-  public boolean isPackage(PsiDirectory directory) {
+  public boolean isPackage(@NotNull PsiDirectory directory) {
     return ProjectRootManager.getInstance(myManager.getProject()).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile()) != null;
   }
 
