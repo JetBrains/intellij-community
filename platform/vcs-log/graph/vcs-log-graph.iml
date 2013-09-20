@@ -17,7 +17,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="vcs-log-common" />
     <orderEntry type="module-library" scope="TEST">
       <library>
         <CLASSES>

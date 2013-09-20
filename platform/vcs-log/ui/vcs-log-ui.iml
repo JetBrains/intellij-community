@@ -22,7 +22,6 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="platform-impl" />
-    <orderEntry type="module" module-name="vcs-log-common" />
     <orderEntry type="module" module-name="vcs-log-graph" />
     <orderEntry type="module" module-name="vcs-log-api" />
     <orderEntry type="module" module-name="vcs-api" />
