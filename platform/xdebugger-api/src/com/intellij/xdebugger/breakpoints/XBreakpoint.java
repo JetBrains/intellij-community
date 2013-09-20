@@ -38,7 +38,6 @@ public interface XBreakpoint<P extends XBreakpointProperties> extends UserDataHo
   @NotNull
   XBreakpointType<?,P> getType();
 
-  @Nullable
   P getProperties();
 
   @Nullable
