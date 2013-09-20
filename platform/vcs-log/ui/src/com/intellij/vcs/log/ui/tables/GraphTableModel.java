@@ -9,8 +9,9 @@ import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.rebase.FakeCommitParents;
 import com.intellij.vcs.log.graph.elements.Node;
+import com.intellij.vcs.log.graph.render.GraphCommitCell;
 import com.intellij.vcs.log.printmodel.GraphPrintCell;
-import com.intellij.vcs.log.ui.render.PositionUtil;
+import com.intellij.vcs.log.graph.render.PositionUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.AbstractTableModel;

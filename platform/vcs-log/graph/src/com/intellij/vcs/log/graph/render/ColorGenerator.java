@@ -1,4 +1,4 @@
-package com.intellij.vcs.log.ui.render.painters;
+package com.intellij.vcs.log.graph.render;
 
 import com.intellij.vcs.log.graph.elements.Branch;
 import org.jetbrains.annotations.NotNull;

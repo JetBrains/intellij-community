@@ -9,8 +9,8 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.ui.VcsLogUI;
-import com.intellij.vcs.log.ui.render.PrintParameters;
-import com.intellij.vcs.log.ui.render.painters.RefPainter;
+import com.intellij.vcs.log.graph.render.PrintParameters;
+import com.intellij.vcs.log.ui.render.RefPainter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

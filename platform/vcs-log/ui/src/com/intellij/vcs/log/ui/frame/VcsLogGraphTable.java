@@ -14,10 +14,10 @@ import com.intellij.vcs.log.printmodel.GraphPrintCell;
 import com.intellij.vcs.log.printmodel.SpecialPrintElement;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
-import com.intellij.vcs.log.ui.render.PositionUtil;
-import com.intellij.vcs.log.ui.render.painters.GraphCellPainter;
-import com.intellij.vcs.log.ui.render.painters.SimpleGraphCellPainter;
-import com.intellij.vcs.log.ui.tables.GraphCommitCell;
+import com.intellij.vcs.log.graph.render.PositionUtil;
+import com.intellij.vcs.log.graph.render.GraphCellPainter;
+import com.intellij.vcs.log.graph.render.SimpleGraphCellPainter;
+import com.intellij.vcs.log.graph.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +28,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -35,7 +36,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.vcs.log.ui.render.PrintParameters.HEIGHT_CELL;
+import static com.intellij.vcs.log.graph.render.PrintParameters.HEIGHT_CELL;
 
 /**
  * @author erokhins
@@ -94,13 +95,23 @@ public class VcsLogGraphTable extends JBTable {
     scrollRectToVisible(getCellRect(rowIndex, 0, false));
   }
 
+  @Nullable
+  public GraphPrintCell getGraphPrintCellForRow(TableModel model, int rowIndex) {
+    if (rowIndex >= model.getRowCount()) {
+      return null;
+    }
+    GraphCommitCell commitCell = (GraphCommitCell)model.getValueAt(rowIndex, GraphTableModel.COMMIT_COLUMN);
+    return commitCell.getPrintCell();
+  }
+
   private class MyMouseAdapter extends MouseAdapter {
     private final Cursor DEFAULT_CURSOR = new Cursor(Cursor.DEFAULT_CURSOR);
     private final Cursor HAND_CURSOR = new Cursor(Cursor.HAND_CURSOR);
 
     @Nullable
     private GraphPrintCell getGraphPrintCell(MouseEvent e) {
-      return PositionUtil.getGraphPrintCell(e, getModel());
+      int rowIndex = PositionUtil.getRowIndex(e);
+      return getGraphPrintCellForRow(getModel(), rowIndex);
     }
 
     @Nullable
@@ -177,7 +188,7 @@ public class VcsLogGraphTable extends JBTable {
     List<Node> result = new ArrayList<Node>();
     Arrays.sort(selectedRows);
     for (int rowIndex : selectedRows) {
-      Node node = PositionUtil.getNode(PositionUtil.getGraphPrintCell(getModel(), rowIndex));
+      Node node = PositionUtil.getNode(getGraphPrintCellForRow(getModel(), rowIndex));
       if (node != null) {
         result.add(node);
       }

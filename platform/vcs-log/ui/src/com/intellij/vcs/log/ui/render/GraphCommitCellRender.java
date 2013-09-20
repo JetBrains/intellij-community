@@ -7,9 +7,8 @@ import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.printmodel.SpecialPrintElement;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
-import com.intellij.vcs.log.ui.render.painters.GraphCellPainter;
-import com.intellij.vcs.log.ui.render.painters.RefPainter;
-import com.intellij.vcs.log.ui.tables.GraphCommitCell;
+import com.intellij.vcs.log.graph.render.GraphCellPainter;
+import com.intellij.vcs.log.graph.render.GraphCommitCell;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,8 +21,8 @@ import java.awt.font.FontRenderContext;
 import java.awt.image.BufferedImage;
 import java.util.List;
 
-import static com.intellij.vcs.log.ui.render.PrintParameters.HEIGHT_CELL;
-import static com.intellij.vcs.log.ui.render.PrintParameters.WIDTH_NODE;
+import static com.intellij.vcs.log.graph.render.PrintParameters.HEIGHT_CELL;
+import static com.intellij.vcs.log.graph.render.PrintParameters.WIDTH_NODE;
 
 /**
  * @author erokhins

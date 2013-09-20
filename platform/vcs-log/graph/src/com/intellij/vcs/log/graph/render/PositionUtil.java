@@ -1,18 +1,14 @@
-package com.intellij.vcs.log.ui.render;
+package com.intellij.vcs.log.graph.render;
 
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.printmodel.GraphPrintCell;
 import com.intellij.vcs.log.printmodel.ShortEdge;
 import com.intellij.vcs.log.printmodel.SpecialPrintElement;
-import com.intellij.vcs.log.ui.tables.GraphCommitCell;
-import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.table.TableModel;
 import java.awt.event.MouseEvent;
 
-import static com.intellij.vcs.log.ui.render.PrintParameters.*;
+import static com.intellij.vcs.log.graph.render.PrintParameters.*;
 
 public class PositionUtil {
   private static float distance(int x1, int y1, int x2, int y2) {
@@ -54,28 +50,6 @@ public class PositionUtil {
   }
 
   @Nullable
-  public static GraphPrintCell getGraphPrintCell(MouseEvent e, TableModel model) {
-    int rowIndex = getRowIndex(e);
-    return getGraphPrintCell(model, rowIndex);
-  }
-
-  @Nullable
-  public static GraphPrintCell getGraphPrintCell(TableModel model, int rowIndex) {
-    if (rowIndex >= model.getRowCount()) {
-      return null;
-    }
-    GraphCommitCell commitCell = (GraphCommitCell)model.getValueAt(rowIndex, GraphTableModel.COMMIT_COLUMN);
-    return commitCell.getPrintCell();
-  }
-
-
-  @Nullable
-  public static Node getNode(MouseEvent e, TableModel model) {
-    GraphPrintCell cell = getGraphPrintCell(e, model);
-    return getNode(cell);
-  }
-
-  @Nullable
   public static Node getNode(@Nullable GraphPrintCell cell) {
     if (cell == null) {
       return null;
@@ -85,15 +59,6 @@ public class PositionUtil {
       if (node != null) {
         return node;
       }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static Hash getCommit(MouseEvent e, TableModel model) {
-    Node node = getNode(e, model);
-    if (node != null) {
-      return node.getCommitHash();
     }
     return null;
   }

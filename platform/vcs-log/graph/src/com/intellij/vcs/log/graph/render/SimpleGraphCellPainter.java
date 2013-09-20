@@ -1,4 +1,4 @@
-package com.intellij.vcs.log.ui.render.painters;
+package com.intellij.vcs.log.graph.render;
 
 import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.graph.elements.Edge;
@@ -7,14 +7,11 @@ import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.printmodel.GraphPrintCell;
 import com.intellij.vcs.log.printmodel.ShortEdge;
 import com.intellij.vcs.log.printmodel.SpecialPrintElement;
-import com.intellij.vcs.log.ui.render.PositionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
-
-import static com.intellij.vcs.log.ui.render.PrintParameters.*;
 
 /**
  * @author erokhins
@@ -25,52 +22,52 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
 
   private Graphics2D g2;
 
-  private final Stroke usual = new BasicStroke(THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
-  private final Stroke hide = new BasicStroke(THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
-  private final Stroke selectUsual = new BasicStroke(SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
-  private final Stroke selectHide = new BasicStroke(SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
+  private final Stroke usual = new BasicStroke(PrintParameters.THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
+  private final Stroke hide = new BasicStroke(PrintParameters.THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
+  private final Stroke selectUsual = new BasicStroke(PrintParameters.SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL);
+  private final Stroke selectHide = new BasicStroke(PrintParameters.SELECT_THICK_LINE, BasicStroke.CAP_ROUND, BasicStroke.JOIN_BEVEL, 0, new float[]{7}, 0);
 
   private void paintUpLine(int from, int to, Color color) {
-    int x1 = WIDTH_NODE * from + WIDTH_NODE / 2;
-    int y1 = HEIGHT_CELL / 2;
-    int x2 = WIDTH_NODE * to + WIDTH_NODE / 2;
-    int y2 = -HEIGHT_CELL / 2;
+    int x1 = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
+    int y1 = PrintParameters.HEIGHT_CELL / 2;
+    int x2 = PrintParameters.WIDTH_NODE * to + PrintParameters.WIDTH_NODE / 2;
+    int y2 = -PrintParameters.HEIGHT_CELL / 2;
     g2.setColor(color);
     g2.drawLine(x2, y2, x1, y1);
   }
 
   private void paintDownLine(int from, int to, Color color) {
-    int x1 = WIDTH_NODE * from + WIDTH_NODE / 2;
-    int y1 = HEIGHT_CELL / 2;
-    int x2 = WIDTH_NODE * to + WIDTH_NODE / 2;
-    int y2 = HEIGHT_CELL + HEIGHT_CELL / 2;
+    int x1 = PrintParameters.WIDTH_NODE * from + PrintParameters.WIDTH_NODE / 2;
+    int y1 = PrintParameters.HEIGHT_CELL / 2;
+    int x2 = PrintParameters.WIDTH_NODE * to + PrintParameters.WIDTH_NODE / 2;
+    int y2 = PrintParameters.HEIGHT_CELL + PrintParameters.HEIGHT_CELL / 2;
     g2.setColor(color);
     g2.drawLine(x1, y1, x2, y2);
   }
 
   private void paintAbove(int position, Color color) {
-    int x1 = WIDTH_NODE * position + 3;
+    int x1 = PrintParameters.WIDTH_NODE * position + 3;
     int y = 4;
-    int x2 = WIDTH_NODE * position + WIDTH_NODE - 4;
+    int x2 = PrintParameters.WIDTH_NODE * position + PrintParameters.WIDTH_NODE - 4;
     g2.setColor(color);
     g2.drawLine(x1, y, x2, y);
   }
 
   private void paintBelow(int position, Color color) {
-    int x1 = WIDTH_NODE * position + 3;
-    int y = HEIGHT_CELL - 4;
-    int x2 = WIDTH_NODE * position + WIDTH_NODE - 4;
+    int x1 = PrintParameters.WIDTH_NODE * position + 3;
+    int y = PrintParameters.HEIGHT_CELL - 4;
+    int x2 = PrintParameters.WIDTH_NODE * position + PrintParameters.WIDTH_NODE - 4;
     g2.setColor(color);
     g2.drawLine(x1, y, x2, y);
   }
 
 
   private void paintCircle(int position, Color color, boolean select) {
-    int x0 = WIDTH_NODE * position + WIDTH_NODE / 2;
-    int y0 = HEIGHT_CELL / 2;
-    int r = CIRCLE_RADIUS;
+    int x0 = PrintParameters.WIDTH_NODE * position + PrintParameters.WIDTH_NODE / 2;
+    int y0 = PrintParameters.HEIGHT_CELL / 2;
+    int r = PrintParameters.CIRCLE_RADIUS;
     if (select) {
-      r = SELECT_CIRCLE_RADIUS;
+      r = PrintParameters.SELECT_CIRCLE_RADIUS;
     }
     Ellipse2D.Double circle = new Ellipse2D.Double(x0 - r + 0.5, y0 - r + 0.5, 2 * r, 2 * r);
     g2.setColor(color);
@@ -78,9 +75,9 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   }
 
   private void paintHide(int position, Color color) {
-    int x0 = WIDTH_NODE * position + WIDTH_NODE / 2;
-    int y0 = HEIGHT_CELL / 2;
-    int r = CIRCLE_RADIUS;
+    int x0 = PrintParameters.WIDTH_NODE * position + PrintParameters.WIDTH_NODE / 2;
+    int y0 = PrintParameters.HEIGHT_CELL / 2;
+    int r = PrintParameters.CIRCLE_RADIUS;
     g2.setColor(color);
     g2.drawLine(x0, y0, x0, y0 + r);
     g2.drawLine(x0, y0 + r, x0 + r, y0);
@@ -88,9 +85,9 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
   }
 
   private void paintShow(int position, Color color) {
-    int x0 = WIDTH_NODE * position + WIDTH_NODE / 2;
-    int y0 = HEIGHT_CELL / 2;
-    int r = CIRCLE_RADIUS;
+    int x0 = PrintParameters.WIDTH_NODE * position + PrintParameters.WIDTH_NODE / 2;
+    int y0 = PrintParameters.HEIGHT_CELL / 2;
+    int r = PrintParameters.CIRCLE_RADIUS;
     g2.setColor(color);
     g2.drawLine(x0, y0, x0, y0 - r);
     g2.drawLine(x0, y0 - r, x0 + r, y0);

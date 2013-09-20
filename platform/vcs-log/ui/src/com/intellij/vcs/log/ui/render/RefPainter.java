@@ -1,4 +1,4 @@
-package com.intellij.vcs.log.ui.render.painters;
+package com.intellij.vcs.log.ui.render;
 
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.intellij.vcs.log.ui.render.PrintParameters.HEIGHT_CELL;
+import static com.intellij.vcs.log.graph.render.PrintParameters.HEIGHT_CELL;
 
 /**
  * @author erokhins

@@ -1,4 +1,4 @@
-package com.intellij.vcs.log.ui.tables;
+package com.intellij.vcs.log.graph.render;
 
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.printmodel.GraphPrintCell;
