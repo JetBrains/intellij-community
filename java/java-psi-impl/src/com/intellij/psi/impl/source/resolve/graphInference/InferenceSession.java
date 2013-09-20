@@ -179,6 +179,8 @@ public class InferenceSession {
                 }
               }
             }
+          } else if (parent instanceof PsiConditionalExpression) {
+            targetType = PsiTypesUtil.getExpectedTypeByParent((PsiExpression)parent);
           }
         }
         if (targetType != null) {
