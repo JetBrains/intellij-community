@@ -114,35 +114,18 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private Map<String, String> myConfigurables = new HashMap<String, String>();
 
   private Alarm myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, ApplicationManager.getApplication());
+  private Alarm myUpdateAlarm = new Alarm(ApplicationManager.getApplication());
   private JBList myList = new JBList(myListModel) {
-    private Dimension oldSize;
     {
       setOpaque(false);
     }
     @Override
     protected void paintComponent(Graphics g) {
-      System.out.println(getPreferredSize());
       g.setColor(getTitlePanelBackground());
       g.fillRect(0, 0, myLeftWidth - 1, getHeight());
       g.setColor(getSeparatorColor());
       g.drawLine(myLeftWidth-1, 0, myLeftWidth-1, getHeight());
       super.paintComponent(g);
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      final Dimension size = super.getPreferredSize();
-      if (size != null && !size.equals(oldSize) && myPopup != null && myPopup.isVisible()) {
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            oldSize = getPreferredSize();
-            updatePopupBounds();
-          }
-        });
-      }
-      return size;
     }
   };
   private AnActionEvent myActionEvent;
@@ -163,11 +146,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }, null);
   }
 
-  private int myTopHitsCount;
-  private int myInitialWidth;
-  private int myInitialHeight;
   private Balloon myBalloon;
   private JLabel mySearchLabel;
+  private int myPopupActualWidth;
 
   public SearchEverywhereAction() {
     myContentPanel = new JPanel(new BorderLayout());
@@ -335,7 +316,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private void doNavigate() {
     final String pattern = getField().getText();
     final Object value = myList.getSelectedValue();
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(getField().getTextEditor()));
+    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(getField().getTextEditor()));
     IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(field.getTextEditor());
     if (myPopup != null && myPopup.isVisible()) {
       myPopup.cancel();
@@ -398,13 +379,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     myPopupField.setOpaque(true);
     initSearchField(myPopupField);
     myPopupField.getTextEditor().setColumns(25);
-    myBalloon = JBPopupFactory.getInstance().createBalloonBuilder(myPopupField)
+    final JPanel panel = new JPanel(new BorderLayout());
+    panel.add(new JLabel("Search Everywhere:"), BorderLayout.NORTH);
+    panel.add(myPopupField, BorderLayout.CENTER);
+    myBalloon = JBPopupFactory.getInstance().createBalloonBuilder(panel)
       .setShowCallout(false)
       .setHideOnKeyOutside(false)
       .setHideOnAction(true)
       .setAnimationCycle(0)
       .setDialogMode(false)
-      .setBorderColor(new JBColor(new Color(156, 192, 255), new Color(77, 77, 77)))
+      .setBorderColor(new JBColor(new Color(156, 192, 255), Gray._77))
       .setFillColor(new JBColor(new Color(77, 121, 231), new Color(60, 63, 65)))
       .createBalloon();
     myBalloon.show(JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext()), Balloon.Position.below);
@@ -498,9 +482,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         cmp = panel;
       }
 
-      final Color bg = isSelected ? UIUtil.getListSelectionBackground() : getRightBackground();
-      cmp.setBackground(bg);
-      myMainPanel.setBorder(new CustomLineBorder(bg, 0, 0, 1, 0));
+      //cmp.setBackground(bg);
+      Color bg = cmp.getBackground();
+      if (bg == null) {
+        bg = UIUtil.getListBackground(isSelected);
+      }
+      myMainPanel.setBorder(new CustomLineBorder(bg, 1, 0, 1, 0));
       String title = myTitleIndexes.getTitle(index);
       myMainPanel.removeAll();
       if (title != null) {
@@ -508,6 +495,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myMainPanel.add(SeparatorComponent.createLabeledLineSeparator(" " + title, getRightBackground()), BorderLayout.NORTH);
       }
       myMainPanel.add(cmp, BorderLayout.CENTER);
+      final int width = myMainPanel.getPreferredSize().width;
+      if (width > myPopupActualWidth) {
+        myPopupActualWidth = width;
+        schedulePopupUpdate();
+      }
       return myMainPanel;
     }
 
@@ -597,6 +589,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private Font getTitleFont() {
       return UIUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL));
     }
+  }
+
+  private void schedulePopupUpdate() {
+    myUpdateAlarm.cancelAllRequests();
+    myUpdateAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        updatePopupBounds();
+      }
+    }, 50);
   }
 
   private static JBColor getTitlePanelBackground() {
@@ -975,7 +977,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             final ActionCallback callback = ListDelegationUtil.installKeyboardDelegation(getField().getTextEditor(), myList);
             final ComponentPopupBuilder builder = JBPopupFactory.getInstance()
               .createComponentPopupBuilder(new JBScrollPane(myList), null);
-            myInitialWidth = myInitialHeight = 0;
             myPopup = builder
               .setRequestFocus(false)
               .setCancelKeyEnabled(false)
@@ -1096,6 +1097,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       return;
     }
     final Dimension size = myList.getPreferredSize();
+    if (size.width < myPopupActualWidth) {
+      size.width = myPopupActualWidth;
+    }
     Dimension sz = new Dimension(Math.max(getField().getWidth(), size.width), size.height);
     if (sz.width > 800 || sz.height > 800) {
       final int extra = new JBScrollPane().getVerticalScrollBar().getWidth();
