@@ -15,6 +15,8 @@
  */
 package com.intellij.util;
 
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
@@ -22,6 +24,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
@@ -134,13 +137,15 @@ public class EnvironmentUtil {
         throw new Exception("shell:" + shell);
       }
 
-      String[] command = {shell, "-l", "-c", "/usr/bin/printenv"};
+      File envFile = FileUtil.createTempFile("intellij-shell-env", null, true);
+      String[] command = {shell, "-l", "-c", "/usr/bin/printenv > " + envFile.getAbsolutePath()};
+      LOG.info("loading shell env: " + StringUtil.join(command, " "));
       Process process = Runtime.getRuntime().exec(command);
       ProcessKiller processKiller = new ProcessKiller(process);
       processKiller.killAfter(SHELL_ENV_READING_TIMEOUT);
-      List<String> lines = FileUtil.loadLines(process.getInputStream());
-      processKiller.stopWaiting();
       int rv = process.waitFor();
+      processKiller.stopWaiting();
+      List<String> lines = Files.readLines(envFile, Charsets.UTF_8);
       if (rv != 0 || lines.isEmpty()) {
         throw new Exception("rv:" + rv + " lines:" + lines.size());
       }
