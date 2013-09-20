@@ -1,9 +1,9 @@
 !define MANUFACTURER "JetBrains"
-!define MUI_PRODUCT  "PyCharm"
-!define PRODUCT_FULL_NAME "JetBrains PyCharm"
+!define MUI_PRODUCT  "PyCharm Community Edition"
+!define PRODUCT_FULL_NAME "JetBrains PyCharm Community Edition"
 !define PRODUCT_EXE_FILE "pycharm.exe"
-!define PRODUCT_ICON_FILE "pycharm_inst.ico"
-!define PRODUCT_UNINST_ICON_FILE "pycharm_uninst.ico"
+!define PRODUCT_ICON_FILE "PC_instCom.ico"
+!define PRODUCT_UNINST_ICON_FILE "PC_uninstCom.ico"
 !define PRODUCT_LOGO_FILE "logo.bmp"
 !define PRODUCT_HEADER_FILE "headerlogo.bmp"
 

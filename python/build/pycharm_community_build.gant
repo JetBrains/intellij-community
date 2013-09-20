@@ -50,7 +50,7 @@ class Paths {
     distWin = "$sandbox/win"
     distMac = "$sandbox/mac"
     distUnix = "$sandbox/unix"
-    artifacts = "$home/out/pycharmCE/artifacts"
+    artifacts = "$sandbox/artifacts"
 
     ideaSystem = "$sandbox/system"
     ideaConfig = "$sandbox/config"
@@ -380,7 +380,7 @@ private layoutMac(Map _args, String target) {
   }
 
   Map args = new HashMap(_args)
-  args.icns = "$home/python/resources/PyCharm.icns"
+  args.icns = "$pythonCommunityHome/resources/PyCharmCore.icns"
   args.bundleIdentifier = "com.jetbrains.pycharm"
   args.platform_prefix = "Python"
   args.help_id = "PY"
