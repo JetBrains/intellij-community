@@ -42,6 +42,6 @@ public class JavaFileStructureFilteringTest extends JavaFileStructureTestCase {
 
   public void testMatcher1()          throws Exception {checkTree("ico");}
   public void testMatcher2()          throws Exception {checkTree("ico");}
-  @Bombed(user = "peter", month = Calendar.SEPTEMBER, day = 20)
+  @Bombed(user = "peter", month = Calendar.DECEMBER, day = 20)
   public void testAnonymousMatcher2() throws Exception {checkTree("ico");}
 }
