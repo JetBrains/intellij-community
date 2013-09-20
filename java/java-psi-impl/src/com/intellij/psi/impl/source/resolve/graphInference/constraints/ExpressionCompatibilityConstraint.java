@@ -124,7 +124,8 @@ public class ExpressionCompatibilityConstraint implements ConstraintFormula {
     }
     
     if (myExpression instanceof PsiMethodReferenceExpression) {
-      //todo
+      constraints.add(new PsiMethodReferenceCompatibilityConstraint(((PsiMethodReferenceExpression)myExpression), myT));
+      return true;
     }
     
     if (myExpression instanceof PsiLambdaExpression) {
