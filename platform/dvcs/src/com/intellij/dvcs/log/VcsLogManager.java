@@ -22,9 +22,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
-import org.hanuna.gitalk.data.VcsLogDataHolder;
-import org.hanuna.gitalk.ui.VcsLogColorManagerImpl;
-import org.hanuna.gitalk.ui.VcsLogUI;
+import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
+import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
