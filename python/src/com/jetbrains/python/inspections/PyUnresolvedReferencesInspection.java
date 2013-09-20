@@ -396,8 +396,11 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
       final PsiElement element = reference.getElement();
       final List<LocalQuickFix> actions = new ArrayList<LocalQuickFix>(2);
-      if (ref_text.length() <= 0) return; // empty text, nothing to highlight
       final String refname = (element instanceof PyQualifiedExpression) ? ((PyQualifiedExpression)element).getReferencedName() : ref_text;
+      // Empty text, nothing to highlight
+      if (refname == null || refname.length() <= 0) {
+        return;
+      }
 
       final PyQualifiedName canonicalQName = getCanonicalName(reference, myTypeEvalContext);
       final String canonicalName = canonicalQName != null ? canonicalQName.toString() : null;
