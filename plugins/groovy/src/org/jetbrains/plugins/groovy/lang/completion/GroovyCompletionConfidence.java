@@ -12,6 +12,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.completion;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionConfidence;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.patterns.ElementPattern;
@@ -93,6 +94,10 @@ public class GroovyCompletionConfidence extends CompletionConfidence {
   @NotNull
   @Override
   public ThreeState shouldSkipAutopopup(@NotNull PsiElement contextElement, @NotNull PsiFile psiFile, int offset) {
+    if (CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS && psiFile.getUserData(GroovyShellAction.GROOVY_SHELL_FILE) == Boolean.TRUE) {
+      return ThreeState.YES;
+    }
+
     if (com.intellij.psi.impl.PsiImplUtil.isLeafElementOfType(contextElement, TokenSets.STRING_LITERALS)) {
       @SuppressWarnings("ConstantConditions")
       PsiElement parent = contextElement.getParent();
