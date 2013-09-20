@@ -54,37 +54,32 @@ public class StorageData {
   }
 
   public void load(@NotNull Element rootElement) throws IOException {
-    final Element[] elements = JDOMUtil.getElements(rootElement);
-    for (Element element : elements) {
-      if (element.getName().equals(COMPONENT)) {
-        final String name = element.getAttributeValue(NAME);
+    for (Iterator<Element> iterator = rootElement.getChildren(COMPONENT).iterator(); iterator.hasNext(); ) {
+      Element element = iterator.next();
+      String name = element.getAttributeValue(NAME);
+      if (name == null) {
+        LOG.info("Broken content in file : " + this);
+        continue;
+      }
 
-        if (name == null) {
-          LOG.info("Broken content in file : " + this);
-          continue;
+      iterator.remove();
+
+      if (element.getAttributes().size() > 1 || !element.getChildren().isEmpty()) {
+        assert element.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
+
+        Element existingElement = myComponentStates.get(name);
+        if (existingElement != null) {
+          element = mergeElements(name, element, existingElement);
         }
 
-        element.detach();
-
-        if (element.getAttributes().size() > 1 || !element.getChildren().isEmpty()) {
-          assert element.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
-
-          Element existingElement = myComponentStates.get(name);
-
-          if (existingElement != null) {
-            element = mergeElements(name, element, existingElement);
-          }
-
-          myComponentStates.put(name, element);
-        }
+        myComponentStates.put(name, element);
       }
     }
   }
 
   private static Element mergeElements(final String name, final Element element1, final Element element2) {
     ExtensionPoint<XmlConfigurationMerger> point = Extensions.getRootArea().getExtensionPoint("com.intellij.componentConfigurationMerger");
-    XmlConfigurationMerger[] mergers = point.getExtensions();
-    for (XmlConfigurationMerger merger : mergers) {
+    for (XmlConfigurationMerger merger : point.getExtensions()) {
       if (merger.getComponentName().equals(name)) {
         return merger.merge(element1, element2);
       }

@@ -15,6 +15,15 @@ public abstract class StreamProvider {
   public abstract boolean isEnabled();
 
   /**
+   * If true, special version file per storage file will keep version of component.
+   * On load remote data will be ignored if local version of component is higher.
+   * If your storage is always in connected state (for example, git provides you local working copy), you don't need it.
+   */
+  public boolean isVersioningRequired() {
+    return false;
+  }
+
+  /**
    * fileSpec Only main fileSpec, not version
    */
   public boolean isApplicable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {

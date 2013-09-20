@@ -119,10 +119,8 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     public void load(@NotNull final Element rootElement) throws IOException {
       super.load(rootElement);
 
-      final List attributes = rootElement.getAttributes();
-      for (Object attribute : attributes) {
-        final Attribute attr = (Attribute)attribute;
-        myOptions.put(attr.getName(), attr.getValue());
+      for (Attribute attribute : rootElement.getAttributes()) {
+        myOptions.put(attribute.getName(), attribute.getValue());
       }
     }
 
