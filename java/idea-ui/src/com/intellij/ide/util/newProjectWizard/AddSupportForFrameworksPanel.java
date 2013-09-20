@@ -80,7 +80,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     myLibrariesContainer = model.getLibrariesContainer();
 
     myLabel.setVisible(!vertical);
-    Splitter splitter = vertical ? new Splitter(true, 0.6f, 0.3f, 0.9f) : new Splitter(false, 0.3f, 0.1f, 0.7f);
+    Splitter splitter = vertical ? new Splitter(true, 0.6f) : new Splitter(false, 0.3f, 0.1f, 0.7f);
     myFrameworksTree = new FrameworksTree() {
       @Override
       protected void onNodeStateChanged(CheckedTreeNode node) {
@@ -239,7 +239,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
       createNode(provider, nodes, groups, roots);
     }
 
-    FrameworkSupportNodeBase.sortByName(roots);
+//    FrameworkSupportNodeBase.sortByName(roots);
     myRoots = roots;
   }
 
