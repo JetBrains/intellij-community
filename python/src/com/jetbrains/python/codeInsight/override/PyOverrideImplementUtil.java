@@ -1,6 +1,5 @@
 package com.jetbrains.python.codeInsight.override;
 
-import com.google.common.collect.Sets;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
@@ -69,21 +68,20 @@ public class PyOverrideImplementUtil {
   }
 
 
-  public static void chooseAndOverrideOrImplementMethods(final Project project,
+  private static void chooseAndOverrideOrImplementMethods(final Project project,
                                                          @NotNull final Editor editor,
                                                          @NotNull final PyClass pyClass) {
-    chooseAndOverrideOrImplementMethods(project, editor, pyClass, Sets.<PyFunction>newHashSet());
-  }
-
-  public static void chooseAndOverrideOrImplementMethods(final Project project,
-                                                          @NotNull final Editor editor,
-                                                          @NotNull final PyClass pyClass,
-                                                          @NotNull final Set<PyFunction> toSelect) {
     LOG.assertTrue(pyClass.isValid());
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     final Collection<PyFunction> superFunctions = getAllSuperFunctions(pyClass);
-    final List<PyMethodMember> membersToSelect = new ArrayList<PyMethodMember>();
+    chooseAndOverrideOrImplementMethods(project, editor, pyClass, superFunctions);
+  }
+
+  public static void chooseAndOverrideOrImplementMethods(@NotNull final Project project,
+                                                          @NotNull final Editor editor,
+                                                          @NotNull final PyClass pyClass,
+                                                          @NotNull final Collection<PyFunction> superFunctions) {
     List<PyMethodMember> elements = new ArrayList<PyMethodMember>();
     for (PyFunction function : superFunctions) {
       final String name = function.getName();
@@ -93,9 +91,6 @@ public class PyOverrideImplementUtil {
       if (pyClass.findMethodByName(name, false) == null) {
         final PyMethodMember member = new PyMethodMember(function);
         elements.add(member);
-        if (toSelect.contains(function)) {
-          membersToSelect.add(member);
-        }
       }
     }
     if (elements.size() == 0) {
@@ -117,7 +112,6 @@ public class PyOverrideImplementUtil {
       };
     chooser.setTitle("Select Methods to Override");
     chooser.setCopyJavadocVisible(false);
-    chooser.selectElements(membersToSelect.toArray(new PyMethodMember[membersToSelect.size()]));
     chooser.show();
     if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
       return;
