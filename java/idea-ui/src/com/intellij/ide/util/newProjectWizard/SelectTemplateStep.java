@@ -106,7 +106,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     Messages.installHyperlinkSupport(myDescriptionPane);
 
     myFormatPanel = new ProjectFormatPanel();
-    myNamePathComponent = initNamePathComponent(context);
+    myNamePathComponent = NamePathComponent.initNamePathComponent(context);
     if (context.isCreatingNewProject()) {
       mySettingsPanel.add(myNamePathComponent, BorderLayout.NORTH);
       addExpertPanel(myModulePanel);
@@ -166,24 +166,6 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
       }
     }
     return helpId;
-  }
-
-  private static NamePathComponent initNamePathComponent(WizardContext context) {
-    NamePathComponent component = new NamePathComponent(
-      IdeBundle.message("label.project.name"),
-      IdeBundle.message("label.project.files.location"),
-      IdeBundle.message("title.select.project.file.directory", IdeBundle.message("project.new.wizard.project.identification")),
-      IdeBundle.message("description.select.project.file.directory", StringUtil
-        .capitalize(IdeBundle.message("project.new.wizard.project.identification"))),
-      true, false
-    );
-    final String baseDir = context.getProjectFileDirectory();
-    final String projectName = context.getProjectName();
-    final String initialProjectName = projectName != null ? projectName : ProjectWizardUtil.findNonExistingFileName(baseDir, "untitled", "");
-    component.setPath(projectName == null ? (baseDir + File.separator + initialProjectName) : baseDir);
-    component.setNameValue(initialProjectName);
-    component.getNameComponent().select(0, initialProjectName.length());
-    return component;
   }
 
   private void setupPanels(@Nullable ProjectTemplate template) {

@@ -25,6 +25,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
 import com.intellij.util.ui.UIUtil;
@@ -116,6 +117,24 @@ public class NamePathComponent extends JPanel{
     insets = new Insets(0, 0, 5, 0);
     this.add(myPathPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 1, 1, 1.0, 0.0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                  insets, 0, 0));
+  }
+
+  public static NamePathComponent initNamePathComponent(WizardContext context) {
+    NamePathComponent component = new NamePathComponent(
+      IdeBundle.message("label.project.name"),
+      IdeBundle.message("label.project.files.location"),
+      IdeBundle.message("title.select.project.file.directory", IdeBundle.message("project.new.wizard.project.identification")),
+      IdeBundle.message("description.select.project.file.directory", StringUtil
+        .capitalize(IdeBundle.message("project.new.wizard.project.identification"))),
+      true, false
+    );
+    final String baseDir = context.getProjectFileDirectory();
+    final String projectName = context.getProjectName();
+    final String initialProjectName = projectName != null ? projectName : ProjectWizardUtil.findNonExistingFileName(baseDir, "untitled", "");
+    component.setPath(projectName == null ? (baseDir + File.separator + initialProjectName) : baseDir);
+    component.setNameValue(initialProjectName);
+    component.getNameComponent().select(0, initialProjectName.length());
+    return component;
   }
 
   private String getProjectFilePath(boolean isDefault) {
