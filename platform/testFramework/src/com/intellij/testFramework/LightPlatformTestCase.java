@@ -787,7 +787,13 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       if (!ourProject.isDisposed()) Disposer.dispose(ourProject);
 
       if (ioFile != null) {
-        FileUtil.delete(ioFile);
+        File dir = ioFile.getParentFile();
+        if (dir.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
+          FileUtil.delete(dir);
+        }
+        else {
+          FileUtil.delete(ioFile);
+        }
       }
 
       ProjectManagerEx.getInstanceEx().closeTestProject(ourProject);

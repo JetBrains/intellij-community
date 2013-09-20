@@ -70,6 +70,7 @@ import java.util.regex.Pattern;
  */
 public abstract class UsefulTestCase extends TestCase {
   public static final String IDEA_MARKER_CLASS = "com.intellij.openapi.components.impl.stores.IdeaProjectStoreImpl";
+  public static final String TEMP_DIR_MARKER = "unitTest_";
 
   protected static boolean OVERWRITE_TESTDATA = false;
 
@@ -122,7 +123,7 @@ public abstract class UsefulTestCase extends TestCase {
       String testName = getTestName(true);
       if (StringUtil.isEmptyOrSpaces(testName)) testName = "";
       testName = new File(testName).getName(); // in case the test name contains file separators
-      myTempDir = FileUtil.toSystemDependentName(ORIGINAL_TEMP_DIR + "/unitTest_" + testName + "_"+ RNG.nextInt(1000));
+      myTempDir = FileUtil.toSystemDependentName(ORIGINAL_TEMP_DIR + "/" + TEMP_DIR_MARKER + testName + "_"+ RNG.nextInt(1000));
       FileUtil.resetCanonicalTempPathCache(myTempDir);
     }
     //noinspection AssignmentToStaticFieldFromInstanceMethod
