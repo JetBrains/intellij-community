@@ -25,7 +25,9 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.StepAdapter;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.Disposer;
@@ -69,6 +71,7 @@ public class ProjectTypeStep extends StepAdapter {
 
   private final AddSupportForFrameworksPanel myFrameworksPanel;
   private final FrameworkSupportModelBase myModel;
+  private final ModuleBuilder.ModuleConfigurationUpdater myConfigurationUpdater;
 
   public ProjectTypeStep(WizardContext context, Disposable disposable) {
     myContext = context;
@@ -81,13 +84,21 @@ public class ProjectTypeStep extends StepAdapter {
         return StringUtil.notNullize(getSelectedBuilder().getContentEntryPath());
       }
     };
+    myConfigurationUpdater = new ModuleBuilder.ModuleConfigurationUpdater() {
+      @Override
+      public void update(@NotNull Module module, @NotNull ModifiableRootModel rootModel) {
+        myFrameworksPanel.addSupport(module, rootModel);
+      }
+    };
 
     ProjectCategory[] projectCategories = ProjectCategory.EXTENSION_POINT_NAME.getExtensions();
     myProjectTypeList.setModel(new CollectionListModel<ProjectCategory>(Arrays.asList(projectCategories)));
     myProjectTypeList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override
       public void valueChanged(ListSelectionEvent e) {
-        myContext.setProjectBuilder(getSelectedBuilder());
+        ModuleBuilder builder = getSelectedBuilder();
+        myContext.setProjectBuilder(builder);
+        builder.addModuleConfigurationUpdater(myConfigurationUpdater);
         updateFrameworks((ProjectCategory)myProjectTypeList.getSelectedValue());
       }
     });

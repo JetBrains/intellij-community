@@ -50,4 +50,9 @@ public class ProjectSummaryStep extends StepAdapter {
   public JComponent getComponent() {
     return myRootPanel;
   }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return myNamePathComponent.getNameComponent();
+  }
 }
