@@ -48,6 +48,7 @@ public class SvnKitClientFactory extends ClientFactory {
     myLockClient = new SvnKitLockClient();
     myCleanupClient = new SvnKitCleanupClient();
     myRelocateClient = new SvnKitRelocateClient();
+    myVersionClient = new SvnKitVersionClient();
     statusClient = new SvnkitSvnStatusClient(myVcs, null);
     infoClient = new SvnkitSvnWcClient(myVcs);
   }

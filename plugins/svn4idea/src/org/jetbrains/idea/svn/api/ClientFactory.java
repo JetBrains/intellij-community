@@ -46,6 +46,7 @@ public abstract class ClientFactory {
   protected LockClient myLockClient;
   protected CleanupClient myCleanupClient;
   protected RelocateClient myRelocateClient;
+  protected VersionClient myVersionClient;
 
   protected ClientFactory(@NotNull SvnVcs vcs) {
     myVcs = vcs;
@@ -144,6 +145,11 @@ public abstract class ClientFactory {
   @NotNull
   public RelocateClient createRelocateClient() {
     return prepare(myRelocateClient);
+  }
+
+  @NotNull
+  public VersionClient createVersionClient() {
+    return prepare(myVersionClient);
   }
 
   @NotNull

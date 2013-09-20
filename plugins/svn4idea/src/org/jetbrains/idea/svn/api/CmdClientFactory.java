@@ -48,6 +48,7 @@ public class CmdClientFactory extends ClientFactory {
     myLockClient = new CmdLockClient();
     myCleanupClient = new CmdCleanupClient();
     myRelocateClient = new CmdRelocateClient();
+    myVersionClient = new CmdVersionClient();
     statusClient = new SvnCommandLineStatusClient(myVcs);
     infoClient = new SvnCommandLineInfoClient(myVcs);
   }
