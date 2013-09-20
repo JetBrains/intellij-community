@@ -25,7 +25,7 @@ public interface RepositoryManager {
   @NotNull
   Collection<String> listSubFileNames(@NotNull String path);
 
-  void updateRepository() throws IOException;
+  void updateRepository();
 
   @NotNull
   ActionCallback commit();

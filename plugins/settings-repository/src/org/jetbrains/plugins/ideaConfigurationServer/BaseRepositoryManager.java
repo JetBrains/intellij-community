@@ -135,7 +135,7 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
   protected abstract void doDelete(@NotNull String path) throws Exception;
 
   @Override
-  public final void updateRepository() throws IOException {
+  public final void updateRepository() {
     taskProcessor.add(new ThrowableRunnable<Exception>() {
       @Override
       public void run() throws Exception {

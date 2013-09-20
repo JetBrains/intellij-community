@@ -17,14 +17,12 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
-import org.eclipse.jgit.transport.CredentialItem;
-import org.eclipse.jgit.transport.CredentialsProvider;
-import org.eclipse.jgit.transport.FetchResult;
-import org.eclipse.jgit.transport.URIish;
+import org.eclipse.jgit.transport.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.util.Iterator;
 
 final class GitRepositoryManager extends BaseRepositoryManager {
   private final Git git;
@@ -164,14 +162,25 @@ final class GitRepositoryManager extends BaseRepositoryManager {
           }
         }
 
-        if (fetchResult.getTrackingRefUpdates().isEmpty()) {
+        Iterator<TrackingRefUpdate> refUpdates = fetchResult.getTrackingRefUpdates().iterator();
+        TrackingRefUpdate refUpdate = refUpdates.hasNext() ? refUpdates.next() : null;
+        if (refUpdate == null || refUpdate.getResult() == RefUpdate.Result.NO_CHANGE) {
           // nothing to merge
           return;
         }
 
         int attemptCount = 0;
         do {
-          MergeResult mergeResult = git.merge().include(getUpstreamBranchRef()).setFastForward(MergeCommand.FastForwardMode.FF_ONLY).call();
+          MergeCommand mergeCommand = git.merge();
+          org.eclipse.jgit.lib.Ref ref = getUpstreamBranchRef();
+          if (ref == null) {
+            throw new AssertionError();
+          }
+          else {
+            mergeCommand.include(ref);
+          }
+
+         MergeResult mergeResult = mergeCommand.setFastForward(MergeCommand.FastForwardMode.FF_ONLY).call();
           if (LOG.isDebugEnabled()) {
             LOG.debug(mergeResult.toString());
           }
