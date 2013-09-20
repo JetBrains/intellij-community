@@ -43,6 +43,7 @@ class Paths {
 
   def Paths(String home) {
     sandbox = "$home/out/pycharm"
+    sandboxCE = "$home/out/pycharmCE"
 
     distAll = "$sandbox/layout"
     distWin = "$sandbox/win"
@@ -165,13 +166,17 @@ private communityEdition(Set usedJars) {
   s.setBinding(binding)
 
   s.layoutCommunity("${paths.sandbox}/classes/production", usedJars)
+  signExe("${paths.sandboxCE}/win/bin/pycharm.exe")
+  buildNSIS(["${paths.sandboxCE}/layout", "${paths.sandboxCE}/win"],
+            "$pythonCommunityHome/build/strings.nsi", "$pythonCommunityHome/build/paths.nsi",
+            "pycharm", false, true, system_selector)
 
   // todo: get rid of copying
-  //ant.copy(file: "$paths.artifacts/ideaIC-${buildNumber}.mac.zip", tofile: "$paths.artifacts/ideaIC-${buildNumber}.sit")
-  //def extraArgs = ["build.number": "IC-$buildNumber"]
-  //signMacZip("idea", extraArgs)
-  //notifyArtifactBuilt("$paths.artifacts/ideaIC-${buildNumber}.sit")
-  //buildDmg("idea", getDmgImage(true), extraArgs)
+  //ant.copy(file: "${paths.sandboxCE}/artifacts/ideaIC-${buildNumber}.mac.zip", tofile: "$paths.artifacts/ideaIC-${buildNumber}.sit")
+  def extraArgs = ["build.number": "PC-$buildNumber"]
+  signMacZip("pycharm", extraArgs)
+  notifyArtifactBuilt("$paths.artifacts/ideaIC-${buildNumber}.sit")
+  buildDmg("pycharm", "${home}/python/build/DMG_background.png", extraArgs)
   //ant.delete(file: "$paths.artifacts/ideaIC-${buildNumber}.sit")
 }
 
