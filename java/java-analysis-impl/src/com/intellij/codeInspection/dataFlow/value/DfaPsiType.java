@@ -17,6 +17,7 @@ package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
@@ -28,12 +29,13 @@ public class DfaPsiType {
   private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myAssignableCache;
   private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myConvertibleCache;
 
-  DfaPsiType(PsiType psiType, Map<Pair<DfaPsiType, DfaPsiType>, Boolean> assignableCache, Map<Pair<DfaPsiType, DfaPsiType>, Boolean> convertibleCache) {
+  DfaPsiType(@NotNull PsiType psiType, Map<Pair<DfaPsiType, DfaPsiType>, Boolean> assignableCache, Map<Pair<DfaPsiType, DfaPsiType>, Boolean> convertibleCache) {
     myPsiType = psiType;
     myAssignableCache = assignableCache;
     myConvertibleCache = convertibleCache;
   }
 
+  @NotNull
   public PsiType getPsiType() {
     return myPsiType;
   }
