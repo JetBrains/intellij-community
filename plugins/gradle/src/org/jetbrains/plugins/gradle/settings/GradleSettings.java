@@ -75,6 +75,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     MyState state = new MyState();
     fillState(state);
     state.serviceDirectoryPath = myServiceDirectoryPath;
+    state.gradleVmOptions = myGradleVmOptions;
     return state;
   }
 
@@ -82,6 +83,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   public void loadState(MyState state) {
     super.loadState(state);
     myServiceDirectoryPath = state.serviceDirectoryPath;
+    myGradleVmOptions = state.gradleVmOptions;
   }
 
   /**
@@ -130,6 +132,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
 
     private Set<GradleProjectSettings> myProjectSettings = ContainerUtilRt.newTreeSet();
     public String serviceDirectoryPath;
+    public String gradleVmOptions;
 
     @AbstractCollection(surroundWithTag = false, elementTypes = {GradleProjectSettings.class})
     public Set<GradleProjectSettings> getLinkedExternalProjectsSettings() {
