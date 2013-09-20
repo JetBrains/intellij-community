@@ -39,7 +39,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
     final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, PsiUtil.resolveGenericsClassInType(myT));
     final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
     for (PsiParameter parameter : parameters) {
-      if (!session.isProperType(parameter.getType())) {
+      if (!session.isProperType(substitutor.substitute(parameter.getType()))) {
         delayedConstraints.add(this);
         return true;
       }
@@ -66,7 +66,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
           return false;
         }
         for (PsiExpression returnExpressions : LambdaUtil.getReturnExpressions(myExpression)) {
-          constraints.add(new ExpressionCompatibilityConstraint(returnExpressions, returnType));
+          constraints.add(new ExpressionCompatibilityConstraint(returnExpressions, substitutor.substitute(returnType)));
         }
       }
     }
