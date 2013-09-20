@@ -2,13 +2,18 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.regex.Pattern;
 
 /**
@@ -16,6 +21,7 @@ import java.util.regex.Pattern;
  * User : ktisha
  */
 public class PyPep8NamingInspection extends PyInspection {
+  public boolean ignoreOverriddenFunctions = true;
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
@@ -24,7 +30,7 @@ public class PyPep8NamingInspection extends PyInspection {
     return new Visitor(holder, session);
   }
 
-  public static class Visitor extends PyInspectionVisitor {
+  public class Visitor extends PyInspectionVisitor {
     Pattern LOWERCASE_REGEX = Pattern.compile("[_a-z][_a-z0-9]*");
     Pattern UPPERCASE_REGEX = Pattern.compile("[_A-Z][_A-Z0-9]*");
     Pattern MIXEDCASE_REGEX = Pattern.compile("_?[A-Z][a-zA-Z0-9]*");
@@ -58,6 +64,8 @@ public class PyPep8NamingInspection extends PyInspection {
     @Override
     public void visitPyFunction(PyFunction node) {
       final PyClass containingClass = node.getContainingClass();
+      final PsiElement superMethod = PySuperMethodsSearch.search(node).findFirst();
+      if (superMethod != null && ignoreOverriddenFunctions) return;
       final String name = node.getName();
       if (name == null) return;
       if (containingClass != null && name.startsWith("__") && name.endsWith("__")) {
@@ -106,5 +114,13 @@ public class PyPep8NamingInspection extends PyInspection {
         registerProblem(node.getAsNameElement(), "CamelCase variable imported as constant", new PyRenameElementQuickFix());
       }
     }
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox("Ignore overridden functions", "ignoreOverriddenFunctions");
+    return panel;
   }
 }
