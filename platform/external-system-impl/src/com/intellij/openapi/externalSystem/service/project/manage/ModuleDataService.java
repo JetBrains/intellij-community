@@ -18,6 +18,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -197,12 +198,12 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
     try {
       String compileOutputPath = data.getCompileOutputPath(ExternalSystemSourceType.SOURCE);
       if (compileOutputPath != null) {
-        extension.setCompilerOutputPath(compileOutputPath);
+        extension.setCompilerOutputPath(VfsUtilCore.pathToUrl(compileOutputPath));
       }
 
       String testCompileOutputPath = data.getCompileOutputPath(ExternalSystemSourceType.TEST);
       if (testCompileOutputPath != null) {
-        extension.setCompilerOutputPathForTests(testCompileOutputPath);
+        extension.setCompilerOutputPathForTests(VfsUtilCore.pathToUrl(testCompileOutputPath));
       }
 
       extension.inheritCompilerOutputPath(data.isInheritProjectCompileOutputPath());
