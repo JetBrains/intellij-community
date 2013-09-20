@@ -24,10 +24,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.instructions.BranchingInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.EmptyInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.application.ApplicationManager;
@@ -109,6 +106,17 @@ public class DataFlowRunner {
       myInstructions = flow.getInstructions();
       myFields = flow.getFields();
       myNestedClosures.clear();
+      
+      Set<Instruction> joinInstructions = ContainerUtil.newHashSet();
+      for (Instruction instruction : myInstructions) {
+        if (instruction instanceof GotoInstruction) {
+          joinInstructions.add(myInstructions[((GotoInstruction)instruction).getOffset()]);
+        } else if (instruction instanceof ConditionalGotoInstruction) {
+          joinInstructions.add(myInstructions[((ConditionalGotoInstruction)instruction).getOffset()]);
+        } else if (instruction instanceof GosubInstruction) {
+          joinInstructions.add(myInstructions[((GosubInstruction)instruction).getSubprogramOffset()]);
+        }
+      }
 
       if (LOG.isDebugEnabled()) {
         LOG.debug("Analyzing code block: " + psiBlock.getText());
@@ -132,7 +140,7 @@ public class DataFlowRunner {
       WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(shouldCheckTimeLimit() ? ourTimeLimit : ourTimeLimit * 42);
       int count = 0;
       while (!queue.isEmpty()) {
-        for (DfaInstructionState instructionState : getNextInstructionStates(queue)) {
+        for (DfaInstructionState instructionState : getNextInstructionStates(queue, joinInstructions)) {
           if (count++ % 1024 == 0 && measurer.isTimeOver()) {
             LOG.debug("Too complex because the analysis took too long");
             psiBlock.putUserData(TOO_EXPENSIVE_HASH, psiBlock.getText().hashCode());
@@ -182,7 +190,7 @@ public class DataFlowRunner {
     }
   }
 
-  private static List<DfaInstructionState> getNextInstructionStates(PriorityQueue<DfaInstructionState> queue) {
+  private static List<DfaInstructionState> getNextInstructionStates(PriorityQueue<DfaInstructionState> queue, Set<Instruction> joinInstructions) {
     DfaInstructionState state = queue.poll();
     Instruction instruction = state.getInstruction();
     
@@ -195,6 +203,10 @@ public class DataFlowRunner {
       sameInstructionStates.add(queue.poll());
     }
 
+    if (!joinInstructions.contains(instruction)) {
+      return sameInstructionStates;
+    }
+    
     findMergeable:
     while (true) {
       for (int i = 0; i < sameInstructionStates.size(); i++) {
