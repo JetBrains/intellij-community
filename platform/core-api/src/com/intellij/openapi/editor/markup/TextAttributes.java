@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,13 @@
 package com.intellij.openapi.editor.markup;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.WriteExternalException;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -34,6 +38,9 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
 
   private boolean myEnforcedDefaults = false;
 
+  @NotNull
+  private AttributesFlyweight myAttrs;
+
   /**
    * Merges (layers) the two given text attributes.
    *
@@ -41,6 +48,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
    * @param above Text attributes to merge "above", overriding settings from "under".
    * @return Merged attributes instance.
    */
+  @Contract("!null, !null -> !null")
   public static TextAttributes merge(TextAttributes under, TextAttributes above) {
     if (under == null) return above;
     if (above == null) return under;
@@ -154,8 +162,6 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
     }
   }
 
-  private AttributesFlyweight myAttrs;
-
   public TextAttributes() {
     this(null, null, null, EffectType.BOXED, Font.PLAIN);
   }
@@ -194,7 +200,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
   }
 
   @NotNull
-  public static TextAttributes fromFlyweight(AttributesFlyweight flyweight) {
+  public static TextAttributes fromFlyweight(@NotNull AttributesFlyweight flyweight) {
     TextAttributes f = new TextAttributes();
     f.myAttrs = flyweight;
     return f;
@@ -277,12 +283,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
   public void readExternal(Element element) throws InvalidDataException {
     Externalizable ext = new Externalizable();
     ext.readExternal(element);
-    myAttrs = AttributesFlyweight.create(ext.FOREGROUND,
-                                         ext.BACKGROUND,
-                                         ext.FONT_TYPE,
-                                         ext.EFFECT_COLOR,
-                                         ext.getEffectType(),
-                                         ext.ERROR_STRIPE_COLOR);
+    myAttrs = AttributesFlyweight.create(ext.FOREGROUND, ext.BACKGROUND, ext.FONT_TYPE, ext.EFFECT_COLOR, ext.getEffectType(), ext.ERROR_STRIPE_COLOR);
     if (isEmpty()) myEnforcedDefaults = true;
   }
 
@@ -302,18 +303,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
 
   @Override
   public String toString() {
-    return "[" +
-           getForegroundColor() +
-           "," +
-           getBackgroundColor() +
-           "," +
-           getFontType() +
-           "," +
-           getEffectType() +
-           "," +
-           getEffectColor() +
-           "," +
-           getErrorStripeColor() +
-           "]";
+    return "[" + getForegroundColor() + "," + getBackgroundColor() + "," + getFontType() + "," + getEffectType() + "," +
+           getEffectColor() + "," + getErrorStripeColor() + "]";
   }
 }
