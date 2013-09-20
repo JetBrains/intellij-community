@@ -24,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.console.GroovyShellAction;
 import org.jetbrains.plugins.groovy.console.GroovyShellActionBase;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
