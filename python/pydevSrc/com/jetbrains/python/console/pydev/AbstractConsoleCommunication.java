@@ -57,9 +57,9 @@ public abstract class AbstractConsoleCommunication implements ConsoleCommunicati
   }
 
   @Override
-  public void notifyCommandExecuted() {
+  public void notifyFinished() {
     for (ConsoleCommunicationListener listener: communicationListeners) {
-      listener.commandExecuted();
+      listener.executionFinished();
     }
   }
 

@@ -210,7 +210,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
 
   private Object execNotifyFinished() {
     setExecuting(false);
-    notifyCommandExecuted();
+    notifyFinished();
     return true;
   }
 
