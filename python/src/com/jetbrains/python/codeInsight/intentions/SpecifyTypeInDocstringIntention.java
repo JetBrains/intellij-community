@@ -1,7 +1,10 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -11,7 +14,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PySignature;
 import com.jetbrains.python.debugger.PySignatureCacheManager;
+import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocstringGenerator;
+import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -50,16 +55,16 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
       callable = getCallable(elementAt);
     }
     if (callable instanceof PyFunction) {
-      generateDocstring(kind, (PyFunction)callable, problemElement);
+      generateDocstring(kind, (PyFunction)callable, problemElement, editor);
     }
   }
 
   private static void generateDocstring(String kind,
                                         PyFunction pyFunction,
-                                        PyExpression problemElement) {
+                                        PyExpression problemElement, Editor editor) {
     String name = "rtype".equals(kind) ? "" : StringUtil.notNullize(problemElement.getName());
 
-    PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(pyFunction);
+    final PyDocstringGenerator docstringGenerator = new PyDocstringGenerator(pyFunction);
 
     PySignature signature = PySignatureCacheManager.getInstance(pyFunction.getProject()).findSignature(pyFunction);
     if (signature != null) {
@@ -69,6 +74,15 @@ public class SpecifyTypeInDocstringIntention extends TypeIntention {
       docstringGenerator.withParam(kind, name);
     }
 
+    final Module module = ModuleManager.getInstance(pyFunction.getProject()).getModules()[0];
+    final PyDocumentationSettings documentationSettings = PyDocumentationSettings.getInstance(module);
+    if (documentationSettings.isPlain(pyFunction.getContainingFile())) {
+      final String[] values = {DocStringFormat.EPYTEXT, DocStringFormat.REST};
+      final int i = Messages.showChooseDialog("Docstring format:", "Select Docstring Type", values, DocStringFormat.EPYTEXT, null);
+      if (i < 0) return;
+      final String value = values[i];
+      documentationSettings.setFormat(value);
+    }
     docstringGenerator.build();
     docstringGenerator.startTemplate();
   }
