@@ -161,7 +161,7 @@ public class QualifiedNameFinder {
     public boolean visitRoot(VirtualFile root, Module module, Sdk sdk, boolean isModuleSource) {
       if (myVFile != null) {
         final String relativePath = VfsUtilCore.getRelativePath(myVFile, root, '/');
-        if (relativePath != null) {
+        if (relativePath != null && !relativePath.isEmpty()) {
           List<String> result = StringUtil.split(relativePath, "/");
           if (result.size() > 0) {
             result.set(result.size() - 1, FileUtil.getNameWithoutExtension(result.get(result.size() - 1)));
