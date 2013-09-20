@@ -77,21 +77,24 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
 
     final CharSequence chars = file.getViewProvider().getContents();
     findCommentTokenRanges(file, chars, queryParameters.getRange(), commentStarts, commentEnds);
+    TIntArrayList occurrences = new TIntArrayList(1);
+    IndexPattern[] patterns = patternProvider != null ? patternProvider.getIndexPatterns() : null;
 
     for (int i = 0; i < commentStarts.size(); i++) {
       int commentStart = commentStarts.get(i);
       int commentEnd = commentEnds.get(i);
+      occurrences.resetQuick();
 
       if (patternProvider != null) {
-        for (final IndexPattern pattern : patternProvider.getIndexPatterns()) {
-          if (!collectPatternMatches(pattern, chars, commentStart, commentEnd, file, queryParameters.getRange(), consumer)) {
+        for (int j = patterns.length - 1; j >=0; --j) {
+          if (!collectPatternMatches(patterns[j], chars, commentStart, commentEnd, file, queryParameters.getRange(), consumer, occurrences)) {
             return false;
           }
         }
       }
       else {
         if (!collectPatternMatches(queryParameters.getPattern(), chars, commentStart, commentEnd, file, queryParameters.getRange(),
-                                   consumer)) {
+                                   consumer, occurrences)) {
           return false;
         }
       }
@@ -236,7 +239,9 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
                                                int commentEnd,
                                                PsiFile file,
                                                TextRange range,
-                                               Processor<IndexPatternOccurrence> consumer) {
+                                               Processor<IndexPatternOccurrence> consumer,
+                                               TIntArrayList matches
+                                               ) {
     Pattern pattern = indexPattern.getPattern();
     if (pattern != null) {
       ProgressManager.checkCanceled();
@@ -253,7 +258,8 @@ public class IndexPatternSearcher implements QueryExecutor<IndexPatternOccurrenc
         int start = matcher.start() + commentStart;
         int end = matcher.end() + commentStart;
         if (start != end) {
-          if (range == null || range.getStartOffset() <= start && end <= range.getEndOffset()) {
+          if ((range == null || range.getStartOffset() <= start && end <= range.getEndOffset()) && matches.indexOf(start) == -1) {
+            matches.add(start);
             if (!consumer.process(new IndexPatternOccurrenceImpl(file, start, end, indexPattern))) {
               return false;
             }
