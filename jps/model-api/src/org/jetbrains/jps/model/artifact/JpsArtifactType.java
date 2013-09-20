@@ -19,6 +19,11 @@ import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementType;
 
 /**
+ * Represents a type of artifacts in JPS model
+ *
+ * <p>
+ * Use {@link org.jetbrains.jps.model.ex.JpsElementTypeBase} as a base class for implementations of this interface
+ * </p>
  * @author nik
  */
 public interface JpsArtifactType<P extends JpsElement> extends JpsElementType<P> {

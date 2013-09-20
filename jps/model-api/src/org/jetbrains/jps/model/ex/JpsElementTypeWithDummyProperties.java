@@ -21,6 +21,8 @@ import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
 
 /**
+ * A base class for type elements without any specific properties
+ *
  * @author nik
  */
 public abstract class JpsElementTypeWithDummyProperties extends JpsElementTypeBase<JpsDummyElement> implements JpsElementTypeWithDefaultProperties<JpsDummyElement> {
