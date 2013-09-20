@@ -19,7 +19,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectWizard.ProjectWizardTestCase;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.projectRoots.IdeaJdk;
@@ -34,7 +34,7 @@ public class PluginProjectWizardTest extends ProjectWizardTestCase {
     createSdk("devkit", IdeaJdk.getInstance());
     Project project = createProjectFromTemplate(JavaModuleType.JAVA_GROUP, PluginModuleType.getInstance().getName(), null);
     VirtualFile baseDir = project.getBaseDir();
-    VirtualFile virtualFile = VfsUtil.findRelativeFile("META-INF/plugin.xml", baseDir);
+    VirtualFile virtualFile = VfsUtilCore.findRelativeFile("META-INF/plugin.xml", baseDir);
     assertNotNull(virtualFile);
   }
 

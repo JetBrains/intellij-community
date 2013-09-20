@@ -18,7 +18,9 @@ package com.intellij.ide.projectWizard;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
 import com.intellij.ide.wizard.Step;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -29,15 +31,17 @@ import javax.swing.*;
  */
 public class NewProjectWizard extends AbstractProjectWizard<Step> {
 
-  public NewProjectWizard(String title, @Nullable Project project) {
-    super(title, null, null);
+  public NewProjectWizard(@Nullable Project project, String defaultPath) {
+    super("New Project", null, defaultPath);
     addStep(new ProjectTypeStep(myWizardContext, getDisposable()));
-    addStep(new ProjectNameStep(myWizardContext, null) {
+    ProjectNameStep projectNameStep = new ProjectNameStep(myWizardContext, null) {
       @Override
       public Icon getIcon() {
         return null;
       }
-    });
+    };
+    addStep(projectNameStep);
+    Disposer.register(getDisposable(), projectNameStep);
     init();
   }
 

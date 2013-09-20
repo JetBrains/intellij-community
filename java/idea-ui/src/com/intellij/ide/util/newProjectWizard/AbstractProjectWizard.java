@@ -53,7 +53,7 @@ public abstract class AbstractProjectWizard<T extends Step> extends AbstractWiza
     myWizardContext = initContext(null, null);
   }
 
-  private WizardContext initContext(@Nullable Project project, @Nullable String defaultPath) {
+  private static WizardContext initContext(@Nullable Project project, @Nullable String defaultPath) {
     WizardContext context = new WizardContext(project);
     if (defaultPath != null) {
       context.setProjectFileDirectory(defaultPath);

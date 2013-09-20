@@ -17,6 +17,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.wizard.StepAdapter;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.FieldPanel;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import javax.swing.*;
 import java.awt.*;
 
-public abstract class ModuleWizardStep extends StepAdapter {
+public abstract class ModuleWizardStep extends StepAdapter implements Disposable {
 
   protected static final Icon ICON = IconLoader.getIcon("/addmodulewizard.png");
   public static final ModuleWizardStep[] EMPTY_ARRAY = new ModuleWizardStep[0];
@@ -65,6 +66,11 @@ public abstract class ModuleWizardStep extends StepAdapter {
   }
 
   public void disposeUIResources() {
+  }
+
+  @Override
+  public void dispose() {
+    disposeUIResources();
   }
 
   public static FieldPanel createFieldPanel(final JTextField field, final String labelText, final BrowseFilesListener browseButtonActionListener) {
