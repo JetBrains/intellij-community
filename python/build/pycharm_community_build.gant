@@ -380,7 +380,7 @@ private layoutMac(Map _args, String target) {
   }
 
   Map args = new HashMap(_args)
-  args.icns = "$home/python/resources/PyCharm.icns"
+  args.icns = "$pythonCommunityHome/python/resources/PyCharmCore.icns"
   args.bundleIdentifier = "com.jetbrains.pycharm"
   args.platform_prefix = "Python"
   args.help_id = "PY"
