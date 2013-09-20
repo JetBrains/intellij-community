@@ -225,18 +225,24 @@ public class PyExceptionBreakpointType
 
     @Override
     public void saveTo(@NotNull XBreakpoint<PyExceptionBreakpointProperties> breakpoint) {
-      breakpoint.getProperties().setNotifyOnTerminate(myNotifyOnTerminateCheckBox.isSelected());
+      PyExceptionBreakpointProperties properties = breakpoint.getProperties();
+      if (properties == null) return;
+      
+      properties.setNotifyOnTerminate(myNotifyOnTerminateCheckBox.isSelected());
 
-      breakpoint.getProperties().setNotifyAlways(myNotifyOnRaiseCheckBox.isSelected() && myAlwaysRadio.isSelected());
-      breakpoint.getProperties().setNotifyOnlyOnFirst(myNotifyOnRaiseCheckBox.isSelected() && myOnlyOnFirstRadio.isSelected());
+      properties.setNotifyAlways(myNotifyOnRaiseCheckBox.isSelected() && myAlwaysRadio.isSelected());
+      properties.setNotifyOnlyOnFirst(myNotifyOnRaiseCheckBox.isSelected() && myOnlyOnFirstRadio.isSelected());
     }
 
     @Override
     public void loadFrom(@NotNull XBreakpoint<PyExceptionBreakpointProperties> breakpoint) {
-      myNotifyOnTerminateCheckBox.setSelected(breakpoint.getProperties().isNotifyOnTerminate());
+      PyExceptionBreakpointProperties properties = breakpoint.getProperties();
+      if (properties == null) return;
+      
+      myNotifyOnTerminateCheckBox.setSelected(properties.isNotifyOnTerminate());
 
-      boolean always = breakpoint.getProperties().isNotifyAlways();
-      boolean onFirst = breakpoint.getProperties().isNotifyOnlyOnFirst();
+      boolean always = properties.isNotifyAlways();
+      boolean onFirst = properties.isNotifyOnlyOnFirst();
 
       setNotifyOnRaiseSelected(always || onFirst);
 

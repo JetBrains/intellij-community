@@ -544,16 +544,22 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   public void addExceptionBreakpoint(XBreakpoint<? extends ExceptionBreakpointProperties> breakpoint) {
-    myRegisteredExceptionBreakpoints.put(breakpoint.getProperties().getException(), breakpoint);
+    ExceptionBreakpointProperties properties = breakpoint.getProperties();
+    if (properties == null) return;
+    
+    myRegisteredExceptionBreakpoints.put(properties.getException(), breakpoint);
     if (isConnected()) {
-      myDebugger.addExceptionBreakpoint(breakpoint.getProperties());
+      myDebugger.addExceptionBreakpoint(properties);
     }
   }
 
   public void removeExceptionBreakpoint(XBreakpoint<? extends ExceptionBreakpointProperties> breakpoint) {
-    myRegisteredExceptionBreakpoints.remove(breakpoint.getProperties().getException());
+    ExceptionBreakpointProperties properties = breakpoint.getProperties();
+    if (properties == null) return;
+
+    myRegisteredExceptionBreakpoints.remove(properties.getException());
     if (isConnected()) {
-      myDebugger.removeExceptionBreakpoint(breakpoint.getProperties());
+      myDebugger.removeExceptionBreakpoint(properties);
     }
   }
 

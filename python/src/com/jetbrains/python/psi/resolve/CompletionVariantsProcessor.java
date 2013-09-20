@@ -48,7 +48,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
     if (!myPlainNamesOnly) {
       if (!mySuppressParentheses &&
           object instanceof PyFunction && ((PyFunction)object).getProperty() == null &&
-          hasNoCustomDecorators((PyFunction)object) &&
+          !PyUtil.hasCustomDecorators((PyFunction)object) &&
           !isSingleArgDecoratorCall(myContext, (PyFunction)object)) {
         item = item.withInsertHandler(PyFunctionInsertHandler.INSTANCE);
         final TypeEvalContext context = TypeEvalContext.userInitiated(myContext != null ? myContext.getContainingFile() : null);
@@ -103,21 +103,6 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
       item = item.withTypeText(source);
     }
     return item;
-  }
-
-  private static boolean hasNoCustomDecorators(PyFunction function) {
-    PyDecoratorList decoratorList = function.getDecoratorList();
-    if (decoratorList == null) {
-      return true;
-    }
-    for (PyDecorator decorator : decoratorList.getDecorators()) {
-      PyQualifiedName name = decorator.getQualifiedName();
-      if (name == null || (!PyNames.CLASSMETHOD.equals(name.toString()) && !PyNames.STATICMETHOD.equals(name.toString()))) {
-        return false;
-      }
-    }
-
-    return true;
   }
 
   private static boolean isSingleArgDecoratorCall(PsiElement elementInCall, PyFunction callee) {

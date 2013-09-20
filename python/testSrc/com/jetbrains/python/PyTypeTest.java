@@ -752,6 +752,14 @@ public class PyTypeTest extends PyTestCase {
            "    expr = x if isinstance(x, str) else 10\n");
   }
 
+  // PY-9334
+  public void testIterateOverListOfNestedTuples() {
+    doTest("str",
+           "def f():\n" +
+           "    for i, (expr, v) in [(0, ('foo', []))]:\n" +
+           "        print(expr)\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }
