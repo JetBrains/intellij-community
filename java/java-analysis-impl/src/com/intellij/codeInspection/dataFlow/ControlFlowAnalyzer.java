@@ -100,24 +100,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     return JavaPsiFacade.getElementFactory(manager.getProject()).createTypeByFQClassName(fqn, scope);
   }
 
-  private boolean myRecursionStopper = false;
-
   private <T extends Instruction> T addInstruction(T i) {
-    ProgressManager.checkCanceled();
-
-    if (!myRecursionStopper) {
-      myRecursionStopper = true;
-      try {
-        // add extra conditional goto in order to handle possible runtime exceptions that could be caught by finally block
-        if (i instanceof BranchingInstruction || i instanceof AssignInstruction || i instanceof MethodCallInstruction) {
-          addConditionalRuntimeThrow();
-        }
-      }
-      finally {
-        myRecursionStopper = false;
-      }
-    }
-
     myCurrentFlow.addInstruction(i);
     return i;
   }
@@ -658,11 +641,13 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     if (exception != null) {
       exception.accept(this);
+      addConditionalRuntimeThrow();
       addInstruction(new DupInstruction());
       addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
       addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, statement.getProject()));
       ConditionalGotoInstruction gotoInstruction = new ConditionalGotoInstruction(null, true, null);
       addInstruction(gotoInstruction);
+      addInstruction(new PushInstruction(myFactory.createTypeValue(myNpe, Nullness.NOT_NULL), null));
       addThrowCode(myNpe);
       gotoInstruction.setOffset(myCurrentFlow.getInstructionCount());
       addThrowCode(exception.getType());
@@ -1106,6 +1091,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(new MethodCallInstruction(expression, MethodCallInstruction.MethodType.UNBOXING, expectedType));
     }
     else if (TypeConversionUtil.isAssignableFromPrimitiveWrapper(expectedType) && TypeConversionUtil.isPrimitiveAndNotNull(exprType)) {
+      addConditionalRuntimeThrow();
       addInstruction(new MethodCallInstruction(expression, MethodCallInstruction.MethodType.BOXING, expectedType));
     }
     else if (exprType != expectedType &&
@@ -1329,6 +1315,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         }
       }
 
+      addConditionalRuntimeThrow();
       addInstruction(new MethodCallInstruction(expression, createChainedVariableValue(expression)));
 
       if (!myCatchStack.isEmpty()) {
@@ -1623,6 +1610,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
           addInstruction(new PopInstruction());
         }
       }
+      addConditionalRuntimeThrow();
       addInstruction(new MethodCallInstruction(expression, null));
     }
     else {
@@ -1640,6 +1628,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         }
       }
 
+      addConditionalRuntimeThrow();
       addInstruction(new MethodCallInstruction(expression, null));
 
       if (!myCatchStack.isEmpty()) {
