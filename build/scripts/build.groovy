@@ -199,6 +199,14 @@ class Build {
     return "${home}/${product}/branding/DMG_background.png"
   }*/
 
+/*
+  def _layoutMac(Map args, String target) {
+    projectBuilder.stage("--- layoutMac ---")
+    ant.delete(dir: target, failonerror: "false")
+//    Map args = new HashMap(_args)
+    utils.layoutMacApp(target, "$home/community", args)
+  }*/
+
   def mac_installation(){
     def extraArgs = ["build.code": "${product}-${suffix}"]
     if (steps.sit) {
