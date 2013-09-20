@@ -8,7 +8,6 @@ import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
-import com.intellij.vcs.log.data.rebase.FakeCommitParents;
 import com.intellij.vcs.log.graph.Graph;
 import com.intellij.vcs.log.graph.elements.Edge;
 import com.intellij.vcs.log.graph.elements.GraphElement;
@@ -134,26 +133,6 @@ public class DataPack {
       }
     }
     return null;
-  }
-
-  public Node getFakeNodeByHash(Hash hash, boolean original) {
-    hash = originalIfNeeded(hash, original);
-    Graph graph = getGraphModel().getGraph();
-    for (int i = 0; i < graph.getNodeRows().size(); i++) {
-      Node node = graph.getCommitNodeInRow(i);
-      if (node != null) {
-        Hash commitHash = node.getCommitHash();
-        if (FakeCommitParents.isFake(commitHash) && originalIfNeeded(commitHash, original).equals(hash)) {
-          return node;
-        }
-      }
-    }
-    return null;
-  }
-
-  private static Hash originalIfNeeded(Hash hash, boolean original) {
-    if (original) return FakeCommitParents.getOriginal(hash);
-    return hash;
   }
 
   @Nullable

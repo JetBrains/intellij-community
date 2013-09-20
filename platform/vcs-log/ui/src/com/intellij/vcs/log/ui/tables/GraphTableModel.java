@@ -7,11 +7,10 @@ import com.intellij.vcs.log.VcsCommitMiniDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.data.rebase.FakeCommitParents;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.render.GraphCommitCell;
-import com.intellij.vcs.log.printmodel.GraphPrintCell;
 import com.intellij.vcs.log.graph.render.PositionUtil;
+import com.intellij.vcs.log.printmodel.GraphPrintCell;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.AbstractTableModel;
@@ -111,7 +110,6 @@ public class GraphTableModel extends AbstractTableModel {
     if (applied.contains(hash)) return GraphCommitCell.Kind.APPLIED;
     if (fixedUp.contains(hash)) return GraphCommitCell.Kind.FIXUP;
     if (reworded.containsKey(hash)) return GraphCommitCell.Kind.REWORD;
-    if (FakeCommitParents.isFake(hash)) return GraphCommitCell.Kind.PICK;
     return GraphCommitCell.Kind.NORMAL;
   }
 

@@ -32,8 +32,6 @@ public class VcsLogUI {
   @NotNull private final MainFrame myMainFrame;
   @NotNull private final VcsLogColorManager myColorManager;
 
-  @NotNull private DragDropListener dragDropListener = DragDropListener.EMPTY;
-
   @Nullable private GraphElement prevGraphElement;
   @NotNull  private TableModel myGraphModel;
 
@@ -177,11 +175,6 @@ public class VcsLogUI {
     else {
       LOG.info("No row for hash " + commitHash);
     }
-  }
-
-  @NotNull
-  public DragDropListener getDragDropListener() {
-    return dragDropListener;
   }
 
   @NotNull
