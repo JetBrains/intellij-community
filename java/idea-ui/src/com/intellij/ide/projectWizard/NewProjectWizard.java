@@ -31,17 +31,19 @@ import javax.swing.*;
  */
 public class NewProjectWizard extends AbstractProjectWizard<Step> {
 
+  private final ProjectNameStep myProjectNameStep;
+
   public NewProjectWizard(@Nullable Project project, String defaultPath) {
     super("New Project", null, defaultPath);
     addStep(new ProjectTypeStep(myWizardContext, getDisposable()));
-    ProjectNameStep projectNameStep = new ProjectNameStep(myWizardContext, null) {
+    myProjectNameStep = new ProjectNameStep(myWizardContext, null) {
       @Override
       public Icon getIcon() {
         return null;
       }
     };
-    addStep(projectNameStep);
-    Disposer.register(getDisposable(), projectNameStep);
+    addStep(myProjectNameStep);
+    Disposer.register(getDisposable(), myProjectNameStep);
     init();
   }
 
@@ -55,5 +57,11 @@ public class NewProjectWizard extends AbstractProjectWizard<Step> {
   @Override
   protected String getDimensionServiceKey() {
     return "new project wizard";
+  }
+
+  @Override
+  protected void doOKAction() {
+    myProjectNameStep.updateDataModel();
+    super.doOKAction();
   }
 }
