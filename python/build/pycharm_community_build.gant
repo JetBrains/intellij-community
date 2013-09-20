@@ -109,7 +109,7 @@ target('default': "Build artifacts") {
   def approvedJars = ["$normalizedHome/lib/", "$normalizedPythonHome/lib/", "$normalizedHome/xml/relaxng/lib/"]
   def usedJars = buildModulesAndCollectUsedJars(modules, approvedJars, ["/ant/"])
 
-  layoutCommunity(usedJars)
+  layoutCommunity("${paths.sandbox}/classes/production", usedJars)
 
 
   buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin])
@@ -125,7 +125,8 @@ target('default': "Build artifacts") {
   */
 }
 
-public layoutCommunity(Set usedJars) {
+public layoutCommunity(String classesPath, Set usedJars) {
+  def appInfo = appInfoFile(classesPath)
   def paths = new Paths(home)
   buildSearchableOptions("${projectBuilder.moduleOutput(findModule("platform-resources"))}/search", [], {
     projectBuilder.moduleRuntimeClasspath(findModule("main_pycharm_ce"), false).each {
@@ -134,7 +135,7 @@ public layoutCommunity(Set usedJars) {
   }, "-Didea.platform.prefix=PyCharmCore -Didea.no.jre.check=true")
 
   if (!dryRun) {
-    wireBuildDate(buildName, appInfoFile())
+    wireBuildDate(buildName, appInfo)
   }
 
   Map args = [
@@ -161,7 +162,7 @@ public layoutCommunity(Set usedJars) {
     "$home/community/platform/icons/src",
     "$pythonCommunityHome/resources"]
   buildWinLauncher("$ch", "$ch/bin/WinLauncher/WinLauncher.exe", launcher,
-                   appInfoFile(), "$pythonCommunityHome/build/pycharm_community_launcher.properties", system_selector, resourcePaths)
+                   appInfo, "$pythonCommunityHome/build/pycharm_community_launcher.properties", system_selector, resourcePaths)
 
   String tarRoot = isEap() ? "pycharm-community-$buildNumber" : "pycharm-community-${p("component.version.major")}.${p("component.version.minor")}"
   buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
@@ -213,8 +214,8 @@ private layoutPlugins(layouts) {
   layouts.layoutPlugins()
 }
 
-private String appInfoFile() {
-  return "$home/out/pycharmCE/classes/production/python-community/idea/PyCharmCoreApplicationInfo.xml"
+private String appInfoFile(String classesPath) {
+  return "$classesPath/python-community/idea/PyCharmCoreApplicationInfo.xml"
 }
 
 private layoutFull(Map args, String target, Set usedJars) {

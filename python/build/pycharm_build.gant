@@ -1,4 +1,4 @@
-import org.jetbrains.jps.LayoutInfo
+  import org.jetbrains.jps.LayoutInfo
 
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
@@ -165,7 +165,7 @@ private communityEdition(Set usedJars) {
   Script s = groovyShell.parse(new File("$pythonCommunityHome/build/pycharm_community_build.gant"))
   s.setBinding(binding)
 
-  s.layoutCommunity(usedJars)
+  s.layoutCommunity("${paths.sandbox}/classes/production", usedJars)
 
   // todo: get rid of copying
   //ant.copy(file: "$paths.artifacts/ideaIC-${buildNumber}.mac.zip", tofile: "$paths.artifacts/ideaIC-${buildNumber}.sit")
