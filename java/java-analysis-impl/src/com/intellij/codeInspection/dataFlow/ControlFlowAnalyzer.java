@@ -22,7 +22,6 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -120,7 +119,10 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   private void finishElement(PsiElement element) {
     myCurrentFlow.finishElement(element);
-    assert element == myElementStack.pop();
+    PsiElement popped = myElementStack.pop();
+    if (element != popped) {
+      throw new AssertionError("Expected " + element + ", popped " + popped);
+    }
   }
 
   @Override
