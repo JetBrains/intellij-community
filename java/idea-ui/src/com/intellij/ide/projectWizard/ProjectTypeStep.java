@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -90,6 +91,15 @@ public class ProjectTypeStep extends StepAdapter {
         myFrameworksPanel.addSupport(module, rootModel);
       }
     };
+
+    myProjectTypeList.setCellRenderer(new ColoredListCellRenderer() {
+      @Override
+      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
+        ProjectCategory category = (ProjectCategory)value;
+        append(category.getDisplayName());
+        setIcon(category.getIcon());
+      }
+    });
 
     ProjectCategory[] projectCategories = ProjectCategory.EXTENSION_POINT_NAME.getExtensions();
     myProjectTypeList.setModel(new CollectionListModel<ProjectCategory>(Arrays.asList(projectCategories)));

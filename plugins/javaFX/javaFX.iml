@@ -22,6 +22,7 @@
     <orderEntry type="module" module-name="compiler-impl" />
     <orderEntry type="module" module-name="common-javaFX-plugin" />
     <orderEntry type="module" module-name="manifest" />
+    <orderEntry type="module" module-name="idea-ui" />
   </component>
 </module>
 

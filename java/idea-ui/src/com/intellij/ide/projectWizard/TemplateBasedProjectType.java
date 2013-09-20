@@ -16,35 +16,53 @@
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.openapi.module.JavaModuleType;
+import com.intellij.platform.templates.ArchivedTemplatesFactory;
+import com.intellij.platform.templates.LocalArchivedTemplate;
 import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
+import java.io.File;
+import java.net.URL;
 
 /**
  * @author Dmitry Avdeev
- *         Date: 04.09.13
+ *         Date: 20.09.13
  */
-public class CommonJavaProjectCategory extends ProjectCategory {
+public abstract class TemplateBasedProjectType extends ProjectCategory {
+
+  private final LocalArchivedTemplate myTemplate;
+
+  public TemplateBasedProjectType(String templatePath) {
+    ClassLoader loader = getClass().getClassLoader();
+    URL resource = loader.getResource(templatePath);
+    assert resource != null : templatePath;
+    String name = ArchivedTemplatesFactory.getTemplateName(new File(templatePath).getName());
+    myTemplate = new LocalArchivedTemplate(name, resource, loader);
+  }
 
   @NotNull
   @Override
   public ModuleBuilder createModuleBuilder() {
-    return JavaModuleType.getModuleType().createModuleBuilder();
+    return myTemplate.createModuleBuilder();
   }
 
   @Override
   public String getId() {
-    return "Java";
+    return getDisplayName();
   }
 
   @Override
   public String getDisplayName() {
-    return "Common Java";
+    return myTemplate.getName();
   }
 
   @Override
   public String getDescription() {
-    return "Common Java Project";
+    return myTemplate.getDescription();
   }
 
-
+  @Override
+  public Icon getIcon() {
+    return myTemplate.getIcon();
+  }
 }
