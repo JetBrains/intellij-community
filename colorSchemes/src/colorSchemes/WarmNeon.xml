@@ -109,12 +109,6 @@
         <option name="EFFECT_TYPE" value="1" />
       </value>
     </option>
-    <option name="CSS.NUMBER">
-      <value>
-        <option name="FOREGROUND" value="ff0000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
     <option name="CSS.PROPERTY_NAME">
       <value>
         <option name="FONT_TYPE" value="1" />
@@ -175,12 +169,6 @@
     <option name="CUSTOM_MULTI_LINE_COMMENT_ATTRIBUTES">
       <value>
         <option name="FOREGROUND" value="de6666" />
-      </value>
-    </option>
-    <option name="CUSTOM_NUMBER_ATTRIBUTES">
-      <value>
-        <option name="FOREGROUND" value="ff0000" />
-        <option name="FONT_TYPE" value="1" />
       </value>
     </option>
     <option name="CUSTOM_STRING_ATTRIBUTES">
@@ -263,7 +251,7 @@
     </option>
     <option name="DEFAULT_NUMBER">
       <value>
-        <option name="FOREGROUND" value="ff0000" />
+        <option name="FOREGROUND" value="F971BB" />
       </value>
     </option>
     <option name="DEFAULT_PREDEFINED_SYMBOL">
@@ -339,12 +327,6 @@
         <option name="FOREGROUND" value="ca9e4d" />
       </value>
     </option>
-    <option name="DJANGO_NUMBER">
-      <value>
-        <option name="FOREGROUND" value="ff0000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
     <option name="DJANGO_STRING_LITERAL">
       <value>
         <option name="FOREGROUND" value="34b434" />
@@ -382,12 +364,6 @@
     <option name="EL.KEYWORD">
       <value>
         <option name="FOREGROUND" value="ffffff" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="EL.NUMBER">
-      <value>
-        <option name="FOREGROUND" value="ff0000" />
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
@@ -580,12 +556,6 @@
         <option name="FOREGROUND" value="e54242" />
       </value>
     </option>
-    <option name="JAVA_NUMBER">
-      <value>
-        <option name="FOREGROUND" value="ff0000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
     <option name="JAVA_OPERATION_SIGN">
       <value>
         <option name="FOREGROUND" value="c8c8c8" />
@@ -671,12 +641,6 @@
       <value>
         <option name="FOREGROUND" value="8db4f2" />
         <option name="EFFECT_TYPE" value="-1" />
-      </value>
-    </option>
-    <option name="JS.NUMBER">
-      <value>
-        <option name="FOREGROUND" value="e42713" />
-        <option name="FONT_TYPE" value="1" />
       </value>
     </option>
     <option name="JS.OPERATION_SIGN">
@@ -891,12 +855,6 @@
         <option name="FOREGROUND" value="ff6666" />
       </value>
     </option>
-    <option name="PY.NUMBER">
-      <value>
-        <option name="FOREGROUND" value="ff0000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
     <option name="PY.OPERATION_SIGN">
       <value>
         <option name="FOREGROUND" value="ffffff" />
@@ -1078,12 +1036,6 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
-    <option name="SASS_NUMBER">
-      <value>
-        <option name="FOREGROUND" value="ff0000" />
-        <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
     <option name="SASS_RULE">
       <value>
         <option name="FOREGROUND" value="ffffff" />
@@ -1132,12 +1084,6 @@
     <option name="SQL_LOCAL_ALIAS">
       <value>
         <option name="FOREGROUND" value="c0c0c0" />
-      </value>
-    </option>
-    <option name="SQL_NUMBER">
-      <value>
-        <option name="FOREGROUND" value="ff0000" />
-        <option name="FONT_TYPE" value="1" />
       </value>
     </option>
     <option name="SQL_PARAMETER">
