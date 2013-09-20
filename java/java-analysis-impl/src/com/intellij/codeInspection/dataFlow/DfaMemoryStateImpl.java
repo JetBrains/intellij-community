@@ -291,6 +291,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (set == null) {
       return Collections.emptyList();
     }
+    return getEqClassValues(set);
+  }
+
+  private List<DfaValue> getEqClassValues(SortedIntSet set) {
     final List<DfaValue> result = new ArrayList<DfaValue>(set.size());
     set.forEach(new TIntProcedure() {
       @Override
@@ -529,6 +533,62 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public boolean isEphemeral() {
     return myEphemeral;
+  }
+
+  @Nullable
+  @Override
+  public DfaMemoryState mergeWith(DfaMemoryState _other) {
+    DfaMemoryStateImpl other = (DfaMemoryStateImpl)_other;
+    if (myEphemeral != other.myEphemeral ||
+        !myStack.equals(other.myStack) ||
+        !myOffsetStack.equals(other.myOffsetStack)) {
+      return null;
+    }
+
+    Set<DfaVariableValue> differentVars = ContainerUtil.newHashSet();
+    addDifferentlyValuedVariables(other, differentVars);
+    other.addDifferentlyValuedVariables(this, differentVars);
+
+    for (DfaVariableValue differentVar : differentVars) {
+      DfaMemoryStateImpl copy1 = createCopy();
+      DfaMemoryStateImpl copy2 = other.createCopy();
+      copy1.flushVariable(differentVar);
+      copy2.flushVariable(differentVar);
+      copy1.myUnknownVariables.addAll(copy2.myUnknownVariables);
+      copy2.myUnknownVariables.addAll(copy1.myUnknownVariables);
+
+      if (!copy1.equals(copy2)) {
+        continue;
+      }
+
+      if (isNull(differentVar) || other.isNull(differentVar)) {
+        copy1.getVariableState(differentVar).setNullable(true);
+      }
+      return copy1;
+    }
+
+    return null;
+  }
+
+  private void addDifferentlyValuedVariables(DfaMemoryStateImpl other, Set<DfaVariableValue> differentVars) {
+    for (SortedIntSet aClass : myEqClasses) {
+      if (aClass == null || aClass.size() < 2) continue;
+      List<DfaValue> values = getEqClassValues(aClass);
+      outer: for (DfaValue var : values) {
+        if (var instanceof DfaVariableValue && !differentVars.contains(var)) {
+          for (DfaValue val : values) {
+            if (val != var && other.areDistinct(var, val)) {
+              differentVars.add((DfaVariableValue)var);
+              continue outer;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  private boolean areDistinct(DfaValue val1, DfaValue val2) {
+    return myDistinctClasses.contains(createPair(getEqClassIndex(val1), getEqClassIndex(val2)));
   }
 
   @Override

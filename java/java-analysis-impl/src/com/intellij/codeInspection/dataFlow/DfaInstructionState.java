@@ -27,20 +27,15 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
 import org.jetbrains.annotations.NotNull;
 
-public class DfaInstructionState {
+public class DfaInstructionState implements Comparable<DfaInstructionState> {
   public static final DfaInstructionState[] EMPTY_ARRAY = new DfaInstructionState[0];
   private final DfaMemoryState myBeforeMemoryState;
   private final Instruction myInstruction;
-  private long myDistanceFromStart = 0;
 
   public DfaInstructionState(@NotNull Instruction myInstruction, @NotNull DfaMemoryState myBeforeMemoryState) {
     this.myBeforeMemoryState = myBeforeMemoryState;
     this.myInstruction = myInstruction;
   }
-
-  public long getDistanceFromStart() { return myDistanceFromStart; }
-
-  public void setDistanceFromStart(long distanceFromStart) { myDistanceFromStart = distanceFromStart; }
 
   @NotNull
   public Instruction getInstruction() {
@@ -54,5 +49,10 @@ public class DfaInstructionState {
 
   public String toString() {
     return getInstruction().getIndex() + " " + getInstruction() + ":   " + getMemoryState().toString();
+  }
+
+  @Override
+  public int compareTo(@NotNull DfaInstructionState o) {
+    return myInstruction.getIndex() - o.myInstruction.getIndex();
   }
 }

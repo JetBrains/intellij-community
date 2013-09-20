@@ -68,4 +68,7 @@ public interface DfaMemoryState {
   void markEphemeral();
   
   boolean isEphemeral();
+
+  @Nullable
+  DfaMemoryState mergeWith(DfaMemoryState other);
 }
