@@ -142,7 +142,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   private void addLocatableRequest(FilteredRequestor requestor, EventRequest request) {
-    if(DebuggerSettings.SUSPEND_ALL.equals(requestor.SUSPEND_POLICY)) {
+    if(DebuggerSettings.SUSPEND_ALL.equals(requestor.getSuspendPolicy())) {
       request.setSuspendPolicy(EventRequest.SUSPEND_ALL);
     }
     else {
