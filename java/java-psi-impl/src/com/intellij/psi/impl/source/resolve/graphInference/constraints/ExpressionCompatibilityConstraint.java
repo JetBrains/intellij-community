@@ -74,35 +74,50 @@ public class ExpressionCompatibilityConstraint implements ConstraintFormula {
     
     if (myExpression instanceof PsiCallExpression) {
       final PsiExpressionList argumentList = ((PsiCallExpression)myExpression).getArgumentList();
-      final Map<PsiElement,Pair<PsiMethod,PsiSubstitutor>> map = MethodCandidateInfo.CURRENT_CANDIDATE.get();
-      final Pair<PsiMethod,PsiSubstitutor> pair = map != null ? map.get(argumentList) : null;
-      final PsiMethod method = pair != null ? pair.first : ((PsiCallExpression)myExpression).resolveMethod();
-      if (method != null) {
-        final PsiTypeParameter[] typeParameters = method.getTypeParameters();
-        if (typeParameters.length == 0) {
-          final PsiType exprType = myExpression.getType();
-          if (exprType != null && !exprType.equals(PsiType.NULL)) {
-            constraints.add(new TypeCompatibilityConstraint(myT, exprType));
+      if (argumentList != null) {
+        final Map<PsiElement,Pair<PsiMethod,PsiSubstitutor>> map = MethodCandidateInfo.CURRENT_CANDIDATE.get();
+        final Pair<PsiMethod,PsiSubstitutor> pair = map != null ? map.get(argumentList) : null;
+        final PsiMethod method = pair != null ? pair.first : ((PsiCallExpression)myExpression).resolveMethod();
+        PsiType returnType = null;
+        InferenceSession callSession = null;
+        if (method != null) {
+          returnType = method.getReturnType();
+          final PsiParameter[] parameters = method.getParameterList().getParameters();
+          if (returnType != null) {
+            callSession = new InferenceSession(method.getTypeParameters(), parameters,
+                                               argumentList.getExpressions(),
+                                               PsiSubstitutor.EMPTY, null, myExpression.getManager());
+            
           }
-        } else {
-          PsiType returnType = method.getReturnType();
-          if (argumentList != null && returnType != null) { //todo constructor
-            final InferenceSession callSession = new InferenceSession(typeParameters, method.getParameterList().getParameters(),
-                                                                      argumentList.getExpressions(),
-                                                                      PsiSubstitutor.EMPTY, null, myExpression.getManager());
-            for (PsiTypeParameter typeParameter : session.getTypeParams()) {
-              callSession.addCapturedVariable(typeParameter);
+        } else if (myExpression instanceof PsiNewExpression) {  //default constructor
+          final PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)myExpression).getClassOrAnonymousClassReference();
+          if (classReference != null) {
+            final PsiElement psiClass = classReference.resolve();
+            if (psiClass instanceof PsiClass) {
+              returnType = JavaPsiFacade.getElementFactory(argumentList.getProject()).createType((PsiClass)psiClass, PsiSubstitutor.EMPTY);
+              callSession = new InferenceSession(((PsiClass)psiClass).getTypeParameters(),
+                                                 PsiParameter.EMPTY_ARRAY,
+                                                 argumentList.getExpressions(),
+                                                 PsiSubstitutor.EMPTY, null, myExpression.getManager());
             }
-            callSession.addConstraint(new TypeCompatibilityConstraint(myT, returnType));
-            final PsiSubstitutor callSubstitutor = callSession.infer();
-            if (myExpression instanceof PsiMethodCallExpression) {
-              returnType =
-                PsiMethodCallExpressionImpl.captureReturnType((PsiMethodCallExpression)myExpression, method, returnType, callSubstitutor);
-            } else {
-              returnType = callSubstitutor.substitute(returnType);
-            }
-            constraints.add(new TypeCompatibilityConstraint(myT, returnType));  //todo primitive types
           }
+        }
+
+        if (callSession != null) {
+
+          for (PsiTypeParameter typeParameter : session.getTypeParams()) {
+            callSession.addCapturedVariable(typeParameter);
+          }
+          callSession.addConstraint(new TypeCompatibilityConstraint(myT, returnType));
+          final PsiSubstitutor callSubstitutor = callSession.infer();
+
+          if (myExpression instanceof PsiMethodCallExpression) {
+            returnType = PsiMethodCallExpressionImpl.captureReturnType((PsiMethodCallExpression)myExpression, method, returnType, callSubstitutor);
+          }
+          else {
+            returnType = callSubstitutor.substitute(returnType);
+          }
+          constraints.add(new TypeCompatibilityConstraint(myT, returnType));  //todo primitive types
         }
       }
       return true;
