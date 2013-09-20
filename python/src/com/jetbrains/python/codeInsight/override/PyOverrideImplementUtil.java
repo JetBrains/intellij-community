@@ -75,13 +75,14 @@ public class PyOverrideImplementUtil {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     final Collection<PyFunction> superFunctions = getAllSuperFunctions(pyClass);
-    chooseAndOverrideOrImplementMethods(project, editor, pyClass, superFunctions);
+    chooseAndOverrideOrImplementMethods(project, editor, pyClass, superFunctions, "Select Methods to Override");
   }
 
   public static void chooseAndOverrideOrImplementMethods(@NotNull final Project project,
-                                                          @NotNull final Editor editor,
-                                                          @NotNull final PyClass pyClass,
-                                                          @NotNull final Collection<PyFunction> superFunctions) {
+                                                         @NotNull final Editor editor,
+                                                         @NotNull final PyClass pyClass,
+                                                         @NotNull final Collection<PyFunction> superFunctions,
+                                                         String title) {
     List<PyMethodMember> elements = new ArrayList<PyMethodMember>();
     for (PyFunction function : superFunctions) {
       final String name = function.getName();
@@ -110,7 +111,7 @@ public class PyOverrideImplementUtil {
           };
         }
       };
-    chooser.setTitle("Select Methods to Override");
+    chooser.setTitle(title);
     chooser.setCopyJavadocVisible(false);
     chooser.show();
     if (chooser.getExitCode() != DialogWrapper.OK_EXIT_CODE) {
