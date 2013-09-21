@@ -15,6 +15,10 @@
     <annotation name="org.jetbrains.annotations.NonNls" />
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name="java.util.regex.Pattern java.util.regex.Pattern compile(java.lang.String, int) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
   <item name="java.util.regex.Pattern java.util.regex.Pattern compile(java.lang.String, int) 1">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="flagsFromClass" val="java.util.regex.Pattern.class" />
