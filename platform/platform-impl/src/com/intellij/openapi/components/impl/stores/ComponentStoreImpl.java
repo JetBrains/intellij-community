@@ -230,9 +230,6 @@ public abstract class ComponentStoreImpl implements IComponentStore {
       if (component instanceof RoamingTypeDisabled) {
          roamingManager.setRoamingType(componentName, RoamingType.DISABLED);
       }
-      else if (component instanceof RoamingTypePerPlatform) {
-        roamingManager.setRoamingType(componentName, RoamingType.PER_PLATFORM);
-      }
       /*else {
         roamingManager.setRoamingType(componentName, RoamingType.PER_USER);
       }*/
@@ -302,9 +299,6 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   private static RoamingType getRoamingType(final PersistentStateComponent component) {
     if (component instanceof RoamingTypeDisabled) {
        return RoamingType.DISABLED;
-    }
-    else if (component instanceof RoamingTypePerPlatform) {
-      return RoamingType.PER_PLATFORM;
     }
 
     final State stateSpec = getStateSpec(component);
