@@ -79,4 +79,46 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
     myFixture.configureByText("X.java", newText.toString());
     myFixture.testHighlighting(true, false, false);
   }
+
+  @Override
+  protected String getBasePath() {
+    final Class<? extends LocalInspectionTool> inspectionClass = getInspection().getClass();
+    final String className = inspectionClass.getName();
+    final String[] words = className.split("\\.");
+    @NonNls final StringBuilder basePath = new StringBuilder("/plugins/InspectionGadgets/test/");
+    final int lastWordIndex = words.length - 1;
+    for (int i = 0; i < lastWordIndex; i++) {
+      final String word = words[i];
+      if (word.equals("ig")) {
+        basePath.append("igtest");
+      }
+      else {
+        basePath.append(word);
+      }
+      basePath.append('/');
+    }
+    String lastWord = words[lastWordIndex];
+    if (lastWord.endsWith("Inspection")) {
+      lastWord = lastWord.substring(0, lastWord.length() - 10);
+    }
+    final int length = lastWord.length();
+    for (int i = 0; i < length; i++) {
+      final char ch = lastWord.charAt(i);
+      if (Character.isUpperCase(ch)) {
+        if (i != 0) {
+          basePath.append('_');
+        }
+        basePath.append(Character.toLowerCase(ch));
+      }
+      else {
+        basePath.append(ch);
+      }
+    }
+    return basePath.toString();
+  }
+
+  protected final void doTest() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.testHighlighting(true, false, false);
+  }
 }
