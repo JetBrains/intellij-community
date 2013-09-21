@@ -3,7 +3,6 @@ package com.jetbrains.python.console;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleView;
-import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ConsoleExecuteActionHandler;
 import com.intellij.openapi.application.Result;
@@ -274,7 +273,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
 
   @Nullable
   private VirtualFile getConsoleFile() {
-    if (myConsoleView != null && myConsoleView.getConsole().getFile() != null) {
+    if (myConsoleView != null) {
       return myConsoleView.getConsole().getFile().getVirtualFile();
     }
     else {
