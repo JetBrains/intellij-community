@@ -161,8 +161,7 @@ public class TodoConfiguration implements NamedComponent, JDOMExternalizable {
   public void readExternal(Element element) throws InvalidDataException {
     List<TodoPattern> patternsList = new ArrayList<TodoPattern>();
     List<TodoFilter> filtersList = new ArrayList<TodoFilter>();
-    for (Object o : element.getChildren()) {
-      Element child = (Element)o;
+    for (Element child : element.getChildren()) {
       if (ELEMENT_PATTERN.equals(child.getName())) {
         TodoPattern pattern = new TodoPattern(TodoAttributesUtil.createDefault());
         pattern.readExternal(child, TodoAttributesUtil.getDefaultColorSchemeTextAttributes());
