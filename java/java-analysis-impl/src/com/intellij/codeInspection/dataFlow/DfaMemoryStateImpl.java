@@ -41,7 +41,7 @@ import java.util.*;
 public class DfaMemoryStateImpl implements DfaMemoryState {
   private final DfaValueFactory myFactory;
 
-  private final List<SortedIntSet> myEqClasses = new ArrayList<SortedIntSet>();
+  private final List<EqClass> myEqClasses = ContainerUtil.newArrayList();
   private final Stack<DfaValue> myStack = new Stack<DfaValue>();
   private TIntStack myOffsetStack = new TIntStack(1);
   private final TLongHashSet myDistinctClasses = new TLongHashSet();
@@ -72,8 +72,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     newState.myOffsetStack = new TIntStack(myOffsetStack);
 
     for (int i = 0; i < myEqClasses.size(); i++) {
-      SortedIntSet aClass = myEqClasses.get(i);
-      newState.myEqClasses.add(aClass != null ? new SortedIntSet(aClass.toNativeArray()) : null);
+      EqClass aClass = myEqClasses.get(i);
+      newState.myEqClasses.add(aClass != null ? new EqClass(aClass) : null);
     }
 
     for (DfaVariableValue dfaVariableValue : myVariableStates.keySet()) {
@@ -115,10 +115,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
-  private Set<Set<SortedIntSet>> getDistinctClassPairs() {
-    Set<Set<SortedIntSet>> result = ContainerUtil.newHashSet();
+  private Set<Set<EqClass>> getDistinctClassPairs() {
+    Set<Set<EqClass>> result = ContainerUtil.newHashSet();
     for (long encodedPair : myDistinctClasses.toArray()) {
-      THashSet<SortedIntSet> pair = new THashSet<SortedIntSet>(2);
+      THashSet<EqClass> pair = new THashSet<EqClass>(2);
       pair.add(myEqClasses.get(low(encodedPair)));
       pair.add(myEqClasses.get(high(encodedPair)));
       result.add(pair);
@@ -126,9 +126,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return result;
   }
 
-  private Set<SortedIntSet> getNonTrivialEqClasses() {
-    Set<SortedIntSet> result = ContainerUtil.newHashSet();
-    for (SortedIntSet eqClass : myEqClasses) {
+  private Set<EqClass> getNonTrivialEqClasses() {
+    Set<EqClass> result = ContainerUtil.newHashSet();
+    for (EqClass eqClass : myEqClasses) {
       if (eqClass != null && eqClass.size() > 1) {
         result.add(eqClass);
       }
@@ -141,20 +141,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     //return ((myEqClasses.hashCode() * 31 + myStack.hashCode()) * 31 + myVariableStates.hashCode()) * 31 + myUnknownVariables.hashCode();
   }
 
-  private void appendClass(StringBuilder buf, @Nullable SortedIntSet aClass) {
-    if (aClass == null) return;
-    
-    buf.append("(");
-
-    for (int i = 0; i < aClass.size(); i++) {
-      if (i > 0) buf.append(", ");
-      int value = aClass.get(i);
-      DfaValue dfaValue = myFactory.getValue(value);
-      buf.append(dfaValue);
-    }
-    buf.append(")");
-  }
-
   @SuppressWarnings({"HardCodedStringLiteral"})
   public String toString() {
     StringBuilder result = new StringBuilder();
@@ -163,22 +149,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       result.append("ephemeral, ");
     }
 
-    for (SortedIntSet set : getNonTrivialEqClasses()) {
-      appendClass(result, set);
+    for (EqClass set : getNonTrivialEqClasses()) {
+      result.append(set);
     }
 
     if (!myDistinctClasses.isEmpty()) {
       result.append("\n  distincts: ");
       List<String> distincts = new ArrayList<String>();
-      for (Set<SortedIntSet> pair : getDistinctClassPairs()) {
-        ArrayList<SortedIntSet> list = new ArrayList<SortedIntSet>(pair);
-        StringBuilder one = new StringBuilder();
-        one.append("{");
-        appendClass(one, list.get(0));
-        one.append(", ");
-        appendClass(one, list.get(1));
-        one.append("}");
-        distincts.add(one.toString());
+      for (Set<EqClass> pair : getDistinctClassPairs()) {
+        distincts.add("{" + StringUtil.join(pair, ", ") + "}");
       }
       Collections.sort(distincts);
       result.append(StringUtil.join(distincts, " "));
@@ -277,7 +256,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!canBeReused(dfaValue) && !(((DfaBoxedValue)dfaValue).getWrappedValue() instanceof DfaConstValue)) {
       return null;
     }
-    SortedIntSet aClass = new SortedIntSet();
+    EqClass aClass = new EqClass(myFactory);
     aClass.add(dfaValue.getID());
     myEqClasses.add(aClass);
 
@@ -287,24 +266,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @NotNull
   private List<DfaValue> getEqClassesFor(@NotNull DfaValue dfaValue) {
     int index = getEqClassIndex(dfaValue);
-    SortedIntSet set = index == -1 ? null : myEqClasses.get(index);
+    EqClass set = index == -1 ? null : myEqClasses.get(index);
     if (set == null) {
       return Collections.emptyList();
     }
-    return getEqClassValues(set);
-  }
-
-  private List<DfaValue> getEqClassValues(SortedIntSet set) {
-    final List<DfaValue> result = new ArrayList<DfaValue>(set.size());
-    set.forEach(new TIntProcedure() {
-      @Override
-      public boolean execute(int c1) {
-        DfaValue value = myFactory.getValue(c1);
-        result.add(value);
-        return true;
-      }
-    });
-    return result;
+    return set.getMemberValues();
   }
 
   private boolean canBeNaN(@NotNull DfaValue dfaValue) {
@@ -330,7 +296,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private int getEqClassIndex(@NotNull DfaValue dfaValue) {
     for (int i = 0; i < myEqClasses.size(); i++) {
-      SortedIntSet aClass = myEqClasses.get(i);
+      EqClass aClass = myEqClasses.get(i);
       if (aClass != null && aClass.contains(dfaValue.getID())) {
         if (!canBeReused(dfaValue) && aClass.size() > 1) return -1;
         return i;
@@ -389,8 +355,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private boolean uniteClasses(int c1Index, int c2Index) {
-    SortedIntSet c1 = myEqClasses.get(c1Index);
-    SortedIntSet c2 = myEqClasses.get(c2Index);
+    EqClass c1 = myEqClasses.get(c1Index);
+    EqClass c2 = myEqClasses.get(c2Index);
 
     Set<DfaVariableValue> vars = ContainerUtil.newTroveSet();
     Set<DfaVariableValue> negatedVars = ContainerUtil.newTroveSet();
@@ -515,14 +481,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   @Nullable
   public DfaConstValue getConstantValue(DfaVariableValue value) {
-    DfaConstValue result = null;
-    for (DfaValue equal : getEqClassesFor(value)) {
-      if (equal instanceof DfaVariableValue) continue;
-      DfaConstValue constValue = asConstantValue(equal);
-      if (constValue == null) return null;
-      result = constValue;
-    }
-    return result;
+    int index = getEqClassIndex(value);
+    EqClass ec = index == -1 ? null : myEqClasses.get(index);
+    return ec == null ? null : ec.findConstant();
   }
 
   @Override
@@ -571,9 +532,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   private void addDifferentlyValuedVariables(DfaMemoryStateImpl other, Set<DfaVariableValue> differentVars) {
-    for (SortedIntSet aClass : myEqClasses) {
+    for (EqClass aClass : myEqClasses) {
       if (aClass == null || aClass.size() < 2) continue;
-      List<DfaValue> values = getEqClassValues(aClass);
+      List<DfaValue> values = aClass.getMemberValues();
       outer: for (DfaValue var : values) {
         if (var instanceof DfaVariableValue && !differentVars.contains(var)) {
           for (DfaValue val : values) {
@@ -603,7 +564,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return isNull(dfaVar) || getVariableState(dfaVar).setInstanceofValue(dfaType);
   }
 
-  private static DfaValue unwrap(DfaValue value) {
+  static DfaValue unwrap(DfaValue value) {
     if (value instanceof DfaBoxedValue) {
       return ((DfaBoxedValue)value).getWrappedValue();
     }
@@ -777,10 +738,9 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       if (!uniteClasses(c1Index, c2Index)) return false;
 
       for (long encodedPair : myDistinctClasses.toArray()) {
-        SortedIntSet c1 = myEqClasses.get(low(encodedPair));
-        SortedIntSet c2 = myEqClasses.get(high(encodedPair));
-        if (ContainerUtil.findInstance(getEqClassValues(c1), DfaConstValue.class) != null && 
-            ContainerUtil.findInstance(getEqClassValues(c2), DfaConstValue.class) != null) {
+        EqClass c1 = myEqClasses.get(low(encodedPair));
+        EqClass c2 = myEqClasses.get(high(encodedPair));
+        if (c1.findConstant() != null && c2.findConstant() != null) {
           myDistinctClasses.remove(encodedPair);
         }
       }
@@ -891,7 +851,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     int size = myEqClasses.size();
     int interruptCount = 0;
     for (int varClassIndex = 0; varClassIndex < size; varClassIndex++) {
-      final SortedIntSet varClass = myEqClasses.get(varClassIndex);
+      final EqClass varClass = myEqClasses.get(varClassIndex);
       if (varClass == null) continue;
 
       for (int i = 0; i < varClass.size(); i++) {
@@ -915,10 +875,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           }
         }
       }
-      else if (containsConstantsOnly(varClassIndex)) {
+      else if (varClass.containsConstantsOnly()) {
         for (long pair : myDistinctClasses.toArray()) {
-          if (low(pair) == varClassIndex && containsConstantsOnly(high(pair)) ||
-              high(pair) == varClassIndex && containsConstantsOnly(low(pair))) {
+          if (low(pair) == varClassIndex && myEqClasses.get(high(pair)).containsConstantsOnly() ||
+              high(pair) == varClassIndex && myEqClasses.get(low(pair)).containsConstantsOnly()) {
             myDistinctClasses.remove(pair);
           }
         }
@@ -929,23 +889,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (varNegated != null) {
       myVariableStates.remove(varNegated);
     }
-  }
-
-  @Nullable private static DfaConstValue asConstantValue(DfaValue value) {
-    value = unwrap(value);
-    if (value instanceof DfaConstValue) return (DfaConstValue)value;
-    return null;
-  }
-
-  private boolean containsConstantsOnly(int id) {
-    SortedIntSet varClass = myEqClasses.get(id);
-    for (int i = 0; i < varClass.size(); i++) {
-      if (asConstantValue(myFactory.getValue(varClass.get(i))) == null) {
-        return false;
-      }
-    }
-
-    return true;
   }
 
   private static boolean mine(int id, DfaValue value) {
