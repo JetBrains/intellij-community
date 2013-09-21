@@ -410,62 +410,52 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
 
     private boolean saveForProvider(@NotNull StreamProvider streamProvider) {
-      // it is not really correctly implemented - stream provider can save not the whole document, but only filtered (per roaming type)
-      // but right now it is not our case, so, we should refine it later, but it not leads to bug now
-      boolean result = false;
-      for (final RoamingType roamingType : RoamingType.values()) {
-        if (roamingType == RoamingType.DISABLED || !streamProvider.isApplicable(myFileSpec, roamingType)) {
-          continue;
-        }
-
-        Document document = getDocumentToSave();
-        if (document.getRootElement().getChildren().isEmpty()) {
-          continue;
-        }
-
-        Document actualDocument;
-        ElementFilter roamingFilter = new ElementFilter(StorageData.COMPONENT) {
-          @Override
-          public boolean matches(Object obj) {
-            return super.matches(obj) && myComponentRoamingManager.getRoamingType(((Element)obj).getAttributeValue(StorageData.NAME)) != roamingType;
-          }
-        };
-
-        if (document.getRootElement().getContent(roamingFilter).iterator().hasNext()) {
-          actualDocument = document.clone();
-          Iterator<Element> iterator = actualDocument.getRootElement().getContent(roamingFilter).iterator();
-          while (iterator.hasNext()) {
-            iterator.next();
-            iterator.remove();
-          }
-
-          if (actualDocument.getRootElement().getChildren().isEmpty()) {
-            continue;
-          }
-        }
-        else {
-          actualDocument = document;
-        }
-
-        try {
-          if (StorageUtil.doSendContent(streamProvider, myFileSpec, actualDocument, roamingType, true)) {
-            result = true;
-          }
-
-          if (streamProvider.isVersioningRequired()) {
-            TObjectLongHashMap<String> versions = loadVersions(actualDocument.getRootElement().getChildren(StorageData.COMPONENT));
-            if (!versions.isEmpty()) {
-              Document versionDoc = new Document(StateStorageManagerImpl.createComponentVersionsXml(versions));
-              StorageUtil.doSendContent(streamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
-            }
-          }
-        }
-        catch (IOException e) {
-          LOG.warn(e);
-        }
+      if (!streamProvider.isApplicable(myFileSpec, RoamingType.PER_USER)) {
+        return false;
       }
 
-      return result;
+      Document document = getDocumentToSave();
+      Element rootElement = document.getRootElement();
+      if (rootElement.getChildren().isEmpty()) {
+        return false;
+      }
+
+      // skip the whole document if some component has disabled roaming type
+      if (rootElement.getContent(new RoamingElementFilter(RoamingType.DISABLED)).iterator().hasNext()) {
+        return false;
+      }
+
+      RoamingElementFilter perPlatformFilter = new RoamingElementFilter(RoamingType.PER_PLATFORM);
+      if (rootElement.getContent(perPlatformFilter).iterator().hasNext()) {
+        return doSaveForProvider(rootElement, new RoamingElementFilter(RoamingType.PER_USER)) ||
+               doSaveForProvider(rootElement, perPlatformFilter);
+      }
+      else {
+        return doSaveForProvider(document, RoamingType.PER_USER, streamProvider);
+      }
+    }
+
+    private boolean doSaveForProvider(Element element, RoamingElementFilter filter) {
+      Element copiedElement = JDOMUtil.cloneElement(element, filter);
+      return copiedElement != null && doSaveForProvider(new Document(copiedElement), filter.myRoamingType, myStreamProvider);
+    }
+
+    private boolean doSaveForProvider(Document actualDocument, RoamingType roamingType, StreamProvider streamProvider) {
+      try {
+        boolean result = StorageUtil.doSendContent(streamProvider, myFileSpec, actualDocument, roamingType, true);
+        if (streamProvider.isVersioningRequired()) {
+          TObjectLongHashMap<String> versions = loadVersions(actualDocument.getRootElement().getChildren(StorageData.COMPONENT));
+          if (!versions.isEmpty()) {
+            Document versionDoc = new Document(StateStorageManagerImpl.createComponentVersionsXml(versions));
+            StorageUtil.doSendContent(streamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
+          }
+        }
+        return result;
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+        return false;
+      }
     }
 
     private boolean isHashUpToDate(final Integer hash) {
@@ -506,6 +496,21 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       }
 
       return null;
+    }
+
+    private class RoamingElementFilter extends ElementFilter {
+      final RoamingType myRoamingType;
+
+      public RoamingElementFilter(RoamingType roamingType) {
+        super(StorageData.COMPONENT);
+
+        myRoamingType = roamingType;
+      }
+
+      @Override
+      public boolean matches(Object obj) {
+        return super.matches(obj) && myComponentRoamingManager.getRoamingType(((Element)obj).getAttributeValue(StorageData.NAME)) == myRoamingType;
+      }
     }
   }
 

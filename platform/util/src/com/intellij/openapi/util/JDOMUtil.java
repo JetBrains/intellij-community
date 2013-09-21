@@ -26,6 +26,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
 import com.intellij.util.text.StringFactory;
 import org.jdom.*;
+import org.jdom.filter.ElementFilter;
 import org.jdom.filter.Filter;
 import org.jdom.input.DOMBuilder;
 import org.jdom.input.SAXBuilder;
@@ -736,5 +737,36 @@ public class JDOMUtil {
     else {
       throw new IllegalArgumentException("Wrong node: " + node);
     }
+  }
+
+  @Nullable
+  public static Element cloneElement(@NotNull Element element, @NotNull ElementFilter elementFilter) {
+    Element result = new Element(element.getName(), element.getNamespace());
+    List<Attribute> attributes = element.getAttributes();
+    if (!attributes.isEmpty()) {
+      ArrayList<Attribute> list = new ArrayList<Attribute>(attributes.size());
+      for (Attribute attribute : attributes) {
+        list.add(attribute.clone());
+      }
+      result.setAttributes(list);
+    }
+
+    for (Namespace namespace : element.getAdditionalNamespaces()) {
+      result.addNamespaceDeclaration(namespace);
+    }
+
+    boolean hasContent = false;
+    for (Content content : element.getContent()) {
+      if (content instanceof Element) {
+        if (elementFilter.matches(content)) {
+          hasContent = true;
+        }
+        else {
+          continue;
+        }
+      }
+      result.addContent(content.clone());
+    }
+    return hasContent ? result : null;
   }
 }

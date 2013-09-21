@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,8 +22,15 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface State {
   String name();
+
+  /**
+   * {@link RoamingType#GLOBAL} will be ignored, use only {@link RoamingType#DISABLED} or {@link RoamingType#PER_PLATFORM}
+   */
   RoamingType roamingType() default RoamingType.PER_USER;
+
   Storage[] storages();
+
   Class<? extends StateStorageChooser> storageChooser() default StorageAnnotationsDefaultValues.NullStateStorageChooser.class;
+
   boolean reloadable() default true;
 }
