@@ -67,6 +67,7 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
     }
   }
 
+  @Override
   public void loadState(final Element element) {
     List groupsList = element.getChildren(GROUP_TAG);
     for (Object project : groupsList) {
@@ -92,14 +93,15 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
     }
 
     final String isAllowedValue = element.getAttributeValue(IS_ALLOWED_ATTR);
-    setAllowed(StringUtil.isEmptyOrSpaces(isAllowedValue) ? false : Boolean.parseBoolean(isAllowedValue));
+    setAllowed(!StringUtil.isEmptyOrSpaces(isAllowedValue) && Boolean.parseBoolean(isAllowedValue));
 
     final String isShowNotificationValue = element.getAttributeValue(SHOW_NOTIFICATION_ATTR);
-    setShowNotification(StringUtil.isEmptyOrSpaces(isShowNotificationValue) ? true : Boolean.parseBoolean(isShowNotificationValue));
+    setShowNotification(StringUtil.isEmptyOrSpaces(isShowNotificationValue) || Boolean.parseBoolean(isShowNotificationValue));
 
     setPeriod(parsePeriod(element.getAttributeValue(PERIOD_ATTR)));
   }
 
+  @Override
   public Element getState() {
     Element element = new Element("state");
 
@@ -162,6 +164,7 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
     return Double.parseDouble(priority);
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
@@ -172,6 +175,7 @@ public class UsageStatisticsPersistenceComponent extends BasicSentUsagesPersiste
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
   }
 }
