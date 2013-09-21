@@ -338,10 +338,14 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   @Override
   public String getPresentableUrl() {
-    if (myProject.isDefault()) return null;
+    if (myProject.isDefault()) {
+      return null;
+    }
     if (myPresentableUrl == null) {
-      final String url = myScheme == StorageScheme.DIRECTORY_BASED ? getProjectBasePath() : getProjectFilePath();
-      myPresentableUrl = url != null ? FileUtil.toSystemDependentName(url) : url;
+      String url = myScheme == StorageScheme.DIRECTORY_BASED ? getProjectBasePath() : getProjectFilePath();
+      if (url != null) {
+        myPresentableUrl = FileUtil.toSystemDependentName(url);
+      }
     }
     return myPresentableUrl;
   }
