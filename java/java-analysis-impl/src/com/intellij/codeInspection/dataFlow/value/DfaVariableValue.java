@@ -187,14 +187,12 @@ public class DfaVariableValue extends DfaValue {
     return Nullness.UNKNOWN;
   }
 
-  public boolean isLocalVariable() {
-    return myVariable instanceof PsiLocalVariable || myVariable instanceof PsiParameter;
-  }
-
   public boolean isFlushableByCalls() {
-    if (isLocalVariable()) return false;
-    if (!myVariable.hasModifierProperty(PsiModifier.FINAL)) return true;
-    return myQualifier != null && myQualifier.isFlushableByCalls();
+    if (myVariable instanceof PsiLocalVariable || myVariable instanceof PsiParameter) return false;
+    if (myVariable instanceof PsiVariable && myVariable.hasModifierProperty(PsiModifier.FINAL)) {
+      return myQualifier != null && myQualifier.isFlushableByCalls();
+    }
+    return true;
   }
 
 }

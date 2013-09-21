@@ -297,6 +297,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testAnonymousFieldIndependence() { doTest(); }
   public void testNoConfusionWithAnonymousConstantInitializer() { doTest(); }
   public void testForeachOverWildcards() { doTest(); }
+  public void testFinalGetter() { doTest(); }
   
   public void testManySequentialIfsNotComplex() { doTest(); }
   
