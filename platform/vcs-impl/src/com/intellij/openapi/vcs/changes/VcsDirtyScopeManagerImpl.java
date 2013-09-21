@@ -105,7 +105,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     if ((! myProject.isOpen()) || myProject.isDisposed() || myVcsManager.getAllActiveVcss().length == 0) return;
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("everything dirty: " + ReflectionUtil.findCallerClass(1));
+      LOG.debug("everything dirty: " + ReflectionUtil.findCallerClass(2));
     }
 
     final LifeDrop lifeDrop = myLife.doIfAlive(new Runnable() {
