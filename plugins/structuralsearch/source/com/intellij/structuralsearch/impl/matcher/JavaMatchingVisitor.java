@@ -236,7 +236,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
     if (myMatchingVisitor.getElement() instanceof PsiDocCommentOwner) {
       comment2 = ((PsiDocCommentOwner)myMatchingVisitor.getElement()).getDocComment();
 
-      if (comment2 == null && comment.getTags() != null) {
+      if (comment2 == null) {
         // doc comment are not collapsed for inner classes!
         myMatchingVisitor.setResult(false);
         return;
