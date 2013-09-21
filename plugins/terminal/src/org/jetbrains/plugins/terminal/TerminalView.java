@@ -2,11 +2,13 @@ package org.jetbrains.plugins.terminal;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.notification.EventLog;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
@@ -75,6 +77,15 @@ public class TerminalView {
         }
       }
     });
+
+    Disposer.register(project, new Disposable() {
+      @Override
+      public void dispose() {
+        if (myTerminalWidget != null) {
+          myTerminalWidget.dispose();
+        }
+      }
+    });
   }
 
   private Content createToolWindowContentPanel(@Nullable LocalTerminalDirectRunner terminalRunner,
@@ -102,7 +113,7 @@ public class TerminalView {
     content.setCloseable(true);
 
     content.setPreferredFocusableComponent(terminalWidget.getComponent());
-    
+
     return content;
   }
 
