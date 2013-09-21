@@ -4,7 +4,7 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.util.SystemInfo;
 
 final class IcsUrlBuilder {
-  private static String getPlatformName() {
+  private static String getOsName() {
     if (SystemInfo.isWindows) {
       return "windows";
     }
@@ -32,13 +32,13 @@ final class IcsUrlBuilder {
   static String buildPath(String filePath, RoamingType roamingType, String projectKey) {
     StringBuilder result = new StringBuilder();
     if (projectKey != null) {
-      result.append("projects/").append(projectKey).append('/');
+      result.append("_projects/").append(projectKey).append('/');
     }
     else if (roamingType == RoamingType.PER_PLATFORM) {
-      result.append("platforms/").append(getPlatformName()).append('/');
+      result.append("_os/").append(getOsName()).append('/');
     }
     else if (roamingType == RoamingType.GLOBAL) {
-      result.append("$GLOBAL$/");
+      result.append("_global/");
     }
     result.append(filePath);
     return result.toString();
