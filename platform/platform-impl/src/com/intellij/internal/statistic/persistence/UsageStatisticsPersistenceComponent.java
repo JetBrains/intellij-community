@@ -35,6 +35,7 @@ import java.util.Set;
 
 @State(
   name = "UsagesStatistic",
+  roamingType = RoamingType.DISABLED,
   storages = {
     @Storage(
       file = StoragePathMacros.APP_CONFIG + "/usage.statistics.xml"
