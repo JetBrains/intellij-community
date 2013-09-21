@@ -145,7 +145,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
           try {
             Document sharedDocument = StorageUtil.loadDocument(myStreamProvider.loadContent(myFileSpec, roamingType));
             if (sharedDocument != null) {
-              filterOutOfDateAndDisabledForRoamingComponents(sharedDocument.getRootElement(), roamingType);
+              filterOutOfDate(sharedDocument.getRootElement());
               loadState(result, sharedDocument.getRootElement());
             }
           }
@@ -558,18 +558,14 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     myLoadedData = storageData;
   }
 
-  private void filterOutOfDateAndDisabledForRoamingComponents(Element element, RoamingType roamingType) {
+  private void filterOutOfDate(Element element) {
+    if (myRemoteVersionProvider == null) {
+      return;
+    }
+
     Iterator<Element> iterator = element.getContent(new ElementFilter(StorageData.COMPONENT)).iterator();
     while (iterator.hasNext()) {
       String name = iterator.next().getAttributeValue(StorageData.NAME);
-      if (myComponentRoamingManager.getRoamingType(name) != roamingType) {
-        iterator.remove();
-      }
-
-      if (myRemoteVersionProvider == null) {
-        continue;
-      }
-
       long remoteVersion = myRemoteVersionProvider.getVersion(name);
       if (remoteVersion <= myLocalVersionProvider.getVersion(name)) {
         iterator.remove();
