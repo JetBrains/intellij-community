@@ -97,7 +97,7 @@ public class GithubShareAction extends DumbAwareAction {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
 
-    if (project == null || project.isDisposed()) {
+    if (project == null || project.isDisposed() || !GithubUtil.testGitExecutable(project)) {
       return;
     }
 
