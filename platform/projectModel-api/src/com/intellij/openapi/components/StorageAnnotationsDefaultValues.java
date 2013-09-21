@@ -38,16 +38,8 @@ public interface StorageAnnotationsDefaultValues {
       throw new UnsupportedOperationException("Method hasState not implemented in " + getClass());
     }
 
-    public boolean needsSave() throws StateStorageException {
-      throw new UnsupportedOperationException("Method needsSave is not supported in " + getClass());
-    }
-
     public void save() throws StateStorageException {
       throw new UnsupportedOperationException("Method save is not supported in " + getClass());
-    }
-
-    public Set<String> getUsedMacros() {
-      throw new UnsupportedOperationException("Method getUsedMacros not implemented in " + getClass());
     }
 
     @Override
