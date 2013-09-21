@@ -49,7 +49,7 @@
     </option>
     <option name="BAD_CHARACTER">
       <value>
-        <option name="FOREGROUND" value="0" />
+        <option name="FOREGROUND" value="9F0E44" />
         <option name="BACKGROUND" value="ffcccc" />
       </value>
     </option>
@@ -228,7 +228,7 @@
     </option>
     <option name="DEFAULT_INVALID_STRING_ESCAPE">
       <value>
-        <option name="FOREGROUND" value="0" />
+        <option name="FOREGROUND" value="9F0E44" />
         <option name="BACKGROUND" value="ffcccc" />
       </value>
     </option>
@@ -538,12 +538,6 @@
         <option name="EFFECT_TYPE" value="1" />
       </value>
     </option>
-    <option name="JAVA_INVALID_STRING_ESCAPE">
-      <value>
-        <option name="FOREGROUND" value="0" />
-        <option name="BACKGROUND" value="ffcccc" />
-      </value>
-    </option>
     <option name="JAVA_KEYWORD">
       <value>
         <option name="FOREGROUND" value="ca9e4d" />
@@ -576,12 +570,6 @@
       <value>
         <option name="FOREGROUND" value="97e85a" />
         <option name="FONT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="JS.BADCHARACTER">
-      <value>
-        <option name="FOREGROUND" value="0" />
-        <option name="BACKGROUND" value="ff0000" />
       </value>
     </option>
     <option name="JS.BLOCK_COMMENT">
@@ -624,12 +612,6 @@
       <value>
         <option name="FONT_TYPE" value="2" />
         <option name="EFFECT_TYPE" value="1" />
-      </value>
-    </option>
-    <option name="JS.INVALID_STRING_ESCAPE">
-      <value>
-        <option name="FOREGROUND" value="8000" />
-        <option name="BACKGROUND" value="ffcccc" />
       </value>
     </option>
     <option name="JS.LINE_COMMENT">
@@ -836,12 +818,6 @@
         <option name="FOREGROUND" value="ffffff" />
         <option name="FONT_TYPE" value="1" />
         <option name="EFFECT_TYPE" value="-1" />
-      </value>
-    </option>
-    <option name="PY.INVALID_STRING_ESCAPE">
-      <value>
-        <option name="FOREGROUND" value="0" />
-        <option name="BACKGROUND" value="ffcccc" />
       </value>
     </option>
     <option name="PY.KEYWORD">
@@ -1057,12 +1033,6 @@
       <value>
         <option name="FOREGROUND" value="0" />
         <option name="BACKGROUND" value="ffa600" />
-      </value>
-    </option>
-    <option name="SQL_BAD_CHARACTER">
-      <value>
-        <option name="FOREGROUND" value="0" />
-        <option name="BACKGROUND" value="ffcccc" />
       </value>
     </option>
     <option name="SQL_COLUMN">
