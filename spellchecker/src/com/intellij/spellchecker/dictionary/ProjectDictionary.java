@@ -31,7 +31,6 @@ public class ProjectDictionary implements EditableDictionary {
   private String activeName;
   private Set<EditableDictionary> dictionaries;
 
-
   public ProjectDictionary() {
   }
 
@@ -48,10 +47,6 @@ public class ProjectDictionary implements EditableDictionary {
   @Override
   public String getName() {
     return DEFAULT_PROJECT_DICTIONARY_NAME;
-  }
-
-  public String getActiveName() {
-    return activeName;
   }
 
   public void setActiveName(String name) {
@@ -124,7 +119,6 @@ public class ProjectDictionary implements EditableDictionary {
     return result;
   }
 
-
   @Override
   public void replaceAll(@Nullable Collection<String> words) {
     getActiveDictionary().replaceAll(words);
@@ -144,7 +138,10 @@ public class ProjectDictionary implements EditableDictionary {
     }
     Set<String> words = new HashSet<String>();
     for (Dictionary dictionary : dictionaries) {
-      words.addAll(dictionary.getWords());
+      Set<String> otherWords = dictionary.getWords();
+      if (otherWords != null) {
+        words.addAll(otherWords);
+      }
     }
     return words;
   }
