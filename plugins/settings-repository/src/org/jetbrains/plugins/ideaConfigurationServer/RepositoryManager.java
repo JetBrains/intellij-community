@@ -5,6 +5,7 @@ import com.intellij.openapi.util.ActionCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
@@ -35,4 +36,6 @@ public interface RepositoryManager {
 
   @NotNull
   ActionCallback pull(@NotNull ProgressIndicator indicator);
+
+  void initRepository(@NotNull File dir) throws IOException;
 }

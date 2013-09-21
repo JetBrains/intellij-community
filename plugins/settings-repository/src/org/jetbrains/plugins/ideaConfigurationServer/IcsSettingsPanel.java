@@ -3,8 +3,10 @@ package org.jetbrains.plugins.ideaConfigurationServer;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.Consumer;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +15,8 @@ import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
 
 public class IcsSettingsPanel extends DialogWrapper {
   private JPanel panel;
@@ -30,6 +34,7 @@ public class IcsSettingsPanel extends DialogWrapper {
     updateRepositoryFromRemoteCheckBox.setSelected(settings.updateOnStart);
     shareProjectWorkspaceCheckBox.setSelected(settings.shareProjectWorkspace);
     urlTextField.setText(icsManager.getRepositoryManager().getRemoteRepositoryUrl());
+    //new TextComponentUndoProvider(urlTextField);
 
     syncButton = new JButton("Sync now\u2026");
     syncButton.addActionListener(new ActionListener() {
@@ -64,7 +69,8 @@ public class IcsSettingsPanel extends DialogWrapper {
   }
 
   private void updateSyncButtonState() {
-    syncButton.setEnabled(!StringUtil.isEmptyOrSpaces(urlTextField.getText()));
+    String url = urlTextField.getText();
+    syncButton.setEnabled(!StringUtil.isEmptyOrSpaces(url) && url.length() > 1);
   }
 
   @Nullable
@@ -108,6 +114,41 @@ public class IcsSettingsPanel extends DialogWrapper {
   }
 
   private void saveRemoteRepositoryUrl() {
-    IcsManager.getInstance().getRepositoryManager().setRemoteRepositoryUrl(StringUtil.nullize(urlTextField.getText()));
+    String url = StringUtil.nullize(urlTextField.getText());
+    if (url != null) {
+      boolean isFile;
+      if (url.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX)) {
+        url = url.substring(StandardFileSystems.FILE_PROTOCOL_PREFIX.length());
+        isFile = true;
+      }
+      else {
+        isFile = !URLUtil.containsScheme(url);
+      }
+
+      if (isFile) {
+        File file = new File(url);
+        if (file.exists()) {
+          if (!file.isDirectory()) {
+            // todo error
+            return;
+          }
+        }
+        else {
+          if (Messages.showYesNoDialog(getContentPane(), "Path not exists, would you like to init repository here?", "Init repository", Messages.getQuestionIcon()) == 1) {
+            try {
+              IcsManager.getInstance().getRepositoryManager().initRepository(file);
+            }
+            catch (IOException e) {
+              Messages.showErrorDialog(getContentPane(), IcsBundle.message("init.failed.message", e.getMessage()), IcsBundle.message("init.failed.title"));
+            }
+          }
+          else {
+            // todo return false
+            return;
+          }
+        }
+      }
+    }
+    IcsManager.getInstance().getRepositoryManager().setRemoteRepositoryUrl(url);
   }
 }

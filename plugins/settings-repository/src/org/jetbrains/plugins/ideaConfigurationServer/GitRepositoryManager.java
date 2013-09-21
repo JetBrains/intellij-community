@@ -34,10 +34,14 @@ final class GitRepositoryManager extends BaseRepositoryManager {
     repositoryBuilder.setGitDir(new File(dir, Constants.DOT_GIT));
     Repository repository = repositoryBuilder.build();
     if (!dir.exists()) {
-      repository.create();
+      repository.create(false);
     }
+    git = Git.wrap(repository);
+  }
 
-    git = new Git(repository);
+  @Override
+  public void initRepository(@NotNull File dir) throws IOException {
+    new FileRepositoryBuilder().setBare().setGitDir(dir).build().create(true);
   }
 
   private CredentialsProvider getCredentialsProvider() {
