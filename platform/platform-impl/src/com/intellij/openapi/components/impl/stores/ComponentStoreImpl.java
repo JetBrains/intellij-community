@@ -226,13 +226,8 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   private static Element getJdomState(final Object component, final String componentName, @NotNull final StateStorage defaultsStorage)
       throws StateStorageException {
     ComponentRoamingManager roamingManager = ComponentRoamingManager.getInstance();
-    if (!roamingManager.typeSpecified(componentName)) {
-      if (component instanceof RoamingTypeDisabled) {
-         roamingManager.setRoamingType(componentName, RoamingType.DISABLED);
-      }
-      /*else {
-        roamingManager.setRoamingType(componentName, RoamingType.PER_USER);
-      }*/
+    if (component instanceof RoamingTypeDisabled && !roamingManager.typeSpecified(componentName)) {
+      roamingManager.setRoamingType(componentName, RoamingType.DISABLED);
     }
     return defaultsStorage.getState(component, componentName, Element.class, null);
   }
