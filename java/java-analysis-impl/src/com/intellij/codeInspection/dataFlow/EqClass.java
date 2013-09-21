@@ -18,6 +18,8 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +55,17 @@ class EqClass extends SortedIntSet {
     return buf.toString();
   }
 
+  List<DfaVariableValue> getVariables() {
+    List<DfaVariableValue> vars = ContainerUtil.newArrayList();
+    for (DfaValue value : getMemberValues()) {
+      value = DfaMemoryStateImpl.unwrap(value);
+      if (value instanceof DfaVariableValue) {
+        vars.add((DfaVariableValue)value);
+      }
+    }
+    return vars;
+  }
+
   List<DfaValue> getMemberValues() {
     final List<DfaValue> result = new ArrayList<DfaValue>(size());
     forEach(new TIntProcedure() {
@@ -67,8 +80,11 @@ class EqClass extends SortedIntSet {
   }
 
   @Nullable
-  DfaConstValue findConstant() {
+  DfaConstValue findConstant(boolean wrapped) {
     for (DfaValue value : getMemberValues()) {
+      if (wrapped) {
+        value = DfaMemoryStateImpl.unwrap(value);
+      }
       if (value instanceof DfaConstValue) {
         return (DfaConstValue)value;
       }

@@ -115,7 +115,10 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
-  private Set<Set<EqClass>> getDistinctClassPairs() {
+  private Set<Set<EqClass>> myCachedDistinctClassPairs;
+  Set<Set<EqClass>> getDistinctClassPairs() {
+    if (myCachedDistinctClassPairs != null) return myCachedDistinctClassPairs;
+
     Set<Set<EqClass>> result = ContainerUtil.newHashSet();
     for (long encodedPair : myDistinctClasses.toArray()) {
       THashSet<EqClass> pair = new THashSet<EqClass>(2);
@@ -123,17 +126,20 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       pair.add(myEqClasses.get(high(encodedPair)));
       result.add(pair);
     }
-    return result;
+    return myCachedDistinctClassPairs = result;
   }
 
-  private Set<EqClass> getNonTrivialEqClasses() {
+  private Set<EqClass> myCachedNonTrivialEqClasses;
+  Set<EqClass> getNonTrivialEqClasses() {
+    if (myCachedNonTrivialEqClasses != null) return myCachedNonTrivialEqClasses;
+    
     Set<EqClass> result = ContainerUtil.newHashSet();
     for (EqClass eqClass : myEqClasses) {
       if (eqClass != null && eqClass.size() > 1) {
         result.add(eqClass);
       }
     }
-    return result;
+    return myCachedNonTrivialEqClasses = result;
   }
 
   public int hashCode() {
@@ -483,7 +489,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public DfaConstValue getConstantValue(DfaVariableValue value) {
     int index = getEqClassIndex(value);
     EqClass ec = index == -1 ? null : myEqClasses.get(index);
-    return ec == null ? null : ec.findConstant();
+    return ec == null ? null : ec.findConstant(true);
   }
 
   @Override
@@ -740,14 +746,17 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       for (long encodedPair : myDistinctClasses.toArray()) {
         EqClass c1 = myEqClasses.get(low(encodedPair));
         EqClass c2 = myEqClasses.get(high(encodedPair));
-        if (c1.findConstant() != null && c2.findConstant() != null) {
+        if (c1.findConstant(false) != null && c2.findConstant(false) != null) {
           myDistinctClasses.remove(encodedPair);
         }
       }
+      myCachedDistinctClassPairs = null;
+      myCachedNonTrivialEqClasses = null;
     }
     else { // Not Equals
       if (c1Index.equals(c2Index)) return false;
       makeClassesDistinct(c1Index, c2Index);
+      myCachedDistinctClassPairs = null;
     }
 
     return true;
@@ -821,8 +830,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     for (DfaVariableValue value : allVars) {
       if (myVariableStates.containsKey(value) || getEqClassIndex(value) >= 0) {
         if (value.isFlushableByCalls()) {
-          doFlush(value);
-          myUnknownVariables.add(value);
+          doFlush(value, true);
         }
       }
     }
@@ -830,7 +838,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void flushVariable(@NotNull DfaVariableValue variable) {
-    doFlush(variable);
+    doFlush(variable, false);
     flushDependencies(variable);
     myUnknownVariables.remove(variable);
     myUnknownVariables.removeAll(myFactory.getVarFactory().getAllQualifiedBy(variable));
@@ -838,11 +846,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   public void flushDependencies(DfaVariableValue variable) {
     for (DfaVariableValue dependent : myFactory.getVarFactory().getAllQualifiedBy(variable)) {
-      doFlush(dependent);
+      doFlush(dependent, false);
     }
   }
 
-  private void doFlush(DfaVariableValue varPlain) {
+  Set<DfaVariableValue> getUnknownVariables() {
+    return myUnknownVariables;
+  }
+
+  void doFlush(DfaVariableValue varPlain, boolean markUnknown) {
     DfaVariableValue varNegated = varPlain.getNegatedValue();
 
     final int idPlain = varPlain.getID();
@@ -889,6 +901,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (varNegated != null) {
       myVariableStates.remove(varNegated);
     }
+    if (markUnknown) {
+      myUnknownVariables.add(varPlain);
+    }
+    myCachedNonTrivialEqClasses = null;
+    myCachedDistinctClassPairs = null;
   }
 
   private static boolean mine(int id, DfaValue value) {
