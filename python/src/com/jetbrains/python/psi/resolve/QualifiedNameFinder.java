@@ -16,6 +16,7 @@ import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -44,16 +45,32 @@ public class QualifiedNameFinder {
 
   @Nullable
   public static PyQualifiedName findShortestImportableQName(@NotNull PsiElement foothold, @NotNull VirtualFile vfile) {
+    return shortestQName(findImportableQNames(foothold, vfile));
+  }
+
+  @NotNull
+  public static List<PyQualifiedName> findImportableQNames(@NotNull PsiElement foothold, @NotNull VirtualFile vfile) {
     final PythonPathCache cache = ResolveImportUtil.getPathCache(foothold);
-    final PyQualifiedName name = cache != null ? cache.getName(vfile) : null;
-    if (name != null) {
-      return name;
+    final List<PyQualifiedName> names = cache != null ? cache.getNames(vfile) : null;
+    if (names != null) {
+      return names;
     }
     PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
     RootVisitorHost.visitRoots(foothold, visitor);
-    final PyQualifiedName result = visitor.getResult();
+    final List<PyQualifiedName> results = visitor.getResults();
     if (cache != null) {
-      cache.putName(vfile, result);
+      cache.putNames(vfile, results);
+    }
+    return results;
+  }
+
+  @Nullable
+  private static PyQualifiedName shortestQName(@NotNull List<PyQualifiedName> qNames) {
+    PyQualifiedName result = null;
+    for (PyQualifiedName name : qNames) {
+      if (result == null || name.getComponentCount() < result.getComponentCount()) {
+        result = name;
+      }
     }
     return result;
   }
@@ -61,15 +78,16 @@ public class QualifiedNameFinder {
   @Nullable
   public static String findShortestImportableName(Module module, @NotNull VirtualFile vfile) {
     final PythonPathCache cache = PythonModulePathCache.getInstance(module);
-    final PyQualifiedName name = cache.getName(vfile);
-    if (name != null) {
-      return name.toString();
+    final List<PyQualifiedName> names = cache.getNames(vfile);
+    if (names != null) {
+      return names.toString();
     }
     PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
     RootVisitorHost.visitRoots(module, false, visitor);
-    final PyQualifiedName result = visitor.getResult();
-    cache.putName(vfile, result);
-    return result == null ? null : result.toString();
+    final List<PyQualifiedName> results = visitor.getResults();
+    cache.putNames(vfile, results);
+    final PyQualifiedName qName = shortestQName(results);
+    return qName == null ? null : qName.toString();
   }
 
   /**
@@ -128,11 +146,8 @@ public class QualifiedNameFinder {
    * For equal depth source root is in preference to library.
    */
   private static class PathChoosingVisitor implements RootVisitor {
-
-    @Nullable
-    private final VirtualFile myVFile;
-    private List<String> myResult;
-    private boolean myIsModuleSource;
+    @Nullable private final VirtualFile myVFile;
+    @NotNull private final List<PyQualifiedName> myResults = new ArrayList<PyQualifiedName>();
 
     private PathChoosingVisitor(@NotNull VirtualFile file) {
       if (!file.isDirectory() && file.getName().equals(PyNames.INIT_DOT_PY)) {
@@ -148,26 +163,23 @@ public class QualifiedNameFinder {
         final String relativePath = VfsUtilCore.getRelativePath(myVFile, root, '/');
         if (relativePath != null) {
           List<String> result = StringUtil.split(relativePath, "/");
-          if (myResult == null || result.size() < myResult.size() || (isModuleSource && !myIsModuleSource)) {
-            if (result.size() > 0) {
-              result.set(result.size() - 1, FileUtil.getNameWithoutExtension(result.get(result.size() - 1)));
-            }
-            for (String component : result) {
-              if (!PyNames.isIdentifier(component)) {
-                return true;
-              }
-            }
-            myResult = result;
-            myIsModuleSource = isModuleSource;
+          if (result.size() > 0) {
+            result.set(result.size() - 1, FileUtil.getNameWithoutExtension(result.get(result.size() - 1)));
           }
+          for (String component : result) {
+            if (!PyNames.isIdentifier(component)) {
+              return true;
+            }
+          }
+          myResults.add(PyQualifiedName.fromComponents(result));
         }
       }
-      return myResult == null || myResult.size() > 0;
+      return true;
     }
 
-    @Nullable
-    public PyQualifiedName getResult() {
-      return myResult != null ? PyQualifiedName.fromComponents(myResult) : null;
+    @NotNull
+    public List<PyQualifiedName> getResults() {
+      return myResults;
     }
   }
 }
