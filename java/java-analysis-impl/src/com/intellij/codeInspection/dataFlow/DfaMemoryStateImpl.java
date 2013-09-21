@@ -775,6 +775,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!isNegated) { //Equals
       if (c1Index.equals(c2Index)) return true;
       if (!uniteClasses(c1Index, c2Index)) return false;
+
+      for (long encodedPair : myDistinctClasses.toArray()) {
+        SortedIntSet c1 = myEqClasses.get(low(encodedPair));
+        SortedIntSet c2 = myEqClasses.get(high(encodedPair));
+        if (ContainerUtil.findInstance(getEqClassValues(c1), DfaConstValue.class) != null && 
+            ContainerUtil.findInstance(getEqClassValues(c2), DfaConstValue.class) != null) {
+          myDistinctClasses.remove(encodedPair);
+        }
+      }
     }
     else { // Not Equals
       if (c1Index.equals(c2Index)) return false;
