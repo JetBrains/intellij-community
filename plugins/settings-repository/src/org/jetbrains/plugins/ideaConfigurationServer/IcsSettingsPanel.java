@@ -40,7 +40,10 @@ public class IcsSettingsPanel extends DialogWrapper {
     syncButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        saveRemoteRepositoryUrl();
+        if (!saveRemoteRepositoryUrl()) {
+          return;
+        }
+
         IcsManager.getInstance().sync().doWhenDone(new Runnable() {
           @Override
           public void run() {
@@ -113,7 +116,7 @@ public class IcsSettingsPanel extends DialogWrapper {
     saveRemoteRepositoryUrl();
   }
 
-  private void saveRemoteRepositoryUrl() {
+  private boolean saveRemoteRepositoryUrl() {
     String url = StringUtil.nullize(urlTextField.getText());
     if (url != null) {
       boolean isFile;
@@ -129,26 +132,25 @@ public class IcsSettingsPanel extends DialogWrapper {
         File file = new File(url);
         if (file.exists()) {
           if (!file.isDirectory()) {
-            // todo error
-            return;
+            Messages.showErrorDialog(getContentPane(), "Specified path is not a directory", "Specified path is invalid");
+            return false;
+          }
+        }
+        else if (Messages.showYesNoDialog(getContentPane(), IcsBundle.message("init.dialog.message"), IcsBundle.message("init.dialog.title"), Messages.getQuestionIcon()) == 0) {
+          try {
+            IcsManager.getInstance().getRepositoryManager().initRepository(file);
+          }
+          catch (IOException e) {
+            Messages.showErrorDialog(getContentPane(), IcsBundle.message("init.failed.message", e.getMessage()), IcsBundle.message("init.failed.title"));
+            return false;
           }
         }
         else {
-          if (Messages.showYesNoDialog(getContentPane(), "Path not exists, would you like to init repository here?", "Init repository", Messages.getQuestionIcon()) == 1) {
-            try {
-              IcsManager.getInstance().getRepositoryManager().initRepository(file);
-            }
-            catch (IOException e) {
-              Messages.showErrorDialog(getContentPane(), IcsBundle.message("init.failed.message", e.getMessage()), IcsBundle.message("init.failed.title"));
-            }
-          }
-          else {
-            // todo return false
-            return;
-          }
+          return false;
         }
       }
     }
     IcsManager.getInstance().getRepositoryManager().setRemoteRepositoryUrl(url);
+    return true;
   }
 }
