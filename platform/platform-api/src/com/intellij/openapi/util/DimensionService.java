@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -30,23 +31,20 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
  * This class represents map between strings and rectangles. It's intended to store
  * sizes of window, dialogs, etc.
  */
-@SuppressWarnings({"NonPrivateFieldAccessedInSynchronizedContext"})
 @State(
-    name = "DimensionService",
-    storages = {@Storage(
-        file = StoragePathMacros.APP_CONFIG + "/options.xml")})
+  name = "DimensionService",
+  storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/options.xml")})
 public class DimensionService implements PersistentStateComponent<Element>, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.DimensionService");
 
-  private final Map<String,Point> myKey2Location;
-  private final Map<String,Dimension> myKey2Size;
+  private final Map<String, Point> myKey2Location;
+  private final Map<String, Dimension> myKey2Size;
   private final TObjectIntHashMap<String> myKey2ExtendedState;
   @NonNls private static final String EXTENDED_STATE = "extendedState";
   @NonNls private static final String KEY = "key";
@@ -62,26 +60,30 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
     return ApplicationManager.getApplication().getComponent(DimensionService.class);
   }
 
-  /** Invoked by reflection */
-  private DimensionService(){
-    myKey2Location=new HashMap<String, Point>();
-    myKey2Size=new HashMap<String, Dimension>();
+  /**
+   * Invoked by reflection
+   */
+  private DimensionService() {
+    myKey2Location = new LinkedHashMap<String, Point>();
+    myKey2Size = new LinkedHashMap<String, Dimension>();
     myKey2ExtendedState = new TObjectIntHashMap<String>();
   }
 
   @Override
-  public void initComponent() {}
+  public void initComponent() {
+  }
 
   @Override
-  public void disposeComponent() {}
+  public void disposeComponent() {
+  }
 
   /**
+   * @param key a String key to perform a query for.
    * @return point stored under the specified <code>key</code>. The method returns
    * <code>null</code> if there is no stored value under the <code>key</code>. If point
    * is outside of current screen bounds then the method returns <code>null</code>. It
    * properly works in multi-monitor configuration.
-   * @exception java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
-   * @param key a String key to perform a query for.
+   * @throws java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
    */
   @Nullable
   public synchronized Point getLocation(String key) {
@@ -90,47 +92,41 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
 
   @Nullable
   public synchronized Point getLocation(@NotNull String key, Project project) {
-    key = realKey(key, project);
-
-    Point point = myKey2Location.get(key);
-    if (point != null) {
-      if (!ScreenUtil.getScreenRectangle(point).contains(point)){
-        point = null;
-      }
+    Point point = myKey2Location.get(realKey(key, project));
+    if (point != null && !ScreenUtil.getScreenRectangle(point).contains(point)) {
+      point = null;
     }
-    if(point!=null){
-      return (Point)point.clone();
-    }else{
-      return null;
-    }
+    return point != null ? (Point)point.clone() : null;
   }
 
   /**
    * Store specified <code>point</code> under the <code>key</code>. If <code>point</code> is
    * <code>null</code> then the value stored under <code>key</code> will be removed.
-   * @param key a String key to store location for.
+   *
+   * @param key   a String key to store location for.
    * @param point location to save.
-   * @exception java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
+   * @throws java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
    */
-  public synchronized void setLocation(String key, Point point){
+  public synchronized void setLocation(String key, Point point) {
     setLocation(key, point, guessProject());
   }
 
-  public synchronized void setLocation(@NotNull String key, Point point, Project project){
+  public synchronized void setLocation(@NotNull String key, Point point, Project project) {
     key = realKey(key, project);
 
     if (point != null) {
       myKey2Location.put(key, (Point)point.clone());
-    }else {
+    }
+    else {
       myKey2Location.remove(key);
     }
   }
 
   /**
+   * @param key a String key to perform a query for.
    * @return point stored under the specified <code>key</code>. The method returns
    * <code>null</code> if there is no stored value under the <code>key</code>.
-   * @param key a String key to perform a query for.
-   * @exception java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
+   * @throws java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
    */
   @Nullable
   public synchronized Dimension getSize(@NotNull @NonNls String key) {
@@ -139,33 +135,29 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
 
   @Nullable
   public synchronized Dimension getSize(@NotNull @NonNls String key, Project project) {
-    key = realKey(key, project);
-
-    Dimension size=myKey2Size.get(key);
-    if(size!=null){
-      return (Dimension)size.clone();
-    }else{
-      return null;
-    }
+    Dimension size = myKey2Size.get(realKey(key, project));
+    return size != null ? (Dimension)size.clone() : null;
   }
 
   /**
    * Store specified <code>size</code> under the <code>key</code>. If <code>size</code> is
    * <code>null</code> then the value stored under <code>key</code> will be removed.
-   * @param key a String key to to save size for.
+   *
+   * @param key  a String key to to save size for.
    * @param size a Size to save.
-   * @exception java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
+   * @throws java.lang.IllegalArgumentException if <code>key</code> is <code>null</code>.
    */
-  public synchronized void setSize(@NotNull @NonNls String key, Dimension size){
+  public synchronized void setSize(@NotNull @NonNls String key, Dimension size) {
     setSize(key, size, guessProject());
   }
 
-  public synchronized void setSize(@NotNull @NonNls String key, Dimension size, Project project){
+  public synchronized void setSize(@NotNull @NonNls String key, Dimension size, Project project) {
     key = realKey(key, project);
 
     if (size != null) {
       myKey2Size.put(key, (Dimension)size.clone());
-    }else {
+    }
+    else {
       myKey2Size.remove(key);
     }
   }
@@ -212,15 +204,13 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
     myKey2Size.clear();
     myKey2ExtendedState.clear();
 
-    for (final Object o : element.getChildren()) {
-      Element e = (Element)o;
+    for (Element e : element.getChildren()) {
       if (ELEMENT_LOCATION.equals(e.getName())) {
         try {
           myKey2Location.put(e.getAttributeValue(KEY), new Point(Integer.parseInt(e.getAttributeValue(ATTRIBUTE_X)),
                                                                  Integer.parseInt(e.getAttributeValue(ATTRIBUTE_Y))));
         }
         catch (NumberFormatException ignored) {
-          // ignored
         }
       }
       else if (ELEMENT_SIZE.equals(e.getName())) {
@@ -229,7 +219,6 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
                                                                  Integer.parseInt(e.getAttributeValue(ATTRIBUTE_HEIGHT))));
         }
         catch (NumberFormatException ignored) {
-          // ignored
         }
       }
       else if (EXTENDED_STATE.equals(e.getName())) {
@@ -237,7 +226,6 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
           myKey2ExtendedState.put(e.getAttributeValue(KEY), Integer.parseInt(e.getAttributeValue(STATE)));
         }
         catch (NumberFormatException ignored) {
-          // ignored
         }
       }
     }
