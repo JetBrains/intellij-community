@@ -69,8 +69,10 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
     myKey2ExtendedState = new TObjectIntHashMap<String>();
   }
 
+  @Override
   public void initComponent() {}
 
+  @Override
   public void disposeComponent() {}
 
   /**
@@ -168,6 +170,7 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
     }
   }
 
+  @Override
   public Element getState() {
     Element element = new Element("state");
     // Save locations
@@ -203,6 +206,7 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
     return element;
   }
 
+  @Override
   public void loadState(final Element element) {
     myKey2Location.clear();
     myKey2Size.clear();
@@ -239,6 +243,7 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
     }
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "DimensionService";
