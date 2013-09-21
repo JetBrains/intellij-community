@@ -12,6 +12,7 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.components.impl.stores.FileBasedStorage;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
+import com.intellij.openapi.components.impl.stores.StreamProvider;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -249,7 +250,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     return actionCallback;
   }
 
-  private class IcsStreamProvider extends com.intellij.openapi.components.impl.stores.StreamProvider {
+  private class IcsStreamProvider extends StreamProvider {
     private final String projectId;
 
     public IcsStreamProvider(@Nullable String projectId) {
@@ -257,7 +258,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     }
 
     @Override
-    public boolean saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) throws IOException {
+    public final boolean saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) {
       repositoryManager.write(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId), content, size, async);
       commitAlarm.cancelAndRequest();
       return false;
