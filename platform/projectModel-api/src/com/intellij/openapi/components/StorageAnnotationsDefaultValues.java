@@ -26,12 +26,14 @@ import java.util.Set;
 
 public interface StorageAnnotationsDefaultValues {
   class NullStateStorage implements StateStorage {
+    @Override
     @Nullable
     public <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto)
     throws StateStorageException {
       throw new UnsupportedOperationException("Method getState is not supported in " + getClass());
     }
 
+    @Override
     public boolean hasState(final Object component, final String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException {
       throw new UnsupportedOperationException("Method hasState not implemented in " + getClass());
     }
@@ -48,20 +50,24 @@ public interface StorageAnnotationsDefaultValues {
       throw new UnsupportedOperationException("Method getUsedMacros not implemented in " + getClass());
     }
 
+    @Override
     @NotNull
     public ExternalizationSession startExternalization() {
       throw new UnsupportedOperationException("Method startExternalization not implemented in " + getClass());
     }
 
+    @Override
     @NotNull
     public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
       throw new UnsupportedOperationException("Method startSave not implemented in " + getClass());
     }
 
+    @Override
     public void finishSave(@NotNull SaveSession saveSession) {
       throw new UnsupportedOperationException("Method finishSave not implemented in " + getClass());
     }
 
+    @Override
     public void reload(@NotNull final Set<String> changedComponents) throws StateStorageException {
       throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
     }
@@ -69,16 +75,19 @@ public interface StorageAnnotationsDefaultValues {
   }
 
   class NullStateStorageChooser implements StateStorageChooser {
+    @Override
     public Storage[] selectStorages(Storage[] storages, Object component, final StateStorageOperation operation) {
       throw new UnsupportedOperationException("Method selectStorages is not supported in " + getClass());
     }
   }
 
   class NullStateSplitter implements StateSplitter {
+    @Override
     public List<Pair<Element, String>> splitState(Element e) {
       throw new UnsupportedOperationException("Method splitState not implemented in " + getClass());
     }
 
+    @Override
     public void mergeStatesInto(final Element target, final Element[] elements) {
       throw new UnsupportedOperationException("Method mergeStatesInto not implemented in " + getClass());
     }
