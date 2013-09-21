@@ -102,13 +102,10 @@ public class PluginModuleBuildConfEditor implements ModuleConfigurationEditor {
     if (myUseUserManifest.isSelected() && myManifest.getText() != null && !new File(myManifest.getText()).exists()){
       throw new ConfigurationException(DevKitBundle.message("error.file.not.found.message", myManifest.getText()));
     }
-    final File plugin = myBuildProperties.getPluginXmlPath() != null ? new File(myBuildProperties.getPluginXmlPath()) : null;
+    final File plugin = new File(myBuildProperties.getPluginXmlPath());
     final String newPluginPath = myPluginXML.getText() + File.separator + META_INF + File.separator + PLUGIN_XML;
-    if (plugin != null &&
-        plugin.exists() &&
-        !plugin.getPath().equals(newPluginPath) &&
-        Messages.showYesNoDialog(myModule.getProject(),
-                                 DevKitBundle.message("deployment.view.delete", plugin.getPath()),
+    if (plugin.exists() && !plugin.getPath().equals(newPluginPath) && 
+        Messages.showYesNoDialog(myModule.getProject(), DevKitBundle.message("deployment.view.delete", plugin.getPath()),
                                  DevKitBundle.message("deployment.cleanup", META_INF), null) == DialogWrapper.OK_EXIT_CODE) {
 
       CommandProcessor.getInstance().executeCommand(myModule.getProject(),

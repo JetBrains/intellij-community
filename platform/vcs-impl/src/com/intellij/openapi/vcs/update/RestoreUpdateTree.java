@@ -23,6 +23,7 @@ import com.intellij.openapi.project.ProjectReloadState;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.RoamingTypeDisabled;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesCache;
@@ -31,7 +32,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class RestoreUpdateTree implements ProjectComponent, JDOMExternalizable {
+public class RestoreUpdateTree implements ProjectComponent, JDOMExternalizable, RoamingTypeDisabled {
   private final Project myProject;
 
   private UpdateInfo myUpdateInfo;

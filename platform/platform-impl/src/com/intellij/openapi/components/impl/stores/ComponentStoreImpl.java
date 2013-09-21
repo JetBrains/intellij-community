@@ -17,7 +17,7 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.diagnostic.IdeErrorsDialog;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.*;
@@ -226,16 +226,8 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   private static Element getJdomState(final Object component, final String componentName, @NotNull final StateStorage defaultsStorage)
       throws StateStorageException {
     ComponentRoamingManager roamingManager = ComponentRoamingManager.getInstance();
-    if (!roamingManager.typeSpecified(componentName)) {
-      if (component instanceof RoamingTypeDisabled) {
-         roamingManager.setRoamingType(componentName, RoamingType.DISABLED);
-      }
-      else if (component instanceof RoamingTypePerPlatform) {
-        roamingManager.setRoamingType(componentName, RoamingType.PER_PLATFORM);
-      }
-      /*else {
-        roamingManager.setRoamingType(componentName, RoamingType.PER_USER);
-      }*/
+    if (component instanceof RoamingTypeDisabled) {
+      roamingManager.setRoamingType(componentName, RoamingType.DISABLED);
     }
     return defaultsStorage.getState(component, componentName, Element.class, null);
   }
@@ -261,13 +253,9 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   private <T> String initPersistentComponent(@NotNull final PersistentStateComponent<T> component, final boolean reloadData) {
-    final String name = getComponentName(component);
-
-    RoamingType roamingTypeFromComponent = getRoamingType(component);
-    ComponentRoamingManager roamingManager = ComponentRoamingManager.getInstance();
-    if (!roamingManager.typeSpecified(name)) {
-      roamingManager.setRoamingType(name, roamingTypeFromComponent);
-    }
+    State spec = getStateSpec(component);
+    final String name = spec.name();
+    ComponentRoamingManager.getInstance().setRoamingType(name, spec.roamingType());
 
     doAddComponent(name, component);
     if (optimizeTestLoading()) return name;
@@ -283,7 +271,6 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     }
 
     Storage[] storageSpecs = getComponentStorageSpecs(component, StateStorageOperation.READ);
-
     for (Storage storageSpec : storageSpecs) {
       StateStorage stateStorage = getStateStorage(storageSpec);
       if (stateStorage == null || !stateStorage.hasState(component, name, stateClass, reloadData)) continue;
@@ -297,21 +284,6 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     validateUnusedMacros(name, true);
 
     return name;
-  }
-
-  private static RoamingType getRoamingType(final PersistentStateComponent component) {
-    if (component instanceof RoamingTypeDisabled) {
-       return RoamingType.DISABLED;
-    }
-    else if (component instanceof RoamingTypePerPlatform) {
-      return RoamingType.PER_PLATFORM;
-    }
-
-    final State stateSpec = getStateSpec(component);
-    assert stateSpec != null;
-
-    return stateSpec.roamingType();
-
   }
 
   @NotNull
@@ -339,18 +311,15 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   public static String getComponentName(@NotNull final PersistentStateComponent<?> persistentStateComponent) {
-    final State stateSpec = getStateSpec(persistentStateComponent);
-    if (stateSpec == null) {
-      LOG.error("Null state spec for " + persistentStateComponent);
-    }
-    return stateSpec.name();
+    return getStateSpec(persistentStateComponent).name();
   }
 
+  @NotNull
   private static <T> State getStateSpec(@NotNull final PersistentStateComponent<T> persistentStateComponent) {
     final Class<? extends PersistentStateComponent> aClass = persistentStateComponent.getClass();
     final State stateSpec = aClass.getAnnotation(State.class);
     if (stateSpec == null) {
-      final PluginId pluginId = PluginManager.getPluginByClassName(aClass.getName());
+      final PluginId pluginId = PluginManagerCore.getPluginByClassName(aClass.getName());
       if (pluginId != null) {
         throw new PluginException("No @State annotation found in " + aClass, pluginId);
       }
@@ -358,7 +327,6 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     }
     return stateSpec;
   }
-
 
   @NotNull
   protected <T> Storage[] getComponentStorageSpecs(@NotNull final PersistentStateComponent<T> persistentStateComponent,
@@ -517,12 +485,8 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   public boolean isReloadPossible(@NotNull final Set<String> componentNames) {
     for (String componentName : componentNames) {
       final Object component = myComponents.get(componentName);
-
-      if (component != null) {
-        if (!(component instanceof PersistentStateComponent)) return false;
-
-        final State stateSpec = getStateSpec((PersistentStateComponent<? extends Object>)component);
-        if (stateSpec == null || !stateSpec.reloadable()) return false;
+      if (component != null && (!(component instanceof PersistentStateComponent) || !getStateSpec((PersistentStateComponent<?>)component).reloadable())) {
+        return false;
       }
     }
 

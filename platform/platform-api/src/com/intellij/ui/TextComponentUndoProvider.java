@@ -37,6 +37,7 @@ public class TextComponentUndoProvider implements Disposable {
     myTextComponent = textComponent;
 
     myUndoableEditListener = new UndoableEditListener() {
+      @Override
       public void undoableEditHappened(UndoableEditEvent e) {
         myUndoManager.addEdit(e.getEdit());
       }
@@ -96,6 +97,7 @@ public class TextComponentUndoProvider implements Disposable {
     }
   }
 
+  @Override
   public void dispose() {
     if (myUndoableEditListener != null) {
       myTextComponent.getDocument().removeUndoableEditListener(myUndoableEditListener);

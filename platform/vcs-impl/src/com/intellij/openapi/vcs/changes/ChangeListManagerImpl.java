@@ -67,7 +67,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author max
  */
-public class ChangeListManagerImpl extends ChangeListManagerEx implements ProjectComponent, ChangeListOwner, JDOMExternalizable {
+public class ChangeListManagerImpl extends ChangeListManagerEx implements ProjectComponent, ChangeListOwner, JDOMExternalizable, RoamingTypeDisabled {
   public static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.ChangeListManagerImpl");
 
   private final Project myProject;

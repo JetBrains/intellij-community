@@ -102,7 +102,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
 
     if (auxiliary != null) {
       myShouldBeCalledOnDispose.add(auxiliary.getCalledOnViewDispose());
-      myBrowser.setTableContextMenu(group, (auxiliary.getPopupActions() == null) ? Collections.<AnAction>emptyList() : auxiliary.getPopupActions());
+      myBrowser.setTableContextMenu(group, auxiliary.getPopupActions());
     } else {
       myBrowser.setTableContextMenu(group, Collections.<AnAction>emptyList());
     }
@@ -252,9 +252,9 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       for(String word: filterWords) {
         final String comment = changeList.getComment();
         final String committer = changeList.getCommitterName();
-        if ((comment != null && comment.toLowerCase().indexOf(word) >= 0) ||
-            (committer != null && committer.toLowerCase().indexOf(word) >= 0) ||
-            Long.toString(changeList.getNumber()).indexOf(word) >= 0) {
+        if ((comment != null && comment.toLowerCase().contains(word)) ||
+            (committer != null && committer.toLowerCase().contains(word)) ||
+            Long.toString(changeList.getNumber()).contains(word)) {
           return true;
         }
       }

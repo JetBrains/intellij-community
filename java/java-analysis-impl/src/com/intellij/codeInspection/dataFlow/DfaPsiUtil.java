@@ -37,9 +37,6 @@ import java.util.List;
 import java.util.Set;
 
 public class DfaPsiUtil {
-  public static boolean isPlainMutableField(PsiVariable var) {
-    return !var.hasModifierProperty(PsiModifier.FINAL) && !var.hasModifierProperty(PsiModifier.TRANSIENT) && !var.hasModifierProperty(PsiModifier.VOLATILE) && var instanceof PsiField;
-  }
 
   public static boolean isFinalField(PsiVariable var) {
     return var.hasModifierProperty(PsiModifier.FINAL) && !var.hasModifierProperty(PsiModifier.TRANSIENT) && var instanceof PsiField;

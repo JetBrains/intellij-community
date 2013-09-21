@@ -35,10 +35,7 @@ import com.intellij.openapi.vcs.changes.TransparentlyFailedValueI;
 import com.intellij.openapi.vcs.changes.patch.ApplyPatchExecutor;
 import com.intellij.openapi.vcs.changes.patch.FilePatchInProgress;
 import com.intellij.openapi.vcs.changes.patch.PatchWriter;
-import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWrapper;
+import com.intellij.openapi.vfs.*;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.MultiMap;
 
@@ -79,7 +76,7 @@ public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor {
       new FileSaverDescriptor("Save patch to", ""), myProject);
     final VirtualFile baseDir = myProject.getBaseDir();
     final VirtualFileWrapper save = dialog.save(baseDir, "TheirsChanges.patch");
-    if (save != null && save.getFile() != null) {
+    if (save != null) {
       final CommitContext commitContext = new CommitContext();
 
       final VirtualFile baseForPatch = myBaseForPatch == null ? baseDir : myBaseForPatch;
@@ -107,7 +104,7 @@ public class ApplyPatchSaveToFileExecutor implements ApplyPatchExecutor {
     for (Map.Entry<VirtualFile, Collection<FilePatchInProgress>> entry : patchGroups.entrySet()) {
       final VirtualFile vf = entry.getKey();
       final String currBasePath = vf.getPath();
-      final String relativePath = VfsUtil.getRelativePath(vf, baseDir, '/');
+      final String relativePath = VfsUtilCore.getRelativePath(vf, baseDir, '/');
       final boolean toConvert = !StringUtil.isEmptyOrSpaces(relativePath) && !".".equals(relativePath);
       for (FilePatchInProgress patchInProgress : entry.getValue()) {
         final TextFilePatch patch = patchInProgress.getPatch();
