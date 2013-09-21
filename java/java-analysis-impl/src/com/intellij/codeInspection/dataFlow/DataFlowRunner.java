@@ -212,6 +212,7 @@ public class DataFlowRunner {
       for (int i = 0; i < sameInstructionStates.size(); i++) {
         DfaInstructionState state1 = sameInstructionStates.get(i);
         for (int j = i + 1; j < sameInstructionStates.size(); j++) {
+          ProgressManager.checkCanceled();
           DfaInstructionState state2 = sameInstructionStates.get(j);
           DfaMemoryState merged = state1.getMemoryState().mergeWith(state2.getMemoryState());
           if (merged != null) {
