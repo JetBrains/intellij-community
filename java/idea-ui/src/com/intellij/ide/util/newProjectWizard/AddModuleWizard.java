@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ public class AddModuleWizard extends AbstractProjectWizard<ModuleWizardStep> {
    * @param project if null, the wizard will start creating new project, otherwise will add a new module to the existing project.
    */
   public AddModuleWizard(Component parent, final Project project, @NotNull ModulesProvider modulesProvider) {
-    super(project == null ? NEW_PROJECT_TITLE : ADD_MODULE_TITLE, parent);
+    super(project == null ? NEW_PROJECT_TITLE : ADD_MODULE_TITLE, project, parent);
     myCurrentProject = project;
     myModulesProvider = modulesProvider;
     initModuleWizard(project, null);
@@ -87,7 +87,7 @@ public class AddModuleWizard extends AbstractProjectWizard<ModuleWizardStep> {
 
   /** Import mode */
   public AddModuleWizard(Project project, Component dialogParent, String filePath, ProjectImportProvider... importProviders) {
-    super(getImportWizardTitle(project, importProviders), dialogParent);
+    super(getImportWizardTitle(project, importProviders), project, dialogParent);
     myCurrentProject = project;
     myImportProviders = importProviders;
     myModulesProvider = DefaultModulesProvider.createForProject(project);

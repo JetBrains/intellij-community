@@ -48,9 +48,9 @@ public abstract class AbstractProjectWizard<T extends Step> extends AbstractWiza
     myWizardContext = initContext(project, defaultPath);
   }
 
-  public AbstractProjectWizard(String title, Component dialogParent) {
+  public AbstractProjectWizard(String title, Project project, Component dialogParent) {
     super(title, dialogParent);
-    myWizardContext = initContext(null, null);
+    myWizardContext = initContext(project, null);
   }
 
   private static WizardContext initContext(@Nullable Project project, @Nullable String defaultPath) {
