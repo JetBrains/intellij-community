@@ -43,11 +43,11 @@ public class PyInlineLocalTest extends PyTestCase {
   }
 
   public void testNoDominator() {
-    doTest("Cannot perform refactoring.\nCannot find a single definition to inline.");
+    doTest("Cannot perform refactoring.\nCannot find a single definition to inline");
   }
 
   public void testDoubleDefinition() {
-    doTest("Cannot perform refactoring.\nAnother variable 'foo' definition is used together with inlined one.");
+    doTest("Cannot perform refactoring.\nAnother variable 'foo' definition is used together with inlined one");
   }
 
   public void testMultiple() {
