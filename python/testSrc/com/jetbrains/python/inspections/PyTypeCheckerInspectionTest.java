@@ -208,4 +208,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testStringStartsWith() {
     doTest();
   }
+
+  // PY-10854
+  public void testSecondFormIter() {
+    doTest();
+  }
 }
