@@ -116,11 +116,17 @@ public class TextRange implements Segment, Serializable {
     return segment1.getStartOffset() == segment2.getStartOffset()
            && segment1.getEndOffset() == segment2.getEndOffset();
   }
+
   @NotNull
   public String replace(@NotNull String original, @NotNull String replacement) {
-    String beginning = original.substring(0, getStartOffset());
-    String ending = original.substring(getEndOffset(), original.length());
-    return beginning + replacement + ending;
+    try {
+      String beginning = original.substring(0, getStartOffset());
+      String ending = original.substring(getEndOffset(), original.length());
+      return beginning + replacement + ending;
+    }
+    catch (StringIndexOutOfBoundsException e) {
+      throw new StringIndexOutOfBoundsException("Can't replace " + this + " range from '" + original + "' with '" + replacement + "'");
+    }
   }
 
   public boolean intersects(@NotNull TextRange textRange) {
