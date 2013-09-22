@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -192,40 +193,31 @@ public class DataFlowRunner {
 
   private static List<DfaInstructionState> getNextInstructionStates(PriorityQueue<DfaInstructionState> queue, Set<Instruction> joinInstructions) {
     DfaInstructionState state = queue.poll();
-    Instruction instruction = state.getInstruction();
+    final Instruction instruction = state.getInstruction();
     
     DfaInstructionState next = queue.peek();
     if (next == null || next.compareTo(state) != 0) return Collections.singletonList(state);
     
-    List<DfaInstructionState> sameInstructionStates = ContainerUtil.newArrayList();
-    sameInstructionStates.add(state);
+    Set<DfaMemoryStateImpl> memoryStates = ContainerUtil.newHashSet();
+    memoryStates.add((DfaMemoryStateImpl)state.getMemoryState());
     while (!queue.isEmpty() && queue.peek().compareTo(state) == 0) {
-      sameInstructionStates.add(queue.poll());
+      memoryStates.add((DfaMemoryStateImpl)queue.poll().getMemoryState());
     }
 
-    if (!joinInstructions.contains(instruction)) {
-      return sameInstructionStates;
-    }
-    
-    findMergeable:
-    while (true) {
-      for (int i = 0; i < sameInstructionStates.size(); i++) {
-        DfaInstructionState state1 = sameInstructionStates.get(i);
-        for (int j = i + 1; j < sameInstructionStates.size(); j++) {
-          ProgressManager.checkCanceled();
-          DfaInstructionState state2 = sameInstructionStates.get(j);
-          DfaMemoryState merged = state1.getMemoryState().mergeWith(state2.getMemoryState());
-          if (merged != null) {
-            sameInstructionStates.set(i, new DfaInstructionState(instruction, merged));
-            sameInstructionStates.remove(j);
-            continue findMergeable;
-          }
-        }
+    if (joinInstructions.contains(instruction)) {
+      while (true) {
+        Set<DfaMemoryStateImpl> nextStates = new StateMerger(memoryStates).merge();
+        if (nextStates == null) break;
+        memoryStates = nextStates;
       }
-      break;
     }
 
-    return sameInstructionStates;
+    return ContainerUtil.map(memoryStates, new Function<DfaMemoryStateImpl, DfaInstructionState>() {
+      @Override
+      public DfaInstructionState fun(DfaMemoryStateImpl state) {
+        return new DfaInstructionState(instruction, state);
+      }
+    });
   }
 
   protected boolean shouldCheckTimeLimit() {
