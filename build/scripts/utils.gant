@@ -806,8 +806,8 @@ binding.setVariable("collectUsedJars", { List modules, List approvedJars, List f
 binding.setVariable("buildModulesAndCollectUsedJars", { List modules, List approvedJars, List forbiddenJars ->
   def modulesToBuild = []
   def usedJars = collectUsedJars(modules, approvedJars, forbiddenJars, modulesToBuild)
-  projectBuilder.buildModules(modulesToBuild)
   projectBuilder.cleanOutput()
+  projectBuilder.buildModules(modulesToBuild)
 
   return usedJars
 })
