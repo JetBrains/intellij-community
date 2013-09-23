@@ -19,6 +19,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.UnfairTextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNamedElement;
@@ -106,7 +107,7 @@ class XmlMover extends LineMover {
       movedLineStart = updateMovedRegionStart(document, movedLineStart, textRange.getStartOffset(), info, down);
     }
 
-    final TextRange moveDestinationRange = new TextRange(
+    final TextRange moveDestinationRange = new UnfairTextRange(
       document.getLineStartOffset(info.toMove2.startLine),
       document.getLineEndOffset(info.toMove2.endLine - 1)
     );
