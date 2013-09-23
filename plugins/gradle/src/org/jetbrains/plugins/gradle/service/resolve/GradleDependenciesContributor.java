@@ -34,7 +34,8 @@ import java.util.Set;
 public class GradleDependenciesContributor implements GradleMethodContextContributor {
   private final static Set<String> BUILD_SCRIPT_BLOCKS = ContainerUtil.newHashSet(
     "subprojects",
-    "allprojects"
+    "allprojects",
+    "buildscript"
   );
 
   @Override
