@@ -806,7 +806,7 @@ binding.setVariable("buildModulesAndCollectUsedJars", { List modules, List appro
 })
 
 binding.setVariable("additionalCompilation", {->
-  projectBuilder.stage("step - additionalCompilationStep")
+  projectBuilder.stage("- additionalCompilationStep -")
   if (isDefined("additionalCompilationStep")) {
     projectBuilder.info("Using additional compilation step: " + additionalCompilationStep)
     def script = includeFile(additionalCompilationStep)
