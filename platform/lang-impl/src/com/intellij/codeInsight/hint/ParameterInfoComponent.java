@@ -315,7 +315,7 @@ public class ParameterInfoComponent extends JPanel {
         if (i == paramCount + added - 1) {
           myOneLineComponents[index] = new OneLineComponent();
           setBackground(background);
-          buf.append(myOneLineComponents[index].setup(text, flagsMap, background));
+          buf.append(myOneLineComponents[index].setup(escapeString(text), flagsMap, background));
           add(myOneLineComponents[index], new GridBagConstraints(0, index, 1, 1, 1, 0, GridBagConstraints.WEST,
                                                                  GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
           index += 1;
