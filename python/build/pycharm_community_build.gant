@@ -144,6 +144,9 @@ public layoutCommunity(String classesPath, Set usedJars) {
     projectBuilder.moduleRuntimeClasspath(findModule("main_pycharm_ce"), false).each {
       ant.pathelement(location: it)
     }
+    projectBuilder.moduleRuntimeClasspath(findModule("java-runtime"), false).each {
+      ant.pathelement(location: it)
+    }
   }, "-Didea.platform.prefix=PyCharmCore -Didea.no.jre.check=true")
 
   if (!dryRun) {
