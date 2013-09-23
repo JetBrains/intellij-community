@@ -179,30 +179,12 @@ public layoutCommunity(String classesPath, Set usedJars) {
   String tarRoot = isEap() ? "pycharm-community-$buildNumber" : "pycharm-community-${p("component.version.major")}.${p("component.version.minor")}"
   buildTarGz(tarRoot, "$paths.artifacts/pycharmPC-${buildNumber}.tar", [paths.distAll, paths.distUnix])
 
-  String macAppRoot = isEap() ? "PyCharm Community Edition ${p("component.version.major")}.${p("component.version.minor")} EAP.app" : "PyCharm Community Edition.app"
+  String macAppRoot = isEap() ? "PyCharm CE ${p("component.version.major")}.${p("component.version.minor")} EAP.app" : "PyCharm CE.app"
   buildMacZip(macAppRoot, "${paths.artifacts}/pycharmPC-${buildNumber}.sit", [paths.distAll], paths.distMac)
 }
 
 private layoutPlugins(layouts) {
   dir("plugins") {
-    /*
-    layouts.layoutPlugin("django-db-config")
-    layouts.layoutPlugin("python-javascript-debugger")
-    layouts.layoutPlugin("remote-run") {
-      fileset(dir: "$home/plugins/remote-run/lib") {
-        include(name: "jediterm-0.2.jar")
-      }
-    }
-    layouts.layoutPlugin("python-remote-interpreter")
-    layouts.layoutPlugin("vagrant") {
-      fileset(dir: "$home/plugins/vagrant/lib") {
-        include(name: "jrubyparser-0.2.jar")
-      }
-    }
-    layouts.layoutPlugin("python-uml")
-    layouts.layoutPlugin("localization")
-    layouts.layoutPlugin("python-localization")
-    */
     layouts.layoutPlugin("rest")
     layouts.layoutPlugin("python-rest")
     /*
