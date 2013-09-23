@@ -159,14 +159,14 @@ target('default': "Build artifacts") {
   signMacZip("pycharm")
   buildDmg("pycharm", "${home}/python/build/DMG_background.png")
 
-  communityEdition(usedJars)
+  communityEdition()
 }
 
-private communityEdition(Set usedJars) {
+private communityEdition() {
   Script s = groovyShell.parse(new File("$pythonCommunityHome/build/pycharm_community_build.gant"))
   s.setBinding(binding)
 
-  s.layoutCommunity("${paths.sandbox}/classes/production", usedJars)
+  s.layoutCommunity("${paths.sandbox}/classes/production", null)
   signExe("${paths.sandboxCE}/win/bin/pycharm.exe")
   buildNSIS(["${paths.sandboxCE}/layout", "${paths.sandboxCE}/win"],
             "$pythonCommunityHome/build/strings.nsi", "$pythonCommunityHome/build/paths.nsi",
