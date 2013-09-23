@@ -87,6 +87,8 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
   private final JRadioButton myRbAccessorPackageLocal = new JRadioButton();
   private DocCommentPanel myJavadocPolicy;
 
+  private boolean myCbUseAccessorWhenAccessibleValue;
+
   {
     myRbAccessorPackageLocal.setFocusable(false);
     myRbAccessorPrivate.setFocusable(false);
@@ -270,13 +272,23 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
     myCbEncapsulateSet.addActionListener(checkboxListener);
     myRbFieldAsIs.addItemListener(new ItemListener() {
       public void itemStateChanged(ItemEvent e) {
-        myCbUseAccessorsWhenAccessible.setEnabled(!myRbFieldAsIs.isSelected());
+        if (myRbFieldAsIs.isSelected()) {
+          myCbUseAccessorWhenAccessibleValue = myCbUseAccessorsWhenAccessible.isSelected();
+
+          myCbUseAccessorsWhenAccessible.setSelected(true);
+          myCbUseAccessorsWhenAccessible.setEnabled(false);
+        }
+        else {
+          myCbUseAccessorsWhenAccessible.setEnabled(true);
+          myCbUseAccessorsWhenAccessible.setSelected(myCbUseAccessorWhenAccessibleValue);
+        }
       }
     }
     );
     myCbUseAccessorsWhenAccessible.setSelected(
             JavaRefactoringSettings.getInstance().ENCAPSULATE_FIELDS_USE_ACCESSORS_WHEN_ACCESSIBLE
     );
+    myCbUseAccessorWhenAccessibleValue = myCbUseAccessorsWhenAccessible.isSelected();
 
     myRbFieldPrivate.setSelected(true);
     myRbAccessorPublic.setSelected(true);
