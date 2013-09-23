@@ -93,6 +93,7 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
                 final PyFunction superInit = superClass.findMethodByName(PyNames.INIT, false);
                 if (superInit != null) {
                   PyClassImpl.collectInstanceAttributes(superInit, attributesInInit);
+                  collectAttributesFromSuper(attributesInInit, superInit);
                 }
               }
             }
