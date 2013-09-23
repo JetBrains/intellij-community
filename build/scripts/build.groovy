@@ -80,6 +80,7 @@ class Build {
   def ch
   def usedJars
   def suffix
+  def launcher
   Map layout_args
   Script utils
   Script ultimate_utils
