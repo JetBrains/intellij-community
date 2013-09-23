@@ -20,12 +20,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints, List<ConstraintFormula> delayedConstraints) {
-    final InferenceVariable inferenceVariable = session.getInferenceVariable(myT);
-    if (inferenceVariable != null) {
-      delayedConstraints.add(this);
-      return true;
-    }
+  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
     if (LambdaHighlightingUtil.checkInterfaceFunctional(myT) != null) {
       return false;
     }
@@ -38,12 +33,6 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
     }
     final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, PsiUtil.resolveGenericsClassInType(myT));
     final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
-    for (PsiParameter parameter : parameters) {
-      if (!session.isProperType(substitutor.substitute(parameter.getType()))) {
-        delayedConstraints.add(this);
-        return true;
-      }
-    }
 
     final PsiParameter[] lambdaParameters = myExpression.getParameterList().getParameters();
     if (lambdaParameters.length != parameters.length) {
@@ -52,6 +41,12 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
     if (myExpression.hasFormalParameterTypes()) {
       for (int i = 0; i < lambdaParameters.length; i++) {
         constraints.add(new TypeEqualityConstraint(lambdaParameters[i].getType(), substitutor.substitute(parameters[i].getType())));
+      }
+    } else {
+      for (PsiParameter parameter : parameters) {
+        if (!session.isProperType(substitutor.substitute(parameter.getType()))) {
+          return false;
+        }
       }
     }
 

@@ -20,7 +20,6 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.util.TypeConversionUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -39,7 +38,7 @@ public class SubtypingConstraint implements ConstraintFormula {
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints, List<ConstraintFormula> delayedConstraints) {
+  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
     if (myIsRefTypes) {
       if (session.isProperType(myS) && session.isProperType(myT)) {
         if (myT == null || myS == null) return myS == myT;

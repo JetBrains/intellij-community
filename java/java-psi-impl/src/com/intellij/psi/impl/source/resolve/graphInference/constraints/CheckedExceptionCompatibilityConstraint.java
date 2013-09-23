@@ -20,7 +20,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
-import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Function;
@@ -43,7 +42,7 @@ public class CheckedExceptionCompatibilityConstraint implements ConstraintFormul
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints, List<ConstraintFormula> delayedConstraints) {
+  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
     if (!PsiPolyExpressionUtil.isPolyExpression(myExpression) ||
         myExpression instanceof PsiCallExpression) {
       return true;
