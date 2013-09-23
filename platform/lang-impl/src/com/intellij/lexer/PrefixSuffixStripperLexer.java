@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class PrefixSuffixStripperLexer extends LexerBase {
   private CharSequence myBuffer;
@@ -49,7 +50,7 @@ public class PrefixSuffixStripperLexer extends LexerBase {
   }
 
   @Override
-  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBuffer = buffer;
     myBufferArray = CharArrayUtil.fromSequenceWithoutCopying(buffer);
     myTokenStart = startOffset;
@@ -87,6 +88,7 @@ public class PrefixSuffixStripperLexer extends LexerBase {
     return myBufferEnd;
   }
 
+  @NotNull
   @Override
   public CharSequence getBufferSequence() {
     return myBuffer;

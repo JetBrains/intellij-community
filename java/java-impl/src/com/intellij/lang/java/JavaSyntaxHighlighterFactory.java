@@ -45,7 +45,7 @@ public class JavaSyntaxHighlighterFactory extends SyntaxHighlighterFactory imple
    */
   @Nullable
   @Override
-  public SyntaxHighlighter create(FileType fileType, @Nullable Project project, @Nullable VirtualFile file) {
+  public SyntaxHighlighter create(@NotNull FileType fileType, @Nullable Project project, @Nullable VirtualFile file) {
     if (project != null && file != null) {
       PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
       if (psiFile instanceof ClsFileImpl) {

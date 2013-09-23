@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -35,20 +36,22 @@ public abstract class Lexer {
    * @param initialState the initial state of the lexer.
    * @since IDEA 7
    */
-  public abstract void start(CharSequence buffer, int startOffset, int endOffset, int initialState);
+  public abstract void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState);
 
-  public final void start(CharSequence buf, int start, int end) {
+  public final void start(@NotNull CharSequence buf, int start, int end) {
     start(buf, start, end, 0);
   }
 
-  public final void start(CharSequence buf) {
+  public final void start(@NotNull CharSequence buf) {
     start(buf, 0, buf.length(), 0);
   }
 
+  @NotNull
   public CharSequence getTokenSequence() {
     return getBufferSequence().subSequence(getTokenStart(), getTokenEnd());
   }
 
+  @NotNull
   public String getTokenText() {
     return getTokenSequence().toString();
   }
@@ -93,6 +96,7 @@ public abstract class Lexer {
    *
    * @return the lexer position and state.
    */
+  @NotNull
   public abstract LexerPosition getCurrentPosition();
 
   /**
@@ -100,7 +104,7 @@ public abstract class Lexer {
    *
    * @param position the state and position to restore to.
    */
-  public abstract void restore(LexerPosition position);
+  public abstract void restore(@NotNull LexerPosition position);
 
   /**
    * Returns the buffer sequence over which the lexer is running. This method should return the
@@ -108,6 +112,7 @@ public abstract class Lexer {
    * @return the lexer buffer.
    * @since IDEA 7
    */
+  @NotNull
   public abstract CharSequence getBufferSequence();
 
   /**

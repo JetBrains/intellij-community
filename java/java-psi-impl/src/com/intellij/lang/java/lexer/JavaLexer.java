@@ -175,7 +175,7 @@ public class JavaLexer extends LexerBase {
   }
 
   @Override
-  public final void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+  public final void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBuffer = buffer;
     myBufferArray = CharArrayUtil.fromSequenceWithoutCopying(buffer);
     myBufferIndex = startOffset;
@@ -417,6 +417,7 @@ public class JavaLexer extends LexerBase {
     return pos;
   }
 
+  @NotNull
   @Override
   public CharSequence getBufferSequence() {
     return myBuffer;

@@ -25,6 +25,7 @@ import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.TIntIntHashMap;
 import org.intellij.plugins.relaxNG.compact.RncTokenTypes;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.kohsuke.rngom.parse.compact.*;
 
@@ -130,6 +131,7 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
     return CharArrayUtil.fromSequence(myBuffer);
   }
 
+  @NotNull
   @Override
   public CharSequence getBufferSequence() {
     return myBuffer;
@@ -173,7 +175,7 @@ public class CompactSyntaxLexerAdapter extends LexerBase {
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBuffer = buffer;
 
     final Reader reader = new CharSequenceReader(buffer, startOffset, endOffset);

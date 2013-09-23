@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ide.highlighter.custom.CustomFileHighlighter;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -32,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 public class CustomFileTypeHighlighterProvider implements SyntaxHighlighterProvider {
   @Override
   @Nullable
-  public SyntaxHighlighter create(final FileType fileType, @Nullable final Project project, @Nullable final VirtualFile file) {
+  public SyntaxHighlighter create(@NotNull final FileType fileType, @Nullable final Project project, @Nullable final VirtualFile file) {
     if (fileType instanceof AbstractFileType) {
       return new CustomFileHighlighter(((CustomSyntaxTableFileType) fileType).getSyntaxTable());
     }

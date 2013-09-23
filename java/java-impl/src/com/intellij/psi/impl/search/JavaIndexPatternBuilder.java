@@ -24,6 +24,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTokenType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -35,7 +36,7 @@ public class JavaIndexPatternBuilder implements IndexPatternBuilder {
 
   @Override
   @Nullable
-  public Lexer getIndexingLexer(final PsiFile file) {
+  public Lexer getIndexingLexer(@NotNull final PsiFile file) {
     if (file instanceof PsiJavaFile && !(file instanceof JspFile)) {
       return JavaParserDefinition.createLexer(((PsiJavaFile)file).getLanguageLevel());
     }
@@ -44,7 +45,7 @@ public class JavaIndexPatternBuilder implements IndexPatternBuilder {
 
   @Override
   @Nullable
-  public TokenSet getCommentTokenSet(final PsiFile file) {
+  public TokenSet getCommentTokenSet(@NotNull final PsiFile file) {
     if (file instanceof PsiJavaFile && !(file instanceof ServerPageFile)) {
       return TokenSet.orSet(StdTokenSets.COMMENT_BIT_SET, XML_COMMENT_BIT_SET, JavaDocTokenType.ALL_JAVADOC_TOKENS, XML_DATA_CHARS);
     }
