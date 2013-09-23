@@ -175,11 +175,9 @@ public class InferenceIncorporationPhase {
     for (int i = 0; i < eqBounds.size(); i++) {
       PsiType sBound= eqBounds.get(i);
       if (sBound == null) continue;
-      final boolean properType = mySession.isProperType(sBound);
       for (int j = i + 1; j < eqBounds.size(); j++) {
         final PsiType tBound = eqBounds.get(j);
         if (tBound == null) continue;
-        if (properType && mySession.isProperType(tBound)) continue;
         addConstraint(new TypeEqualityConstraint(tBound, sBound));
       }
     }
