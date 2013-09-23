@@ -18,7 +18,9 @@ package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -57,8 +59,8 @@ public abstract class MvcProjectStructure {
   @NotNull
   public abstract String getUserLibraryName();
 
-  public abstract String[] getSourceFolders();
-  public abstract String[] getTestFolders();
+  public abstract MultiMap<JpsModuleSourceRootType<?>, String> getSourceFolders();
+
   public abstract String[] getInvalidSourceFolders();
 
   public abstract String[] getExcludedFolders();
