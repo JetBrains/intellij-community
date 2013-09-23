@@ -45,7 +45,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard<? ex
   protected final List<Sdk> mySdks = new ArrayList<Sdk>();
   protected T myWizard;
   @Nullable
-  private Project myCreatedProject;
+  protected Project myCreatedProject;
 
   protected Project createProjectFromTemplate(String group, String name, @Nullable Consumer<Step> adjuster) throws IOException {
     runWizard(group, name, null, adjuster);
