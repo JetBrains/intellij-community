@@ -17,10 +17,11 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.lang.annotation.*;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.lang.annotation.AnnotationHolder;
+import com.intellij.lang.annotation.AnnotationSession;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,11 +36,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author max
  */
-public class AnnotationHolderImpl extends SmartList<Annotation> implements SemanticAnnotationHolder {
+public class AnnotationHolderImpl extends SmartList<Annotation> implements AnnotationHolder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.AnnotationHolderImpl");
   private final AnnotationSession myAnnotationSession;
-
-  private final static boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
   private final boolean myBatchMode;
 
@@ -157,13 +156,5 @@ public class AnnotationHolderImpl extends SmartList<Annotation> implements Seman
   @Override
   public AnnotationSession getCurrentAnnotationSession() {
     return myAnnotationSession;
-  }
-
-  @Override
-  public Annotation createSemanticAnnotation(@NotNull TextRange range, @NotNull TextAttributesKey key) {
-    String description = isUnitTestMode ? key.getExternalName() : null;
-    Annotation annotation = createAnnotation(range, HighlightSeverity.SEMANTIC, description);
-    annotation.setTextAttributes(key);
-    return annotation;
   }
 }
