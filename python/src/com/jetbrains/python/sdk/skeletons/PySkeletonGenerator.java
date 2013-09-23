@@ -1,9 +1,6 @@
 package com.jetbrains.python.sdk.skeletons;
 
 import com.google.common.collect.Maps;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -143,9 +140,10 @@ public class PySkeletonGenerator {
   }
 
   public void generateBuiltinSkeletons(@NotNull Sdk sdk) throws InvalidSdkException {
+    //noinspection ResultOfMethodCallIgnored
     new File(mySkeletonsPath).mkdirs();
     String binaryPath = sdk.getHomePath();
-
+    if (binaryPath == null) throw new InvalidSdkException("Broken home path for " + sdk.getName());
 
     long startTime = System.currentTimeMillis();
     final ProcessOutput runResult = getProcessOutput(
@@ -166,7 +164,7 @@ public class PySkeletonGenerator {
   public ListBinariesResult listBinaries(@NotNull Sdk sdk, @NotNull String extraSysPath) throws InvalidSdkException {
     final String homePath = sdk.getHomePath();
     final long startTime = System.currentTimeMillis();
-
+    if (homePath == null) throw new InvalidSdkException("Broken home path for " + sdk.getName());
     final String parentDir = new File(homePath).getParent();
 
     final String[] cmd = new String[]{homePath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-v", "-L", "-s", extraSysPath};
