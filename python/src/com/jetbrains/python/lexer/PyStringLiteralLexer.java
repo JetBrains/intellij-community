@@ -6,9 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyTokenTypes;
-
-import static com.intellij.psi.StringEscapesTokenTypes.INVALID_UNICODE_ESCAPE_TOKEN;
-import static com.intellij.psi.StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Specialized lexer for string literals. To be used as a layer in a LayeredLexer.
@@ -47,7 +45,7 @@ public class PyStringLiteralLexer extends LexerBase {
     myIsTriple = PyTokenTypes.TRIPLE_NODES.contains(myOriginalLiteralToken);
   }
 
-  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBuffer = buffer;
     myStart = startOffset;
     myState = initialState;
@@ -306,6 +304,7 @@ public class PyStringLiteralLexer extends LexerBase {
     //assert myStart < myEnd || (myStart == myEnd && myEnd == myBufferEnd) : "Inconsistent: start " + myStart + ", end " + myEnd + ", buf end " + myBufferEnd;
   }
 
+  @NotNull
   public CharSequence getBufferSequence() {
     return myBuffer;
   }
