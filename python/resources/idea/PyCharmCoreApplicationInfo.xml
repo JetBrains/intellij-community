@@ -1,13 +1,13 @@
 <component>
   <company name="JetBrains s.r.o." url="http://www.jetbrains.com/?fromIDE"/>
-  <version major="3" minor="0" eap="true"/>
+  <version major="3" minor="0" eap="false"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
   <logo url="/pycharm_core_logo.png" textcolor="ffffff" progressColor="ffaa16" progressY="230" progressTailIcon="/community_progress_tail.png"/>
   <about url="/pycharm_core_about.png" logoX="300" logoY="265" logoW="75" logoH="30" foreground="ffffff" linkColor="fca11a"/>
   <icon size32="/PyCharmCore32.png" size16="/PyCharmCore16.png" size32opaque="/PyCharmCore32.png" size12="/PyCharm_13.png" ico="PyCharmCore.ico"/>
   <package code="__PACKAGE_CODE__"/>
   <names product="PyCharm" fullname="PyCharm Community Edition" script="charm"/>
-  <install-over minbuild="0" maxbuild="0" version="1.x"/>
+  <install-over minbuild="131.1" maxbuild="131.9999" version="3.x"/>
 
   <welcome-screen logo-url="/pycharm_welcomeScreen.png" caption-url="/welcomeCaption.png" slogan-url="/developSlogan.png"/>
 
