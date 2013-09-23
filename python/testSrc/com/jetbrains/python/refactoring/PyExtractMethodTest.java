@@ -266,4 +266,8 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testDuplicateWithRename() {
     doTest("foo");
   }
+
+  public void testDuplicateCheckParam() {
+    doTest("foo");
+  }
 }
