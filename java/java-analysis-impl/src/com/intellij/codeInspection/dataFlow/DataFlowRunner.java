@@ -204,7 +204,7 @@ public class DataFlowRunner {
       memoryStates.add((DfaMemoryStateImpl)queue.poll().getMemoryState());
     }
 
-    if (joinInstructions.contains(instruction)) {
+    if (memoryStates.size() > 1 && joinInstructions.contains(instruction)) {
       while (true) {
         Set<DfaMemoryStateImpl> nextStates = new StateMerger(memoryStates).merge();
         if (nextStates == null) break;
