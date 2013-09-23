@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
-import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrIfStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 
@@ -33,11 +34,17 @@ public class SplitElseIfIntention extends Intention {
     return new SplitElseIfPredicate();
   }
 
-  public void processIntention(@NotNull PsiElement element, Project project, Editor editor)
-      throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     final GrIfStatement parentStatement = (GrIfStatement) element;
     final GrStatement elseBranch = parentStatement.getElseBranch();
-    IntentionUtils.replaceStatement("if(" + parentStatement.getCondition().getText()+ ")"+ parentStatement.getThenBranch().getText() +
-        "else{\n" + elseBranch.getText() +"\n}", parentStatement);
+
+    GrIfStatement ifStatement = (GrIfStatement)parentStatement.copy();
+
+    GrBlockStatement blockStatement = GroovyPsiElementFactory.getInstance(project).createBlockStatementFromText("{\nabc()\n}", null);
+    GrBlockStatement newBlock = ifStatement.replaceElseBranch(blockStatement);
+
+    newBlock.getBlock().getStatements()[0].replace(elseBranch);
+
+    parentStatement.replaceWithStatement(ifStatement);
   }
 }
