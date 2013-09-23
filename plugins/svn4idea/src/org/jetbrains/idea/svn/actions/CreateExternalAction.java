@@ -36,13 +36,16 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.dialogs.SelectCreateExternalTargetDialog;
+import org.jetbrains.idea.svn.update.UpdateClient;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.internal.wc.SVNExternal;
 import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 
@@ -94,7 +97,7 @@ public class CreateExternalAction extends DumbAwareAction {
       dirtyScopeManager.fileDirty(filePath);
       if (checkout) {
         // +-
-        final SVNUpdateClient client = vcs.createUpdateClient();
+        final UpdateClient client = vcs.getFactory(ioFile).createUpdateClient();
         client.setEventHandler(new ISVNEventHandler() {
           @Override
           public void handleEvent(SVNEvent event, double progress) throws SVNException {
@@ -118,12 +121,16 @@ public class CreateExternalAction extends DumbAwareAction {
     catch (SVNException e1) {
       AbstractVcsHelper.getInstance(project).showError(new VcsException(e1), "Create External");
     }
+    catch (VcsException e1) {
+      AbstractVcsHelper.getInstance(project).showError(e1, "Create External");
+    }
   }
 
-  public static boolean addToExternalProperty(SvnVcs vcs, File ioFile, String target, String url) throws SVNException {
-    final SVNWCClient wcClient = vcs.createWCClient();
-    final SVNPropertyData propertyData =
-      wcClient.doGetProperty(ioFile, SvnPropertyKeys.SVN_EXTERNALS, SVNRevision.UNDEFINED, SVNRevision.UNDEFINED);
+  public static boolean addToExternalProperty(@NotNull SvnVcs vcs, @NotNull File ioFile, String target, String url)
+    throws SVNException, VcsException {
+    ClientFactory factory = vcs.getFactory(ioFile);
+    SVNPropertyData propertyData = factory.createPropertyClient().getProperty(SvnTarget.fromFile(ioFile), SvnPropertyKeys.SVN_EXTERNALS,
+                                                                              false, SVNRevision.UNDEFINED);
     String newValue;
     if (propertyData != null && propertyData.getValue() != null && ! StringUtil.isEmptyOrSpaces(propertyData.getValue().getString())) {
       final SVNExternal[] externals = SVNExternal.parseExternals("Create External", propertyData.getValue().getString());
@@ -139,7 +146,8 @@ public class CreateExternalAction extends DumbAwareAction {
     } else {
       newValue = createExternalDefinitionString(url, target);
     }
-    wcClient.doSetProperty(ioFile, SvnPropertyKeys.SVN_EXTERNALS, SVNPropertyValue.create(newValue), false, SVNDepth.EMPTY, null, null);
+    factory.createPropertyClient().setProperty(ioFile, SvnPropertyKeys.SVN_EXTERNALS, SVNPropertyValue.create(newValue), SVNDepth.EMPTY,
+                                               false);
     return false;
   }
 
