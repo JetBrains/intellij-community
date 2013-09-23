@@ -1,6 +1,7 @@
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.util.PsiUtil;
 
@@ -26,11 +27,13 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
 
     if (myExpression.hasFormalParameterTypes()) {
     }
-    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(myT);
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(
+      FunctionalInterfaceParameterizationUtil.getFunctionalType(myT, myExpression));
+    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
     if (interfaceMethod == null) {
       return false;
     }
-    final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, PsiUtil.resolveGenericsClassInType(myT));
+    final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult);
     final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
 
     final PsiParameter[] lambdaParameters = myExpression.getParameterList().getParameters();

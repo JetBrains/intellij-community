@@ -48,6 +48,10 @@ public class InferenceSession {
 
   private final InferenceIncorporationPhase myIncorporationPhase = new InferenceIncorporationPhase(this);
 
+  public InferenceSession(PsiSubstitutor siteSubstitutor) {
+    mySiteSubstitutor = siteSubstitutor;
+  }
+
   public InferenceSession(PsiTypeParameter[] typeParams,
                           PsiType[] leftTypes, 
                           PsiType[] rightTypes,
@@ -80,7 +84,7 @@ public class InferenceSession {
         PsiType parameterType = getParameterType(parameters, args, i, mySiteSubstitutor);
         if (args[i] != null) {
           myConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
-          myConstraints.add(new CheckedExceptionCompatibilityConstraint(args[i], parameterType));
+          //myConstraints.add(new CheckedExceptionCompatibilityConstraint(args[i], parameterType));
         }
       }
     }
@@ -384,5 +388,21 @@ public class InferenceSession {
 
   public Collection<PsiTypeParameter> getTypeParams() {
     return myInferenceVariables.keySet();
+  }
+
+  public void addVariable(PsiTypeParameter typeParameter, final PsiType parameter) {
+    InferenceVariable variable = new InferenceVariable(typeParameter);
+    if (parameter instanceof PsiWildcardType) {
+      PsiType bound = ((PsiWildcardType)parameter).getBound();
+      if (bound != null) {
+        variable.addBound(bound, ((PsiWildcardType)parameter).isExtends() ? InferenceBound.UPPER : InferenceBound.LOWER);
+      } else {
+        variable.addBound(PsiType.getJavaLangObject(typeParameter.getManager(), parameter.getResolveScope()),
+                          InferenceBound.UPPER);
+      }
+    } else {
+      variable.addBound(parameter, InferenceBound.EQ);
+    }
+    myInferenceVariables.put(typeParameter, variable);
   }
 }
