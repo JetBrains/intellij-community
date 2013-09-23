@@ -20,12 +20,16 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UnorderedPair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author peter
@@ -61,9 +65,8 @@ class StateMerger {
         if (statesByValue == null) {
           continue;
         }
-        
-        DfaMemoryStateImpl copy = state.createCopy();
-        copy.flushVariable(var);
+
+        DfaMemoryStateImpl copy = copyWithoutVar(state, var);
         
         final Set<DfaMemoryStateImpl> complementaryStates = findComplementaryStates(var, statesByValue, copy);
         if (complementaryStates == null) {
@@ -71,11 +74,12 @@ class StateMerger {
         }
 
         complementaryStates.add(state);
+        copy = copy.createCopy();
         for (DfaMemoryStateImpl removedState : complementaryStates) {
           for (DfaVariableValue unknownVar : removedState.getUnknownVariables()) {
             copy.doFlush(unknownVar, true);
           }
-          if (removedState.getVariableState(var).isNullable()) {
+          if (removedState.isNull(var)) {
             copy.getVariableState(var).setNullable(true);
           }
         }
@@ -95,8 +99,20 @@ class StateMerger {
     return null;
   }
 
+  private Map<Pair<DfaMemoryStateImpl, DfaVariableValue>, DfaMemoryStateImpl> myCopyCache = ContainerUtil.newHashMap();
+  private DfaMemoryStateImpl copyWithoutVar(DfaMemoryStateImpl state, DfaVariableValue var) {
+    Pair<DfaMemoryStateImpl, DfaVariableValue> key = Pair.create(state, var);
+    DfaMemoryStateImpl copy = myCopyCache.get(key);
+    if (copy == null) {
+      copy = state.createCopy();
+      copy.flushVariable(var);
+      myCopyCache.put(key, copy);
+    }
+    return copy;
+  }
+
   @Nullable
-  private static Set<DfaMemoryStateImpl> findComplementaryStates(DfaVariableValue var,
+  private Set<DfaMemoryStateImpl> findComplementaryStates(DfaVariableValue var,
                                                                  Map<DfaValue, Collection<DfaMemoryStateImpl>> statesByValue,
                                                                  DfaMemoryStateImpl mainCopy) {
     Set<DfaMemoryStateImpl> removedStates = ContainerUtil.newTroveSet(ContainerUtil.<DfaMemoryStateImpl>identityStrategy());
@@ -104,9 +120,7 @@ class StateMerger {
   eachValue: 
     for (DfaValue value : statesByValue.keySet()) {
       for (DfaMemoryStateImpl originalState : statesByValue.get(value)) {
-        DfaMemoryStateImpl copy2 = originalState.createCopy();
-        copy2.flushVariable(var);
-        if (mainCopy.equalsByRelations(copy2)) {
+        if (mainCopy.equalsByRelations(copyWithoutVar(originalState, var))) {
           removedStates.add(originalState);
           continue eachValue;
         }
