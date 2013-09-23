@@ -382,7 +382,7 @@ private layoutMac(Map _args, String target) {
   Map args = new HashMap(_args)
   args.icns = "$pythonCommunityHome/resources/PyCharmCore.icns"
   args.bundleIdentifier = "com.jetbrains.pycharm"
-  args.platform_prefix = "Python"
+  args.platform_prefix = "PyCharmCore"
   args.help_id = "PY"
   args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
   args."idea.properties" = ["idea.no.jre.check": true, "ide.mac.useNativeClipboard": "false"];
