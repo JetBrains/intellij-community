@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -23,10 +24,12 @@ public class SimpleDuplicatesFinder {
   private final ArrayList<PsiElement> myPattern;
   private final Set<String> myParameters;
   public static final Key<PsiElement> PARAMETER = Key.create("PARAMETER");
+  private final Collection<String> myOutputVariables;
 
   public SimpleDuplicatesFinder(@NotNull final PsiElement statement1,
                                 @NotNull final PsiElement statement2,
-                                AbstractVariableData[] variableData) {
+                                AbstractVariableData[] variableData, Collection<String> variables) {
+    myOutputVariables = variables;
     myParameters = new HashSet<String>();
     for (AbstractVariableData data : variableData) {
       myParameters.add(data.getOriginalName());
@@ -117,13 +120,17 @@ public class SimpleDuplicatesFinder {
     return match;
   }
 
-  private static boolean matchPattern(@Nullable final PsiElement pattern,
+  private boolean matchPattern(@Nullable final PsiElement pattern,
                                       @Nullable final PsiElement candidate,
                                       @NotNull final SimpleMatch match) {
     ProgressManager.checkCanceled();
     if (pattern == null || candidate == null) return pattern == candidate;
     final PsiElement[] children1 = PsiEquivalenceUtil.getFilteredChildren(pattern, null, true);
     final PsiElement[] children2 = PsiEquivalenceUtil.getFilteredChildren(candidate, null, true);
+    if (pattern.getUserData(PARAMETER) != null && pattern.getParent().getClass() == candidate.getParent().getClass()) {
+      match.changeParameter(pattern.getText(), candidate.getText());
+      return true;
+    }
     if (children1.length != children2.length) return false;
 
     for (int i = 0; i < children1.length; i++) {
@@ -137,7 +144,13 @@ public class SimpleDuplicatesFinder {
         match.changeParameter(pattern.getText(), candidate.getText());
         return true;
       }
-      if (!pattern.textMatches(candidate)) return false;
+      if (myOutputVariables.contains(pattern.getText())) {
+        match.changeOutput(candidate.getText());
+        return true;
+      }
+      if (!pattern.textMatches(candidate)) {
+        return false;
+      }
     }
 
     return true;
