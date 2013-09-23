@@ -35,11 +35,11 @@ import java.util.Set;
  * @author peter
  */
 class StateMerger {
-  private final Set<DfaMemoryStateImpl> myStates;
+  private final List<DfaMemoryStateImpl> myStates;
   private final MultiMap<UnorderedPair<DfaValue>,DfaMemoryStateImpl> myStatesByEq = new MultiMap<UnorderedPair<DfaValue>, DfaMemoryStateImpl>();
   private final Map<DfaMemoryStateImpl, Map<DfaVariableValue, DfaConstValue>> myVarValues = ContainerUtil.newIdentityHashMap();
 
-  public StateMerger(Set<DfaMemoryStateImpl> states) {
+  public StateMerger(List<DfaMemoryStateImpl> states) {
     myStates = states;
     for (DfaMemoryStateImpl state : myStates) {
       ProgressManager.checkCanceled();
@@ -56,7 +56,7 @@ class StateMerger {
   }
 
   @Nullable
-  public Set<DfaMemoryStateImpl> merge() {
+  public List<DfaMemoryStateImpl> merge() {
     for (final DfaMemoryStateImpl state : myStates) {
       ProgressManager.checkCanceled();
       MultiMap<DfaVariableValue, DfaValue> distincts = getDistinctsMap(state);
@@ -84,7 +84,7 @@ class StateMerger {
           }
         }
 
-        Set<DfaMemoryStateImpl> result = ContainerUtil.newHashSet();
+        List<DfaMemoryStateImpl> result = ContainerUtil.newArrayList();
         result.add(copy);
         result.addAll(ContainerUtil.filter(myStates, new Condition<DfaMemoryStateImpl>() {
           @Override

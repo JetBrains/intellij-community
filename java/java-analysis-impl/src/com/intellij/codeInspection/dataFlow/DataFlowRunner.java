@@ -35,7 +35,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.MultiMapBasedOnSet;
@@ -134,9 +133,9 @@ public class DataFlowRunner {
         return RunnerResult.TOO_COMPLEX;
       }
 
-      final PriorityQueue<DfaInstructionState> queue = new PriorityQueue<DfaInstructionState>();
+      final StateQueue queue = new StateQueue();
       for (final DfaMemoryState initialState : initialStates) {
-        queue.add(new DfaInstructionState(myInstructions[0], initialState));
+        queue.offer(new DfaInstructionState(myInstructions[0], initialState));
       }
 
       MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState> processedStates = new MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState>();
@@ -144,7 +143,7 @@ public class DataFlowRunner {
       WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(shouldCheckTimeLimit() ? ourTimeLimit : ourTimeLimit * 42);
       int count = 0;
       while (!queue.isEmpty()) {
-        for (DfaInstructionState instructionState : getNextInstructionStates(queue, joinInstructions)) {
+        for (DfaInstructionState instructionState : queue.getNextInstructionStates(joinInstructions)) {
           if (count++ % 1024 == 0 && measurer.isTimeOver()) {
             LOG.debug("Too complex because the analysis took too long");
             psiBlock.putUserData(TOO_EXPENSIVE_HASH, psiBlock.getText().hashCode());
@@ -181,7 +180,7 @@ public class DataFlowRunner {
                 processedStates.get((BranchingInstruction)nextInstruction).contains(state.getMemoryState())) {
               continue;
             }
-            queue.add(state);
+            queue.offer(state);
           }
         }
       }
@@ -200,35 +199,6 @@ public class DataFlowRunner {
       }
       return RunnerResult.ABORTED;
     }
-  }
-
-  private static List<DfaInstructionState> getNextInstructionStates(PriorityQueue<DfaInstructionState> queue, Set<Instruction> joinInstructions) {
-    DfaInstructionState state = queue.poll();
-    final Instruction instruction = state.getInstruction();
-    
-    DfaInstructionState next = queue.peek();
-    if (next == null || next.compareTo(state) != 0) return Collections.singletonList(state);
-    
-    Set<DfaMemoryStateImpl> memoryStates = ContainerUtil.newHashSet();
-    memoryStates.add((DfaMemoryStateImpl)state.getMemoryState());
-    while (!queue.isEmpty() && queue.peek().compareTo(state) == 0) {
-      memoryStates.add((DfaMemoryStateImpl)queue.poll().getMemoryState());
-    }
-
-    if (memoryStates.size() > 1 && joinInstructions.contains(instruction)) {
-      while (true) {
-        Set<DfaMemoryStateImpl> nextStates = new StateMerger(memoryStates).merge();
-        if (nextStates == null) break;
-        memoryStates = nextStates;
-      }
-    }
-
-    return ContainerUtil.map(memoryStates, new Function<DfaMemoryStateImpl, DfaInstructionState>() {
-      @Override
-      public DfaInstructionState fun(DfaMemoryStateImpl state) {
-        return new DfaInstructionState(instruction, state);
-      }
-    });
   }
 
   protected boolean shouldCheckTimeLimit() {

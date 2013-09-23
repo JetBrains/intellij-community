@@ -25,7 +25,15 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Set;
 
 public class DfaInstructionState implements Comparable<DfaInstructionState> {
   public static final DfaInstructionState[] EMPTY_ARRAY = new DfaInstructionState[0];
@@ -55,4 +63,55 @@ public class DfaInstructionState implements Comparable<DfaInstructionState> {
   public int compareTo(@NotNull DfaInstructionState o) {
     return myInstruction.getIndex() - o.myInstruction.getIndex();
   }
+}
+
+class StateQueue {
+  private final PriorityQueue<DfaInstructionState> myQueue = new PriorityQueue<DfaInstructionState>();
+  private final Set<Pair<Instruction, DfaMemoryState>> mySet = ContainerUtil.newHashSet();
+  
+  void offer(DfaInstructionState state) {
+    if (mySet.contains(Pair.create(state.getInstruction(), state.getMemoryState()))) {
+      return;
+    }
+    mySet.add(Pair.create(state.getInstruction(), state.getMemoryState().createCopy()));
+    myQueue.offer(state);
+  }
+
+  boolean isEmpty() {
+    return myQueue.isEmpty();
+  }
+
+  List<DfaInstructionState> getNextInstructionStates(Set<Instruction> joinInstructions) {
+    DfaInstructionState state = myQueue.poll();
+    final Instruction instruction = state.getInstruction();
+    mySet.remove(Pair.create(instruction, state.getMemoryState()));
+
+    DfaInstructionState next = myQueue.peek();
+    if (next == null || next.compareTo(state) != 0) return Collections.singletonList(state);
+
+    List<DfaMemoryStateImpl> memoryStates = ContainerUtil.newArrayList();
+    memoryStates.add((DfaMemoryStateImpl)state.getMemoryState());
+    while (!myQueue.isEmpty() && myQueue.peek().compareTo(state) == 0) {
+      DfaMemoryState anotherState = myQueue.poll().getMemoryState();
+      mySet.remove(Pair.create(instruction, anotherState));
+      memoryStates.add((DfaMemoryStateImpl)anotherState);
+    }
+
+    if (memoryStates.size() > 1 && joinInstructions.contains(instruction)) {
+      while (true) {
+        List<DfaMemoryStateImpl> nextStates = new StateMerger(memoryStates).merge();
+        if (nextStates == null) break;
+        memoryStates = nextStates;
+      }
+    }
+
+    return ContainerUtil.map(memoryStates, new Function<DfaMemoryStateImpl, DfaInstructionState>() {
+      @Override
+      public DfaInstructionState fun(DfaMemoryStateImpl state) {
+        return new DfaInstructionState(instruction, state);
+      }
+    });
+  }
+  
+  
 }
