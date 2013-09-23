@@ -165,10 +165,10 @@ public layoutCommunity(String classesPath, Set usedJars) {
                    appInfo, "$pythonCommunityHome/build/pycharm_community_launcher.properties", system_selector, resourcePaths)
 
   String tarRoot = isEap() ? "pycharm-community-$buildNumber" : "pycharm-community-${p("component.version.major")}.${p("component.version.minor")}"
-  buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
+  buildTarGz(tarRoot, "$paths.artifacts/pycharmPC-${buildNumber}.tar", [paths.distAll, paths.distUnix])
 
   String macAppRoot = isEap() ? "PyCharm Community Edition ${p("component.version.major")}.${p("component.version.minor")} EAP.app" : "PyCharm Community Edition.app"
-  buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll], paths.distMac)
+  buildMacZip(macAppRoot, "${paths.artifacts}/pycharmPC-${buildNumber}.sit", [paths.distAll], paths.distMac)
 }
 
 private layoutPlugins(layouts) {

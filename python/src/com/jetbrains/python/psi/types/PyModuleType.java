@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -129,18 +130,20 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   @Nullable
   private List<? extends RatedResolveResult> resolveImplicitPackageMember(@NotNull String name,
                                                                           @NotNull List<PyImportElement> importElements) {
-    final PyQualifiedName packageQName = QualifiedNameFinder.findCanonicalImportPath(myModule, null);
-    if (packageQName != null) {
-      final PyQualifiedName resolvingQName = packageQName.append(name);
-      for (PyImportElement importElement : importElements) {
-        for (PyQualifiedName qName : getCanonicalImportedQNames(importElement)) {
-          if (qName.matchesPrefix(resolvingQName)) {
-            final PsiElement subModule = ResolveImportUtil.resolveChild(myModule, name, myModule, false, true);
-            if (subModule != null) {
-              final ResolveResultList results = new ResolveResultList();
-              results.add(new ImportedResolveResult(subModule, RatedResolveResult.RATE_NORMAL,
-                                                    Collections.<PsiElement>singletonList(importElement)));
-              return results;
+    final VirtualFile moduleFile = myModule.getVirtualFile();
+    if (moduleFile != null) {
+      for (PyQualifiedName packageQName : QualifiedNameFinder.findImportableQNames(myModule, myModule.getVirtualFile())) {
+        final PyQualifiedName resolvingQName = packageQName.append(name);
+        for (PyImportElement importElement : importElements) {
+          for (PyQualifiedName qName : getImportedQNames(importElement)) {
+            if (qName.matchesPrefix(resolvingQName)) {
+              final PsiElement subModule = ResolveImportUtil.resolveChild(myModule, name, myModule, false, true);
+              if (subModule != null) {
+                final ResolveResultList results = new ResolveResultList();
+                results.add(new ImportedResolveResult(subModule, RatedResolveResult.RATE_NORMAL,
+                                                      Collections.<PsiElement>singletonList(importElement)));
+                return results;
+              }
             }
           }
         }
@@ -150,7 +153,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
   @NotNull
-  private static List<PyQualifiedName> getCanonicalImportedQNames(@NotNull PyImportElement element) {
+  private static List<PyQualifiedName> getImportedQNames(@NotNull PyImportElement element) {
     final List<PyQualifiedName> importedQNames = new ArrayList<PyQualifiedName>();
     final PyStatement stmt = element.getContainingImportStatement();
     if (stmt instanceof PyFromImportStatement) {

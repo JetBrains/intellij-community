@@ -95,10 +95,8 @@ public class PySplitIfIntention extends BaseIntentionAction {
     PyIfStatement newIf = elementGenerator.createFromText(LanguageLevel.getDefault(), PyIfStatement.class, "if a:\n    a = 1");
     newIf.getIfPart().getCondition().replace(ifStatement.getIfPart().getCondition());
     newIf.getIfPart().getStatementList().replace(statementList);
-    if (ifStatement.getElifParts() != null) {
-      for (PyIfPart elif : ifStatement.getElifParts())
-        newIf.add(elif);
-    }
+    for (PyIfPart elif : ifStatement.getElifParts())
+      newIf.add(elif);
     if (ifStatement.getElsePart() != null) {
         newIf.add(ifStatement.getElsePart());
     }

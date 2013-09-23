@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.129"  # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.130"  # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -1966,7 +1966,16 @@ class ModuleRedeclarator(object):
         else:
             mod_name = " does not know its name"
         out(0, "# module ", p_name, mod_name) # line 2
-        out(0, "# from %s" % (self.mod_filename or getattr(self.module, "__file__", "(built-in)"))) # line 3
+
+        BUILT_IN_HEADER = "(built-in)"
+        if self.mod_filename:
+            filename = self.mod_filename
+        elif p_name in sys.builtin_module_names:
+            filename = BUILT_IN_HEADER
+        else:
+            filename = getattr(self.module, "__file__", BUILT_IN_HEADER)
+
+        out(0, "# from %s" % filename)  # line 3
         out(0, "# by generator %s" % VERSION) # line 4
         if p_name == BUILTIN_MOD_NAME and version[0] == 2 and version[1] >= 6:
             out(0, "from __future__ import print_function")
