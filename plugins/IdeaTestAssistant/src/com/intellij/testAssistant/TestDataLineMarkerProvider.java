@@ -38,6 +38,10 @@ import java.util.List;
  * @author yole
  */
 public class TestDataLineMarkerProvider implements LineMarkerProvider {
+  public static final String TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME = "com.intellij.testFramework.TestDataPath";
+  public static final String CONTENT_ROOT_VARIABLE = "$CONTENT_ROOT";
+  public static final String PROJECT_ROOT_VARIABLE = "$PROJECT_ROOT";
+
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return null;
@@ -80,7 +84,8 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
 
   @Nullable
   public static String getTestDataBasePath(PsiClass psiClass) {
-    final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(psiClass, Collections.singleton("com.intellij.testFramework.TestDataPath"));
+    final PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(psiClass,
+                                                                              Collections.singleton(TEST_DATA_PATH_ANNOTATION_QUALIFIED_NAME));
     if (annotation != null) {
       final PsiAnnotationMemberValue value = annotation.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME);
       if (value instanceof PsiExpression) {
@@ -89,7 +94,7 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
         final Object constantValue = evaluationHelper.computeConstantExpression(value, false);
         if (constantValue instanceof String) {
           String path = (String) constantValue;
-          if (path.contains("$CONTENT_ROOT")) {
+          if (path.contains(CONTENT_ROOT_VARIABLE)) {
             final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
             final VirtualFile file = psiClass.getContainingFile().getVirtualFile();
             if (file == null) {
@@ -97,14 +102,14 @@ public class TestDataLineMarkerProvider implements LineMarkerProvider {
             }
             final VirtualFile contentRoot = fileIndex.getContentRootForFile(file);
             if (contentRoot == null) return null;
-            path = path.replace("$CONTENT_ROOT", contentRoot.getPath());
+            path = path.replace(CONTENT_ROOT_VARIABLE, contentRoot.getPath());
           }
-          if (path.contains("$PROJECT_ROOT")) {
+          if (path.contains(PROJECT_ROOT_VARIABLE)) {
             final VirtualFile baseDir = project.getBaseDir();
             if (baseDir == null) {
               return null;
             }
-            path = path.replace("$PROJECT_ROOT", baseDir.getPath());
+            path = path.replace(PROJECT_ROOT_VARIABLE, baseDir.getPath());
           }
           return path;
         }

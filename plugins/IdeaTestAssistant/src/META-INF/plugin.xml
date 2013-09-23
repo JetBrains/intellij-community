@@ -21,6 +21,7 @@
     <codeInsight.lineMarkerProvider language="Groovy" implementationClass="com.intellij.testAssistant.TestDataLineMarkerProvider"/>
     <fileEditorProvider implementation="com.intellij.testAssistant.TestDataGroupEditorProvider"/>
     <gotoRelatedProvider implementation="com.intellij.testAssistant.TestDataAsRelatedFileProvider"/>
+    <psi.referenceContributor implementation="com.intellij.testAssistant.TestDataReferenceContributor"/>
   </extensions>
 
   <project-components>
