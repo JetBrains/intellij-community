@@ -37,6 +37,7 @@ import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.dialogs.SelectCreateExternalTargetDialog;
 import org.jetbrains.idea.svn.update.UpdateClient;
 import org.tmatesoft.svn.core.SVNCancelException;
@@ -152,7 +153,7 @@ public class CreateExternalAction extends DumbAwareAction {
   }
 
   public static String createExternalDefinitionString(String url, String target) {
-    return url + " " + target;
+    return CommandUtil.escape(url) + " " + target;
   }
 
   @Override
