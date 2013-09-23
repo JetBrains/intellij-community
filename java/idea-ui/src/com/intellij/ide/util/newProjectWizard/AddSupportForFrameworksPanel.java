@@ -239,7 +239,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
       createNode(provider, nodes, groups, roots);
     }
 
-//    FrameworkSupportNodeBase.sortByName(roots);
+    FrameworkSupportNodeBase.sortByName(roots);
     myRoots = roots;
   }
 
