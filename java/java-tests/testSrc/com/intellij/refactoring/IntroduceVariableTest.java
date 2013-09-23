@@ -149,8 +149,8 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
       protected boolean reportConflicts(MultiMap<PsiElement,String> conflicts, final Project project, IntroduceVariableSettings dialog) {
         assertEquals(2, conflicts.size());
         Collection<? extends String> conflictsMessages = conflicts.values();
-        assertTrue(conflictsMessages.contains("Introducing variable may break code logic."));
-        assertTrue(conflictsMessages.contains("Local variable <b><code>c</code></b> is modified in loop body."));
+        assertTrue(conflictsMessages.contains("Introducing variable may break code logic"));
+        assertTrue(conflictsMessages.contains("Local variable <b><code>c</code></b> is modified in loop body"));
         return false;
       }
     });
@@ -242,7 +242,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     }
     catch (Exception e) {
       assertEquals(e.getMessage(), "Error message:Cannot perform refactoring.\n" +
-                                   "Selected block should represent an expression.");
+                                   "Selected block should represent an expression");
       return;
     }
     fail("Should not be able to perform refactoring");
@@ -254,7 +254,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     }
     catch (Exception e) {
       assertEquals(e.getMessage(), "Error message:Cannot perform refactoring.\n" +
-                                   "Selected block should represent an expression.");
+                                   "Selected block should represent an expression");
       return;
     }
     fail("Should not be able to perform refactoring");
@@ -366,7 +366,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
     }
     catch (Exception e) {
       assertEquals(e.getMessage(), "Error message:Cannot perform refactoring.\n" +
-                                   "Selected block should represent an expression.");
+                                   "Selected block should represent an expression");
       return;
     }
     fail("Should not be able to perform refactoring");
