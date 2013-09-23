@@ -340,7 +340,7 @@ private layoutWin(Map args, String target) {
   }
 
   winScripts(target, "$home/community", "pycharm.bat", args)
-  winVMOptions(target, args.system_selector, "pycharm.exe")
+  winVMOptions(target, null, "pycharm.exe")
 }
 
 private layoutUnix(Map args, String target) {
