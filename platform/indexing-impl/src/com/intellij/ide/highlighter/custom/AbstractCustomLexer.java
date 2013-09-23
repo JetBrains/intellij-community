@@ -41,6 +41,7 @@ public class AbstractCustomLexer extends LexerBase {
     myTokenParsers = tokenParsers.toArray(new TokenParser[tokenParsers.size()]);
   }
 
+  @Override
   public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBuffer = buffer;
     myStartOffset = startOffset;
@@ -53,22 +54,27 @@ public class AbstractCustomLexer extends LexerBase {
     advance();
   }
 
+  @Override
   public int getState() {
     return 0;
   }
 
+  @Override
   public IElementType getTokenType() {
     return myCurrentToken.getType();
   }
 
+  @Override
   public int getTokenStart() {
     return myCurrentToken.getStart();
   }
 
+  @Override
   public int getTokenEnd() {
     return myCurrentToken.getEnd();
   }
 
+  @Override
   public void advance() {
     if (myPosition >= myEndOffset) {
       myCurrentToken.updateData(myPosition, myPosition, null);
@@ -96,11 +102,13 @@ public class AbstractCustomLexer extends LexerBase {
     myCurrentToken.updateData(myPosition, myPosition + 1, CustomHighlighterTokenType.CHARACTER);
   }
 
+  @Override
   @NotNull
   public CharSequence getBufferSequence() {
     return myBuffer;
   }
 
+  @Override
   public int getBufferEnd() {
     return myEndOffset;
   }
