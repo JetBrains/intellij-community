@@ -16,10 +16,14 @@
 
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.value.DfaPsiType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiExpression;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 /**
  * @author Gregory.Shrago
@@ -49,21 +53,37 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
   }
 
   static class ValuableDfaVariableState extends DfaVariableState {
-    DfaValue myValue;
-    PsiExpression myExpression;
+    final DfaValue myValue;
+    final PsiExpression myExpression;
 
     private ValuableDfaVariableState(final DfaVariableValue psiVariable) {
       super(psiVariable);
+      myValue = null;
+      myExpression = null;
     }
 
-    protected ValuableDfaVariableState(final ValuableDfaVariableState state) {
-      super(state);
-      myExpression = state.myExpression;
+    private ValuableDfaVariableState(Set<DfaPsiType> instanceofValues,
+                             Set<DfaPsiType> notInstanceofValues,
+                             Nullness nullability, DfaValue value, PsiExpression expression) {
+      super(instanceofValues, notInstanceofValues, nullability);
+      myValue = value;
+      myExpression = expression;
     }
 
     @Override
-    public void setValue(final DfaValue value) {
-      myValue = value;
+    protected DfaVariableState createCopy(Set<DfaPsiType> instanceofValues, Set<DfaPsiType> notInstanceofValues, Nullness nullability) {
+      return new ValuableDfaVariableState(instanceofValues, notInstanceofValues, nullability, myValue, myExpression);
+    }
+
+    @Override
+    public DfaVariableState withValue(@Nullable final DfaValue value) {
+      if (value == myValue) return this;
+      return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, myNullability, value, myExpression);
+    }
+
+    public ValuableDfaVariableState withExpression(@Nullable final PsiExpression expression) {
+      if (expression == myExpression) return this;
+      return new ValuableDfaVariableState(myInstanceofValues, myNotInstanceofValues, myNullability, myValue, expression);
     }
 
     @Override
@@ -71,9 +91,5 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
       return myValue;
     }
 
-    @Override
-    protected ValuableDfaVariableState clone() {
-      return new ValuableDfaVariableState(this);
-    }
   }
 }

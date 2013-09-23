@@ -80,7 +80,7 @@ class StateMerger {
             copy.doFlush(unknownVar, true);
           }
           if (removedState.isNull(var)) {
-            copy.getVariableState(var).setNullable(true);
+            copy.setVariableState(var, copy.getVariableState(var).withNullability(Nullness.NULLABLE));
           }
         }
 
