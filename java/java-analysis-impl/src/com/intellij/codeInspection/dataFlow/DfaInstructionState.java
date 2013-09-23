@@ -70,11 +70,9 @@ class StateQueue {
   private final Set<Pair<Instruction, DfaMemoryState>> mySet = ContainerUtil.newHashSet();
   
   void offer(DfaInstructionState state) {
-    if (mySet.contains(Pair.create(state.getInstruction(), state.getMemoryState()))) {
-      return;
+    if (mySet.add(Pair.create(state.getInstruction(), state.getMemoryState()))) {
+      myQueue.offer(state);
     }
-    mySet.add(Pair.create(state.getInstruction(), state.getMemoryState().createCopy()));
-    myQueue.offer(state);
   }
 
   boolean isEmpty() {

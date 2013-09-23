@@ -19,17 +19,13 @@
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.openapi.util.KeyedExtensionFactory;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-public class FileTypeExtensionFactory<T> extends KeyedExtensionFactory<T, FileType> {
-  public FileTypeExtensionFactory(@NotNull final Class<T> interfaceClass, @NonNls @NotNull final String epName) {
-    super(interfaceClass, epName);
-  }
-
-  @Override
-  public String getKey(@NotNull final FileType key) {
-    return key.getName();
+public class PlainSyntaxHighlighterFactory extends SyntaxHighlighterFactory {
+  @NotNull
+  public SyntaxHighlighter getSyntaxHighlighter(final Project project, final VirtualFile virtualFile) {
+    return new PlainSyntaxHighlighter();
   }
 }

@@ -139,6 +139,7 @@ public class DataFlowRunner {
       }
 
       MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState> processedStates = new MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState>();
+      MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState> incomingStates = new MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState>();
 
       WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(shouldCheckTimeLimit() ? ourTimeLimit : ourTimeLimit * 42);
       int count = 0;
@@ -176,9 +177,13 @@ public class DataFlowRunner {
             if (nextInstruction.getIndex() >= endOffset) {
               continue;
             }
-            if (nextInstruction instanceof BranchingInstruction && 
-                processedStates.get((BranchingInstruction)nextInstruction).contains(state.getMemoryState())) {
-              continue;
+            if (nextInstruction instanceof BranchingInstruction) {
+              BranchingInstruction branching = (BranchingInstruction)nextInstruction;
+              if (processedStates.get(branching).contains(state.getMemoryState()) || 
+                  incomingStates.get(branching).contains(state.getMemoryState())) {
+                continue;
+              }
+              incomingStates.putValue(branching, state.getMemoryState().createCopy());
             }
             queue.offer(state);
           }

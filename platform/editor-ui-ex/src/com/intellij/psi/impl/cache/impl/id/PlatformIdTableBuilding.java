@@ -23,11 +23,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.impl.cache.impl.BaseFilterLexer;
@@ -41,7 +39,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
-import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.indexing.SubstitutedFileType;
 import org.jetbrains.annotations.NotNull;
@@ -57,10 +54,9 @@ import java.util.regex.Pattern;
  * Author: dmitrylomov
  */
 public abstract class PlatformIdTableBuilding {
-  static final HashMap<FileType, DataIndexer<TodoIndexEntry, Integer, FileContent>> ourTodoIndexers =
-    new HashMap<FileType, DataIndexer<TodoIndexEntry, Integer, FileContent>>();
-  private static final TokenSet ABSTRACT_FILE_COMMENT_TOKENS =
-    TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
+  public static final Key<EditorHighlighter> EDITOR_HIGHLIGHTER = new Key<EditorHighlighter>("Editor");
+  private static final Map<FileType, DataIndexer<TodoIndexEntry, Integer, FileContent>> ourTodoIndexers = new HashMap<FileType, DataIndexer<TodoIndexEntry, Integer, FileContent>>();
+  private static final TokenSet ABSTRACT_FILE_COMMENT_TOKENS = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
 
   private PlatformIdTableBuilding() {}
 
@@ -112,19 +108,18 @@ public abstract class PlatformIdTableBuilding {
   }
 
   @Deprecated
-  public static void registerTodoIndexer(FileType fileType, DataIndexer<TodoIndexEntry, Integer, FileContent> indexer) {
+  public static void registerTodoIndexer(@NotNull FileType fileType, DataIndexer<TodoIndexEntry, Integer, FileContent> indexer) {
     ourTodoIndexers.put(fileType, indexer);
   }
 
-  public static boolean isTodoIndexerRegistered(FileType fileType) {
-    return ourTodoIndexers.containsKey(fileType) || TodoIndexers.INSTANCE.forFileType(fileType) != null;
+  public static boolean isTodoIndexerRegistered(@NotNull FileType fileType) {
+    return ourTodoIndexers.containsKey(fileType) || TodoIndexers.INSTANCE.forFileType(fileType) != null || fileType instanceof InternalFileType;
   }
 
   private static class CompositeTodoIndexer implements DataIndexer<TodoIndexEntry, Integer, FileContent> {
-
     private final DataIndexer<TodoIndexEntry, Integer, FileContent>[] indexers;
 
-    public CompositeTodoIndexer(DataIndexer<TodoIndexEntry, Integer, FileContent>... indexers) {
+    public CompositeTodoIndexer(@NotNull DataIndexer<TodoIndexEntry, Integer, FileContent>... indexers) {
       this.indexers = indexers;
     }
 
@@ -163,7 +158,7 @@ public abstract class PlatformIdTableBuilding {
         final OccurrenceConsumer occurrenceConsumer = new OccurrenceConsumer(null, true);
         EditorHighlighter highlighter;
 
-        final EditorHighlighter editorHighlighter = inputData.getUserData(FileBasedIndexImpl.EDITOR_HIGHLIGHTER);
+        final EditorHighlighter editorHighlighter = inputData.getUserData(EDITOR_HIGHLIGHTER);
         if (editorHighlighter != null && checkCanUseCachedEditorHighlighter(chars, editorHighlighter)) {
           highlighter = editorHighlighter;
         }
@@ -241,15 +236,15 @@ public abstract class PlatformIdTableBuilding {
   }
 
   static {
-    IdTableBuilding.registerIdIndexer(FileTypes.PLAIN_TEXT, new IdTableBuilding.PlainTextIndexer());
-    registerTodoIndexer(FileTypes.PLAIN_TEXT, new PlainTextTodoIndexer());
+    IdTableBuilding.registerIdIndexer(PlainTextFileType.INSTANCE, new IdTableBuilding.PlainTextIndexer());
+    registerTodoIndexer(PlainTextFileType.INSTANCE, new PlainTextTodoIndexer());
 
-    IdTableBuilding.registerIdIndexer(StdFileTypes.IDEA_MODULE, null);
-    IdTableBuilding.registerIdIndexer(StdFileTypes.IDEA_WORKSPACE, null);
-    IdTableBuilding.registerIdIndexer(StdFileTypes.IDEA_PROJECT, null);
+    //IdTableBuilding.registerIdIndexer(StdFileTypes.IDEA_MODULE, null);
+    //IdTableBuilding.registerIdIndexer(StdFileTypes.IDEA_WORKSPACE, null);
+    //IdTableBuilding.registerIdIndexer(StdFileTypes.IDEA_PROJECT, null);
 
-    registerTodoIndexer(StdFileTypes.IDEA_MODULE, null);
-    registerTodoIndexer(StdFileTypes.IDEA_WORKSPACE, null);
-    registerTodoIndexer(StdFileTypes.IDEA_PROJECT, null);
+    //registerTodoIndexer(StdFileTypes.IDEA_MODULE, null);
+    //registerTodoIndexer(StdFileTypes.IDEA_WORKSPACE, null);
+    //registerTodoIndexer(StdFileTypes.IDEA_PROJECT, null);
   }
 }

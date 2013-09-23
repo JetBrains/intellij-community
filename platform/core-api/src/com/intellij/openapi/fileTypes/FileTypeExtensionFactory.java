@@ -15,18 +15,22 @@
  */
 
 /*
- * Created by IntelliJ IDEA.
- * User: yole
- * Date: 06.11.2007
- * Time: 19:49:57
+ * @author max
  */
 package com.intellij.openapi.fileTypes;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.KeyedExtensionFactory;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
-public interface SyntaxHighlighterProvider {
-  @Nullable
-  SyntaxHighlighter create(FileType fileType, @Nullable Project project, @Nullable VirtualFile file);
+public class FileTypeExtensionFactory<T> extends KeyedExtensionFactory<T, FileType> {
+  public FileTypeExtensionFactory(@NotNull final Class<T> interfaceClass, @NonNls @NotNull final String epName) {
+    super(interfaceClass, epName, ApplicationManager.getApplication().getPicoContainer());
+  }
+
+  @Override
+  public String getKey(@NotNull final FileType key) {
+    return key.getName();
+  }
 }

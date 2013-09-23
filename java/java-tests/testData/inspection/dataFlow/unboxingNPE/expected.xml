@@ -384,10 +384,4 @@
     <description>Condition &lt;code&gt;i&lt;/code&gt; is always &lt;code&gt;true&lt;/code&gt; when reached</description>
   </problem>
 
-  <problem>
-    <file>Test.java</file>
-    <line>62</line>
-    <module>testUnboxingNPE_7454908424878253728</module>
-    <description>Switch label&lt;code&gt;case 0:&lt;/code&gt; is unreachable</description>
-  </problem>
 </problems>

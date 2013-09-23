@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.lexer.LexerBase;
 import com.intellij.psi.CustomHighlighterTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -40,7 +41,8 @@ public class AbstractCustomLexer extends LexerBase {
     myTokenParsers = tokenParsers.toArray(new TokenParser[tokenParsers.size()]);
   }
 
-  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+  @Override
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBuffer = buffer;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
@@ -52,22 +54,27 @@ public class AbstractCustomLexer extends LexerBase {
     advance();
   }
 
+  @Override
   public int getState() {
     return 0;
   }
 
+  @Override
   public IElementType getTokenType() {
     return myCurrentToken.getType();
   }
 
+  @Override
   public int getTokenStart() {
     return myCurrentToken.getStart();
   }
 
+  @Override
   public int getTokenEnd() {
     return myCurrentToken.getEnd();
   }
 
+  @Override
   public void advance() {
     if (myPosition >= myEndOffset) {
       myCurrentToken.updateData(myPosition, myPosition, null);
@@ -95,10 +102,13 @@ public class AbstractCustomLexer extends LexerBase {
     myCurrentToken.updateData(myPosition, myPosition + 1, CustomHighlighterTokenType.CHARACTER);
   }
 
+  @Override
+  @NotNull
   public CharSequence getBufferSequence() {
     return myBuffer;
   }
 
+  @Override
   public int getBufferEnd() {
     return myEndOffset;
   }

@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,7 +28,8 @@ public class GotItPanel {
   JPanel myButton;
   JPanel myRoot;
   JLabel myTitle;
-  JLabel myMessage;
+  JEditorPane myMessage;
+
 
   private void createUIComponents() {
     myButton = new JPanel(new BorderLayout()) {
@@ -45,5 +47,10 @@ public class GotItPanel {
         g.drawRoundRect(0,0,getWidth()-1, getHeight()-1, 5,5);
       }
     };
+    myMessage = new JEditorPane("text/html", "<html></html>");
+    myMessage.setEditorKit(UIUtil.getHTMLEditorKit());
+    myMessage.setEditable(false);
+    myMessage.addHyperlinkListener(new BrowserHyperlinkListener());
+    myMessage.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.getLabelFont().getSize() + 2f));
   }
 }

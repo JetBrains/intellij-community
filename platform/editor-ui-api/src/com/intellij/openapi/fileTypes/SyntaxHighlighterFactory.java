@@ -50,7 +50,7 @@ public abstract class SyntaxHighlighterFactory {
    * @return {@code SyntaxHighlighter} interface implementation for the given file type
    */
   @Nullable
-  public static SyntaxHighlighter getSyntaxHighlighter(FileType fileType, @Nullable Project project, @Nullable VirtualFile file) {
+  public static SyntaxHighlighter getSyntaxHighlighter(@NotNull FileType fileType, @Nullable Project project, @Nullable VirtualFile file) {
     return SyntaxHighlighter.PROVIDER.create(fileType, project, file);
   }
 

@@ -189,13 +189,13 @@ public abstract class SlicePanel extends JPanel implements TypeSafeDataProvider,
   @NotNull
   private JTree createTree() {
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
-    final Tree tree = new Tree(new DefaultTreeModel(root)){
+    final Tree tree = new Tree(new DefaultTreeModel(root))/* {
       @Override
       protected void paintComponent(Graphics g) {
         DuplicateNodeRenderer.paintDuplicateNodesBackground(g, this);
         super.paintComponent(g);
       }
-    };
+    }*/;
     tree.setOpaque(false);
 
     tree.setToggleClickCount(-1);

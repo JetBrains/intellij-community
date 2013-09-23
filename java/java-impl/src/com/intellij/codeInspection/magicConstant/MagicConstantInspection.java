@@ -623,7 +623,7 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
     params.dataFlowToThis = true;
     params.scope = new AnalysisScope(new LocalSearchScope(scope), manager.getProject());
 
-    SliceRootNode rootNode = new SliceRootNode(manager.getProject(), new DuplicateMap(), SliceManager.createRootUsage(argument, params));
+    SliceRootNode rootNode = new SliceRootNode(manager.getProject(), new DuplicateMap(), SliceUsage.createRootUsage(argument, params));
 
     Collection<? extends AbstractTreeNode> children = rootNode.getChildren().iterator().next().getChildren();
     for (AbstractTreeNode child : children) {

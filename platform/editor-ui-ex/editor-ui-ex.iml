@@ -11,6 +11,8 @@
     <orderEntry type="module" module-name="util" exported="" />
     <orderEntry type="module" module-name="annotations" exported="" />
     <orderEntry type="module" module-name="core-impl" exported="" />
+    <orderEntry type="module" module-name="indexing-impl" />
+    <orderEntry type="module" module-name="projectModel-api" />
   </component>
 </module>
 

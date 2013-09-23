@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@
 
 /* It's an automatically generated code. Do not modify it. */
 package com.intellij.lexer;
+
+import org.jetbrains.annotations.NotNull;
 
 public class _XmlLexer extends FlexAdapter {
   private int myState = __XmlLexer.YYINITIAL;
@@ -43,7 +45,7 @@ public class _XmlLexer extends FlexAdapter {
     packState();
   }
 
-  public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
+  public void start(@NotNull final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
     super.start(buffer, startOffset, endOffset, initialState);
     handleState(initialState);
   }

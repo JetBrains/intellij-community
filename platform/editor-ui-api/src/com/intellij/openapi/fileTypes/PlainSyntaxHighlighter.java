@@ -13,26 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.openapi.fileTypes;
 
-package com.intellij.psi.impl.search;
-
+import com.intellij.lexer.EmptyLexer;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.psi.PsiFile;
+import com.intellij.openapi.editor.HighlighterColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
-public interface IndexPatternBuilder {
-  ExtensionPointName<IndexPatternBuilder> EP_NAME = ExtensionPointName.create("com.intellij.indexPatternBuilder");
+public class PlainSyntaxHighlighter implements SyntaxHighlighter {
+  private static final TextAttributesKey[] ATTRS = {HighlighterColors.TEXT};
 
-  @Nullable
-  Lexer getIndexingLexer(PsiFile file);
-  @Nullable
-  TokenSet getCommentTokenSet(PsiFile file);
-  int getCommentStartDelta(IElementType tokenType);
-  int getCommentEndDelta(IElementType tokenType);
+  @Override
+  @NotNull
+  public Lexer getHighlightingLexer() {
+    return new EmptyLexer();
+  }
+
+  @Override
+  @NotNull
+  public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
+    return ATTRS;
+  }
 }

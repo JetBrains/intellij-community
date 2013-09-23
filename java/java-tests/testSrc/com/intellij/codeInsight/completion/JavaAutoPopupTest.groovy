@@ -880,7 +880,9 @@ class Foo {
   void foo(int aaa, int aaaaa) { }
   void bar(int aaa, int aaaaa) { foo(<caret>) }
 } """)
-    type 'a,'
+    type 'a'
+    println myFixture.lookupElementStrings
+    type ','
     assert myFixture.editor.document.text.contains('foo(aaa, )')
   }
 

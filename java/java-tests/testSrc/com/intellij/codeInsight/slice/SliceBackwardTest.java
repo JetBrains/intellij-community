@@ -31,7 +31,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.slicer.SliceAnalysisParams;
 import com.intellij.slicer.SliceHandler;
-import com.intellij.slicer.SliceManager;
 import com.intellij.slicer.SliceUsage;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.IntArrayList;
@@ -59,7 +58,7 @@ public class SliceBackwardTest extends DaemonAnalyzerTestCase {
     params.scope = new AnalysisScope(getProject());
     params.dataFlowToThis = true;
 
-    SliceUsage usage = SliceManager.createRootUsage(element, params);
+    SliceUsage usage = SliceUsage.createRootUsage(element, params);
     checkUsages(usage, true, myFlownOffsets);
   }
 

@@ -37,7 +37,7 @@ public class SliceTooComplexDFAUsage extends SliceUsage {
   }
 
   @Override
-  public void processChildren(Processor<SliceUsage> processor) {
+  public void processChildren(@NotNull Processor<SliceUsage> processor) {
     // no children
   }
 

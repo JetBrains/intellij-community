@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,14 @@ import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.jsp.JspTokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class JspIndexPatternBuilder implements IndexPatternBuilder {
   @Override
-  public Lexer getIndexingLexer(final PsiFile file) {
+  public Lexer getIndexingLexer(@NotNull final PsiFile file) {
     if (JspPsiUtil.isInJspFile(file)) {
       EditorHighlighter highlighter = null;
 
@@ -67,7 +68,7 @@ public class JspIndexPatternBuilder implements IndexPatternBuilder {
   }
 
   @Override
-  public TokenSet getCommentTokenSet(final PsiFile file) {
+  public TokenSet getCommentTokenSet(@NotNull final PsiFile file) {
     final JspFile jspFile = JspPsiUtil.getJspFile(file);
     TokenSet commentTokens = TokenSet.orSet(JavaIndexPatternBuilder.XML_COMMENT_BIT_SET, StdTokenSets.COMMENT_BIT_SET);
     final ParserDefinition parserDefinition =
