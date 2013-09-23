@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.resolve.graphInference.constraints.CheckedExceptionCompatibilityConstraint;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ExpressionCompatibilityConstraint;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompatibilityConstraint;
@@ -80,6 +81,7 @@ public class InferenceSession {
         PsiType parameterType = getParameterType(parameters, args, i, mySiteSubstitutor);
         if (args[i] != null) {
           myConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
+          myConstraints.add(new CheckedExceptionCompatibilityConstraint(args[i], parameterType));
         }
       }
     }
