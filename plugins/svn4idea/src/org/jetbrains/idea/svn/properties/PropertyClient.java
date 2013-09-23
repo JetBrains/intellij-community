@@ -50,4 +50,10 @@ public interface PropertyClient extends SvnClient {
                    @Nullable SVNPropertyValue value,
                    @Nullable SVNDepth depth,
                    boolean force) throws VcsException;
+
+  void setRevisionProperty(@NotNull SvnTarget target,
+                           @NotNull String property,
+                           @NotNull SVNRevision revision,
+                           @Nullable SVNPropertyValue value,
+                           boolean force) throws VcsException;
 }

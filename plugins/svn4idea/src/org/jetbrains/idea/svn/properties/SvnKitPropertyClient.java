@@ -83,6 +83,25 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
     }
   }
 
+  @Override
+  public void setRevisionProperty(@NotNull SvnTarget target,
+                                  @NotNull String property,
+                                  @NotNull SVNRevision revision,
+                                  @Nullable SVNPropertyValue value,
+                                  boolean force) throws VcsException {
+    try {
+      if (target.isFile()) {
+        createClient().doSetRevisionProperty(target.getFile(), revision, property, value, force, null);
+      }
+      else {
+        createClient().doSetRevisionProperty(target.getURL(), revision, property, value, force, null);
+      }
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
+  }
+
   private void runGetProperty(@NotNull SvnTarget target,
                               @Nullable String property,
                               @Nullable SVNRevision revision,

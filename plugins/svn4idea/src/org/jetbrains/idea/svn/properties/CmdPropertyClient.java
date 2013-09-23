@@ -12,7 +12,10 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
+import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.wc.SVNPropertyData;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.xml.bind.JAXBException;
@@ -92,19 +95,41 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
                           @Nullable SVNPropertyValue value,
                           @Nullable SVNDepth depth,
                           boolean force) throws VcsException {
+    runSetProperty(SvnTarget.fromFile(file), property, null, depth, value, force);
+  }
+
+  @Override
+  public void setRevisionProperty(@NotNull SvnTarget target,
+                                  @NotNull String property,
+                                  @NotNull SVNRevision revision,
+                                  @Nullable SVNPropertyValue value,
+                                  boolean force) throws VcsException {
+    runSetProperty(target, property, revision, null, value, force);
+  }
+
+  private void runSetProperty(@NotNull SvnTarget target,
+                              @NotNull String property,
+                              @Nullable SVNRevision revision,
+                              @Nullable SVNDepth depth,
+                              @Nullable SVNPropertyValue value,
+                              boolean force) throws VcsException {
     List<String> parameters = new ArrayList<String>();
     boolean isDelete = value == null;
 
     parameters.add(property);
+    if (revision != null) {
+      parameters.add("--revprop");
+      CommandUtil.put(parameters, revision);
+    }
     if (!isDelete) {
       parameters.add(SVNPropertyValue.getPropertyAsString(value));
       // --force could only be used in "propset" command, but not in "propdel" command
       CommandUtil.put(parameters, force, "--force");
     }
-    CommandUtil.put(parameters, file);
+    CommandUtil.put(parameters, target);
     CommandUtil.put(parameters, depth);
 
-    CommandUtil.execute(myVcs, SvnTarget.fromFile(file), isDelete ? SvnCommandName.propdel : SvnCommandName.propset, parameters, null);
+    CommandUtil.execute(myVcs, target, isDelete ? SvnCommandName.propdel : SvnCommandName.propset, parameters, null);
   }
 
   private void fillListParameters(@NotNull SvnTarget target,
