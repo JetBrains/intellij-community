@@ -806,15 +806,14 @@ public class PyPackageManagerImpl extends PyPackageManager {
       }
       final List<String> cmdline = new ArrayList<String>();
       cmdline.add(homePath);
-
+      cmdline.add(helperPath);
       cmdline.addAll(args);
+      LOG.info("Running packaging tool: " + StringUtil.join(cmdline, " "));
 
       final boolean canCreate = FileUtil.ensureCanCreateFile(new File(homePath));
       if (!canCreate && !SystemInfo.isWindows && askForSudo) {   //is system site interpreter --> we need sudo privileges
         try {
-          helperPath = StringUtil.replace(helperPath, " ", "\\ ");
-          cmdline.add(1, helperPath);
-          final ProcessOutput result = ExecUtil.sudoAndGetOutput(StringUtil.join(cmdline, " "),
+          final ProcessOutput result = ExecUtil.sudoAndGetOutput(cmdline,
                                                                  "Please enter your password to make changes in system packages: ",
                                                                  workingDir);
           String message = result.getStderr();
@@ -840,10 +839,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
           throw new PyExternalProcessException(ERROR_ACCESS_DENIED, helperPath, args, e.getMessage());
         }
       }
-      else                 //vEnv interpreter
-      {
-        cmdline.add(1, helperPath);
-        LOG.info("Running packaging tool: " + StringUtil.join(cmdline, " "));
+      else {
         return PySdkUtil.getProcessOutput(workingDir, ArrayUtil.toStringArray(cmdline), TIMEOUT);
       }
     }
