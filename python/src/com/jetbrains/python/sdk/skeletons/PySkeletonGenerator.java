@@ -1,9 +1,6 @@
 package com.jetbrains.python.sdk.skeletons;
 
 import com.google.common.collect.Maps;
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -143,9 +140,10 @@ public class PySkeletonGenerator {
   }
 
   public void generateBuiltinSkeletons(@NotNull Sdk sdk) throws InvalidSdkException {
+    //noinspection ResultOfMethodCallIgnored
     new File(mySkeletonsPath).mkdirs();
     String binaryPath = sdk.getHomePath();
-
+    if (binaryPath == null) throw new InvalidSdkException("Broken home path for " + sdk.getName());
 
     long startTime = System.currentTimeMillis();
     final ProcessOutput runResult = getProcessOutput(
@@ -166,65 +164,57 @@ public class PySkeletonGenerator {
   public ListBinariesResult listBinaries(@NotNull Sdk sdk, @NotNull String extraSysPath) throws InvalidSdkException {
     final String homePath = sdk.getHomePath();
     final long startTime = System.currentTimeMillis();
-    final String[] cmd = new String[]{homePath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-v", "-L"};
-    final GeneralCommandLine commandLine = new GeneralCommandLine(cmd);
-    commandLine.addParameter("-s");
-    commandLine.addParameter(extraSysPath);
-    final String[] additionalEnv = PythonSdkType.getVirtualEnvAdditionalEnv(homePath);
-    if (additionalEnv != null) {
-      final Map<String, String> map = PySdkUtil.buildEnvMap(additionalEnv);
-      commandLine.getEnvironment().putAll(map);
-    }
-    try {
-      CapturingProcessHandler handler = new CapturingProcessHandler(commandLine);
-      final ProcessOutput process = handler.runProcess(MINUTE * 4);
-      LOG.info("Retrieving binary module list took " + (System.currentTimeMillis() - startTime) + " ms");
-      if (process.getExitCode() != 0) {
-        final StringBuilder sb = new StringBuilder("failed to run ").append(GENERATOR3).append(" for ").append(homePath);
-        if (process.isTimeout()) {
-          sb.append(": timed out.");
-        }
-        else {
-          sb.append(", exit code ")
-            .append(process.getExitCode())
-            .append(", stderr: \n-----\n");
-          for (String line : process.getStderrLines()) {
-            sb.append(line).append("\n");
-          }
-          sb.append("-----");
-        }
-        throw new InvalidSdkException(sb.toString());
-      }
-      final List<String> lines = process.getStdoutLines();
-      if (lines.size() < 1) {
-        throw new InvalidSdkException("Empty output from " + GENERATOR3 + " for " + homePath);
-      }
-      final Iterator<String> iter = lines.iterator();
-      final int generatorVersion = fromVersionString(iter.next().trim());
-      final Map<String, PySkeletonRefresher.PyBinaryItem> binaries = Maps.newHashMap();
-      while (iter.hasNext()) {
-        final String line = iter.next();
-        int cutpos = line.indexOf('\t');
-        if (cutpos >= 0) {
-          String[] strs = line.split("\t");
-          String moduleName = strs[0];
-          String path = strs[1];
-          int length = Integer.parseInt(strs[2]);
-          int lastModified = Integer.parseInt(strs[3]);
+    if (homePath == null) throw new InvalidSdkException("Broken home path for " + sdk.getName());
+    final String parentDir = new File(homePath).getParent();
 
-          binaries.put(moduleName, new PySkeletonRefresher.PyBinaryItem(moduleName, path, length, lastModified));
-        }
-        else {
-          LOG.error("Bad binaries line: '" + line + "', SDK " + homePath); // but don't die yet
-        }
-      }
-      return new ListBinariesResult(generatorVersion, binaries);
-    }
-    catch (ExecutionException e) {
+    final String[] cmd = new String[]{homePath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-v", "-L", "-s", extraSysPath};
+
+    final ProcessOutput process = getProcessOutput(parentDir,
+                                                   cmd,
+                                                   PythonSdkType.getVirtualEnvAdditionalEnv(homePath),
+                                                   MINUTE * 4); // see PY-3898
+
+    LOG.info("Retrieving binary module list took " + (System.currentTimeMillis() - startTime) + " ms");
+    if (process.getExitCode() != 0) {
       final StringBuilder sb = new StringBuilder("failed to run ").append(GENERATOR3).append(" for ").append(homePath);
-      sb.append(e.getCause());
+      if (process.isTimeout()) {
+        sb.append(": timed out.");
+      }
+      else {
+        sb.append(", exit code ")
+          .append(process.getExitCode())
+          .append(", stderr: \n-----\n");
+        for (String line : process.getStderrLines()) {
+          sb.append(line).append("\n");
+        }
+        sb.append("-----");
+      }
       throw new InvalidSdkException(sb.toString());
     }
+    final List<String> lines = process.getStdoutLines();
+    if (lines.size() < 1) {
+      throw new InvalidSdkException("Empty output from " + GENERATOR3 + " for " + homePath);
+    }
+    final Iterator<String> iter = lines.iterator();
+    final int generatorVersion = fromVersionString(iter.next().trim());
+    final Map<String, PySkeletonRefresher.PyBinaryItem> binaries = Maps.newHashMap();
+    while (iter.hasNext()) {
+      final String line = iter.next();
+      int cutpos = line.indexOf('\t');
+      if (cutpos >= 0) {
+        String[] strs = line.split("\t");
+        String moduleName = strs[0];
+        String path = strs[1];
+        int length = Integer.parseInt(strs[2]);
+        int lastModified = Integer.parseInt(strs[3]);
+
+        binaries.put(moduleName, new PySkeletonRefresher.PyBinaryItem(moduleName, path, length, lastModified));
+      }
+      else {
+        LOG.error("Bad binaries line: '" + line + "', SDK " + homePath); // but don't die yet
+      }
+    }
+    return new ListBinariesResult(generatorVersion, binaries);
   }
 
   public boolean deleteOrLog(@NotNull File item) {

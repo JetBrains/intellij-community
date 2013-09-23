@@ -83,7 +83,7 @@ public class PyExtractMethodUtil {
     final String methodName = data.first;
     final AbstractVariableData[] variableData = data.second;
 
-    final SimpleDuplicatesFinder finder = new SimpleDuplicatesFinder(statement1, statement2, variableData);
+    final SimpleDuplicatesFinder finder = new SimpleDuplicatesFinder(statement1, statement2, variableData, fragment.getOutputVariables());
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       public void run() {
@@ -236,7 +236,7 @@ public class PyExtractMethodUtil {
   public static void extractFromExpression(@NotNull final Project project,
                                            final Editor editor,
                                            final PyCodeFragment fragment,
-                                           final PsiElement expression) {
+                                           @NotNull final PsiElement expression) {
     if (!fragment.getOutputVariables().isEmpty()){
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           "Cannot perform refactoring from expression with local variables modifications inside code fragment",
@@ -264,6 +264,7 @@ public class PyExtractMethodUtil {
     final String methodName = data.first;
     final AbstractVariableData[] variableData = data.second;
 
+    final SimpleDuplicatesFinder finder = new SimpleDuplicatesFinder(expression, expression, variableData, fragment.getOutputVariables());
     if (fragment.getOutputVariables().isEmpty()) {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
         @Override
@@ -305,7 +306,8 @@ public class PyExtractMethodUtil {
               if (callElement != null) {
                 callElement = PyReplaceExpressionUtil.replaceExpression(expression, callElement);
               }
-
+              if (callElement != null)
+                processDuplicates(callElement, generatedMethod, finder, editor);
               // Set editor
               setSelectionAndCaret(editor, callElement);
             }
@@ -328,27 +330,40 @@ public class PyExtractMethodUtil {
     return callElement;
   }
 
-  private static PsiElement replaceElements(@NotNull final SimpleMatch match, @NotNull final PsiElement callElement) {
+  private static PsiElement replaceElements(@NotNull final SimpleMatch match, @NotNull final PsiElement element) {
     final List<PsiElement> elementsRange = PyPsiUtils.collectElements(match.getStartElement(), match.getEndElement());
     final Map<String, String> changedParameters = match.getChangedParameters();
-    if (callElement instanceof PyExpressionStatement) {
-      final PyExpression expression = ((PyExpressionStatement)callElement).getExpression();
-      if (expression instanceof PyCallExpression) {
-        final Set<String> keys = changedParameters.keySet();
-        final PyArgumentList argumentList = ((PyCallExpression)expression).getArgumentList();
-        if (argumentList != null) {
-          for (PyExpression arg : argumentList.getArguments()) {
-            final String argText = arg.getText();
-            if (argText != null && keys.contains(argText)) {
-              arg.replace(PyElementGenerator.getInstance(callElement.getProject()).createExpressionFromText(
-                LanguageLevel.forElement(callElement),
-                changedParameters.get(argText)));
-            }
+    PsiElement callElement = element;
+    final PyElementGenerator generator = PyElementGenerator.getInstance(callElement.getProject());
+    if (element instanceof PyAssignmentStatement) {
+      final PyExpression value = ((PyAssignmentStatement)element).getAssignedValue();
+      if (value != null) callElement = value;
+      final PyExpression[] targets = ((PyAssignmentStatement)element).getTargets();
+      if (targets.length == 1) {
+        final String output = match.getChangedOutput();
+        final PyExpression text = generator.createFromText(LanguageLevel.forElement(callElement), PyAssignmentStatement.class,
+                                                           output + " = 1").getTargets()[0];
+        targets[0].replace(text);
+      }
+    }
+    if (element instanceof PyExpressionStatement) {
+      callElement = ((PyExpressionStatement)element).getExpression();
+    }
+    if (callElement instanceof PyCallExpression) {
+      final Set<String> keys = changedParameters.keySet();
+      final PyArgumentList argumentList = ((PyCallExpression)callElement).getArgumentList();
+      if (argumentList != null) {
+        for (PyExpression arg : argumentList.getArguments()) {
+          final String argText = arg.getText();
+          if (argText != null && keys.contains(argText)) {
+            arg.replace(generator.createExpressionFromText(
+              LanguageLevel.forElement(callElement),
+              changedParameters.get(argText)));
           }
         }
       }
     }
-    return replaceElements(elementsRange, callElement);
+    return replaceElements(elementsRange, element);
   }
 
   // Creates string for call

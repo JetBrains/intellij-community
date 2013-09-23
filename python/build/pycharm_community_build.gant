@@ -33,6 +33,18 @@ private List pycharmImplementationModules() {   //modules to put into pycharm.ja
     "platform-main"].flatten()
 }
 
+private List modules() {
+  return [
+    "python-pydev", "colorSchemes", pycharmPlatformApiModules(), pycharmImplementationModules(), pluginFilter
+  ].flatten()
+}
+
+private List approvedJars() {
+  def normalizedHome = ch.replace('\\', '/')
+  def normalizedPythonHome = pythonCommunityHome.replace('\\', '/')
+  return ["$normalizedHome/lib/", "$normalizedPythonHome/lib/", "$normalizedHome/xml/relaxng/lib/"]
+}
+
 class Paths {
   final sandbox
   final distAll
@@ -61,9 +73,6 @@ setProperty("paths", new Paths(home))
 setProperty("buildName", "PC-$buildNumber")
 
 target('default': "Build artifacts") {
-  def modules = [
-    "python-pydev", "colorSchemes", pycharmPlatformApiModules(), pycharmImplementationModules(), pluginFilter
-  ].flatten()
 
   loadProject()
 
@@ -104,10 +113,7 @@ target('default': "Build artifacts") {
 
   zipSources(home, paths.artifacts)
 
-  def normalizedHome = ch.replace('\\', '/')
-  def normalizedPythonHome = pythonCommunityHome.replace('\\', '/')
-  def approvedJars = ["$normalizedHome/lib/", "$normalizedPythonHome/lib/", "$normalizedHome/xml/relaxng/lib/"]
-  def usedJars = buildModulesAndCollectUsedJars(modules, approvedJars, ["/ant/"])
+  def usedJars = buildModulesAndCollectUsedJars(modules(), approvedJars(), ["/ant/"])
 
   layoutCommunity("${paths.sandbox}/classes/production", usedJars)
 
@@ -126,6 +132,12 @@ target('default': "Build artifacts") {
 }
 
 public layoutCommunity(String classesPath, Set usedJars) {
+  setProperty("pluginFilter", new File("$pythonCommunityHome/build/plugin-list.txt").readLines())
+
+  if (usedJars == null) {
+    usedJars = collectUsedJars(modules(), approvedJars(), ["/ant/"], null)
+  }
+
   def appInfo = appInfoFile(classesPath)
   def paths = new Paths(home)
   buildSearchableOptions("${projectBuilder.moduleOutput(findModule("platform-resources"))}/search", [], {
@@ -167,30 +179,12 @@ public layoutCommunity(String classesPath, Set usedJars) {
   String tarRoot = isEap() ? "pycharm-community-$buildNumber" : "pycharm-community-${p("component.version.major")}.${p("component.version.minor")}"
   buildTarGz(tarRoot, "$paths.artifacts/pycharmPC-${buildNumber}.tar", [paths.distAll, paths.distUnix])
 
-  String macAppRoot = isEap() ? "PyCharm Community Edition ${p("component.version.major")}.${p("component.version.minor")} EAP.app" : "PyCharm Community Edition.app"
+  String macAppRoot = isEap() ? "PyCharm CE ${p("component.version.major")}.${p("component.version.minor")} EAP.app" : "PyCharm CE.app"
   buildMacZip(macAppRoot, "${paths.artifacts}/pycharmPC-${buildNumber}.sit", [paths.distAll], paths.distMac)
 }
 
 private layoutPlugins(layouts) {
   dir("plugins") {
-    /*
-    layouts.layoutPlugin("django-db-config")
-    layouts.layoutPlugin("python-javascript-debugger")
-    layouts.layoutPlugin("remote-run") {
-      fileset(dir: "$home/plugins/remote-run/lib") {
-        include(name: "jediterm-0.2.jar")
-      }
-    }
-    layouts.layoutPlugin("python-remote-interpreter")
-    layouts.layoutPlugin("vagrant") {
-      fileset(dir: "$home/plugins/vagrant/lib") {
-        include(name: "jrubyparser-0.2.jar")
-      }
-    }
-    layouts.layoutPlugin("python-uml")
-    layouts.layoutPlugin("localization")
-    layouts.layoutPlugin("python-localization")
-    */
     layouts.layoutPlugin("rest")
     layouts.layoutPlugin("python-rest")
     /*
@@ -382,7 +376,7 @@ private layoutMac(Map _args, String target) {
   Map args = new HashMap(_args)
   args.icns = "$pythonCommunityHome/resources/PyCharmCore.icns"
   args.bundleIdentifier = "com.jetbrains.pycharm"
-  args.platform_prefix = "Python"
+  args.platform_prefix = "PyCharmCore"
   args.help_id = "PY"
   args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
   args."idea.properties" = ["idea.no.jre.check": true, "ide.mac.useNativeClipboard": "false"];
