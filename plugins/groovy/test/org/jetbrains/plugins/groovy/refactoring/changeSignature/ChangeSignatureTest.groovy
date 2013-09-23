@@ -239,7 +239,7 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
       doTest(new SimpleInfo('optional', -1, null, '1', 'int'));
     }
     catch (ConflictsInTestsException e) {
-      assertEquals('Method foo(int) is already defined in the class <b><code>Test</code></b>.', e.message)
+      assertEquals('Method foo(int) is already defined in the class <b><code>Test</code></b>', e.message)
       return
     }
     assertFalse('conflicts are not detected!', true);
