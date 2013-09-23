@@ -33,6 +33,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.JavaTokenType.*;
 
@@ -41,11 +42,10 @@ public class BinopInstruction extends BranchingInstruction {
   private final IElementType myOperationSign;
   private final Project myProject;
 
-  public BinopInstruction(IElementType opSign, PsiElement psiAnchor, @NotNull Project project) {
+  public BinopInstruction(IElementType opSign, @Nullable PsiElement psiAnchor, @NotNull Project project) {
+    super(psiAnchor);
     myProject = project;
     myOperationSign = ourSignificantOperations.contains(opSign) ? opSign : null;
-
-    setPsiAnchor(psiAnchor);
   }
 
   @Override

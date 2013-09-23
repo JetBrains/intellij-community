@@ -38,6 +38,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.MultiMapBasedOnSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,6 +139,8 @@ public class DataFlowRunner {
         queue.add(new DfaInstructionState(myInstructions[0], initialState));
       }
 
+      MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState> processedStates = new MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState>();
+
       WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(shouldCheckTimeLimit() ? ourTimeLimit : ourTimeLimit * 42);
       int count = 0;
       while (!queue.isEmpty()) {
@@ -158,20 +161,27 @@ public class DataFlowRunner {
 
           if (instruction instanceof BranchingInstruction) {
             BranchingInstruction branching = (BranchingInstruction)instruction;
-            if (branching.isMemoryStateProcessed(instructionState.getMemoryState())) {
+            if (processedStates.get(branching).contains(instructionState.getMemoryState())) {
               continue;
             }
-            if (!branching.setMemoryStateProcessed(instructionState.getMemoryState().createCopy())) {
+            if (processedStates.get(branching).size() > MAX_STATES_PER_BRANCH) {
               LOG.debug("Too complex because too many different possible states");
               return RunnerResult.TOO_COMPLEX; // Too complex :(
             }
+            processedStates.putValue(branching, instructionState.getMemoryState().createCopy());
           }
 
           DfaInstructionState[] after = acceptInstruction(visitor, instructionState);
           for (DfaInstructionState state : after) {
-            if (instruction.getIndex() < endOffset) {
-              queue.add(state);
+            Instruction nextInstruction = state.getInstruction();
+            if (nextInstruction.getIndex() >= endOffset) {
+              continue;
             }
+            if (nextInstruction instanceof BranchingInstruction && 
+                processedStates.get((BranchingInstruction)nextInstruction).contains(state.getMemoryState())) {
+              continue;
+            }
+            queue.add(state);
           }
         }
       }
