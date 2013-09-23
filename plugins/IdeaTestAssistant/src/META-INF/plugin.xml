@@ -10,6 +10,9 @@
             class="com.intellij.testAssistant.NavigateToTestDataAction"
             text="Navigate to testdata" use-shortcut-of="GotoRelated">
     </action>
+    <action id="DumpCleanTestData" internal="true" class="com.intellij.internal.DumpCleanHighlightingTestdataAction">
+      <add-to-group group-id="Internal.Dump"/>
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
