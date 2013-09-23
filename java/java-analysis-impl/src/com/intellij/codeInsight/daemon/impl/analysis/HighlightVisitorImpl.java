@@ -301,7 +301,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                 myHolder.add(result);
               }
               else {
-                final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(FunctionalInterfaceParameterizationUtil.getFunctionalType(functionalInterfaceType, expression));
+                final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
                 final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
                 if (interfaceMethod != null) {
                   final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();

@@ -24,7 +24,8 @@ import org.jetbrains.annotations.Nullable;
 public class FunctionalInterfaceParameterizationUtil {
   private static final Logger LOG = Logger.getInstance("#" + FunctionalInterfaceParameterizationUtil.class.getName());
 
-  public static boolean isWildcardParameterized(@NotNull PsiType classType) {
+  public static boolean isWildcardParameterized(@Nullable PsiType classType) {
+    if (classType == null) return false;
     if (classType instanceof PsiIntersectionType) {
       for (PsiType type : ((PsiIntersectionType)classType).getConjuncts()) {
         if (!isWildcardParameterized(type)) return false;
@@ -43,7 +44,7 @@ public class FunctionalInterfaceParameterizationUtil {
   }
 
   @Nullable
-  public static PsiType getFunctionalType(PsiType psiClassType, PsiLambdaExpression expr) {
+  public static PsiType getFunctionalType(@Nullable PsiType psiClassType, PsiLambdaExpression expr) {
     if (!expr.hasFormalParameterTypes()) return psiClassType;
     if (!isWildcardParameterized(psiClassType)) {
       return psiClassType;
