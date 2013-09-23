@@ -45,7 +45,7 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard<? ex
   protected final List<Sdk> mySdks = new ArrayList<Sdk>();
   protected T myWizard;
   @Nullable
-  protected Project myCreatedProject;
+  private Project myCreatedProject;
 
   protected Project createProjectFromTemplate(String group, String name, @Nullable Consumer<Step> adjuster) throws IOException {
     runWizard(group, name, null, adjuster);
@@ -102,6 +102,13 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard<? ex
     myFilesToDelete.add(directory);
     myWizard = createWizard(project, directory);
     UIUtil.dispatchAllInvocationEvents(); // to make default selection applied
+  }
+
+  protected Project createProject(Consumer<Step> adjuster) throws IOException {
+    createWizard(getProject());
+    runWizard(adjuster);
+    myCreatedProject = NewProjectUtil.createFromWizard(myWizard, null);
+    return myCreatedProject;
   }
 
   protected T createWizard(Project project, File directory) {
