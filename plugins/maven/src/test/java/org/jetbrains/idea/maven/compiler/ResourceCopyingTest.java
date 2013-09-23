@@ -29,22 +29,11 @@ import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.io.File;
 
-public abstract class ResourceCopyingTest extends MavenImportingTestCase {
-
-  public static class IdeaModeTest extends ResourceCopyingTest {
-    @Override
-    protected boolean useJps() {
-      return false;
-    }
+public class ResourceCopyingTest extends MavenImportingTestCase {
+  @Override
+  protected boolean useJps() {
+    return true;
   }
-
-  public static class JpsModeTest extends ResourceCopyingTest {
-    @Override
-    protected boolean useJps() {
-      return true;
-    }
-  }
-
 
   @Override
   protected void setUpInWriteAction() throws Exception {

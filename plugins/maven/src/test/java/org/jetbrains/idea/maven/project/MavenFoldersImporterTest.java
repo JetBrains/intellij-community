@@ -23,6 +23,7 @@ import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.io.File;
 
@@ -90,13 +91,17 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    assertSources("project", "src/main/java", "src/main/resources");
-    assertTestSources("project", "src/test/java", "src/test/resources");
+    assertSources("project", "src/main/java");
+    assertResources("project", "src/main/resources");
+    assertTestSources("project", "src/test/java");
+    assertTestResources("project", "src/test/resources");
 
     updateProjectFolders();
 
-    assertSources("project", "src/main/java", "src/main/resources");
-    assertTestSources("project", "src/test/java", "src/test/resources");
+    assertSources("project", "src/main/java");
+    assertResources("project", "src/main/resources");
+    assertTestSources("project", "src/test/java");
+    assertTestResources("project", "src/test/resources");
   }
 
   public void testDoesNotExcludeRegisteredSources() throws Exception {
@@ -113,7 +118,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
         MavenRootModelAdapter adapter = new MavenRootModelAdapter(myProjectsTree.findProject(myProjectPom),
                                                                   getModule("project"),
                                                                   new MavenDefaultModifiableModelsProvider(myProject));
-        adapter.addSourceFolder(sourceDir.getPath(), false);
+        adapter.addSourceFolder(sourceDir.getPath(), JavaSourceRootType.SOURCE);
         adapter.getRootModel().commit();
       }
     });

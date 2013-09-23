@@ -22,6 +22,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -33,6 +34,8 @@ import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
@@ -139,9 +142,28 @@ public abstract class MavenImporter {
     return true;
   }
 
+  public void collectSourceRoots(MavenProject mavenProject, PairConsumer<String, JpsModuleSourceRootType<?>> result) {
+    List<String> sources = new ArrayList<String>();
+    collectSourceFolders(mavenProject, sources);
+    for (String path : sources) {
+      result.consume(path, JavaSourceRootType.SOURCE);
+    }
+    List<String> testSources = new ArrayList<String>();
+    collectTestFolders(mavenProject, testSources);
+    for (String path : testSources) {
+      result.consume(path, JavaSourceRootType.TEST_SOURCE);
+    }
+  }
+
+  /**
+   * @deprecated override {@link #collectSourceRoots} instead
+   */
   public void collectSourceFolders(MavenProject mavenProject, List<String> result) {
   }
 
+  /**
+   * @deprecated override {@link #collectSourceRoots} instead
+   */
   public void collectTestFolders(MavenProject mavenProject, List<String> result) {
   }
 

@@ -39,6 +39,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.idea.maven.utils.Url;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
 import java.util.Set;
@@ -129,11 +130,11 @@ public class MavenRootModelAdapter {
     }
   }
 
-  public void addSourceFolder(String path, boolean testSource) {
-    addSourceFolder(path, testSource, false);
+  public void addSourceFolder(String path, final JpsModuleSourceRootType<?> rootType) {
+    addSourceFolder(path, rootType, false);
   }
 
-  public void addSourceFolder(String path, boolean testSource, boolean ifNotEmpty) {
+  public void addSourceFolder(String path, final JpsModuleSourceRootType<?> rootType, boolean ifNotEmpty) {
     if (ifNotEmpty) {
       String[] childs = new File(toPath(path).getPath()).list();
       if (childs == null || childs.length == 0) return;
@@ -147,19 +148,7 @@ public class MavenRootModelAdapter {
     if (e == null) return;
     unregisterAll(path, true, true);
     unregisterAll(path, false, true);
-    e.addSourceFolder(url.getUrl(), testSource);
-  }
-
-  public void addSourceFolderSoft(String path, boolean testSource) {
-    if (!exists(path)) return;
-
-    Url url = toUrl(path);
-    ContentEntry e = getContentRootFor(url);
-    if (e == null) return;
-
-    if (!hasCollision(path)) {
-      e.addSourceFolder(url.getUrl(), testSource);
-    }
+    e.addSourceFolder(url.getUrl(), rootType);
   }
 
   public boolean hasRegisteredSourceSubfolder(File f) {
