@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ public class MoveClassTest extends RefactoringTestCase {
       fail("Conflicts expected");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("A package-local class <b><code>Class2</code></b> will no longer be accessible from field <b><code>User.class2</code></b>", e.getMessage());
+      assertEquals("Package-local class <b><code>Class2</code></b> will no longer be accessible from field <b><code>User.class2</code></b>", e.getMessage());
     }
   }
 
