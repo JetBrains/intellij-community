@@ -110,9 +110,6 @@ target('default': "Build artifacts") {
     projectBuilder.moduleRuntimeClasspath(findModule("main_pycharm"), false).each {
       ant.pathelement(location: it)
     }
-    projectBuilder.moduleRuntimeClasspath(findModule("java-runtime"), false).each {
-      ant.pathelement(location: it)
-    }
   }, "-Didea.platform.prefix=Python -Didea.no.jre.check=true")
 
   if (!dryRun) {
