@@ -142,7 +142,7 @@ public class CreateExternalAction extends DumbAwareAction {
         }
       }
       final String string = createExternalDefinitionString(url, target);
-      newValue = propertyData.getValue().getString() + "\n" + string;
+      newValue = propertyData.getValue().getString().trim() + "\n" + string;
     } else {
       newValue = createExternalDefinitionString(url, target);
     }
