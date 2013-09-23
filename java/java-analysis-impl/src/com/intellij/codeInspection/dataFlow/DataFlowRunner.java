@@ -157,10 +157,11 @@ public class DataFlowRunner {
           Instruction instruction = instructionState.getInstruction();
 
           if (instruction instanceof BranchingInstruction) {
-            if (instruction.isMemoryStateProcessed(instructionState.getMemoryState())) {
+            BranchingInstruction branching = (BranchingInstruction)instruction;
+            if (branching.isMemoryStateProcessed(instructionState.getMemoryState())) {
               continue;
             }
-            if (!instruction.setMemoryStateProcessed(instructionState.getMemoryState().createCopy())) {
+            if (!branching.setMemoryStateProcessed(instructionState.getMemoryState().createCopy())) {
               LOG.debug("Too complex because too many different possible states");
               return RunnerResult.TOO_COMPLEX; // Too complex :(
             }

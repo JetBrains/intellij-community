@@ -24,15 +24,21 @@
  */
 package com.intellij.codeInspection.dataFlow.instructions;
 
+import com.intellij.codeInspection.dataFlow.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+
+import java.util.Set;
 
 public abstract class BranchingInstruction extends Instruction {
   private boolean myIsTrueReachable;
   private boolean myIsFalseReachable;
   private boolean isConstTrue;
   private PsiElement myExpression;
+  private final Set<DfaMemoryState> myProcessedStates = ContainerUtil.newHashSet();
 
   protected BranchingInstruction() {
     myIsTrueReachable = false;
@@ -74,4 +80,15 @@ public abstract class BranchingInstruction extends Instruction {
     myExpression = psiAnchor;
     isConstTrue = psiAnchor != null && isBoolConst(psiAnchor);
   }
+
+  public boolean isMemoryStateProcessed(DfaMemoryState dfaMemState) {
+    return myProcessedStates.contains(dfaMemState);
+  }
+
+  public boolean setMemoryStateProcessed(DfaMemoryState dfaMemState) {
+    if (myProcessedStates.size() > DataFlowRunner.MAX_STATES_PER_BRANCH) return false;
+    myProcessedStates.add(dfaMemState);
+    return true;
+  }
+
 }
