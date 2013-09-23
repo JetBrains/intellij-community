@@ -24,8 +24,11 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
+import com.intellij.psi.impl.source.resolve.graphInference.PsiGraphInferenceHelper;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.FileTreeAccessFilter;
 import com.intellij.testFramework.HighlightTestInfo;
@@ -78,6 +81,18 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
   protected void doTest(@NonNls String filePath, boolean checkWarnings, boolean checkInfos) {
     configureByFile(filePath);
     doTestConfiguredFile(checkWarnings, checkInfos, filePath);
+  }
+
+  protected void doTestNewInference(@NonNls String filePath, boolean checkWarnings, boolean checkInfos) {
+    final PsiResolveHelperImpl helper = (PsiResolveHelperImpl)JavaPsiFacade.getInstance(getProject()).getResolveHelper();
+    helper.setTestHelper(new PsiGraphInferenceHelper(getPsiManager()));
+    try {
+      configureByFile(filePath);
+      doTestConfiguredFile(checkWarnings, checkInfos, filePath);
+    }
+    finally {
+      helper.setTestHelper(null);
+    }
   }
 
   protected void doTest(@NonNls String filePath, boolean checkWarnings, boolean checkWeakWarnings, boolean checkInfos) {
