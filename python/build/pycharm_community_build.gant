@@ -33,6 +33,18 @@ private List pycharmImplementationModules() {   //modules to put into pycharm.ja
     "platform-main"].flatten()
 }
 
+private List modules() {
+  return [
+    "python-pydev", "colorSchemes", pycharmPlatformApiModules(), pycharmImplementationModules(), pluginFilter
+  ].flatten()
+}
+
+private List approvedJars() {
+  def normalizedHome = ch.replace('\\', '/')
+  def normalizedPythonHome = pythonCommunityHome.replace('\\', '/')
+  return ["$normalizedHome/lib/", "$normalizedPythonHome/lib/", "$normalizedHome/xml/relaxng/lib/"]
+}
+
 class Paths {
   final sandbox
   final distAll
@@ -61,9 +73,6 @@ setProperty("paths", new Paths(home))
 setProperty("buildName", "PC-$buildNumber")
 
 target('default': "Build artifacts") {
-  def modules = [
-    "python-pydev", "colorSchemes", pycharmPlatformApiModules(), pycharmImplementationModules(), pluginFilter
-  ].flatten()
 
   loadProject()
 
@@ -104,10 +113,7 @@ target('default': "Build artifacts") {
 
   zipSources(home, paths.artifacts)
 
-  def normalizedHome = ch.replace('\\', '/')
-  def normalizedPythonHome = pythonCommunityHome.replace('\\', '/')
-  def approvedJars = ["$normalizedHome/lib/", "$normalizedPythonHome/lib/", "$normalizedHome/xml/relaxng/lib/"]
-  def usedJars = buildModulesAndCollectUsedJars(modules, approvedJars, ["/ant/"])
+  def usedJars = buildModulesAndCollectUsedJars(modules(), approvedJars(), ["/ant/"])
 
   layoutCommunity("${paths.sandbox}/classes/production", usedJars)
 
@@ -126,6 +132,12 @@ target('default': "Build artifacts") {
 }
 
 public layoutCommunity(String classesPath, Set usedJars) {
+  setProperty("pluginFilter", new File("$pythonCommunityHome/build/plugin-list.txt").readLines())
+
+  if (usedJars == null) {
+    usedJars = collectUsedJars(modules(), approvedJars(), ["/ant/"], null)
+  }
+
   def appInfo = appInfoFile(classesPath)
   def paths = new Paths(home)
   buildSearchableOptions("${projectBuilder.moduleOutput(findModule("platform-resources"))}/search", [], {
