@@ -12,10 +12,7 @@ import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc.ISVNPropertyHandler;
-import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNPropertyData;
-import org.tmatesoft.svn.core.wc.SVNRevision;
+import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.xml.bind.JAXBException;
@@ -211,7 +208,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     // such behavior is required to compatibility with SVNKit as some logic in merge depends on
     // whether null property data or property data with empty string value is returned
     if (value != null) {
-      result = new SVNPropertyData(property, SVNPropertyValue.create(value.trim()), null);
+      result = new SVNPropertyData(property, SVNPropertyValue.create(value.trim()), LF_SEPARATOR_OPTIONS);
     }
 
     return result;
