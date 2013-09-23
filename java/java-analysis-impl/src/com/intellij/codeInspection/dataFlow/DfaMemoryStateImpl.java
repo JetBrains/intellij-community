@@ -26,6 +26,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.UnorderedPair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -103,16 +104,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
-  private Set<Set<EqClass>> myCachedDistinctClassPairs;
-  Set<Set<EqClass>> getDistinctClassPairs() {
+  private Set<UnorderedPair<EqClass>> myCachedDistinctClassPairs;
+  Set<UnorderedPair<EqClass>> getDistinctClassPairs() {
     if (myCachedDistinctClassPairs != null) return myCachedDistinctClassPairs;
 
-    Set<Set<EqClass>> result = ContainerUtil.newHashSet();
+    Set<UnorderedPair<EqClass>> result = ContainerUtil.newHashSet();
     for (long encodedPair : myDistinctClasses.toArray()) {
-      THashSet<EqClass> pair = new THashSet<EqClass>(2);
-      pair.add(myEqClasses.get(low(encodedPair)));
-      pair.add(myEqClasses.get(high(encodedPair)));
-      result.add(pair);
+      result.add(new UnorderedPair<EqClass>(myEqClasses.get(low(encodedPair)), myEqClasses.get(high(encodedPair))));
     }
     return myCachedDistinctClassPairs = result;
   }
@@ -153,8 +151,8 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!myDistinctClasses.isEmpty()) {
       result.append("\n  distincts: ");
       List<String> distincts = new ArrayList<String>();
-      for (Set<EqClass> pair : getDistinctClassPairs()) {
-        distincts.add("{" + StringUtil.join(pair, ", ") + "}");
+      for (UnorderedPair<EqClass> pair : getDistinctClassPairs()) {
+        distincts.add("{" + pair.first + ", " + pair.second + "}");
       }
       Collections.sort(distincts);
       result.append(StringUtil.join(distincts, " "));

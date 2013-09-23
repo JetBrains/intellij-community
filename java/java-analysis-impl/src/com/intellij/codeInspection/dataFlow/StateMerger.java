@@ -172,11 +172,10 @@ class StateMerger {
 
   private static MultiMap<DfaVariableValue, DfaValue> getDistinctsMap(DfaMemoryStateImpl state) {
     MultiMap<DfaVariableValue, DfaValue> distincts = new MultiMap<DfaVariableValue, DfaValue>();
-    for (Set<EqClass> classPair : state.getDistinctClassPairs()) {
-      EqClass[] array = classPair.toArray(new EqClass[classPair.size()]);
-      for (DfaValue value1 : array[0].getMemberValues()) {
+    for (UnorderedPair<EqClass> classPair : state.getDistinctClassPairs()) {
+      for (DfaValue value1 : classPair.first.getMemberValues()) {
         value1 = DfaMemoryStateImpl.unwrap(value1);
-        for (DfaValue value2 : array[1].getMemberValues()) {
+        for (DfaValue value2 : classPair.second.getMemberValues()) {
           value2 = DfaMemoryStateImpl.unwrap(value2);
           if (value1 instanceof DfaVariableValue) {
             if (value2 instanceof DfaVariableValue || value2 instanceof DfaConstValue) {
