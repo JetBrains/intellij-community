@@ -775,11 +775,9 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
   }
 })
 
-binding.setVariable("buildModulesAndCollectUsedJars", { List modules, List approvedJars, List forbiddenJars ->
+binding.setVariable("collectUsedJars", { List modules, List approvedJars, List forbiddenJars, List modulesToBuild ->
   def usedJars = new HashSet();
 
-  projectBuilder.cleanOutput()
-  def modulesToBuild = []
   modules.each {
     def module = findModule(it)
     if (module != null) {
@@ -794,13 +792,22 @@ binding.setVariable("buildModulesAndCollectUsedJars", { List modules, List appro
           }
         }
       }
-      modulesToBuild << module
+      if (modulesToBuild != null) {
+        modulesToBuild << module
+      }
     }
     else {
       projectBuilder.warning("$it is not a module")
     }
   }
+
+})
+
+binding.setVariable("buildModulesAndCollectUsedJars", { List modules, List approvedJars, List forbiddenJars ->
+  def modulesToBuild = []
+  def usedJars = collectUsedJars(modules, approvedJars, forbiddenJars, modulesToBuild)
   projectBuilder.buildModules(modulesToBuild)
+  projectBuilder.cleanOutput()
 
   return usedJars
 })
