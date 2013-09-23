@@ -40,9 +40,13 @@ public class ValuableDataFlowRunner extends DataFlowRunner {
       super(factory);
     }
 
+    MyDfaMemoryState(DfaMemoryStateImpl toCopy) {
+      super(toCopy);
+    }
+
     @Override
-    protected DfaMemoryStateImpl createNew() {
-      return new MyDfaMemoryState(getFactory());
+    public DfaMemoryStateImpl createCopy() {
+      return new MyDfaMemoryState(this);
     }
 
     @Override

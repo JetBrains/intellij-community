@@ -42,46 +42,55 @@ import java.util.*;
 public class DfaMemoryStateImpl implements DfaMemoryState {
   private final DfaValueFactory myFactory;
 
-  private final List<EqClass> myEqClasses = ContainerUtil.newArrayList();
-  private final Stack<DfaValue> myStack = new Stack<DfaValue>();
-  private TIntStack myOffsetStack = new TIntStack(1);
-  private final TLongHashSet myDistinctClasses = new TLongHashSet();
-  private final THashMap<DfaVariableValue,DfaVariableState> myVariableStates = ContainerUtil.newTroveMap();
-  private THashMap<DfaVariableValue,DfaVariableState> myDefaultVariableStates; // shared between all states
-  private final THashSet<DfaVariableValue> myUnknownVariables = new THashSet<DfaVariableValue>();
+  private final List<EqClass> myEqClasses;
+  private final Stack<DfaValue> myStack;
+  private final TIntStack myOffsetStack;
+  private final TLongHashSet myDistinctClasses;
+  private final Map<DfaVariableValue,DfaVariableState> myVariableStates;
+  private final Map<DfaVariableValue,DfaVariableState> myDefaultVariableStates; 
+  private final Set<DfaVariableValue> myUnknownVariables;
   private boolean myEphemeral;
 
   public DfaMemoryStateImpl(final DfaValueFactory factory) {
     myFactory = factory;
     myDefaultVariableStates = ContainerUtil.newTroveMap();
+    myEqClasses = ContainerUtil.newArrayList();
+    myUnknownVariables = ContainerUtil.newTroveSet();
+    myVariableStates = ContainerUtil.newTroveMap();
+    myDistinctClasses = new TLongHashSet();
+    myOffsetStack = new TIntStack();
+    myStack = new Stack<DfaValue>();
+  }
+
+  protected DfaMemoryStateImpl(DfaMemoryStateImpl toCopy) {
+    myFactory = toCopy.myFactory;
+    myEphemeral = toCopy.myEphemeral;
+    myDefaultVariableStates = toCopy.myDefaultVariableStates; // shared between all states
+    
+    myStack = new Stack<DfaValue>(toCopy.myStack);
+    myDistinctClasses = new TLongHashSet(toCopy.myDistinctClasses.toArray());
+    myUnknownVariables = new THashSet<DfaVariableValue>(toCopy.myUnknownVariables);
+    myOffsetStack = new TIntStack(toCopy.myOffsetStack);
+
+    myEqClasses = ContainerUtil.newArrayListWithCapacity(toCopy.myEqClasses.size());
+    for (int i = 0; i < toCopy.myEqClasses.size(); i++) {
+      EqClass aClass = toCopy.myEqClasses.get(i);
+      myEqClasses.add(aClass != null ? new EqClass(aClass) : null);
+    }
+
+    myVariableStates = new THashMap<DfaVariableValue, DfaVariableState>(toCopy.myVariableStates);
+    
+    myCachedDistinctClassPairs = toCopy.myCachedDistinctClassPairs;
+    myCachedNonTrivialEqClasses = toCopy.myCachedNonTrivialEqClasses;
   }
 
   public DfaValueFactory getFactory() {
     return myFactory;
   }
 
-  protected DfaMemoryStateImpl createNew() {
-    return new DfaMemoryStateImpl(myFactory);
-  }
-
   @Override
   public DfaMemoryStateImpl createCopy() {
-    DfaMemoryStateImpl newState = createNew();
-
-    newState.myDefaultVariableStates = myDefaultVariableStates;
-    newState.myEphemeral = myEphemeral;
-    newState.myStack.addAll(myStack);
-    newState.myDistinctClasses.addAll(myDistinctClasses.toArray());
-    newState.myUnknownVariables.addAll(myUnknownVariables);
-    newState.myOffsetStack = new TIntStack(myOffsetStack);
-
-    for (int i = 0; i < myEqClasses.size(); i++) {
-      EqClass aClass = myEqClasses.get(i);
-      newState.myEqClasses.add(aClass != null ? new EqClass(aClass) : null);
-    }
-
-    newState.myVariableStates.putAll(myVariableStates);
-    return newState;
+    return new DfaMemoryStateImpl(this);
   }
 
   public boolean equals(Object obj) {
