@@ -15,75 +15,72 @@
  */
 package org.jetbrains.plugins.gradle.service.resolve;
 
-import com.intellij.psi.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Denis Zhdanov
  * @since 8/14/13 12:58 PM
  */
 public class GradleDependenciesContributor implements GradleMethodContextContributor {
+  private final static Set<String> BUILD_SCRIPT_BLOCKS = ContainerUtil.newHashSet(
+    "subprojects",
+    "allprojects",
+    "buildscript"
+  );
 
   @Override
   public void process(@NotNull List<String> methodCallInfo,
                       @NotNull PsiScopeProcessor processor,
                       @NotNull ResolveState state,
                       @NotNull PsiElement place) {
-    if (methodCallInfo.isEmpty()) {
-      return;
+    if (methodCallInfo.isEmpty()) return;
+
+    String methodCall = ContainerUtil.getLastItem(methodCallInfo);
+    if (methodCall == null) return;
+
+    if (methodCallInfo.size() > 1 && BUILD_SCRIPT_BLOCKS.contains(methodCall)) {
+      methodCallInfo.remove(methodCallInfo.size() - 1);
+      methodCall = ContainerUtil.getLastItem(methodCallInfo);
     }
 
-    int i = methodCallInfo.indexOf("dependencies");
-    if (i != 1) {
-      return;
-    }
+    if (!StringUtil.equals(methodCall, "dependencies")) return;
 
-    // Assuming that the method call is addition of new dependency into configuration.
-    GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
-    PsiClass contributorClass =
-      psiManager.findClassWithCache(GradleCommonClassNames.GRADLE_API_DEPENDENCY_HANDLER, place.getResolveScope());
-    if (contributorClass == null) {
-      return;
-    }
-    processDependencyAddition(methodCallInfo.get(0), contributorClass, processor, state, place);
-  }
-
-  private static void processDependencyAddition(@NotNull String gradleConfigurationName,
-                                                @NotNull PsiClass dependencyHandlerClass,
-                                                @NotNull PsiScopeProcessor processor,
-                                                @NotNull ResolveState state,
-                                                @NotNull PsiElement place) {
-    GrLightMethodBuilder builder = new GrLightMethodBuilder(place.getManager(), gradleConfigurationName);
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getManager().getProject());
-    PsiType type = new PsiArrayType(factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, place.getResolveScope()));
-    builder.addParameter(new GrLightParameter("dependencyInfo", type, builder));
-    processor.execute(builder, state);
-
-    GrMethodCall call = PsiTreeUtil.getParentOfType(place, GrMethodCall.class);
-    if (call == null) {
-      return;
-    }
-    GrArgumentList args = call.getArgumentList();
-    if (args == null) {
-      return;
-    }
-
-    int argsCount = GradleResolverUtil.getGrMethodArumentsCount(args);
-    argsCount++; // Configuration name is delivered as an argument.
-
-    for (PsiMethod method : dependencyHandlerClass.findMethodsByName("add", false)) {
-      if (method.getParameterList().getParametersCount() == argsCount) {
-        builder.setNavigationElement(method);
+    final GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
+    if (methodCallInfo.size() == 2) {
+      PsiClass psiClass =
+        psiManager.findClassWithCache(GradleCommonClassNames.GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY, place.getResolveScope());
+      if (psiClass != null) {
+        psiClass.processDeclarations(processor, state, null, place);
       }
+      // Assuming that the method call is addition of new dependency into configuration.
+      PsiClass contributorClass =
+        psiManager.findClassWithCache(GradleCommonClassNames.GRADLE_API_DEPENDENCY_HANDLER, place.getResolveScope());
+      if (contributorClass == null) return;
+      GradleResolverUtil.processMethod(methodCallInfo.get(0), contributorClass, processor, state, place, "add");
+    }
+    else if (methodCallInfo.size() == 3) {
+      GradleResolverUtil.processDeclarations(psiManager, processor, state, place,
+                                             GradleCommonClassNames.GRADLE_API_DEPENDENCY_HANDLER,
+                                             GradleCommonClassNames.GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY,
+                                             GradleCommonClassNames.GRADLE_API_ARTIFACTS_DEPENDENCY_ARTIFACT,
+                                             GradleCommonClassNames.GRADLE_API_PROJECT);
+    }
+    else if (methodCallInfo.size() == 4) {
+      // Assuming that the method call is addition of new dependency into configuration.
+      PsiClass contributorClass =
+        psiManager.findClassWithCache(GradleCommonClassNames.GRADLE_API_DEPENDENCY_HANDLER, place.getResolveScope());
+      if (contributorClass == null) return;
+      GradleResolverUtil.processMethod(methodCallInfo.get(0), contributorClass, processor, state, place, "add");
     }
   }
 }

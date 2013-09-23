@@ -17,11 +17,14 @@ package org.jetbrains.plugins.gradle.service.resolve;
 
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrImplicitVariableImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
@@ -77,10 +80,73 @@ public class GradleResolverUtil {
     GrLightParameter closureParameter = new GrLightParameter("closure", closureType, methodWithClosure);
     methodWithClosure.addParameter(closureParameter);
 
-    if (returnType != null) {
-      PsiClassType retType = factory.createTypeByFQClassName(returnType, place.getResolveScope());
-      methodWithClosure.setReturnType(retType);
-    }
+    PsiClassType retType = factory.createTypeByFQClassName(
+      returnType != null ? returnType : CommonClassNames.JAVA_LANG_OBJECT, place.getResolveScope());
+    methodWithClosure.setReturnType(retType);
     return methodWithClosure;
+  }
+
+  public static void processMethod(@NotNull String gradleConfigurationName,
+                                   @NotNull PsiClass dependencyHandlerClass,
+                                   @NotNull PsiScopeProcessor processor,
+                                   @NotNull ResolveState state,
+                                   @NotNull PsiElement place) {
+    processMethod(gradleConfigurationName, dependencyHandlerClass, processor, state, place, null);
+  }
+
+  public static void processMethod(@NotNull String gradleConfigurationName,
+                                   @NotNull PsiClass dependencyHandlerClass,
+                                   @NotNull PsiScopeProcessor processor,
+                                   @NotNull ResolveState state,
+                                   @NotNull PsiElement place,
+                                   @Nullable String defaultMethodName) {
+    GrLightMethodBuilder builder = new GrLightMethodBuilder(place.getManager(), gradleConfigurationName);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getManager().getProject());
+    PsiType type = new PsiArrayType(factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, place.getResolveScope()));
+    builder.addParameter(new GrLightParameter("param", type, builder));
+    PsiClassType retType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, place.getResolveScope());
+    builder.setReturnType(retType);
+    processor.execute(builder, state);
+
+    GrMethodCall call = PsiTreeUtil.getParentOfType(place, GrMethodCall.class);
+    if (call == null) {
+      return;
+    }
+    GrArgumentList args = call.getArgumentList();
+    if (args == null) {
+      return;
+    }
+
+    int argsCount = getGrMethodArumentsCount(args);
+    argsCount++; // Configuration name is delivered as an argument.
+
+    for (PsiMethod method : dependencyHandlerClass.findMethodsByName(gradleConfigurationName, false)) {
+      if (method.getParameterList().getParametersCount() == argsCount) {
+        builder.setNavigationElement(method);
+        return;
+      }
+    }
+
+    if (defaultMethodName != null) {
+      for (PsiMethod method : dependencyHandlerClass.findMethodsByName(defaultMethodName, false)) {
+        if (method.getParameterList().getParametersCount() == argsCount) {
+          builder.setNavigationElement(method);
+          return;
+        }
+      }
+    }
+  }
+
+  public static void processDeclarations(@NotNull GroovyPsiManager psiManager,
+                                         @NotNull PsiScopeProcessor processor,
+                                         @NotNull ResolveState state,
+                                         @NotNull PsiElement place,
+                                         @NotNull String... fqNames) {
+    for (String fqName : fqNames) {
+      PsiClass psiClass = psiManager.findClassWithCache(fqName, place.getResolveScope());
+      if (psiClass != null) {
+        psiClass.processDeclarations(processor, state, null, place);
+      }
+    }
   }
 }

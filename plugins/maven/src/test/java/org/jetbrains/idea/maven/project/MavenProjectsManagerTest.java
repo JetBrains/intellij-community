@@ -920,7 +920,8 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                   "  </plugins>" +
                   "</build>");
 
-    assertSources("project", "src/main/java", "src/main/resources", "src1", "src2");
+    assertSources("project", "src/main/java", "src1", "src2");
+    assertResources("project", "src/main/resources");
   }
 
   public void testForceReimport() throws Exception {

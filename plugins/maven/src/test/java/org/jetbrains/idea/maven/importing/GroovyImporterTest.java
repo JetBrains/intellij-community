@@ -93,12 +93,12 @@ public class GroovyImporterTest extends MavenImportingTestCase {
 
     assertSources("project",
                   "src/main/java",
-                  "src/main/resources",
                   "src/main/groovy");
+    assertResources("project", "src/main/resources");
     assertTestSources("project",
                       "src/test/java",
-                      "src/test/resources",
                       "src/test/groovy");
+    assertTestResources("project", "src/test/resources");
   }
 
   public void testAddingCustomGroovySpecificSources() throws Exception {
@@ -161,14 +161,14 @@ public class GroovyImporterTest extends MavenImportingTestCase {
 
     assertSources("project",
                   "src/main/java",
-                  "src/main/resources",
                   "src/foo1",
                   "src/foo2");
+    assertResources("project", "src/main/resources");
     assertTestSources("project",
                       "src/test/java",
-                      "src/test/resources",
                       "src/test-foo1",
                       "src/test-foo2");
+    assertTestResources("project", "src/test/resources");
   }
 
   public void testAddingCustomGroovySpecificSourcesByRelativePath() throws Exception {
@@ -255,11 +255,10 @@ public class GroovyImporterTest extends MavenImportingTestCase {
 
     assertSources("project",
                   "src/main/java",
-                  "src/main/resources",
                   "target/generated-sources/xxx");
-    assertTestSources("project",
-                      "src/test/java",
-                      "src/test/resources");
+    assertResources("project", "src/main/resources");
+    assertTestSources("project", "src/test/java");
+    assertTestResources("project", "src/test/resources");
 
     assertExcludes("project",
                    "target/generated-sources/groovy-stubs");
@@ -308,11 +307,10 @@ public class GroovyImporterTest extends MavenImportingTestCase {
 
     assertSources("project",
                   "src/main/java",
-                  "src/main/resources",
                   "target/generated-sources/xxx");
-    assertTestSources("project",
-                      "src/test/java",
-                      "src/test/resources");
+    assertResources("project", "src/main/resources");
+    assertTestSources("project", "src/test/java");
+    assertTestResources("project", "src/test/resources");
 
     assertExcludes("project",
                    "target/generated-sources/foo",
@@ -456,11 +454,10 @@ public class GroovyImporterTest extends MavenImportingTestCase {
 
     assertSources("project",
                   "src/main/java",
-                  "src/main/resources",
                   "target/generated-sources/xxx");
-    assertTestSources("project",
-                      "src/test/java",
-                      "src/test/resources");
+    assertResources("project", "src/main/resources");
+    assertTestSources("project", "src/test/java");
+    assertTestResources("project", "src/test/resources");
 
     assertExcludes("project",
                    "target/generated-sources/groovy-stubs");

@@ -787,7 +787,12 @@ public class CompileDriver {
     });
   }
 
+  private static final Key<Boolean> OLD_IMPLEMENTATION_WARNING_SHOWN = Key.create("_old_make_implementation_warning_shown_"); 
   private void notifyDeprecatedImplementation() {
+    if (OLD_IMPLEMENTATION_WARNING_SHOWN.get(myProject, Boolean.FALSE).booleanValue()) {
+      return;
+    }
+    OLD_IMPLEMENTATION_WARNING_SHOWN.set(myProject, Boolean.TRUE);
     final NotificationListener hyperlinkHandler = new NotificationListener.Adapter() {
       @Override
       protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
