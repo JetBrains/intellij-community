@@ -2,7 +2,6 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.util.PsiUtil;
 
 import java.util.List;
@@ -52,16 +51,17 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
 
     final PsiType returnType = interfaceMethod.getReturnType();
     if (returnType != null) {
+      final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(myExpression);
       if (returnType.equals(PsiType.VOID)) {
-        if (!myExpression.isVoidCompatible() && !(myExpression.getBody() instanceof PsiExpression)) {
+        if (!returnExpressions.isEmpty() && !(myExpression.getBody() instanceof PsiExpression)) {
           return false;
         }
       } else {
-        if (myExpression.isVoidCompatible()) {  //not value-compatible
+        if (returnExpressions.isEmpty()) {  //not value-compatible
           return false;
         }
-        for (PsiExpression returnExpressions : LambdaUtil.getReturnExpressions(myExpression)) {
-          constraints.add(new ExpressionCompatibilityConstraint(returnExpressions, substitutor.substitute(returnType)));
+        for (PsiExpression returnExpression : returnExpressions) {
+          constraints.add(new ExpressionCompatibilityConstraint(returnExpression, substitutor.substitute(returnType)));
         }
       }
     }
