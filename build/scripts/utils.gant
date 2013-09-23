@@ -801,6 +801,7 @@ binding.setVariable("collectUsedJars", { List modules, List approvedJars, List f
     }
   }
 
+  return usedJars
 })
 
 binding.setVariable("buildModulesAndCollectUsedJars", { List modules, List approvedJars, List forbiddenJars ->
