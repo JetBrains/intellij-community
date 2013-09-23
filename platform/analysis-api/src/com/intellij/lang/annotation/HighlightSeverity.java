@@ -34,8 +34,6 @@ public class HighlightSeverity implements Comparable<HighlightSeverity>, JDOMExt
   public String myName;
   public int myVal;
 
-  public static final HighlightSeverity SEMANTIC = new HighlightSeverity("SEMANTIC", 5);
-
   /**
    * The standard severity level for information annotations.
    */
