@@ -33,17 +33,24 @@ public abstract class EditorHighlighterFactory {
     return ServiceManager.getService(EditorHighlighterFactory.class);
   }
 
-  public abstract EditorHighlighter createEditorHighlighter(final SyntaxHighlighter syntaxHighlighter, final EditorColorsScheme colors);
+  @NotNull
+  public abstract EditorHighlighter createEditorHighlighter(final SyntaxHighlighter syntaxHighlighter, @NotNull EditorColorsScheme colors);
 
-  public abstract EditorHighlighter createEditorHighlighter(final FileType fileType, final EditorColorsScheme settings, final Project project);
+  @NotNull
+  public abstract EditorHighlighter createEditorHighlighter(@NotNull FileType fileType, @NotNull EditorColorsScheme settings, final Project project);
 
-  public abstract EditorHighlighter createEditorHighlighter(final Project project, final FileType fileType);
+  @NotNull
+  public abstract EditorHighlighter createEditorHighlighter(final Project project, @NotNull FileType fileType);
 
-  public abstract EditorHighlighter createEditorHighlighter(@NotNull final VirtualFile file, final EditorColorsScheme globalScheme, @Nullable final Project project);
+  @NotNull
+  public abstract EditorHighlighter createEditorHighlighter(@NotNull final VirtualFile file, @NotNull EditorColorsScheme globalScheme, @Nullable final Project project);
 
-  public abstract EditorHighlighter createEditorHighlighter(final Project project, final VirtualFile file);
+  @NotNull
+  public abstract EditorHighlighter createEditorHighlighter(final Project project, @NotNull VirtualFile file);
 
-  public abstract EditorHighlighter createEditorHighlighter(final Project project, final String fileName);
+  @NotNull
+  public abstract EditorHighlighter createEditorHighlighter(final Project project, @NotNull String fileName);
 
-  public abstract EditorHighlighter createEditorHighlighter(final EditorColorsScheme settings, final String fileName, @Nullable final Project project);
+  @NotNull
+  public abstract EditorHighlighter createEditorHighlighter(@NotNull EditorColorsScheme settings, @NotNull String fileName, @Nullable final Project project);
 }

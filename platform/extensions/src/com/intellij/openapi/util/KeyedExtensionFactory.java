@@ -15,12 +15,12 @@
  */
 package com.intellij.openapi.util;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.KeyedFactoryEPBean;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.picocontainer.PicoContainer;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -32,10 +32,12 @@ import java.lang.reflect.Proxy;
 public abstract class KeyedExtensionFactory<T, KeyT> {
   private final Class<T> myInterfaceClass;
   private final ExtensionPointName<KeyedFactoryEPBean> myEpName;
+  private final PicoContainer myPicoContainer;
 
-  public KeyedExtensionFactory(@NotNull final Class<T> interfaceClass, @NonNls @NotNull final String epName) {
+  public KeyedExtensionFactory(@NotNull final Class<T> interfaceClass, @NonNls @NotNull final String epName, @NotNull PicoContainer picoContainer) {
     myInterfaceClass = interfaceClass;
     myEpName = new ExtensionPointName<KeyedFactoryEPBean>(epName);
+    myPicoContainer = picoContainer;
   }
 
   @NotNull
@@ -63,7 +65,7 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
       if (Comparing.strEqual(getKey(key), epBean.key)) {
         try {
           if (epBean.implementationClass != null) {
-            return (T)epBean.instantiate(epBean.implementationClass, ApplicationManager.getApplication().getPicoContainer());
+            return (T)epBean.instantiate(epBean.implementationClass, myPicoContainer);
           }
         }
         catch (Exception e) {
@@ -80,10 +82,10 @@ public abstract class KeyedExtensionFactory<T, KeyT> {
       if (Comparing.strEqual(epBean.key, key, true)) {
         try {
           if (epBean.implementationClass != null) {
-            result = epBean.instantiate(epBean.implementationClass, ApplicationManager.getApplication().getPicoContainer());
+            result = epBean.instantiate(epBean.implementationClass, myPicoContainer);
           }
           else {
-            Object factory = epBean.instantiate(epBean.factoryClass, ApplicationManager.getApplication().getPicoContainer());
+            Object factory = epBean.instantiate(epBean.factoryClass, myPicoContainer);
             result = method.invoke(factory, args);
           }
           if (result != null) {

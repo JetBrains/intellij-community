@@ -22,8 +22,6 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
-import com.intellij.openapi.project.ProjectCoreUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.search.IndexPatternProvider;
@@ -113,7 +111,7 @@ public class TodoIndex extends FileBasedIndexExtension<TodoIndexEntry, Integer> 
   private final FileBasedIndex.InputFilter myInputFilter = new FileBasedIndex.InputFilter() {
     @Override
     public boolean acceptInput(final VirtualFile file) {
-      if (!(file.getFileSystem() instanceof LocalFileSystem)) {
+      if (!file.isInLocalFileSystem()) {
         return false; // do not index TODOs in library sources
       }
 
