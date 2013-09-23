@@ -34,15 +34,11 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableConvertor;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.*;
 import git4idea.DialogManager;
 import git4idea.GitCommit;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
-import git4idea.branch.GitBranchUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
@@ -59,13 +55,12 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.*;
 import org.jetbrains.plugins.github.exceptions.GithubAuthenticationCanceledException;
 import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog;
-import org.jetbrains.plugins.github.util.GithubAuthData;
-import org.jetbrains.plugins.github.util.GithubNotifications;
-import org.jetbrains.plugins.github.util.GithubUrlUtil;
-import org.jetbrains.plugins.github.util.GithubUtil;
+import org.jetbrains.plugins.github.ui.GithubSelectForkDialog;
+import org.jetbrains.plugins.github.util.*;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
@@ -117,64 +112,71 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
 
   static void createPullRequest(@NotNull final Project project, @Nullable final VirtualFile file) {
     final Git git = ServiceManager.getService(Git.class);
+    final GithubProjectSettings projectSettings = GithubProjectSettings.getInstance(project);
 
-    final GitRepository repository = GithubUtil.getGitRepository(project, file);
-    if (repository == null) {
+    final GitRepository gitRepository = GithubUtil.getGitRepository(project, file);
+    if (gitRepository == null) {
       GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Can't find git repository");
       return;
     }
-    repository.update();
+    gitRepository.update();
 
-    Pair<GitRemote, String> remote = GithubUtil.findGithubRemote(repository);
+    Pair<GitRemote, String> remote = GithubUtil.findGithubRemote(gitRepository);
     if (remote == null) {
       GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Can't find GitHub remote");
       return;
     }
-    final String remoteUrl = remote.getSecond();
     final String remoteName = remote.getFirst().getName();
-
-    GithubFullPath userAndRepo = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);
-    if (userAndRepo == null) {
+    final String remoteUrl = remote.getSecond();
+    final GithubFullPath path = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);
+    if (path == null) {
       GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Can't process remote: " + remoteUrl);
       return;
     }
 
-    final GitLocalBranch currentBranch = repository.getCurrentBranch();
+    final GitLocalBranch currentBranch = gitRepository.getCurrentBranch();
     if (currentBranch == null) {
       GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "No current branch");
       return;
     }
 
-    String upstreamUrl = GithubUtil.findUpstreamRemote(repository);
-    GithubFullPath upstreamUserAndRepo =
-      upstreamUrl == null || !GithubUrlUtil.isGithubUrl(upstreamUrl) ? null : GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(upstreamUrl);
+    GithubFullPath forkPath = projectSettings.getCreatePullRequestDefaultRepo();
+    if (forkPath == null) {
+      openSelectTargetForkDialog(project, git, gitRepository, path, remoteName, remoteUrl, currentBranch.getName());
+      return;
+    }
 
-    final Map<String, String> forks = new HashMap<String, String>();
-    final Set<RemoteBranch> branches = new HashSet<RemoteBranch>();
-    addAvailableBranchesFromGit(repository, forks, branches);
-    GithubInfo info = loadGithubInfoAndBranchesWithModal(project, userAndRepo, upstreamUserAndRepo, forks, branches);
+    performCreatePullRequest(project, git, gitRepository, path, forkPath, remoteName, remoteUrl, currentBranch.getName());
+  }
+
+  private static void performCreatePullRequest(@NotNull final Project project,
+                                               @NotNull final Git git,
+                                               @NotNull final GitRepository gitRepository,
+                                               @NotNull final GithubFullPath path,
+                                               @NotNull final GithubFullPath forkPath,
+                                               @NotNull final String remoteName,
+                                               @NotNull final String remoteUrl,
+                                               @NotNull final String currentBranch) {
+    final GithubInfo info = prepareInfoWithModal(project, forkPath, gitRepository);
     if (info == null) {
       return;
     }
-    final GithubRepoDetailed repo = info.getRepo();
     final GithubAuthData auth = info.getAuthData();
 
-    GithubRepo parent = repo.getParent();
-    String defaultBranch =
-      parent == null || parent.getDefaultBranch() == null ? null : parent.getUserName() + ":" + parent.getDefaultBranch();
-    Collection<String> suggestions = ContainerUtil.map(branches, new Function<RemoteBranch, String>() {
+    Consumer<String> showDiff = info.getTargetRemote() != null ? new Consumer<String>() {
       @Override
-      public String fun(RemoteBranch remoteBranch) {
-        return remoteBranch.getReference();
+      public void consume(String branch) {
+        showDiffByRef(project, branch, gitRepository, info.getTargetRemote(), currentBranch);
       }
-    });
-    Consumer<String> showDiff = new Consumer<String>() {
+    } : null;
+    Runnable showSelectForkDialog = new Runnable() {
       @Override
-      public void consume(String ref) {
-        showDiffByRef(project, ref, repository, currentBranch.getName(), auth, forks, branches, repo.getSource());
+      public void run() {
+        openSelectTargetForkDialog(project, git, gitRepository, path, remoteName, remoteUrl, currentBranch);
       }
     };
-    final GithubCreatePullRequestDialog dialog = new GithubCreatePullRequestDialog(project, suggestions, defaultBranch, showDiff);
+    final GithubCreatePullRequestDialog dialog =
+      new GithubCreatePullRequestDialog(project, forkPath.getFullName(), info.getBranches(), showDiff, showSelectForkDialog);
     DialogManager.show(dialog);
     if (!dialog.isOK()) {
       return;
@@ -185,26 +187,19 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
       public void run(@NotNull ProgressIndicator indicator) {
         LOG.info("Pushing current branch");
         indicator.setText("Pushing current branch...");
-        GitCommandResult result = git.push(repository, remoteName, remoteUrl, currentBranch.getName(), true);
+        GitCommandResult result = git.push(gitRepository, remoteName, remoteUrl, currentBranch, true);
         if (!result.success()) {
           GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Push failed:<br/>" + result.getErrorOutputAsHtmlString());
           return;
         }
 
-        String from = repo.getUserName() + ":" + currentBranch.getName();
+        String from = path.getUser() + ":" + currentBranch;
         String onto = dialog.getTargetBranch();
-        String targetUser = onto.substring(0, onto.indexOf(':'));
-
-        GithubFullPath targetRepo = findRepositoryByUser(project, targetUser, forks, auth, repo.getSource());
-        if (targetRepo == null) {
-          GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Can't find repository for specified branch: " + onto);
-          return;
-        }
 
         LOG.info("Creating pull request");
         indicator.setText("Creating pull request...");
         GithubPullRequest request =
-          createPullRequest(project, auth, targetRepo, dialog.getRequestTitle(), dialog.getDescription(), from, onto);
+          createPullRequest(project, auth, forkPath, dialog.getRequestTitle(), dialog.getDescription(), from, onto);
         if (request == null) {
           return;
         }
@@ -216,26 +211,58 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static GithubInfo loadGithubInfoAndBranchesWithModal(@NotNull final Project project,
-                                                               @NotNull final GithubFullPath userAndRepo,
-                                                               @Nullable final GithubFullPath upstreamUserAndRepo,
-                                                               @NotNull final Map<String, String> forks,
-                                                               @NotNull final Set<RemoteBranch> branches) {
+  private static GithubInfo prepareInfoWithModal(@NotNull final Project project,
+                                                 @NotNull final GithubFullPath forkPath,
+                                                 @NotNull final GitRepository gitRepository) {
     try {
       return GithubUtil
         .computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubInfo, IOException>() {
           @Override
           public GithubInfo convert(ProgressIndicator indicator) throws IOException {
-            final AtomicReference<GithubRepoDetailed> reposRef = new AtomicReference<GithubRepoDetailed>();
+            // configure remote
+            GitRemote targetRemote = GithubUtil.findGithubRemote(gitRepository, forkPath);
+            String targetRemoteName = targetRemote == null ? null : targetRemote.getName();
+            if (targetRemoteName == null) {
+              final AtomicReference<Integer> responseRef = new AtomicReference<Integer>();
+              ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+                @Override
+                public void run() {
+                  responseRef.set(GithubNotifications
+                                    .showYesNoDialog(project, "Can't find remote", "Configure remote for '" + forkPath.getUser() + "'?"));
+                }
+              }, indicator.getModalityState());
+              if (responseRef.get() == Messages.YES) {
+                targetRemoteName = configureRemote(project, gitRepository, forkPath);
+              }
+            }
+
+            // load available branches
+            final AtomicReference<List<String>> reposRef = new AtomicReference<List<String>>();
             final GithubAuthData auth =
               GithubUtil.runAndGetValidAuth(project, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
                 @Override
                 public void consume(GithubAuthData authData) throws IOException {
-                  reposRef.set(GithubApiUtil.getDetailedRepoInfo(authData, userAndRepo.getUser(), userAndRepo.getRepository()));
+                  reposRef.set(ContainerUtil.map(GithubApiUtil.getRepoBranches(authData, forkPath.getUser(), forkPath.getRepository()),
+                                                 new Function<GithubBranch, String>() {
+                                                   @Override
+                                                   public String fun(GithubBranch githubBranch) {
+                                                     return githubBranch.getName();
+                                                   }
+                                                 }));
                 }
               });
-            addAvailableBranchesFromGithub(project, auth, reposRef.get(), upstreamUserAndRepo, forks, branches);
-            return new GithubInfo(auth, reposRef.get());
+
+
+            // fetch
+            if (targetRemoteName != null) {
+              GitFetchResult result = new GitFetcher(project, indicator, false).fetch(gitRepository.getRoot(), targetRemoteName, null);
+              if (!result.isSuccess()) {
+                GitFetcher.displayFetchResult(project, result, null, result.getErrors());
+                targetRemoteName = null;
+              }
+            }
+
+            return new GithubInfo(auth, reposRef.get(), targetRemoteName);
           }
         });
     }
@@ -249,42 +276,15 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
   }
 
   @Nullable
-  private static GithubFullPath findRepositoryByUser(@NotNull Project project,
-                                                     @NotNull String user,
-                                                     @NotNull Map<String, String> forks,
-                                                     @NotNull GithubAuthData auth,
-                                                     @Nullable GithubRepo source) {
-    for (Map.Entry<String, String> entry : forks.entrySet()) {
-      if (StringUtil.equalsIgnoreCase(user, entry.getKey())) {
-        return new GithubFullPath(entry.getKey(), entry.getValue());
-      }
+  private static String configureRemote(@NotNull Project project, @NotNull GitRepository gitRepository, @NotNull GithubFullPath forkPath) {
+    String url = GithubUrlUtil.getCloneUrl(forkPath);
+
+    if (GithubUtil.addGithubRemote(project, gitRepository, forkPath.getUser(), url)) {
+      return forkPath.getUser();
     }
-
-    if (source != null) {
-      try {
-        GithubRepoDetailed target = GithubApiUtil.getDetailedRepoInfo(auth, user, source.getName());
-        if (target.getSource() != null && StringUtil.equals(target.getSource().getUserName(), source.getUserName())) {
-          forks.put(target.getUserName(), target.getName());
-          return target.getFullPath();
-        }
-      }
-      catch (IOException ignore) {
-        // such repo may not exist
-      }
-
-      try {
-        GithubRepo fork = GithubApiUtil.findForkByUser(auth, source.getUserName(), source.getName(), user);
-        if (fork != null) {
-          forks.put(fork.getUserName(), fork.getName());
-          return fork.getFullPath();
-        }
-      }
-      catch (IOException e) {
-        GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, e);
-      }
+    else {
+      return null;
     }
-
-    return null;
   }
 
   @Nullable
@@ -304,91 +304,12 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
     }
   }
 
-  private static void addAvailableBranchesFromGit(@NotNull GitRepository gitRepository,
-                                                  @NotNull Map<String, String> forks,
-                                                  @NotNull Set<RemoteBranch> branches) {
-    for (GitRemoteBranch remoteBranch : gitRepository.getBranches().getRemoteBranches()) {
-      for (String url : remoteBranch.getRemote().getUrls()) {
-        if (GithubUrlUtil.isGithubUrl(url)) {
-          GithubFullPath path = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url);
-          if (path != null) {
-            forks.put(path.getUser(), path.getRepository());
-            branches.add(new RemoteBranch(path.getUser(), remoteBranch.getNameForRemoteOperations(), remoteBranch));
-            break;
-          }
-        }
-      }
-    }
-  }
-
-  private static void addAvailableBranchesFromGithub(@NotNull final Project project,
-                                                     @NotNull final GithubAuthData auth,
-                                                     @NotNull final GithubRepoDetailed repo,
-                                                     @Nullable final GithubFullPath upstreamPath,
-                                                     @NotNull Map<String, String> forks,
-                                                     @NotNull Set<RemoteBranch> branches) {
-    try {
-      final GithubRepo parent = repo.getParent();
-      final GithubRepo source = repo.getSource();
-
-      forks.put(repo.getUserName(), repo.getName());
-      branches.addAll(getBranches(auth, repo.getUserName(), repo.getName()));
-
-      if (parent != null) {
-        forks.put(parent.getUserName(), parent.getName());
-        branches.addAll(getBranches(auth, parent.getUserName(), parent.getName()));
-      }
-
-      if (source != null && !equals(source, parent)) {
-        forks.put(source.getUserName(), source.getName());
-        branches.addAll(getBranches(auth, source.getUserName(), source.getName()));
-      }
-
-      if (upstreamPath != null && !equals(upstreamPath, repo) && !equals(upstreamPath, parent) && !equals(upstreamPath, source)) {
-        forks.put(upstreamPath.getUser(), upstreamPath.getRepository());
-        branches.addAll(getBranches(auth, upstreamPath.getUser(), upstreamPath.getRepository()));
-      }
-    }
-    catch (IOException e) {
-      GithubNotifications.showError(project, "Can't load available branches", e);
-    }
-  }
-
-  @NotNull
-  private static List<RemoteBranch> getBranches(@NotNull GithubAuthData auth, @NotNull final String user, @NotNull final String repo)
-    throws IOException {
-    List<GithubBranch> branches = GithubApiUtil.getRepoBranches(auth, user, repo);
-    return ContainerUtil.map(branches, new Function<GithubBranch, RemoteBranch>() {
-      @Override
-      public RemoteBranch fun(GithubBranch branch) {
-        return new RemoteBranch(user, branch.getName());
-      }
-    });
-  }
-
-  private static boolean equals(@NotNull GithubRepo repo1, @Nullable GithubRepo repo2) {
-    if (repo2 == null) {
-      return false;
-    }
-    return StringUtil.equals(repo1.getUserName(), repo2.getUserName());
-  }
-
-  private static boolean equals(@NotNull GithubFullPath repo1, @Nullable GithubRepo repo2) {
-    if (repo2 == null) {
-      return false;
-    }
-    return StringUtil.equals(repo1.getUser(), repo2.getUserName());
-  }
-
   private static void showDiffByRef(@NotNull final Project project,
-                                    @Nullable final String ref,
+                                    @Nullable final String branch,
                                     @NotNull final GitRepository gitRepository,
-                                    @NotNull final String currentBranch,
-                                    @NotNull final GithubAuthData auth,
-                                    @NotNull final Map<String, String> forks,
-                                    @NotNull final Set<RemoteBranch> branches,
-                                    @Nullable final GithubRepo source) {
-    if (ref == null) {
+                                    @NotNull final String targetRemote,
+                                    @NotNull final String currentBranch) {
+    if (branch == null) {
       return;
     }
 
@@ -396,113 +317,16 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
       @Override
       @Nullable
       public DiffInfo convert(ProgressIndicator indicator) {
-        List<String> list = StringUtil.split(ref, ":");
-        assert list.size() == 2 : ref;
-        final String user = list.get(0);
-        final String branch = list.get(1);
-
-        TargetBranchInfo targetBranchInfo;
-        RemoteBranch remoteBranch = findRemoteBranch(branches, user, branch);
-        if (remoteBranch != null && remoteBranch.getRemoteBranch() != null) {
-          targetBranchInfo = getTargetBranchInfo(remoteBranch.getRemoteBranch());
-        }
-        else {
-          GithubFullPath forkPath = findRepositoryByUser(project, user, forks, auth, source);
-          if (forkPath == null) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                GithubNotifications.showErrorDialog(project, "Can't show diff", "Can't find fork for user '" + user + "'");
-              }
-            }, indicator.getModalityState());
-            return null;
-          }
-
-          targetBranchInfo = findRemote(branch, gitRepository, forkPath);
-          if (targetBranchInfo == null) {
-            final AtomicReference<Integer> responseRef = new AtomicReference<Integer>();
-            ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-              @Override
-              public void run() {
-                responseRef.set(GithubNotifications.showYesNoDialog(project, "Can't find remote", "Configure remote for '" + user + "'?"));
-              }
-            }, indicator.getModalityState());
-            if (responseRef.get() != Messages.YES) {
-              return null;
-            }
-
-            targetBranchInfo = configureRemote(project, user, branch, gitRepository, forkPath);
-          }
-        }
-        if (targetBranchInfo == null) {
-          return null;
-        }
-
-        GitFetchResult result = new GitFetcher(project, indicator, false)
-          .fetch(gitRepository.getRoot(), targetBranchInfo.getRemote(), targetBranchInfo.getBranchNameForRemoteOperations());
-        if (!result.isSuccess()) {
-          GitFetcher.displayFetchResult(project, result, null, result.getErrors());
-          return null;
-        }
-
-        DiffInfo info = getDiffInfo(project, gitRepository, currentBranch, targetBranchInfo.getBranchNameForLocalOperations());
-        if (info == null) {
-          ApplicationManager.getApplication().invokeLater(new Runnable() {
-            @Override
-            public void run() {
-              GithubNotifications.showErrorDialog(project, "Can't show diff", "Can't get diff info");
-            }
-          }, indicator.getModalityState());
-          return null;
-        }
-        return info;
+        return getDiffInfo(project, gitRepository, currentBranch, targetRemote + "/" + branch);
       }
     });
     if (info == null) {
+      GithubNotifications.showErrorDialog(project, "Can't show diff", "Can't get diff info");
       return;
     }
 
     GitCompareBranchesDialog dialog = new GitCompareBranchesDialog(project, info.getTo(), info.getFrom(), info.getInfo(), gitRepository);
     dialog.show();
-  }
-
-  private static TargetBranchInfo getTargetBranchInfo(@NotNull GitRemoteBranch remoteBranch) {
-    return new TargetBranchInfo(remoteBranch.getRemote().getName(), remoteBranch.getNameForRemoteOperations());
-  }
-
-  @Nullable
-  private static TargetBranchInfo findRemote(@NotNull String branch,
-                                             @NotNull GitRepository gitRepository,
-                                             @NotNull GithubFullPath forkPath) {
-    GitRemote remote = GithubUtil.findGithubRemote(gitRepository, forkPath);
-    return remote == null ? null : new TargetBranchInfo(remote.getName(), branch);
-  }
-
-  @Nullable
-  private static TargetBranchInfo configureRemote(@NotNull Project project,
-                                                  @NotNull String user,
-                                                  @NotNull String branch,
-                                                  @NotNull GitRepository gitRepository,
-                                                  @NotNull GithubFullPath forkPath) {
-    String url = GithubUrlUtil.getCloneUrl(forkPath);
-
-    if (GithubUtil.addGithubRemote(project, gitRepository, user, url)) {
-      return new TargetBranchInfo(user, branch);
-    }
-    else {
-      return null;
-    }
-  }
-
-  @Nullable
-  private static RemoteBranch findRemoteBranch(@NotNull Set<RemoteBranch> branches, @NotNull String user, @NotNull String branch) {
-    for (RemoteBranch remoteBranch : branches) {
-      if (StringUtil.equalsIgnoreCase(user, remoteBranch.getUser()) && StringUtil.equals(branch, remoteBranch.getBranch())) {
-        return remoteBranch;
-      }
-    }
-
-    return null;
   }
 
   @Nullable
@@ -524,80 +348,192 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
     }
   }
 
-  private static class RemoteBranch {
-    @NotNull final String myUser;
-    @NotNull final String myBranch;
-
-    @Nullable final GitRemoteBranch myRemoteBranch;
-
-    private RemoteBranch(@NotNull String user, @NotNull String branch) {
-      this(user, branch, null);
+  private static void openSelectTargetForkDialog(@NotNull final Project project,
+                                                 @NotNull final Git git,
+                                                 @NotNull final GitRepository gitRepository,
+                                                 @NotNull final GithubFullPath path,
+                                                 @NotNull final String remoteName,
+                                                 @NotNull final String remoteUrl,
+                                                 @NotNull final String currentBranch) {
+    final GithubInfo2 info = getAvailableForksInModal(project, gitRepository, path);
+    if (info == null) {
+      return;
     }
 
-    public RemoteBranch(@NotNull String user, @NotNull String branch, @Nullable GitRemoteBranch localBranch) {
-      myUser = user;
-      myBranch = branch;
-      myRemoteBranch = localBranch;
+    Convertor<String, GithubFullPath> getForkPath = new Convertor<String, GithubFullPath>() {
+      @Nullable
+      @Override
+      public GithubFullPath convert(final String user) {
+        return GithubUtil.computeValueInModal(project, "Access to GitHub", new Convertor<ProgressIndicator, GithubFullPath>() {
+          @Nullable
+          @Override
+          public GithubFullPath convert(ProgressIndicator o) {
+            return findRepositoryByUser(project, user, info.getForks(), info.getAuthData(), info.getSource());
+          }
+        });
+      }
+    };
+    GithubSelectForkDialog dialog = new GithubSelectForkDialog(project, info.getForks(), getForkPath);
+    dialog.show();
+    if (!dialog.isOK()) {
+      return;
     }
 
-    @NotNull
-    public String getReference() {
-      return myUser + ":" + myBranch;
+    performCreatePullRequest(project, git, gitRepository, path, dialog.getPath(), remoteName, remoteUrl, currentBranch);
+  }
+
+  @Nullable
+  private static GithubInfo2 getAvailableForksInModal(@NotNull final Project project,
+                                                      @NotNull final GitRepository gitRepository,
+                                                      @NotNull final GithubFullPath path) {
+    return GithubUtil.computeValueInModal(project, "Access to GitHub", new Convertor<ProgressIndicator, GithubInfo2>() {
+      @Nullable
+      @Override
+      public GithubInfo2 convert(ProgressIndicator indicator) {
+        try {
+          final Set<GithubFullPath> forks = new HashSet<GithubFullPath>();
+
+          // GitHub
+          final AtomicReference<GithubRepo> sourceRef = new AtomicReference<GithubRepo>();
+          GithubAuthData authData = GithubUtil.runAndGetValidAuth(project, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
+            @Override
+            public void consume(GithubAuthData authData) throws IOException {
+              GithubRepoDetailed repo = GithubApiUtil.getDetailedRepoInfo(authData, path.getUser(), path.getRepository());
+              forks.add(path);
+              if (repo.getParent() != null) {
+                forks.add(repo.getParent().getFullPath());
+              }
+              if (repo.getSource() != null) {
+                forks.add(repo.getSource().getFullPath());
+              }
+              if (repo.getSource() != null) {
+                sourceRef.set(repo.getSource());
+              }
+              else {
+                sourceRef.set(repo);
+              }
+            }
+          });
+
+          // Git
+          forks.addAll(getAvailableForksFromGit(gitRepository));
+
+          return new GithubInfo2(forks, authData, sourceRef.get());
+        }
+        catch (GithubAuthenticationCanceledException e) {
+          return null;
+        }
+        catch (IOException e) {
+          GithubNotifications.showErrorDialog(project, CANNOT_CREATE_PULL_REQUEST, e);
+          return null;
+        }
+      }
+    });
+  }
+
+  @NotNull
+  private static List<GithubFullPath> getAvailableForksFromGit(@NotNull GitRepository gitRepository) {
+    List<GithubFullPath> forks = new ArrayList<GithubFullPath>();
+    for (GitRemoteBranch remoteBranch : gitRepository.getBranches().getRemoteBranches()) {
+      for (String url : remoteBranch.getRemote().getUrls()) {
+        if (GithubUrlUtil.isGithubUrl(url)) {
+          GithubFullPath path = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(url);
+          if (path != null) {
+            forks.add(path);
+            break;
+          }
+        }
+      }
+    }
+    return forks;
+  }
+
+  @Nullable
+  private static GithubFullPath findRepositoryByUser(@NotNull Project project,
+                                                     @NotNull String user,
+                                                     @NotNull Set<GithubFullPath> forks,
+                                                     @NotNull GithubAuthData auth,
+                                                     @NotNull GithubRepo source) {
+    for (GithubFullPath path : forks) {
+      if (StringUtil.equalsIgnoreCase(user, path.getUser())) {
+        return path;
+      }
     }
 
-    @NotNull
-    public String getUser() {
-      return myUser;
+    try {
+      GithubRepoDetailed target = GithubApiUtil.getDetailedRepoInfo(auth, user, source.getName());
+      if (target.getSource() != null && StringUtil.equals(target.getSource().getUserName(), source.getUserName())) {
+        return target.getFullPath();
+      }
+    }
+    catch (IOException ignore) {
+      // such repo may not exist
     }
 
-    @NotNull
-    public String getBranch() {
-      return myBranch;
+    try {
+      GithubRepo fork = GithubApiUtil.findForkByUser(auth, source.getUserName(), source.getName(), user);
+      if (fork != null) {
+        return fork.getFullPath();
+      }
+    }
+    catch (IOException e) {
+      GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, e);
     }
 
-    @Nullable
-    public GitRemoteBranch getRemoteBranch() {
-      return myRemoteBranch;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      RemoteBranch that = (RemoteBranch)o;
-
-      if (!StringUtil.equals(myUser, that.myUser)) return false;
-      if (!StringUtil.equals(myBranch, that.myBranch)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      int result = myUser.hashCode();
-      result = 31 * result + myBranch.hashCode();
-      return result;
-    }
+    return null;
   }
 
   private static class GithubInfo {
-    @NotNull private final GithubRepoDetailed myRepo;
+    @NotNull private final List<String> myBranches;
     @NotNull private final GithubAuthData myAuthData;
+    @Nullable private final String myTargetRemote;
 
-    private GithubInfo(@NotNull GithubAuthData authData, @NotNull GithubRepoDetailed repo) {
+    private GithubInfo(@NotNull GithubAuthData authData, @NotNull List<String> repo, @Nullable String targetRemote) {
       myAuthData = authData;
-      myRepo = repo;
+      myBranches = repo;
+      myTargetRemote = targetRemote;
     }
 
     @NotNull
-    public GithubRepoDetailed getRepo() {
-      return myRepo;
+    public List<String> getBranches() {
+      return myBranches;
     }
 
     @NotNull
     public GithubAuthData getAuthData() {
       return myAuthData;
+    }
+
+    @Nullable
+    public String getTargetRemote() {
+      return myTargetRemote;
+    }
+  }
+
+  private static class GithubInfo2 {
+    @NotNull private final Set<GithubFullPath> myForks;
+    @NotNull private final GithubAuthData myAuthData;
+    @NotNull private final GithubRepo mySource;
+
+    private GithubInfo2(@NotNull Set<GithubFullPath> forks, @NotNull GithubAuthData authData, @NotNull GithubRepo source) {
+      myForks = forks;
+      myAuthData = authData;
+      mySource = source;
+    }
+
+    @NotNull
+    public Set<GithubFullPath> getForks() {
+      return myForks;
+    }
+
+    @NotNull
+    public GithubAuthData getAuthData() {
+      return myAuthData;
+    }
+
+    @NotNull
+    public GithubRepo getSource() {
+      return mySource;
     }
   }
 
@@ -625,33 +561,6 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
     @NotNull
     public String getTo() {
       return myTo;
-    }
-  }
-
-  private static class TargetBranchInfo {
-    @NotNull private final String myRemote;
-    @NotNull private final String myName;
-    @NotNull private final String myNameAtRemote;
-
-    private TargetBranchInfo(@NotNull String remote, @NotNull String nameAtRemote) {
-      myRemote = remote;
-      myNameAtRemote = GitBranchUtil.stripRefsPrefix(nameAtRemote);
-      myName = myRemote + "/" + myNameAtRemote;
-    }
-
-    @NotNull
-    public String getRemote() {
-      return myRemote;
-    }
-
-    @NotNull
-    public String getBranchNameForLocalOperations() {
-      return myName;
-    }
-
-    @NotNull
-    public String getBranchNameForRemoteOperations() {
-      return myNameAtRemote;
     }
   }
 }

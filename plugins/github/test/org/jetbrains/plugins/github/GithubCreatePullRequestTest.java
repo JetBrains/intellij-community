@@ -22,7 +22,8 @@ import com.intellij.notification.NotificationType;
  */
 public class GithubCreatePullRequestTest extends GithubCreatePullRequestTestBase {
   public void testSimple() throws Exception {
-    registerDefaultCreatePullRequestDialogHandler(myLogin1 + ":master");
+    registerDefaultCreatePullRequestDialogHandler("master");
+    setDefaultForkUser(myLogin1);
 
     GithubCreatePullRequestAction.createPullRequest(myProject, myProjectRoot);
 
@@ -32,17 +33,9 @@ public class GithubCreatePullRequestTest extends GithubCreatePullRequestTestBase
   }
 
   public void testParent() throws Exception {
-    registerDefaultCreatePullRequestDialogHandler(myLogin2 + ":file2");
-
-    GithubCreatePullRequestAction.createPullRequest(myProject, myProjectRoot);
-
-    checkNotification(NotificationType.INFORMATION, "Successfully created pull request", null);
-    checkRemoteConfigured();
-    checkLastCommitPushed();
-  }
-
-  public void testCommitRef1() throws Exception {
-    registerDefaultCreatePullRequestDialogHandler(myLogin1 + ":refs/heads/master");
+    registerDefaultCreatePullRequestDialogHandler("file2");
+    setDefaultForkUser(myLogin2);
+    addRemote(myLogin2);
 
     GithubCreatePullRequestAction.createPullRequest(myProject, myProjectRoot);
 

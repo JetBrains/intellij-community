@@ -37,18 +37,28 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
   @NotNull private static final Pattern GITHUB_REPO_PATTERN = Pattern.compile("[a-zA-Z0-9_.-]+:[a-zA-Z0-9_.-]+");
   @NotNull private final Project myProject;
 
-  public GithubCreatePullRequestDialog(@NotNull final Project project,
+  public GithubCreatePullRequestDialog(@NotNull Project project,
+                                       @NotNull String repoName,
                                        @NotNull Collection<String> branches,
-                                       @Nullable String suggestedBranch,
-                                       @NotNull Consumer<String> showDiff) {
+                                       @Nullable Consumer<String> showDiff,
+                                       @NotNull final Runnable showSelectForkDialog) {
     super(project, true);
-    myGithubCreatePullRequestPanel = new GithubCreatePullRequestPanel(showDiff);
+    myProject = project;
+
+    myGithubCreatePullRequestPanel = new GithubCreatePullRequestPanel(showDiff, new Runnable() {
+      @Override
+      public void run() {
+        doCancelAction();
+        showSelectForkDialog.run();
+      }
+    });
 
     myGithubCreatePullRequestPanel.setBranches(branches);
 
-    myProject = project;
     String configBranch = GithubProjectSettings.getInstance(myProject).getCreatePullRequestDefaultBranch();
-    myGithubCreatePullRequestPanel.setSelectedBranch(configBranch != null ? configBranch : suggestedBranch);
+    if (configBranch != null) myGithubCreatePullRequestPanel.setSelectedBranch(configBranch);
+
+    myGithubCreatePullRequestPanel.setForkName(repoName);
 
     setTitle("Create Pull Request");
     init();
@@ -102,10 +112,6 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
   protected ValidationInfo doValidate() {
     if (StringUtil.isEmptyOrSpaces(getRequestTitle())) {
       return new ValidationInfo("Title can't be empty'", myGithubCreatePullRequestPanel.getTitleTextField());
-    }
-
-    if (!GITHUB_REPO_PATTERN.matcher(getTargetBranch()).matches()) {
-      return new ValidationInfo("Branch must be specified like 'username:branch'", myGithubCreatePullRequestPanel.getBranchEditor());
     }
 
     return null;

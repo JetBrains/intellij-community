@@ -38,8 +38,10 @@ public class GithubCreatePullRequestPanel {
   private SortedComboBoxModel<String> myBranchModel;
   private JPanel myPanel;
   private JButton myShowDiffButton;
+  private JButton mySelectForkButton;
+  private JLabel myForkLabel;
 
-  public GithubCreatePullRequestPanel(@NotNull final Consumer<String> showDiff) {
+  public GithubCreatePullRequestPanel(@Nullable final Consumer<String> showDiff, @NotNull final Runnable showSelectForkDialog) {
     myDescriptionTextArea.setBorder(BorderFactory.createEtchedBorder());
     myBranchModel = new SortedComboBoxModel<String>(new Comparator<String>() {
       @Override
@@ -48,10 +50,22 @@ public class GithubCreatePullRequestPanel {
       }
     });
     myBranchComboBox.setModel(myBranchModel);
-    myShowDiffButton.addActionListener(new ActionListener() {
+
+    if (showDiff != null) {
+      myShowDiffButton.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          showDiff.consume(getBranch());
+        }
+      });
+    }
+    else {
+      myShowDiffButton.setEnabled(false);
+    }
+    mySelectForkButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        showDiff.consume(getBranch());
+        showSelectForkDialog.run();
       }
     });
   }
@@ -73,19 +87,18 @@ public class GithubCreatePullRequestPanel {
 
   public void setSelectedBranch(@Nullable String branch) {
     if (StringUtil.isEmptyOrSpaces(branch)) {
-      myBranchComboBox.setSelectedItem("");
       return;
     }
 
-    if (myBranchModel.indexOf(branch) == -1) {
-      myBranchModel.add(branch);
-    }
     myBranchComboBox.setSelectedItem(branch);
   }
 
   public void setBranches(@NotNull Collection<String> branches) {
     myBranchModel.clear();
     myBranchModel.addAll(branches);
+    if (branches.size() > 0) {
+      myBranchComboBox.setSelectedIndex(0);
+    }
   }
 
   public JPanel getPanel() {
@@ -107,5 +120,9 @@ public class GithubCreatePullRequestPanel {
 
   public void setTitle(String title) {
     myTitleTextField.setText(title);
+  }
+
+  public void setForkName(@NotNull String forkName) {
+    myForkLabel.setText(forkName);
   }
 }
