@@ -148,6 +148,24 @@ public class SvnCommitRunner {
         }
         return;
       }
+      if (line.startsWith(CommitEventType.skipped.getText())) {
+        File target = null;
+        if (myHandler != null) {
+          int pathStart = line.indexOf('\'');
+          if (pathStart > -1) {
+            int pathEnd = line.indexOf('\'', pathStart + 1);
+            if (pathEnd > -1) {
+              target = toFile(line.substring(pathStart + 1, pathEnd));
+            }
+          }
+          if (target != null) {
+            myHandler.commitEvent(CommitEventType.skipped, myBase);
+          } else {
+            LOG.info("Can not parse 'Skipped' path " + line);
+          }
+        }
+        return;
+      }
       if (line.startsWith(CommitEventType.committedRevision.getText())) {
         final String substring = line.substring(CommitEventType.committedRevision.getText().length());
         int cnt = 0;
