@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.completion.NormalCompletionTest;
 import com.intellij.codeInsight.completion.SmartTypeCompletionTest;
 import com.intellij.codeInsight.slice.SliceBackwardTest;
 import com.intellij.codeInsight.slice.SliceTreeTest;
@@ -29,6 +30,7 @@ public class DataFlowInspectionTestSuite {
     suite.addTestSuite(SliceTreeTest.class);
     suite.addTestSuite(SliceBackwardTest.class);
     suite.addTestSuite(SmartTypeCompletionTest.class);
+    suite.addTestSuite(NormalCompletionTest.class);
     return suite;
   }
 }
