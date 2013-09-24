@@ -36,16 +36,22 @@ public class PyDebuggerTask extends PyBaseDebuggerTask implements RemoteSdkTesta
   private PythonRunConfiguration myRunConfiguration;
 
   public PyDebuggerTask() {
+    init();
   }
 
   public PyDebuggerTask(String workingFolder, String scriptName, String scriptParameters) {
     setWorkingFolder(getTestDataPath() + workingFolder);
     setScriptName(scriptName);
     setScriptParameters(scriptParameters);
+    init();
   }
 
   public PyDebuggerTask(String workingFolder, String scriptName) {
     this(workingFolder, scriptName, null);
+  }
+
+  protected void init() {
+
   }
 
   public void runTestOn(String sdkHome) throws Exception {

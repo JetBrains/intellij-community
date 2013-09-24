@@ -2,6 +2,7 @@ package com.jetbrains.env.python;
 
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.xdebugger.XDebuggerTestUtil;
@@ -456,6 +457,36 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         stepOver();
         waitForPause();
         eval("y").hasValue("2");
+      }
+    });
+  }
+
+  public void testMultiprocess() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_multiprocess.py") {
+      @Override
+      protected void init() {
+        setMultiprocessDebug(true);
+      }
+
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptPath(), 9);
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+
+        eval("i").hasValue("'Result:OK'");
+
+        resume();
+
+        waitForOutput("Result:OK");
+      }
+
+      @Override
+      public Set<String> getTags() {
+        return Sets.newHashSet("python3");
       }
     });
   }
