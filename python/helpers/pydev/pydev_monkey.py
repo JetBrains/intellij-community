@@ -27,12 +27,17 @@ def patch_args(args):
             return args
 
         if is_python(args[0]):
-            if '-c' == args[1]:
+            try:
+                indC = args.index('-c')
+            except KeyError:
+                indC = -1
+
+            if indC != -1:
                 import pydevd
                 host, port = pydevd.dispatch()
 
                 if port is not None:
-                    args[2] = "import sys; sys.path.append('%s'); import pydevd; pydevd.settrace(host='%s', port=%s, suspend=False); %s"%(helpers, host, port, args[2])
+                    args[indC + 1] = "import sys; sys.path.append('%s'); import pydevd; pydevd.settrace(host='%s', port=%s, suspend=False); %s"%(helpers, host, port, args[indC + 1])
                     return args
             else:
                 new_args.append(args[0])
