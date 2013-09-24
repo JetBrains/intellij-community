@@ -87,3 +87,9 @@ class TestForLoopBody:
     for _ in [1, 2, 3]:
         def <warning descr="Redeclared 'foo' defined above without usage">foo</warning>():
             pass
+
+
+# PY-10839
+class TestNestedComprehension:
+    x = [[n for _ in []] for n in []]
+    n = 2

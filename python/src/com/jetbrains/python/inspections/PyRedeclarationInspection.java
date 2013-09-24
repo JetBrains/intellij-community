@@ -6,6 +6,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiNameIdentifierOwner;
@@ -108,26 +109,23 @@ public class PyRedeclarationInspection extends PyInspection {
         if (startInstruction < 0) {
           return;
         }
+        final Ref<PsiElement> readElementRef = Ref.create(null);
+        final Ref<PsiElement> writeElementRef = Ref.create(null);
         ControlFlowUtil.iteratePrev(startInstruction, instructions, new Function<Instruction, ControlFlowUtil.Operation>() {
           @Override
           public ControlFlowUtil.Operation fun(Instruction instruction) {
             if (instruction instanceof ReadWriteInstruction && instruction.num() != startInstruction) {
               final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
               if (name.equals(rwInstruction.getName())) {
-                if (rwInstruction.getAccess().isWriteAccess()) {
-                  final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
-                  final PsiElement originalElement = rwInstruction.getElement();
-                  if (originalElement != null && originalElement != element) {
-                    if (suggestRename(element, originalElement)) {
-                      quickFixes.add(new PyRenameElementQuickFix());
+                final PsiElement originalElement = rwInstruction.getElement();
+                if (originalElement != null) {
+                  if (rwInstruction.getAccess().isReadAccess()) {
+                    readElementRef.set(originalElement);
+                  }
+                  if (rwInstruction.getAccess().isWriteAccess()) {
+                    if (originalElement != element) {
+                      writeElementRef.set(originalElement);
                     }
-                    final PsiElement identifier = element.getNameIdentifier();
-                    registerProblem(identifier != null ? identifier : element,
-                                    PyBundle.message("INSP.redeclared.name", name),
-                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                    null,
-                                    quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
-                    return ControlFlowUtil.Operation.BREAK;
                   }
                 }
                 return ControlFlowUtil.Operation.CONTINUE;
@@ -136,6 +134,19 @@ public class PyRedeclarationInspection extends PyInspection {
             return ControlFlowUtil.Operation.NEXT;
           }
         });
+        final PsiElement writeElement = writeElementRef.get();
+        if (writeElement != null && readElementRef.get() == null) {
+          final List<LocalQuickFix> quickFixes = new ArrayList<LocalQuickFix>();
+          if (suggestRename(element, writeElement)) {
+            quickFixes.add(new PyRenameElementQuickFix());
+          }
+          final PsiElement identifier = element.getNameIdentifier();
+          registerProblem(identifier != null ? identifier : element,
+                          PyBundle.message("INSP.redeclared.name", name),
+                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                          null,
+                          quickFixes.toArray(new LocalQuickFix[quickFixes.size()]));
+        }
       }
     }
 
