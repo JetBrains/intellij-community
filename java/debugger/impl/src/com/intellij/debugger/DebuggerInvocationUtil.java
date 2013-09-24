@@ -22,79 +22,76 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public class DebuggerInvocationUtil {
-  public static void swingInvokeLater(final Project project, @NotNull final Runnable runnable) {
+  public static void swingInvokeLater(@Nullable final Project project, @NotNull final Runnable runnable) {
+    if (project == null) {
+      return;
+    }
+
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        if (project != null && !project.isDisposed()) {
+        if (!project.isDisposed()) {
           runnable.run();
         }
       }
     });
   }
 
-  public static void invokeLater(final Project project, @NotNull final Runnable runnable) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if (project != null && !project.isDisposed()) {
-          runnable.run();
-        }
-      }
-    });
+  public static void invokeLater(@Nullable Project project, @NotNull Runnable runnable) {
+    if (project != null) {
+      ApplicationManager.getApplication().invokeLater(runnable, project.getDisposed());
+    }
   }
 
-  public static void invokeLater(final Project project, @NotNull final Runnable runnable, ModalityState state) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        if(project == null || project.isDisposed()) return;
-
-        runnable.run();
-      }
-    }, state);
+  public static void invokeLater(@Nullable Project project, @NotNull Runnable runnable, ModalityState state) {
+    if (project != null) {
+      ApplicationManager.getApplication().invokeLater(runnable, state, project.getDisposed());
+    }
   }
 
   public static void invokeAndWait(final Project project, @NotNull final Runnable runnable, ModalityState state) {
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        if(project == null || project.isDisposed()) return;
-
-        runnable.run();
-      }
-    }, state);
+    if (project != null) {
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          if (!project.isDisposed()) {
+            runnable.run();
+          }
+        }
+      }, state);
+    }
   }
 
-  public static  <T> T commitAndRunReadAction(Project project, final EvaluatingComputable<T> computable) throws EvaluateException {
-    final Throwable[] ex = new Throwable[] { null };
+  public static <T> T commitAndRunReadAction(Project project, final EvaluatingComputable<T> computable) throws EvaluateException {
+    final Throwable[] ex = new Throwable[]{null};
     T result = PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Computable<T>() {
-          @Override
-          public T compute() {
-            try {
-              return computable.compute();
-            }
-            catch (RuntimeException e) {
-              ex[0] = e;
-            }
-            catch (Exception th) {
-              ex[0] = th;
-            }
+      @Override
+      public T compute() {
+        try {
+          return computable.compute();
+        }
+        catch (RuntimeException e) {
+          ex[0] = e;
+        }
+        catch (Exception th) {
+          ex[0] = th;
+        }
 
-            return null;
-          }
-        });
+        return null;
+      }
+    });
 
-    if(ex[0] != null) {
-      if(ex[0] instanceof RuntimeException) {
+    if (ex[0] != null) {
+      if (ex[0] instanceof RuntimeException) {
         throw (RuntimeException)ex[0];
       }
       else {
-        throw (EvaluateException) ex[0];
+        throw (EvaluateException)ex[0];
       }
     }
 
