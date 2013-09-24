@@ -28,6 +28,7 @@ public class PlatformUtils extends PlatformUtilsCore {
   public static final String APPCODE_PREFIX = "AppCode";
   public static final String CPP_PREFIX = "CppIde";
   public static final String PYCHARM_PREFIX = "Python";
+  public static final String PYCHARM_PREFIX2 = "PyCharm";
   public static final String RUBY_PREFIX = "Ruby";
   public static final String PHP_PREFIX = "PhpStorm";
   public static final String WEB_PREFIX = "WebStorm";
@@ -69,7 +70,8 @@ public class PlatformUtils extends PlatformUtilsCore {
   }
 
   public static boolean isPyCharm() {
-    return PYCHARM_PREFIX.equals(getPlatformPrefix());
+    String prefix = getPlatformPrefix();
+    return PYCHARM_PREFIX.equals(prefix) || (prefix != null && prefix.startsWith(PYCHARM_PREFIX2));
   }
 
   public static boolean isPhpStorm() {
