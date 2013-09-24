@@ -22,12 +22,15 @@ import org.jetbrains.annotations.NotNull;
  * @author nik
  */
 public abstract class XBreakpointAdapter<B extends XBreakpoint<?>> implements XBreakpointListener<B>{
+  @Override
   public void breakpointAdded(@NotNull final B breakpoint) {
   }
 
+  @Override
   public void breakpointRemoved(@NotNull final B breakpoint) {
   }
 
+  @Override
   public void breakpointChanged(@NotNull final B breakpoint) {
   }
 }
