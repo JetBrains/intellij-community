@@ -154,9 +154,7 @@ class Build {
         def unscrambledPath = "$paths.artifacts/${product}.unscrambled"
         ant.mkdir(dir: unscrambledPath)
         ant.copy(file: "$args.jarPath/${args.jarName}", todir: unscrambledPath, overwrite: "true")
-//[vo]to avoid duplicated unscrambled jar.        utils.notifyArtifactBuilt("$unscrambledPath/${args.jarName}")
 
-        // [vo] the following call is different from prodcut to product
         if ( args.extraLibDirs != "") {
           ultimate_utils.zkmScramble("$paths.sandbox/script.zkm", args.jarPath, args.jarName, args.extraLibDirs)
         } else {
