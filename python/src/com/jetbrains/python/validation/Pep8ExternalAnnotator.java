@@ -214,6 +214,10 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
           else {
             lineEndOffset = StringUtil.lineColToOffset(text, line+1, 0) - 1;
           }
+          if (offset > lineEndOffset) {
+            // PSI/document don't match, don't try to highlight random places
+            continue;
+          }
           problemRange = new TextRange(offset, lineEndOffset);
         }
         final Annotation annotation;
