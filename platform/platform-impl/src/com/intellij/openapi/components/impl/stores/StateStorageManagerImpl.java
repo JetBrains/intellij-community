@@ -144,6 +144,9 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   public Collection<String> getStorageFileNames() {
     myStorageLock.lock();
     try {
+      if (myStorages.isEmpty()) {
+        return Collections.emptyList();
+      }
       return Collections.unmodifiableCollection(myStorages.keySet());
     }
     finally {
