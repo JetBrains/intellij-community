@@ -11,6 +11,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.imports.AddImportHelper;
 import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.*;
@@ -74,7 +75,7 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
                                   @NotNull final PsiFile usageFile, boolean addImport) {
     final PyExpression qualifier = element.getQualifier();
     if (qualifier == null) return;
-
+    if (qualifier.getText().equals(PyNames.CANONICAL_SELF)) PyUtil.removeQualifier(element);
     if (qualifier instanceof PyCallExpression) {              // remove qualifier A().m()
       if (addImport)
         AddImportHelper.addImport((PsiNamedElement)finalElement, usageFile, element);

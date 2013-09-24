@@ -150,7 +150,7 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
       EnumSet[] flags = new EnumSet[hintFlags.size()];
       for (int i = 0; i < flags.length; i += 1) flags[i] = hintFlags.get(i);
       if (hints.length < 1) {
-        hints = new String[]{XmlStringUtil.escapeString(NO_PARAMS_MSG)};
+        hints = new String[]{NO_PARAMS_MSG};
         flags = new EnumSet[]{EnumSet.of(ParameterInfoUIContextEx.Flag.DISABLE)};
       }
 

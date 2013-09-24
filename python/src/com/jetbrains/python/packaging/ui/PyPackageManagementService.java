@@ -42,11 +42,6 @@ public class PyPackageManagementService extends PackageManagementService {
   }
 
   @Override
-  public boolean canModifyRepository(String repositoryUrl) {
-    return !PyPIPackageUtil.PYPI_URL.equals(repositoryUrl);
-  }
-
-  @Override
   public void addRepository(String repositoryUrl) {
     PyPackageService.getInstance().addRepository(repositoryUrl);
   }
