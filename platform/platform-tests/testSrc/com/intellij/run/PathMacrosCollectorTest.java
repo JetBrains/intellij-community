@@ -18,6 +18,7 @@ package com.intellij.run;
 import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.openapi.application.PathMacroFilter;
+import com.intellij.testFramework.UsefulTestCase;
 import junit.framework.TestCase;
 import org.jdom.Attribute;
 import org.jdom.Element;
@@ -41,21 +42,17 @@ public class PathMacrosCollectorTest extends TestCase {
     root.addContent(new Text("$$$ "));
     root.addContent(new Text("$c:\\a\\b\\c$ "));
     root.addContent(new Text("$Revision 1.23$"));
+    root.addContent(new Text("file://$root$/some/path/just$file$name.txt"));
 
     final Set<String> macros = PathMacrosCollector.getMacroNames(root, null, new PathMacrosImpl());
-
-    assertEquals(5, macros.size());
-    assertTrue(macros.contains("MACro1"));
-    assertTrue(macros.contains("macro4"));
-    assertTrue(macros.contains("mac_ro6"));
-    assertTrue(macros.contains("macr.o7"));
-    assertTrue(macros.contains("mac-ro8"));
+    UsefulTestCase.assertSameElements(macros, "MACro1", "macro4", "mac_ro6", "macr.o7", "mac-ro8", "root");
   }
 
   public void testWithRecursiveFilter() throws Exception {
     Element root = new Element("root");
     final Element configuration = new Element("configuration");
     configuration.setAttribute("value", "some text$macro5$fdsjfhdskjfsd$MACRO$");
+    configuration.setAttribute("value2", "file://$root$/some/path/just$file$name.txt");
     root.addContent(configuration);
 
     final Set<String> macros = PathMacrosCollector.getMacroNames(root, new PathMacroFilter() {
@@ -64,10 +61,7 @@ public class PathMacrosCollectorTest extends TestCase {
                                                                       return "value".equals(attribute.getName());
                                                                     }
                                                                   }, new PathMacrosImpl());
-
-    assertEquals(2, macros.size());
-    assertTrue(macros.contains("macro5"));
-    assertTrue(macros.contains("MACRO"));
+    UsefulTestCase.assertSameElements(macros, "macro5", "MACRO", "root");
   }
 
   public void testWithFilter() throws Exception {

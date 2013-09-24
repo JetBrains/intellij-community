@@ -83,20 +83,25 @@ public class PathMacrosCollector extends PathMacroMap {
   @Override
   public String substitute(String text, boolean caseSensitive) {
     if (text == null || text.isEmpty()) return text;
-
-    String protocol = null;
-    if (text.length() > 7 && text.charAt(0) == 'f') {
-      protocol = FILE_PROTOCOL;
-    } else if (text.length() > 6 && text.charAt(0) == 'j') {
-      protocol = JAR_PROTOCOL;
-    } else if ('$' != text.charAt(0)) {
+    
+    int startPos = -1;
+    if (text.charAt(0) == '$') {
+      startPos = 0;
+    } else {
+      for (String protocol : ReplacePathToMacroMap.PROTOCOLS) {
+        if (text.length() > protocol.length() + 4 && text.startsWith(protocol) && text.charAt(protocol.length()) == ':') {
+          startPos = protocol.length() + 1;
+          if (text.charAt(startPos) == '/') startPos++;
+          if (text.charAt(startPos) == '/') startPos++;
+        }
+      }
+    }
+    if (startPos < 0) {
       return text;
     }
 
-    if (protocol != null && !text.startsWith(protocol)) return text;
-
-    myMatcher.reset(text);
-    if (myMatcher.find()) {
+    myMatcher.reset(text).region(startPos, text.length());
+    if (myMatcher.lookingAt()) {
       final String macroName = myMatcher.group(1);
       myMacroMap.put(macroName, null);
     }

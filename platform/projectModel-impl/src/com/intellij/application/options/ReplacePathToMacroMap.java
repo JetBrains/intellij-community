@@ -43,7 +43,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
   private List<String> myPathsIndex = null;
   private final Map<String, String> myMacroMap = ContainerUtilRt.newLinkedHashMap();
 
-  @NonNls private static final String[] PROTOCOLS;
+  @NonNls public static final String[] PROTOCOLS;
   static {
     List<String> protocols = new ArrayList<String>();
     protocols.add("file");
