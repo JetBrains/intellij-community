@@ -15,29 +15,24 @@
  */
 package org.jetbrains.idea.svn.ignore;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.*;
 
 public class SvnPropertyService {
-  private final static Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.ignore.SvnPropertyService");
 
   private SvnPropertyService() {
   }
@@ -114,28 +109,6 @@ public class SvnPropertyService {
       }
       onAfterProcessing(file);
     }
-  }
-
-  @Nullable
-  public static Set<String> getIgnoreStringsUnder(final SvnVcs vcs, final VirtualFile dir) {
-    try {
-      final SVNPropertyData data = vcs.createWCClient().doGetProperty(new File(dir.getPath()), SvnPropertyKeys.SVN_IGNORE, SVNRevision.WORKING, SVNRevision.WORKING);
-      final SVNPropertyValue value = (data == null) ? null : data.getValue();
-      if (value != null) {
-        final Set<String> ignorePatterns = new HashSet<String>();
-        final String propAsString = SVNPropertyValue.getPropertyAsString(value);
-        final StringTokenizer st = new StringTokenizer(propAsString, "\r\n ");
-        while (st.hasMoreElements()) {
-          final String ignorePattern = (String) st.nextElement();
-          ignorePatterns.add(ignorePattern);
-        }
-        return ignorePatterns;
-      }
-    }
-    catch (SVNException e) {
-      LOG.info(e);
-    }
-    return null;
   }
 
   private static class IgnorePropertyChecker extends IgnorePropertyWorkTemplate {
@@ -248,21 +221,6 @@ public class SvnPropertyService {
         return getNewPropertyValueForRemove(data, SVNPropertyValue.getPropertyAsString(propertyValue));
       }
       return "";
-    }
-  }
-
-  public static void setIgnores(final SvnVcs vcs, final Collection<String> patterns, final File file)
-    throws SVNException {
-    final SVNWCClient client = vcs.createWCClient();
-    final StringBuilder sb = new StringBuilder();
-    for (String pattern : patterns) {
-      sb.append(pattern).append('\n');
-    }
-    if (! patterns.isEmpty()) {
-      final String value = sb.toString();
-      client.doSetProperty(file, SvnPropertyKeys.SVN_IGNORE, SVNPropertyValue.create(value), false, SVNDepth.EMPTY, null, null);
-    } else {
-      client.doSetProperty(file, SvnPropertyKeys.SVN_IGNORE, null, false, SVNDepth.EMPTY, null, null);
     }
   }
 
