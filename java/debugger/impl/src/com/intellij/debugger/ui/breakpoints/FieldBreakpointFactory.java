@@ -19,11 +19,9 @@ import com.intellij.CommonBundle;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.HelpID;
-import com.intellij.debugger.ui.breakpoints.actions.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
@@ -32,7 +30,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.jdom.Element;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 
 /**
  * @author Eugene Zhuravlev
@@ -69,24 +66,6 @@ public class FieldBreakpointFactory extends BreakpointFactory{
   @Override
   public BreakpointPropertiesPanel createBreakpointPropertiesPanel(Project project, boolean compact) {
     return new FieldBreakpointPropertiesPanel(project, compact);
-  }
-
-  @Override
-  protected BreakpointPanelAction[] createBreakpointPanelActions(final Project project, final DialogWrapper parentDialog) {
-    return new BreakpointPanelAction[] {
-      new SwitchViewAction(),
-      new AddAction(this, project),
-      new GotoSourceAction(project) {
-        public void actionPerformed(ActionEvent e) {
-          super.actionPerformed(e);
-          parentDialog.close(DialogWrapper.OK_EXIT_CODE);
-        }
-      },
-      new ViewSourceAction(project),
-      new RemoveAction(project),
-      new ToggleGroupByClassesAction(),
-      new ToggleFlattenPackagesAction(),
-    };
   }
 
   public Key<FieldBreakpoint> getBreakpointCategory() {

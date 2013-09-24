@@ -19,12 +19,10 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.HelpID;
 import com.intellij.debugger.engine.JVMNameUtil;
-import com.intellij.debugger.ui.breakpoints.actions.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -70,51 +68,6 @@ public class ExceptionBreakpointFactory extends BreakpointFactory {
   @Override
   public BreakpointPropertiesPanel createBreakpointPropertiesPanel(Project project, boolean compact) {
     return new ExceptionBreakpointPropertiesPanel(project, compact);
-  }
-
-  @Override
-  protected BreakpointPanelAction[] createBreakpointPanelActions(final Project project, DialogWrapper parentDialog) {
-    return new BreakpointPanelAction[]{
-      new SwitchViewAction(),
-      new AddAction(this, project),
-      new RemoveAction(project) {
-      public void update() {
-        super.update();
-        if (getButton().isEnabled()) {
-          Breakpoint[] selectedBreakpoints = getPanel().getSelectedBreakpoints();
-          for (Breakpoint bp : selectedBreakpoints) {
-            if (bp instanceof AnyExceptionBreakpoint) {
-              getButton().setEnabled(false);
-            }
-          }
-        }
-      }
-    }, new ToggleGroupByClassesAction(), new ToggleFlattenPackagesAction(),};
-  }
-
-  public BreakpointPanel createBreakpointPanel(final Project project, final DialogWrapper parentDialog) {
-    BreakpointPanel panel =
-      new BreakpointPanel(project, createBreakpointPropertiesPanel(project, false), createBreakpointPanelActions(project, parentDialog),
-                          getBreakpointCategory(), getDisplayName(), getHelpID()) {
-        public void resetBreakpoints() {
-          super.resetBreakpoints();
-          Breakpoint[] breakpoints = getBreakpointManager().getBreakpoints(getBreakpointCategory());
-          final AnyExceptionBreakpoint anyExceptionBreakpoint =
-            DebuggerManagerEx.getInstanceEx(project).getBreakpointManager().getAnyExceptionBreakpoint();
-          boolean found = false;
-          for (Breakpoint breakpoint : breakpoints) {
-            if (breakpoint.equals(anyExceptionBreakpoint)) {
-              found = true;
-              break;
-            }
-          }
-          if (!found) {
-            insertBreakpointAt(anyExceptionBreakpoint, 0);
-          }
-        }
-      };
-    configureBreakpointPanel(panel);
-    return panel;
   }
 
   public Key<ExceptionBreakpoint> getBreakpointCategory() {

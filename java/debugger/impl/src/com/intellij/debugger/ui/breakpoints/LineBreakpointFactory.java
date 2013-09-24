@@ -17,29 +17,29 @@ package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.HelpID;
-import com.intellij.debugger.ui.breakpoints.actions.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
 import org.jdom.Element;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 
 /**
  * @author Eugene Zhuravlev
  *         Date: Apr 26, 2005
  */
 public class LineBreakpointFactory extends BreakpointFactory {
+  @Override
   public Breakpoint createBreakpoint(Project project, final Element element) {
     return new LineBreakpoint(project);
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.Debugger.Db_set_breakpoint;
   }
 
+  @Override
   public Icon getDisabledIcon() {
     return AllIcons.Debugger.Db_disabled_breakpoint;
   }
@@ -60,22 +60,6 @@ public class LineBreakpointFactory extends BreakpointFactory {
   }
 
   @Override
-  protected BreakpointPanelAction[] createBreakpointPanelActions(Project project, final DialogWrapper parentDialog) {
-    return new BreakpointPanelAction[]{new SwitchViewAction(),
-      new GotoSourceAction(project) {
-        public void actionPerformed(ActionEvent e) {
-          super.actionPerformed(e);
-          parentDialog.close(DialogWrapper.OK_EXIT_CODE);
-        }
-      },
-      new ViewSourceAction(project),
-      new RemoveAction(project),
-      new ToggleGroupByMethodsAction(),
-      new ToggleGroupByClassesAction(),
-      new ToggleFlattenPackagesAction(),
-    };
-  }
-
   public Key<LineBreakpoint> getBreakpointCategory() {
     return LineBreakpoint.CATEGORY;
   }

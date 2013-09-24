@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
@@ -22,15 +23,21 @@ import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 
 public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPropertiesSubPanel<B> {
   private JCheckBox mySuspendCheckBox;
-  private JRadioButton mySuspendAllRadioButton;
-  private JRadioButton mySuspendThreadRadioButton;
+  private JRadioButton mySuspendAll;
+  private JRadioButton mySuspendThread;
 
   private JPanel myContentPane;
+  private JButton myMakeDefaultButton;
+
+  private ButtonGroup mySuspendPolicyGroup;
 
   public interface Delegate {
     void showMoreOptionsIfNeeded();
@@ -56,16 +63,78 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
         }
       }
     });
+
+    if (!myBreakpoint.getType().isSuspendThreadSupported()) {
+      return;
+    }
+
+    mySuspendPolicyGroup = new ButtonGroup();
+    mySuspendPolicyGroup.add(mySuspendAll);
+    mySuspendPolicyGroup.add(mySuspendThread);
+
+    updateSuspendPolicyFont(createSettingsKey());
+
+    ItemListener suspendPolicyChangeListener = new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        updateMakeDefaultEnableState();
+      }
+    };
+    updateMakeDefaultEnableState();
+
+    mySuspendAll.addItemListener(suspendPolicyChangeListener);
+    mySuspendThread.addItemListener(suspendPolicyChangeListener);
+
+    myMakeDefaultButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        SuspendPolicy suspendPolicy = getSelectedSuspendPolicy();
+        String settingsKey = createSettingsKey();
+        PropertiesComponent.getInstance().setValue(settingsKey, suspendPolicy.name());
+        updateSuspendPolicyFont(settingsKey);
+        if (SuspendPolicy.THREAD == suspendPolicy) {
+          mySuspendThread.requestFocus();
+        }
+        else {
+          mySuspendAll.requestFocus();
+        }
+        myMakeDefaultButton.setEnabled(false);
+      }
+    });
+  }
+
+  private void updateMakeDefaultEnableState() {
+    myMakeDefaultButton.setEnabled(!getSelectedSuspendPolicy().name().equalsIgnoreCase(PropertiesComponent.getInstance().getValue(createSettingsKey(), SuspendPolicy.ALL.name())));
+  }
+
+  private String createSettingsKey() {
+    return "debugger.suspend.policy-" + myBreakpointType.getId();
+  }
+
+  private void updateSuspendPolicyFont(String settingsKey) {
+    String defaultPolicy = PropertiesComponent.getInstance().getValue(settingsKey, SuspendPolicy.ALL.name());
+    Font font = mySuspendAll.getFont().deriveFont(Font.PLAIN);
+    Font boldFont = font.deriveFont(Font.BOLD);
+
+    mySuspendAll.setFont(SuspendPolicy.ALL.name().equalsIgnoreCase(defaultPolicy) ? boldFont : font);
+    mySuspendThread.setFont(SuspendPolicy.THREAD.name().equalsIgnoreCase(defaultPolicy) ? boldFont : font);
   }
 
   private void changeEnableState(boolean selected) {
-    mySuspendAllRadioButton.setEnabled(selected);
-    mySuspendThreadRadioButton.setEnabled(selected);
+    mySuspendAll.setEnabled(selected);
+    mySuspendThread.setEnabled(selected);
+    if (selected) {
+      updateMakeDefaultEnableState();
+    }
+    else {
+      myMakeDefaultButton.setEnabled(false);
+    }
   }
 
   private void changeVisibleState(boolean suspendThreadSupported) {
-    mySuspendAllRadioButton.setVisible(suspendThreadSupported);
-    mySuspendThreadRadioButton.setVisible(suspendThreadSupported);
+    mySuspendAll.setVisible(suspendThreadSupported);
+    mySuspendThread.setVisible(suspendThreadSupported);
+    myMakeDefaultButton.setVisible(suspendThreadSupported);
   }
 
   @Override
@@ -82,8 +151,7 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
 
     changeVisibleState(suspendThreadSupported);
     if (suspendThreadSupported) {
-      mySuspendAllRadioButton.setSelected(suspendPolicy == SuspendPolicy.ALL);
-      mySuspendThreadRadioButton.setSelected(suspendPolicy == SuspendPolicy.THREAD);
+      mySuspendPolicyGroup.setSelected(suspendPolicy == SuspendPolicy.THREAD ? mySuspendThread.getModel() : mySuspendAll.getModel(), true);
       changeEnableState(selected);
     }
 
@@ -93,12 +161,12 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
     }
   }
 
-  private SuspendPolicy getConfiguredSuspendPolicy() {
+  private SuspendPolicy getSelectedSuspendPolicy() {
     if (!mySuspendCheckBox.isSelected()) {
       return SuspendPolicy.NONE;
     }
     else if (myBreakpoint.getType().isSuspendThreadSupported()) {
-      return mySuspendAllRadioButton.isSelected() ? SuspendPolicy.ALL : SuspendPolicy.THREAD;
+      return mySuspendAll.isSelected() ? SuspendPolicy.ALL : SuspendPolicy.THREAD;
     }
     else {
       return SuspendPolicy.ALL;
@@ -107,7 +175,7 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
 
   @Override
   void saveProperties() {
-    myBreakpoint.setSuspendPolicy(getConfiguredSuspendPolicy());
+    myBreakpoint.setSuspendPolicy(getSelectedSuspendPolicy());
   }
 
   public Delegate getDelegate() {
