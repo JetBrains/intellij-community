@@ -50,17 +50,10 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   }
 
   /**
-   * @deprecated implement {@link #canPutAt(com.intellij.openapi.vfs.VirtualFile, int, com.intellij.openapi.project.Project)} instead
-   */
-  public boolean canPutAt(@NotNull VirtualFile file, int line) {
-    return false;
-  }
-
-  /**
    * Return <code>true<code> if breakpoint can be put on <code>line</code> in <code>file</code>
    */
   public boolean canPutAt(@NotNull VirtualFile file, int line, @NotNull Project project) {
-    return canPutAt(file, line);
+    return false;
   }
 
   /**
