@@ -40,6 +40,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,9 +48,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -103,16 +102,26 @@ public class ProjectTypeStep extends StepAdapter {
       }
     });
 
-    ProjectCategory[] projectCategories = ProjectCategory.EXTENSION_POINT_NAME.getExtensions();
-    List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
-
-    List<ProjectCategory> categories = new ArrayList<ProjectCategory>(Arrays.asList(projectCategories));
-    categories.addAll(ContainerUtil.map(builders, new Function<ModuleBuilder, ProjectCategory>() {
+    List<ProjectCategory> categories = new ArrayList<ProjectCategory>();
+    categories.addAll(ContainerUtil.map(ModuleBuilder.getAllBuilders(), new Function<ModuleBuilder, ProjectCategory>() {
       @Override
       public ProjectCategory fun(ModuleBuilder builder) {
         return new BuilderBasedProjectType(builder);
       }
     }));
+    categories.addAll(Arrays.asList(ProjectCategory.EXTENSION_POINT_NAME.getExtensions()));
+
+    final MultiMap<String, ProjectCategory> map = new MultiMap<String, ProjectCategory>();
+    for (ProjectCategory category : categories) {
+      map.putValue(category.getGroupName(), category);
+    }
+    Collections.sort(categories, new Comparator<ProjectCategory>() {
+      @Override
+      public int compare(ProjectCategory o1, ProjectCategory o2) {
+        return map.get(o2.getGroupName()).size() - map.get(o1.getGroupName()).size();
+      }
+    });
+
     myProjectTypeList.setModel(new CollectionListModel<ProjectCategory>(categories));
     myProjectTypeList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
       @Override

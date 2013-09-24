@@ -55,6 +55,10 @@ public abstract class ProjectCategory {
     return createModuleBuilder().getDescription();
   }
 
+  public String getGroupName() {
+    return createModuleBuilder().getGroupName();
+  }
+
   @Nullable
   public String getParentId() {
     return null;
