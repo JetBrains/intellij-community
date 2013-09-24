@@ -57,6 +57,7 @@ import java.util.List;
  */
 public class ProjectTypeStep extends StepAdapter {
 
+  private static final String FRAMEWORKS_CARD = "frameworks card";
   private final WizardContext myContext;
   private JPanel myPanel;
   private JBList myProjectTypeList;
@@ -70,16 +71,16 @@ public class ProjectTypeStep extends StepAdapter {
       return key.createModuleBuilder();
     }
   };
+  private final Set<String> myCards = new HashSet<String>();
 
   private final AddSupportForFrameworksPanel myFrameworksPanel;
-  private final FrameworkSupportModelBase myModel;
   private final ModuleBuilder.ModuleConfigurationUpdater myConfigurationUpdater;
 
   public ProjectTypeStep(WizardContext context, Disposable disposable) {
     myContext = context;
     Project project = context.getProject();
     final LibrariesContainer container = LibrariesContainerFactory.createContainer(project);
-    myModel = new FrameworkSupportModelBase(project, null, container) {
+    FrameworkSupportModelBase model = new FrameworkSupportModelBase(project, null, container) {
       @NotNull
       @Override
       public String getBaseDirectoryForLibrariesPath() {
@@ -129,14 +130,14 @@ public class ProjectTypeStep extends StepAdapter {
         ModuleBuilder builder = getSelectedBuilder();
         myContext.setProjectBuilder(builder);
         builder.addModuleConfigurationUpdater(myConfigurationUpdater);
-        updateFrameworks((ProjectCategory)myProjectTypeList.getSelectedValue());
+        updateOptionsPanel((ProjectCategory)myProjectTypeList.getSelectedValue());
       }
     });
 
-    myFrameworksPanel = new AddSupportForFrameworksPanel(Collections.<FrameworkSupportInModuleProvider>emptyList(), myModel, true);
+    myFrameworksPanel = new AddSupportForFrameworksPanel(Collections.<FrameworkSupportInModuleProvider>emptyList(), model, true);
     Disposer.register(disposable, myFrameworksPanel);
 
-    myOptionsPanel.add(myFrameworksPanel.getMainPanel(), BorderLayout.CENTER);
+    myOptionsPanel.add(myFrameworksPanel.getMainPanel(), FRAMEWORKS_CARD);
     myProjectTypeList.setSelectedIndex(0);
   }
 
@@ -145,21 +146,34 @@ public class ProjectTypeStep extends StepAdapter {
     return myBuilders.get(projectCategory);
   }
 
-  private void updateFrameworks(ProjectCategory projectCategory) {
+  private void updateOptionsPanel(ProjectCategory projectCategory) {
     if (projectCategory == null) return;
-    List<FrameworkSupportInModuleProvider> providers = new ArrayList<FrameworkSupportInModuleProvider>();
-    for (FrameworkSupportInModuleProvider framework : FrameworkSupportUtil.getAllProviders()) {
-      if (matchFramework(projectCategory, framework)) {
-        providers.add(framework);
+    ModuleBuilder builder = myBuilders.get(projectCategory);
+    JComponent panel = builder.getCustomOptionsPanel();
+    String card;
+    if (panel != null) {
+      card = builder.getBuilderId();
+      if (!myCards.add(card)) {
+         myOptionsPanel.add(panel, card);
       }
     }
-    myFrameworksPanel.setProviders(providers);
-    for (FrameworkSupportInModuleProvider provider : providers) {
-      if (ArrayUtil.contains(provider.getFrameworkType().getId(), projectCategory.getAssociatedFrameworkIds())) {
-        CheckedTreeNode treeNode = myFrameworksPanel.findNodeFor(provider);
-        treeNode.setChecked(true);
+    else {
+      card = FRAMEWORKS_CARD;
+      List<FrameworkSupportInModuleProvider> providers = new ArrayList<FrameworkSupportInModuleProvider>();
+      for (FrameworkSupportInModuleProvider framework : FrameworkSupportUtil.getAllProviders()) {
+        if (matchFramework(projectCategory, framework)) {
+          providers.add(framework);
+        }
+      }
+      myFrameworksPanel.setProviders(providers);
+      for (FrameworkSupportInModuleProvider provider : providers) {
+        if (ArrayUtil.contains(provider.getFrameworkType().getId(), projectCategory.getAssociatedFrameworkIds())) {
+          CheckedTreeNode treeNode = myFrameworksPanel.findNodeFor(provider);
+          treeNode.setChecked(true);
+        }
       }
     }
+    ((CardLayout)myOptionsPanel.getLayout()).show(myOptionsPanel, card);
   }
 
   private static boolean matchFramework(ProjectCategory projectCategory, FrameworkSupportInModuleProvider framework) {
