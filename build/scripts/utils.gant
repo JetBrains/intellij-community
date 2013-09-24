@@ -664,8 +664,7 @@ binding.setVariable("buildWinZip", { String zipPath, List paths ->
   notifyArtifactBuilt(zipPath)
 })
 
-binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths,
-                                     String macPath, List extraBins = [] ->
+binding.setVariable("buildMacZip", { String zipRoot, String zipPath, List paths, String macPath, List extraBins = [] ->
   projectBuilder.stage(".mac.zip")
 
   allPaths = paths + [macPath]
@@ -776,10 +775,8 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
   }
 })
 
-binding.setVariable("buildModulesAndCollectUsedJars", { List modules, List approvedJars, List forbiddenJars ->
+binding.setVariable("collectUsedJars", { List modules, List approvedJars, List forbiddenJars, List modulesToBuild ->
   def usedJars = new HashSet();
-  projectBuilder.cleanOutput()
-  def modulesToBuild = []
   modules.each {
     def module = findModule(it)
     if (module != null) {
@@ -787,20 +784,29 @@ binding.setVariable("buildModulesAndCollectUsedJars", { List modules, List appro
         File file = new File(it)
         if (file.exists()) {
           String path = file.canonicalPath.replace('\\', '/')
-          if (path.endsWith(".jar") && approvedJars.any { path.startsWith(it) } &&
-              !forbiddenJars.any { path.contains(it) }) {
+          if (path.endsWith(".jar") && approvedJars.any { path.startsWith(it) } && !forbiddenJars.any { path.contains(it) }) {
             if (usedJars.add(path)) {
               projectBuilder.info("\tADDED: $path for ${module.getName()}")
             }
           }
         }
       }
-      modulesToBuild << module
+      if (modulesToBuild != null) {
+        modulesToBuild << module
+      }
     }
     else {
       projectBuilder.warning("$it is not a module")
     }
   }
+
+  return usedJars
+})
+
+binding.setVariable("buildModulesAndCollectUsedJars", { List modules, List approvedJars, List forbiddenJars ->
+  def modulesToBuild = []
+  def usedJars = collectUsedJars(modules, approvedJars, forbiddenJars, modulesToBuild)
+  projectBuilder.cleanOutput()
   projectBuilder.buildModules(modulesToBuild)
   return usedJars
 })
