@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.Messages;
@@ -41,8 +40,12 @@ import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.ExclusiveBackgroundVcsAction;
 import org.jetbrains.idea.svn.actions.SvnExcludingIgnoredOperation;
 import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
+import org.jetbrains.idea.svn.commandLine.CommitEventHandler;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
-import org.tmatesoft.svn.core.*;
+import org.tmatesoft.svn.core.SVNCancelException;
+import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -219,7 +222,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   public static void doImport(final Project project, final File target, final SVNURL url, final SVNDepth depth,
                               final boolean includeIgnored, final String message) {
     final Ref<String> errorMessage = new Ref<String>();
-    final SVNCommitClient client = SvnVcs.getInstance(project).createCommitClient();
+    final SvnVcs vcs = SvnVcs.getInstance(project);
     final String targetPath = FileUtil.toSystemIndependentName(target.getAbsolutePath());
 
     ExclusiveBackgroundVcsAction.run(project, new Runnable() {
@@ -228,7 +231,6 @@ public class SvnCheckoutProvider implements CheckoutProvider {
           public void run() {
             final FileIndexFacade facade = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
             ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-            client.setEventHandler(new IdeaCommitHandler(progressIndicator));
             try {
               progressIndicator.setText(SvnBundle.message("progress.text.import", target.getAbsolutePath()));
 
@@ -242,25 +244,20 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                     return facade.isInContent(targetVf);
                   }
                 });
-                SVNCommitInfo info;
-                if (project.isDefault() || !isInContent) {
-                  // do not pay attention to ignored/excluded settings
-                  info = client.doImport(target, url, message, null, !includeIgnored, false, depth);
-                } else {
-                  client.setCommitHandler(new MyFilter(LocalFileSystem.getInstance(), new SvnExcludingIgnoredOperation.Filter(project)));
-                  info = client.doImport(target, url, message, null, !includeIgnored, false, depth);
-                }
-                if (info.getNewRevision() > 0) {
-                  StatusBar.Info.set(SvnBundle.message("status.text.comitted.revision", info.getNewRevision()), project);
+                CommitEventHandler handler = new IdeaCommitHandler(progressIndicator);
+                boolean useFileFilter = !project.isDefault() && isInContent;
+                ISVNCommitHandler commitHandler =
+                  useFileFilter ? new MyFilter(LocalFileSystem.getInstance(), new SvnExcludingIgnoredOperation.Filter(project)) : null;
+                long revision = vcs.getFactoryFromSettings().createImportClient()
+                  .doImport(target, url, depth, message, includeIgnored, handler, commitHandler);
+
+                if (revision > 0) {
+                  StatusBar.Info.set(SvnBundle.message("status.text.comitted.revision", revision), project);
                 }
               }
             }
-            catch (SVNException e) {
+            catch (VcsException e) {
               errorMessage.set(e.getMessage());
-            }
-            finally {
-              client.setIgnoreExternals(false);
-              client.setEventHandler(null);
             }
           }
         }, SvnBundle.message("message.title.import"), true, project);
