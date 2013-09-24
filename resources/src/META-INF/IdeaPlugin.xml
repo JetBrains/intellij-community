@@ -1476,6 +1476,8 @@
                      implementationClass="org.jetbrains.generate.tostring.inspection.FieldNotUsedInToStringInspection"/>
 
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.jarFinder.FindJarQuickFixProvider"/>
+
+    <xdebugger.breakpointType implementation="org.jetbrains.java.debugger.breakpoints.JavaBreakpointType"/>
   </extensions>
 
   <actions>

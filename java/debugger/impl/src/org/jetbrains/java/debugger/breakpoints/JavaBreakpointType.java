@@ -2,12 +2,16 @@ package org.jetbrains.java.debugger.breakpoints;
 
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.facet.FacetManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.SystemProperties;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
@@ -27,7 +31,16 @@ public class JavaBreakpointType extends XLineBreakpointTypeBase {
 
   @Override
   public boolean canPutAt(@NotNull final VirtualFile file, final int line, @NotNull Project project) {
-    return doCanPutAt(PsiManager.getInstance(project).findFile(file));
+    if (SystemProperties.getBooleanProperty("java.debugger.xBreakpoint", false)) {
+      // todo now applicable only if modules has facets, remove this check when java xbreakpoint will work
+      if (SystemProperties.getBooleanProperty("java.debugger.xBreakpoint.onlyIfHasFacets", false)) {
+        Module module = ModuleUtilCore.findModuleForFile(file, project);
+        return module != null && FacetManager.getInstance(module).getAllFacets().length > 0;
+      }
+
+      return doCanPutAt(PsiManager.getInstance(project).findFile(file));
+    }
+    return false;
   }
 
   @Override
