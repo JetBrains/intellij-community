@@ -83,6 +83,7 @@ import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.lowLevel.PrimitivePool;
 import org.jetbrains.idea.svn.networking.SSLProtocolExceptionParser;
 import org.jetbrains.idea.svn.portable.SvnWcClientI;
+import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
@@ -861,7 +862,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Nullable
-  public SVNPropertyValue getPropertyWithCaching(final VirtualFile file, final String propName) throws SVNException {
+  public SVNPropertyValue getPropertyWithCaching(final VirtualFile file, final String propName) throws VcsException {
     Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>> cachedMap = myPropertyCache.get(keyForVf(file));
     final Pair<SVNPropertyValue, Trinity<Long, Long, Long>> cachedValue = cachedMap == null ? null : cachedMap.get(propName);
 
@@ -875,7 +876,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       }
     }
 
-    final SVNPropertyData value = createWCClient().doGetProperty(ioFile, propName, SVNRevision.WORKING, SVNRevision.WORKING);
+    PropertyClient client = getFactory(ioFile).createPropertyClient();
+    final SVNPropertyData value = client.getProperty(SvnTarget.fromFile(ioFile, SVNRevision.WORKING), propName, false, SVNRevision.WORKING);
     final SVNPropertyValue propValue = value == null ? null : value.getValue();
 
     if (cachedMap == null) {

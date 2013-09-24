@@ -129,7 +129,13 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     CommandUtil.put(parameters, target);
     CommandUtil.put(parameters, depth);
 
-    CommandUtil.execute(myVcs, target, isDelete ? SvnCommandName.propdel : SvnCommandName.propset, parameters, null);
+    // For some reason, command setting ignore property when working directory equals target directory (like
+    // "svn propset svn:ignore *.java . --depth empty") tries to set ignore also on child files and fails with error like
+    // "svn: E200009: Cannot set 'svn:ignore' on a file ('...File1.java')". So here we manually force home directory to be used.
+    // NOTE: that setting other properties (not svn:ignore) does not cause such error.
+    CommandUtil
+      .execute(myVcs, target, CommandUtil.getHomeDirectory(), isDelete ? SvnCommandName.propdel : SvnCommandName.propset, parameters,
+               null);
   }
 
   private void fillListParameters(@NotNull SvnTarget target,

@@ -31,6 +31,7 @@ import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.wc.SVNPropertyData;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.*;
@@ -67,22 +68,23 @@ public class SvnPropertyService {
 
   private static abstract class IgnorePropertyWorkTemplate {
     protected final SvnVcs myVcs;
-    protected final SVNWCClient myClient;
     protected final Project myProject;
     protected final boolean myUseCommonExtension;
     protected final boolean myCanUseCachedProperty;
     
     protected abstract void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data,
-                                          final SVNPropertyValue propertyValue) throws SVNException;
+                                          final SVNPropertyValue propertyValue) throws VcsException;
+
     protected abstract void onAfterProcessing(final VirtualFile[] file) throws VcsException;
-    protected abstract void onSVNException(SVNException e);
+
+    protected abstract void onSVNException(Exception e);
+
     protected abstract boolean stopIteration();
 
     private IgnorePropertyWorkTemplate(final SvnVcs activeVcs, final Project project, final boolean useCommonExtension,
                                        final boolean canUseCachedProperty) {
       myVcs = activeVcs;
       myCanUseCachedProperty = canUseCachedProperty;
-      myClient = activeVcs.createWCClient();
       myProject = project;
       myUseCommonExtension = useCommonExtension;
     }
@@ -100,12 +102,13 @@ public class SvnPropertyService {
             value = myVcs.getPropertyWithCaching(entry.getKey(), SvnPropertyKeys.SVN_IGNORE);
           } else {
             final SVNPropertyData data =
-              myVcs.createWCClient().doGetProperty(dir, SvnPropertyKeys.SVN_IGNORE, SVNRevision.UNDEFINED, SVNRevision.WORKING);
+              myVcs.getFactory(dir).createPropertyClient()
+                .getProperty(SvnTarget.fromFile(dir), SvnPropertyKeys.SVN_IGNORE, false, SVNRevision.WORKING);
             value = data == null ? null : data.getValue();
           }
           processFolder(entry.getKey(), dir, entry.getValue(), value);
         }
-        catch (SVNException e) {
+        catch (VcsException e) {
           onSVNException(e);
         }
       }
@@ -152,7 +155,7 @@ public class SvnPropertyService {
     }
 
     protected void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data, final SVNPropertyValue propertyValue)
-        throws SVNException {
+      throws VcsException {
       if (propertyValue == null) {
         myFilesOk = false;
         myExtensionOk = false;
@@ -176,7 +179,7 @@ public class SvnPropertyService {
     protected void onAfterProcessing(final VirtualFile[] file) throws VcsException {
     }
 
-    protected void onSVNException(final SVNException e) {
+    protected void onSVNException(final Exception e) {
       myFilesOk = false;
       myExtensionOk = false;
     }
@@ -207,10 +210,11 @@ public class SvnPropertyService {
     protected abstract String getNewPropertyValue(final Set<String> data, final SVNPropertyValue propertyValue);
 
     protected void processFolder(final VirtualFile folder, final File folderDir, final Set<String> data, final SVNPropertyValue propertyValue)
-        throws SVNException {
+      throws VcsException {
       String newValue = getNewPropertyValue(data, propertyValue);
       newValue = (newValue.trim().isEmpty()) ? null : newValue;
-      myClient.doSetProperty(folderDir, SvnPropertyKeys.SVN_IGNORE, SVNPropertyValue.create(newValue), false, false, null);
+      myVcs.getFactory(folderDir).createPropertyClient()
+        .setProperty(folderDir, SvnPropertyKeys.SVN_IGNORE, SVNPropertyValue.create(newValue), SVNDepth.EMPTY, false);
 
       if (myUseCommonExtension) {
         dirtyScopeManager.dirDirtyRecursively(folder);
@@ -229,7 +233,7 @@ public class SvnPropertyService {
       }
     }
 
-    protected void onSVNException(final SVNException e) {
+    protected void onSVNException(final Exception e) {
       exceptions.add(e.getMessage());
     }
   }

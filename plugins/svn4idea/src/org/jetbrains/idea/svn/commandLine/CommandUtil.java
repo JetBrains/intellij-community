@@ -190,13 +190,28 @@ public class CommandUtil {
                                    @NotNull SvnCommandName name,
                                    @NotNull List<String> parameters,
                                    @Nullable LineCommandListener listener) throws VcsException {
-    SVNURL repositoryUrl = resolveRepositoryUrl(vcs, name, target);
     File workingDirectory = resolveWorkingDirectory(vcs, target);
+
+    return execute(vcs, target, workingDirectory, name, parameters, listener);
+  }
+
+  public static SvnCommand execute(@NotNull SvnVcs vcs,
+                                   @NotNull SvnTarget target,
+                                   @NotNull File workingDirectory,
+                                   @NotNull SvnCommandName name,
+                                   @NotNull List<String> parameters,
+                                   @Nullable LineCommandListener listener) throws VcsException {
+    SVNURL repositoryUrl = resolveRepositoryUrl(vcs, name, target);
     IdeaSvnkitBasedAuthenticationCallback callback = new IdeaSvnkitBasedAuthenticationCallback(vcs);
 
     return SvnLineCommand.runWithAuthenticationAttempt(workingDirectory, repositoryUrl, name,
                                                        listener != null ? listener : new SvnCommitRunner.CommandListener(null), callback,
                                                        ArrayUtil.toStringArray(parameters));
+  }
+
+  @NotNull
+  public static File getHomeDirectory() {
+    return new File(PathManager.getHomePath());
   }
 
   private static SVNURL resolveRepositoryUrl(@NotNull SvnVcs vcs, @NotNull SvnCommandName name, @NotNull SvnTarget target) {
@@ -223,7 +238,7 @@ public class CommandUtil {
 
     if (workingDirectory == null) {
       workingDirectory =
-        !vcs.getProject().isDefault() ? VfsUtilCore.virtualToIoFile(vcs.getProject().getBaseDir()) : new File(PathManager.getHomePath());
+        !vcs.getProject().isDefault() ? VfsUtilCore.virtualToIoFile(vcs.getProject().getBaseDir()) : getHomeDirectory();
     }
 
     return workingDirectory;
