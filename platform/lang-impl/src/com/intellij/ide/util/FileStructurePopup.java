@@ -523,8 +523,6 @@ public class FileStructurePopup implements Disposable {
 
   @Nullable
   public PsiElement getCurrentElement(@Nullable final PsiFile psiFile) {
-    if (psiFile == null) return null;
-
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
     Object elementAtCursor = myTreeModel.getCurrentEditorElement();
@@ -532,7 +530,7 @@ public class FileStructurePopup implements Disposable {
       return (PsiElement)elementAtCursor;
     }
 
-    if (myEditor != null) {
+    if (myEditor != null && psiFile != null) {
       return psiFile.getViewProvider().findElementAt(myEditor.getCaretModel().getOffset());
     }
 
