@@ -72,12 +72,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myUnknownVariables = new THashSet<DfaVariableValue>(toCopy.myUnknownVariables);
     myOffsetStack = new TIntStack(toCopy.myOffsetStack);
 
-    myEqClasses = ContainerUtil.newArrayListWithCapacity(toCopy.myEqClasses.size());
-    for (int i = 0; i < toCopy.myEqClasses.size(); i++) {
-      EqClass aClass = toCopy.myEqClasses.get(i);
-      myEqClasses.add(aClass != null ? new EqClass(aClass) : null);
-    }
-
+    myEqClasses = ContainerUtil.newArrayList(toCopy.myEqClasses);
     myVariableStates = new THashMap<DfaVariableValue, DfaVariableState>(toCopy.myVariableStates);
     
     myCachedDistinctClassPairs = toCopy.myCachedDistinctClassPairs;
@@ -401,6 +396,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       }
     }
 
+    myEqClasses.set(c1Index, c1 = new EqClass(c1));
     for (int i = 0; i < c2.size(); i++) {
       int c = c2.get(i);
       c1.add(c);
@@ -832,7 +828,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     int size = myEqClasses.size();
     int interruptCount = 0;
     for (int varClassIndex = 0; varClassIndex < size; varClassIndex++) {
-      final EqClass varClass = myEqClasses.get(varClassIndex);
+      EqClass varClass = myEqClasses.get(varClassIndex);
       if (varClass == null) continue;
 
       for (int i = 0; i < varClass.size(); i++) {
@@ -842,6 +838,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         int cl = varClass.get(i);
         DfaValue value = myFactory.getValue(cl);
         if (mine(idPlain, value) || idNegated >= 0 && mine(idNegated, value)) {
+          myEqClasses.set(varClassIndex, varClass = new EqClass(varClass));
           varClass.remove(i);
           break;
         }
