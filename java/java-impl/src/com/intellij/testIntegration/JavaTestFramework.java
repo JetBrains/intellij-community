@@ -107,6 +107,8 @@ public abstract class JavaTestFramework implements TestFramework {
   public FileTemplateDescriptor getParametersMethodFileTemplateDescriptor() {
     return null;
   }
+  
+  public abstract char getMnemonic();
 
   public PsiMethod createSetUpPatternMethod(JVMElementFactory factory) {
     final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(getSetUpMethodFileTemplateDescriptor().getFileName());

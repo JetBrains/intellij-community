@@ -33,6 +33,11 @@ public class JUnit3Framework extends JavaTestFramework {
     return "JUnit3";
   }
 
+  @Override
+  public char getMnemonic() {
+    return '3';
+  }
+
   @NotNull
   @Override
   public Icon getIcon() {

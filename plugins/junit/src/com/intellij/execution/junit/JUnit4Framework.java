@@ -146,6 +146,11 @@ public class JUnit4Framework extends JavaTestFramework {
   }
 
   @Override
+  public char getMnemonic() {
+    return '4';
+  }
+
+  @Override
   public boolean isParameterized(PsiClass clazz) {
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(clazz, JUnitUtil.RUN_WITH);
     if (annotation != null) {
