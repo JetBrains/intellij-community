@@ -228,7 +228,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
           public void run() {
             final FileIndexFacade facade = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
             ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-            client.setEventHandler(new CheckoutEventHandler(SvnVcs.getInstance(project), true, progressIndicator));
+            client.setEventHandler(new IdeaCommitHandler(progressIndicator));
             try {
               progressIndicator.setText(SvnBundle.message("progress.text.import", target.getAbsolutePath()));
 
