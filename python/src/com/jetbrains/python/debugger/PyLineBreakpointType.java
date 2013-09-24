@@ -11,32 +11,28 @@ import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Processor;
 import com.intellij.xdebugger.XDebuggerUtil;
-import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
-import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
-import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
-import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointTypeBase;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 
-public class PyLineBreakpointType extends XLineBreakpointType<XBreakpointProperties> {
+public class PyLineBreakpointType extends XLineBreakpointTypeBase {
   public static final String ID = "python-line";
   private static final String NAME = "Python Line Breakpoint";
 
-  private final PyDebuggerEditorsProvider myEditorsProvider = new PyDebuggerEditorsProvider();
-
   public PyLineBreakpointType() {
-    super(ID, NAME);
+    super(ID, NAME, new PyDebuggerEditorsProvider());
   }
 
+  @Override
   public boolean canPutAt(@NotNull final VirtualFile file, final int line, @NotNull final Project project) {
     final Ref<Boolean> stoppable = Ref.create(false);
     final Document document = FileDocumentManager.getInstance().getDocument(file);
     if (document != null) {
       if (file.getFileType() == PythonFileType.INSTANCE) {
         XDebuggerUtil.getInstance().iterateLine(project, document, line, new Processor<PsiElement>() {
+          @Override
           public boolean process(PsiElement psiElement) {
             if (psiElement instanceof PsiWhiteSpace || psiElement instanceof PsiComment) return true;
             if (psiElement.getNode() != null && notStoppableElementType(psiElement.getNode().getElementType())) return true;
@@ -60,22 +56,11 @@ public class PyLineBreakpointType extends XLineBreakpointType<XBreakpointPropert
     return elementType == PyTokenTypes.TRIPLE_QUOTED_STRING ||
            elementType == PyTokenTypes.SINGLE_QUOTED_STRING ||
            elementType == PyTokenTypes.SINGLE_QUOTED_UNICODE ||
-           elementType == PyTokenTypes.DOCSTRING
-      ;
-  }
-
-  @Nullable
-  public XBreakpointProperties createBreakpointProperties(@NotNull final VirtualFile file, final int line) {
-    return null;
+           elementType == PyTokenTypes.DOCSTRING;
   }
 
   @Override
   public String getBreakpointsDialogHelpTopic() {
     return "reference.dialogs.breakpoints";
-  }
-
-  @Override
-  public XDebuggerEditorsProvider getEditorsProvider(@NotNull XLineBreakpoint<XBreakpointProperties> breakpoint, @NotNull Project project) {
-    return myEditorsProvider;
   }
 }
