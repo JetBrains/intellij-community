@@ -17,10 +17,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.jetbrains.python.sdk.skeletons.SkeletonVersionChecker.fromVersionString;
 
@@ -169,10 +166,14 @@ public class PySkeletonGenerator {
     if (homePath == null) throw new InvalidSdkException("Broken home path for " + sdk.getName());
     final String parentDir = new File(homePath).getParent();
 
-    final String[] cmd = new String[]{homePath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-v", "-L", "-s", extraSysPath};
+    List<String> cmd = new ArrayList<String>(Arrays.asList(homePath, PythonHelpersLocator.getHelperPath(GENERATOR3), "-v", "-L"));
+    if (!StringUtil.isEmpty(extraSysPath)) {
+      cmd.add("-s");
+      cmd.add(extraSysPath);
+    }
 
     final ProcessOutput process = getProcessOutput(parentDir,
-                                                   cmd,
+                                                   ArrayUtil.toStringArray(cmd),
                                                    PythonSdkType.getVirtualEnvAdditionalEnv(homePath),
                                                    MINUTE * 4); // see PY-3898
 
