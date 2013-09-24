@@ -19,7 +19,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.util.ActionCallback;
@@ -107,7 +106,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     }
   }
 
-  public void registerApplicationLevelProviders(Application application) {
+  private void registerApplicationLevelProviders(Application application) {
     try {
       settings.load();
     }
@@ -130,13 +129,20 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
         commitAlarm.cancelAndRequest();
       }
     };
-    ((ApplicationImpl)application).getStateStore().getStateStorageManager().setStreamProvider(streamProvider);
+    StateStorageManager storageManager = ((ApplicationImpl)application).getStateStore().getStateStorageManager();
+    storageManager.setStreamProvider(streamProvider);
+
+    Collection<String> storageFileNames = storageManager.getStorageFileNames();
+    if (!storageFileNames.isEmpty()) {
+      updateStoragesFromStreamProvider(storageManager, storageFileNames);
+      SchemesManagerFactory.getInstance().updateConfigFilesFromStreamProviders();
+    }
   }
 
-  public void registerProjectLevelProviders(Project project) {
-    StateStorageManager manager = ((ProjectEx)project).getStateStore().getStateStorageManager();
+  private void registerProjectLevelProviders(Project project) {
+    StateStorageManager storageManager = ((ProjectEx)project).getStateStore().getStateStorageManager();
     String projectId = getProjectId(project);
-    manager.setStreamProvider(new IcsStreamProvider(projectId) {
+    storageManager.setStreamProvider(new IcsStreamProvider(projectId) {
       @Override
       public boolean isApplicable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
         if (roamingType != RoamingType.PER_USER) {
@@ -150,9 +156,11 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
         return settings.shareProjectWorkspace || (!fileSpec.equals(StoragePathMacros.WORKSPACE_FILE));
       }
     });
+
+    updateStoragesFromStreamProvider(storageManager, storageManager.getStorageFileNames());
   }
 
-  public void connectAndUpdateRepository() {
+  private void connectAndUpdateRepository() {
     try {
       repositoryManager = new GitRepositoryManager();
       setStatus(IcsStatus.OPENED);
@@ -167,23 +175,6 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
       finally {
         setStatus(getStatus() == IcsStatus.OPENED ? IcsStatus.UPDATE_FAILED : IcsStatus.OPEN_FAILED);
       }
-    }
-
-    notifyIdeaStorage();
-  }
-
-  private static void notifyIdeaStorage() {
-    StateStorageManager appStorageManager = ((ApplicationImpl)ApplicationManager.getApplication()).getStateStore().getStateStorageManager();
-    Collection<String> storageFileNames = appStorageManager.getStorageFileNames();
-    if (!storageFileNames.isEmpty()) {
-      processStorages(appStorageManager, storageFileNames);
-
-      for (Project project : ProjectManager.getInstance().getOpenProjects()) {
-        StateStorageManager storageManager = ((ProjectEx)project).getStateStore().getStateStorageManager();
-        processStorages(storageManager, storageManager.getStorageFileNames());
-      }
-
-      SchemesManagerFactory.getInstance().updateConfigFilesFromStreamProviders();
     }
   }
 
@@ -206,7 +197,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
     }
   }
 
-  private static void processStorages(final StateStorageManager appStorageManager, final Collection<String> storageFileNames) {
+  private static void updateStoragesFromStreamProvider(final StateStorageManager appStorageManager, final Collection<String> storageFileNames) {
     for (String storageFileName : storageFileNames) {
       StateStorage stateStorage = appStorageManager.getFileStateStorage(storageFileName);
       if (stateStorage instanceof FileBasedStorage) {
