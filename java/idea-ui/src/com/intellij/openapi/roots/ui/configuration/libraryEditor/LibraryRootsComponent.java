@@ -142,7 +142,7 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
     myTreeBuilder = new LibraryTableTreeBuilder(myTree, (DefaultTreeModel)myTree.getModel(), treeStructure);
     myTreePanel.setLayout(new BorderLayout());
 
-    ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTree).disableUpDownActions().disableAddAction()
+    ToolbarDecorator toolbarDecorator = ToolbarDecorator.createDecorator(myTree).disableUpDownActions()
       .setRemoveActionName(ProjectBundle.message("library.detach.action"))
       .setRemoveAction(new AnActionButtonRunnable() {
         @Override
@@ -173,29 +173,43 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
         }
       });
 
+    List<String> actionsOrder = new ArrayList<String>();
+    actionsOrder.add("Add");
+    final List<AttachRootButtonDescriptor> popupItems = new ArrayList<AttachRootButtonDescriptor>();
+    for (AttachRootButtonDescriptor descriptor : myDescriptor.createAttachButtons()) {
+      Icon icon = descriptor.getToolbarIcon();
+      if (icon != null) {
+        AttachItemAction action = new AttachItemAction(descriptor, descriptor.getButtonText(), icon);
+        toolbarDecorator.addExtraAction(AnActionButton.fromAction(action));
+        actionsOrder.add(action.getTemplatePresentation().getText());
+      }
+      else {
+        popupItems.add(descriptor);
+      }
+    }
+    actionsOrder.add("Remove");
+
     toolbarDecorator.setAddAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton button) {
-        final AnAction[] children = getActions();
-        if (children.length == 0) return;
-        final DefaultActionGroup actions = new DefaultActionGroup(children);
-        JBPopupFactory.getInstance().createActionGroupPopup(null, actions,
+        if (popupItems.isEmpty()) {
+          new AttachFilesAction(myDescriptor.getAttachFilesActionName()).actionPerformed(null);
+          return;
+        }
+
+        List<AnAction> actions = new ArrayList<AnAction>();
+        actions.add(new AttachFilesAction(myDescriptor.getAttachFilesActionName()));
+        for (AttachRootButtonDescriptor descriptor : popupItems) {
+          actions.add(new AttachItemAction(descriptor, descriptor.getButtonText(), null));
+        }
+        final DefaultActionGroup group = new DefaultActionGroup(actions);
+        JBPopupFactory.getInstance().createActionGroupPopup(null, group,
                                                             DataManager.getInstance().getDataContext(button.getContextComponent()),
                                                             JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true)
           .show(button.getPreferredPopupPoint());
       }
-
-      private AnAction[] getActions() {
-        List<AnAction> actions = new ArrayList<AnAction>();
-        actions.add(new AttachFilesAction(myDescriptor.getAttachFilesActionName()));
-        for (AttachRootButtonDescriptor descriptor : myDescriptor.createAttachButtons()) {
-          actions.add(new AttachItemAction(descriptor, descriptor.getButtonText()));
-        }
-        return actions.toArray(new AnAction[actions.size()]);
-      }
     });
-
-
+    toolbarDecorator.setButtonComparator(ArrayUtil.toStringArray(actionsOrder));
 
     myTreePanel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
     ToolbarDecorator.findRemoveButton(myTreePanel).addCustomUpdater(new AnActionButtonUpdater() {
@@ -406,8 +420,9 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
   private class AttachItemAction extends AttachItemActionBase {
     private final AttachRootButtonDescriptor myDescriptor;
 
-    protected AttachItemAction(AttachRootButtonDescriptor descriptor, String title) {
+    protected AttachItemAction(AttachRootButtonDescriptor descriptor, String title, final Icon icon) {
       super(title);
+      getTemplatePresentation().setIcon(icon);
       myDescriptor = descriptor;
     }
 
@@ -471,24 +486,5 @@ public class LibraryRootsComponent implements Disposable, LibraryEditorComponent
 
   public void removeListener(Runnable listener) {
     myListeners.remove(listener);
-  }
-
-  @Nullable
-  private static Class<?> getElementsClass(Object[] elements) {
-    if (elements.length == 0) {
-      return null;
-    }
-    Class<?> cls = null;
-    for (Object element : elements) {
-      if (cls == null) {
-        cls = element.getClass();
-      }
-      else {
-        if (!cls.equals(element.getClass())) {
-          return null;
-        }
-      }
-    }
-    return cls;
   }
 }

@@ -76,7 +76,7 @@ public abstract class LibraryRootsComponentDescriptor {
   }
 
   /**
-   * @return descriptors for 'Attach' buttons in the library roots editor
+   * @return descriptors for additional 'Attach' buttons in the library roots editor
    */
   @NotNull
   public abstract List<? extends AttachRootButtonDescriptor> createAttachButtons();

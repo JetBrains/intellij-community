@@ -30,10 +30,22 @@ import javax.swing.*;
 public abstract class AttachRootButtonDescriptor {
   private final OrderRootType myOrderRootType;
   protected final String myButtonText;
+  private final Icon myToolbarIcon;
 
+  /**
+   * Create a descriptor for 'attach' button shown in popup when user click on '+' button
+   */
   protected AttachRootButtonDescriptor(@NotNull OrderRootType orderRootType, @NotNull String buttonText) {
+    this(orderRootType, null, buttonText);
+  }
+
+  /**
+   * Create a descriptor for 'attach' button shown in toolbar of a library editor
+   */
+  protected AttachRootButtonDescriptor(@NotNull OrderRootType orderRootType, @NotNull Icon toolbarIcon, @NotNull String description) {
     myOrderRootType = orderRootType;
-    myButtonText = buttonText;
+    myButtonText = description;
+    myToolbarIcon = toolbarIcon;
   }
 
   public abstract VirtualFile[] selectFiles(@NotNull JComponent parent, @Nullable VirtualFile initialSelection,
@@ -54,5 +66,10 @@ public abstract class AttachRootButtonDescriptor {
   @NotNull
   public VirtualFile[] scanForActualRoots(@NotNull VirtualFile[] rootCandidates, JComponent parent) {
     return rootCandidates;
+  }
+
+  @Nullable
+  public Icon getToolbarIcon() {
+    return myToolbarIcon;
   }
 }

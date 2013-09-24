@@ -30,11 +30,15 @@ import com.intellij.openapi.roots.ui.configuration.PathUIUtils;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
@@ -108,7 +112,7 @@ public class DefaultLibraryRootsComponentDescriptor extends LibraryRootsComponen
 
   private static class AttachUrlJavadocDescriptor extends AttachRootButtonDescriptor {
     private AttachUrlJavadocDescriptor() {
-      super(JavadocOrderRootType.getInstance(), ProjectBundle.message("module.libraries.javadoc.url.button"));
+      super(JavadocOrderRootType.getInstance(), IconUtil.getAddLinkIcon(), ProjectBundle.message("module.libraries.javadoc.url.button"));
     }
 
     @Override
