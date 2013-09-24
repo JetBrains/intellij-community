@@ -60,10 +60,10 @@ public final class Branch {
   @Override
   public String toString() {
     if (upCommitHash == downCommitHash) {
-      return upCommitHash.toStrHash();
+      return upCommitHash.asString();
     }
     else {
-      return upCommitHash.toStrHash() + '#' + downCommitHash.toStrHash();
+      return upCommitHash.asString() + '#' + downCommitHash.asString();
     }
   }
 

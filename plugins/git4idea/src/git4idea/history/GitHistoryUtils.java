@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -40,7 +39,10 @@ import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.TimeCommitParents;
+import com.intellij.vcs.log.VcsCommitMiniDetails;
+import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
@@ -495,9 +497,9 @@ public class GitHistoryUtils {
       public VcsCommitMiniDetails fun(GitLogRecord record) {
         List<Hash> parents = new SmartList<Hash>();
         for (String parent : record.getParentsHashes()) {
-          parents.add(Hash.build(parent));
+          parents.add(HashImpl.build(parent));
         }
-        return new VcsCommitMiniDetails(Hash.build(record.getHash()), parents, record.getAuthorTimeStamp(),
+        return new VcsCommitMiniDetails(HashImpl.build(record.getHash()), parents, record.getAuthorTimeStamp(),
                                         record.getSubject(), record.getAuthorName());
       }
     });
@@ -520,9 +522,9 @@ public class GitHistoryUtils {
       public VcsCommitMiniDetails fun(GitLogRecord record) {
         List<Hash> parents = new SmartList<Hash>();
         for (String parent : record.getParentsHashes()) {
-          parents.add(Hash.build(parent));
+          parents.add(HashImpl.build(parent));
         }
-        return new VcsCommitMiniDetails(Hash.build(record.getHash()), parents, record.getAuthorTimeStamp(),
+        return new VcsCommitMiniDetails(HashImpl.build(record.getHash()), parents, record.getAuthorTimeStamp(),
                                         record.getSubject(), record.getAuthorName());
       }
     });
@@ -548,9 +550,9 @@ public class GitHistoryUtils {
       public TimeCommitParents fun(GitLogRecord record) {
         List<Hash> parents = new SmartList<Hash>();
         for (String parent : record.getParentsHashes()) {
-          parents.add(Hash.build(parent));
+          parents.add(HashImpl.build(parent));
         }
-        return new TimeCommitParents(Hash.build(record.getHash()), parents, record.getAuthorTimeStamp());
+        return new TimeCommitParents(HashImpl.build(record.getHash()), parents, record.getAuthorTimeStamp());
       }
     });
   }
@@ -702,10 +704,10 @@ public class GitHistoryUtils {
     List<Hash> parents = ContainerUtil.map(record.getParentsHashes(), new Function<String, Hash>() {
       @Override
       public Hash fun(String hash) {
-        return Hash.build(hash);
+        return HashImpl.build(hash);
       }
     });
-    return new GitCommit(Hash.build(record.getHash()), parents, record.getAuthorTimeStamp(), record.getSubject(), record.getAuthorName(),
+    return new GitCommit(HashImpl.build(record.getHash()), parents, record.getAuthorTimeStamp(), record.getSubject(), record.getAuthorName(),
                          record.getAuthorEmail(), record.getFullMessage(),
                          record.getCommitterName(), record.getCommitterEmail(), record.getLongTimeStamp(),
                          record.parseChanges(project, root));

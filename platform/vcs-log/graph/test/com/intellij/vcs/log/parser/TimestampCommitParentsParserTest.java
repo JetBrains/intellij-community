@@ -14,13 +14,13 @@ public class TimestampCommitParentsParserTest {
   private String toStr(TimeCommitParents commitParents) {
     StringBuilder s = new StringBuilder();
     s.append(commitParents.getAuthorTime()).append("|-");
-    s.append(commitParents.getHash().toStrHash()).append("|-");
+    s.append(commitParents.getHash().asString()).append("|-");
     for (int i = 0; i < commitParents.getParents().size(); i++) {
       Hash hash = commitParents.getParents().get(i);
       if (i != 0) {
         s.append(" ");
       }
-      s.append(hash.toStrHash());
+      s.append(hash.asString());
     }
     return s.toString();
   }

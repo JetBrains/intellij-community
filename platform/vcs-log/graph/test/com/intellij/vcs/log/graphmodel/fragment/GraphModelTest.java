@@ -191,7 +191,7 @@ public class GraphModelTest {
             @NotNull
             @Override
             public Boolean fun(@NotNull Node key) {
-                return startedNodes.contains(key.getCommitHash().toStrHash());
+                return startedNodes.contains(key.getCommitHash().asString());
             }
         });
     }

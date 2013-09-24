@@ -7,8 +7,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.branch.GitBranchesCollection;
@@ -136,7 +136,7 @@ public class GitLogRefSorterTest extends UsefulTestCase {
   }
 
   private static VcsRef ref(String hash, String name, RefType type) {
-    return new VcsRef(Hash.build(hash), name, type, MOCK_VIRTUAL_FILE);
+    return new VcsRef(HashImpl.build(hash), name, type, MOCK_VIRTUAL_FILE);
   }
 
   private static void check(Collection<VcsRef> unsorted, List<VcsRef> expected) {
@@ -176,8 +176,8 @@ public class GitLogRefSorterTest extends UsefulTestCase {
             }
           });
           if (trackedRef != null) {
-            infos.add(new GitBranchTrackInfo(new GitLocalBranch(localRef.getName(), Hash.build(randomHash())),
-                                             new GitRemoteBranch(trackedRef.getName(), Hash.build(randomHash())) {
+            infos.add(new GitBranchTrackInfo(new GitLocalBranch(localRef.getName(), HashImpl.build(randomHash())),
+                                             new GitRemoteBranch(trackedRef.getName(), HashImpl.build(randomHash())) {
                                                @NotNull
                                                @Override
                                                public String getNameForRemoteOperations() {

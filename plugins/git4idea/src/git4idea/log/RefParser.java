@@ -3,6 +3,7 @@ package git4idea.log;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.impl.HashImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,7 @@ class RefParser {
   public static List<VcsRef> parseCommitRefs(@NotNull String input, @NotNull VirtualFile root) {
     int firstSpaceIndex = input.indexOf(' ');
     String strHash = input.substring(0, firstSpaceIndex);
-    Hash hash = Hash.build(strHash);
+    Hash hash = HashImpl.build(strHash);
     String refPaths = input.substring(firstSpaceIndex + 2, input.length() - 1);
     String[] longRefPaths = refPaths.split(", ");
     List<VcsRef> refs = new ArrayList<VcsRef>();

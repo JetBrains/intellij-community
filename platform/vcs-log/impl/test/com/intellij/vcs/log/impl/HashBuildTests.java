@@ -1,6 +1,7 @@
-package com.intellij.vcs.log;
+package com.intellij.vcs.log.impl;
 
 
+import com.intellij.vcs.log.Hash;
 import junit.framework.Assert;
 import org.junit.Test;
 
@@ -8,9 +9,10 @@ import org.junit.Test;
  * @author erokhins
  */
 public class HashBuildTests {
+
   public void runStringTest(String strHash) {
-    Hash hash = Hash.build(strHash);
-    Assert.assertEquals(strHash, hash.toStrHash());
+    Hash hash = HashImpl.build(strHash);
+    Assert.assertEquals(strHash, hash.asString());
   }
 
   @Test

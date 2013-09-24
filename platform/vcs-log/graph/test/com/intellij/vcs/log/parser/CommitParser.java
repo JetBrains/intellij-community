@@ -33,14 +33,14 @@ public class CommitParser {
   public static CommitParents parseCommitParents(@NotNull String line) {
     int separatorIndex = nextSeparatorIndex(line, 0);
     String commitHashStr = line.substring(0, separatorIndex);
-    Hash commitHash = Hash.build(commitHashStr);
+    Hash commitHash = new SimpleHash(commitHashStr);
 
     String parentHashStr = line.substring(separatorIndex + 2, line.length());
     String[] parentsHashes = parentHashStr.split("\\s");
     List<Hash> hashes = new ArrayList<Hash>(parentsHashes.length);
     for (String aParentsStr : parentsHashes) {
       if (aParentsStr.length() > 0) {
-        hashes.add(Hash.build(aParentsStr));
+        hashes.add(new SimpleHash(aParentsStr));
       }
     }
     return new SimpleCommitParents(commitHash, hashes);
@@ -104,7 +104,7 @@ public class CommitParser {
 
     final String commitMessage = line.substring(nextIndex + 2);
 
-    return new VcsCommitMiniDetails(Hash.build(hashStr), Collections.<Hash>emptyList(), timestamp, commitMessage, authorName);
+    return new VcsCommitMiniDetails(new SimpleHash(hashStr), Collections.<Hash>emptyList(), timestamp, commitMessage, authorName);
   }
 
 

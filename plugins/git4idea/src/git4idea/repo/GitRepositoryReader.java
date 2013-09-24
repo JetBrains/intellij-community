@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Processor;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
@@ -77,7 +78,7 @@ class GitRepositoryReader {
 
   @NotNull
   private static Hash createHash(@Nullable String hash) {
-    return hash == null ? GitBranch.DUMMY_HASH : Hash.build(hash);
+    return hash == null ? GitBranch.DUMMY_HASH : HashImpl.build(hash);
   }
 
   @NotNull
@@ -163,7 +164,7 @@ class GitRepositoryReader {
     if (!branchFile.exists()) { // can happen when rebasing from detached HEAD: IDEA-93806
       return null;
     }
-    Hash hash = Hash.build(readBranchFile(branchFile));
+    Hash hash = HashImpl.build(readBranchFile(branchFile));
     if (branchName.startsWith(REFS_HEADS_PREFIX)) {
       branchName = branchName.substring(REFS_HEADS_PREFIX.length());
     }
@@ -357,10 +358,10 @@ class GitRepositoryReader {
         }
         hash = shortBuffer(hash);
         if (branchName.startsWith(REFS_HEADS_PREFIX)) {
-          localBranches.add(new GitLocalBranch(branchName, Hash.build(hash)));
+          localBranches.add(new GitLocalBranch(branchName, HashImpl.build(hash)));
         }
         else if (branchName.startsWith(REFS_REMOTES_PREFIX)) {
-          GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, Hash.build(hash), remotes);
+          GitRemoteBranch remoteBranch = GitBranchUtil.parseRemoteBranch(branchName, HashImpl.build(hash), remotes);
           if (remoteBranch != null) {
             remoteBranches.add(remoteBranch);
           }

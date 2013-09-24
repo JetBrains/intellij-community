@@ -115,7 +115,7 @@ public abstract class DataGetter<T extends CommitParents> implements Disposable 
     MultiMap<VirtualFile, String> hashesByRoots = new MultiMap<VirtualFile, String>();
     for (Node node : nodes) {
       VirtualFile root = node.getBranch().getRepositoryRoot();
-      hashesByRoots.putValue(root, node.getCommitHash().toStrHash());
+      hashesByRoots.putValue(root, node.getCommitHash().asString());
     }
 
     for (Map.Entry<VirtualFile, Collection<String>> entry : hashesByRoots.entrySet()) {
