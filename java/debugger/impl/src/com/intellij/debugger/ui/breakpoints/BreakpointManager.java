@@ -25,7 +25,6 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
@@ -47,7 +46,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
@@ -74,6 +72,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.debugger.breakpoints.JavaBreakpointType;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
@@ -183,14 +182,10 @@ public class BreakpointManager implements JDOMExternalizable {
         }
         final Document document = editor.getDocument();
         final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        if (psiFile == null) {
+        if (!JavaBreakpointType.doCanPutAt(psiFile)) {
           return null;
         }
-        final FileType fileType = psiFile.getFileType();
-        boolean isInsideCompiledClass = StdFileTypes.CLASS.equals(fileType);
-        if (!isInsideCompiledClass && !(DebuggerUtils.supportsJVMDebugging(fileType) || DebuggerUtils.supportsJVMDebugging(psiFile))) {
-          return null;
-        }
+
         PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
         int offset = editor.getCaretModel().getOffset();
@@ -206,6 +201,7 @@ public class BreakpointManager implements JDOMExternalizable {
 
         Breakpoint breakpoint = findBreakpoint(document, offset, null);
         if (breakpoint == null) {
+          boolean isInsideCompiledClass = StdFileTypes.CLASS.equals(psiFile.getFileType());
           if (mostSuitingBreakpoint || isInsideCompiledClass) {
             breakpoint = addFieldBreakpoint(document, offset);
             if (breakpoint == null) {

@@ -35,6 +35,7 @@ public class DebuggerInvocationUtil {
       }
     });
   }
+
   public static void invokeLater(final Project project, @NotNull final Runnable runnable) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
