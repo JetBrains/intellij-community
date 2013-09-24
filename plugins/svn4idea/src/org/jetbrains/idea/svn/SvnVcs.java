@@ -203,8 +203,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   };
   private SvnCheckoutProvider myCheckoutProvider;
 
-  private ClientFactory cmdClientFactory;
-  private ClientFactory svnKitClientFactory;
+  private final ClientFactory cmdClientFactory;
+  private final ClientFactory svnKitClientFactory;
 
   private final boolean myLogExceptions;
 
