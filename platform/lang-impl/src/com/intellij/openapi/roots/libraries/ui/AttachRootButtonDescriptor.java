@@ -42,7 +42,7 @@ public abstract class AttachRootButtonDescriptor {
   /**
    * Create a descriptor for 'attach' button shown in toolbar of a library editor
    */
-  protected AttachRootButtonDescriptor(@NotNull OrderRootType orderRootType, @NotNull Icon toolbarIcon, @NotNull String description) {
+  protected AttachRootButtonDescriptor(@NotNull OrderRootType orderRootType, @Nullable Icon toolbarIcon, @NotNull String description) {
     myOrderRootType = orderRootType;
     myButtonText = description;
     myToolbarIcon = toolbarIcon;
