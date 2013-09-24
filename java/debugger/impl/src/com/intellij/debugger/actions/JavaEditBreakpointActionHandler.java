@@ -19,8 +19,8 @@ import com.intellij.debugger.ui.breakpoints.BreakpointFactory;
 import com.intellij.debugger.ui.breakpoints.BreakpointPropertiesPanel;
 import com.intellij.debugger.ui.breakpoints.BreakpointWithHighlighter;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -41,13 +41,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: zajac
- * Date: 04.05.12
- * Time: 4:10
- * To change this template use File | Settings | File Templates.
- */
 public class JavaEditBreakpointActionHandler extends EditBreakpointActionHandler {
   @Override
   protected void doShowPopup(final Project project, final JComponent component, final Point whereToShow, final Object breakpoint) {
@@ -66,6 +59,7 @@ public class JavaEditBreakpointActionHandler extends EditBreakpointActionHandler
     assert breakpointFactory != null : "can't find factory for breakpoint " + javaBreakpoint;
 
     final BreakpointPropertiesPanel propertiesPanel = breakpointFactory.createBreakpointPropertiesPanel(project, true);
+    assert propertiesPanel != null;
     propertiesPanel.initFrom(javaBreakpoint, false);
 
     final JComponent mainPanel = propertiesPanel.getPanel();
@@ -98,7 +92,7 @@ public class JavaEditBreakpointActionHandler extends EditBreakpointActionHandler
         });
       }
     };
-    final Balloon balloon = DebuggerUIUtil.showBreakpointEditor(project, mainPanel, displayName, whereToShow, component, showMoreOptions,
+    final Balloon balloon = DebuggerUIUtil.showBreakpointEditor(project, mainPanel, whereToShow, component, showMoreOptions,
                                                                 breakpoint);
     balloon.addListener(saveOnClose);
 
@@ -108,7 +102,7 @@ public class JavaEditBreakpointActionHandler extends EditBreakpointActionHandler
         propertiesPanel.setActionsPanelVisible(true);
         balloon.hide();
         final Balloon newBalloon =
-          DebuggerUIUtil.showBreakpointEditor(project, mainPanel, displayName, whereToShow, component, showMoreOptions, breakpoint);
+          DebuggerUIUtil.showBreakpointEditor(project, mainPanel, whereToShow, component, showMoreOptions, breakpoint);
         newBalloon.addListener(saveOnClose);
       }
     });
@@ -124,7 +118,7 @@ public class JavaEditBreakpointActionHandler extends EditBreakpointActionHandler
   @Override
   public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       return false;
     }

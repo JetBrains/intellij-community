@@ -16,8 +16,8 @@
 package com.intellij.xdebugger.impl.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
@@ -31,13 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: zajac
- * Date: 04.05.12
- * Time: 4:07
- * To change this template use File | Settings | File Templates.
- */
 public class XDebuggerEditBreakpointActionHandler extends EditBreakpointActionHandler {
   @Override
   protected void doShowPopup(Project project, JComponent component, Point whereToShow, Object breakpoint) {
@@ -47,7 +40,7 @@ public class XDebuggerEditBreakpointActionHandler extends EditBreakpointActionHa
   @Override
   public boolean isEnabled(@NotNull Project project, AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) return false;
     final Pair<GutterIconRenderer,Object> pair = XBreakpointUtil.findSelectedBreakpoint(project, editor);
     return pair.first != null && pair.second instanceof XLineBreakpointImpl;

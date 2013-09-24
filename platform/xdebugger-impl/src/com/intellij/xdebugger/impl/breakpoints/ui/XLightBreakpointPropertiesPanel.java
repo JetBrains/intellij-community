@@ -38,7 +38,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implements XSuspendPolicyPanel.Delegate {
-
   public boolean showMoreOptions() {
     return myShowMoreOptions;
   }
