@@ -296,7 +296,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     final String schemaLocationDeclaration = getAttributeValue("schemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI);
 
     if (noNamespaceDeclaration != null) {
-      map = initializeSchema(XmlUtil.EMPTY_URI, null, noNamespaceDeclaration, map);
+      map = initializeSchema(XmlUtil.EMPTY_URI, null, noNamespaceDeclaration, null);
     }
     if (schemaLocationDeclaration != null) {
       final StringTokenizer tokenizer = new StringTokenizer(schemaLocationDeclaration);
@@ -334,7 +334,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return null;
   }
 
-  private Map<String, CachedValue<XmlNSDescriptor>> initializeSchema(final String namespace,
+  private Map<String, CachedValue<XmlNSDescriptor>> initializeSchema(final @NotNull String namespace,
                                                                      @Nullable final String version,
                                                                      final String fileLocation,
                                                                      Map<String, CachedValue<XmlNSDescriptor>> map) {
@@ -422,7 +422,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   }
 
   @Nullable
-  private PsiMetaOwner retrieveOwner(final XmlFile file, final String namespace) {
+  private PsiMetaOwner retrieveOwner(final XmlFile file, final @NotNull String namespace) {
     if (file == null) {
       return namespace.equals(XmlUtil.getTargetSchemaNsFromTag(this)) ? this : null;
     }

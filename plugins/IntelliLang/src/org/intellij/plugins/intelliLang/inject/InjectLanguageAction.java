@@ -192,8 +192,10 @@ public class InjectLanguageAction implements IntentionAction {
     JBPopup popup = new PopupChooserBuilder(list).setItemChoosenCallback(new Runnable() {
       public void run() {
         Injectable value = (Injectable)list.getSelectedValue();
-        onChosen.process(value);
-        PropertiesComponent.getInstance().setValue(LAST_INJECTED_LANGUAGE, value.getId());
+        if (value != null) {
+          onChosen.process(value);
+          PropertiesComponent.getInstance().setValue(LAST_INJECTED_LANGUAGE, value.getId());
+        }
       }
     }).setFilteringEnabled(new Function<Object, String>() {
       @Override
