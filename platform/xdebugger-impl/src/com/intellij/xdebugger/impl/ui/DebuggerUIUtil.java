@@ -165,7 +165,7 @@ public class DebuggerUIUtil {
     propertiesPanel.loadProperties();
     isLoading.set(Boolean.FALSE);
 
-    Runnable viewBreakpoints = new Runnable() {
+    Runnable showMoreOptions = new Runnable() {
       @Override
       public void run() {
         propertiesPanel.saveProperties();
@@ -174,7 +174,7 @@ public class DebuggerUIUtil {
     };
 
     final JComponent mainPanel = propertiesPanel.getMainPanel();
-    final Balloon balloon = showBreakpointEditor(project, mainPanel, point, component, viewBreakpoints, breakpoint);
+    final Balloon balloon = showBreakpointEditor(project, mainPanel, point, component, showMoreOptions, breakpoint);
     balloonRef.set(balloon);
 
     final XBreakpointListener<XBreakpoint<?>> breakpointListener = new XBreakpointAdapter<XBreakpoint<?>>() {
