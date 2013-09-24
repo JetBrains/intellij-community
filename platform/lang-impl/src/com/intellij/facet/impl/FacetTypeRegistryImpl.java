@@ -63,6 +63,7 @@ public class FacetTypeRegistryImpl extends FacetTypeRegistry {
     myTypeIds.remove(stringId);
   }
 
+  @NotNull
   @Override
   public synchronized FacetTypeId[] getFacetTypeIds() {
     loadExtensions();
@@ -70,6 +71,7 @@ public class FacetTypeRegistryImpl extends FacetTypeRegistry {
     return ids.toArray(new FacetTypeId[ids.size()]);
   }
 
+  @NotNull
   @Override
   public synchronized FacetType[] getFacetTypes() {
     loadExtensions();
@@ -79,6 +81,7 @@ public class FacetTypeRegistryImpl extends FacetTypeRegistry {
     return facetTypes;
   }
 
+  @NotNull
   @Override
   public FacetType[] getSortedFacetTypes() {
     final FacetType[] types = getFacetTypes();
@@ -94,11 +97,13 @@ public class FacetTypeRegistryImpl extends FacetTypeRegistry {
     return typeId == null ? null : myFacetTypes.get(typeId);
   }
 
+  @NotNull
   @Override
-  @Nullable
-  public synchronized <F extends Facet<C>, C extends FacetConfiguration> FacetType<F, C> findFacetType(FacetTypeId<F> typeId) {
+  public synchronized <F extends Facet<C>, C extends FacetConfiguration> FacetType<F, C> findFacetType(@NotNull FacetTypeId<F> typeId) {
     loadExtensions();
-    return myFacetTypes.get(typeId);
+    FacetType type = myFacetTypes.get(typeId);
+    LOG.assertTrue(type != null, "Cannot find facet by id '" + typeId + "'");
+    return type;
   }
 
   private void loadExtensions() {

@@ -191,11 +191,6 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       FacetTypeId<?> underlyingTypeId = type.getUnderlyingFacetType();
       if (underlyingTypeId != null) {
         expectedUnderlyingType = myFacetTypeRegistry.findFacetType(underlyingTypeId);
-        if (expectedUnderlyingType == null) {
-          addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.cannot.find.underlying.facet.type.for.0", typeId),
-                          underlyingTypeId.toString());
-          continue;
-        }
       }
       FacetType actualUnderlyingType = underlyingFacet != null ? underlyingFacet.getType() : null;
       if (expectedUnderlyingType != null) {

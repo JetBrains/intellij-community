@@ -17,6 +17,7 @@
 package com.intellij.facet;
 
 import com.intellij.openapi.components.ServiceManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -38,14 +39,18 @@ public abstract class FacetTypeRegistry {
    */
   public abstract void unregisterFacetType(FacetType facetType);
 
+  @NotNull
   public abstract FacetTypeId[] getFacetTypeIds();
 
+  @NotNull
   public abstract FacetType[] getFacetTypes();
 
+  @NotNull
   public abstract FacetType[] getSortedFacetTypes();
 
   @Nullable
   public abstract FacetType findFacetType(String id);
 
-  public abstract <F extends Facet<C>, C extends FacetConfiguration> FacetType<F, C> findFacetType(FacetTypeId<F> typeId);
+  @NotNull
+  public abstract <F extends Facet<C>, C extends FacetConfiguration> FacetType<F, C> findFacetType(@NotNull FacetTypeId<F> typeId);
 }
