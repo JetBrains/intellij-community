@@ -147,11 +147,11 @@ public layoutCommunity(String classesPath, Set usedJars) {
   }, "-Didea.platform.prefix=PyCharmCore -Didea.no.jre.check=true")
 
   if (!dryRun) {
-    wireBuildDate(buildName, appInfo)
+    wireBuildDate("PC-${buildNumber}", appInfo)
   }
 
   Map args = [
-    buildNumber: buildName,
+    buildNumber: "PC-${buildNumber}",
     system_selector: system_selector,
     ide_jvm_args: "-Didea.platform.prefix=PyCharmCore -Didea.no.jre.check=true"]
 

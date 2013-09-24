@@ -118,8 +118,10 @@ public class PySkeletonGenerator {
     if (ApplicationManagerEx.getApplicationEx().isInternal()) {
       commandLine.add("-x");
     }
-    commandLine.add("-s");
-    commandLine.add(extraSyspath);
+    if (!StringUtil.isEmpty(extraSyspath)) {
+      commandLine.add("-s");
+      commandLine.add(extraSyspath);
+    }
     commandLine.add(modname);
     if (modfilename != null) {
       commandLine.add(modfilename);
