@@ -170,20 +170,21 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     for (FacetState child : facetStates) {
       final String typeId = child.getFacetType();
       if (typeId == null) {
-        addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.facet.type.isn.t.specified"), null);
+        addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.facet.type.isn.t.specified"));
         continue;
       }
 
       final FacetType<?,?> type = myFacetTypeRegistry.findFacetType(typeId);
       if (type == null) {
-        addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.unknown.facet.type.0", typeId), typeId);
+        addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.unknown.facet.type.0", typeId));
+        UnknownFeaturesCollector.getInstance(myModule.getProject()).registerUnknownFeature("com.intellij.facetType", typeId);
         continue;
       }
 
       ModuleType moduleType = ModuleType.get(myModule);
       if (!type.isSuitableModuleType(moduleType)) {
         addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.0.facets.are.not.allowed.in.1",
-                                                                      type.getPresentableName(), moduleType.getName()), null);
+                                                                      type.getPresentableName(), moduleType.getName()));
         continue;
       }
 
@@ -197,14 +198,13 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
         if (!expectedUnderlyingType.equals(actualUnderlyingType)) {
           addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.0.facet.must.be.placed.under.1.facet",
                                                                         type.getPresentableName(),
-                                                                        expectedUnderlyingType.getPresentableName()), null);
+                                                                        expectedUnderlyingType.getPresentableName()));
           continue;
         }
       }
       else if (actualUnderlyingType != null) {
         addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.0.cannot.be.placed.under.1",
-                                                                      type.getPresentableName(), actualUnderlyingType.getPresentableName()),
-                        null);
+                                                                      type.getPresentableName(), actualUnderlyingType.getPresentableName()));
         continue;
       }
 
@@ -213,8 +213,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       }
       catch (InvalidDataException e) {
         LOG.info(e);
-        addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.cannot.load.facet.condiguration.0", e.getMessage()),
-                        null);
+        addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.cannot.load.facet.condiguration.0", e.getMessage()));
       }
     }
   }
@@ -222,8 +221,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
   private void addInvalidFacet(final FacetState state,
                                ModifiableFacetModel model,
                                final Facet underlyingFacet,
-                               final String errorMessage,
-                               @Nullable final String typeId) {
+                               final String errorMessage) {
     final InvalidFacetManager invalidFacetManager = InvalidFacetManager.getInstance(myModule.getProject());
     final InvalidFacetType type = InvalidFacetType.getInstance();
     final InvalidFacetConfiguration configuration = new InvalidFacetConfiguration(state, errorMessage);
@@ -232,9 +230,6 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     if (!invalidFacetManager.isIgnored(facet)) {
       FacetLoadingErrorDescription description = new FacetLoadingErrorDescription(facet);
       ProjectLoadingErrorsNotifier.getInstance(myModule.getProject()).registerError(description);
-      if (typeId != null) {
-        UnknownFeaturesCollector.getInstance(myModule.getProject()).registerUnknownFeature("com.intellij.facetType", typeId);
-      }
     }
   }
 
