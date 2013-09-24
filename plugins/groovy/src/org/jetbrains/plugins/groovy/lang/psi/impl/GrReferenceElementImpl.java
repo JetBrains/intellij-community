@@ -86,7 +86,7 @@ public abstract class GrReferenceElementImpl<Q extends PsiElement> extends Groov
         newNameNode = factory.createLiteralFromValue(newElementName).getFirstChild().getNode();
       }
       assert newNameNode != null && node != null;
-      node.getTreeParent().replaceChild(node, newNameNode);
+      getNode().replaceChild(node, newNameNode);
     }
 
     return this;
