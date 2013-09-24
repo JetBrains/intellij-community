@@ -301,7 +301,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private static void addChildFrameworks(final List<FrameworkSupportNodeBase> list, final List<FrameworkSupportNode> result,
                                          final boolean selectedOnly) {
     for (FrameworkSupportNodeBase node : list) {
-      if (!selectedOnly || node.isChecked()) {
+      if (!selectedOnly || node.isChecked() || node instanceof FrameworkGroupNode) {
         if (node instanceof FrameworkSupportNode) {
           result.add((FrameworkSupportNode)node);
         }
