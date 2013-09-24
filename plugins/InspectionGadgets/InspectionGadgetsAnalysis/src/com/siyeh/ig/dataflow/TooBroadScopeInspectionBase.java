@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -140,7 +140,7 @@ public class TooBroadScopeInspectionBase extends BaseInspection {
     @Override
     public void visitVariable(@NotNull PsiVariable variable) {
       super.visitVariable(variable);
-      if (!(variable instanceof PsiLocalVariable)) {
+      if (!(variable instanceof PsiLocalVariable) || variable instanceof PsiResourceVariable) {
         return;
       }
       final PsiExpression initializer = variable.getInitializer();

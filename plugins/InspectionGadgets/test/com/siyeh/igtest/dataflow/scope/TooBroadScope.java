@@ -109,4 +109,12 @@ public class TooBroadScope
             System.out.println(i);
         }
     }
+
+    void resourceVariable(boolean b) {
+        try (AutoCloseable ac = null) {
+            if (b) {
+                System.out.println(ac);
+            }
+        }
+    }
 }
