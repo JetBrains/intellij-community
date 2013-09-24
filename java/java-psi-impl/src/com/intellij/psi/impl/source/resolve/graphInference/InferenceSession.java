@@ -25,6 +25,7 @@ import com.intellij.psi.impl.source.resolve.graphInference.constraints.Expressio
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompatibilityConstraint;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -98,6 +99,49 @@ public class InferenceSession {
         }
       }
     }
+  }
+
+  public static boolean isPertinentToApplicability(PsiExpression expr, PsiMethod method) {
+    if (expr instanceof PsiLambdaExpression) {
+      if (((PsiLambdaExpression)expr).hasFormalParameterTypes()) return true;
+      for (PsiExpression expression : LambdaUtil.getReturnExpressions((PsiLambdaExpression)expr)) {
+        if (!isPertinentToApplicability(expression, method)) return false;
+      }
+      if (method.getTypeParameters().length > 0) {
+        final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expr.getParent());
+        if (parent instanceof PsiExpressionList) {
+          final PsiElement gParent = parent.getParent();
+          if (gParent instanceof PsiCallExpression && ((PsiCallExpression)gParent).getTypeArgumentList().getTypeParameterElements().length == 0) {
+            final int idx = LambdaUtil.getLambdaIdx(((PsiExpressionList)parent), expr);
+            final PsiParameter[] parameters = method.getParameterList().getParameters();
+            PsiType paramType;
+            if (idx > parameters.length - 1) {
+              final PsiType lastParamType = parameters[parameters.length - 1].getType();
+              paramType = parameters[parameters.length - 1].isVarArgs() ? ((PsiEllipsisType)lastParamType).getComponentType() : lastParamType;
+            }
+            else {
+              paramType = parameters[idx].getType();
+            }
+            final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(paramType);
+            if (psiClass instanceof PsiTypeParameter && ((PsiTypeParameter)psiClass).getOwner() == method) return false;
+          }
+        }
+      }
+      return true;
+    }
+    if (expr instanceof PsiMethodReferenceExpression) {
+      return ((PsiMethodReferenceExpression)expr).isExact();
+    }
+    if (expr instanceof PsiParenthesizedExpression) {
+      return isPertinentToApplicability(((PsiParenthesizedExpression)expr).getExpression(), method);
+    }
+    if (expr instanceof PsiConditionalExpression) {
+      final PsiExpression thenExpression = ((PsiConditionalExpression)expr).getThenExpression();
+      if (!isPertinentToApplicability(thenExpression, method)) return false;
+      final PsiExpression elseExpression = ((PsiConditionalExpression)expr).getElseExpression();
+      if (!isPertinentToApplicability(elseExpression, method)) return false;
+    }
+    return true;
   }
 
   private static PsiType getParameterType(PsiParameter[] parameters, PsiExpression[] args, int i, PsiSubstitutor substitutor) {
