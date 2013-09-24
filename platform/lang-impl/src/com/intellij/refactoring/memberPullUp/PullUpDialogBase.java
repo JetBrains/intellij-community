@@ -19,9 +19,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.AbstractMemberInfoStorage;
-import com.intellij.refactoring.classMembers.DelegatingMemberInfoModel;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.classMembers.MemberInfoChange;
+import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.refactoring.ui.AbstractMemberSelectionTable;
 import com.intellij.refactoring.ui.MemberSelectionPanelBase;
 import com.intellij.refactoring.ui.RefactoringDialog;
@@ -43,7 +43,7 @@ public abstract class PullUpDialogBase<Storage extends AbstractMemberInfoStorage
                               Member extends PsiElement,
                               Class extends PsiElement> extends RefactoringDialog {
   protected MemberSelectionPanelBase<Member, MemberInfo, AbstractMemberSelectionTable<Member, MemberInfo>> myMemberSelectionPanel;
-  protected DelegatingMemberInfoModel<Member, MemberInfo> myMemberInfoModel;
+  protected MemberInfoModel<Member, MemberInfo> myMemberInfoModel;
   protected final Class myClass;
   protected final List<Class> mySuperClasses;
   protected final Storage myMemberInfoStorage;
@@ -146,5 +146,5 @@ public abstract class PullUpDialogBase<Storage extends AbstractMemberInfoStorage
 
   protected abstract AbstractMemberSelectionTable<Member,MemberInfo> createMemberSelectionTable(List<MemberInfo> infos);
 
-  protected abstract DelegatingMemberInfoModel<Member, MemberInfo> createMemberInfoModel();
+  protected abstract MemberInfoModel<Member, MemberInfo> createMemberInfoModel();
 }

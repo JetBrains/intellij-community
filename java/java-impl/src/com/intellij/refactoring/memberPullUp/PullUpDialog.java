@@ -28,7 +28,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.classMembers.DelegatingMemberInfoModel;
+import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.refactoring.ui.AbstractMemberSelectionTable;
 import com.intellij.refactoring.ui.ClassCellRenderer;
 import com.intellij.refactoring.ui.DocCommentPanel;
@@ -169,7 +169,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
   }
 
   @Override
-  protected DelegatingMemberInfoModel<PsiMember, MemberInfo> createMemberInfoModel() {
+  protected MemberInfoModel<PsiMember, MemberInfo> createMemberInfoModel() {
     return new MyMemberInfoModel();
   }
 
