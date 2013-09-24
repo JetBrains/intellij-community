@@ -33,16 +33,19 @@ public abstract class AttachRootButtonDescriptor {
   private final Icon myToolbarIcon;
 
   /**
-   * Create a descriptor for 'attach' button shown in popup when user click on '+' button
+   * Creates a descriptor for 'attach' button shown in popup when user click on '+' button.
+   * Consider using {@link #AttachRootButtonDescriptor(com.intellij.openapi.roots.OrderRootType, javax.swing.Icon, String)} instead.
    */
   protected AttachRootButtonDescriptor(@NotNull OrderRootType orderRootType, @NotNull String buttonText) {
-    this(orderRootType, null, buttonText);
+    myOrderRootType = orderRootType;
+    myButtonText = buttonText;
+    myToolbarIcon = null;
   }
 
   /**
-   * Create a descriptor for 'attach' button shown in toolbar of a library editor
+   * Creates a descriptor for 'attach' button shown in toolbar of a library editor
    */
-  protected AttachRootButtonDescriptor(@NotNull OrderRootType orderRootType, @Nullable Icon toolbarIcon, @NotNull String description) {
+  protected AttachRootButtonDescriptor(@NotNull OrderRootType orderRootType, @NotNull Icon toolbarIcon, @NotNull String description) {
     myOrderRootType = orderRootType;
     myButtonText = description;
     myToolbarIcon = toolbarIcon;
