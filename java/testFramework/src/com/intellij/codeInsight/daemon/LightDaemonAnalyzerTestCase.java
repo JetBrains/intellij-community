@@ -85,7 +85,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
 
   protected void doTestNewInference(@NonNls String filePath, boolean checkWarnings, boolean checkInfos) {
     final PsiResolveHelperImpl helper = (PsiResolveHelperImpl)JavaPsiFacade.getInstance(getProject()).getResolveHelper();
-    helper.setTestHelper(new PsiGraphInferenceHelper(getPsiManager()));
+    //helper.setTestHelper(new PsiGraphInferenceHelper(getPsiManager()));
     try {
       configureByFile(filePath);
       doTestConfiguredFile(checkWarnings, checkInfos, filePath);
