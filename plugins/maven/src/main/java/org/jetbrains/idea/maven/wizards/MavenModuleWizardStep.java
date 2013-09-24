@@ -67,11 +67,8 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
 
   private JPanel myMainPanel;
 
-  private JLabel myAggregatorLabel;
   private JLabel myAggregatorNameLabel;
   private JButton mySelectAggregator;
-
-  private JLabel myParentLabel;
   private JLabel myParentNameLabel;
   private JButton mySelectParent;
 
@@ -88,6 +85,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   private Tree myArchetypesTree;
   private JScrollPane myArchetypeDescriptionScrollPane;
   private JTextArea myArchetypeDescriptionField;
+  private JPanel myAddToPanel;
 
   private Object myCurrentUpdaterMarker;
   private final AsyncProcessIcon myLoadingIcon = new AsyncProcessIcon.Big(getClass() + ".loading");
@@ -440,15 +438,7 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   }
 
   private void updateComponents() {
-    if (!isMavenizedProject()) {
-      myAggregatorLabel.setEnabled(false);
-      myAggregatorNameLabel.setEnabled(false);
-      mySelectAggregator.setEnabled(false);
-
-      myParentLabel.setEnabled(false);
-      myParentNameLabel.setEnabled(false);
-      mySelectParent.setEnabled(false);
-    }
+    myAddToPanel.setVisible(isMavenizedProject());
     myAggregatorNameLabel.setText(formatProjectString(myAggregator));
     myParentNameLabel.setText(formatProjectString(myParent));
 
