@@ -66,7 +66,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     String oldPrefix = completionState.oldPrefix;
     CompletionVariant lastProposedVariant = completionState.lastProposedVariant;
 
-    if (lastProposedVariant == null || oldPrefix == null || !prefixMatches(oldPrefix, currentPrefix) ||
+    if (lastProposedVariant == null || oldPrefix == null || !new CamelHumpMatcher(oldPrefix).isStartMatch(currentPrefix) ||
         !currentPrefix.equals(lastProposedVariant.variant)) {
       //we are starting over
       oldPrefix = currentPrefix;
@@ -251,7 +251,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
       if ((start > caretOffset || end < caretOffset) &&  //skip prefix itself
           end - start > matcher.getPrefix().length() && isWordLike(chars, start, end)) {
         final String word = chars.subSequence(start, end).toString();
-        if (matcher.prefixMatches(word)) {
+        if (matcher.isStartMatch(word)) {
           CompletionVariant v = new CompletionVariant(word, start);
           if (end > caretOffset) {
             afterWords.add(v);
@@ -263,10 +263,6 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
       }
       iterator.advance();
     }
-  }
-
-  private static boolean prefixMatches(String prefix, String word) {
-    return new CamelHumpMatcher(prefix == null ? "" : prefix).isStartMatch(word);
   }
 
   private static CompletionData computeData(final Editor editor, final CharSequence charsSequence) {

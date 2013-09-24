@@ -27,7 +27,7 @@ class HippieCompletionTest extends LightCodeInsightFixtureTestCase {
 $some_long_variable_name = Obj::instance();
 $some_lon<caret>
 '''
-    myFixture.performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
+    complete()
     myFixture.checkResult '''
 $some_long_variable_name = Obj::instance();
 $some_long_variable_name<caret>
@@ -42,9 +42,26 @@ $some_long_variable_name = Obj::instance();
 $some_lon<caret>
 '''
 
-    myFixture.performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
+    complete()
     myFixture.checkResult '''
 $some_long_variable_name<caret>
 '''
+  }
+
+  public void "test no middle matching"() {
+    myFixture.configureByText "a.txt", '''
+fooExpression
+exp<caret>
+'''
+    complete()
+    myFixture.checkResult '''
+fooExpression
+exp<caret>
+'''
+    
+  }
+
+  private void complete() {
+    myFixture.performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
   }
 }
