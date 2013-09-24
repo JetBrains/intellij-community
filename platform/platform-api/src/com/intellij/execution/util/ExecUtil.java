@@ -177,7 +177,8 @@ public class ExecUtil {
    * @return the results of running the process
    */
   @NotNull
-  public static ProcessOutput sudoAndGetOutput(@NotNull List<String> command, @NotNull String prompt,
+  public static ProcessOutput sudoAndGetOutput(@NotNull List<String> command,
+                                               @NotNull String prompt,
                                                @Nullable String workDir) throws IOException, ExecutionException {
     if (SystemInfo.isMac) {
       final String escapedCommandLine = StringUtil.join(command, new Function<String, String>() {
@@ -242,22 +243,16 @@ public class ExecUtil {
     return "'" + arg.replace("'", "\\'") + "'";
   }
 
-  /**
-   * @deprecated It relies on platform-dependent escaping, use {@link #sudoAndGetOutput(java.util.List, String, String)} instead
-   */
-  @NotNull
-  public static ProcessOutput sudoAndGetOutput(@NotNull final String scriptPath,
-                                               @NotNull final String prompt) throws IOException, ExecutionException {
+  /** @deprecated relies on platform-dependent escaping, use {@link #sudoAndGetOutput(List, String, String)} instead (to remove in IDEA 14) */
+  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
+  public static ProcessOutput sudoAndGetOutput(@NotNull String scriptPath, @NotNull String prompt) throws IOException, ExecutionException {
     return sudoAndGetOutput(scriptPath, prompt, null);
   }
 
-  /**
-   * @param scriptPath is already escaped file path
-   * @deprecated It relies on platform-dependent escaping, use {@link #sudoAndGetOutput(java.util.List, String, String)} instead
-   */
+  /** @deprecated relies on platform-dependent escaping, use {@link #sudoAndGetOutput(List, String, String)} instead (to remove in IDEA 14) */
   @NotNull
-  public static ProcessOutput sudoAndGetOutput(@NotNull final String scriptPath,
-                                               @NotNull final String prompt,
+  public static ProcessOutput sudoAndGetOutput(@NotNull String scriptPath,
+                                               @NotNull String prompt,
                                                @Nullable String workDir) throws IOException, ExecutionException {
     if (SystemInfo.isMac) {
       final String script = "do shell script \"" + scriptPath + "\" with administrator privileges";
@@ -288,12 +283,10 @@ public class ExecUtil {
     throw new UnsupportedSystemException();
   }
 
-  /**
-   * @deprecated It relies on platform-dependent escaping, use {@link #sudoAndGetOutput(java.util.List, String, String)} instead
-   */
-  public static int sudoAndGetResult(@NotNull final String scriptPath,
-                                     @NotNull final String prompt) throws IOException, ExecutionException {
-    return sudoAndGetOutput(scriptPath, prompt).getExitCode();
+  /** @deprecated relies on platform-dependent escaping, use {@link #sudoAndGetOutput(List, String, String)} instead (to remove in IDEA 14) */
+  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
+  public static int sudoAndGetResult(@NotNull String scriptPath, @NotNull String prompt) throws IOException, ExecutionException {
+    return sudoAndGetOutput(scriptPath, prompt, null).getExitCode();
   }
 
   public static boolean hasTerminalApp() {

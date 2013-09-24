@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -211,7 +211,8 @@ public class CreateDesktopEntryAction extends DumbAwareAction {
                          "xdg-desktop-menu forceupdate --mode system\n" +
                          "exit $RV\n");
         script.deleteOnExit();
-        final int result = ExecUtil.sudoAndGetResult(script.getAbsolutePath(), ApplicationBundle.message("desktop.entry.sudo.prompt"));
+        final String prompt = ApplicationBundle.message("desktop.entry.sudo.prompt");
+        final int result = ExecUtil.sudoAndGetOutput(asList(script.getPath()), prompt, null).getExitCode();
         if (result != 0) throw new RuntimeException("'" + script.getAbsolutePath() + "' : " + result);
       }
       else {

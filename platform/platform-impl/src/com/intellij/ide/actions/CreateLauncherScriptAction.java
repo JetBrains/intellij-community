@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,8 +112,8 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
           // copy file and change ownership to root (UID 0 = root, GID 0 = root (wheel on Macs))
           "install -g 0 -o 0 \"" + scriptFile.getCanonicalPath() + "\" \"" + pathName + "\"";
         final File installationScript = ExecUtil.createTempExecutableScript("launcher_installer", ".sh", installationScriptSrc);
-        ExecUtil.sudoAndGetResult(installationScript.getAbsolutePath(),
-                                  ApplicationBundle.message("launcher.script.sudo.prompt", launcherScriptContainingDirPath));
+        final String prompt = ApplicationBundle.message("launcher.script.sudo.prompt", launcherScriptContainingDirPath);
+        ExecUtil.sudoAndGetOutput(asList(installationScript.getPath()), prompt, null);
       }
     }
     catch (Exception e) {
