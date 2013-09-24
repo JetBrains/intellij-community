@@ -19,9 +19,9 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.InstanceFilter;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.FieldBreakpoint;
@@ -33,7 +33,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,8 +49,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ToggleFieldBreakpointAction extends AnAction {
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;
     }
@@ -83,7 +83,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
 
             RequestManagerImpl.createRequests(fieldBreakpoint);
 
-            manager.editBreakpoint(fieldBreakpoint, PlatformDataKeys.EDITOR.getData(e.getDataContext()));
+            manager.editBreakpoint(fieldBreakpoint, CommonDataKeys.EDITOR.getData(e.getDataContext()));
           }
         }
         else {
@@ -93,6 +93,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
     }
   }
 
+  @Override
   public void update(AnActionEvent event){
     SourcePosition place = getPlace(event);
     boolean toEnable = place != null;
@@ -105,7 +106,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
     }
     else if(DebuggerAction.isContextView(event)) {
       presentation.setText(DebuggerBundle.message("action.add.field.watchpoint.text"));
-      Project project = event.getData(PlatformDataKeys.PROJECT);
+      Project project = event.getData(CommonDataKeys.PROJECT);
       if(project != null && place != null) {
         Document document = PsiDocumentManager.getInstance(project).getDocument(place.getFile());
         if (document != null) {
@@ -125,14 +126,14 @@ public class ToggleFieldBreakpointAction extends AnAction {
   @Nullable
   public static SourcePosition getPlace(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
-    Project project = event.getData(PlatformDataKeys.PROJECT);
+    Project project = event.getData(CommonDataKeys.PROJECT);
     if(project == null) {
       return null;
     }
     if (ActionPlaces.PROJECT_VIEW_POPUP.equals(event.getPlace()) ||
         ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace()) ||
         ActionPlaces.FAVORITES_VIEW_POPUP.equals(event.getPlace())) {
-      final PsiElement psiElement = event.getData(LangDataKeys.PSI_ELEMENT);
+      final PsiElement psiElement = event.getData(CommonDataKeys.PSI_ELEMENT);
       if(psiElement instanceof PsiField) {
         return SourcePosition.createFromElement(psiElement);
       }
@@ -152,7 +153,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
         if(node != null && node.getDescriptor() instanceof FieldDescriptorImpl) {
           Field field = ((FieldDescriptorImpl)node.getDescriptor()).getField();
           DebuggerSession session = tree.getDebuggerContext().getDebuggerSession();
-          PsiClass psiClass = DebuggerUtilsEx.findClass(field.declaringType().name(), project, (session != null) ? session.getSearchScope(): GlobalSearchScope.allScope(project));
+          PsiClass psiClass = DebuggerUtils.findClass(field.declaringType().name(), project, (session != null) ? session.getSearchScope() : GlobalSearchScope.allScope(project));
           if(psiClass != null) {
             psiClass = (PsiClass) psiClass.getNavigationElement();
             final PsiField psiField = psiClass.findFieldByName(field.name(), true);
@@ -165,7 +166,7 @@ public class ToggleFieldBreakpointAction extends AnAction {
       return null;
     }
 
-    Editor editor = event.getData(PlatformDataKeys.EDITOR);
+    Editor editor = event.getData(CommonDataKeys.EDITOR);
     if(editor == null) {
       editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     }
@@ -173,7 +174,6 @@ public class ToggleFieldBreakpointAction extends AnAction {
       final Document document = editor.getDocument();
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
       if (file != null) {
-        FileTypeManager fileTypeManager = FileTypeManager.getInstance();
         final VirtualFile virtualFile = file.getVirtualFile();
         FileType fileType = virtualFile != null ? virtualFile.getFileType() : null;
         if (StdFileTypes.JAVA == fileType || StdFileTypes.CLASS  == fileType) {
