@@ -28,6 +28,7 @@ import javax.swing.*;
 public class DebuggerInvocationUtil {
   public static void swingInvokeLater(final Project project, @NotNull final Runnable runnable) {
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (project != null && !project.isDisposed()) {
           runnable.run();
@@ -38,6 +39,7 @@ public class DebuggerInvocationUtil {
 
   public static void invokeLater(final Project project, @NotNull final Runnable runnable) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (project != null && !project.isDisposed()) {
           runnable.run();
@@ -48,6 +50,7 @@ public class DebuggerInvocationUtil {
 
   public static void invokeLater(final Project project, @NotNull final Runnable runnable, ModalityState state) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         if(project == null || project.isDisposed()) return;
 
@@ -58,6 +61,7 @@ public class DebuggerInvocationUtil {
 
   public static void invokeAndWait(final Project project, @NotNull final Runnable runnable, ModalityState state) {
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
       public void run() {
         if(project == null || project.isDisposed()) return;
 
@@ -69,6 +73,7 @@ public class DebuggerInvocationUtil {
   public static  <T> T commitAndRunReadAction(Project project, final EvaluatingComputable<T> computable) throws EvaluateException {
     final Throwable[] ex = new Throwable[] { null };
     T result = PsiDocumentManager.getInstance(project).commitAndRunReadAction(new Computable<T>() {
+          @Override
           public T compute() {
             try {
               return computable.compute();
