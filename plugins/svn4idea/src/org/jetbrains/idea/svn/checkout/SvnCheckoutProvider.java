@@ -28,7 +28,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -43,8 +42,8 @@ import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.*;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
 import java.io.File;
@@ -79,23 +78,24 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                                final boolean ignoreExternals,
                                final Listener listener, final WorkingCopyFormat selectedFormat) {
     final Ref<Boolean> checkoutSuccessful = new Ref<Boolean>();
-    final Exception[] exception = new Exception[1];
+    final SVNException[] exception = new SVNException[1];
     final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project,
                      SvnBundle.message("message.title.check.out"), true, VcsConfiguration.getInstance(project).getCheckoutOption()) {
       public void run(@NotNull final ProgressIndicator indicator) {
         SvnWorkingCopyFormatHolder.setPresetFormat(selectedFormat);
 
-        SvnVcs vcs = SvnVcs.getInstance(project);
-        // TODO: made this way to preserve existing logic, but probably this check could be omitted as setPresetFormat(selectedFormat) invoked above
-        WorkingCopyFormat format = !WorkingCopyFormat.ONE_DOT_SEVEN.equals(SvnWorkingCopyFormatHolder.getPresetFormat())
-                                   ? WorkingCopyFormat.ONE_DOT_SIX
-                                   : selectedFormat;
-        ISVNEventHandler handler = new CheckoutEventHandler(vcs, false, ProgressManager.getInstance().getProgressIndicator());
-        ProgressManager.progress(SvnBundle.message("progress.text.checking.out", target.getAbsolutePath()));
+        final SVNUpdateClient client = SvnVcs.getInstance(project).createUpdateClient();
+        if (! WorkingCopyFormat.ONE_DOT_SEVEN.equals(selectedFormat)) {
+          client.getOperationsFactory().setPrimaryWcGeneration(SvnWcGeneration.V16);
+        }
+        client.setEventHandler(new CheckoutEventHandler(SvnVcs.getInstance(project), false, ProgressManager.getInstance().getProgressIndicator()));
+        client.setIgnoreExternals(ignoreExternals);
         try {
-          // TODO: probably rewrite some logic to force ClientFactory provide supported versions (or create special client for that)
-          vcs.getFactoryFromSettings().createCheckoutClient()
-            .checkout(SvnTarget.fromURL(SVNURL.parseURIEncoded(url)), target, revision, depth, ignoreExternals, format, handler);
+          ProgressManager.progress(SvnBundle.message("progress.text.checking.out", target.getAbsolutePath()));
+          if (! WorkingCopyFormat.ONE_DOT_SEVEN.equals(SvnWorkingCopyFormatHolder.getPresetFormat())) {
+            client.getOperationsFactory().setPrimaryWcGeneration(SvnWcGeneration.V16);
+          }
+          client.doCheckout(SVNURL.parseURIEncoded(url), target, SVNRevision.UNDEFINED, revision, depth, true);
           ProgressManager.checkCanceled();
           checkoutSuccessful.set(Boolean.TRUE);
         }
@@ -104,10 +104,9 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         catch (SVNException e) {
           exception[0] = e;
         }
-        catch (VcsException e) {
-          exception[0] = e;
-        }
         finally {
+          client.setIgnoreExternals(false);
+          client.setEventHandler(null);
           SvnWorkingCopyFormatHolder.setPresetFormat(null);
         }
       }
