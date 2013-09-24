@@ -64,11 +64,11 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     final CollectConsumer<MatchResult> collect = new SynchronizedCollectConsumer<MatchResult>(namesList);
     long started;
 
-    if (model instanceof EfficientChooseByNameModel) {
+    if (model instanceof ChooseByNameModelEx) {
       indicator.checkCanceled();
       started = System.currentTimeMillis();
       final MinusculeMatcher matcher = buildPatternMatcher(matchingPattern, NameUtil.MatchingCaseSensitivity.NONE);
-      ((EfficientChooseByNameModel)model).processNames(new Processor<String>() {
+      ((ChooseByNameModelEx)model).processNames(new Processor<String>() {
         @Override
         public boolean process(String sequence) {
           ProgressManager.checkCanceled();

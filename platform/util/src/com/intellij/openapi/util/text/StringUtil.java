@@ -2018,11 +2018,22 @@ public class StringUtil extends StringUtilRt {
     if (part1.length == part2.length) {
       return 0;
     }
-    else if (part1.length > idx) {
-      return 1;
-    }
     else {
-      return -1;
+      boolean left = part1.length > idx;
+      String[] parts = left ? part1 : part2;
+
+      for (; idx < parts.length; idx++) {
+        String p = parts[idx];
+        int cmp;
+        if (p.matches("\\d+")) {
+          cmp = new Integer(p).compareTo(0);
+        }
+        else {
+          cmp = 1;
+        }
+        if (cmp != 0) return left ? cmp : -cmp;
+      }
+      return 0;
     }
   }
 

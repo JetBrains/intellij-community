@@ -48,6 +48,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.breakpoints.*;
+import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.XExecutionStack;
 import com.intellij.xdebugger.frame.XStackFrame;
@@ -91,7 +92,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private XSourcePosition myCurrentPosition;
   private final AtomicBoolean myPaused = new AtomicBoolean();
   private MyDependentBreakpointListener myDependentBreakpointListener;
-  private XValueMarkers<?,?> myValueMarkers;
+  private XValueMarkers<?, ?> myValueMarkers;
   private final String mySessionName;
   private XDebugSessionTab mySessionTab;
   private XDebugSessionData mySessionData;
@@ -159,7 +160,7 @@ public class XDebugSessionImpl implements XDebugSession {
   public void setAutoInitBreakpoints(boolean value) {
     autoInitBreakpoints = value;
   }
-  
+
   public List<AnAction> getRestartActions() {
     return myRestartActions;
   }
@@ -302,13 +303,14 @@ public class XDebugSessionImpl implements XDebugSession {
 
   public void showSessionTab() {
     RunContentDescriptor descriptor = getRunContentDescriptor();
-    ExecutionManager.getInstance(getProject()).getContentManager().showRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor);
+    ExecutionManager.getInstance(getProject()).getContentManager()
+      .showRunContent(DefaultDebugExecutor.getDebugExecutorInstance(), descriptor);
   }
 
   public XValueMarkers<?, ?> getValueMarkers() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myValueMarkers == null) {
-      XValueMarkerProvider<?,?> provider = myDebugProcess.createValueMarkerProvider();
+      XValueMarkerProvider<?, ?> provider = myDebugProcess.createValueMarkerProvider();
       if (provider != null) {
         myValueMarkers = XValueMarkers.createValueMarkers(provider);
       }
@@ -393,6 +395,12 @@ public class XDebugSessionImpl implements XDebugSession {
   @Override
   public void removeSessionListener(@NotNull final XDebugSessionListener listener) {
     myDispatcher.removeListener(listener);
+  }
+
+  @NotNull
+  @Override
+  public XDebuggerEditorsProvider getEditorsProvider() {
+    return myDebugProcess.getEditorsProvider();
   }
 
   @Override
@@ -566,7 +574,7 @@ public class XDebugSessionImpl implements XDebugSession {
       return null;
     }
     if (myActiveNonLineBreakpoint != null) {
-      return ((XBreakpointBase<?,?,?>)myActiveNonLineBreakpoint).createGutterIconRenderer();
+      return ((XBreakpointBase<?, ?, ?>)myActiveNonLineBreakpoint).createGutterIconRenderer();
     }
     if (myCurrentExecutionStack != null) {
       return myCurrentExecutionStack.getExecutionLineIconRenderer();

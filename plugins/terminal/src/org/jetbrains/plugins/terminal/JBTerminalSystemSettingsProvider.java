@@ -2,9 +2,11 @@ package org.jetbrains.plugins.terminal;
 
 import com.intellij.application.options.OptionsConstants;
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.options.FontSize;
@@ -18,6 +20,7 @@ import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.emulator.ColorPalette;
 import com.jediterm.terminal.ui.settings.DefaultSettingsProvider;
+import com.jediterm.terminal.ui.settings.DefaultTabbedSettingsProvider;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +35,7 @@ import java.util.Map;
 /**
  * @author traff
  */
-class JBTerminalSystemSettingsProvider extends DefaultSettingsProvider {
+class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider {
 
   private final EditorColorsScheme myColorScheme;
 
@@ -52,7 +55,7 @@ class JBTerminalSystemSettingsProvider extends DefaultSettingsProvider {
 
   @Override
   public ColorPalette getTerminalColorPalette() {
-    return SystemInfo.isWindows ? ColorPalette.WINDOWS_PALETTE : ColorPalette.XTERM_PALETTE;
+    return new JBTerminalSchemeColorPalette(myColorScheme);
   }
 
   private KeyStroke[] getKeyStrokesByActionId(String actionId) {
@@ -71,6 +74,16 @@ class JBTerminalSystemSettingsProvider extends DefaultSettingsProvider {
   @Override
   public boolean shouldCloseTabOnLogout(TtyConnector ttyConnector) {
     return ttyConnector instanceof PtyProcessTtyConnector; //close tab only on logout of local pty, not remote
+  }
+
+  @Override
+  public String tabName(TtyConnector ttyConnector, String sessionName) { //for local terminal use name from settings
+    if (ttyConnector instanceof PtyProcessTtyConnector) {
+      return TerminalOptionsProvider.getInstance().getTabName();
+    }
+    else {
+      return sessionName;
+    }
   }
 
   @Override
@@ -131,8 +144,39 @@ class JBTerminalSystemSettingsProvider extends DefaultSettingsProvider {
     return (float)myColorScheme.getConsoleFontSize();
   }
 
+
+  @Override
+  public boolean useAntialiasing() {
+    return UISettings.getInstance().ANTIALIASING_IN_EDITOR;
+  }
+
+  @Override
+  public int caretBlinkingMs() {
+    return EditorSettingsExternalizable.getInstance().getBlinkPeriod();
+  }
+
   public EditorColorsScheme getColorScheme() {
     return createBoundColorSchemeDelegate(null);
+  }
+
+  @Override
+  public boolean audibleBell() {
+    return TerminalOptionsProvider.getInstance().audibleBell();
+  }
+
+  @Override
+  public boolean enableMouseReporting() {
+    return TerminalOptionsProvider.getInstance().enableMouseReporting();
+  }
+
+  @Override
+  public boolean copyOnSelect() {
+    return TerminalOptionsProvider.getInstance().copyOnSelection();
+  }
+
+  @Override
+  public boolean pasteOnMiddleMouseClick() {
+    return TerminalOptionsProvider.getInstance().pasteOnMiddleMouseButton();
   }
 
   @NotNull

@@ -16,6 +16,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -56,5 +57,9 @@ public class RetinaImage {
         return new JBHiDPIScaledImage(image, width, height, type);
       }
     }
+  }
+
+  public static boolean isAppleHiDPIScaledImage(Image image) {
+    return UIUtil.isAppleRetina() && AppleHiDPIScaledImage.is(image);
   }
 }

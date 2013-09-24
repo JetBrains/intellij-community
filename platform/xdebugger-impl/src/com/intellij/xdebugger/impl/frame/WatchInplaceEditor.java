@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.xdebugger.XStackFrameAwareSession;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebugSessionAdapter;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -45,8 +46,10 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
     myRootNode = rootNode;
     myOldNode = oldNode;
     myExpressionEditor.setText(oldNode != null ? oldNode.getExpression() : "");
-    final XDebugSession session = rootNode.getTree().getSession();
-    new WatchEditorSessionListener(session).install();
+    final XStackFrameAwareSession session = rootNode.getTree().getSession();
+    if (session instanceof XDebugSession) {
+      new WatchEditorSessionListener((XDebugSession)session).install();
+    }
   }
 
   protected JComponent createInplaceEditorComponent() {
@@ -73,8 +76,13 @@ public class WatchInplaceEditor extends XDebuggerTreeInplaceEditor {
   }
 
   private XWatchesView getWatchesView() {
-    XDebugSessionTab tab = ((XDebugSessionImpl)myRootNode.getTree().getSession()).getSessionTab();
-    return tab.getWatchesView();
+    if (myRootNode.getTree().getSession() instanceof XDebugSessionImpl) {
+      XDebugSessionTab tab = ((XDebugSessionImpl)myRootNode.getTree().getSession()).getSessionTab();
+      return tab.getWatchesView();
+    }
+    else {
+      return null;
+    }
   }
 
   private class WatchEditorSessionListener extends XDebugSessionAdapter {

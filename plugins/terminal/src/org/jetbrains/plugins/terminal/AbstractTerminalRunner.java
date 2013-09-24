@@ -171,7 +171,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
       openSession(terminalWidget, createTtyConnector(process));
     }
     catch (Exception e) {
-      throw new RuntimeException(e.getMessage(), e);
+      LOG.error("Can't open terminal session:" + e.getMessage(), e);
     }
   }
 }

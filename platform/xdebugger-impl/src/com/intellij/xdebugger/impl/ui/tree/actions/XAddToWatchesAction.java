@@ -16,7 +16,7 @@
 package com.intellij.xdebugger.impl.ui.tree.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XStackFrameAwareSession;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -28,16 +28,18 @@ import org.jetbrains.annotations.NotNull;
 public class XAddToWatchesAction extends XDebuggerTreeActionBase {
   @Override
   protected boolean isEnabled(final XValueNodeImpl node) {
-    return super.isEnabled(node) && node.getValueContainer().getEvaluationExpression() != null;
+    return super.isEnabled(node) && node.getValueContainer().getEvaluationExpression() != null && (node.getTree().getSession() instanceof XDebugSessionImpl);
   }
 
   @Override
   protected void perform(final XValueNodeImpl node, @NotNull final String nodeName, final AnActionEvent e) {
-    XDebugSession session = node.getTree().getSession();
-    XDebugSessionTab sessionTab = ((XDebugSessionImpl)session).getSessionTab();
-    String expression = node.getValueContainer().getEvaluationExpression();
-    if (expression != null) {
-      sessionTab.getWatchesView().addWatchExpression(expression, -1, true);
+    XStackFrameAwareSession session = node.getTree().getSession();
+    if (session instanceof XDebugSessionImpl) {
+      XDebugSessionTab sessionTab = ((XDebugSessionImpl)session).getSessionTab();
+      String expression = node.getValueContainer().getEvaluationExpression();
+      if (expression != null) {
+        sessionTab.getWatchesView().addWatchExpression(expression, -1, true);
+      }
     }
   }
 }

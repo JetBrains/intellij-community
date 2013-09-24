@@ -18,7 +18,7 @@ package com.intellij.xdebugger.impl.frame;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.xdebugger.XDebugSession;
+import com.intellij.xdebugger.XStackFrameAwareSession;
 import com.intellij.xdebugger.XDebugSessionAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,10 +29,10 @@ import org.jetbrains.annotations.Nullable;
 public abstract class XDebugViewBase implements Disposable {
   protected enum SessionEvent {PAUSED, BEFORE_RESUME, RESUMED, STOPPED, FRAME_CHANGED, SETTINGS_CHANGED}
 
-  protected final XDebugSession mySession;
+  protected final XStackFrameAwareSession mySession;
   private final MyDebugSessionListener mySessionListener;
 
-  public XDebugViewBase(@NotNull final XDebugSession session, @Nullable Disposable parentDisposable) {
+  public XDebugViewBase(@NotNull final XStackFrameAwareSession session, @Nullable Disposable parentDisposable) {
     mySession = session;
     mySessionListener = new MyDebugSessionListener();
     mySession.addSessionListener(mySessionListener);

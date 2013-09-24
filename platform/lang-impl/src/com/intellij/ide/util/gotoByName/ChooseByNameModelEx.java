@@ -13,13 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.navigation;
+package com.intellij.ide.util.gotoByName;
 
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
-import com.intellij.util.indexing.IdFilter;
 
-public interface EfficientChooseByNameContributor extends ChooseByNameContributor {
-  void processNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter);
+public interface ChooseByNameModelEx extends ChooseByNameModel {
+  void processNames(Processor<String> processor, boolean inLibraries);
 }

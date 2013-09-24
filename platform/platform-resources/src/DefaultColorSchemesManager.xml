@@ -892,7 +892,27 @@
           <option name="ERROR_STRIPE_COLOR" value="ff" />
         </value>
       </option>
+        <option name="CONSOLE_BLACK_OUTPUT">
+          <value>
+            <option name="FOREGROUND" value="000000" />
+            <option name="BACKGROUND" />
+            <option name="FONT_TYPE" value="0" />
+            <option name="EFFECT_COLOR" />
+            <option name="EFFECT_TYPE" value="0" />
+            <option name="ERROR_STRIPE_COLOR" />
+          </value>
+        </option>
         <option name="CONSOLE_BLUE_OUTPUT">
+          <value>
+            <option name="FOREGROUND" value="ff" />
+            <option name="BACKGROUND" />
+            <option name="FONT_TYPE" value="0" />
+            <option name="EFFECT_COLOR" />
+            <option name="EFFECT_TYPE" value="0" />
+            <option name="ERROR_STRIPE_COLOR" />
+          </value>
+        </option>
+        <option name="CONSOLE_BLUE_BRIGHT_OUTPUT">
           <value>
             <option name="FOREGROUND" value="ff" />
             <option name="BACKGROUND" />
@@ -905,6 +925,26 @@
         <option name="CONSOLE_CYAN_OUTPUT">
           <value>
             <option name="FOREGROUND" value="b2b2" />
+            <option name="BACKGROUND" />
+            <option name="FONT_TYPE" value="0" />
+            <option name="EFFECT_COLOR" />
+            <option name="EFFECT_TYPE" value="0" />
+            <option name="ERROR_STRIPE_COLOR" />
+          </value>
+        </option>
+        <option name="CONSOLE_CYAN_BRIGHT_OUTPUT">
+          <value>
+            <option name="FOREGROUND" value="b2b2" />
+            <option name="BACKGROUND" />
+            <option name="FONT_TYPE" value="0" />
+            <option name="EFFECT_COLOR" />
+            <option name="EFFECT_TYPE" value="0" />
+            <option name="ERROR_STRIPE_COLOR" />
+          </value>
+        </option>
+        <option name="CONSOLE_DARKGRAY_OUTPUT">
+          <value>
+            <option name="FOREGROUND" value="595959" />
             <option name="BACKGROUND" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />
@@ -932,7 +972,27 @@
             <option name="ERROR_STRIPE_COLOR" />
           </value>
         </option>
+        <option name="CONSOLE_GREEN_BRIGHT_OUTPUT">
+          <value>
+            <option name="FOREGROUND" value="8000" />
+            <option name="BACKGROUND" />
+            <option name="FONT_TYPE" value="0" />
+            <option name="EFFECT_COLOR" />
+            <option name="EFFECT_TYPE" value="0" />
+            <option name="ERROR_STRIPE_COLOR" />
+          </value>
+        </option>
         <option name="CONSOLE_MAGENTA_OUTPUT">
+          <value>
+            <option name="FOREGROUND" value="ff00ff" />
+            <option name="BACKGROUND" />
+            <option name="FONT_TYPE" value="0" />
+            <option name="EFFECT_COLOR" />
+            <option name="EFFECT_TYPE" value="0" />
+            <option name="ERROR_STRIPE_COLOR" />
+          </value>
+        </option>
+        <option name="CONSOLE_MAGENTA_BRIGHT_OUTPUT">
           <value>
             <option name="FOREGROUND" value="ff00ff" />
             <option name="BACKGROUND" />
@@ -952,9 +1012,39 @@
             <option name="ERROR_STRIPE_COLOR" />
           </value>
         </option>
+        <option name="CONSOLE_RED_BRIGHT_OUTPUT">
+          <value>
+            <option name="FOREGROUND" value="ff0000" />
+            <option name="BACKGROUND" />
+            <option name="FONT_TYPE" value="0" />
+            <option name="EFFECT_COLOR" />
+            <option name="EFFECT_TYPE" value="0" />
+            <option name="ERROR_STRIPE_COLOR" />
+          </value>
+        </option>
         <option name="CONSOLE_YELLOW_OUTPUT">
           <value>
             <option name="FOREGROUND" value="ffcc00" />
+            <option name="BACKGROUND" />
+            <option name="FONT_TYPE" value="0" />
+            <option name="EFFECT_COLOR" />
+            <option name="EFFECT_TYPE" value="0" />
+            <option name="ERROR_STRIPE_COLOR" />
+          </value>
+        </option>
+        <option name="CONSOLE_YELLOW_BRIGHT_OUTPUT">
+          <value>
+            <option name="FOREGROUND" value="ffcc00" />
+            <option name="BACKGROUND" />
+            <option name="FONT_TYPE" value="0" />
+            <option name="EFFECT_COLOR" />
+            <option name="EFFECT_TYPE" value="0" />
+            <option name="ERROR_STRIPE_COLOR" />
+          </value>
+        </option>
+        <option name="CONSOLE_WHITE_OUTPUT">
+          <value>
+            <option name="FOREGROUND" value="FFFFFF" />
             <option name="BACKGROUND" />
             <option name="FONT_TYPE" value="0" />
             <option name="EFFECT_COLOR" />

@@ -20,7 +20,7 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
-import com.intellij.navigation.EfficientChooseByNameContributor;
+import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.application.ReadActionProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,9 +35,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
-import com.intellij.util.SynchronizedCollectConsumer;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +52,7 @@ import java.util.List;
 /**
  * Contributor-based goto model
  */
-public abstract class ContributorsBasedGotoByModel implements EfficientChooseByNameModel {
+public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelEx {
   public static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.ContributorsBasedGotoByModel");
 
   protected final Project myProject;
@@ -98,8 +98,8 @@ public abstract class ContributorsBasedGotoByModel implements EfficientChooseByN
             long contributorStarted = System.currentTimeMillis();
             final TIntHashSet filter = new TIntHashSet(1000);
             myContributorToItsSymbolsMap.put(contributor, filter);
-            if (contributor instanceof EfficientChooseByNameContributor) {
-              ((EfficientChooseByNameContributor)contributor).processNames(new Processor<String>() {
+            if (contributor instanceof ChooseByNameContributorEx) {
+              ((ChooseByNameContributorEx)contributor).processNames(new Processor<String>() {
                 @Override
                 public boolean process(String s) {
                   if (nameProcessor.process(s)) {
@@ -107,7 +107,7 @@ public abstract class ContributorsBasedGotoByModel implements EfficientChooseByN
                   }
                   return true;
                 }
-              }, DefaultFileNavigationContributor.getScope(myProject, checkBoxState), DefaultFileNavigationContributor.getFilter(myProject, checkBoxState));
+              }, DefaultFileNavigationContributor.getScope(myProject, checkBoxState), IdFilter.getProjectIdFilter(myProject, checkBoxState));
             } else {
               String[] names = contributor.getNames(myProject, checkBoxState);
               for (String element : names) {

@@ -26,8 +26,8 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
-import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.XStackFrameAwareSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
@@ -75,9 +75,9 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   private final XDebuggerEditorsProvider myEditorsProvider;
   private XSourcePosition mySourcePosition;
   private final List<XDebuggerTreeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-  private final XDebugSession mySession;
+  private final XStackFrameAwareSession mySession;
 
-  public XDebuggerTree(final @NotNull XDebugSession session,
+  public XDebuggerTree(final @NotNull XStackFrameAwareSession session,
                        final @NotNull XDebuggerEditorsProvider editorsProvider,
                        final @Nullable XSourcePosition sourcePosition,
                        final @NotNull String popupActionGroupId) {
@@ -179,7 +179,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
   }
 
   @NotNull
-  public XDebugSession getSession() {
+  public XStackFrameAwareSession getSession() {
     return mySession;
   }
 

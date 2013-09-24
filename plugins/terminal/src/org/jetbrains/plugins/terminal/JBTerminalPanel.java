@@ -1,35 +1,33 @@
-/* -*-mode:java; c-basic-offset:2; -*- */
-/* JCTerm
- * Copyright (C) 2002-2004 ymnk, JCraft,Inc.
- *  
- * Written by: 2002 ymnk<ymnk@jcaft.com>
- *   
- *   
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Library General Public License
- * as published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- 
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Library General Public License for more details.
- * 
- * You should have received a copy of the GNU Library General Public
- * License along with this program; if not, write to the Free Software
- * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
+/* -*-mode:java; c-basic-offset:2; -*- */
+
 
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.base.Predicate;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.JBHiDPIScaledImage;
-import com.intellij.util.ui.GraphicsUtil;
+import com.intellij.util.RetinaImage;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.display.BackBuffer;
 import com.jediterm.terminal.display.StyleState;
@@ -98,8 +96,9 @@ public class JBTerminalPanel extends TerminalPanel {
     }
   }
 
-  protected void setupAntialiasing(Graphics graphics, boolean antialiasing) {
-    GraphicsUtil.setupAntialiasing(graphics, antialiasing, false);
+  @Override
+  protected void setupAntialiasing(Graphics graphics) {
+    UISettings.setupAntialiasing(graphics);
   }
 
   @Override
@@ -135,9 +134,12 @@ public class JBTerminalPanel extends TerminalPanel {
       if (img == null) {
         img = image;
       }
-      newG.drawImage(img, 2 * dx1, 2 * dy1, 2 * dx2, 2 * dy2, sx1, sy1, sx2, sy2, observer);
+      newG.drawImage(img, 2 * dx1, 2 * dy1, 2 * dx2, 2 * dy2, sx1 * 2, sy1 * 2, sx2 * 2, sy2 * 2, observer);
       newG.scale(1, 1);
       newG.dispose();
+    }
+    else if (RetinaImage.isAppleHiDPIScaledImage(image)) {
+      g.drawImage(image, dx1, dy1, dx2, dy2, sx1 * 2, sy1 * 2, sx2 * 2, sy2 * 2, observer);
     }
     else {
       g.drawImage(image, dx1, dy1, dx2, dy2, sx1, sy1, sx2, sy2, observer);

@@ -24,7 +24,11 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiFile;
@@ -187,24 +191,15 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     final ArrayList<CompletionVariant> words = new ArrayList<CompletionVariant>();
     final List<CompletionVariant> afterWords = new ArrayList<CompletionVariant>();
 
-    IdTableBuilding.scanWords(new IdTableBuilding.ScanWordProcessor() {
-      @Override
-      public void run(final CharSequence chars, @Nullable char[] charsArray, final int start, final int end) {
-        final int caretOffset = editor.getCaretModel().getOffset();
-        if (start <= caretOffset && end >= caretOffset) return; //skip prefix itself
-
-        final String word = chars.subSequence(start, end).toString();
-        if (!prefixMatches(prefix, word)) return;
-        final CompletionVariant v = new CompletionVariant(word, start);
-
-        if (end > caretOffset) {
-          afterWords.add(v);
-        }
-        else {
-          words.add(v);
+    addWordsForEditor(editor, prefix, chars, words, afterWords);
+    for(FileEditor fileEditor: FileEditorManager.getInstance(editor.getProject()).getAllEditors()) {
+      if (fileEditor instanceof TextEditor) {
+        Editor anotherEditor = ((TextEditor)fileEditor).getEditor();
+        if (anotherEditor != editor) {
+          addWordsForEditor(anotherEditor, prefix, anotherEditor.getDocument().getCharsSequence(), words, afterWords);
         }
       }
-    }, chars, 0, chars.length());
+    }
 
 
     Set<String> allWords = new HashSet<String>();
@@ -230,6 +225,31 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     }
 
     return result;
+  }
+
+  private static void addWordsForEditor(final Editor editor,
+                                        final String prefix,
+                                        CharSequence chars,
+                                        final ArrayList<CompletionVariant> words,
+                                        final List<CompletionVariant> afterWords) {
+    IdTableBuilding.scanWords(new IdTableBuilding.ScanWordProcessor() {
+      @Override
+      public void run(final CharSequence chars, @Nullable char[] charsArray, final int start, final int end) {
+        final int caretOffset = editor.getCaretModel().getOffset();
+        if (start <= caretOffset && end >= caretOffset) return; //skip prefix itself
+
+        final String word = chars.subSequence(start, end).toString();
+        if (!prefixMatches(prefix, word)) return;
+        final CompletionVariant v = new CompletionVariant(word, start);
+
+        if (end > caretOffset) {
+          afterWords.add(v);
+        }
+        else {
+          words.add(v);
+        }
+      }
+    }, chars, 0, chars.length());
   }
 
   private static boolean prefixMatches(String prefix, String word) {

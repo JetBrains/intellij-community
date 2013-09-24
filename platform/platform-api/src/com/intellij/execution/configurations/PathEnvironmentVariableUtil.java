@@ -71,7 +71,7 @@ public class PathEnvironmentVariableUtil {
    * @param fileBaseName file base name
    * @return {@code File} instance or null if not found
    */
-  public static File findInOriginalPath(@NotNull String fileBaseName) {
+  private static File findInOriginalPath(@NotNull String fileBaseName) {
     String originalPath;
     if (SystemInfo.isMac) {
       originalPath = System.getenv(PATH_ENV_VAR_NAME);
@@ -135,4 +135,30 @@ public class PathEnvironmentVariableUtil {
     }
     return result;
   }
+
+  /**
+   * Finds the absolute path of an executable file in PATH by the given relative path.
+   * This method makes sense for Mac only, because other OSs pass correct environment variables to IDE process
+   * letting {@link ProcessBuilder#start} sees correct PATH environment variable.
+   *
+   * @param exePath String relative path (or just a base name)
+   * @return the absolute path if the executable file found, and the given {@code exePath} otherwise
+   */
+  @NotNull
+  public static String findAbsolutePathOnMac(@NotNull String exePath) {
+    if (SystemInfo.isMac) {
+      if (!exePath.contains(File.separator)) {
+        File originalResolvedExeFile = findInOriginalPath(exePath);
+        // don't modify exePath if the absolute path can be found in the original PATH
+        if (originalResolvedExeFile == null) {
+          File resolvedExeFile = findInPath(exePath);
+          if (resolvedExeFile != null) {
+            exePath = resolvedExeFile.getAbsolutePath();
+          }
+        }
+      }
+    }
+    return exePath;
+  }
+
 }

@@ -1958,16 +1958,32 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               }
             }
           }
-          // For 'normal indices' schedule the file for update and stop iteration if at least one index accepts it
+          // For 'normal indices' schedule the file for update and reset stamps for all affected indices (there
+          // can be client that used indices between before and after events, in such case indices are up to date due to force update
+          // with old content)
           if (!fileIsDirectory && !isTooLarge(file)) {
             final List<ID<?, ?>> candidates = getAffectedIndexCandidates(file);
+            //noinspection ForLoopReplaceableByForEach
+            FileType fileType = file.getFileType();
+            boolean scheduleForUpdate = false;
+            boolean resetStamp = false;
+
             //noinspection ForLoopReplaceableByForEach
             for (int i = 0, size = candidates.size(); i < size; ++i) {
               final ID<?, ?> indexId = candidates.get(i);
               if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
-                scheduleForUpdate(file);
-                break; // no need to iterate further, as the file is already marked
+                ID id = IndexInfrastructure.getStubId(indexId, fileType);
+                if (IndexingStamp.isFileIndexed(file, id, IndexInfrastructure.getIndexCreationStamp(id))) {
+                  IndexingStamp.update(file, id, IndexInfrastructure.INVALID_STAMP2);
+                  resetStamp = true;
+                }
+                scheduleForUpdate = true;
               }
+            }
+
+            if (scheduleForUpdate) {
+              if (resetStamp) IndexingStamp.flushCache(file);
+              scheduleForUpdate(file);
             }
           }
 

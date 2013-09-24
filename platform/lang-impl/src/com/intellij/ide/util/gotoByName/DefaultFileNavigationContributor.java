@@ -15,16 +15,10 @@
  */
 package com.intellij.ide.util.gotoByName;
 
-import com.intellij.navigation.EfficientChooseByNameContributor;
+import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.NavigationItem;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ContentIterator;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -36,17 +30,14 @@ import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.BitSet;
-
-public class DefaultFileNavigationContributor implements EfficientChooseByNameContributor, DumbAware {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.DefaultFileNavigationContributor");
+public class DefaultFileNavigationContributor implements ChooseByNameContributorEx, DumbAware {
 
   @Override
   @NotNull
   public String[] getNames(Project project, boolean includeNonProjectItems) {
     if (FileBasedIndex.ourEnableTracingOfKeyHashToVirtualFileMapping) {
       final THashSet<String> names = new THashSet<String>(1000);
-      IdFilter filter = getFilter(project, includeNonProjectItems);
+      IdFilter filter = IdFilter.getProjectIdFilter(project, includeNonProjectItems);
       processNames(new Processor<String>() {
         @Override
         public boolean process(String s) {
@@ -54,8 +45,8 @@ public class DefaultFileNavigationContributor implements EfficientChooseByNameCo
           return true;
         }
       }, getScope(project, includeNonProjectItems), filter);
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("All names retrieved2:" + names.size());
+      if (IdFilter.LOG.isDebugEnabled()) {
+        IdFilter.LOG.debug("All names retrieved2:" + names.size());
       }
       return ArrayUtil.toStringArray(names);
     } else {
@@ -65,38 +56,6 @@ public class DefaultFileNavigationContributor implements EfficientChooseByNameCo
 
   public static GlobalSearchScope getScope(Project project, boolean includeNonProjectItems) {
     return includeNonProjectItems ? GlobalSearchScope.projectScope(project) : GlobalSearchScope.allScope(project);
-  }
-
-  public static IdFilter getFilter(Project project, boolean includeNonProjectItems) {
-    long started = System.currentTimeMillis();
-    final BitSet idSet = new BitSet();
-
-    ContentIterator iterator = new ContentIterator() {
-      @Override
-      public boolean processFile(VirtualFile fileOrDir) {
-        idSet.set(
-          ((VirtualFileWithId)fileOrDir).getId()
-        );
-        ProgressManager.checkCanceled();
-        return true;
-      }
-    };
-
-    if (!includeNonProjectItems) {
-      ProjectRootManager.getInstance(project).getFileIndex().iterateContent(iterator);
-    } else {
-      FileBasedIndex.getInstance().iterateIndexableFiles(iterator, project, null);
-    }
-
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Done filter " + (System.currentTimeMillis()  -started) + ":" + idSet.size());
-    }
-    return new IdFilter() {
-      @Override
-      public boolean contains(int id) {
-        return idSet.get(id);
-      }
-    };
   }
 
   @Override
@@ -124,8 +83,8 @@ public class DefaultFileNavigationContributor implements EfficientChooseByNameCo
         return processor.process(s);
       }
     }, scope, filter);
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("All names retrieved:" + (System.currentTimeMillis() - started));
+    if (IdFilter.LOG.isDebugEnabled()) {
+      IdFilter.LOG.debug("All names retrieved:" + (System.currentTimeMillis() - started));
     }
   }
 }
