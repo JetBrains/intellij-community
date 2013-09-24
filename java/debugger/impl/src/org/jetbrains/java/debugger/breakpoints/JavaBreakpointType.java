@@ -7,27 +7,21 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
-import com.intellij.xdebugger.breakpoints.XLineBreakpointType;
+import com.intellij.xdebugger.breakpoints.XLineBreakpointTypeBase;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.debugger.JavaDebuggerEditorsProvider;
 
 import java.util.List;
 
-public class JavaBreakpointType extends XLineBreakpointType<XBreakpointProperties> {
+public class JavaBreakpointType extends XLineBreakpointTypeBase {
   public JavaBreakpointType() {
-    super("java", DebuggerBundle.message("java.breakpoint.title"));
+    super("java", DebuggerBundle.message("java.breakpoint.title"), new JavaDebuggerEditorsProvider());
   }
 
   @Override
   public boolean canPutAt(@NotNull final VirtualFile file, final int line, @NotNull Project project) {
     return file.getFileType() == JavaFileType.INSTANCE;
-  }
-
-  @Nullable
-  @Override
-  public XBreakpointProperties createBreakpointProperties(@NotNull VirtualFile file, int line) {
-    return null;
   }
 
   @Override
