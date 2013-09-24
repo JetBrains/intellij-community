@@ -66,9 +66,7 @@ public abstract class FacetBasedFrameworkSupportProvider<F extends Facet> extend
    * @see #getPrecedingFrameworkProviderIds()
    */
   public static String getProviderId(final FacetTypeId<?> typeId) {
-    FacetType<?,?> type = FacetTypeRegistry.getInstance().findFacetType(typeId);
-    LOG.assertTrue(type != null, typeId);
-    return getProviderId(type);
+    return getProviderId(FacetTypeRegistry.getInstance().findFacetType(typeId));
   }
 
   @Override
@@ -77,8 +75,7 @@ public abstract class FacetBasedFrameworkSupportProvider<F extends Facet> extend
     FacetTypeId<?> typeId = myFacetType.getUnderlyingFacetType();
     if (typeId == null) return null;
 
-    FacetType<?,?> type = FacetTypeRegistry.getInstance().findFacetType(typeId);
-    return type != null ? getProviderId(type) : null;
+    return getProviderId(FacetTypeRegistry.getInstance().findFacetType(typeId));
 
   }
 
