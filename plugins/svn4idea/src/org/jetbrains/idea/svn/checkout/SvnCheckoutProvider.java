@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.Messages;
@@ -33,16 +34,15 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.ExclusiveBackgroundVcsAction;
 import org.jetbrains.idea.svn.actions.SvnExcludingIgnoredOperation;
+import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
-import org.tmatesoft.svn.core.SVNCancelException;
-import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.wc.*;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
@@ -242,12 +242,16 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                     return facade.isInContent(targetVf);
                   }
                 });
+                SVNCommitInfo info;
                 if (project.isDefault() || !isInContent) {
                   // do not pay attention to ignored/excluded settings
-                  client.doImport(target, url, message, null, !includeIgnored, false, depth);
+                  info = client.doImport(target, url, message, null, !includeIgnored, false, depth);
                 } else {
                   client.setCommitHandler(new MyFilter(LocalFileSystem.getInstance(), new SvnExcludingIgnoredOperation.Filter(project)));
-                  client.doImport(target, url, message, null, !includeIgnored, false, depth);
+                  info = client.doImport(target, url, message, null, !includeIgnored, false, depth);
+                }
+                if (info.getNewRevision() > 0) {
+                  StatusBar.Info.set(SvnBundle.message("status.text.comitted.revision", info.getNewRevision()), project);
                 }
               }
             }
