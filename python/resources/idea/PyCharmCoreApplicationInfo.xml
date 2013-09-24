@@ -6,7 +6,7 @@
   <about url="/pycharm_core_about.png" logoX="300" logoY="265" logoW="75" logoH="30" foreground="ffffff" linkColor="fca11a"/>
   <icon size32="/PyCharmCore32.png" size16="/PyCharmCore16.png" size32opaque="/PyCharmCore32.png" size12="/PyCharm_13.png" ico="PyCharmCore.ico"/>
   <package code="__PACKAGE_CODE__"/>
-  <names product="PyCharm Core" fullname="PyCharm Core" script="charm"/>
+  <names product="PyCharm" fullname="PyCharm Community Edition" script="charm"/>
   <install-over minbuild="0" maxbuild="0" version="1.x"/>
 
   <welcome-screen logo-url="/pycharm_welcomeScreen.png" caption-url="/welcomeCaption.png" slogan-url="/developSlogan.png"/>
