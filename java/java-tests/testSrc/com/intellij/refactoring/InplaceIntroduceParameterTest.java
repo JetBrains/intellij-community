@@ -59,6 +59,15 @@ public class InplaceIntroduceParameterTest extends AbstractJavaInplaceIntroduceT
     });
   }
 
+  public void testReplaceAll3() throws Exception {
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+        inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
+      }
+    });
+  }
+
   public void testReplaceAllMethodCalls() throws Exception {
     doTest(new Pass<AbstractInplaceIntroducer>() {
       @Override
