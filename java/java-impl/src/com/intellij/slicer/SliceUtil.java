@@ -30,7 +30,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.slicer.forward.SliceFUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import gnu.trove.THashMap;
@@ -54,7 +53,7 @@ public class SliceUtil {
     expression = simplify(expression);
     PsiElement original = expression;
     if (expression instanceof PsiReferenceExpression) {
-      PsiElement element = SliceFUtil.complexify(expression);
+      PsiElement element = SliceForwardUtil.complexify(expression);
       if (element instanceof PsiExpression && PsiUtil.isOnAssignmentLeftHand((PsiExpression)element)) {
         PsiExpression rightSide = ((PsiAssignmentExpression)element.getParent()).getRExpression();
         return rightSide == null || handToProcessor(rightSide, processor, parent, parentSubstitutor);
@@ -238,9 +237,12 @@ public class SliceUtil {
     });
   }
 
+  @NotNull
   public static SliceUsage createSliceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
     return new SliceUsage(simplify(element), parent, substitutor);
   }
+
+  @NotNull
   public static SliceUsage createTooComplexDFAUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
     return new SliceTooComplexDFAUsage(simplify(element), parent, substitutor);
   }

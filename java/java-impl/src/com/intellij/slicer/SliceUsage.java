@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiSubstitutor;
-import com.intellij.slicer.forward.SliceFUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.util.CommonProcessors;
@@ -44,14 +43,18 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
     params = parent.params;
     assert params != null;
   }
-  public SliceUsage(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) {
+  private SliceUsage(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) {
     super(new UsageInfo(element));
     myParent = null;
     this.params = params;
     mySubstitutor = PsiSubstitutor.EMPTY;
   }
 
-  public void processChildren(Processor<SliceUsage> processor) {
+  public static SliceUsage createRootUsage(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) {
+    return new SliceUsage(element, params);
+  }
+
+  public void processChildren(@NotNull Processor<SliceUsage> processor) {
     final PsiElement element = getElement();
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     indicator.checkCanceled();
@@ -76,7 +79,7 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
           SliceUtil.processUsagesFlownDownTo(element, uniqueProcessor, SliceUsage.this, mySubstitutor);
         }
         else {
-          SliceFUtil.processUsagesFlownFromThe(element, uniqueProcessor, SliceUsage.this);
+          SliceForwardUtil.processUsagesFlownFromThe(element, uniqueProcessor, SliceUsage.this);
         }
       }
     });
@@ -93,7 +96,7 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
 
   SliceUsage copy() {
     PsiElement element = getUsageInfo().getElement();
-    return getParent() == null ? new SliceUsage(element, params) : new SliceUsage(element, getParent(),mySubstitutor);
+    return getParent() == null ? createRootUsage(element, params) : new SliceUsage(element, getParent(),mySubstitutor);
   }
 
   public PsiSubstitutor getSubstitutor() {

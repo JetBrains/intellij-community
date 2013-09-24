@@ -40,7 +40,7 @@ public class ExpressionCompatibilityConstraint implements ConstraintFormula {
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints, List<ConstraintFormula> delayedConstraints) {
+  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
     if (session.isProperType(myT)) {
       return TypeConversionUtil.areTypesAssignmentCompatible(myT, myExpression);
     }

@@ -232,6 +232,7 @@ public class MavenDomUtil {
   public static <T extends MavenDomElement> T getMavenDomModel(@NotNull Project project,
                                                                @NotNull VirtualFile file,
                                                                @NotNull Class<T> clazz) {
+    if (!file.isValid()) return null;
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (psiFile == null) return null;
     return getMavenDomModel(psiFile, clazz);

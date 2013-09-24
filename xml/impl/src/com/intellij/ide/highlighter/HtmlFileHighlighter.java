@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,11 +80,13 @@ public class HtmlFileHighlighter extends SyntaxHighlighterBase {
     keys1.put(XmlTokenType.XML_BAD_CHARACTER, HighlighterColors.BAD_CHARACTER);
   }
 
+  @Override
   @NotNull
   public Lexer getHighlightingLexer() {
     return new HtmlHighlightingLexer();
   }
 
+  @Override
   @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
     return pack(XmlHighlighterColors.HTML_CODE, pack(keys1.get(tokenType), keys2.get(tokenType)));

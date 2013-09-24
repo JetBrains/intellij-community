@@ -19,6 +19,7 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -51,15 +52,14 @@ public class DefaultGroovyShellRunner extends GroovyShellRunner {
     boolean useBundled = !hasGroovyAll(module);
     DefaultGroovyScriptRunner.configureGenericGroovyRunner(res, module, "org.codehaus.groovy.tools.shell.Main", false, true);
     if (useBundled) {
-      String parent = GroovyUtils.getBundledGroovyJar().getParent();
-      String groovyHome = parent + File.separator + "groovy";
-      File libDir = new File(groovyHome + File.separator + "lib");
+      String libRoot = GroovyUtils.getBundledGroovyJar().getParent();
+      File libDir = new File(libRoot + "/groovy/lib");
       assert libDir.isDirectory();
       for (File file : libDir.listFiles()) {
         res.getClassPath().add(file);
       }
 
-      GroovyScriptRunner.setGroovyHome(res, groovyHome);
+      GroovyScriptRunner.setGroovyHome(res, FileUtil.toCanonicalPath(libRoot  + "/groovy"));
     }
     res.setWorkingDirectory(getWorkingDirectory(module));
 

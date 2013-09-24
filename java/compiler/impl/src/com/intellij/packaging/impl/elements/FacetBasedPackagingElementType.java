@@ -28,7 +28,6 @@ import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -89,11 +88,6 @@ public abstract class FacetBasedPackagingElementType<E extends PackagingElement<
 
   protected abstract String getItemText(F item);
 
-  @Nullable
-  protected Icon getIcon(F item) {
-    return FacetTypeRegistry.getInstance().findFacetType(myFacetType).getIcon();
-  }
-
   private class ChooseFacetsDialog extends ChooseElementsDialog<F> {
     private ChooseFacetsDialog(Project project, List<? extends F> items, String title, String description) {
       super(project, items, title, description, true);
@@ -106,7 +100,7 @@ public abstract class FacetBasedPackagingElementType<E extends PackagingElement<
 
     @Override
     protected Icon getItemIcon(F item) {
-      return FacetBasedPackagingElementType.this.getIcon(item);
+      return FacetTypeRegistry.getInstance().findFacetType(myFacetType).getIcon();
     }
   }
 }

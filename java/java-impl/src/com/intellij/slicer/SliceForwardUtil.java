@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.slicer.forward;
+package com.intellij.slicer;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -22,10 +22,6 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.slicer.SliceDereferenceUsage;
-import com.intellij.slicer.SliceManager;
-import com.intellij.slicer.SliceUsage;
-import com.intellij.slicer.SliceUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
@@ -40,7 +36,7 @@ import java.util.Set;
 /**
  * @author cdr
  */
-public class SliceFUtil {
+public class SliceForwardUtil {
   public static boolean processUsagesFlownFromThe(@NotNull PsiElement element, @NotNull final Processor<SliceUsage> processor, @NotNull final SliceUsage parent) {
     Pair<PsiElement, PsiSubstitutor> pair = getAssignmentTarget(element, parent);
     if (pair != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2012 Bas Leijdekkers
+ * Copyright 2011-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,13 @@
 package com.siyeh.ig.javadoc;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaDocTokenType;
-import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -52,23 +53,15 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final int offset = ((Integer)infos[0]).intValue();
-    return new HtmlTagCanBeJavaDocTagFix(offset);
+    return new HtmlTagCanBeJavaDocTagFix();
   }
 
   private static class HtmlTagCanBeJavaDocTagFix extends InspectionGadgetsFix {
 
-    private final int startIndex;
-
-    public HtmlTagCanBeJavaDocTagFix(int startIndex) {
-      this.startIndex = startIndex;
-    }
-
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "html.tag.can.be.javadoc.tag.quickfix");
+      return InspectionGadgetsBundle.message("html.tag.can.be.javadoc.tag.quickfix");
     }
     @Override
     @NotNull
@@ -78,60 +71,55 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
-      final PsiElement element = descriptor.getPsiElement();
-      final PsiDocComment comment = PsiTreeUtil.getParentOfType(element, PsiDocComment.class);
-      if (comment == null) {
+      final TextRange range = descriptor.getTextRangeInElement();
+      PsiElement element = descriptor.getPsiElement();
+      final PsiFile file = PsiTreeUtil.getParentOfType(element, PsiFile.class);
+      if (file == null) {
         return;
       }
-      @NonNls final StringBuilder newCommentText = new StringBuilder();
-      buildNewCommentText(comment, element, false, newCommentText);
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiDocComment newComment = factory.createDocCommentFromText(newCommentText.toString());
-      comment.replace(newComment);
+      final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+      if (document == null) {
+        return;
+      }
+      final int startOffset = range.getStartOffset();
+      final int replaceStartOffset = element.getTextOffset() + startOffset;
+      final int endOffset = range.getEndOffset();
+      @NonNls String text = element.getText();
+      if (!"<code>".equals(text.substring(startOffset, endOffset))) {
+        return;
+      }
+      @NonNls final StringBuilder newCommentText = new StringBuilder("{@code");
+      int endTag = text.indexOf("</code>", startOffset);
+      boolean first = true;
+      while (endTag < 0) {
+        appendElementText(text, endOffset, text.length(), first, newCommentText);
+        first = false;
+        element = element.getNextSibling();
+        if (element == null) return;
+        text = element.getText();
+        endTag = text.indexOf("</code>");
+      }
+      appendElementText(text, endOffset, endTag, first, newCommentText);
+      newCommentText.append('}');
+      final int replaceEndOffset = element.getTextOffset() + endTag + 7;
+      final String oldText = document.getText(new TextRange(replaceStartOffset, replaceEndOffset));
+      if (!oldText.startsWith("<code>") || !oldText.endsWith("</code>")) { // sanity check
+        return;
+      }
+      document.replaceString(replaceStartOffset, replaceEndOffset, newCommentText);
     }
 
-    private boolean buildNewCommentText(PsiElement element, PsiElement elementToReplace, boolean missingEndTag,
-                                        @NonNls StringBuilder newCommentText) {
-      final PsiElement[] children = element.getChildren();
-      if (children.length != 0) {
-        for (PsiElement child : children) {
-          missingEndTag = buildNewCommentText(child, elementToReplace, missingEndTag, newCommentText);
+    private static void appendElementText(String text, int startOffset, int endOffset, boolean first, StringBuilder out) {
+      if (first) {
+        final String substring = text.substring(startOffset, endOffset);
+        if (!substring.isEmpty() && !Character.isWhitespace(substring.charAt(0))) {
+          out.append(' ');
         }
-        return missingEndTag;
-      }
-      @NonNls final String text = element.getText();
-      if (element != elementToReplace) {
-        if (missingEndTag) {
-          final int endIndex = text.indexOf("</code>");
-          if (endIndex >= 0) {
-            final String codeText = text.substring(0, endIndex);
-            newCommentText.append(codeText);
-            newCommentText.append('}');
-            newCommentText.append(text.substring(endIndex + 7));
-            return false;
-          }
-        }
-        newCommentText.append(text);
+        out.append(substring);
       }
       else {
-        newCommentText.append(text.substring(0, startIndex));
-        newCommentText.append("{@code ");
-        final int endIndex = text.indexOf("</code>", startIndex);
-        if (endIndex >= 0) {
-          final String codeText = text.substring(startIndex + 6, endIndex);
-          newCommentText.append(codeText);
-          //StringUtil.replace(codeText, "}", "&#125;"));
-          newCommentText.append('}');
-          newCommentText.append(text.substring(endIndex + 7));
-        }
-        else {
-          final String codeText = text.substring(startIndex + 6);
-          newCommentText.append(codeText);
-          //StringUtil.replace(codeText, "}", "&#125;"));
-          return true;
-        }
+        out.append(text.substring(0, endOffset));
       }
-      return missingEndTag;
     }
   }
 
@@ -160,14 +148,14 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
           return;
         }
         if (hasMatchingCloseTag(token, startIndex + 6)) {
-          registerErrorAtOffset(token, startIndex, 6, Integer.valueOf(startIndex));
+          registerErrorAtOffset(token, startIndex, 6);
         }
         startIndex++;
       }
     }
 
     private static boolean hasMatchingCloseTag(PsiElement element, int offset) {
-      final String text = element.getText();
+      @NonNls final String text = element.getText();
       final int endOffset1 = text.indexOf("</code>", offset);
       if (endOffset1 >= 0) {
         final int startOffset1 = text.indexOf("<code>", offset);
@@ -175,7 +163,7 @@ public class HtmlTagCanBeJavadocTagInspection extends BaseInspection {
       }
       PsiElement sibling = element.getNextSibling();
       while (sibling != null) {
-        final String text1 = sibling.getText();
+        @NonNls final String text1 = sibling.getText();
         final int endOffset = text1.indexOf("</code>");
         if (endOffset >= 0) {
           final int startOffset = text1.indexOf("<code>");

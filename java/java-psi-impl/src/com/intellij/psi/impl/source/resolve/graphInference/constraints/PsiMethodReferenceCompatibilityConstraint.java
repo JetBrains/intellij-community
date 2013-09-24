@@ -40,12 +40,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints, List<ConstraintFormula> delayedConstraints) {
-    final InferenceVariable inferenceVariable = session.getInferenceVariable(myT);
-    if (inferenceVariable != null) {
-      delayedConstraints.add(this);
-      return true;
-    }
+  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
     if (LambdaHighlightingUtil.checkInterfaceFunctional(myT) != null) {
       return false;
     }
@@ -59,8 +54,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
     final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
     for (PsiParameter parameter : parameters) {
       if (!session.isProperType(substitutor.substitute(parameter.getType()))) {
-        delayedConstraints.add(this);
-        return true;
+        return false;
       }
     }
 

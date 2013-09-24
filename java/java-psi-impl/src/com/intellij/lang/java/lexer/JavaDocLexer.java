@@ -54,7 +54,7 @@ public class JavaDocLexer extends MergingLexerAdapter {
     }
 
     @Override
-    public final void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+    public final void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
       myBuffer = buffer;
       myBufferIndex =  startOffset;
       myBufferEndOffset = endOffset;
@@ -68,6 +68,7 @@ public class JavaDocLexer extends MergingLexerAdapter {
       return myState;
     }
 
+    @NotNull
     @Override
     public CharSequence getBufferSequence() {
       return myBuffer;

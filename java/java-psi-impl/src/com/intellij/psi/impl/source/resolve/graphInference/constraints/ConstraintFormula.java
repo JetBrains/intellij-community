@@ -23,5 +23,5 @@ import java.util.List;
  * User: anna
  */
 public interface ConstraintFormula {
-  boolean reduce(InferenceSession session, List<ConstraintFormula> constraints, List<ConstraintFormula> delayedConstraints);
+  boolean reduce(InferenceSession session, List<ConstraintFormula> constraints);
 }

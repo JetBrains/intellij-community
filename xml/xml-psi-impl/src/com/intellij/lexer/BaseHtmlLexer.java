@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -239,7 +240,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
     tokenHandlers.put(elementType,value);
   }
 
-  public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
+  public void start(@NotNull final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
     initState(initialState);
     super.start(buffer, startOffset, endOffset, initialState & BASE_STATE_MASK);
   }

@@ -30,7 +30,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.impl.EditorHighlighterCache;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -57,6 +56,7 @@ import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDocumentTransactionListener;
+import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -1551,7 +1551,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         initFileContent(newFc, project, dominantContentFile);
 
         if (content instanceof AuthenticContent) {
-          newFc.putUserData(EDITOR_HIGHLIGHTER, EditorHighlighterCache.getEditorHighlighterForCachesBuilding(document));
+          newFc.putUserData(PlatformIdTableBuilding.EDITOR_HIGHLIGHTER, EditorHighlighterCache.getEditorHighlighterForCachesBuilding(document));
         }
 
         final int inputId = Math.abs(getFileId(vFile));
@@ -1570,8 +1570,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private final TaskQueue myContentlessIndicesUpdateQueue = new TaskQueue(10000);
-
-  public static final Key<EditorHighlighter> EDITOR_HIGHLIGHTER = new Key<EditorHighlighter>("Editor");
 
   @Nullable
   private PsiFile findDominantPsiForDocument(@NotNull Document document, @Nullable Project project) {

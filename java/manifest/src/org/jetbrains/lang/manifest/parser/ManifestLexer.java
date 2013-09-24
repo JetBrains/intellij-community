@@ -27,6 +27,7 @@ package org.jetbrains.lang.manifest.parser;
 import com.intellij.lexer.LexerBase;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.lang.manifest.psi.ManifestTokenType;
 
@@ -63,7 +64,7 @@ public class ManifestLexer extends LexerBase {
   private IElementType myTokenType;
 
   @Override
-  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     this.myBuffer = buffer;
     this.myEndOffset = endOffset;
     myCurrentState = State.values()[initialState];
@@ -104,6 +105,7 @@ public class ManifestLexer extends LexerBase {
     return myEndOffset;
   }
 
+  @NotNull
   @Override
   public CharSequence getBufferSequence() {
     return myBuffer;

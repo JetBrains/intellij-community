@@ -36,8 +36,6 @@ import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.*;
 
 import static com.intellij.compiler.options.CompilerOptionsFilter.Setting;
@@ -77,7 +75,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   private JCheckBox            myCbAssertNotNull;
   private JBLabel              myPatternLegendLabel;
   private JCheckBox            myCbAutoShowFirstError;
-  private JCheckBox            myCbUseExternalBuild;
   private JCheckBox            myCbEnableAutomake;
   private JCheckBox            myCbParallelCompilation;
   private JTextField           myHeapSizeField;
@@ -93,19 +90,12 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myProject = project;
 
     myPatternLegendLabel.setText("<html><body>" +
-                                 "Use <b>;</b> to separate patterns and <b>!</b> to negate a pattern. " +
-                                 "Accepted wildcards: <b>?</b> &mdash; exactly one symbol; <b>*</b> &mdash; zero or more symbols; " +
-                                 "<b>/</b> &mdash; path separator; <b>/**/</b> &mdash; any number of directories; " +
-                                 "<i>&lt;dir_name&gt;</i>:<i>&lt;pattern&gt;</i> &mdash; restrict to source roots with the specified name" +
-                                 "</body></html>");
+                                   "Use <b>;</b> to separate patterns and <b>!</b> to negate a pattern. " +
+                                   "Accepted wildcards: <b>?</b> &mdash; exactly one symbol; <b>*</b> &mdash; zero or more symbols; " +
+                                   "<b>/</b> &mdash; path separator; <b>/**/</b> &mdash; any number of directories; " +
+                                   "<i>&lt;dir_name&gt;</i>:<i>&lt;pattern&gt;</i> &mdash; restrict to source roots with the specified name" +
+                                   "</body></html>");
     myPatternLegendLabel.setForeground(new JBColor(Gray._50, Gray._130));
-    myCbUseExternalBuild.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        updateExternalMakeOptionControls(myCbUseExternalBuild.isSelected());
-      }
-    });
-
     tweakControls(project);
   }
 
@@ -141,7 +131,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     controls.put(Setting.CLEAR_OUTPUT_DIR_ON_REBUILD, Collections.<JComponent>singleton(myCbClearOutputDirectory));
     controls.put(Setting.ADD_NOT_NULL_ASSERTIONS, Collections.<JComponent>singleton(myCbAssertNotNull));
     controls.put(Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR, Collections.<JComponent>singleton(myCbAutoShowFirstError));
-    controls.put(Setting.EXTERNAL_BUILD, ContainerUtilRt.<JComponent>newArrayList(myCbUseExternalBuild));
     controls.put(Setting.AUTO_MAKE, ContainerUtilRt.<JComponent>newArrayList(myCbEnableAutomake, myEnableAutomakeLegendLabel));
     controls.put(Setting.PARALLEL_COMPILATION,
                  ContainerUtilRt.<JComponent>newArrayList(myCbParallelCompilation, myParallelCompilationLegendLabel));
@@ -166,14 +155,12 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myCbAutoShowFirstError.setSelected(workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
     myCbClearOutputDirectory.setSelected(workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
     myCbAssertNotNull.setSelected(configuration.isAddNotNullAssertions());
-    myCbUseExternalBuild.setSelected(workspaceConfiguration.useOutOfProcessBuild());
     myCbEnableAutomake.setSelected(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
     myCbParallelCompilation.setSelected(workspaceConfiguration.PARALLEL_COMPILATION);
     myCbRebuildOnDependencyChange.setSelected(workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE);
     myHeapSizeField.setText(String.valueOf(workspaceConfiguration.COMPILER_PROCESS_HEAP_SIZE));
     final String options = workspaceConfiguration.COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS;
     myVMOptionsField.setText(options == null ? "" : options.trim());
-    updateExternalMakeOptionControls(myCbUseExternalBuild.isSelected());
 
     configuration.convertPatterns();
 
@@ -201,9 +188,7 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     if (!myDisabledSettings.contains(Setting.CLEAR_OUTPUT_DIR_ON_REBUILD)) {
       workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY = myCbClearOutputDirectory.isSelected();
     }
-    boolean wasUsingExternalMake = workspaceConfiguration.useOutOfProcessBuild();
     if (!myDisabledSettings.contains(Setting.EXTERNAL_BUILD)) {
-      workspaceConfiguration.USE_COMPILE_SERVER = myCbUseExternalBuild.isSelected();
       if (!myDisabledSettings.contains(Setting.AUTO_MAKE)) {
         workspaceConfiguration.MAKE_PROJECT_ON_SAVE = myCbEnableAutomake.isSelected();
       }
@@ -234,12 +219,8 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
       String extensionString = myResourcePatternsField.getText().trim();
       applyResourcePatterns(extensionString, (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject));
     }
-    if (wasUsingExternalMake != workspaceConfiguration.useOutOfProcessBuild()) {
-      myProject.getMessageBus().syncPublisher(ExternalBuildOptionListener.TOPIC).externalBuildOptionChanged(workspaceConfiguration.useOutOfProcessBuild());
-    }
-    if (workspaceConfiguration.useOutOfProcessBuild()) {
-      BuildManager.getInstance().clearState(myProject);
-    }
+    
+    BuildManager.getInstance().clearState(myProject);
   }
 
   private static void applyResourcePatterns(String extensionString, final CompilerConfigurationImpl configuration)
@@ -277,8 +258,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
     boolean isModified = !myDisabledSettings.contains(Setting.AUTO_SHOW_FIRST_ERROR_IN_EDITOR)
                          && ComparingUtils.isModified(myCbAutoShowFirstError, workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
-    isModified |= !myDisabledSettings.contains(Setting.EXTERNAL_BUILD)
-                  && ComparingUtils.isModified(myCbUseExternalBuild, workspaceConfiguration.useOutOfProcessBuild());
     isModified |= !myDisabledSettings.contains(Setting.AUTO_MAKE)
                   && ComparingUtils.isModified(myCbEnableAutomake, workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
     isModified |= !myDisabledSettings.contains(Setting.PARALLEL_COMPILATION)
@@ -323,16 +302,6 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
   }
 
   public void disposeUIResources() {
-  }
-
-  private void updateExternalMakeOptionControls(boolean enabled) {
-    myCbEnableAutomake.setEnabled(enabled);
-    myCbParallelCompilation.setEnabled(enabled);
-    myCbRebuildOnDependencyChange.setEnabled(enabled);
-    myHeapSizeField.setEnabled(enabled);
-    myVMOptionsField.setEnabled(enabled);
-    myHeapSizeLabel.setEnabled(enabled);
-    myVMOptionsLabel.setEnabled(enabled);
   }
 
   private void createUIComponents() {

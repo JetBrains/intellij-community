@@ -1,11 +1,9 @@
 package com.intellij.codeInsight.slice;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
-import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl;
@@ -34,7 +32,7 @@ public class SliceTreeTest extends LightDaemonAnalyzerTestCase {
     params.scope = new AnalysisScope(getProject());
     params.dataFlowToThis = true;
 
-    SliceUsage usage = SliceManager.createRootUsage(element, params);
+    SliceUsage usage = SliceUsage.createRootUsage(element, params);
 
 
     SlicePanel panel = new SlicePanel(getProject(), true, new SliceRootNode(getProject(), new DuplicateMap(), usage), false, ToolWindowHeadlessManagerImpl.HEADLESS_WINDOW) {
@@ -252,7 +250,7 @@ public class SliceTreeTest extends LightDaemonAnalyzerTestCase {
   }
 
   private static void checkStructure(final SliceNode root, @NonNls String dataExpected) {
-    List<SliceNode> actualNodes = new ArrayList<SliceNode>((Collection<? extends SliceNode>)root.getChildren());
+    List<SliceNode> actualNodes = new ArrayList<SliceNode>((Collection)root.getChildren());
     Collections.sort(actualNodes, SliceTreeBuilder.SLICE_NODE_COMPARATOR);
 
     Object[] actualStrings = ContainerUtil.map2Array(actualNodes, new Function<SliceNode, Object>() {

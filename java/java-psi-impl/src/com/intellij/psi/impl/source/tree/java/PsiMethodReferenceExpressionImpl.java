@@ -72,6 +72,15 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
   }
 
   @Override
+  public boolean isExact() {
+    PsiElement resolve = resolve();
+    if (resolve instanceof PsiMethod) {
+      return !((PsiMethod)resolve).isVarArgs();
+    }
+    return true;
+  }
+
+  @Override
   public PsiExpression getQualifierExpression() {
     final PsiElement qualifier = getQualifier();
     return qualifier instanceof PsiExpression ? (PsiExpression)qualifier : null;

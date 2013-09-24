@@ -58,6 +58,7 @@ public class InspectionValidatorWrapper implements Validator {
   private final InspectionProjectProfileManager myProfileManager;
   private final PsiDocumentManager myPsiDocumentManager;
   private static final ThreadLocal<Boolean> ourCompilationThreads = new ThreadLocal<Boolean>() {
+    @Override
     protected Boolean initialValue() {
       return Boolean.FALSE;
     }
@@ -95,11 +96,13 @@ public class InspectionValidatorWrapper implements Validator {
       myVirtualFile = psiFile.getVirtualFile();
     }
 
+    @Override
     @NotNull
     public VirtualFile getFile() {
       return myVirtualFile;
     }
 
+    @Override
     @Nullable
     public ValidityState getValidityState() {
       if (myValidityState == null) {
@@ -121,6 +124,7 @@ public class InspectionValidatorWrapper implements Validator {
     }
   }
 
+  @Override
   @NotNull
   public ProcessingItem[] getProcessingItems(final CompileContext context) {
     final Project project = context.getProject();
@@ -129,6 +133,7 @@ public class InspectionValidatorWrapper implements Validator {
     }
     final ExcludedEntriesConfiguration excludedEntriesConfiguration = ValidationConfiguration.getExcludedEntriesConfiguration(project);
     final List<ProcessingItem> items = new ReadAction<List<ProcessingItem>>() {
+      @Override
       protected void run(final Result<List<ProcessingItem>> result) {
         final CompileScope compileScope = context.getCompileScope();
         if (!myValidator.isAvailableOnScope(compileScope)) return;
@@ -167,6 +172,7 @@ public class InspectionValidatorWrapper implements Validator {
     return items.toArray(new ProcessingItem[items.size()]);
   }
 
+  @Override
   public ProcessingItem[] process(final CompileContext context, final ProcessingItem[] items) {
     context.getProgressIndicator().setText(myValidator.getProgressIndicatorText());
 
@@ -307,7 +313,13 @@ public class InspectionValidatorWrapper implements Validator {
 
     final List<ExternalAnnotator> annotators = ExternalLanguageAnnotators.allForFile(StdLanguages.XML, xmlFile);
     for (ExternalAnnotator annotator : annotators) {
-      annotator.annotate(xmlFile, holder);
+      Object initial = annotator.collectInformation(xmlFile);
+      if (initial != null) {
+        Object result = annotator.doAnnotate(initial);
+        if (result != null) {
+          annotator.apply(xmlFile, result, holder);
+        }
+      }
     }
 
     if (!holder.hasAnnotations()) return Collections.emptyMap();
@@ -331,15 +343,18 @@ public class InspectionValidatorWrapper implements Validator {
   }
 
 
+  @Override
   @NotNull
   public String getDescription() {
     return myValidator.getDescription();
   }
 
+  @Override
   public boolean validateConfiguration(final CompileScope scope) {
     return true;
   }
 
+  @Override
   public ValidityState createValidityState(final DataInput in) throws IOException {
     return PsiElementsValidityState.load(in);
   }

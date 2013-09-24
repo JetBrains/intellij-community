@@ -124,7 +124,7 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
     SliceAnalysisParams params = handler.askForParams(element, dataFlowToThis, myStoredSettings, dialogTitle);
     if (params == null) return;
 
-    SliceRootNode rootNode = new SliceRootNode(myProject, new DuplicateMap(), createRootUsage(element, params));
+    SliceRootNode rootNode = new SliceRootNode(myProject, new DuplicateMap(), SliceUsage.createRootUsage(element, params));
 
     createToolWindow(dataFlowToThis, rootNode, false, getElementDescription(null, element, null));
   }
@@ -177,10 +177,6 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
     return "<html><head>" + UIUtil.getCssFontDeclaration(BaseLabel.getLabelFont()) + "</head><body>" +
            (prefix == null ? "" : prefix) + StringUtil.first(desc, 100, true)+(suffix == null ? "" : suffix) +
            "</body></html>";
-  }
-
-  public static SliceUsage createRootUsage(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) {
-    return new SliceUsage(element, params);
   }
 
   public void checkCanceled() throws ProcessCanceledException {

@@ -30,24 +30,6 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
   /**
-   * @deprecated use {@link ExternalAnnotator#collectInformation(PsiFile)} instead
-   */
-  @Nullable
-  @Deprecated
-  public InitialInfoType collectionInformation(@NotNull PsiFile file) {
-    return null;
-  }
-
-  /**
-   * @deprecated use {@link ExternalAnnotator#collectInformation(PsiFile, Editor, boolean)} instead
-   */
-  @Nullable
-  @Deprecated()
-  public InitialInfoType collectInformation(@NotNull PsiFile file, @NotNull Editor editor) {
-    return collectInformation(file);
-  }
-
-  /**
    * Collects initial information required for annotation. Expected to run within read action.
    * See {@link ExternalAnnotator#collectInformation(PsiFile, Editor, boolean)} for details.
    *
@@ -56,7 +38,7 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
    */
   @Nullable
   public InitialInfoType collectInformation(@NotNull PsiFile file) {
-    return collectionInformation(file);
+    return null;
   }
 
   /**
@@ -70,7 +52,7 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
    */
   @Nullable
   public InitialInfoType collectInformation(@NotNull PsiFile file, @NotNull Editor editor, boolean hasErrors) {
-    return hasErrors ? null : collectInformation(file, editor);
+    return hasErrors ? null : collectInformation(file);
   }
 
   /**
@@ -91,16 +73,5 @@ public abstract class ExternalAnnotator<InitialInfoType, AnnotationResultType> {
    * @param holder container which receives annotations
    */
   public void apply(@NotNull PsiFile file, AnnotationResultType annotationResult, @NotNull AnnotationHolder holder) {
-  }
-
-  /**
-   * Annotates the specified file.
-   *
-   * @param file   the file to annotate.
-   * @param holder the container which receives annotations created by the plugin.
-   */
-  // todo: adapt existing annotators to a new API
-  @Deprecated
-  public void annotate(PsiFile file, AnnotationHolder holder) {
   }
 }

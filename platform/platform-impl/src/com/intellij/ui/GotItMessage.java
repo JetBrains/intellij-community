@@ -41,11 +41,13 @@ public class GotItMessage {
                        @NotNull String message                       ) {
     myTitle = title;
     final String[] lines = message.split("\n");
-    if (lines.length > 1) {
-      myMessage = "<html><div align='center'>" + message.replace("\n", "<br>") + "</div></html>";
-    } else {
-      myMessage = message;
-    }
+
+    StringBuffer buf = new StringBuffer("<html><body><div align='center' style=\"font-family: ")
+      .append(UIUtil.getLabelFont().getFontName()).append("; ")
+      .append("font-size: 12pt;\">")
+      .append(lines.length > 1 ? message.replace("\n", "<br>") : message)
+      .append("</div></body></html>");
+    myMessage = buf.toString();
   }
 
   public static GotItMessage createMessage(@NotNull String title,
@@ -86,6 +88,7 @@ public class GotItMessage {
       .setHideOnFrameResize(false)
       .setHideOnKeyOutside(false)
       .setShowCallout(myShowCallout)
+      .setBlockClicksThroughBalloon(true)
       .createBalloon();
     panel.myButton.addMouseListener(new MouseAdapter() {
       @Override

@@ -11,6 +11,7 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="annotations" />
     <orderEntry type="module" module-name="projectModel-api" />
+    <orderEntry type="module" module-name="indexing-api" />
   </component>
 </module>
 

@@ -23,7 +23,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.slicer.SliceAnalysisParams;
 import com.intellij.slicer.SliceForwardHandler;
-import com.intellij.slicer.SliceManager;
 import com.intellij.slicer.SliceUsage;
 import com.intellij.util.containers.IntArrayList;
 import gnu.trove.TIntObjectHashMap;
@@ -49,7 +48,7 @@ public class SliceForwardTest extends DaemonAnalyzerTestCase {
     SliceAnalysisParams params = new SliceAnalysisParams();
     params.scope = new AnalysisScope(getProject());
     params.dataFlowToThis = false;
-    SliceUsage usage = SliceManager.createRootUsage(element, params);
+    SliceUsage usage = SliceUsage.createRootUsage(element, params);
     SliceBackwardTest.checkUsages(usage, false, myFlownOffsets);
   }
 

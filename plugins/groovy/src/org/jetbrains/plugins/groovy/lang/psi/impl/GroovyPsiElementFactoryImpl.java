@@ -16,6 +16,7 @@
 
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -570,7 +571,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   private GroovyFile createGroovyFileChecked(@NotNull CharSequence idText, boolean isPhysical, @Nullable PsiElement context) {
     final GroovyFileImpl file = createDummyFile(idText, isPhysical);
     if (ErrorUtil.containsError(file)) {
-      throw new IncorrectOperationException("cannot create file from text: " + idText);
+      LogMessageEx.error(LOG, "cannot create file from text", idText.toString());
     }
     file.setContext(context);
     return file;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class HtmlHighlightingLexer extends BaseHtmlLexer {
@@ -96,7 +97,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     registerHandler(XmlTokenType.XML_COMMENT_CHARACTERS,value);
   }
 
-  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     super.start(buffer, startOffset, endOffset, initialState);
 
     if ((initialState & EMBEDDED_LEXER_ON)!=0) {

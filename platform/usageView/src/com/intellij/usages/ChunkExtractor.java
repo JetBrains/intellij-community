@@ -298,13 +298,9 @@ public class ChunkExtractor {
     return attrs;
   }
 
-  private void appendPrefix(List<TextChunk> result, int lineNumber, int columnNumber) {
-    StringBuilder buffer = new StringBuilder("(");
-    buffer.append(lineNumber + 1);
-    buffer.append(": ");
-    buffer.append(columnNumber + 1);
-    buffer.append(") ");
-    TextChunk prefixChunk = new TextChunk(myColorsScheme.getAttributes(UsageTreeColors.USAGE_LOCATION), buffer.toString());
+  private void appendPrefix(@NotNull List<TextChunk> result, int lineNumber, int columnNumber) {
+    String prefix = "(" + (lineNumber + 1) + ": " + (columnNumber + 1) + ") ";
+    TextChunk prefixChunk = new TextChunk(myColorsScheme.getAttributes(UsageTreeColors.USAGE_LOCATION), prefix);
     result.add(prefixChunk);
   }
 }

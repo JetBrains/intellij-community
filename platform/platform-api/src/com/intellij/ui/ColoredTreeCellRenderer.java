@@ -44,6 +44,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
   protected JTree myTree;
 
   private boolean myOpaque = true;
+  @Override
   public final Component getTreeCellRendererComponent(
     JTree tree,
     Object value,
@@ -137,6 +138,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
     return myTree.hasFocus();
   }
 
+  @Override
   public void setOpaque(boolean isOpaque) {
     myOpaque = isOpaque;
     super.setOpaque(isOpaque);
@@ -157,6 +159,7 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
    * When the item is selected then we use default tree's selection foreground.
    * It guaranties readability of selected text in any LAF.
    */
+  @Override
   public void append(@NotNull @Nls String fragment, @NotNull SimpleTextAttributes attributes, boolean isMainText) {
     if (mySelected && isFocused()) {
       super.append(fragment, new SimpleTextAttributes(attributes.getStyle(), UIUtil.getTreeSelectionForeground()), isMainText);

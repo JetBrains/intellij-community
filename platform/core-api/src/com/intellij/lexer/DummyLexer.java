@@ -16,6 +16,7 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 public class DummyLexer extends LexerBase {
   private CharSequence myBuffer;
@@ -27,43 +28,55 @@ public class DummyLexer extends LexerBase {
     myTokenType = type;
   }
 
-  public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
+  @Override
+  public void start(@NotNull final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
     myBuffer = buffer;
     myStartOffset = startOffset;
     myEndOffset = endOffset;
   }
 
+  @NotNull
+  @Override
   public CharSequence getBufferSequence() {
     return myBuffer;
   }
 
+  @Override
   public int getState() {
     return 0;
   }
 
+  @Override
   public IElementType getTokenType() {
-    return (myStartOffset < myEndOffset ? myTokenType : null);
+    return myStartOffset < myEndOffset ? myTokenType : null;
   }
 
+  @Override
   public int getTokenStart() {
     return myStartOffset;
   }
 
+  @Override
   public int getTokenEnd() {
     return myEndOffset;
   }
 
+  @Override
   public void advance() {
     myStartOffset = myEndOffset;
   }
 
+  @NotNull
+  @Override
   public LexerPosition getCurrentPosition() {
     return new LexerPositionImpl(0, getState());
   }
 
-  public void restore(LexerPosition position) {
+  @Override
+  public void restore(@NotNull LexerPosition position) {
   }
 
+  @Override
   public int getBufferEnd() {
     return myEndOffset;
   }

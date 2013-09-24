@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.resolve.graphInference.constraints.CheckedExceptionCompatibilityConstraint;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ExpressionCompatibilityConstraint;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeCompatibilityConstraint;
@@ -40,13 +41,16 @@ public class InferenceSession {
 
   private Map<PsiTypeParameter, InferenceVariable> myInferenceVariables = new LinkedHashMap<PsiTypeParameter, InferenceVariable>();
   private final List<ConstraintFormula> myConstraints = new ArrayList<ConstraintFormula>();
-  private final List<ConstraintFormula> myDelayedConstraints = new ArrayList<ConstraintFormula>();
 
   private PsiSubstitutor mySiteSubstitutor;
   private PsiManager myManager;
   private int myConstraintIdx = 0;
 
   private final InferenceIncorporationPhase myIncorporationPhase = new InferenceIncorporationPhase(this);
+
+  public InferenceSession(PsiSubstitutor siteSubstitutor) {
+    mySiteSubstitutor = siteSubstitutor;
+  }
 
   public InferenceSession(PsiTypeParameter[] typeParams,
                           PsiType[] leftTypes, 
@@ -80,6 +84,7 @@ public class InferenceSession {
         PsiType parameterType = getParameterType(parameters, args, i, mySiteSubstitutor);
         if (args[i] != null) {
           myConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
+          //myConstraints.add(new CheckedExceptionCompatibilityConstraint(args[i], parameterType));
         }
       }
     }
@@ -275,7 +280,7 @@ public class InferenceSession {
     List<ConstraintFormula> newConstraints = new ArrayList<ConstraintFormula>();
     for (int i = myConstraintIdx; i < myConstraints.size(); i++) {
       ConstraintFormula constraint = myConstraints.get(i);
-      if (!constraint.reduce(this, newConstraints, myDelayedConstraints)) {
+      if (!constraint.reduce(this, newConstraints)) {
         return false;
       }
     }
@@ -383,5 +388,21 @@ public class InferenceSession {
 
   public Collection<PsiTypeParameter> getTypeParams() {
     return myInferenceVariables.keySet();
+  }
+
+  public void addVariable(PsiTypeParameter typeParameter, final PsiType parameter) {
+    InferenceVariable variable = new InferenceVariable(typeParameter);
+    if (parameter instanceof PsiWildcardType) {
+      PsiType bound = ((PsiWildcardType)parameter).getBound();
+      if (bound != null) {
+        variable.addBound(bound, ((PsiWildcardType)parameter).isExtends() ? InferenceBound.UPPER : InferenceBound.LOWER);
+      } else {
+        variable.addBound(PsiType.getJavaLangObject(typeParameter.getManager(), parameter.getResolveScope()),
+                          InferenceBound.UPPER);
+      }
+    } else {
+      variable.addBound(parameter, InferenceBound.EQ);
+    }
+    myInferenceVariables.put(typeParameter, variable);
   }
 }
