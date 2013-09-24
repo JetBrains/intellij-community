@@ -235,4 +235,9 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
       }
     }
   }
+
+  @Override
+  public <B extends XLineBreakpoint<?>> List<XBreakpointGroupingRule<B, ?>> getGroupingByFileRuleAsList() {
+    return Collections.<XBreakpointGroupingRule<B, ?>>singletonList(this.<B>getGroupingByFileRule());
+  }
 }

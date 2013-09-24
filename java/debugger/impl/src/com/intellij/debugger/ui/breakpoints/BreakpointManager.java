@@ -977,7 +977,6 @@ public class BreakpointManager implements JDOMExternalizable {
   public void removeBreakpointManagerListener(@NotNull BreakpointManagerListener listener) {
     myDispatcher.removeListener(listener);
   }
-
   
   private boolean myAllowMulticasting = true;
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
