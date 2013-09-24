@@ -70,6 +70,7 @@ public abstract class XLineBreakpointType<P extends XBreakpointProperties> exten
   @Nullable
   public abstract P createBreakpointProperties(@NotNull VirtualFile file, int line);
 
+  @Override
   public String getDisplayText(final XLineBreakpoint<P> breakpoint) {
     return fileLineDisplayText(breakpoint.getPresentableFilePath(), breakpoint.getLine());
   }
