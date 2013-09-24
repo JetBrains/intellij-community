@@ -89,7 +89,7 @@ public class HighlightInfo implements Segment {
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
 
   private GutterMark gutterIconRenderer;
-  private ProblemGroup myProblemGroup;
+  private final ProblemGroup myProblemGroup;
 
   private volatile byte myFlags; // bit packed flags below:
   private static final int BIJECTIVE_FLAG = 0;
@@ -104,7 +104,7 @@ public class HighlightInfo implements Segment {
     return new ProperTextRange(fixStartOffset, fixEndOffset);
   }
 
-  public void setFromInjection(boolean fromInjection) {
+  void setFromInjection(boolean fromInjection) {
     setFlag(FROM_INJECTION_FLAG, fromInjection);
   }
 
@@ -149,15 +149,15 @@ public class HighlightInfo implements Segment {
     myFlags = (byte)(myFlags & ~(1 << flag) | state << flag);
   }
 
-  public boolean isFileLevelAnnotation() {
+  boolean isFileLevelAnnotation() {
     return isFlagSet(FILE_LEVEL_ANNOTATION_FLAG);
   }
 
-  public boolean isBijective() {
+  boolean isBijective() {
     return isFlagSet(BIJECTIVE_FLAG);
   }
 
-  public void setBijective(boolean bijective) {
+  void setBijective(boolean bijective) {
     setFlag(BIJECTIVE_FLAG, bijective);
   }
 
@@ -275,7 +275,9 @@ public class HighlightInfo implements Segment {
                 boolean afterEndOfLine,
                 @Nullable Boolean needsUpdateOnTyping,
                 boolean isFileLevelAnnotation,
-                int navigationShift) {
+                int navigationShift,
+                ProblemGroup problemGroup,
+                GutterMark gutterIconRenderer) {
     if (startOffset < 0 || startOffset > endOffset) {
       LOG.error("Incorrect highlightInfo bounds. description="+escapedDescription+"; startOffset="+startOffset+"; endOffset="+endOffset+";type="+type);
     }
@@ -294,6 +296,8 @@ public class HighlightInfo implements Segment {
     setFlag(NEEDS_UPDATE_ON_TYPING_FLAG, calcNeedUpdateOnTyping(needsUpdateOnTyping, type));
     setFlag(FILE_LEVEL_ANNOTATION_FLAG, isFileLevelAnnotation);
     this.navigationShift = navigationShift;
+    myProblemGroup = problemGroup;
+    this.gutterIconRenderer = gutterIconRenderer;
   }
 
   private static boolean calcNeedUpdateOnTyping(@Nullable Boolean needsUpdateOnTyping, HighlightInfoType type) {
@@ -381,7 +385,7 @@ public class HighlightInfo implements Segment {
     return new B(type);
   }
 
-  public void setGroup(int group) {
+  void setGroup(int group) {
     this.group = group;
   }
 
@@ -394,7 +398,7 @@ public class HighlightInfo implements Segment {
     @NotNull Builder range(int start, int end);
 
     @NotNull Builder gutterIconRenderer(@NotNull GutterIconRenderer gutterIconRenderer);
-    @NotNull Builder problemGroup(@NotNull String problemGroup);
+    @NotNull Builder problemGroup(@NotNull ProblemGroup problemGroup);
 
     // only one allowed
     @NotNull Builder description(@NotNull String description);
@@ -421,7 +425,7 @@ public class HighlightInfo implements Segment {
     HighlightInfo createUnconditionally();
   }
 
-  public static boolean isAcceptedByFilters(@NotNull HighlightInfo info, @Nullable PsiElement psiElement) {
+  private static boolean isAcceptedByFilters(@NotNull HighlightInfo info, @Nullable PsiElement psiElement) {
     PsiFile file = psiElement == null ? null : psiElement.getContainingFile();
     for (HighlightInfoFilter filter : FILTERS) {
       if (!filter.accept(info, file)) {
@@ -449,7 +453,7 @@ public class HighlightInfo implements Segment {
     private int navigationShift = 0;
 
     private GutterIconRenderer gutterIconRenderer;
-    private String problemGroup;
+    private ProblemGroup problemGroup;
     private PsiElement psiElement;
 
     public B(@NotNull HighlightInfoType type) {
@@ -466,7 +470,7 @@ public class HighlightInfo implements Segment {
 
     @NotNull
     @Override
-    public Builder problemGroup(@NotNull String problemGroup) {
+    public Builder problemGroup(@NotNull ProblemGroup problemGroup) {
       assert this.problemGroup == null : "problemGroup already set";
       this.problemGroup = problemGroup;
       return this;
@@ -601,7 +605,7 @@ public class HighlightInfo implements Segment {
     public HighlightInfo create() {
       HighlightInfo info = createUnconditionally();
       LOG.assertTrue(psiElement != null || severity == HighlightInfoType.SYMBOL_TYPE_SEVERITY || severity == HighlightInfoType.INJECTED_FRAGMENT_SEVERITY || ArrayUtilRt.find(HighlightSeverity.DEFAULT_SEVERITIES, severity) != -1,
-                     "Custom type demands element to detect its text attributes");
+                     "Custom type requires not-null element to detect its text attributes");
 
       if (!isAcceptedByFilters(info, psiElement)) return null;
 
@@ -616,7 +620,8 @@ public class HighlightInfo implements Segment {
       }
 
       return new HighlightInfo(forcedTextAttributes, forcedTextAttributesKey, type, startOffset, endOffset, escapedDescription,
-                        escapedToolTip, severity, isAfterEndOfLine, myNeedsUpdateOnTyping, isFileLevelAnnotation, navigationShift);
+                               escapedToolTip, severity, isAfterEndOfLine, myNeedsUpdateOnTyping, isFileLevelAnnotation, navigationShift,
+                               problemGroup, gutterIconRenderer);
     }
   }
 
@@ -624,17 +629,9 @@ public class HighlightInfo implements Segment {
     return gutterIconRenderer;
   }
 
-  public void setGutterIconRenderer(final GutterMark gutterIconRenderer) {
-    this.gutterIconRenderer = gutterIconRenderer;
-  }
-
   @Nullable
   public ProblemGroup getProblemGroup() {
     return myProblemGroup;
-  }
-
-  public void setProblemGroup(@Nullable ProblemGroup problemGroup) {
-    myProblemGroup = problemGroup;
   }
 
   @NotNull
@@ -652,9 +649,7 @@ public class HighlightInfo implements Segment {
                                            fixedRange != null? fixedRange.getEndOffset() : annotation.getEndOffset(),
                                            annotation.getMessage(), annotation.getTooltip(),
                                            annotation.getSeverity(), annotation.isAfterEndOfLine(), annotation.needsUpdateOnTyping(), annotation.isFileLevelAnnotation(),
-                                           0);
-    info.setGutterIconRenderer(annotation.getGutterIconRenderer());
-    info.setProblemGroup(annotation.getProblemGroup());
+                                           0, annotation.getProblemGroup(), annotation.getGutterIconRenderer());
     appendFixes(fixedRange, info, batchMode ? annotation.getBatchFixes() : annotation.getQuickFixes());
     return info;
   }
@@ -710,7 +705,7 @@ public class HighlightInfo implements Segment {
     return isFlagSet(HAS_HINT_FLAG);
   }
 
-  public void setHint(final boolean hasHint) {
+  void setHint(final boolean hasHint) {
     setFlag(HAS_HINT_FLAG, hasHint);
   }
 
@@ -722,10 +717,6 @@ public class HighlightInfo implements Segment {
     RangeHighlighterEx h = highlighter;
     return h == null || !h.isValid() ? endOffset : h.getEndOffset();
   }
-
-  //public void setCustomColorScheme(@Nullable final EditorColorsScheme customColorScheme) {
-  //  myCustomColorScheme = customColorScheme;
-  //}
 
   public static class IntentionActionDescriptor {
     private final IntentionAction myAction;
@@ -882,11 +873,11 @@ public class HighlightInfo implements Segment {
     return getActualEndOffset();
   }
 
-  public int getGroup() {
+  int getGroup() {
     return group;
   }
 
-  public boolean isFromInjection() {
+  boolean isFromInjection() {
     return isFlagSet(FROM_INJECTION_FLAG);
   }
 

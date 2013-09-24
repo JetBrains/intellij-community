@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -437,13 +435,17 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     final HighlightSeverity severity = highlightInfoType.getSeverity(psiElement);
     TextAttributes attributes = mySeverityRegistrar.getTextAttributesBySeverity(severity);
-    HighlightInfo highlightInfo = new HighlightInfo(attributes, null, highlightInfoType, textRange.getStartOffset(), textRange.getEndOffset(), message, toolTip,
-                                                    severity, problemDescriptor.isAfterEndOfLine(), null, isFileLevel, 0);
-    if (!HighlightInfo.isAcceptedByFilters(highlightInfo, psiElement)) {
-      return null;
-    }
-    highlightInfo.setProblemGroup(problemDescriptor.getProblemGroup());
-    return highlightInfo;
+    HighlightInfo.Builder b = HighlightInfo.newHighlightInfo(highlightInfoType)
+                              .range(psiElement, textRange.getStartOffset(), textRange.getEndOffset())
+                              .description(message)
+                              .severity(severity);
+    if (toolTip != null) b.escapedToolTip(toolTip);
+    if (attributes != null) b.textAttributes(attributes);
+    if (problemDescriptor.isAfterEndOfLine()) b.endOfLine();
+    if (isFileLevel) b.fileLevelAnnotation();
+    if (problemDescriptor.getProblemGroup() != null) b.problemGroup(problemDescriptor.getProblemGroup());
+
+    return b.create();
   }
 
   private final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<TextRange, RangeMarker>();
