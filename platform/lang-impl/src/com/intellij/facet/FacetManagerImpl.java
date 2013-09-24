@@ -31,6 +31,7 @@ import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.messages.MessageBus;
@@ -169,20 +170,20 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     for (FacetState child : facetStates) {
       final String typeId = child.getFacetType();
       if (typeId == null) {
-        addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.facet.type.isn.t.specified"));
+        addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.facet.type.isn.t.specified"), null);
         continue;
       }
 
       final FacetType<?,?> type = myFacetTypeRegistry.findFacetType(typeId);
       if (type == null) {
-        addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.unknown.facet.type.0", typeId));
+        addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.unknown.facet.type.0", typeId), typeId);
         continue;
       }
 
       ModuleType moduleType = ModuleType.get(myModule);
       if (!type.isSuitableModuleType(moduleType)) {
         addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.0.facets.are.not.allowed.in.1",
-                                                                      type.getPresentableName(), moduleType.getName()));
+                                                                      type.getPresentableName(), moduleType.getName()), null);
         continue;
       }
 
@@ -191,7 +192,8 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       if (underlyingTypeId != null) {
         expectedUnderlyingType = myFacetTypeRegistry.findFacetType(underlyingTypeId);
         if (expectedUnderlyingType == null) {
-          addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.cannot.find.underlying.facet.type.for.0", typeId));
+          addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.cannot.find.underlying.facet.type.for.0", typeId),
+                          underlyingTypeId.toString());
           continue;
         }
       }
@@ -200,13 +202,14 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
         if (!expectedUnderlyingType.equals(actualUnderlyingType)) {
           addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.0.facet.must.be.placed.under.1.facet",
                                                                         type.getPresentableName(),
-                                                                        expectedUnderlyingType.getPresentableName()));
+                                                                        expectedUnderlyingType.getPresentableName()), null);
           continue;
         }
       }
       else if (actualUnderlyingType != null) {
         addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.0.cannot.be.placed.under.1",
-                                                                      type.getPresentableName(), actualUnderlyingType.getPresentableName()));
+                                                                      type.getPresentableName(), actualUnderlyingType.getPresentableName()),
+                        null);
         continue;
       }
 
@@ -215,12 +218,17 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       }
       catch (InvalidDataException e) {
         LOG.info(e);
-        addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.cannot.load.facet.condiguration.0", e.getMessage()));
+        addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.cannot.load.facet.condiguration.0", e.getMessage()),
+                        null);
       }
     }
   }
 
-  private void addInvalidFacet(final FacetState state, ModifiableFacetModel model, final Facet underlyingFacet, final String errorMessage) {
+  private void addInvalidFacet(final FacetState state,
+                               ModifiableFacetModel model,
+                               final Facet underlyingFacet,
+                               final String errorMessage,
+                               @Nullable final String typeId) {
     final InvalidFacetManager invalidFacetManager = InvalidFacetManager.getInstance(myModule.getProject());
     final InvalidFacetType type = InvalidFacetType.getInstance();
     final InvalidFacetConfiguration configuration = new InvalidFacetConfiguration(state, errorMessage);
@@ -229,6 +237,9 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     if (!invalidFacetManager.isIgnored(facet)) {
       FacetLoadingErrorDescription description = new FacetLoadingErrorDescription(facet);
       ProjectLoadingErrorsNotifier.getInstance(myModule.getProject()).registerError(description);
+      if (typeId != null) {
+        UnknownFeaturesCollector.getInstance(myModule.getProject()).registerUnknownFeature("com.intellij.facetType", typeId);
+      }
     }
   }
 
