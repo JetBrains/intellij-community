@@ -811,6 +811,41 @@ binding.setVariable("buildModulesAndCollectUsedJars", { List modules, List appro
   return usedJars
 })
 
+binding.setVariable("buildSearchableOptions", { String target, List licenses, Closure cp, String jvmArgs = null,
+                                                def paths = getProperty("paths") ->
+  projectBuilder.stage("Building searchable options")
+
+  String targetFile = "${target}/searchableOptions.xml"
+  ant.delete(file: targetFile)
+
+  licenses.each {
+    ant.copy(file: it, todir: paths.ideaSystem)
+  }
+
+  ant.path(id: "searchable.options.classpath") { cp() }
+  String classpathFile = "${paths.sandbox}/classpath.txt"
+  ant.echo(file: classpathFile, append: false, message: "\${toString:searchable.options.classpath}")
+  ant.replace(file: classpathFile, token: File.pathSeparator, value: "\n")
+
+  ant.java(classname: "com.intellij.rt.execution.CommandLineWrapper", fork: true, failonerror: true) {
+    jvmarg(line: "-Xbootclasspath/a:${projectBuilder.moduleOutput(findModule("boot"))} -ea -Xmx500m -XX:MaxPermSize=200m")
+    jvmarg(line: "-Didea.home.path=$home -Didea.system.path=${paths.ideaSystem} -Didea.config.path=${paths.ideaConfig}")
+    if (jvmArgs != null) {
+      jvmarg(line: jvmArgs)
+    }
+
+    arg(line: "${classpathFile} com.intellij.idea.Main traverseUI ${target}/searchableOptions.xml")
+
+    classpath() {
+      pathelement(location: "${projectBuilder.moduleOutput(findModule("java-runtime"))}")
+    }
+  }
+
+  ant.available(file: targetFile, property: "searchable.options.exists");
+  ant.fail(unless: "searchable.options.exists", message: "Searchable options were not built.")
+})
+
+
 binding.setVariable("additionalCompilation", {->
   projectBuilder.stage("- additionalCompilationStep -")
   if (isDefined("additionalCompilationStep")) {
