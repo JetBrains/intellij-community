@@ -50,25 +50,14 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   public static final ExtensionPointName<XBreakpointType> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.xdebugger.breakpointType");
   private final @NonNls @NotNull String myId;
   private final @Nls @NotNull String myTitle;
-  private final boolean mySuspendThreadSupported;
 
   /**
    * @param id an unique id of breakpoint type
    * @param title title of tab in the breakpoints dialog
    */
   protected XBreakpointType(@NonNls @NotNull final String id, @Nls @NotNull final String title) {
-    this(id, title, false);
-  }
-
-  /**
-   * @param id an unique id of breakpoint type
-   * @param title title of tab in the breakpoints dialog
-   * @param suspendThreadSupported <code>true</code> if suspending only one thread is supported for this type of breakpoints
-   */
-  protected XBreakpointType(@NonNls @NotNull final String id, @Nls @NotNull final String title, boolean suspendThreadSupported) {
     myId = id;
     myTitle = title;
-    mySuspendThreadSupported = suspendThreadSupported;
   }
 
   @Nullable
@@ -76,8 +65,11 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return null;
   }
 
-  public final boolean isSuspendThreadSupported() {
-    return mySuspendThreadSupported;
+  /**
+   * @return {@code true} if suspending only one thread is supported
+   */
+  public boolean isSuspendThreadSupported() {
+    return false;
   }
 
   @NotNull

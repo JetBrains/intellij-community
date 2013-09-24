@@ -32,15 +32,22 @@ public class JavaBreakpointType extends XLineBreakpointTypeBase {
   @Override
   public boolean canPutAt(@NotNull final VirtualFile file, final int line, @NotNull Project project) {
     if (SystemProperties.getBooleanProperty("java.debugger.xBreakpoint", false)) {
+      boolean result = doCanPutAt(PsiManager.getInstance(project).findFile(file));
+
       // todo now applicable only if modules has facets, remove this check when java xbreakpoint will work
-      if (SystemProperties.getBooleanProperty("java.debugger.xBreakpoint.onlyIfHasFacets", false)) {
+      if (result && SystemProperties.getBooleanProperty("java.debugger.xBreakpoint.onlyIfHasFacets", false)) {
         Module module = ModuleUtilCore.findModuleForFile(file, project);
         return module != null && FacetManager.getInstance(module).getAllFacets().length > 0;
       }
 
-      return doCanPutAt(PsiManager.getInstance(project).findFile(file));
+      return result;
     }
     return false;
+  }
+
+  @Override
+  public boolean isSuspendThreadSupported() {
+    return true;
   }
 
   @Override

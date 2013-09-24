@@ -22,15 +22,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * Created by IntelliJ IDEA.
- * User: zajac
- * Date: 16.06.11
- * Time: 19:21
- * To change this template use File | Settings | File Templates.
- */
 public abstract class XBreakpointPropertiesSubPanel<B extends XBreakpoint<?>> {
-
   protected Project myProject;
   protected XBreakpointManager myBreakpointManager;
   protected B myBreakpoint;

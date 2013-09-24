@@ -19,32 +19,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.HashMap;
-import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: zajac
- * Date: 16.06.11
- * Time: 17:40
- * To change this template use File | Settings | File Templates.
- */
 public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPropertiesSubPanel<B> {
-
-  private JPanel mySuspendPolicyPanel;
   private JCheckBox mySuspendCheckBox;
   private JRadioButton mySuspendAllRadioButton;
   private JRadioButton mySuspendThreadRadioButton;
-  private JRadioButton mySuspendNoneRadioButton;
+
   private JPanel myContentPane;
-  private Map<SuspendPolicy, JRadioButton> mySuspendRadioButtons;
 
   public interface Delegate {
     void showMoreOptionsIfNeeded();
@@ -52,57 +38,72 @@ public class XSuspendPolicyPanel<B extends XBreakpoint<?>> extends XBreakpointPr
 
   private Delegate myDelegate;
 
+  @Override
   public void init(Project project, final XBreakpointManager breakpointManager, @NotNull B breakpoint) {
     super.init(project, breakpointManager, breakpoint);
-    mySuspendRadioButtons = new HashMap<SuspendPolicy, JRadioButton>();
-    mySuspendRadioButtons.put(SuspendPolicy.ALL, mySuspendAllRadioButton);
-    mySuspendRadioButtons.put(SuspendPolicy.THREAD, mySuspendThreadRadioButton);
-    mySuspendRadioButtons.put(SuspendPolicy.NONE, mySuspendNoneRadioButton);
-    @NonNls String card = myBreakpointType.isSuspendThreadSupported() ? "radioButtons" : "checkbox";
-    ((CardLayout)mySuspendPolicyPanel.getLayout()).show(mySuspendPolicyPanel, card);
 
     mySuspendCheckBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent actionEvent) {
-        if (myDelegate != null && !mySuspendCheckBox.isSelected()) {
+        boolean selected = mySuspendCheckBox.isSelected();
+
+        if (myBreakpoint.getType().isSuspendThreadSupported()) {
+          changeEnableState(selected);
+        }
+
+        if (myDelegate != null && !selected) {
           myDelegate.showMoreOptionsIfNeeded();
         }
       }
     });
   }
 
+  private void changeEnableState(boolean selected) {
+    mySuspendAllRadioButton.setEnabled(selected);
+    mySuspendThreadRadioButton.setEnabled(selected);
+  }
+
+  private void changeVisibleState(boolean suspendThreadSupported) {
+    mySuspendAllRadioButton.setVisible(suspendThreadSupported);
+    mySuspendThreadRadioButton.setVisible(suspendThreadSupported);
+  }
+
   @Override
   public boolean lightVariant(boolean showAllOptions) {
-    mySuspendPolicyPanel.setBorder(null);
+    myContentPane.setBorder(null);
     return false;
   }
 
   @Override
   void loadProperties() {
     SuspendPolicy suspendPolicy = myBreakpoint.getSuspendPolicy();
-    mySuspendRadioButtons.get(suspendPolicy).setSelected(true);
-    final boolean selected = suspendPolicy != SuspendPolicy.NONE;
+    boolean selected = suspendPolicy != SuspendPolicy.NONE;
+    boolean suspendThreadSupported = myBreakpoint.getType().isSuspendThreadSupported();
+
+    changeVisibleState(suspendThreadSupported);
+    if (suspendThreadSupported) {
+      mySuspendAllRadioButton.setSelected(suspendPolicy == SuspendPolicy.ALL);
+      mySuspendThreadRadioButton.setSelected(suspendPolicy == SuspendPolicy.THREAD);
+      changeEnableState(selected);
+    }
+
     mySuspendCheckBox.setSelected(selected);
-    if (!selected) {
-      if (myDelegate != null) {
-        myDelegate.showMoreOptionsIfNeeded();
-      }
+    if (!selected && myDelegate != null) {
+      myDelegate.showMoreOptionsIfNeeded();
     }
   }
 
   private SuspendPolicy getConfiguredSuspendPolicy() {
-    if (!myBreakpoint.getType().isSuspendThreadSupported()) {
-      return mySuspendCheckBox.isSelected() ? SuspendPolicy.ALL : SuspendPolicy.NONE;
+    if (!mySuspendCheckBox.isSelected()) {
+      return SuspendPolicy.NONE;
     }
-
-    for (SuspendPolicy policy : mySuspendRadioButtons.keySet()) {
-      if (mySuspendRadioButtons.get(policy).isSelected()) {
-        return policy;
-      }
+    else if (myBreakpoint.getType().isSuspendThreadSupported()) {
+      return mySuspendAllRadioButton.isSelected() ? SuspendPolicy.ALL : SuspendPolicy.THREAD;
     }
-    return SuspendPolicy.ALL;
+    else {
+      return SuspendPolicy.ALL;
+    }
   }
-
 
   @Override
   void saveProperties() {
