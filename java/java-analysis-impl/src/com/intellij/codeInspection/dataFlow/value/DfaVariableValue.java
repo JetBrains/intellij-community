@@ -74,9 +74,6 @@ public class DfaVariableValue extends DfaValue {
       return value.myDependents;
     }
 
-    public Iterable<? extends DfaVariableValue> getAllVariables() {
-      return myExistingVars.values();
-    }
   }
 
   private final PsiModifierListOwner myVariable;

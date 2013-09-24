@@ -792,11 +792,18 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public void flushFields(DfaVariableValue[] fields) {
-    for (DfaVariableValue value : myFactory.getVarFactory().getAllVariables()) {
-      if (myVariableStates.containsKey(value) || getEqClassIndex(value) >= 0) {
-        if (value.isFlushableByCalls()) {
-          doFlush(value, true);
+    for (EqClass aClass : myEqClasses) {
+      if (aClass != null) {
+        for (DfaVariableValue value : aClass.getVariables()) {
+          if (value.isFlushableByCalls()) {
+            doFlush(value, true);
+          }
         }
+      }
+    }
+    for (DfaVariableValue value : new ArrayList<DfaVariableValue>(myVariableStates.keySet())) {
+      if (value.isFlushableByCalls()) {
+        doFlush(value, true);
       }
     }
   }
