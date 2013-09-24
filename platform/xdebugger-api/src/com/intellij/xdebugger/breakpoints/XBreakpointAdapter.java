@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public abstract class XBreakpointAdapter<B extends XBreakpoint<?>> implements XBreakpointListener<B>{
+public abstract class XBreakpointAdapter<B extends XBreakpoint<?>> implements XBreakpointListener<B> {
   @Override
   public void breakpointAdded(@NotNull final B breakpoint) {
   }

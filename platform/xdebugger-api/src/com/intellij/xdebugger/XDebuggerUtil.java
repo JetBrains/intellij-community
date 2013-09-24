@@ -50,6 +50,7 @@ public abstract class XDebuggerUtil {
                                             @NotNull VirtualFile file,
                                             int line,
                                             boolean temporary);
+
   public abstract boolean canPutBreakpointAt(@NotNull Project project, @NotNull VirtualFile file, int line);
 
   public <P extends XBreakpointProperties> void toggleLineBreakpoint(@NotNull Project project, @NotNull XLineBreakpointType<P> type,

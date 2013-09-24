@@ -53,6 +53,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
@@ -298,7 +299,8 @@ public class BreakpointManager implements JDOMExternalizable {
                 return;
               }
 
-              if (XDebuggerUtil.getInstance().canPutBreakpointAt(myProject, FileDocumentManager.getInstance().getFile(document), line)) {
+              VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+              if (file != null && XDebuggerUtil.getInstance().canPutBreakpointAt(myProject, file, line)) {
                 return;
               }
               e.consume();
@@ -346,6 +348,7 @@ public class BreakpointManager implements JDOMExternalizable {
       @Override
       public void documentChanged(@NotNull final DocumentEvent e) {
         final Document document = e.getDocument();
+        //noinspection SynchronizeOnThis
         synchronized (BreakpointManager.this) {
           List<BreakpointWithHighlighter> breakpoints = myDocumentBreakpoints.get(document);
 
@@ -374,8 +377,7 @@ public class BreakpointManager implements JDOMExternalizable {
     DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
       @Override
       public void run() {
-        final GutterIconRenderer renderer =
-          (GutterIconRenderer)((BreakpointWithHighlighter)breakpoint).getHighlighter().getGutterIconRenderer();
+        final GutterIconRenderer renderer = ((BreakpointWithHighlighter)breakpoint).getHighlighter().getGutterIconRenderer();
         if (renderer != null) {
           DebuggerSupport.getDebuggerSupport(JavaDebuggerSupport.class).getEditBreakpointAction()
             .editBreakpoint(myProject, editor, breakpoint, renderer);
@@ -539,6 +541,7 @@ public class BreakpointManager implements JDOMExternalizable {
     for (final Breakpoint breakpoint : getBreakpoints()) {
       if (breakpoint instanceof BreakpointWithHighlighter && ((BreakpointWithHighlighter)breakpoint).isAt(document, offset)) {
         if (category == null || category.equals(breakpoint.getCategory())) {
+          //noinspection CastConflictsWithInstanceof,unchecked
           return (T)breakpoint;
         }
       }
@@ -662,18 +665,15 @@ public class BreakpointManager implements JDOMExternalizable {
   public synchronized void addBreakpoint(Breakpoint breakpoint) {
     myBreakpoints.add(breakpoint);
     myBreakpointsListForIteration = null;
-    if(breakpoint instanceof BreakpointWithHighlighter) {
+    if (breakpoint instanceof BreakpointWithHighlighter) {
       BreakpointWithHighlighter breakpointWithHighlighter = (BreakpointWithHighlighter)breakpoint;
       Document document = breakpointWithHighlighter.getDocument();
-      if(document != null) {
-        List<BreakpointWithHighlighter> breakpoints = myDocumentBreakpoints.get(document);
-
-        if(breakpoints == null) {
-          breakpoints = new ArrayList<BreakpointWithHighlighter>();
-          myDocumentBreakpoints.put(document, breakpoints);
-        }
-        breakpoints.add(breakpointWithHighlighter);
+      List<BreakpointWithHighlighter> breakpoints = myDocumentBreakpoints.get(document);
+      if (breakpoints == null) {
+        breakpoints = new ArrayList<BreakpointWithHighlighter>();
+        myDocumentBreakpoints.put(document, breakpoints);
       }
+      breakpoints.add(breakpointWithHighlighter);
     }
     myDispatcher.getMulticaster().breakpointsChanged();
   }
@@ -812,7 +812,7 @@ public class BreakpointManager implements JDOMExternalizable {
 
   /**
    * @return breakpoints of one of the category:
-   *         LINE_BREAKPOINTS, EXCEPTION_BREKPOINTS, FIELD_BREAKPOINTS, METHOD_BREAKPOINTS
+   *         LINE_BREAKPOINTS, EXCEPTION_BREAKPOINTS, FIELD_BREAKPOINTS, METHOD_BREAKPOINTS
    */
   public <T extends Breakpoint> Breakpoint[] getBreakpoints(@NotNull final Key<T> category) {
     ApplicationManager.getApplication().assertIsDispatchThread();

@@ -24,11 +24,11 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.actions.ThreadDumpAction;
+import com.intellij.debugger.engine.ContextUtil;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
-import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
@@ -82,6 +82,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     super(project, highlighter);
   }
 
+  @Override
   protected Icon getDisabledIcon(boolean isMuted) {
     final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
     if (isMuted) {
@@ -92,6 +93,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     }
   }
 
+  @Override
   protected Icon getSetIcon(boolean isMuted) {
     if (REMOVE_AFTER_HIT) {
       return isMuted ? AllIcons.Debugger.Db_muted_temporary_breakpoint : AllIcons.Debugger.Db_temporary_breakpoint;
@@ -99,10 +101,12 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     return isMuted? AllIcons.Debugger.Db_muted_breakpoint : AllIcons.Debugger.Db_set_breakpoint;
   }
 
+  @Override
   protected Icon getInvalidIcon(boolean isMuted) {
     return isMuted? AllIcons.Debugger.Db_muted_invalid_breakpoint : AllIcons.Debugger.Db_invalid_breakpoint;
   }
 
+  @Override
   protected Icon getVerifiedIcon(boolean isMuted) {
     if (REMOVE_AFTER_HIT) {
       return isMuted ? AllIcons.Debugger.Db_muted_temporary_breakpoint : AllIcons.Debugger.Db_temporary_breakpoint;
@@ -110,25 +114,30 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     return isMuted? AllIcons.Debugger.Db_muted_verified_breakpoint : AllIcons.Debugger.Db_verified_breakpoint;
   }
 
+  @Override
   protected Icon getVerifiedWarningsIcon(boolean isMuted) {
     return isMuted? AllIcons.Debugger.Db_muted_verified_warning_breakpoint : AllIcons.Debugger.Db_verified_warning_breakpoint;
   }
 
+  @Override
   public Key<LineBreakpoint> getCategory() {
     return CATEGORY;
   }
 
+  @Override
   protected void reload(PsiFile file) {
     super.reload(file);
     myMethodName = findMethodName(file, getHighlighter().getStartOffset());
   }
 
+  @Override
   protected void createOrWaitPrepare(DebugProcessImpl debugProcess, String classToBeLoaded) {
     if (isInScopeOf(debugProcess, classToBeLoaded)) {
       super.createOrWaitPrepare(debugProcess, classToBeLoaded);
     }
   }
 
+  @Override
   protected void createRequestForPreparedClass(final DebugProcessImpl debugProcess, final ReferenceType classType) {
     if (!isInScopeOf(debugProcess, classType.name())) {
       if (LOG.isDebugEnabled()) {
@@ -137,13 +146,13 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       return;
     }
     try {
-      List<Location> locs = debugProcess.getPositionManager().locationsOfLine(classType, getSourcePosition());
-      if (!locs.isEmpty()) {
-        for (Location loc : locs) {
+      List<Location> locations = debugProcess.getPositionManager().locationsOfLine(classType, getSourcePosition());
+      if (!locations.isEmpty()) {
+        for (Location loc : locations) {
           if (LOG.isDebugEnabled()) {
             LOG.debug("Found location [codeIndex=" + loc.codeIndex() +"] for reference type " + classType.name() + " at line " + getLineIndex() + "; isObsolete: " + (debugProcess.getVirtualMachineProxy().versionHigher("1.4") && loc.method().isObsolete()));
           }
-          BreakpointRequest request = debugProcess.getRequestsManager().createBreakpointRequest(LineBreakpoint.this, loc);
+          BreakpointRequest request = debugProcess.getRequestsManager().createBreakpointRequest(this, loc);
           debugProcess.getRequestsManager().enableRequest(request);
           if (LOG.isDebugEnabled()) {
             LOG.debug("Created breakpoint request for reference type " + classType.name() + " at line " + getLineIndex() + "; codeIndex=" + loc.codeIndex());
@@ -152,7 +161,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       }
       else {
         // there's no executable code in this class
-        debugProcess.getRequestsManager().setInvalid(LineBreakpoint.this, DebuggerBundle.message(
+        debugProcess.getRequestsManager().setInvalid(this, DebuggerBundle.message(
           "error.invalid.breakpoint.no.executable.code", (getLineIndex() + 1), classType.name())
         );
         if (LOG.isDebugEnabled()) {
@@ -176,7 +185,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       if (LOG.isDebugEnabled()) {
         LOG.debug("InvalidLineNumberException: " + ex.getMessage());
       }
-      debugProcess.getRequestsManager().setInvalid(LineBreakpoint.this, DebuggerBundle.message("error.invalid.breakpoint.bad.line.number"));
+      debugProcess.getRequestsManager().setInvalid(this, DebuggerBundle.message("error.invalid.breakpoint.bad.line.number"));
     }
     catch (InternalException ex) {
       LOG.info(ex);
@@ -251,6 +260,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     final int dollarIndex = className.indexOf("$");
     final String topLevelClassName = dollarIndex >= 0? className.substring(0, dollarIndex) : className;
     return ApplicationManager.getApplication().runReadAction(new Computable<Collection<VirtualFile>>() {
+      @Override
       @Nullable
       public Collection<VirtualFile> compute() {
         final PsiClass[] classes = JavaPsiFacade.getInstance(myProject).findClasses(topLevelClassName, scope);
@@ -292,6 +302,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     });
   }
 
+  @Override
   public boolean evaluateCondition(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
     if(CLASS_FILTERS_ENABLED){
       String className = null;
@@ -335,6 +346,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     return getDisplayInfoInternal(false, 30);
   }
 
+  @Override
   public String getDisplayName() {
     return getDisplayInfoInternal(true, -1);
   }
@@ -399,6 +411,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     }
     if (file instanceof PsiClassOwner) {
       return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        @Override
         public String compute() {
           final PsiMethod method = DebuggerUtilsEx.findPsiMethod(file, offset);
           return method != null? method.getName() + "()" : null;
@@ -408,9 +421,10 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     return null;
   }
 
+  @Override
   public String getEventMessage(LocatableEvent event) {
     final Location location = event.location();
-    String sourceName = "Unknown Source";
+    String sourceName;
     try {
       sourceName = location.sourceName();
     }
@@ -452,8 +466,9 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     }
   }
 
+  @Override
   public PsiElement getEvaluationElement() {
-    return PositionUtil.getContextElement(getSourcePosition());
+    return ContextUtil.getContextElement(getSourcePosition());
   }
 
   protected static LineBreakpoint create(Project project, Document document, int lineIndex) {
@@ -471,6 +486,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     return (LineBreakpoint)breakpoint.init();
   }
 
+  @Override
   public boolean canMoveTo(SourcePosition position) {
     if (!super.canMoveTo(position)) {
       return false;
@@ -493,6 +509,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
     final boolean[] canAdd = new boolean[]{false};
     XDebuggerUtil.getInstance().iterateLine(project, document, lineIndex, new Processor<PsiElement>() {
+      @Override
       public boolean process(PsiElement element) {
         if ((element instanceof PsiWhiteSpace) || (PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null)) {
           return true;
