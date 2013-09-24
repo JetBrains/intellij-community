@@ -59,7 +59,8 @@ public class PlatformUtils extends PlatformUtilsCore {
   }
 
   public static boolean isPyCharm() {
-    return PYCHARM_PREFIX.equals(getPlatformPrefix());
+    String prefix = getPlatformPrefix();
+    return PYCHARM_PREFIX.equals(prefix) || (prefix != null && prefix.startsWith(PYCHARM_PREFIX2));
   }
 
   public static boolean isPhpStorm() {
