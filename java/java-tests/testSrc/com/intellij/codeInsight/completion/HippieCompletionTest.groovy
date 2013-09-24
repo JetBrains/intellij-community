@@ -58,7 +58,41 @@ exp<caret>
 fooExpression
 exp<caret>
 '''
-    
+  }
+
+  public void "test words from javadoc"() {
+    myFixture.configureByText "a.java", '''
+/** some comment */
+com<caret>
+'''
+    complete()
+    myFixture.checkResult '''
+/** some comment */
+comment<caret>
+'''
+  }
+  
+  public void "test words from line comments"() {
+    myFixture.configureByText "a.java", '''
+// some comment2
+com<caret>
+'''
+    complete()
+    myFixture.checkResult '''
+// some comment2
+comment2<caret>
+'''
+  }
+  public void "test words from block comments"() {
+    myFixture.configureByText "a.java", '''
+/* some comment3 */
+com<caret>
+'''
+    complete()
+    myFixture.checkResult '''
+/* some comment3 */
+comment3<caret>
+'''
   }
 
   private void complete() {
