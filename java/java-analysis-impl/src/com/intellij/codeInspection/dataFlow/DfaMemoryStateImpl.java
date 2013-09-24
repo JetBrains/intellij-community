@@ -44,7 +44,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private final List<EqClass> myEqClasses;
   private final Stack<DfaValue> myStack;
-  private final TIntStack myOffsetStack;
+  private TIntStack myOffsetStack;
   private final TLongHashSet myDistinctClasses;
   private final Map<DfaVariableValue,DfaVariableState> myVariableStates;
   private final Map<DfaVariableValue,DfaVariableState> myDefaultVariableStates; 
@@ -70,7 +70,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myStack = new Stack<DfaValue>(toCopy.myStack);
     myDistinctClasses = new TLongHashSet(toCopy.myDistinctClasses.toArray());
     myUnknownVariables = new THashSet<DfaVariableValue>(toCopy.myUnknownVariables);
-    myOffsetStack = new TIntStack(toCopy.myOffsetStack);
+    myOffsetStack = toCopy.myOffsetStack;
 
     myEqClasses = ContainerUtil.newArrayList(toCopy.myEqClasses);
     myVariableStates = new THashMap<DfaVariableValue, DfaVariableState>(toCopy.myVariableStates);
@@ -195,11 +195,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   public int popOffset() {
+    myOffsetStack = new TIntStack(myOffsetStack);
     return myOffsetStack.pop();
   }
 
   @Override
   public void pushOffset(int offset) {
+    myOffsetStack = new TIntStack(myOffsetStack);
     myOffsetStack.push(offset);
   }
 
