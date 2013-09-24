@@ -74,7 +74,7 @@ public abstract class TokenSets {
       mDOLLAR_SLASH_REGEX_LITERAL
   );
 
-  public static final TokenSet BUILT_IN_TYPE = TokenSet.create(
+  public static final TokenSet BUILT_IN_TYPES = TokenSet.create(
       kVOID,
       kBOOLEAN,
       kBYTE,
@@ -217,4 +217,10 @@ public abstract class TokenSets {
   public static final TokenSet CODE_REFERENCE_ELEMENT_NAME_TOKENS = TokenSet.create(mIDENT, kDEF,  kIN, kAS);
 
   public static final TokenSet BLOCK_SET = TokenSet.create(CLOSABLE_BLOCK, BLOCK_STATEMENT, CONSTRUCTOR_BODY, OPEN_BLOCK, ENUM_BODY, CLASS_BODY);
+  public static final TokenSet METHOD_DEFS = TokenSet.create(METHOD_DEFINITION, CONSTRUCTOR_DEFINITION, ANNOTATION_METHOD);
+  public static final TokenSet VARIABLES = TokenSet.create(VARIABLE, FIELD);
+  public static final TokenSet TYPE_ELEMENTS = TokenSet.create(CLASS_TYPE_ELEMENT, ARRAY_TYPE, BUILT_IN_TYPE, TYPE_ARGUMENT, DISJUNCTION_TYPE_ELEMENT);
+
+
+  public static final TokenSet TYPE_DEFINITIONS = TokenSet.create(CLASS_DEFINITION, ENUM_DEFINITION, INTERFACE_DEFINITION, ANNOTATION_DEFINITION);
 }

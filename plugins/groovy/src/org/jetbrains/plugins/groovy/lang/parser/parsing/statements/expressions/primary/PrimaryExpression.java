@@ -43,7 +43,7 @@ public class PrimaryExpression implements GroovyElementTypes {
   public static IElementType parsePrimaryExpression(PsiBuilder builder, GroovyParser parser, boolean literalsAsRefExprs) {
 
     final IElementType tokenType = builder.getTokenType();
-    if (TokenSets.BUILT_IN_TYPE.contains(tokenType)) {
+    if (TokenSets.BUILT_IN_TYPES.contains(tokenType)) {
       ParserUtils.eatElement(builder, BUILT_IN_TYPE_EXPRESSION);
       return BUILT_IN_TYPE_EXPRESSION;
     }
@@ -110,7 +110,7 @@ public class PrimaryExpression implements GroovyElementTypes {
     ParserUtils.getToken(builder, mNLS);
     PsiBuilder.Marker rb = builder.mark();
     TypeArguments.parseTypeArguments(builder, false);
-    if (!TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType()) && mIDENT != builder.getTokenType()) {
+    if (!TokenSets.BUILT_IN_TYPES.contains(builder.getTokenType()) && mIDENT != builder.getTokenType()) {
       rb.rollbackTo();
     }
     else {
@@ -119,7 +119,7 @@ public class PrimaryExpression implements GroovyElementTypes {
 
     PsiBuilder.Marker anonymousMarker = builder.mark();
     String name = null;
-    if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) {
+    if (TokenSets.BUILT_IN_TYPES.contains(builder.getTokenType())) {
       ParserUtils.eatElement(builder, BUILT_IN_TYPE);
     }
     else if (TokenSets.CODE_REFERENCE_ELEMENT_NAME_TOKENS.contains(builder.getTokenType())) {

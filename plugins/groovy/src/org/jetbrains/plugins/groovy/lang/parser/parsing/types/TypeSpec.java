@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ public class TypeSpec implements GroovyElementTypes {
   }
 
   public static ReferenceElementResult parse(PsiBuilder builder, boolean isUpper, final boolean expressionPossible) {
-    if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) {
+    if (TokenSets.BUILT_IN_TYPES.contains(builder.getTokenType())) {
       return parseBuiltInType(builder);
     }
     if (builder.getTokenType() == mIDENT) {
@@ -117,7 +117,7 @@ public class TypeSpec implements GroovyElementTypes {
    * @return
    */
   public static ReferenceElementResult parseStrict(PsiBuilder builder, boolean expressionPossible) {
-    if (TokenSets.BUILT_IN_TYPE.contains(builder.getTokenType())) {
+    if (TokenSets.BUILT_IN_TYPES.contains(builder.getTokenType())) {
       return parseBuiltInTypeStrict(builder);
     }
     else if (builder.getTokenType() == mIDENT) {

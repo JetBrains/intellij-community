@@ -526,7 +526,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     if (myType2 == mSEMI) return;
 
     if (typeDefinitionBody != null) { //check variable definitions only inside class body
-      if ((myType1 == VARIABLE_DEFINITION || isSemiAfter(VARIABLE_DEFINITION)) && METHOD_DEFS.contains(myType2)) {
+      if ((myType1 == VARIABLE_DEFINITION || isSemiAfter(VARIABLE_DEFINITION)) && TokenSets.METHOD_DEFS.contains(myType2)) {
         final int minBlankLines = Math.max(
           isInterface ? mySettings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE : mySettings.BLANK_LINES_AROUND_METHOD,
           isInterface ? mySettings.BLANK_LINES_AROUND_FIELD_IN_INTERFACE : mySettings.BLANK_LINES_AROUND_FIELD
@@ -542,14 +542,29 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
       }
     }
 
-    if (METHOD_DEFS.contains(myType1) || isSemiAfter(METHOD_DEFS) || METHOD_DEFS.contains((myType2))) {
+    if (TokenSets.METHOD_DEFS.contains(myType1) || isSemiAfter(TokenSets.METHOD_DEFS) || TokenSets.METHOD_DEFS.contains((myType2))) {
       if (myType1 == GROOVY_DOC_COMMENT) {
         createLF(true);
+        return;
       }
       else {
         final int minBlankLines = isInterface ? mySettings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE : mySettings.BLANK_LINES_AROUND_METHOD;
         myResult = Spacing.createSpacing(0, 0, minBlankLines + 1, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
+        return;
       }
+    }
+
+    if (TokenSets.TYPE_DEFINITIONS.contains(myType1) || isSemiAfter(TokenSets.TYPE_DEFINITIONS) || TokenSets.TYPE_DEFINITIONS.contains((myType2)) ) {
+      if (myType1 == GROOVY_DOC_COMMENT) {
+        createLF(true);
+        return;
+      }
+      else {
+        final int minBlankLines = mySettings.BLANK_LINES_AROUND_CLASS;
+        myResult = Spacing.createSpacing(0, 0, minBlankLines + 1, mySettings.KEEP_LINE_BREAKS, keepBlankLines());
+        return;
+      }
+
     }
   }
 

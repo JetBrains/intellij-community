@@ -1620,7 +1620,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   private static void checkGrDocReferenceElement(AnnotationHolder holder, PsiElement element) {
     ASTNode node = element.getNode();
-    if (node != null && TokenSets.BUILT_IN_TYPE.contains(node.getElementType())) {
+    if (node != null && TokenSets.BUILT_IN_TYPES.contains(node.getElementType())) {
       Annotation annotation = holder.createInfoAnnotation(element, null);
       annotation.setTextAttributes(KEYWORD);
     }
