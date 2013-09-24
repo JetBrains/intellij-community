@@ -354,10 +354,12 @@ private layoutUnix(Map args, String target) {
     }
   }
 
-  ant.copy(file: "$home/python/resources/PyCharm_128.png", tofile: "$target/bin/pycharm.png")
+  ant.copy(file: "$pythonCommunityHome/resources/PyCharmCore128.png", tofile: "$target/bin/pycharm.png")
 
   unixScripts(target, "$home/community", "pycharm.sh", args)
   unixVMOptions(target, "pycharm")
+
+  ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help", failonerror: false)
 }
 
 private layoutMac(Map _args, String target) {
