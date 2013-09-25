@@ -218,11 +218,8 @@ public class BreakpointsDialog extends DialogWrapper {
 
       @Override
       protected void selectionChangedImpl() {
-        super.selectionChanged();
-        ItemWrapper item = myDetailController.getSelectedItem();
-        if (item instanceof BreakpointItem) {
-          ((BreakpointItem)item).saveState();
-        }
+        super.selectionChangedImpl();
+        saveCurrentItem();
         myDetailController.updateDetailView();
       }
     };
@@ -359,15 +356,16 @@ public class BreakpointsDialog extends DialogWrapper {
 
   @Override
   protected void dispose() {
-    saveAllItemsState();
+    saveCurrentItem();
     Disposer.dispose(myListenerDisposable);
     saveBreakpointsDialogState();
     super.dispose();
   }
 
-  private void saveAllItemsState() {
-    for (BreakpointItem item : myBreakpointItems) {
-      item.saveState();
+  private void saveCurrentItem() {
+    ItemWrapper item = myDetailController.getSelectedItem();
+    if (item instanceof BreakpointItem) {
+      ((BreakpointItem)item).saveState();
     }
   }
 }
