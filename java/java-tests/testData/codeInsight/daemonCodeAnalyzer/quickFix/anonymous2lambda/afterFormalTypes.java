@@ -9,6 +9,6 @@ class Test2 {
     static <T> I<T> bar(I<T> i){return i;}
  
     {
-        bar((List<String> list) -> null);
+        bar(list -> null);
     }
 }
