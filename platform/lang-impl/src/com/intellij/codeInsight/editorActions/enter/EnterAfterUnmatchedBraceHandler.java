@@ -171,7 +171,7 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
    * @param offset  target offset where line feed will be inserted
    * @return        offset to use for inserting closing brace
    */
-  private static int calculateOffsetToInsertClosingBrace(PsiFile file, CharSequence text, final int offset) {
+  protected int calculateOffsetToInsertClosingBrace(PsiFile file, CharSequence text, final int offset) {
     PsiElement element = PsiUtilCore.getElementAtOffset(file, offset);
     ASTNode node = element.getNode();
     if (node != null && node.getElementType() == TokenType.WHITE_SPACE) {
