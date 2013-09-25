@@ -174,10 +174,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
   protected void collectReturnTypeVariables(InferenceSession session,
                                             PsiExpression psiExpression,
-                                            PsiMethod interfaceMethod,
+                                            PsiType returnType, 
                                             Set<InferenceVariable> result) {
     if (psiExpression instanceof PsiLambdaExpression) {
-      final PsiType returnType = interfaceMethod.getReturnType();
       if (returnType != PsiType.VOID) {
         final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions((PsiLambdaExpression)psiExpression);
         for (PsiExpression expression : returnExpressions) {

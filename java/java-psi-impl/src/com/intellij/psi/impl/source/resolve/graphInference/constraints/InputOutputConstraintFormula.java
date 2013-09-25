@@ -38,7 +38,7 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
   protected abstract InputOutputConstraintFormula createSelfConstraint(PsiType type, PsiExpression expression);
   protected abstract void collectReturnTypeVariables(InferenceSession session,
                                                      PsiExpression psiExpression,
-                                                     PsiMethod interfaceMethod,
+                                                     PsiType returnType, 
                                                      Set<InferenceVariable> result);
 
   public Set<InferenceVariable> getInputVariables(InferenceSession session) {
@@ -64,11 +64,14 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
 
             final Set<InferenceVariable> result = new HashSet<InferenceVariable>();
             final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult);
-            for (PsiParameter parameter : interfaceMethod.getParameterList().getParameters()) {
-              session.collectDependencies(substitutor.substitute(parameter.getType()), result, true);
+            if (psiExpression instanceof PsiLambdaExpression && !((PsiLambdaExpression)psiExpression).hasFormalParameterTypes() || 
+                psiExpression instanceof PsiMethodReferenceExpression && !((PsiMethodReferenceExpression)psiExpression).isExact()) {
+              for (PsiParameter parameter : interfaceMethod.getParameterList().getParameters()) {
+                session.collectDependencies(substitutor.substitute(parameter.getType()), result, true);
+              }
             }
 
-            collectReturnTypeVariables(session, psiExpression, interfaceMethod, result);
+            collectReturnTypeVariables(session, psiExpression, substitutor.substitute(interfaceMethod.getReturnType()), result);
 
             return result;
           }

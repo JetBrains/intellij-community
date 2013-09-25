@@ -156,9 +156,8 @@ public class CheckedExceptionCompatibilityConstraint extends InputOutputConstrai
   @Override
   protected void collectReturnTypeVariables(InferenceSession session,
                                             PsiExpression psiExpression,
-                                            PsiMethod interfaceMethod,
+                                            PsiType returnType, 
                                             Set<InferenceVariable> result) {
-    final PsiType returnType = interfaceMethod.getReturnType();
     session.collectDependencies(returnType, result, true);
   }
 }
