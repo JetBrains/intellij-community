@@ -19,6 +19,7 @@ import com.intellij.formatting.ASTBlock;
 import com.intellij.formatting.Wrap;
 import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.java.JavaFormatterUtil;
@@ -83,7 +84,10 @@ public class JavaChildBlockWrapFactory {
       return Wrap.createWrap(settings.THROWS_LIST_WRAP, true);
     }
     else if (nodeType == JavaElementType.CODE_BLOCK) {
-      return Wrap.createWrap(Wrap.NORMAL, false);
+      if (settings.KEEP_SIMPLE_METHODS_IN_ONE_LINE && node.getPsi().getParent() instanceof PsiMethod && !node.textContains('\n')) {
+        return null;
+      }
+      return Wrap.createWrap(WrapType.NORMAL, false);
     }
     else if (JavaFormatterUtil.isAssignment(node)) {
       return Wrap.createWrap(settings.ASSIGNMENT_WRAP, true);
