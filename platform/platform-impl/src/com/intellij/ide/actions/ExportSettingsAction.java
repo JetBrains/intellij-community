@@ -22,6 +22,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,7 +45,6 @@ import java.util.*;
 import java.util.jar.JarOutputStream;
 
 public class ExportSettingsAction extends AnAction implements DumbAware {
-
   public void actionPerformed(AnActionEvent e) {
     Project project = getEventProject(e);
     List<ExportableComponent> exportableComponents = new ArrayList<ExportableComponent>();
@@ -57,11 +57,12 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
     dialog.show();
     if (!dialog.isOK()) return;
     Set<ExportableComponent> markedComponents = dialog.getExportableComponents();
-    if (markedComponents.size() == 0) return;
+    if (markedComponents.isEmpty()) {
+      return;
+    }
     Set<File> exportFiles = new HashSet<File>();
     for (final ExportableComponent markedComponent : markedComponents) {
-      final File[] files = markedComponent.getExportFiles();
-      ContainerUtil.addAll(exportFiles, files);
+      ContainerUtil.addAll(exportFiles, markedComponent.getExportFiles());
     }
 
     ApplicationManager.getApplication().saveSettings();
@@ -107,7 +108,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
 
   private static void exportInstalledPlugins(File saveFile, JarOutputStream output, HashSet<String> writtenItemRelativePaths) throws IOException {
     final List<String> oldPlugins = new ArrayList<String>();
-    for (IdeaPluginDescriptor descriptor : PluginManager.getPlugins()) {
+    for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
       if (!descriptor.isBundled() && descriptor.isEnabled()) {
         oldPlugins.add(descriptor.getPluginId().getIdString());
       }
@@ -115,7 +116,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
     if (!oldPlugins.isEmpty()) {
       final File tempFile = File.createTempFile("installed", "plugins");
       tempFile.deleteOnExit();
-      PluginManager.savePluginsList(oldPlugins, false, tempFile);
+      PluginManagerCore.savePluginsList(oldPlugins, false, tempFile);
       ZipUtil.addDirToZipRecursively(output, saveFile, tempFile, "/" + PluginManager.INSTALLED_TXT, null, writtenItemRelativePaths);
     }
   }
@@ -129,8 +130,7 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
 
     for (ExportableComponent component : components) {
       exportableComponents.add(component);
-      final File[] exportFiles = component.getExportFiles();
-      for (File exportFile : exportFiles) {
+      for (File exportFile : component.getExportFiles()) {
         Set<ExportableComponent> componentsTied = fileToComponents.get(exportFile);
         if (componentsTied == null) {
           componentsTied = new HashSet<ExportableComponent>();
@@ -141,5 +141,4 @@ public class ExportSettingsAction extends AnAction implements DumbAware {
     }
     return fileToComponents;
   }
-
 }
