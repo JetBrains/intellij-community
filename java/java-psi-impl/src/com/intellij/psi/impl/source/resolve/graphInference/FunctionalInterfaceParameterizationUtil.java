@@ -45,7 +45,7 @@ public class FunctionalInterfaceParameterizationUtil {
 
   @Nullable
   public static PsiType getFunctionalType(@Nullable PsiType psiClassType, PsiLambdaExpression expr) {
-    if (!expr.hasFormalParameterTypes()) return psiClassType;
+    if (!expr.hasFormalParameterTypes() || expr.getParameterList().getParametersCount() == 0) return psiClassType;
     if (!isWildcardParameterized(psiClassType)) {
       return psiClassType;
     }

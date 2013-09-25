@@ -82,7 +82,7 @@ public class PsiPolyExpressionUtilTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testPertinentLambdaExpression() throws Exception {
-    assertFalse(doTestLambdaPertinent("  void bar(List<Runnable> l) {" +
+    assertTrue(doTestLambdaPertinent("  void bar(List<Runnable> l) {" +
                                       "   foo(() <caret>-> {}, l);" +
                                       "  }"));
   }

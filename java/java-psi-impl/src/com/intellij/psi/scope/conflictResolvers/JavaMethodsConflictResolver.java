@@ -122,7 +122,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
             if (methodParameters.length == 0) continue;
             final PsiParameter param = i < methodParameters.length ? methodParameters[i] : methodParameters[methodParameters.length - 1];
             final PsiType paramType = param.getType();
-            if (!LambdaUtil.isAcceptable(lambdaExpression, conflict.getSubstitutor().substitute(paramType), true)) {
+            if (!LambdaUtil.isAcceptable(lambdaExpression, conflict.getSubstitutor().substitute(paramType), lambdaExpression.hasFormalParameterTypes())) {
               iterator.remove();
             } else {
               /*todo
@@ -699,6 +699,12 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       for (int functionalInterfaceIdx = 0; functionalInterfaceIdx < actualParameterTypes.length; functionalInterfaceIdx++) {
         final PsiType interfaceReturnType = getReturnType(functionalInterfaceIdx, method);
         final PsiType interfaceReturnType1 = getReturnType(functionalInterfaceIdx, conflict);
+        if (actualParameterTypes[functionalInterfaceIdx] instanceof PsiLambdaExpressionType) {
+          final PsiLambdaExpression lambdaExpression = ((PsiLambdaExpressionType)actualParameterTypes[functionalInterfaceIdx]).getExpression();
+          if (!lambdaExpression.hasFormalParameterTypes()) {
+            return Specifics.NEITHER;
+          }
+        }
         if (actualParameterTypes[functionalInterfaceIdx] instanceof PsiLambdaExpressionType || actualParameterTypes[functionalInterfaceIdx] instanceof PsiMethodReferenceType) {
           if (interfaceReturnType != null && interfaceReturnType1 != null && !Comparing.equal(interfaceReturnType, interfaceReturnType1)) {
             Specifics moreSpecific1 = comparePrimitives(actualParameterTypes[functionalInterfaceIdx], interfaceReturnType, interfaceReturnType1);

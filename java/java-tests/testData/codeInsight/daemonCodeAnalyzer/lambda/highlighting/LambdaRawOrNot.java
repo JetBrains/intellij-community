@@ -12,7 +12,7 @@ class Test1 {
 
 class Test2 {
   protected <T, U> U exerciseOps(TestData<T> data, TerminalOp<T, U> terminal, IntermediateOp... ops) {
-    return exerciseOps(data, <error descr="Cyclic inference">(u, v) -> u.equals(v)</error>, terminal);
+    <error descr="Incompatible types. Found: 'java.lang.Object', required: 'U'">return exerciseOps(data, (u, v) -> u.equals(v), terminal);</error>
   }
 }
 
@@ -23,15 +23,15 @@ class Test3 {
 
   static <T> void bar(I<T> i, List<T> l){
     bar(x -> {}, l);
-    bar(<error descr="Cyclic inference">x -> {}</error>, null);
+    bar(x -> {}, null);
     bar((I<T>)x -> {}, null);
     bar((T x) -> {}, null);
     bar(x -> {}, new ArrayList<T>());
-    bar(<error descr="Cyclic inference">x -> {}</error>, new ArrayList());
+    bar(x -> {}, new ArrayList());
   }
 
   static {
-    bar(<error descr="Cyclic inference">x->{}</error>, new ArrayList());
+    bar(x->{}, new ArrayList());
   }
 }
 

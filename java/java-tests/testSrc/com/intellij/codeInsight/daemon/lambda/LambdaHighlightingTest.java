@@ -51,7 +51,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testAmbiguityRawGenerics() { doTest(); }
   public void testDefaultMethod() { doTest(); }
   public void testLambdaOnVarargsPlace() { doTest(); }
-  public void testLambdaRawOrNot() { doTest(); }
+  public void testLambdaRawOrNot() { doTest(); }  //todo incorrect testdata
   public void testReturnTypeCompatibility1() { doTest(); }
   public void testNoInferenceResult() { doTest(); }
   public void testInferenceFromArgs() { doTest(); }

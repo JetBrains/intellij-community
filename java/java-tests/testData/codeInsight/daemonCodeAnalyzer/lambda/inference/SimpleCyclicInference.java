@@ -8,13 +8,13 @@ class NoLambda {
 
     void bazz() {
         bar(null);
-        bar(<error descr="Cyclic inference">(z)-> {System.out.println();}</error>);
+        bar((z)-> {System.out.println();});
     }
   
     static <T> T id(T i2) {return i2;}
 
     {
-       id(<error descr="Cyclic inference">() -> {System.out.println("hi");}</error>);
+       id<error descr="'id(T)' in 'NoLambda' cannot be applied to '(<lambda expression>)'">(() -> {System.out.println("hi");})</error>;
        NoLambda.<Runnable>id(() -> {System.out.println("hi");});
     }
 }

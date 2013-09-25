@@ -119,6 +119,6 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
     for (PsiParameter parameter : parameters) {
       if (parameter.getTypeElement() == null) return false;
     }
-    return parameters.length > 0;
+    return true;
   }
 }
