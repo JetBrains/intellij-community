@@ -59,7 +59,7 @@ class Steps {
   def compile = true
   def scramble = true
   def layout = true
-  def build_searchable_options = true
+  def build_searchable_options = false
   def zipwin = true
   def targz = true
   def dmg = true
