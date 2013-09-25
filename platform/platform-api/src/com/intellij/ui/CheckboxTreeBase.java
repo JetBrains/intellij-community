@@ -182,6 +182,10 @@ public class CheckboxTreeBase extends Tree {
 
   }
 
+  protected void nodeStateWillChange(CheckedTreeNode node) {
+
+  }
+
   protected void adjustParentsAndChildren(final CheckedTreeNode node, final boolean checked) {
     changeNodeState(node, checked);
     if (!checked) {
@@ -220,6 +224,7 @@ public class CheckboxTreeBase extends Tree {
 
   private void changeNodeState(final CheckedTreeNode node, final boolean checked) {
     if (node.isChecked() != checked) {
+      nodeStateWillChange(node);
       node.setChecked(checked);
       onNodeStateChanged(node);
     }

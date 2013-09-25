@@ -30,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -348,15 +350,15 @@ public class MasterDetailPopupBuilder implements MasterController {
     return this;
   }
 
-  public MasterDetailPopupBuilder setTree(final JTree tree) {
-    setChooser(tree);
-    myDetailController.setTree(tree);
-    return this;
-  }
-
   public MasterDetailPopupBuilder setList(final JBList list) {
     setChooser(list);
     myDetailController.setList(list);
+    list.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+      @Override
+      public void valueChanged(ListSelectionEvent event) {
+        myDetailController.updateDetailView();
+      }
+    });
     return this;
   }
 

@@ -39,6 +39,8 @@ import java.awt.*;
 public abstract class BreakpointItem extends ItemWrapper implements Comparable<BreakpointItem>, Navigatable {
   public static final Key<Object> EDITOR_ONLY = Key.create("EditorOnly");
 
+  public abstract void saveState();
+
   public abstract Object getBreakpoint();
 
   public abstract boolean isEnabled();

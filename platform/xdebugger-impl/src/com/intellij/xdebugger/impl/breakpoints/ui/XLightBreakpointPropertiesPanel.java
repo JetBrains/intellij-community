@@ -54,16 +54,6 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
     }
   }
 
-  private void createUIComponents() {
-    myMainPanel = new JPanel() {
-      @Override
-      public void removeNotify() {
-        super.removeNotify();
-        saveProperties();
-      }
-    };
-  }
-
   public interface Delegate {
     void showMoreOptions();
   }

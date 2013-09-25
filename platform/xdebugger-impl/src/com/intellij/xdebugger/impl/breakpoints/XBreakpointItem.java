@@ -33,6 +33,7 @@ import javax.swing.*;
 
 class XBreakpointItem extends BreakpointItem {
   private final XBreakpoint<?> myBreakpoint;
+  private XLightBreakpointPropertiesPanel<XBreakpoint<?>> myPropertiesPanel;
 
   public XBreakpointItem(XBreakpoint<?> breakpoint) {
     myBreakpoint = breakpoint;
@@ -75,13 +76,21 @@ class XBreakpointItem extends BreakpointItem {
     return ((XBreakpointBase)myBreakpoint).getType().getDisplayText(myBreakpoint);
   }
 
+  @Override
+  public void saveState() {
+    if (myPropertiesPanel != null) {
+      myPropertiesPanel.saveProperties();
+    }
+  }
+
   public void doUpdateDetailView(DetailView panel, boolean editorOnly) {
     Project project = ((XBreakpointBase)myBreakpoint).getProject();
-    XLightBreakpointPropertiesPanel<XBreakpoint<?>> propertiesPanel = null;
+    saveState();
+    myPropertiesPanel = null;
     if (!editorOnly) {
-      propertiesPanel = new XLightBreakpointPropertiesPanel<XBreakpoint<?>>(project, getManager(), myBreakpoint, true);
+      myPropertiesPanel = new XLightBreakpointPropertiesPanel<XBreakpoint<?>>(project, getManager(), myBreakpoint, true);
 
-      panel.setPropertiesPanel(propertiesPanel.getMainPanel());
+      panel.setPropertiesPanel(myPropertiesPanel.getMainPanel());
     }
 
     XSourcePosition sourcePosition = myBreakpoint.getSourcePosition();
@@ -92,10 +101,10 @@ class XBreakpointItem extends BreakpointItem {
       panel.clearEditor();
     }
 
-    if (propertiesPanel != null) {
-      propertiesPanel.setDetailView(panel);
-      propertiesPanel.loadProperties();
-      propertiesPanel.getMainPanel().revalidate();
+    if (myPropertiesPanel != null) {
+      myPropertiesPanel.setDetailView(panel);
+      myPropertiesPanel.loadProperties();
+      myPropertiesPanel.getMainPanel().revalidate();
 
     }
 

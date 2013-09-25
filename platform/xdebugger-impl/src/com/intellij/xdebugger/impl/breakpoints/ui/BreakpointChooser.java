@@ -126,7 +126,7 @@ public class BreakpointChooser {
         if (selected) {
           if (hackedSelection.get() != value) {
             hackedSelection.set(value);
-            myDetailController.selectionChanged();
+            myDetailController.updateDetailView();
           }
         }
       }
