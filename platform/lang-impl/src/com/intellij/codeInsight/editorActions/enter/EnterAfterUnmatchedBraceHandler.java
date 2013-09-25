@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -179,13 +179,12 @@ public class EnterAfterUnmatchedBraceHandler extends EnterHandlerDelegateAdapter
     }
     for (PsiElement parent = element.getParent(); parent != null; parent = parent.getParent()) {
       ASTNode parentNode = parent.getNode();
-      if (parentNode == null || (parentNode.getStartOffset() != offset && parentNode.getStartOffset() != offset - 2)) {
-        // (offset - 2) means that parent block starts with opening brace and hence should be ends with closing brace
+      if (parentNode == null || parentNode.getStartOffset() != offset) {
         break;
       }
       element = parent;
     }
-    if (element.getTextOffset() != offset && element.getTextOffset() != offset - 2) {
+    if (element.getTextOffset() != offset) {
       return CharArrayUtil.shiftForwardUntil(text, offset, "\n");
     }
     else {
