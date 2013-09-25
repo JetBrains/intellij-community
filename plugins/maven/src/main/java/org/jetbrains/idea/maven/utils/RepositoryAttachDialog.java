@@ -166,6 +166,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
                                              ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,
                                              descriptor);
     updateInfoLabel();
+    setOKActionEnabled(false);
     init();
   }
 
@@ -276,6 +277,9 @@ public class RepositoryAttachDialog extends DialogWrapper {
             }
           }
           updateComboboxSelection(prevSize != myCoordinates.size());
+          // tooMany != null on last call, so enable OK action to let
+          // local maven repo a chance even if all remote services failed
+          setOKActionEnabled(!myRepositories.isEmpty() || tooMany != null);
           return true;
         }
       });
