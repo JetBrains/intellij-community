@@ -9,7 +9,7 @@ import com.intellij.util.Consumer;
 import org.jetbrains.plugins.ideaConfigurationServer.IcsBundle;
 import org.jetbrains.plugins.ideaConfigurationServer.IcsManager;
 
-public class SyncAction extends DumbAwareAction {
+class SyncAction extends DumbAwareAction {
   public SyncAction() {
     super(IcsBundle.message("actions.sync"));
   }

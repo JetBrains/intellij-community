@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
@@ -17,7 +18,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 
+@SuppressWarnings("DialogTitleCapitalization")
 public class IcsSettingsPanel extends DialogWrapper {
   private JPanel panel;
   private JTextField urlTextField;
@@ -34,9 +37,11 @@ public class IcsSettingsPanel extends DialogWrapper {
     updateRepositoryFromRemoteCheckBox.setSelected(settings.updateOnStart);
     shareProjectWorkspaceCheckBox.setSelected(settings.shareProjectWorkspace);
     urlTextField.setText(icsManager.getRepositoryManager().getRemoteRepositoryUrl());
+
+    // todo TextComponentUndoProvider should not depends on app settings
     //new TextComponentUndoProvider(urlTextField);
 
-    syncButton = new JButton("Sync now\u2026");
+    syncButton = new JButton(IcsBundle.message("settings.panel.syncNow"));
     syncButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -66,7 +71,7 @@ public class IcsSettingsPanel extends DialogWrapper {
       }
     });
 
-    setTitle(IcsManager.PLUGIN_NAME + " Settings");
+    setTitle(IcsBundle.message("settings.panel.title"));
     setResizable(false);
     init();
   }
@@ -114,6 +119,14 @@ public class IcsSettingsPanel extends DialogWrapper {
     settings.updateOnStart = updateRepositoryFromRemoteCheckBox.isSelected();
     settings.shareProjectWorkspace = shareProjectWorkspaceCheckBox.isSelected();
     saveRemoteRepositoryUrl();
+
+    ApplicationManager.getApplication().executeOnPooledThread(new Callable<Object>() {
+      @Override
+      public Object call() throws Exception {
+        IcsManager.getInstance().getSettings().save();
+        return null;
+      }
+    });
   }
 
   private boolean saveRemoteRepositoryUrl() {

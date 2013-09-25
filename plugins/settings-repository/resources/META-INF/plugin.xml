@@ -1,26 +1,26 @@
 <idea-plugin version="2">
-  <name>Idea Configuration Server</name>
+  <name>Settings Server</name>
   <id>org.jetbrains.plugins.ideaConfigurationServer</id>
   <description>Supports sharing settings between installations of IntelliJ Platform based products used by the same developer (or team) on different computers</description>
   <version>2.0</version>
   <idea-version since-build="132.397"/>
   <!--<vendor>JetBrains</vendor>-->
 
-  <application-components>
-    <component>
-      <implementation-class>org.jetbrains.plugins.ideaConfigurationServer.IcsManager$IcsProjectLoadListener</implementation-class>
-    </component>
-  </application-components>
-
   <extensions defaultExtensionNs="com.intellij">
     <ApplicationLoadListener implementation="org.jetbrains.plugins.ideaConfigurationServer.IcsManager"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.ideaConfigurationServer.ProjectId"/>
+    <projectService serviceInterface="org.jetbrains.plugins.ideaConfigurationServer.ProjectId"
+                    serviceImplementation="org.jetbrains.plugins.ideaConfigurationServer.ProjectId"/>
   </extensions>
 
   <actions>
-    <action id="Ics.Sync" class="org.jetbrains.plugins.ideaConfigurationServer.actions.SyncAction">
+    <action id="SyncIcs" class="org.jetbrains.plugins.ideaConfigurationServer.actions.SyncAction">
       <add-to-group group-id="VcsGroups"/>
     </action>
+    <action id="ConfigureIcs" class="org.jetbrains.plugins.ideaConfigurationServer.actions.ConfigureIcsAction">
+      <add-to-group group-id="ExportImportGroup"/>
+    </action>
   </actions>
+
+  <resource-bundle>messages.IcsBundle</resource-bundle>
 </idea-plugin>

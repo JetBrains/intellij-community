@@ -22,9 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
-import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.util.SingleAlarm;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -140,15 +137,18 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
   }
 
   private void registerProjectLevelProviders(Project project) {
-    ProjectId projectId = ProjectId.getInstance(project);
-    if (projectId.uid == null) {
+    StateStorageManager storageManager = ((ProjectEx)project).getStateStore().getStateStorageManager();
+
+    StateStorage workspaceFileStorage = storageManager.getFileStateStorage(StoragePathMacros.WORKSPACE_FILE);
+    LOG.assertTrue(workspaceFileStorage != null);
+    ProjectId projectId = workspaceFileStorage.getState(new ProjectId(), "IcsProjectId", ProjectId.class, null);
+    if (projectId == null || projectId.uid == null) {
       // not mapped, if user wants, he can map explicitly, we don't suggest
       // we cannot suggest "map to ICS" for any project that user opens,
       // it will be annoying
       return;
     }
 
-    StateStorageManager storageManager = ((ProjectEx)project).getStateStore().getStateStorageManager();
     storageManager.setStreamProvider(new IcsStreamProvider(projectId.uid) {
       @Override
       public boolean isApplicable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
@@ -275,38 +275,6 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
     @Override
     public void deleteFile(@NotNull final String fileSpec, @NotNull final RoamingType roamingType) {
-    }
-  }
-
-  static final class IcsProjectLoadListener implements ApplicationComponent, SettingsSavingComponent {
-    @Override
-    @NotNull
-    public String getComponentName() {
-      return "IcsProjectLoadListener";
-    }
-
-    @Override
-    public void initComponent() {
-      // todo find normal way to register our widget
-      WindowManager.getInstance().addListener(new WindowManagerListener() {
-        @Override
-        public void frameCreated(IdeFrame frame) {
-          frame.getStatusBar().addWidget(new IcsStatusBarWidget());
-        }
-
-        @Override
-        public void beforeFrameReleased(IdeFrame frame) {
-        }
-      });
-    }
-
-    @Override
-    public void disposeComponent() {
-    }
-
-    @Override
-    public void save() {
-      getInstance().getSettings().save();
     }
   }
 

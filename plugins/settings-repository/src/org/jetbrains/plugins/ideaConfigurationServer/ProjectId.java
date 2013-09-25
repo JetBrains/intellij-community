@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,10 +8,6 @@ import org.jetbrains.annotations.Nullable;
 class ProjectId implements PersistentStateComponent<ProjectId> {
   public String uid;
   public String path;
-
-  public static ProjectId getInstance(Project project) {
-    return ServiceManager.getService(project, ProjectId.class);
-  }
 
   @Nullable
   @Override
