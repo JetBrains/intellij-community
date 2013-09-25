@@ -50,6 +50,7 @@ public class MethodGroupingRule implements UsageGroupingRule {
     if (!(usage instanceof PsiElementUsage)) return null;
     PsiElement psiElement = ((PsiElementUsage)usage).getElement();
     PsiFile containingFile = psiElement.getContainingFile();
+    if (containingFile == null) return null;
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(containingFile.getProject());
     PsiFile topLevelFile = manager.getTopLevelFile(containingFile);
     if (topLevelFile instanceof PsiJavaFile) {
