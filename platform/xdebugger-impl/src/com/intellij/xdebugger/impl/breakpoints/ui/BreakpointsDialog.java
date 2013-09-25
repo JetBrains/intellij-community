@@ -210,7 +210,7 @@ public class BreakpointsDialog extends DialogWrapper {
 
       @Override
       public void nodeStateDidChangeImpl(CheckedTreeNode node) {
-        super.nodeStateDidChange(node);
+        super.nodeStateDidChangeImpl(node);
         if (node instanceof BreakpointItemNode) {
           myDetailController.doUpdateDetailView(true);
         }
