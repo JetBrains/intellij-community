@@ -181,7 +181,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     WorkingCopyFormat format = WorkingCopyFormat.UNKNOWN;
     final Ref<Boolean> wasOk = new Ref<Boolean>();
     while ((format == WorkingCopyFormat.UNKNOWN) && (! Boolean.FALSE.equals(wasOk.get()))) {
-      format = SvnFormatSelector.showUpgradeDialog(target, project, true, WorkingCopyFormat.ONE_DOT_SEVEN, wasOk);
+      format = SvnFormatSelector.showUpgradeDialog(target, project, WorkingCopyFormat.ONE_DOT_SEVEN, wasOk);
     }
     return Boolean.TRUE.equals(wasOk.get()) ? format : WorkingCopyFormat.UNKNOWN;
   }

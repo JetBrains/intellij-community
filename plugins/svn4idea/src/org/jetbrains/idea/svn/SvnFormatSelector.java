@@ -138,14 +138,13 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
 
   public static WorkingCopyFormat showUpgradeDialog(final File path,
                                                     final Project project,
-                                                    final boolean display13format,
                                                     @NotNull final WorkingCopyFormat defaultSelection,
                                                     @NotNull final Ref<Boolean> wasOk) {
     assert ! ApplicationManager.getApplication().isUnitTestMode();
     final Ref<WorkingCopyFormat> format = new Ref<WorkingCopyFormat>(defaultSelection);
     WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(new Runnable() {
       public void run() {
-        wasOk.set(displayUpgradeDialog(project, path, display13format, format));
+        wasOk.set(displayUpgradeDialog(project, path, format));
       }
     });
     ApplicationManager.getApplication().getMessageBus().syncPublisher(SvnVcs.WC_CONVERTED).run();
@@ -190,7 +189,7 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
     return WorkingCopyFormat.getInstance(format);
   }
 
-  private static boolean displayUpgradeDialog(Project project, File path, final boolean dispay13format, Ref<WorkingCopyFormat> format) {
+  private static boolean displayUpgradeDialog(Project project, File path, Ref<WorkingCopyFormat> format) {
     UpgradeFormatDialog dialog = new UpgradeFormatDialog(project, path, false);
     dialog.setData(format.get());
     dialog.show();
