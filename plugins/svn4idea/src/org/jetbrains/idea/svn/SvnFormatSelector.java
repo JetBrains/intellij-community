@@ -18,8 +18,7 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
-import com.intellij.util.WaitForProgressToShow;
+import com.intellij.openapi.vcs.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
@@ -184,44 +183,24 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
       myPath = path;
     }
 
+    @CalledInAwt
     public WorkingCopyFormat prompt() {
-      WorkingCopyFormat format = WorkingCopyFormat.UNKNOWN;
-      final Ref<Boolean> wasOk = new Ref<Boolean>();
-
-      while ((format == WorkingCopyFormat.UNKNOWN) && (!Boolean.FALSE.equals(wasOk.get()))) {
-        format = showUpgradeDialog(WorkingCopyFormat.ONE_DOT_SEVEN, wasOk);
-      }
-
-      return Boolean.TRUE.equals(wasOk.get()) ? format : WorkingCopyFormat.UNKNOWN;
-    }
-
-    public WorkingCopyFormat showUpgradeDialog(@NotNull final WorkingCopyFormat defaultSelection,
-                                              @NotNull final Ref<Boolean> wasOk) {
       assert !ApplicationManager.getApplication().isUnitTestMode();
 
-      final Ref<WorkingCopyFormat> format = new Ref<WorkingCopyFormat>(defaultSelection);
-
-      WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(new Runnable() {
-        public void run() {
-          wasOk.set(displayUpgradeDialog(format));
-        }
-      });
+      final WorkingCopyFormat result = displayUpgradeDialog(WorkingCopyFormat.ONE_DOT_SEVEN);
 
       ApplicationManager.getApplication().getMessageBus().syncPublisher(SvnVcs.WC_CONVERTED).run();
 
-      return format.get();
+      return result;
     }
 
-    private boolean displayUpgradeDialog(@NotNull Ref<WorkingCopyFormat> format) {
+    private WorkingCopyFormat displayUpgradeDialog(@NotNull WorkingCopyFormat defaultSelection) {
       UpgradeFormatDialog dialog = new UpgradeFormatDialog(myProject, myPath, false);
 
-      dialog.setData(format.get());
+      dialog.setData(defaultSelection);
       dialog.show();
-      if (dialog.isOK()) {
-        format.set(dialog.getUpgradeMode());
-      }
 
-      return dialog.isOK();
+      return dialog.isOK() ? dialog.getUpgradeMode() : WorkingCopyFormat.UNKNOWN;
     }
   }
 }
