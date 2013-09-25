@@ -57,9 +57,9 @@ class Steps {
   def clear = true
   def zipSources = true
   def compile = true
+  def build_searchable_options = true
   def scramble = true
   def layout = true
-  def build_searchable_options = false
   def zipwin = true
   def targz = true
   def dmg = true
@@ -194,32 +194,19 @@ class Build {
     }
   }
 
-/*  private String getDmgImage(){
-    return "${home}/${product}/branding/DMG_background.png"
-  }*/
-
-/*
-  def _layoutMac(Map args, String target) {
-    projectBuilder.stage("--- layoutMac ---")
-    ant.delete(dir: target, failonerror: "false")
-//    Map args = new HashMap(_args)
-    utils.layoutMacApp(target, "$home/community", args)
-  }*/
-
   def mac_installation(){
     def extraArgs = ["build.code": "${product}-${suffix}"]
     if (steps.sit) {
-      projectBuilder.stage(" - buildMacZip - ")
+      projectBuilder.stage("- buildMacZip -")
       String macAppRoot = utils.isEap() ? "${system_selector} EAP.app" : "${product}.app"
       utils.buildMacZip(macAppRoot, "${paths.artifacts}/${product}-${suffix}.sit",
                         [paths.distAll], paths.distMac)
 
-      projectBuilder.stage(" - signMacZip - ")
+      projectBuilder.stage("- signMacZip -")
       ultimate_utils.signMacZip("webide", extraArgs)
     }
     if (steps.dmg) {
-      projectBuilder.stage(" - buildDmg - ")
-//      ultimate_utils.buildDmg(product, "${home}/${product}/branding/DMG_background.png", extraArgs)
+      projectBuilder.stage("- buildDmg -")
       ultimate_utils.buildDmg(product, getDmgImage(), extraArgs)
     }
   }
