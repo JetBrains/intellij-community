@@ -309,13 +309,6 @@ public class PythonIndentingProcessor extends MergingLexerAdapter {
       end = getBaseTokenEnd();
       advanceBase();
     }
-    if (breakStatementOnLineBreak && getBaseTokenType() == PyTokenTypes.LINE_BREAK && myBraceLevel == 0) {
-      myTokenQueue.add(new PendingToken(PyTokenTypes.STATEMENT_BREAK, startPos, startPos));
-      while (getBaseTokenType() == PyTokenTypes.SPACE || getBaseTokenType() == PyTokenTypes.LINE_BREAK) {
-        end = getBaseTokenEnd();
-        advanceBase();
-      }
-    }
     myTokenQueue.add(new PendingToken(PyTokenTypes.LINE_BREAK, startPos, end));
     myProcessSpecialTokensPending = true;
   }

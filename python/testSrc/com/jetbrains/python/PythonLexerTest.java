@@ -150,8 +150,22 @@ public class PythonLexerTest extends PyLexerTestCase {
 
   public void testBackslashBeforeEmptyLine() {
     doTest("x=\"a\" + \\\n     \"b\" \\\n\nprint x", "Py:IDENTIFIER", "Py:EQ", "Py:SINGLE_QUOTED_STRING", "Py:SPACE", "Py:PLUS", "Py:SPACE", "Py:LINE_BREAK",
-           "Py:SINGLE_QUOTED_STRING", "Py:SPACE", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:SINGLE_QUOTED_STRING", "Py:SPACE", "Py:LINE_BREAK", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
            "Py:IDENTIFIER" , "Py:SPACE", "Py:IDENTIFIER", "Py:STATEMENT_BREAK");
+  }
+
+  public void testBackslashFuction() {
+    doTest("def test():\n" +
+           "    print \\\n" +
+           "\n" +
+           "def test2():\n" +
+           "    pass\n" +
+           "\n" +
+           "print 'hello'", "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:COLON", "Py:STATEMENT_BREAK",
+           "Py:LINE_BREAK", "Py:INDENT", "Py:IDENTIFIER", "Py:SPACE", "Py:LINE_BREAK", "Py:STATEMENT_BREAK", "Py:DEDENT", "Py:LINE_BREAK",
+           "Py:DEF_KEYWORD", "Py:SPACE", "Py:IDENTIFIER", "Py:LPAR", "Py:RPAR", "Py:COLON", "Py:STATEMENT_BREAK", "Py:LINE_BREAK",
+           "Py:INDENT", "Py:PASS_KEYWORD", "Py:STATEMENT_BREAK", "Py:DEDENT", "Py:LINE_BREAK", "Py:IDENTIFIER", "Py:SPACE",
+           "Py:SINGLE_QUOTED_STRING", "Py:STATEMENT_BREAK");
   }
 
   public void testIncompleteTripleQuotedString() {  // PY-1768
