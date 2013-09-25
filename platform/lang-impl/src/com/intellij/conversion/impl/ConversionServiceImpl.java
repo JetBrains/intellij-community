@@ -172,18 +172,23 @@ public class ConversionServiceImpl extends ConversionService {
     return converters;
   }
 
-  public static boolean isConversionNeeded(String projectPath) throws CannotConvertException {
-    final ConversionContextImpl context = new ConversionContextImpl(projectPath);
-    final List<ConversionRunner> runners = getSortedConverters(context);
-    if (runners.isEmpty()) {
-      return false;
-    }
-    for (ConversionRunner runner : runners) {
-      if (runner.isConversionNeeded()) {
-        return true;
+  public static boolean isConversionNeeded(String projectPath) {
+    try {
+      final ConversionContextImpl context = new ConversionContextImpl(projectPath);
+      final List<ConversionRunner> runners = getSortedConverters(context);
+      if (runners.isEmpty()) {
+        return false;
       }
+      for (ConversionRunner runner : runners) {
+        if (runner.isConversionNeeded()) {
+          return true;
+        }
+      }
+      saveConversionResult(context);
     }
-    saveConversionResult(context);
+    catch (CannotConvertException e) {
+      LOG.info("Cannot check whether conversion of project files is needed or not, conversion won't be performed", e);
+    }
     return false;
   }
 
