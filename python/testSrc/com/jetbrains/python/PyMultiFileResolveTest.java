@@ -445,6 +445,11 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertNotParsed((PyFile)psiManager.findFile(myFixture.findFileInTempDir("p1/foo.py")));
   }
 
+  // PY-10819
+  public void testFromPackageModuleImportStarElementNamedAsModule() {
+    assertResolvesTo(PyFunction.class, "foo");
+  }
+
   private void prepareTestDirectory() {
     final String testName = getTestName(true);
     myFixture.copyDirectoryToProject(testName, "");
