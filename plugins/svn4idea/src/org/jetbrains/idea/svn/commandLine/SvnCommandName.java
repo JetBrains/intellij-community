@@ -48,7 +48,8 @@ public enum SvnCommandName {
   changelist("changelist", true),
   lock("lock", true),
   unlock("unlock", true),
-  importFolder("import", false);
+  importFolder("import", false),
+  export("export", false);
 
   private final String myName;
   private final boolean myWriteable;

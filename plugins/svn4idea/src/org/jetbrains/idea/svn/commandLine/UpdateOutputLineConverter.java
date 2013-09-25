@@ -26,7 +26,9 @@ import org.tmatesoft.svn.core.wc.SVNEventAction;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -55,12 +57,18 @@ public class UpdateOutputLineConverter {
   private final static Pattern ourUpdatedToRevision = Pattern.compile(UPDATED_TO_REVISION);
   private final static Pattern ourCheckedOutRevision = Pattern.compile("Checked out revision (\\d+)\\.");
 
+  // export from repository
+  private final static Pattern ourExportedRevision = Pattern.compile("Exported revision (\\d+)\\.");
+  // export from working copy
+  private final static Pattern ourExportComplete = Pattern.compile("Export complete\\.");
+
   private final static Pattern ourExternal = Pattern.compile(EXTERNAL);
   private final static Pattern ourUpdatedExternal = Pattern.compile(UPDATED_EXTERNAL);
   private final static Pattern ourCheckedOutExternal = Pattern.compile("Checked out external at revision (\\d+)\\.");
 
   private final static Pattern[] ourCompletePatterns =
-    new Pattern[]{ourAtRevision, ourUpdatedToRevision, ourCheckedOutRevision, ourExternal, ourUpdatedExternal, ourCheckedOutExternal};
+    new Pattern[]{ourAtRevision, ourUpdatedToRevision, ourCheckedOutRevision, ourExportedRevision, ourExternal, ourUpdatedExternal,
+      ourCheckedOutExternal, ourExportComplete};
 
   private final File myBase;
   private File myCurrentFile;
@@ -168,6 +176,10 @@ public class UpdateOutputLineConverter {
   private long matchAndGetRevision(final Pattern pattern, final String line) {
     final Matcher matcher = pattern.matcher(line);
     if (matcher.matches()) {
+      if (pattern == ourExportComplete) {
+        return 0;
+      }
+
       final String group = matcher.group(1);
       if (group == null) return -1;
       try {

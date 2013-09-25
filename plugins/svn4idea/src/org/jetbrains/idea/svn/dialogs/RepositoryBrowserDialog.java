@@ -894,7 +894,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       ExportOptionsDialog dialog = new ExportOptionsDialog(p, url, dir);
       dialog.show();
       if (dialog.isOK()) {
-        SvnCheckoutProvider.doExport(myProject, dir, url.toString(), dialog.getDepth(),
+        SvnCheckoutProvider.doExport(myProject, dir, url, dialog.getDepth(),
                 dialog.isIgnoreExternals(), dialog.isForce(), dialog.getEOLStyle());
       }
     }
