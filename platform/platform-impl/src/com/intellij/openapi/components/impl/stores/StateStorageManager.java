@@ -37,7 +37,7 @@ public interface StateStorageManager {
   TrackingPathMacroSubstitutor getMacroSubstitutor();
 
   @Nullable
-  StateStorage getStateStorage(@NotNull Storage storageSpec) throws StateStorageException;
+  StateStorage   getStateStorage(@NotNull Storage storageSpec) throws StateStorageException;
 
   @Nullable
   StateStorage getFileStateStorage(String fileName);
@@ -59,7 +59,7 @@ public interface StateStorageManager {
   String expandMacros(String file);
 
   @Deprecated
-  void registerStreamProvider(StreamProvider streamProvider, final RoamingType type);
+  void registerStreamProvider(@SuppressWarnings("deprecation") StreamProvider streamProvider, final RoamingType type);
 
   void setStreamProvider(@Nullable com.intellij.openapi.components.impl.stores.StreamProvider streamProvider);
 

@@ -21,12 +21,13 @@ import com.intellij.openapi.components.CompositePathMacroFilter;
 import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -43,9 +44,6 @@ public class PathMacrosCollector extends PathMacroMap {
   private final Matcher myMatcher;
   private final Map<String, String> myMacroMap = ContainerUtilRt.newLinkedHashMap();
 
-  private static final String FILE_PROTOCOL = "file:";
-  private static final String JAR_PROTOCOL = "jar:";
-
   private PathMacrosCollector() {
     myMatcher = MACRO_PATTERN.matcher("");
   }
@@ -59,7 +57,7 @@ public class PathMacrosCollector extends PathMacroMap {
   public static Set<String> getMacroNames(Element root, @Nullable PathMacroFilter filter, @NotNull final PathMacros pathMacros) {
     final PathMacrosCollector collector = new PathMacrosCollector();
     collector.substitute(root, true, false, filter);
-    final HashSet<String> result = new HashSet<String>(collector.myMacroMap.keySet());
+    final Set<String> result = new THashSet<String>(collector.myMacroMap.keySet());
     result.removeAll(pathMacros.getSystemMacroNames());
     result.removeAll(pathMacros.getLegacyMacroNames());
     result.removeAll(PathMacrosImpl.getToolMacroNames());
@@ -69,12 +67,13 @@ public class PathMacrosCollector extends PathMacroMap {
 
   @Override
   public String substituteRecursively(String text, boolean caseSensitive) {
-    if (text == null || text.isEmpty()) return text;
+    if (StringUtil.isEmpty(text)) {
+      return text;
+    }
 
     myMatcher.reset(text);
     while (myMatcher.find()) {
-      final String macroName = myMatcher.group(1);
-      myMacroMap.put(macroName, null);
+      myMacroMap.put(myMatcher.group(1), null);
     }
 
     return text;
@@ -82,12 +81,15 @@ public class PathMacrosCollector extends PathMacroMap {
 
   @Override
   public String substitute(String text, boolean caseSensitive) {
-    if (text == null || text.isEmpty()) return text;
-    
+    if (StringUtil.isEmpty(text)) {
+      return text;
+    }
+
     int startPos = -1;
     if (text.charAt(0) == '$') {
       startPos = 0;
-    } else {
+    }
+    else {
       for (String protocol : ReplacePathToMacroMap.PROTOCOLS) {
         if (text.length() > protocol.length() + 4 && text.startsWith(protocol) && text.charAt(protocol.length()) == ':') {
           startPos = protocol.length() + 1;
@@ -102,8 +104,7 @@ public class PathMacrosCollector extends PathMacroMap {
 
     myMatcher.reset(text).region(startPos, text.length());
     if (myMatcher.lookingAt()) {
-      final String macroName = myMatcher.group(1);
-      myMacroMap.put(macroName, null);
+      myMacroMap.put(myMatcher.group(1), null);
     }
 
     return text;

@@ -491,7 +491,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   @Override
-  public void registerStreamProvider(com.intellij.openapi.options.StreamProvider streamProvider, final RoamingType type) {
+  public void registerStreamProvider(@SuppressWarnings("deprecation") com.intellij.openapi.options.StreamProvider streamProvider, final RoamingType type) {
     synchronized (myOldStreamProvider) {
       myOldStreamProvider.myStreamProviders.add(new OldStreamProviderAdapter(streamProvider, type));
     }

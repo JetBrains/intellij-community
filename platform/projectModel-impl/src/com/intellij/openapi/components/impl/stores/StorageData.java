@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -106,14 +107,12 @@ public class StorageData {
 
   @Nullable
   public Element getState(final String name) {
-    final Element e = myComponentStates.get(name);
-
-    if (e != null) {
-      assert e.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
-      e.removeAttribute(NAME);
+    final Element element = myComponentStates.get(name);
+    if (element != null) {
+      assert element.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
+      element.removeAttribute(NAME);
     }
-
-    return e;
+    return element;
   }
 
   void removeState(final String componentName) {
@@ -169,10 +168,10 @@ public class StorageData {
   }
 
   public Set<String> getDifference(final StorageData storageData, PathMacroSubstitutor substitutor) {
-    Set<String> bothStates = new HashSet<String>(myComponentStates.keySet());
+    Set<String> bothStates = new THashSet<String>(myComponentStates.keySet());
     bothStates.retainAll(storageData.myComponentStates.keySet());
 
-    Set<String> diffs = new HashSet<String>();
+    Set<String> diffs = new THashSet<String>();
     diffs.addAll(storageData.myComponentStates.keySet());
     diffs.addAll(myComponentStates.keySet());
     diffs.removeAll(bothStates);
@@ -191,7 +190,6 @@ public class StorageData {
       }
     }
 
-
     return diffs;
   }
 
@@ -204,7 +202,9 @@ public class StorageData {
   }
 
   public void checkUnknownMacros(TrackingPathMacroSubstitutor pathMacroSubstitutor) {
-    if (pathMacroSubstitutor == null) return;
+    if (pathMacroSubstitutor == null) {
+      return;
+    }
 
     for (String componentName : myComponentStates.keySet()) {
       final Set<String> unknownMacros = PathMacrosCollector.getMacroNames(myComponentStates.get(componentName));
