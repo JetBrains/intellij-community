@@ -58,7 +58,6 @@ import org.xmlpull.v1.XmlSerializer;
 
 import java.awt.event.KeyEvent;
 import java.io.*;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
@@ -78,20 +77,10 @@ public class ConsoleHistoryController {
   private final ModelHelper myHelper;
   private long myLastSaveStamp;
 
-  public ConsoleHistoryController(@NotNull final String type,
-                                  @Nullable final String persistenceId,
-                                  @NotNull final LanguageConsoleImpl console,
-                                  @NotNull final ConsoleHistoryModel model) {
-    this(type, persistenceId, console, model, Charset.defaultCharset());
-  }
-  public ConsoleHistoryController(@NotNull final String type,
-                                  @Nullable final String persistenceId,
-                                  @NotNull final LanguageConsoleImpl console,
-                                  @NotNull final ConsoleHistoryModel model,
-                                  @NotNull final Charset charset)
-  {
+  public ConsoleHistoryController(@NotNull String type, @Nullable String persistenceId,
+                                  @NotNull LanguageConsoleImpl console, @NotNull ConsoleHistoryModel model) {
     String id = persistenceId == null || StringUtil.isEmpty(persistenceId) ? console.getProject().getPresentableUrl() : persistenceId;
-    myHelper = new ModelHelper(type, id, model, charset);
+    myHelper = new ModelHelper(type, id, model);
     myConsole = console;
   }
 
@@ -358,14 +347,11 @@ public class ConsoleHistoryController {
     private final String myId;
     private final ConsoleHistoryModel myModel;
     private String myContent;
-    @NotNull
-    private final Charset myCharset;
 
-    public ModelHelper(String type, String id, ConsoleHistoryModel model, @NotNull Charset charset) {
+    public ModelHelper(String type, String id, ConsoleHistoryModel model) {
       myType = type;
       myId = id;
       myModel = model;
-      myCharset = charset;
     }
 
     public ConsoleHistoryModel getModel() {
@@ -395,7 +381,7 @@ public class ConsoleHistoryController {
       if (!file.exists()) return false;
       HierarchicalStreamReader xmlReader = null;
       try {
-        xmlReader = new XppReader(new InputStreamReader(new FileInputStream(file), myCharset));
+        xmlReader = new XppReader(new InputStreamReader(new FileInputStream(file), CharsetToolkit.UTF8));
         String text = loadHistory(xmlReader, id);
         if (text != null) {
           myContent = text;
@@ -430,7 +416,7 @@ public class ConsoleHistoryController {
         catch (Exception e) {
           // not recognized
         }
-        serializer.setOutput(os = new SafeFileOutputStream(file), myCharset.name());
+        serializer.setOutput(os = new SafeFileOutputStream(file), CharsetToolkit.UTF8);
         saveHistory(serializer);
       }
       catch (Exception ex) {
