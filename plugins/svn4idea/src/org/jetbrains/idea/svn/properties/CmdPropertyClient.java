@@ -95,19 +95,47 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
                           @Nullable SVNPropertyValue value,
                           @Nullable SVNDepth depth,
                           boolean force) throws VcsException {
+    runSetProperty(SvnTarget.fromFile(file), property, null, depth, value, force);
+  }
+
+  @Override
+  public void setRevisionProperty(@NotNull SvnTarget target,
+                                  @NotNull String property,
+                                  @NotNull SVNRevision revision,
+                                  @Nullable SVNPropertyValue value,
+                                  boolean force) throws VcsException {
+    runSetProperty(target, property, revision, null, value, force);
+  }
+
+  private void runSetProperty(@NotNull SvnTarget target,
+                              @NotNull String property,
+                              @Nullable SVNRevision revision,
+                              @Nullable SVNDepth depth,
+                              @Nullable SVNPropertyValue value,
+                              boolean force) throws VcsException {
     List<String> parameters = new ArrayList<String>();
     boolean isDelete = value == null;
 
     parameters.add(property);
+    if (revision != null) {
+      parameters.add("--revprop");
+      CommandUtil.put(parameters, revision);
+    }
     if (!isDelete) {
       parameters.add(SVNPropertyValue.getPropertyAsString(value));
       // --force could only be used in "propset" command, but not in "propdel" command
       CommandUtil.put(parameters, force, "--force");
     }
-    CommandUtil.put(parameters, file);
+    CommandUtil.put(parameters, target);
     CommandUtil.put(parameters, depth);
 
-    CommandUtil.execute(myVcs, SvnTarget.fromFile(file), isDelete ? SvnCommandName.propdel : SvnCommandName.propset, parameters, null);
+    // For some reason, command setting ignore property when working directory equals target directory (like
+    // "svn propset svn:ignore *.java . --depth empty") tries to set ignore also on child files and fails with error like
+    // "svn: E200009: Cannot set 'svn:ignore' on a file ('...File1.java')". So here we manually force home directory to be used.
+    // NOTE: that setting other properties (not svn:ignore) does not cause such error.
+    CommandUtil
+      .execute(myVcs, target, CommandUtil.getHomeDirectory(), isDelete ? SvnCommandName.propdel : SvnCommandName.propset, parameters,
+               null);
   }
 
   private void fillListParameters(@NotNull SvnTarget target,
@@ -211,7 +239,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     // such behavior is required to compatibility with SVNKit as some logic in merge depends on
     // whether null property data or property data with empty string value is returned
     if (value != null) {
-      result = new SVNPropertyData(property, SVNPropertyValue.create(value.trim()), null);
+      result = new SVNPropertyData(property, SVNPropertyValue.create(value.trim()), LF_SEPARATOR_OPTIONS);
     }
 
     return result;

@@ -83,6 +83,7 @@ import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.lowLevel.PrimitivePool;
 import org.jetbrains.idea.svn.networking.SSLProtocolExceptionParser;
 import org.jetbrains.idea.svn.portable.SvnWcClientI;
+import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
@@ -202,8 +203,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   };
   private SvnCheckoutProvider myCheckoutProvider;
 
-  private ClientFactory cmdClientFactory;
-  private ClientFactory svnKitClientFactory;
+  private final ClientFactory cmdClientFactory;
+  private final ClientFactory svnKitClientFactory;
 
   private final boolean myLogExceptions;
 
@@ -243,6 +244,9 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   public SvnVcs(final Project project, MessageBus bus, SvnConfiguration svnConfiguration, final SvnLoadedBrachesStorage storage) {
     super(project, VCS_NAME);
+
+    cmdClientFactory = new CmdClientFactory(this);
+    svnKitClientFactory = new SvnKitClientFactory(this);
 
     myLoadedBranchesStorage = storage;
     myRootsToWorkingCopies = new RootsToWorkingCopies(this);
@@ -500,9 +504,6 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     else if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       checkCommandLineVersion();
     }
-
-    cmdClientFactory = new CmdClientFactory(this);
-    svnKitClientFactory = new SvnKitClientFactory(this);
 
     // do one time after project loaded
     StartupManager.getInstance(myProject).runWhenProjectIsInitialized(new DumbAwareRunnable() {
@@ -861,7 +862,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Nullable
-  public SVNPropertyValue getPropertyWithCaching(final VirtualFile file, final String propName) throws SVNException {
+  public SVNPropertyValue getPropertyWithCaching(final VirtualFile file, final String propName) throws VcsException {
     Map<String, Pair<SVNPropertyValue, Trinity<Long, Long, Long>>> cachedMap = myPropertyCache.get(keyForVf(file));
     final Pair<SVNPropertyValue, Trinity<Long, Long, Long>> cachedValue = cachedMap == null ? null : cachedMap.get(propName);
 
@@ -875,7 +876,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       }
     }
 
-    final SVNPropertyData value = createWCClient().doGetProperty(ioFile, propName, SVNRevision.WORKING, SVNRevision.WORKING);
+    PropertyClient client = getFactory(ioFile).createPropertyClient();
+    final SVNPropertyData value = client.getProperty(SvnTarget.fromFile(ioFile, SVNRevision.WORKING), propName, false, SVNRevision.WORKING);
     final SVNPropertyValue propValue = value == null ? null : value.getValue();
 
     if (cachedMap == null) {
@@ -1396,5 +1398,10 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull
   public ClientFactory getFactoryFromSettings() {
     return myConfiguration.isCommandLine() ? cmdClientFactory : svnKitClientFactory;
+  }
+
+  @NotNull
+  public ClientFactory getCommandLineFactory() {
+    return cmdClientFactory;
   }
 }

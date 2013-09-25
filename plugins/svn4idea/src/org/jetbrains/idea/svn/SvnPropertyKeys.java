@@ -24,4 +24,5 @@ public interface SvnPropertyKeys {
   String SVN_EXECUTABLE = "svn:executable";
   String SVN_IGNORE = "svn:ignore";
   String SVN_EXTERNALS = "svn:externals";
+  String LOG = "svn:log";
 }

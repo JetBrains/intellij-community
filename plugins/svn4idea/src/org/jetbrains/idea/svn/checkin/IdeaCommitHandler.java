@@ -94,6 +94,8 @@ public class IdeaCommitHandler implements CommitEventHandler, ISVNEventHandler {
       result = CommitEventType.replacing;
     } else if (SVNEventAction.COMMIT_DELTA_SENT.equals(action)) {
       result = CommitEventType.transmittingDeltas;
+    } else if (SVNEventAction.SKIP.equals(action)) {
+      result = CommitEventType.skipped;
     }
 
     if (result == null) {

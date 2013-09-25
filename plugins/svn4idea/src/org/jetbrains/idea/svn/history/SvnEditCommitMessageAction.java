@@ -36,13 +36,14 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNPropertyValue;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 /**
  * Created with IntelliJ IDEA.
@@ -133,7 +134,6 @@ public class SvnEditCommitMessageAction extends AnAction {
 
     @Override
     public void run(@NotNull ProgressIndicator indicator) {
-      final SVNWCClient client = myVcs.createWCClient();
       final String url = myLocation.getURL();
       final SVNURL root;
       try {
@@ -142,11 +142,15 @@ public class SvnEditCommitMessageAction extends AnAction {
           myException = new VcsException("Can not determine repository root for URL: " + url);
           return;
         }
-        client.doSetRevisionProperty(root, SVNRevision.create(myNumber), "svn:log",
-                                     SVNPropertyValue.create(myNewMessage), false, null);
+        SvnTarget target = SvnTarget.fromURL(root);
+        myVcs.getFactory(target).createPropertyClient()
+          .setRevisionProperty(target, SvnPropertyKeys.LOG, SVNRevision.create(myNumber), SVNPropertyValue.create(myNewMessage), false);
       }
       catch (SVNException e) {
         myException = new VcsException(e);
+      }
+      catch (VcsException e) {
+        myException = e;
       }
     }
 

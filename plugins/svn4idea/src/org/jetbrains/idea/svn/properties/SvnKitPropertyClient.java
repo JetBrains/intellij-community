@@ -31,9 +31,9 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
     try {
       if (!revisionProperty) {
         if (target.isFile()) {
-          return myVcs.createWCClient().doGetProperty(target.getFile(), property, target.getPegRevision(), revision);
+          return createClient().doGetProperty(target.getFile(), property, target.getPegRevision(), revision);
         } else {
-          return myVcs.createWCClient().doGetProperty(target.getURL(), property, target.getPegRevision(), revision);
+          return createClient().doGetProperty(target.getURL(), property, target.getPegRevision(), revision);
         }
       } else {
         return getRevisionProperty(target, property, revision);
@@ -42,6 +42,14 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
     catch (SVNException e) {
       throw new VcsException(e);
     }
+  }
+
+  @NotNull
+  private SVNWCClient createClient() {
+    SVNWCClient client = myVcs.createWCClient();
+    client.setOptions(LF_SEPARATOR_OPTIONS);
+
+    return client;
   }
 
   @Override
@@ -68,7 +76,26 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
                           @Nullable SVNDepth depth,
                           boolean force) throws VcsException {
     try {
-      myVcs.createWCClient().doSetProperty(file, property, value, force, depth, null, null);
+      createClient().doSetProperty(file, property, value, force, depth, null, null);
+    }
+    catch (SVNException e) {
+      throw new SvnBindException(e);
+    }
+  }
+
+  @Override
+  public void setRevisionProperty(@NotNull SvnTarget target,
+                                  @NotNull String property,
+                                  @NotNull SVNRevision revision,
+                                  @Nullable SVNPropertyValue value,
+                                  boolean force) throws VcsException {
+    try {
+      if (target.isFile()) {
+        createClient().doSetRevisionProperty(target.getFile(), revision, property, value, force, null);
+      }
+      else {
+        createClient().doSetRevisionProperty(target.getURL(), revision, property, value, force, null);
+      }
     }
     catch (SVNException e) {
       throw new SvnBindException(e);
@@ -80,7 +107,7 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
                               @Nullable SVNRevision revision,
                               @Nullable SVNDepth depth,
                               @Nullable ISVNPropertyHandler handler) throws VcsException {
-    SVNWCClient client = myVcs.createWCClient();
+    SVNWCClient client = createClient();
 
     try {
       if (target.isURL()) {
@@ -94,7 +121,7 @@ public class SvnKitPropertyClient extends BaseSvnClient implements PropertyClien
   }
 
   private SVNPropertyData getRevisionProperty(@NotNull SvnTarget target, @NotNull final String property, @Nullable SVNRevision revision) throws SVNException{
-    final SVNWCClient client = myVcs.createWCClient();
+    final SVNWCClient client = createClient();
     final SVNPropertyData[] result = new SVNPropertyData[1];
     ISVNPropertyHandler handler = new ISVNPropertyHandler() {
       @Override

@@ -29,6 +29,8 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created with IntelliJ IDEA.
@@ -94,6 +96,14 @@ public class SvnCommitRunner {
   }
 
   public static class CommandListener extends LineCommandListener {
+
+    // Status could contain spaces, like "Adding copy of   <path>". But at the end we are not interested in "copy of" part and want to have
+    // only "Adding" in match group.
+    private static final String STATUS = "\\s*(\\w+)(.*?)\\s\\s+";
+    private static final String OPTIONAL_FILE_TYPE = "(\\(.*\\))?";
+    private static final String PATH = "\\s*(.*?)\\s*";
+    private static final Pattern CHANGED_PATH = Pattern.compile(STATUS + OPTIONAL_FILE_TYPE + PATH);
+
     @Nullable private final CommitEventHandler myHandler;
     private SvnBindException myException;
     private long myCommittedRevision = Revision.SVN_INVALID_REVNUM;
@@ -138,6 +148,24 @@ public class SvnCommitRunner {
         }
         return;
       }
+      if (line.startsWith(CommitEventType.skipped.getText())) {
+        File target = null;
+        if (myHandler != null) {
+          int pathStart = line.indexOf('\'');
+          if (pathStart > -1) {
+            int pathEnd = line.indexOf('\'', pathStart + 1);
+            if (pathEnd > -1) {
+              target = toFile(line.substring(pathStart + 1, pathEnd));
+            }
+          }
+          if (target != null) {
+            myHandler.commitEvent(CommitEventType.skipped, myBase);
+          } else {
+            LOG.info("Can not parse 'Skipped' path " + line);
+          }
+        }
+        return;
+      }
       if (line.startsWith(CommitEventType.committedRevision.getText())) {
         final String substring = line.substring(CommitEventType.committedRevision.getText().length());
         int cnt = 0;
@@ -167,25 +195,33 @@ public class SvnCommitRunner {
         }
       } else {
         if (myHandler == null) return;
-        // status and path are separated by several spaces
-        final int idxSpace = line.indexOf("  ");
-        if (idxSpace == -1) {
-          LOG.info("Can not parse event type: " + line);
-          return;
+
+        Matcher matcher = CHANGED_PATH.matcher(line);
+        if (matcher.matches()) {
+          final CommitEventType type = CommitEventType.create(matcher.group(1));
+          if (type == null) {
+            LOG.info("Can not parse event type: " + line);
+            return;
+          }
+          myHandler.commitEvent(type, toFile(matcher.group(4)));
+        } else {
+          LOG.info("Can not parse output: " + line);
         }
-        final CommitEventType type = CommitEventType.create(line.substring(0, idxSpace));
-        if (type == null) {
-          LOG.info("Can not parse event type: " + line);
-          return;
-        }
-        File target = new File(new String(line.substring(idxSpace + 1).trim()));
-        if (!target.isAbsolute()) {
-          target = new File(myBase, target.getPath());
-        }
-        myHandler.commitEvent(type, target);
       }
     }
+
+    @NotNull
+    private File toFile(@NotNull String path) {
+      File result = new File(path);
+
+      if (!result.isAbsolute()) {
+        result = new File(myBase, result.getPath());
+      }
+
+      return result;
+    }
   }
+
 
 /*C:\TestProjects\sortedProjects\Subversion\local2\preRelease\mod2\src\com\test>sv
   n st
