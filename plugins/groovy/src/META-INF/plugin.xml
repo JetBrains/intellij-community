@@ -1444,6 +1444,8 @@
                                      implementation="org.jetbrains.plugins.groovy.springloaded.SpringLoadedPositionManagerFactory"/>
     <codeStyle.ReferenceAdjuster language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster"/>
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="org.jetbrains.plugins.groovy.jarFinder.GroovyFindJarQuickFixProvider"/>
+    <lang.refactoringSupport.classMembersRefactoringSupport language="Groovy"
+                                                            implementationClass="org.jetbrains.plugins.groovy.refactoring.classMembers.GroovyClassMembersRefactoringSupport"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

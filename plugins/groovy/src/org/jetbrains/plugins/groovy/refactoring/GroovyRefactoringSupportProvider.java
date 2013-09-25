@@ -41,6 +41,7 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.constant.GrIntroduceCo
 import org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntroduceFieldHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GrIntroduceVariableHandler;
+import org.jetbrains.plugins.groovy.refactoring.memberPullUp.GrPullUpHandler;
 
 /**
  * @author ilyas
@@ -128,5 +129,18 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
   @Override
   public RefactoringActionHandler getIntroduceConstantHandler() {
     return new GrIntroduceConstantHandler();
+  }
+
+  @Nullable
+  @Override
+  public RefactoringActionHandler getPullUpHandler() {
+    return new GrPullUpHandler();
+  }
+
+  @Nullable
+  @Override
+  public RefactoringActionHandler getExtractInterfaceHandler() {
+    //return new ExtractInterfaceHandler();
+    return null;
   }
 }
