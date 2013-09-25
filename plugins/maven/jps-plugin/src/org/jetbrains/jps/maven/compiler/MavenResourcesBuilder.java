@@ -49,6 +49,7 @@ public class MavenResourcesBuilder extends TargetBuilder<MavenResourceRootDescri
     final Set<String> filteringExcludedExtensions = config.getFilteringExcludedExtensions();
     final JpsEncodingProjectConfiguration encodingConfig =
       JpsEncodingConfigurationService.getInstance().getEncodingConfiguration(target.getModule().getProject());
+
     final Date timestamp = new Date();
 
     holder.processDirtyFiles(new FileProcessor<MavenResourceRootDescriptor, MavenResourcesTarget>() {

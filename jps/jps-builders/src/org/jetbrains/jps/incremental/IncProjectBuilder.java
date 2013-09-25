@@ -379,7 +379,9 @@ public class IncProjectBuilder {
   public static void clearOutputFiles(CompileContext context, BuildTarget<?> target) throws IOException {
     final SourceToOutputMapping map = context.getProjectDescriptor().dataManager.getSourceToOutputMap(target);
     final THashSet<File> dirsToDelete = target instanceof ModuleBasedTarget? new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY) : null;
-    for (String srcPath : map.getSources()) {
+    Collection<String> sources = map.getSources();
+    LOG.debug("Clearing " + sources.size() + " output files");
+    for (String srcPath : sources) {
       final Collection<String> outs = map.getOutputs(srcPath);
       if (outs != null && !outs.isEmpty()) {
         for (String out : outs) {
@@ -399,6 +401,7 @@ public class IncProjectBuilder {
     if (dirsToDelete != null) {
       FSOperations.pruneEmptyDirs(context, dirsToDelete);
     }
+    LOG.debug("Finished clearing output files");
   }
 
   private static void registerTargetsWithClearedOutput(CompileContext context, Collection<? extends BuildTarget<?>> targets) {
@@ -715,7 +718,7 @@ public class IncProjectBuilder {
     return false;
   }
 
-  private boolean runBuildersForChunk(CompileContext context, final BuildTargetChunk chunk) throws ProjectBuildException, IOException {
+  private boolean runBuildersForChunk(final CompileContext context, final BuildTargetChunk chunk) throws ProjectBuildException, IOException {
     Set<? extends BuildTarget<?>> targets = chunk.getTargets();
     if (targets.size() > 1) {
       Set<ModuleBuildTarget> moduleTargets = new HashSet<ModuleBuildTarget>();
@@ -739,6 +742,11 @@ public class IncProjectBuilder {
       return runModuleLevelBuilders(context, new ModuleChunk(Collections.singleton((ModuleBuildTarget)target)));
     }
 
+    // In general the set of files corresponding to changed source file may be different
+    // Need this for example, to keep up with case changes in file names  for case-insensitive OSes: 
+    // deleting the output before copying is the only way to ensure the case of the output file's name is exactly the same as source file's case
+    cleanOldOutputs(context, target);
+    
     final List<TargetBuilder<?, ?>> builders = BuilderRegistry.getInstance().getTargetBuilders();
     for (TargetBuilder<?, ?> builder : builders) {
       BuildOperations.buildTarget(target, context, builder);
@@ -747,6 +755,18 @@ public class IncProjectBuilder {
     return true;
   }
 
+  private static <T extends BuildRootDescriptor>
+  void cleanOldOutputs(final CompileContext context, final BuildTarget<T> target) throws ProjectBuildException, IOException {
+    if (!context.getScope().isBuildForced(target)) {
+      BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, new DirtyFilesHolderBase<T, BuildTarget<T>>(context) {
+        public void processDirtyFiles(@NotNull FileProcessor<T, BuildTarget<T>> processor) throws IOException {
+          context.getProjectDescriptor().fsState.processFilesToRecompile(context, target, processor);
+        }
+      });
+    }
+  }
+  
+  
   private void updateDoneFraction(CompileContext context, final float delta) {
     myTargetsProcessed += delta;
     float processed = myTargetsProcessed;

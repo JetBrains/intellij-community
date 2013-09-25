@@ -364,19 +364,19 @@ public class AndroidLintInspectionToolProvider {
 
   public static class AndroidLintManifestOrderInspection extends AndroidLintInspectionBase {
     public AndroidLintManifestOrderInspection() {
-      super(AndroidBundle.message("android.lint.inspections.manifest.order"), ManifestOrderDetector.ORDER);
+      super(AndroidBundle.message("android.lint.inspections.manifest.order"), ManifestDetector.ORDER);
     }
   }
 
   public static class AndroidLintMultipleUsesSdkInspection extends AndroidLintInspectionBase {
     public AndroidLintMultipleUsesSdkInspection() {
-      super(AndroidBundle.message("android.lint.inspections.multiple.uses.sdk"), ManifestOrderDetector.MULTIPLE_USES_SDK);
+      super(AndroidBundle.message("android.lint.inspections.multiple.uses.sdk"), ManifestDetector.MULTIPLE_USES_SDK);
     }
   }
 
   public static class AndroidLintUsesMinSdkAttributesInspection extends AndroidLintInspectionBase {
     public AndroidLintUsesMinSdkAttributesInspection() {
-      super(AndroidBundle.message("android.lint.inspections.uses.min.sdk"), ManifestOrderDetector.USES_SDK);
+      super(AndroidBundle.message("android.lint.inspections.uses.min.sdk"), ManifestDetector.USES_SDK);
     }
   }
 

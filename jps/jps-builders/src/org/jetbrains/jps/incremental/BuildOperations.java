@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -41,6 +42,8 @@ import java.util.*;
  *         Date: 10/30/12
  */
 public class BuildOperations {
+  private static final Logger LOG = Logger.getInstance(BuildOperations.class);
+
   private BuildOperations() {
   }
 
@@ -147,6 +150,7 @@ public class BuildOperations {
 
   public static <R extends BuildRootDescriptor, T extends BuildTarget<R>>
   Map<T, Set<File>> cleanOutputsCorrespondingToChangedFiles(final CompileContext context, DirtyFilesHolder<R, T> dirtyFilesHolder) throws ProjectBuildException {
+    LOG.debug("Starting cleaning output files for changed sources");
     final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     try {
       final Map<T, Set<File>> cleanedSources = new java.util.HashMap<T, Set<File>>();
@@ -205,6 +209,7 @@ public class BuildOperations {
       // attempting to delete potentially empty directories
       FSOperations.pruneEmptyDirs(context, dirsToDelete);
 
+      LOG.debug("Finished cleaning output files for changed sources");
       return cleanedSources;
     }
     catch (Exception e) {

@@ -75,6 +75,22 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
 
   protected Map<String, String> myBuildParams;
 
+  protected static void rename(String path, String newName) {
+    try {
+      File file = new File(FileUtil.toSystemDependentName(path));
+      assertTrue("File " + file.getAbsolutePath() + " doesn't exist", file.exists());
+      final File tempFile = new File(file.getParentFile(), "__" + newName);
+      FileUtil.rename(file, tempFile);
+      File newFile = new File(file.getParentFile(), newName);
+      FileUtil.copyContent(tempFile, newFile);
+      FileUtil.delete(tempFile);
+      change(newFile.getPath());
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
