@@ -19,6 +19,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -27,11 +28,12 @@ import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * User: anna
  */
-public class CheckedExceptionCompatibilityConstraint implements ConstraintFormula {
+public class CheckedExceptionCompatibilityConstraint extends InputOutputConstraintFormula {
   private static final Logger LOG = Logger.getInstance("#" + CheckedExceptionCompatibilityConstraint.class.getName());
   private final PsiExpression myExpression;
   private final PsiType myT;
@@ -134,5 +136,29 @@ public class CheckedExceptionCompatibilityConstraint implements ConstraintFormul
       }
     }
     return false;
+  }
+
+  @Override
+  protected PsiExpression getExpression() {
+    return myExpression;
+  }
+
+  @Override
+  protected PsiType getT() {
+    return myT;
+  }
+
+  @Override
+  protected InputOutputConstraintFormula createSelfConstraint(PsiType type, PsiExpression expression) {
+    return new CheckedExceptionCompatibilityConstraint(expression, type);
+  }
+
+  @Override
+  protected void collectReturnTypeVariables(InferenceSession session,
+                                            PsiExpression psiExpression,
+                                            PsiMethod interfaceMethod,
+                                            Set<InferenceVariable> result) {
+    final PsiType returnType = interfaceMethod.getReturnType();
+    session.collectDependencies(returnType, result, true);
   }
 }

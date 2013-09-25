@@ -18,19 +18,19 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiMethodCallExpressionImpl;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * User: anna
  */
-public class ExpressionCompatibilityConstraint implements ConstraintFormula {
+public class ExpressionCompatibilityConstraint extends InputOutputConstraintFormula {
   private PsiExpression myExpression;
   private PsiType myT;
 
@@ -155,5 +155,38 @@ public class ExpressionCompatibilityConstraint implements ConstraintFormula {
     int result = myExpression.hashCode();
     result = 31 * result + myT.hashCode();
     return result;
+  }
+
+  @Override
+  public PsiExpression getExpression() {
+    return myExpression;
+  }
+
+  @Override
+  public PsiType getT() {
+    return myT;
+  }
+
+  @Override
+  protected InputOutputConstraintFormula createSelfConstraint(PsiType type, PsiExpression expression) {
+    return new ExpressionCompatibilityConstraint(expression, type);
+  }
+
+  protected void collectReturnTypeVariables(InferenceSession session,
+                                            PsiExpression psiExpression,
+                                            PsiMethod interfaceMethod,
+                                            Set<InferenceVariable> result) {
+    if (psiExpression instanceof PsiLambdaExpression) {
+      final PsiType returnType = interfaceMethod.getReturnType();
+      if (returnType != PsiType.VOID) {
+        final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions((PsiLambdaExpression)psiExpression);
+        for (PsiExpression expression : returnExpressions) {
+          final Set<InferenceVariable> resultInputVars = createSelfConstraint(returnType, expression).getInputVariables(session);
+          if (resultInputVars != null) {
+            result.addAll(resultInputVars);
+          }
+        }
+      }
+    }
   }
 }
