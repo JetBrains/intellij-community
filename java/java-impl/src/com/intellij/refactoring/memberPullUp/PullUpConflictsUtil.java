@@ -39,6 +39,7 @@ import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -135,9 +136,9 @@ public class PullUpConflictsUtil {
       checkModuleConflictsList.add(member);
     }
     for (final PsiMethod method : abstractMethods) {
-      checkModuleConflictsList.add(method.getParameterList());
-      checkModuleConflictsList.add(method.getReturnTypeElement());
-      checkModuleConflictsList.add(method.getTypeParameterList());
+      ContainerUtil.addIfNotNull(checkModuleConflictsList, method.getParameterList());
+      ContainerUtil.addIfNotNull(checkModuleConflictsList, method.getReturnTypeElement());
+      ContainerUtil.addIfNotNull(checkModuleConflictsList, method.getTypeParameterList());
     }
     RefactoringConflictsUtil.analyzeModuleConflicts(subclass.getProject(), checkModuleConflictsList,
                                            new UsageInfo[0], targetRepresentativeElement, conflicts);
