@@ -1507,9 +1507,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         if (type == ASSERT_IS_NULL_METHOD || type == ASSERT_IS_NOT_NULL_METHOD) {
           constraints[checkedParam] = type == ASSERT_IS_NOT_NULL_METHOD ? ValueConstraint.NULL_VALUE : ValueConstraint.NOT_NULL_VALUE;
           return Collections.singletonList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
-        } else if (type == IS_NULL_METHOD || type == IS_NOT_NULL_METHOD) {
-          constraints[checkedParam] = type == IS_NULL_METHOD ? ValueConstraint.NOT_NULL_VALUE : ValueConstraint.NULL_VALUE;
-          return Collections.singletonList(new MethodContract(constraints, ValueConstraint.FALSE_VALUE));
+        } else if (type == IS_NOT_NULL_METHOD || type == IS_NULL_METHOD) {
+          constraints[checkedParam] = ValueConstraint.NULL_VALUE;
+          return Collections.singletonList(new MethodContract(constraints, type == IS_NULL_METHOD ? ValueConstraint.TRUE_VALUE : ValueConstraint.FALSE_VALUE));
         } else { //assertTrue or assertFalse
           constraints[checkedParam] = type == ASSERT_FALSE_METHOD ? ValueConstraint.TRUE_VALUE : ValueConstraint.FALSE_VALUE;
           return Collections.singletonList(new MethodContract(constraints, ValueConstraint.THROW_EXCEPTION));
