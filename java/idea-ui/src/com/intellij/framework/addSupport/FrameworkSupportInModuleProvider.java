@@ -23,6 +23,9 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * @author nik
  */
@@ -58,6 +61,10 @@ public abstract class FrameworkSupportInModuleProvider {
 
   public String getVersionLabel() {
     return "Version:";
+  }
+
+  public List<String> getOptionalDependenciesFrameworkIds() {
+    return Collections.emptyList();
   }
 
   @Override
