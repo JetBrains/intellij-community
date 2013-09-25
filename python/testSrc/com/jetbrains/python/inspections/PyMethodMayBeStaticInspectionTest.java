@@ -55,6 +55,10 @@ public class PyMethodMayBeStaticInspectionTest extends PyTestCase {
     doTest();
   }
 
+  public void testAbstractProperty() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile("inspections/PyMethodMayBeStaticInspection/" + getTestName(true) + ".py");
     myFixture.enableInspections(PyMethodMayBeStaticInspection.class);
