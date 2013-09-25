@@ -34,8 +34,8 @@ public class CmdImportClient extends BaseSvnClient implements ImportClient {
 
     List<String> parameters = new ArrayList<String>();
 
-    CommandUtil.put(parameters, path);
-    CommandUtil.put(parameters, SvnTarget.fromURL(url));
+    CommandUtil.put(parameters, path, false);
+    CommandUtil.put(parameters, SvnTarget.fromURL(url), false);
     CommandUtil.put(parameters, depth);
     CommandUtil.put(parameters, noIgnore, "--no-ignore");
     parameters.add("--message");
