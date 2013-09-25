@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,15 +32,18 @@ public class KeyedLazyInstanceEP<T> extends AbstractExtensionPointBean implement
   public String implementationClass;
 
   private final LazyInstance<T> myHandler = new LazyInstance<T>() {
+    @Override
     protected Class<T> getInstanceClass() throws ClassNotFoundException {
       return findClass(implementationClass);
     }
   };
 
+  @Override
   public T getInstance() {
     return myHandler.getValue();
   }
 
+  @Override
   public String getKey() {
     return key;
   }
