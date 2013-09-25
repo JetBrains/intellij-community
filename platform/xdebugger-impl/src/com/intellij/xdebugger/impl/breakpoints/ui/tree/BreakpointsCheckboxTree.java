@@ -21,17 +21,26 @@ import com.intellij.ui.CheckedTreeNode;
 
 public class BreakpointsCheckboxTree extends CheckboxTree {
 
+  @Override
+  protected void nodeStateWillChange(CheckedTreeNode node) {
+    super.nodeStateWillChange(node);
+    if (myDelegate != null) {
+      myDelegate.nodeStateWillChange(node);
+    }
+  }
 
   @Override
   protected void onNodeStateChanged(CheckedTreeNode node) {
     super.onNodeStateChanged(node);
     if (myDelegate != null) {
-      myDelegate.nodeStateChanged(node);
+      myDelegate.nodeStateDidChange(node);
     }
   }
 
   interface Delegate {
-    void nodeStateChanged(CheckedTreeNode node);
+    void nodeStateDidChange(CheckedTreeNode node);
+
+    void nodeStateWillChange(CheckedTreeNode node);
   }
 
   public void setDelegate(Delegate delegate) {
