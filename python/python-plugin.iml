@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="ultimate-verifier" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="webide-api" />
+    <orderEntry type="module" module-name="python-community-plugin" />
   </component>
 </module>
 
