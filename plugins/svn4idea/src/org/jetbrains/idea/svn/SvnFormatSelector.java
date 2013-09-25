@@ -17,11 +17,7 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.CalledInAwt;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -171,36 +167,5 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
     }
 
     return WorkingCopyFormat.getInstance(format);
-  }
-
-  public static class CheckoutFormatFromUserProvider {
-
-    @NotNull private final Project myProject;
-    @NotNull private final File myPath;
-
-    public CheckoutFormatFromUserProvider(@NotNull Project project, @NotNull File path) {
-      myProject = project;
-      myPath = path;
-    }
-
-    @CalledInAwt
-    public WorkingCopyFormat prompt() {
-      assert !ApplicationManager.getApplication().isUnitTestMode();
-
-      final WorkingCopyFormat result = displayUpgradeDialog(WorkingCopyFormat.ONE_DOT_SEVEN);
-
-      ApplicationManager.getApplication().getMessageBus().syncPublisher(SvnVcs.WC_CONVERTED).run();
-
-      return result;
-    }
-
-    private WorkingCopyFormat displayUpgradeDialog(@NotNull WorkingCopyFormat defaultSelection) {
-      UpgradeFormatDialog dialog = new UpgradeFormatDialog(myProject, myPath, false);
-
-      dialog.setData(defaultSelection);
-      dialog.show();
-
-      return dialog.isOK() ? dialog.getUpgradeMode() : WorkingCopyFormat.UNKNOWN;
-    }
   }
 }

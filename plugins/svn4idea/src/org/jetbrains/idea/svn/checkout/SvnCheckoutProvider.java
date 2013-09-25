@@ -43,6 +43,7 @@ import org.jetbrains.idea.svn.actions.SvnExcludingIgnoredOperation;
 import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
 import org.jetbrains.idea.svn.commandLine.CommitEventHandler;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
+import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -172,7 +173,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   @CalledInAwt
   @NotNull
   public static WorkingCopyFormat promptForWCopyFormat(final File target, final Project project) {
-    return new SvnFormatSelector.CheckoutFormatFromUserProvider(project, target).prompt();
+    return new CheckoutFormatFromUserProvider(project, target).prompt();
   }
 
   public static void doExport(final Project project, final File target, final SVNURL url, final SVNDepth depth,
@@ -275,6 +276,36 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     return "_Subversion";
   }
 
+  public static class CheckoutFormatFromUserProvider {
+
+    @NotNull private final Project myProject;
+    @NotNull private final File myPath;
+
+    public CheckoutFormatFromUserProvider(@NotNull Project project, @NotNull File path) {
+      myProject = project;
+      myPath = path;
+    }
+
+    @CalledInAwt
+    public WorkingCopyFormat prompt() {
+      assert !ApplicationManager.getApplication().isUnitTestMode();
+
+      final WorkingCopyFormat result = displayUpgradeDialog(WorkingCopyFormat.ONE_DOT_SEVEN);
+
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(SvnVcs.WC_CONVERTED).run();
+
+      return result;
+    }
+
+    private WorkingCopyFormat displayUpgradeDialog(@NotNull WorkingCopyFormat defaultSelection) {
+      UpgradeFormatDialog dialog = new UpgradeFormatDialog(myProject, myPath, false);
+
+      dialog.setData(defaultSelection);
+      dialog.show();
+
+      return dialog.isOK() ? dialog.getUpgradeMode() : WorkingCopyFormat.UNKNOWN;
+    }
+  }
 }
 
 
