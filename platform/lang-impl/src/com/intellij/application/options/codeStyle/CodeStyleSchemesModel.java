@@ -209,6 +209,10 @@ public class CodeStyleSchemesModel {
     myDispatcher.getMulticaster().currentSettingsChanged();
   }
 
+  public void fireSchemeChanged(CodeStyleScheme scheme) {
+    myDispatcher.getMulticaster().schemeChanged(scheme);
+  }
+
   public CodeStyleScheme getSelectedGlobalScheme() {
     return myGlobalSelected;
   }
