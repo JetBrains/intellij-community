@@ -1618,4 +1618,34 @@ def groovy2 = '''print <error descr="String end expected">'abc\\\\' </error>'''
 def foo
 ''')
   }
+
+  void testSameNameMethodWithDifferentAccessModifiers() {
+    testHighlighting('''
+
+class A {
+  def foo(){}
+  def foo(int x) {}
+}
+
+class B {
+  <error descr="Mixing private and public/protected methods of the same name">private def foo()</error>{}
+  <error descr="Mixing private and public/protected methods of the same name">public def foo(int x)</error> {}
+}
+
+class C {
+  private foo(){}
+  private foo(int x) {}
+}
+
+class D {
+  <error>private foo()</error>{}
+  <error>protected foo(int x)</error> {}
+}
+
+class E {
+  <error>private foo()</error>{}
+  <error>def foo(int x)</error> {}
+}
+''')
+  }
 }

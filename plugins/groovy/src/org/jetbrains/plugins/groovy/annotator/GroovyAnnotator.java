@@ -391,6 +391,39 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     checkConstructors(myHolder, typeDefinition);
 
     checkAnnotationCollector(myHolder, typeDefinition);
+
+    checkSameNameMethodsWithDifferentAccessModifiers(myHolder, typeDefinition.getCodeMethods());
+  }
+
+  private static void checkSameNameMethodsWithDifferentAccessModifiers(AnnotationHolder holder, GrMethod[] methods) {
+    MultiMap<String, GrMethod> map = MultiMap.create();
+    for (GrMethod method : methods) {
+      map.putValue(method.getName(), method);
+    }
+
+    for (Map.Entry<String, Collection<GrMethod>> entry : map.entrySet()) {
+      Collection<GrMethod> collection = entry.getValue();
+      if (collection.size() > 1 && !sameAccessModifier(collection)) {
+        for (GrMethod method : collection) {
+          holder.createErrorAnnotation(GrHighlightUtil.getMethodHeaderTextRange(method), GroovyBundle.message("mixing.private.and.public.protected.methods.of.the.same.name"));
+        }
+      }
+    }
+  }
+
+  private static boolean sameAccessModifier(Collection<GrMethod> collection) {
+    Iterator<GrMethod> iterator = collection.iterator();
+    GrMethod method = iterator.next();
+    boolean  privateAccess = PsiModifier.PRIVATE.equals(VisibilityUtil.getVisibilityModifier(method.getModifierList()));
+
+    while (iterator.hasNext()) {
+      GrMethod next = iterator.next();
+      if (privateAccess != PsiModifier.PRIVATE.equals(VisibilityUtil.getVisibilityModifier(next.getModifierList()))) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private static void checkAnnotationCollector(AnnotationHolder holder, GrTypeDefinition definition) {
@@ -1345,6 +1378,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     final PsiClass scriptClass = file.getScriptClass();
     if (scriptClass != null) {
       checkDuplicateMethod(scriptClass, myHolder);
+      checkSameNameMethodsWithDifferentAccessModifiers(myHolder, file.getCodeMethods());
     }
   }
 
