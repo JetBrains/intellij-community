@@ -421,7 +421,12 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       }
 
       // skip the whole document if some component has disabled roaming type
-      if (rootElement.getContent(new RoamingElementFilter(RoamingType.DISABLED)).iterator().hasNext()) {
+      // you must not store components with different roaming types in one document
+      // one exclusion: workspace file (you don't have choice in this case)
+      // for example, it is important for ICS ProjectId - we cannot keep project in another place,
+      // but this project id must not be shared
+      if (!myFileSpec.equals(StoragePathMacros.WORKSPACE_FILE) &&
+          rootElement.getContent(new RoamingElementFilter(RoamingType.DISABLED)).iterator().hasNext()) {
         return false;
       }
 
