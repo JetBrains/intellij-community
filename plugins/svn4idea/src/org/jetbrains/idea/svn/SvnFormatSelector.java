@@ -136,21 +136,6 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
     return result;
   }
 
-  public static WorkingCopyFormat showUpgradeDialog(final File path,
-                                                    final Project project,
-                                                    @NotNull final WorkingCopyFormat defaultSelection,
-                                                    @NotNull final Ref<Boolean> wasOk) {
-    assert ! ApplicationManager.getApplication().isUnitTestMode();
-    final Ref<WorkingCopyFormat> format = new Ref<WorkingCopyFormat>(defaultSelection);
-    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(new Runnable() {
-      public void run() {
-        wasOk.set(displayUpgradeDialog(project, path, format));
-      }
-    });
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(SvnVcs.WC_CONVERTED).run();
-    return format.get();
-  }
-
   public static WorkingCopyFormat findRootAndGetFormat(final File path) {
     File root = SvnUtil.getWorkingCopyRootNew(path);
 
@@ -189,13 +174,54 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
     return WorkingCopyFormat.getInstance(format);
   }
 
-  private static boolean displayUpgradeDialog(Project project, File path, Ref<WorkingCopyFormat> format) {
-    UpgradeFormatDialog dialog = new UpgradeFormatDialog(project, path, false);
-    dialog.setData(format.get());
-    dialog.show();
-    if (dialog.isOK()) {
-      format.set(dialog.getUpgradeMode());
+  public static class CheckoutFormatFromUserProvider {
+
+    @NotNull private final Project myProject;
+    @NotNull private final File myPath;
+
+    public CheckoutFormatFromUserProvider(@NotNull Project project, @NotNull File path) {
+      myProject = project;
+      myPath = path;
     }
-    return dialog.isOK();
+
+    public WorkingCopyFormat prompt() {
+      WorkingCopyFormat format = WorkingCopyFormat.UNKNOWN;
+      final Ref<Boolean> wasOk = new Ref<Boolean>();
+
+      while ((format == WorkingCopyFormat.UNKNOWN) && (!Boolean.FALSE.equals(wasOk.get()))) {
+        format = showUpgradeDialog(WorkingCopyFormat.ONE_DOT_SEVEN, wasOk);
+      }
+
+      return Boolean.TRUE.equals(wasOk.get()) ? format : WorkingCopyFormat.UNKNOWN;
+    }
+
+    public WorkingCopyFormat showUpgradeDialog(@NotNull final WorkingCopyFormat defaultSelection,
+                                              @NotNull final Ref<Boolean> wasOk) {
+      assert !ApplicationManager.getApplication().isUnitTestMode();
+
+      final Ref<WorkingCopyFormat> format = new Ref<WorkingCopyFormat>(defaultSelection);
+
+      WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(new Runnable() {
+        public void run() {
+          wasOk.set(displayUpgradeDialog(format));
+        }
+      });
+
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(SvnVcs.WC_CONVERTED).run();
+
+      return format.get();
+    }
+
+    private boolean displayUpgradeDialog(@NotNull Ref<WorkingCopyFormat> format) {
+      UpgradeFormatDialog dialog = new UpgradeFormatDialog(myProject, myPath, false);
+
+      dialog.setData(format.get());
+      dialog.show();
+      if (dialog.isOK()) {
+        format.set(dialog.getUpgradeMode());
+      }
+
+      return dialog.isOK();
+    }
   }
 }
