@@ -33,6 +33,34 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
                "class Foo {\n" + "    Map<String, String> map() {\n" + "    }\n" + "}");
   }
 
+  public void testDoNotPlaceStatementsOnOneLineIfFirstEndsWithSingleLineComment() {
+    getSettings().KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE = true;
+    getSettings().KEEP_LINE_BREAKS = false;
+    String before = "public class Reproduce {\n" +
+                    "    public void start() {\n" +
+                    "        if (true)\n" +
+                    "            return; // comment\n" +
+                    "        final int count = 5;\n" +
+                    "        for (int i = 0; i < count; i++) {\n" +
+                    "            System.out.println(\"AAA!\");\n" +
+                    "            System.out.println(\"BBB!\"); // ololol\n" +
+                    "            System.out.println(\"asda\"); /* ololo */\n" +
+                    "            System.out.println(\"booo\");\n" +
+                    "        }\n" +
+                    "    }\n" +
+                    "}";
+    String after = "public class Reproduce {\n" +
+                   "    public void start() {\n" +
+                   "        if (true) return; // comment\n" +
+                   "        final int count = 5; for (int i = 0; i < count; i++) {\n" +
+                   "            System.out.println(\"AAA!\"); System.out.println(\"BBB!\"); // ololol\n" +
+                   "            System.out.println(\"asda\"); /* ololo */ System.out.println(\"booo\");\n" +
+                   "        }\n" +
+                   "    }\n" +
+                   "}";
+    doTextTest(before, after);
+  }
+
   public void testSpaceBeforeAnnotationParamArray() {
     // Inspired by IDEA-24329
     getSettings().SPACE_BEFORE_ANNOTATION_ARRAY_INITIALIZER_LBRACE = true;
