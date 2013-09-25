@@ -3,11 +3,10 @@ package com.jetbrains.python.inspections;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.psi.Callable;
-import com.jetbrains.python.psi.PyAssignmentStatement;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
@@ -15,6 +14,8 @@ import com.jetbrains.python.sdk.PySdkUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 /**
  * User: ktisha
@@ -41,6 +42,8 @@ public class PyNoneFunctionAssignmentInspection extends PyInspection {
 
 
   private static class Visitor extends PyInspectionVisitor {
+    private final Map<PyFunction, Boolean> myHasInheritors = new HashMap<PyFunction, Boolean>();
+
     public Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);
     }
@@ -56,11 +59,30 @@ public class PyNoneFunctionAssignmentInspection extends PyInspection {
           final PyTypeChecker.AnalyzeCallResults analyzeCallResults = PyTypeChecker.analyzeCall(((PyCallExpression)value), myTypeEvalContext);
           if (analyzeCallResults != null) {
             final Callable callable = analyzeCallResults.getCallable();
-            if (PySdkUtil.isElementInSkeletons(callable)) return;
+            if (PySdkUtil.isElementInSkeletons(callable)) {
+              return;
+            }
+            if (callable instanceof PyFunction) {
+              final PyFunction function = (PyFunction)callable;
+              // Currently we don't infer types returned by decorators
+              if (hasInheritors(function) || PyUtil.hasCustomDecorators(function)) {
+                return;
+              }
+            }
             registerProblem(node, PyBundle.message("INSP.none.function.assignment", callee.getName()));
           }
         }
       }
+    }
+
+    private boolean hasInheritors(@NotNull PyFunction function) {
+      final Boolean cached = myHasInheritors.get(function);
+      if (cached != null) {
+        return cached;
+      }
+      final boolean result = PyOverridingMethodsSearch.search(function, true).findFirst() != null;
+      myHasInheritors.put(function, result);
+      return result;
     }
   }
 }
