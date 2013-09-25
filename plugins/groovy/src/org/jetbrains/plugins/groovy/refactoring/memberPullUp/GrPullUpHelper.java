@@ -59,6 +59,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
 import org.jetbrains.plugins.groovy.refactoring.classMembers.GrClassMemberReferenceVisitor;
 import org.jetbrains.plugins.groovy.refactoring.classMembers.GrMemberInfo;
@@ -340,6 +341,9 @@ public class GrPullUpHelper extends BaseRefactoringProcessor {
     if (myTargetSuperClass.isInterface() || info.isToAbstract()) {
       GroovyChangeContextUtil.clearContextInfo(method);
       RefactoringUtil.makeMethodAbstract(myTargetSuperClass, methodCopy);
+      if (myTargetSuperClass.isInterface()) {
+        PsiUtil.setModifierProperty(methodCopy, PsiModifier.ABSTRACT, false);
+      }
       replaceMovedMemberTypeParameters(methodCopy, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
 
       myDocCommentPolicy.processCopiedJavaDoc(methodCopy.getDocComment(), method.getDocComment(), isOriginalMethodAbstract);
@@ -394,6 +398,12 @@ public class GrPullUpHelper extends BaseRefactoringProcessor {
   private static void deleteOverrideAnnotationIfFound(PsiMethod oMethod) {
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(oMethod, CommonClassNames.JAVA_LANG_OVERRIDE);
     if (annotation != null) {
+      PsiElement prev = annotation.getPrevSibling();
+      PsiElement next = annotation.getNextSibling();
+      if ((prev == null || org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isLineFeed(prev)) &&
+          org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isLineFeed(next)) {
+        next.delete();
+      }
       annotation.delete();
     }
   }
@@ -617,8 +627,7 @@ public class GrPullUpHelper extends BaseRefactoringProcessor {
             PsiElement anchor = myTargetSuperClass.getTypeParameterList() != null ? myTargetSuperClass.getTypeParameterList():
                                 myTargetSuperClass.getNameIdentifierGroovy();
             referenceList = (GrReferenceList)myTargetSuperClass.addAfter(newClause, anchor);
-            //CodeStyleManager.getInstance(myProject).reformat(referenceList);
-            //myTargetSuperClass.getNode().addLeaf(TokenType.WHITE_SPACE, " ", referenceList.getNode());
+            addSpacesAround(referenceList);
           }
         }
         else {
@@ -630,8 +639,7 @@ public class GrPullUpHelper extends BaseRefactoringProcessor {
                                 myTargetSuperClass.getTypeParameterList() != null ? myTargetSuperClass.getTypeParameterList() :
                                 myTargetSuperClass.getNameIdentifierGroovy();
             referenceList = (GrReferenceList)myTargetSuperClass.addAfter(newClause, anchor);
-            //CodeStyleManager.getInstance(myProject).reformat(referenceList);
-            //myTargetSuperClass.getNode().addLeaf(TokenType.WHITE_SPACE, " ", referenceList.getNode());
+            addSpacesAround(referenceList);
           }
 
         }
@@ -647,6 +655,18 @@ public class GrPullUpHelper extends BaseRefactoringProcessor {
       //movedElement = (PsiMember)CodeStyleManager.getInstance(myProject).reformat(movedElement);
       myMembersAfterMove.add(movedElement);
       aClass.delete();
+    }
+  }
+
+  private static void addSpacesAround(@NotNull GrReferenceList list) {
+    PsiElement prev = list.getPrevSibling();
+    if (!PsiImplUtil.isWhiteSpace(prev)) {
+      list.getParent().getNode().addLeaf(TokenType.WHITE_SPACE, " ", list.getNode());
+    }
+
+    PsiElement next = list.getNextSibling();
+    if (!PsiImplUtil.isWhiteSpace(next)) {
+      list.getParent().getNode().addLeaf(TokenType.WHITE_SPACE, " ", list.getNode().getTreeNext());
     }
   }
 
@@ -666,8 +686,7 @@ public class GrPullUpHelper extends BaseRefactoringProcessor {
    *
    * @return if removed  - a reference to the class or null if there were no references to this class in the reference list
    */
-  public static GrCodeReferenceElement removeFromReferenceList(GrReferenceList refList, PsiClass aClass)
-    throws IncorrectOperationException {
+  public static GrCodeReferenceElement removeFromReferenceList(GrReferenceList refList, PsiClass aClass) throws IncorrectOperationException {
     GrCodeReferenceElement[] refs = refList.getReferenceElements();
     for (GrCodeReferenceElement ref : refs) {
       if (ref.isReferenceTo(aClass)) {

@@ -107,7 +107,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
 
     String name = method.getName();
 
-    boolean isAbstract = GenerationUtil.isAbstractInJava(method);
+    boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
 
     PsiModifierList modifierList = method.getModifierList();
 

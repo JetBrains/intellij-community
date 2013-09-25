@@ -137,7 +137,7 @@ class GrPullUpTest extends LightGroovyTestCase {
     doTest(false, new MemberDescriptor("foo", PsiMethod));
   }
 
-  public void testExtensionMethod() {
+  public void _testExtensionMethod() {
     doTest(false, new MemberDescriptor("foo", PsiMethod));
   }
 
@@ -159,7 +159,7 @@ class GrPullUpTest extends LightGroovyTestCase {
     assertNotNull(targetClass);
     if (!targetClass.isWritable()) {
       final PsiClass[] interfaces = sourceClass.getInterfaces();
-      assertEquals(1, interfaces.length);
+      assertEquals(2, interfaces.length);
       assertTrue(interfaces[0].isWritable());
       targetClass = interfaces[0];
     }

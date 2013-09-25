@@ -7,7 +7,7 @@ class Foo implements I {
 }
 -----
 public interface I<S> {
-public <T> void foo(java.util.List<T> a) ;
+public abstract <T> void foo(java.util.List<T> a) ;
 
 }
 ---

@@ -269,15 +269,6 @@ public class GenerationUtil {
     return curClass;
   }
 
-  static boolean isAbstractInJava(PsiMethod method) {
-    if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-      return true;
-    }
-
-    final PsiClass psiClass = method.getContainingClass();
-    return psiClass != null && psiClass.isInterface();
-  }
-
   static void writeTypeParameters(StringBuilder text,
                                   PsiTypeParameterListOwner typeParameterListOwner,
                                   final ClassNameProvider classNameProvider) {
