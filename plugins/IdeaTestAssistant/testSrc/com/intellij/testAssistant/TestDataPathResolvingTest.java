@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @TestDataPath("$CONTENT_ROOT/testData/resolveTestDataPath/")
 public class TestDataPathResolvingTest extends TestDataPathTestCase {
-  public void testProjectRoot() throws Exception {
+  public void testProjectRootReference() throws Exception {
     doTest(PsiManager.getInstance(myFixture.getProject()).findDirectory(myFixture.getProject().getBaseDir()));
   }
 
@@ -36,7 +36,7 @@ public class TestDataPathResolvingTest extends TestDataPathTestCase {
     doTest(PsiManager.getInstance(myFixture.getProject()).findDirectory(myProjectSubdir));
   }
 
-  public void testContentRoot() throws Exception {
+  public void testContentRootReference() throws Exception {
     doTest(PsiManager.getInstance(myFixture.getProject()).findDirectory(myContentRoot));
   }
 
