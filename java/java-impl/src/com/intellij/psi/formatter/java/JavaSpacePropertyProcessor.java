@@ -1092,7 +1092,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       createParenthSpace(mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
     }
     else if (myRole1 == ChildRole.COMMA) {
-      createSpaceInCode(true);
+      createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
     }
   }
 
