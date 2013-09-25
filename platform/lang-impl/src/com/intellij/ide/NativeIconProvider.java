@@ -14,13 +14,17 @@
  * limitations under the License.
  */
 
-package com.intellij.openapi.fileTypes.impl;
+package com.intellij.ide;
 
-import com.intellij.ide.FileIconProvider;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.project.Project;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.INativeFileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.ui.DeferredIconImpl;
 import com.intellij.util.Function;
@@ -35,7 +39,7 @@ import java.util.*;
 /**
  * @author yole
  */
-public class NativeFileIconProvider implements FileIconProvider {
+public class NativeIconProvider extends IconProvider {
   private final Map<Ext, Icon> myIconCache = new HashMap<Ext, Icon>();
   // on Windows .exe and .ico files provide their own icons which can differ for each file, cache them by full file path
   private final Set<Ext> myCustomIconExtensions =
@@ -46,8 +50,18 @@ public class NativeFileIconProvider implements FileIconProvider {
 
   private static final Ext CLOSED_DIR = new Ext(null, 0);
 
+  @Nullable
   @Override
-  public Icon getIcon(@NotNull VirtualFile file, final int flags, @Nullable Project project) {
+  public Icon getIcon(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
+    if (element instanceof PsiFileSystemItem) {
+      VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
+      return doGetIcon(file, flags);
+    }
+    return null;
+  }
+
+  @Nullable
+  private Icon doGetIcon(@NotNull VirtualFile file, final int flags) {
     if (!isNativeFileType(file)) return null;
 
     final Ext ext = getExtension(file, flags);
@@ -117,7 +131,10 @@ public class NativeFileIconProvider implements FileIconProvider {
   }
 
   protected boolean isNativeFileType(VirtualFile file) {
-    return ElementBase.isNativeFileType(file.getFileType());
+    FileType type = file.getFileType();
+
+    if (type instanceof INativeFileType) return ((INativeFileType)type).useNativeIcon();
+    return type instanceof UnknownFileType && !file.isDirectory();
   }
 
   private static class Ext extends ComparableObject.Impl {
