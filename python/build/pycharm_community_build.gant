@@ -288,11 +288,11 @@ private layoutFull(Map args, String target, Set usedJars) {
         }
 
         jar("pycharm-pydev-src.zip") {
-          fileset(dir: "$home/python/pydevSrc")
+          fileset(dir: "$pythonCommunityHome/pydevSrc")
         }
         jar("pycharm-openapi-src.zip") {
-          fileset(dir: "$home/python/openapi/src")
-          fileset(dir: "$home/python/psi-api/src")
+          fileset(dir: "$pythonCommunityHome/openapi/src")
+          fileset(dir: "$pythonCommunityHome/psi-api/src")
         }
       }
     }
@@ -304,7 +304,7 @@ private layoutFull(Map args, String target, Set usedJars) {
     }
 
     dir("helpers") {
-      fileset(dir: "$home/python/helpers")
+      fileset(dir: "$pythonCommunityHome/helpers")
     }
 
     dir("license") {
