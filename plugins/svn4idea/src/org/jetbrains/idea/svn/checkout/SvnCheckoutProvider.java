@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
@@ -168,16 +169,9 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
   }
 
-  public static boolean promptForWCFormatAndSelect(final File target, final Project project) {
-    final WorkingCopyFormat result = promptForWCopyFormat(target, project);
-    if (result != WorkingCopyFormat.UNKNOWN) {
-      SvnWorkingCopyFormatHolder.setPresetFormat(result);
-    }
-    return result != WorkingCopyFormat.UNKNOWN;
-  }
-
+  @CalledInAwt
   @NotNull
-  private static WorkingCopyFormat promptForWCopyFormat(final File target, final Project project) {
+  public static WorkingCopyFormat promptForWCopyFormat(final File target, final Project project) {
     return new SvnFormatSelector.CheckoutFormatFromUserProvider(project, target).prompt();
   }
 

@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
@@ -120,19 +121,23 @@ public class ShareProjectAction extends BasicAction {
         }
       }
 
+      final WorkingCopyFormat format = SvnCheckoutProvider.promptForWCopyFormat(VfsUtilCore.virtualToIoFile(file), project);
+      actionStarted.set(format != WorkingCopyFormat.UNKNOWN);
+      // means operation cancelled
+      if (format == WorkingCopyFormat.UNKNOWN) {
+        return true;
+      }
+
       ExclusiveBackgroundVcsAction.run(project, new Runnable() {
         public void run() {
           progressManager.runProcessWithProgressSynchronously(new Runnable() {
             public void run() {
               try {
                 final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
-
                 final File path = new File(file.getPath());
-                if (! SvnCheckoutProvider.promptForWCFormatAndSelect(path, project)) {
-                  // action cancelled
-                  actionStarted.set(Boolean.FALSE);
-                  return;
-                }
+
+                SvnWorkingCopyFormatHolder.setPresetFormat(format);
+
                 final SVNURL parenUrl = SVNURL.parseURIEncoded(parent);
                 final SVNURL checkoutUrl;
                 final SVNRevision revision;
