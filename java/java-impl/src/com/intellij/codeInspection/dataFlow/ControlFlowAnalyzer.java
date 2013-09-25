@@ -1346,16 +1346,16 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
           handleAssertNullityMethod(expression, exitPoint, type == ConditionChecker.Type.ASSERT_IS_NOT_NULL_METHOD);
         } else if (type == ConditionChecker.Type.IS_NULL_METHOD || type == ConditionChecker.Type.IS_NOT_NULL_METHOD) {
           addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
-          addInstruction(new BinopInstruction(type == ConditionChecker.Type.IS_NULL_METHOD ? JavaTokenType.EQEQ : JavaTokenType.NE, null, expression.getProject()));
+          addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, expression.getProject()));
 
-          ConditionalGotoInstruction ifFails = new ConditionalGotoInstruction(-1, true, null);
+          ConditionalGotoInstruction ifFails = new ConditionalGotoInstruction(-1, false, null);
           GotoInstruction gotoEnd = new GotoInstruction(exitPoint);
 
           addInstruction(ifFails);
           pushUnknown();
           addInstruction(gotoEnd);
           ifFails.setOffset(myCurrentFlow.getInstructionCount());
-          addInstruction(new PushInstruction(myFactory.getConstFactory().getFalse(), null));
+          addInstruction(new PushInstruction(type == ConditionChecker.Type.IS_NULL_METHOD ? myFactory.getConstFactory().getTrue() : myFactory.getConstFactory().getFalse(), null));
           gotoEnd.setOffset(myCurrentFlow.getInstructionCount());
 
         } else { //assertTrue or assertFalse
