@@ -162,7 +162,7 @@ public class ProjectTypeStep extends ModuleWizardStep {
     String card;
     if (panel != null) {
       card = builder.getBuilderId();
-      if (!myCards.add(card)) {
+      if (myCards.add(card)) {
          myOptionsPanel.add(panel, card);
       }
     }
