@@ -516,6 +516,12 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertPreference("*e", "fileIndex", "file", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
+  public void "test first letter case match is important"() {
+    assertPreference("*pim", "PNGImageDecoder", "posIdMap", NameUtil.MatchingCaseSensitivity.NONE)
+    assertPreference("*pim", "PImageDecoder", "posIdMap", NameUtil.MatchingCaseSensitivity.NONE)
+    assertPreference("*er", "Error", "exchangeRequest", NameUtil.MatchingCaseSensitivity.NONE)
+  }
+
   public void testPreferences() {
     assertPreference(" fb", "FooBar", "_fooBar", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("*foo", "barFoo", "foobar");
