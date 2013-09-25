@@ -40,7 +40,7 @@ import java.util.List;
  *         Date: 10/29/12
  */
 @SuppressWarnings("unchecked")
-public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard<? extends Step>> extends PlatformTestCase {
+public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> extends PlatformTestCase {
 
   protected final List<Sdk> mySdks = new ArrayList<Sdk>();
   protected T myWizard;

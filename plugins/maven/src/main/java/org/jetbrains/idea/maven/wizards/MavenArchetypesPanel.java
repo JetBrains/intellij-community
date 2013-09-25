@@ -46,7 +46,6 @@ import java.util.List;
  */
 public class MavenArchetypesPanel implements Disposable {
 
-
   private JCheckBox myUseArchetypeCheckBox;
   private JButton myAddArchetypeButton;
   private JPanel myArchetypesPanel;
@@ -126,6 +125,7 @@ public class MavenArchetypesPanel implements Disposable {
     myArchetypeDescriptionField.setBackground(UIUtil.getPanelBackground());
 
     updateComponents();
+    requestUpdate();
   }
 
   public JPanel getMainPanel() {

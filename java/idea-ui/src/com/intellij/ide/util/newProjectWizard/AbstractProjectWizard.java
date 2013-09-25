@@ -17,15 +17,18 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.wizard.AbstractWizard;
-import com.intellij.ide.wizard.Step;
+import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.components.StorageScheme;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
@@ -40,7 +43,7 @@ import java.io.File;
  * @author Dmitry Avdeev
  *         Date: 19.09.13
  */
-public abstract class AbstractProjectWizard<T extends Step> extends AbstractWizard<T> {
+public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardStep> {
   protected final WizardContext myWizardContext;
 
   public AbstractProjectWizard(String title, Project project, String defaultPath) {
@@ -52,6 +55,8 @@ public abstract class AbstractProjectWizard<T extends Step> extends AbstractWiza
     super(title, dialogParent);
     myWizardContext = initContext(project, null);
   }
+
+  public abstract StepSequence getSequence();
 
   private static WizardContext initContext(@Nullable Project project, @Nullable String defaultPath) {
     WizardContext context = new WizardContext(project);
@@ -117,8 +122,87 @@ public abstract class AbstractProjectWizard<T extends Step> extends AbstractWiza
     return path;
   }
 
+  protected void updateStep() {
+    if (!mySteps.isEmpty()) {
+      getCurrentStepObject().updateStep();
+    }
+    super.updateStep();
+    myIcon.setIcon(null);
+  }
+
+  protected void dispose() {
+    for (ModuleWizardStep step : mySteps) {
+      step.disposeUIResources();
+    }
+    super.dispose();
+  }
+
+  protected final void doOKAction() {
+    int idx = getCurrentStep();
+    try {
+      do {
+        final ModuleWizardStep step = mySteps.get(idx);
+        if (step != getCurrentStepObject()) {
+          step.updateStep();
+        }
+        if (!commitStepData(step)) {
+          return;
+        }
+        step.onStepLeaving();
+        try {
+          step._commit(true);
+        }
+        catch (CommitStepException e) {
+          String message = e.getMessage();
+          if (message != null) {
+            Messages.showErrorDialog(getCurrentStepComponent(), message);
+          }
+          return;
+        }
+        if (!isLastStep(idx)) {
+          idx = getNextStep(idx);
+        } else {
+          break;
+        }
+      } while (true);
+    }
+    finally {
+      myCurrentStep = idx;
+      updateStep();
+    }
+    super.doOKAction();
+  }
+
+  protected boolean commitStepData(final ModuleWizardStep step) {
+    try {
+      if (!step.validate()) {
+        return false;
+      }
+    }
+    catch (ConfigurationException e) {
+      Messages.showErrorDialog(myContentPanel, e.getMessage(), e.getTitle());
+      return false;
+    }
+    step.updateDataModel();
+    return true;
+  }
+
   public void doNextAction() {
+    final ModuleWizardStep step = getCurrentStepObject();
+    if (!commitStepData(step)) {
+      return;
+    }
+    step.onStepLeaving();
     super.doNextAction();
+  }
+
+
+  protected String getHelpID() {
+    ModuleWizardStep step = getCurrentStepObject();
+    if (step != null) {
+      return step.getHelpId();
+    }
+    return null;
   }
 
   @TestOnly
@@ -134,5 +218,46 @@ public abstract class AbstractProjectWizard<T extends Step> extends AbstractWiza
   @NonNls
   public String getModuleFilePath() {
     return myWizardContext.getProjectFileDirectory() + File.separator + myWizardContext.getProjectName() + ModuleFileType.DOT_DEFAULT_EXTENSION;
+  }
+
+  protected void doPreviousAction() {
+    final ModuleWizardStep step = getCurrentStepObject();
+    step.onStepLeaving();
+    super.doPreviousAction();
+  }
+
+  public void doCancelAction() {
+    final ModuleWizardStep step = getCurrentStepObject();
+    step.onStepLeaving();
+    super.doCancelAction();
+  }
+
+  private boolean isLastStep(int step) {
+    return getNextStep(step) == step;
+  }
+
+  protected final int getNextStep(final int step) {
+    ModuleWizardStep nextStep = null;
+    final StepSequence stepSequence = getSequence();
+    if (stepSequence != null) {
+      ModuleWizardStep current = mySteps.get(step);
+      nextStep = stepSequence.getNextStep(current);
+      while (nextStep != null && !nextStep.isStepVisible()) {
+        nextStep = stepSequence.getNextStep(nextStep);
+      }
+    }
+    return nextStep == null ? step : mySteps.indexOf(nextStep);
+  }
+
+  protected final int getPreviousStep(final int step) {
+      ModuleWizardStep previousStep = null;
+      final StepSequence stepSequence = getSequence();
+      if (stepSequence != null) {
+        previousStep = stepSequence.getPreviousStep(mySteps.get(step));
+        while (previousStep != null && !previousStep.isStepVisible()) {
+          previousStep = stepSequence.getPreviousStep(previousStep);
+        }
+      }
+      return previousStep == null ? 0 : mySteps.indexOf(previousStep);
   }
 }

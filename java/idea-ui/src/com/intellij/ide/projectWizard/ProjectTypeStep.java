@@ -22,12 +22,12 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.ide.wizard.StepAdapter;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.Disposer;
@@ -55,10 +55,12 @@ import java.util.List;
  * @author Dmitry Avdeev
  *         Date: 04.09.13
  */
-public class ProjectTypeStep extends StepAdapter {
+public class ProjectTypeStep extends ModuleWizardStep {
 
   private static final String FRAMEWORKS_CARD = "frameworks card";
   private final WizardContext myContext;
+  private final NewProjectWizard myWizard;
+  private final ModulesProvider myModulesProvider;
   private JPanel myPanel;
   private JBList myProjectTypeList;
   private JPanel myOptionsPanel;
@@ -76,8 +78,10 @@ public class ProjectTypeStep extends StepAdapter {
   private final AddSupportForFrameworksPanel myFrameworksPanel;
   private final ModuleBuilder.ModuleConfigurationUpdater myConfigurationUpdater;
 
-  public ProjectTypeStep(WizardContext context, Disposable disposable) {
+  public ProjectTypeStep(WizardContext context, NewProjectWizard wizard, ModulesProvider modulesProvider) {
     myContext = context;
+    myWizard = wizard;
+    myModulesProvider = modulesProvider;
     Project project = context.getProject();
     final LibrariesContainer container = LibrariesContainerFactory.createContainer(project);
     FrameworkSupportModelBase model = new FrameworkSupportModelBase(project, null, container) {
@@ -129,13 +133,18 @@ public class ProjectTypeStep extends StepAdapter {
       public void valueChanged(ListSelectionEvent e) {
         ModuleBuilder builder = getSelectedBuilder();
         myContext.setProjectBuilder(builder);
+        myWizard.getSequence().setType(builder.getBuilderId());
         builder.addModuleConfigurationUpdater(myConfigurationUpdater);
         updateOptionsPanel((ProjectCategory)myProjectTypeList.getSelectedValue());
       }
     });
 
+    for (ProjectCategory category : categories) {
+      myWizard.getSequence().addStepsForBuilder(myBuilders.get(category), context, modulesProvider, true);
+    }
+
     myFrameworksPanel = new AddSupportForFrameworksPanel(Collections.<FrameworkSupportInModuleProvider>emptyList(), model, true);
-    Disposer.register(disposable, myFrameworksPanel);
+    Disposer.register(wizard.getDisposable(), myFrameworksPanel);
 
     myOptionsPanel.add(myFrameworksPanel.getMainPanel(), FRAMEWORKS_CARD);
     myProjectTypeList.setSelectedIndex(0);
@@ -149,7 +158,7 @@ public class ProjectTypeStep extends StepAdapter {
   private void updateOptionsPanel(ProjectCategory projectCategory) {
     if (projectCategory == null) return;
     ModuleBuilder builder = myBuilders.get(projectCategory);
-    JComponent panel = builder.getCustomOptionsPanel();
+    JComponent panel = builder.getCustomOptionsPanel(this);
     String card;
     if (panel != null) {
       card = builder.getBuilderId();
@@ -207,6 +216,11 @@ public class ProjectTypeStep extends StepAdapter {
   @Override
   public JComponent getComponent() {
     return myPanel;
+  }
+
+  @Override
+  public void updateDataModel() {
+    myWizard.getSequence().addStepsForBuilder(getSelectedBuilder(), myContext, myModulesProvider, true);
   }
 
   @Override

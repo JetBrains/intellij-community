@@ -299,7 +299,11 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   public void addStep(@NotNull final T step) {
-    mySteps.add(step);
+    addStep(step, mySteps.size());
+  }
+
+  public void addStep(@NotNull final T step, int index) {
+    mySteps.add(index, step);
 
     if (step instanceof StepAdapter) {
       ((StepAdapter)step).registerStepListener(myStepListener);
@@ -451,7 +455,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   @Nullable
   @Override
   public JComponent getPreferredFocusedComponent() {
-    JComponent component = mySteps.get(myCurrentStep).getPreferredFocusedComponent();
+    JComponent component = getCurrentStepObject().getPreferredFocusedComponent();
     return component == null ? super.getPreferredFocusedComponent() : component;
   }
 

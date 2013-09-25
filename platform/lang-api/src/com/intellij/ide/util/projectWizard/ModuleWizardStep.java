@@ -34,7 +34,14 @@ public abstract class ModuleWizardStep extends StepAdapter implements Disposable
 
   @Override
   public abstract JComponent getComponent();
+
+  /** Commits data from UI into ModuleBuilder and WizardContext */
   public abstract void updateDataModel();
+
+  /** Update UI from ModuleBuilder and WizardContext */
+  public void updateStep() {
+    // empty by default
+  }
 
   @NonNls public String getHelpId() {
     return null;
@@ -45,10 +52,6 @@ public abstract class ModuleWizardStep extends StepAdapter implements Disposable
   }
 
   public void onStepLeaving() {
-    // empty by default
-  }
-
-  public void updateStep() {
     // empty by default
   }
 
