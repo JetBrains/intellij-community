@@ -16,7 +16,7 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
-import com.intellij.navigation.ChooseByNameContributor;
+import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -26,7 +26,9 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -34,7 +36,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-public class DefaultSymbolNavigationContributor implements ChooseByNameContributor {
+public class DefaultSymbolNavigationContributor implements ChooseByNameContributorEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.gotoByName.DefaultSymbolNavigationContributor");
 
   @Override
@@ -89,6 +91,13 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
       }
     }
     return false;
+  }
+
+  public void processNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(scope.getProject());
+    cache.processAllClassNames(processor, scope, filter);
+    cache.processAllFieldNames(processor, scope, filter);
+    cache.processAllMethodNames(processor, scope, filter);
   }
 
   private static class MyComparator implements Comparator<PsiModifierListOwner>{

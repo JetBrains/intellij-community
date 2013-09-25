@@ -117,6 +117,26 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   }
 
   @Override
+  public boolean processAllMethodNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+    for (PsiShortNamesCache cache : myCaches) {
+      if (!cache.processAllMethodNames(processor, scope, filter)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public boolean processAllFieldNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+    for (PsiShortNamesCache cache : myCaches) {
+      if (!cache.processAllFieldNames(processor, scope, filter)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @Override
   public void getAllClassNames(@NotNull HashSet<String> dest) {
     for (PsiShortNamesCache cache : myCaches) {
       cache.getAllClassNames(dest);
