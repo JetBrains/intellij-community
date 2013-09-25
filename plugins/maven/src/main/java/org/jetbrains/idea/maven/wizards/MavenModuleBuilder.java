@@ -125,7 +125,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
     return new ModuleWizardStep[]{
-      new MavenModuleWizardStep(wizardContext.getProject(), this, wizardContext),
+      new MavenModuleWizardStep(this, wizardContext, true),
       new SelectPropertiesStep(wizardContext.getProject(), this)
     };
   }
@@ -133,7 +133,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider, boolean forNewWizard) {
     return new ModuleWizardStep[]{
-      new MavenModuleWizardStep(wizardContext.getProject(), this, wizardContext),
+      new MavenModuleWizardStep(this, wizardContext, !forNewWizard),
       new SelectPropertiesStep(wizardContext.getProject(), this)
     };
   }

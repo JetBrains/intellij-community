@@ -68,14 +68,20 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   private JPanel myArchetypesPanel;
   private JPanel myAddToPanel;
 
+  @Nullable
   private final MavenArchetypesPanel myArchetypes;
 
-  public MavenModuleWizardStep(@Nullable Project project, MavenModuleBuilder builder, WizardContext context) {
-    myProjectOrNull = project;
+  public MavenModuleWizardStep(MavenModuleBuilder builder, WizardContext context, boolean includeArtifacts) {
+    myProjectOrNull = context.getProject();
     myBuilder = builder;
     myContext = context;
-    myArchetypes = new MavenArchetypesPanel(builder, this);
-    myArchetypesPanel.add(myArchetypes.getMainPanel(), BorderLayout.CENTER);
+    if (includeArtifacts) {
+      myArchetypes = new MavenArchetypesPanel(builder, this);
+      myArchetypesPanel.add(myArchetypes.getMainPanel(), BorderLayout.CENTER);
+    }
+    else {
+      myArchetypes = null;
+    }
     initComponents();
     loadSettings();
   }
@@ -143,10 +149,12 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     saveValue(INHERIT_GROUP_ID_KEY, myInheritGroupIdCheckBox.isSelected());
     saveValue(INHERIT_VERSION_KEY, myInheritVersionCheckBox.isSelected());
 
-    MavenArchetype arch = myArchetypes.getSelectedArchetype();
-    saveValue(ARCHETYPE_GROUP_ID_KEY, arch == null ? null : arch.groupId);
-    saveValue(ARCHETYPE_ARTIFACT_ID_KEY, arch == null ? null : arch.artifactId);
-    saveValue(ARCHETYPE_VERSION_KEY, arch == null ? null : arch.version);
+    if (myArchetypes != null) {
+      MavenArchetype arch = myArchetypes.getSelectedArchetype();
+      saveValue(ARCHETYPE_GROUP_ID_KEY, arch == null ? null : arch.groupId);
+      saveValue(ARCHETYPE_ARTIFACT_ID_KEY, arch == null ? null : arch.artifactId);
+      saveValue(ARCHETYPE_VERSION_KEY, arch == null ? null : arch.version);
+    }
   }
 
   private static boolean getSavedValue(String key, boolean defaultValue) {
@@ -213,7 +221,9 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     myInheritGroupIdCheckBox.setSelected(myBuilder.isInheritGroupId());
     myInheritVersionCheckBox.setSelected(myBuilder.isInheritVersion());
 
-    myArchetypes.requestUpdate();
+    if (myArchetypes != null) {
+      myArchetypes.requestUpdate();
+    }
     updateComponents();
   }
 
@@ -269,7 +279,9 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     myBuilder.setInheritedOptions(myInheritGroupIdCheckBox.isSelected(),
                                   myInheritVersionCheckBox.isSelected());
 
-    myBuilder.setArchetype(myArchetypes.getSelectedArchetype());
+    if (myArchetypes != null) {
+      myBuilder.setArchetype(myArchetypes.getSelectedArchetype());
+    }
   }
 
   @Override
