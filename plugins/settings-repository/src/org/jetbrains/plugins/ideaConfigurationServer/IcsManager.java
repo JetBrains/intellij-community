@@ -140,9 +140,16 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
   }
 
   private void registerProjectLevelProviders(Project project) {
+    ProjectId projectId = ProjectId.getInstance(project);
+    if (projectId.uid == null) {
+      // not mapped, if user wants, he can map explicitly, we don't suggest
+      // we cannot suggest "map to ICS" for any project that user opens,
+      // it will be annoying
+      return;
+    }
+
     StateStorageManager storageManager = ((ProjectEx)project).getStateStore().getStateStorageManager();
-    String projectId = getProjectId(project);
-    storageManager.setStreamProvider(new IcsStreamProvider(projectId) {
+    storageManager.setStreamProvider(new IcsStreamProvider(projectId.uid) {
       @Override
       public boolean isApplicable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
         if (roamingType != RoamingType.PER_USER) {

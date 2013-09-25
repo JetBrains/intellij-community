@@ -15,6 +15,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <ApplicationLoadListener implementation="org.jetbrains.plugins.ideaConfigurationServer.IcsManager"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.ideaConfigurationServer.ProjectId"/>
   </extensions>
 
   <actions>
