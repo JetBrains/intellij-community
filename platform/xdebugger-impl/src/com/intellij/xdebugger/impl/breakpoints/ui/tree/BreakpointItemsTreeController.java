@@ -186,12 +186,9 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
   }
 
   public void rebuildTree(Collection<BreakpointItem> items) {
-    List<BreakpointItem> selectedBreakpoints = getSelectedBreakpoints();
     TreePath path = myTreeView.getSelectionPath();
     buildTree(items);
-    if (selectedBreakpoints.size() > 0) {
-      selectBreakpointItem(selectedBreakpoints.get(0), path);
-    }
+    selectBreakpointItem(null, path);
   }
 
   public List<BreakpointItem> getSelectedBreakpoints() {
