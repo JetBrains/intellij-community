@@ -100,4 +100,18 @@ public enum WorkingCopyFormat {
   public int getFormat() {
     return myFormat;
   }
+
+  @NotNull
+  public static WorkingCopyFormat from(@NotNull Version version) {
+    WorkingCopyFormat result = UNKNOWN;
+
+    for (WorkingCopyFormat format : WorkingCopyFormat.values()) {
+      if (format.getVersion().is(version.major, version.minor)) {
+        result = format;
+        break;
+      }
+    }
+
+    return result;
+  }
 }

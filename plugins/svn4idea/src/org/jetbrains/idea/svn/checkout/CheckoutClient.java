@@ -11,6 +11,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
+import java.util.List;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -24,4 +25,6 @@ public interface CheckoutClient extends SvnClient {
                 boolean ignoreExternals,
                 @Nullable WorkingCopyFormat format,
                 @Nullable ISVNEventHandler handler) throws VcsException;
+
+  List<WorkingCopyFormat> getSupportedFormats() throws VcsException;
 }

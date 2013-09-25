@@ -15,11 +15,25 @@ import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Konstantin Kolosovsky.
  */
 public class SvnKitCheckoutClient extends BaseSvnClient implements CheckoutClient {
+
+  private static final List<WorkingCopyFormat> SUPPORTED_FORMATS;
+
+  static {
+    List<WorkingCopyFormat> supportedFormats = new ArrayList<WorkingCopyFormat>();
+
+    supportedFormats.add(WorkingCopyFormat.ONE_DOT_SEVEN);
+    supportedFormats.add(WorkingCopyFormat.ONE_DOT_SIX);
+
+    SUPPORTED_FORMATS = Collections.unmodifiableList(supportedFormats);
+  }
 
   @Override
   public void checkout(@NotNull SvnTarget source,
@@ -51,5 +65,10 @@ public class SvnKitCheckoutClient extends BaseSvnClient implements CheckoutClien
     catch (SVNException e) {
       throw new SvnBindException(e);
     }
+  }
+
+  @Override
+  public List<WorkingCopyFormat> getSupportedFormats() throws VcsException {
+    return SUPPORTED_FORMATS;
   }
 }

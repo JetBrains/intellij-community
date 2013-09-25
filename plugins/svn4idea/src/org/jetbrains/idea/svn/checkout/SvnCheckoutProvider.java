@@ -35,6 +35,8 @@ import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
@@ -53,6 +55,9 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class SvnCheckoutProvider implements CheckoutProvider {
 
@@ -279,11 +284,17 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   public static class CheckoutFormatFromUserProvider {
 
     @NotNull private final Project myProject;
+    @NotNull private final SvnVcs myVcs;
     @NotNull private final File myPath;
+
+    @NotNull private final AtomicReference<String> error;
 
     public CheckoutFormatFromUserProvider(@NotNull Project project, @NotNull File path) {
       myProject = project;
+      myVcs = SvnVcs.getInstance(project);
       myPath = path;
+
+      error = new AtomicReference<String>();
     }
 
     @CalledInAwt
@@ -298,14 +309,51 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
 
     private WorkingCopyFormat displayUpgradeDialog(@NotNull WorkingCopyFormat defaultSelection) {
-      UpgradeFormatDialog dialog = new UpgradeFormatDialog(myProject, myPath, false);
+      final UpgradeFormatDialog dialog = new UpgradeFormatDialog(myProject, myPath, false);
+      dialog.startLoading();
 
-      dialog.setData(defaultSelection);
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          final List<WorkingCopyFormat> formats = loadSupportedFormats();
+
+          UIUtil.invokeLaterIfNeeded(new Runnable() {
+            @Override
+            public void run() {
+              final String errorMessage = error.get();
+
+              if (errorMessage != null) {
+                dialog.doCancelAction();
+                Messages.showErrorDialog(SvnBundle.message("message.text.cannot.load.supported.formats", errorMessage),
+                                         SvnBundle.message("message.title.check.out"));
+              }
+              else {
+                dialog.setSupported(formats);
+                dialog.setData(ContainerUtil.getFirstItem(formats, WorkingCopyFormat.UNKNOWN));
+                dialog.stopLoading();
+              }
+            }
+          });
+        }
+      });
+
       dialog.show();
 
       return dialog.isOK() ? dialog.getUpgradeMode() : WorkingCopyFormat.UNKNOWN;
     }
+
+    private List<WorkingCopyFormat> loadSupportedFormats() {
+      List<WorkingCopyFormat> result;
+
+      try {
+        result = myVcs.getFactoryFromSettings().createCheckoutClient().getSupportedFormats();
+      }
+      catch (VcsException e) {
+        result = Collections.emptyList();
+        error.set(e.getMessage());
+      }
+
+      return result;
+    }
   }
 }
-
-

@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.ui.components.JBLoadingPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,12 +31,15 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class UpgradeFormatDialog extends DialogWrapper  {
 
   private ButtonGroup formatGroup = new ButtonGroup();
   private List<JRadioButton> formatButtons = new ArrayList<JRadioButton>();
+
+  private JBLoadingPanel myLoadingPanel;
 
   protected File myPath;
 
@@ -64,13 +68,36 @@ public class UpgradeFormatDialog extends DialogWrapper  {
     return "svn.upgradeDialog";
   }
 
-  public void setData(final WorkingCopyFormat selectedFormat) {
+  public void setData(@NotNull final WorkingCopyFormat selectedFormat) {
     for (JRadioButton button : formatButtons) {
       if (selectedFormat == getFormat(button)) {
         button.setSelected(true);
         break;
       }
     }
+  }
+
+  public void setSupported(@NotNull Collection<WorkingCopyFormat> supported) {
+    for (JRadioButton button : formatButtons) {
+      button.setEnabled(supported.contains(getFormat(button)));
+    }
+  }
+
+  public void startLoading() {
+    enableFormatButtons(false);
+    getOKAction().setEnabled(false);
+    myLoadingPanel.startLoading();
+  }
+
+  private void enableFormatButtons(boolean enabled) {
+    for (JRadioButton button : formatButtons) {
+      button.setEnabled(enabled);
+    }
+  }
+
+  public void stopLoading() {
+    getOKAction().setEnabled(true);
+    myLoadingPanel.stopLoading();
   }
 
   protected String getTopMessage(final String label) {
@@ -115,7 +142,10 @@ public class UpgradeFormatDialog extends DialogWrapper  {
       gb.gridy += 1;
     }
 
-    return panel;
+    myLoadingPanel = new JBLoadingPanel(new BorderLayout(), getDisposable());
+    myLoadingPanel.add(panel, BorderLayout.CENTER);
+
+    return myLoadingPanel;
   }
 
   private void registerFormat(@NotNull WorkingCopyFormat format,
