@@ -565,6 +565,8 @@
                                   id="PlatformProjectConfigurator"/>
     <directoryProjectConfigurator implementation="com.intellij.platform.PlatformProjectViewOpener"/>
 
+    <fileIconProvider implementation="com.intellij.ide.FileIconPatcherImpl"/>
+    <iconProvider implementation="com.intellij.ide.NativeIconProvider"/>
     <iconProvider implementation="com.intellij.psi.impl.file.DirectoryIconProvider" id="directory" order="last"/>
 
     <statementUpDownMover implementation="com.intellij.codeInsight.editorActions.moveUpDown.LineMover" id="line" order="last"/>
@@ -756,8 +758,6 @@
     <!--<projectViewPane implementation="com.intellij.ide.favoritesTreeView.FavoritesProjectViewPane"/>-->
     <projectViewPane implementation="com.intellij.ide.scopeView.ScopeViewPane"/>
 
-    <fileIconProvider implementation="com.intellij.openapi.fileTypes.impl.NativeFileIconProvider"/>
-    <fileIconProvider implementation="com.intellij.ide.FileIconPatcherImpl"/>
     <renameHandler implementation="com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler"/>
     <renameHandler implementation="com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler"/>
     <completion.contributor language="any"
