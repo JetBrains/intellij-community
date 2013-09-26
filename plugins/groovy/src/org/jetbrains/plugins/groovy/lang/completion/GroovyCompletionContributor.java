@@ -71,7 +71,6 @@ import org.jetbrains.plugins.groovy.refactoring.DefaultGroovyVariableNameValidat
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.inline.InlineMethodConflictSolver;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -429,10 +428,9 @@ public class GroovyCompletionContributor extends CompletionContributor {
     final PsiElement qualifier = reference.getQualifier();
     final PsiType qualifierType = qualifier instanceof GrExpression ? ((GrExpression)qualifier).getType() : null;
 
-    final Set<String> unresolvedProps;
     if (reference instanceof GrReferenceExpression && (qualifier instanceof GrExpression || qualifier == null)) {
-      unresolvedProps = CompleteReferenceExpression.getVariantsWithSameQualifier(matcher, (GrExpression)qualifier, (GrReferenceExpression)reference);
-      for (String string : unresolvedProps) {
+      for (String string : CompleteReferenceExpression.getVariantsWithSameQualifier(matcher, (GrExpression)qualifier,
+                                                                                                   (GrReferenceExpression)reference)) {
         consumer.consume(LookupElementBuilder.create(string).withItemTextUnderlined(true));
       }
       if (parameters.getInvocationCount() < 2 && qualifier != null && qualifierType == null &&
@@ -442,9 +440,6 @@ public class GroovyCompletionContributor extends CompletionContributor {
         }
         return EmptyRunnable.INSTANCE;
       }
-    }
-    else {
-      unresolvedProps = Collections.emptySet();
     }
 
     final List<LookupElement> zeroPriority = newArrayList();
@@ -667,7 +662,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     }
   }
 
-  private String getIdentifier(CompletionInitializationContext context) {
+  private static String getIdentifier(CompletionInitializationContext context) {
     if (context.getCompletionType() == CompletionType.BASIC && context.getFile() instanceof GroovyFile) {
       PsiElement position = context.getFile().findElementAt(context.getStartOffset());
       if (position != null &&
