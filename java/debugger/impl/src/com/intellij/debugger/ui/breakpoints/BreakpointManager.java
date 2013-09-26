@@ -810,7 +810,6 @@ public class BreakpointManager {
     removeInvalidBreakpoints();
 
     final ArrayList<Breakpoint> breakpoints = new ArrayList<Breakpoint>();
-
     for (Breakpoint breakpoint : getBreakpoints()) {
       if (category.equals(breakpoint.getCategory())) {
         breakpoints.add(breakpoint);

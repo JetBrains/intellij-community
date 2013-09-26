@@ -22,7 +22,6 @@ import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.RequestManager;
 import com.intellij.debugger.requests.Requestor;
@@ -70,7 +69,6 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     myDebugProcess = debugProcess;
     myDebugProcess.addDebugProcessListener(this);
   }
-
 
   public EventRequestManager getVMRequestManager() {
     return myEventRequestManager;
@@ -163,8 +161,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
         }
         final JVMName jvmClassName = ApplicationManager.getApplication().runReadAction(new Computable<JVMName>() {
           public JVMName compute() {
-            PsiClass psiClass =
-              DebuggerUtilsEx.findClass(filter.getPattern(), myDebugProcess.getProject(), myDebugProcess.getSearchScope());
+            PsiClass psiClass = DebuggerUtils.findClass(filter.getPattern(), myDebugProcess.getProject(), myDebugProcess.getSearchScope());
             if (psiClass == null) {
               return null;
             }
@@ -177,14 +174,13 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
             pattern = jvmClassName.getName(myDebugProcess);
           }
         }
-        catch (EvaluateException e) {
+        catch (EvaluateException ignored) {
         }
 
         addClassFilter(request, pattern);
       }
 
-      final ClassFilter[] iclassFilters = requestor.getClassExclusionFilters();
-      for (ClassFilter filter : iclassFilters) {
+      for (ClassFilter filter : requestor.getClassExclusionFilters()) {
         if (filter.isEnabled()) {
           addClassExclusionFilter(request, filter.getPattern());
         }
@@ -206,7 +202,6 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       myRequestorToBelongedRequests.put(requestor, reqSet);
     }
     reqSet.add(request);
-
   }
 
   // requests creation
@@ -293,6 +288,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
         // request is already deleted
       }
       catch (InternalException e) {
+        //noinspection StatementWithEmptyBody
         if (e.errorCode() == 41) {
           //event request not found
           //there could be no requests after hotswap
@@ -346,10 +342,12 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       }
       request.enable();
     } catch (InternalException e) {
-      if(e.errorCode() == 41) {
+      //noinspection StatementWithEmptyBody
+      if (e.errorCode() == 41) {
         //event request not found
         //there could be no requests after hotswap
-      } else {
+      }
+      else {
         LOG.error(e);
       }
     }
@@ -389,7 +387,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   public void processAttached(DebugProcessImpl process) {
     myEventRequestManager = myDebugProcess.getVirtualMachineProxy().eventRequestManager();
-    // invoke later, so that requests are for sure created only _after_ 'processAttached()' methods of other listeneres are executed
+    // invoke later, so that requests are for sure created only _after_ 'processAttached()' methods of other listeners are executed
     process.getManagerThread().schedule(new DebuggerCommandImpl() {
       protected void action() throws Exception {
         final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myDebugProcess.getProject()).getBreakpointManager();
@@ -421,7 +419,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
   }
 
-  private static interface AllProcessesCommand {
+  private interface AllProcessesCommand {
     void action(DebugProcessImpl process);
   }
 
