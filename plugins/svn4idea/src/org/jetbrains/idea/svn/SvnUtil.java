@@ -647,6 +647,7 @@ public class SvnUtil {
   }
 
   public static boolean remoteFolderIsEmpty(final SvnVcs vcs, final String url) throws SVNException {
+    // TODO: Implement with command line client
     SVNRepository repository = null;
     try {
       repository = vcs.createRepository(url);

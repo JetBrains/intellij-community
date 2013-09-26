@@ -20,13 +20,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
 
 public class SvnExcludingIgnoredOperation {
   private final Operation myImportAction;
@@ -79,28 +79,28 @@ public class SvnExcludingIgnoredOperation {
     }
   }
 
-  private boolean operation(final VirtualFile file) throws SVNException {
+  private boolean operation(final VirtualFile file) throws VcsException {
     if (! myFilter.accept(file)) return false;
 
     myImportAction.doOperation(file);
     return true;
   }
 
-  private void executeDown(final VirtualFile file) throws SVNException {
+  private void executeDown(final VirtualFile file) throws VcsException {
     VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
       @Override
       public boolean visitFile(@NotNull VirtualFile file) {
         try {
           return operation(file);
         }
-        catch (SVNException e) {
+        catch (VcsException e) {
           throw new VisitorException(e);
         }
       }
-    }, SVNException.class);
+    }, VcsException.class);
   }
 
-  public void execute(final VirtualFile file) throws SVNException {
+  public void execute(final VirtualFile file) throws VcsException {
     if (SVNDepth.INFINITY.equals(myDepth)) {
       executeDown(file);
       return;
@@ -123,6 +123,6 @@ public class SvnExcludingIgnoredOperation {
   }
 
   public interface Operation {
-    void doOperation(final VirtualFile file) throws SVNException;
+    void doOperation(final VirtualFile file) throws VcsException;
   }
 }

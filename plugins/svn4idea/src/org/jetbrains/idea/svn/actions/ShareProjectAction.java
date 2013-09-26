@@ -33,17 +33,17 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.*;
+import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.checkout.SvnCheckoutProvider;
 import org.jetbrains.idea.svn.dialogs.ShareDialog;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.internal.wc2.SvnWcGeneration;
 import org.tmatesoft.svn.core.wc.SVNRevision;
-import org.tmatesoft.svn.core.wc.SVNUpdateClient;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 
@@ -105,7 +105,7 @@ public class ShareProjectAction extends BasicAction {
     final String parent = shareDialog.getSelectedURL();
     if (shareDialog.isOK() && parent != null) {
       final Ref<Boolean> actionStarted = new Ref<Boolean>(Boolean.TRUE);
-      final SVNException[] error = new SVNException[1];
+      final Exception[] error = new Exception[1];
 
       final ShareDialog.ShareTarget shareTarget = shareDialog.getShareTarget();
       final ProgressManager progressManager = ProgressManager.getInstance();
@@ -165,15 +165,16 @@ public class ShareProjectAction extends BasicAction {
                   indicator.checkCanceled();
                   indicator.setText(SvnBundle.message("share.directory.checkout.back.progress.text", checkoutUrl.toString()));
                 }
-                final SVNUpdateClient client = activeVcs.createUpdateClient();
-                if (! WorkingCopyFormat.ONE_DOT_SEVEN.equals(SvnWorkingCopyFormatHolder.getPresetFormat())) {
-                  client.getOperationsFactory().setPrimaryWcGeneration(SvnWcGeneration.V16);
-                }
-                client.doCheckout(checkoutUrl, path, SVNRevision.UNDEFINED, revision, SVNDepth.INFINITY, false);
-                SvnWorkingCopyFormatHolder.setPresetFormat(null);
 
-                addRecursively(activeVcs, file);
+                final ClientFactory factory = activeVcs.getFactoryFromSettings();
+
+                factory.createCheckoutClient()
+                  .checkout(SvnTarget.fromURL(checkoutUrl), path, revision, SVNDepth.INFINITY, false, false, format, null);
+                addRecursively(activeVcs, factory, file);
               } catch (SVNException e) {
+                error[0] = e;
+              }
+              catch (VcsException e) {
                 error[0] = e;
               } finally {
                 activeVcs.invokeRefreshSvnRoots();
@@ -231,6 +232,7 @@ public class ShareProjectAction extends BasicAction {
       indicator.checkCanceled();
       indicator.setText(SvnBundle.message("share.directory.create.dir.progress.text", urlText));
     }
+    // TODO: Implement with command line client
     final SVNCommitInfo info =
       vcs.createCommitClient().doMkDir(new SVNURL[]{url}, SvnBundle.message("share.directory.commit.message", folderName,
                                                                             ApplicationNamesInfo.getInstance().getFullProductName(), commitText));
@@ -242,17 +244,17 @@ public class ShareProjectAction extends BasicAction {
     VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(file);
   }
 
-  private static void addRecursively(final SvnVcs activeVcs, final VirtualFile file) throws SVNException {
-    final SVNWCClient wcClient = activeVcs.createWCClient();
+  private static void addRecursively(@NotNull final SvnVcs activeVcs, @NotNull final ClientFactory factory, final VirtualFile file)
+    throws VcsException {
     final SvnExcludingIgnoredOperation operation = new SvnExcludingIgnoredOperation(activeVcs.getProject(), new SvnExcludingIgnoredOperation.Operation() {
-      public void doOperation(final VirtualFile virtualFile) throws SVNException {
+      public void doOperation(final VirtualFile virtualFile) throws VcsException {
         final File ioFile = new File(virtualFile.getPath());
         final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         if (indicator != null) {
           indicator.checkCanceled();
           indicator.setText(SvnBundle.message("share.or.import.add.progress.text", virtualFile.getPath()));
         }
-        wcClient.doAdd(ioFile, true, false, false, SVNDepth.EMPTY, false, false);
+        factory.createAddClient().add(ioFile, SVNDepth.EMPTY, false, false, true, null);
       }
     }, SVNDepth.INFINITY);
 
