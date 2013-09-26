@@ -44,10 +44,7 @@ public class SvnKitCheckoutClient extends BaseSvnClient implements CheckoutClien
                        @NotNull WorkingCopyFormat format,
                        @Nullable ISVNEventHandler handler) throws VcsException {
     assertUrl(source);
-
-    if (WorkingCopyFormat.ONE_DOT_EIGHT.equals(format)) {
-      throw new IllegalArgumentException("could not check out 1.8 format with SVNKit");
-    }
+    validateFormat(format, getSupportedFormats());
 
     SVNUpdateClient client = myVcs.createUpdateClient();
 

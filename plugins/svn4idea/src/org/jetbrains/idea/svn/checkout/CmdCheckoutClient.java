@@ -30,9 +30,9 @@ public class CmdCheckoutClient extends BaseSvnClient implements CheckoutClient {
                        boolean ignoreExternals,
                        @NotNull WorkingCopyFormat format,
                        @Nullable ISVNEventHandler handler) throws VcsException {
-    List<String> parameters = new ArrayList<String>();
+    validateFormat(format, getSupportedFormats());
 
-    // TODO: check format
+    List<String> parameters = new ArrayList<String>();
 
     CommandUtil.put(parameters, source);
     CommandUtil.put(parameters, destination, false);

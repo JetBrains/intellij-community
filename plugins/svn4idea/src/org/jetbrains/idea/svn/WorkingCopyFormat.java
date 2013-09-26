@@ -114,4 +114,9 @@ public enum WorkingCopyFormat {
 
     return result;
   }
+
+  @Override
+  public String toString() {
+    return getName();
+  }
 }
