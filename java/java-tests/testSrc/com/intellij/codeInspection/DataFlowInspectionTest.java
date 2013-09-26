@@ -200,7 +200,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testLastConstantConditionInAnd() { doTest(); }
 
   public void testTransientFinalField() { doTest(); }
-  public void _testSymmetricUncheckedCast() { doTest(); }
+  public void _testSymmetricUncheckedCast() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEABKL-6871
   public void testNullCheckDoesntAffectUncheckedCast() { doTest(); }
   public void testThrowNull() { doTest(); }
 
@@ -307,5 +307,5 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   
   public void testVariablesDiverge() { doTest(); }
   
-  public void _testNullCheckBeforeInstanceof() { doTest(); }
+  public void _testNullCheckBeforeInstanceof() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEA-113220
 }
