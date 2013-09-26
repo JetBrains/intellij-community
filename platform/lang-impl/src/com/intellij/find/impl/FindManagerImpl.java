@@ -59,6 +59,7 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.usages.UsageViewManager;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
@@ -491,12 +492,14 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
           }
         }
       } else {
-        LOG.assertTrue(ftype instanceof AbstractFileType, ftype);
-        if (model.isInCommentsOnly()) {
-          tokensOfInterest = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
-        }
-        if (model.isInStringLiteralsOnly()) {
-          tokensOfInterest = TokenSet.orSet(tokensOfInterest, TokenSet.create(CustomHighlighterTokenType.STRING, CustomHighlighterTokenType.SINGLE_QUOTED_STRING));
+        relevantLanguages = ContainerUtil.newHashSet();
+        if (ftype instanceof AbstractFileType) {
+          if (model.isInCommentsOnly()) {
+            tokensOfInterest = TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT, CustomHighlighterTokenType.MULTI_LINE_COMMENT);
+          }
+          if (model.isInStringLiteralsOnly()) {
+            tokensOfInterest = TokenSet.orSet(tokensOfInterest, TokenSet.create(CustomHighlighterTokenType.STRING, CustomHighlighterTokenType.SINGLE_QUOTED_STRING));
+          }
         }
       }
 
