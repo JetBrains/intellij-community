@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.completion.NormalCompletionTest;
-import com.intellij.codeInsight.completion.SmartTypeCompletionTest;
+import com.intellij.codeInsight.completion.NormalCompletionDfaTest;
+import com.intellij.codeInsight.completion.SmartTypeCompletionDfaTest;
 import com.intellij.codeInsight.slice.SliceBackwardTest;
 import com.intellij.codeInsight.slice.SliceTreeTest;
 import junit.framework.Test;
@@ -29,8 +29,8 @@ public class DataFlowInspectionTestSuite {
     suite.addTestSuite(DataFlowInspectionAncientTest.class);
     suite.addTestSuite(SliceTreeTest.class);
     suite.addTestSuite(SliceBackwardTest.class);
-    suite.addTestSuite(SmartTypeCompletionTest.class);
-    suite.addTestSuite(NormalCompletionTest.class);
+    suite.addTestSuite(SmartTypeCompletionDfaTest.class);
+    suite.addTestSuite(NormalCompletionDfaTest.class);
     return suite;
   }
 }
