@@ -6,15 +6,16 @@ from tcunittest import TeamcityTestResult
 
 try:
   from nose.util import isclass # backwards compat
-  from nose.plugins.base import Plugin
   from nose.config import Config
   from nose.result import TextTestResult
+  from nose import SkipTest
+  from nose.plugins.errorclass import ErrorClassPlugin
 except (Exception, ):
   e = sys.exc_info()[1]
   raise NameError(
     "Something went wrong, do you have nosetest installed? I got this error: %s" % e)
 
-class TeamcityPlugin(Plugin, TextTestResult, TeamcityTestResult):
+class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
   """
   TeamcityTest plugin for nose tests
   """
@@ -48,10 +49,12 @@ class TeamcityPlugin(Plugin, TextTestResult, TeamcityTestResult):
 
 
   def addError(self, test, err):
+    exctype, value, tb = err
     err = self.formatErr(err)
-    self.messages.testError(self.getTestName(test),
-      message='Error', details=err)
-
+    if exctype == SkipTest:
+        self.messages.testIgnored(self.getTestName(test), message='Skip')
+    else:
+        self.messages.testError(self.getTestName(test), message='Error', details=err)
 
   def formatErr(self, err):
     exctype, value, tb = err
