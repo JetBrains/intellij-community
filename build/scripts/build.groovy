@@ -133,7 +133,7 @@ class Build {
         usedJars = ultimate_utils.buildModules(modules, args.module_libs)
       }
       projectBuilder.stage("- additionalCompilation -")
-      utils.additionalCompilation()
+      ultimate_utils.additionalCompilation()
     }
   }
 
@@ -149,7 +149,6 @@ class Build {
         utils.copyAndPatchFile("$home/build/conf/script.zkm.stub", "$paths.sandbox/script.zkm",
                        ["CLASSES": "\"${args.jarPath}/${args.jarName}\"",
                         "SCRAMBLED_CLASSES": args.jarPath, "INCREMENTAL": inc])
-
 
         def unscrambledPath = "$paths.artifacts/${product}.unscrambled"
         ant.mkdir(dir: unscrambledPath)

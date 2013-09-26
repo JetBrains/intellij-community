@@ -844,13 +844,3 @@ binding.setVariable("buildSearchableOptions", { String target, List licenses, Cl
   ant.available(file: targetFile, property: "searchable.options.exists");
   ant.fail(unless: "searchable.options.exists", message: "Searchable options were not built.")
 })
-
-
-binding.setVariable("additionalCompilation", {->
-  projectBuilder.stage("- additionalCompilationStep -")
-  if (isDefined("additionalCompilationStep")) {
-    projectBuilder.info("Using additional compilation step: " + additionalCompilationStep)
-    def script = includeFile(additionalCompilationStep)
-    script.doCustomCompile();
-  }
-})
