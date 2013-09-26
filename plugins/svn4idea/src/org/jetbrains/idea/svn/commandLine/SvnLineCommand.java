@@ -62,7 +62,8 @@ public class SvnLineCommand extends SvnCommand {
   public static final String AUTHENTICATION_REALM = "Authentication realm:";
   public static final String CERTIFICATE_ERROR = "Error validating server certificate for";
   public static final String PASSPHRASE_FOR = "Passphrase for";
-  public static final String UNABLE_TO_CONNECT = "svn: E170001:";
+  public static final String UNABLE_TO_CONNECT_CODE = "svn: E170001:";
+  public static final String UNABLE_TO_CONNECT_MESSAGE = "Unable to connect to a repository";
   public static final String CANNOT_AUTHENTICATE_TO_PROXY = "Could not authenticate to proxy server";
   public static final String AUTHENTICATION_FAILED_MESSAGE = "Authentication failed";
 
@@ -216,7 +217,7 @@ public class SvnLineCommand extends SvnCommand {
     if (errText.startsWith(PASSPHRASE_FOR)) {
       return new PassphraseCallback(callback, url);
     }
-    if (errText.startsWith(UNABLE_TO_CONNECT) && errText.contains(CANNOT_AUTHENTICATE_TO_PROXY)) {
+    if (errText.startsWith(UNABLE_TO_CONNECT_CODE) && errText.contains(CANNOT_AUTHENTICATE_TO_PROXY)) {
       return new ProxyCallback(callback, url);
     }
     // http/https protocol invalid credentials
@@ -226,6 +227,10 @@ public class SvnLineCommand extends SvnCommand {
     // messages could be "Can't get password", "Can't get username or password"
     if (errText.contains(INVALID_CREDENTIALS_FOR_SVN_PROTOCOL) && errText.contains(PASSWORD_STRING)) {
       // svn protocol invalid credentials
+      return new UsernamePasswordCallback(callback, url);
+    }
+    // http/https protocol, svn 1.7, non-interactive
+    if (errText.contains(UNABLE_TO_CONNECT_MESSAGE)) {
       return new UsernamePasswordCallback(callback, url);
     }
     // https one-way protocol untrusted server certificate
