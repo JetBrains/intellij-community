@@ -1,4 +1,4 @@
-package com.intellij.dvcs.log;
+package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;

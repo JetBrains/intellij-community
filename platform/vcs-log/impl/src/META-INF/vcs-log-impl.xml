@@ -1,4 +1,12 @@
 <idea-plugin>
+  <project-components>
+    <component>
+      <interface-class>com.intellij.vcs.log.impl.VcsLogManager</interface-class>
+      <implementation-class>com.intellij.vcs.log.impl.VcsLogManager</implementation-class>
+    </component>
+  </project-components>
+
+
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogSettings" serviceImplementation="com.intellij.vcs.log.impl.VcsLogSettingsImpl"/>
   </extensions>
