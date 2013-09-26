@@ -15,9 +15,9 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentI;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
+import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
@@ -95,14 +95,6 @@ public class VcsLogManager extends AbstractProjectComponent {
     });
   }
 
-  @Override
-  public void disposeComponent() {
-    if (myLogRefresher != null) {
-      myLogRefresher.dispose();
-    }
-    super.disposeComponent();
-  }
-
   private void refreshLogOnVcsEvents(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
     MultiMap<VcsLogProvider, VirtualFile> providers2roots = MultiMap.create();
     for (Map.Entry<VirtualFile, VcsLogProvider> entry : logProviders.entrySet()) {
@@ -148,11 +140,13 @@ public class VcsLogManager extends AbstractProjectComponent {
     }
   }
 
-  private static class PostponeableLogRefresher implements VcsLogRefresher {
+  private static class PostponeableLogRefresher implements VcsLogRefresher, Disposable {
+
+    private  static final String TOOLWINDOW_ID = ChangesViewContentManager.TOOLWINDOW_ID;
 
     @NotNull private final VcsLogDataHolder myDataHolder;
     @NotNull private final Content myContentPane;
-    @NotNull private final ToolWindowManagerEx myToolWindowManager;
+    @NotNull private final ToolWindowManagerImpl myToolWindowManager;
     @NotNull private final ToolWindowImpl myToolWindow;
     @NotNull private final MyRefreshPostponedEventsListener myPostponedEventsListener;
 
@@ -163,8 +157,10 @@ public class VcsLogManager extends AbstractProjectComponent {
     public PostponeableLogRefresher(@NotNull Project project, @NotNull VcsLogDataHolder dataHolder, @NotNull Content contentPane) {
       myDataHolder = dataHolder;
       myContentPane = contentPane;
-      myToolWindowManager = ((ToolWindowManagerEx)ToolWindowManager.getInstance(project));
-      myToolWindow = (ToolWindowImpl)myToolWindowManager.getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+      myToolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
+      myToolWindow = (ToolWindowImpl)myToolWindowManager.getToolWindow(TOOLWINDOW_ID);
+
+      Disposer.register(myToolWindow.getContentManager(), this);
 
       myPostponedEventsListener = new MyRefreshPostponedEventsListener();
       myToolWindow.getContentManager().addContentManagerListener(myPostponedEventsListener);
@@ -195,13 +191,15 @@ public class VcsLogManager extends AbstractProjectComponent {
       }
     }
 
-    void dispose() {
+    @Override
+    public void dispose() {
       myToolWindow.getContentManager().removeContentManagerListener(myPostponedEventsListener);
       myToolWindowManager.removeToolWindowManagerListener(myPostponedEventsListener);
     }
 
     private boolean isOurContentPaneShowing() {
-      return myToolWindow.isVisible() && myContentPane.equals(myToolWindow.getContentManager().getSelectedContent());
+      return myToolWindowManager.isToolWindowRegistered(TOOLWINDOW_ID) &&
+             myToolWindow.isVisible() && myContentPane.equals(myToolWindow.getContentManager().getSelectedContent());
     }
 
     private void refreshPostponedRoots() {
