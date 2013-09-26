@@ -4,10 +4,9 @@ import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.impl.BasicVcsLogRefSorter;
-import com.intellij.vcs.log.VcsLogLogger;
 import com.intellij.vcs.log.VcsLogRefSorter;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.impl.BasicVcsLogRefSorter;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +23,7 @@ class GitLogRefSorter implements VcsLogRefSorter {
 
   private static final String MASTER = "master";
   private static final String ORIGIN_MASTER = "origin/master";
-  private static final Logger LOG = VcsLogLogger.LOG;
+  private static final Logger LOG = Logger.getInstance(GitLogRefSorter.class);
 
   @NotNull private final RepositoryManager<GitRepository> myRepositoryManager;
 

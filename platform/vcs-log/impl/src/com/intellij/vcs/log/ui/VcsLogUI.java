@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
-import com.intellij.vcs.log.VcsLogLogger;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.elements.GraphElement;
@@ -26,7 +25,7 @@ import javax.swing.table.TableModel;
  */
 public class VcsLogUI {
 
-  private static final Logger LOG = VcsLogLogger.LOG;
+  private static final Logger LOG = Logger.getInstance(VcsLogUI.class);
 
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final MainFrame myMainFrame;

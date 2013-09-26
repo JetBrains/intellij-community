@@ -1,5 +1,6 @@
 package com.intellij.vcs.log.graph.mutable;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
@@ -7,7 +8,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.VcsLogLogger;
 import com.intellij.vcs.log.graph.elements.Branch;
 import com.intellij.vcs.log.graph.mutable.elements.MutableNode;
 import com.intellij.vcs.log.graph.mutable.elements.MutableNodeRow;
@@ -23,6 +23,8 @@ import static com.intellij.vcs.log.graph.elements.Node.NodeType.*;
  * @author erokhins
  */
 public class GraphBuilder {
+
+  private static final Logger LOG = Logger.getInstance(GraphBuilder.class);
 
   public static MutableGraph build(@NotNull List<? extends CommitParents> commitParentses, Collection<VcsRef> allRefs) {
     Map<Hash, Integer> commitLogIndexes = new HashMap<Hash, Integer>(commitParentses.size());
@@ -102,7 +104,7 @@ public class GraphBuilder {
       VirtualFile repositoryRoot;
       if (ref == null) {
         // should never happen, but fallback gently.
-        VcsLogLogger.LOG.error("Ref should exist for this node. Hash: " + commitHash);
+        LOG.error("Ref should exist for this node. Hash: " + commitHash);
         repositoryRoot = NullVirtualFile.INSTANCE;
       }
       else {

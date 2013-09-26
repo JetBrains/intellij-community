@@ -5,19 +5,18 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.VcsLogLogger;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.elements.Edge;
 import com.intellij.vcs.log.graph.elements.GraphElement;
 import com.intellij.vcs.log.graph.elements.Node;
+import com.intellij.vcs.log.graph.render.GraphCellPainter;
+import com.intellij.vcs.log.graph.render.GraphCommitCell;
+import com.intellij.vcs.log.graph.render.PositionUtil;
+import com.intellij.vcs.log.graph.render.SimpleGraphCellPainter;
 import com.intellij.vcs.log.printmodel.GraphPrintCell;
 import com.intellij.vcs.log.printmodel.SpecialPrintElement;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
-import com.intellij.vcs.log.graph.render.PositionUtil;
-import com.intellij.vcs.log.graph.render.GraphCellPainter;
-import com.intellij.vcs.log.graph.render.SimpleGraphCellPainter;
-import com.intellij.vcs.log.graph.render.GraphCommitCell;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -198,7 +197,7 @@ public class VcsLogGraphTable extends JBTable {
 
   private static class RootCellRenderer extends JPanel implements TableCellRenderer {
 
-    private static final Logger LOG = VcsLogLogger.LOG;
+    private static final Logger LOG = Logger.getInstance(RootCellRenderer.class);
 
     @NotNull private final VcsLogUI myUi;
     @NotNull private final VcsLogDataHolder myDataHolder;

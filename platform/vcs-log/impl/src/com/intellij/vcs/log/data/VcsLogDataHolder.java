@@ -16,7 +16,6 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -85,8 +84,6 @@ import java.util.Map;
 public class VcsLogDataHolder implements Disposable {
 
   public static final Topic<Runnable> REFRESH_COMPLETED = Topic.create("Vcs.Log.Completed", Runnable.class);
-
-  private static final Logger LOG = VcsLogLogger.LOG;
 
   @NotNull private final Project myProject;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;

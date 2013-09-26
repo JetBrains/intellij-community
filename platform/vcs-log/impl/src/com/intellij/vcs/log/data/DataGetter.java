@@ -1,7 +1,6 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -12,7 +11,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogProvider;
-import com.intellij.vcs.log.VcsLogLogger;
 import com.intellij.vcs.log.graph.Graph;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.elements.NodeRow;
@@ -38,7 +36,6 @@ import java.util.Map;
  */
 public abstract class DataGetter<T extends CommitParents> implements Disposable {
 
-  private static final Logger LOG = VcsLogLogger.LOG;
   private static final int UP_PRELOAD_COUNT = 20;
   private static final int DOWN_PRELOAD_COUNT = 40;
 
