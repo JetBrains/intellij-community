@@ -760,6 +760,17 @@ public class PyTypeTest extends PyTestCase {
            "        print(expr)\n");
   }
 
+  // PY-8953
+  public void testSelfInDocString() {
+    doTest("int",
+           "class C(object):\n" +
+           "    def foo(self):\n" +
+           "        '''\n" +
+           "        :type self: int\n" +
+           "        '''\n" +
+           "        expr = self\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }
