@@ -33,7 +33,7 @@ public class PyExceptionBreakpointType
   private static final String BASE_EXCEPTION = "BaseException";
 
   public PyExceptionBreakpointType() {
-    super("python-exception", "Python Exception Breakpoint", false);
+    super("python-exception", "Python Exception Breakpoint");
   }
 
   @NotNull
@@ -73,6 +73,7 @@ public class PyExceptionBreakpointType
       final String qualifiedName = pyClass.getQualifiedName();
       assert qualifiedName != null : "Qualified name of the class shouldn't be null";
       return ApplicationManager.getApplication().runWriteAction(new Computable<XBreakpoint<PyExceptionBreakpointProperties>>() {
+        @Override
         public XBreakpoint<PyExceptionBreakpointProperties> compute() {
           return XDebuggerManager.getInstance(project).getBreakpointManager()
             .addBreakpoint(PyExceptionBreakpointType.this, new PyExceptionBreakpointProperties(qualifiedName));
@@ -85,6 +86,7 @@ public class PyExceptionBreakpointType
   private static class PyExceptionCachingFilter implements AbstractTreeClassChooserDialog.Filter<PyClass> {
     private final HashMap<Integer, Pair<WeakReference<PyClass>, Boolean>> processedElements = Maps.newHashMap();
 
+    @Override
     public boolean isAccepted(@NotNull final PyClass pyClass) {
       final VirtualFile virtualFile = pyClass.getContainingFile().getVirtualFile();
       if (virtualFile == null) {
@@ -194,6 +196,7 @@ public class PyExceptionBreakpointType
       panel.setBorder(IdeBorderFactory.createTitledBorder("Activation policy", true));
 
       ActionListener listener = new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           setRadioButtonsEnabled();
         }

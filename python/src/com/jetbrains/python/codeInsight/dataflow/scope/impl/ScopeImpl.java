@@ -226,19 +226,7 @@ public class ScopeImpl implements Scope {
       }
     });
 
-    Collections.sort(importedNameDefiners, new Comparator<NameDefiner>() {
-      @Override
-      public int compare(NameDefiner d1, NameDefiner d2) {
-        return getPriority(d2) - getPriority(d1);
-      }
-
-      private int getPriority(NameDefiner nameDefiner) {
-        if (nameDefiner instanceof PyStarImportElement) {
-          return -10;
-        }
-        return 0;
-      }
-    });
+    Collections.reverse(importedNameDefiners);
 
     myNamedElements = namedElements;
     myImportedNameDefiners = importedNameDefiners;
