@@ -85,7 +85,6 @@ class Build {
   Script utils
   Script ultimate_utils
   Script layouts
-  Script community_layouts
   Script libLicenses
 
   Build(String arg_home, JpsGantProjectBuilder prjBuilder, String arg_product){
@@ -108,7 +107,6 @@ class Build {
     }
     ultimate_utils = utils.includeFile(home + "/build/scripts/ultimate_utils.gant")
     layouts = utils.includeFile(home + "/build/scripts/layouts.gant")
-    community_layouts = utils.includeFile(home + "/community/build/scripts/layouts.gant")
     libLicenses = utils.includeFile(home + "/community/build/scripts/libLicenses.gant")
   }
 

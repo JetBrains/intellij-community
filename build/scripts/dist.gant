@@ -129,9 +129,12 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
   def macAppRoot = isEap() ? "${p("component.version.codename")}-${args.buildNumber}.app" : "IntelliJ IDEA ${p("component.version.major")} CE.app"
 
   String macZip = "$paths.artifacts/idea${args.buildNumber}.mac.zip"
+  String sitFile = "$paths.artifacts/idea${args.buildNumber}.sit"
   buildMacZip(macAppRoot, macZip, [paths.distAll], paths.distMac)
+  ant.copy(file: macZip,
+           tofile: sitFile)
   notifyArtifactBuilt(macZip)
-
+  notifyArtifactBuilt(sitFile)
   buildTarGz("idea-${args.buildNumber}", "$paths.artifacts/idea${args.buildNumber}.tar", [paths.distAll, paths.distUnix])
 }
 
