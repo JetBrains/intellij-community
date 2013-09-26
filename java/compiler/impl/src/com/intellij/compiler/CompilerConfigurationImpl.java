@@ -800,7 +800,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     }
   }
 
-  public void writeExternal(Element parentNode) throws WriteExternalException {
+  private void writeExternal(Element parentNode) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, parentNode);
 
     if (myAddNotNullAssertions != true) {

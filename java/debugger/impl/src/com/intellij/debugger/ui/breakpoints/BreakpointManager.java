@@ -58,7 +58,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.containers.HashMap;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
@@ -67,6 +66,7 @@ import com.sun.jdi.InternalException;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.request.*;
+import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -78,27 +78,32 @@ import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
-public class BreakpointManager implements JDOMExternalizable {
+public class BreakpointManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.BreakpointManager");
-
-  @NonNls private static final String RULES_GROUP_NAME = "breakpoint_rules";
-  private final Project myProject;
-  private AnyExceptionBreakpoint myAnyExceptionBreakpoint;
-  private final List<Breakpoint> myBreakpoints = new ArrayList<Breakpoint>(); // breakpoints storage, access should be synchronized
-  private final List<EnableBreakpointRule> myBreakpointRules = new ArrayList<EnableBreakpointRule>(); // breakpoint rules
-  @Nullable private List<Breakpoint> myBreakpointsListForIteration = null; // another list for breakpoints iteration, unsynchronized access ok
-  private final Map<Document, List<BreakpointWithHighlighter>> myDocumentBreakpoints = new HashMap<Document, List<BreakpointWithHighlighter>>();
-  private final Map<String, String> myUIProperties = new java.util.HashMap<String, String>();
-  private final Map<Key<? extends Breakpoint>, BreakpointDefaults> myBreakpointDefaults = new HashMap<Key<? extends Breakpoint>, BreakpointDefaults>();
-
-  private final EventDispatcher<BreakpointManagerListener> myDispatcher = EventDispatcher.create(BreakpointManagerListener.class);
-
-  private final StartupManager myStartupManager;
 
   @NonNls private static final String MASTER_BREAKPOINT_TAGNAME = "master_breakpoint";
   @NonNls private static final String SLAVE_BREAKPOINT_TAGNAME = "slave_breakpoint";
   @NonNls private static final String DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME = "default_suspend_policy";
   @NonNls private static final String DEFAULT_CONDITION_STATE_ATTRIBUTE_NAME = "default_condition_enabled";
+
+  @NonNls private static final String RULES_GROUP_NAME = "breakpoint_rules";
+
+  private final Project myProject;
+  private AnyExceptionBreakpoint myAnyExceptionBreakpoint;
+  private final List<Breakpoint> myBreakpoints = new ArrayList<Breakpoint>(); // breakpoints storage, access should be synchronized
+  private final List<EnableBreakpointRule> myBreakpointRules = new ArrayList<EnableBreakpointRule>(); // breakpoint rules
+  @Nullable private List<Breakpoint> myBreakpointsListForIteration = null; // another list for breakpoints iteration, unsynchronized access ok
+  private final Map<Document, List<BreakpointWithHighlighter>> myDocumentBreakpoints = new THashMap<Document, List<BreakpointWithHighlighter>>();
+  private final Map<String, String> myUIProperties = new LinkedHashMap<String, String>();
+  private final Map<Key<? extends Breakpoint>, BreakpointDefaults> myBreakpointDefaults = new LinkedHashMap<Key<? extends Breakpoint>, BreakpointDefaults>();
+
+  private final EventDispatcher<BreakpointManagerListener> myDispatcher = EventDispatcher.create(BreakpointManagerListener.class);
+
+  private final StartupManager myStartupManager;
+
+  static final class State {
+
+  }
 
   private void update(@NotNull List<BreakpointWithHighlighter> breakpoints) {
     final TIntHashSet intHash = new TIntHashSet();
@@ -545,11 +550,11 @@ public class BreakpointManager implements JDOMExternalizable {
     return null;
   }
 
-  @Override
-  public void readExternal(@NotNull final Element parentNode) throws InvalidDataException {
+  public void readExternal(@NotNull final Element parentNode) {
     if (myProject.isOpen()) {
       doRead(parentNode);
-    } else {
+    }
+    else {
       myStartupManager.registerPostStartupActivity(new Runnable() {
         @Override
         public void run() {
@@ -564,7 +569,7 @@ public class BreakpointManager implements JDOMExternalizable {
       @Override
       @SuppressWarnings({"HardCodedStringLiteral"})
       public void run() {
-        final Map<String, Breakpoint> nameToBreakpointMap = new java.util.HashMap<String, Breakpoint>();
+        final Map<String, Breakpoint> nameToBreakpointMap = new THashMap<String, Breakpoint>();
         try {
           final List groups = parentNode.getChildren();
           for (final Object group1 : groups) {
@@ -704,62 +709,47 @@ public class BreakpointManager implements JDOMExternalizable {
     }
   }
 
-  @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public void writeExternal(@NotNull final Element parentNode) throws WriteExternalException {
-    WriteExternalException ex = ApplicationManager.getApplication().runReadAction(new Computable<WriteExternalException>() {
+  public void writeExternal(@NotNull final Element parentNode) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
-      @Nullable
-      public WriteExternalException compute() {
-        try {
-          removeInvalidBreakpoints();
-          final Map<Key<? extends Breakpoint>, Element> categoryToElementMap = new java.util.HashMap<Key<? extends Breakpoint>, Element>();
-          for (Key<? extends Breakpoint> category : myBreakpointDefaults.keySet()) {
-            final Element group = getCategoryGroupElement(categoryToElementMap, category, parentNode);
-            final BreakpointDefaults defaults = getBreakpointDefaults(category);
-            group.setAttribute(DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME, String.valueOf(defaults.getSuspendPolicy()));
-            group.setAttribute(DEFAULT_CONDITION_STATE_ATTRIBUTE_NAME, String.valueOf(defaults.isConditionEnabled()));
-          }
-          for (final Breakpoint breakpoint : getBreakpoints()) {
-            final Key<? extends Breakpoint> category = breakpoint.getCategory();
-            final Element group = getCategoryGroupElement(categoryToElementMap, category, parentNode);
-            if (breakpoint.isValid()) {
-              writeBreakpoint(group, breakpoint);
-            }
-          }
-          final AnyExceptionBreakpoint anyExceptionBreakpoint = getAnyExceptionBreakpoint();
-          final Element group = getCategoryGroupElement(categoryToElementMap, anyExceptionBreakpoint.getCategory(), parentNode);
-          writeBreakpoint(group, anyExceptionBreakpoint);
-          
-          final Element rules = new Element(RULES_GROUP_NAME);
-          parentNode.addContent(rules);
-          for (final EnableBreakpointRule myBreakpointRule : myBreakpointRules) {
-            writeRule(myBreakpointRule, rules);
-          }
-
-          return null;
+      public void run() {
+        removeInvalidBreakpoints();
+        final Map<Key<? extends Breakpoint>, Element> categoryToElementMap = new THashMap<Key<? extends Breakpoint>, Element>();
+        for (Key<? extends Breakpoint> category : myBreakpointDefaults.keySet()) {
+          final Element group = getCategoryGroupElement(categoryToElementMap, category, parentNode);
+          final BreakpointDefaults defaults = getBreakpointDefaults(category);
+          group.setAttribute(DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME, String.valueOf(defaults.getSuspendPolicy()));
+          group.setAttribute(DEFAULT_CONDITION_STATE_ATTRIBUTE_NAME, String.valueOf(defaults.isConditionEnabled()));
         }
-        catch (WriteExternalException e) {
-          return e;
+        for (final Breakpoint breakpoint : getBreakpoints()) {
+          if (breakpoint.isValid()) {
+            writeBreakpoint(getCategoryGroupElement(categoryToElementMap, breakpoint.getCategory(), parentNode), breakpoint);
+          }
+        }
+        final AnyExceptionBreakpoint anyExceptionBreakpoint = getAnyExceptionBreakpoint();
+        final Element group = getCategoryGroupElement(categoryToElementMap, anyExceptionBreakpoint.getCategory(), parentNode);
+        writeBreakpoint(group, anyExceptionBreakpoint);
+
+        final Element rules = new Element(RULES_GROUP_NAME);
+        parentNode.addContent(rules);
+        for (EnableBreakpointRule myBreakpointRule : myBreakpointRules) {
+          writeRule(myBreakpointRule, rules);
         }
       }
     });
-    if (ex != null) {
-      throw ex;
-    }
-    
-    final Element props = new Element("ui_properties");
-    parentNode.addContent(props);
+
+    final Element uiProperties = new Element("ui_properties");
+    parentNode.addContent(uiProperties);
     for (final String name : myUIProperties.keySet()) {
-      final String value = myUIProperties.get(name);
-      final Element property = new Element("property");
-      props.addContent(property);
+      Element property = new Element("property");
+      uiProperties.addContent(property);
       property.setAttribute("name", name);
-      property.setAttribute("value", value);
+      property.setAttribute("value", myUIProperties.get(name));
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"}) private static void writeRule(@NotNull final EnableBreakpointRule enableBreakpointRule, @NotNull Element element) {
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static void writeRule(@NotNull final EnableBreakpointRule enableBreakpointRule, @NotNull Element element) {
     Element rule = new Element("rule");
     if (enableBreakpointRule.isLeaveEnabled()) {
       rule.setAttribute("leaveEnabled", Boolean.toString(true));
@@ -776,10 +766,15 @@ public class BreakpointManager implements JDOMExternalizable {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void writeBreakpoint(@NotNull final Element group, @NotNull final Breakpoint breakpoint) throws WriteExternalException {
+  private static void writeBreakpoint(@NotNull final Element group, @NotNull final Breakpoint breakpoint) {
     Element breakpointNode = new Element("breakpoint");
     group.addContent(breakpointNode);
-    breakpoint.writeExternal(breakpointNode);
+    try {
+      breakpoint.writeExternal(breakpointNode);
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
   }
 
   private static <T extends Breakpoint> Element getCategoryGroupElement(@NotNull final Map<Key<? extends Breakpoint>, Element> categoryToElementMap, @NotNull final Key<T> category, @NotNull final Element parentNode) {
