@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,8 +35,9 @@ public class XDebuggerHistoryManager {
   }
 
   public void addRecentExpression(@NotNull @NonNls String id, @NotNull String expression) {
-    final String trimmedExpression = expression.trim();
-    if (trimmedExpression.length() == 0) return;
+    if (StringUtil.isEmptyOrSpaces(expression)) {
+      return;
+    }
 
     LinkedList<String> list = myRecentExpressions.get(id);
     if (list == null) {
@@ -45,6 +47,8 @@ public class XDebuggerHistoryManager {
     if (list.size() == MAX_RECENT_EXPRESSIONS) {
       list.removeLast();
     }
+
+    String trimmedExpression = expression.trim();
     list.remove(trimmedExpression);
     list.addFirst(trimmedExpression);
   }
