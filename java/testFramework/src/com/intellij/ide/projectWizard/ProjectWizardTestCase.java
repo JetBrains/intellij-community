@@ -10,9 +10,11 @@ import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.DefaultModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
@@ -25,6 +27,7 @@ import com.intellij.platform.ProjectTemplate;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.util.Consumer;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +45,7 @@ import java.util.List;
 @SuppressWarnings("unchecked")
 public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> extends PlatformTestCase {
 
+  protected static final String DEFAULT_SDK = "default";
   protected final List<Sdk> mySdks = new ArrayList<Sdk>();
   protected T myWizard;
   @Nullable
@@ -139,6 +143,28 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
         });
       }
     }
+  }
+
+  protected void setupJdk() {
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      public void run() {
+        ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
+        Sdk defaultJdk = new SimpleJavaSdkType().createJdk(DEFAULT_SDK, SystemProperties.getJavaHome());
+        Sdk otherJdk = new SimpleJavaSdkType().createJdk("_other", SystemProperties.getJavaHome());
+        jdkTable.addJdk(otherJdk);
+        jdkTable.addJdk(defaultJdk);
+        mySdks.add(defaultJdk);
+        mySdks.add(otherJdk);
+
+        Sdk[] jdks = jdkTable.getAllJdks();
+        System.out.println(Arrays.asList(jdks));
+
+        if (getName().contains("DefaultSdk")) {
+          Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+          ProjectRootManager.getInstance(defaultProject).setProjectSdk(defaultJdk);
+        }
+      }
+    });
   }
 
   @Override
