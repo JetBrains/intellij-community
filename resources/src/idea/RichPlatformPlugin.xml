@@ -395,7 +395,7 @@
   <xi:include href="/META-INF/RemoteServersJava.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/dvcs.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/META-INF/vcs-log-impl.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
 

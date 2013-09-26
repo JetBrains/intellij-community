@@ -1,40 +1,27 @@
 package com.intellij.vcs.log;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import org.jetbrains.annotations.Nullable;
 
 /**
+ * <p>Vcs Log user settings, both explicit (when user chooses some behavior)
+ *    and implicit (when we remember some preference based on user actions.</p>
+ *
+ * <p>Most of the settings are workspace-specific, i. e. they are stored in
+ *    {@link StoragePathMacros#WORKSPACE_FILE .idea/workspace.xml}.</p>
+ *
  * @author Kirill Likhodedov
  */
-@State(name = "Vcs.Log.Settings", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
-public class VcsLogSettings implements PersistentStateComponent<VcsLogSettings.State> {
+public interface VcsLogSettings {
 
-  private State myState = new State();
+  /**
+   * Returns true if the details pane (which shows commit meta-data, such as the full commit message, commit date, all references, etc.)
+   * should be visible when the log is loaded; returns false if it should be hidden by default.
+   * @see #setShowDetails(boolean)
+   */
+  boolean isShowDetails();
 
-  public static class State {
-    public boolean SHOW_DETAILS = false;
-  }
-
-  @Nullable
-  @Override
-  public State getState() {
-    return myState;
-  }
-
-  @Override
-  public void loadState(State state) {
-    myState = state;
-  }
-
-  public boolean isShowDetails() {
-    return myState.SHOW_DETAILS;
-  }
-
-  public void setShowDetails(boolean showDetails) {
-    myState.SHOW_DETAILS = showDetails;
-  }
-
+  /**
+   * Sets if the details pane (which shows commit meta-data) should be shown or hidden by default.
+   */
+  void setShowDetails(boolean showDetails);
 }
