@@ -161,10 +161,11 @@ public class DataFlowRunner {
 
           if (instruction instanceof BranchingInstruction) {
             BranchingInstruction branching = (BranchingInstruction)instruction;
-            if (processedStates.get(branching).contains(instructionState.getMemoryState())) {
+            Collection<DfaMemoryState> processed = processedStates.get(branching);
+            if (processed.contains(instructionState.getMemoryState())) {
               continue;
             }
-            if (processedStates.get(branching).size() > MAX_STATES_PER_BRANCH) {
+            if (processed.size() > MAX_STATES_PER_BRANCH) {
               LOG.debug("Too complex because too many different possible states");
               return RunnerResult.TOO_COMPLEX; // Too complex :(
             }

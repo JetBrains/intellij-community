@@ -102,6 +102,9 @@ class StateQueue {
         if (nextStates == null) {
           nextStates = merger.mergeByType();
         }
+        if (nextStates == null) {
+          nextStates = merger.mergeByUnknowns();
+        }
         if (nextStates == null) break;
         memoryStates = nextStates;
       }

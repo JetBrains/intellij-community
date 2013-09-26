@@ -136,11 +136,18 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public int hashCode() {
-    return (((getNonTrivialEqClasses().hashCode() * 31 + 
-              getDistinctClassPairs().hashCode()) * 31 + 
-             myStack.hashCode()) * 31 + 
-            myUnknownVariables.hashCode()) * 31 + 
-           myVariableStates.hashCode();
+    return getPartialHashCode(true);
+  }
+
+  int getPartialHashCode(boolean unknowns) {
+    int hash = ((getNonTrivialEqClasses().hashCode() * 31 +
+              getDistinctClassPairs().hashCode()) * 31 +
+             myStack.hashCode()) * 31 +
+            myVariableStates.hashCode();
+    if (unknowns) {
+      hash = hash * 31 + myUnknownVariables.hashCode();
+    }
+    return hash;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

@@ -38,7 +38,6 @@ import java.util.Set;
 class StateMerger {
   private final List<DfaMemoryStateImpl> myStates;
   private final MultiMap<UnorderedPair<DfaValue>,DfaMemoryStateImpl> myStatesByEq = new MultiMap<UnorderedPair<DfaValue>, DfaMemoryStateImpl>();
-  private final MultiMap<Pair<DfaVariableValue, DfaPsiType>,DfaMemoryStateImpl> myStatesByInstanceof = new MultiMap<Pair<DfaVariableValue, DfaPsiType>, DfaMemoryStateImpl>();
   private final Map<DfaMemoryStateImpl, Map<DfaVariableValue, DfaConstValue>> myVarValues = ContainerUtil.newIdentityHashMap();
 
   public StateMerger(List<DfaMemoryStateImpl> states) {
@@ -54,12 +53,6 @@ class StateMerger {
         }
       }
       myVarValues.put(state, varValues);
-
-      for (DfaVariableValue value : state.getChangedVariable()) {
-        for (DfaPsiType instanceofValue : state.getVariableState(value).myInstanceofValues) {
-          myStatesByInstanceof.putValue(Pair.create(value, instanceofValue), state);
-        }
-      }
     }
   }
 
@@ -82,7 +75,8 @@ class StateMerger {
         DfaMemoryStateImpl copy = copyWithoutVar(state, var).createCopy();
 
         complementaryStates.add(state);
-        postProcessMergedState(var, copy, complementaryStates);
+        mergeNullableState(var, copy, complementaryStates);
+        mergeUnknowns(copy, complementaryStates);
         return getMergeResult(copy, complementaryStates);
       }
       
@@ -90,13 +84,17 @@ class StateMerger {
     return null;
   }
 
-  private static void postProcessMergedState(DfaVariableValue var,
-                                             DfaMemoryStateImpl mergedState,
-                                             Collection<DfaMemoryStateImpl> complementaryStates) {
+  private static void mergeUnknowns(DfaMemoryStateImpl mergedState, Collection<DfaMemoryStateImpl> complementaryStates) {
     for (DfaMemoryStateImpl removedState : complementaryStates) {
       for (DfaVariableValue unknownVar : removedState.getUnknownVariables()) {
         mergedState.doFlush(unknownVar, true);
       }
+    }
+  }
+  private static void mergeNullableState(DfaVariableValue var,
+                                             DfaMemoryStateImpl mergedState,
+                                             Collection<DfaMemoryStateImpl> complementaryStates) {
+    for (DfaMemoryStateImpl removedState : complementaryStates) {
       if (removedState.getVariableState(var).isNullable()) {
         mergedState.setVariableState(var, mergedState.getVariableState(var).withNullability(Nullness.NULLABLE));
       }
@@ -116,7 +114,49 @@ class StateMerger {
   }
 
   @Nullable
+  public List<DfaMemoryStateImpl> mergeByUnknowns() {
+    MultiMap<Integer, DfaMemoryStateImpl> byHash = new MultiMap<Integer, DfaMemoryStateImpl>();
+    for (DfaMemoryStateImpl state : myStates) {
+      ProgressManager.checkCanceled();
+      byHash.putValue(state.getPartialHashCode(false), state);
+    }
+
+    for (Integer key : byHash.keySet()) {
+      Collection<DfaMemoryStateImpl> similarStates = byHash.get(key);
+      if (similarStates.size() < 2) continue;
+      
+      for (final DfaMemoryStateImpl state1 : similarStates) {
+        ProgressManager.checkCanceled();
+        List<DfaMemoryStateImpl> complementary = ContainerUtil.filter(similarStates, new Condition<DfaMemoryStateImpl>() {
+          @Override
+          public boolean value(DfaMemoryStateImpl state2) {
+            return state1.equalsSuperficially(state2) && state1.equalsByRelations(state2) && state1.equalsByVariableStates(state2);
+          }
+        });
+        if (complementary.size() > 1) {
+          DfaMemoryStateImpl copy = state1.createCopy();
+          mergeUnknowns(copy, complementary);
+          return getMergeResult(copy, ContainerUtil.newHashSet(complementary));
+        }
+      }
+      
+    }
+
+    return null;
+  }
+  
+  @Nullable
   public List<DfaMemoryStateImpl> mergeByType() {
+    MultiMap<Pair<DfaVariableValue, DfaPsiType>,DfaMemoryStateImpl> byInstanceof = new MultiMap<Pair<DfaVariableValue, DfaPsiType>, DfaMemoryStateImpl>();
+    for (final DfaMemoryStateImpl state : myStates) {
+      ProgressManager.checkCanceled();
+      for (DfaVariableValue value : state.getChangedVariable()) {
+        for (DfaPsiType instanceofValue : state.getVariableState(value).myInstanceofValues) {
+          byInstanceof.putValue(Pair.create(value, instanceofValue), state);
+        }
+      }
+    }
+    
     for (final DfaMemoryStateImpl state : myStates) {
       ProgressManager.checkCanceled();
 
@@ -124,7 +164,7 @@ class StateMerger {
         for (final DfaPsiType notInstanceof : state.getVariableState(var).myNotInstanceofValues) {
           final DfaVariableState varStateWithoutType = getVarStateWithoutType(state, var, notInstanceof);
           List<DfaMemoryStateImpl> complementaryStates = ContainerUtil.filter(
-            myStatesByInstanceof.get(Pair.create(var, notInstanceof)),
+            byInstanceof.get(Pair.create(var, notInstanceof)),
             new Condition<DfaMemoryStateImpl>() {
               @Override
               public boolean value(DfaMemoryStateImpl another) {
@@ -142,7 +182,8 @@ class StateMerger {
           copy.setVariableState(var, varStateWithoutType);
           
           complementaryStates.add(state);
-          postProcessMergedState(var, copy, complementaryStates);
+          mergeNullableState(var, copy, complementaryStates);
+          mergeUnknowns(copy, complementaryStates);
           return getMergeResult(copy, ContainerUtil.newHashSet(complementaryStates));
         }
       }
