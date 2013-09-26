@@ -168,6 +168,11 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
   }
 
   @Override
+  protected void setT(PsiType t) {
+    myT = t;
+  }
+
+  @Override
   protected InputOutputConstraintFormula createSelfConstraint(PsiType type, PsiExpression expression) {
     return new ExpressionCompatibilityConstraint(expression, type);
   }

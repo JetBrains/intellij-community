@@ -35,6 +35,7 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
 
   protected abstract PsiExpression getExpression();
   protected abstract PsiType getT();
+  protected abstract void setT(PsiType t);
   protected abstract InputOutputConstraintFormula createSelfConstraint(PsiType type, PsiExpression expression);
   protected abstract void collectReturnTypeVariables(InferenceSession session,
                                                      PsiExpression psiExpression,
@@ -50,14 +51,11 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
         if (inferenceVariable != null) {
           return Collections.singleton(inferenceVariable);
         }
-        final PsiType functionalInterfaceType = psiExpression instanceof PsiLambdaExpression 
-                                                ? ((PsiLambdaExpression)psiExpression).getFunctionalInterfaceType() 
-                                                : ((PsiMethodReferenceExpression)psiExpression).getFunctionalInterfaceType();
-        if (functionalInterfaceType != null) {
+        if (LambdaHighlightingUtil.checkInterfaceFunctional(type) == null) {
           final PsiType functionType =
-            psiExpression instanceof PsiLambdaExpression 
-            ? FunctionalInterfaceParameterizationUtil.getFunctionalType(functionalInterfaceType, (PsiLambdaExpression)psiExpression) 
-            : functionalInterfaceType;
+            psiExpression instanceof PsiLambdaExpression
+            ? FunctionalInterfaceParameterizationUtil.getFunctionalType(type, (PsiLambdaExpression)psiExpression)
+            : type;
           final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(functionType);
           final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
           if (interfaceMethod != null) {
@@ -107,9 +105,16 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
     if (!PsiPolyExpressionUtil.isPolyExpression(getExpression())) {
       final HashSet<InferenceVariable> mentionedVariables = new HashSet<InferenceVariable>();
       session.collectDependencies(getT(), mentionedVariables, true);
-      mentionedVariables.removeAll(inputVariables);
+      if (inputVariables != null) {
+        mentionedVariables.removeAll(inputVariables);
+      }
       return mentionedVariables;
     }
     return null;
+  }
+
+  @Override
+  public void apply(PsiSubstitutor substitutor) {
+    setT(substitutor.substitute(getT()));
   }
 }

@@ -166,6 +166,12 @@ public class SubtypingConstraint implements ConstraintFormula {
   }
 
   @Override
+  public void apply(PsiSubstitutor substitutor) {
+    myT = substitutor.substitute(myT);
+    myS = substitutor.substitute(myS);
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;

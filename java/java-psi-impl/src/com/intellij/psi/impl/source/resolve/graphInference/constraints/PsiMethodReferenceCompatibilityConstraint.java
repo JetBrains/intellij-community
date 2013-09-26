@@ -31,7 +31,7 @@ import java.util.List;
 public class PsiMethodReferenceCompatibilityConstraint implements ConstraintFormula {
   private static final Logger LOG = Logger.getInstance("#" + PsiMethodReferenceCompatibilityConstraint.class.getName());
   private final PsiMethodReferenceExpression myExpression;
-  private final PsiType myT;
+  private PsiType myT;
 
   public PsiMethodReferenceCompatibilityConstraint(PsiMethodReferenceExpression expression, PsiType t) {
     myExpression = expression;
@@ -96,5 +96,10 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
     }
     
     return true;
+  }
+
+  @Override
+  public void apply(PsiSubstitutor substitutor) {
+    myT = substitutor.substitute(myT);
   }
 }
