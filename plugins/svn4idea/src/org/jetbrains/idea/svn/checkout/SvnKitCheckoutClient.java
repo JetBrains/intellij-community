@@ -15,11 +15,25 @@ import org.tmatesoft.svn.core.wc.SVNUpdateClient;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Konstantin Kolosovsky.
  */
 public class SvnKitCheckoutClient extends BaseSvnClient implements CheckoutClient {
+
+  private static final List<WorkingCopyFormat> SUPPORTED_FORMATS;
+
+  static {
+    List<WorkingCopyFormat> supportedFormats = new ArrayList<WorkingCopyFormat>();
+
+    supportedFormats.add(WorkingCopyFormat.ONE_DOT_SEVEN);
+    supportedFormats.add(WorkingCopyFormat.ONE_DOT_SIX);
+
+    SUPPORTED_FORMATS = Collections.unmodifiableList(supportedFormats);
+  }
 
   @Override
   public void checkout(@NotNull SvnTarget source,
@@ -27,18 +41,15 @@ public class SvnKitCheckoutClient extends BaseSvnClient implements CheckoutClien
                        @Nullable SVNRevision revision,
                        @Nullable SVNDepth depth,
                        boolean ignoreExternals,
-                       @Nullable WorkingCopyFormat format,
+                       boolean force,
+                       @NotNull WorkingCopyFormat format,
                        @Nullable ISVNEventHandler handler) throws VcsException {
     assertUrl(source);
-
-    if (WorkingCopyFormat.ONE_DOT_EIGHT.equals(format)) {
-      throw new IllegalArgumentException("could not check out 1.8 format with SVNKit");
-    }
+    validateFormat(format, getSupportedFormats());
 
     SVNUpdateClient client = myVcs.createUpdateClient();
 
-    // TODO: most likely we should compare directly with WorkingCopyFormat.ONE_DOT_SIX
-    if (!WorkingCopyFormat.ONE_DOT_SEVEN.equals(format)) {
+    if (WorkingCopyFormat.ONE_DOT_SIX.equals(format)) {
       client.getOperationsFactory().setPrimaryWcGeneration(SvnWcGeneration.V16);
     }
 
@@ -46,10 +57,15 @@ public class SvnKitCheckoutClient extends BaseSvnClient implements CheckoutClien
     client.setEventHandler(handler);
 
     try {
-      client.doCheckout(source.getURL(), destination, source.getPegRevision(), revision, depth, true);
+      client.doCheckout(source.getURL(), destination, source.getPegRevision(), revision, depth, force);
     }
     catch (SVNException e) {
       throw new SvnBindException(e);
     }
+  }
+
+  @Override
+  public List<WorkingCopyFormat> getSupportedFormats() throws VcsException {
+    return SUPPORTED_FORMATS;
   }
 }

@@ -62,7 +62,8 @@ public class SvnLineCommand extends SvnCommand {
   public static final String AUTHENTICATION_REALM = "Authentication realm:";
   public static final String CERTIFICATE_ERROR = "Error validating server certificate for";
   public static final String PASSPHRASE_FOR = "Passphrase for";
-  public static final String UNABLE_TO_CONNECT = "svn: E170001:";
+  public static final String UNABLE_TO_CONNECT_CODE = "svn: E170001:";
+  public static final String UNABLE_TO_CONNECT_MESSAGE = "Unable to connect to a repository";
   public static final String CANNOT_AUTHENTICATE_TO_PROXY = "Could not authenticate to proxy server";
   public static final String AUTHENTICATION_FAILED_MESSAGE = "Authentication failed";
 
@@ -216,7 +217,7 @@ public class SvnLineCommand extends SvnCommand {
     if (errText.startsWith(PASSPHRASE_FOR)) {
       return new PassphraseCallback(callback, url);
     }
-    if (errText.startsWith(UNABLE_TO_CONNECT) && errText.contains(CANNOT_AUTHENTICATE_TO_PROXY)) {
+    if (errText.startsWith(UNABLE_TO_CONNECT_CODE) && errText.contains(CANNOT_AUTHENTICATE_TO_PROXY)) {
       return new ProxyCallback(callback, url);
     }
     // http/https protocol invalid credentials
@@ -226,6 +227,10 @@ public class SvnLineCommand extends SvnCommand {
     // messages could be "Can't get password", "Can't get username or password"
     if (errText.contains(INVALID_CREDENTIALS_FOR_SVN_PROTOCOL) && errText.contains(PASSWORD_STRING)) {
       // svn protocol invalid credentials
+      return new UsernamePasswordCallback(callback, url);
+    }
+    // http/https protocol, svn 1.7, non-interactive
+    if (errText.contains(UNABLE_TO_CONNECT_MESSAGE)) {
       return new UsernamePasswordCallback(callback, url);
     }
     // https one-way protocol untrusted server certificate
@@ -469,23 +474,13 @@ public class SvnLineCommand extends SvnCommand {
           final String trim = text.trim();
           // should end in 1 second
           errorReceived.set(true);
-          // TODO: destroy process here is called despite --non-interactive flag (so it is called even for 1.8) and then unnecessary
-          // TODO: cleanup is invoked - fix this
-          if (trim.startsWith(UNABLE_TO_CONNECT)) {
-            // wait for 3 lines of text then
-            if (myErrCnt >= 3) {
-              destroyProcess();
-            }
-          } else if (trim.startsWith(PASSPHRASE_FOR) || myErrCnt >= 2) {
-            destroyProcess();
-          }
         }
         super.onTextAvailable(text, outputType);
       }
     };
 
-    //command.addParameters("--non-interactive");
     command.addParameters(parameters);
+    command.addParameters("--non-interactive");
     final AtomicReference<Throwable> exceptionRef = new AtomicReference<Throwable>();
     // several threads
     command.addLineListener(new LineProcessEventListener() {
@@ -503,6 +498,7 @@ public class SvnLineCommand extends SvnCommand {
         }
         listener.onLineAvailable(line, outputType);
         if (listener.isCanceled()) {
+          LOG.info("Cancelling command: " + command.getCommandText());
           command.destroyProcess();
           return;
         }
@@ -530,9 +526,9 @@ public class SvnLineCommand extends SvnCommand {
     boolean finished;
     do {
       finished = command.waitFor(500);
-      if (!finished && errorReceived.get()) {
+      if (!finished && (errorReceived.get() || command.needsDestroy())) {
         command.waitFor(1000);
-        command.destroyProcess();
+        command.doDestroyProcess();
         break;
       }
     }

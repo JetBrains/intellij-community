@@ -1,5 +1,6 @@
 package org.jetbrains.idea.svn.checkout;
 
+import com.intellij.openapi.util.Version;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,20 +28,31 @@ public class CmdCheckoutClient extends BaseSvnClient implements CheckoutClient {
                        @Nullable SVNRevision revision,
                        @Nullable SVNDepth depth,
                        boolean ignoreExternals,
-                       @Nullable WorkingCopyFormat format,
+                       boolean force,
+                       @NotNull WorkingCopyFormat format,
                        @Nullable ISVNEventHandler handler) throws VcsException {
-    List<String> parameters = new ArrayList<String>();
+    validateFormat(format, getSupportedFormats());
 
-    // TODO: check format
+    List<String> parameters = new ArrayList<String>();
 
     CommandUtil.put(parameters, source);
     CommandUtil.put(parameters, destination, false);
     CommandUtil.put(parameters, depth);
     CommandUtil.put(parameters, revision);
     CommandUtil.put(parameters, ignoreExternals, "--ignore-externals");
-    parameters.add("--force"); // this is to conform to currently used SVNKit behavior - allowUnversionedObstructions
+    CommandUtil.put(parameters, force, "--force"); // corresponds to "allowUnversionedObstructions" in SVNKit
 
     run(source, destination, handler, parameters);
+  }
+
+  @Override
+  public List<WorkingCopyFormat> getSupportedFormats() throws VcsException {
+    ArrayList<WorkingCopyFormat> result = new ArrayList<WorkingCopyFormat>();
+
+    Version version = myFactory.createVersionClient().getVersion();
+    result.add(WorkingCopyFormat.from(version));
+
+    return result;
   }
 
   private void run(@NotNull SvnTarget source,

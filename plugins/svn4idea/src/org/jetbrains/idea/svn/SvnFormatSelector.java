@@ -17,12 +17,7 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
-import com.intellij.util.WaitForProgressToShow;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -136,22 +131,6 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
     return result;
   }
 
-  public static WorkingCopyFormat showUpgradeDialog(final File path,
-                                                    final Project project,
-                                                    final boolean display13format,
-                                                    @NotNull final WorkingCopyFormat defaultSelection,
-                                                    @NotNull final Ref<Boolean> wasOk) {
-    assert ! ApplicationManager.getApplication().isUnitTestMode();
-    final Ref<WorkingCopyFormat> format = new Ref<WorkingCopyFormat>(defaultSelection);
-    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(new Runnable() {
-      public void run() {
-        wasOk.set(displayUpgradeDialog(project, path, display13format, format));
-      }
-    });
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(SvnVcs.WC_CONVERTED).run();
-    return format.get();
-  }
-
   public static WorkingCopyFormat findRootAndGetFormat(final File path) {
     File root = SvnUtil.getWorkingCopyRootNew(path);
 
@@ -188,15 +167,5 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
     }
 
     return WorkingCopyFormat.getInstance(format);
-  }
-
-  private static boolean displayUpgradeDialog(Project project, File path, final boolean dispay13format, Ref<WorkingCopyFormat> format) {
-    UpgradeFormatDialog dialog = new UpgradeFormatDialog(project, path, false);
-    dialog.setData(format.get());
-    dialog.show();
-    if (dialog.isOK()) {
-      format.set(dialog.getUpgradeMode());
-    }
-    return dialog.isOK();
   }
 }
