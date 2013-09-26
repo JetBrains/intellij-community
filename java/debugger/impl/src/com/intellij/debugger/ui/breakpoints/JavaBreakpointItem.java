@@ -25,6 +25,7 @@ import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -132,7 +133,9 @@ class JavaBreakpointItem extends BreakpointItem {
 
   @Override
   public void saveState() {
-    myBreakpointPropertiesPanel.saveTo(myBreakpoint, EmptyRunnable.INSTANCE);
+    if (myBreakpointPropertiesPanel != null) {
+      myBreakpointPropertiesPanel.saveTo(myBreakpoint, EmptyRunnable.INSTANCE);
+    }
   }
 
   @Override
@@ -154,11 +157,11 @@ class JavaBreakpointItem extends BreakpointItem {
 
   @Override
   public boolean isDefaultBreakpoint() {
-    return myBreakpoint.getCategory().equals(AnyExceptionBreakpoint.CATEGORY);
+    return myBreakpoint.getCategory().equals(ExceptionBreakpoint.CATEGORY);
   }
 
   @Override
-  public int compareTo(BreakpointItem breakpointItem) {
+  public int compareTo(@NotNull BreakpointItem breakpointItem) {
     final Object breakpoint = breakpointItem.getBreakpoint();
     if (breakpoint instanceof Breakpoint) {
       return -getIndexOf(myBreakpoint) + getIndexOf((Breakpoint)breakpoint);
