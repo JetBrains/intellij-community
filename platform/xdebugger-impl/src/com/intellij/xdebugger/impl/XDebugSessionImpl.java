@@ -325,8 +325,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private <B extends XBreakpoint<?>> void processBreakpoints(final XBreakpointHandler<B> handler,
                                                              boolean register,
                                                              final boolean temporary) {
-    XBreakpointType<B, ?> type = XDebuggerUtil.getInstance().findBreakpointType(handler.getBreakpointTypeClass());
-    Collection<? extends B> breakpoints = myDebuggerManager.getBreakpointManager().getBreakpoints(type);
+    Collection<? extends B> breakpoints = myDebuggerManager.getBreakpointManager().getBreakpoints(handler.getBreakpointTypeClass());
     for (B b : breakpoints) {
       handleBreakpoint(handler, b, register, temporary);
     }

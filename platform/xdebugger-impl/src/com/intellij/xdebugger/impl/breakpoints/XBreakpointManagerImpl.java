@@ -242,6 +242,12 @@ public class XBreakpointManagerImpl implements XBreakpointManager, PersistentSta
     return result;
   }
 
+  @NotNull
+  @Override
+  public <B extends XBreakpoint<?>> Collection<? extends B> getBreakpoints(@NotNull Class<? extends XBreakpointType<B, ?>> typeClass) {
+    return getBreakpoints(XBreakpointType.EXTENSION_POINT_NAME.findExtension(typeClass));
+  }
+
   @Override
   @Nullable
   public <B extends XBreakpoint<?>> B getDefaultBreakpoint(@NotNull XBreakpointType<B, ?> type) {
