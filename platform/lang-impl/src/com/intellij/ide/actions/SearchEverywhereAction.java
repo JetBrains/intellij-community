@@ -413,8 +413,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     initSearchField(myPopupField);
     myPopupField.getTextEditor().setColumns(25);
     final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(new JLabel("Search Everywhere:"), BorderLayout.NORTH);
+    panel.add(new JLabel(" Search Everywhere:"), BorderLayout.NORTH);
     panel.add(myPopupField, BorderLayout.CENTER);
+    panel.setBorder(IdeBorderFactory.createEmptyBorder(5, 5,  2, 5));
     myBalloon = JBPopupFactory.getInstance().createBalloonBuilder(panel)
       .setShowCallout(false)
       .setHideOnKeyOutside(false)
@@ -503,6 +504,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
       if (myLocationString != null || value instanceof BooleanOptionDescription) {
         final JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(UIUtil.getListBackground(isSelected));
         panel.add(cmp, BorderLayout.CENTER);
         final Component rightComponent;
         if (value instanceof BooleanOptionDescription) {
@@ -517,17 +519,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         cmp = panel;
       }
 
-      //cmp.setBackground(bg);
+      cmp.setBackground(UIUtil.getListBackground(isSelected));
       Color bg = cmp.getBackground();
-      if (bg == null) {
-        bg = UIUtil.getListBackground(isSelected);
-      }
       myMainPanel.setBorder(new CustomLineBorder(bg, 0, 0, 2, 0));
       String title = myTitleIndexes.getTitle(index);
       myMainPanel.removeAll();
       if (title != null) {
         myTitle.setText(title);
-        myMainPanel.add(SeparatorComponent.createLabeledLineSeparator(" " + title, getRightBackground()), BorderLayout.NORTH);
+        myMainPanel.add(SeparatorComponent.createLabeledLineSeparator(" " + title, UIUtil.getListBackground(), UIUtil.getLabelDisabledForeground()), BorderLayout.NORTH);
       }
       myMainPanel.add(cmp, BorderLayout.CENTER);
       final int width = myMainPanel.getPreferredSize().width;
