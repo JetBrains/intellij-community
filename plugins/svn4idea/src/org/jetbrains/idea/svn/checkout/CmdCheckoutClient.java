@@ -28,7 +28,7 @@ public class CmdCheckoutClient extends BaseSvnClient implements CheckoutClient {
                        @Nullable SVNRevision revision,
                        @Nullable SVNDepth depth,
                        boolean ignoreExternals,
-                       @Nullable WorkingCopyFormat format,
+                       @NotNull WorkingCopyFormat format,
                        @Nullable ISVNEventHandler handler) throws VcsException {
     List<String> parameters = new ArrayList<String>();
 

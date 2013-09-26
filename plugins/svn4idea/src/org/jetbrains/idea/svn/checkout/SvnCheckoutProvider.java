@@ -98,6 +98,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         WorkingCopyFormat format = !WorkingCopyFormat.ONE_DOT_SEVEN.equals(SvnWorkingCopyFormatHolder.getPresetFormat())
                                    ? WorkingCopyFormat.ONE_DOT_SIX
                                    : selectedFormat;
+        format = format == null ? WorkingCopyFormat.UNKNOWN : format;
         ISVNEventHandler handler = new CheckoutEventHandler(vcs, false, ProgressManager.getInstance().getProgressIndicator());
         ProgressManager.progress(SvnBundle.message("progress.text.checking.out", target.getAbsolutePath()));
         try {

@@ -41,7 +41,7 @@ public class SvnKitCheckoutClient extends BaseSvnClient implements CheckoutClien
                        @Nullable SVNRevision revision,
                        @Nullable SVNDepth depth,
                        boolean ignoreExternals,
-                       @Nullable WorkingCopyFormat format,
+                       @NotNull WorkingCopyFormat format,
                        @Nullable ISVNEventHandler handler) throws VcsException {
     assertUrl(source);
 
