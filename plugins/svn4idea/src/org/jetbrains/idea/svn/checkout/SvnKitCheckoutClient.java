@@ -48,8 +48,7 @@ public class SvnKitCheckoutClient extends BaseSvnClient implements CheckoutClien
 
     SVNUpdateClient client = myVcs.createUpdateClient();
 
-    // TODO: most likely we should compare directly with WorkingCopyFormat.ONE_DOT_SIX
-    if (!WorkingCopyFormat.ONE_DOT_SEVEN.equals(format)) {
+    if (WorkingCopyFormat.ONE_DOT_SIX.equals(format)) {
       client.getOperationsFactory().setPrimaryWcGeneration(SvnWcGeneration.V16);
     }
 

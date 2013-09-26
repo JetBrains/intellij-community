@@ -91,18 +91,14 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project,
                      SvnBundle.message("message.title.check.out"), true, VcsConfiguration.getInstance(project).getCheckoutOption()) {
       public void run(@NotNull final ProgressIndicator indicator) {
-        SvnWorkingCopyFormatHolder.setPresetFormat(selectedFormat);
+        final WorkingCopyFormat format = selectedFormat == null ? WorkingCopyFormat.UNKNOWN : selectedFormat;
+
+        SvnWorkingCopyFormatHolder.setPresetFormat(format);
 
         SvnVcs vcs = SvnVcs.getInstance(project);
-        // TODO: made this way to preserve existing logic, but probably this check could be omitted as setPresetFormat(selectedFormat) invoked above
-        WorkingCopyFormat format = !WorkingCopyFormat.ONE_DOT_SEVEN.equals(SvnWorkingCopyFormatHolder.getPresetFormat())
-                                   ? WorkingCopyFormat.ONE_DOT_SIX
-                                   : selectedFormat;
-        format = format == null ? WorkingCopyFormat.UNKNOWN : format;
         ISVNEventHandler handler = new CheckoutEventHandler(vcs, false, ProgressManager.getInstance().getProgressIndicator());
         ProgressManager.progress(SvnBundle.message("progress.text.checking.out", target.getAbsolutePath()));
         try {
-          // TODO: probably rewrite some logic to force ClientFactory provide supported versions (or create special client for that)
           vcs.getFactoryFromSettings().createCheckoutClient()
             .checkout(SvnTarget.fromURL(SVNURL.parseURIEncoded(url)), target, revision, depth, ignoreExternals, format, handler);
           ProgressManager.checkCanceled();
