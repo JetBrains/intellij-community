@@ -23,6 +23,7 @@ public interface CheckoutClient extends SvnClient {
                 @Nullable SVNRevision revision,
                 @Nullable SVNDepth depth,
                 boolean ignoreExternals,
+                boolean force,
                 @NotNull WorkingCopyFormat format,
                 @Nullable ISVNEventHandler handler) throws VcsException;
 

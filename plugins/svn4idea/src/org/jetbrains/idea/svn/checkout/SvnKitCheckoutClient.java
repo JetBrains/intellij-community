@@ -41,6 +41,7 @@ public class SvnKitCheckoutClient extends BaseSvnClient implements CheckoutClien
                        @Nullable SVNRevision revision,
                        @Nullable SVNDepth depth,
                        boolean ignoreExternals,
+                       boolean force,
                        @NotNull WorkingCopyFormat format,
                        @Nullable ISVNEventHandler handler) throws VcsException {
     assertUrl(source);
@@ -56,7 +57,7 @@ public class SvnKitCheckoutClient extends BaseSvnClient implements CheckoutClien
     client.setEventHandler(handler);
 
     try {
-      client.doCheckout(source.getURL(), destination, source.getPegRevision(), revision, depth, true);
+      client.doCheckout(source.getURL(), destination, source.getPegRevision(), revision, depth, force);
     }
     catch (SVNException e) {
       throw new SvnBindException(e);

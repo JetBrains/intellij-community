@@ -28,6 +28,7 @@ public class CmdCheckoutClient extends BaseSvnClient implements CheckoutClient {
                        @Nullable SVNRevision revision,
                        @Nullable SVNDepth depth,
                        boolean ignoreExternals,
+                       boolean force,
                        @NotNull WorkingCopyFormat format,
                        @Nullable ISVNEventHandler handler) throws VcsException {
     validateFormat(format, getSupportedFormats());
@@ -39,7 +40,7 @@ public class CmdCheckoutClient extends BaseSvnClient implements CheckoutClient {
     CommandUtil.put(parameters, depth);
     CommandUtil.put(parameters, revision);
     CommandUtil.put(parameters, ignoreExternals, "--ignore-externals");
-    parameters.add("--force"); // this is to conform to currently used SVNKit behavior - allowUnversionedObstructions
+    CommandUtil.put(parameters, force, "--force"); // corresponds to "allowUnversionedObstructions" in SVNKit
 
     run(source, destination, handler, parameters);
   }

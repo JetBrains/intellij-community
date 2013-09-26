@@ -101,7 +101,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         ProgressManager.progress(SvnBundle.message("progress.text.checking.out", target.getAbsolutePath()));
         try {
           vcs.getFactoryFromSettings().createCheckoutClient()
-            .checkout(SvnTarget.fromURL(SVNURL.parseURIEncoded(url)), target, revision, depth, ignoreExternals, format, handler);
+            .checkout(SvnTarget.fromURL(SVNURL.parseURIEncoded(url)), target, revision, depth, ignoreExternals, true, format, handler);
           ProgressManager.checkCanceled();
           checkoutSuccessful.set(Boolean.TRUE);
         }
