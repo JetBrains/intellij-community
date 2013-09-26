@@ -82,22 +82,22 @@ public class PsiPolyExpressionUtilTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testPertinentLambdaExpression() throws Exception {
-    assertTrue(doTestLambdaPertinent("  void bar(List<Runnable> l) {" +
+    assertFalse(doTestLambdaPertinent("  void bar(List<Runnable> l) {" +
                                       "   foo(() <caret>-> {}, l);" +
                                       "  }"));
   }
 
   public void testPertinentImplicitLambdaExpression() throws Exception {
-    assertTrue(doTestLambdaPertinent("  void bar(List<Comparable<String>> l) {" +
-                                     "   foo((String s) <caret>-> 1, l);" +
-                                     "  }"));
+    assertFalse(doTestLambdaPertinent("  void bar(List<Comparable<String>> l) {" +
+                                      "   foo((String s) <caret>-> 1, l);" +
+                                      "  }"));
   }
 
   public void testPertinentNestedLambdaExpression() throws Exception {
-    assertTrue(doTestLambdaPertinent("  interface Fun<I, O> { O inOut(I i);}\n" +
-                                     "  void bar(List<Fun<String, Fun<String, String>>> l) {" +
-                                     "   foo((sIn, sOut) -> (sInInner, sOutInner) <caret>-> sOutInner, l);" +
-                                     "  }"));
+    assertFalse(doTestLambdaPertinent("  interface Fun<I, O> { O inOut(I i);}\n" +
+                                      "  void bar(List<Fun<String, Fun<String, String>>> l) {" +
+                                      "   foo((sIn, sOut) -> (sInInner, sOutInner) <caret>-> sOutInner, l);" +
+                                      "  }"));
   }
 
   private boolean doTestLambdaPertinent(final String barText) {

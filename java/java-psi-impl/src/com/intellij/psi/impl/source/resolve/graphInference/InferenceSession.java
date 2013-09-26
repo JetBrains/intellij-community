@@ -103,7 +103,7 @@ public class InferenceSession {
 
   public static boolean isPertinentToApplicability(PsiExpression expr, PsiMethod method) {
     if (expr instanceof PsiLambdaExpression) {
-      if (((PsiLambdaExpression)expr).hasFormalParameterTypes()) return true;
+      if (!((PsiLambdaExpression)expr).hasFormalParameterTypes()) return false;
       for (PsiExpression expression : LambdaUtil.getReturnExpressions((PsiLambdaExpression)expr)) {
         if (!isPertinentToApplicability(expression, method)) return false;
       }
