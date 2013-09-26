@@ -42,6 +42,7 @@ public abstract class SvnCommand {
   private final File myConfigDir;
 
   private boolean myIsDestroyed;
+  private boolean myNeedsDestroy;
   private int myExitCode;
   protected final GeneralCommandLine myCommandLine;
   private final File myWorkingDirectory;
@@ -210,10 +211,28 @@ public abstract class SvnCommand {
 
   public void destroyProcess() {
     synchronized (myLock) {
-      if (! myIsDestroyed) {
+      myNeedsDestroy = true;
+    }
+  }
+
+  /**
+   * ProcessHandler.destroyProcess() implementations could acquire read lock in its implementation - like OSProcessManager.getInstance().
+   * Some commands are called under write lock - which is generally bad idea, but such logic is not refactored yet.
+   * To prevent deadlocks this method should only be called from thread that started the process.
+   */
+  public void doDestroyProcess() {
+    synchronized (myLock) {
+      if (!myIsDestroyed) {
+        LOG.info("Destroying process by command: " + getCommandText());
         myIsDestroyed = true;
         myHandler.destroyProcess();
       }
+    }
+  }
+
+  public boolean needsDestroy() {
+    synchronized (myLock) {
+      return myNeedsDestroy;
     }
   }
 

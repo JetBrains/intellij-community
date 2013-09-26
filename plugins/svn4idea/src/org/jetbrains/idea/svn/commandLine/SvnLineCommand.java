@@ -530,9 +530,9 @@ public class SvnLineCommand extends SvnCommand {
     boolean finished;
     do {
       finished = command.waitFor(500);
-      if (!finished && errorReceived.get()) {
+      if (!finished && (errorReceived.get() || command.needsDestroy())) {
         command.waitFor(1000);
-        command.destroyProcess();
+        command.doDestroyProcess();
         break;
       }
     }
