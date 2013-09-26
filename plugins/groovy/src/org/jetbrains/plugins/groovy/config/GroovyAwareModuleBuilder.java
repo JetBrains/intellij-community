@@ -37,7 +37,7 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
 
   @SuppressWarnings("UnusedDeclaration")
   public GroovyAwareModuleBuilder() {
-    this("groovy", "Groovy Module", "Simple module with attached Groovy library", null);
+    this("groovy", "Groovy", "Simple module with attached Groovy library", null);
   }
 
   protected GroovyAwareModuleBuilder(String builderId, String presentableName, String description, Icon bigIcon) {

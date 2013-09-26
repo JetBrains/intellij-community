@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
@@ -346,7 +347,8 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   }
 
   public String getPresentableName() {
-    return getModuleType().getName();
+    String name = getModuleType().getName();
+    return StringUtil.trimEnd(name, " Module");
   }
 
   public String getGroupName() {

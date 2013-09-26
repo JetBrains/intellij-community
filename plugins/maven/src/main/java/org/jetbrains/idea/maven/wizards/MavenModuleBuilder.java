@@ -94,7 +94,7 @@ public class MavenModuleBuilder extends ModuleBuilder implements SourcePathsBuil
 
   @Override
   public String getPresentableName() {
-    return "Maven Module";
+    return "Maven";
   }
 
   @Override
