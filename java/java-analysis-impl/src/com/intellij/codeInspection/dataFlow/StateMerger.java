@@ -79,7 +79,7 @@ class StateMerger {
           for (DfaVariableValue unknownVar : removedState.getUnknownVariables()) {
             copy.doFlush(unknownVar, true);
           }
-          if (removedState.isNull(var)) {
+          if (removedState.getVariableState(var).isNullable()) {
             copy.setVariableState(var, copy.getVariableState(var).withNullability(Nullness.NULLABLE));
           }
         }
