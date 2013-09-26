@@ -18,7 +18,6 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.TypeEqualityConstraint;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class FunctionalInterfaceParameterizationUtil {
@@ -45,6 +44,11 @@ public class FunctionalInterfaceParameterizationUtil {
 
   @Nullable
   public static PsiType getFunctionalType(@Nullable PsiType psiClassType, PsiLambdaExpression expr) {
+    return getFunctionalType(psiClassType, expr, true);
+  }
+
+  @Nullable
+  public static PsiType getFunctionalType(@Nullable PsiType psiClassType, PsiLambdaExpression expr, boolean resolve) {
     if (!expr.hasFormalParameterTypes() || expr.getParameterList().getParametersCount() == 0) return psiClassType;
     if (!isWildcardParameterized(psiClassType)) {
       return psiClassType;
@@ -52,7 +56,7 @@ public class FunctionalInterfaceParameterizationUtil {
     final PsiParameter[] lambdaParams = expr.getParameterList().getParameters();
     if (psiClassType instanceof PsiIntersectionType) {
       for (PsiType psiType : ((PsiIntersectionType)psiClassType).getConjuncts()) {
-        final PsiType functionalType = getFunctionalType(psiType, expr);
+        final PsiType functionalType = getFunctionalType(psiType, expr, false);
         if (functionalType != null) return functionalType;
       }
       return null;
@@ -81,7 +85,9 @@ public class FunctionalInterfaceParameterizationUtil {
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
       final PsiParameter[] targetMethodParams = interfaceMethod.getParameterList().getParameters();
       for (int i = 0; i < targetMethodParams.length; i++) {
-        session.addConstraint(new TypeEqualityConstraint(lambdaParams[i].getType(), targetMethodParams[i].getType()));
+        if (resolve) {
+          session.addConstraint(new TypeEqualityConstraint(lambdaParams[i].getType(), targetMethodParams[i].getType()));
+        }
       }
 
       final PsiClassType parameterization = elementFactory.createType(psiClass, session.infer());

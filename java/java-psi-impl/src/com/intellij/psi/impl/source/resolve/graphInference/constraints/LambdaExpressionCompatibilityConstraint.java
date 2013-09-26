@@ -28,7 +28,7 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
     if (myExpression.hasFormalParameterTypes()) {
     }
     final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(
-      FunctionalInterfaceParameterizationUtil.getFunctionalType(myT, myExpression));
+      FunctionalInterfaceParameterizationUtil.getFunctionalType(myT, myExpression, false));
     final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
     if (interfaceMethod == null) {
       return false;
