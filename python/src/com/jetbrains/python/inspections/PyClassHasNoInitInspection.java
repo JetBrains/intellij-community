@@ -2,7 +2,9 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.AddMethodQuickFix;
@@ -44,6 +46,11 @@ public class PyClassHasNoInitInspection extends PyInspection {
 
     @Override
     public void visitPyClass(PyClass node) {
+      final PyClass outerClass = PsiTreeUtil.getParentOfType(node, PyClass.class);
+      assert node != null;
+      if (outerClass != null && StringUtil.equalsIgnoreCase("meta", node.getName())) {
+        return;
+      }
       final List<PyClassLikeType> types = node.getAncestorTypes(myTypeEvalContext);
       for (PyClassLikeType type : types) {
         if (type == null) return;
