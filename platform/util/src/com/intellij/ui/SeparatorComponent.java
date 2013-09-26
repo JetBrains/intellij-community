@@ -115,6 +115,9 @@ public class SeparatorComponent extends JComponent {
     JPanel result = new JPanel(new BorderLayout(hgap, 10));
     result.add(titleLabel, BorderLayout.WEST);
     result.add(separatorComponent, BorderLayout.CENTER);
+    if (containerBackgroundColor != null) {
+      result.setBackground(containerBackgroundColor);
+    }
 
     return result;
   }
