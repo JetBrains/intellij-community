@@ -1,4 +1,4 @@
-package com.intellij.vcs.log;
+package com.intellij.vcs.log.impl;
 
 import com.intellij.vcs.log.VcsLogRefSorter;
 import com.intellij.vcs.log.VcsRef;

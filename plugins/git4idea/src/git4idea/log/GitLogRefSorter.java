@@ -4,7 +4,7 @@ import com.intellij.dvcs.repo.RepositoryManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.BasicVcsLogRefSorter;
+import com.intellij.vcs.log.impl.BasicVcsLogRefSorter;
 import com.intellij.vcs.log.VcsLogLogger;
 import com.intellij.vcs.log.VcsLogRefSorter;
 import com.intellij.vcs.log.VcsRef;
