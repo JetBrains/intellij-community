@@ -20,6 +20,7 @@ import com.intellij.lexer.Lexer;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.XmlHighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
@@ -83,7 +84,7 @@ public class HtmlFileHighlighter extends SyntaxHighlighterBase {
   @Override
   @NotNull
   public Lexer getHighlightingLexer() {
-    return new HtmlHighlightingLexer();
+    return new HtmlHighlightingLexer(FileTypeManager.getInstance().getStdFileType("CSS"));
   }
 
   @Override

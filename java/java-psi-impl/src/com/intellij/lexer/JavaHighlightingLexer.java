@@ -21,12 +21,13 @@ import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
  */
 public class JavaHighlightingLexer extends LayeredLexer {
-  public JavaHighlightingLexer(LanguageLevel languageLevel) {
+  public JavaHighlightingLexer(@NotNull LanguageLevel languageLevel) {
     super(JavaParserDefinition.createLexer(languageLevel));
     registerSelfStoppingLayer(new StringLiteralLexer('\"', JavaTokenType.STRING_LITERAL),
                               new IElementType[]{JavaTokenType.STRING_LITERAL}, IElementType.EMPTY_ARRAY);
@@ -36,7 +37,7 @@ public class JavaHighlightingLexer extends LayeredLexer {
 
     LayeredLexer docLexer = new LayeredLexer(JavaParserDefinition.createDocLexer(languageLevel));
 
-    HtmlHighlightingLexer lexer = new HtmlHighlightingLexer();
+    HtmlHighlightingLexer lexer = new HtmlHighlightingLexer(null);
     lexer.setHasNoEmbeddments(true);
     docLexer.registerLayer(lexer, JavaDocTokenType.DOC_COMMENT_DATA);
 

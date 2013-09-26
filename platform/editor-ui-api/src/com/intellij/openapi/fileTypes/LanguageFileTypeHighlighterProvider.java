@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class LanguageFileTypeHighlighterProvider implements SyntaxHighlighterProvider {
+  @Override
   @Nullable
   public SyntaxHighlighter create(@NotNull final FileType fileType, @Nullable final Project project, @Nullable final VirtualFile file) {
     if (fileType instanceof LanguageFileType) {
