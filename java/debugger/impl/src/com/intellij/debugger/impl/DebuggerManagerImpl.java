@@ -50,6 +50,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.EventDispatcher;
@@ -185,7 +186,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
   public void writeExternal(Element element) throws WriteExternalException {
     myBreakpointManager.writeExternal(element);
   }
-
 
   public DebuggerSession attachVirtualMachine(Executor executor,
                                               ProgramRunner runner,
@@ -436,7 +436,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     final boolean useSockets = transport == DebuggerSettings.SOCKET_TRANSPORT;
 
     String address = "";
-    if (debugPort == null || "".equals(debugPort)) {
+    if (StringUtil.isEmptyOrSpaces(debugPort)) {
       try {
         address = DebuggerUtils.getInstance().findAvailableDebugAddress(useSockets);
       }

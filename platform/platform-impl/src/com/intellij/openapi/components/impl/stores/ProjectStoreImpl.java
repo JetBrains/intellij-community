@@ -608,9 +608,9 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
 
-  private final StateStorageChooser myStateStorageChooser = new StateStorageChooser() {
+  private final StateStorageChooser<PersistentStateComponent<?>> myStateStorageChooser = new StateStorageChooser<PersistentStateComponent<?>>() {
     @Override
-    public Storage[] selectStorages(final Storage[] storages, final Object component, final StateStorageOperation operation) {
+    public Storage[] selectStorages(final Storage[] storages, final PersistentStateComponent<?> component, final StateStorageOperation operation) {
       if (operation == StateStorageOperation.READ) {
         OrderedSet<Storage> result = new OrderedSet<Storage>();
 
@@ -652,7 +652,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   };
 
   @Override
-  protected StateStorageChooser getDefaultStateStorageChooser() {
+  protected StateStorageChooser<PersistentStateComponent<?>> getDefaultStateStorageChooser() {
     return myStateStorageChooser;
   }
 

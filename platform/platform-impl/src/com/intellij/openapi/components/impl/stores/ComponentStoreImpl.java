@@ -54,13 +54,6 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     return getStateStorageManager().getStateStorage(storageSpec);
   }
 
-  @Deprecated
-  @Nullable
-  private StateStorage getOldStorage(final Object component, final String componentName, final StateStorageOperation operation)
-      throws StateStorageException {
-    return getStateStorageManager().getOldStorage(component, componentName, operation);
-  }
-
   protected StateStorage getDefaultsStorage() {
     throw new UnsupportedOperationException("Method getDefaultsStorage is not supported in " + getClass());
   }
@@ -160,24 +153,19 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     }
   }
 
-  private static void commitJdomExternalizable(@NotNull final JDOMExternalizable component,
-                                               @NotNull StateStorageManager.ExternalizationSession session) {
-    final String componentName = ComponentManagerImpl.getComponentName(component);
-
-    session.setStateInOldStorage(component, componentName, component);
-  }
-
   @Nullable
   private String initJdomExternalizable(@NotNull JDOMExternalizable component) {
     final String componentName = ComponentManagerImpl.getComponentName(component);
 
     doAddComponent(componentName, component);
 
-    if (optimizeTestLoading()) return componentName;
+    if (optimizeTestLoading()) {
+      return componentName;
+    }
 
     loadJdomDefaults(component, componentName);
 
-    StateStorage stateStorage = getOldStorage(component, componentName, StateStorageOperation.READ);
+    StateStorage stateStorage = getStateStorageManager().getOldStorage(component, componentName, StateStorageOperation.READ);
 
     if (stateStorage == null) return null;
     Element element = getJdomState(component, componentName, stateStorage);
@@ -344,7 +332,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
         StorageAnnotationsDefaultValues.NullStateStorageChooser.class;
 
     final Class<? extends StateStorageChooser> storageChooserClass = stateSpec.storageChooser();
-    final StateStorageChooser defaultStateStorageChooser = getDefaultStateStorageChooser();
+    final StateStorageChooser<PersistentStateComponent<?>> defaultStateStorageChooser = getDefaultStateStorageChooser();
     assert storageChooserClass != defaultClass || defaultStateStorageChooser != null : "State chooser not specified for: " +
                                                                                        persistentStateComponent.getClass();
 
@@ -371,7 +359,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
   }
 
   @Nullable
-  protected StateStorageChooser getDefaultStateStorageChooser() {
+  protected StateStorageChooser<PersistentStateComponent<?>> getDefaultStateStorageChooser() {
     return null;
   }
 
@@ -461,7 +449,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
           commitPersistentComponent((PersistentStateComponent<?>)component, session);
         }
         else if (component instanceof JDOMExternalizable) {
-          commitJdomExternalizable((JDOMExternalizable)component, session);
+          session.setStateInOldStorage(component, ComponentManagerImpl.getComponentName(component), component);
         }
       }
       myStorageManagerSaveSession = storageManager.startSave(session);
