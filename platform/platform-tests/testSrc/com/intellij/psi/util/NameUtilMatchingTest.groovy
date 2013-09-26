@@ -25,6 +25,7 @@ import com.intellij.ui.SpeedSearchComparator
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.Matcher
+import groovy.transform.CompileStatic
 import junit.framework.AssertionFailedError
 import org.jetbrains.annotations.NonNls
 /**
@@ -635,6 +636,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     try {
       PlatformTestUtil.startPerformanceTest("Matcher is slow", 4500, new ThrowableRunnable() {
         @Override
+        @CompileStatic
         public void run() {
           System.out.println("attempt start: " + System.currentTimeMillis());
           for (int i = 0; i < 100000; i++) {
