@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.checkout;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -314,7 +315,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         public void run() {
           final List<WorkingCopyFormat> formats = loadSupportedFormats();
 
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
               final String errorMessage = error.get();
@@ -330,7 +331,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                 dialog.stopLoading();
               }
             }
-          });
+          }, ModalityState.stateForComponent(dialog.getWindow()));
         }
       });
 
