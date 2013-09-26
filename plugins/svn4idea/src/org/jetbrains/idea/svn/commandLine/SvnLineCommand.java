@@ -469,23 +469,13 @@ public class SvnLineCommand extends SvnCommand {
           final String trim = text.trim();
           // should end in 1 second
           errorReceived.set(true);
-          // TODO: destroy process here is called despite --non-interactive flag (so it is called even for 1.8) and then unnecessary
-          // TODO: cleanup is invoked - fix this
-          if (trim.startsWith(UNABLE_TO_CONNECT)) {
-            // wait for 3 lines of text then
-            if (myErrCnt >= 3) {
-              destroyProcess();
-            }
-          } else if (trim.startsWith(PASSPHRASE_FOR) || myErrCnt >= 2) {
-            destroyProcess();
-          }
         }
         super.onTextAvailable(text, outputType);
       }
     };
 
-    //command.addParameters("--non-interactive");
     command.addParameters(parameters);
+    command.addParameters("--non-interactive");
     final AtomicReference<Throwable> exceptionRef = new AtomicReference<Throwable>();
     // several threads
     command.addLineListener(new LineProcessEventListener() {
@@ -503,6 +493,7 @@ public class SvnLineCommand extends SvnCommand {
         }
         listener.onLineAvailable(line, outputType);
         if (listener.isCanceled()) {
+          LOG.info("Cancelling command: " + command.getCommandText());
           command.destroyProcess();
           return;
         }
