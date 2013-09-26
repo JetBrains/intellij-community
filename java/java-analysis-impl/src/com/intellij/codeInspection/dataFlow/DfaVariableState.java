@@ -103,6 +103,20 @@ public class DfaVariableState {
     return createCopy(myInstanceofValues, newNotInstanceof, myNullability);
   }
 
+  DfaVariableState withoutType(DfaPsiType type) {
+    if (myInstanceofValues.contains(type)) {
+      HashSet<DfaPsiType> newInstanceof = ContainerUtil.newHashSet(myInstanceofValues);
+      newInstanceof.remove(type);
+      return createCopy(newInstanceof, myNotInstanceofValues, myNullability);
+    }
+    if (myNotInstanceofValues.contains(type)) {
+      HashSet<DfaPsiType> newNotInstanceof = ContainerUtil.newHashSet(myNotInstanceofValues);
+      newNotInstanceof.remove(type);
+      return createCopy(myInstanceofValues, newNotInstanceof, myNullability);
+    }
+    return this;
+  }
+
   public int hashCode() {
     return (myInstanceofValues.hashCode() * 31 + myNotInstanceofValues.hashCode()) * 31 + myNullability.hashCode();
   }

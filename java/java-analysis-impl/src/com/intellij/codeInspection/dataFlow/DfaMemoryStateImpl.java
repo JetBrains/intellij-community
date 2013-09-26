@@ -92,8 +92,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (obj == this) return true;
     if (!(obj instanceof DfaMemoryStateImpl)) return false;
     DfaMemoryStateImpl that = (DfaMemoryStateImpl)obj;
+    return equalsSuperficially(that) && equalsByUnknownVariables(that) && equalsByRelations(that) && equalsByVariableStates(that);
+  }
 
-    return equalsSuperficially(that) && myUnknownVariables.equals(that.myUnknownVariables) && equalsByRelations(that);
+  boolean equalsByUnknownVariables(DfaMemoryStateImpl that) {
+    return myUnknownVariables.equals(that.myUnknownVariables);
   }
 
   boolean equalsSuperficially(DfaMemoryStateImpl other) {
@@ -101,11 +104,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   boolean equalsByRelations(DfaMemoryStateImpl that) {
-    if (myDistinctClasses.size() != that.myDistinctClasses.size()) return false;
-    if (!getNonTrivialEqClasses().equals(that.getNonTrivialEqClasses())) return false;
-    if (!getDistinctClassPairs().equals(that.getDistinctClassPairs())) return false;
-    if (!myVariableStates.equals(that.myVariableStates)) return false;
-    return true;
+    return getNonTrivialEqClasses().equals(that.getNonTrivialEqClasses()) && getDistinctClassPairs().equals(that.getDistinctClassPairs());
+  }
+
+  boolean equalsByVariableStates(DfaMemoryStateImpl that) {
+    return myVariableStates.equals(that.myVariableStates);
   }
 
   private Set<UnorderedPair<EqClass>> myCachedDistinctClassPairs;
@@ -803,11 +806,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         }
       }
     }
-    for (DfaVariableValue value : new ArrayList<DfaVariableValue>(myVariableStates.keySet())) {
+    for (DfaVariableValue value : new ArrayList<DfaVariableValue>(getChangedVariable())) {
       if (value.isFlushableByCalls()) {
         doFlush(value, true);
       }
     }
+  }
+
+  Set<DfaVariableValue> getChangedVariable() {
+    return myVariableStates.keySet();
   }
 
   @Override
