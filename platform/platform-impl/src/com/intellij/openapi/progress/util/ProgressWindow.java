@@ -115,6 +115,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     myFocusTrackback.registerFocusComponent(myDialog.getPanel());
   }
 
+  @Override
   public synchronized void start() {
     LOG.assertTrue(!isRunning());
     LOG.assertTrue(!myStoppedAlready);
@@ -161,6 +162,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
                 final DialogWrapper popup = myDialog.myPopup;
                 if (popup != null) {
                   myFocusTrackback.registerFocusComponent(new FocusTrackback.ComponentQuery() {
+                    @Override
                     public Component getComponent() {
                       return popup.getPreferredFocusedComponent();
                     }
@@ -183,6 +185,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     timer.start();
   }
 
+  @Override
   public void startBlocking() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     synchronized (this) {
@@ -193,6 +196,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     enterModality();
 
     IdeEventQueue.getInstance().pumpEventsForHierarchy(myDialog.myPanel, new Condition<AWTEvent>() {
+      @Override
       public boolean value(final AWTEvent object) {
         if (myShouldShowCancel &&
             object instanceof KeyEvent &&
@@ -200,6 +204,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
             ((KeyEvent)object).getKeyCode() == KeyEvent.VK_ESCAPE &&
             ((KeyEvent)object).getModifiers() == 0) {
           SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
               cancel();
             }
@@ -233,11 +238,13 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     }
   }
 
+  @Override
   public void setIndeterminate(boolean indeterminate) {
     super.setIndeterminate(indeterminate);
     update();
   }
 
+  @Override
   public synchronized void stop() {
     LOG.assertTrue(!myStoppedAlready);
 
@@ -266,7 +273,9 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
           }
         }
 
-        myStoppedAlready = true;
+        synchronized (ProgressWindow.this) {
+          myStoppedAlready = true;
+        }
 
         Disposer.dispose(ProgressWindow.this);
       }
@@ -279,6 +288,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     return myDialog != null && myDialog.getPanel() != null && myDialog.getPanel().isShowing();
   }
 
+  @Override
   public void cancel() {
     super.cancel();
     if (myDialog != null) {
@@ -312,6 +322,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     return myBackgrounded;
   }
 
+  @Override
   public void setText(String text) {
     if (!Comparing.equal(text, getText())) {
       super.setText(text);
@@ -319,6 +330,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     }
   }
 
+  @Override
   public void setFraction(double fraction) {
     if (fraction != getFraction()) {
       super.setFraction(fraction);
@@ -326,6 +338,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     }
   }
 
+  @Override
   public void setText2(String text) {
     if (!Comparing.equal(text, getText2())) {
       super.setText2(text);
@@ -355,6 +368,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     private volatile boolean myShouldShowBackground;
 
     private final Runnable myRepaintRunnable = new Runnable() {
+      @Override
       public void run() {
         String text = getText();
         double fraction = getFraction();
@@ -389,6 +403,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     }
 
     private final Runnable myUpdateRequest = new Runnable() {
+      @Override
       public void run() {
         update();
       }
@@ -434,12 +449,14 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       myInnerPanel.setPreferredSize(new Dimension(SystemInfo.isMac ? 350 : 450, -1));
 
       myCancelButton.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           doCancelAction();
         }
       });
 
       myCancelButton.registerKeyboardAction(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           if (myCancelButton.isEnabled()) {
             doCancelAction();
@@ -456,6 +473,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
       myTitlePanel.setActive(true);
       myTitlePanel.addMouseListener(new MouseAdapter() {
+        @Override
         public void mousePressed(MouseEvent e) {
           final Point titleOffset = RelativePoint.getNorthWestOf(myTitlePanel).getScreenPoint();
           myLastClicked = new RelativePoint(e).getScreenPoint();
@@ -465,6 +483,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       });
 
       myTitlePanel.addMouseMotionListener(new MouseMotionAdapter() {
+        @Override
         public void mouseDragged(MouseEvent e) {
           if (myLastClicked == null) {
             return;
@@ -480,6 +499,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       });
     }
 
+    @Override
     public void dispose() {
       UIUtil.disposeProgress(myProgressBar);
       UIUtil.dispose(myTitlePanel);
@@ -497,6 +517,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     public void setShouldShowBackground(final boolean shouldShowBackground) {
       myShouldShowBackground = shouldShowBackground;
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           myBackgroundButton.setVisible(shouldShowBackground);
           myPanel.revalidate();
@@ -517,6 +538,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     public void cancel() {
       if (myShouldShowCancel) {
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             myCancelButton.setEnabled(false);
           }
@@ -535,6 +557,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       myBackgroundButton.setVisible(myShouldShowBackground);
       myBackgroundButton.addActionListener(
         new ActionListener() {
+          @Override
           public void actionPerformed(ActionEvent e) {
             if (myShouldShowBackground) {
               ProgressWindow.this.background();
@@ -568,6 +591,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
 
     public void hide() {
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           if (myPopup != null) {
             myPopup.close(DialogWrapper.CANCEL_EXIT_CODE);
@@ -591,6 +615,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       myPopup.pack();
 
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           if (myPopup != null) {
             if (myPopup.getPeer() instanceof FocusTrackbackProvider) {
@@ -684,25 +709,30 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
         }
       }
 
+      @Override
       protected void init() {
         super.init();
         setUndecorated(true);
         myPanel.setBorder(PopupBorder.Factory.create(true, true));
       }
 
+      @Override
       protected boolean isProgressDialog() {
         return true;
       }
 
+      @Override
       protected JComponent createCenterPanel() {
         return myPanel;
       }
 
+      @Override
       @Nullable
       protected JComponent createSouthPanel() {
         return null;
       }
 
+      @Override
       @Nullable
       protected Border createContentPaneBorder() {
         return null;
@@ -728,9 +758,11 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
     return IdeFocusManager.getInstance(myProject);
   }
 
+  @Override
   public void dispose() {
   }
 
+  @Override
   public boolean isPopupWasShown() {
     return myDialog != null && myDialog.myPopup != null && myDialog.myPopup.isShowing();
   }
