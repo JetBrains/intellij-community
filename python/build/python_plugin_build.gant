@@ -143,6 +143,7 @@ target(name: "compile", description: "Compile module python") {
   ant.mkdir(dir: "${classesDir}/META-INF")
   ant.copy(todir: "${classesDir}/META-INF") {
     fileset(file: "${pluginHome}/pluginSrc/META-INF/*.xml")
+    fileset(file: "${pluginHome}/pluginResources/META-INF/*.xml")
   }
 
   ant.replaceregexp(file: "${classesDir}/META-INF/plugin.xml",
