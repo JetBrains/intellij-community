@@ -10,10 +10,6 @@ import org.jetbrains.plugins.ideaConfigurationServer.IcsBundle;
 import org.jetbrains.plugins.ideaConfigurationServer.IcsManager;
 
 class SyncAction extends DumbAwareAction {
-  public SyncAction() {
-    super(IcsBundle.message("actions.sync"));
-  }
-
   @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setVisible(IcsManager.getInstance().getRepositoryManager().getRemoteRepositoryUrl() != null);
