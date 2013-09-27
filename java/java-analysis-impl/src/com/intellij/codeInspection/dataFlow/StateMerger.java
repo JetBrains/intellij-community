@@ -38,7 +38,7 @@ import java.util.Set;
 class StateMerger {
   private final Map<DfaMemoryStateImpl, Map<DfaVariableValue, DfaConstValue>> myVarValues = ContainerUtil.newIdentityHashMap();
   private final Map<DfaMemoryStateImpl, List<UnorderedPair<DfaValue>>> myEqPairs = ContainerUtil.newIdentityHashMap();
-  private final Map<Pair<DfaMemoryStateImpl, DfaVariableValue>, DfaMemoryStateImpl> myCopyCache = ContainerUtil.newHashMap();
+  private final Map<DfaMemoryState, Map<DfaVariableValue, DfaMemoryStateImpl>> myCopyCache = ContainerUtil.newIdentityHashMap();
 
   @Nullable
   public List<DfaMemoryStateImpl> mergeByEquality(List<DfaMemoryStateImpl> states) {
@@ -197,12 +197,15 @@ class StateMerger {
   }
 
   private DfaMemoryStateImpl copyWithoutVar(DfaMemoryStateImpl state, DfaVariableValue var) {
-    Pair<DfaMemoryStateImpl, DfaVariableValue> key = Pair.create(state, var);
-    DfaMemoryStateImpl copy = myCopyCache.get(key);
+    Map<DfaVariableValue, DfaMemoryStateImpl> map = myCopyCache.get(state);
+    if (map == null) {
+      myCopyCache.put(state, map = ContainerUtil.newIdentityHashMap());
+    }
+    DfaMemoryStateImpl copy = map.get(var);
     if (copy == null) {
       copy = state.createCopy();
       copy.flushVariable(var);
-      myCopyCache.put(key, copy);
+      map.put(var, copy);
     }
     return copy;
   }
