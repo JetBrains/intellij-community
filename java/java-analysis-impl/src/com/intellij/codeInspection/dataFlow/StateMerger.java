@@ -37,6 +37,7 @@ import java.util.Set;
  */
 class StateMerger {
   private final Map<DfaMemoryStateImpl, Map<DfaVariableValue, DfaConstValue>> myVarValues = ContainerUtil.newIdentityHashMap();
+  private final Map<DfaMemoryStateImpl, List<UnorderedPair<DfaValue>>> myEqPairs = ContainerUtil.newIdentityHashMap();
   private final Map<Pair<DfaMemoryStateImpl, DfaVariableValue>, DfaMemoryStateImpl> myCopyCache = ContainerUtil.newHashMap();
 
   @Nullable
@@ -304,22 +305,26 @@ class StateMerger {
     return distincts;
   }
 
-  private static List<UnorderedPair<DfaValue>> getEqPairs(DfaMemoryStateImpl state) {
-    Set<UnorderedPair<DfaValue>> eqPairs = ContainerUtil.newHashSet();
-    for (EqClass eqClass : state.getNonTrivialEqClasses()) {
-      DfaConstValue constant = eqClass.findConstant(true);
-      List<DfaVariableValue> vars = eqClass.getVariables();
-      for (int i = 0; i < vars.size(); i++) {
-        DfaVariableValue var = vars.get(i);
-        if (constant != null) {
-          eqPairs.add(createPair(var, constant));
-        }
-        for (int j = i + 1; j < vars.size(); j++) {
-          eqPairs.add(createPair(var, vars.get(j)));
+  private List<UnorderedPair<DfaValue>> getEqPairs(DfaMemoryStateImpl state) {
+    List<UnorderedPair<DfaValue>> result = myEqPairs.get(state);
+    if (result == null) {
+      Set<UnorderedPair<DfaValue>> eqPairs = ContainerUtil.newHashSet();
+      for (EqClass eqClass : state.getNonTrivialEqClasses()) {
+        DfaConstValue constant = eqClass.findConstant(true);
+        List<DfaVariableValue> vars = eqClass.getVariables();
+        for (int i = 0; i < vars.size(); i++) {
+          DfaVariableValue var = vars.get(i);
+          if (constant != null) {
+            eqPairs.add(createPair(var, constant));
+          }
+          for (int j = i + 1; j < vars.size(); j++) {
+            eqPairs.add(createPair(var, vars.get(j)));
+          }
         }
       }
+      myEqPairs.put(state, result = ContainerUtil.newArrayList(eqPairs));
     }
-    return ContainerUtil.newArrayList(eqPairs);
+    return result;
   }
 
   private static UnorderedPair<DfaValue> createPair(DfaVariableValue var, DfaValue val) {
