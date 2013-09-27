@@ -1004,12 +1004,14 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     public void updatePlugins(MavenProject mavenProject) {
       List<MavenPlugin> plugins = mavenProject.getDeclaredPlugins();
 
-      for (PluginNode each : myPluginNodes.toArray(new PluginNode[myPluginNodes.size()])) {
+      for (Iterator<PluginNode> itr = myPluginNodes.iterator(); itr.hasNext(); ) {
+        PluginNode each = itr.next();
+
         if (plugins.contains(each.getPlugin())) {
           each.updatePlugin();
         }
         else {
-          myPluginNodes.remove(each);
+          itr.remove();
         }
       }
       for (MavenPlugin each : plugins) {
@@ -1017,6 +1019,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
           myPluginNodes.add(new PluginNode(this, each));
         }
       }
+
       sort(myPluginNodes);
       childrenChanged();
     }
