@@ -96,14 +96,14 @@ class StateQueue {
     }
 
     if (memoryStates.size() > 1 && joinInstructions.contains(instruction)) {
+      StateMerger merger = new StateMerger();
       while (true) {
-        StateMerger merger = new StateMerger(memoryStates);
-        List<DfaMemoryStateImpl> nextStates = merger.mergeByEquality();
+        List<DfaMemoryStateImpl> nextStates = merger.mergeByEquality(memoryStates);
         if (nextStates == null) {
-          nextStates = merger.mergeByType();
+          nextStates = merger.mergeByType(memoryStates);
         }
         if (nextStates == null) {
-          nextStates = merger.mergeByUnknowns();
+          nextStates = merger.mergeByUnknowns(memoryStates);
         }
         if (nextStates == null) break;
         memoryStates = nextStates;

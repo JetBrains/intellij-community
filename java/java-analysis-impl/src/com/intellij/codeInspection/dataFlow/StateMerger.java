@@ -36,33 +36,24 @@ import java.util.Set;
  * @author peter
  */
 class StateMerger {
-  private final List<DfaMemoryStateImpl> myStates;
-  private final MultiMap<UnorderedPair<DfaValue>,DfaMemoryStateImpl> myStatesByEq = new MultiMap<UnorderedPair<DfaValue>, DfaMemoryStateImpl>();
   private final Map<DfaMemoryStateImpl, Map<DfaVariableValue, DfaConstValue>> myVarValues = ContainerUtil.newIdentityHashMap();
-
-  public StateMerger(List<DfaMemoryStateImpl> states) {
-    myStates = states;
-    for (DfaMemoryStateImpl state : myStates) {
-      ProgressManager.checkCanceled();
-      
-      Map<DfaVariableValue,DfaConstValue> varValues = ContainerUtil.newHashMap();
-      for (UnorderedPair<DfaValue> pair : getEqPairs(state)) {
-        myStatesByEq.putValue(pair, state);
-        if (pair.first instanceof DfaVariableValue && pair.second instanceof DfaConstValue) {
-          varValues.put((DfaVariableValue)pair.first, (DfaConstValue)pair.second);
-        }
-      }
-      myVarValues.put(state, varValues);
-    }
-  }
+  private final Map<Pair<DfaMemoryStateImpl, DfaVariableValue>, DfaMemoryStateImpl> myCopyCache = ContainerUtil.newHashMap();
 
   @Nullable
-  public List<DfaMemoryStateImpl> mergeByEquality() {
-    for (final DfaMemoryStateImpl state : myStates) {
+  public List<DfaMemoryStateImpl> mergeByEquality(List<DfaMemoryStateImpl> states) {
+    final MultiMap<UnorderedPair<DfaValue>,DfaMemoryStateImpl> statesByEq = new MultiMap<UnorderedPair<DfaValue>, DfaMemoryStateImpl>();
+    for (DfaMemoryStateImpl state : states) {
+      ProgressManager.checkCanceled();
+      for (UnorderedPair<DfaValue> pair : getEqPairs(state)) {
+        statesByEq.putValue(pair, state);
+      }
+    }
+
+    for (final DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
       MultiMap<DfaVariableValue, DfaValue> distincts = getDistinctsMap(state);
       for (DfaVariableValue var : distincts.keySet()) {
-        Map<DfaValue, Collection<DfaMemoryStateImpl>> statesByValue = getCompatibleStatesByValue(state, var, distincts);
+        Map<DfaValue, Collection<DfaMemoryStateImpl>> statesByValue = getCompatibleStatesByValue(state, var, distincts, statesByEq);
         if (statesByValue == null) {
           continue;
         }
@@ -77,7 +68,7 @@ class StateMerger {
         complementaryStates.add(state);
         mergeNullableState(var, copy, complementaryStates);
         mergeUnknowns(copy, complementaryStates);
-        return getMergeResult(copy, complementaryStates);
+        return getMergeResult(copy, complementaryStates, states);
       }
       
     }
@@ -101,10 +92,12 @@ class StateMerger {
     }
   }
 
-  private List<DfaMemoryStateImpl> getMergeResult(DfaMemoryStateImpl mergeResult, final Set<DfaMemoryStateImpl> complementaryStates) {
+  private static List<DfaMemoryStateImpl> getMergeResult(DfaMemoryStateImpl mergeResult,
+                                                         final Set<DfaMemoryStateImpl> complementaryStates,
+                                                         List<DfaMemoryStateImpl> oldStates) {
     List<DfaMemoryStateImpl> result = ContainerUtil.newArrayList();
     result.add(mergeResult);
-    result.addAll(ContainerUtil.filter(myStates, new Condition<DfaMemoryStateImpl>() {
+    result.addAll(ContainerUtil.filter(oldStates, new Condition<DfaMemoryStateImpl>() {
       @Override
       public boolean value(DfaMemoryStateImpl state) {
         return !complementaryStates.contains(state);
@@ -114,9 +107,9 @@ class StateMerger {
   }
 
   @Nullable
-  public List<DfaMemoryStateImpl> mergeByUnknowns() {
+  public List<DfaMemoryStateImpl> mergeByUnknowns(List<DfaMemoryStateImpl> states) {
     MultiMap<Integer, DfaMemoryStateImpl> byHash = new MultiMap<Integer, DfaMemoryStateImpl>();
-    for (DfaMemoryStateImpl state : myStates) {
+    for (DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
       byHash.putValue(state.getPartialHashCode(false), state);
     }
@@ -136,7 +129,7 @@ class StateMerger {
         if (complementary.size() > 1) {
           DfaMemoryStateImpl copy = state1.createCopy();
           mergeUnknowns(copy, complementary);
-          return getMergeResult(copy, ContainerUtil.newHashSet(complementary));
+          return getMergeResult(copy, ContainerUtil.newHashSet(complementary), states);
         }
       }
       
@@ -146,9 +139,9 @@ class StateMerger {
   }
   
   @Nullable
-  public List<DfaMemoryStateImpl> mergeByType() {
+  public List<DfaMemoryStateImpl> mergeByType(List<DfaMemoryStateImpl> states) {
     MultiMap<Pair<DfaVariableValue, DfaPsiType>,DfaMemoryStateImpl> byInstanceof = new MultiMap<Pair<DfaVariableValue, DfaPsiType>, DfaMemoryStateImpl>();
-    for (final DfaMemoryStateImpl state : myStates) {
+    for (final DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
       for (DfaVariableValue value : state.getChangedVariable()) {
         for (DfaPsiType instanceofValue : state.getVariableState(value).myInstanceofValues) {
@@ -157,7 +150,7 @@ class StateMerger {
       }
     }
     
-    for (final DfaMemoryStateImpl state : myStates) {
+    for (final DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
 
       for (final DfaVariableValue var : state.getChangedVariable()) {
@@ -184,7 +177,7 @@ class StateMerger {
           complementaryStates.add(state);
           mergeNullableState(var, copy, complementaryStates);
           mergeUnknowns(copy, complementaryStates);
-          return getMergeResult(copy, ContainerUtil.newHashSet(complementaryStates));
+          return getMergeResult(copy, ContainerUtil.newHashSet(complementaryStates), states);
         }
       }
 
@@ -202,7 +195,6 @@ class StateMerger {
     return s.getVariableState(var).withoutType(type).withNullability(Nullness.UNKNOWN);
   }
 
-  private Map<Pair<DfaMemoryStateImpl, DfaVariableValue>, DfaMemoryStateImpl> myCopyCache = ContainerUtil.newHashMap();
   private DfaMemoryStateImpl copyWithoutVar(DfaMemoryStateImpl state, DfaVariableValue var) {
     Pair<DfaMemoryStateImpl, DfaVariableValue> key = Pair.create(state, var);
     DfaMemoryStateImpl copy = myCopyCache.get(key);
@@ -236,10 +228,11 @@ class StateMerger {
   @Nullable
   private Map<DfaValue, Collection<DfaMemoryStateImpl>> getCompatibleStatesByValue(final DfaMemoryStateImpl state,
                                                                                           final DfaVariableValue var,
-                                                                                          MultiMap<DfaVariableValue, DfaValue> distincts) {
+                                                                                          MultiMap<DfaVariableValue, DfaValue> distincts,
+                                                                                          MultiMap<UnorderedPair<DfaValue>,DfaMemoryStateImpl> statesByEq) {
     Map<DfaValue, Collection<DfaMemoryStateImpl>> statesByValue = ContainerUtil.newHashMap();
     for (DfaValue value : distincts.get(var)) {
-      List<DfaMemoryStateImpl> compatible = ContainerUtil.filter(myStatesByEq.get(createPair(var, value)), new Condition<DfaMemoryStateImpl>() {
+      List<DfaMemoryStateImpl> compatible = ContainerUtil.filter(statesByEq.get(createPair(var, value)), new Condition<DfaMemoryStateImpl>() {
         @Override
         public boolean value(DfaMemoryStateImpl state2) {
           return seemCompatible(state, state2, var);
@@ -257,8 +250,8 @@ class StateMerger {
     if (!state1.equalsSuperficially(state2)) {
       return false;
     }
-    Map<DfaVariableValue, DfaConstValue> varValues1 = myVarValues.get(state1);
-    Map<DfaVariableValue, DfaConstValue> varValues2 = myVarValues.get(state2);
+    Map<DfaVariableValue, DfaConstValue> varValues1 = getVarValues(state1);
+    Map<DfaVariableValue, DfaConstValue> varValues2 = getVarValues(state2);
     
     for (DfaVariableValue var : varValues1.keySet()) {
       if (var != differentVar && varValues1.get(var) != varValues2.get(var)) {
@@ -271,6 +264,21 @@ class StateMerger {
       }
     }
     return true;
+  }
+
+  private Map<DfaVariableValue, DfaConstValue> getVarValues(DfaMemoryStateImpl state) {
+    Map<DfaVariableValue, DfaConstValue> map = myVarValues.get(state);
+    if (map == null) {
+      map = ContainerUtil.newHashMap();
+      for (UnorderedPair<DfaValue> pair : getEqPairs(state)) {
+        if (pair.first instanceof DfaVariableValue && pair.second instanceof DfaConstValue) {
+          map.put((DfaVariableValue)pair.first, (DfaConstValue)pair.second);
+        }
+      }
+      myVarValues.put(state, map);
+
+    }
+    return map;
   }
 
   private static MultiMap<DfaVariableValue, DfaValue> getDistinctsMap(DfaMemoryStateImpl state) {
