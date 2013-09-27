@@ -176,6 +176,21 @@ public class PyCallExpressionHelper {
         else if (PyNames.STATICMETHOD.equals(wrapper_name)) wrappedModifier = PyFunction.Modifier.STATICMETHOD;
       }
     }
+    final List<PyExpression> qualifiers = resolveResult != null ? resolveResult.getQualifiers() : Collections.<PyExpression>emptyList();
+    final TypeEvalContext context = resolveContext.getTypeEvalContext();
+    if (resolved instanceof PyFunction) {
+      final PyFunction function = (PyFunction)resolved;
+      final Property property = function.getProperty();
+      if (property != null && isQualifiedByInstance(function, qualifiers, context)) {
+        final PyType type = function.getReturnType(context, null);
+        if (type instanceof PyFunctionType) {
+          resolved = ((PyFunctionType)type).getCallable();
+        }
+        else {
+          resolved = null;
+        }
+      }
+    }
     if (resolved instanceof Callable) {
       PyFunction.Modifier modifier = resolved instanceof PyFunction
                                    ? ((PyFunction)resolved).getModifier()
@@ -183,12 +198,10 @@ public class PyCallExpressionHelper {
       if (modifier == null && wrappedModifier != null) {
         modifier = wrappedModifier;
       }
-      List<PyExpression> qualifiers = resolveResult != null ? resolveResult.getQualifiers() : Collections.<PyExpression>emptyList();
-      boolean isByInstance = isConstructorCall ||
-                               isQualifiedByInstance((Callable)resolved, qualifiers, resolveContext.getTypeEvalContext())
-                               || resolved instanceof PyBoundFunction;
+      boolean isByInstance = isConstructorCall || isQualifiedByInstance((Callable)resolved, qualifiers, context)
+                             || resolved instanceof PyBoundFunction;
       PyExpression lastQualifier = qualifiers != null && qualifiers.isEmpty() ? null : qualifiers.get(qualifiers.size()-1);
-      boolean isByClass = lastQualifier == null ? false : isQualifiedByClass((Callable)resolved, lastQualifier, resolveContext.getTypeEvalContext());
+      boolean isByClass = lastQualifier == null ? false : isQualifiedByClass((Callable)resolved, lastQualifier, context);
       final Callable callable = (Callable)resolved;
 
       implicitOffset += getImplicitArgumentCount(callable, modifier, isConstructorCall, isByInstance, isByClass);
