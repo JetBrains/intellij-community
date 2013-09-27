@@ -468,9 +468,10 @@ public class GrStringUtil {
     if (literal instanceof GrString) {
       final GrStringInjection[] injections = ((GrString)literal).getInjections();
       if (injections.length > 0) {
-        if (injections[injections.length - 1].getExpression() != null) {
-          if (!checkBraceIsUnnecessary(injections[injections.length - 1].getExpression(), injection.getNextSibling())) {
-            wrapInjection(injections[injections.length - 1]);
+        GrStringInjection last = injections[injections.length - 1];
+        if (last.getExpression() != null) {
+          if (!checkBraceIsUnnecessary(last.getExpression(), injection.getNextSibling())) {
+            wrapInjection(last);
           }
         }
       }
@@ -488,8 +489,9 @@ public class GrStringUtil {
     
     final GrExpression expression = factory.createExpressionFromText("\"\"\"${}" + literalText + "\"\"\"");
 
-    expression.getFirstChild().delete();
-    expression.getFirstChild().delete();
+    expression.getFirstChild().delete();//quote
+    expression.getFirstChild().delete();//empty gstring content
+    expression.getFirstChild().delete();//empty injection
 
     final ASTNode node = grString.getNode();
     if (expression.getFirstChild() != null) {
@@ -541,12 +543,12 @@ public class GrStringUtil {
 
     if (!(statements[0] instanceof GrReferenceExpression)) return false;
 
-    final PsiElement next = injection.getNextSibling();
-
-    return checkBraceIsUnnecessary(statements[0], next);
+    return checkBraceIsUnnecessary(statements[0], injection.getNextSibling());
   }
 
   private static boolean checkBraceIsUnnecessary(GrStatement injected, PsiElement next) {
+    if (next.getTextLength() == 0) next = next.getNextSibling();
+
     char nextChar = next.getText().charAt(0);
     if (nextChar == '"' || nextChar == '$') {
       return true;
@@ -561,8 +563,14 @@ public class GrStringUtil {
     }
     if (!(gString instanceof GrString)) return false;
 
-    final PsiElement child = gString.getChildren()[0];
-    if (!(child instanceof GrStringInjection)) return false;
+    PsiElement child = gString.getFirstChild();
+    if (!(child.getNode().getElementType() == mGSTRING_BEGIN)) return false;
+
+    child = child.getNextSibling();
+    if (child == null || !(child instanceof GrStringContent)) return false;
+
+    child = child.getNextSibling();
+    if (child == null || !(child instanceof GrStringInjection)) return false;
 
     final PsiElement refExprCopy = ((GrStringInjection)child).getExpression();
     if (!(refExprCopy instanceof GrReferenceExpression)) return false;

@@ -53,7 +53,10 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
   @Override
   protected boolean isStringLiteral(@NotNull PsiElement token) {
     ASTNode node = token.getNode();
-    return node != null && (TokenSets.STRING_LITERALS.contains(node.getElementType()) || node.getElementType() == GroovyElementTypes.GSTRING_INJECTION);
+    return node != null &&
+           (TokenSets.STRING_LITERALS.contains(node.getElementType()) ||
+            node.getElementType() == GroovyElementTypes.GSTRING_INJECTION ||
+            node.getElementType() == GroovyElementTypes.GSTRING_CONTENT);
   }
 
   @Nullable
@@ -74,11 +77,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
       elementType = elementAtSelectionStart.getNode().getElementType();
     }
 
-
-
-    if (!isStringLiteral(elementAtSelectionStart) &&
-        !isCharLiteral(elementAtSelectionStart) &&
-        !(elementType == GroovyElementTypes.GSTRING_INJECTION)) {
+    if (!isStringLiteral(elementAtSelectionStart)) {
       return null;
     }
 
@@ -103,9 +102,14 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
       selectionStart++;
       selectionEnd--;
     }
-    if (selectionStart <= textRange.getStartOffset() || selectionEnd >= textRange.getEndOffset()) {
+    if (textRange.getLength() > 0 && (selectionStart <= textRange.getStartOffset() || selectionEnd >= textRange.getEndOffset())) {
       return null;
     }
+
+    if (elementType == GroovyElementTypes.GSTRING_CONTENT) {
+      elementAtSelectionStart = elementAtSelectionStart.getFirstChild();
+    }
+
     return elementAtSelectionStart;
   }
 

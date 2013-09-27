@@ -19,8 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.LiteralTextEscaper;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringContent;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
@@ -48,10 +47,10 @@ public class GrStringContentImpl extends GroovyPsiElementImpl implements GrStrin
 
   @Override
   public GrStringContentImpl updateText(@NotNull String text) {
-
-    final GrString fromText = (GrString)GroovyPsiElementFactory.getInstance(getProject()).createExpressionFromText("\"${0}" + text + "\"");
-    final GrStringContent content = fromText.getContents()[0];
-    getNode().replaceChild(getFirstChild().getNode(), content.getFirstChild().getNode());
+    if (getFirstChild() != null) {
+      getFirstChild().delete();
+    }
+    getNode().addLeaf(GroovyTokenTypes.mGSTRING_CONTENT, text, null);
     return this;
   }
 
