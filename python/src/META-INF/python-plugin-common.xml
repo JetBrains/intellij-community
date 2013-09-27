@@ -1,7 +1,7 @@
 <idea-plugin version="2"  xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- Components and extensions declared in this file work both in PyCharm and Python plugin. -->
 
-  <xi:include href="/META-INF/python-plugin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/python-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.jetbrains.python.duplocator.PyDuplocatorSettings"
