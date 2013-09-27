@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public class JavaContainerProvider implements ContainerProvider {
     if (item instanceof PsiTypeParameter) return item.getParent().getParent();
     if (item instanceof PsiClass) {
       final PsiClass containingClass = ((PsiClass)item).getContainingClass();
-      return containingClass != null ? containingClass : item.getContainingFile();
+      return containingClass == null ? item.getContainingFile() : containingClass;
     }
     if (item instanceof PsiMember) return ((PsiMember)item).getContainingClass();
 
