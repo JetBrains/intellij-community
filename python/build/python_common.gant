@@ -15,7 +15,7 @@ private List<String> listTopLevelModules(String root) {
 
 binding.setVariable("buildDebuggerEgg", {String sandbox, String pythonHome, String buildName ->
   return buildEgg(sandbox, pythonHome, buildName, "pycharm-debug", {
-    ant.fileset(dir: "$pythonHome/helpers/pydev") {
+    ant.fileset(dir: "$pythonHome/community/helpers/pydev") {
       include(name: "**/*.py")
     }
   })
@@ -23,7 +23,7 @@ binding.setVariable("buildDebuggerEgg", {String sandbox, String pythonHome, Stri
 
 binding.setVariable("buildDebuggerEggPy3K", {String sandbox, String pythonHome, String buildName ->
   return buildEgg(sandbox, pythonHome, buildName, "pycharm-debug-py3k") {
-    ant.fileset(dir: "$pythonHome/helpers/pydev") {
+    ant.fileset(dir: "$pythonHome/community/helpers/pydev") {
       include(name: "**/*.py")
       exclude(name:"**/_pydev_BaseHTTPServer.py")
       exclude(name:"**/_pydev_SimpleXMLRPCServer.py")
