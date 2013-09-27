@@ -129,15 +129,21 @@ public class CommonCheckinFilesAction extends AbstractCommonCheckinAction {
     final FilePath[] paths = dataContext.getSelectedFilePaths();
     if (paths.length == 0) return false;
     final FileStatusManager fsm = FileStatusManager.getInstance(dataContext.getProject());
-    boolean somethingToCommit = false;
     for (final FilePath path : paths) {
-      if (path.getVirtualFile() == null) continue;
-      final FileStatus status = fsm.getStatus(path.getVirtualFile());
-      if (FileStatus.UNKNOWN == status || FileStatus.IGNORED == status) continue;
-      somethingToCommit = true;
-      break;
+      VirtualFile file = path.getVirtualFile();
+      if (file == null) {
+        continue;
+      }
+      FileStatus status = fsm.getStatus(file);
+      if (isApplicableRoot(file, status, dataContext)) {
+        return true;
+      }
     }
-    return somethingToCommit;
+    return false;
+  }
+
+  protected boolean isApplicableRoot(VirtualFile file, FileStatus status, VcsContext dataContext) {
+    return status != FileStatus.UNKNOWN && status != FileStatus.IGNORED;
   }
 
   protected FilePath[] getRoots(final VcsContext context) {
