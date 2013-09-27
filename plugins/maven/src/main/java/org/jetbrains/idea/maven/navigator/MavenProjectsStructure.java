@@ -1321,6 +1321,12 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       return myConfiguration.getName();
     }
 
+    @Nullable
+    @Override
+    String getMenuId() {
+      return "Maven.RunConfigurationMenu";
+    }
+
     public void updateRunConfiguration() {
 
     }
