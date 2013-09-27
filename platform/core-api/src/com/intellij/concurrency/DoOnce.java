@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package com.intellij.concurrency;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Executes given runnable exactly once.
@@ -25,22 +25,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * Author: dmitrylomov
  */
 public class DoOnce {
-  private Runnable myRunnable;
-  private final AtomicBoolean myAlreadyRun;
+  private final AtomicReference<Runnable> myRunnable;
 
   public DoOnce(@NotNull Runnable runnable) {
-    myRunnable = runnable;
-    myAlreadyRun = new AtomicBoolean(false);
+    myRunnable = new AtomicReference<Runnable>(runnable);
   }
 
   public void execute() {
-    if (myAlreadyRun.compareAndSet(false, true)) {
-      try {
-        myRunnable.run();
-      }
-      finally {
-        myRunnable = null; // do not leak runnable
-      }
+    Runnable runnable = myRunnable.getAndSet(null);
+    if (runnable != null) {
+      runnable.run();
     }
   }
 }
