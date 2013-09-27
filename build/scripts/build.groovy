@@ -119,7 +119,7 @@ class Build {
 
   def compile(Map args) {
     paths.jdkHome = args.jdk
-    projectBuilder.stage("- Compile -")
+    projectBuilder.stage("Compile")
     if (steps.compile) {
       projectBuilder.arrangeModuleCyclesOutputs = true
       projectBuilder.targetFolder = paths.classesTarget
@@ -130,13 +130,13 @@ class Build {
       else{
         usedJars = ultimate_utils.buildModules(modules, args.module_libs)
       }
-      projectBuilder.stage("- additionalCompilation -")
+      projectBuilder.stage("additionalCompilation")
       ultimate_utils.additionalCompilation()
     }
   }
 
   def scramble (Map args) {
-    projectBuilder.stage("- scramble -")
+    projectBuilder.stage("scramble")
     if (steps.scramble) {
       if (ultimate_utils.isUnderTeamCity()) {
         getPreviousLogs()
@@ -191,19 +191,23 @@ class Build {
     }
   }
 
-  def mac_installation(){
+  def mac_installation(List extraBins = []){
+    projectBuilder.stage("mac installation")
     def extraArgs = ["build.code": "${product}-${suffix}"]
     if (steps.sit) {
-      projectBuilder.stage("- buildMacZip -")
-      String macAppRoot = utils.isEap() ? "${system_selector} EAP.app" : "${product}.app"
-      utils.buildMacZip(macAppRoot, "${paths.artifacts}/${product}-${suffix}.sit",
-                        [paths.distAll], paths.distMac)
+      projectBuilder.stage("buildMacZip")
+      //String macAppRoot = utils.isEap() ? "${system_selector} EAP.app" : "${product}.app"
+      //suffix = isEap() ? "EAP-${buildNumber}" : p("component.version.major") + "." + p("component.version.minor")
 
-      projectBuilder.stage("- signMacZip -")
+//      utils.buildMacZip(macAppRoot, "${paths.artifacts}/${product}-${suffix}.sit",
+      utils.buildMacZip("$suffix.app", "${paths.artifacts}/${product}-${suffix}.sit",
+                        [paths.distAll], paths.distMac, extraBins)
+
+      projectBuilder.stage("signMacZip")
       ultimate_utils.signMacZip("webide", extraArgs)
     }
     if (steps.dmg) {
-      projectBuilder.stage("- buildDmg -")
+      projectBuilder.stage("buildDmg")
       ultimate_utils.buildDmg(product, getDmgImage(), extraArgs)
     }
   }
