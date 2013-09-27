@@ -42,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.util.List;
 
@@ -218,11 +220,12 @@ public class PluginManager extends PluginManagerCore {
 
       disablePlugin(pluginId.getIdString());
 
-      String message =
-        "Plugin '" + pluginId.getIdString() + "' failed to initialize and will be disabled\n" +
-        "(reason: " + t.getMessage() + ")\n\n" +
-        "Please restart " + ApplicationNamesInfo.getInstance().getFullProductName() + ".";
-      Main.showMessage("Plugin Error", message, false);
+      StringWriter message = new StringWriter();
+      message.append("Plugin '").append(pluginId.getIdString()).append("' failed to initialize and will be disabled. ");
+      message.append(" Please restart ").append(ApplicationNamesInfo.getInstance().getFullProductName()).append('.');
+      message.append("\n\n");
+      t.printStackTrace(new PrintWriter(message));
+      Main.showMessage("Plugin Error", message.toString(), false);
 
       throw new StartupAbortedException(t).exitCode(Main.PLUGIN_ERROR).logError(false);
     }
