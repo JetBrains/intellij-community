@@ -10,6 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import com.jetbrains.python.testing.pytest.PyTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +23,7 @@ import java.util.regex.Pattern;
  */
 public class PyPep8NamingInspection extends PyInspection {
   public boolean ignoreOverriddenFunctions = true;
+  public boolean ignoreTestFunctions = true;
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
@@ -66,6 +68,7 @@ public class PyPep8NamingInspection extends PyInspection {
       final PyClass containingClass = node.getContainingClass();
       final PsiElement superMethod = PySuperMethodsSearch.search(node).findFirst();
       if (superMethod != null && ignoreOverriddenFunctions) return;
+      if(PyTestUtil.isPyTestClass(containingClass) && ignoreTestFunctions) return;
       final String name = node.getName();
       if (name == null) return;
       if (containingClass != null && name.startsWith("__") && name.endsWith("__")) {
@@ -121,6 +124,7 @@ public class PyPep8NamingInspection extends PyInspection {
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox("Ignore overridden functions", "ignoreOverriddenFunctions");
+    panel.addCheckbox("Ignore test functions", "ignoreTestFunctions");
     return panel;
   }
 }
