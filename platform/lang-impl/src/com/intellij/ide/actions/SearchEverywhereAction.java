@@ -35,8 +35,6 @@ import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.keymap.KeymapUtil;
@@ -128,10 +126,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
     @Override
     protected void paintComponent(Graphics g) {
-      g.setColor(getTitlePanelBackground());
-      g.fillRect(0, 0, myLeftWidth - 1, getHeight());
-      g.setColor(getSeparatorColor());
-      g.drawLine(myLeftWidth-1, 0, myLeftWidth-1, getHeight());
+      //g.setColor(getTitlePanelBackground());
+      //g.fillRect(0, 0, myLeftWidth - 1, getHeight());
+      //g.setColor(getSeparatorColor());
+      //g.drawLine(myLeftWidth-1, 0, myLeftWidth-1, getHeight());
       super.paintComponent(g);
     }
   };
@@ -440,8 +438,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static class MySearchTextField extends SearchTextField implements DataProvider {
     public MySearchTextField() {
       super(false);
-      setOpaque(false);
-      getTextEditor().setOpaque(false);
     }
 
     @Override
@@ -694,7 +690,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       updatePopup();
       AccessToken readLock = ApplicationManager.getApplication().acquireReadActionLock();
       try {
-        buildClasses(pattern);
+        buildClasses(pattern, false);
       } finally {readLock.finish();}
       updatePopup();
       readLock = ApplicationManager.getApplication().acquireReadActionLock();
@@ -800,14 +796,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     }
 
-    private void buildClasses(String pattern) {
+    private void buildClasses(String pattern, boolean includeLibraries) {
       int clsCounter = 0;
-      List<MatchResult> matches = collectResults(pattern, myClasses, myClassModel);
+      final int maxCount = includeLibraries ? 5 : 15;
+      List<MatchResult> matches = collectResults(pattern, includeLibraries ? myClassModel.getNames(true) : myClasses, myClassModel);
       final List<Object> classes = new ArrayList<Object>();
       for (MatchResult matchResult : matches) {
-        if (clsCounter > 15) break;
+        if (clsCounter > maxCount) break;
 
-        Object[] objects = myClassModel.getElementsByName(matchResult.elementName, false, pattern, myProgressIndicator);
+        Object[] objects = myClassModel.getElementsByName(matchResult.elementName, includeLibraries, pattern, myProgressIndicator);
         for (Object object : objects) {
           if (!myListModel.contains(object)) {
             if (object instanceof PsiElement) {
@@ -824,7 +821,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             classes.add(object);
             clsCounter++;
 
-            if (clsCounter > 15) break;
+            if (clsCounter > maxCount) break;
           }
         }
       }
@@ -840,10 +837,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               for (Object cls : classes) {
                 myListModel.addElement(cls);
               }
-              myMoreClassesIndex = classes.size() >= 15 ? myListModel.size() - 1 : -1;
+              myMoreClassesIndex = classes.size() >= maxCount ? myListModel.size() - 1 : -1;
             }
           }
         });
+      } else {
+        if (!includeLibraries) {
+          buildClasses(pattern, true);
+        }
       }
     }
 
@@ -1012,10 +1013,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
           myRenderer.recalculateWidth();
           if (myPopup == null || !myPopup.isVisible()) {
-            final Font editorFont = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
-            myList.setFont(editorFont);
-            getField().getTextEditor().setFont(editorFont);
-            More.instance.label.setFont(editorFont);
+            //final Font editorFont = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
+            //myList.setFont(editorFont);
+            //getField().getTextEditor().setFont(editorFont);
+            //More.instance.label.setFont(editorFont);
             final ActionCallback callback = ListDelegationUtil.installKeyboardDelegation(getField().getTextEditor(), myList);
             final ComponentPopupBuilder builder = JBPopupFactory.getInstance()
               .createComponentPopupBuilder(new JBScrollPane(myList), null);
