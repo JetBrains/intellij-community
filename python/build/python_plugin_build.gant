@@ -26,7 +26,7 @@ setProperty("output", "${projectHome}/python/dist")
 
 setProperty("zipdir", "${output}/zip")
 setProperty("plugindir", "${zipdir}/python")
-setProperty("zipname", "python-${pluginRevision}.zip")
+setProperty("zipname", "python-community-${pluginRevision}.zip")
 
 setProperty("srcDir", "${pluginHome}/src")
 
