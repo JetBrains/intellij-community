@@ -1,7 +1,7 @@
 package com.intellij.vcs.log.parser;
 
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.CommitParents;
+import com.intellij.vcs.log.VcsCommit;
 import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;
@@ -10,7 +10,7 @@ import static junit.framework.Assert.assertEquals;
  * @author erokhins
  */
 public class CommitParserTest {
-  private String toStr(CommitParents commitParentHashes) {
+  private String toStr(VcsCommit commitParentHashes) {
     StringBuilder s = new StringBuilder();
     s.append(commitParentHashes.getHash().asString()).append("|-");
     for (int i = 0; i < commitParentHashes.getParents().size(); i++) {
@@ -24,8 +24,8 @@ public class CommitParserTest {
   }
 
   private void runTest(String inputStr) {
-    CommitParents commitParents = CommitParser.parseCommitParents(inputStr);
-    assertEquals(inputStr, toStr(commitParents));
+    VcsCommit vcsCommit = CommitParser.parseCommitParents(inputStr);
+    assertEquals(inputStr, toStr(vcsCommit));
   }
 
   @Test

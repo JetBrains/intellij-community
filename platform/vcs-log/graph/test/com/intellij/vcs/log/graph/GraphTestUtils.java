@@ -1,6 +1,6 @@
 package com.intellij.vcs.log.graph;
 
-import com.intellij.vcs.log.CommitParents;
+import com.intellij.vcs.log.VcsCommit;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.elements.NodeRow;
@@ -36,14 +36,14 @@ public class GraphTestUtils {
   @NotNull
   public static MutableGraph getNewMutableGraph(@NotNull String inputStr) {
     SimpleCommitListParser parser = new SimpleCommitListParser(new StringReader(inputStr));
-    List<CommitParents> commitParentses;
+    List<VcsCommit> vcsCommitParentses;
     try {
-      commitParentses = parser.readAllCommits();
+      vcsCommitParentses = parser.readAllCommits();
     }
     catch (IOException e) {
       throw new IllegalStateException();
     }
-    return GraphBuilder.build(commitParentses, Collections.<VcsRef>emptyList());
+    return GraphBuilder.build(vcsCommitParentses, Collections.<VcsRef>emptyList());
   }
 
   // "1 20 3" -> {1,20,3}

@@ -28,7 +28,7 @@ public interface VcsLogProvider {
    * Reads the whole history, but only hashes & parents.
    */
   @NotNull
-  List<TimeCommitParents> readAllHashes(@NotNull VirtualFile root) throws VcsException;
+  List<TimedVcsCommit> readAllHashes(@NotNull VirtualFile root) throws VcsException;
 
   /**
    * Reads those details of the given commits, which are necessary to be shown in the log table.

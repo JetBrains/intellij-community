@@ -18,10 +18,9 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
-import com.intellij.vcs.log.CommitParents;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.TimeCommitParents;
-import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.TimedVcsCommit;
+import com.intellij.vcs.log.VcsCommit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -44,9 +43,9 @@ public class VcsLogJoiner {
    * @return Total saved log with new commits properly attached to it + number of new commits attached to the log.
    */
   @NotNull
-  public Pair<List<TimeCommitParents>, Integer> addCommits(@NotNull List<TimeCommitParents> savedLog,
+  public Pair<List<TimedVcsCommit>, Integer> addCommits(@NotNull List<TimedVcsCommit> savedLog,
                                                            @NotNull Collection<VcsRef> previousRefs,
-                                                           @NotNull List<? extends TimeCommitParents> firstBlock,
+                                                           @NotNull List<? extends TimedVcsCommit> firstBlock,
                                                            @NotNull Collection<VcsRef> newRefs) {
     int unsafeBlockSize = getFirstSafeIndex(savedLog, firstBlock, newRefs);
     if (unsafeBlockSize == -1) { // firstBlock not enough
@@ -54,8 +53,8 @@ public class VcsLogJoiner {
       throw new IllegalStateException();
     }
 
-    List<TimeCommitParents> unsafePartSavedLog = new ArrayList<TimeCommitParents>(savedLog.subList(0, unsafeBlockSize));
-    Set<TimeCommitParents> allNewsCommits = getAllNewCommits(unsafePartSavedLog, firstBlock);
+    List<TimedVcsCommit> unsafePartSavedLog = new ArrayList<TimedVcsCommit>(savedLog.subList(0, unsafeBlockSize));
+    Set<TimedVcsCommit> allNewsCommits = getAllNewCommits(unsafePartSavedLog, firstBlock);
     unsafePartSavedLog = new NewCommitIntegrator(unsafePartSavedLog, allNewsCommits).getResultList();
 
     return Pair.create(ContainerUtil.concat(unsafePartSavedLog, savedLog.subList(unsafeBlockSize, savedLog.size())),
@@ -70,17 +69,17 @@ public class VcsLogJoiner {
    * @return first index i in savedLog, where all log after i is valid part of new log
    * -1 if not enough commits in firstBlock
    */
-  private static int getFirstSafeIndex(@NotNull List<TimeCommitParents> savedLog,
-                                       @NotNull List<? extends TimeCommitParents> firstBlock,
+  private static int getFirstSafeIndex(@NotNull List<TimedVcsCommit> savedLog,
+                                       @NotNull List<? extends TimedVcsCommit> firstBlock,
                                        @NotNull Collection<VcsRef> refs) {
     Set<Hash> allUnresolvedLinkedHashes = new HashSet<Hash>();
     for (VcsRef ref: refs) {
       allUnresolvedLinkedHashes.add(ref.getCommitHash());
     }
-    for (CommitParents commit : firstBlock) {
+    for (VcsCommit commit : firstBlock) {
       allUnresolvedLinkedHashes.addAll(commit.getParents());
     }
-    for (CommitParents commit : firstBlock) {
+    for (VcsCommit commit : firstBlock) {
       if (commit.getParents().size() != 0) {
         allUnresolvedLinkedHashes.remove(commit.getHash());
       }
@@ -88,9 +87,9 @@ public class VcsLogJoiner {
     return getFirstUnTrackedIndex(savedLog, allUnresolvedLinkedHashes);
   }
 
-  private static int getFirstUnTrackedIndex(@NotNull List<TimeCommitParents> commits, @NotNull Set<Hash> searchHashes) {
+  private static int getFirstUnTrackedIndex(@NotNull List<TimedVcsCommit> commits, @NotNull Set<Hash> searchHashes) {
     int lastIndex = 0;
-    for (CommitParents commit : commits) {
+    for (VcsCommit commit : commits) {
       if (searchHashes.size() == 0) {
         return lastIndex;
       }
@@ -104,14 +103,14 @@ public class VcsLogJoiner {
     }
   }
 
-  private static Set<TimeCommitParents> getAllNewCommits(@NotNull List<TimeCommitParents> unsafePartSavedLog,
-                                                         @NotNull List<? extends TimeCommitParents> firstBlock) {
+  private static Set<TimedVcsCommit> getAllNewCommits(@NotNull List<TimedVcsCommit> unsafePartSavedLog,
+                                                         @NotNull List<? extends TimedVcsCommit> firstBlock) {
     Set<Hash> existedCommitHashes = new HashSet<Hash>();
-    for (CommitParents commit : unsafePartSavedLog) {
+    for (VcsCommit commit : unsafePartSavedLog) {
       existedCommitHashes.add(commit.getHash());
     }
-    Set<TimeCommitParents> allNewsCommits = ContainerUtil.newHashSet();
-    for (TimeCommitParents newCommit : firstBlock) {
+    Set<TimedVcsCommit> allNewsCommits = ContainerUtil.newHashSet();
+    for (TimedVcsCommit newCommit : firstBlock) {
       if (!existedCommitHashes.contains(newCommit.getHash())) {
         allNewsCommits.add(newCommit);
       }
@@ -121,25 +120,25 @@ public class VcsLogJoiner {
 
 
   private static class NewCommitIntegrator {
-    private final List<TimeCommitParents> list;
-    private final Map<Hash, TimeCommitParents> newCommitsMap;
+    private final List<TimedVcsCommit> list;
+    private final Map<Hash, TimedVcsCommit> newCommitsMap;
 
-    private NewCommitIntegrator(@NotNull List<TimeCommitParents> list, @NotNull Set<TimeCommitParents> newCommits) {
+    private NewCommitIntegrator(@NotNull List<TimedVcsCommit> list, @NotNull Set<TimedVcsCommit> newCommits) {
       this.list = list;
       newCommitsMap = ContainerUtil.newHashMap();
-      for (TimeCommitParents commit : newCommits) {
+      for (TimedVcsCommit commit : newCommits) {
         newCommitsMap.put(commit.getHash(), commit);
       }
     }
 
     // return insert Index
-    private int insertToList(@NotNull TimeCommitParents commit) {
+    private int insertToList(@NotNull TimedVcsCommit commit) {
       if (!newCommitsMap.containsKey(commit.getHash())) {
         throw new IllegalStateException("Commit was inserted, but insert call again. Commit hash: " + commit.getHash());
       }
       //insert all parents commits
       for (Hash parentHash : commit.getParents()) {
-        TimeCommitParents parentCommit = newCommitsMap.get(parentHash);
+        TimedVcsCommit parentCommit = newCommitsMap.get(parentHash);
         if (parentCommit != null) {
           insertToList(parentCommit);
         }
@@ -164,14 +163,14 @@ public class VcsLogJoiner {
     }
 
     private void insertAllCommits() {
-      Iterator<TimeCommitParents> iterator = newCommitsMap.values().iterator();
+      Iterator<TimedVcsCommit> iterator = newCommitsMap.values().iterator();
       while (iterator.hasNext()) {
         insertToList(iterator.next());
         iterator = newCommitsMap.values().iterator();
       }
     }
 
-    private List<TimeCommitParents> getResultList() {
+    private List<TimedVcsCommit> getResultList() {
       insertAllCommits();
       return list;
     }

@@ -26,6 +26,7 @@ import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.vcs.log.VcsLogObjectsFactory;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
@@ -47,11 +48,14 @@ public class VcsLogManager extends AbstractProjectComponent {
   public static final ExtensionPointName<VcsLogProvider> LOG_PROVIDER_EP = ExtensionPointName.create("com.intellij.logProvider");
 
   @NotNull private final ProjectLevelVcsManager myVcsManager;
+  @NotNull private final VcsLogObjectsFactory myLogObjectsFactory;
   private PostponeableLogRefresher myLogRefresher;
 
-  protected VcsLogManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManagerInitializedFirst) {
+  protected VcsLogManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManagerInitializedFirst,
+                          @NotNull VcsLogObjectsFactory logObjectsFactory) {
     super(project);
     myVcsManager = vcsManagerInitializedFirst;
+    myLogObjectsFactory = logObjectsFactory;
   }
 
   @Override
@@ -79,7 +83,7 @@ public class VcsLogManager extends AbstractProjectComponent {
             changesView.addContent(content);
             content.setCloseable(false);
 
-            VcsLogDataHolder.init(myProject, logProviders, new Consumer<VcsLogDataHolder>() {
+            VcsLogDataHolder.init(myProject, myLogObjectsFactory, logProviders, new Consumer<VcsLogDataHolder>() {
               @Override
               public void consume(VcsLogDataHolder vcsLogDataHolder) {
                 Disposer.register(myProject, vcsLogDataHolder);

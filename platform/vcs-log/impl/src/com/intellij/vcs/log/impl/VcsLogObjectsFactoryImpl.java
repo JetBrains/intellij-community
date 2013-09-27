@@ -1,10 +1,7 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.VcsLogObjectsFactory;
-import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -18,6 +15,18 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
   @Override
   public Hash createHash(@NotNull String stringHash) {
     return HashImpl.build(stringHash);
+  }
+
+  @NotNull
+  @Override
+  public VcsCommit createCommit(@NotNull Hash hash, @NotNull List<Hash> parents) {
+    return new VcsCommitImpl(hash, parents);
+  }
+
+  @NotNull
+  @Override
+  public TimedVcsCommit createTimedCommit(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp) {
+    return new TimedVcsCommitImpl(hash, parents, timeStamp);
   }
 
   @NotNull

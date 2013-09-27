@@ -1,6 +1,6 @@
 package com.intellij.vcs.log.graph.mutable;
 
-import com.intellij.vcs.log.CommitParents;
+import com.intellij.vcs.log.VcsCommit;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.mutable.elements.MutableNode;
@@ -88,7 +88,7 @@ class GraphAppendBuilder {
     return underdoneNodes;
   }
 
-  private void simpleAppend(@NotNull List<? extends CommitParents> commitParentses,
+  private void simpleAppend(@NotNull List<? extends VcsCommit> commitParentses,
                             @NotNull MutableNodeRow nextRow,
                             @NotNull Map<Hash, MutableNode> underdoneNodes) {
     int startIndex = nextRow.getRowIndex();
@@ -103,7 +103,7 @@ class GraphAppendBuilder {
     builder.runBuild(commitParentses);
   }
 
-  public void appendToGraph(@NotNull List<? extends CommitParents> commitParentses) {
+  public void appendToGraph(@NotNull List<? extends VcsCommit> commitParentses) {
     if (commitParentses.size() == 0) {
       throw new IllegalArgumentException("Empty list commitParentses");
     }

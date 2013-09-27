@@ -28,6 +28,7 @@ public interface VcsRefType {
 
   /**
    * Returns the background color which should be used to paint a {@link VcsRef reference label} of this type.
+   * TODO maybe this is not the right place for color
    */
   @NotNull
   Color getBackgroundColor();

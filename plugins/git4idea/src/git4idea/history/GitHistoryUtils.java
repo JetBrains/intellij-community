@@ -16,6 +16,7 @@
 package git4idea.history;
 
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
@@ -40,10 +41,11 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.TimeCommitParents;
+import com.intellij.vcs.log.TimedVcsCommit;
+import com.intellij.vcs.log.VcsLogObjectsFactory;
 import com.intellij.vcs.log.VcsShortCommitDetails;
-import com.intellij.vcs.log.impl.VcsShortCommitDetailsImpl;
 import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.impl.VcsShortCommitDetailsImpl;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
 import git4idea.commands.*;
@@ -532,7 +534,7 @@ public class GitHistoryUtils {
   }
 
   @NotNull
-  public static List<TimeCommitParents> readAllHashes(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+  public static List<TimedVcsCommit> readAllHashes(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_TIME);
     h.setStdoutSuppressed(true);
@@ -546,14 +548,15 @@ public class GitHistoryUtils {
 
     List<GitLogRecord> records = parser.parse(output);
 
-    return ContainerUtil.map(records, new Function<GitLogRecord, TimeCommitParents>() {
+    return ContainerUtil.map(records, new Function<GitLogRecord, TimedVcsCommit>() {
       @Override
-      public TimeCommitParents fun(GitLogRecord record) {
+      public TimedVcsCommit fun(GitLogRecord record) {
         List<Hash> parents = new SmartList<Hash>();
         for (String parent : record.getParentsHashes()) {
           parents.add(HashImpl.build(parent));
         }
-        return new TimeCommitParents(HashImpl.build(record.getHash()), parents, record.getAuthorTimeStamp());
+        return ServiceManager.getService(VcsLogObjectsFactory.class).createTimedCommit(HashImpl.build(record.getHash()),
+                                                                                       parents, record.getAuthorTimeStamp());
       }
     });
   }

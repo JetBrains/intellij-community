@@ -1,7 +1,7 @@
 package com.intellij.vcs.log.parser;
 
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.TimeCommitParents;
+import com.intellij.vcs.log.TimedVcsCommit;
 import org.junit.Test;
 
 import static junit.framework.Assert.assertEquals;
@@ -9,9 +9,9 @@ import static junit.framework.Assert.assertEquals;
 /**
  * @author erokhins
  */
-public class TimestampCommitParentsParserTest {
+public class TimestampVcsCommitParserTest {
 
-  private String toStr(TimeCommitParents commitParents) {
+  private String toStr(TimedVcsCommit commitParents) {
     StringBuilder s = new StringBuilder();
     s.append(commitParents.getAuthorTime()).append("|-");
     s.append(commitParents.getHash().asString()).append("|-");
@@ -27,7 +27,7 @@ public class TimestampCommitParentsParserTest {
 
 
   private void runTest(String inputStr) {
-    TimeCommitParents commitParents = CommitParser.parseTimestampParentHashes(inputStr);
+    TimedVcsCommit commitParents = CommitParser.parseTimestampParentHashes(inputStr);
     assertEquals(inputStr, toStr(commitParents));
   }
 

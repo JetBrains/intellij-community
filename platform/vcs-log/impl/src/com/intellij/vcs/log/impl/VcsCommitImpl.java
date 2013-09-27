@@ -1,8 +1,10 @@
-package com.intellij.vcs.log;
+package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsCommit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -12,26 +14,28 @@ import java.util.List;
  *    i. e. it is the only value that should be checked in equals() and hashCode().</p>
  * <p>equals() and hashCode() are made final to ensure that any descendants of this class are considered equal
  *    if and only if their hashes are equals.</p>
- * <p>This is also the reason why a class and not an interface is provided as the root of the hierarchy of commit data.</p>
+ * <p>It is highly recommended to use this standard implementation of the VcsCommit because of the above reasons.</p>
  *
  * @author erokhins
  * @author Kirill Likhodedov
  */
-public class CommitParents {
+public class VcsCommitImpl implements VcsCommit {
 
   @NotNull private final Hash myHash;
   @NotNull private final List<Hash> myParents;
 
-  public CommitParents(@NotNull Hash hash, @NotNull List<Hash> parents) {
+  public VcsCommitImpl(@NotNull Hash hash, @NotNull List<Hash> parents) {
     myHash = hash;
     myParents = parents;
   }
 
+  @Override
   @NotNull
   public final Hash getHash() {
     return myHash;
   }
 
+  @Override
   @NotNull
   public final List<Hash> getParents() {
     return myParents;
@@ -42,10 +46,10 @@ public class CommitParents {
     if (this == obj) {
       return true;
     }
-    if (!(obj instanceof CommitParents)) {
+    if (!(obj instanceof VcsCommitImpl)) {
       return false;
     }
-    return myHash.equals(((CommitParents)obj).myHash);
+    return myHash.equals(((VcsCommitImpl)obj).myHash);
   }
 
   @Override

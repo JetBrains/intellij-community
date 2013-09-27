@@ -31,7 +31,7 @@ public class CommitParser {
    *             123|-             // no parent
    */
   @NotNull
-  public static CommitParents parseCommitParents(@NotNull String line) {
+  public static VcsCommit parseCommitParents(@NotNull String line) {
     int separatorIndex = nextSeparatorIndex(line, 0);
     String commitHashStr = line.substring(0, separatorIndex);
     Hash commitHash = createHash(commitHashStr);
@@ -44,7 +44,7 @@ public class CommitParser {
         hashes.add(createHash(aParentsStr));
       }
     }
-    return new SimpleCommitParents(commitHash, hashes);
+    return getFactory().createCommit(commitHash, hashes);
   }
 
   /**
@@ -52,7 +52,7 @@ public class CommitParser {
    *             timestamp|-hash commit|-parent hashes
    */
   @NotNull
-  public static TimeCommitParents parseTimestampParentHashes(@NotNull String line) {
+  public static TimedVcsCommit parseTimestampParentHashes(@NotNull String line) {
     int firstSeparatorIndex = nextSeparatorIndex(line, 0);
     String timestampStr = line.substring(0, firstSeparatorIndex);
     long timestamp;
@@ -67,9 +67,9 @@ public class CommitParser {
     catch (NumberFormatException e) {
       throw new IllegalArgumentException("bad timestamp in line: " + line);
     }
-    CommitParents commitParents = parseCommitParents(line.substring(firstSeparatorIndex + 2));
+    VcsCommit vcsCommit = parseCommitParents(line.substring(firstSeparatorIndex + 2));
 
-    return new TimeCommitParents(commitParents.getHash(), commitParents.getParents(), timestamp);
+    return getFactory().createTimedCommit(vcsCommit.getHash(), vcsCommit.getParents(), timestamp);
   }
 
   /**
@@ -105,16 +105,20 @@ public class CommitParser {
 
     final String commitMessage = line.substring(nextIndex + 2);
 
-    VcsLogObjectsFactory factory = ServiceManager.getService(VcsLogObjectsFactory.class);
+    VcsLogObjectsFactory factory = getFactory();
     return factory.createShortDetails(factory.createHash(hashStr), Collections.<Hash>emptyList(), timestamp, commitMessage, authorName);
   }
 
+  @NotNull
+  private static VcsLogObjectsFactory getFactory() {
+    return ServiceManager.getService(VcsLogObjectsFactory.class);
+  }
 
   @NotNull
-  public static List<TimeCommitParents> log(@NotNull String... commits) {
-    return ContainerUtil.map(Arrays.asList(commits), new Function<String, TimeCommitParents>() {
+  public static List<TimedVcsCommit> log(@NotNull String... commits) {
+    return ContainerUtil.map(Arrays.asList(commits), new Function<String, TimedVcsCommit>() {
       @Override
-      public TimeCommitParents fun(String commit) {
+      public TimedVcsCommit fun(String commit) {
         return parseTimestampParentHashes(commit);
       }
     });
@@ -122,7 +126,7 @@ public class CommitParser {
 
   @NotNull
   private static Hash createHash(@NotNull String s) {
-    return ServiceManager.getService(VcsLogObjectsFactory.class).createHash(s);
+    return getFactory().createHash(s);
   }
 
 }

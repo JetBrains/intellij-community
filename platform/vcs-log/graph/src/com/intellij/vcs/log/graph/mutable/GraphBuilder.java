@@ -5,7 +5,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.CommitParents;
+import com.intellij.vcs.log.VcsCommit;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.elements.Branch;
@@ -26,7 +26,7 @@ public class GraphBuilder {
 
   private static final Logger LOG = Logger.getInstance(GraphBuilder.class);
 
-  public static MutableGraph build(@NotNull List<? extends CommitParents> commitParentses, Collection<VcsRef> allRefs) {
+  public static MutableGraph build(@NotNull List<? extends VcsCommit> commitParentses, Collection<VcsRef> allRefs) {
     Map<Hash, Integer> commitLogIndexes = new HashMap<Hash, Integer>(commitParentses.size());
     for (int i = 0; i < commitParentses.size(); i++) {
       commitLogIndexes.put(commitParentses.get(i).getHash(), i);
@@ -35,7 +35,7 @@ public class GraphBuilder {
     return builder.runBuild(commitParentses);
   }
 
-  public static void addCommitsToGraph(@NotNull MutableGraph graph, @NotNull List<? extends CommitParents> commitParentses,
+  public static void addCommitsToGraph(@NotNull MutableGraph graph, @NotNull List<? extends VcsCommit> commitParentses,
                                        @NotNull Collection<VcsRef> allRefs) {
     new GraphAppendBuilder(graph, allRefs).appendToGraph(commitParentses);
   }
@@ -153,10 +153,10 @@ public class GraphBuilder {
     return new MutableNode(branch, hash);
   }
 
-  private void append(@NotNull CommitParents commitParents) {
-    MutableNode node = addCurrentCommitAndFinishRow(commitParents.getHash());
+  private void append(@NotNull VcsCommit vcsCommit) {
+    MutableNode node = addCurrentCommitAndFinishRow(vcsCommit.getHash());
 
-    List<Hash> parents = commitParents.getParents();
+    List<Hash> parents = vcsCommit.getParents();
     Branch branch = node.getBranch();
     if (parents.size() == 1) {
       addParent(node, parents.get(0), branch);
@@ -185,12 +185,12 @@ public class GraphBuilder {
 
   // local package
   @NotNull
-  MutableGraph runBuild(@NotNull List<? extends CommitParents> commitParentses) {
+  MutableGraph runBuild(@NotNull List<? extends VcsCommit> commitParentses) {
     if (commitParentses.size() == 0) {
       throw new IllegalArgumentException("Empty list commitParentses");
     }
-    for (CommitParents commitParents : commitParentses) {
-      append(commitParents);
+    for (VcsCommit vcsCommit : commitParentses) {
+      append(vcsCommit);
     }
     lastActions();
     graph.updateVisibleRows();

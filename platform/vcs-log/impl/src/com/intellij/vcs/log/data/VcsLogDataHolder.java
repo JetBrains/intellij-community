@@ -87,6 +87,7 @@ public class VcsLogDataHolder implements Disposable {
   public static final Topic<Runnable> REFRESH_COMPLETED = Topic.create("Vcs.Log.Completed", Runnable.class);
 
   @NotNull private final Project myProject;
+  @NotNull private final VcsLogObjectsFactory myFactory;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
   @NotNull private final BackgroundTaskQueue myDataLoaderQueue;
   @NotNull private final MiniDetailsGetter myMiniDetailsGetter;
@@ -99,7 +100,8 @@ public class VcsLogDataHolder implements Disposable {
   @Nullable private volatile LogData myLogData;
   private volatile boolean myFullLogShowing;
 
-  public VcsLogDataHolder(@NotNull Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
+  public VcsLogDataHolder(@NotNull Project project, @NotNull VcsLogObjectsFactory logObjectsFactory,
+                          @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
     myProject = project;
     myLogProviders = logProviders;
     myDataLoaderQueue = new BackgroundTaskQueue(project, "Loading history...");
@@ -107,6 +109,7 @@ public class VcsLogDataHolder implements Disposable {
     myDetailsGetter = new CommitDetailsGetter(this, logProviders);
     myLogJoiner = new VcsLogJoiner();
     myMultiRepoJoiner = new VcsLogMultiRepoJoiner();
+    myFactory = logObjectsFactory;
   }
 
   /**
@@ -120,9 +123,10 @@ public class VcsLogDataHolder implements Disposable {
    * @param onInitialized This is called when the holder is initialized with the initial data received from the VCS.
    *                      The consumer is called on the EDT.
    */
-  public static void init(@NotNull final Project project, @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
+  public static void init(@NotNull final Project project, @NotNull VcsLogObjectsFactory logObjectsFactory,
+                          @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                           @NotNull final Consumer<VcsLogDataHolder> onInitialized) {
-    final VcsLogDataHolder dataHolder = new VcsLogDataHolder(project, logProviders);
+    final VcsLogDataHolder dataHolder = new VcsLogDataHolder(project, logObjectsFactory, logProviders);
     dataHolder.initialize(onInitialized);
   }
 
@@ -142,7 +146,7 @@ public class VcsLogDataHolder implements Disposable {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
-        Map<VirtualFile, List<TimeCommitParents>> logs = ContainerUtil.newHashMap();
+        Map<VirtualFile, List<TimedVcsCommit>> logs = ContainerUtil.newHashMap();
         Map<VirtualFile, Collection<VcsRef>> refs = ContainerUtil.newHashMap();
         for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
           VirtualFile root = entry.getKey();
@@ -160,7 +164,7 @@ public class VcsLogDataHolder implements Disposable {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
         if (myLogData != null) {
-          List<TimeCommitParents> compoundLog = myMultiRepoJoiner.join(myLogData.myLogsByRoot.values());
+          List<TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(myLogData.myLogsByRoot.values());
           myDataPack = DataPack.build(compoundLog, myLogData.getAllRefs(), indicator);
           myFullLogShowing = true;
           UIUtil.invokeAndWaitIfNeeded(new Runnable() {
@@ -191,7 +195,7 @@ public class VcsLogDataHolder implements Disposable {
         }
         boolean ordered = !isFullLogReady(); // full log is not ready (or it is initial loading) => need to fairly query the VCS
 
-        Map<VirtualFile, List<TimeCommitParents>> logsToBuild = ContainerUtil.newHashMap();
+        Map<VirtualFile, List<TimedVcsCommit>> logsToBuild = ContainerUtil.newHashMap();
         Collection<VcsRef> allRefs = ContainerUtil.newHashSet();
 
         for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
@@ -203,22 +207,22 @@ public class VcsLogDataHolder implements Disposable {
           myDetailsGetter.saveInCache(firstBlockDetails);
           myMiniDetailsGetter.saveInCache(firstBlockDetails);
 
-          List<TimeCommitParents> firstBlockCommits = ContainerUtil.map(firstBlockDetails, new Function<VcsFullCommitDetails, TimeCommitParents>() {
+          List<TimedVcsCommit> firstBlockCommits = ContainerUtil.map(firstBlockDetails, new Function<VcsFullCommitDetails, TimedVcsCommit>() {
             @Override
-            public TimeCommitParents fun(VcsFullCommitDetails details) {
-              return new TimeCommitParents(details.getHash(), details.getParents(), details.getAuthorTime());
+            public TimedVcsCommit fun(VcsFullCommitDetails details) {
+              return myFactory.createTimedCommit(details.getHash(), details.getParents(), details.getAuthorTime());
             }
           });
 
-          List<TimeCommitParents> refreshedLog;
+          List<TimedVcsCommit> refreshedLog;
           int newCommitsCount;
           if (ordered) {
             // the whole log is not loaded before the first refresh
-            refreshedLog = new ArrayList<TimeCommitParents>(firstBlockCommits);
+            refreshedLog = new ArrayList<TimedVcsCommit>(firstBlockCommits);
             newCommitsCount = 0;
           }
           else {
-            Pair<List<TimeCommitParents>, Integer> joinResult = myLogJoiner.addCommits(myLogData.getLog(root), myLogData.getRefs(root),
+            Pair<List<TimedVcsCommit>, Integer> joinResult = myLogJoiner.addCommits(myLogData.getLog(root), myLogData.getRefs(root),
                                                                                        firstBlockCommits, newRefs);
             refreshedLog = joinResult.getFirst();
             newCommitsCount = joinResult.getSecond();
@@ -245,7 +249,7 @@ public class VcsLogDataHolder implements Disposable {
           }
         }
 
-        List<TimeCommitParents> compoundLog = myMultiRepoJoiner.join(logsToBuild.values());
+        List<TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(logsToBuild.values());
         myDataPack = DataPack.build(compoundLog, allRefs, indicator);
 
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
@@ -355,17 +359,17 @@ public class VcsLogDataHolder implements Disposable {
    * Contains full logs per repository root & references per root.
    */
   private static class LogData {
-    @NotNull private final Map<VirtualFile, List<TimeCommitParents>> myLogsByRoot;
+    @NotNull private final Map<VirtualFile, List<TimedVcsCommit>> myLogsByRoot;
     @NotNull private final Map<VirtualFile, Collection<VcsRef>> myRefsByRoot;
 
-    private LogData(@NotNull Map<VirtualFile, List<TimeCommitParents>> logsByRoot,
+    private LogData(@NotNull Map<VirtualFile, List<TimedVcsCommit>> logsByRoot,
                     @NotNull Map<VirtualFile, Collection<VcsRef>> refsByRoot) {
       myLogsByRoot = logsByRoot;
       myRefsByRoot = refsByRoot;
     }
 
     @NotNull
-    public List<TimeCommitParents> getLog(@NotNull VirtualFile root) {
+    public List<TimedVcsCommit> getLog(@NotNull VirtualFile root) {
       return myLogsByRoot.get(root);
     }
 

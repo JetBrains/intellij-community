@@ -2,7 +2,7 @@ package com.intellij.vcs.log.graphmodel;
 
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import com.intellij.vcs.log.CommitParents;
+import com.intellij.vcs.log.VcsCommit;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
 import com.intellij.vcs.log.graph.Graph;
 import com.intellij.vcs.log.graph.elements.Node;
@@ -18,7 +18,7 @@ public interface GraphModel {
   @NotNull
   public Graph getGraph();
 
-  public void appendCommitsToGraph(@NotNull List<? extends CommitParents> commitParentses);
+  public void appendCommitsToGraph(@NotNull List<? extends VcsCommit> commitParentses);
 
   public void setVisibleBranchesNodes(@NotNull Function<Node, Boolean> isStartedNode);
 

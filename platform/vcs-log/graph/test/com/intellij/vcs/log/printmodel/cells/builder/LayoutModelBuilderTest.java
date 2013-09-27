@@ -1,6 +1,6 @@
 package com.intellij.vcs.log.printmodel.cells.builder;
 
-import com.intellij.vcs.log.CommitParents;
+import com.intellij.vcs.log.VcsCommit;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.mutable.GraphBuilder;
 import com.intellij.vcs.log.parser.SimpleCommitListParser;
@@ -21,8 +21,8 @@ import static com.intellij.vcs.log.printmodel.LayoutTestUtils.toStr;
 public class LayoutModelBuilderTest {
   private void runTest(String input, String out) throws IOException {
     SimpleCommitListParser parser = new SimpleCommitListParser(new StringReader(input));
-    List<CommitParents> commitParentses = parser.readAllCommits();
-    LayoutModel layoutModel = new LayoutModel(GraphBuilder.build(commitParentses, Collections.<VcsRef>emptyList()));
+    List<VcsCommit> vcsCommitParentses = parser.readAllCommits();
+    LayoutModel layoutModel = new LayoutModel(GraphBuilder.build(vcsCommitParentses, Collections.<VcsRef>emptyList()));
     assertEquals(out, toStr(layoutModel));
   }
 

@@ -2,7 +2,7 @@ package com.intellij.vcs.log.graphmodel.impl;
 
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
-import com.intellij.vcs.log.CommitParents;
+import com.intellij.vcs.log.VcsCommit;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
 import com.intellij.vcs.log.graph.Graph;
@@ -90,7 +90,7 @@ public class GraphModelImpl implements GraphModel {
   }
 
   @Override
-  public void appendCommitsToGraph(@NotNull List<? extends CommitParents> commitParentses) {
+  public void appendCommitsToGraph(@NotNull List<? extends VcsCommit> commitParentses) {
     int oldSize = graph.getNodeRows().size();
     GraphBuilder.addCommitsToGraph(graph, commitParentses, myRefs);
     visibleNodes.setVisibleNodes(visibleNodes.generateVisibleBranchesNodes(isStartedBranchVisibilityNode));

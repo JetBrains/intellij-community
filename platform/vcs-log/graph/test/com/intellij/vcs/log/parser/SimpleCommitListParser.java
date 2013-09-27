@@ -1,6 +1,6 @@
 package com.intellij.vcs.log.parser;
 
-import com.intellij.vcs.log.CommitParents;
+import com.intellij.vcs.log.VcsCommit;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
@@ -13,7 +13,7 @@ import java.util.List;
  * @author erokhins
  */
 public class SimpleCommitListParser {
-  public static List<CommitParents> parseCommitList(@NotNull String input) {
+  public static List<VcsCommit> parseCommitList(@NotNull String input) {
     SimpleCommitListParser parser = new SimpleCommitListParser(new StringReader(input));
     try {
       return parser.readAllCommits();
@@ -29,13 +29,13 @@ public class SimpleCommitListParser {
     this.bufferedReader = new BufferedReader(bufferedReader);
   }
 
-  public List<CommitParents> readAllCommits() throws IOException {
+  public List<VcsCommit> readAllCommits() throws IOException {
     String line;
-    List<CommitParents> commitParentses = new ArrayList<CommitParents>();
+    List<VcsCommit> vcsCommitParentses = new ArrayList<VcsCommit>();
     while ((line = bufferedReader.readLine()) != null) {
-      commitParentses.add(CommitParser.parseCommitParents(line));
+      vcsCommitParentses.add(CommitParser.parseCommitParents(line));
     }
-    return commitParentses;
+    return vcsCommitParentses;
   }
 
 }

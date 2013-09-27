@@ -1,6 +1,6 @@
 package com.intellij.vcs.log.graph.mutable;
 
-import com.intellij.vcs.log.CommitParents;
+import com.intellij.vcs.log.VcsCommit;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.parser.SimpleCommitListParser;
 import org.junit.Test;
@@ -18,8 +18,8 @@ public class GraphBuilderTest {
 
 
   public void runTest(String input, String out) {
-    List<CommitParents> commitParentses = SimpleCommitListParser.parseCommitList(input);
-    MutableGraph graph = GraphBuilder.build(commitParentses, Collections.<VcsRef>emptyList());
+    List<VcsCommit> vcsCommitParentses = SimpleCommitListParser.parseCommitList(input);
+    MutableGraph graph = GraphBuilder.build(vcsCommitParentses, Collections.<VcsRef>emptyList());
     assertEquals(out, toStr(graph));
   }
 

@@ -16,6 +16,12 @@ public interface VcsLogObjectsFactory {
   Hash createHash(@NotNull String stringHash);
 
   @NotNull
+  VcsCommit createCommit(@NotNull Hash hash, @NotNull List<Hash> parents);
+
+  @NotNull
+  TimedVcsCommit createTimedCommit(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp);
+
+  @NotNull
   VcsShortCommitDetails createShortDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp,
                                            @NotNull String subject, @NotNull String authorName);
 

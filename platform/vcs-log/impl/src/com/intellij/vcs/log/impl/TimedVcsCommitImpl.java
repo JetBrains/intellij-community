@@ -1,23 +1,24 @@
-package com.intellij.vcs.log;
+package com.intellij.vcs.log.impl;
 
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.TimedVcsCommit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 /**
- * Hash + parents + the timestamp of the commit
- *
  * @author Kirill Likhodedov
  */
-public class TimeCommitParents extends CommitParents {
+public class TimedVcsCommitImpl extends VcsCommitImpl implements TimedVcsCommit {
 
   private final long myTime;
 
-  public TimeCommitParents(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp) {
+  public TimedVcsCommitImpl(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp) {
     super(hash, parents);
     myTime = timeStamp;
   }
 
+  @Override
   public final long getAuthorTime() {
     return myTime;
   }

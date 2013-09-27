@@ -69,7 +69,7 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<TimeCommitParents> readAllHashes(@NotNull VirtualFile root) throws VcsException {
+  public List<TimedVcsCommit> readAllHashes(@NotNull VirtualFile root) throws VcsException {
     return GitHistoryUtils.readAllHashes(myProject, root);
   }
 

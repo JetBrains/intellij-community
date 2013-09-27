@@ -17,6 +17,7 @@ public interface VcsLogRefManager {
 
   /**
    * Sorts the given references.
+   * TODO better provide compareTo
    */
   @NotNull
   List<VcsRef> sort(Collection<VcsRef> refs);

@@ -1,7 +1,7 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.TimeCommitParents;
+import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,13 +12,13 @@ import java.util.List;
  */
 public class VcsShortCommitDetailsImpl implements VcsShortCommitDetails {
 
-  @NotNull private final TimeCommitParents myTimeCommitParents;
+  @NotNull private final TimedVcsCommit myTimeCommitParents;
   @NotNull private final String mySubject;
   @NotNull private final String myAuthorName;
 
   public VcsShortCommitDetailsImpl(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp,
                                    @NotNull String subject, @NotNull String authorName) {
-    myTimeCommitParents = new TimeCommitParents(hash, parents, timeStamp);
+    myTimeCommitParents = new TimedVcsCommitImpl(hash, parents, timeStamp);
     mySubject = subject;
     myAuthorName = authorName;
   }

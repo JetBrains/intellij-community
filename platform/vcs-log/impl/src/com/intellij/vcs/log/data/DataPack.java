@@ -4,7 +4,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.Predicate;
-import com.intellij.vcs.log.CommitParents;
+import com.intellij.vcs.log.VcsCommit;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
@@ -33,7 +33,7 @@ public class DataPack {
   @NotNull private final GraphPrintCellModel myPrintCellModel;
 
   @NotNull
-  public static DataPack build(@NotNull List<? extends CommitParents> commits, @NotNull Collection<VcsRef> allRefs,
+  public static DataPack build(@NotNull List<? extends VcsCommit> commits, @NotNull Collection<VcsRef> allRefs,
                                @NotNull ProgressIndicator indicator) {
     indicator.setText("Building graph...");
 
@@ -71,7 +71,7 @@ public class DataPack {
     myPrintCellModel = printCellModel;
   }
 
-  public void appendCommits(@NotNull List<? extends CommitParents> commitParentsList) {
+  public void appendCommits(@NotNull List<? extends VcsCommit> commitParentsList) {
     myGraphModel.appendCommitsToGraph(commitParentsList);
   }
 
