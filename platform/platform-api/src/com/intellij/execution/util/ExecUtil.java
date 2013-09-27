@@ -48,6 +48,14 @@ public class ExecUtil {
     }
   };
 
+  private static final NotNullLazyValue<Boolean> hasPkExec = new NotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      return new File("/usr/bin/pkexec").canExecute();
+    }
+  };
+
   private static final NotNullLazyValue<Boolean> hasGnomeTerminal = new NotNullLazyValue<Boolean>() {
     @NotNull
     @Override
@@ -116,7 +124,7 @@ public class ExecUtil {
                                                 @NotNull final String suffix,
                                                 @NotNull final String source) throws IOException, ExecutionException {
     File tempDir = new File(PathManager.getTempPath());
-    File tempFile = FileUtil.createTempFile(tempDir, prefix, suffix);
+    File tempFile = FileUtil.createTempFile(tempDir, prefix, suffix, true, true);
     FileUtil.writeToFile(tempFile, source);
     if (!tempFile.setExecutable(true, true)) {
       throw new ExecutionException("Failed to make temp file executable: " + tempFile);
@@ -195,19 +203,19 @@ public class ExecUtil {
     }
     else if (hasGkSudo.getValue()) {
       final List<String> sudoCommand = new ArrayList<String>();
-      sudoCommand.add("gksudo");
-      sudoCommand.add("--message");
-      sudoCommand.add(prompt);
-      sudoCommand.add("--");
+      sudoCommand.addAll(Arrays.asList("gksudo", "--message", prompt, "--"));
       sudoCommand.addAll(command);
       return execAndGetOutput(sudoCommand, workDir);
     }
     else if (hasKdeSudo.getValue()) {
       final List<String> sudoCommand = new ArrayList<String>();
-      sudoCommand.add("kdesudo");
-      sudoCommand.add("--comment");
-      sudoCommand.add(prompt);
-      sudoCommand.add("--");
+      sudoCommand.addAll(Arrays.asList("kdesudo", "--comment", prompt, "--"));
+      sudoCommand.addAll(command);
+      return execAndGetOutput(sudoCommand, workDir);
+    }
+    else if (hasPkExec.getValue()) {
+      final List<String> sudoCommand = new ArrayList<String>();
+      sudoCommand.add("pkexec");
       sudoCommand.addAll(command);
       return execAndGetOutput(sudoCommand, workDir);
     }
@@ -230,6 +238,7 @@ public class ExecUtil {
         "exit $STATUS\n");
       return execAndGetOutput(getTerminalCommand("Install", script.getAbsolutePath()), workDir);
     }
+
     throw new UnsupportedSystemException();
   }
 
@@ -266,6 +275,9 @@ public class ExecUtil {
     }
     else if (hasGkSudo.getValue()) {
       return execAndGetOutput(Arrays.asList("gksudo", "--message", prompt, scriptPath), workDir);
+    }
+    else if (hasPkExec.getValue()) {
+      return execAndGetOutput(Arrays.asList("pkexec", scriptPath), workDir);
     }
     else if (SystemInfo.isUnix && hasTerminalApp()) {
       final File sudo = createTempExecutableScript("sudo", ".sh",
