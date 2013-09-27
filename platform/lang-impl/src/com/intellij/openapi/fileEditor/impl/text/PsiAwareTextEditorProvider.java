@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,8 @@ package com.intellij.openapi.fileEditor.impl.text;
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeInsight.daemon.impl.TextEditorBackgroundHighlighter;
 import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -34,7 +36,6 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.Producer;
-import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -107,7 +108,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     // type (caused by undo).
     if(FileEditorStateLevel.FULL == level){
       // Folding
-      if (project != null && !project.isDisposed() && !editor.isDisposed()) {
+      if (project != null && !project.isDisposed() && !editor.isDisposed() && project.isInitialized()) {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
         state.setFoldingState(CodeFoldingManager.getInstance(project).saveFoldingState(editor));
       }
@@ -124,10 +125,10 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     super.setStateImpl(project, editor, state);
     // Folding
     final CodeFoldingState foldState = state.getFoldingState();
-    if (project != null && foldState != null){
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+    if (project != null && foldState != null) {
+      new WriteAction() {
         @Override
-        public void run() {
+        protected void run(Result result) throws Throwable {
           PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
           editor.getFoldingModel().runBatchFoldingOperation(
             new Runnable() {
@@ -138,7 +139,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
             }
           );
         }
-      });
+      }.execute();
     }
   }
 
