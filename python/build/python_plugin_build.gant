@@ -1,6 +1,7 @@
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 setProperty("projectHome", guessHome(this as Script))
+setProperty("home", projectHome)
 
 includeTargets << new File("${projectHome}/community/build/scripts/utils.gant")
 
