@@ -8,6 +8,7 @@
 
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory" serviceImplementation="com.intellij.vcs.log.VcsLogObjectsFactoryImpl" />
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogSettings" serviceImplementation="com.intellij.vcs.log.impl.VcsLogSettingsImpl"/>
   </extensions>
 </idea-plugin>

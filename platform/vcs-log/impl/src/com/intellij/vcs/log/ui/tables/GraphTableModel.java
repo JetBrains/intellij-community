@@ -3,7 +3,7 @@ package com.intellij.vcs.log.ui.tables;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsCommitMiniDetails;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
@@ -53,7 +53,7 @@ public class GraphTableModel extends AbstractTableModel {
   @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
     Node commitNode = dataPack.getGraphModel().getGraph().getCommitNodeInRow(rowIndex);
-    VcsCommitMiniDetails data;
+    VcsShortCommitDetails data;
     if (commitNode == null) {
       data = null;
     }

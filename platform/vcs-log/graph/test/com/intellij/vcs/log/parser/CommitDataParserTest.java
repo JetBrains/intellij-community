@@ -1,6 +1,6 @@
 package com.intellij.vcs.log.parser;
 
-import com.intellij.vcs.log.VcsCommitMiniDetails;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
@@ -12,7 +12,7 @@ import static junit.framework.Assert.assertEquals;
  */
 public class CommitDataParserTest {
 
-  private static String toStr(@NotNull VcsCommitMiniDetails commitData) {
+  private static String toStr(@NotNull VcsShortCommitDetails commitData) {
     StringBuilder s = new StringBuilder();
     s.append(commitData.getHash()).append("|-");
     s.append(commitData.getAuthorName()).append("|-");
@@ -22,7 +22,7 @@ public class CommitDataParserTest {
   }
 
   private void runTest(@NotNull String inputStr) {
-    VcsCommitMiniDetails commitData = CommitParser.parseCommitData(inputStr);
+    VcsShortCommitDetails commitData = CommitParser.parseCommitData(inputStr);
     assertEquals(inputStr, toStr(commitData));
   }
 
@@ -58,7 +58,7 @@ public class CommitDataParserTest {
 
   @Test
   public void emptyTimestamp() {
-    VcsCommitMiniDetails commitData = CommitParser.parseCommitData("af56|-author |-|-message");
+    VcsShortCommitDetails commitData = CommitParser.parseCommitData("af56|-author |-|-message");
     Assert.assertEquals("author ", commitData.getAuthorName());
     Assert.assertEquals(0, commitData.getAuthorTime());
     Assert.assertEquals("message", commitData.getSubject());

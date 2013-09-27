@@ -14,7 +14,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ArrayUtil;
-import com.intellij.vcs.log.VcsCommitDetails;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.elements.Node;
@@ -124,7 +124,7 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
   public List<Change> getSelectedChanges() {
     List<Change> changes = new ArrayList<Change>();
     for (Node node : myGraphTable.getSelectedNodes()) {
-      VcsCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(node);
+      VcsFullCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(node);
       if (commitData instanceof LoadingDetails) {
         return null;
       }

@@ -22,7 +22,7 @@ public interface VcsLogProvider {
    * Reads {@link #COMMIT_BLOCK_SIZE the first part} of the log.
    */
   @NotNull
-  List<? extends VcsCommitDetails> readFirstBlock(@NotNull VirtualFile root, boolean ordered) throws VcsException;
+  List<? extends VcsFullCommitDetails> readFirstBlock(@NotNull VirtualFile root, boolean ordered) throws VcsException;
 
   /**
    * Reads the whole history, but only hashes & parents.
@@ -34,13 +34,13 @@ public interface VcsLogProvider {
    * Reads those details of the given commits, which are necessary to be shown in the log table.
    */
   @NotNull
-  List<? extends VcsCommitMiniDetails> readMiniDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException;
+  List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException;
 
   /**
    * Read full details of the given commits from the VCS.
    */
   @NotNull
-  List<? extends VcsCommitDetails> readDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException;
+  List<? extends VcsFullCommitDetails> readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException;
 
   /**
    * Read all references (branches, tags, etc.) for the given roots.

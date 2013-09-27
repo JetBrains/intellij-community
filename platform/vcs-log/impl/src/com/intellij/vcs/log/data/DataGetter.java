@@ -8,9 +8,9 @@ import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.graph.Graph;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.elements.NodeRow;
@@ -34,7 +34,7 @@ import java.util.Map;
  *
  * @author Kirill Likhodedov
  */
-public abstract class DataGetter<T extends CommitParents> implements Disposable {
+public abstract class DataGetter<T extends VcsShortCommitDetails> implements Disposable {
 
   private static final int UP_PRELOAD_COUNT = 20;
   private static final int DOWN_PRELOAD_COUNT = 40;

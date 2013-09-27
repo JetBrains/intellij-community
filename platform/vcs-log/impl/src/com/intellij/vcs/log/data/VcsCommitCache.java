@@ -16,8 +16,8 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.util.containers.SLRUMap;
-import com.intellij.vcs.log.CommitParents;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +32,7 @@ import java.awt.*;
  *
  * @author Kirill Likhodedov
  */
-class VcsCommitCache<T extends CommitParents> {
+class VcsCommitCache<T extends VcsShortCommitDetails> {
 
   private final SLRUMap<Hash, T> myCache = new SLRUMap<Hash, T>(5000, 5000);
 

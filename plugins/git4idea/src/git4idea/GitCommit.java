@@ -17,7 +17,7 @@ package git4idea;
 
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsCommitDetails;
+import com.intellij.vcs.log.impl.VcsFullCommitDetailsImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -27,7 +27,7 @@ import java.util.List;
  *
  * @author Kirill Likhodedov
  */
-public final class GitCommit extends VcsCommitDetails {
+public final class GitCommit extends VcsFullCommitDetailsImpl {
 
   public GitCommit(@NotNull Hash hash, @NotNull List<Hash> parents, long authorTime, @NotNull String subject, @NotNull String authorName,
                    @NotNull String authorEmail, @NotNull String message, @NotNull String committerName, @NotNull String committerEmail,

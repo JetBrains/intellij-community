@@ -1,5 +1,6 @@
 package com.intellij.vcs.log.parser;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
@@ -33,14 +34,14 @@ public class CommitParser {
   public static CommitParents parseCommitParents(@NotNull String line) {
     int separatorIndex = nextSeparatorIndex(line, 0);
     String commitHashStr = line.substring(0, separatorIndex);
-    Hash commitHash = new SimpleHash(commitHashStr);
+    Hash commitHash = createHash(commitHashStr);
 
     String parentHashStr = line.substring(separatorIndex + 2, line.length());
     String[] parentsHashes = parentHashStr.split("\\s");
     List<Hash> hashes = new ArrayList<Hash>(parentsHashes.length);
     for (String aParentsStr : parentsHashes) {
       if (aParentsStr.length() > 0) {
-        hashes.add(new SimpleHash(aParentsStr));
+        hashes.add(createHash(aParentsStr));
       }
     }
     return new SimpleCommitParents(commitHash, hashes);
@@ -76,7 +77,7 @@ public class CommitParser {
    *             hash|-author name|-123124|-commit message
    */
   @NotNull
-  public static VcsCommitMiniDetails parseCommitData(@NotNull String line) {
+  public static VcsShortCommitDetails parseCommitData(@NotNull String line) {
     int prevIndex = 0;
     int nextIndex = nextSeparatorIndex(line, 0);
     final String hashStr = line.substring(0, nextIndex);
@@ -104,7 +105,8 @@ public class CommitParser {
 
     final String commitMessage = line.substring(nextIndex + 2);
 
-    return new VcsCommitMiniDetails(new SimpleHash(hashStr), Collections.<Hash>emptyList(), timestamp, commitMessage, authorName);
+    VcsLogObjectsFactory factory = ServiceManager.getService(VcsLogObjectsFactory.class);
+    return factory.createShortDetails(factory.createHash(hashStr), Collections.<Hash>emptyList(), timestamp, commitMessage, authorName);
   }
 
 
@@ -117,4 +119,10 @@ public class CommitParser {
       }
     });
   }
+
+  @NotNull
+  private static Hash createHash(@NotNull String s) {
+    return ServiceManager.getService(VcsLogObjectsFactory.class).createHash(s);
+  }
+
 }

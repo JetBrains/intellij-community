@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="xml-openapi" />
     <orderEntry type="module" module-name="xml" />
     <orderEntry type="module" module-name="vcs-log-api" />
+    <orderEntry type="module" module-name="vcs-log-impl" />
   </component>
 </module>
 

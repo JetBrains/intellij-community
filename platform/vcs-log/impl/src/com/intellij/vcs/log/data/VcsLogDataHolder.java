@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
@@ -177,7 +178,7 @@ public class VcsLogDataHolder implements Disposable {
   /**
    * Loads the top part of the log and rebuilds the graph & log table.
    *
-   * @param onSuccess this task is called {@link UIUtil.invokeAndWaitIfNeeded(Runnable) on the EDT} after loading and graph
+   * @param onSuccess this task is called {@link UIUtil#invokeAndWaitIfNeeded(Runnable) on the EDT} after loading and graph
    *                  building completes.
    * @param invalidateWholeLog if the whole log data should be invalidated and will be retrieved in onSuccess.
    */
@@ -196,22 +197,29 @@ public class VcsLogDataHolder implements Disposable {
         for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
           VirtualFile root = entry.getKey();
           VcsLogProvider logProvider = entry.getValue();
-          List<? extends VcsCommitDetails> firstBlock = logProvider.readFirstBlock(root, ordered);
+          List<? extends VcsFullCommitDetails> firstBlockDetails = logProvider.readFirstBlock(root, ordered);
           Collection<VcsRef> newRefs = logProvider.readAllRefs(root);
 
-          myDetailsGetter.saveInCache(firstBlock);
-          myMiniDetailsGetter.saveInCache(firstBlock);
+          myDetailsGetter.saveInCache(firstBlockDetails);
+          myMiniDetailsGetter.saveInCache(firstBlockDetails);
+
+          List<TimeCommitParents> firstBlockCommits = ContainerUtil.map(firstBlockDetails, new Function<VcsFullCommitDetails, TimeCommitParents>() {
+            @Override
+            public TimeCommitParents fun(VcsFullCommitDetails details) {
+              return new TimeCommitParents(details.getHash(), details.getParents(), details.getAuthorTime());
+            }
+          });
 
           List<TimeCommitParents> refreshedLog;
           int newCommitsCount;
           if (ordered) {
             // the whole log is not loaded before the first refresh
-            refreshedLog = new ArrayList<TimeCommitParents>(firstBlock);
+            refreshedLog = new ArrayList<TimeCommitParents>(firstBlockCommits);
             newCommitsCount = 0;
           }
           else {
             Pair<List<TimeCommitParents>, Integer> joinResult = myLogJoiner.addCommits(myLogData.getLog(root), myLogData.getRefs(root),
-                                                                                       firstBlock, newRefs);
+                                                                                       firstBlockCommits, newRefs);
             refreshedLog = joinResult.getFirst();
             newCommitsCount = joinResult.getSecond();
           }
@@ -225,7 +233,7 @@ public class VcsLogDataHolder implements Disposable {
               commitsToShow = myDataPack.getGraphModel().getGraph().getNodeRows().size() + newCommitsCount;
             }
             else {
-              commitsToShow = firstBlock.size();
+              commitsToShow = firstBlockDetails.size();
             }
             logsToBuild.put(root, refreshedLog.subList(0, Math.min(commitsToShow, refreshedLog.size())));
           }

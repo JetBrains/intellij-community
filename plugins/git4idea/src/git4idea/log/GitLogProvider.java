@@ -60,7 +60,7 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsCommitDetails> readFirstBlock(@NotNull VirtualFile root, boolean ordered) throws VcsException {
+  public List<? extends VcsFullCommitDetails> readFirstBlock(@NotNull VirtualFile root, boolean ordered) throws VcsException {
     String[] params = { "HEAD", "--branches", "--remotes", "--tags", "--encoding=UTF-8", "--full-history", "--sparse",
                         "--max-count=" + VcsLogProvider.COMMIT_BLOCK_SIZE};
     if (ordered) {
@@ -77,13 +77,13 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsCommitMiniDetails> readMiniDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
+  public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
     return GitHistoryUtils.readMiniDetails(myProject, root, hashes);
   }
 
   @NotNull
   @Override
-  public List<? extends VcsCommitDetails> readDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
+  public List<? extends VcsFullCommitDetails> readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
     return GitHistoryUtils.commitsDetails(myProject, root, hashes);
   }
 

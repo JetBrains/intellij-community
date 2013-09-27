@@ -11,8 +11,8 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.VcsCommitDetails;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.elements.Node;
@@ -92,7 +92,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
         return;
       }
       Hash hash = node.getCommitHash();
-      VcsCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(node);
+      VcsFullCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(node);
       if (commitData instanceof LoadingDetails) {
         myLoadingPanel.startLoading();
         myDataPanel.setData(null);
@@ -148,7 +148,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       setOpaque(false);
     }
 
-    void setData(@Nullable VcsCommitDetails commit) {
+    void setData(@Nullable VcsFullCommitDetails commit) {
       if (commit == null) {
         myHashLabel.setText("");
         myCommitMessage.setText("");

@@ -41,7 +41,8 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.TimeCommitParents;
-import com.intellij.vcs.log.VcsCommitMiniDetails;
+import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.impl.VcsShortCommitDetailsImpl;
 import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.*;
 import git4idea.branch.GitBranchUtil;
@@ -479,7 +480,7 @@ public class GitHistoryUtils {
     return null;
   }
 
-  public static List<? extends VcsCommitMiniDetails> readAllMiniDetails(Project project, VirtualFile root) throws VcsException {
+  public static List<? extends VcsShortCommitDetails> readAllMiniDetails(Project project, VirtualFile root) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME, AUTHOR_TIME, SUBJECT);
     h.setStdoutSuppressed(true);
@@ -492,20 +493,20 @@ public class GitHistoryUtils {
 
     List<GitLogRecord> records = parser.parse(output);
 
-    return ContainerUtil.mapNotNull(records, new Function<GitLogRecord, VcsCommitMiniDetails>() {
+    return ContainerUtil.mapNotNull(records, new Function<GitLogRecord, VcsShortCommitDetails>() {
       @Override
-      public VcsCommitMiniDetails fun(GitLogRecord record) {
+      public VcsShortCommitDetails fun(GitLogRecord record) {
         List<Hash> parents = new SmartList<Hash>();
         for (String parent : record.getParentsHashes()) {
           parents.add(HashImpl.build(parent));
         }
-        return new VcsCommitMiniDetails(HashImpl.build(record.getHash()), parents, record.getAuthorTimeStamp(),
+        return new VcsShortCommitDetailsImpl(HashImpl.build(record.getHash()), parents, record.getAuthorTimeStamp(),
                                         record.getSubject(), record.getAuthorName());
       }
     });
   }
 
-  public static List<? extends VcsCommitMiniDetails> readMiniDetails(Project project, VirtualFile root, List<String> hashes) throws VcsException {
+  public static List<? extends VcsShortCommitDetails> readMiniDetails(Project project, VirtualFile root, List<String> hashes) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME, AUTHOR_TIME, SUBJECT);
     h.setStdoutSuppressed(true);
@@ -517,14 +518,14 @@ public class GitHistoryUtils {
     String output = h.run();
     List<GitLogRecord> records = parser.parse(output);
 
-    return ContainerUtil.map(records, new Function<GitLogRecord, VcsCommitMiniDetails>() {
+    return ContainerUtil.map(records, new Function<GitLogRecord, VcsShortCommitDetails>() {
       @Override
-      public VcsCommitMiniDetails fun(GitLogRecord record) {
+      public VcsShortCommitDetails fun(GitLogRecord record) {
         List<Hash> parents = new SmartList<Hash>();
         for (String parent : record.getParentsHashes()) {
           parents.add(HashImpl.build(parent));
         }
-        return new VcsCommitMiniDetails(HashImpl.build(record.getHash()), parents, record.getAuthorTimeStamp(),
+        return new VcsShortCommitDetailsImpl(HashImpl.build(record.getHash()), parents, record.getAuthorTimeStamp(),
                                         record.getSubject(), record.getAuthorName());
       }
     });
