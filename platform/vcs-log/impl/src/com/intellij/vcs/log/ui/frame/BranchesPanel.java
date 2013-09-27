@@ -1,15 +1,16 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.collect.Ordering;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.RefGroup;
+import com.intellij.vcs.log.VcsLogProvider;
+import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.ui.VcsLogUI;
 import com.intellij.vcs.log.graph.render.PrintParameters;
+import com.intellij.vcs.log.ui.VcsLogUI;
 import com.intellij.vcs.log.ui.render.RefPainter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,39 +80,42 @@ public class BranchesPanel extends JPanel {
     getParent().repaint();
   }
 
+  @NotNull
   private List<VcsRef> getRefsToDisplayOnPanel() {
     Collection<VcsRef> allRefs = myDataHolder.getDataPack().getRefsModel().getAllRefs();
 
-    List<VcsRef> refsToShow = ContainerUtil.filter(allRefs, new Condition<VcsRef>() {
-      @Override
-      public boolean value(VcsRef ref) {
-        if (ref.getType() == VcsRef.RefType.REMOTE_BRANCH) {
-          return true;
+    List<VcsRef> refsToShow = new ArrayList<VcsRef>();
+    for (Map.Entry<VirtualFile, Collection<VcsRef>> entry : groupByRoot(allRefs).entrySet()) {
+      VirtualFile root = entry.getKey();
+      Collection<VcsRef> refs = entry.getValue();
+      VcsLogProvider provider = myDataHolder.getLogProvider(root);
+      VcsLogRefManager refManager = provider.getReferenceManager();
+      List<RefGroup> groups = refManager.group(refs);
+
+      // TODO draw groups
+      for (RefGroup group : groups) {
+        if (group.getRefs().size() == 1) {
+          refsToShow.add(group.getRefs().iterator().next());
         }
-        if (ref.getType().isLocalOrHead()) {
-          return true;
-        }
-        return false;
       }
-    });
-
-    // TODO sort roots as well
-    // TODO improve UI for multiple roots case
-    return sortReferences(refsToShow);
-  }
-
-  private List<VcsRef> sortReferences(List<VcsRef> refsToShow) {
-    List<VcsRef> sortedRefs = new ArrayList<VcsRef>(refsToShow.size());
-    MultiMap<VirtualFile, VcsRef> map = groupByRoot(refsToShow);
-    for (Map.Entry<VirtualFile, Collection<VcsRef>> entry : map.entrySet()) {
-      List<VcsRef> sortedRefsForRoot = myDataHolder.getLogProvider(entry.getKey()).getRefSorter().sort(entry.getValue());
-      sortedRefs.addAll(sortedRefsForRoot);
     }
-    return sortedRefs;
+    // TODO improve UI for multiple roots case
+    return refsToShow;
   }
 
-  private static MultiMap<VirtualFile, VcsRef> groupByRoot(Collection<VcsRef> refs) {
-    MultiMap<VirtualFile, VcsRef> map = MultiMap.create();
+  @NotNull
+  private static MultiMap<VirtualFile, VcsRef> groupByRoot(@NotNull Collection<VcsRef> refs) {
+    MultiMap<VirtualFile, VcsRef> map = new MultiMap<VirtualFile, VcsRef>() {
+      @Override
+      protected Map<VirtualFile, Collection<VcsRef>> createMap() {
+        return new TreeMap<VirtualFile, Collection<VcsRef>>(new Comparator<VirtualFile>() { // TODO common to VCS root sorting method
+          @Override
+          public int compare(VirtualFile o1, VirtualFile o2) {
+            return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
+          }
+        });
+      }
+    };
     for (VcsRef ref : refs) {
       map.putValue(ref.getRoot(), ref);
     }

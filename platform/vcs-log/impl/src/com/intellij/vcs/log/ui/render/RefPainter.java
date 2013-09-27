@@ -62,7 +62,7 @@ public class RefPainter {
     int height = HEIGHT_CELL - 2 * RECTANGLE_Y_PADDING;
     RoundRectangle2D rectangle2D = new RoundRectangle2D.Double(x, y, width, height, ROUND_RADIUS, ROUND_RADIUS);
 
-    g2.setColor(myColorManager.getBackgroundColor(ref));
+    g2.setColor(ref.getType().getBackgroundColor());
     g2.fill(rectangle2D);
 
     g2.setColor(myColorManager.getReferenceBorderColor());

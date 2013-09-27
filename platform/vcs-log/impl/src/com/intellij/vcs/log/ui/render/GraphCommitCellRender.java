@@ -88,7 +88,7 @@ public class GraphCommitCellRender implements TableCellRenderer {
     List<VcsRef> refs = cell.getRefsToThisCommit();
     if (!refs.isEmpty()) {
       VirtualFile root = refs.iterator().next().getRoot(); // all refs are from the same commit => they have the same root
-      refs = myDataHolder.getLogProvider(root).getRefSorter().sort(refs);
+      refs = myDataHolder.getLogProvider(root).getReferenceManager().sort(refs);
     }
     refPainter.draw(g2, refs, padding);
 

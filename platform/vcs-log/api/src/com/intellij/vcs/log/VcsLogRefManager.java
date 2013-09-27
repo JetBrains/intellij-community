@@ -1,5 +1,7 @@
 package com.intellij.vcs.log;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
 import java.util.List;
 
@@ -11,11 +13,20 @@ import java.util.List;
  *
  * @author Kirill Likhodedov
  */
-public interface VcsLogRefSorter {
+public interface VcsLogRefManager {
 
   /**
    * Sorts the given references.
    */
+  @NotNull
   List<VcsRef> sort(Collection<VcsRef> refs);
+
+  /**
+   * <p>Groups VCS references to show them on the branches panel.</p>
+   * <p>Groups containing only one element will be displayed as a single ref. Others will provide a popup menu.</p>
+   * <p>Groups must be pre-sorted in the order which they are to be painted on the panel.</p>
+   */
+  @NotNull
+  List<RefGroup> group(Collection<VcsRef> refs);
 
 }

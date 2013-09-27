@@ -54,7 +54,7 @@ class RefParser {
   private static VcsRef createRef(@NotNull Hash hash, @NotNull String longRefPath, @NotNull VirtualFile root) {
     String name = getRefName(longRefPath, "refs/tags/");
     if (name != null) {
-      return new VcsRef(hash, name, VcsRef.RefType.TAG, root);
+      return new VcsRef(hash, name, GitRefManager.TAG, root);
     }
 
     return null;

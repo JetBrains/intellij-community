@@ -109,7 +109,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   @NotNull
   private List<VcsRef> sortRefs(@NotNull Hash hash, @NotNull VirtualFile root) {
     List<VcsRef> refs = myLogDataHolder.getDataPack().getRefsModel().refsToCommit(hash);
-    return myLogDataHolder.getLogProvider(root).getRefSorter().sort(refs);
+    return myLogDataHolder.getLogProvider(root).getReferenceManager().sort(refs);
   }
 
   private static class DataPanel extends JPanel {

@@ -8,6 +8,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.impl.HashImpl;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
@@ -18,9 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-
-import static com.intellij.vcs.log.VcsRef.RefType;
-import static com.intellij.vcs.log.VcsRef.RefType.*;
 
 /**
  * @author Kirill Likhodedov
@@ -104,15 +102,15 @@ public class GitLogRefSorterTest extends UsefulTestCase {
   private static VcsRef ref(String name) {
     String randomHash = randomHash();
     if (isHead(name)) {
-      return ref(randomHash, name, HEAD);
+      return ref(randomHash, name, GitRefManager.HEAD);
     }
     if (isRemoteBranch(name)) {
-      return ref(randomHash, name, REMOTE_BRANCH);
+      return ref(randomHash, name, GitRefManager.REMOTE_BRANCH);
     }
     if (isTag(name)) {
-      return ref(randomHash, name, TAG);
+      return ref(randomHash, name, GitRefManager.TAG);
     }
-    return ref(randomHash, name, LOCAL_BRANCH);
+    return ref(randomHash, name, GitRefManager.LOCAL_BRANCH);
   }
 
   private static String randomHash() {
@@ -135,7 +133,7 @@ public class GitLogRefSorterTest extends UsefulTestCase {
     return !isHead(name) && !isTag(name) && !isRemoteBranch(name);
   }
 
-  private static VcsRef ref(String hash, String name, RefType type) {
+  private static VcsRef ref(String hash, String name, VcsRefType type) {
     return new VcsRef(HashImpl.build(hash), name, type, MOCK_VIRTUAL_FILE);
   }
 
@@ -206,7 +204,7 @@ public class GitLogRefSorterTest extends UsefulTestCase {
         return infos;
       }
     });
-    return new GitLogRefSorter(manager).sort(refs);
+    return new GitRefManager(manager).sort(refs);
   }
 
   // TODO either use the real GitRepository, or move upwards and make more generic implementation

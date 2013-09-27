@@ -3,7 +3,6 @@ package com.intellij.vcs.log.ui;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -14,11 +13,6 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 public class VcsLogColorManagerImpl implements VcsLogColorManager {
-
-  private static final Color HEAD = new JBColor(new Color(0xf1ef9e), new Color(113, 111, 64));
-  private static final Color LOCAL_BRANCH = new JBColor(new Color(0x75eec7), new Color(0x0D6D4F));
-  private static final Color REMOTE_BRANCH = new JBColor(new Color(0xbcbcfc), new Color(0xbcbcfc).darker().darker());
-  private static final Color TAG = JBColor.WHITE;
 
   private static final Color REF_BORDER = JBColor.GRAY;
   private static final Color ROOT_INDICATOR_BORDER = JBColor.LIGHT_GRAY;
@@ -49,23 +43,6 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
   @Override
   public boolean isMultipleRoots() {
     return myRoots.size() > 1;
-  }
-
-  @NotNull
-  @Override
-  public Color getBackgroundColor(@NotNull VcsRef ref) {
-    switch (ref.getType()) {
-      case HEAD:
-        return HEAD;
-      case LOCAL_BRANCH:
-        return LOCAL_BRANCH;
-      case REMOTE_BRANCH:
-        return REMOTE_BRANCH;
-      case TAG:
-        return TAG;
-      default:
-        throw new IllegalArgumentException("Unknown ref type: " + ref.getType() + ", ref: " + ref);
-    }
   }
 
   @NotNull

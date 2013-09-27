@@ -37,7 +37,7 @@ public final class Branch {
   }
 
   public int getBranchNumber() {
-    if (myRef == null || myRef.getType() == VcsRef.RefType.TAG) {
+    if (myRef == null || !myRef.getType().isBranch()) {
       return upCommitHash.hashCode() + 73 * downCommitHash.hashCode();
     }
     return myRef.getName().hashCode();

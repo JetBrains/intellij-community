@@ -36,10 +36,7 @@ import git4idea.repo.GitRepositoryChangeListener;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Kirill Likhodedov
@@ -50,12 +47,12 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull private final Project myProject;
   @NotNull private final GitRepositoryManager myRepositoryManager;
-  @NotNull private final VcsLogRefSorter myRefSorter;
+  @NotNull private final VcsLogRefManager myRefSorter;
 
   public GitLogProvider(@NotNull Project project, @NotNull GitRepositoryManager repositoryManager) {
     myProject = project;
     myRepositoryManager = repositoryManager;
-    myRefSorter = new GitLogRefSorter(myRepositoryManager);
+    myRefSorter = new GitRefManager(myRepositoryManager);
   }
 
   @NotNull
@@ -102,14 +99,15 @@ public class GitLogProvider implements VcsLogProvider {
     Collection<GitRemoteBranch> remoteBranches = repository.getBranches().getRemoteBranches();
     Collection<VcsRef> refs = new ArrayList<VcsRef>(localBranches.size() + remoteBranches.size());
     for (GitLocalBranch localBranch : localBranches) {
-      refs.add(new VcsRef(HashImpl.build(localBranch.getHash()), localBranch.getName(), VcsRef.RefType.LOCAL_BRANCH, root));
+      refs.add(new VcsRef(HashImpl.build(localBranch.getHash()), localBranch.getName(), GitRefManager.LOCAL_BRANCH, root));
     }
     for (GitRemoteBranch remoteBranch : remoteBranches) {
-      refs.add(new VcsRef(HashImpl.build(remoteBranch.getHash()), remoteBranch.getNameForLocalOperations(), VcsRef.RefType.REMOTE_BRANCH, root));
+      refs.add(new VcsRef(HashImpl.build(remoteBranch.getHash()), remoteBranch.getNameForLocalOperations(),
+                          GitRefManager.REMOTE_BRANCH, root));
     }
     String currentRevision = repository.getCurrentRevision();
     if (currentRevision != null) { // null => fresh repository
-      refs.add(new VcsRef(HashImpl.build(currentRevision), "HEAD", VcsRef.RefType.HEAD, root));
+      refs.add(new VcsRef(HashImpl.build(currentRevision), "HEAD", GitRefManager.HEAD, root));
     }
 
     refs.addAll(readTags(root));
@@ -138,7 +136,7 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public VcsLogRefSorter getRefSorter() {
+  public VcsLogRefManager getReferenceManager() {
     return myRefSorter;
   }
 
@@ -154,5 +152,4 @@ public class GitLogProvider implements VcsLogProvider {
       }
     });
   }
-
 }

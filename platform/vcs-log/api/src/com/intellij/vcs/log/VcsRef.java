@@ -10,10 +10,10 @@ public final class VcsRef {
 
   @NotNull private final Hash myCommitHash;
   @NotNull private final String myName;
-  @NotNull private final RefType myType;
+  @NotNull private final VcsRefType myType;
   @NotNull private final VirtualFile myRoot;
 
-  public VcsRef(@NotNull Hash commitHash, @NotNull String name, @NotNull RefType type, @NotNull VirtualFile root) {
+  public VcsRef(@NotNull Hash commitHash, @NotNull String name, @NotNull VcsRefType type, @NotNull VirtualFile root) {
     myCommitHash = commitHash;
     myName = name;
     myType = type;
@@ -21,7 +21,7 @@ public final class VcsRef {
   }
 
   @NotNull
-  public RefType getType() {
+  public VcsRefType getType() {
     return myType;
   }
 
@@ -67,22 +67,5 @@ public final class VcsRef {
   @NotNull
   public VirtualFile getRoot() {
     return myRoot;
-  }
-
-  public enum RefType {
-    LOCAL_BRANCH,
-    REMOTE_BRANCH,
-    TAG,
-    ANOTHER,
-    HEAD;
-
-    public boolean isBranch() {
-      return this == LOCAL_BRANCH || this == REMOTE_BRANCH || this == HEAD;
-    }
-
-    public boolean isLocalOrHead() {
-      return this == LOCAL_BRANCH || this == HEAD;
-    }
-
   }
 }

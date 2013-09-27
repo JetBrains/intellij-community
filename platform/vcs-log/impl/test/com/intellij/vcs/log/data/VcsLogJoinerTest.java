@@ -2,12 +2,15 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.TimeCommitParents;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.parser.CommitParser;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
+import java.awt.*;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -34,6 +37,17 @@ public class VcsLogJoinerTest {
   }
 
   private static VcsRef ref(String name, String hash) {
-    return new VcsRef(HashImpl.build(hash), name, VcsRef.RefType.LOCAL_BRANCH, new StubVirtualFile());
+    return new VcsRef(HashImpl.build(hash), name, new VcsRefType() {
+      @Override
+      public boolean isBranch() {
+        return true;
+      }
+
+      @NotNull
+      @Override
+      public Color getBackgroundColor() {
+        return Color.WHITE;
+      }
+    }, new StubVirtualFile());
   }
 }

@@ -49,17 +49,18 @@ public interface VcsLogProvider {
   Collection<VcsRef> readAllRefs(@NotNull VirtualFile root) throws VcsException;
 
   /**
-   * Returns the VCS which is supported by this provider.
+   * <p>Returns the VCS which is supported by this provider.</p>
+   * <p>If there will be several VcsLogProviders which support the same VCS, only one will be chosen. It is undefined, which one.</p>
    */
   @NotNull
   VcsKey getSupportedVcs();
 
   /**
-   * Returns the {@link VcsLogRefSorter} which will be used to identify positions of references in the log table, on the branches panel,
+   * Returns the {@link VcsLogRefManager} which will be used to identify positions of references in the log table, on the branches panel,
    * and on the details panel.
    */
   @NotNull
-  VcsLogRefSorter getRefSorter();
+  VcsLogRefManager getReferenceManager();
 
   /**
    * <p>Starts listening to events from the certain VCS, which should lead to the log refresh.</p>

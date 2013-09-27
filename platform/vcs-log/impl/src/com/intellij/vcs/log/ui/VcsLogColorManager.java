@@ -1,7 +1,6 @@
 package com.intellij.vcs.log.ui;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -12,12 +11,6 @@ import java.awt.*;
  * @author Kirill Likhodedov
  */
 public interface VcsLogColorManager {
-
-  /**
-   * Returns the background color which should be used to paint a {@link VcsRef reference label}.
-   */
-  @NotNull
-  Color getBackgroundColor(@NotNull VcsRef ref);
 
   /**
    * Returns the color assigned to the given repository root.
