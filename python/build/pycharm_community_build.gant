@@ -308,7 +308,11 @@ private layoutFull(Map args, String target, Set usedJars) {
     }
 
     dir("license") {
-      fileset(dir: "$home/community/license")
+      fileset(dir: "$ch/license")
+      fileset(dir: "$ch") {
+        include(name: "LICENSE.txt")
+        include(name: "NOTICE.txt")
+      }
     }
 
     layoutPlugins(superLayouts)
