@@ -307,6 +307,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testManyDisjunctiveFieldAssignmentsInLoopNotComplex() { doTest(); }
   
   public void testVariablesDiverge() { doTest(); }
+  public void testDontForgetInstanceofInfoWhenMerging() { doTest(); }
   
   public void _testNullCheckBeforeInstanceof() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEA-113220
 }

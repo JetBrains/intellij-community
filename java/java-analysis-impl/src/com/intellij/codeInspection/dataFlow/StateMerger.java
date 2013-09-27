@@ -239,7 +239,8 @@ class StateMerger {
       List<DfaMemoryStateImpl> compatible = ContainerUtil.filter(statesByEq.get(createPair(var, value)), new Condition<DfaMemoryStateImpl>() {
         @Override
         public boolean value(DfaMemoryStateImpl state2) {
-          return seemCompatible(state, state2, var);
+          return seemCompatible(state, state2, var) && 
+                 state.getVariableState(var).withNullability(Nullness.UNKNOWN).equals(state2.getVariableState(var).withNullability(Nullness.UNKNOWN));
         }
       });
       if (compatible.isEmpty()) {
