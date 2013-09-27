@@ -17,10 +17,12 @@ package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.SettingsStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.mvc.GroovySdkForNewModuleWizardStep;
 import org.jetbrains.plugins.groovy.mvc.MvcFramework;
 
@@ -49,15 +51,15 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
 
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
-    return new ModuleWizardStep[]{new GroovySdkForNewModuleWizardStep(this, wizardContext, getFramework())};
+    return new ModuleWizardStep[]{new GroovySdkForNewModuleWizardStep(this, wizardContext, getFramework(), null)};
   }
 
-  //@Nullable
-  //@Override
-  //public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
-  //  return new GroovySdkForNewModuleWizardStep(this, settingsStep.getContext(), getFramework());
-  //}
-  //
+  @Nullable
+  @Override
+  public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
+    return new GroovySdkForNewModuleWizardStep(this, settingsStep.getContext(), getFramework(), settingsStep);
+  }
+
   @Override
   public String getBuilderId() {
     return myBuilderId;

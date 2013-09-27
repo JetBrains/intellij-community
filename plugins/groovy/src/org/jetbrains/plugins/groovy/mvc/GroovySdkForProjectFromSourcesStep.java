@@ -36,15 +36,10 @@ public class GroovySdkForProjectFromSourcesStep extends GroovySdkWizardStepBase 
   public GroovySdkForProjectFromSourcesStep(MvcProjectStructureDetector detector, ProjectFromSourcesBuilder builder,
                                             ProjectDescriptor projectDescriptor,
                                             MvcFramework framework) {
-    super(framework, builder.getContext());
+    super(framework, builder.getContext(), builder.getBaseProjectPath());
     myDetector = detector;
     myBuilder = builder;
     myProjectDescriptor = projectDescriptor;
-  }
-
-  @Override
-  protected String getBasePath() {
-    return myBuilder.getBaseProjectPath();
   }
 
   @Override

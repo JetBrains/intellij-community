@@ -87,6 +87,7 @@ public class LibraryOptionsPanel implements Disposable {
   private JLabel myHiddenLabel;
   private JPanel myRootPanel;
   private JRadioButton myUseFromProviderRadioButton;
+  private JPanel mySimplePanel;
   private ButtonGroup myButtonGroup;
 
   private LibraryCompositionSettings mySettings;
@@ -134,6 +135,10 @@ public class LibraryOptionsPanel implements Disposable {
       showSettingsPanel(libraryDescription, baseDirectoryPath, versionFilter, showDoNotCreateOption,
                         new ArrayList<FrameworkLibraryVersion>());
     }
+  }
+
+  public JPanel getSimplePanel() {
+    return mySimplePanel;
   }
 
   @Nullable
@@ -236,6 +241,9 @@ public class LibraryOptionsPanel implements Disposable {
     if (!canDownload && !canUseFromProvider && !showDoNotCreateOption) {
       myUseLibraryRadioButton.setVisible(false);
       myUseLibraryLabel.setVisible(true);
+    }
+    else {
+      myUseLibraryLabel.setVisible(false);
     }
 
     final Dimension minimumSize = new Dimension(-1, myMessageLabel.getFontMetrics(myMessageLabel.getFont()).getHeight() * 2);
