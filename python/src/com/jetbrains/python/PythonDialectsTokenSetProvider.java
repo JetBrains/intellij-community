@@ -9,7 +9,7 @@ import com.intellij.psi.tree.TokenSet;
  * @author vlan
  */
 public class PythonDialectsTokenSetProvider {
-  public static final PythonDialectsTokenSetProvider INSTANCE = new PythonDialectsTokenSetProvider();
+  public static PythonDialectsTokenSetProvider INSTANCE = new PythonDialectsTokenSetProvider();
 
   private final TokenSet myStatementTokens;
   private final TokenSet myExpressionTokens;
@@ -103,5 +103,9 @@ public class PythonDialectsTokenSetProvider {
    */
   public TokenSet getReferenceExpressionTokens() {
     return myReferenceExpressionTokens;
+  }
+
+  public static void reset() {
+    INSTANCE = new PythonDialectsTokenSetProvider();
   }
 }
