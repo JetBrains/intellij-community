@@ -5,7 +5,7 @@ setProperty("projectHome", guessHome(this as Script))
 includeTargets << new File("${projectHome}/community/build/scripts/utils.gant")
 
 setProperty("outDir", "${projectHome}/out/python")
-setProperty("ideaDir", "${outDir}/idea")
+setProperty("ideaDir", "${outDir}/ideaCE")
 
 setProperty("ideaHome", "${ideaDir}/jdk16") //compiled idea
 
