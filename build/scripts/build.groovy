@@ -118,8 +118,8 @@ class Build {
   }
 
   def compile(Map args) {
-    paths.jdkHome = args.jdk
     projectBuilder.stage("Compile")
+    paths.jdkHome = args.jdk
     if (steps.compile) {
       projectBuilder.arrangeModuleCyclesOutputs = true
       projectBuilder.targetFolder = paths.classesTarget
@@ -191,23 +191,21 @@ class Build {
     }
   }
 
+  //boolean isEap() { return true }
+
   def mac_installation(List arg_paths = [paths.distAll], String arg_macPath = paths.distMac, List extraBins = []){
     projectBuilder.stage("mac installation")
     def extraArgs = ["build.code": "${product}-${suffix}"]
+
     if (steps.sit) {
       projectBuilder.stage("buildMacZip")
-      //String macAppRoot = utils.isEap() ? "${system_selector} EAP.app" : "${product}.app"
-      //suffix = isEap() ? "EAP-${buildNumber}" : p("component.version.major") + "." + p("component.version.minor")
-
-//      utils.buildMacZip(macAppRoot, "${paths.artifacts}/${product}-${suffix}.sit",
       utils.buildMacZip("${suffix}.app", "${paths.artifacts}/${product}-${suffix}.sit",
                         arg_paths, arg_macPath, extraBins)
-//      [paths.distAll], paths.distMac, extraBins)
-//      buildMacZip(appRoot, "$paths.artifacts/${product}-${buildNumber}.sit", [], paths.distAll,
 
       projectBuilder.stage("signMacZip")
       ultimate_utils.signMacZip("webide", extraArgs)
     }
+
     if (steps.dmg) {
       projectBuilder.stage("buildDmg")
       ultimate_utils.buildDmg(product, getDmgImage(), extraArgs)
