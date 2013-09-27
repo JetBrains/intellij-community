@@ -327,7 +327,7 @@ private layoutFull(Map args, String target, Set usedJars) {
         }
         jar("pycharm-openapi-src.zip") {
           fileset(dir: "$pythonCommunityHome/openapi/src")
-          fileset(dir: "$pythonCommunityHome/python/psi-api/src")
+          fileset(dir: "$pythonCommunityHome/psi-api/src")
         }
       }
     }
