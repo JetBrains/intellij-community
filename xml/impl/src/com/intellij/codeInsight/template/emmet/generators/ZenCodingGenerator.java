@@ -75,6 +75,8 @@ public abstract class ZenCodingGenerator {
   @Nullable
   public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
     Editor editor = callback.getEditor();
+    final int currentOffset = editor.getCaretModel().getOffset();
+    final CharSequence documentText = editor.getDocument().getCharsSequence();
     PsiElement element = callback.getContext();
     int line = editor.getCaretModel().getLogicalPosition().line;
     int lineStart = editor.getDocument().getLineStartOffset(line);
@@ -87,8 +89,8 @@ public abstract class ZenCodingGenerator {
         e = e.getPrevSibling();
       }
       if (elementStart >= 0) {
-        int startOffset = elementStart > lineStart ? elementStart : lineStart;
-        String key = computeKey(editor, startOffset);
+        int startOffset = Math.max(elementStart, lineStart);
+        String key = computeKey(startOffset, currentOffset, documentText);
         if (key != null) {
           while (key.length() > 0 && !ZenCodingTemplate.checkTemplateKey(key, callback, this)) {
             key = key.substring(1);
@@ -105,9 +107,11 @@ public abstract class ZenCodingGenerator {
   }
 
   @Nullable
-  protected static String computeKey(Editor editor, int startOffset) {
-    int offset = editor.getCaretModel().getOffset();
-    String s = editor.getDocument().getCharsSequence().subSequence(startOffset, offset).toString();
+  protected static String computeKey(int startOffset, int currentOffset, CharSequence documentText) {
+    if (currentOffset < startOffset || startOffset > documentText.length() || currentOffset > documentText.length()) {
+      return null;
+    }
+    String s = documentText.subSequence(startOffset, currentOffset).toString();
     int index = 0;
     while (index < s.length() && Character.isWhitespace(s.charAt(index))) {
       index++;
