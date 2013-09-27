@@ -705,6 +705,13 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
             return Specifics.NEITHER;
           }
         }
+        if (actualParameterTypes[functionalInterfaceIdx] instanceof PsiMethodReferenceType) {
+          final PsiMethodReferenceExpression
+            methodReferenceExpression = ((PsiMethodReferenceType)actualParameterTypes[functionalInterfaceIdx]).getExpression();
+          if (!methodReferenceExpression.isExact()) {
+            return Specifics.NEITHER;
+          }
+        }
         if (actualParameterTypes[functionalInterfaceIdx] instanceof PsiLambdaExpressionType || actualParameterTypes[functionalInterfaceIdx] instanceof PsiMethodReferenceType) {
           if (interfaceReturnType != null && interfaceReturnType1 != null && !Comparing.equal(interfaceReturnType, interfaceReturnType1)) {
             Specifics moreSpecific1 = comparePrimitives(actualParameterTypes[functionalInterfaceIdx], interfaceReturnType, interfaceReturnType1);

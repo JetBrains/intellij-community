@@ -75,7 +75,14 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
   public boolean isExact() {
     PsiElement resolve = resolve();
     if (resolve instanceof PsiMethod) {
-      return !((PsiMethod)resolve).isVarArgs();
+      if (!((PsiMethod)resolve).isVarArgs()) {
+        if (((PsiMethod)resolve).getTypeParameters().length > 0) {
+          final PsiReferenceParameterList parameterList = getParameterList();
+          return parameterList != null && parameterList.getTypeParameterElements().length > 0;
+        }
+        return true;
+      }
+      return false;
     }
     return resolve != null;
   }
