@@ -20,6 +20,7 @@
             <module name="python-pydev"/>
             <module name="python-openapi"/>
             <module name="python-psi-api"/>
+            <module name="python-community-plugin"/>
             <module name="colorSchemes"/>
           </jar>
           <jar name="resources_en.jar">
