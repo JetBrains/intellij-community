@@ -668,6 +668,10 @@
             text="Generate Python Spellchecker Dictionaries" internal="true">
       <add-to-group group-id="Internal"/>
     </action>
+
+    <action id="PyInvertBooleanAction" class="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanAction" text="Invert Boolean">
+      <add-to-group group-id="RefactoringMenu" anchor="last" />
+    </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
