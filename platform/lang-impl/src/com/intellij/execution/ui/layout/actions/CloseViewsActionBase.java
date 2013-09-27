@@ -16,22 +16,35 @@
 
 package com.intellij.execution.ui.layout.actions;
 
+import com.intellij.execution.ui.actions.BaseViewAction;
 import com.intellij.execution.ui.layout.ViewContext;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
 
-public class CloseAllViewsAction extends CloseViewsActionBase {
+public abstract class CloseViewsActionBase extends BaseViewAction {
   @Override
+  protected void update(AnActionEvent e, ViewContext context, Content[] content) {
+    e.getPresentation().setEnabledAndVisible(isEnabled(context, content, e.getPlace()));
+  }
+
+  @Override
+  protected void actionPerformed(AnActionEvent e, ViewContext context, Content[] content) {
+    ContentManager manager = context.getContentManager();
+    for (Content c : manager.getContents()) {
+      if (c.isCloseable() && isAccepted(c, content)) {
+        manager.removeContent(c, context.isToDisposeRemovedContent());
+      }
+    }
+  }
+
   public boolean isEnabled(ViewContext context, Content[] selectedContents, String place) {
-    int count = 0;
     for (Content c : context.getContentManager().getContents()) {
-      if (c.isCloseable() && ++count > 1) return true;
+      if (c.isCloseable() && isAccepted(c, selectedContents)) return true;
     }
     return false;
   }
 
-  @Override
-  protected boolean isAccepted(@NotNull Content c, @NotNull Content[] selectedContents) {
-    return true;
-  }
+  protected abstract boolean isAccepted(@NotNull Content c, @NotNull Content[] selectedContents);
 }

@@ -16,35 +16,13 @@
 
 package com.intellij.execution.ui.layout.actions;
 
-import com.intellij.execution.ui.actions.BaseViewAction;
-import com.intellij.execution.ui.layout.ViewContext;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.NotNull;
 
-public class CloseOtherViewsAction extends BaseViewAction {
-  @Override
-  protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
-    setEnabled(e, isEnabled(context, content, e.getPlace()));
-  }
+public class CloseOtherViewsAction extends CloseViewsActionBase {
 
   @Override
-  protected void actionPerformed(final AnActionEvent e, final ViewContext context, final Content[] content) {
-    final ContentManager manager = context.getContentManager();
-    for (Content c : manager.getContents()) {
-      if (c != content[0] && c.isCloseable()) {
-        manager.removeContent(c, context.isToDisposeRemovedContent());
-      }
-    }
-  }
-
-  public static boolean isEnabled(ViewContext context, Content[] content, String place) {
-    if (content.length != 1) return false;
-    int closeable = 0;
-    for (Content c : context.getContentManager().getContents()) {
-      if (c == content[0]) continue;
-      if (c.isCloseable()) closeable++;
-    }
-    return closeable > 0;
+  protected boolean isAccepted(@NotNull Content c, @NotNull Content[] selectedContents) {
+    return c != selectedContents[0];
   }
 }
