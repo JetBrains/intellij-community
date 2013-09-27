@@ -67,6 +67,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testBuildRegexpNotComplex() throws Throwable { doTest(); }
   public void testTernaryInWhileNotComplex() throws Throwable { doTest(); }
   public void testTryCatchInForNotComplex() throws Throwable { doTest(); }
+  public void testNestedTryInWhileNotComplex() throws Throwable { doTest(); }
   public void testFieldChangedBetweenSynchronizedBlocks() throws Throwable { doTest(); }
 
   public void testGeneratedEquals() throws Throwable { doTest(); }

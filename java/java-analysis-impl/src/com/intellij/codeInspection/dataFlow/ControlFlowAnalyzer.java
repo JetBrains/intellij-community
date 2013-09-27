@@ -709,6 +709,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       }
       if (scope instanceof PsiCodeBlock) {
         flushCodeBlockVariables((PsiCodeBlock)scope);
+        if (scope.getParent() instanceof PsiTryStatement && scope == ((PsiTryStatement)scope.getParent()).getFinallyBlock()) {
+          addInstruction(new PopOffsetInstruction());
+        }
       }
     }
   }
