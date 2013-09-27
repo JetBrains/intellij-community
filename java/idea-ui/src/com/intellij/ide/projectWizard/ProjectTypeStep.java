@@ -24,6 +24,7 @@ import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -158,7 +159,12 @@ public class ProjectTypeStep extends ModuleWizardStep {
   private void updateOptionsPanel(ProjectCategory projectCategory) {
     if (projectCategory == null) return;
     ModuleBuilder builder = myBuilders.get(projectCategory);
-    JComponent panel = builder.getCustomOptionsPanel(this);
+    JComponent panel = builder.getCustomOptionsPanel(new Disposable() {
+      @Override
+      public void dispose() {
+        disposeUIResources();
+      }
+    });
     String card;
     if (panel != null) {
       card = builder.getBuilderId();

@@ -78,7 +78,6 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
     myContext = context;
     if (includeArtifacts) {
       myArchetypes = new MavenArchetypesPanel(builder, this);
-      Disposer.register(this, myArchetypes);
       myArchetypesPanel.add(myArchetypes.getMainPanel(), BorderLayout.CENTER);
     }
     else {
@@ -294,6 +293,13 @@ public class MavenModuleWizardStep extends ModuleWizardStep {
   @Override
   public String getHelpId() {
     return "reference.dialogs.new.project.fromScratch.maven";
+  }
+
+  @Override
+  public void disposeUIResources() {
+    if (myArchetypes != null) {
+      Disposer.dispose(myArchetypes);
+    }
   }
 }
 
