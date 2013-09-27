@@ -273,7 +273,9 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
           }
         }
 
-        myStoppedAlready = true;
+        synchronized (ProgressWindow.this) {
+          myStoppedAlready = true;
+        }
 
         Disposer.dispose(ProgressWindow.this);
       }
