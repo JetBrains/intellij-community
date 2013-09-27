@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -282,16 +282,13 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
   public boolean isApplicable(PsiFile file, int offset, boolean wrapping) {
-    EmmetOptions emmetOptions = EmmetOptions.getInstance();
-    if (!emmetOptions.isEmmetEnabled()) {
-      return false;
-    }
     if (file == null) {
       return false;
     }
     PsiDocumentManager.getInstance(file.getProject()).commitAllDocuments();
     PsiElement element = CustomTemplateCallback.getContext(file, offset);
-    return findApplicableDefaultGenerator(element, wrapping) != null;
+    final ZenCodingGenerator applicableGenerator = findApplicableDefaultGenerator(element, wrapping);
+    return applicableGenerator != null && applicableGenerator.isEnabled();
   }
 
   public static void doWrap(final String selection,
