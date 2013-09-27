@@ -153,6 +153,10 @@ class GrPullUpTest extends LightGroovyTestCase {
     doTest(false, new MemberDescriptor("I1", PsiClass), new MemberDescriptor("I2", PsiClass))
   }
 
+  void testDocCommentInMethod() {
+    doTest(false, new MemberDescriptor("foo", PsiMethod))
+  }
+
   private void doTest(MemberDescriptor... membersToFind) {
     doTest(true, membersToFind);
   }
