@@ -320,9 +320,13 @@ public class CommandUtil {
     @Nullable
     @Override
     public Repository get() {
-      RootUrlInfo rootInfo = myTarget.isFile()
-                             ? myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myTarget.getFile())
-                             : myVcs.getSvnFileUrlMapping().getWcRootForUrl(myTarget.getURL().toDecodedString());
+      RootUrlInfo rootInfo = null;
+
+      if (!myVcs.getProject().isDefault()) {
+        rootInfo = myTarget.isFile()
+                   ? myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myTarget.getFile())
+                   : myVcs.getSvnFileUrlMapping().getWcRootForUrl(myTarget.getURL().toDecodedString());
+      }
 
       return rootInfo != null ? new Repository(rootInfo.getRepositoryUrlUrl()) : null;
     }
@@ -330,16 +334,26 @@ public class CommandUtil {
 
   public static class InfoCommandRepositoryProvider extends BaseRepositoryProvider {
 
-    public InfoCommandRepositoryProvider(@NotNull SvnVcs vcs,
-                                         @NotNull SvnTarget target) {
+    public InfoCommandRepositoryProvider(@NotNull SvnVcs vcs, @NotNull SvnTarget target) {
       super(vcs, target);
     }
 
     @Nullable
     @Override
     public Repository get() {
-      SVNInfo info = getInfo(myVcs, myTarget);
-      return info != null ? new Repository(info.getRepositoryRootURL()) : null;
+      Repository result;
+
+      if (myTarget.isURL()) {
+        // TODO: Also could still execute info when target is url - either to use info for authentication or to just get correct repository
+        // TODO: url in case of "read" operations are allowed anonymously.
+        result = new Repository(myTarget.getURL());
+      }
+      else {
+        SVNInfo info = getInfo(myVcs, myTarget);
+        result = info != null ? new Repository(info.getRepositoryRootURL()) : null;
+      }
+
+      return result;
     }
   }
 }
