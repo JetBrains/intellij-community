@@ -46,6 +46,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.jsp.JspFile;
+import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.impl.DebuggerSupport;
@@ -94,6 +95,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     return myIcon;
   }
 
+  @Nullable
   @Override
   public String getClassName() {
     return myClassName;
@@ -111,13 +113,14 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     return super.getShortClassName();
   }
 
+  @Nullable
   @Override
   public String getPackageName() {
     return myPackageName;
   }
 
   @Nullable
-  protected Breakpoint init() {
+  public BreakpointWithHighlighter init() {
     if (!isValid()) {
       myHighlighter.dispose();
       return null;
@@ -181,12 +184,16 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   public BreakpointWithHighlighter(@NotNull final Project project, @NotNull final RangeHighlighter highlighter) {
     super(project);
     myHighlighter = highlighter;
-    highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
+    setEditorFilter(highlighter);
     reload();
   }
 
+  protected void setEditorFilter(RangeHighlighter highlighter) {
+    highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
+  }
+
   public RangeHighlighter getHighlighter() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    ApplicationManager.getApplication().assertReadAccessAllowed();
     return myHighlighter;
   }
 
@@ -275,11 +282,12 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
   @Override
   public final void reload() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (getHighlighter().isValid()) {
-      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(getHighlighter().getDocument());
+    ApplicationManager.getApplication().assertReadAccessAllowed();
+    RangeHighlighter highlighter = myHighlighter;
+    if (highlighter != null && highlighter.isValid()) {
+      PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(highlighter.getDocument());
       if (psiFile != null) {
-        mySourcePosition = SourcePosition.createFromOffset(psiFile, getHighlighter().getStartOffset());
+        mySourcePosition = SourcePosition.createFromOffset(psiFile, highlighter.getStartOffset());
         reload(psiFile);
         return;
       }
@@ -319,7 +327,6 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     updateUI();
   }
 
-
   /**
    * updates the state of breakpoint and all the related UI widgets etc
    */
@@ -338,7 +345,6 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
         DebuggerContextImpl context = DebuggerManagerEx.getInstanceEx(project).getContext();
         final DebugProcessImpl debugProcess = context.getDebugProcess();
-
         if (debugProcess == null || !debugProcess.isAttached()) {
           updateCaches(null);
           updateGutter();
@@ -371,9 +377,16 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
   private void updateGutter() {
     if (myVisible) {
-      RangeHighlighter highlighter = getHighlighter();
+      RangeHighlighter highlighter = myHighlighter;
       if (highlighter != null && highlighter.isValid() && isValid()) {
-        setupGutterRenderer(highlighter);
+        AppUIUtil.invokeLaterIfProjectAlive(myProject, new Runnable() {
+          @Override
+          public void run() {
+            if (isValid()) {
+              setupGutterRenderer(myHighlighter);
+            }
+          }
+        });
       }
       else {
         DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().removeBreakpoint(this);
@@ -430,8 +443,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   private void setupGutterRenderer(@NotNull RangeHighlighter highlighter) {
-    MyGutterIconRenderer renderer = new MyGutterIconRenderer(getIcon(), getDescription());
-    highlighter.setGutterIconRenderer(renderer);
+    highlighter.setGutterIconRenderer(new MyGutterIconRenderer(getIcon(), getDescription()));
   }
 
   @Override

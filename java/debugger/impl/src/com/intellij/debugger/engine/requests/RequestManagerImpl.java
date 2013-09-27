@@ -29,7 +29,9 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -37,10 +39,15 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.containers.HashMap;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.sun.jdi.*;
 import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.request.*;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.debugger.breakpoints.JavaBreakpointAdapter;
+import org.jetbrains.java.debugger.breakpoints.JavaBreakpointType;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -390,9 +397,22 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     // invoke later, so that requests are for sure created only _after_ 'processAttached()' methods of other listeners are executed
     process.getManagerThread().schedule(new DebuggerCommandImpl() {
       protected void action() throws Exception {
-        final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myDebugProcess.getProject()).getBreakpointManager();
+        Project project = myDebugProcess.getProject();
+        final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
         for (final Breakpoint breakpoint : breakpointManager.getBreakpoints()) {
           breakpoint.createRequest(myDebugProcess);
+        }
+
+        AccessToken token = ReadAction.start();
+        try {
+          JavaBreakpointAdapter adapter = new JavaBreakpointAdapter(project);
+          for (XLineBreakpoint<XBreakpointProperties> breakpoint : XDebuggerManager.getInstance(project).getBreakpointManager()
+            .getBreakpoints(JavaBreakpointType.class)) {
+            adapter.getOrCreate(breakpoint).createRequest(myDebugProcess);
+          }
+        }
+        finally {
+          token.finish();
         }
       }
     });

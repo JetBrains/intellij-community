@@ -176,7 +176,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     myBreakpointManager.init();
   }
 
-
   @Nullable
   @Override
   public Element getState() {

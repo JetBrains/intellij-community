@@ -35,7 +35,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -60,6 +59,7 @@ import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import com.sun.jdi.request.BreakpointRequest;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
@@ -78,7 +78,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     super(project);
   }
 
-  protected LineBreakpoint(Project project, RangeHighlighter highlighter) {
+  public LineBreakpoint(Project project, RangeHighlighter highlighter) {
     super(project, highlighter);
   }
 
@@ -471,12 +471,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     return ContextUtil.getContextElement(getSourcePosition());
   }
 
-  protected static LineBreakpoint create(Project project, Document document, int lineIndex) {
-    VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(document);
-    if (virtualFile == null) {
-      return null;
-    }
-
+  public static LineBreakpoint create(@NotNull Project project, @NotNull Document document, int lineIndex) {
     final RangeHighlighter highlighter = createHighlighter(project, document, lineIndex);
     if (highlighter == null) {
       return null;
