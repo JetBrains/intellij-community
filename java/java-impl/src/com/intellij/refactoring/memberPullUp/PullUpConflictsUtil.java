@@ -133,7 +133,7 @@ public class PullUpConflictsUtil {
                             : new ConflictingUsagesOfSuperClassMembers(member, subclass, targetPackage, movedMembers, conflicts);
         member.accept(visitor);
       }
-      checkModuleConflictsList.add(member);
+      ContainerUtil.addIfNotNull(checkModuleConflictsList, member);
     }
     for (final PsiMethod method : abstractMethods) {
       ContainerUtil.addIfNotNull(checkModuleConflictsList, method.getParameterList());
