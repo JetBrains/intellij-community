@@ -120,6 +120,9 @@ expected:
 
   static boolean compareFiles(Element reportedProblem, Element expectedProblem) {
     String reportedFileName = reportedProblem.getChildText("file");
+    if (reportedFileName == null) {
+      return true;
+    }
     File reportedFile = new File(reportedFileName);
 
     return Comparing.equal(reportedFile.getName(), expectedProblem.getChildText("file"));
