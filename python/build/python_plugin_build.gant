@@ -70,7 +70,7 @@ target(name: "clean", description: "Cleanup output") {
 
 target(name: "unzip") {
   ant.mkdir(dir: "${ideaHome}")
-  ant.unzip(src: "${ideaDir}/ideaIC-${ideaBuildNumber}.zip", dest: "${ideaHome}")
+  ant.unzip(src: "${ideaDir}/ideaIC-${ideaBuildNumber}.win.zip", dest: "${ideaHome}")
 }
 
 target(name: "compile", description: "Compile module python") {
