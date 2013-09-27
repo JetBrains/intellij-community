@@ -912,6 +912,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myScrollPane.getViewport().invalidate();
   }
 
+  public int getFontSize() {
+    return myScheme.getEditorFontSize();
+  }
+
   @NotNull
   public ActionCallback type(@NotNull final String text) {
     final ActionCallback result = new ActionCallback();

@@ -123,6 +123,8 @@
       <action id="EditorDuplicateLines" class="com.intellij.openapi.editor.actions.DuplicateLinesAction"/>
       <action id="EditorToggleInsertState" class="com.intellij.openapi.editor.actions.ToggleInsertStateAction"/>
       <action id="EditorToggleColumnMode" class="com.intellij.openapi.editor.actions.ToggleColumnModeAction"/>
+      <action id="EditorIncreaseFontSize" class="com.intellij.openapi.editor.actions.ChangeEditorFontSizeAction$IncreaseEditorFontSize"/>
+      <action id="EditorDecreaseFontSize" class="com.intellij.openapi.editor.actions.ChangeEditorFontSizeAction$DecreaseEditorFontSize"/>
 
       <action id="EditorScrollToCenter" class="com.intellij.openapi.editor.actions.ScrollToCenterAction"/>
       <action id="EditorToggleCase" class="com.intellij.openapi.editor.actions.ToggleCaseAction"/>
