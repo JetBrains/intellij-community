@@ -72,7 +72,7 @@ public class PyTestRunnerTest extends LightPlatformTestCase {
   }
 
   private static String[] runUTRunner(String workDir, String... args) throws ExecutionException {
-    File helpersDir = new File(PathManager.getHomePath(), "python/helpers");
+    File helpersDir = new File(PyTestCase.getHelpersPath());
     File utRunner = new File(helpersDir, "pycharm/utrunner.py");
     List<String> allArgs = new ArrayList<String>();
     allArgs.add(utRunner.getPath());

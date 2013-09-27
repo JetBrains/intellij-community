@@ -1,6 +1,5 @@
-package com.jetbrains.python.quickFixes;
+package com.jetbrains.python;
 
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.inspections.PyMethodMayBeStaticInspection;
 
 /**

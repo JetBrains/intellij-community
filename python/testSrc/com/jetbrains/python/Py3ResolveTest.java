@@ -4,6 +4,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
@@ -14,13 +15,13 @@ import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 public class Py3ResolveTest extends PyResolveTestCase {
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+    return PyTestCase.ourPy3Descriptor;
   }
 
   @Override
   protected PsiElement doResolve() {
     myFixture.configureByFile("resolve/" + getTestName(false) + ".py");
-    final PsiReference ref = findReferenceByMarker(myFixture.getFile());
+    final PsiReference ref = PyResolveTestCase.findReferenceByMarker(myFixture.getFile());
     return ref.resolve();
   }
 

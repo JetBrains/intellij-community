@@ -287,6 +287,6 @@ public class PythonLexerTest extends PyLexerTestCase {
   }
 
   private static void doTest(String text, String... expectedTokens) {
-    doLexerTest(text, new PythonIndentingLexer(), expectedTokens);
+    PyLexerTestCase.doLexerTest(text, new PythonIndentingLexer(), expectedTokens);
   }
 }

@@ -3,7 +3,6 @@ package com.jetbrains.python;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.ParsingTestCase;
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.cython.CythonTokenSetContributor;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 
@@ -24,7 +23,6 @@ public class PythonParsingTest extends ParsingTestCase {
     PyTestCase.initPlatformPrefix();
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
-    registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new CythonTokenSetContributor());
   }
 
   @Override

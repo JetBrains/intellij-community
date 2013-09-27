@@ -10,6 +10,9 @@
     <orderEntry type="module" module-name="testFramework" />
     <orderEntry type="module" module-name="python-psi-api" scope="TEST" />
     <orderEntry type="module" module-name="python-community" scope="TEST" />
+    <orderEntry type="module" module-name="xdebugger-api" scope="TEST" />
+    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="spellchecker" scope="TEST" />
   </component>
 </module>
 

@@ -1,20 +1,14 @@
 package com.jetbrains.python;
 
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.PsiManagerImpl;
-import com.jetbrains.cython.psi.CythonFunction;
-import com.jetbrains.cython.psi.CythonVariable;
-import com.jetbrains.python.fixtures.PyResolveTestCase;
+import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
 
 /**
  * @author yole
  */
-public class PyMultiFileResolveTest extends PyResolveTestCase {
-  protected String myTestFileName;
+public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
 
   private static void checkInitPyDir(PsiElement elt, String dirname) {
     assertTrue(elt instanceof PyFile);
@@ -266,96 +260,6 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
       myTestFileName = null;
     }
   }
-
-  public void testCythonFromModuleCImport() {
-    assertResolvesTo(CythonFunction.class, "foo");
-  }
-
-  public void testCythonFromModuleCImportAs() {
-    assertResolvesTo(CythonFunction.class, "foo");
-  }
-
-  public void testCythonFromModuleCImportStar() {
-    assertResolvesTo(CythonFunction.class, "foo");
-  }
-
-  public void testCythonFromPackageCImportAttribute() {
-    assertResolvesTo(CythonFunction.class, "foo");
-  }
-
-  public void testCythonFromPackageCImportModule() {
-    assertResolvesTo(PyFile.class, "m1.pxd");
-  }
-
-  public void testCythonFromPackageCImportPackage() {
-    assertResolvesTo(PyFile.class, "__init__.pxd");
-  }
-
-  public void testCythonCImportAttribute() {
-    assertResolvesTo(PyFile.class, "m1.pxd");
-  }
-
-  public void testCythonCImportPackage() {
-    assertResolvesTo(PyFile.class, "__init__.pxd");
-  }
-
-  public void testCythonCImportModule() {
-    assertResolvesTo(PyFile.class, "m1.pxd");
-  }
-
-  public void testCythonImplicitCImport() {
-    assertResolvesTo(CythonFunction.class, "foo");
-  }
-
-  public void testCythonInclude() {
-    assertResolvesTo(CythonFunction.class, "foo");
-  }
-
-  // PY-4843
-  public void testCythonFromSubmoduleAbsoluteCImport() {
-    prepareTestDirectory();
-    final VirtualFile file = myFixture.findFileInTempDir("p1/m2.pyx");
-    assertNotNull("Could not find test file", file);
-    final PsiFile psiFile = myFixture.getPsiManager().findFile(file);
-    PsiElement element = doResolve(psiFile);
-    assertInstanceOf(element, CythonVariable.class);
-    assertEquals("foo", ((PsiNamedElement)element).getName());
-  }
-
-  // PY-4844
-  public void testCythonFromModuleCImportExternStar() {
-    assertResolvesTo(CythonVariable.class, "foo");
-  }
-
-  public void testCythonCdefClassForwardInclude() {
-    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "bar");
-    final PyExpression value = target.findAssignedValue();
-    assertNotNull(value);
-    final PsiReference ref = value.getReference();
-    assertNotNull(ref);
-    final PsiElement field = ref.resolve();
-    assertNotNull(field);
-    assertInstanceOf(field, CythonVariable.class);
-    assertEquals("foo", ((PsiNamedElement)field).getName());
-  }
-
-  public void testCythonImportFromPython() {
-    assertResolvesTo(CythonFunction.class, "foo");
-  }
-
-  // PY-4946
-  public void testCythonCdefClassAttributeInDefinition() {
-    final PyTargetExpression target = assertResolvesTo(PyTargetExpression.class, "foo");
-    final PyExpression value = target.findAssignedValue();
-    assertNotNull(value);
-    final PsiReference ref = value.getReference();
-    assertNotNull(ref);
-    final PsiElement field = ref.resolve();
-    assertNotNull(field);
-    assertInstanceOf(field, CythonVariable.class);
-    assertEquals("x", ((PsiNamedElement)field).getName());
-  }
-
   // PY-2813
   public void testFromNamespacePackageImport() {
     assertResolvesTo(PyFunction.class, "foo");
@@ -441,70 +345,12 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
   public void testFromPackageModuleImportElementNamedAsModule() {
     assertResolvesTo(PyFunction.class, "foo");
     final PsiManager psiManager = myFixture.getPsiManager();
-    assertNotParsed((PyFile)psiManager.findFile(myFixture.findFileInTempDir("p1/__init__.py")));
-    assertNotParsed((PyFile)psiManager.findFile(myFixture.findFileInTempDir("p1/foo.py")));
+    PyTestCase.assertNotParsed((PyFile)psiManager.findFile(myFixture.findFileInTempDir("p1/__init__.py")));
+    PyTestCase.assertNotParsed((PyFile)psiManager.findFile(myFixture.findFileInTempDir("p1/foo.py")));
   }
 
   // PY-10819
   public void testFromPackageModuleImportStarElementNamedAsModule() {
     assertResolvesTo(PyFunction.class, "foo");
-  }
-
-  private void prepareTestDirectory() {
-    final String testName = getTestName(true);
-    myFixture.copyDirectoryToProject(testName, "");
-    PsiDocumentManager.getInstance(myFixture.getProject()).commitAllDocuments();
-  }
-
-  private PsiFile prepareFile() {
-    prepareTestDirectory();
-    VirtualFile sourceFile = null;
-    for (String ext : new String[]{".py", ".pyx"}) {
-      final String fileName = myTestFileName != null ? myTestFileName : getTestName(false) + ext;
-      sourceFile = myFixture.findFileInTempDir(fileName);
-      if (sourceFile != null) {
-        break;
-      }
-    }
-    assertNotNull("Could not find test file", sourceFile);
-    return myFixture.getPsiManager().findFile(sourceFile);
-  }
-
-  @Override
-  protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/resolve/multiFile/";
-  }
-
-  protected PsiElement doResolve(PsiFile psiFile) {
-    final PsiPolyVariantReference ref = findReferenceByMarker(psiFile);
-    final PsiManagerImpl psiManager = (PsiManagerImpl)myFixture.getPsiManager();
-    psiManager.setAssertOnFileLoadingFilter(new VirtualFileFilter() {
-      @Override
-      public boolean accept(VirtualFile file) {
-        FileType fileType = file.getFileType();
-        return fileType == PythonFileType.INSTANCE;
-      }
-    });
-    try {
-      final ResolveResult[] resolveResults = ref.multiResolve(false);
-      if (resolveResults.length == 0) {
-        return null;
-      }
-      return resolveResults[0].isValidResult() ? resolveResults[0].getElement() : null;
-    }
-    finally {
-      psiManager.setAssertOnFileLoadingFilter(VirtualFileFilter.NONE);
-    }
-  }
-
-  @Override
-  protected PsiElement doResolve() {
-    return doResolve(prepareFile());
-  }
-
-  private ResolveResult[] doMultiResolve() {
-    PsiFile psiFile = prepareFile();
-    final PsiPolyVariantReference ref = findReferenceByMarker(psiFile);
-    return ref.multiResolve(false);
   }
 }

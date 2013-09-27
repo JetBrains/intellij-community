@@ -1,4 +1,4 @@
-package com.jetbrains.python.quickFixes;
+package com.jetbrains.python;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.jetbrains.python.PythonTestUtil;
