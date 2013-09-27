@@ -111,7 +111,6 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the next sibling, or null if the node is the last in the list of siblings.
    */
-  @Nullable
   PsiElement getNextSibling();
 
   /**
@@ -119,7 +118,6 @@ public interface PsiElement extends UserDataHolder, Iconable {
    *
    * @return the previous sibling, or null if the node is the first in the list of siblings.
    */
-  @Nullable
   PsiElement getPrevSibling();
 
   /**
