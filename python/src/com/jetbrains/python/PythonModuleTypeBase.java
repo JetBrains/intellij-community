@@ -1,6 +1,8 @@
 package com.jetbrains.python;
 
+import com.intellij.facet.FacetType;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleTypeManager;
 import icons.PythonIcons;
@@ -30,7 +32,14 @@ public abstract class PythonModuleTypeBase<T extends ModuleBuilder> extends Modu
 
   @NotNull
   public String getDescription() {
-    return "Python modules are used for developing <b>Python</b> applications. Supported technologies include <b>Django, Google App Engine, Mako, Jinja2</b> and others.";
+    String basicDescription = "Python modules are used for developing <b>Python</b> applications.";
+    FacetType[] facetTypes = Extensions.getExtensions(FacetType.EP_NAME);
+    for (FacetType type : facetTypes) {
+      if (type.getId().toString().equalsIgnoreCase("django")) {
+        return basicDescription + " Supported technologies include <b>Django, Google App Engine, Mako, Jinja2</b> and others.";
+      }
+    }
+    return basicDescription;
   }
 
   public Icon getBigIcon() {
