@@ -50,10 +50,12 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
     }
     
     final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, PsiUtil.resolveGenericsClassInType(myT));
-    final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
-    for (PsiParameter parameter : parameters) {
-      if (!session.isProperType(substitutor.substitute(parameter.getType()))) {
-        return false;
+    if (!myExpression.isExact()) {
+      final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
+      for (PsiParameter parameter : parameters) {
+        if (!session.isProperType(substitutor.substitute(parameter.getType()))) {
+          return false;
+        }
       }
     }
 

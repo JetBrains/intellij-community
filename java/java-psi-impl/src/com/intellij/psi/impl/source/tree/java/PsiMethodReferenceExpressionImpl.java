@@ -77,7 +77,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
     if (resolve instanceof PsiMethod) {
       return !((PsiMethod)resolve).isVarArgs();
     }
-    return true;
+    return resolve != null;
   }
 
   @Override
