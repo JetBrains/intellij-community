@@ -569,19 +569,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           }
         }
         else if (isSetting(value)) {
-          String hit = ((OptionDescription)value).getHit();
-          if (hit == null) {
-            hit = ((OptionDescription)value).getOption();
-          }
-          hit = StringUtil.unescapeXml(hit);
-          if (hit.length() > 60) {
-            hit = hit.substring(0, 60) + "...";
-          }
-          hit = hit.replace("  ", " "); //avoid extra spaces from mnemonics and xml conversion
-          String text = hit.trim();
-          if (text.endsWith(":")) {
-            text = text.substring(0, text.length() - 1);
-          }
+          String text = getSettingText((OptionDescription)value);
           append(text);
           final String id = ((OptionDescription)value).getConfigurableId();
           final String name = myConfigurables.get(id);
@@ -620,6 +608,23 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     private Font getTitleFont() {
       return UIUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL));
     }
+  }
+
+  private String getSettingText(OptionDescription value) {
+    String hit = value.getHit();
+    if (hit == null) {
+      hit = value.getOption();
+    }
+    hit = StringUtil.unescapeXml(hit);
+    if (hit.length() > 60) {
+      hit = hit.substring(0, 60) + "...";
+    }
+    hit = hit.replace("  ", " "); //avoid extra spaces from mnemonics and xml conversion
+    String text = hit.trim();
+    if (text.endsWith(":")) {
+      text = text.substring(0, text.length() - 1);
+    }
+    return text;
   }
 
   private void schedulePopupUpdate() {
@@ -705,21 +710,24 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       final Set<AnAction> actions = new HashSet<AnAction>();
       final Set<Object> settings = new HashSet<Object>();
       final HashSet<AnAction> toolWindows = new HashSet<AnAction>();
+      final MinusculeMatcher matcher = new MinusculeMatcher("*" +pattern, NameUtil.MatchingCaseSensitivity.NONE);
 
       List<MatchResult> matches = collectResults(pattern, myActions, myActionModel);
 
       for (MatchResult o : matches) {
-        myProgressIndicator.checkCanceled();
+        //myProgressIndicator.checkCanceled();
         Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
         for (Object object : objects) {
-          myProgressIndicator.checkCanceled();
-          if (isSetting(object) && settings.size() < 5) {
-            settings.add(object);
+          //myProgressIndicator.checkCanceled();
+          if (isSetting(object) && settings.size() < 7) {
+            if (matcher.matches(getSettingText((OptionDescription)object))) {
+              settings.add(object);
+            }
           }
           else if (isToolWindowAction(object) && toolWindows.size() < 10) {
             toolWindows.add((AnAction)((Map.Entry)object).getKey());
           }
-          else if (isActionValue(object) && actions.size() < 5) {
+          else if (isActionValue(object) && actions.size() < 7) {
             actions.add((AnAction)((Map.Entry)object).getKey());
           }
         }
@@ -743,14 +751,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               myListModel.addElement(action);
             }
           }
-          myMoreActionsIndex = actions.size() >= 5 ? myListModel.size() - 1 : -1;
+          myMoreActionsIndex = actions.size() >= 7 ? myListModel.size() - 1 : -1;
           if (settings.size() > 0) {
             myTitleIndexes.settings = myListModel.size();
             for (Object setting : settings) {
               myListModel.addElement(setting);
             }
           }
-          myMoreSettingsIndex = settings.size() >= 5 ? myListModel.size() - 1 : -1;
+          myMoreSettingsIndex = settings.size() >= 7 ? myListModel.size() - 1 : -1;
         }
       });
     }
@@ -1105,6 +1113,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         if (model instanceof CustomMatcherModel) {
           try {
             result = ((CustomMatcherModel)model).matches(name, pattern) ? new MatchResult(name, 0, true) : null;
+            if (result != null && model == myActionModel) {
+              ((CustomMatcherModel)model).matches(name, pattern);
+            }
           }
           catch (Exception ignore) {
           }
