@@ -20,18 +20,17 @@ import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 
-public class CloseAllViewsAction extends CloseViewsActionBase {
+public class CloseAllUnpinnedViewsAction extends CloseViewsActionBase {
   @Override
   public boolean isEnabled(ViewContext context, Content[] selectedContents, String place) {
-    int count = 0;
-    for (Content c : context.getContentManager().getContents()) {
-      if (c.isCloseable() && ++count > 1) return true;
+    for (Content content : context.getContentManager().getContents()) {
+      if (content.isPinned()) return super.isEnabled(context, selectedContents, place);
     }
     return false;
   }
 
   @Override
   protected boolean isAccepted(@NotNull Content c, @NotNull Content[] selectedContents) {
-    return true;
+    return !c.isPinned();
   }
 }
