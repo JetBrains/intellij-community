@@ -225,6 +225,8 @@
     <defaultLiveTemplatesProvider implementation="com.jetbrains.django.DjangoDefaultLiveTemplatesProvider"/>
     <projectService serviceImplementation="com.jetbrains.django.console.DjangoConsoleOptions"/>
 
+    <psi.treeChangePreprocessor implementation="com.jetbrains.django.lang.template.DjangoTemplateTreeChangePreprocessor"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
     <framework.detector implementation="com.jetbrains.appengine.facet.AppEngineFrameworkDetector"/>
@@ -456,12 +458,6 @@
     <visitorFilter language="Chameleon" implementationClass="com.jetbrains.pyramid.templates.highlighting.ChameleonTemplateVisitorFilter"/>
     <pyClassMembersProvider implementation="com.jetbrains.pyramid.codeInsight.PyramidRequestClassMembersProvider"/>
   </extensions>
-
-  <project-components>
-    <component>
-      <implementation-class>com.jetbrains.django.lang.template.DjangoTemplatePsiManager</implementation-class>
-    </component>
-  </project-components>
 
   <actions>
     <action id="PyInvertBooleanAction" class="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanAction" text="Invert Boolean">
