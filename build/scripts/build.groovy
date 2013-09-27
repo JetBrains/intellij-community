@@ -130,7 +130,6 @@ class Build {
       else{
         usedJars = ultimate_utils.buildModules(modules, args.module_libs)
       }
-      projectBuilder.stage("additionalCompilation")
       ultimate_utils.additionalCompilation()
     }
   }
