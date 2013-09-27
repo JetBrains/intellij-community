@@ -34,6 +34,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.actions.TextComponentEditorAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -419,7 +420,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     myBalloon = JBPopupFactory.getInstance().createBalloonBuilder(panel)
       .setShowCallout(false)
       .setHideOnKeyOutside(false)
-      .setHideOnAction(true)
+      .setHideOnAction(false)
       .setAnimationCycle(0)
       .setDialogMode(false)
       .setBorderColor(new JBColor(new Color(156, 192, 255), Gray._77))
@@ -1047,6 +1048,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
               @Override
               public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+                if (action instanceof TextComponentEditorAction) {
+                  return;
+                }
                 myPopup.cancel();
               }
             }, myPopup);
