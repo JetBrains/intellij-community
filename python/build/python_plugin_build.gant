@@ -3,9 +3,7 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 setProperty("projectHome", guessHome(this as Script))
 
 includeTargets << new File("${projectHome}/community/build/scripts/utils.gant")
-includeTargets << new File("${projectHome}/python/build/python_common.gant")
 
-setProperty("contribHome", "${projectHome}/contrib")
 setProperty("outDir", "${projectHome}/out/python")
 setProperty("ideaDir", "${outDir}/idea")
 
@@ -16,7 +14,7 @@ setProperty("pluginHelp", "${outDir}/help")
 setProperty("buildNumber", requireProperty("build.number", snapshot))
 setProperty("ideaBuildNumber", requireProperty("idea.build.number"))
 
-setProperty("pluginHome", "${projectHome}/python")
+setProperty("pluginHome", "${projectHome}/python/community")
 setProperty("pluginRevision", "${buildNumber}")
 
 setProperty("ideaLib", "${ideaHome}/lib")
@@ -30,21 +28,11 @@ setProperty("plugindir", "${zipdir}/python")
 setProperty("zipname", "python-${pluginRevision}.zip")
 
 setProperty("srcDir", "${pluginHome}/src")
-setProperty("restSrcDir", "${pluginHome}/community/rest/src")
-setProperty("localizationSrcDir", "${pluginHome}/localization/src")
 
 setProperty("resourcesDir", "${pluginHome}/resources")
-setProperty("restResourcesDir", "${pluginHome}/rest/resources")
-setProperty("localizationResourcesDir", "${pluginHome}/localization/resources")
-setProperty("pluginResourcesDir", "${pluginHome}/pluginResources")
 
 setProperty("classesRootDir", "${outDir}/classes")
 setProperty("classesDir", "${classesRootDir}/python")
-setProperty("restClassesDir", "${classesRootDir}/rest")
-setProperty("localizationClassesDir", "${classesRootDir}/localization")
-
-setProperty("restJarName", "${output}/rest-${buildNumber}.jar")
-setProperty("localizationJarName", "${output}/localization-${buildNumber}.jar")
 
 //Compiler options
 setProperty("compilerDebug", "on")
@@ -70,10 +58,6 @@ ant.patternset(id: "resources.pt") {
   exclude(name: "**/plugin.xml")
 }
 
-def connectorPlugins = ["django-db-config", "python-javascript-debugger", "python-uml", "python-localization", "python-rest",
-                        "python-remote-interpreter"]
-def contribPlugins = ["pycharm-flask", "pycharm-numpy"]
-
 target(name: "clean", description: "Cleanup output") {
   ant.echo("Cleaning ${output}")
   ant.delete(dir: "${output}", failonerror: "false")
@@ -85,188 +69,19 @@ target(name: "clean", description: "Cleanup output") {
 
 target(name: "unzip") {
   ant.mkdir(dir: "${ideaHome}")
-  ant.unzip(src: "${ideaDir}/ideaIU-${ideaBuildNumber}.zip", dest: "${ideaHome}")
+  ant.unzip(src: "${ideaDir}/ideaIC-${ideaBuildNumber}.zip", dest: "${ideaHome}")
 }
-
-def patchPluginXml(path) {
-  ant.replaceregexp(file: path,
-                    match: "since-build=\"\\d+\\.\\d+\"",
-                    replace: "since-build=\"${ideaBuildNumber}\"")
-  ant.replaceregexp(file: path,
-                    match: "\\d+\\.SNAPSHOT",
-                    replace: "${ideaBuildNumber}")
-
-}
-
-target(name: "compileRest", description: "Compile module rest") {
-  depends("unzip")
-  ant.path(id: "classpath.lib") {
-    fileset(dir: "${ideaLib}") {
-      include(name: "?*.jar")
-    }
-  }
-
-  //The task requires the following libraries from IntelliJ IDEA distribution:
-  //javac2.jar; jdom.jar; asm.jar; asm-commons.jar
-  ant.taskdef(name: "javac2", classname: "com.intellij.ant.Javac2") {
-    classpath(refid: "classpath.lib")
-  }
-
-  ant.mkdir(dir: "${restClassesDir}")
-
-  //compile
-  ant.javac2(destdir: "${restClassesDir}",
-             debug: "${compilerDebug}",
-             nowarn: "${compilerGenerateNoWarnings}",
-             memorymaximumsize: "${compilerMaxMemory}",
-             fork: "true") {
-    compilerarg(line: "${compilerArgs}")
-    classpath(refid: "classpath.lib")
-    src {
-      pathelement(location: "${restSrcDir}")
-    }
-  }
-
-  //copy resources
-  ant.copy(todir: "${restClassesDir}") {
-    fileset(dir: "${restSrcDir}") {
-      patternset(refid: "resources.pt")
-      type(type: "file")
-    }
-  }
-  ant.copy(todir: "${restClassesDir}") {
-    fileset(dir: "${restResourcesDir}") {
-      patternset(refid: "resources.pt")
-      type(type: "file")
-    }
-  }
-
-  //copy plugin.xml
-  ant.mkdir(dir: "${restClassesDir}/META-INF")
-  ant.copy(todir: "${restClassesDir}/META-INF") {
-    fileset(dir: "${pluginHome}/rest/resources/META-INF")
-  }
-
-  patchPluginXml("${restClassesDir}/META-INF/plugin.xml")
-}
-
-target(name: "jarRest", description: "Generate jar file for ReST plugin") {
-  depends("compileRest")
-  ant.mkdir(dir: "${output}")
-  ant.jar(destfile: "${restJarName}", basedir: "${restClassesDir}") {
-    manifest() {
-      attribute(name: "Revision", value: "${pluginRevision}")
-      //<!--<attribute name="Build" value="${plugin.version}"/>-->
-    }
-  }
-}
-
-target(name: "compileLocalization", description: "Compile module localization") {
-  depends("unzip")
-  ant.path(id: "classpath.lib") {
-    fileset(dir: "${ideaLib}") {
-      include(name: "?*.jar")
-    }
-  }
-
-  ant.path(id: "sourcepath") {
-    dirset(dir: "${pluginHome}") {
-      include(name: "localization/src")
-    }
-  }
-  //The task requires the following libraries from IntelliJ IDEA distribution:
-  //javac2.jar; jdom.jar; asm.jar; asm-commons.jar
-  ant.taskdef(name: "javac2", classname: "com.intellij.ant.Javac2") {
-    classpath(refid: "classpath.lib")
-  }
-
-  ant.mkdir(dir: "${localizationClassesDir}")
-
-  //compile
-  ant.javac2(destdir: "${localizationClassesDir}",
-             debug: "${compilerDebug}",
-             nowarn: "${compilerGenerateNoWarnings}",
-             memorymaximumsize: "${compilerMaxMemory}",
-             fork: "true") {
-    compilerarg(line: "${compilerArgs}")
-    classpath(refid: "classpath.lib")
-    src {
-      pathelement(location: "${localizationSrcDir}")
-    }
-  }
-
-  //copy resources
-  ant.copy(todir: "${localizationClassesDir}") {
-    fileset(dir: "${localizationSrcDir}") {
-      patternset(refid: "resources.pt")
-      type(type: "file")
-    }
-  }
-  ant.copy(todir: "${localizationClassesDir}") {
-    fileset(dir: "${localizationResourcesDir}") {
-      patternset(refid: "resources.pt")
-      type(type: "file")
-    }
-  }
-
-  //copy plugin.xml
-  ant.mkdir(dir: "${localizationClassesDir}/META-INF")
-  ant.copy(todir: "${localizationClassesDir}/META-INF") {
-    fileset(dir: "${pluginHome}/localization/resources/META-INF")
-  }
-
-  patchPluginXml("${localizationClassesDir}/META-INF/plugin.xml")
-}
-
-target(name: "jarLocalization", description: "Generate jar file for localization plugin") {
-  depends("compileLocalization")
-  ant.mkdir(dir: "${output}")
-  ant.jar(destfile: "${localizationJarName}", basedir: "${localizationClassesDir}") {
-    manifest() {
-      attribute(name: "Revision", value: "${pluginRevision}")
-      //<!--<attribute name="Build" value="${plugin.version}"/>-->
-    }
-  }
-}
-
 
 target(name: "compile", description: "Compile module python") {
   depends("unzip")
-  depends("jarRest")
-  depends("jarLocalization")
 
   ant.path(id: "classpath.lib") {
     fileset(dir: "${ideaLib}") {
       include(name: "?*.jar")
-    }
-    fileset(dir: "${ideaPlugins}/yaml/lib") {
-      include(name: "yaml.jar")
-    }
-    fileset(dir: "${ideaPlugins}/coverage/lib") {
-      include(name: "coverage.jar")
-      include(name: "coverage-agent.jar")
-    }
-    fileset(dir: "${ideaPlugins}/JavaScriptDebugger/lib") {
-      include(name: "JavaScriptDebugger.jar")
-    }
-    fileset(dir: "${ideaPlugins}/webDeployment/lib") {
-      include(name: "webDeployment.jar")
-      include(name: "commons-vfs*.jar")
-    }
-    fileset(dir: "${ideaPlugins}/uml/lib") {
-      include(name: "*.jar")
-    }
-    fileset(dir: "${ideaPlugins}/DatabaseSupport/lib") {
-      include(name: "*.jar")
-    }
-    fileset(dir: "${ideaPlugins}/remote-run/lib") {
-      include(name: "*.jar")
     }
     fileset(dir: "${ideaPlugins}/terminal/lib") {
       include(name: "*.jar")
     }
-    pathelement(location: restJarName)
-    pathelement(location: localizationJarName)
   }
 
   ant.path(id: "sourcepath") {
@@ -274,19 +89,10 @@ target(name: "compile", description: "Compile module python") {
       include(name: "resources")
       include(name: "src")
       include(name: "pluginSrc")
-      include(name: "community/pydevSrc")
-      include(name: "community/openapi/src")
-      include(name: "community/psi-api/src")
-      include(name: "community/src")
-      include(name: "pluginResources")
+      include(name: "pydevSrc")
+      include(name: "openapi/src")
+      include(name: "psi-api/src")
     }
-    connectorPlugins.each {
-      pathelement(location: "${pluginHome}/${it}/src")
-    }
-    contribPlugins.each {
-      pathelement(location: "${contribHome}/${it}/src")
-    }
-    pathelement(location: "${pluginHome}/../ultimate/ultimate-verifier/src")
   }
   //The task requires the following libraries from IntelliJ IDEA distribution:
   //javac2.jar; jdom.jar; asm.jar; asm-commons.jar
@@ -317,46 +123,25 @@ target(name: "compile", description: "Compile module python") {
       patternset(refid: "resources.pt")
       type(type: "file")
     }
-    fileset(dir: "${pluginResourcesDir}") {
-      patternset(refid: "resources.pt")
-      type(type: "file")
-    }
     fileset(dir: "${pluginHome}/src") {
       patternset(refid: "resources.pt")
       type(type: "file")
     }
-    fileset(dir: "${pluginHome}/community/psi-api/resources") {
+    fileset(dir: "${pluginHome}/psi-api/resources") {
       patternset(refid: "resources.pt")
       type(type: "file")
     }
-    fileset(dir: "${pluginHome}/community/src") {
+    fileset(dir: "${pluginHome}/resources") {
       patternset(refid: "resources.pt")
       type(type: "file")
     }
-    fileset(dir: "${pluginHome}/community/resources") {
-      patternset(refid: "resources.pt")
-      type(type: "file")
-    }
-    connectorPlugins.each {
-      fileset(dir: "${pluginHome}/${it}/resources") {
-        patternset(refid: "resources.pt")
-        type(type: "file")
-      }
-    }
-    contribPlugins.each {
-      fileset(dir: "${contribHome}/${it}/resources") {
-        patternset(refid: "resources.pt")
-        type(type: "file")
-      }
-    }
-    fileset(dir: "${pluginHome}/../community/colorSchemes/src")
+    fileset(dir: "${pluginHome}/../../community/colorSchemes/src")
   }
 
   //copy plugin.xml
   ant.mkdir(dir: "${classesDir}/META-INF")
   ant.copy(todir: "${classesDir}/META-INF") {
-    fileset(file: "${pluginHome}/pluginSrc/META-INF/plugin.xml")
-    fileset(file: "${pluginHome}/build/python-plugin-dependencies.xml")
+    fileset(file: "${pluginHome}/pluginSrc/META-INF/*.xml")
   }
 
   ant.replaceregexp(file: "${classesDir}/META-INF/plugin.xml",
@@ -367,7 +152,7 @@ target(name: "compile", description: "Compile module python") {
 target(name: "jar", description: "Generate jar file") {
   depends("compile")
   ant.mkdir(dir: "${output}")
-  ant.jar(destfile: "${output}/python.jar", basedir: "${classesDir}") {
+  ant.jar(destfile: "${output}/python-community.jar", basedir: "${classesDir}") {
     manifest() {
       attribute(name: "Revision", value: "${pluginRevision}")
       //<!--<attribute name="Build" value="${plugin.version}"/>-->
@@ -382,11 +167,11 @@ target(name: "zip", description: "Generate zip plugin file") {
 
   // copy plugin jar
   ant.mkdir(dir: "${plugindir}/lib")
-  ant.move(file: "${output}/python.jar", todir: "${plugindir}/lib")
+  ant.move(file: "${output}/python-community.jar", todir: "${plugindir}/lib")
 
   ant.mkdir(dir: "${plugindir}/helpers")
   ant.copy(todir: "${plugindir}/helpers") {
-    fileset(dir: "${pluginHome}/community/helpers") {
+    fileset(dir: "${pluginHome}/helpers") {
       include(name: "**/*")
     }
   }
@@ -395,19 +180,12 @@ target(name: "zip", description: "Generate zip plugin file") {
   ant.copy(file: "${pluginHelp}/pytonpluginhelp.jar", tofile: "${plugindir}/help/pythonpluginhelp.jar")
   ant.copy(file: "${pluginHelp}/pytonpluginhelp_mac.jar", tofile: "${plugindir}/help/pythonpluginhelp_mac.jar")
 
-  ant.move(file: "${debugEgg}", todir: "${plugindir}")
-  ant.move(file: "${debugEggPy3K}", todir: "${plugindir}")
-
   ant.zip(basedir: "${zipdir}", destfile: "${output}/${zipname}")
 }
 
 target(name: "build") {
   depends("unzip")
   depends("compile")
-  egg = buildDebuggerEgg(outDir, pluginHome, "PythonPlugin-${buildNumber}")
-  setProperty("debugEgg", "$egg")
-  egg = buildDebuggerEggPy3K(outDir, pluginHome, "PythonPlugin-${buildNumber}")
-  setProperty("debugEggPy3K", "$egg")
 }
 
 target(name: "dist", description: "main target") {
