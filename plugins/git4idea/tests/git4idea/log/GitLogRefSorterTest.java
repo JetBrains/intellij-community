@@ -10,6 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.impl.VcsRefImpl;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.branch.GitBranchesCollection;
@@ -134,7 +135,7 @@ public class GitLogRefSorterTest extends UsefulTestCase {
   }
 
   private static VcsRef ref(String hash, String name, VcsRefType type) {
-    return new VcsRef(HashImpl.build(hash), name, type, MOCK_VIRTUAL_FILE);
+    return new VcsRefImpl(HashImpl.build(hash), name, type, MOCK_VIRTUAL_FILE);
   }
 
   private static void check(Collection<VcsRef> unsorted, List<VcsRef> expected) {

@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.impl.VcsRefImpl;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitVcs;
@@ -99,15 +100,15 @@ public class GitLogProvider implements VcsLogProvider {
     Collection<GitRemoteBranch> remoteBranches = repository.getBranches().getRemoteBranches();
     Collection<VcsRef> refs = new ArrayList<VcsRef>(localBranches.size() + remoteBranches.size());
     for (GitLocalBranch localBranch : localBranches) {
-      refs.add(new VcsRef(HashImpl.build(localBranch.getHash()), localBranch.getName(), GitRefManager.LOCAL_BRANCH, root));
+      refs.add(new VcsRefImpl(HashImpl.build(localBranch.getHash()), localBranch.getName(), GitRefManager.LOCAL_BRANCH, root));
     }
     for (GitRemoteBranch remoteBranch : remoteBranches) {
-      refs.add(new VcsRef(HashImpl.build(remoteBranch.getHash()), remoteBranch.getNameForLocalOperations(),
+      refs.add(new VcsRefImpl(HashImpl.build(remoteBranch.getHash()), remoteBranch.getNameForLocalOperations(),
                           GitRefManager.REMOTE_BRANCH, root));
     }
     String currentRevision = repository.getCurrentRevision();
     if (currentRevision != null) { // null => fresh repository
-      refs.add(new VcsRef(HashImpl.build(currentRevision), "HEAD", GitRefManager.HEAD, root));
+      refs.add(new VcsRefImpl(HashImpl.build(currentRevision), "HEAD", GitRefManager.HEAD, root));
     }
 
     refs.addAll(readTags(root));

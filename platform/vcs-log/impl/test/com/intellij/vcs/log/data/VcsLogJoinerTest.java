@@ -2,6 +2,7 @@ package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.vcs.log.impl.VcsRefImpl;
 import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.TimeCommitParents;
 import com.intellij.vcs.log.VcsRef;
@@ -37,7 +38,7 @@ public class VcsLogJoinerTest {
   }
 
   private static VcsRef ref(String name, String hash) {
-    return new VcsRef(HashImpl.build(hash), name, new VcsRefType() {
+    return new VcsRefImpl(HashImpl.build(hash), name, new VcsRefType() {
       @Override
       public boolean isBranch() {
         return true;

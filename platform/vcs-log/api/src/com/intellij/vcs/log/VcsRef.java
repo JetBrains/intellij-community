@@ -1,71 +1,52 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author erokhins
+ * A special reference to a commit, such as a branch or a tag.
+ *
+ * @author Kirill Likhodedov
  */
-public final class VcsRef {
+public interface VcsRef {
 
-  @NotNull private final Hash myCommitHash;
-  @NotNull private final String myName;
-  @NotNull private final VcsRefType myType;
-  @NotNull private final VirtualFile myRoot;
-
-  public VcsRef(@NotNull Hash commitHash, @NotNull String name, @NotNull VcsRefType type, @NotNull VirtualFile root) {
-    myCommitHash = commitHash;
-    myName = name;
-    myType = type;
-    myRoot = root;
-  }
-
+  /**
+   * Returns the hash of the commit which this reference points to.
+   */
   @NotNull
-  public VcsRefType getType() {
-    return myType;
-  }
+  Hash getCommitHash();
 
+  /**
+   * Returns the display name of the reference.
+   */
   @NotNull
-  public Hash getCommitHash() {
-    return myCommitHash;
-  }
+  String getName();
 
+  /**
+   * Returns the type of this reference. There can be different types across different VCS.
+   */
   @NotNull
-  public String getName() {
-    return myName;
-  }
+  VcsRefType getType();
 
-  @Override
-  public String toString() {
-    return String.format("%s:%s(%s|%s)", myRoot.getName(), myName, myCommitHash, myType);
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    VcsRef ref = (VcsRef)o;
-
-    if (!myCommitHash.equals(ref.myCommitHash)) return false;
-    if (!myName.equals(ref.myName)) return false;
-    if (!myRoot.equals(ref.myRoot)) return false;
-    if (myType != ref.myType) return false;
-
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = myCommitHash.hashCode();
-    result = 31 * result + (myName.hashCode());
-    result = 31 * result + (myRoot.hashCode());
-    result = 31 * result + (myType.hashCode());
-    return result;
-  }
-
+  /**
+   * Returns the VCS root this reference belongs to.
+   */
   @NotNull
-  public VirtualFile getRoot() {
-    return myRoot;
-  }
+  VirtualFile getRoot();
+
 }

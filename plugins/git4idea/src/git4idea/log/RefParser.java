@@ -3,6 +3,7 @@ package git4idea.log;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.impl.VcsRefImpl;
 import com.intellij.vcs.log.impl.HashImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +55,7 @@ class RefParser {
   private static VcsRef createRef(@NotNull Hash hash, @NotNull String longRefPath, @NotNull VirtualFile root) {
     String name = getRefName(longRefPath, "refs/tags/");
     if (name != null) {
-      return new VcsRef(hash, name, GitRefManager.TAG, root);
+      return new VcsRefImpl(hash, name, GitRefManager.TAG, root);
     }
 
     return null;
