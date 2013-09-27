@@ -64,7 +64,7 @@ public class PyTestUtil {
     final String className = pyClass.getName();
     if (className == null) return false;
     final String name = className.toLowerCase();
-    if (name != null && name.startsWith("test")) {
+    if (name.startsWith("test")) {
       for (PyFunction cls : pyClass.getMethods()) {
         if (isPyTestFunction(cls)) {
           return true;
