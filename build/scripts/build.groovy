@@ -191,7 +191,7 @@ class Build {
     }
   }
 
-  def mac_installation(List extraBins = []){
+  def mac_installation(List arg_paths = [paths.distAll], String arg_macPath = paths.distMac, List extraBins = []){
     projectBuilder.stage("mac installation")
     def extraArgs = ["build.code": "${product}-${suffix}"]
     if (steps.sit) {
@@ -201,7 +201,9 @@ class Build {
 
 //      utils.buildMacZip(macAppRoot, "${paths.artifacts}/${product}-${suffix}.sit",
       utils.buildMacZip("${suffix}.app", "${paths.artifacts}/${product}-${suffix}.sit",
-                        [paths.distAll], paths.distMac, extraBins)
+                        arg_paths, arg_macPath, extraBins)
+//      [paths.distAll], paths.distMac, extraBins)
+//      buildMacZip(appRoot, "$paths.artifacts/${product}-${buildNumber}.sit", [], paths.distAll,
 
       projectBuilder.stage("signMacZip")
       ultimate_utils.signMacZip("webide", extraArgs)
