@@ -22,7 +22,7 @@ setProperty("ideaLib", "${ideaHome}/lib")
 setProperty("ideaPlugins", "${ideaHome}/plugins") //compiled plugins
 
 
-setProperty("output", "${projectHome}/python/dist")
+setProperty("output", "${projectHome}/python/distCE")
 
 setProperty("zipdir", "${output}/zip")
 setProperty("plugindir", "${zipdir}/python")
