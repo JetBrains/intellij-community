@@ -149,4 +149,8 @@ public abstract class PyTestCase extends UsefulTestCase {
   public static void initPlatformPrefix() {
     PlatformTestCase.initPlatformPrefix(UsefulTestCase.IDEA_MARKER_CLASS, PlatformUtils.PYCHARM_PREFIX);
   }
+
+  public static String getHelpersPath() {
+    return new File(PathManager.getHomePath(), "python/community/helpers").getPath();
+  }
 }

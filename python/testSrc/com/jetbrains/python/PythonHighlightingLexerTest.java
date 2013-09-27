@@ -156,6 +156,6 @@ public class PythonHighlightingLexerTest extends PyLexerTestCase {
     }
 
   private static void doTest(LanguageLevel languageLevel, String text, String... expectedTokens) {
-    doLexerTest(text, new PythonHighlightingLexer(languageLevel), expectedTokens);
+    PyLexerTestCase.doLexerTest(text, new PythonHighlightingLexer(languageLevel), expectedTokens);
   }
 }

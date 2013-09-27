@@ -16,7 +16,7 @@
     <orderEntry type="library" name="XmlRPC" level="project" />
     <orderEntry type="module" module-name="xdebugger-api" />
     <orderEntry type="library" name="http-client-3.1" level="project" />
-    <orderEntry type="module" module-name="RegExpSupport" />
+    <orderEntry type="module" module-name="RegExpSupport" exported="" />
     <orderEntry type="module" module-name="testRunner" />
     <orderEntry type="module" module-name="smRunner" />
     <orderEntry type="module" module-name="spellchecker" />

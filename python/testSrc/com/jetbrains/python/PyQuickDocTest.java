@@ -7,8 +7,10 @@ import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.TestDataFile;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+import junit.framework.Assert;
 
 import java.io.IOException;
 import java.util.Map;
@@ -27,14 +29,14 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   private void checkByHTML(String text) {
-    assertNotNull(text);
+    Assert.assertNotNull(text);
     checkByHTML(text, "/quickdoc/" + getTestName(false) + ".html");
   }
 
   private void checkByHTML(String text, @TestDataFile String filePath) {
     final String fullPath = getTestDataPath() + filePath;
-    final VirtualFile vFile = getVirtualFileByName(fullPath);
-    assertNotNull("file " + fullPath + " not found", vFile);
+    final VirtualFile vFile = PyTestCase.getVirtualFileByName(fullPath);
+    Assert.assertNotNull("file " + fullPath + " not found", vFile);
 
     String loadedText;
     try {
@@ -44,7 +46,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
       throw new RuntimeException(e);
     }
     String fileText = StringUtil.convertLineSeparators(loadedText, "\n");
-    assertEquals(fileText.trim(), text.trim());
+    Assert.assertEquals(fileText.trim(), text.trim());
   }
 
   @Override
@@ -54,16 +56,16 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
   private void checkRefDocPair() {
     Map<String, PsiElement> marks = loadTest();
-    assertEquals(2, marks.size());
+    Assert.assertEquals(2, marks.size());
     final PsiElement original_elt = marks.get("<the_doc>");
     PsiElement doc_elt = original_elt.getParent(); // ident -> expr
-    assertTrue(doc_elt instanceof PyStringLiteralExpression);
+    Assert.assertTrue(doc_elt instanceof PyStringLiteralExpression);
     String doc_text = ((PyStringLiteralExpression)doc_elt).getStringValue();
-    assertNotNull(doc_text);
+    Assert.assertNotNull(doc_text);
 
     PsiElement ref_elt = marks.get("<the_ref>").getParent(); // ident -> expr
     final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyReferenceExpression)ref_elt).getReference().resolve();
-    assertEquals(doc_elt, doc_owner.getDocStringExpression());
+    Assert.assertEquals(doc_elt, doc_owner.getDocStringExpression());
 
     checkByHTML(myProvider.generateDoc(doc_owner, original_elt));
   }
@@ -127,15 +129,15 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
   public void testInheritedMethod() {
     Map<String, PsiElement> marks = loadTest();
-    assertEquals(2, marks.size());
+    Assert.assertEquals(2, marks.size());
     PsiElement doc_elt = marks.get("<the_doc>").getParent(); // ident -> expr
-    assertTrue(doc_elt instanceof PyStringLiteralExpression);
+    Assert.assertTrue(doc_elt instanceof PyStringLiteralExpression);
     String doc_text = ((PyStringLiteralExpression)doc_elt).getStringValue();
-    assertNotNull(doc_text);
+    Assert.assertNotNull(doc_text);
 
     PsiElement ref_elt = marks.get("<the_ref>").getParent(); // ident -> expr
     final PyDocStringOwner doc_owner = (PyDocStringOwner)((PyReferenceExpression)ref_elt).getReference().resolve();
-    assertNull(doc_owner.getDocStringExpression()); // no direct doc!
+    Assert.assertNull(doc_owner.getDocStringExpression()); // no direct doc!
 
     checkByHTML(myProvider.generateDoc(doc_owner, null));
   }

@@ -8,10 +8,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
+import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import junit.framework.Assert;
 
 import java.io.IOException;
 
@@ -236,10 +238,10 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     for (Instruction instruction : instructions) {
       buffer.append(instruction).append("\n");
     }
-    final VirtualFile vFile = getVirtualFileByName(fullPath);
+    final VirtualFile vFile = PyTestCase.getVirtualFileByName(fullPath);
     try {
       final String fileText = StringUtil.convertLineSeparators(VfsUtil.loadText(vFile), "\n");
-      assertEquals(fileText.trim(), buffer.toString().trim());
+      Assert.assertEquals(fileText.trim(), buffer.toString().trim());
     }
     catch (IOException e) {
       throw new RuntimeException(e);

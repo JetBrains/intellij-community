@@ -2,7 +2,6 @@ package com.jetbrains.python.testRunner;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.ArrayUtil;
@@ -67,12 +66,12 @@ public class PyDocTestRunnerTest extends LightPlatformTestCase {
   }
 
   private static String[] runUTRunner(String workDir, String... args) throws ExecutionException {
-    File helpersDir = new File(PathManager.getHomePath(), "python/helpers");
-    File utRunner = new File(helpersDir, "pycharm/docrunner.py");
+    String helpersPath = PyTestCase.getHelpersPath();
+    File utRunner = new File(helpersPath, "pycharm/docrunner.py");
     List<String> allArgs = new ArrayList<String>();
     allArgs.add(utRunner.getPath());
     Collections.addAll(allArgs, args);
-    final ProcessOutput output = JythonUnitTestUtil.runJython(workDir, helpersDir.getPath(), ArrayUtil.toStringArray(allArgs));
+    final ProcessOutput output = JythonUnitTestUtil.runJython(workDir, helpersPath, ArrayUtil.toStringArray(allArgs));
     assertEquals(output.getStderr(), 0, splitLines(output.getStderr()).length);
     return splitLines(output.getStdout());
   }
