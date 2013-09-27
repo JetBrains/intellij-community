@@ -57,11 +57,8 @@ public class GradleDependenciesContributor implements GradleMethodContextContrib
 
     final GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
     if (methodCallInfo.size() == 2) {
-      PsiClass psiClass =
-        psiManager.findClassWithCache(GradleCommonClassNames.GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY, place.getResolveScope());
-      if (psiClass != null) {
-        psiClass.processDeclarations(processor, state, null, place);
-      }
+      GradleResolverUtil.processDeclarations(
+        psiManager, processor, state, place, GradleCommonClassNames.GRADLE_API_ARTIFACTS_EXTERNAL_MODULE_DEPENDENCY);
       // Assuming that the method call is addition of new dependency into configuration.
       PsiClass contributorClass =
         psiManager.findClassWithCache(GradleCommonClassNames.GRADLE_API_DEPENDENCY_HANDLER, place.getResolveScope());

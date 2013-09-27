@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.gradle.service.resolve;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -69,9 +68,6 @@ public class GradleRootContributor implements GradleMethodContextContributor {
     }
 
     GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
-    PsiClass contributorClass = psiManager.findClassWithCache(GradleCommonClassNames.GRADLE_API_PROJECT, place.getResolveScope());
-    if (contributorClass != null) {
-      contributorClass.processDeclarations(processor, state, null, place);
-    }
+    GradleResolverUtil.processDeclarations(psiManager, processor, state, place, GradleCommonClassNames.GRADLE_API_PROJECT);
   }
 }

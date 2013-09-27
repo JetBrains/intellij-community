@@ -20,9 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -42,18 +40,13 @@ import java.util.List;
  * @since 9/9/13
  */
 public class GradleTaskContributor implements GradleMethodContextContributor {
+
   @Override
   public void process(@NotNull List<String> methodCallInfo,
                       @NotNull PsiScopeProcessor processor,
                       @NotNull ResolveState state,
                       @NotNull PsiElement place) {
-    if (methodCallInfo.isEmpty()) {
-      return;
-    }
-    final String methodCall = ContainerUtil.getLastItem(methodCallInfo);
-    if (methodCall == null || !methodCall.equals("task")) {
-      return;
-    }
+    if (methodCallInfo.isEmpty()) return;
 
     if (methodCallInfo.size() == 1) {
       if (place.getParent() instanceof GrShiftExpressionImpl) {
@@ -68,18 +61,14 @@ public class GradleTaskContributor implements GradleMethodContextContributor {
       else {
         processTaskTypeParameter(processor, state, place);
       }
-      GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
-      PsiClass psiClass = psiManager.findClassWithCache(GradleCommonClassNames.GRADLE_API_PROJECT, place.getResolveScope());
-      if (psiClass != null) {
-        psiClass.processDeclarations(processor, state, null, place);
-      }
+
+      GradleImplicitContributor.processImplicitDeclarations(processor, state, place);
     }
     else if (methodCallInfo.size() >= 3) {
-      GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
-      PsiClass psiClass = psiManager.findClassWithCache(GradleCommonClassNames.GRADLE_API_PROJECT, place.getResolveScope());
-      if (psiClass != null) {
-        psiClass.processDeclarations(processor, state, null, place);
-      }
+      processTaskTypeParameter(processor, state, place);
+
+      GradleImplicitContributor.processImplicitDeclarations(processor, state, place);
+
       if (place.getText().equals(GradleSourceSetsContributor.SOURCE_SETS) &&
           StringUtil.startsWith(methodCallInfo.get(0), GradleSourceSetsContributor.SOURCE_SETS + '.')) {
         GradleResolverUtil.addImplicitVariable(processor, state, place, GradleCommonClassNames.GRADLE_API_SOURCE_SET_CONTAINER);
@@ -91,44 +80,35 @@ public class GradleTaskContributor implements GradleMethodContextContributor {
                                                @NotNull ResolveState state,
                                                @NotNull PsiElement place) {
     final int taskTypeParameterLevel = 3;
-    PsiElement psiElement = findParent(place, taskTypeParameterLevel);
+    PsiElement psiElement = GradleResolverUtil.findParent(place, taskTypeParameterLevel);
 
     if (psiElement instanceof GrMethodCallExpression) {
       GrMethodCallExpression callExpression = (GrMethodCallExpression)psiElement;
       GrArgumentList argumentList = callExpression.getArgumentList();
-      if (argumentList != null) {
+      if (argumentList != null && argumentList.getAllArguments().length > 0) {
         for (GroovyPsiElement argument : argumentList.getAllArguments()) {
           if (argument instanceof GrNamedArgument) {
             GrNamedArgument namedArgument = (GrNamedArgument)argument;
             GrExpression grExpression = namedArgument.getExpression();
             PsiType psiType = null;
             if (grExpression != null) {
-              psiType = grExpression.getType();
+              psiType = GradleResolverUtil.getTypeOf(grExpression);
             }
             if (psiType instanceof PsiImmediateClassType) {
               PsiImmediateClassType immediateClassType = (PsiImmediateClassType)psiType;
               for (PsiType type : immediateClassType.getParameters()) {
                 GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
-                PsiClass psiClass = psiManager.findClassWithCache(type.getCanonicalText(), place.getResolveScope());
-                if (psiClass != null) {
-                  psiClass.processDeclarations(processor, state, null, place);
-                }
+                GradleResolverUtil.processDeclarations(psiManager, processor, state, place, type.getCanonicalText());
               }
             }
           }
         }
       }
+      else {
+        GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
+        GradleResolverUtil.processDeclarations(psiManager, processor, state, place, GradleCommonClassNames.GRADLE_API_TASK);
+      }
     }
-  }
-
-  @Nullable
-  private static PsiElement findParent(@NotNull PsiElement element, int level) {
-    PsiElement parent = element;
-    do {
-      parent = parent.getParent();
-    }
-    while (parent != null && --level > 0);
-    return parent;
   }
 
   private static void processTaskAddition(@NotNull String name,
