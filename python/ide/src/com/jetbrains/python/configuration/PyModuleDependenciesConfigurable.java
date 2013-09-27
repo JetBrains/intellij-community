@@ -70,7 +70,7 @@ public class PyModuleDependenciesConfigurable implements UnnamedConfigurable {
 
   @Override
   public boolean isModified() {
-    return collectDependencies().equals(myInitialDependencies);
+    return !collectDependencies().equals(myInitialDependencies);
   }
 
   private List<Module> collectDependencies() {
