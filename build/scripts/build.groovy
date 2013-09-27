@@ -200,7 +200,7 @@ class Build {
       //suffix = isEap() ? "EAP-${buildNumber}" : p("component.version.major") + "." + p("component.version.minor")
 
 //      utils.buildMacZip(macAppRoot, "${paths.artifacts}/${product}-${suffix}.sit",
-      utils.buildMacZip("$suffix.app", "${paths.artifacts}/${product}-${suffix}.sit",
+      utils.buildMacZip("${suffix}.app", "${paths.artifacts}/${product}-${suffix}.sit",
                         [paths.distAll], paths.distMac, extraBins)
 
       projectBuilder.stage("signMacZip")
