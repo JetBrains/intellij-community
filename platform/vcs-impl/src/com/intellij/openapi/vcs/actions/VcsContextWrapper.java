@@ -28,11 +28,15 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Set;
 
 public class VcsContextWrapper implements VcsContext {
   protected final DataContext myContext;
@@ -136,7 +140,7 @@ public class VcsContextWrapper implements VcsContext {
   }
 
   public FilePath[] getSelectedFilePaths() {
-    Set<FilePath> result = new HashSet<FilePath>();
+    Set<FilePath> result = new THashSet<FilePath>();
     FilePath path = VcsDataKeys.FILE_PATH.getData(myContext);
     if (path != null) {
       result.add(path);
@@ -169,7 +173,6 @@ public class VcsContextWrapper implements VcsContext {
     }
 
     return result.toArray(new FilePath[result.size()]);
-
   }
 
   @Nullable

@@ -72,7 +72,6 @@ public class AggregatedDictionary implements EditableDictionary {
     getCachedDictionary().removeFromDictionary(word);
   }
 
-
   @Override
   public void replaceAll(@Nullable Collection<String> words) {
     Set<String> oldWords = getProjectDictionary().getWords();
@@ -96,7 +95,6 @@ public class AggregatedDictionary implements EditableDictionary {
     cachedDictionary.traverse(consumer);
   }
 
-
   @Override
   public Set<String> getWords() {
     return cachedDictionary.getWords();
@@ -113,7 +111,6 @@ public class AggregatedDictionary implements EditableDictionary {
     return getProjectDictionary().getEditableWords();
   }
 
-
   @Override
   public void addToDictionary(@Nullable Collection<String> words) {
     getProjectDictionary().addToDictionary(words);
@@ -127,6 +124,4 @@ public class AggregatedDictionary implements EditableDictionary {
   public ProjectDictionary getProjectDictionary() {
     return projectDictionary;
   }
-
-
 }

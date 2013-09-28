@@ -23,7 +23,6 @@ import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -164,12 +163,7 @@ public final class CompressedDictionary implements Dictionary {
 
 
   public String toString() {
-    @NonNls StringBuilder sb = new StringBuilder();
-    sb.append("CompressedDictionary");
-    sb.append("{wordsCount=").append(wordsCount);
-    sb.append(", name='").append(name).append('\'');
-    sb.append('}');
-    return sb.toString();
+    return "CompressedDictionary" + "{wordsCount=" + wordsCount + ", name='" + name + '\'' + '}';
   }
 
   @NotNull
