@@ -23,7 +23,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.MakeSerializableFix;
+import com.siyeh.ig.fixes.DelegatingFixFactory;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +45,7 @@ public class ComparatorNotSerializableInspection extends BaseInspection {
   @Override
   @Nullable
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new MakeSerializableFix();
+    return DelegatingFixFactory.createMakeSerializableFix((PsiClass)infos[0]);
   }
 
   @Override
@@ -61,7 +61,7 @@ public class ComparatorNotSerializableInspection extends BaseInspection {
           SerializationUtils.isSerializable(aClass)) {
         return;
       }
-      registerClassError(aClass);
+      registerClassError(aClass, aClass);
     }
   }
 }
