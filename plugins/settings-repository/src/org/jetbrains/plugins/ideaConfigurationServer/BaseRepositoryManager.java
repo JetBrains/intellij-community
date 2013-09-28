@@ -91,6 +91,9 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
         if (async) {
           writeToFile(path, content, size);
         }
+        else if (!new File(path).exists()) {
+          return;
+        }
         doAdd(path);
       }
     });
