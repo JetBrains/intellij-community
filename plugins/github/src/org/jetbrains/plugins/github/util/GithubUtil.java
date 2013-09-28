@@ -232,7 +232,17 @@ public class GithubUtil {
         throw new GithubAuthenticationException("Anonymous connection not allowed");
     }
 
-    return testConnection(auth);
+    try {
+      return testConnection(auth);
+    }
+    catch (IOException e) {
+      if (GithubSslSupport.isCertificateException(e)) {
+        if (GithubSslSupport.getInstance().askIfShouldProceed(auth.getHost())) {
+          return testConnection(auth);
+        }
+      }
+      throw e;
+    }
   }
 
   @NotNull
