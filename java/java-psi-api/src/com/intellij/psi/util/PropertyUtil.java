@@ -38,6 +38,7 @@ import java.util.*;
  * @author Mike
  */
 public class PropertyUtil {
+  @NonNls private static final String IS_PREFIX = "is";
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PropertyUtil");
 
   private PropertyUtil() {
@@ -63,9 +64,9 @@ public class PropertyUtil {
       PsiType returnType = method.getReturnType();
       if (returnType != null && PsiType.VOID.equals(returnType)) return false;
     }
-    else if (methodName.startsWith("is") && methodNameLength > "is".length()) {
-      if (Character.isLowerCase(methodName.charAt("is".length()))
-          && (methodNameLength == "is".length() + 1 || Character.isLowerCase(methodName.charAt("is".length() + 1)))) {
+    else if (methodName.startsWith(IS_PREFIX) && methodNameLength > IS_PREFIX.length()) {
+      if (Character.isLowerCase(methodName.charAt(IS_PREFIX.length()))
+          && (methodNameLength == IS_PREFIX.length() + 1 || Character.isLowerCase(methodName.charAt(IS_PREFIX.length() + 1)))) {
         return false;
       }
       PsiType returnType = method.getReturnType();
@@ -323,7 +324,7 @@ public class PropertyUtil {
     @NonNls StringBuffer name = new StringBuffer(StringUtil.capitalizeWithJavaBeanConvention(propertyName));
     if (isBoolean(propertyType)) {
       if (existingGetterName == null || !existingGetterName.startsWith("get")) {
-        name.insert(0, "is");
+        name.insert(0, IS_PREFIX);
       }
       else {
         name.insert(0, "get");
@@ -343,7 +344,7 @@ public class PropertyUtil {
   @NonNls
   public static String[] suggestGetterNames(String propertyName) {
     final String str = StringUtil.capitalizeWithJavaBeanConvention(propertyName);
-    return new String[] { "is" + str, "get" + str };
+    return new String[] { IS_PREFIX + str, "get" + str };
   }
 
   public static String suggestSetterName(@NonNls String propertyName) {
@@ -532,7 +533,13 @@ public class PropertyUtil {
   public static String suggestPropertyName(Project project, PsiField field) {
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
     VariableKind kind = codeStyleManager.getVariableKind(field);
-    return codeStyleManager.variableNameToPropertyName(field.getName(), kind);
+    String name = codeStyleManager.variableNameToPropertyName(field.getName(), kind);
+    if (!field.hasModifierProperty(PsiModifier.STATIC) && isBoolean(field.getType())) {
+      if (name.startsWith(IS_PREFIX) && name.length() > IS_PREFIX.length() && Character.isUpperCase(name.charAt(IS_PREFIX.length()))) {
+        name = Introspector.decapitalize(name.substring(IS_PREFIX.length()));
+      }
+    }
+    return name;
   }
 
   public static String suggestGetterName(Project project, PsiField field) {
@@ -850,8 +857,8 @@ public static PsiMethod getReversePropertyMethod(PsiMethod propertyMethod) {
   if (methodName.startsWith("get")) {
     prefix = "get";
   }
-  else if (methodName.startsWith("is")) {
-    prefix = "is";
+  else if (methodName.startsWith(IS_PREFIX)) {
+    prefix = IS_PREFIX;
   }
   else if (methodName.startsWith("set")) {
     prefix = "set";
@@ -875,7 +882,7 @@ public static PsiMethod getReversePropertyMethod(PsiMethod propertyMethod) {
     if (result != null) {
       return result;
     }
-    return findPropertyMethod(aClass, "is", name, field);
+    return findPropertyMethod(aClass, IS_PREFIX, name, field);
   }
   else {
     return findPropertyMethod(aClass, "set", name, field);

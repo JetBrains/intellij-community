@@ -762,11 +762,6 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
       doDecapitalize = true;
     }
 
-    if (name.startsWith(IS_PREFIX) && name.length() > IS_PREFIX.length() && Character.isUpperCase(name.charAt(IS_PREFIX.length()))) {
-      name = name.substring(IS_PREFIX.length());
-      doDecapitalize = true;
-    }
-
     if (doDecapitalize) {
       name = Introspector.decapitalize(name);
     }
