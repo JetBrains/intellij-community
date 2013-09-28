@@ -18,12 +18,10 @@ package org.jetbrains.plugins.github.ui;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SortedComboBoxModel;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
 import java.util.Comparator;
@@ -41,7 +39,7 @@ public class GithubCreatePullRequestPanel {
   private JButton mySelectForkButton;
   private JLabel myForkLabel;
 
-  public GithubCreatePullRequestPanel(@Nullable final Consumer<String> showDiff, @NotNull final Runnable showSelectForkDialog) {
+  public GithubCreatePullRequestPanel(@Nullable final ActionListener showDiffAction, @NotNull final ActionListener selectForkAction) {
     myDescriptionTextArea.setBorder(BorderFactory.createEtchedBorder());
     myBranchModel = new SortedComboBoxModel<String>(new Comparator<String>() {
       @Override
@@ -51,23 +49,8 @@ public class GithubCreatePullRequestPanel {
     });
     myBranchComboBox.setModel(myBranchModel);
 
-    if (showDiff != null) {
-      myShowDiffButton.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          showDiff.consume(getBranch());
-        }
-      });
-    }
-    else {
-      myShowDiffButton.setEnabled(false);
-    }
-    mySelectForkButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        showSelectForkDialog.run();
-      }
-    });
+    myShowDiffButton.addActionListener(showDiffAction);
+    mySelectForkButton.addActionListener(selectForkAction);
   }
 
   @NotNull
@@ -83,6 +66,10 @@ public class GithubCreatePullRequestPanel {
   @NotNull
   public String getBranch() {
     return myBranchComboBox.getSelectedItem().toString();
+  }
+
+  public void setDiffEnabled(boolean enabled) {
+    myShowDiffButton.setEnabled(enabled);
   }
 
   public void setSelectedBranch(@Nullable String branch) {
