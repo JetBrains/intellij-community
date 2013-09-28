@@ -172,7 +172,7 @@ public class GithubShareAction extends DumbAwareAction {
           return;
         }
 
-        final String remoteUrl = GithubUrlUtil.getGitHost() + "/" + githubInfo.getUser().getLogin() + "/" + name + ".git";
+        final String remoteUrl = GithubUrlUtil.getCloneUrl(githubInfo.getUser().getLogin(), name);
         final String remoteName = finalExternalRemoteDetected ? "github" : "origin";
 
         //git remote add origin git@github.com:login/name.git

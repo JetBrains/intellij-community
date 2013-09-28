@@ -170,7 +170,7 @@ public class GithubRebaseAction extends DumbAwareAction {
       return null;
     }
 
-    final String parentRepoUrl = GithubUrlUtil.getGitHost() + '/' + repositoryInfo.getParent().getFullName() + ".git";
+    final String parentRepoUrl = GithubUrlUtil.getCloneUrl(repositoryInfo.getParent().getFullPath());
 
     LOG.info("Adding GitHub parent as a remote host");
     indicator.setText("Adding GitHub parent as a remote host...");

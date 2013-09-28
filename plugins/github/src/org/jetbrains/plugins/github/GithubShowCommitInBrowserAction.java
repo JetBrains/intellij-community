@@ -49,7 +49,7 @@ abstract class GithubShowCommitInBrowserAction extends DumbAwareAction {
       return;
     }
 
-    String githubUrl = GithubUrlUtil.getGitHost() + '/' + userAndRepository.getUser() + '/'
+    String githubUrl = GithubUrlUtil.getGithubHost() + '/' + userAndRepository.getUser() + '/'
                        + userAndRepository.getRepository() + "/commit/" + revisionHash;
     BrowserUtil.launchBrowser(githubUrl);
   }

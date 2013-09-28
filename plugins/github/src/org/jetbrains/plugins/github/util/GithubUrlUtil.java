@@ -20,7 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
 import org.jetbrains.plugins.github.api.GithubFullPath;
-import org.jetbrains.plugins.github.util.GithubSettings;
 
 /**
  * @author Aleksey Pivovarov
@@ -62,13 +61,13 @@ public class GithubUrlUtil {
   }
 
   /**
-   * Returns the "host" part of Git URLs.
+   * Returns the "host" part of Github URLs.
    * E.g.: https://github.com
    *       https://my.company.url
    * Note: there is no trailing slash in the returned url.
    */
   @NotNull
-  public static String getGitHost() {
+  public static String getGithubHost() {
     return "https://" + getGitHostWithoutProtocol();
   }
 
@@ -153,7 +152,7 @@ public class GithubUrlUtil {
    */
   @Nullable
   public static String makeGithubRepoUrlFromRemoteUrl(@NotNull String remoteUrl) {
-    return makeGithubRepoUrlFromRemoteUrl(remoteUrl, getGitHost());
+    return makeGithubRepoUrlFromRemoteUrl(remoteUrl, getGithubHost());
   }
 
   @Nullable
@@ -177,6 +176,11 @@ public class GithubUrlUtil {
 
   @NotNull
   public static String getCloneUrl(@NotNull GithubFullPath path) {
-    return getGitHost() + "/" + path.getUser() + "/" + path.getRepository() + ".git";
+    return getCloneUrl(path.getUser(), path.getRepository());
+  }
+
+  @NotNull
+  public static String getCloneUrl(@NotNull String user, @NotNull String repo) {
+    return getGithubHost() + "/" + user + "/" + repo + ".git";
   }
 }
