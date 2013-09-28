@@ -20,7 +20,7 @@
     <action id="ConfigureIcs" class="org.jetbrains.plugins.ideaConfigurationServer.actions.ConfigureIcsAction">
       <add-to-group group-id="ExportImportGroup"/>
     </action>
-    <action id="AddToIcs" class="org.jetbrains.plugins.ideaConfigurationServer.actions.AddToIcsAction">
+    <action id="CommitToIcs" class="org.jetbrains.plugins.ideaConfigurationServer.actions.CommitToIcsAction">
       <add-to-group group-id="ChangesViewPopupMenu" relative-to-action="ChangesView.Shelve" anchor="after"/>
     </action>
   </actions>

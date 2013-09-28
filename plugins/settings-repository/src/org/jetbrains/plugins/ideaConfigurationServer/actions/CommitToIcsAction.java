@@ -20,7 +20,7 @@ import org.jetbrains.plugins.ideaConfigurationServer.ProjectId;
 
 import java.util.List;
 
-class AddToIcsAction extends CommonCheckinFilesAction {
+class CommitToIcsAction extends CommonCheckinFilesAction {
   @Override
   protected String getActionName(VcsContext dataContext) {
     FilePath[] roots = getRoots(dataContext);
