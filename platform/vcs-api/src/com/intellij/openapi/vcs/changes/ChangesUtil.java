@@ -407,6 +407,6 @@ public class ChangesUtil {
   }
 
   public static String getDefaultChangeListName() {
-    return VcsBundle.message("changes.default.changlist.name");
+    return VcsBundle.message("changes.default.changelist.name");
   }
 }
