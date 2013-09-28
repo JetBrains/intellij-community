@@ -52,8 +52,7 @@ public class FieldHasSetterButNoGetterInspection extends BaseInspection {
 
     @Override
     public void visitField(@NotNull PsiField field) {
-      final Project project = field.getProject();
-      final String propertyName = PropertyUtil.suggestPropertyName(project, field);
+      final String propertyName = PropertyUtil.suggestPropertyName(field);
       final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
       final PsiClass containingClass = field.getContainingClass();
       final PsiMethod setter = PropertyUtil.findPropertySetter(containingClass, propertyName, isStatic, false);

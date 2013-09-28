@@ -293,7 +293,7 @@ public class PropertyUtil {
 
     for (PsiField field : fields) {
       if (field.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
-      if (propertyName.equals(suggestPropertyName(project, field))) return field;
+      if (propertyName.equals(suggestPropertyName(field))) return field;
     }
 
     return null;
@@ -304,7 +304,7 @@ public class PropertyUtil {
     while (fields.hasNext()) {
       PsiField field = fields.next();
       if (field.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
-      if (propertyName.equals(suggestPropertyName(project, field))) {
+      if (propertyName.equals(suggestPropertyName(field))) {
         if (type.equals(field.getType())) return field;
       }
     }
@@ -527,13 +527,14 @@ public class PropertyUtil {
     modifierList.addAfter(factory.createAnnotationFromText("@" + annotationQName, listOwner), null);
   }
 
-  public static String suggestPropertyName(PsiField field) {
-    return suggestPropertyName(field.getProject(), field);
+  public static String suggestPropertyName(@NotNull PsiField field) {
+    return suggestPropertyName(field, field.getName());
   }
-  public static String suggestPropertyName(Project project, PsiField field) {
-    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
+
+  public static String suggestPropertyName(@NotNull PsiField field, @NotNull String fieldName) {
+    JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(field.getProject());
     VariableKind kind = codeStyleManager.getVariableKind(field);
-    String name = codeStyleManager.variableNameToPropertyName(field.getName(), kind);
+    String name = codeStyleManager.variableNameToPropertyName(fieldName, kind);
     if (!field.hasModifierProperty(PsiModifier.STATIC) && isBoolean(field.getType())) {
       if (name.startsWith(IS_PREFIX) && name.length() > IS_PREFIX.length() && Character.isUpperCase(name.charAt(IS_PREFIX.length()))) {
         name = Introspector.decapitalize(name.substring(IS_PREFIX.length()));
@@ -543,12 +544,12 @@ public class PropertyUtil {
   }
 
   public static String suggestGetterName(Project project, PsiField field) {
-    String propertyName = suggestPropertyName(project, field);
+    String propertyName = suggestPropertyName(field);
     return suggestGetterName(propertyName, field.getType());
   }
 
   public static String suggestSetterName(Project project, PsiField field) {
-    String propertyName = suggestPropertyName(project, field);
+    String propertyName = suggestPropertyName(field);
     return suggestSetterName(propertyName);
   }
 
@@ -656,16 +657,14 @@ public class PropertyUtil {
 
   public static PsiMethod findSetterForField(PsiField field) {
       final PsiClass containingClass = field.getContainingClass();
-      final Project project = field.getProject();
-      final String propertyName = suggestPropertyName(project, field);
+      final String propertyName = suggestPropertyName(field);
       final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
       return findPropertySetter(containingClass, propertyName, isStatic, true);
   }
 
   public static PsiMethod findGetterForField(PsiField field) {
       final PsiClass containingClass = field.getContainingClass();
-      final Project project = field.getProject();
-      final String propertyName = suggestPropertyName(project, field);
+      final String propertyName = suggestPropertyName(field);
       final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
       return findPropertyGetter(containingClass, propertyName, isStatic, true);
   }

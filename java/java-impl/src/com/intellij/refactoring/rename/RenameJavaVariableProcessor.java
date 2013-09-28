@@ -144,8 +144,8 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
     Project project = field.getProject();
     final JavaCodeStyleManager manager = JavaCodeStyleManager.getInstance(project);
 
-    final String propertyName = manager.variableNameToPropertyName(field.getName(), VariableKind.FIELD);
-    String newPropertyName = manager.variableNameToPropertyName(newName, VariableKind.FIELD);
+    final String propertyName = PropertyUtil.suggestPropertyName(field, field.getName());
+    String newPropertyName = PropertyUtil.suggestPropertyName(field, newName);
 
     boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
 

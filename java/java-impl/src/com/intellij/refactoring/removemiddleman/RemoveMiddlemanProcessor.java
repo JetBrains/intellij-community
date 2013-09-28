@@ -49,8 +49,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
     super(field.getProject());
     this.field = field;
     containingClass = field.getContainingClass();
-    final Project project = field.getProject();
-    final String propertyName = PropertyUtil.suggestPropertyName(project, field);
+    final String propertyName = PropertyUtil.suggestPropertyName(field);
     final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
     getter = PropertyUtil.findPropertyGetter(containingClass, propertyName, isStatic, false);
     myDelegateMethodInfos = memberInfos;
