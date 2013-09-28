@@ -8,7 +8,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
-import com.intellij.openapi.components.*;
+import com.intellij.openapi.components.RoamingType;
+import com.intellij.openapi.components.StateStorage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.components.impl.stores.FileBasedStorage;
 import com.intellij.openapi.components.impl.stores.StateStorageManager;
 import com.intellij.openapi.components.impl.stores.StorageUtil;
@@ -151,16 +153,17 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
     storageManager.setStreamProvider(new IcsStreamProvider(projectId.uid) {
       @Override
-      public boolean isApplicable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
-        if (roamingType != RoamingType.PER_USER) {
-          return true;
-        }
+      protected boolean isAutoCommit(String fileSpec, RoamingType roamingType) {
+        return !StorageUtil.isProjectOrModuleFile(fileSpec);
+      }
 
+      @Override
+      public boolean isApplicable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
         if (StorageUtil.isProjectOrModuleFile(fileSpec)) {
           return false;
         }
 
-        return settings.shareProjectWorkspace || (!fileSpec.equals(StoragePathMacros.WORKSPACE_FILE));
+        return settings.shareProjectWorkspace || !fileSpec.equals(StoragePathMacros.WORKSPACE_FILE);
       }
     });
 
@@ -257,9 +260,16 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
     @Override
     public final boolean saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) {
-      repositoryManager.write(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId), content, size, async);
-      commitAlarm.cancelAndRequest();
+      boolean scheduleToAdd = isAutoCommit(fileSpec, roamingType);
+      repositoryManager.write(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId), content, size, async, scheduleToAdd);
+      if (scheduleToAdd) {
+        commitAlarm.cancelAndRequest();
+      }
       return false;
+    }
+
+    protected boolean isAutoCommit(String fileSpec, RoamingType roamingType) {
+      return true;
     }
 
     @Override

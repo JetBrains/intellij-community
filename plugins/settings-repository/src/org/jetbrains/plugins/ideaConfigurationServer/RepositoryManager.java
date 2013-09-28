@@ -19,7 +19,11 @@ public interface RepositoryManager {
   @Nullable
   InputStream read(@NotNull String path) throws IOException;
 
-  void write(@NotNull String path, @NotNull byte[] content, int size, boolean async);
+  /**
+   * @param async Write postpone or immediately
+   * @param scheduleToAdd Mark file as changed (git add)
+   */
+  void write(@NotNull String path, @NotNull byte[] content, int size, boolean async, boolean scheduleToAdd);
 
   void deleteAsync(@NotNull String path);
 

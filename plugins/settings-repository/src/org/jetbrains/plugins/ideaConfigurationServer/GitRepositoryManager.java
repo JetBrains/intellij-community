@@ -115,10 +115,17 @@ final class GitRepositoryManager extends BaseRepositoryManager {
           }
 
           AddCommand addCommand = git.add();
+          boolean added = false;
           for (String path : index.getModified()) {
-            addCommand.addFilepattern(path);
+            // todo is path absolute or relative?
+            if (!path.startsWith(IcsUrlBuilder.PROJECTS_DIR_NAME)) {
+              addCommand.addFilepattern(path);
+              added = true;
+            }
           }
-          addCommand.call();
+          if (added) {
+            addCommand.call();
+          }
         }
 
         PersonIdent author = new PersonIdent(git.getRepository());

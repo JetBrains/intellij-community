@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.ActionCallback;
@@ -56,7 +57,7 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
   }
 
   @Override
-  public void write(@NotNull final String path, @NotNull final byte[] content, final int size, final boolean async) {
+  public void write(@NotNull final String path, @NotNull final byte[] content, final int size, final boolean async, boolean scheduleToAdd) {
     if (!async) {
       try {
         writeToFile(path, content, size);
@@ -65,6 +66,23 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
         LOG.error(e);
         return;
       }
+    }
+    else if (scheduleToAdd) {
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            writeToFile(path, content, size);
+          }
+          catch (IOException e) {
+            LOG.error(e);
+          }
+        }
+      });
+    }
+
+    if (!scheduleToAdd) {
+      return;
     }
 
     taskProcessor.add(new ThrowableRunnable<Exception>() {
