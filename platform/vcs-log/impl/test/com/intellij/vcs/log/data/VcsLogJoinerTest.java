@@ -3,13 +3,12 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcs.log.TimedVcsCommit;
-import com.intellij.vcs.log.impl.VcsRefImpl;
-import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.vcs.log.impl.VcsRefImpl;
 import com.intellij.vcs.log.parser.CommitParser;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Test;
 
 import java.awt.*;
 import java.util.Arrays;
@@ -23,7 +22,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class VcsLogJoinerTest {
 
-  @Test
+  //@Test
   public void simpleTest() {
     String[] INITIAL = {"4|-a2|-a1", "3|-b1|-a", "2|-a1|-a", "1|-a|-"};
     List<TimedVcsCommit> fullLog = CommitParser.log(INITIAL);
