@@ -61,13 +61,13 @@ public class GroovyEncapsulateFieldHelper extends EncapsulateFieldHelper {
   @Override
   @NotNull
   public String suggestSetterName(@NotNull PsiField field) {
-    return PropertyUtil.suggestSetterName(field.getProject(), field);
+    return PropertyUtil.suggestSetterName(field);
   }
 
   @Override
   @NotNull
   public String suggestGetterName(@NotNull PsiField field) {
-    return PropertyUtil.suggestGetterName(field.getProject(), field);
+    return PropertyUtil.suggestGetterName(field);
   }
 
   @Override

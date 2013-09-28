@@ -253,7 +253,7 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
         myInnerClass.add(outputField);
         field = outputField;
       } else {
-        field = PropertyUtil.findPropertyField(myProject, myInnerClass, name, false);
+        field = PropertyUtil.findPropertyField(myInnerClass, name, false);
       }
       LOG.assertTrue(field != null, "i:" + i + "; output variables: " + Arrays.toString(outputVariables) + "; parameters: " + Arrays.toString(getMethod().getParameterList().getParameters()) + "; output field: " + outputField );
       myInnerClass.add(GenerateMembersUtil.generateGetterPrototype(field));
@@ -763,7 +763,8 @@ public class ExtractMethodObjectProcessor extends BaseRefactoringProcessor {
           PsiStatement st = null;
           final String pureName = getPureName(variable);
           final int varIdxInOutput = ArrayUtil.find(myOutputVariables, variable);
-          final String getterName = varIdxInOutput > -1 && myOutputFields[varIdxInOutput] != null ? PropertyUtil.suggestGetterName(myProject, myOutputFields[varIdxInOutput]) : PropertyUtil.suggestGetterName(pureName, variable.getType());
+          final String getterName = varIdxInOutput > -1 && myOutputFields[varIdxInOutput] != null ? PropertyUtil.suggestGetterName(
+            myOutputFields[varIdxInOutput]) : PropertyUtil.suggestGetterName(pureName, variable.getType());
           if (isDeclaredInside(variable)) {
             st = myElementFactory.createStatementFromText(
               variable.getType().getCanonicalText() + " " + name + " = " + object + "." + getterName + "();",

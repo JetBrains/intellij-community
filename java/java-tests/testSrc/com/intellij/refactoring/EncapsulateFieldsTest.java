@@ -113,8 +113,8 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
         public FieldDescriptor[] getSelectedFields() {
           return new FieldDescriptor[]{new FieldDescriptorImpl(
             field,
-            PropertyUtil.suggestGetterName(project, field),
-            PropertyUtil.suggestSetterName(project, field),
+            PropertyUtil.suggestGetterName(field),
+            PropertyUtil.suggestSetterName(field),
             isToEncapsulateGet() ? PropertyUtil.generateGetterPrototype(field) : null,
             isToEncapsulateSet() ? PropertyUtil.generateSetterPrototype(field) : null
           )};

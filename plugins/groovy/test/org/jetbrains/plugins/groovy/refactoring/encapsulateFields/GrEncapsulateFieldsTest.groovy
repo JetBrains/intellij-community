@@ -226,8 +226,8 @@ public class A {
 
     final Project project = myFixture.getProject()
 
-    if (!getterName) getterName = PropertyUtil.suggestGetterName(project, aField)
-    if (!setterName) setterName = PropertyUtil.suggestSetterName(project, aField)
+    if (!getterName) getterName = PropertyUtil.suggestGetterName(aField)
+    if (!setterName) setterName = PropertyUtil.suggestSetterName(aField)
 
     try {
       final EncapsulateFieldsDescriptor descriptor = createMockDescriptor(aClass, aField, generateGetters, generateSetters, getterName,
