@@ -90,7 +90,7 @@ public class GraphCommitCellRender implements TableCellRenderer {
       VirtualFile root = refs.iterator().next().getRoot(); // all refs are from the same commit => they have the same root
       refs = myDataHolder.getLogProvider(root).getReferenceManager().sort(refs);
     }
-    refPainter.draw(g2, refs, padding);
+    refPainter.draw(g2, refs, padding, -1); // TODO think how to behave if there are too many refs here (even if tags are collapsed)
 
     g.drawImage(image, 0, 0, null);
   }

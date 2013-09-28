@@ -72,7 +72,7 @@ public class BranchesPanel extends JPanel {
 
   @Override
   protected void paintComponent(Graphics g) {
-    myRefPositions = myRefPainter.draw((Graphics2D)g, myRefs, 0);
+    myRefPositions = myRefPainter.draw((Graphics2D)g, myRefs, 0, getWidth());
   }
 
   public void rebuild() {

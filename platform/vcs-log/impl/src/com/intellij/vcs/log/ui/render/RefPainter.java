@@ -103,7 +103,7 @@ public class RefPainter {
     return Math.round(p);
   }
 
-  public Map<Integer, VcsRef> draw(@NotNull Graphics2D g2, @NotNull List<VcsRef> refs, int startPadding) {
+  public Map<Integer, VcsRef> draw(@NotNull Graphics2D g2, @NotNull List<VcsRef> refs, int startPadding, int maxWidth) {
     float currentPadding = startPadding;
     g2.setFont(DEFAULT_FONT);
     g2.setStroke(new BasicStroke(1.5f));
@@ -114,6 +114,9 @@ public class RefPainter {
       int x = draw(g2, ref, (int)currentPadding);
       positions.put(x, ref);
       currentPadding += paddingStr(ref.getName(), renderContext);
+      if (maxWidth > 0 && x >= maxWidth) {
+        break;
+      }
     }
     return positions;
   }

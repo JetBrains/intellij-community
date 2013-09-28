@@ -182,7 +182,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
     @Override
     protected void paintComponent(Graphics g) {
-      myRefPainter.draw((Graphics2D)g, myRefs, 0);
+      // TODO when the right margin reaches, draw on the second line
+      myRefPainter.draw((Graphics2D)g, myRefs, 0, getWidth());
     }
 
     void setRefs(@NotNull List<VcsRef> refs) {
