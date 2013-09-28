@@ -10,21 +10,39 @@ import com.intellij.openapi.vcs.actions.CommonCheckinFilesAction;
 import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.CommitExecutor;
+import com.intellij.openapi.vcs.checkin.BeforeCommitDialogHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ideaConfigurationServer.CommitToIcsDialog;
 import org.jetbrains.plugins.ideaConfigurationServer.IcsBundle;
 import org.jetbrains.plugins.ideaConfigurationServer.ProjectId;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 class CommitToIcsAction extends CommonCheckinFilesAction {
+  static class IcsBeforeCommitDialogHandler extends BeforeCommitDialogHandler {
+    @Override
+    public boolean beforeCommitDialogShownCallback(@NotNull Project project, @NotNull List<Change> changes, @NotNull Iterable<CommitExecutor> executors, boolean showVcsCommit) {
+      ProjectChangeCollectConsumer collectConsumer = new ProjectChangeCollectConsumer(project);
+      collectProjectChanges(changes, collectConsumer);
+
+      if (collectConsumer.hasResult()) {
+        new CommitToIcsDialog(project, collectConsumer.getResult()).show();
+      }
+      return true;
+    }
+  }
+
   @Override
   protected String getActionName(VcsContext dataContext) {
-    FilePath[] roots = getRoots(dataContext);
-    return IcsBundle.message("action.AddToIcs.text", roots == null ? 0 : roots.length);
+    return IcsBundle.message("action.CommitToIcs.text");
   }
 
   @Override
@@ -57,37 +75,58 @@ class CommitToIcsAction extends CommonCheckinFilesAction {
 
     }
 
-    List<Change> projectFileChanges = null;
     Change[] changes = context.getSelectedChanges();
+    ProjectChangeCollectConsumer collectConsumer = new ProjectChangeCollectConsumer(project);
     if (changes != null && changes.length > 0) {
       for (Change change : changes) {
-        if (isProjectConfigFile(change.getVirtualFile(), project)) {
-          if (projectFileChanges == null) {
-            projectFileChanges = new SmartList<Change>();
-          }
-          projectFileChanges.add(change);
-        }
+        collectConsumer.consume(change);
       }
     }
     else {
       ChangeListManager manager = ChangeListManager.getInstance(project);
       FilePath[] paths = getRoots(context);
       for (FilePath path : paths) {
-        if (isProjectConfigFile(path.getVirtualFile(), project)) {
-          for (Change change : manager.getChangesIn(path)) {
-            if (projectFileChanges == null) {
-              projectFileChanges = new SmartList<Change>();
-            }
-            projectFileChanges.add(change);
-          }
-        }
+        collectProjectChanges(manager.getChangesIn(path), collectConsumer);
       }
     }
 
-    if (projectFileChanges == null) {
+    if (!collectConsumer.hasResult()) {
       return;
     }
 
-    new CommitToIcsDialog(project, projectFileChanges).show();
+    new CommitToIcsDialog(project, collectConsumer.getResult()).show();
+  }
+
+  private static void collectProjectChanges(Collection<Change> changes, ProjectChangeCollectConsumer collectConsumer) {
+    for (Change change : changes) {
+      collectConsumer.consume(change);
+    }
+  }
+
+  private static final class ProjectChangeCollectConsumer implements Consumer<Change> {
+    private final Project project;
+    private List<Change> projectChanges;
+
+    private ProjectChangeCollectConsumer(Project project) {
+      this.project = project;
+    }
+
+    @Override
+    public void consume(Change change) {
+      if (isProjectConfigFile(change.getVirtualFile(), project)) {
+        if (projectChanges == null) {
+          projectChanges = new SmartList<Change>();
+        }
+        projectChanges.add(change);
+      }
+    }
+
+    public List<Change> getResult() {
+      return projectChanges == null ? Collections.<Change>emptyList() : projectChanges;
+    }
+
+    public boolean hasResult() {
+      return projectChanges != null;
+    }
   }
 }

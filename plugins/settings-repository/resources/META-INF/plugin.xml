@@ -11,6 +11,7 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <projectService serviceInterface="org.jetbrains.plugins.ideaConfigurationServer.ProjectId"
                     serviceImplementation="org.jetbrains.plugins.ideaConfigurationServer.ProjectId"/>
+    <beforeCommitDialog implementation="org.jetbrains.plugins.ideaConfigurationServer.actions.CommitToIcsAction$IcsBeforeCommitDialogHandler" order="first"/>
   </extensions>
 
   <actions>
