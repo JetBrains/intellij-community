@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.checkin;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
 
 public abstract class BeforeCheckinDialogHandler {
+
   /**
    * @return false to cancel commit
    */

@@ -141,15 +141,29 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
   private final MyUpdateButtonsRunnable myUpdateButtonsRunnable = new MyUpdateButtonsRunnable(this);
 
+  static final class MyBeforeCommitDialogHandler extends BeforeCommitDialogHandler {
+    @Override
+    public boolean beforeCommitDialogShownCallback(@NotNull Project project,
+                                                   @NotNull List<Change> changes,
+                                                   @NotNull Iterable<CommitExecutor> executors,
+                                                   boolean showVcsCommit) {
+      List<VcsCheckinHandlerFactory> factoryList = CheckinHandlersManager.getInstance().getMatchingVcsFactories(
+        Arrays.asList(ProjectLevelVcsManager.getInstance(project).getAllActiveVcss()));
+      for (BaseCheckinHandlerFactory factory : factoryList) {
+        BeforeCheckinDialogHandler handler = factory.createSystemReadyHandler(project);
+        if (handler != null && !handler.beforeCommitDialogShownCallback(executors, showVcsCommit)) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+
   private static boolean commit(final Project project, final List<Change> changes, final LocalChangeList initialSelection,
                                 final List<CommitExecutor> executors, final boolean showVcsCommit, final String comment,
                                 @Nullable CommitResultHandler customResultHandler) {
-    final AbstractVcs[] allActiveVcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
-    final List<VcsCheckinHandlerFactory> factoryList =
-      CheckinHandlersManager.getInstance().getMatchingVcsFactories(Arrays.<AbstractVcs>asList(allActiveVcss));
-    for (BaseCheckinHandlerFactory factory : factoryList) {
-      final BeforeCheckinDialogHandler handler = factory.createSystemReadyHandler(project);
-      if (handler != null && !handler.beforeCommitDialogShownCallback(Collections.unmodifiableList(executors), showVcsCommit)) {
+    for (BeforeCommitDialogHandler handler : BeforeCommitDialogHandler.EP_NAME.getExtensions()) {
+      if (!handler.beforeCommitDialogShownCallback(project, changes, executors, showVcsCommit)) {
         return false;
       }
     }
@@ -202,22 +216,22 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   /**
    * Shows the commit dialog, and performs the selected action: commit, commit & push, create patch, etc.
    * @param customResultHandler If this is not null, after commit is completed, custom result handler is called instead of
-   *                            showing the default notification in case of commit or failure.
-   * @return true if user agreed to commit, false if he pressed "Cancel".
-   */
-  public static boolean commitChanges(final Project project, final Collection<Change> changes, final LocalChangeList initialSelection,
-                                      final List<CommitExecutor> executors, final boolean showVcsCommit, final String comment,
-                                      @Nullable CommitResultHandler customResultHandler) {
-    if (changes.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
-      Messages.showInfoMessage(project, VcsBundle.message("commit.dialog.no.changes.detected.text") ,
-                                 VcsBundle.message("commit.dialog.no.changes.detected.title"));
-      return false;
+     *                            showing the default notification in case of commit or failure.
+     * @return true if user agreed to commit, false if he pressed "Cancel".
+     */
+    public static boolean commitChanges(final Project project, final Collection<Change> changes, final LocalChangeList initialSelection,
+                                        final List<CommitExecutor> executors, final boolean showVcsCommit, final String comment,
+                                        @Nullable CommitResultHandler customResultHandler) {
+      if (changes.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
+        Messages.showInfoMessage(project, VcsBundle.message("commit.dialog.no.changes.detected.text") ,
+                                   VcsBundle.message("commit.dialog.no.changes.detected.title"));
+        return false;
+      }
+
+      return commit(project, new ArrayList<Change>(changes), initialSelection, executors, showVcsCommit, comment, customResultHandler);
     }
 
-    return commit(project, new ArrayList<Change>(changes), initialSelection, executors, showVcsCommit, comment, customResultHandler);
-  }
-
-  public static void commitAlienChanges(final Project project, final List<Change> changes, final AbstractVcs vcs,
+    public static void commitAlienChanges(final Project project, final List<Change> changes, final AbstractVcs vcs,
                                         final String changelistName, final String comment) {
     final LocalChangeList lcl = new AlienLocalChangeList(changes, changelistName);
     new CommitChangeListDialog(project, changes, null, null, true, AlienLocalChangeList.DEFAULT_ALIEN, Collections.singletonList(lcl), vcs,
