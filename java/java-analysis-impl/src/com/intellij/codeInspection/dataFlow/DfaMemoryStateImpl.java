@@ -585,9 +585,13 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
           }
           return applyCondition(compareToNull(dfaVar, false));
         }
+        boolean wasUnknown = getVariableState(dfaVar).getNullability() == Nullness.UNKNOWN;
         if (applyCondition(compareToNull(dfaVar, true))) {
           DfaVariableState newState = getVariableState(dfaVar).withInstanceofValue((DfaTypeValue)dfaRight);
           if (newState != null) {
+            if (wasUnknown) {
+              newState = newState.withNullability(Nullness.UNKNOWN);
+            }
             setVariableState(dfaVar, newState);
             return true;
           }
