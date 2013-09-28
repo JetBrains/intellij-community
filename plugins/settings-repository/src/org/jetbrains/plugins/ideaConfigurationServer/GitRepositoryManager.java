@@ -18,6 +18,7 @@ import org.eclipse.jgit.errors.UnsupportedCredentialItem;
 import org.eclipse.jgit.lib.*;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.eclipse.jgit.transport.*;
+import org.eclipse.jgit.treewalk.FileTreeIterator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -89,28 +90,9 @@ final class GitRepositoryManager extends BaseRepositoryManager {
     return !StringUtil.isEmptyOrSpaces(git.getRepository().getConfig().getString("remote", "origin", "url"));
   }
 
-  private boolean addFilesToGit() throws IOException {
-    AddCommand addCommand;
-    synchronized (filesToAdd) {
-      if (filesToAdd.isEmpty()) {
-        return false;
-      }
-
-      addCommand = git.add();
-      for (String pathname : filesToAdd) {
-        addCommand.addFilepattern(pathname);
-      }
-      filesToAdd.clear();
-    }
-
-    try {
-      addCommand.call();
-    }
-    catch (GitAPIException e) {
-      throw new IOException(e);
-    }
-
-    return true;
+  @Override
+  protected void doAdd(String path) throws Exception {
+    git.add().addFilepattern(path).call();
   }
 
   @Override
@@ -124,18 +106,24 @@ final class GitRepositoryManager extends BaseRepositoryManager {
     return execute(new ThrowableConsumer<ProgressIndicator, Exception>() {
       @Override
       public void consume(@NotNull ProgressIndicator indicator) throws Exception {
-        boolean someFilesWereModified = addFilesToGit();
-        if (!isFirstCommitAfterApplicationStart && !someFilesWereModified && !someFilesWereRemoved) {
-          LOG.debug("skip scheduled commit, nothing to commit (fast check)");
-          return;
+        IndexDiff index = new IndexDiff(git.getRepository(), Constants.HEAD, new FileTreeIterator(git.getRepository()));
+        // don't worry about untracked/modified only in the FS files
+        if (!index.diff() || (index.getAdded().isEmpty() && index.getChanged().isEmpty() && index.getRemoved().isEmpty())) {
+          if (index.getModified().isEmpty()) {
+            LOG.debug("skip scheduled commit, nothing to commit");
+            return;
+          }
+
+          AddCommand addCommand = git.add();
+          for (String path : index.getModified()) {
+            addCommand.addFilepattern(path);
+          }
+          addCommand.call();
         }
 
-        someFilesWereRemoved = false;
-        
         PersonIdent author = new PersonIdent(git.getRepository());
         PersonIdent committer = new PersonIdent(ApplicationInfoEx.getInstanceEx().getFullApplicationName(), author.getEmailAddress());
-        git.commit().setAuthor(author).setCommitter(committer).setAll(isFirstCommitAfterApplicationStart).setMessage("").call();
-        isFirstCommitAfterApplicationStart = false;
+        git.commit().setAuthor(author).setCommitter(committer).setMessage("").call();
       }
     }, new EmptyProgressIndicator());
   }

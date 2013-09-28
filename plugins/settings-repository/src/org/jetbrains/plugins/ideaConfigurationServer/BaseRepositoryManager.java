@@ -8,7 +8,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.QueueProcessor;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,19 +15,15 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 public abstract class BaseRepositoryManager implements RepositoryManager {
   protected static final Logger LOG = Logger.getInstance(BaseRepositoryManager.class);
 
   protected final File dir;
-
-  // avoid FS recursive scan
-  protected final Set<String> filesToAdd = new THashSet<String>();
-  protected boolean someFilesWereRemoved;
-
-  // application could be terminated incorrectly (force quit), so, we should ensure that modified files will be added to index on first commit after application start
-  protected boolean isFirstCommitAfterApplicationStart = true;
 
   protected final QueueProcessor<ThrowableRunnable<Exception>> taskProcessor = new QueueProcessor<ThrowableRunnable<Exception>>(new Consumer<ThrowableRunnable<Exception>>() {
     @Override
@@ -61,37 +56,31 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
   }
 
   @Override
-  public void write(@NotNull final String path, @NotNull final byte[] content, final int size, boolean async) {
-    synchronized (filesToAdd) {
-      filesToAdd.add(path);
-    }
-
-    if (async) {
-      taskProcessor.add(new ThrowableRunnable<Exception>() {
-        @Override
-        public void run() throws Exception {
-          synchronized (filesToAdd) {
-            if (!filesToAdd.contains(path)) {
-              // delete was requested
-              return;
-            }
-          }
-
-          doWrite(path, content, size);
-        }
-      });
-    }
-    else {
+  public void write(@NotNull final String path, @NotNull final byte[] content, final int size, final boolean async) {
+    if (!async) {
       try {
-        doWrite(path, content, size);
+        writeToFile(path, content, size);
       }
       catch (IOException e) {
         LOG.error(e);
+        return;
       }
     }
+
+    taskProcessor.add(new ThrowableRunnable<Exception>() {
+      @Override
+      public void run() throws Exception {
+        if (async) {
+          writeToFile(path, content, size);
+        }
+        doAdd(path);
+      }
+    });
   }
 
-  private void doWrite(String path, byte[] content, int size) throws IOException {
+  protected abstract void doAdd(String path) throws Exception;
+
+  private void writeToFile(String path, byte[] content, int size) throws IOException {
     FileUtil.writeToFile(new File(dir, path), content, 0, size);
   }
 
@@ -112,21 +101,9 @@ public abstract class BaseRepositoryManager implements RepositoryManager {
 
   @Override
   public final void deleteAsync(@NotNull final String path) {
-    synchronized (filesToAdd) {
-      filesToAdd.remove(path);
-    }
-
     taskProcessor.add(new ThrowableRunnable<Exception>() {
       @Override
       public void run() throws Exception {
-        synchronized (filesToAdd) {
-          if (filesToAdd.contains(path)) {
-            // write was requested
-            return;
-          }
-        }
-
-        someFilesWereRemoved = true;
         doDelete(path);
       }
     });
