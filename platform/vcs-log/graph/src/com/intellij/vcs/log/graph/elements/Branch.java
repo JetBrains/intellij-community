@@ -1,10 +1,14 @@
 package com.intellij.vcs.log.graph.elements;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Collection;
 
 /**
  * @author erokhins
@@ -12,18 +16,29 @@ import org.jetbrains.annotations.Nullable;
 public final class Branch {
   private final Hash upCommitHash;
   private final Hash downCommitHash;
-  @Nullable private final VcsRef myRef;
+  @Nullable private final VcsRef myColoredRef;
   @NotNull private final VirtualFile myRepositoryRoot;
 
-  public Branch(@NotNull Hash upCommitHash, @NotNull Hash downCommitHash, @Nullable VcsRef ref, @NotNull VirtualFile repositoryRoot) {
+  public Branch(@NotNull Hash upCommitHash, @NotNull Hash downCommitHash, @NotNull Collection<VcsRef> refs,
+                @NotNull VirtualFile repositoryRoot) {
     this.upCommitHash = upCommitHash;
     this.downCommitHash = downCommitHash;
-    myRef = ref;
     myRepositoryRoot = repositoryRoot;
+    myColoredRef = findRefForBranchColor(refs);
   }
 
-  public Branch(@NotNull Hash commit, @Nullable VcsRef ref, @NotNull VirtualFile repositoryRoot) {
-    this(commit, commit, ref, repositoryRoot);
+  @Nullable
+  private static VcsRef findRefForBranchColor(@NotNull Collection<VcsRef> refs) {
+    return ContainerUtil.find(refs, new Condition<VcsRef>() {
+      @Override
+      public boolean value(VcsRef ref) {
+        return ref.getType().isBranch();
+      }
+    });
+  }
+
+  public Branch(@NotNull Hash commit, @NotNull Collection<VcsRef> refs, @NotNull VirtualFile repositoryRoot) {
+    this(commit, commit, refs, repositoryRoot);
   }
 
   @NotNull
@@ -37,10 +52,10 @@ public final class Branch {
   }
 
   public int getBranchNumber() {
-    if (myRef == null || !myRef.getType().isBranch()) {
+    if (myColoredRef == null) {
       return upCommitHash.hashCode() + 73 * downCommitHash.hashCode();
     }
-    return myRef.getName().hashCode();
+    return myColoredRef.getName().hashCode();
   }
 
   @Override
@@ -72,8 +87,4 @@ public final class Branch {
     return myRepositoryRoot;
   }
 
-  @Nullable
-  public VcsRef getRef() {
-    return myRef;
-  }
 }

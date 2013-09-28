@@ -1,19 +1,17 @@
 package com.intellij.vcs.log.graph.mutable;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.VcsCommit;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsCommit;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.graph.elements.Branch;
 import com.intellij.vcs.log.graph.mutable.elements.MutableNode;
 import com.intellij.vcs.log.graph.mutable.elements.MutableNodeRow;
 import com.intellij.vcs.log.graph.mutable.elements.UsualEdge;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -51,7 +49,7 @@ public class GraphBuilder {
   private final MutableGraph graph;
   private final Map<Hash, MutableNode> underdoneNodes;
   private Map<Hash, Integer> commitHashLogIndexes;
-  private Collection<VcsRef> myRefs;
+  private MultiMap<Hash, VcsRef> myRefsOfHashes;
 
   private MutableNodeRow nextRow;
 
@@ -65,7 +63,17 @@ public class GraphBuilder {
     this.graph = graph;
     this.underdoneNodes = underdoneNodes;
     this.nextRow = nextRow;
-    myRefs = refs;
+
+    myRefsOfHashes = prepareRefsMap(refs);
+  }
+
+  @NotNull
+  private static MultiMap<Hash, VcsRef> prepareRefsMap(@NotNull Collection<VcsRef> refs) {
+    MultiMap<Hash, VcsRef> map = MultiMap.create();
+    for (VcsRef ref : refs) {
+      map.putValue(ref.getCommitHash(), ref);
+    }
+    return map;
   }
 
   public GraphBuilder(int lastLogIndex, Map<Hash, Integer> commitHashLogIndexes, MutableGraph graph, Collection<VcsRef> refs) {
@@ -87,30 +95,25 @@ public class GraphBuilder {
     }
   }
 
-  @Nullable
-  public VcsRef findRefForHash(@NotNull final Hash hash) {
-    return ContainerUtil.find(myRefs, new Condition<VcsRef>() {
-      @Override
-      public boolean value(VcsRef ref) {
-        return ref.getCommitHash().equals(hash);
-      }
-    });
+  @NotNull
+  private Collection<VcsRef> findRefForHash(@NotNull final Hash hash) {
+    return myRefsOfHashes.get(hash);
   }
 
   private MutableNode addCurrentCommitAndFinishRow(@NotNull Hash commitHash) {
     MutableNode node = underdoneNodes.remove(commitHash);
     if (node == null) {
-      VcsRef ref = findRefForHash(commitHash);
+      Collection<VcsRef> refs = findRefForHash(commitHash);
       VirtualFile repositoryRoot;
-      if (ref == null) {
+      if (refs.isEmpty()) {
         // should never happen, but fallback gently.
         LOG.error("Ref should exist for this node. Hash: " + commitHash);
         repositoryRoot = NullVirtualFile.INSTANCE;
       }
       else {
-        repositoryRoot = ref.getRoot();
+        repositoryRoot = refs.iterator().next().getRoot();
       }
-      node = createNode(commitHash, new Branch(commitHash, ref, repositoryRoot));
+      node = createNode(commitHash, new Branch(commitHash, refs, repositoryRoot));
     }
     node.setType(COMMIT_NODE);
     node.setNodeRow(nextRow);
@@ -163,8 +166,8 @@ public class GraphBuilder {
     }
     else {
       for (Hash parentHash : parents) {
-        VcsRef ref = findRefForHash(node.getCommitHash());
-        addParent(node, parentHash, new Branch(node.getCommitHash(), parentHash, ref, branch.getRepositoryRoot()));
+        Collection<VcsRef> refs = findRefForHash(node.getCommitHash());
+        addParent(node, parentHash, new Branch(node.getCommitHash(), parentHash, refs, branch.getRepositoryRoot()));
       }
     }
   }
