@@ -1199,6 +1199,10 @@
                      key="html.tag.can.be.javadoc.tag.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.javadoc.HtmlTagCanBeJavadocTagInspection"/>
+    <globalInspection language="JAVA" shortName="MissingPackageInfo" bundle="com.siyeh.InspectionGadgetsBundle"
+                      key="missing.package.info.display.name" groupBundle="messages.InspectionsBundle"
+                      groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
+                      implementationClass="com.siyeh.ig.javadoc.MissingPackageInfoInspection"/>
     <localInspection shortName="PackageDotHtmlMayBePackageInfo" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="package.dot.html.may.be.package.info.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
