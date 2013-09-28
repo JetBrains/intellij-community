@@ -62,7 +62,7 @@ public class MutableGraph implements Graph {
     }
     NodeRow nodeRow = visibleRows.get(rowIndex);
     for (Node node : nodeRow.getNodes()) {
-      if (node.getType() == Node.NodeType.COMMIT_NODE || node.getType() == Node.NodeType.END_COMMIT_NODE) {
+      if (node.getType() == Node.NodeType.COMMIT_NODE) {
         return node;
       }
     }

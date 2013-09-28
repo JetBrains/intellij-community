@@ -24,18 +24,19 @@ public class GraphBuilder {
 
   private static final Logger LOG = Logger.getInstance(GraphBuilder.class);
 
+  @NotNull
   public static MutableGraph build(@NotNull List<? extends VcsCommit> commitParentses, Collection<VcsRef> allRefs) {
+    GraphBuilder builder = new GraphBuilder(commitParentses.size() - 1, calcCommitLogIndices(commitParentses), allRefs);
+    return builder.runBuild(commitParentses);
+  }
+
+  @NotNull
+  public static Map<Hash, Integer> calcCommitLogIndices(@NotNull List<? extends VcsCommit> commitParentses) {
     Map<Hash, Integer> commitLogIndexes = new HashMap<Hash, Integer>(commitParentses.size());
     for (int i = 0; i < commitParentses.size(); i++) {
       commitLogIndexes.put(commitParentses.get(i).getHash(), i);
     }
-    GraphBuilder builder = new GraphBuilder(commitParentses.size() - 1, commitLogIndexes, allRefs);
-    return builder.runBuild(commitParentses);
-  }
-
-  public static void addCommitsToGraph(@NotNull MutableGraph graph, @NotNull List<? extends VcsCommit> commitParentses,
-                                       @NotNull Collection<VcsRef> allRefs) {
-    new GraphAppendBuilder(graph, allRefs).appendToGraph(commitParentses);
+    return commitLogIndexes;
   }
 
   // local package
@@ -104,16 +105,7 @@ public class GraphBuilder {
     MutableNode node = underdoneNodes.remove(commitHash);
     if (node == null) {
       Collection<VcsRef> refs = findRefForHash(commitHash);
-      VirtualFile repositoryRoot;
-      if (refs.isEmpty()) {
-        // should never happen, but fallback gently.
-        LOG.error("Ref should exist for this node. Hash: " + commitHash);
-        repositoryRoot = NullVirtualFile.INSTANCE;
-      }
-      else {
-        repositoryRoot = refs.iterator().next().getRoot();
-      }
-      node = createNode(commitHash, new Branch(commitHash, refs, repositoryRoot));
+      node = createNode(commitHash, createBranch(commitHash, refs));
     }
     node.setType(COMMIT_NODE);
     node.setNodeRow(nextRow);
@@ -122,6 +114,20 @@ public class GraphBuilder {
     graph.getAllRows().add(nextRow);
     nextRow = new MutableNodeRow(graph, nextRow.getRowIndex() + 1);
     return node;
+  }
+
+  @NotNull
+  protected Branch createBranch(@NotNull Hash commitHash, @NotNull Collection<VcsRef> refs) {
+    VirtualFile repositoryRoot;
+    if (refs.isEmpty()) {
+      // should never happen, but fallback gently.
+      LOG.error("Ref should exist for this node. Hash: " + commitHash);
+      repositoryRoot = NullVirtualFile.INSTANCE;
+    }
+    else {
+      repositoryRoot = refs.iterator().next().getRoot();
+    }
+    return new Branch(commitHash, refs, repositoryRoot);
   }
 
   private void addParent(MutableNode node, Hash parentHash, Branch branch) {
@@ -188,7 +194,7 @@ public class GraphBuilder {
 
   // local package
   @NotNull
-  MutableGraph runBuild(@NotNull List<? extends VcsCommit> commitParentses) {
+  public MutableGraph runBuild(@NotNull List<? extends VcsCommit> commitParentses) {
     if (commitParentses.size() == 0) {
       throw new IllegalArgumentException("Empty list commitParentses");
     }

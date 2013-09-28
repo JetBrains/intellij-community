@@ -1,7 +1,10 @@
 package com.intellij.vcs.log.graph;
 
+import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsCommit;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.graph.elements.Branch;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.elements.NodeRow;
 import com.intellij.vcs.log.graph.mutable.GraphBuilder;
@@ -11,10 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author erokhins
@@ -43,7 +43,25 @@ public class GraphTestUtils {
     catch (IOException e) {
       throw new IllegalStateException();
     }
-    return GraphBuilder.build(vcsCommitParentses, Collections.<VcsRef>emptyList());
+    return buildGraph(vcsCommitParentses, Collections.<VcsRef>emptyList());
+  }
+
+  @NotNull
+  public static MutableGraph buildGraph(@NotNull List<VcsCommit> commitParentses, @NotNull List<VcsRef> refs) {
+    GraphBuilder builder = new GraphBuilder(commitParentses.size() - 1, GraphBuilder.calcCommitLogIndices(commitParentses), refs) {
+      @NotNull
+      @Override
+      protected Branch createBranch(@NotNull Hash commitHash, @NotNull Collection<VcsRef> refs) {
+        // allow no refs in tests
+        return createBranchWithFakeRoot(commitHash, refs);
+      }
+    };
+    return builder.runBuild(commitParentses);
+  }
+
+  @NotNull
+  public static Branch createBranchWithFakeRoot(@NotNull Hash commitHash, @NotNull Collection<VcsRef> refs) {
+    return new Branch(commitHash, refs, new StubVirtualFile());
   }
 
   // "1 20 3" -> {1,20,3}
