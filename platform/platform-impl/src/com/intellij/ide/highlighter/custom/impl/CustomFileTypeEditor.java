@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,6 +71,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     myCommentAtLineStart.setEnabled(false);
   }
 
+  @Override
   public void resetEditorFrom(AbstractFileType fileType) {
     myFileTypeName.setText(fileType.getName());
     myFileTypeDescr.setText(fileType.getDescription());
@@ -106,6 +107,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     }
   }
 
+  @Override
   public void applyEditorTo(AbstractFileType type) throws ConfigurationException {
     if (myFileTypeName.getText().trim().length() == 0) {
       throw new ConfigurationException(IdeBundle.message("error.name.cannot.be.empty"),
@@ -119,6 +121,7 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
     type.setSyntaxTable(getSyntaxTable());
   }
 
+  @Override
   @NotNull
   public JComponent createEditor() {
     JComponent panel = createCenterPanel();

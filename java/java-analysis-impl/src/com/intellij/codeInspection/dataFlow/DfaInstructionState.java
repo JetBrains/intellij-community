@@ -25,22 +25,25 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.openapi.util.Pair;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class DfaInstructionState {
+import java.util.Collections;
+import java.util.List;
+import java.util.PriorityQueue;
+import java.util.Set;
+
+public class DfaInstructionState implements Comparable<DfaInstructionState> {
   public static final DfaInstructionState[] EMPTY_ARRAY = new DfaInstructionState[0];
   private final DfaMemoryState myBeforeMemoryState;
   private final Instruction myInstruction;
-  private long myDistanceFromStart = 0;
 
   public DfaInstructionState(@NotNull Instruction myInstruction, @NotNull DfaMemoryState myBeforeMemoryState) {
     this.myBeforeMemoryState = myBeforeMemoryState;
     this.myInstruction = myInstruction;
   }
-
-  public long getDistanceFromStart() { return myDistanceFromStart; }
-
-  public void setDistanceFromStart(long distanceFromStart) { myDistanceFromStart = distanceFromStart; }
 
   @NotNull
   public Instruction getInstruction() {
@@ -55,4 +58,65 @@ public class DfaInstructionState {
   public String toString() {
     return getInstruction().getIndex() + " " + getInstruction() + ":   " + getMemoryState().toString();
   }
+
+  @Override
+  public int compareTo(@NotNull DfaInstructionState o) {
+    return myInstruction.getIndex() - o.myInstruction.getIndex();
+  }
+}
+
+class StateQueue {
+  private final PriorityQueue<DfaInstructionState> myQueue = new PriorityQueue<DfaInstructionState>();
+  private final Set<Pair<Instruction, DfaMemoryState>> mySet = ContainerUtil.newHashSet();
+  
+  void offer(DfaInstructionState state) {
+    if (mySet.add(Pair.create(state.getInstruction(), state.getMemoryState()))) {
+      myQueue.offer(state);
+    }
+  }
+
+  boolean isEmpty() {
+    return myQueue.isEmpty();
+  }
+
+  List<DfaInstructionState> getNextInstructionStates(Set<Instruction> joinInstructions) {
+    DfaInstructionState state = myQueue.poll();
+    final Instruction instruction = state.getInstruction();
+    mySet.remove(Pair.create(instruction, state.getMemoryState()));
+
+    DfaInstructionState next = myQueue.peek();
+    if (next == null || next.compareTo(state) != 0) return Collections.singletonList(state);
+
+    List<DfaMemoryStateImpl> memoryStates = ContainerUtil.newArrayList();
+    memoryStates.add((DfaMemoryStateImpl)state.getMemoryState());
+    while (!myQueue.isEmpty() && myQueue.peek().compareTo(state) == 0) {
+      DfaMemoryState anotherState = myQueue.poll().getMemoryState();
+      mySet.remove(Pair.create(instruction, anotherState));
+      memoryStates.add((DfaMemoryStateImpl)anotherState);
+    }
+
+    if (memoryStates.size() > 1 && joinInstructions.contains(instruction)) {
+      StateMerger merger = new StateMerger();
+      while (true) {
+        List<DfaMemoryStateImpl> nextStates = merger.mergeByEquality(memoryStates);
+        if (nextStates == null) {
+          nextStates = merger.mergeByType(memoryStates);
+        }
+        if (nextStates == null) {
+          nextStates = merger.mergeByUnknowns(memoryStates);
+        }
+        if (nextStates == null) break;
+        memoryStates = nextStates;
+      }
+    }
+
+    return ContainerUtil.map(memoryStates, new Function<DfaMemoryStateImpl, DfaInstructionState>() {
+      @Override
+      public DfaInstructionState fun(DfaMemoryStateImpl state) {
+        return new DfaInstructionState(instruction, state);
+      }
+    });
+  }
+  
+  
 }

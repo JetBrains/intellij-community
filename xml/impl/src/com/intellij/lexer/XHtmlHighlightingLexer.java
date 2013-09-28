@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,18 @@
  */
 package com.intellij.lexer;
 
+import com.intellij.openapi.fileTypes.FileTypeManager;
+
 public class XHtmlHighlightingLexer extends HtmlHighlightingLexer {
   public XHtmlHighlightingLexer() {
     this(new XmlLexer(true));
   }
 
   public XHtmlHighlightingLexer(Lexer baseLexer) {
-    super(baseLexer,false);
+    super(baseLexer,false, FileTypeManager.getInstance().getStdFileType("CSS"));
   }
 
+  @Override
   protected boolean isHtmlTagState(int state) {
     return state == __XmlLexer.TAG || state == __XmlLexer.END_TAG;
   }

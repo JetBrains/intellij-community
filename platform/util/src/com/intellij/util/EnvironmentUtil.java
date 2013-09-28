@@ -15,6 +15,8 @@
  */
 package com.intellij.util;
 
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
 import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
@@ -22,6 +24,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
@@ -128,52 +131,63 @@ public class EnvironmentUtil {
 
   @SuppressWarnings("SpellCheckingInspection")
   private static Map<String, String> getShellEnv() {
+    File envFile = null;
     try {
       String shell = System.getenv("SHELL");
       if (shell == null || !new File(shell).canExecute()) {
         throw new Exception("shell:" + shell);
       }
 
-      String[] command = {shell, "-l", "-c", "/usr/bin/printenv"};
+      envFile = FileUtil.createTempFile("intellij-shell-env", null, false);
+      String[] command = {shell, "-l", "-c", "/usr/bin/printenv > '" + envFile.getAbsolutePath() + "'"};
+      LOG.info("loading shell env: " + StringUtil.join(command, " "));
       Process process = Runtime.getRuntime().exec(command);
       ProcessKiller processKiller = new ProcessKiller(process);
       processKiller.killAfter(SHELL_ENV_READING_TIMEOUT);
-      List<String> lines = FileUtil.loadLines(process.getInputStream());
-      processKiller.stopWaiting();
       int rv = process.waitFor();
+      processKiller.stopWaiting();
+      List<String> lines = Files.readLines(envFile, Charsets.UTF_8);
       if (rv != 0 || lines.isEmpty()) {
         throw new Exception("rv:" + rv + " lines:" + lines.size());
       }
-
-      Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL"));
-      Map<String, String> env = System.getenv();
-      Map<String, String> newEnv = new HashMap<String, String>();
-      for (String line : lines) {
-        int pos = line.indexOf('=');
-        if (pos <= 0) {
-          LOG.warn("malformed:" + line);
-          continue;
-        }
-        String name = line.substring(0, pos);
-        if (!toIgnore.contains(name)) {
-          newEnv.put(name, line.substring(pos + 1));
-        }
-        else if (env.containsKey(name)) {
-          newEnv.put(name, env.get(name));
-        }
-      }
-      if (newEnv.size() < lines.size() - toIgnore.size()) {
-        // some lines weren't parsed - we're better to fall back to original environment than use possibly incomplete one
-        throw new Exception("env:" + newEnv.size() + " lines:" + lines.size());
-      }
-
-      LOG.info("shell environment loaded (" + newEnv.size() + " vars)");
-      return Collections.unmodifiableMap(newEnv);
+      return parseEnv(lines);
     }
     catch (Throwable t) {
       LOG.warn("can't get shell environment", t);
       return System.getenv();
     }
+    finally {
+      if (envFile != null) {
+        FileUtil.delete(envFile);
+      }
+    }
+  }
+
+  private static Map<String, String> parseEnv(List<String> lines) throws Exception {
+    Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL"));
+    Map<String, String> env = System.getenv();
+    Map<String, String> newEnv = new HashMap<String, String>();
+    for (String line : lines) {
+      int pos = line.indexOf('=');
+      if (pos <= 0) {
+        LOG.warn("malformed:" + line);
+        continue;
+      }
+      String name = line.substring(0, pos);
+      if (!toIgnore.contains(name)) {
+        newEnv.put(name, line.substring(pos + 1));
+      }
+      else if (env.containsKey(name)) {
+        newEnv.put(name, env.get(name));
+      }
+    }
+    if (newEnv.size() < lines.size() - toIgnore.size()) {
+      // some lines weren't parsed - we're better to fall back to original environment than use possibly incomplete one
+      throw new Exception("env:" + newEnv.size() + " lines:" + lines.size());
+    }
+
+    LOG.info("shell environment loaded (" + newEnv.size() + " vars)");
+    return Collections.unmodifiableMap(newEnv);
   }
 
   private static class ProcessKiller {

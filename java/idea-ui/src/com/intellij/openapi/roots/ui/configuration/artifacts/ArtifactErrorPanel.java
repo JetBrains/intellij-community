@@ -91,9 +91,7 @@ public class ArtifactErrorPanel {
     if (myErrorLabel.isShowing()) {
       myErrorLabel.setText(errorText);
     }
-    else {
-      myErrorText = errorText;
-    }
+    myErrorText = errorText;
     myMainPanel.setVisible(true);
     myCurrentQuickFixes = quickFixes;
     myFixButton.setVisible(!quickFixes.isEmpty());

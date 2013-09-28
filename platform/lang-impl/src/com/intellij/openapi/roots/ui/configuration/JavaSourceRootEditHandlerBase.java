@@ -22,7 +22,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.ui.roots.IconActionComponent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -36,12 +35,6 @@ import java.awt.*;
 public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEditHandler<JpsSimpleElement<JavaSourceRootProperties>> {
   public JavaSourceRootEditHandlerBase(JpsModuleSourceRootType<JpsSimpleElement<JavaSourceRootProperties>> rootType) {
     super(rootType);
-  }
-
-  @NotNull
-  @Override
-  public JpsSimpleElement<JavaSourceRootProperties> createDefaultProperties() {
-    return JpsElementFactory.getInstance().createSimpleElement(new JavaSourceRootProperties());
   }
 
   @Nullable

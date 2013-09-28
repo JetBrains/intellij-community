@@ -17,6 +17,7 @@ package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -45,7 +46,7 @@ public class DocCommentLexer extends MergingLexerAdapter {
     }
 
     @Override
-    public final void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+    public final void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
       myBuffer = buffer;
       myBufferIndex =  startOffset;
       myBufferEndOffset = endOffset;
@@ -59,6 +60,7 @@ public class DocCommentLexer extends MergingLexerAdapter {
       return myState;
     }
 
+    @NotNull
     @Override
     public CharSequence getBufferSequence() {
       return myBuffer;

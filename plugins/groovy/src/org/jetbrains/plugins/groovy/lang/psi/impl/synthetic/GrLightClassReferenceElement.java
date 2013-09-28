@@ -125,6 +125,11 @@ public class GrLightClassReferenceElement extends LightElement implements GrCode
   }
 
   @Override
+  public boolean isQualified() {
+    return false;
+  }
+
+  @Override
   public void accept(GroovyElementVisitor visitor) {
     //todo ???
   }

@@ -16,34 +16,22 @@
 
 package com.intellij.execution.ui.layout.actions;
 
-import com.intellij.execution.ui.actions.BaseViewAction;
 import com.intellij.execution.ui.layout.ViewContext;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.NotNull;
 
-public class CloseAllViewsAction extends BaseViewAction {
+public class CloseAllViewsAction extends CloseViewsActionBase {
   @Override
-  protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
-    setEnabled(e, isEnabled(context, content, e.getPlace()));
-  }
-
-  @Override
-  protected void actionPerformed(final AnActionEvent e, final ViewContext context, final Content[] content) {
-    final ContentManager manager = context.getContentManager();
-    for (Content c : manager.getContents()) {
-      if (c.isCloseable()) {
-        manager.removeContent(c, context.isToDisposeRemovedContent());
-      }
-    }
-  }
-
-  public static boolean isEnabled(ViewContext context, Content[] content, String place) {
-    int closeable = 0;
+  public boolean isEnabled(ViewContext context, Content[] selectedContents, String place) {
+    int count = 0;
     for (Content c : context.getContentManager().getContents()) {
-      if (c.isCloseable()) closeable ++;
+      if (c.isCloseable() && ++count > 1) return true;
     }
-    return closeable > 1;
+    return false;
   }
 
+  @Override
+  protected boolean isAccepted(@NotNull Content c, @NotNull Content[] selectedContents) {
+    return true;
+  }
 }

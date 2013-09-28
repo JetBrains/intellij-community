@@ -20,7 +20,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsKey;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -54,7 +54,7 @@ public class DescindingFilesFilter {
       } else {
         boolean failed = false;
         for (FilePath chainedPath : chain) {
-          if (VfsUtil.isAncestor(chainedPath.getIOFile(), root.getIOFile(), false)) {
+          if (VfsUtilCore.isAncestor(chainedPath.getIOFile(), root.getIOFile(), false)) {
             // do not take this root
             failed = true;      
             break;

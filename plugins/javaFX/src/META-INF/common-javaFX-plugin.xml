@@ -50,6 +50,7 @@
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.javaFX.JavaFxRenameAttributeProcessor" order="before xmlAttribute"/>
     <completion.contributor implementationClass="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxCompletionContributor" language="XML" order="before xmlNonFirst"/>
     <manifest.parser.provider implementation="org.jetbrains.plugins.javaFX.manifest.JavaFxManifestHeaderParsers"/>
+    <projectWizard.projectCategory implementation="org.jetbrains.plugins.javaFX.JavaFxProjectType"/>
   </extensions>
 
   <actions>

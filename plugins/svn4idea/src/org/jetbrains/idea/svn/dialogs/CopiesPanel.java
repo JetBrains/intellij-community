@@ -340,14 +340,13 @@ public class CopiesPanel {
 
   private void changeFormat(final WCInfo wcInfo) {
     ChangeFormatDialog dialog = new ChangeFormatDialog(myProject, new File(wcInfo.getPath()), false, ! wcInfo.isIsWcRoot());
-    dialog.setData(wcInfo.getFormat().getOption());
+    dialog.setData(wcInfo.getFormat());
     dialog.show();
     if (! dialog.isOK()) {
       return;
     }
-    final String newMode = dialog.getUpgradeMode();
-    if (! wcInfo.getFormat().getOption().equals(newMode)) {
-      final WorkingCopyFormat newFormat = WorkingCopyFormat.getInstance(newMode);
+    final WorkingCopyFormat newFormat = dialog.getUpgradeMode();
+    if (!wcInfo.getFormat().equals(newFormat)) {
       ApplicationManager.getApplication().saveAll();
       final Task.Backgroundable task = new SvnFormatWorker(myProject, newFormat, wcInfo) {
         @Override

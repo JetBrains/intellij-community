@@ -120,6 +120,14 @@ public abstract class PsiShortNamesCache {
 
   public abstract boolean processMethodsWithName(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiMethod> processor);
 
+  public boolean processAllMethodNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+    return ContainerUtil.process(getAllFieldNames(), processor);
+  }
+
+  public boolean processAllFieldNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+    return ContainerUtil.process(getAllFieldNames(), processor);
+  }
+
   /**
    * Returns the list of names of all methods in the project and
    * (optionally) libraries.

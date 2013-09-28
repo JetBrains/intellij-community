@@ -20,7 +20,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.SurroundWithIfFix;
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.psi.PsiExpression;
@@ -106,7 +106,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
       configureAnnotations.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(OptionsPanel.this));
+          Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(OptionsPanel.this));
           if (project == null) project = ProjectManager.getInstance().getDefaultProject();
           final NullableNotNullDialog dialog = new NullableNotNullDialog(project);
           dialog.show();
@@ -118,23 +118,25 @@ public class DataFlowInspection extends DataFlowInspectionBase {
       gc.insets.bottom = 15;
       add(configureAnnotations, gc);
 
-      final JButton configureCheckAnnotations = new JButton(InspectionsBundle.message("configure.checker.option.button"));
-      configureCheckAnnotations.addActionListener(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(OptionsPanel.this));
-          if (project == null) project = ProjectManager.getInstance().getDefaultProject();
-          final ConditionCheckDialog dialog = new ConditionCheckDialog(project,
-                                                                       InspectionsBundle.message("configure.checker.option.main.dialog.title")
-          );
-          dialog.show();
-        }
-      });
-      gc.gridy++;
-      gc.fill = GridBagConstraints.NONE;
-      gc.insets.left = 20;
-      gc.insets.bottom = 15;
-      add(configureCheckAnnotations, gc);
+      if ("true".equals(System.getProperty("dfa.inspection.show.method.configuration", "false"))) {
+        final JButton configureCheckAnnotations = new JButton(InspectionsBundle.message("configure.checker.option.button"));
+        configureCheckAnnotations.addActionListener(new ActionListener() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(OptionsPanel.this));
+            if (project == null) project = ProjectManager.getInstance().getDefaultProject();
+            final ConditionCheckDialog dialog = new ConditionCheckDialog(project,
+                                                                         InspectionsBundle.message("configure.checker.option.main.dialog.title")
+            );
+            dialog.show();
+          }
+        });
+        gc.gridy++;
+        gc.fill = GridBagConstraints.NONE;
+        gc.insets.left = 20;
+        gc.insets.bottom = 15;
+        add(configureCheckAnnotations, gc);
+      }
 
       gc.fill = GridBagConstraints.HORIZONTAL;
       gc.weighty = 1;

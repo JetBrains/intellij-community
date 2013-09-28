@@ -80,7 +80,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     myLibrariesContainer = model.getLibrariesContainer();
 
     myLabel.setVisible(!vertical);
-    Splitter splitter = vertical ? new Splitter(true, 0.6f, 0.3f, 0.9f) : new Splitter(false, 0.3f, 0.1f, 0.7f);
+    Splitter splitter = vertical ? new Splitter(true, 0.6f) : new Splitter(false, 0.3f, 0.1f, 0.7f);
     myFrameworksTree = new FrameworksTree() {
       @Override
       protected void onNodeStateChanged(CheckedTreeNode node) {
@@ -301,7 +301,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
   private static void addChildFrameworks(final List<FrameworkSupportNodeBase> list, final List<FrameworkSupportNode> result,
                                          final boolean selectedOnly) {
     for (FrameworkSupportNodeBase node : list) {
-      if (!selectedOnly || node.isChecked()) {
+      if (!selectedOnly || node.isChecked() || node instanceof FrameworkGroupNode) {
         if (node instanceof FrameworkSupportNode) {
           result.add((FrameworkSupportNode)node);
         }

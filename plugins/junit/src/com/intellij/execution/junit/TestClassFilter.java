@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,7 +54,8 @@ public class TestClassFilter implements ClassFilter.ClassFilterWithScope {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       @Override
       public Boolean compute() {
-        return ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(aClass) &&
+        return aClass.getQualifiedName() != null &&
+               ConfigurationUtil.PUBLIC_INSTANTIATABLE_CLASS.value(aClass) &&
                (aClass.isInheritor(myBase, true) || JUnitUtil.isTestClass(aClass))
                && !CompilerConfiguration.getInstance(getProject()).isExcludedFromCompilation(PsiUtilCore.getVirtualFile(aClass)); 
       }

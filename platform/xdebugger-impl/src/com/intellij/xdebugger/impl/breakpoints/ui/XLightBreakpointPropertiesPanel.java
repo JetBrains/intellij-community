@@ -38,7 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implements XSuspendPolicyPanel.Delegate {
-
+  @SuppressWarnings("UnusedDeclaration")
   public boolean showMoreOptions() {
     return myShowMoreOptions;
   }
@@ -52,16 +52,6 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
         myDelegate.showMoreOptions();
       }
     }
-  }
-
-  private void createUIComponents() {
-    myMainPanel = new JPanel() {
-      @Override
-      public void removeNotify() {
-        super.removeNotify();
-        saveProperties();
-      }
-    };
   }
 
   public interface Delegate {
@@ -165,8 +155,7 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
     }
 
     if (myConditionComboBox != null) {
-      final String text = myConditionComboBox.getText();
-      final String condition = StringUtil.isEmptyOrSpaces(text) ? null : text;
+      final String condition = StringUtil.nullize(myConditionComboBox.getText(), true);
       myBreakpoint.setCondition(condition);
       if (condition != null) {
         myConditionComboBox.saveTextInHistory();
@@ -188,8 +177,7 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
     }
     
     if (myConditionComboBox != null) {
-      String condition = myBreakpoint.getCondition();
-      myConditionComboBox.setText(condition != null ? condition : "");
+      myConditionComboBox.setText(StringUtil.notNullize(myBreakpoint.getCondition()));
     }
 
     for (XBreakpointCustomPropertiesPanel<B> customPanel : myCustomPanels) {

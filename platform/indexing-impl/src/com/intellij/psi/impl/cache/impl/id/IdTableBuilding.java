@@ -22,6 +22,7 @@ import com.intellij.lang.cacheBuilder.*;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.InternalFileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.psi.CustomHighlighterTokenType;
@@ -65,15 +66,15 @@ public class IdTableBuilding {
     }
   }
 
-  private static final HashMap<FileType, FileTypeIdIndexer> ourIdIndexers = new HashMap<FileType, FileTypeIdIndexer>();
+  private static final Map<FileType, FileTypeIdIndexer> ourIdIndexers = new HashMap<FileType, FileTypeIdIndexer>();
 
   @Deprecated
-  public static void registerIdIndexer(FileType fileType, FileTypeIdIndexer indexer) {
+  public static void registerIdIndexer(@NotNull FileType fileType, FileTypeIdIndexer indexer) {
     ourIdIndexers.put(fileType, indexer);
   }
 
-  public static boolean isIdIndexerRegistered(FileType fileType) {
-    return ourIdIndexers.containsKey(fileType) || IdIndexers.INSTANCE.forFileType(fileType) != null;
+  public static boolean isIdIndexerRegistered(@NotNull FileType fileType) {
+    return ourIdIndexers.containsKey(fileType) || IdIndexers.INSTANCE.forFileType(fileType) != null || fileType instanceof InternalFileType;
   }
 
 

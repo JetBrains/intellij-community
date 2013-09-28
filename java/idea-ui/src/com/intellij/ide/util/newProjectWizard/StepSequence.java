@@ -49,14 +49,17 @@ public class StepSequence {
     myCommonSteps.add(step);
   }
 
-  public void addCommonFinishingStep(@NotNull ModuleWizardStep step, @NotNull Set<String> suitableTypes) {
+  public void addCommonFinishingStep(@NotNull ModuleWizardStep step, @Nullable Set<String> suitableTypes) {
     myCommonFinishingSteps.add(Pair.create(step, suitableTypes));
   }
 
-  public void addStepsForBuilder(@NotNull AbstractModuleBuilder builder, @NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
+  public void addStepsForBuilder(@NotNull AbstractModuleBuilder builder,
+                                 @NotNull WizardContext wizardContext,
+                                 @NotNull ModulesProvider modulesProvider,
+                                 boolean forNewWizard) {
     String id = builder.getBuilderId();
     if (!mySpecificSteps.containsKey(id)) {
-      mySpecificSteps.put(id, Arrays.asList(builder.createWizardSteps(wizardContext, modulesProvider)));
+      mySpecificSteps.put(id, Arrays.asList(builder.createWizardSteps(wizardContext, modulesProvider, forNewWizard)));
     }
   }
 
@@ -73,7 +76,8 @@ public class StepSequence {
         mySelectedSteps.addAll(steps);
       }
       for (Pair<ModuleWizardStep, Set<String>> pair : myCommonFinishingSteps) {
-        if (ContainerUtil.intersects(myTypes, pair.getSecond())) {
+        Set<String> types = pair.getSecond();
+        if (types == null || ContainerUtil.intersects(myTypes, types)) {
           mySelectedSteps.add(pair.getFirst());
         }
       }
@@ -120,9 +124,5 @@ public class StepSequence {
     }
     ContainerUtil.removeDuplicates(result);
     return result;
-  }
-
-  public ModuleWizardStep getFirstStep() {
-    return myCommonSteps.get(0);
   }
 }

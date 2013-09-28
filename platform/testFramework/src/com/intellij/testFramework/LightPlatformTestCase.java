@@ -229,6 +229,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         new Throwable(projectFile.getPath()).printStackTrace(new PrintStream(buffer));
 
         ourProject = PlatformTestCase.createProject(projectFile, LIGHT_PROJECT_MARK + buffer.toString());
+        ourPathToKeep = projectFile.getPath();
         if (!ourHaveShutdownHook) {
           ourHaveShutdownHook = true;
           registerShutdownHook();
@@ -779,7 +780,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   public static synchronized void closeAndDeleteProject() {
     if (ourProject != null) {
       ApplicationManager.getApplication().assertWriteAccessAllowed();
-      ourApplication.setDataProvider(null);
 
       ((ProjectImpl)ourProject).setTemporarilyDisposed(false);
       VirtualFile projectFile = ((ProjectEx)ourProject).getStateStore().getProjectFile();
@@ -787,11 +787,18 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       if (!ourProject.isDisposed()) Disposer.dispose(ourProject);
 
       if (ioFile != null) {
-        FileUtil.delete(ioFile);
+        File dir = ioFile.getParentFile();
+        if (dir.getName().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
+          FileUtil.delete(dir);
+        }
+        else {
+          FileUtil.delete(ioFile);
+        }
       }
 
       ProjectManagerEx.getInstanceEx().closeTestProject(ourProject);
       ourProject = null;
+      ourPathToKeep = null;
     }
   }
 

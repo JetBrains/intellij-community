@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.refactoring.inline;
 
 import com.intellij.JavaTestUtil;
@@ -108,11 +123,11 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
   }
 
   public void testAnotherDefinitionUsed() throws Exception {
-    doTest(true, "Cannot perform refactoring.\nAnother variable 'bar' definition is used together with inlined one.");
+    doTest(true, "Cannot perform refactoring.\nAnother variable 'bar' definition is used together with inlined one");
   }
 
   public void testAnotherDefinitionUsed1() throws Exception {
-    doTest(false, "Cannot perform refactoring.\nAnother variable 'bar' definition is used together with inlined one.");
+    doTest(false, "Cannot perform refactoring.\nAnother variable 'bar' definition is used together with inlined one");
   }
 
   public void testTypeArgumentsStatic() throws Exception {
@@ -137,7 +152,7 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
 
   public void testAssignmentToArrayElement() throws Exception {
     doTest(true, "Cannot perform refactoring.\n" +
-                 "Variable 'arr' is accessed for writing.");
+                 "Variable 'arr' is accessed for writing");
   }
 
   public void testArrayMethodCallInitialized() throws Exception {
@@ -150,7 +165,7 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
 
   public void testNonEqAssignment() throws Exception {
     doTest(false, "Cannot perform refactoring.\n" +
-                  "Variable 'x' is accessed for writing.");
+                  "Variable 'x' is accessed for writing");
   }
 
   public void testInlineFromTryCatch() throws Exception {
@@ -223,7 +238,7 @@ public class InlineLocalTest extends LightCodeInsightTestCase {
 
   public void testLocalVarInsideLambdaBodyWriteUsage() throws Exception {
     doTest(true, "Cannot perform refactoring.\n" +
-                 "Variable 'hello' is accessed for writing.");
+                 "Variable 'hello' is accessed for writing");
   }
 
   private void doTest(final boolean inlineDef, String conflictMessage) throws Exception {

@@ -1,12 +1,15 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.util.PairConsumer;
 import org.jdom.Element;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectChanges;
 import org.jetbrains.idea.maven.project.MavenProjectsProcessorTask;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.List;
 import java.util.Map;
@@ -33,23 +36,22 @@ public abstract class GroovyImporter extends MavenImporter {
   }
 
   @Override
-  public void collectSourceFolders(MavenProject mavenProject, List<String> result) {
-    collectSourceOrTestFolders(mavenProject, "compile", "src/main/groovy", result);
+  public void collectSourceRoots(MavenProject mavenProject, PairConsumer<String, JpsModuleSourceRootType<?>> result) {
+    collectSourceOrTestFolders(mavenProject, "compile", "src/main/groovy", JavaSourceRootType.SOURCE, result);
+    collectSourceOrTestFolders(mavenProject, "testCompile", "src/test/groovy", JavaSourceRootType.TEST_SOURCE, result);
   }
 
-  @Override
-  public void collectTestFolders(MavenProject mavenProject, List<String> result) {
-    collectSourceOrTestFolders(mavenProject, "testCompile", "src/test/groovy", result);
-  }
-
-  private void collectSourceOrTestFolders(MavenProject mavenProject, String goal, String defaultDir, List<String> result) {
+  private void collectSourceOrTestFolders(MavenProject mavenProject, String goal, String defaultDir, JavaSourceRootType type,
+                                          PairConsumer<String, JpsModuleSourceRootType<?>> result) {
     Element sourcesElement = getGoalConfig(mavenProject, goal);
     List<String> dirs = MavenJDOMUtil.findChildrenValuesByPath(sourcesElement, "sources", "fileset.directory");
     if (dirs.isEmpty()) {
-      result.add(mavenProject.getDirectory() + "/" + defaultDir);
+      result.consume(mavenProject.getDirectory() + "/" + defaultDir, type);
       return;
     }
-    result.addAll(dirs);
+    for (String dir : dirs) {
+      result.consume(dir, type);
+    }
   }
 
   @Override

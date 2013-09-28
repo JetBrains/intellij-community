@@ -20,14 +20,13 @@ import com.intellij.debugger.engine.DebugProcessListener;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.Function;
 
 /**
  * @author lex
  */
-public abstract class DebuggerManager implements ProjectComponent, JDOMExternalizable {
+public abstract class DebuggerManager implements ProjectComponent {
   public static DebuggerManager getInstance(Project project) {
     return project.getComponent(DebuggerManager.class);
   }
@@ -52,5 +51,4 @@ public abstract class DebuggerManager implements ProjectComponent, JDOMExternali
   public abstract void registerPositionManagerFactory(Function<DebugProcess, PositionManager> factory);
 
   public abstract void unregisterPositionManagerFactory(Function<DebugProcess, PositionManager> factory);
-
 }

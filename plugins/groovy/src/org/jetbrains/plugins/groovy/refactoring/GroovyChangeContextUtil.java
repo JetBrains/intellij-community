@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.refactoring;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -114,6 +115,7 @@ public class GroovyChangeContextUtil {
                 final PsiElement qualifier = refExpr.getQualifier();
                 if (!(qualifier instanceof GrReferenceExpression)) {
                   refExpr.setQualifier(factory.createReferenceExpressionFromText(memberClass.getQualifiedName()));
+                  JavaCodeStyleManager.getInstance(manager.getProject()).shortenClassReferences(refExpr.getQualifier());
                   return;
                 }
               }
@@ -138,6 +140,15 @@ public class GroovyChangeContextUtil {
           ref.bindToElement(refClass);
         }
       }
+    }
+  }
+
+  public static void clearContextInfo(PsiElement scope) {
+    scope.putCopyableUserData(QUALIFIER_CLASS_KEY, null);
+    scope.putCopyableUserData(REF_TO_CLASS, null);
+    scope.putCopyableUserData(REF_TO_MEMBER, null);
+    for (PsiElement child = scope.getFirstChild(); child != null; child = child.getNextSibling()) {
+      clearContextInfo(child);
     }
   }
 }

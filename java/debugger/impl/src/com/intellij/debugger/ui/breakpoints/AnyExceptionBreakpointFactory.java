@@ -15,13 +15,10 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
-import com.intellij.debugger.ui.breakpoints.actions.BreakpointPanelAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -58,17 +55,8 @@ public class AnyExceptionBreakpointFactory extends BreakpointFactory{
   }
 
   @Override
-  protected BreakpointPanelAction[] createBreakpointPanelActions(Project project, DialogWrapper parentDialog) {
-    return new BreakpointPanelAction[0];  //To change body of implemented methods use File | Settings | File Templates.
-  }
-
-  @Override
   public boolean breakpointCanBeRemoved(Breakpoint breakpoint) {
     return false;
-  }
-
-  public @Nullable BreakpointPanel createBreakpointPanel(Project project, DialogWrapper parentDialog) {
-    return null;
   }
 
   public Key<AnyExceptionBreakpoint> getBreakpointCategory() {

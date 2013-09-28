@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Map;
@@ -75,7 +76,7 @@ public class LayeredLexer extends DelegateLexer {
   }
 
   @Override
-  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     LOG.assertTrue(initialState != IN_LAYER_STATE, "Restoring to layer is not supported.");
     myState = initialState;
     myCurrentLayerLexer = null;
@@ -157,13 +158,14 @@ public class LayeredLexer extends DelegateLexer {
     myState = isLayerActive() ? IN_LAYER_STATE : super.getState();
   }
 
+  @NotNull
   @Override
   public LexerPosition getCurrentPosition() {
     return new LexerPositionImpl(getTokenStart(), getState());
   }
 
   @Override
-  public void restore(LexerPosition position) {
+  public void restore(@NotNull LexerPosition position) {
     start(getBufferSequence(), position.getOffset(), getBufferEnd(), position.getState());
   }
 

@@ -63,7 +63,7 @@ public class CreateFromScratchMode extends WizardMode {
 
     StepSequence sequence = new StepSequence();
     for (ModuleBuilder builder : builders) {
-      sequence.addStepsForBuilder(builder, context, modulesProvider);
+      sequence.addStepsForBuilder(builder, context, modulesProvider, false);
     }
     return sequence;
   }

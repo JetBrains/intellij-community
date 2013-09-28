@@ -1,10 +1,7 @@
 package org.jetbrains.idea.svn.history;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.util.LineSeparator;
-import com.intellij.util.containers.hash.HashMap;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
@@ -18,22 +15,21 @@ import org.tmatesoft.svn.core.SVNLogEntryPath;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.annotation.XmlAttribute;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.XmlRootElement;
+import javax.xml.bind.annotation.XmlValue;
 import java.io.File;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * @author Konstantin Kolosovsky.
  */
 public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
-
-  private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.history.CmdHistoryClient");
 
   @Override
   public void doLog(@NotNull File path,
@@ -47,10 +43,6 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
                     @Nullable String[] revisionProperties,
                     @Nullable ISVNLogEntryHandler handler) throws VcsException {
     // TODO: add revision properties parameter if necessary
-    // TODO: svn log command supports --xml option - could update parsing to use xml format
-
-    // TODO: after merge remove setting includeMergedRevisions to false and update parsing
-    includeMergedRevisions = false;
 
     List<String> parameters =
       prepareCommand(path, startRevision, endRevision, pegRevision, stopOnCopy, discoverChangedPaths, includeMergedRevisions, limit);
@@ -59,18 +51,39 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
       SvnCommand command = CommandUtil.execute(myVcs, SvnTarget.fromFile(path, pegRevision), SvnCommandName.log, parameters, null);
       // TODO: handler should be called in parallel with command execution, but this will be in other thread
       // TODO: check if that is ok for current handler implementation
-      parseOutput(handler, command);
+      parseOutput(command, handler);
     }
     catch (SVNException e) {
       throw new VcsException(e);
     }
   }
 
-  private static void parseOutput(@Nullable ISVNLogEntryHandler handler, @NotNull SvnCommand command)
+  private static void parseOutput(@NotNull SvnCommand command, @Nullable ISVNLogEntryHandler handler)
     throws VcsException, SVNException {
-    Parser parser = new Parser(handler);
-    for (String line : StringUtil.splitByLines(command.getOutput(), false)) {
-      parser.onLine(line);
+    try {
+      LogInfo log = CommandUtil.parse(command.getOutput(), LogInfo.class);
+
+      if (handler != null && log != null) {
+        for (LogEntry entry : log.entries) {
+          iterateRecursively(entry, handler);
+        }
+      }
+    }
+    catch (JAXBException e) {
+      throw new VcsException(e);
+    }
+  }
+
+  private static void iterateRecursively(@NotNull LogEntry entry, @NotNull ISVNLogEntryHandler handler) throws SVNException {
+    handler.handleLogEntry(entry.toLogEntry());
+
+    for (LogEntry childEntry : entry.childEntries) {
+      iterateRecursively(childEntry, handler);
+    }
+
+    if (entry.hasChildren()) {
+      // empty log entry passed to handler to fully correspond to SVNKit behavior.
+      handler.handleLogEntry(SVNLogEntry.EMPTY_ENTRY);
     }
   }
 
@@ -92,133 +105,90 @@ public class CmdHistoryClient extends BaseSvnClient implements HistoryClient {
       parameters.add("--limit");
       parameters.add(String.valueOf(limit));
     }
+    parameters.add("--xml");
 
     return parameters;
   }
 
-  private static class Parser {
-    private static final String REVISION = "\\s*r(\\d+)\\s*";
-    private static final String AUTHOR = "\\s*([^|]*)\\s*";
-    private static final String DATE = "\\s*([^|]*)\\s*";
-    private static final String MESSAGE_LINES = "\\s*(\\d+).*";
+  @XmlRootElement(name = "log")
+  public static class LogInfo {
 
-    private static final Pattern ENTRY_START = Pattern.compile("-+");
-    private static final Pattern DETAILS = Pattern.compile(REVISION + "\\|" + AUTHOR + "\\|" + DATE + "\\|" + MESSAGE_LINES);
+    @XmlElement(name = "logentry")
+    public List<LogEntry> entries = new ArrayList<LogEntry>();
+  }
 
-    private static final String STATUS = "\\s*(\\w)";
-    private static final String PATH = "\\s*(.*?)\\s*";
-    private static final String COPY_FROM_PATH = "(/[^:]*)";
-    private static final String COPY_FROM_REVISION = "(\\d+)\\))\\s*";
-    private static final String COPY_FROM_INFO = "((\\(from " + COPY_FROM_PATH + ":" + COPY_FROM_REVISION + ")?";
-    private static final Pattern CHANGED_PATH = Pattern.compile(STATUS + PATH + COPY_FROM_INFO);
+  public static class LogEntry {
 
-    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
+    @XmlAttribute(name = "revision")
+    public long revision;
 
-    ISVNLogEntryHandler handler;
+    @XmlElement(name = "author")
+    public String author;
 
-    Entry entry;
-    boolean waitDetails;
-    boolean waitChangedPath;
-    boolean waitMessage;
+    @XmlElement(name = "date")
+    public Date date;
 
-    public Parser(@Nullable ISVNLogEntryHandler handler) {
-      this.handler = handler;
+    @XmlElement(name = "msg")
+    public String message;
+
+    @XmlElement(name = "paths")
+    public ChangedPaths changedPaths;
+
+    @XmlElement(name = "logentry")
+    public List<LogEntry> childEntries = new ArrayList<LogEntry>();
+
+    public boolean hasChildren() {
+      return !childEntries.isEmpty();
     }
 
-    public void onLine(@NotNull String line) throws VcsException, SVNException {
-      if (ENTRY_START.matcher(line).matches()) {
-        processEntryStart();
-      }
-      else if (waitDetails) {
-        processDetails(line);
-      }
-      else if (waitMessage) {
-        processMessage(line);
-      }
-      else if (StringUtil.isEmpty(line.trim())) {
-        processChangedPathsFinished();
-      }
-      else if (line.startsWith("Changed paths:")) {
-        processChangedPathsStarted();
-      }
-      else if (waitChangedPath) {
-        processChangedPath(line);
-      }
-      else {
-        throw new VcsException("unknown state on line " + line);
-      }
+    public SVNLogEntry toLogEntry() {
+      SVNLogEntry entry = new SVNLogEntry(toChangedPathsMap(), revision, author, date, message);
+
+      entry.setHasChildren(hasChildren());
+
+      return entry;
     }
 
-    private void processChangedPath(@NotNull String line) throws VcsException {
-      Matcher matcher = CHANGED_PATH.matcher(line);
-      if (!matcher.matches()) {
-        throw new VcsException("changed path not found in " + line);
+    public Map<String, SVNLogEntryPath> toChangedPathsMap() {
+      return changedPaths != null ? changedPaths.toMap() : ContainerUtil.<String, SVNLogEntryPath>newHashMap();
+    }
+  }
+
+  public static class ChangedPaths {
+
+    @XmlElement(name = "path")
+    public List<ChangedPath> changedPaths = new ArrayList<ChangedPath>();
+
+    public Map<String, SVNLogEntryPath> toMap() {
+      Map<String, SVNLogEntryPath> changes = ContainerUtil.newHashMap();
+
+      for (ChangedPath path : changedPaths) {
+        changes.put(path.path, path.toLogEntryPath());
       }
 
-      String path = matcher.group(2);
-      char type = CommandUtil.getStatusChar(matcher.group(1));
-      String copyPath = matcher.group(5);
-      long copyRevision = !StringUtil.isEmpty(matcher.group(6)) ? Long.valueOf(matcher.group(6)) : 0;
-
-      entry.changedPaths.put(path, new SVNLogEntryPath(path, type, copyPath, copyRevision));
+      return changes;
     }
+  }
 
-    private void processChangedPathsStarted() {
-      waitChangedPath = true;
-    }
+  public static class ChangedPath {
 
-    private void processChangedPathsFinished() {
-      waitChangedPath = false;
-      waitMessage = true;
-    }
+    @XmlAttribute(name = "kind")
+    public String kind;
 
-    private void processMessage(@NotNull String line) {
-      entry.message.append(line);
-      entry.message.append(LineSeparator.LF.getSeparatorString());
-    }
+    @XmlAttribute(name = "action")
+    public String action;
 
-    private void processDetails(@NotNull String line) throws VcsException {
-      Matcher matcher = DETAILS.matcher(line);
-      if (!matcher.matches()) {
-        throw new VcsException("details not found in " + line);
-      }
-      entry.revision = Long.valueOf(matcher.group(1));
-      entry.author = matcher.group(2).trim();
-      entry.date = tryGetDate(matcher.group(3));
+    @XmlAttribute(name = "copyfrom-path")
+    public String copyFromPath;
 
-      waitDetails = false;
-    }
+    @XmlAttribute(name = "copyfrom-rev")
+    public long copyFromRevision;
 
-    private void processEntryStart() throws SVNException {
-      if (entry != null) {
-        handler.handleLogEntry(entry.toLogEntry());
-      }
-      entry = new Entry();
-      waitDetails = true;
-      waitMessage = false;
-    }
+    @XmlValue
+    public String path;
 
-    private static Date tryGetDate(@NotNull String value) {
-      Date result = null;
-      try {
-        result = DATE_FORMAT.parse(value);
-      }
-      catch (ParseException e) {
-        LOG.debug(e);
-      }
-      return result;
-    }
-
-    private static class Entry {
-      Map<String, SVNLogEntryPath> changedPaths = new HashMap<String, SVNLogEntryPath>();
-      long revision;
-      String author;
-      Date date;
-      StringBuilder message = new StringBuilder();
-
-      private SVNLogEntry toLogEntry() {
-        return new SVNLogEntry(changedPaths, revision, author, date, message.toString());
-      }
+    public SVNLogEntryPath toLogEntryPath() {
+      return new SVNLogEntryPath(path, CommandUtil.getStatusChar(action), copyFromPath, copyFromRevision);
     }
   }
 }

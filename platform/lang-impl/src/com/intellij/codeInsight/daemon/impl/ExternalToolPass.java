@@ -96,10 +96,6 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
         boolean errorFound = daemonCodeAnalyzer.getFileStatusMap().wasErrorFound(myDocument);
 
         for(ExternalAnnotator externalAnnotator: externalAnnotators) {
-          if (!errorFound) {
-            externalAnnotator.annotate(psiRoot, myAnnotationHolder);
-          }
-
           final Object collectedInfo = externalAnnotator.collectInformation(psiRoot, myEditor, errorFound);
           if (collectedInfo != null) {
             myAnnotator2DataMap.put(externalAnnotator, new MyData(psiRoot, collectedInfo));

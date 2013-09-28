@@ -67,6 +67,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testBuildRegexpNotComplex() throws Throwable { doTest(); }
   public void testTernaryInWhileNotComplex() throws Throwable { doTest(); }
   public void testTryCatchInForNotComplex() throws Throwable { doTest(); }
+  public void testNestedTryInWhileNotComplex() throws Throwable { doTest(); }
   public void testFieldChangedBetweenSynchronizedBlocks() throws Throwable { doTest(); }
 
   public void testGeneratedEquals() throws Throwable { doTest(); }
@@ -200,7 +201,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testLastConstantConditionInAnd() { doTest(); }
 
   public void testTransientFinalField() { doTest(); }
-  public void _testSymmetricUncheckedCast() { doTest(); }
+  public void _testSymmetricUncheckedCast() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEABKL-6871
   public void testNullCheckDoesntAffectUncheckedCast() { doTest(); }
   public void testThrowNull() { doTest(); }
 
@@ -286,6 +287,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testContractAnnotation() { doTest(); }
   public void testContractInLoopNotTooComplex() { doTest(); }
   public void testContractWithNullable() { doTest(); }
+  public void testContractPreservesUnknownNullability() { doTest(); }
 
   public void testBoxingImpliesNotNull() { doTest(); }
   public void testLargeIntegersAreNotEqualWhenBoxed() { doTest(); }
@@ -295,6 +297,17 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testAnonymousMethodIndependence() { doTest(); }
   public void testAnonymousFieldIndependence() { doTest(); }
   public void testNoConfusionWithAnonymousConstantInitializer() { doTest(); }
+  public void testForeachOverWildcards() { doTest(); }
+  public void testFinalGetter() { doTest(); }
   
-  public void _testNullCheckBeforeInstanceof() { doTest(); }
+  public void testManySequentialIfsNotComplex() { doTest(); }
+  public void testManySequentialInstanceofsNotComplex() { doTest(); }
+  public void testLongDisjunctionsNotComplex() { doTest(); }
+  public void testWhileNotComplex() { doTest(); }
+  public void testManyDisjunctiveFieldAssignmentsInLoopNotComplex() { doTest(); }
+  
+  public void testVariablesDiverge() { doTest(); }
+  public void testDontForgetInstanceofInfoWhenMerging() { doTest(); }
+  
+  public void _testNullCheckBeforeInstanceof() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEA-113220
 }

@@ -17,13 +17,10 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.tree.TreeNode;
 import java.util.List;
 
 /**
@@ -127,24 +124,5 @@ public class SupportForFrameworksStep extends ModuleWizardStep {
     public String getBaseDirectoryForLibrariesPath() {
       return getBaseDirectory(myBuilder);
     }
-  }
-
-  @TestOnly
-  public boolean enableSupport(final String frameworkId) {
-    return !TreeUtil.traverse((TreeNode)mySupportForFrameworksPanel.getFrameworksTree().getModel().getRoot(), new TreeUtil.Traverse() {
-      @Override
-      public boolean accept(Object node) {
-        if (node instanceof FrameworkSupportNode && frameworkId.equals(
-          ((FrameworkSupportNode)node).getProvider().getFrameworkType().getId())) {
-          TreeNode parent = ((FrameworkSupportNode)node).getParent();
-          if (parent instanceof FrameworkSupportNode) {
-            ((FrameworkSupportNode)parent).setChecked(true);
-          }
-          ((FrameworkSupportNode)node).setChecked(true);
-          return false;
-        }
-        return true;
-      }
-    });
   }
 }

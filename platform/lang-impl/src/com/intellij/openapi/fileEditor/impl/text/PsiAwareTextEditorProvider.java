@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,7 +107,7 @@ public class PsiAwareTextEditorProvider extends TextEditorProvider {
     // type (caused by undo).
     if(FileEditorStateLevel.FULL == level){
       // Folding
-      if (project != null && !project.isDisposed() && !editor.isDisposed()) {
+      if (project != null && !project.isDisposed() && !editor.isDisposed() && project.isInitialized()) {
         PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
         state.setFoldingState(CodeFoldingManager.getInstance(project).saveFoldingState(editor));
       }

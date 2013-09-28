@@ -287,7 +287,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     new CloseListener(content, ijMessageView.getContentManager(), project);
     // Do not inline next two variabled. Seeking for NPE.
     ToolWindow messageToolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
-    messageToolWindow.activate(null);
+    messageToolWindow.activate(null, false);
     return messageView;
   }
 

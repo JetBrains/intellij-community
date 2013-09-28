@@ -45,7 +45,7 @@ public class VcsGroupsWrapper extends DefaultActionGroup implements DumbAware {
                                                                          0));
       for (AnAction child : children) {
         if (!(child instanceof StandardVcsGroup)) {
-          LOG.error("Any version control group should extends com.intellij.openapi.vcs.actions.StandardVcsGroup class. Groupd class: " +
+          LOG.error("Any version control group should extends com.intellij.openapi.vcs.actions.StandardVcsGroup class. GroupId class: " +
                     child.getClass().getName() + ", group ID: " + ActionManager.getInstance().getId(child));
         }
         else {
@@ -78,15 +78,12 @@ public class VcsGroupsWrapper extends DefaultActionGroup implements DumbAware {
       vcsToActionMap.put(vcsName, child);
     }
 
-    if (selectedFiles != null) {
-      for (VirtualFile selectedFile : selectedFiles) {
-        AbstractVcs vcs = projectLevelVcsManager.getVcsFor(selectedFile);
-        if (vcs != null) {
-          currentVcses.add(vcs.getName());
-        }
+    for (VirtualFile selectedFile : selectedFiles) {
+      AbstractVcs vcs = projectLevelVcsManager.getVcsFor(selectedFile);
+      if (vcs != null) {
+        currentVcses.add(vcs.getName());
       }
     }
-
 
     if (currentVcses.size() == 1 && vcsToActionMap.containsKey(currentVcses.iterator().next())) {
       updateFromAction(vcsToActionMap.get(currentVcses.iterator().next()), presentation);

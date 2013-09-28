@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.StubBasedPsiElement;
@@ -23,6 +24,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
@@ -38,11 +40,47 @@ import java.util.ArrayList;
  * @author Maxim.Medvedev
  */
 public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceListStub> implements StubBasedPsiElement<GrReferenceListStub>, GrReferenceList {
-
+  private static final Logger LOG = Logger.getInstance(GrReferenceListImpl.class);
+  
   private PsiClassType[] cachedTypes = null;
 
   public GrReferenceListImpl(@NotNull ASTNode node) {
     super(node);
+  }
+
+  @Override
+  public void deleteChildInternal(@NotNull ASTNode child) {
+    PsiElement psi = child.getPsi();
+
+    if (psi instanceof GrCodeReferenceElement) {
+
+      GrCodeReferenceElement[] refs = getReferenceElements();
+      if (refs.length == 1) {
+        PsiElement keyword = getKeyword();
+        LOG.assertTrue(keyword != null);
+        keyword.delete();
+      }
+      else {
+        PsiElement comma = PsiUtil.skipWhitespacesAndComments(psi, refs[0] == psi, true);
+        if (comma != null && comma.getNode().getElementType() == GroovyTokenTypes.mCOMMA) {
+          comma.delete();
+        }
+      }
+
+      super.deleteChildInternal(child);
+    }
+    else {
+      super.deleteChildInternal(child);
+    }
+  }
+
+  @Nullable
+  private PsiElement getKeyword() {
+    PsiElement firstChild = getFirstChild();
+    if (firstChild != null && firstChild.getNode().getElementType() == getKeywordType()) {
+      return firstChild;
+    }
+    return null;
   }
 
   @Override

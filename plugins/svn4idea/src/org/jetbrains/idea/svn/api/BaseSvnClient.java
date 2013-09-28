@@ -1,8 +1,13 @@
 package org.jetbrains.idea.svn.api;
 
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
+
+import java.util.Collection;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -42,6 +47,13 @@ public abstract class BaseSvnClient implements SvnClient {
   protected void assertFile(@NotNull SvnTarget target) {
     if (!target.isFile()) {
       throw new IllegalArgumentException("Target should be file " + target);
+    }
+  }
+
+  protected void validateFormat(@NotNull WorkingCopyFormat format, @NotNull Collection<WorkingCopyFormat> supported) throws VcsException {
+    if (!supported.contains(format)) {
+      throw new VcsException(
+        String.format("%s format is not supported. Supported formats are: %s.", format.getName(), StringUtil.join(supported, ",")));
     }
   }
 }

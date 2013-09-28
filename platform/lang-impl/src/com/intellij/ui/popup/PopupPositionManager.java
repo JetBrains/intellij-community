@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.lookup.LookupAdapter;
@@ -18,14 +33,20 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 
 /**
  * @author pegov
+ * @author Konstantin Bulenkov
  */
 public class PopupPositionManager {
   private PopupPositionManager() {
+  }
+
+  public enum Position {
+    TOP, BOTTOM, LEFT, RIGHT
   }
 
   public static void positionPopupInBestPosition(final JBPopup hint,
@@ -113,7 +134,7 @@ public class PopupPositionManager {
     }
   }
 
-  private static class PositionAdjuster {
+  public static class PositionAdjuster {
     private static final int GAP = 5;
 
     private final Component myRelativeTo;
@@ -157,32 +178,25 @@ public class PopupPositionManager {
      * @param popup
      */
     public void adjust(final JBPopup popup) {
+      adjust(popup, Position.RIGHT, Position.LEFT, Position.TOP, Position.BOTTOM);
+    }
+
+    public void adjust(final JBPopup popup, Position... traversalPolicy) {
       final Dimension d = getPopupSize(popup);
 
       Rectangle popupRect = null;
-      Rectangle r = positionRight(d);
-      if (myScreenRect.contains(r)) {
-        popupRect = r;
-      }
+      Rectangle r = null;
 
-      if (popupRect == null) {
-        r = positionLeft(d);
-        if (myScreenRect.contains(r)) {
-          popupRect = r;
+      for (Position position : traversalPolicy) {
+        switch (position) {
+          case TOP:    r = positionAbove(d); break;
+          case BOTTOM: r = positionUnder(d); break;
+          case LEFT:   r = positionLeft(d);  break;
+          case RIGHT:  r = positionRight(d); break;
         }
-      }
-
-      if (popupRect == null) {
-        r = positionAbove(d);
         if (myScreenRect.contains(r)) {
           popupRect = r;
-        }
-      }
-
-      if (popupRect == null) {
-        r = positionUnder(d);
-        if (myScreenRect.contains(r)) {
-          popupRect = r;
+          break;
         }
       }
 
@@ -197,7 +211,7 @@ public class PopupPositionManager {
       }
       else {
         // ok, popup does not fit, will try to resize it
-        final List<Rectangle> boxes = new ArrayList<Rectangle>();
+        final java.util.List<Rectangle> boxes = new ArrayList<Rectangle>();
         // right
         boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x + myRelativeTo.getWidth() + GAP, myRelativeOnScreen.y,
                                                    myScreenRect.width, myScreenRect.height)));

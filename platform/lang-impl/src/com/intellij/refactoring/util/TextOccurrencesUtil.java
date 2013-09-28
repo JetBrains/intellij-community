@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -83,6 +84,9 @@ public class TextOccurrencesUtil {
             }
           });
           return usageInfo == null || processor.process(usageInfo);
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
         }
         catch (Exception e) {
           LOG.error(e);
@@ -154,7 +158,9 @@ public class TextOccurrencesUtil {
       offset = text.indexOf(stringToSearch, offset);
       if (offset < 0) break;
       final PsiReference referenceAt = scope.findReferenceAt(offset);
-      if (!ignoreReferences && referenceAt != null && (referenceAt.resolve() != null || (referenceAt instanceof PsiPolyVariantReference && ((PsiPolyVariantReference)referenceAt).multiResolve(true).length > 0))) continue;
+      if (!ignoreReferences && referenceAt != null
+          && (referenceAt.resolve() != null || referenceAt instanceof PsiPolyVariantReference
+                                               && ((PsiPolyVariantReference)referenceAt).multiResolve(true).length > 0)) continue;
 
       if (offset > 0) {
         char c = text.charAt(offset - 1);

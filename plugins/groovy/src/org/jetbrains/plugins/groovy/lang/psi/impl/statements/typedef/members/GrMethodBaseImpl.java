@@ -144,7 +144,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
       }
     }
 
-    return (GrTypeElement)findChildByType(GroovyElementTypes.TYPE_ELEMENTS);
+    return (GrTypeElement)findChildByType(TokenSets.TYPE_ELEMENTS);
   }
 
   public PsiType getInferredReturnType() {

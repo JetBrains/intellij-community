@@ -27,11 +27,75 @@ class HippieCompletionTest extends LightCodeInsightFixtureTestCase {
 $some_long_variable_name = Obj::instance();
 $some_lon<caret>
 '''
-    myFixture.performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
+    complete()
     myFixture.checkResult '''
 $some_long_variable_name = Obj::instance();
 $some_long_variable_name<caret>
 '''
   }
 
+  public void testFromAnotherFile() {
+    myFixture.configureByText "b.txt", '''
+$some_long_variable_name = Obj::instance();
+'''
+    myFixture.configureByText "a.txt", '''
+$some_lon<caret>
+'''
+
+    complete()
+    myFixture.checkResult '''
+$some_long_variable_name<caret>
+'''
+  }
+
+  public void "test no middle matching"() {
+    myFixture.configureByText "a.txt", '''
+fooExpression
+exp<caret>
+'''
+    complete()
+    myFixture.checkResult '''
+fooExpression
+exp<caret>
+'''
+  }
+
+  public void "test words from javadoc"() {
+    myFixture.configureByText "a.java", '''
+/** some comment */
+com<caret>
+'''
+    complete()
+    myFixture.checkResult '''
+/** some comment */
+comment<caret>
+'''
+  }
+  
+  public void "test words from line comments"() {
+    myFixture.configureByText "a.java", '''
+// some comment2
+com<caret>
+'''
+    complete()
+    myFixture.checkResult '''
+// some comment2
+comment2<caret>
+'''
+  }
+  public void "test words from block comments"() {
+    myFixture.configureByText "a.java", '''
+/* some comment3 */
+com<caret>
+'''
+    complete()
+    myFixture.checkResult '''
+/* some comment3 */
+comment3<caret>
+'''
+  }
+
+  private void complete() {
+    myFixture.performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
+  }
 }

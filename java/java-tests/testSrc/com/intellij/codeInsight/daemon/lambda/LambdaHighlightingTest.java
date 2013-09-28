@@ -51,7 +51,7 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testAmbiguityRawGenerics() { doTest(); }
   public void testDefaultMethod() { doTest(); }
   public void testLambdaOnVarargsPlace() { doTest(); }
-  public void testLambdaRawOrNot() { doTest(); }
+  public void testLambdaRawOrNot() { doTest(); }  //todo incorrect testdata
   public void testReturnTypeCompatibility1() { doTest(); }
   public void testNoInferenceResult() { doTest(); }
   public void testInferenceFromArgs() { doTest(); }
@@ -92,12 +92,13 @@ public class LambdaHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testFunctionalInterfaceCheck() { doTest();}
   public void testUnderscores() { doTest(true);}
   public void testReturnTypeAmbiguity() { doTest();}
+  public void testWildcardsAndFormalLambdaParams() {doTest();}
 
   private void doTest() {
     doTest(false);
   }
 
   private void doTest(final boolean checkWarnings) {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
+    doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, false);
   }
 }

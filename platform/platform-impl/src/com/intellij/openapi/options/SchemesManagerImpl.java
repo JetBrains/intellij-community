@@ -572,7 +572,7 @@ public class SchemesManagerImpl<T extends Scheme, E extends ExternalizableScheme
     schemeKey.getExternalInfo().setCurrentFileName(fileName);
   }
 
-  private static long computeHashValue(final Document document) throws IOException {
+  private static long computeHashValue(final Document document) {
     return JDOMUtil.getTreeHash(document);
   }
 

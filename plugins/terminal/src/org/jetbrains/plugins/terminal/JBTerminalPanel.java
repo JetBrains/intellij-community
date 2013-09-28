@@ -20,6 +20,7 @@
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.base.Predicate;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.Keymap;
@@ -27,7 +28,6 @@ import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.RetinaImage;
-import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.jediterm.terminal.display.BackBuffer;
 import com.jediterm.terminal.display.StyleState;
@@ -96,8 +96,9 @@ public class JBTerminalPanel extends TerminalPanel {
     }
   }
 
-  protected void setupAntialiasing(Graphics graphics, boolean antialiasing) {
-    GraphicsUtil.setupAntialiasing(graphics, antialiasing, false);
+  @Override
+  protected void setupAntialiasing(Graphics graphics) {
+    UISettings.setupAntialiasing(graphics);
   }
 
   @Override

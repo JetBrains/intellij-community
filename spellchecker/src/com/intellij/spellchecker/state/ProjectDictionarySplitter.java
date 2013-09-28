@@ -16,7 +16,6 @@
 package com.intellij.spellchecker.state;
 
 import com.intellij.openapi.components.StateSplitter;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.text.UniqueNameGenerator;
@@ -31,19 +30,17 @@ import java.util.List;
  * @author shkate@jetbrains.com
  */
 public class ProjectDictionarySplitter implements StateSplitter {
-
+  @Override
   public List<Pair<Element, String>> splitState(Element e) {
     final UniqueNameGenerator generator = new UniqueNameGenerator();
-
     List<Pair<Element, String>> result = new ArrayList<Pair<Element, String>>();
-    for (Element element : JDOMUtil.getElements(e)) {
-      final String name = generator.generateUniqueName(FileUtil.sanitizeFileName(element.getAttributeValue(DictionaryState.NAME_ATTRIBUTE))) + ".xml";
-
-      result.add(new Pair<Element, String>(element, name));
+    for (Element element : e.getChildren()) {
+      result.add(Pair.create(element, generator.generateUniqueName(FileUtil.sanitizeFileName(element.getAttributeValue(DictionaryState.NAME_ATTRIBUTE))) + ".xml"));
     }
     return result;
   }
 
+  @Override
   public void mergeStatesInto(Element target, Element[] elements) {
     for (Element e : elements) {
       target.addContent(e);

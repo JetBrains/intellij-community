@@ -123,6 +123,12 @@ public class FrameworkSupportUtil {
           dependencies.add(underlyingProvider);
         }
       }
+      for (String frameworkId : provider.getOptionalDependenciesFrameworkIds()) {
+        FrameworkSupportInModuleProvider dep = findProvider(frameworkId, myFrameworkSupportProviders);
+        if (dep != null) {
+          dependencies.add(dep);
+        }
+      }
       if (provider instanceof OldFrameworkSupportProviderWrapper) {
         String[] ids = ((OldFrameworkSupportProviderWrapper)provider).getProvider().getPrecedingFrameworkProviderIds();
         for (String id : ids) {

@@ -42,6 +42,7 @@ import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
@@ -209,10 +210,15 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   @NotNull
   @Override
   public SourceFolder addSourceFolder(@NotNull String url, boolean isTestSource) {
+    return addSourceFolder(url, isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE);
+  }
+
+  @NotNull
+  @Override
+  public <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url, @NotNull JpsModuleSourceRootType<P> type) {
     assertFolderUnderMe(url);
-    JavaSourceRootType type = isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
-    JpsSimpleElement<JavaSourceRootProperties> properties = JpsElementFactory.getInstance().createSimpleElement(new JavaSourceRootProperties(""));
-    return addSourceFolder(new SourceFolderImpl(JpsElementFactory.getInstance().createModuleSourceRoot(url, type, properties), this));
+    JpsModuleSourceRoot sourceRoot = JpsElementFactory.getInstance().createModuleSourceRoot(url, type, type.createDefaultProperties());
+    return addSourceFolder(new SourceFolderImpl(sourceRoot, this));
   }
 
   @NotNull

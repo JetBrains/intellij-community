@@ -255,7 +255,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     for (OverrideImplementsAnnotationsHandler each : Extensions.getExtensions(OverrideImplementsAnnotationsHandler.EP_NAME)) {
       for (String annotation : each.getAnnotations(project)) {
         if (moduleScope != null && facade.findClass(annotation, moduleScope) == null) continue;
-        if (AnnotationUtil.isAnnotated(overridden, annotation, false, false)) {
+        if (AnnotationUtil.isAnnotated(overridden, annotation, false, false) && !AnnotationUtil.isAnnotated(method, annotation, false, false)) {
           AddAnnotationPsiFix.removePhysicalAnnotations(method, each.annotationsToRemove(project, annotation));
           AddAnnotationPsiFix.addPhysicalAnnotation(annotation, PsiNameValuePair.EMPTY_ARRAY, method.getModifierList());
         }

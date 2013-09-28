@@ -22,7 +22,6 @@ import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.debugger.requests.RequestManager;
 import com.intellij.debugger.requests.Requestor;
@@ -30,7 +29,9 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.FilteredRequestor;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -38,10 +39,15 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.containers.HashMap;
+import com.intellij.xdebugger.XDebuggerManager;
+import com.intellij.xdebugger.breakpoints.XBreakpointProperties;
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.sun.jdi.*;
 import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.request.*;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.debugger.breakpoints.JavaBreakpointAdapter;
+import org.jetbrains.java.debugger.breakpoints.JavaBreakpointType;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -70,7 +76,6 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     myDebugProcess = debugProcess;
     myDebugProcess.addDebugProcessListener(this);
   }
-
 
   public EventRequestManager getVMRequestManager() {
     return myEventRequestManager;
@@ -142,7 +147,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
   }
 
   private void addLocatableRequest(FilteredRequestor requestor, EventRequest request) {
-    if(DebuggerSettings.SUSPEND_ALL.equals(requestor.SUSPEND_POLICY)) {
+    if(DebuggerSettings.SUSPEND_ALL.equals(requestor.getSuspendPolicy())) {
       request.setSuspendPolicy(EventRequest.SUSPEND_ALL);
     }
     else {
@@ -163,8 +168,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
         }
         final JVMName jvmClassName = ApplicationManager.getApplication().runReadAction(new Computable<JVMName>() {
           public JVMName compute() {
-            PsiClass psiClass =
-              DebuggerUtilsEx.findClass(filter.getPattern(), myDebugProcess.getProject(), myDebugProcess.getSearchScope());
+            PsiClass psiClass = DebuggerUtils.findClass(filter.getPattern(), myDebugProcess.getProject(), myDebugProcess.getSearchScope());
             if (psiClass == null) {
               return null;
             }
@@ -177,14 +181,13 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
             pattern = jvmClassName.getName(myDebugProcess);
           }
         }
-        catch (EvaluateException e) {
+        catch (EvaluateException ignored) {
         }
 
         addClassFilter(request, pattern);
       }
 
-      final ClassFilter[] iclassFilters = requestor.getClassExclusionFilters();
-      for (ClassFilter filter : iclassFilters) {
+      for (ClassFilter filter : requestor.getClassExclusionFilters()) {
         if (filter.isEnabled()) {
           addClassExclusionFilter(request, filter.getPattern());
         }
@@ -206,7 +209,6 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       myRequestorToBelongedRequests.put(requestor, reqSet);
     }
     reqSet.add(request);
-
   }
 
   // requests creation
@@ -293,6 +295,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
         // request is already deleted
       }
       catch (InternalException e) {
+        //noinspection StatementWithEmptyBody
         if (e.errorCode() == 41) {
           //event request not found
           //there could be no requests after hotswap
@@ -346,10 +349,12 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
       }
       request.enable();
     } catch (InternalException e) {
-      if(e.errorCode() == 41) {
+      //noinspection StatementWithEmptyBody
+      if (e.errorCode() == 41) {
         //event request not found
         //there could be no requests after hotswap
-      } else {
+      }
+      else {
         LOG.error(e);
       }
     }
@@ -389,12 +394,25 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   public void processAttached(DebugProcessImpl process) {
     myEventRequestManager = myDebugProcess.getVirtualMachineProxy().eventRequestManager();
-    // invoke later, so that requests are for sure created only _after_ 'processAttached()' methods of other listeneres are executed
+    // invoke later, so that requests are for sure created only _after_ 'processAttached()' methods of other listeners are executed
     process.getManagerThread().schedule(new DebuggerCommandImpl() {
       protected void action() throws Exception {
-        final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myDebugProcess.getProject()).getBreakpointManager();
+        Project project = myDebugProcess.getProject();
+        final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(project).getBreakpointManager();
         for (final Breakpoint breakpoint : breakpointManager.getBreakpoints()) {
           breakpoint.createRequest(myDebugProcess);
+        }
+
+        AccessToken token = ReadAction.start();
+        try {
+          JavaBreakpointAdapter adapter = new JavaBreakpointAdapter(project);
+          for (XLineBreakpoint<XBreakpointProperties> breakpoint : XDebuggerManager.getInstance(project).getBreakpointManager()
+            .getBreakpoints(JavaBreakpointType.class)) {
+            adapter.getOrCreate(breakpoint).createRequest(myDebugProcess);
+          }
+        }
+        finally {
+          token.finish();
         }
       }
     });
@@ -421,7 +439,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
   }
 
-  private static interface AllProcessesCommand {
+  private interface AllProcessesCommand {
     void action(DebugProcessImpl process);
   }
 

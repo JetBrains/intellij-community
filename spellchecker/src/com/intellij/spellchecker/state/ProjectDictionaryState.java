@@ -16,7 +16,6 @@
 package com.intellij.spellchecker.state;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.spellchecker.dictionary.EditableDictionary;
 import com.intellij.spellchecker.dictionary.ProjectDictionary;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -36,31 +35,17 @@ import java.util.Set;
              scheme = StorageScheme.DIRECTORY_BASED, stateSplitter = ProjectDictionarySplitter.class)
   }
 )
-public class ProjectDictionaryState implements PersistentStateComponent<ProjectDictionaryState>{
-
+public class ProjectDictionaryState implements PersistentStateComponent<ProjectDictionaryState> {
   @Property(surroundWithTag = false) @AbstractCollection(surroundWithTag = false, elementTypes = DictionaryState.class)
   public List<DictionaryState> dictionaryStates = new ArrayList<DictionaryState>();
 
-
   private ProjectDictionary projectDictionary;
-  private String currentUser;
-  private Project project;
 
   public ProjectDictionaryState() {
   }
 
-  public void setProject(Project project) {
-     this.project = project;
-   }
-
-   public void setCurrentUser(String currentUser) {
-     this.currentUser = currentUser;
-   }
-
-
   @Transient
   public void setProjectDictionary(ProjectDictionary projectDictionary) {
-    currentUser = projectDictionary.getActiveName();
     dictionaryStates.clear();
     Set<EditableDictionary> projectDictionaries = projectDictionary.getDictionaries();
     if (projectDictionaries != null) {
@@ -72,21 +57,22 @@ public class ProjectDictionaryState implements PersistentStateComponent<ProjectD
 
   @Transient
   public ProjectDictionary getProjectDictionary() {
-    if (projectDictionary==null){
+    if (projectDictionary == null) {
       projectDictionary = new ProjectDictionary();
     }
     return projectDictionary;
   }
 
+  @Override
   public ProjectDictionaryState getState() {
-    if (projectDictionary!=null){
+    if (projectDictionary != null) {
       //ensure all dictionaries within project dictionary will be stored
       setProjectDictionary(projectDictionary);
     }
     return this;
   }
-  
 
+  @Override
   public void loadState(ProjectDictionaryState state) {
     if (state != null) {
       this.dictionaryStates = state.dictionaryStates;

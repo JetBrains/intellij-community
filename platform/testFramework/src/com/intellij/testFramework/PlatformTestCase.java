@@ -141,24 +141,20 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     }
   }
 
+  private static String[] PREFIX_CANDIDATES = new String[] { "Python", "PyCharmCore", "UltimateLangXml", "Idea" };
+
   public static void autodetectPlatformPrefix() {
     if (ourPlatformPrefixInitialized) {
       return;
     }
     URL resource = PlatformTestCase.class.getClassLoader().getResource("idea/ApplicationInfo.xml");
     if (resource == null) {
-      resource = PlatformTestCase.class.getClassLoader().getResource("META-INF/UltimateLangXmlPlugin.xml");
-      if (resource == null) {
-        resource = PlatformTestCase.class.getClassLoader().getResource("idea/IdeaApplicationInfo.xml");
-        if (resource == null) {
-          setPlatformPrefix("PlatformLangXml");
+      for (String candidate : PREFIX_CANDIDATES) {
+        resource = PlatformTestCase.class.getClassLoader().getResource("META-INF/" + candidate + "Plugin.xml");
+        if (resource != null) {
+          setPlatformPrefix(candidate);
+          break;
         }
-        else {
-          setPlatformPrefix("Idea");
-        }
-      }
-      else {
-        setPlatformPrefix("UltimateLangXml");
       }
     }
   }

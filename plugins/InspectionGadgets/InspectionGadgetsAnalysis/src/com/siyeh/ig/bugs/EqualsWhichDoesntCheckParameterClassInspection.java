@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,60 +60,76 @@ public class EqualsWhichDoesntCheckParameterClassInspection extends BaseInspecti
       final PsiParameter[] parameters = parameterList.getParameters();
       final PsiParameter parameter = parameters[0];
       final PsiCodeBlock body = method.getBody();
-      if (body == null) {
-        return;
-      }
-      if (isParameterChecked(body, parameter)) {
-        return;
-      }
-      if (isParameterCheckNotNeeded(body)) {
+      if (body == null || isParameterChecked(body, parameter) || isParameterCheckNotNeeded(body, parameter)) {
         return;
       }
       registerMethodError(method);
     }
 
-    private static boolean isParameterCheckNotNeeded(PsiCodeBlock body) {
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length == 0) {
-        return true;
-      }
-      if (statements.length != 1) {
-        return false;
-      }
-      final PsiStatement statement = statements[0];
-      if (!(statement instanceof PsiReturnStatement)) {
-        return false;
-      }
-      final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
-      final PsiExpression returnValue = returnStatement.getReturnValue();
-      final Object constant = ExpressionUtils.computeConstantExpression(returnValue);
-      return Boolean.FALSE.equals(constant);
-    }
-
     private static boolean isParameterChecked(PsiCodeBlock body, PsiParameter parameter) {
-      if (usesEqualsBuilderReflectionEquals(body)) {
-        return true;
-      }
       final ParameterClassCheckVisitor visitor = new ParameterClassCheckVisitor(parameter);
       body.accept(visitor);
       return visitor.isChecked();
     }
 
-    private static boolean usesEqualsBuilderReflectionEquals(PsiCodeBlock body) {
+    private static boolean isParameterCheckNotNeeded(PsiCodeBlock body, PsiParameter parameter) {
       final PsiStatement[] statements = body.getStatements();
+      if (statements.length == 0) {
+        return true; // incomplete code
+      }
       if (statements.length != 1) {
         return false;
       }
       final PsiStatement statement = statements[0];
       if (!(statement instanceof PsiReturnStatement)) {
-        return false;
+        return true; // incomplete code
       }
       final PsiReturnStatement returnStatement = (PsiReturnStatement)statement;
       final PsiExpression returnValue = returnStatement.getReturnValue();
-      if (!(returnValue instanceof PsiMethodCallExpression)) {
+      final Object constant = ExpressionUtils.computeConstantExpression(returnValue);
+      if (Boolean.FALSE.equals(constant)) {
+        return true; // incomplete code
+      }
+      if (isEqualsBuilderReflectionEquals(returnValue)) {
+        return true;
+      }
+      if (isIdentityEquals(returnValue, parameter)) {
+        return true;
+      }
+      return false;
+    }
+
+    private static boolean isIdentityEquals(PsiExpression expression, PsiParameter parameter) {
+      if (!(expression instanceof PsiBinaryExpression)) {
         return false;
       }
-      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)returnValue;
+      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
+      final PsiExpression lhs = binaryExpression.getLOperand();
+      final PsiExpression rhs = binaryExpression.getROperand();
+      return isIdentityEquals(lhs, rhs, parameter) || isIdentityEquals(rhs, lhs, parameter);
+    }
+
+    private static boolean isIdentityEquals(PsiExpression lhs, PsiExpression rhs, PsiParameter parameter) {
+      if (!(lhs instanceof PsiReferenceExpression)) {
+        return false;
+      }
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)lhs;
+      final PsiElement target = referenceExpression.resolve();
+      if (target != parameter) {
+        return false;
+      }
+      if (!(rhs instanceof PsiThisExpression)) {
+        return false;
+      }
+      final PsiThisExpression thisExpression = (PsiThisExpression)rhs;
+      return thisExpression.getQualifier() == null;
+    }
+
+    private static boolean isEqualsBuilderReflectionEquals(PsiExpression expression) {
+      if (!(expression instanceof PsiMethodCallExpression)) {
+        return false;
+      }
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       @NonNls final String referenceName = methodExpression.getReferenceName();
       if (!"reflectionEquals".equals(referenceName)) {

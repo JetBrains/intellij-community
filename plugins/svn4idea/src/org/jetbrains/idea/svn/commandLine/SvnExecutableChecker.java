@@ -16,14 +16,11 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.ExecutableValidator;
-import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.CapturingProcessHandler;
-import com.intellij.execution.process.ProcessOutput;
 import com.intellij.notification.Notification;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Version;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
@@ -40,6 +37,8 @@ import java.io.File;
  * Time: 3:02 PM
  */
 public class SvnExecutableChecker extends ExecutableValidator {
+
+  private static final Logger LOG = Logger.getInstance(SvnExecutableChecker.class);
 
   public SvnExecutableChecker(Project project) {
     super(project, getNotificationTitle(), getWrongPathMessage());
@@ -74,12 +73,13 @@ public class SvnExecutableChecker extends ExecutableValidator {
   protected boolean isExecutableValid(@NotNull String executable) {
     setNotificationErrorDescription(getWrongPathMessage());
 
-    final Version version = getVersion(executable);
+    // Necessary executable path will be taken from settings while command execution
+    final Version version = getConfiguredClientVersion();
     try {
       return version != null && validateVersion(version);
     }
     catch (Throwable e) {
-      // do nothing
+      LOG.info(e);
       return false;
     }
   }
@@ -101,36 +101,17 @@ public class SvnExecutableChecker extends ExecutableValidator {
   }
 
   @Nullable
-  public Version getVersion(@NotNull String executable) {
+  private Version getConfiguredClientVersion() {
     Version result = null;
 
     try {
-      GeneralCommandLine commandLine = new GeneralCommandLine();
-      commandLine.setExePath(executable);
-      commandLine.addParameter("--version");
-      commandLine.addParameter("--quiet");
-
-      CapturingProcessHandler handler = new CapturingProcessHandler(commandLine.createProcess(), CharsetToolkit.getDefaultSystemCharset());
-      ProcessOutput output = handler.runProcess(30 * 1000);
-
-      if (!output.isTimeout() && (output.getExitCode() == 0) && output.getStderr().isEmpty()) {
-        String versionText = output.getStdout().trim();
-        final String[] parts = versionText.split("\\.");
-
-        if (parts.length >= 3) {
-          result = new Version(getInt(parts[0]), getInt(parts[1]), getInt(parts[2]));
-        }
-      }
+      result = getVcs().getCommandLineFactory().createVersionClient().getVersion();
     }
     catch (Throwable e) {
-      // do nothing
+      LOG.info(e);
     }
 
     return result;
-  }
-
-  private static int getInt(@NotNull String value) {
-    return Integer.parseInt(value);
   }
 
   private static String getWrongPathMessage() {

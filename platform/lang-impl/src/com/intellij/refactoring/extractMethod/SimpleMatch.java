@@ -13,6 +13,8 @@ public class SimpleMatch {
   PsiElement myStartElement;
   PsiElement myEndElement;
   private final Map<String, String> myChangedParameters;
+  private String myChangedOutput;
+
   public SimpleMatch(@NotNull final PsiElement start, @NotNull final PsiElement endElement) {
     myStartElement = start;
     myEndElement = endElement;
@@ -34,4 +36,13 @@ public class SimpleMatch {
   public void changeParameter(@NotNull final String from, @NotNull final String to) {
     myChangedParameters.put(from, to);
   }
+
+  public void changeOutput(@NotNull final String to) {
+    myChangedOutput = to;
+  }
+
+  public String getChangedOutput() {
+    return myChangedOutput;
+  }
+
 }

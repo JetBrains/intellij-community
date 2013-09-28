@@ -194,6 +194,14 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
       }
     }
 
+    if (owner instanceof GrMethod && owner.getParent() instanceof GrTypeDefinitionBody) {
+      PsiElement parent = owner.getParent().getParent();
+      if (parent instanceof PsiClass && ((PsiClass)parent).isInterface()) {
+        if (GrModifier.ABSTRACT.equals(modifier)) return true;
+        if (GrModifier.PUBLIC.equals(modifier)) return true;
+      }
+    }
+
     if (modifierList.hasExplicitModifier(modifier)) {
       return true;
     }

@@ -44,6 +44,7 @@ import com.intellij.xdebugger.impl.breakpoints.ui.grouping.XBreakpointFileGroupi
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingsManager;
 import com.intellij.xdebugger.impl.ui.tree.actions.XDebuggerTreeActionBase;
 import com.intellij.xdebugger.settings.XDebuggerSettings;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,6 +57,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
   private XLineBreakpointType<?>[] myLineBreakpointTypes;
   private Map<Class<? extends XBreakpointType>, XBreakpointType<?,?>> myBreakpointTypeByClass;
 
+  @Override
   public XLineBreakpointType<?>[] getLineBreakpointTypes() {
     if (myLineBreakpointTypes == null) {
       XBreakpointType[] types = XBreakpointUtil.getBreakpointTypes();
@@ -70,6 +72,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return myLineBreakpointTypes;
   }
 
+  @Override
   public void toggleLineBreakpoint(@NotNull final Project project, @NotNull final VirtualFile file, final int line, boolean temporary) {
     for (XLineBreakpointType<?> type : getLineBreakpointTypes()) {
       if (type.canPutAt(file, line, project)) {
@@ -89,12 +92,14 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return false;
   }
 
+  @Override
   public <P extends XBreakpointProperties> void toggleLineBreakpoint(@NotNull final Project project,
                                                                      @NotNull final XLineBreakpointType<P> type,
                                                                      @NotNull final VirtualFile file,
                                                                      final int line,
                                                                      final boolean temporary) {
     new WriteAction() {
+      @Override
       protected void run(final Result result) {
         XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
         XLineBreakpoint<P> breakpoint = breakpointManager.findBreakpointAtLine(type, file, line);
@@ -109,17 +114,20 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     }.execute();
   }
 
+  @Override
   public void removeBreakpoint(final Project project, final XBreakpoint<?> breakpoint) {
     new WriteAction() {
+      @Override
       protected void run(final Result result) {
         XDebuggerManager.getInstance(project).getBreakpointManager().removeBreakpoint(breakpoint);
       }
     }.execute();
   }
 
+  @Override
   public <B extends XBreakpoint<?>> XBreakpointType<B, ?> findBreakpointType(@NotNull Class<? extends XBreakpointType<B, ?>> typeClass) {
     if (myBreakpointTypeByClass == null) {
-      myBreakpointTypeByClass = new HashMap<Class<? extends XBreakpointType>, XBreakpointType<?,?>>();
+      myBreakpointTypeByClass = new THashMap<Class<? extends XBreakpointType>, XBreakpointType<?,?>>();
       for (XBreakpointType<?, ?> breakpointType : XBreakpointUtil.getBreakpointTypes()) {
         myBreakpointTypeByClass.put(breakpointType.getClass(), breakpointType);
       }
@@ -129,6 +137,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return (XBreakpointType<B, ?>)type;
   }
 
+  @Override
   public <T extends XDebuggerSettings<?>> T getDebuggerSettings(Class<T> aClass) {
     return XDebuggerSettingsManager.getInstance().getSettings(aClass);
   }
@@ -138,16 +147,19 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return XDebuggerTreeActionBase.getSelectedValue(dataContext);
   }
 
+  @Override
   @Nullable
   public XSourcePosition createPosition(@NotNull final VirtualFile file, final int line) {
     return XSourcePositionImpl.create(file, line);
   }
 
-  @Nullable 
+  @Override
+  @Nullable
   public XSourcePosition createPositionByOffset(@NotNull final VirtualFile file, final int offset) {
     return XSourcePositionImpl.createByOffset(file, offset);
   }
 
+  @Override
   public <B extends XLineBreakpoint<?>> XBreakpointGroupingRule<B, ?> getGroupingByFileRule() {
     return new XBreakpointFileGroupingRule<B>();
   }
@@ -172,16 +184,20 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return editor;
   }
 
+  @Override
   public <B extends XBreakpoint<?>> Comparator<B> getDefaultBreakpointComparator(final XBreakpointType<B, ?> type) {
     return new Comparator<B>() {
+      @Override
       public int compare(final B o1, final B o2) {
         return type.getDisplayText(o1).compareTo(type.getDisplayText(o2));
       }
     };
   }
 
+  @Override
   public <P extends XBreakpointProperties> Comparator<XLineBreakpoint<P>> getDefaultLineBreakpointComparator() {
     return new Comparator<XLineBreakpoint<P>>() {
+      @Override
       public int compare(final XLineBreakpoint<P> o1, final XLineBreakpoint<P> o2) {
         int fileCompare = o1.getFileUrl().compareTo(o2.getFileUrl());
         if (fileCompare != 0) return fileCompare;
@@ -202,6 +218,7 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
     return null;
   }
 
+  @Override
   public void iterateLine(@NotNull Project project, @NotNull Document document, int line, @NotNull Processor<PsiElement> processor) {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return;
@@ -234,5 +251,10 @@ public class XDebuggerUtilImpl extends XDebuggerUtil {
         off++;
       }
     }
+  }
+
+  @Override
+  public <B extends XLineBreakpoint<?>> List<XBreakpointGroupingRule<B, ?>> getGroupingByFileRuleAsList() {
+    return Collections.<XBreakpointGroupingRule<B, ?>>singletonList(this.<B>getGroupingByFileRule());
   }
 }

@@ -15,24 +15,34 @@
  */
 package org.jetbrains.plugins.gradle.service.resolve;
 
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceExpressionImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrImplicitVariableImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 
+import java.util.Set;
+
 /**
  * @author Vladislav.Soroka
  * @since 8/30/13
  */
 public class GradleResolverUtil {
+  private static final Key<Integer> TYPE_RESOLVE_IN_PROGRESS_KEY = Key.create("TYPE_RESOLVE_IN_PROGRESS_KEY");
 
   public static int getGrMethodArumentsCount(@NotNull GrArgumentList args) {
     int argsCount = 0;
@@ -70,17 +80,144 @@ public class GradleResolverUtil {
   }
 
 
-  public static GrLightMethodBuilder createMethodWithClosure(@NotNull String name, @NotNull PsiElement place, @Nullable String returnType) {
-    GrLightMethodBuilder methodWithClosure = new GrLightMethodBuilder(place.getManager(), name);
+  @Nullable
+  public static GrLightMethodBuilder createMethodWithClosure(@NotNull String name,
+                                                             @Nullable String returnType,
+                                                             @Nullable String closureTypeParameter,
+                                                             @NotNull PsiElement place,
+                                                             @NotNull GroovyPsiManager psiManager) {
+    PsiClassType closureType;
+    PsiClass closureClass =
+      psiManager.findClassWithCache(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, place.getResolveScope());
+    if (closureClass == null) return null;
+
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getManager().getProject());
-    PsiClassType closureType = factory.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, place.getResolveScope());
+
+    if (closureTypeParameter != null) {
+      PsiClassType closureClassTypeParameter =
+        factory.createTypeByFQClassName(closureTypeParameter, place.getResolveScope());
+      closureType = factory.createType(closureClass, closureClassTypeParameter);
+    }
+    else {
+      PsiClassType closureClassTypeParameter =
+        factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, place.getResolveScope());
+      closureType = factory.createType(closureClass, closureClassTypeParameter);
+    }
+
+    GrLightMethodBuilder methodWithClosure = new GrLightMethodBuilder(place.getManager(), name);
     GrLightParameter closureParameter = new GrLightParameter("closure", closureType, methodWithClosure);
     methodWithClosure.addParameter(closureParameter);
-
-    if (returnType != null) {
-      PsiClassType retType = factory.createTypeByFQClassName(returnType, place.getResolveScope());
-      methodWithClosure.setReturnType(retType);
-    }
+    PsiClassType retType = factory.createTypeByFQClassName(
+      returnType != null ? returnType : CommonClassNames.JAVA_LANG_OBJECT, place.getResolveScope());
+    methodWithClosure.setReturnType(retType);
+    methodWithClosure.setContainingClass(retType.resolve());
     return methodWithClosure;
+  }
+
+  public static void processMethod(@NotNull String gradleConfigurationName,
+                                   @NotNull PsiClass dependencyHandlerClass,
+                                   @NotNull PsiScopeProcessor processor,
+                                   @NotNull ResolveState state,
+                                   @NotNull PsiElement place) {
+    processMethod(gradleConfigurationName, dependencyHandlerClass, processor, state, place, null);
+  }
+
+  public static void processMethod(@NotNull String gradleConfigurationName,
+                                   @NotNull PsiClass dependencyHandlerClass,
+                                   @NotNull PsiScopeProcessor processor,
+                                   @NotNull ResolveState state,
+                                   @NotNull PsiElement place,
+                                   @Nullable String defaultMethodName) {
+    GrLightMethodBuilder builder = new GrLightMethodBuilder(place.getManager(), gradleConfigurationName);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getManager().getProject());
+    PsiType type = new PsiArrayType(factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, place.getResolveScope()));
+    builder.addParameter(new GrLightParameter("param", type, builder));
+    PsiClassType retType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, place.getResolveScope());
+    builder.setReturnType(retType);
+    processor.execute(builder, state);
+
+    GrMethodCall call = PsiTreeUtil.getParentOfType(place, GrMethodCall.class);
+    if (call == null) {
+      return;
+    }
+    GrArgumentList args = call.getArgumentList();
+    if (args == null) {
+      return;
+    }
+
+    int argsCount = getGrMethodArumentsCount(args);
+    argsCount++; // Configuration name is delivered as an argument.
+
+    for (PsiMethod method : dependencyHandlerClass.findMethodsByName(gradleConfigurationName, false)) {
+      if (method.getParameterList().getParametersCount() == argsCount) {
+        builder.setNavigationElement(method);
+        return;
+      }
+    }
+
+    if (defaultMethodName != null) {
+      for (PsiMethod method : dependencyHandlerClass.findMethodsByName(defaultMethodName, false)) {
+        if (method.getParameterList().getParametersCount() == argsCount) {
+          builder.setNavigationElement(method);
+          return;
+        }
+      }
+    }
+  }
+
+  public static void processDeclarations(@NotNull GroovyPsiManager psiManager,
+                                         @NotNull PsiScopeProcessor processor,
+                                         @NotNull ResolveState state,
+                                         @NotNull PsiElement place,
+                                         @NotNull String... fqNames) {
+    for (String fqName : fqNames) {
+      PsiClass psiClass = psiManager.findClassWithCache(fqName, place.getResolveScope());
+      if (psiClass != null) {
+        psiClass.processDeclarations(processor, state, null, place);
+      }
+    }
+  }
+
+  @Nullable
+  public static PsiElement findParent(@NotNull PsiElement element, int level) {
+    PsiElement parent = element;
+    do {
+      parent = parent.getParent();
+    }
+    while (parent != null && --level > 0);
+    return parent;
+  }
+
+  @Nullable
+  public static <T extends PsiElement> T findParent(@NotNull PsiElement element, Class<T> clazz) {
+    PsiElement parent = element;
+    do {
+      parent = parent.getParent();
+      if (clazz.isInstance(parent)) {
+        //noinspection unchecked
+        return (T)parent;
+      }
+    }
+    while (parent != null && !(parent instanceof GroovyFile));
+    return null;
+  }
+
+  public static boolean canBeMethodOf(@Nullable String methodName, @Nullable PsiClass aClass) {
+    return methodName != null && aClass != null && aClass.findMethodsByName(methodName, true).length != 0;
+  }
+
+  @Nullable
+  public static PsiType getTypeOf(@Nullable GrExpression expression) {
+    PsiType psiType = null;
+    if (expression != null) {
+      Integer count = expression.getUserData(TYPE_RESOLVE_IN_PROGRESS_KEY);
+      if (count == null) count = 0;
+      if (count < 15) {
+        expression.putUserData(TYPE_RESOLVE_IN_PROGRESS_KEY, ++count);
+        psiType = expression.getNominalType();
+        expression.putUserData(TYPE_RESOLVE_IN_PROGRESS_KEY, null);
+      }
+    }
+    return psiType;
   }
 }

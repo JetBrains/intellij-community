@@ -263,6 +263,9 @@ public abstract class AbstractJavaBlock extends AbstractBlock implements JavaBlo
       final Indent defaultChildIndent = getChildIndent(parent, indentOptions);
       if (defaultChildIndent != null) return defaultChildIndent;
     }
+    if (child.getTreeParent() instanceof PsiLambdaExpression && child instanceof PsiCodeBlock) {
+      return Indent.getNoneIndent();
+    }
 
     return null;
   }

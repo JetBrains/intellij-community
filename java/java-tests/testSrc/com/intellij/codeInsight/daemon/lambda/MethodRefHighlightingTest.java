@@ -95,6 +95,6 @@ public class MethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   private void doTest(boolean warnings) {
     IdeaTestUtil.setTestVersion(JavaSdkVersion.JDK_1_8, getModule(), getTestRootDisposable());
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
+    doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", warnings, false);
   }
 }

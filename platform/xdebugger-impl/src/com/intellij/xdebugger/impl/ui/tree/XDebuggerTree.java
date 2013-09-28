@@ -32,7 +32,10 @@ import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
-import com.intellij.xdebugger.impl.ui.tree.nodes.*;
+import com.intellij.xdebugger.impl.ui.tree.nodes.MessageTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,7 +117,13 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
         }
       }
     });
-    new TreeSpeedSearch(this, SPEED_SEARCH_CONVERTER, true);
+
+    if (Boolean.valueOf(System.getProperty("xdebugger.variablesView.rss"))) {
+      new XDebuggerTreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
+    }
+    else {
+      new TreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
+    }
 
     final ActionManager actionManager = ActionManager.getInstance();
     addMouseListener(new PopupHandler() {

@@ -97,33 +97,26 @@ public enum WorkingCopyFormat {
     return UNKNOWN;
   }
 
-  public static WorkingCopyFormat getInstance(final String updateOption) {
-    if (SvnConfiguration.UPGRADE_AUTO_17.equals(updateOption)) {
-      return ONE_DOT_SEVEN;
-    } else if (SvnConfiguration.UPGRADE_AUTO_16.equals(updateOption)) {
-      return ONE_DOT_SIX;
-    } else if (SvnConfiguration.UPGRADE_AUTO_15.equals(updateOption)) {
-      return ONE_DOT_FIVE;
-    } else if (SvnConfiguration.UPGRADE_AUTO.equals(updateOption)) {
-      return ONE_DOT_FOUR;
-    }
-    return ONE_DOT_THREE;
-  }
-
   public int getFormat() {
     return myFormat;
   }
 
-  public String getOption() {
-    if (ONE_DOT_SEVEN.equals(this)) {
-      return SvnConfiguration.UPGRADE_AUTO_17;
-    } else if (ONE_DOT_SIX.equals(this)) {
-      return SvnConfiguration.UPGRADE_AUTO_16;
-    } else if (ONE_DOT_FIVE.equals(this)) {
-      return SvnConfiguration.UPGRADE_AUTO_15;
-    } else if (ONE_DOT_FOUR.equals(this)) {
-      return SvnConfiguration.UPGRADE_AUTO;
+  @NotNull
+  public static WorkingCopyFormat from(@NotNull Version version) {
+    WorkingCopyFormat result = UNKNOWN;
+
+    for (WorkingCopyFormat format : WorkingCopyFormat.values()) {
+      if (format.getVersion().is(version.major, version.minor)) {
+        result = format;
+        break;
+      }
     }
-    return SvnConfiguration.UPGRADE_NONE;
+
+    return result;
+  }
+
+  @Override
+  public String toString() {
+    return getName();
   }
 }

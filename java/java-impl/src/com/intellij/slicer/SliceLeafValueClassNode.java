@@ -44,8 +44,8 @@ public class SliceLeafValueClassNode extends SliceLeafValueRootNode {
   }
 
   @Override
-  public void customizeCellRenderer(SliceUsageCellRenderer renderer,
-                                    JTree tree,
+  public void customizeCellRenderer(@NotNull SliceUsageCellRenderer renderer,
+                                    @NotNull JTree tree,
                                     Object value,
                                     boolean selected,
                                     boolean expanded,

@@ -16,40 +16,42 @@
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
-import com.intellij.ide.util.newProjectWizard.ProjectNameStep;
-import com.intellij.ide.wizard.Step;
+import com.intellij.ide.util.newProjectWizard.StepSequence;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
 
 /**
  * @author Dmitry Avdeev
  *         Date: 04.09.13
  */
-public class NewProjectWizard extends AbstractProjectWizard<Step> {
+public class NewProjectWizard extends AbstractProjectWizard {
 
-  public NewProjectWizard(String title, @Nullable Project project) {
-    super(title, null, null);
-    addStep(new ProjectTypeStep(myWizardContext, getDisposable()));
-    addStep(new ProjectNameStep(myWizardContext, null) {
-      @Override
-      public Icon getIcon() {
-        return null;
-      }
-    });
+  private final StepSequence mySequence;
+
+  public NewProjectWizard(@Nullable Project project, @NotNull ModulesProvider modulesProvider, @Nullable String defaultPath) {
+    super("New Project", project, defaultPath);
+//    addStep();
+//    addStep(new ProjectSummaryStep(myWizardContext));
+    mySequence = new StepSequence();
+    mySequence.addCommonStep(new ProjectTypeStep(myWizardContext, this, modulesProvider));
+    mySequence.addCommonFinishingStep(new ProjectSettingsStep(myWizardContext), null);
+    for (ModuleWizardStep step : mySequence.getAllSteps()) {
+      addStep(step);
+    }
     init();
-  }
-
-  @Nullable
-  @Override
-  protected String getHelpID() {
-    return null;
   }
 
   @Nullable
   @Override
   protected String getDimensionServiceKey() {
     return "new project wizard";
+  }
+
+  @Override
+  public StepSequence getSequence() {
+    return mySequence;
   }
 }

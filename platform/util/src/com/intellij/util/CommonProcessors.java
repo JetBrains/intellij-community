@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class CommonProcessors {
   public static class CollectProcessor<T> implements Processor<T> {
     private final Collection<T> myCollection;
 
-    public CollectProcessor(Collection<T> collection) {
+    public CollectProcessor(@NotNull Collection<T> collection) {
       myCollection = collection;
     }
 
@@ -53,14 +53,15 @@ public class CommonProcessors {
       return true;
     }
 
-    public T[] toArray(T[] a) {
+    @NotNull
+    public T[] toArray(@NotNull T[] a) {
       return myCollection.toArray(a);
     }
 
+    @NotNull
     public Collection<T> getResults() {
       return myCollection;
     }
-
   }
 
   @NotNull
@@ -87,10 +88,12 @@ public class CommonProcessors {
       return true;
     }
 
-    public T[] toArray(T[] a) {
+    @NotNull
+    public T[] toArray(@NotNull T[] a) {
       return myCollection.toArray(a);
     }
 
+    @NotNull
     public Collection<T> getResults() {
       return myCollection;
     }
@@ -99,10 +102,10 @@ public class CommonProcessors {
     private final Set<T> processed;
     private final Processor<T> myDelegate;
 
-    public UniqueProcessor(Processor<T> delegate) {
+    public UniqueProcessor(@NotNull Processor<T> delegate) {
       this(delegate, ContainerUtil.<T>canonicalStrategy());
     }
-    public UniqueProcessor(Processor<T> delegate, TObjectHashingStrategy<T> strategy) {
+    public UniqueProcessor(@NotNull Processor<T> delegate, @NotNull TObjectHashingStrategy<T> strategy) {
       myDelegate = delegate;
       processed = new THashSet<T>(strategy);
     }
@@ -143,7 +146,6 @@ public class CommonProcessors {
   }
 
   public static class FindFirstProcessor<T> extends FindProcessor<T> {
-
     @Override
     protected boolean accept(T t) {
       return true;
@@ -163,10 +165,13 @@ public class CommonProcessors {
     }
   };
 
+  @NotNull
   @SuppressWarnings({"unchecked"})
   public static <T> Processor<T> alwaysFalse() {
     return FALSE;
   }
+
+  @NotNull
   @SuppressWarnings({"unchecked"})
   public static <T> Processor<T> alwaysTrue() {
     return TRUE;

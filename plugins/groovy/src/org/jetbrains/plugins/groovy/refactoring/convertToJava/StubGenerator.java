@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -229,7 +229,7 @@ public class StubGenerator implements ClassItemGenerator {
       return; //does not have a java image
     }
 
-    boolean isAbstract = GenerationUtil.isAbstractInJava(method);
+    boolean isAbstract = method.hasModifierProperty(PsiModifier.ABSTRACT);
 
     PsiModifierList modifierList = method.getModifierList();
 
@@ -342,7 +342,7 @@ public class StubGenerator implements ClassItemGenerator {
         if (baseClass == null) continue;
         final String qname = baseClass.getQualifiedName();
         if (DEFAULT_BASE_CLASS_NAME.equals(qname) || GROOVY_OBJECT_SUPPORT.equals(qname) ||
-            GenerationUtil.isAbstractInJava(method) && typeDefinition.isInheritor(baseClass, true)) {
+            method.hasModifierProperty(PsiModifier.ABSTRACT) && typeDefinition.isInheritor(baseClass, true)) {
           if (method.isConstructor()) continue;
           methods.add(mirrorMethod(typeDefinition, method, baseClass, signature.getSubstitutor()));
         }

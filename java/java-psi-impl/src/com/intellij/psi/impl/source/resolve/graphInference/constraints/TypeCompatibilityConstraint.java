@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -37,7 +38,7 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints, List<ConstraintFormula> delayedConstraints) {
+  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
     if (session.isProperType(myT) && session.isProperType(myS)) {
       return TypeConversionUtil.isAssignable(myS, myT);
     }
@@ -57,6 +58,12 @@ public class TypeCompatibilityConstraint implements ConstraintFormula {
     }
     constraints.add(new SubtypingConstraint(myT, myS, true));
     return true;
+  }
+
+  @Override
+  public void apply(PsiSubstitutor substitutor) {
+    myT = substitutor.substitute(myT);
+    myS = substitutor.substitute(myS);
   }
 
   @Override

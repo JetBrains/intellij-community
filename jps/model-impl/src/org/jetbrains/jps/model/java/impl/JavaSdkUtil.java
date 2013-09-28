@@ -83,9 +83,17 @@ public class JavaSdkUtil {
       }
     }
 
-    File classesZip = new File(home, "lib/classes.zip");
-    if (classesZip.isFile()) {
-      rootFiles.add(classesZip);
+    String[] additionalJars = {
+      "jre/bin/default/jclSC170/vm.jar",
+      "jre/lib/i386/default/jclSC170/vm.jar",
+      "jre/lib/amd64/default/jclSC170/vm.jar",
+      "lib/classes.zip"
+    };
+    for (String relativePath : additionalJars) {
+      File jar = new File(home, relativePath);
+      if (jar.isFile()) {
+        rootFiles.add(jar);
+      }
     }
 
     File classesDir = new File(home, "classes");

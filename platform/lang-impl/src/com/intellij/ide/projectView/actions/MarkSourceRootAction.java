@@ -64,6 +64,6 @@ public class MarkSourceRootAction extends MarkRootActionBase {
 
   private static <P extends JpsElement> void addSourceFolder(VirtualFile vFile, ContentEntry entry,
                                                              JpsModuleSourceRootType<P> markAsRootType) {
-    entry.addSourceFolder(vFile, markAsRootType, ModuleSourceRootEditHandler.getEditHandler(markAsRootType).createDefaultProperties());
+    entry.addSourceFolder(vFile, markAsRootType, markAsRootType.createDefaultProperties());
   }
 }

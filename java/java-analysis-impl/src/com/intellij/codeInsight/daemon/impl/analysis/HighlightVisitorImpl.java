@@ -30,6 +30,7 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.LanguageLevel;
@@ -37,6 +38,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
+import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -311,16 +313,28 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
                     myHolder.add(result);
                   }
                   else {
-                    for (int i = 0; i < lambdaParameters.length; i++) {
-                      PsiParameter lambdaParameter = lambdaParameters[i];
-                      if (!TypeConversionUtil.isAssignable(lambdaParameter.getType(),
-                                                           GenericsUtil.eliminateWildcards(
-                                                             LambdaUtil.getSubstitutor(interfaceMethod, resolveResult)
-                                                               .substitute(parameters[i].getType())))) {
-                        HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(lambdaParameter)
-                          .descriptionAndTooltip(incompatibleTypesMessage).create();
-                        myHolder.add(result);
-                        break;
+                    final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult);
+                    if (expression.hasFormalParameterTypes()) {
+                      for (int i = 0; i < lambdaParameters.length; i++) {
+                        if (!Comparing.equal(lambdaParameters[i].getType(), substitutor.substitute(parameters[i].getType()))) {
+                          HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                            .range(lambdaParameters[i])
+                            .descriptionAndTooltip(incompatibleTypesMessage)
+                            .create();
+                          myHolder.add(result);
+                          break;
+                        }
+                      }
+                    } else {
+                      for (int i = 0; i < lambdaParameters.length; i++) {
+                        PsiParameter lambdaParameter = lambdaParameters[i];
+                        if (!TypeConversionUtil.isAssignable(lambdaParameter.getType(),
+                                                             GenericsUtil.eliminateWildcards(substitutor.substitute(parameters[i].getType())))) {
+                          HighlightInfo result = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(lambdaParameter)
+                            .descriptionAndTooltip(incompatibleTypesMessage).create();
+                          myHolder.add(result);
+                          break;
+                        }
                       }
                     }
                   }

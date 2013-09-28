@@ -37,6 +37,6 @@ public class Interface8MethodsHighlightingTest extends LightDaemonAnalyzerTestCa
   }
 
   private void doTest(boolean checkWarnings, boolean checkInfos) {
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
+    doTestNewInference(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
   }
 }

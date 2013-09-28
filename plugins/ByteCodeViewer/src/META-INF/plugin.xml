@@ -8,11 +8,13 @@
   <extensionPoints>
     <extensionPoint name="classSearcher" interface="com.intellij.byteCodeViewer.ClassSearcher"/>
   </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <projectService serviceInterface="com.intellij.byteCodeViewer.ByteCodeViewerManager"
                     serviceImplementation="com.intellij.byteCodeViewer.ByteCodeViewerManager"/>
   </extensions>
+
   <actions>
     <group>
       <action id="ByteCodeViewer" class="com.intellij.byteCodeViewer.ShowByteCodeAction" text="Show Byte Code"/>

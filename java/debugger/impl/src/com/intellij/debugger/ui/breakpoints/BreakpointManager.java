@@ -25,7 +25,6 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
@@ -47,20 +46,23 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.containers.HashMap;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.XDebuggerUtil;
+import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.sun.jdi.Field;
@@ -68,47 +70,50 @@ import com.sun.jdi.InternalException;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ThreadReference;
 import com.sun.jdi.request.*;
+import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.java.debugger.breakpoints.JavaBreakpointAdapter;
+import org.jetbrains.java.debugger.breakpoints.JavaBreakpointType;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.*;
 
-public class BreakpointManager implements JDOMExternalizable {
+public class BreakpointManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.BreakpointManager");
-
-  @NonNls private static final String RULES_GROUP_NAME = "breakpoint_rules";
-  private final Project myProject;
-  private AnyExceptionBreakpoint myAnyExceptionBreakpoint;
-  private final List<Breakpoint> myBreakpoints = new ArrayList<Breakpoint>(); // breakpoints storage, access should be synchronized
-  private final List<EnableBreakpointRule> myBreakpointRules = new ArrayList<EnableBreakpointRule>(); // breakpoint rules
-  @Nullable private List<Breakpoint> myBreakpointsListForIteration = null; // another list for breakpoints iteration, unsynchronized access ok
-  private final Map<Document, List<BreakpointWithHighlighter>> myDocumentBreakpoints = new HashMap<Document, List<BreakpointWithHighlighter>>();
-  private final Map<String, String> myUIProperties = new java.util.HashMap<String, String>();
-  private final Map<Key<? extends Breakpoint>, BreakpointDefaults> myBreakpointDefaults = new HashMap<Key<? extends Breakpoint>, BreakpointDefaults>();
-
-  private final EventDispatcher<BreakpointManagerListener> myDispatcher = EventDispatcher.create(BreakpointManagerListener.class);
-
-  private final StartupManager myStartupManager;
 
   @NonNls private static final String MASTER_BREAKPOINT_TAGNAME = "master_breakpoint";
   @NonNls private static final String SLAVE_BREAKPOINT_TAGNAME = "slave_breakpoint";
   @NonNls private static final String DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME = "default_suspend_policy";
   @NonNls private static final String DEFAULT_CONDITION_STATE_ATTRIBUTE_NAME = "default_condition_enabled";
 
+  @NonNls private static final String RULES_GROUP_NAME = "breakpoint_rules";
+
+  private final Project myProject;
+  private AnyExceptionBreakpoint myAnyExceptionBreakpoint;
+  private final List<Breakpoint> myBreakpoints = new ArrayList<Breakpoint>(); // breakpoints storage, access should be synchronized
+  private final List<EnableBreakpointRule> myBreakpointRules = new ArrayList<EnableBreakpointRule>(); // breakpoint rules
+  @Nullable private List<Breakpoint> myBreakpointsListForIteration = null; // another list for breakpoints iteration, unsynchronized access ok
+  private final MultiMap<Document, BreakpointWithHighlighter> myDocumentBreakpoints = MultiMap.createSmartList();
+  private final Map<String, String> myUIProperties = new LinkedHashMap<String, String>();
+  private final Map<Key<? extends Breakpoint>, BreakpointDefaults> myBreakpointDefaults = new LinkedHashMap<Key<? extends Breakpoint>, BreakpointDefaults>();
+
+  private final EventDispatcher<BreakpointManagerListener> myDispatcher = EventDispatcher.create(BreakpointManagerListener.class);
+
+  private final StartupManager myStartupManager;
+
   private void update(@NotNull List<BreakpointWithHighlighter> breakpoints) {
     final TIntHashSet intHash = new TIntHashSet();
-
     for (BreakpointWithHighlighter breakpoint : breakpoints) {
       SourcePosition sourcePosition = breakpoint.getSourcePosition();
       breakpoint.reload();
 
       if (breakpoint.isValid()) {
-        if (breakpoint.getSourcePosition().getLine() != sourcePosition.getLine()) {
+        if (sourcePosition == null || breakpoint.getSourcePosition().getLine() != sourcePosition.getLine()) {
           fireBreakpointChanged(breakpoint);
         }
 
@@ -124,25 +129,6 @@ public class BreakpointManager implements JDOMExternalizable {
       }
     }
   }
-
-  /*
-  // todo: not needed??
-  private void setInvalid(final BreakpointWithHighlighter breakpoint) {
-    Collection<DebuggerSession> sessions = DebuggerManagerEx.getInstanceEx(myProject).getSessions();
-
-    for (Iterator<DebuggerSession> iterator = sessions.getSectionsIterator(); getSectionsIterator.hasNext();) {
-      DebuggerSession session = iterator.next();
-      final DebugProcessImpl process = session.getProcess();
-      process.getManagerThread().schedule(new DebuggerCommandImpl() {
-        protected void action() throws Exception {
-          process.getRequestsManager().deleteRequest(breakpoint);
-          process.getRequestsManager().setInvalid(breakpoint, "Source code changed");
-          breakpoint.updateUI();
-        }
-      });
-    }
-  }
-  */
 
   private void remove(final BreakpointWithHighlighter breakpoint) {
     DebuggerInvocationUtil.invokeLater(myProject, new Runnable() {
@@ -167,11 +153,16 @@ public class BreakpointManager implements JDOMExternalizable {
         }
       }
     });
+
+    if (!project.isDefault()) {
+      XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpointListener(
+        XBreakpointType.EXTENSION_POINT_NAME.findExtension(JavaBreakpointType.class), new JavaBreakpointAdapter(project), project);
+    }
   }
 
   public void init() {
     EditorEventMulticaster eventMulticaster = EditorFactory.getInstance().getEventMulticaster();
-    EditorMouseAdapter myEditorMouseListener = new EditorMouseAdapter() {
+    eventMulticaster.addEditorMouseListener(new EditorMouseAdapter() {
       @Nullable private EditorMouseEvent myMousePressedEvent;
 
       @Nullable
@@ -182,14 +173,16 @@ public class BreakpointManager implements JDOMExternalizable {
         }
         final Document document = editor.getDocument();
         final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
-        if (psiFile == null) {
+        if (!JavaBreakpointType.doCanPutAt(psiFile)) {
           return null;
         }
-        final FileType fileType = psiFile.getFileType();
-        boolean isInsideCompiledClass = StdFileTypes.CLASS.equals(fileType);
-        if (!isInsideCompiledClass && !(DebuggerUtils.supportsJVMDebugging(fileType) || DebuggerUtils.supportsJVMDebugging(psiFile))) {
+
+        if (SystemProperties.getBooleanProperty("java.debugger.xBreakpoint", false) &&
+            XBreakpointType.EXTENSION_POINT_NAME.findExtension(JavaBreakpointType.class)
+              .canPutAt(psiFile.getVirtualFile(), line, myProject)) {
           return null;
         }
+
         PsiDocumentManager.getInstance(myProject).commitDocument(document);
 
         int offset = editor.getCaretModel().getOffset();
@@ -205,6 +198,7 @@ public class BreakpointManager implements JDOMExternalizable {
 
         Breakpoint breakpoint = findBreakpoint(document, offset, null);
         if (breakpoint == null) {
+          boolean isInsideCompiledClass = StdFileTypes.CLASS.equals(psiFile.getFileType());
           if (mostSuitingBreakpoint || isInsideCompiledClass) {
             breakpoint = addFieldBreakpoint(document, offset);
             if (breakpoint == null) {
@@ -298,7 +292,8 @@ public class BreakpointManager implements JDOMExternalizable {
                 return;
               }
 
-              if (XDebuggerUtil.getInstance().canPutBreakpointAt(myProject, FileDocumentManager.getInstance().getFile(document), line)) {
+              VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+              if (file != null && XDebuggerUtil.getInstance().canPutBreakpointAt(myProject, file, line)) {
                 return;
               }
               e.consume();
@@ -336,20 +331,18 @@ public class BreakpointManager implements JDOMExternalizable {
           });
         }
       }
-    };
+    }, myProject);
 
-    eventMulticaster.addEditorMouseListener(myEditorMouseListener, myProject);
-
-    final DocumentListener myDocumentListener = new DocumentAdapter() {
+    eventMulticaster.addDocumentListener(new DocumentAdapter() {
       private final Alarm myUpdateAlarm = new Alarm();
 
       @Override
       public void documentChanged(@NotNull final DocumentEvent e) {
         final Document document = e.getDocument();
+        //noinspection SynchronizeOnThis
         synchronized (BreakpointManager.this) {
-          List<BreakpointWithHighlighter> breakpoints = myDocumentBreakpoints.get(document);
-
-          if(breakpoints != null) {
+          Collection<BreakpointWithHighlighter> breakpoints = myDocumentBreakpoints.get(document);
+          if (!breakpoints.isEmpty()) {
             myUpdateAlarm.cancelAllRequests();
             // must create new array in order to avoid "concurrent modification" errors
             final List<BreakpointWithHighlighter> breakpointsToUpdate = new ArrayList<BreakpointWithHighlighter>(breakpoints);
@@ -365,17 +358,14 @@ public class BreakpointManager implements JDOMExternalizable {
           }
         }
       }
-    };
-
-    eventMulticaster.addDocumentListener(myDocumentListener, myProject);
+    }, myProject);
   }
 
   public void editBreakpoint(final Breakpoint breakpoint, final Editor editor) {
     DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
       @Override
       public void run() {
-        final GutterIconRenderer renderer =
-          (GutterIconRenderer)((BreakpointWithHighlighter)breakpoint).getHighlighter().getGutterIconRenderer();
+        final GutterIconRenderer renderer = ((BreakpointWithHighlighter)breakpoint).getHighlighter().getGutterIconRenderer();
         if (renderer != null) {
           DebuggerSupport.getDebuggerSupport(JavaDebuggerSupport.class).getEditBreakpointAction()
             .editBreakpoint(myProject, editor, breakpoint, renderer);
@@ -498,7 +488,6 @@ public class BreakpointManager implements JDOMExternalizable {
   @NotNull
   public List<BreakpointWithHighlighter> findBreakpoints(final Document document, final int offset) {
     LinkedList<BreakpointWithHighlighter> result = new LinkedList<BreakpointWithHighlighter>();
-
     ApplicationManager.getApplication().assertIsDispatchThread();
     for (final Breakpoint breakpoint : getBreakpoints()) {
       if (breakpoint instanceof BreakpointWithHighlighter && ((BreakpointWithHighlighter)breakpoint).isAt(document, offset)) {
@@ -527,18 +516,22 @@ public class BreakpointManager implements JDOMExternalizable {
   }
 
   /**
-   * 
-   * @param document
-   * @param offset
-   * @param category breakpoint's category, null if the category does not matter
-   * @return
+   * @param category breakpoint category, null if the category does not matter
    */
   @Nullable
   public <T extends BreakpointWithHighlighter> T findBreakpoint(final Document document, final int offset, @Nullable final Key<T> category) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    for (BreakpointWithHighlighter breakpointWithHighlighter : myDocumentBreakpoints.get(document)) {
+      if (breakpointWithHighlighter.isAt(document, offset) &&
+          (category == null || category.equals(breakpointWithHighlighter.getCategory()))) {
+        //noinspection unchecked
+        return (T)breakpointWithHighlighter;
+      }
+    }
+
     for (final Breakpoint breakpoint : getBreakpoints()) {
       if (breakpoint instanceof BreakpointWithHighlighter && ((BreakpointWithHighlighter)breakpoint).isAt(document, offset)) {
         if (category == null || category.equals(breakpoint.getCategory())) {
+          //noinspection CastConflictsWithInstanceof,unchecked
           return (T)breakpoint;
         }
       }
@@ -546,11 +539,11 @@ public class BreakpointManager implements JDOMExternalizable {
     return null;
   }
 
-  @Override
-  public void readExternal(@NotNull final Element parentNode) throws InvalidDataException {
+  public void readExternal(@NotNull final Element parentNode) {
     if (myProject.isOpen()) {
       doRead(parentNode);
-    } else {
+    }
+    else {
       myStartupManager.registerPostStartupActivity(new Runnable() {
         @Override
         public void run() {
@@ -565,7 +558,7 @@ public class BreakpointManager implements JDOMExternalizable {
       @Override
       @SuppressWarnings({"HardCodedStringLiteral"})
       public void run() {
-        final Map<String, Breakpoint> nameToBreakpointMap = new java.util.HashMap<String, Breakpoint>();
+        final Map<String, Breakpoint> nameToBreakpointMap = new THashMap<String, Breakpoint>();
         try {
           final List groups = parentNode.getChildren();
           for (final Object group1 : groups) {
@@ -662,18 +655,9 @@ public class BreakpointManager implements JDOMExternalizable {
   public synchronized void addBreakpoint(Breakpoint breakpoint) {
     myBreakpoints.add(breakpoint);
     myBreakpointsListForIteration = null;
-    if(breakpoint instanceof BreakpointWithHighlighter) {
+    if (breakpoint instanceof BreakpointWithHighlighter) {
       BreakpointWithHighlighter breakpointWithHighlighter = (BreakpointWithHighlighter)breakpoint;
-      Document document = breakpointWithHighlighter.getDocument();
-      if(document != null) {
-        List<BreakpointWithHighlighter> breakpoints = myDocumentBreakpoints.get(document);
-
-        if(breakpoints == null) {
-          breakpoints = new ArrayList<BreakpointWithHighlighter>();
-          myDocumentBreakpoints.put(document, breakpoints);
-        }
-        breakpoints.add(breakpointWithHighlighter);
-      }
+      myDocumentBreakpoints.putValue(breakpointWithHighlighter.getDocument(), breakpointWithHighlighter);
     }
     myDispatcher.getMulticaster().breakpointsChanged();
   }
@@ -687,16 +671,9 @@ public class BreakpointManager implements JDOMExternalizable {
     if (myBreakpoints.remove(breakpoint)) {
       updateBreakpointRules(breakpoint);
       myBreakpointsListForIteration = null;
-      if(breakpoint instanceof BreakpointWithHighlighter) {
-        //breakpoint.saveToString() may be invalid
-
-        for (final Document document : myDocumentBreakpoints.keySet()) {
-          final List<BreakpointWithHighlighter> documentBreakpoints = myDocumentBreakpoints.get(document);
-          final boolean reallyRemoved = documentBreakpoints.remove(breakpoint);
-          if (reallyRemoved) {
-            if (documentBreakpoints.isEmpty()) {
-              myDocumentBreakpoints.remove(document);
-            }
+      if (breakpoint instanceof BreakpointWithHighlighter) {
+        for (Document document : myDocumentBreakpoints.keySet()) {
+          if (myDocumentBreakpoints.removeValue(document, (BreakpointWithHighlighter)breakpoint)) {
             break;
           }
         }
@@ -708,62 +685,49 @@ public class BreakpointManager implements JDOMExternalizable {
     }
   }
 
-  @Override
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  public void writeExternal(@NotNull final Element parentNode) throws WriteExternalException {
-    WriteExternalException ex = ApplicationManager.getApplication().runReadAction(new Computable<WriteExternalException>() {
+  public void writeExternal(@NotNull final Element parentNode) {
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
-      @Nullable
-      public WriteExternalException compute() {
-        try {
-          removeInvalidBreakpoints();
-          final Map<Key<? extends Breakpoint>, Element> categoryToElementMap = new java.util.HashMap<Key<? extends Breakpoint>, Element>();
-          for (Key<? extends Breakpoint> category : myBreakpointDefaults.keySet()) {
-            final Element group = getCategoryGroupElement(categoryToElementMap, category, parentNode);
-            final BreakpointDefaults defaults = getBreakpointDefaults(category);
-            group.setAttribute(DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME, String.valueOf(defaults.getSuspendPolicy()));
-            group.setAttribute(DEFAULT_CONDITION_STATE_ATTRIBUTE_NAME, String.valueOf(defaults.isConditionEnabled()));
-          }
-          for (final Breakpoint breakpoint : getBreakpoints()) {
-            final Key<? extends Breakpoint> category = breakpoint.getCategory();
-            final Element group = getCategoryGroupElement(categoryToElementMap, category, parentNode);
-            if (breakpoint.isValid()) {
-              writeBreakpoint(group, breakpoint);
-            }
-          }
-          final AnyExceptionBreakpoint anyExceptionBreakpoint = getAnyExceptionBreakpoint();
-          final Element group = getCategoryGroupElement(categoryToElementMap, anyExceptionBreakpoint.getCategory(), parentNode);
-          writeBreakpoint(group, anyExceptionBreakpoint);
-          
-          final Element rules = new Element(RULES_GROUP_NAME);
-          parentNode.addContent(rules);
-          for (final EnableBreakpointRule myBreakpointRule : myBreakpointRules) {
-            writeRule(myBreakpointRule, rules);
-          }
-
-          return null;
+      public void run() {
+        removeInvalidBreakpoints();
+        final Map<Key<? extends Breakpoint>, Element> categoryToElementMap = new THashMap<Key<? extends Breakpoint>, Element>();
+        for (Key<? extends Breakpoint> category : myBreakpointDefaults.keySet()) {
+          final Element group = getCategoryGroupElement(categoryToElementMap, category, parentNode);
+          final BreakpointDefaults defaults = getBreakpointDefaults(category);
+          group.setAttribute(DEFAULT_SUSPEND_POLICY_ATTRIBUTE_NAME, String.valueOf(defaults.getSuspendPolicy()));
+          group.setAttribute(DEFAULT_CONDITION_STATE_ATTRIBUTE_NAME, String.valueOf(defaults.isConditionEnabled()));
         }
-        catch (WriteExternalException e) {
-          return e;
+        // don't store invisible breakpoints
+        for (Breakpoint breakpoint : getBreakpoints()) {
+          if (breakpoint.isValid() &&
+              (!(breakpoint instanceof BreakpointWithHighlighter) || ((BreakpointWithHighlighter)breakpoint).isVisible())) {
+            writeBreakpoint(getCategoryGroupElement(categoryToElementMap, breakpoint.getCategory(), parentNode), breakpoint);
+          }
+        }
+        final AnyExceptionBreakpoint anyExceptionBreakpoint = getAnyExceptionBreakpoint();
+        final Element group = getCategoryGroupElement(categoryToElementMap, anyExceptionBreakpoint.getCategory(), parentNode);
+        writeBreakpoint(group, anyExceptionBreakpoint);
+
+        final Element rules = new Element(RULES_GROUP_NAME);
+        parentNode.addContent(rules);
+        for (EnableBreakpointRule myBreakpointRule : myBreakpointRules) {
+          writeRule(myBreakpointRule, rules);
         }
       }
     });
-    if (ex != null) {
-      throw ex;
-    }
-    
-    final Element props = new Element("ui_properties");
-    parentNode.addContent(props);
+
+    final Element uiProperties = new Element("ui_properties");
+    parentNode.addContent(uiProperties);
     for (final String name : myUIProperties.keySet()) {
-      final String value = myUIProperties.get(name);
-      final Element property = new Element("property");
-      props.addContent(property);
+      Element property = new Element("property");
+      uiProperties.addContent(property);
       property.setAttribute("name", name);
-      property.setAttribute("value", value);
+      property.setAttribute("value", myUIProperties.get(name));
     }
   }
 
-  @SuppressWarnings({"HardCodedStringLiteral"}) private static void writeRule(@NotNull final EnableBreakpointRule enableBreakpointRule, @NotNull Element element) {
+  @SuppressWarnings({"HardCodedStringLiteral"})
+  private static void writeRule(@NotNull final EnableBreakpointRule enableBreakpointRule, @NotNull Element element) {
     Element rule = new Element("rule");
     if (enableBreakpointRule.isLeaveEnabled()) {
       rule.setAttribute("leaveEnabled", Boolean.toString(true));
@@ -780,10 +744,15 @@ public class BreakpointManager implements JDOMExternalizable {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void writeBreakpoint(@NotNull final Element group, @NotNull final Breakpoint breakpoint) throws WriteExternalException {
+  private static void writeBreakpoint(@NotNull final Element group, @NotNull final Breakpoint breakpoint) {
     Element breakpointNode = new Element("breakpoint");
     group.addContent(breakpointNode);
-    breakpoint.writeExternal(breakpointNode);
+    try {
+      breakpoint.writeExternal(breakpointNode);
+    }
+    catch (WriteExternalException e) {
+      LOG.error(e);
+    }
   }
 
   private static <T extends Breakpoint> Element getCategoryGroupElement(@NotNull final Map<Key<? extends Breakpoint>, Element> categoryToElementMap, @NotNull final Key<T> category, @NotNull final Element parentNode) {
@@ -812,14 +781,13 @@ public class BreakpointManager implements JDOMExternalizable {
 
   /**
    * @return breakpoints of one of the category:
-   *         LINE_BREAKPOINTS, EXCEPTION_BREKPOINTS, FIELD_BREAKPOINTS, METHOD_BREAKPOINTS
+   *         LINE_BREAKPOINTS, EXCEPTION_BREAKPOINTS, FIELD_BREAKPOINTS, METHOD_BREAKPOINTS
    */
   public <T extends Breakpoint> Breakpoint[] getBreakpoints(@NotNull final Key<T> category) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     removeInvalidBreakpoints();
 
     final ArrayList<Breakpoint> breakpoints = new ArrayList<Breakpoint>();
-
     for (Breakpoint breakpoint : getBreakpoints()) {
       if (category.equals(breakpoint.getCategory())) {
         breakpoints.add(breakpoint);
@@ -977,7 +945,6 @@ public class BreakpointManager implements JDOMExternalizable {
   public void removeBreakpointManagerListener(@NotNull BreakpointManagerListener listener) {
     myDispatcher.removeListener(listener);
   }
-
   
   private boolean myAllowMulticasting = true;
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);

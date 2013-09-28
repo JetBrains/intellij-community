@@ -142,11 +142,12 @@ public class MinusculeMatcher implements Matcher {
     if (iterable.isEmpty()) return 0;
 
     final TextRange first = iterable.getHead();
+    boolean startMatch = first.getStartOffset() == 0;
 
     int matchingCase = 0;
     int p = -1;
 
-    int integral = 0; // sum of matching-character-count * hump-index over all matched humps; favors longer fragments matching earlier words
+    int integral = 0; // -sum of matching-char-count * hump-index over all matched humps; favors longer fragments matching earlier words
     int humpIndex = 1;
     int nextHumpStart = 0;
     for (TextRange range : iterable) {
@@ -161,7 +162,7 @@ public class MinusculeMatcher implements Matcher {
             humpIndex++;
           }
         }
-        integral += humpIndex;
+        integral -= humpIndex;
 
         char c = name.charAt(i);
         p = StringUtil.indexOf(myPattern, c, p + 1, myPattern.length, false);
@@ -169,9 +170,10 @@ public class MinusculeMatcher implements Matcher {
           break;
         }
 
-        // favor uppercase letters matching hump start
         if (c == myPattern[p]) {
-          matchingCase += isUpperCase[p] ? 50 : isHumpStart ? 1 : 0;
+          if (isUpperCase[p]) matchingCase += 50; // strongly prefer user's uppercase matching uppercase: they made an effort to press Shift
+          else if (i == 0 && startMatch) matchingCase += 15; // the very first letter case distinguishes classes in Java etc
+          else if (isHumpStart) matchingCase += 1; // if a lowercase matches lowercase hump start, that also means something 
         } else if (isHumpStart) {
           // disfavor hump starts where pattern letter case doesn't match name case
           matchingCase -= 20;
@@ -183,9 +185,12 @@ public class MinusculeMatcher implements Matcher {
     boolean afterSeparator = StringUtil.indexOfAny(name, HARD_SEPARATORS, 0, startIndex) >= 0;
     boolean wordStart = startIndex == 0 || isWordStart(name, startIndex) && !isWordStart(name, startIndex - 1);
     boolean finalMatch = iterable.get(iterable.size() - 1).getEndOffset() == name.length();
-    boolean startMatch = iterable.get(0).getStartOffset() == 0;
 
-    return (wordStart ? 1000 : 0) - integral * 10 + matchingCase + (afterSeparator ? 0 : 2) + (startMatch ? 1 : 0) + (finalMatch ? 1 : 0);
+    return (wordStart ? 1000 : 0) + 
+           integral * 10 + 
+           matchingCase * (startMatch ? 10 : 1) + // in start matches, case is more important; in middle matches - fragment length (integral)
+           (afterSeparator ? 0 : 2) + 
+           (finalMatch ? 1 : 0);
   }
 
   public boolean isStartMatch(@NotNull String name) {
@@ -359,7 +364,7 @@ public class MinusculeMatcher implements Matcher {
             return prependRange(ranges, nameIndex, i);
           }
           // at least three consecutive uppercase letters shouldn't match lowercase
-          if (myHasHumps && i > 1 && isUpperCase[patternIndex + i - 1] && isUpperCase[patternIndex + i - 2]) {
+          if (i > 1 && isUpperCase[patternIndex + i - 1] && isUpperCase[patternIndex + i - 2]) {
             // but if there's a lowercase after them, it can match (in case shift was released a bit later)
             if (nameIndex + i + 1 == name.length() ||
                 patternIndex + i + 1 < myPattern.length && !isLowerCase[patternIndex + i + 1]) {

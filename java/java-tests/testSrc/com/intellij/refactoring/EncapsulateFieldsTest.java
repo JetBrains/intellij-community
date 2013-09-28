@@ -43,11 +43,11 @@ public class EncapsulateFieldsTest extends MultiFileTestCase{
   }
 
   public void testDiffWithReturnTypeOnly() throws Exception {
-    doTest("i", "There already is a method <b><code>Test setI(int)</code></b> which differs from setter <b><code>setI</code></b> by return type only.");
+    doTest("i", "There is already method <b><code>Test setI(int)</code></b> which differs from setter <b><code>setI</code></b> by return type only");
   }
 
    public void testDiffWithReturnTypeOnlyInHierarchy() throws Exception {
-    doTest("i", "There already is a method <b><code>Super setI(int)</code></b> which differs from setter <b><code>setI</code></b> by return type only.");
+    doTest("i", "There is already method <b><code>Super setI(int)</code></b> which differs from setter <b><code>setI</code></b> by return type only");
   }
 
   public void testHideOverriderMethod() throws Exception {

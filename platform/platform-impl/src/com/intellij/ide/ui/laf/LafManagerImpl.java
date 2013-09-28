@@ -148,6 +148,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       // when we leave only system LaFs on other OSes, the order also should be determined as Default, Darcula
       
       Arrays.sort(myLaFs, new Comparator<UIManager.LookAndFeelInfo>() {
+        @Override
         public int compare(UIManager.LookAndFeelInfo obj1, UIManager.LookAndFeelInfo obj2) {
           String name1 = obj1.getName();
           String name2 = obj2.getName();
@@ -162,6 +163,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   /**
    * Adds specified listener
    */
+  @Override
   public void addLafManagerListener(@NotNull final LafManagerListener l) {
     myListenerList.add(LafManagerListener.class, l);
   }
@@ -169,6 +171,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   /**
    * Removes specified listener
    */
+  @Override
   public void removeLafManagerListener(@NotNull final LafManagerListener l) {
     myListenerList.remove(LafManagerListener.class, l);
   }
@@ -180,11 +183,13 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "LafManager";
   }
 
+  @Override
   public void initComponent() {
     if (myCurrentLaf != null) {
       final UIManager.LookAndFeelInfo laf = findLaf(myCurrentLaf.getClassName());
@@ -213,6 +218,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
   }
 
+  @Override
   public void disposeComponent() {
     if (myThemeChangeListener != null) {
       Toolkit.getDefaultToolkit().removePropertyChangeListener(GNOME_THEME_PROPERTY_NAME, myThemeChangeListener);
@@ -220,6 +226,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
   }
 
+  @Override
   public void loadState(final Element element) {
     String className = null;
     for (final Object o : element.getChildren()) {
@@ -244,6 +251,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     myCurrentLaf = laf;
   }
 
+  @Override
   public Element getState() {
     Element element = new Element("state");
     if (myCurrentLaf != null) {
@@ -257,10 +265,12 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     return element;
   }
 
+  @Override
   public UIManager.LookAndFeelInfo[] getInstalledLookAndFeels(){
     return myLaFs.clone();
   }
 
+  @Override
   public UIManager.LookAndFeelInfo getCurrentLookAndFeel(){
     return myCurrentLaf;
   }
@@ -322,6 +332,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   /**
    * Sets current LAF. The method doesn't update component hierarchy.
    */
+  @Override
   public void setCurrentLookAndFeel(UIManager.LookAndFeelInfo lookAndFeelInfo) {
     if (findLaf(lookAndFeelInfo.getClassName()) == null) {
       LOG.error("unknown LookAndFeel : " + lookAndFeelInfo);
@@ -458,6 +469,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
    * Updates LAF of all windows. The method also updates font of components
    * as it's configured in <code>UISettings</code>.
    */
+  @Override
   public void updateUI() {
     final UIDefaults uiDefaults = UIManager.getLookAndFeelDefaults();
 
@@ -671,6 +683,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   /**
    * Repaints all displayable window.
    */
+  @Override
   public void repaintUI(){
     Frame[] frames=Frame.getFrames();
     for (Frame frame : frames) {
@@ -761,6 +774,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       myDelegate = delegate;
     }
 
+    @Override
     public Popup getPopup(final Component owner, final Component contents, final int x, final int y) throws IllegalArgumentException {
       final Point point = fixPopupLocation(contents, x, y);
 

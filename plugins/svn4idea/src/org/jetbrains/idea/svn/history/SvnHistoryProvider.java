@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
@@ -42,7 +43,9 @@ import org.jetbrains.idea.svn.*;
 import org.tmatesoft.svn.core.*;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNErrorManager;
-import org.tmatesoft.svn.core.wc.*;
+import org.tmatesoft.svn.core.wc.SVNInfo;
+import org.tmatesoft.svn.core.wc.SVNLogClient;
+import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import javax.swing.*;
@@ -502,6 +505,8 @@ public class SvnHistoryProvider
           }
           SVNLogEntryPath entryPath = null;
           String copyPath = null;
+          final int mergeLevel = svnLogEntryIntegerPair.getSecond();
+
           if (! myLastPathCorrector.isRoot()) {
             myLastPathCorrector.handleLogEntry(logEntry);
             entryPath = myLastPathCorrector.getDirectlyMentioned();
@@ -511,11 +516,16 @@ public class SvnHistoryProvider
             } else {
               // if there are no path with exact match, check whether parent or child paths had changed
               // "entry path" is allowed to be null now; if it is null, last path would be taken for revision construction
-              if (! checkForChildChanges(logEntry) && ! checkForParentChanges(logEntry)) return;
+
+              // Separate SVNLogEntry is issued for each "merge source" revision. These "merge source" revisions are treated as child
+              // revisions of some other revision - this way we construct merge hierarchy.
+              // mergeLevel >= 0 indicates that we are currently processing some "merge source" revision. This "merge source" revision
+              // contains changes from some other branch - so checkForChildChanges() and checkForParentChanges() return "false".
+              // Because of this case we apply these methods only for non-"merge source" revisions - this means mergeLevel < 0.
+              if (mergeLevel < 0 && !checkForChildChanges(logEntry) && !checkForParentChanges(logEntry)) return;
             }
           }
 
-          final int mergeLevel = svnLogEntryIntegerPair.getSecond();
           final SvnFileRevision revision = createRevision(logEntry, copyPath, entryPath);
           if (mergeLevel >= 0) {
             addToListByLevel((SvnFileRevision)myPrevious, revision, mergeLevel);
@@ -608,7 +618,47 @@ public class SvnHistoryProvider
     }
   }
 
-  private class MergeSourceColumnInfo extends ColumnInfo<VcsFileRevision, String> {
+  private static class RevisionMergeSourceInfo {
+
+    @NotNull private final VcsFileRevision revision;
+
+    private RevisionMergeSourceInfo(@NotNull VcsFileRevision revision) {
+      this.revision = revision;
+    }
+
+    @NotNull
+    public SvnFileRevision getRevision() {
+      return (SvnFileRevision)revision;
+    }
+
+    // will be used, for instance, while copying (to clipboard) data from table
+    @Override
+    public String toString() {
+      return toString(revision);
+    }
+
+    private static String toString(@Nullable VcsFileRevision value) {
+      if (!(value instanceof SvnFileRevision)) return "";
+      final SvnFileRevision revision = (SvnFileRevision)value;
+      final List<SvnFileRevision> mergeSources = revision.getMergeSources();
+      if (mergeSources.isEmpty()) {
+        return "";
+      }
+      final StringBuilder sb = new StringBuilder();
+      for (SvnFileRevision source : mergeSources) {
+        if (sb.length() != 0) {
+          sb.append(", ");
+        }
+        sb.append(source.getRevisionNumber().asString());
+        if (!source.getMergeSources().isEmpty()) {
+          sb.append("*");
+        }
+      }
+      return sb.toString();
+    }
+  }
+
+  private class MergeSourceColumnInfo extends ColumnInfo<VcsFileRevision, RevisionMergeSourceInfo> {
     private final MergeSourceRenderer myRenderer;
 
     private MergeSourceColumnInfo(final SvnHistorySession session) {
@@ -621,8 +671,8 @@ public class SvnHistoryProvider
       return myRenderer;
     }
 
-    public String valueOf(final VcsFileRevision vcsFileRevision) {
-      return vcsFileRevision == null ? "" : getText(vcsFileRevision);
+    public RevisionMergeSourceInfo valueOf(final VcsFileRevision vcsFileRevision) {
+      return vcsFileRevision != null ? new RevisionMergeSourceInfo(vcsFileRevision) : null;
     }
 
     public String getText(final VcsFileRevision vcsFileRevision) {
@@ -673,8 +723,8 @@ public class SvnHistoryProvider
       int column = table.columnAtPoint(e.getPoint());
 
       final Object value = table.getModel().getValueAt(row, column);
-      if (value instanceof SvnFileRevision) {
-        return (SvnFileRevision)value;
+      if (value instanceof RevisionMergeSourceInfo) {
+        return ((RevisionMergeSourceInfo)value).getRevision();
       }
       return null;
     }
@@ -700,23 +750,7 @@ public class SvnHistoryProvider
     }
 
     public String getText(final VcsFileRevision value) {
-      if (!(value instanceof SvnFileRevision)) return "";
-      final SvnFileRevision revision = (SvnFileRevision)value;
-      final List<SvnFileRevision> mergeSources = revision.getMergeSources();
-      if (mergeSources.isEmpty()) {
-        return "";
-      }
-      final StringBuilder sb = new StringBuilder();
-      for (SvnFileRevision source : mergeSources) {
-        if (sb.length() != 0) {
-          sb.append(", ");
-        }
-        sb.append(source.getRevisionNumber().asString());
-        if (!source.getMergeSources().isEmpty()) {
-          sb.append("*");
-        }
-      }
-      return sb.toString();
+      return RevisionMergeSourceInfo.toString(value);
     }
 
     protected void customizeCellRenderer(final JTable table,
@@ -729,22 +763,17 @@ public class SvnHistoryProvider
         myListener = new MergeSourceDetailsLinkListener(MERGE_SOURCE_DETAILS_TAG, myFile);
         myListener.installOn(table);
       }
-      if (value instanceof String) {
-        append((String)value, SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        return;
-      }
-      if (!(value instanceof SvnFileRevision)) {
-        append("", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        return;
-      }
-      final SvnFileRevision revision = (SvnFileRevision)value;
-      final String text = getText(revision);
-      if (text.length() == 0) {
-        append("", SimpleTextAttributes.REGULAR_ATTRIBUTES);
-        return;
-      }
+      appendMergeSourceText(table, row, column, value instanceof RevisionMergeSourceInfo ? value.toString() : null);
+    }
 
-      append(cutString(text, table.getCellRect(row, column, false).getWidth()), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    private void appendMergeSourceText(JTable table, int row, int column, @Nullable String text) {
+      if (StringUtil.isEmpty(text)) {
+        append("", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      }
+      else {
+        append(cutString(text, table.getCellRect(row, column, false).getWidth()), SimpleTextAttributes.REGULAR_ATTRIBUTES,
+               MERGE_SOURCE_DETAILS_TAG);
+      }
     }
 
     private String cutString(final String text, final double value) {

@@ -795,6 +795,12 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       {
         minSpaces = 1;
         minLineFeeds = 0;
+        if (myChild1 != null) {
+          ASTNode lastElement = myChild1;
+          while (lastElement.getLastChildNode() != null) lastElement = lastElement.getLastChildNode();
+          //Not to place second statement on the same line with first one, if last ends with single line comment
+          if (lastElement instanceof PsiComment && lastElement.getElementType() == JavaTokenType.END_OF_LINE_COMMENT) minLineFeeds = 1;
+        }
       }
       myResult = Spacing.createSpacing(minSpaces, 0, minLineFeeds, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
@@ -1086,7 +1092,7 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
       createParenthSpace(mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
     }
     else if (myRole1 == ChildRole.COMMA) {
-      createSpaceInCode(true);
+      createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
     }
   }
 

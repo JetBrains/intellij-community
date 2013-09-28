@@ -26,6 +26,7 @@ public enum SvnCommandName {
   info("info", false),
   st("st", false),
   up("up", true),
+  switchCopy("switch", true),
   relocate("relocate", true),
   ci("commit", true),
   checkout("checkout", true),
@@ -46,7 +47,9 @@ public enum SvnCommandName {
   merge("merge", true),
   changelist("changelist", true),
   lock("lock", true),
-  unlock("unlock", true);
+  unlock("unlock", true),
+  importFolder("import", false),
+  export("export", false);
 
   private final String myName;
   private final boolean myWriteable;

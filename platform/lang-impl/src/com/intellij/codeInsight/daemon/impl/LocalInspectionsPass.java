@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,9 +35,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -437,13 +435,17 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     final HighlightSeverity severity = highlightInfoType.getSeverity(psiElement);
     TextAttributes attributes = mySeverityRegistrar.getTextAttributesBySeverity(severity);
-    HighlightInfo highlightInfo = new HighlightInfo(attributes, null, highlightInfoType, textRange.getStartOffset(), textRange.getEndOffset(), message, toolTip,
-                                                    severity, problemDescriptor.isAfterEndOfLine(), null, isFileLevel, 0);
-    if (!HighlightInfo.isAcceptedByFilters(highlightInfo, psiElement)) {
-      return null;
-    }
-    highlightInfo.setProblemGroup(problemDescriptor.getProblemGroup());
-    return highlightInfo;
+    HighlightInfo.Builder b = HighlightInfo.newHighlightInfo(highlightInfoType)
+                              .range(psiElement, textRange.getStartOffset(), textRange.getEndOffset())
+                              .description(message)
+                              .severity(severity);
+    if (toolTip != null) b.escapedToolTip(toolTip);
+    if (attributes != null) b.textAttributes(attributes);
+    if (problemDescriptor.isAfterEndOfLine()) b.endOfLine();
+    if (isFileLevel) b.fileLevelAnnotation();
+    if (problemDescriptor.getProblemGroup() != null) b.problemGroup(problemDescriptor.getProblemGroup());
+
+    return b.create();
   }
 
   private final Map<TextRange, RangeMarker> ranges2markersCache = new THashMap<TextRange, RangeMarker>();
@@ -513,42 +515,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  @NotNull
-  private HighlightInfoType highlightTypeFromDescriptor(@NotNull ProblemDescriptor problemDescriptor, @NotNull HighlightSeverity severity) {
-    final ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
-    switch (highlightType) {
-      case GENERIC_ERROR_OR_WARNING:
-        return mySeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
-      case LIKE_DEPRECATED:
-        return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.DEPRECATED.getAttributesKey());
-      case LIKE_UNKNOWN_SYMBOL:
-        if (severity == HighlightSeverity.ERROR) {
-          return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.WRONG_REF.getAttributesKey());
-        }
-        if (severity == HighlightSeverity.WARNING) {
-          return new HighlightInfoType.HighlightInfoTypeImpl(severity, CodeInsightColors.WEAK_WARNING_ATTRIBUTES);
-        }
-        return mySeverityRegistrar.getHighlightInfoTypeBySeverity(severity);
-      case LIKE_UNUSED_SYMBOL:
-        return new HighlightInfoType.HighlightInfoTypeImpl(severity, HighlightInfoType.UNUSED_SYMBOL.getAttributesKey());
-      case INFO:
-        return HighlightInfoType.INFO;
-       case WEAK_WARNING:
-        return HighlightInfoType.WEAK_WARNING;
-      case ERROR:
-        return HighlightInfoType.WRONG_REF;
-      case GENERIC_ERROR:
-        return HighlightInfoType.ERROR;
-      case INFORMATION:
-        final TextAttributesKey attributes = ((ProblemDescriptorBase)problemDescriptor).getEnforcedTextAttributes();
-        if (attributes != null) {
-          return new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, attributes);
-        }
-        return HighlightInfoType.INFORMATION;
-    }
-    throw new RuntimeException("Cannot map " + highlightType);
-  }
-
   @Override
   protected void applyInformationWithProgress() {
     UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, myInfos, getColorsScheme(), getId());
@@ -592,7 +558,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                              PsiElement element) {
     if (element == null) return;
     if (myIgnoreSuppressed && SuppressionUtil.inspectionResultSuppressed(element, tool.getTool())) return;
-    HighlightInfoType level = highlightTypeFromDescriptor(descriptor, severity);
+    HighlightInfoType level = ProblemDescriptorUtil.highlightTypeFromDescriptor(descriptor, severity, mySeverityRegistrar);
     HighlightInfo info = createHighlightInfo(descriptor, tool, level, emptyActionRegistered, element);
     if (info == null) return;
 

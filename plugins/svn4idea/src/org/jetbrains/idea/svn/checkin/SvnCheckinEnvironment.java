@@ -178,7 +178,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
       return;
     }
     if (WorkingCopyFormat.ONE_DOT_EIGHT.equals(format) || WorkingCopyFormat.ONE_DOT_SEVEN.equals(format) &&
-        SvnConfiguration.UseAcceleration.commandLine.equals(SvnConfiguration.getInstance(mySvnVcs.getProject()).myUseAcceleration) &&
+        SvnConfiguration.getInstance(mySvnVcs.getProject()).isCommandLine() &&
         (SvnAuthenticationManager.HTTP.equals(url.getProtocol()) || SvnAuthenticationManager.HTTPS.equals(url.getProtocol()))) {
       doWithCommandLine(committables, comment, exception, feedback);
       return;
@@ -282,7 +282,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     if (! childrenOfSomebody.isEmpty()) {
       final HashSet<File> result = new HashSet<File>(committables);
       result.removeAll(childrenOfSomebody);
-      final SvnCommandLineStatusClient statusClient = new SvnCommandLineStatusClient(mySvnVcs.getProject());
+      final SvnCommandLineStatusClient statusClient = new SvnCommandLineStatusClient(mySvnVcs);
       for (File file : childrenOfSomebody) {
         try {
           final SVNStatus status = statusClient.doStatus(file, false);
@@ -385,7 +385,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
   }
 
   private SVNStatus getStatusCommandLine(File file) throws SVNException {
-    return new SvnCommandLineStatusClient(mySvnVcs.getProject()).doStatus(file, false);
+    return new SvnCommandLineStatusClient(mySvnVcs).doStatus(file, false);
   }
 
   private static List<File> collectPaths(final List<Change> changes) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -71,6 +72,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
     @NonNls private static final String TOKEN_STYLE = "style";
     @NonNls private static final String TOKEN_ON = "on";
 
+    @Override
     public void handleElement(Lexer lexer) {
       final CharSequence buffer;
       if (lexerOfCacheBufferSequence == lexer) {
@@ -131,6 +133,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
   }
 
   class XmlAttributeValueEndHandler implements TokenHandler {
+    @Override
     public void handleElement(Lexer lexer) {
       if (seenAttribute) {
         seenStyle = false;
@@ -142,6 +145,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
   }
 
   class XmlAttributeValueHandler implements TokenHandler {
+    @Override
     public void handleElement(Lexer lexer) {
       if (seenContentType) {
         if(!seenScript || seenAttribute) {
@@ -183,6 +187,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
   }
 
   class XmlTagClosedHandler implements TokenHandler {
+    @Override
     public void handleElement(Lexer lexer) {
       if (seenAttribute) {
         seenScript=false;
@@ -198,6 +203,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
   }
 
   class XmlTagEndHandler implements TokenHandler {
+    @Override
     public void handleElement(Lexer lexer) {
       seenStyle=false;
       seenScript=false;
@@ -229,6 +235,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
     if (tokenHandler != null) {
       final TokenHandler newHandler = value;
       value = new TokenHandler() {
+        @Override
         public void handleElement(final Lexer lexer) {
           tokenHandler.handleElement(lexer);
           newHandler.handleElement(lexer);
@@ -239,7 +246,8 @@ abstract class BaseHtmlLexer extends DelegateLexer {
     tokenHandlers.put(elementType,value);
   }
 
-  public void start(final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
+  @Override
+  public void start(@NotNull final CharSequence buffer, final int startOffset, final int endOffset, final int initialState) {
     initState(initialState);
     super.start(buffer, startOffset, endOffset, initialState & BASE_STATE_MASK);
   }
@@ -343,6 +351,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
            tokenType == XmlTokenType.XML_CHAR_ENTITY_REF;
   }
 
+  @Override
   public void advance() {
     super.advance();
     IElementType type = getDelegate().getTokenType();
@@ -351,6 +360,7 @@ abstract class BaseHtmlLexer extends DelegateLexer {
   }
 
 
+  @Override
   public int getState() {
     int state = super.getState();
 

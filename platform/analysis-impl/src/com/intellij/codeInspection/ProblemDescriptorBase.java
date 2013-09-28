@@ -102,6 +102,11 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
     return PsiTreeUtil.findCommonParent(startElement, endElement);
   }
 
+  @Nullable
+  public TextRange getTextRangeInElement() {
+    return myTextRangeInElement;
+  }
+
   @Override
   public PsiElement getStartElement() {
     return myStartSmartPointer.getElement();

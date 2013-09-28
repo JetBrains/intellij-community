@@ -1620,8 +1620,14 @@ public class StringUtil extends StringUtilRt {
   public static int indexOfAny(@NotNull final String s, @NotNull final String chars) {
     return indexOfAny(s, chars, 0, s.length());
   }
+  public static int indexOfAny(@NotNull final CharSequence s, @NotNull final String chars) {
+    return indexOfAny(s, chars, 0, s.length());
+  }
 
   public static int indexOfAny(@NotNull final String s, @NotNull final String chars, final int start, final int end) {
+    return indexOfAny((CharSequence)s, chars, start, end);
+  }
+  public static int indexOfAny(@NotNull final CharSequence s, @NotNull final String chars, final int start, final int end) {
     for (int i = start; i < end; i++) {
       if (containsChar(chars, s.charAt(i))) return i;
     }

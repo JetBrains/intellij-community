@@ -59,4 +59,13 @@ public interface DfaMemoryState {
 
   @Nullable
   DfaConstValue getConstantValue(DfaVariableValue value);
+
+  /**
+   * Ephemeral means a state that was created when considering a method contract and checking if one of its arguments is null.
+   * With explicit null check, that would result in any non-annotated variable being treated as nullable and producing possible NPE warnings later.
+   * With contracts, we don't want this. So the state where this variable is null is marked ephemeral and no NPE warnings are issued for such states. 
+   */
+  void markEphemeral();
+  
+  boolean isEphemeral();
 }

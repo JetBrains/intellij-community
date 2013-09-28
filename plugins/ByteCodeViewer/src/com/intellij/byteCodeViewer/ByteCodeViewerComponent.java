@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.byteCodeViewer;
 
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
@@ -25,8 +40,8 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * User: anna
- * Date: 5/7/12
+ * @author anna
+ * @since 5/7/12
  */
 public class ByteCodeViewerComponent extends JPanel implements Disposable {
 
@@ -66,7 +81,7 @@ public class ByteCodeViewerComponent extends JPanel implements Disposable {
   public void setText(final String bytecode) {
     setText(bytecode, 0);
   }
-  
+
   public void setText(final String bytecode, PsiElement element) {
     int offset = 0;
     final Document document = PsiDocumentManager.getInstance(element.getProject()).getDocument(element.getContainingFile());
@@ -100,7 +115,7 @@ public class ByteCodeViewerComponent extends JPanel implements Disposable {
   public String getText() {
     return myEditor.getDocument().getText();
   }
-  
+
   @Override
   public void dispose() {
     EditorFactory.getInstance().releaseEditor(myEditor);

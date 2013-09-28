@@ -536,4 +536,13 @@ public class JavaFormatterIndentationTest extends AbstractJavaFormatterTest {
     getIndentOptions().USE_TAB_CHARACTER = true;
     doTextTest(initial, expected);
   }
+
+  public void testLambdaIndentation() throws Exception {
+    String before = "Runnable r = () ->\n" +
+                    "{\n" +
+                    "    System.out.println(\"olo\");\n" +
+                    "};";
+    doMethodTest(before, before);
+  }
+
 }

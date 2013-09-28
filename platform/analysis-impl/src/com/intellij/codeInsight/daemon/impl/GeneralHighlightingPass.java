@@ -16,7 +16,6 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -31,7 +30,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -51,14 +49,12 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.PsiTodoSearchHelper;
 import com.intellij.psi.search.TodoItem;
 import com.intellij.util.NotNullProducer;
-import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.Stack;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -376,38 +372,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     };
 
     analyzeByVisitors(progress, visitors, holder, 0, action);
-  }
-
-  protected void killAbandonedHighlightsUnder(@NotNull final TextRange range,
-                                              @Nullable final List<HighlightInfo> holder,
-                                              @NotNull final ProgressIndicator progress) {
-    DaemonCodeAnalyzerEx
-      .processHighlights(getDocument(), myProject, null, range.getStartOffset(), range.getEndOffset(), new Processor<HighlightInfo>() {
-        @Override
-        public boolean process(final HighlightInfo existing) {
-          if (existing.isBijective() &&
-              existing.getGroup() == Pass.UPDATE_ALL &&
-              range.equalsToRange(existing.getActualStartOffset(), existing.getActualEndOffset())) {
-            if (holder != null) {
-              for (HighlightInfo created : holder) {
-                if (existing.equalsByActualOffset(created)) return true;
-              }
-            }
-            // seems that highlight info "existing" is going to disappear
-            // remove it earlier
-            SwingUtilities.invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                RangeHighlighterEx highlighter = existing.highlighter;
-                if (!progress.isCanceled() && highlighter != null) {
-                  highlighter.dispose();
-                }
-              }
-            });
-          }
-          return true;
-        }
-      });
   }
 
   private void analyzeByVisitors(@NotNull final ProgressIndicator progress,

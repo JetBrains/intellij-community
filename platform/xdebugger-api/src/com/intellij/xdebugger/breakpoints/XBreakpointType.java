@@ -61,8 +61,8 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
   }
 
   /**
-   * @param id an unique id of breakpoint type
-   * @param title title of tab in the breakpoints dialog
+   * @param id                     an unique id of breakpoint type
+   * @param title                  title of tab in the breakpoints dialog
    * @param suspendThreadSupported <code>true</code> if suspending only one thread is supported for this type of breakpoints
    */
   protected XBreakpointType(@NonNls @NotNull final String id, @Nls @NotNull final String title, boolean suspendThreadSupported) {
@@ -76,7 +76,10 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return null;
   }
 
-  public final boolean isSuspendThreadSupported() {
+  /**
+   * @return {@code true} if suspending only one thread is supported
+   */
+  public boolean isSuspendThreadSupported() {
     return mySuspendThreadSupported;
   }
 

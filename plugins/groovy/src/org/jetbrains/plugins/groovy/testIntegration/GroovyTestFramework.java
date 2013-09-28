@@ -105,6 +105,11 @@ public class GroovyTestFramework extends JavaTestFramework {
     return inClass;
   }
 
+  @Override
+  public char getMnemonic() {
+    return 'G';
+  }
+
   @NotNull
   @Override
   public String getName() {

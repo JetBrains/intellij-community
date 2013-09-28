@@ -17,10 +17,11 @@
 package com.intellij.tasks.context.java;
 
 import com.intellij.debugger.DebuggerManager;
-import com.intellij.debugger.ui.breakpoints.BreakpointManager;
+import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
-import com.intellij.debugger.impl.DebuggerManagerImpl;
+import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.tasks.context.WorkingContextProvider;
@@ -53,15 +54,16 @@ public class BreakpointsContextProvider extends WorkingContextProvider {
   }
 
   public void saveContext(Element toElement) throws WriteExternalException {
-    myDebuggerManager.writeExternal(toElement);
+    ((DebuggerManagerEx)myDebuggerManager).getBreakpointManager().writeExternal(toElement);
   }
 
   public void loadContext(Element fromElement) throws InvalidDataException {
-    myDebuggerManager.readExternal(fromElement);
+    //noinspection unchecked
+    ((PersistentStateComponent<Element>)myDebuggerManager).loadState(fromElement);
   }
 
   public void clearContext() {
-    final BreakpointManager breakpointManager = ((DebuggerManagerImpl)myDebuggerManager).getBreakpointManager();
+    final BreakpointManager breakpointManager = ((DebuggerManagerEx)myDebuggerManager).getBreakpointManager();
     List<Breakpoint> breakpoints = breakpointManager.getBreakpoints();
     for (final Breakpoint breakpoint : breakpoints) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {

@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.byteCodeViewer;
 
 import com.intellij.codeInsight.documentation.DockablePopupManager;
@@ -32,8 +47,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 
 /**
- * User: anna
- * Date: 5/7/12
+ * @author anna
+ * @since 5/7/12
  */
 public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerComponent> {
   private static final ExtensionPointName<ClassSearcher> CLASS_SEARCHER_EP = ExtensionPointName.create("ByteCodeViewer.classSearcher");
@@ -43,7 +58,7 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
   public static final String TOOLWINDOW_ID = "Byte Code Viewer";
   private static final String SHOW_BYTECODE_IN_TOOL_WINDOW = "BYTE_CODE_TOOL_WINDOW";
   private static final String BYTECODE_AUTO_UPDATE_ENABLED = "BYTE_CODE_AUTO_UPDATE_ENABLED";
-  
+
   public static ByteCodeViewerManager getInstance(Project project) {
     return ServiceManager.getService(project, ByteCodeViewerManager.class);
   }
@@ -129,7 +144,7 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
     }
   }
 
-  
+
   @Override
   protected void doUpdateComponent(Editor editor, PsiFile psiFile) {
     final Content content = myToolWindow.getContentManager().getSelectedContent();
@@ -229,7 +244,7 @@ public class ByteCodeViewerManager extends DockablePopupManager<ByteCodeViewerCo
   @Nullable
   private static String getClassVMName(PsiClass containingClass) {
     if (containingClass instanceof PsiAnonymousClass) {
-      return getClassVMName(PsiTreeUtil.getParentOfType(containingClass, PsiClass.class)) + 
+      return getClassVMName(PsiTreeUtil.getParentOfType(containingClass, PsiClass.class)) +
              JavaAnonymousClassesHelper.getName((PsiAnonymousClass)containingClass);
     }
     return ClassUtil.getJVMClassName(containingClass);

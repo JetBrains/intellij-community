@@ -78,9 +78,8 @@ public class XDebuggerTestUtil {
                                                                                   final Class<? extends XBreakpointType<XBreakpoint<P>, P>> typeClass) {
     return new WriteAction<XBreakpoint<P>>() {
       protected void run(final Result<XBreakpoint<P>> result) {
-        result.setResult(XDebuggerManager.getInstance(project).getBreakpointManager()
-                           .addBreakpoint((XBreakpointType<XBreakpoint<P>, P>)XDebuggerUtil.getInstance().findBreakpointType(typeClass),
-                                          properties));
+        result.setResult(XDebuggerManager.getInstance(project).getBreakpointManager().addBreakpoint(
+          XBreakpointType.EXTENSION_POINT_NAME.findExtension(typeClass), properties));
       }
     }.execute().getResultObject();
   }

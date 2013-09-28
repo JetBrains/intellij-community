@@ -49,9 +49,9 @@ public class GradleArtifactsContributor implements GradleMethodContextContributo
     }
 
     GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
+    GradleResolverUtil.processDeclarations(psiManager, processor, state, place, GradleCommonClassNames.GRADLE_API_ARTIFACT_HANDLER);
     PsiClass contributorClass = psiManager.findClassWithCache(GradleCommonClassNames.GRADLE_API_ARTIFACT_HANDLER, place.getResolveScope());
     if (contributorClass != null) {
-      contributorClass.processDeclarations(processor, state, null, place);
       // assuming that the method call is addition of an artifact to the given configuration.
       processAtrifactAddition(methodCallInfo.get(0), contributorClass, processor, state, place);
     }

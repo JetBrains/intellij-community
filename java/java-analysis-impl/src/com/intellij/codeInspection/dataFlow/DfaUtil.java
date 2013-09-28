@@ -163,9 +163,10 @@ public class DfaUtil {
     }
 
     @Override
-    public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState _memState) {
       final Instruction nextInstruction = runner.getInstruction(instruction.getIndex() + 1);
 
+      ValuableDataFlowRunner.MyDfaMemoryState memState = (ValuableDataFlowRunner.MyDfaMemoryState)_memState;
       final DfaValue dfaSource = memState.pop();
       final DfaValue dfaDest = memState.pop();
 
@@ -176,10 +177,10 @@ public class DfaUtil {
         final IElementType type = parent instanceof PsiAssignmentExpression
                                   ? ((PsiAssignmentExpression)parent).getOperationTokenType() : JavaTokenType.EQ;
         // store current value - to use in case of '+='
-        final PsiExpression prevValue = ((ValuableDataFlowRunner.ValuableDfaVariableState)((ValuableDataFlowRunner.MyDfaMemoryState)memState).getVariableState(var)).myExpression;
+        final PsiExpression prevValue = ((ValuableDataFlowRunner.ValuableDfaVariableState)memState.getVariableState(var)).myExpression;
         memState.setVarValue(var, dfaSource);
         // state may have been changed so re-retrieve it
-        final ValuableDataFlowRunner.ValuableDfaVariableState curState = (ValuableDataFlowRunner.ValuableDfaVariableState)((ValuableDataFlowRunner.MyDfaMemoryState)memState).getVariableState(var);
+        final ValuableDataFlowRunner.ValuableDfaVariableState curState = (ValuableDataFlowRunner.ValuableDfaVariableState)memState.getVariableState(var);
         final PsiExpression curValue = curState.myExpression;
         final PsiExpression nextValue;
         if (type == JavaTokenType.PLUSEQ && prevValue != null) {
@@ -196,7 +197,7 @@ public class DfaUtil {
         else {
           nextValue = curValue == null ? rightValue : curValue;
         }
-        curState.myExpression = nextValue;
+        memState.setVariableState(var, curState.withExpression(nextValue));
       }
       memState.push(dfaDest);
       return new DfaInstructionState[]{new DfaInstructionState(nextInstruction, memState)};

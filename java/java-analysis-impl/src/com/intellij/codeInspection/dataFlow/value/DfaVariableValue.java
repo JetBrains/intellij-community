@@ -30,6 +30,7 @@ import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -132,7 +133,7 @@ public class DfaVariableValue extends DfaValue {
 
   private boolean hardEquals(PsiModifierListOwner psiVar, PsiType varType, boolean negated, DfaVariableValue qualifier) {
     return psiVar == myVariable &&
-           Comparing.equal(varType, myVarType) &&
+           Comparing.equal(TypeConversionUtil.erasure(varType), TypeConversionUtil.erasure(myVarType)) &&
            negated == myIsNegated &&
            (myQualifier == null ? qualifier == null : myQualifier.hardEquals(qualifier.getPsiVariable(), qualifier.getVariableType(),
                                                                              qualifier.isNegated(), qualifier.getQualifier()));
@@ -141,10 +142,6 @@ public class DfaVariableValue extends DfaValue {
   @Nullable
   public DfaVariableValue getQualifier() {
     return myQualifier;
-  }
-
-  public boolean isViaMethods() {
-    return myVariable instanceof PsiMethod || myQualifier != null && myQualifier.isViaMethods();
   }
 
   public Nullness getInherentNullability() {
@@ -190,14 +187,12 @@ public class DfaVariableValue extends DfaValue {
     return Nullness.UNKNOWN;
   }
 
-  public boolean isLocalVariable() {
-    return myVariable instanceof PsiLocalVariable || myVariable instanceof PsiParameter;
-  }
-
   public boolean isFlushableByCalls() {
-    if (isLocalVariable()) return false;
-    if (!myVariable.hasModifierProperty(PsiModifier.FINAL)) return true;
-    return myQualifier != null && myQualifier.isFlushableByCalls();
+    if (myVariable instanceof PsiLocalVariable || myVariable instanceof PsiParameter) return false;
+    if (myVariable instanceof PsiVariable && myVariable.hasModifierProperty(PsiModifier.FINAL)) {
+      return myQualifier != null && myQualifier.isFlushableByCalls();
+    }
+    return true;
   }
 
 }

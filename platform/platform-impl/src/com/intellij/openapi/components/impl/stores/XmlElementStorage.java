@@ -59,9 +59,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   private final Map<String, Object> myStorageComponentStates = new THashMap<String, Object>(); // at loading we store Element, on setState Integer of hash// at loading we store Element, on setState Integer of hash
 
   private final ComponentVersionProvider myLocalVersionProvider;
-  private final ComponentVersionProvider myRemoteVersionProvider;
-
-  protected TObjectLongHashMap<String> myProviderVersions;
+  protected final RemoteComponentVersionProvider myRemoteVersionProvider;
 
   protected ComponentVersionListener myListener = new ComponentVersionListener(){
     @Override
@@ -72,7 +70,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   private boolean myDisposed;
 
-  protected XmlElementStorage(@Nullable final TrackingPathMacroSubstitutor pathMacroSubstitutor,
+  protected XmlElementStorage(@Nullable TrackingPathMacroSubstitutor pathMacroSubstitutor,
                               @NotNull Disposable parentDisposable,
                               @NotNull String rootElementName,
                               @Nullable StreamProvider streamProvider,
@@ -86,24 +84,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     Disposer.register(parentDisposable, this);
 
     myLocalVersionProvider = localComponentVersionsProvider;
-
-    myRemoteVersionProvider = new ComponentVersionProvider() {
-      @Override
-      public long getVersion(String name) {
-        if (myProviderVersions == null) {
-          loadProviderVersions();
-        }
-        return myProviderVersions.get(name);
-      }
-
-      @Override
-      public void changeVersion(String name, long version) {
-        if (myProviderVersions == null) {
-          loadProviderVersions();
-        }
-        myProviderVersions.put(name, version);
-      }
-    };
+    myRemoteVersionProvider = streamProvider == null || !streamProvider.isVersioningRequired() ? null : new RemoteComponentVersionProvider();
   }
 
   protected boolean isDisposed() {
@@ -145,12 +126,12 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       return myLoadedData;
     }
 
-    myLoadedData = loadData(true, myListener);
+    myLoadedData = loadData(true);
     return myLoadedData;
   }
 
   @NotNull
-  protected StorageData loadData(boolean useProvidersData, @SuppressWarnings("UnusedParameters") ComponentVersionListener listener) throws StateStorageException {
+  protected StorageData loadData(boolean useProvidersData) throws StateStorageException {
     Document document = loadDocument();
     StorageData result = createStorageData();
 
@@ -158,28 +139,24 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       loadState(result, document.getRootElement());
     }
 
-    if (myStreamProvider != null && useProvidersData && myStreamProvider.isEnabled()) {
+    if (useProvidersData && myStreamProvider != null && myStreamProvider.isEnabled()) {
       for (RoamingType roamingType : RoamingType.values()) {
         if (roamingType != RoamingType.DISABLED && roamingType != RoamingType.GLOBAL) {
-          loadProviderData(result, roamingType, myStreamProvider);
+          try {
+            Document sharedDocument = StorageUtil.loadDocument(myStreamProvider.loadContent(myFileSpec, roamingType));
+            if (sharedDocument != null) {
+              filterOutOfDate(sharedDocument.getRootElement());
+              loadState(result, sharedDocument.getRootElement());
+            }
+          }
+          catch (Exception e) {
+            LOG.warn(e);
+          }
         }
       }
     }
 
     return result;
-  }
-
-  private void loadProviderData(StorageData result, RoamingType roamingType, StreamProvider streamProvider) {
-    try {
-      Document sharedDocument = StorageUtil.loadDocument(streamProvider.loadContent(myFileSpec, roamingType));
-      if (sharedDocument != null) {
-        filterOutOfDateAndDisabledForRoamingComponents(sharedDocument.getRootElement(), roamingType);
-        loadState(result, sharedDocument.getRootElement());
-      }
-    }
-    catch (Exception e) {
-      LOG.warn(e);
-    }
   }
 
   protected void loadState(final StorageData result, final Element element) throws StateStorageException {
@@ -433,59 +410,57 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
 
     private boolean saveForProvider(@NotNull StreamProvider streamProvider) {
-      // it is not really correctly implemented - stream provider can save not the whole document, but only filtered (per roaming type)
-      // but right now it is not our case, so, we should refine it later, but it not leads to bug now
-      boolean result = false;
-      for (final RoamingType roamingType : RoamingType.values()) {
-        if (roamingType == RoamingType.DISABLED || !streamProvider.isApplicable(myFileSpec, roamingType)) {
-          continue;
-        }
+      if (!streamProvider.isApplicable(myFileSpec, RoamingType.PER_USER)) {
+        return false;
+      }
 
-        Document document = getDocumentToSave();
-        if (document.getRootElement().getChildren().isEmpty()) {
-          continue;
-        }
+      Document document = getDocumentToSave();
+      Element rootElement = document.getRootElement();
+      if (rootElement.getChildren().isEmpty()) {
+        return false;
+      }
 
-        Document actualDocument;
-        ElementFilter roamingFilter = new ElementFilter(StorageData.COMPONENT) {
-          @Override
-          public boolean matches(Object obj) {
-            return super.matches(obj) && myComponentRoamingManager.getRoamingType(((Element)obj).getAttributeValue(StorageData.NAME)) != roamingType;
-          }
-        };
+      // skip the whole document if some component has disabled roaming type
+      // you must not store components with different roaming types in one document
+      // one exclusion: workspace file (you don't have choice in this case)
+      // for example, it is important for ICS ProjectId - we cannot keep project in another place,
+      // but this project id must not be shared
+      if (!myFileSpec.equals(StoragePathMacros.WORKSPACE_FILE) &&
+          rootElement.getContent(new RoamingElementFilter(RoamingType.DISABLED)).iterator().hasNext()) {
+        return false;
+      }
 
-        if (document.getRootElement().getContent(roamingFilter).iterator().hasNext()) {
-          actualDocument = document.clone();
-          Iterator<Element> iterator = actualDocument.getRootElement().getContent(roamingFilter).iterator();
-          while (iterator.hasNext()) {
-            iterator.next();
-            iterator.remove();
-          }
+      RoamingElementFilter perPlatformFilter = new RoamingElementFilter(RoamingType.PER_PLATFORM);
+      if (rootElement.getContent(perPlatformFilter).iterator().hasNext()) {
+        return doSaveForProvider(rootElement, new RoamingElementFilter(RoamingType.PER_USER)) ||
+               doSaveForProvider(rootElement, perPlatformFilter);
+      }
+      else {
+        return doSaveForProvider(document, RoamingType.PER_USER, streamProvider);
+      }
+    }
 
-          if (actualDocument.getRootElement().getChildren().isEmpty()) {
-            continue;
-          }
-        }
-        else {
-          actualDocument = document;
-        }
+    private boolean doSaveForProvider(Element element, RoamingElementFilter filter) {
+      Element copiedElement = JDOMUtil.cloneElement(element, filter);
+      return copiedElement != null && doSaveForProvider(new Document(copiedElement), filter.myRoamingType, myStreamProvider);
+    }
 
-        try {
-          if (StorageUtil.doSendContent(streamProvider, myFileSpec, actualDocument, roamingType, true)) {
-            result = true;
-          }
+    private boolean doSaveForProvider(Document actualDocument, RoamingType roamingType, StreamProvider streamProvider) {
+      try {
+        boolean result = StorageUtil.doSendContent(streamProvider, myFileSpec, actualDocument, roamingType, true);
+        if (streamProvider.isVersioningRequired()) {
           TObjectLongHashMap<String> versions = loadVersions(actualDocument.getRootElement().getChildren(StorageData.COMPONENT));
           if (!versions.isEmpty()) {
             Document versionDoc = new Document(StateStorageManagerImpl.createComponentVersionsXml(versions));
             StorageUtil.doSendContent(streamProvider, myFileSpec + VERSION_FILE_SUFFIX, versionDoc, roamingType, true);
           }
         }
-        catch (IOException e) {
-          LOG.warn(e);
-        }
+        return result;
       }
-
-      return result;
+      catch (IOException e) {
+        LOG.warn(e);
+        return false;
+      }
     }
 
     private boolean isHashUpToDate(final Integer hash) {
@@ -527,6 +502,21 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
       return null;
     }
+
+    private class RoamingElementFilter extends ElementFilter {
+      final RoamingType myRoamingType;
+
+      public RoamingElementFilter(RoamingType roamingType) {
+        super(StorageData.COMPONENT);
+
+        myRoamingType = roamingType;
+      }
+
+      @Override
+      public boolean matches(Object obj) {
+        return super.matches(obj) && myComponentRoamingManager.getRoamingType(((Element)obj).getAttributeValue(StorageData.NAME)) == myRoamingType;
+      }
+    }
   }
 
   private TObjectLongHashMap<String> loadVersions(List<Element> elements) {
@@ -554,7 +544,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   @Override
   public void reload(@NotNull final Set<String> changedComponents) throws StateStorageException {
-    final StorageData storageData = loadData(false, myListener);
+    final StorageData storageData = loadData(false);
 
     final StorageData oldLoadedData = myLoadedData;
 
@@ -578,12 +568,16 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     myLoadedData = storageData;
   }
 
-  private void filterOutOfDateAndDisabledForRoamingComponents(Element element, RoamingType roamingType) {
+  private void filterOutOfDate(Element element) {
+    if (myRemoteVersionProvider == null) {
+      return;
+    }
+
     Iterator<Element> iterator = element.getContent(new ElementFilter(StorageData.COMPONENT)).iterator();
     while (iterator.hasNext()) {
       String name = iterator.next().getAttributeValue(StorageData.NAME);
-      long remoteVersion;
-      if (myComponentRoamingManager.getRoamingType(name) != roamingType || (remoteVersion = myRemoteVersionProvider.getVersion(name)) <= myLocalVersionProvider.getVersion(name)) {
+      long remoteVersion = myRemoteVersionProvider.getVersion(name);
+      if (remoteVersion <= myLocalVersionProvider.getVersion(name)) {
         iterator.remove();
       }
       else {
@@ -592,30 +586,50 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
   }
 
-  private void loadProviderVersions() {
-    if (myStreamProvider == null) {
-      return;
+  @Nullable
+  Document logComponents() throws StateStorageException {
+    return mySession instanceof MySaveSession ? getDocument(((MySaveSession)mySession).myStorageData) : null;
+  }
+
+  protected class RemoteComponentVersionProvider implements ComponentVersionProvider {
+    protected TObjectLongHashMap<String> myProviderVersions;
+
+    @Override
+    public long getVersion(String name) {
+      if (myProviderVersions == null) {
+        loadProviderVersions();
+      }
+      return myProviderVersions == null ? -1 : myProviderVersions.get(name);
     }
 
-    myProviderVersions = new TObjectLongHashMap<String>();
-    for (RoamingType type : RoamingType.values()) {
-      Document doc = null;
-      if (myStreamProvider.isEnabled()) {
+    @Override
+    public void changeVersion(String name, long version) {
+      if (myProviderVersions == null) {
+        loadProviderVersions();
+      }
+      if (myProviderVersions != null) {
+        myProviderVersions.put(name, version);
+      }
+    }
+
+    private void loadProviderVersions() {
+      assert myStreamProvider != null;
+      if (!myStreamProvider.isEnabled()) {
+        return;
+      }
+
+      myProviderVersions = new TObjectLongHashMap<String>();
+      for (RoamingType type : RoamingType.values()) {
         try {
-          doc = StorageUtil.loadDocument(myStreamProvider.loadContent(myFileSpec + VERSION_FILE_SUFFIX, type));
+          Document doc = StorageUtil.loadDocument(myStreamProvider.loadContent(myFileSpec + VERSION_FILE_SUFFIX, type));
+          if (doc != null) {
+            StateStorageManagerImpl.loadComponentVersions(myProviderVersions, doc);
+          }
         }
         catch (IOException e) {
           LOG.debug(e);
         }
       }
-      if (doc != null) {
-        StateStorageManagerImpl.loadComponentVersions(myProviderVersions, doc);
-      }
     }
-  }
-
-  @Nullable
-  Document logComponents() throws StateStorageException {
-    return mySession instanceof MySaveSession ? getDocument(((MySaveSession)mySession).myStorageData) : null;
   }
 }

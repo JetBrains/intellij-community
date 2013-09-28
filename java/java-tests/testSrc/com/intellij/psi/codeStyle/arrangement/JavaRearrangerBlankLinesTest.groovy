@@ -131,4 +131,16 @@ class Test {
 }'''
     doTest(initial: text, expected: text, rules: [rule(CLASS)] )
   }
+
+  void "test statements on the same line"() {
+    def before = '''\
+
+
+
+public enum Sender {a, b; private String value;
+}
+'''
+    doTest(initial: before, expected: before)
+  }
+
 }

@@ -25,7 +25,7 @@ import com.intellij.ui.SpeedSearchComparator
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.Matcher
-import junit.framework.AssertionFailedError
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NonNls
 /**
  * @author max
@@ -516,6 +516,12 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertPreference("*e", "fileIndex", "file", NameUtil.MatchingCaseSensitivity.NONE);
   }
 
+  public void "test first letter case match is important"() {
+    assertPreference("*pim", "PNGImageDecoder", "posIdMap", NameUtil.MatchingCaseSensitivity.NONE)
+    assertPreference("*pim", "PImageDecoder", "posIdMap", NameUtil.MatchingCaseSensitivity.NONE)
+    assertPreference("*er", "Error", "exchangeRequest", NameUtil.MatchingCaseSensitivity.NONE)
+  }
+
   public void testPreferences() {
     assertPreference(" fb", "FooBar", "_fooBar", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("*foo", "barFoo", "foobar");
@@ -613,7 +619,6 @@ public class NameUtilMatchingTest extends UsefulTestCase {
   }
 
   public void testPerformance() {
-    System.out.println("test start: " + System.currentTimeMillis());
     @NonNls final String longName = "ThisIsAQuiteLongNameWithParentheses().Dots.-Minuses-_UNDERSCORES_digits239:colons:/slashes\\AndOfCourseManyLetters";
     final List<MinusculeMatcher> matching = new ArrayList<MinusculeMatcher>();
     final List<MinusculeMatcher> nonMatching = new ArrayList<MinusculeMatcher>();
@@ -625,32 +630,21 @@ public class NameUtilMatchingTest extends UsefulTestCase {
       nonMatching.add(new MinusculeMatcher(s, NameUtil.MatchingCaseSensitivity.NONE));
     }
 
-    System.out.println("measuring start: " + System.currentTimeMillis());
-    try {
-      PlatformTestUtil.startPerformanceTest("Matcher is slow", 4500, new ThrowableRunnable() {
-        @Override
-        public void run() {
-          System.out.println("attempt start: " + System.currentTimeMillis());
-          for (int i = 0; i < 100000; i++) {
-            for (MinusculeMatcher matcher : matching) {
-              assertTrue(matcher.toString(), matcher.matches(longName));
-              matcher.matchingDegree(longName);
-            }
-            for (MinusculeMatcher matcher : nonMatching) {
-              assertFalse(matcher.toString(), matcher.matches(longName));
-            }
+    PlatformTestUtil.startPerformanceTest("Matcher is slow", 4500, new ThrowableRunnable() {
+      @Override
+      @CompileStatic
+      public void run() {
+        for (int i = 0; i < 100000; i++) {
+          for (MinusculeMatcher matcher : matching) {
+            assertTrue(matcher.toString(), matcher.matches(longName));
+            matcher.matchingDegree(longName);
           }
-          System.out.println("attempt end: " + System.currentTimeMillis());
+          for (MinusculeMatcher matcher : nonMatching) {
+            assertFalse(matcher.toString(), matcher.matches(longName));
+          }
         }
-      }).cpuBound().assertTiming()
-    }
-    catch (AssertionFailedError e) {
-      println "free " + Runtime.runtime.freeMemory()
-      println "total " + Runtime.runtime.totalMemory()
-      println "max " + Runtime.runtime.maxMemory()
-      printThreadDump();
-      throw e
-    }
+      }
+    }).cpuBound().assertTiming()
   }
 
   public void testOnlyUnderscoresPerformance() {

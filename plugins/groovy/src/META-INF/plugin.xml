@@ -167,7 +167,7 @@
     <groovyFrameworkConfigNotification implementation="org.jetbrains.plugins.groovy.griffon.GriffonConfigureNotification"/>
     <defaultImportContributor implementation="org.jetbrains.plugins.groovy.griffon.GriffonDefaultImportContributor"/>
 
-    <groovyShellRunner implementation="org.jetbrains.plugins.groovy.console.DefaultGroovyShellRunner" order="last"/>
+    <groovyShellRunner implementation="org.jetbrains.plugins.groovy.console.GroovyConsoleRunner" order="last"/>
 
     <closureCompleter implementation="org.jetbrains.plugins.groovy.lang.completion.GdslClosureCompleter"/>
     <closureCompleter implementation="org.jetbrains.plugins.groovy.lang.completion.EachWithIndexClosureCompleter"/>
@@ -1444,6 +1444,8 @@
                                      implementation="org.jetbrains.plugins.groovy.springloaded.SpringLoadedPositionManagerFactory"/>
     <codeStyle.ReferenceAdjuster language="Groovy" implementationClass="org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster"/>
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="org.jetbrains.plugins.groovy.jarFinder.GroovyFindJarQuickFixProvider"/>
+    <lang.refactoringSupport.classMembersRefactoringSupport language="Groovy"
+                                                            implementationClass="org.jetbrains.plugins.groovy.refactoring.classMembers.GroovyClassMembersRefactoringSupport"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
@@ -1547,9 +1549,16 @@
             icon="JetgroovyIcons.Groovy.GroovyDoc">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
-    <action id="Groovy.Console"
+    <action id="Groovy.Shell"
             class="org.jetbrains.plugins.groovy.console.GroovyShellAction"
             text="Groovy Shell..." description="Launch Groovy Shell"
+            icon="JetgroovyIcons.Groovy.Groovy_16x16">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+
+    <action id="Groovy.Console"
+            class="org.jetbrains.plugins.groovy.console.GroovyConsoleAction"
+            text="Groovy Console..." description="Launch Groovy Console"
             icon="JetgroovyIcons.Groovy.Groovy_16x16">
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>

@@ -5,7 +5,9 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.add.SvnKitAddClient;
 import org.jetbrains.idea.svn.annotate.SvnKitAnnotateClient;
 import org.jetbrains.idea.svn.change.SvnKitChangeListClient;
+import org.jetbrains.idea.svn.checkin.SvnKitImportClient;
 import org.jetbrains.idea.svn.checkout.SvnKitCheckoutClient;
+import org.jetbrains.idea.svn.checkout.SvnKitExportClient;
 import org.jetbrains.idea.svn.cleanup.SvnKitCleanupClient;
 import org.jetbrains.idea.svn.conflict.SvnKitConflictClient;
 import org.jetbrains.idea.svn.content.SvnKitContentClient;
@@ -14,8 +16,8 @@ import org.jetbrains.idea.svn.delete.SvnKitDeleteClient;
 import org.jetbrains.idea.svn.history.SvnKitHistoryClient;
 import org.jetbrains.idea.svn.integrate.SvnKitMergeClient;
 import org.jetbrains.idea.svn.lock.SvnKitLockClient;
-import org.jetbrains.idea.svn.portable.SvnSvnkitUpdateClient;
-import org.jetbrains.idea.svn.portable.SvnUpdateClientI;
+import org.jetbrains.idea.svn.update.SvnKitUpdateClient;
+import org.jetbrains.idea.svn.update.UpdateClient;
 import org.jetbrains.idea.svn.portable.SvnkitSvnStatusClient;
 import org.jetbrains.idea.svn.portable.SvnkitSvnWcClient;
 import org.jetbrains.idea.svn.properties.SvnKitPropertyClient;
@@ -48,13 +50,16 @@ public class SvnKitClientFactory extends ClientFactory {
     myLockClient = new SvnKitLockClient();
     myCleanupClient = new SvnKitCleanupClient();
     myRelocateClient = new SvnKitRelocateClient();
-    statusClient = new SvnkitSvnStatusClient(myVcs.createStatusClient());
+    myVersionClient = new SvnKitVersionClient();
+    myImportClient = new SvnKitImportClient();
+    myExportClient = new SvnKitExportClient();
+    statusClient = new SvnkitSvnStatusClient(myVcs, null);
     infoClient = new SvnkitSvnWcClient(myVcs);
   }
 
   @NotNull
   @Override
-  public SvnUpdateClientI createUpdateClient() {
-    return new SvnSvnkitUpdateClient(myVcs.createUpdateClient());
+  public UpdateClient createUpdateClient() {
+    return prepare(new SvnKitUpdateClient());
   }
 }

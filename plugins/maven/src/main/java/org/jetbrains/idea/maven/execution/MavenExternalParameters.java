@@ -69,7 +69,7 @@ public class MavenExternalParameters {
   private static final Logger LOG = Logger.getInstance(MavenExternalParameters.class);
 
   public static final String MAVEN_LAUNCHER_CLASS = "org.codehaus.classworlds.Launcher";
-  @NonNls private static final String JAVA_HOME = "JAVA_HOME";
+
   @NonNls private static final String MAVEN_OPTS = "MAVEN_OPTS";
 
   @Deprecated // Use createJavaParameters(Project,MavenRunnerParameters, MavenGeneralSettings,MavenRunnerSettings,MavenRunConfiguration)
@@ -295,7 +295,7 @@ public class MavenExternalParameters {
     }
 
     if (name.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
-      final String javaHome = System.getenv(JAVA_HOME);
+      final String javaHome = System.getenv("JAVA_HOME");
       if (StringUtil.isEmptyOrSpaces(javaHome)) {
         throw new ExecutionException(RunnerBundle.message("maven.java.home.undefined"));
       }

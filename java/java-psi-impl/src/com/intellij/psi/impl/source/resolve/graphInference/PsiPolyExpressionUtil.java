@@ -82,10 +82,6 @@ public class PsiPolyExpressionUtil {
     return false;
   }
 
-  public static PsiType getTargetType(@NotNull PsiCallExpression expression) {
-    return PsiTypesUtil.getExpectedTypeByParent(expression);
-  }
-  
   public static Boolean mentionsTypeParameters(@Nullable PsiType returnType, final Set<PsiTypeParameter> typeParameters) {
     if (returnType == null) return false;
     return returnType.accept(new PsiTypeVisitor<Boolean>() {
@@ -125,7 +121,7 @@ public class PsiPolyExpressionUtil {
 
   private static boolean isInAssignmentOrInvocationContext(PsiExpression expr) {
     final PsiElement context = expr.getParent();
-    return context instanceof PsiExpressionList || isAssignmentContext(expr, context);
+    return context instanceof PsiExpressionList || context instanceof PsiConditionalExpression || isAssignmentContext(expr, context);
   }
 
   private static boolean isAssignmentContext(PsiExpression expr, PsiElement context) {

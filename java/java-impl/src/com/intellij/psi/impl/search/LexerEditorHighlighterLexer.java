@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharSequenceSubSequence;
+import org.jetbrains.annotations.NotNull;
 
 /**
 * @author Sergey Evdokimov
@@ -38,7 +39,7 @@ public class LexerEditorHighlighterLexer extends LexerBase {
   }
 
   @Override
-  public void start(CharSequence buffer, int startOffset, int endOffset, int state) {
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int state) {
     if (myAlreadyInitializedHighlighter) {
       this.buffer = buffer;
       start = startOffset;
@@ -75,6 +76,7 @@ public class LexerEditorHighlighterLexer extends LexerBase {
     iterator.advance();
   }
 
+  @NotNull
   @Override
   public CharSequence getBufferSequence() {
     return buffer;

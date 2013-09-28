@@ -66,7 +66,7 @@ public class ToggleSourcesStateAction<P extends JpsElement> extends ContentEntry
       final SourceFolder sourceFolder = contentEntryEditor.getSourceFolder(selectedFile);
       if (isSelected) {
         if (sourceFolder == null) { // not marked yet
-          P properties = myEditHandler.createDefaultProperties();
+          P properties = myEditHandler.getRootType().createDefaultProperties();
           contentEntryEditor.addSourceFolder(selectedFile, myEditHandler.getRootType(), properties);
         }
         else if (!myEditHandler.getRootType().equals(sourceFolder.getRootType())) {
@@ -75,7 +75,7 @@ public class ToggleSourcesStateAction<P extends JpsElement> extends ContentEntry
             properties = (P)((SourceFolderImpl)sourceFolder).getJpsElement().getProperties().getBulkModificationSupport().createCopy();
           }
           else {
-            properties = myEditHandler.createDefaultProperties();
+            properties = myEditHandler.getRootType().createDefaultProperties();
           }
           contentEntryEditor.removeSourceFolder(sourceFolder);
           contentEntryEditor.addSourceFolder(selectedFile, myEditHandler.getRootType(), properties);

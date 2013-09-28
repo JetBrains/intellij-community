@@ -49,6 +49,7 @@ import com.intellij.refactoring.ui.PackageNameReferenceEditorCombo;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
+import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.testIntegration.TestIntegrationUtils;
 import com.intellij.ui.EditorTextField;
@@ -123,6 +124,12 @@ public class CreateTestDialog extends DialogWrapper {
 
     for (final TestFramework descriptor : Extensions.getExtensions(TestFramework.EXTENSION_NAME)) {
       final JRadioButton b = new JRadioButton(descriptor.getName());
+      if (descriptor instanceof JavaTestFramework) {
+        final char mnemonic = ((JavaTestFramework)descriptor).getMnemonic();
+        if (mnemonic > -1) {
+          b.setMnemonic(mnemonic);
+        }
+      }
       myLibraryButtons.add(b);
       group.add(b);
 

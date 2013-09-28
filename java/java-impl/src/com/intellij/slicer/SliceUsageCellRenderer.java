@@ -18,12 +18,14 @@ package com.intellij.slicer;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usages.TextChunk;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -41,7 +43,7 @@ public class SliceUsageCellRenderer extends ColoredTreeCellRenderer {
   }
 
   @Override
-  public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+  public void customizeCellRenderer(@NotNull JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     assert value instanceof DefaultMutableTreeNode;
     DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)value;
     Object userObject = treeNode.getUserObject();
@@ -58,7 +60,7 @@ public class SliceUsageCellRenderer extends ColoredTreeCellRenderer {
     }
   }
 
-  public void customizeCellRendererFor(SliceUsage sliceUsage) {
+  public void customizeCellRendererFor(@NotNull SliceUsage sliceUsage) {
     boolean isForcedLeaf = sliceUsage instanceof SliceDereferenceUsage;
 
     TextChunk[] text = sliceUsage.getPresentation().getText();
@@ -83,12 +85,10 @@ public class SliceUsageCellRenderer extends ColoredTreeCellRenderer {
         break;
       }
     }
+    int methodOptions = PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS | PsiFormatUtilBase.SHOW_CONTAINING_CLASS;
     String location = method != null
-                      ? PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME |
-                                                                                 PsiFormatUtil.SHOW_PARAMETERS |
-                                                                                 PsiFormatUtil.SHOW_CONTAINING_CLASS,
-                                                   PsiFormatUtil.SHOW_TYPE, 2)
-                      : aClass != null ? PsiFormatUtil.formatClass(aClass, PsiFormatUtil.SHOW_NAME) : null;
+                      ? PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, methodOptions, PsiFormatUtilBase.SHOW_TYPE, 2)
+                      : aClass != null ? PsiFormatUtil.formatClass(aClass, PsiFormatUtilBase.SHOW_NAME) : null;
     if (location != null) {
       SimpleTextAttributes attributes = SimpleTextAttributes.GRAY_ATTRIBUTES;
       append(" in " + location, attributes);

@@ -31,10 +31,12 @@ import java.awt.event.KeyEvent;
 
 public class MergeSourceDetailsAction extends AnAction implements DumbAware {
 
+  public MergeSourceDetailsAction() {
+    super("Show merge sources details", null, SvnIcons.MergeSourcesDetails);
+  }
+
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setIcon(SvnIcons.MergeSourcesDetails);
-    e.getPresentation().setText("Show merge sources details");
     e.getPresentation().setEnabled(enabled(e));
   }
 

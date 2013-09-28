@@ -18,12 +18,14 @@ package com.intellij.debugger.ui.breakpoints;
 import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -31,6 +33,7 @@ import javax.swing.*;
 class JavaBreakpointItem extends BreakpointItem {
   private final Breakpoint myBreakpoint;
   private BreakpointFactory myBreakpointFactory;
+  private BreakpointPropertiesPanel myBreakpointPropertiesPanel;
 
   public JavaBreakpointItem(@Nullable BreakpointFactory breakpointFactory, Breakpoint breakpoint) {
     myBreakpointFactory = breakpointFactory;
@@ -68,17 +71,19 @@ class JavaBreakpointItem extends BreakpointItem {
 
   @Override
   protected void doUpdateDetailView(DetailView panel, boolean editorOnly) {
-    BreakpointPropertiesPanel breakpointPropertiesPanel = null;
+    saveState();
+    myBreakpointPropertiesPanel = null;
+
     if (!editorOnly) {
-      breakpointPropertiesPanel = myBreakpointFactory != null ? myBreakpointFactory
+      myBreakpointPropertiesPanel = myBreakpointFactory != null ? myBreakpointFactory
         .createBreakpointPropertiesPanel(myBreakpoint.getProject(), false) : null;
 
-      if (breakpointPropertiesPanel != null) {
-        breakpointPropertiesPanel.initFrom(myBreakpoint, true);
+      if (myBreakpointPropertiesPanel != null) {
+        myBreakpointPropertiesPanel.initFrom(myBreakpoint, true);
 
-        breakpointPropertiesPanel.setSaveOnRemove(true);
+        myBreakpointPropertiesPanel.setSaveOnRemove(true);
 
-        final JPanel mainPanel = breakpointPropertiesPanel.getPanel();
+        final JPanel mainPanel = myBreakpointPropertiesPanel.getPanel();
         panel.setPropertiesPanel(mainPanel);
       }
       else {
@@ -93,8 +98,8 @@ class JavaBreakpointItem extends BreakpointItem {
     } else {
       panel.clearEditor();
     }
-    if (breakpointPropertiesPanel != null) {
-      breakpointPropertiesPanel.setDetailView(panel);
+    if (myBreakpointPropertiesPanel != null) {
+      myBreakpointPropertiesPanel.setDetailView(panel);
     }
   }
 
@@ -127,6 +132,13 @@ class JavaBreakpointItem extends BreakpointItem {
   }
 
   @Override
+  public void saveState() {
+    if (myBreakpointPropertiesPanel != null) {
+      myBreakpointPropertiesPanel.saveTo(myBreakpoint, EmptyRunnable.INSTANCE);
+    }
+  }
+
+  @Override
   public Object getBreakpoint() {
     return myBreakpoint;
   }
@@ -145,11 +157,11 @@ class JavaBreakpointItem extends BreakpointItem {
 
   @Override
   public boolean isDefaultBreakpoint() {
-    return myBreakpoint.getCategory().equals(AnyExceptionBreakpoint.CATEGORY);
+    return myBreakpoint.getCategory().equals(ExceptionBreakpoint.CATEGORY);
   }
 
   @Override
-  public int compareTo(BreakpointItem breakpointItem) {
+  public int compareTo(@NotNull BreakpointItem breakpointItem) {
     final Object breakpoint = breakpointItem.getBreakpoint();
     if (breakpoint instanceof Breakpoint) {
       return -getIndexOf(myBreakpoint) + getIndexOf((Breakpoint)breakpoint);

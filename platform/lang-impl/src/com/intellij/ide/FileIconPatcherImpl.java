@@ -21,7 +21,7 @@ package com.intellij.ide;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PsiIconUtil;
 import org.jetbrains.annotations.NotNull;
@@ -33,9 +33,10 @@ public class FileIconPatcherImpl implements FileIconProvider {
   @Override
   @Nullable
   public Icon getIcon(@NotNull final VirtualFile file, final int flags, final Project project) {
-    if(project == null) return null;
+    if (project == null) return null;
 
-    final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    final PsiFileSystemItem psiFile = file.isDirectory() ? PsiManager.getInstance(project).findDirectory(file)
+                                                         : PsiManager.getInstance(project).findFile(file);
     return psiFile == null ? null : PsiIconUtil.getProvidersIcon(psiFile, flags);
   }
 }

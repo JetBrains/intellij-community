@@ -31,6 +31,7 @@ import com.intellij.openapi.module.ModuleComponent;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ProjectLoadingErrorsNotifier;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.messages.MessageBus;
@@ -176,6 +177,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       final FacetType<?,?> type = myFacetTypeRegistry.findFacetType(typeId);
       if (type == null) {
         addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.unknown.facet.type.0", typeId));
+        UnknownFeaturesCollector.getInstance(myModule.getProject()).registerUnknownFeature("com.intellij.facetType", typeId);
         continue;
       }
 
@@ -190,10 +192,6 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
       FacetTypeId<?> underlyingTypeId = type.getUnderlyingFacetType();
       if (underlyingTypeId != null) {
         expectedUnderlyingType = myFacetTypeRegistry.findFacetType(underlyingTypeId);
-        if (expectedUnderlyingType == null) {
-          addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.cannot.find.underlying.facet.type.for.0", typeId));
-          continue;
-        }
       }
       FacetType actualUnderlyingType = underlyingFacet != null ? underlyingFacet.getType() : null;
       if (expectedUnderlyingType != null) {
@@ -220,7 +218,10 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     }
   }
 
-  private void addInvalidFacet(final FacetState state, ModifiableFacetModel model, final Facet underlyingFacet, final String errorMessage) {
+  private void addInvalidFacet(final FacetState state,
+                               ModifiableFacetModel model,
+                               final Facet underlyingFacet,
+                               final String errorMessage) {
     final InvalidFacetManager invalidFacetManager = InvalidFacetManager.getInstance(myModule.getProject());
     final InvalidFacetType type = InvalidFacetType.getInstance();
     final InvalidFacetConfiguration configuration = new InvalidFacetConfiguration(state, errorMessage);

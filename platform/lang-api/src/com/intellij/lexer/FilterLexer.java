@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import org.jetbrains.annotations.NotNull;
 
 public class FilterLexer extends DelegateLexer {
   private final Filter myFilter;
@@ -55,7 +56,7 @@ public class FilterLexer extends DelegateLexer {
   }
 
   @Override
-  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     super.start(buffer, startOffset, endOffset, initialState);
     myPrevTokenEnd = -1;
     locateToken();
@@ -73,13 +74,14 @@ public class FilterLexer extends DelegateLexer {
     return myPrevTokenEnd;
   }
 
+  @NotNull
   @Override
   public LexerPosition getCurrentPosition() {
     return getDelegate().getCurrentPosition();    //To change body of overridden methods use File | Settings | File Templates.
   }
 
   @Override
-  public void restore(LexerPosition position) {
+  public void restore(@NotNull LexerPosition position) {
     getDelegate().restore(position);
     myPrevTokenEnd = -1;
   }

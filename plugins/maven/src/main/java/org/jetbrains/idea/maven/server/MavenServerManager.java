@@ -28,16 +28,14 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkType;
-import com.intellij.openapi.projectRoots.JdkUtil;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
+import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.PathUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.apache.lucene.search.Query;
@@ -45,6 +43,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.model.MavenModel;
 import org.jetbrains.idea.maven.project.MavenConsole;
@@ -82,6 +81,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
 
   private boolean useMaven2 = true;
   private String mavenEmbedderVMOptions = DEFAULT_VM_OPTIONS;
+  private String embedderJdk = MavenRunnerSettings.USE_INTERNAL_JAVA;
 
   public static MavenServerManager getInstance() {
     return ServiceManager.getService(MavenServerManager.class);
@@ -164,12 +164,34 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
     myShutdownAlarm.cancelAllRequests();
   }
 
+  @NotNull
+  private Sdk getJdk() {
+    if (embedderJdk.equals(MavenRunnerSettings.USE_JAVA_HOME)) {
+      final String javaHome = System.getenv("JAVA_HOME");
+      if (!StringUtil.isEmptyOrSpaces(javaHome)) {
+        Sdk jdk = JavaSdk.getInstance().createJdk("", javaHome);
+        if (jdk != null) {
+          return jdk;
+        }
+      }
+    }
+
+    for (Sdk projectJdk : ProjectJdkTable.getInstance().getAllJdks()) {
+      if (projectJdk.getName().equals(embedderJdk)) {
+        return projectJdk;
+      }
+    }
+
+    // By default use internal jdk
+    return JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+  }
+
   private RunProfileState createRunProfileState() {
     return new CommandLineState(null) {
       private SimpleJavaParameters createJavaParameters() throws ExecutionException {
         final SimpleJavaParameters params = new SimpleJavaParameters();
 
-        params.setJdk(new SimpleJavaSdkType().createJdk("tmp", SystemProperties.getJavaHome()));
+        params.setJdk(getJdk());
 
         params.setWorkingDirectory(PathManager.getBinPath());
         final List<String> classPath = new ArrayList<String>();
@@ -457,6 +479,18 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   public void setMavenEmbedderVMOptions(@NotNull String mavenEmbedderVMOptions) {
     if (!mavenEmbedderVMOptions.trim().equals(this.mavenEmbedderVMOptions.trim())) {
       this.mavenEmbedderVMOptions = mavenEmbedderVMOptions;
+      shutdown(false);
+    }
+  }
+
+  @NotNull
+  public String getEmbedderJdk() {
+    return embedderJdk;
+  }
+
+  public void setEmbedderJdk(@NotNull String embedderJdk) {
+    if (!this.embedderJdk.equals(embedderJdk)) {
+      this.embedderJdk = embedderJdk;
       shutdown(false);
     }
   }

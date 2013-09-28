@@ -27,15 +27,19 @@ public class GosubInstruction extends Instruction {
     mySubprogramOffset = subprogramOffset;
   }
 
+  public int getSubprogramOffset() {
+    return mySubprogramOffset.getInstructionOffset();
+  }
+
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
     final int returnIndex = getIndex() + 1;
     stateBefore.pushOffset(returnIndex);
-    Instruction nextInstruction = runner.getInstruction(mySubprogramOffset.getInstructionOffset());
+    Instruction nextInstruction = runner.getInstruction(getSubprogramOffset());
     return new DfaInstructionState[] {new DfaInstructionState(nextInstruction, stateBefore)};
   }
 
   public String toString() {
-    return "GOSUB: " + mySubprogramOffset.getInstructionOffset();
+    return "GOSUB: " + getSubprogramOffset();
   }
 }

@@ -27,11 +27,14 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.cache.impl.id.IdTableBuilding;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +45,7 @@ import java.util.*;
  */
 public class HippieWordCompletionHandler implements CodeInsightActionHandler {
   private static final Key<CompletionState> KEY_STATE = new Key<CompletionState>("HIPPIE_COMPLETION_STATE");
+  private static final String WHITESPACE_CHARS = " \t\n";
   private final boolean myForward;
 
   public HippieWordCompletionHandler(boolean forward) {
@@ -64,7 +68,7 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     String oldPrefix = completionState.oldPrefix;
     CompletionVariant lastProposedVariant = completionState.lastProposedVariant;
 
-    if (lastProposedVariant == null || oldPrefix == null || !prefixMatches(oldPrefix, currentPrefix) ||
+    if (lastProposedVariant == null || oldPrefix == null || !new CamelHumpMatcher(oldPrefix).isStartMatch(currentPrefix) ||
         !currentPrefix.equals(lastProposedVariant.variant)) {
       //we are starting over
       oldPrefix = currentPrefix;
@@ -201,24 +205,15 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
 
     final int caretOffset = editor.getCaretModel().getOffset();
 
-    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(0);
-    while (!iterator.atEnd()) {
-      int start = iterator.getStart();
-      int end = iterator.getEnd();
-      if ((start > caretOffset || end < caretOffset) &&  //skip prefix itself
-          end - start > matcher.getPrefix().length() && isWordLike(chars, start, end)) {
-        final String word = chars.subSequence(start, end).toString();
-        if (matcher.prefixMatches(word)) {
-          CompletionVariant v = new CompletionVariant(word, start);
-          if (end > caretOffset) {
-            afterWords.add(v);
-          }
-          else {
-            words.add(v);
-          }
+    addWordsForEditor((EditorEx)editor, matcher, chars, words, afterWords, caretOffset);
+
+    for(FileEditor fileEditor: FileEditorManager.getInstance(file.getProject()).getAllEditors()) {
+      if (fileEditor instanceof TextEditor) {
+        Editor anotherEditor = ((TextEditor)fileEditor).getEditor();
+        if (anotherEditor != editor) {
+          addWordsForEditor((EditorEx)anotherEditor, matcher, anotherEditor.getDocument().getCharsSequence(), words, afterWords, 0);
         }
       }
-      iterator.advance();
     }
 
     Set<String> allWords = new HashSet<String>();
@@ -245,29 +240,82 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
 
     return result;
   }
+  
+  private interface TokenProcessor {
+    boolean processToken(int start, int end);
+  } 
 
-  private static boolean prefixMatches(String prefix, String word) {
-    return new CamelHumpMatcher(prefix == null ? "" : prefix).isStartMatch(word);
+  private static void addWordsForEditor(EditorEx editor,
+                                        final CamelHumpMatcher matcher,
+                                        final CharSequence chars,
+                                        final List<CompletionVariant> words,
+                                        final List<CompletionVariant> afterWords, final int caretOffset) {
+    int startOffset = 0;
+    TokenProcessor processor = new TokenProcessor() {
+      @Override
+      public boolean processToken(int start, int end) {
+        if ((start > caretOffset || end < caretOffset) &&  //skip prefix itself
+            end - start > matcher.getPrefix().length() && isWordLike(chars, start, end)) {
+          final String word = chars.subSequence(start, end).toString();
+          if (matcher.isStartMatch(word)) {
+            CompletionVariant v = new CompletionVariant(word, start);
+            if (end > caretOffset) {
+              afterWords.add(v);
+            }
+            else {
+              words.add(v);
+            }
+          }
+        }
+        return true;
+      }
+    };
+    processWords(editor, startOffset, processor);
+  }
+
+  private static void processWords(Editor editor, int startOffset, TokenProcessor processor) {
+    CharSequence chars = editor.getDocument().getCharsSequence();
+    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(startOffset);
+    while (!iterator.atEnd()) {
+      int start = iterator.getStart();
+      int end = iterator.getEnd();
+      while (start < end) {
+        int nextWs = StringUtil.indexOfAny(chars, WHITESPACE_CHARS, start, end);
+        if (nextWs < 0) {
+          if (isWordLike(chars, start, end) && !processor.processToken(start, end)) {
+            return;
+          }
+          break;
+        }
+        if (isWordLike(chars, start, end) && !processor.processToken(start, nextWs)) {
+          return;
+        }
+        start = CharArrayUtil.shiftForward(chars, nextWs, WHITESPACE_CHARS);
+      }
+      iterator.advance();
+    }
   }
 
   private static CompletionData computeData(final Editor editor, final CharSequence charsSequence) {
     final int offset = editor.getCaretModel().getOffset();
 
     final CompletionData data = new CompletionData();
-
-    final int caretOffset = editor.getCaretModel().getOffset();
-
-    HighlighterIterator iterator = ((EditorEx)editor).getHighlighter().createIterator(offset - 1);
-    int start = iterator.getStart();
-    int end = iterator.getEnd();
-    if (start <= offset && end >= offset) {
-      if (isWordLike(charsSequence, start, end)) {
-        data.myPrefix = charsSequence.subSequence(start, offset).toString();
-        data.myWordUnderCursor = charsSequence.subSequence(start, end).toString();
-        data.startOffset = start;
+    
+    processWords(editor, offset - 1, new TokenProcessor() {
+      @Override
+      public boolean processToken(int start, int end) {
+        if (start > offset) {
+          return false;
+        }
+        if (end >= offset) {
+          data.myPrefix = charsSequence.subSequence(start, offset).toString();
+          data.myWordUnderCursor = charsSequence.subSequence(start, end).toString();
+          data.startOffset = start;
+          return false;
+        }
+        return true;
       }
-    }
-    iterator.advance();
+    });
 
     if (data.myPrefix == null) {
       data.myPrefix = "";

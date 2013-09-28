@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.file;
 
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 /**
  * @author yole
@@ -34,6 +36,7 @@ public class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
     myManager = manager;
   }
 
+  @NotNull
   @Override
   public PsiDirectory createDirectory(@NotNull final VirtualFile file) {
     return new PsiJavaDirectoryImpl(myManager, file);
@@ -61,8 +64,10 @@ public class PsiJavaDirectoryFactory extends PsiDirectoryFactory {
   }
 
   @Override
-  public boolean isPackage(PsiDirectory directory) {
-    return ProjectRootManager.getInstance(myManager.getProject()).getFileIndex().getPackageNameByDirectory(directory.getVirtualFile()) != null;
+  public boolean isPackage(@NotNull PsiDirectory directory) {
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myManager.getProject()).getFileIndex();
+    VirtualFile virtualFile = directory.getVirtualFile();
+    return fileIndex.isUnderSourceRootOfType(virtualFile, JavaModuleSourceRootTypes.SOURCES) && fileIndex.getPackageNameByDirectory(virtualFile) != null;
   }
 
   @Override

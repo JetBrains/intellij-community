@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -232,7 +233,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
 
     gbConstraints.gridx = 1;
     gbConstraints.insets = new Insets(0, 4, 0, 0);
-    myExpandByCombo = new JComboBox(new Object[]{myDefaultShortcutItem, SPACE, TAB, ENTER});
+    myExpandByCombo = new ComboBox(new Object[]{myDefaultShortcutItem, SPACE, TAB, ENTER}, -1);
     myExpandByCombo.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
@@ -309,6 +310,9 @@ public class LiveTemplateSettingsEditor extends JPanel {
     final Runnable updateLabel = new Runnable() {
       @Override
       public void run() {
+        myExpandByCombo.setEnabled(isExpandableFromEditor());
+        updateHighlighter();
+
         StringBuilder sb = new StringBuilder();
         String oldPrefix = "";
         for (TemplateContextType type : getApplicableContexts()) {
@@ -343,7 +347,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
       public boolean onClick(MouseEvent e, int clickCount) {
         if (disposeContextPopup()) return false;
 
-        final JPanel content = createPopupContextPanel(updateLabel);
+        final JPanel content = createPopupContextPanel(updateLabel, myContext);
         Dimension prefSize = content.getPreferredSize();
         if (myLastSize != null && (myLastSize.width > prefSize.width || myLastSize.height > prefSize.height)) {
           content.setPreferredSize(new Dimension(Math.max(prefSize.width, myLastSize.width), Math.max(prefSize.height, myLastSize.height)));
@@ -374,7 +378,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
     return false;
   }
 
-  private JPanel createPopupContextPanel(final Runnable onChange) {
+  static JPanel createPopupContextPanel(final Runnable onChange, final Map<TemplateContextType, Boolean> context) {
     JPanel panel = new JPanel(new BorderLayout());
 
     MultiMap<TemplateContextType, TemplateContextType> hierarchy = new MultiMap<TemplateContextType, TemplateContextType>() {
@@ -383,7 +387,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
         return new LinkedHashMap<TemplateContextType, Collection<TemplateContextType>>();
       }
     };
-    for (TemplateContextType type : myContext.keySet()) {
+    for (TemplateContextType type : context.keySet()) {
       hierarchy.putValue(type.getBaseContextType(), type);
     }
 
@@ -401,17 +405,15 @@ public class LiveTemplateSettingsEditor extends JPanel {
       protected void onNodeStateChanged(CheckedTreeNode node) {
         final TemplateContextType type = (TemplateContextType)((Pair)node.getUserObject()).first;
         if (type != null) {
-          myContext.put(type, node.isChecked());
+          context.put(type, node.isChecked());
         }
-        myExpandByCombo.setEnabled(isExpandableFromEditor());
-        updateHighlighter();
         onChange.run();
 
       }
     };
 
     for (TemplateContextType type : hierarchy.get(null)) {
-      addContextNode(hierarchy, root, type);
+      addContextNode(hierarchy, root, type, context);
     }
 
     ((DefaultTreeModel)checkboxTree.getModel()).nodeStructureChanged(root);
@@ -434,23 +436,23 @@ public class LiveTemplateSettingsEditor extends JPanel {
     return panel;
   }
 
-  private void addContextNode(MultiMap<TemplateContextType, TemplateContextType> hierarchy,
-                              CheckedTreeNode parent,
-                              TemplateContextType type) {
+  private static void addContextNode(MultiMap<TemplateContextType, TemplateContextType> hierarchy,
+                                     CheckedTreeNode parent,
+                                     TemplateContextType type, Map<TemplateContextType, Boolean> context) {
     final Collection<TemplateContextType> children = hierarchy.get(type);
     final String name = UIUtil.removeMnemonic(type.getPresentableName());
     final CheckedTreeNode node = new CheckedTreeNode(Pair.create(children.isEmpty() ? type : null, name));
     parent.add(node);
 
     if (children.isEmpty()) {
-      node.setChecked(myContext.get(type));
+      node.setChecked(context.get(type));
     }
     else {
       for (TemplateContextType child : children) {
-        addContextNode(hierarchy, node, child);
+        addContextNode(hierarchy, node, child, context);
       }
       final CheckedTreeNode other = new CheckedTreeNode(Pair.create(type, "Other"));
-      other.setChecked(myContext.get(type));
+      other.setChecked(context.get(type));
       node.add(other);
     }
   }

@@ -158,6 +158,9 @@ public abstract class AbstractJavaInplaceIntroducer extends AbstractInplaceIntro
       }
       if (parent instanceof PsiExpression) {
         expression = (PsiExpression)parent;
+        if (expression.getText().equals(exprText)) {
+          return expression;
+        }
       } else {
         return null;
       }

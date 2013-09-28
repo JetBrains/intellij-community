@@ -38,7 +38,7 @@ public class TypeEqualityConstraint implements ConstraintFormula {
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints, List<ConstraintFormula> delayedConstraints) {
+  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
     if (session.isProperType(myT) && session.isProperType(myS)) {
       return myT.equals(myS);
     }
@@ -100,6 +100,12 @@ public class TypeEqualityConstraint implements ConstraintFormula {
       }
     }
     return false;
+  }
+
+  @Override
+  public void apply(PsiSubstitutor substitutor) {
+    myT = substitutor.substitute(myT);
+    myS = substitutor.substitute(myS);
   }
 
   @Override

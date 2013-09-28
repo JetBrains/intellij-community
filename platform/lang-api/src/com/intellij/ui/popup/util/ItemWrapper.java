@@ -37,10 +37,6 @@ public abstract class ItemWrapper {
   public void updateDetailView(DetailView panel) {
     if (panel == null) return;
 
-    if (equals(panel.getCurrentItem())) {
-      return;
-    }
-
     doUpdateDetailView(panel, panel.hasEditorOnly());
 
     panel.setCurrentItem(this);

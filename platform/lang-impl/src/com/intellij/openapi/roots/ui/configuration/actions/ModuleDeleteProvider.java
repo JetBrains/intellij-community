@@ -18,9 +18,9 @@ package com.intellij.openapi.roots.ui.configuration.actions;
 
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.TitledHandler;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -36,7 +36,6 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.projectImport.ProjectAttachProcessor;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
@@ -75,7 +74,8 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
   public void deleteElement(@NotNull DataContext dataContext) {
     final Module[] modules = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
     assert modules != null;
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    assert project != null;
     String names = StringUtil.join(Arrays.asList(modules), new Function<Module, String>() {
       @Override
       public String fun(final Module module) {
@@ -115,7 +115,7 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
 
   private static String getConfirmationText(Module[] modules, String names) {
     if (ProjectAttachProcessor.canAttachToProject()) {
-      return "Would you like to detach the project" + (modules.length > 1 ? "s " : " ") +  names + "?";
+      return ProjectBundle.message("project.remove.confirmation.prompt", names, modules.length);
     }
     return ProjectBundle.message("module.remove.confirmation.prompt", names, modules.length);
   }

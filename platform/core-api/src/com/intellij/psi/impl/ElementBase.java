@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,13 +40,13 @@ import com.intellij.ui.IconDeferrer;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
 import java.util.List;
 
 public abstract class ElementBase extends UserDataHolderBase implements Iconable {
@@ -313,7 +313,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     }
   }
 
-  private static final List<IconLayer> ourIconLayers = new ArrayList<IconLayer>();
+  private static final List<IconLayer> ourIconLayers = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public static void registerIconLayer(int flagMask, Icon icon) {
     for(IconLayer iconLayer: ourIconLayers) {

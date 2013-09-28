@@ -129,8 +129,8 @@ public class SvnRecursiveStatusWalker {
       myConfiguration17 = SvnConfiguration.getInstance(myProject);
       myPath = path;
       myDepth = depth;
-      mySvnClient = new SvnkitSvnStatusClient(client);
-      myCommandLineClient = new SvnCommandLineStatusClient(myProject);
+      mySvnClient = new SvnkitSvnStatusClient(myVcs, client);
+      myCommandLineClient = new SvnCommandLineStatusClient(myVcs);
       myIsInnerCopyRoot = isInnerCopyRoot;
     }
 
@@ -159,7 +159,7 @@ public class SvnRecursiveStatusWalker {
       if (CheckJavaHL.isPresent() && SvnConfiguration.UseAcceleration.javaHL.equals(myConfiguration17.myUseAcceleration) &&
           Svn17Detector.is17(myProject, file)) {
         return new JavaHLSvnStatusClient(myProject);
-      } else if (SvnConfiguration.UseAcceleration.commandLine.equals(myConfiguration17.myUseAcceleration)) {
+      } else if (myConfiguration17.isCommandLine()) {
         // apply command line disregarding working copy format
         return myCommandLineClient;
       }

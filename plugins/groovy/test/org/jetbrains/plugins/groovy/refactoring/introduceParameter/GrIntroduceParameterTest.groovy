@@ -238,7 +238,7 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testSuperInExpression() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, "Parameter initializer contains <b><code>super</code></b>, but not all calls to method are in its class.");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, "Parameter initializer contains <b><code>super</code></b>, but not all calls to method are in its class");
   }
 
   public void testWeirdQualifierAndParameter() {
@@ -262,7 +262,7 @@ public class GrIntroduceParameterTest extends LightCodeInsightFixtureTestCase {
   }*/
 
   public void testSuperWithSideEffect() {
-    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, "Parameter initializer contains <b><code>super</code></b>, but not all calls to method are in its class.");
+    doTest(IntroduceParameterRefactoring.REPLACE_FIELDS_WITH_GETTERS_INACCESSIBLE, false, false, "Parameter initializer contains <b><code>super</code></b>, but not all calls to method are in its class");
   }
 
   public void testConflictingField() {

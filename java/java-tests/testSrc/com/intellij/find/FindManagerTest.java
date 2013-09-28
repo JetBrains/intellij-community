@@ -478,36 +478,36 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   private static void runFindForwardAndBackward(FindManager findManager, FindModel findModel, String text, String ext) {
     findModel.setForward(true);
     LightVirtualFile file = new LightVirtualFile("A."+ext, text);
-    int prevousOffset;
+    int previousOffset;
 
     FindResult findResult = findManager.findString(text, 0, findModel, file);
     assertTrue(findResult.isStringFound());
-    prevousOffset = findResult.getStartOffset();
+    previousOffset = findResult.getStartOffset();
 
     findResult = findManager.findString(text, findResult.getEndOffset(), findModel, file);
     assertTrue(findResult.isStringFound());
-    assertTrue(findResult.getStartOffset() > prevousOffset);
-    prevousOffset = findResult.getStartOffset();
+    assertTrue(findResult.getStartOffset() > previousOffset);
+    previousOffset = findResult.getStartOffset();
 
     findResult = findManager.findString(text, findResult.getEndOffset(), findModel, file);
     assertTrue(findResult.isStringFound());
-    assertTrue(findResult.getStartOffset() > prevousOffset);
+    assertTrue(findResult.getStartOffset() > previousOffset);
 
     findModel.setForward(false);
 
     findResult = findManager.findString(text, text.length(), findModel, file);
     assertTrue(findResult.isStringFound());
-    prevousOffset = findResult.getStartOffset();
+    previousOffset = findResult.getStartOffset();
 
-    findResult = findManager.findString(text, prevousOffset, findModel, file);
+    findResult = findManager.findString(text, previousOffset, findModel, file);
     assertTrue(findResult.isStringFound());
-    assertTrue(prevousOffset > findResult.getStartOffset() );
+    assertTrue(previousOffset > findResult.getStartOffset() );
 
-    prevousOffset = findResult.getStartOffset();
+    previousOffset = findResult.getStartOffset();
 
-    findResult = findManager.findString(text, prevousOffset, findModel, file);
+    findResult = findManager.findString(text, previousOffset, findModel, file);
     assertTrue(findResult.isStringFound());
-    assertTrue(prevousOffset > findResult.getStartOffset() );
+    assertTrue(previousOffset > findResult.getStartOffset() );
   }
 
   public void testFindInJavaDocs() throws Exception{
@@ -564,6 +564,18 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     findModel.setInStringLiteralsOnly(true);
     findModel.setInCommentsOnly(false);
+    runFindForwardAndBackward(findManager, findModel, text, "java");
+
+    text = "def n = \"\"\"done\"\"\"\n def n = /done/\n def n = \"done\"\n def n = \"done2\"";
+
+    runFindForwardAndBackward(findManager, findModel, text, "groovy");
+
+    text = "\"\"; \"done\"; 'done'; 'done' \"done2\"";
+
+    findModel.setStringToFind("done");
+    findModel.setWholeWordsOnly(true);
+    findModel.setRegularExpressions(false);
+
     runFindForwardAndBackward(findManager, findModel, text, "java");
   }
 }

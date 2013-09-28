@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class DelegateLexer extends LexerBase {
@@ -34,7 +35,7 @@ public class DelegateLexer extends LexerBase {
   }
 
   @Override
-  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myDelegate.start(buffer, startOffset, endOffset, initialState);
   }
 
@@ -64,6 +65,7 @@ public class DelegateLexer extends LexerBase {
     myDelegate.advance();
   }
 
+  @NotNull
   @Override
   public final CharSequence getBufferSequence() {
     return myDelegate.getBufferSequence();

@@ -255,7 +255,7 @@ public class GroovyWrappingProcessor {
       return mySettings.CLASS_ANNOTATION_WRAP;
     }
 
-    if (METHOD_DEFS.contains(containerType)) {
+    if (TokenSets.METHOD_DEFS.contains(containerType)) {
       return mySettings.METHOD_ANNOTATION_WRAP;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -134,6 +134,7 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
     myIsXHtml = xhtml;
   }
 
+  @Override
   @NotNull
   public Lexer getHighlightingLexer() {
     if (myIsDtd) {
@@ -145,6 +146,7 @@ public class XmlFileHighlighter extends SyntaxHighlighterBase {
     }
   }
 
+  @Override
   @NotNull
   public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
     return pack(keys1.get(tokenType), keys2.get(tokenType));

@@ -20,7 +20,6 @@ import com.intellij.psi.impl.source.resolve.graphInference.InferenceBound;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.util.TypeConversionUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -39,7 +38,7 @@ public class SubtypingConstraint implements ConstraintFormula {
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints, List<ConstraintFormula> delayedConstraints) {
+  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
     if (myIsRefTypes) {
       if (session.isProperType(myS) && session.isProperType(myT)) {
         if (myT == null || myS == null) return myS == myT;
@@ -127,6 +126,11 @@ public class SubtypingConstraint implements ConstraintFormula {
           }
           return false;
         } else {
+
+          if (myS instanceof PsiCapturedWildcardType) {
+            myS = ((PsiCapturedWildcardType)myS).getWildcard();
+          }
+
           if (myS instanceof PsiWildcardType) {
             final PsiType sBound = ((PsiWildcardType)myS).getBound();
             if (sBound != null && ((PsiWildcardType)myS).isSuper()) {
@@ -140,15 +144,31 @@ public class SubtypingConstraint implements ConstraintFormula {
         }
         return false;
       } else {
+        InferenceVariable inferenceVariable = session.getInferenceVariable(myT);
         if (myS instanceof PsiWildcardType) {
-          return false;
+          return inferenceVariable != null && inferenceVariable.isCaptured();
         } else {
+          if (inferenceVariable != null) {
+            inferenceVariable.addBound(myS, InferenceBound.EQ);
+            return true;
+          }
+          inferenceVariable = session.getInferenceVariable(myS);
+          if (inferenceVariable != null) {
+            inferenceVariable.addBound(myT, InferenceBound.EQ);
+            return true;
+          }
           constraints.add(new SubtypingConstraint(myT, myS, true));
           return true;
         }
       }
     }
     return true;
+  }
+
+  @Override
+  public void apply(PsiSubstitutor substitutor) {
+    myT = substitutor.substitute(myT);
+    myS = substitutor.substitute(myS);
   }
 
   @Override
@@ -159,6 +179,9 @@ public class SubtypingConstraint implements ConstraintFormula {
     SubtypingConstraint that = (SubtypingConstraint)o;
 
     if (myIsRefTypes != that.myIsRefTypes) return false;
+
+    if (!myIsRefTypes && myS instanceof PsiCapturedWildcardType && myS != that.myS) return false;
+
     if (myS != null ? !myS.equals(that.myS) : that.myS != null) return false;
     if (myT != null ? !myT.equals(that.myT) : that.myT != null) return false;
 

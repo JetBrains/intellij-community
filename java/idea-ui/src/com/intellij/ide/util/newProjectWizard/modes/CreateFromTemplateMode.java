@@ -106,7 +106,7 @@ public class CreateFromTemplateMode extends WizardMode {
     MultiMap<TemplatesGroup, ProjectTemplate> map = getTemplatesMap(context);
     StepSequence sequence = new StepSequence();
     for (ProjectTemplate template : map.values()) {
-      sequence.addStepsForBuilder(template.createModuleBuilder(), context, modulesProvider);
+      sequence.addStepsForBuilder(template.createModuleBuilder(), context, modulesProvider, false);
     }
     mySelectTemplateStep = new SelectTemplateStep(context, sequence, map);
     sequence.addCommonStep(mySelectTemplateStep);

@@ -95,8 +95,9 @@ public class MavenExecutionTest extends MavenImportingTestCase {
 
     assertSources("project",
                   "src/main/java",
-                  "src/main/resources",
                   "target/generated-sources/foo");
+    assertResources("project",
+                    "src/main/resources");
 
     assertExcludes("project",
                    "target/bar",

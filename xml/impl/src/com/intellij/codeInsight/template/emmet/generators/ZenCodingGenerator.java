@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.codeInsight.template.emmet.tokens.ZenCodingToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -61,6 +62,8 @@ public abstract class ZenCodingGenerator {
   }
 
   public abstract boolean isAppliedByDefault(@NotNull PsiElement context);
+  
+  public abstract boolean isEnabled();
 
   public static List<ZenCodingGenerator> getInstances() {
     List<ZenCodingGenerator> generators = new ArrayList<ZenCodingGenerator>();
@@ -166,5 +169,10 @@ public abstract class ZenCodingGenerator {
                                   ZenCodingGenerator generator,
                                   boolean surroundWithTemplate) {
     return new XmlEmmetParser(tokens, callback, generator, surroundWithTemplate);
+  }
+  
+  @Nullable
+  public UnnamedConfigurable createConfigurable() {
+    return null;
   }
 }

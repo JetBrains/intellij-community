@@ -76,8 +76,9 @@ public class WatchesRootNode extends XDebuggerTreeNode {
     fireNodeStructureChanged();
   }
 
+  @NotNull
   @Override
-  protected List<? extends TreeNode> getChildren() {
+  public List<? extends TreeNode> getChildren() {
     return myChildren;
   }
 

@@ -141,12 +141,6 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
 
   public void testNoUnqualifiedCastsInQualifiedContext() throws Throwable { doAntiTest(); }
 
-  private void doAntiTest() throws Exception {
-    configure();
-    assertEmpty(myItems);
-    checkResultByFile(getTestName(false) + ".java");
-  }
-
   public void testCastInstanceofedQualifier() throws Throwable { doTest(); }
 
   public void testNoLeftRecursion() throws Throwable {

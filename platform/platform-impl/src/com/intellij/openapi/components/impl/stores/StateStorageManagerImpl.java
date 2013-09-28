@@ -144,6 +144,9 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   public Collection<String> getStorageFileNames() {
     myStorageLock.lock();
     try {
+      if (myStorages.isEmpty()) {
+        return Collections.emptyList();
+      }
       return Collections.unmodifiableCollection(myStorages.keySet());
     }
     finally {
@@ -488,7 +491,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   @Override
-  public void registerStreamProvider(com.intellij.openapi.options.StreamProvider streamProvider, final RoamingType type) {
+  public void registerStreamProvider(@SuppressWarnings("deprecation") com.intellij.openapi.options.StreamProvider streamProvider, final RoamingType type) {
     synchronized (myOldStreamProvider) {
       myOldStreamProvider.myStreamProviders.add(new OldStreamProviderAdapter(streamProvider, type));
     }
@@ -545,6 +548,11 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   private static class OldStreamProviderManager extends StreamProvider implements CurrentUserHolder {
     private final List<OldStreamProviderAdapter> myStreamProviders = new SmartList<OldStreamProviderAdapter>();
+
+    @Override
+    public boolean isVersioningRequired() {
+      return true;
+    }
 
     @Override
     public boolean isEnabled() {

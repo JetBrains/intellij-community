@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.lexer;
 
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class CompositeLexer extends LexerBase {
   private final Lexer myLexer1;
@@ -30,12 +31,13 @@ public abstract class CompositeLexer extends LexerBase {
   protected abstract IElementType getCompositeTokenType(IElementType type1, IElementType type2);
 
   @Override
-  public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
+  public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myLexer1.start(buffer, startOffset, endOffset, (initialState >> 16) & 0xFFFF);
     myLexer2.start(buffer, startOffset, endOffset, initialState & 0xFFFF);
     myCurOffset = startOffset;
   }
 
+  @NotNull
   @Override
   public CharSequence getBufferSequence() {
     return myLexer1.getBufferSequence();

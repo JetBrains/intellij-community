@@ -111,8 +111,7 @@ public class JpsModuleImpl<P extends JpsElement> extends JpsNamedCompositeElemen
 
   @NotNull
   @Override
-  public <P extends JpsElement, T extends JpsModuleSourceRootType<P> & JpsElementTypeWithDefaultProperties<P>>
-  JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull T rootType) {
+  public <P extends JpsElement> JpsModuleSourceRoot addSourceRoot(@NotNull String url, @NotNull JpsModuleSourceRootType<P> rootType) {
     return addSourceRoot(url, rootType, rootType.createDefaultProperties());
   }
 

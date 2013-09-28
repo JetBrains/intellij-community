@@ -1,15 +1,15 @@
 class IntStream {
   private void foo(IntStream s) {
-    s.map(i -> 1 << i);
-    s.map(i -> 1);
-    s.map(i -> i);
+    s.map<error descr="Ambiguous method call: both 'IntStream.map(IntUnaryOperator)' and 'IntStream.map(ObjIntFunction<Integer>)' match">(i -> <error descr="Operator '<<' cannot be applied to 'int', '<lambda parameter>'">1 << i</error>)</error>;
+    s.map<error descr="Ambiguous method call: both 'IntStream.map(IntUnaryOperator)' and 'IntStream.map(ObjIntFunction<Integer>)' match">(i -> 1)</error>;
+    s.map<error descr="Ambiguous method call: both 'IntStream.map(IntUnaryOperator)' and 'IntStream.map(ObjIntFunction<Integer>)' match">(i -> i)</error>;
   }
 
   public static void main(String[] args) {
     new IntStream().foo(null);
   }
 
-  private IntStream map(IntUnaryOperator mapper) {
+  private IntStream <warning descr="Private method 'map(IntUnaryOperator)' is never used">map</warning>(IntUnaryOperator mapper) {
     System.out.println(mapper);
     return null;
   }

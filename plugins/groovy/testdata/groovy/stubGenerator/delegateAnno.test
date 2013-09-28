@@ -15,7 +15,7 @@ class Del2 implements DelegateFoo {
 }
 -----
 public interface DelegateFoo {
-public java.lang.Object foo() ;
+public abstract java.lang.Object foo() ;
 
 }
 ---

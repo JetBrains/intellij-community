@@ -16,27 +16,28 @@
 
 package com.intellij.xdebugger.breakpoints;
 
-import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.pom.Navigatable;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.pom.Navigatable;
+import com.intellij.xdebugger.XSourcePosition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Represents a breakpoint. This interface isn't supposed to be implemented by a plugin. In order to support breakpoint provide 
+ * Represents a breakpoint. This interface isn't supposed to be implemented by a plugin. In order to support breakpoint provide
  * {@link XBreakpointType} or {@link XLineBreakpointType} implementation
  *
+ * @author nik
  * @see XLineBreakpoint
  * @see XBreakpointManager
- * @author nik
  */
 public interface XBreakpoint<P extends XBreakpointProperties> extends UserDataHolder {
 
   boolean isEnabled();
+
   void setEnabled(boolean enabled);
 
   @NotNull
-  XBreakpointType<?,P> getType();
+  XBreakpointType<?, P> getType();
 
   P getProperties();
 
@@ -48,17 +49,21 @@ public interface XBreakpoint<P extends XBreakpointProperties> extends UserDataHo
 
   @NotNull
   SuspendPolicy getSuspendPolicy();
+
   void setSuspendPolicy(@NotNull SuspendPolicy policy);
 
   boolean isLogMessage();
+
   void setLogMessage(boolean logMessage);
 
   @Nullable
   String getLogExpression();
+
   void setLogExpression(@Nullable String expression);
 
   @Nullable
   String getCondition();
+
   void setCondition(@Nullable String condition);
 
   long getTimeStamp();

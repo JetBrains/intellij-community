@@ -1759,7 +1759,7 @@ public class TranslatingCompilerFilesMonitor implements ApplicationComponent {
   }
   
   public boolean isMarkedForCompilation(Project project, VirtualFile file) {
-    if (CompilerWorkspaceConfiguration.getInstance(project).USE_COMPILE_SERVER) {
+    if (CompilerWorkspaceConfiguration.getInstance(project).useOutOfProcessBuild()) {
       final CompilerManager compilerManager = CompilerManager.getInstance(project);
       return !compilerManager.isUpToDate(compilerManager.createFilesCompileScope(new VirtualFile[]{file}));
     }

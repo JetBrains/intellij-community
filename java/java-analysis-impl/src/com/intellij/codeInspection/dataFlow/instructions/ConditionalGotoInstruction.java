@@ -33,9 +33,9 @@ public class ConditionalGotoInstruction extends BranchingInstruction {
   private final boolean myIsNegated;
 
   public ConditionalGotoInstruction(ControlFlow.ControlFlowOffset myOffset, boolean isNegated, PsiElement psiAnchor) {
+    super(psiAnchor);
     this.myOffset = myOffset;
     myIsNegated = isNegated;
-    setPsiAnchor(psiAnchor);
   }
 
   public boolean isNegated() {

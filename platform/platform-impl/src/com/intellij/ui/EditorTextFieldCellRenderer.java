@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * @author gregsh
  */
-public abstract class EditorTextFieldCellRenderer extends JPanel implements TableCellRenderer, Disposable {
+public abstract class EditorTextFieldCellRenderer extends CellRendererPanel implements TableCellRenderer, Disposable {
 
   private EditorEx myEditor;
 
@@ -111,40 +111,6 @@ public abstract class EditorTextFieldCellRenderer extends JPanel implements Tabl
     editor.getHighlighter().setText(text);
     ((EditorImpl)editor).resetSizes();
   }
-
-  // BEGIN no validation methods --------------
-  @Override
-  public void doLayout() {
-    if (getComponentCount() != 1) return;
-    getComponent(0).setBounds(0, 0, getWidth(), getHeight());
-  }
-
-  @Override
-  public Dimension getPreferredSize() {
-    if (getComponentCount() != 1) return super.getPreferredSize();
-    return getComponent(0).getPreferredSize();
-  }
-
-  public void invalidate() {
-  }
-
-  public void validate() {
-    doLayout();
-  }
-
-  public void revalidate() {
-  }
-
-  public void repaint(long tm, int x, int y, int width, int height) {
-  }
-
-  public void repaint(Rectangle r) {
-  }
-
-  public void repaint() {
-  }
-
-// END no validation methods --------------
 
   private static class MyDocument extends UserDataHolderBase implements DocumentEx {
 

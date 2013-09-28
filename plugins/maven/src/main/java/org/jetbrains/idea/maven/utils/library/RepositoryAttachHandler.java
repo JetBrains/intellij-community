@@ -222,7 +222,11 @@ public class RepositoryAttachHandler {
                   tooManyResults = true;
                 }
                 else {
-                  resultList.add(Pair.create(artifact, map.get(artifact.getRepositoryId())));
+                  MavenRepositoryInfo repository = map.get(artifact.getRepositoryId());
+                  // if the artifact is provided by an unsupported repository just skip it
+                  // because it won't be resolved anyway
+                  if (repository == null) continue;
+                  resultList.add(Pair.create(artifact, repository));
                 }
               }
             }

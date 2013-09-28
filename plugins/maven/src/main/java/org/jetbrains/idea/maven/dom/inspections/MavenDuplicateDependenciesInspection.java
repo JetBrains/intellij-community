@@ -22,12 +22,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.MultiMapBasedOnSet;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.DependencyConflictId;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
@@ -56,13 +56,13 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
 
   private static void checkDependencies(@NotNull MavenDomProjectModel projectModel,
                                         @NotNull DomElementAnnotationHolder holder) {
-    final Map<DependencyConflictId, Set<MavenDomDependency>> allDuplicates = getDuplicateDependenciesMap(projectModel);
+    MultiMap<DependencyConflictId, MavenDomDependency> allDuplicates = getDuplicateDependenciesMap(projectModel);
 
     for (MavenDomDependency dependency : projectModel.getDependencies().getDependencies()) {
       DependencyConflictId id = DependencyConflictId.create(dependency);
       if (id != null) {
-        Set<MavenDomDependency> dependencies = allDuplicates.get(id);
-        if (dependencies != null && dependencies.size() > 1) {
+        Collection<MavenDomDependency> dependencies = allDuplicates.get(id);
+        if (dependencies.size() > 1) {
 
           List<MavenDomDependency> duplicatedDependencies = new ArrayList<MavenDomDependency>();
 
@@ -115,22 +115,12 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
   }
 
   private static String createLinkText(@NotNull MavenDomProjectModel model, @NotNull MavenDomDependency dependency) {
-    StringBuilder sb = new StringBuilder();
-
     XmlTag tag = dependency.getXmlTag();
     if (tag == null) return getProjectName(model);
     VirtualFile file = tag.getContainingFile().getVirtualFile();
     if (file == null) return getProjectName(model);
 
-    sb.append("<a href ='#navigation/");
-    sb.append(file.getPath());
-    sb.append(":");
-    sb.append(tag.getTextRange().getStartOffset());
-    sb.append("'>");
-    sb.append(getProjectName(model));
-    sb.append("</a>");
-
-    return sb.toString();
+    return "<a href ='#navigation/" + file.getPath() + ":" + tag.getTextRange().getStartOffset() + "'>" + getProjectName(model) + "</a>";
   }
 
   @NotNull
@@ -151,8 +141,8 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
   }
 
   @NotNull
-  private static Map<DependencyConflictId, Set<MavenDomDependency>> getDuplicateDependenciesMap(MavenDomProjectModel projectModel) {
-    final Map<DependencyConflictId, Set<MavenDomDependency>> allDependencies = new HashMap<DependencyConflictId, Set<MavenDomDependency>>();
+  private static MultiMap<DependencyConflictId, MavenDomDependency> getDuplicateDependenciesMap(MavenDomProjectModel projectModel) {
+    final MultiMap<DependencyConflictId, MavenDomDependency> allDependencies = new MultiMapBasedOnSet<DependencyConflictId, MavenDomDependency>();
 
     Processor<MavenDomProjectModel> collectProcessor = new Processor<MavenDomProjectModel>() {
       public boolean process(MavenDomProjectModel model) {
@@ -167,28 +157,22 @@ public class MavenDuplicateDependenciesInspection extends BasicDomElementsInspec
     return allDependencies;
   }
 
-  private static void collect(Map<DependencyConflictId, Set<MavenDomDependency>> duplicates, @NotNull MavenDomDependencies dependencies) {
+  private static void collect(MultiMap<DependencyConflictId, MavenDomDependency> duplicates, @NotNull MavenDomDependencies dependencies) {
     for (MavenDomDependency dependency : dependencies.getDependencies()) {
       DependencyConflictId mavenId = DependencyConflictId.create(dependency);
       if (mavenId == null) continue;
 
-      Set<MavenDomDependency> set = duplicates.get(mavenId);
-      if (set == null) {
-        set = new THashSet<MavenDomDependency>();
-        duplicates.put(mavenId, set);
-      }
-
-      set.add(dependency);
+      duplicates.putValue(mavenId, dependency);
     }
   }
 
   private static void checkManagedDependencies(@NotNull MavenDomProjectModel projectModel,
                                                @NotNull DomElementAnnotationHolder holder) {
-    final Map<DependencyConflictId, Set<MavenDomDependency>> duplicates = new THashMap<DependencyConflictId, Set<MavenDomDependency>>();
+    MultiMap<DependencyConflictId, MavenDomDependency> duplicates = new MultiMapBasedOnSet<DependencyConflictId, MavenDomDependency>();
     collect(duplicates, projectModel.getDependencyManagement().getDependencies());
 
-    for (Map.Entry<DependencyConflictId, Set<MavenDomDependency>> entry : duplicates.entrySet()) {
-      Set<MavenDomDependency> set = entry.getValue();
+    for (Map.Entry<DependencyConflictId, Collection<MavenDomDependency>> entry : duplicates.entrySet()) {
+      Collection<MavenDomDependency> set = entry.getValue();
       if (set.size() <= 1) continue;
 
       for (MavenDomDependency dependency : set) {

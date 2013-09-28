@@ -32,8 +32,11 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -46,10 +49,9 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.EventDispatcher;
@@ -64,8 +66,10 @@ import java.io.File;
 import java.util.*;
 import java.util.jar.Attributes;
 
-public class DebuggerManagerImpl extends DebuggerManagerEx {
+@State(name = "DebuggerManager", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
+public class DebuggerManagerImpl extends DebuggerManagerEx implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.impl.DebuggerManagerImpl");
+
   private final Project myProject;
   private final HashMap<ProcessHandler, DebuggerSession> mySessions = new HashMap<ProcessHandler, DebuggerSession>();
   private final BreakpointManager myBreakpointManager;
@@ -132,21 +136,15 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     myDispatcher.removeListener(listener);
   }
 
-  public DebuggerManagerImpl(Project project, StartupManager startupManager, final EditorColorsManager colorsManager) {
+  public DebuggerManagerImpl(Project project, StartupManager startupManager, EditorColorsManager colorsManager) {
     myProject = project;
     myBreakpointManager = new BreakpointManager(myProject, startupManager, this);
     if (!project.isDefault()) {
-      final EditorColorsListener colorsListener = new EditorColorsListener() {
+      colorsManager.addEditorColorsListener(new EditorColorsListener() {
         public void globalSchemeChange(EditorColorsScheme scheme) {
           getBreakpointManager().updateBreakpointsUI();
         }
-      };
-      colorsManager.addEditorColorsListener(colorsListener);
-      Disposer.register(project, new Disposable() {
-        public void dispose() {
-          colorsManager.removeEditorColorsListener(colorsListener);
-        }
-      });
+      }, project);
     }
   }
 
@@ -178,14 +176,22 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     myBreakpointManager.init();
   }
 
-  public void readExternal(Element element) throws InvalidDataException {
-    myBreakpointManager.readExternal(element);
+  @Nullable
+  @Override
+  public Element getState() {
+    Element state = new Element("state");
+    myBreakpointManager.writeExternal(state);
+    return state;
+  }
+
+  @Override
+  public void loadState(Element state) {
+    myBreakpointManager.readExternal(state);
   }
 
   public void writeExternal(Element element) throws WriteExternalException {
     myBreakpointManager.writeExternal(element);
   }
-
 
   public DebuggerSession attachVirtualMachine(Executor executor,
                                               ProgramRunner runner,
@@ -284,6 +290,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     }
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   @Nullable
   public DebuggerSession getDebugSession(final ProcessHandler processHandler) {
     synchronized (mySessions) {
@@ -436,7 +443,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx {
     final boolean useSockets = transport == DebuggerSettings.SOCKET_TRANSPORT;
 
     String address = "";
-    if (debugPort == null || "".equals(debugPort)) {
+    if (StringUtil.isEmptyOrSpaces(debugPort)) {
       try {
         address = DebuggerUtils.getInstance().findAvailableDebugAddress(useSockets);
       }

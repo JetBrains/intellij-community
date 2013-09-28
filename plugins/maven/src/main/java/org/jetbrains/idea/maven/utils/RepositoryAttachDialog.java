@@ -90,8 +90,8 @@ public class RepositoryAttachDialog extends DialogWrapper {
     myProject = project;
     myProgressIcon.suspend();
     myCaptionLabel.setText(
-      XmlStringUtil.wrapInHtml(StringUtil.escapeXml("enter keyword, pattern or class name to search by or Maven coordinates," +
-                                                    "i.e. 'springframework', 'Logger' or 'org.hibernate:hibernate-core:3.5.0.GA':")
+      XmlStringUtil.wrapInHtml(StringUtil.escapeXml("keyword or class name to search by or exact Maven coordinates, " +
+                                                    "i.e. 'spring', 'Logger' or 'ant:ant-junit:1.6.5'")
       ));
     myInfoLabel.setPreferredSize(
       new Dimension(myInfoLabel.getFontMetrics(myInfoLabel.getFont()).stringWidth("Showing: 1000"), myInfoLabel.getPreferredSize().height));
@@ -166,6 +166,7 @@ public class RepositoryAttachDialog extends DialogWrapper {
                                              ProjectBundle.message("file.chooser.directory.for.downloaded.libraries.description"), null,
                                              descriptor);
     updateInfoLabel();
+    setOKActionEnabled(false);
     init();
   }
 
@@ -276,6 +277,9 @@ public class RepositoryAttachDialog extends DialogWrapper {
             }
           }
           updateComboboxSelection(prevSize != myCoordinates.size());
+          // tooMany != null on last call, so enable OK action to let
+          // local maven repo a chance even if all remote services failed
+          setOKActionEnabled(!myRepositories.isEmpty() || tooMany != null);
           return true;
         }
       });

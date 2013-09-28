@@ -32,6 +32,7 @@ public abstract class PsiDirectoryFactory {
     return ServiceManager.getService(project, PsiDirectoryFactory.class);
   }
 
+  @NotNull
   public abstract PsiDirectory createDirectory(@NotNull VirtualFile file);
 
   @NotNull
@@ -40,7 +41,7 @@ public abstract class PsiDirectoryFactory {
   @Nullable
   public abstract PsiDirectoryContainer getDirectoryContainer(@NotNull PsiDirectory directory);
 
-  public abstract boolean isPackage(PsiDirectory directory);
+  public abstract boolean isPackage(@NotNull PsiDirectory directory);
 
-  public abstract boolean isValidPackageName(String name);
+  public abstract boolean isValidPackageName(@Nullable String name);
 }

@@ -196,6 +196,7 @@ public abstract class BreakpointPropertiesPanel {
     public MyTextField() {
     }
 
+    @Override
     public String getToolTipText(MouseEvent event) {
       reloadClassFilters();
       updateClassFilterEditor(false);
@@ -205,6 +206,7 @@ public abstract class BreakpointPropertiesPanel {
       return getToolTipText().length() == 0 ? null : toolTipText;
     }
 
+    @Override
     public JToolTip createToolTip() {
       JToolTip toolTip = new JToolTip(){{
         setUI(new MultiLineTooltipUI());
@@ -230,6 +232,7 @@ public abstract class BreakpointPropertiesPanel {
 
     updateSuspendPolicyRbFont();
     final ItemListener suspendPolicyChangeListener = new ItemListener() {
+      @Override
       public void itemStateChanged(final ItemEvent e) {
         final BreakpointDefaults defaults = getBreakpointManager(myProject).getBreakpointDefaults(breakpointCategory);
         myMakeDefaultButton.setEnabled(!defaults.getSuspendPolicy().equals(getSelectedSuspendPolicy()) || defaults.isConditionEnabled() != myConditionCheckbox.isSelected());
@@ -251,6 +254,7 @@ public abstract class BreakpointPropertiesPanel {
     myConditionCheckbox.addItemListener(suspendPolicyChangeListener);
 
     myMakeDefaultButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         final BreakpointManager breakpointManager = getBreakpointManager(myProject);
         final String suspendPolicy = getSelectedSuspendPolicy();
@@ -306,6 +310,7 @@ public abstract class BreakpointPropertiesPanel {
 
     myInstanceFiltersField = new FieldPanel(new MyTextField(), "", null,
      new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         reloadInstanceFilters();
         EditInstanceFiltersDialog _dialog = new EditInstanceFiltersDialog(myProject);
@@ -322,6 +327,7 @@ public abstract class BreakpointPropertiesPanel {
 
     myClassFiltersField = new FieldPanel(new MyTextField(), "", null,
      new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         reloadClassFilters();
 
@@ -365,6 +371,7 @@ public abstract class BreakpointPropertiesPanel {
 
     DebuggerUIUtil.enableEditorOnCheck(myLogExpressionCheckBox, myLogExpressionCombo);
     ActionListener updateListener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateCheckboxes();
       }
@@ -458,6 +465,7 @@ public abstract class BreakpointPropertiesPanel {
     ClassFilter classFilter;
     if(myBreakpointPsiClass != null) {
       classFilter = new ClassFilter() {
+        @Override
         public boolean isAccepted(PsiClass aClass) {
           return myBreakpointPsiClass == aClass || aClass.isInheritor(myBreakpointPsiClass, true);
         }
@@ -641,7 +649,7 @@ public abstract class BreakpointPropertiesPanel {
     }
   }
 
-  private TextWithImportsImpl emptyText() {
+  private static TextWithImportsImpl emptyText() {
     return new TextWithImportsImpl(CodeFragmentKind.EXPRESSION, "");
   }
 
@@ -653,14 +661,14 @@ public abstract class BreakpointPropertiesPanel {
     saveMasterBreakpoint();
     try {
       String text = myPassCountField.getText().trim();
-      int count = !"".equals(text)? Integer.parseInt(text) : 0;
-      breakpoint.COUNT_FILTER = count;
+      breakpoint.COUNT_FILTER = !text.isEmpty() ? Integer.parseInt(text) : 0;
       if (breakpoint.COUNT_FILTER < 0) {
         breakpoint.COUNT_FILTER = 0;
       }
     }
-    catch (Exception e) {
+    catch (Exception ignored) {
     }
+
     breakpoint.COUNT_FILTER_ENABLED = breakpoint.COUNT_FILTER > 0 && myPassCountCheckbox.isSelected();
     breakpoint.setCondition(myConditionCombo.getText());
     breakpoint.CONDITION_ENABLED = myConditionCheckbox.isSelected();
@@ -867,8 +875,10 @@ public abstract class BreakpointPropertiesPanel {
       myDialogTitle = dialogTitle;
     }
 
+    @Override
     public void actionPerformed(final ActionEvent e) {
       new DialogWrapper(myTargetEditor, true){
+        @Override
         public void show() {
           setTitle(myDialogTitle);
           setModal(true);
@@ -876,10 +886,12 @@ public abstract class BreakpointPropertiesPanel {
           super.show();
         }
 
+        @Override
         public JComponent getPreferredFocusedComponent() {
           return myEditor;
         }
 
+        @Override
         @Nullable
         protected JComponent createCenterPanel() {
           final JPanel panel = new JPanel(new BorderLayout());
@@ -890,6 +902,7 @@ public abstract class BreakpointPropertiesPanel {
           return panel;
         }
 
+        @Override
         protected void doOKAction() {
           myTargetEditor.setText(myEditor.getText());
           super.doOKAction();

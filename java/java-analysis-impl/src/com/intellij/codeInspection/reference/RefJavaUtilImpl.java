@@ -223,7 +223,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
       refParent = refParent.getOwner();
     }
 
-    return (RefClass)refElement;
+    return refElement instanceof RefClass ? (RefClass)refElement : null;
   }
 
   @Override

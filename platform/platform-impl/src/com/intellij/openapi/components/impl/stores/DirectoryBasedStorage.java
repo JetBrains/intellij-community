@@ -140,7 +140,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
         LOG.error(e);
       }
     }
-    final ExternalizationSession session = new MyExternalizationSession(myPathMacroSubstitutor, myStorageData.clone());
+    final ExternalizationSession session = new MyExternalizationSession(myStorageData.clone());
 
     mySession = session;
     return session;
@@ -330,7 +330,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   private class MyExternalizationSession implements ExternalizationSession {
     private final DirectoryStorageData myStorageData;
 
-    private MyExternalizationSession(final TrackingPathMacroSubstitutor pathMacroSubstitutor, final DirectoryStorageData storageData) {
+    private MyExternalizationSession(final DirectoryStorageData storageData) {
       myStorageData = storageData;
     }
 
@@ -344,16 +344,13 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     private void setState(final String componentName, @NotNull Object state, final Storage storageSpec) throws StateStorageException {
       try {
         final Element element = DefaultStateSerializer.serializeState(state, storageSpec);
-
-        final List<Pair<Element, String>> states = mySplitter.splitState(element);
-        for (Pair<Element, String> pair : states) {
+        for (Pair<Element, String> pair : mySplitter.splitState(element)) {
           Element e = pair.first;
           String name = pair.second;
 
           Element statePart = new Element(StorageData.COMPONENT);
           statePart.setAttribute(StorageData.NAME, componentName);
-          e.detach();
-          statePart.addContent(e);
+          statePart.addContent(e.detach());
 
           myStorageData.put(componentName, myDir.getChild(name), statePart, false);
         }

@@ -338,10 +338,14 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
 
   @Override
   public String getPresentableUrl() {
-    if (myProject.isDefault()) return null;
+    if (myProject.isDefault()) {
+      return null;
+    }
     if (myPresentableUrl == null) {
-      final String url = myScheme == StorageScheme.DIRECTORY_BASED ? getProjectBasePath() : getProjectFilePath();
-      myPresentableUrl = url != null ? FileUtil.toSystemDependentName(url) : url;
+      String url = myScheme == StorageScheme.DIRECTORY_BASED ? getProjectBasePath() : getProjectFilePath();
+      if (url != null) {
+        myPresentableUrl = FileUtil.toSystemDependentName(url);
+      }
     }
     return myPresentableUrl;
   }
@@ -604,9 +608,9 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
 
-  private final StateStorageChooser myStateStorageChooser = new StateStorageChooser() {
+  private final StateStorageChooser<PersistentStateComponent<?>> myStateStorageChooser = new StateStorageChooser<PersistentStateComponent<?>>() {
     @Override
-    public Storage[] selectStorages(final Storage[] storages, final Object component, final StateStorageOperation operation) {
+    public Storage[] selectStorages(final Storage[] storages, final PersistentStateComponent<?> component, final StateStorageOperation operation) {
       if (operation == StateStorageOperation.READ) {
         OrderedSet<Storage> result = new OrderedSet<Storage>();
 
@@ -648,7 +652,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   };
 
   @Override
-  protected StateStorageChooser getDefaultStateStorageChooser() {
+  protected StateStorageChooser<PersistentStateComponent<?>> getDefaultStateStorageChooser() {
     return myStateStorageChooser;
   }
 

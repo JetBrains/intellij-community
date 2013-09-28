@@ -104,7 +104,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     return findChildrenByClass(GrTopLevelDefinition.class);
   }
 
-  public GrMethod[] getTopLevelMethods() {
+  public GrMethod[] getCodeMethods() {
     final StubElement<?> stub = getStub();
     if (stub != null) {
       return stub.getChildrenByType(GroovyElementTypes.METHOD_DEFINITION, GrMethod.ARRAY_FACTORY);
@@ -118,7 +118,7 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     if (myMethods == null) {
       List<GrMethod> result = new ArrayList<GrMethod>();
       
-      GrMethod[] methods = getTopLevelMethods();
+      GrMethod[] methods = getCodeMethods();
       for (GrMethod method : methods) {
         final GrReflectedMethod[] reflectedMethods = method.getReflectedMethods();
         if (reflectedMethods.length > 0) {

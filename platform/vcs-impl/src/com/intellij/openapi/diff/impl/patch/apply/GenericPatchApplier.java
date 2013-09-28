@@ -489,7 +489,7 @@ public class GenericPatchApplier {
           myHadAlreadyAppliedMet = value.isHaveAlreadyApplied();
         } else {
           // deletion
-          myTransformations.put(new TextRange(j, i + (cntStart - endSize)), new MyAppliedData(Collections.<String>emptyList(), value.isHaveAlreadyApplied(),
+          myTransformations.put(new UnfairTextRange(j, i + (cntStart - endSize)), new MyAppliedData(Collections.<String>emptyList(), value.isHaveAlreadyApplied(),
                                                                    value.isPlaceCoinside(), value.isChangedCoinside(), value.myChangeType));
         }
       } else {

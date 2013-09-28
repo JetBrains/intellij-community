@@ -35,7 +35,6 @@ public class EclipseCompilerConfigurable implements Configurable {
   private JCheckBox myCbDebuggingInfo;
   private JCheckBox myCbGenerateNoWarnings;
   private RawCommandLineEditor myAdditionalOptionsField;
-  private JTextField myJavacMaximumHeapField;
   private JCheckBox myCbProceedOnErrors;
   private final EclipseCompilerOptions myCompilerSettings;
 
@@ -59,7 +58,7 @@ public class EclipseCompilerConfigurable implements Configurable {
   }
 
   public boolean isModified() {
-    boolean isModified = ComparingUtils.isModified(myJavacMaximumHeapField, myCompilerSettings.MAXIMUM_HEAP_SIZE);
+    boolean isModified = false;
 
     isModified |= ComparingUtils.isModified(myCbDeprecation, myCompilerSettings.DEPRECATION);
     isModified |= ComparingUtils.isModified(myCbDebuggingInfo, myCompilerSettings.DEBUGGING_INFO);
@@ -70,17 +69,6 @@ public class EclipseCompilerConfigurable implements Configurable {
   }
 
   public void apply() throws ConfigurationException {
-
-    try {
-      myCompilerSettings.MAXIMUM_HEAP_SIZE = Integer.parseInt(myJavacMaximumHeapField.getText());
-      if(myCompilerSettings.MAXIMUM_HEAP_SIZE < 1) {
-        myCompilerSettings.MAXIMUM_HEAP_SIZE = 128;
-      }
-    }
-    catch(NumberFormatException exception) {
-      myCompilerSettings.MAXIMUM_HEAP_SIZE = 128;
-    }
-
     myCompilerSettings.DEPRECATION =  myCbDeprecation.isSelected();
     myCompilerSettings.DEBUGGING_INFO = myCbDebuggingInfo.isSelected();
     myCompilerSettings.GENERATE_NO_WARNINGS = myCbGenerateNoWarnings.isSelected();
@@ -89,7 +77,6 @@ public class EclipseCompilerConfigurable implements Configurable {
   }
 
   public void reset() {
-    myJavacMaximumHeapField.setText(Integer.toString(myCompilerSettings.MAXIMUM_HEAP_SIZE));
     myCbDeprecation.setSelected(myCompilerSettings.DEPRECATION);
     myCbDebuggingInfo.setSelected(myCompilerSettings.DEBUGGING_INFO);
     myCbGenerateNoWarnings.setSelected(myCompilerSettings.GENERATE_NO_WARNINGS);

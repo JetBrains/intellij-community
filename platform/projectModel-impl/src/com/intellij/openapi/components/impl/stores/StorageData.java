@@ -25,6 +25,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import org.jdom.Attribute;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -54,37 +55,32 @@ public class StorageData {
   }
 
   public void load(@NotNull Element rootElement) throws IOException {
-    final Element[] elements = JDOMUtil.getElements(rootElement);
-    for (Element element : elements) {
-      if (element.getName().equals(COMPONENT)) {
-        final String name = element.getAttributeValue(NAME);
+    for (Iterator<Element> iterator = rootElement.getChildren(COMPONENT).iterator(); iterator.hasNext(); ) {
+      Element element = iterator.next();
+      String name = element.getAttributeValue(NAME);
+      if (name == null) {
+        LOG.info("Broken content in file : " + this);
+        continue;
+      }
 
-        if (name == null) {
-          LOG.info("Broken content in file : " + this);
-          continue;
+      iterator.remove();
+
+      if (element.getAttributes().size() > 1 || !element.getChildren().isEmpty()) {
+        assert element.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
+
+        Element existingElement = myComponentStates.get(name);
+        if (existingElement != null) {
+          element = mergeElements(name, element, existingElement);
         }
 
-        element.detach();
-
-        if (element.getAttributes().size() > 1 || !element.getChildren().isEmpty()) {
-          assert element.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
-
-          Element existingElement = myComponentStates.get(name);
-
-          if (existingElement != null) {
-            element = mergeElements(name, element, existingElement);
-          }
-
-          myComponentStates.put(name, element);
-        }
+        myComponentStates.put(name, element);
       }
     }
   }
 
   private static Element mergeElements(final String name, final Element element1, final Element element2) {
     ExtensionPoint<XmlConfigurationMerger> point = Extensions.getRootArea().getExtensionPoint("com.intellij.componentConfigurationMerger");
-    XmlConfigurationMerger[] mergers = point.getExtensions();
-    for (XmlConfigurationMerger merger : mergers) {
+    for (XmlConfigurationMerger merger : point.getExtensions()) {
       if (merger.getComponentName().equals(name)) {
         return merger.merge(element1, element2);
       }
@@ -111,14 +107,12 @@ public class StorageData {
 
   @Nullable
   public Element getState(final String name) {
-    final Element e = myComponentStates.get(name);
-
-    if (e != null) {
-      assert e.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
-      e.removeAttribute(NAME);
+    final Element element = myComponentStates.get(name);
+    if (element != null) {
+      assert element.getAttributeValue(NAME) != null : "No name attribute for component: " + name + " in " + this;
+      element.removeAttribute(NAME);
     }
-
-    return e;
+    return element;
   }
 
   void removeState(final String componentName) {
@@ -174,10 +168,10 @@ public class StorageData {
   }
 
   public Set<String> getDifference(final StorageData storageData, PathMacroSubstitutor substitutor) {
-    Set<String> bothStates = new HashSet<String>(myComponentStates.keySet());
+    Set<String> bothStates = new THashSet<String>(myComponentStates.keySet());
     bothStates.retainAll(storageData.myComponentStates.keySet());
 
-    Set<String> diffs = new HashSet<String>();
+    Set<String> diffs = new THashSet<String>();
     diffs.addAll(storageData.myComponentStates.keySet());
     diffs.addAll(myComponentStates.keySet());
     diffs.removeAll(bothStates);
@@ -196,7 +190,6 @@ public class StorageData {
       }
     }
 
-
     return diffs;
   }
 
@@ -209,7 +202,9 @@ public class StorageData {
   }
 
   public void checkUnknownMacros(TrackingPathMacroSubstitutor pathMacroSubstitutor) {
-    if (pathMacroSubstitutor == null) return;
+    if (pathMacroSubstitutor == null) {
+      return;
+    }
 
     for (String componentName : myComponentStates.keySet()) {
       final Set<String> unknownMacros = PathMacrosCollector.getMacroNames(myComponentStates.get(componentName));

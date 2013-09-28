@@ -80,7 +80,7 @@ public class CompilerTestUtil {
   public static void enableExternalCompiler(final Project project) {
     new WriteAction() {
       protected void run(final Result result) {
-        CompilerWorkspaceConfiguration.getInstance(project).USE_COMPILE_SERVER = true;
+        CompilerWorkspaceConfiguration.getInstance(project).USE_OUT_OF_PROCESS_BUILD = true;
         ApplicationManagerEx.getApplicationEx().doNotSave(false);
         JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
         table.addJdk(table.getInternalJdk());
@@ -91,7 +91,7 @@ public class CompilerTestUtil {
   public static void disableExternalCompiler(final Project project) {
     new WriteAction() {
       protected void run(final Result result) {
-        CompilerWorkspaceConfiguration.getInstance(project).USE_COMPILE_SERVER = false;
+        CompilerWorkspaceConfiguration.getInstance(project).USE_OUT_OF_PROCESS_BUILD = false;
         ApplicationManagerEx.getApplicationEx().doNotSave(true);
         JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
         table.removeJdk(table.getInternalJdk());

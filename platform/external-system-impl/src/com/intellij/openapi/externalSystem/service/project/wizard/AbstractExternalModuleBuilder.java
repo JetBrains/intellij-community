@@ -18,7 +18,6 @@ package com.intellij.openapi.externalSystem.service.project.wizard;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleBuilderListener;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.diagnostic.Logger;
@@ -74,7 +73,7 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
 
   @Override
   public String getPresentableName() {
-    return ExternalSystemBundle.message("module.type.title", myExternalSystemId.getReadableName());
+    return myExternalSystemId.getReadableName();
   }
 
   @Override

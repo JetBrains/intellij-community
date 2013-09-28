@@ -27,6 +27,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
@@ -46,6 +48,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
   private final MultiValuesMap<XBreakpointGroupingRule, XBreakpointGroup> myGroups = new MultiValuesMap<XBreakpointGroupingRule, XBreakpointGroup>();
 
   private JTree myTreeView;
+  protected boolean myInBuild;
 
   public BreakpointItemsTreeController(Collection<XBreakpointGroupingRule> groupingRules) {
     myRoot = new CheckedTreeNode("root");
@@ -58,10 +61,45 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
 
   public void setTreeView(JTree treeView) {
     myTreeView = treeView;
+    myTreeView.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
+      public void valueChanged(TreeSelectionEvent event) {
+        selectionChanged();
+      }
+    });
     if (treeView instanceof BreakpointsCheckboxTree) {
       ((BreakpointsCheckboxTree)treeView).setDelegate(this);
     }
     myTreeView.setShowsRootHandles(!myGroupingRules.isEmpty());
+  }
+
+  protected void selectionChanged() {
+    if (myInBuild) return;
+    selectionChangedImpl();
+  }
+
+  protected void selectionChangedImpl() {
+  }
+
+  @Override
+  public void nodeStateDidChange(CheckedTreeNode node) {
+    if (myInBuild) return;
+    nodeStateDidChangeImpl(node);
+  }
+
+  protected void nodeStateDidChangeImpl(CheckedTreeNode node) {
+    if (node instanceof BreakpointItemNode) {
+      ((BreakpointItemNode)node).getBreakpointItem().setEnabled(node.isChecked());
+    }
+  }
+
+  @Override
+  public void nodeStateWillChange(CheckedTreeNode node) {
+    if (myInBuild) return;
+    nodeStateWillChangeImpl(node);
+  }
+
+  protected void nodeStateWillChangeImpl(CheckedTreeNode node) {
   }
 
   private void setGroupingRulesInternal(final Collection<XBreakpointGroupingRule> groupingRules) {
@@ -81,9 +119,11 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
       myNodes.put(breakpoint, node);
     }
     TreeUtil.sort(myRoot, myComparator);
+    myInBuild = true;
     ((DefaultTreeModel)(myTreeView.getModel())).nodeStructureChanged(myRoot);
     state.applyTo(myTreeView, myRoot);
     TreeUtil.expandAll(myTreeView);
+    myInBuild = false;
   }
 
 
@@ -140,25 +180,15 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
     return groupNode;
   }
 
-  @Override
-  public void nodeStateChanged(CheckedTreeNode node) {
-    if (node instanceof BreakpointItemNode) {
-      ((BreakpointItemNode)node).getBreakpointItem().setEnabled(node.isChecked());
-    }
-  }
-
   public void setGroupingRules(Collection<XBreakpointGroupingRule> groupingRules) {
     setGroupingRulesInternal(groupingRules);
     rebuildTree(new ArrayList<BreakpointItem>(myNodes.keySet()));
   }
 
   public void rebuildTree(Collection<BreakpointItem> items) {
-    List<BreakpointItem> selectedBreakpoints = getSelectedBreakpoints();
     TreePath path = myTreeView.getSelectionPath();
     buildTree(items);
-    if (selectedBreakpoints.size() > 0) {
-      selectBreakpointItem(selectedBreakpoints.get(0), path);
-    }
+    selectBreakpointItem(null, path);
   }
 
   public List<BreakpointItem> getSelectedBreakpoints() {

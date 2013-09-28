@@ -93,6 +93,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     init();
   }
 
+  @NotNull
   public List<T> showAndGetResult() {
     show();
     return getChosenElements();

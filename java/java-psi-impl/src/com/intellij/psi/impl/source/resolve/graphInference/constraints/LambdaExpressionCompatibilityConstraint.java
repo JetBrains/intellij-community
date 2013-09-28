@@ -1,8 +1,8 @@
 package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
-import com.intellij.psi.impl.source.resolve.graphInference.InferenceVariable;
 import com.intellij.psi.util.PsiUtil;
 
 import java.util.List;
@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class LambdaExpressionCompatibilityConstraint implements ConstraintFormula {
   private final PsiLambdaExpression myExpression;
-  private final PsiType myT;
+  private PsiType myT;
 
   public LambdaExpressionCompatibilityConstraint(PsiLambdaExpression expression, PsiType t) {
     myExpression = expression;
@@ -20,30 +20,21 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
   }
 
   @Override
-  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints, List<ConstraintFormula> delayedConstraints) {
-    final InferenceVariable inferenceVariable = session.getInferenceVariable(myT);
-    if (inferenceVariable != null) {
-      delayedConstraints.add(this);
-      return true;
-    }
+  public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
     if (LambdaHighlightingUtil.checkInterfaceFunctional(myT) != null) {
       return false;
     }
 
     if (myExpression.hasFormalParameterTypes()) {
     }
-    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(myT);
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(
+      FunctionalInterfaceParameterizationUtil.getFunctionalType(myT, myExpression, false));
+    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
     if (interfaceMethod == null) {
       return false;
     }
-    final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, PsiUtil.resolveGenericsClassInType(myT));
+    final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, resolveResult);
     final PsiParameter[] parameters = interfaceMethod.getParameterList().getParameters();
-    for (PsiParameter parameter : parameters) {
-      if (!session.isProperType(parameter.getType())) {
-        delayedConstraints.add(this);
-        return true;
-      }
-    }
 
     final PsiParameter[] lambdaParameters = myExpression.getParameterList().getParameters();
     if (lambdaParameters.length != parameters.length) {
@@ -53,23 +44,35 @@ public class LambdaExpressionCompatibilityConstraint implements ConstraintFormul
       for (int i = 0; i < lambdaParameters.length; i++) {
         constraints.add(new TypeEqualityConstraint(lambdaParameters[i].getType(), substitutor.substitute(parameters[i].getType())));
       }
+    } else {
+      for (PsiParameter parameter : parameters) {
+        if (!session.isProperType(substitutor.substitute(parameter.getType()))) {
+          return false;
+        }
+      }
     }
 
     final PsiType returnType = interfaceMethod.getReturnType();
     if (returnType != null) {
+      final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(myExpression);
       if (returnType.equals(PsiType.VOID)) {
-        if (!myExpression.isVoidCompatible() && !(myExpression.getBody() instanceof PsiExpression)) {
+        if (!returnExpressions.isEmpty() && !(myExpression.getBody() instanceof PsiExpression)) {
           return false;
         }
       } else {
-        if (myExpression.isVoidCompatible()) {  //not value-compatible
+        if (returnExpressions.isEmpty()) {  //not value-compatible
           return false;
         }
-        for (PsiExpression returnExpressions : LambdaUtil.getReturnExpressions(myExpression)) {
-          constraints.add(new ExpressionCompatibilityConstraint(returnExpressions, returnType));
+        for (PsiExpression returnExpression : returnExpressions) {
+          constraints.add(new ExpressionCompatibilityConstraint(returnExpression, substitutor.substitute(returnType)));
         }
       }
     }
     return true;
+  }
+
+  @Override
+  public void apply(PsiSubstitutor substitutor) {
+    myT = substitutor.substitute(myT);
   }
 }

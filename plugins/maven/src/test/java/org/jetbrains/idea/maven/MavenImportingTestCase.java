@@ -48,9 +48,13 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.*;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.*;
+import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
 import java.io.File;
@@ -115,36 +119,42 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void assertSources(String moduleName, String... expectedSources) {
-    doAssertContentFolders(moduleName, true, false, expectedSources);
+    doAssertContentFolders(moduleName, JavaSourceRootType.SOURCE, expectedSources);
+  }
+
+  protected void assertResources(String moduleName, String... expectedSources) {
+    doAssertContentFolders(moduleName, JavaResourceRootType.RESOURCE, expectedSources);
   }
 
   protected void assertTestSources(String moduleName, String... expectedSources) {
-    doAssertContentFolders(moduleName, true, true, expectedSources);
+    doAssertContentFolders(moduleName, JavaSourceRootType.TEST_SOURCE, expectedSources);
+  }
+
+  protected void assertTestResources(String moduleName, String... expectedSources) {
+    doAssertContentFolders(moduleName, JavaResourceRootType.TEST_RESOURCE, expectedSources);
   }
 
   protected void assertExcludes(String moduleName, String... expectedExcludes) {
-    doAssertContentFolders(moduleName, false, false, expectedExcludes);
+    doAssertContentFolders(moduleName, null, expectedExcludes);
   }
 
   protected void assertContentRootExcludes(String moduleName, String contentRoot, String... expectedExcudes) {
-    doAssertContentFolders(getContentRoot(moduleName, contentRoot), false, false, expectedExcudes);
+    doAssertContentFolders(getContentRoot(moduleName, contentRoot), null, expectedExcudes);
   }
 
-  private void doAssertContentFolders(String moduleName, boolean isSource, boolean isTest, String... expected) {
-    doAssertContentFolders(getContentRoot(moduleName), isSource, isTest, expected);
+  private void doAssertContentFolders(String moduleName, @Nullable JpsModuleSourceRootType<?> rootType, String... expected) {
+    doAssertContentFolders(getContentRoot(moduleName), rootType, expected);
   }
 
-  private static void doAssertContentFolders(ContentEntry e, boolean isSource, boolean isTest, String... expected) {
+  private static void doAssertContentFolders(ContentEntry e, @Nullable JpsModuleSourceRootType<?> rootType, String... expected) {
     List<String> actual = new ArrayList<String>();
-    for (ContentFolder f : isSource ? e.getSourceFolders() : e.getExcludeFolders()) {
-      if (isSource && (isTest != ((SourceFolder)f).isTestSource())) continue;
-
+    for (ContentFolder f : rootType != null ? e.getSourceFolders(rootType) : Arrays.asList(e.getExcludeFolders())) {
       String rootUrl = e.getUrl();
       String folderUrl = f.getUrl();
 
       if (folderUrl.startsWith(rootUrl)) {
-        int lenght = rootUrl.length() + 1;
-        folderUrl = folderUrl.substring(Math.min(lenght, folderUrl.length()));
+        int length = rootUrl.length() + 1;
+        folderUrl = folderUrl.substring(Math.min(length, folderUrl.length()));
       }
 
       actual.add(folderUrl);

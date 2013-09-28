@@ -23,12 +23,14 @@ import com.intellij.testFramework.UsefulTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.*;
 
 /**
  * @author yole
  */
 public class TestDataReferenceCollector {
+  private static final String TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME = "com.intellij.testFramework.TestDataFile";
   private final String myTestDataPath;
   private final String myTestName;
   private final List<String> myLogMessages = new ArrayList<String>();
@@ -36,6 +38,9 @@ public class TestDataReferenceCollector {
   private boolean myFoundTestDataParameters = false;
 
   public TestDataReferenceCollector(@Nullable String testDataPath, String testName) {
+    if (StringUtil.isNotEmpty(testDataPath) && StringUtil.endsWithChar(testDataPath, File.separatorChar)) {
+      testDataPath += File.separatorChar;
+    }
     myTestDataPath = testDataPath;
     myTestName = testName;
   }
@@ -80,7 +85,7 @@ public class TestDataReferenceCollector {
           for (int i = 0, psiParametersLength = psiParameters.length; i < psiParametersLength; i++) {
             PsiParameter psiParameter = psiParameters[i];
             final PsiModifierList modifierList = psiParameter.getModifierList();
-            if (modifierList != null && modifierList.findAnnotation("com.intellij.testFramework.TestDataFile") != null) {
+            if (modifierList != null && modifierList.findAnnotation(TEST_DATA_FILE_ANNOTATION_QUALIFIED_NAME) != null) {
               myFoundTestDataParameters = true;
               processCallArgument(expression, argumentMap, result, i);
               haveAnnotatedParameters = true;
@@ -152,7 +157,6 @@ public class TestDataReferenceCollector {
         if (initializer != null) {
           return evaluate(initializer, arguments);
         }
-
       }
     }
     else if (expression instanceof PsiMethodCallExpression) {

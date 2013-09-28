@@ -9,8 +9,9 @@ import com.siyeh.ipp.IPPTestCase;
 public class UnicodeUnescapeIntentionTest extends IPPTestCase {
 
   public void testSimple() { doTest(); }
-  public void testNoException() { assertIntentionNotAvailable(); }
   public void testSelection() { doTest(); }
+  public void testNoException() { assertIntentionNotAvailable(); }
+  public void testU() { assertIntentionNotAvailable(); }
 
   @Override
   protected String getRelativePath() {

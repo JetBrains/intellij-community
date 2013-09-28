@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
@@ -35,6 +36,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenGoalLocation;
+import org.jetbrains.idea.maven.execution.MavenRunConfiguration;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -134,6 +136,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return extractNavigatables();
 
     if (MavenDataKeys.MAVEN_GOALS.is(dataId)) return extractGoals(true);
+    if (MavenDataKeys.RUN_CONFIGURATION.is(dataId)) return extractRunConfiguration();
     if (MavenDataKeys.MAVEN_PROFILES.is(dataId)) return extractProfiles();
 
     if (MavenDataKeys.MAVEN_DEPENDENCIES.is(dataId)) {
@@ -186,6 +189,14 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
 
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
     return psiFile == null ? null : new MavenGoalLocation(myProject, psiFile, goals);
+  }
+
+  @Nullable
+  private MavenRunConfiguration extractRunConfiguration() {
+    SimpleNode node = myTree.getSelectedNode();
+    if (!(node instanceof MavenProjectsStructure.RunConfigurationNode)) return null;
+
+    return ((MavenProjectsStructure.RunConfigurationNode)node).getConfiguration();
   }
 
   private List<String> extractGoals(boolean qualifiedGoals) {

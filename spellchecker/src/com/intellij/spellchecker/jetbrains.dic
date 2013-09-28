@@ -11,6 +11,7 @@ arial
 arity
 asensitive
 aspectj
+async
 attr
 attlist
 auth
@@ -84,6 +85,7 @@ covariant
 cron
 ctrl
 customizer
+cyclomatic
 datafile
 datafiles
 datetime

@@ -134,7 +134,9 @@ public class FileBasedStorage extends XmlElementStorage {
 
   public void resetProviderCache() {
     myProviderUpToDateHash = -1;
-    myProviderVersions = null;
+    if (myRemoteVersionProvider != null) {
+      myRemoteVersionProvider.myProviderVersions = null;
+    }
   }
 
   private class FileSaveSession extends MySaveSession {
@@ -322,7 +324,7 @@ public class FileBasedStorage extends XmlElementStorage {
 
   @Nullable
   public File updateFileExternallyFromStreamProviders() throws IOException {
-    StorageData loadedData = loadData(true, myListener);
+    StorageData loadedData = loadData(true);
     Document document = getDocument(loadedData);
     if (physicalContentNeedsSave(document)) {
       File file = new File(myFile.getAbsolutePath());

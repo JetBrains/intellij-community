@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class HighlightInfoComposite extends HighlightInfo {
 
   public HighlightInfoComposite(@NotNull List<HighlightInfo> infos) {
     super(null, null, infos.get(0).type, infos.get(0).startOffset, infos.get(0).endOffset, createCompositeDescription(infos),
-          createCompositeTooltip(infos), infos.get(0).type.getSeverity(null), false, null, false, 0);
+          createCompositeTooltip(infos), infos.get(0).type.getSeverity(null), false, null, false, 0, infos.get(0).getProblemGroup(), infos.get(0).getGutterIconRenderer());
     highlighter = infos.get(0).highlighter;
     setGroup(infos.get(0).getGroup());
     List EMPTY = ContainerUtil.emptyList();

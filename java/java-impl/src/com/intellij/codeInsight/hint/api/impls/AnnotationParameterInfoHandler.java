@@ -21,6 +21,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,14 +111,18 @@ public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiA
 
   @Override
   public void updateUI(final PsiAnnotationMethod p, final ParameterInfoUIContext context) {
-    @NonNls StringBuffer buffer = new StringBuffer();
+    updateUIText(p, context);
+  }
+
+  public static String updateUIText(PsiAnnotationMethod p, ParameterInfoUIContext context) {
+    @NonNls StringBuilder buffer = new StringBuilder();
     int highlightStartOffset;
     int highlightEndOffset;
     buffer.append(p.getReturnType().getPresentableText());
     buffer.append(" ");
-    highlightStartOffset = buffer.length();
+    highlightStartOffset = XmlStringUtil.escapeString(buffer.toString()).length();
     buffer.append(p.getName());
-    highlightEndOffset = buffer.length();
+    highlightEndOffset = XmlStringUtil.escapeString(buffer.toString()).length();
     buffer.append("()");
 
     if (p.getDefaultValue() != null) {
@@ -125,8 +130,8 @@ public class AnnotationParameterInfoHandler implements ParameterInfoHandler<PsiA
       buffer.append(p.getDefaultValue().getText());
     }
 
-    context.setupUIComponentPresentation(buffer.toString(), highlightStartOffset, highlightEndOffset, false, p.isDeprecated(),
-                                         false, context.getDefaultParameterColor());
+    return context.setupUIComponentPresentation(buffer.toString(), highlightStartOffset, highlightEndOffset, false, p.isDeprecated(),
+                                                false, context.getDefaultParameterColor());
   }
 
   private static PsiAnnotationMethod findAnnotationMethod(PsiFile file, int offset) {

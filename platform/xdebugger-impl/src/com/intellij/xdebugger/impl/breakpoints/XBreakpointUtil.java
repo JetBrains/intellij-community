@@ -22,13 +22,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -57,8 +56,7 @@ public class XBreakpointUtil {
 
   @Nullable
   public static XBreakpointType<?,?> findType(@NotNull @NonNls String id) {
-    XBreakpointType[] breakpointTypes = getBreakpointTypes();
-    for (XBreakpointType breakpointType : breakpointTypes) {
+    for (XBreakpointType breakpointType : getBreakpointTypes()) {
       if (id.equals(breakpointType.getId())) {
         return breakpointType;
       }
@@ -67,7 +65,7 @@ public class XBreakpointUtil {
   }
 
   public static XBreakpointType<?,?>[] getBreakpointTypes() {
-    return Extensions.getExtensions(XBreakpointType.EXTENSION_POINT_NAME);
+    return XBreakpointType.EXTENSION_POINT_NAME.getExtensions();
   }
 
   @NotNull

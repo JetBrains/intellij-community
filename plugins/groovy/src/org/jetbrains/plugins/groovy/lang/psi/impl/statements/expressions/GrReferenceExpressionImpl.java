@@ -857,10 +857,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return findExpressionChild(this);
   }
 
-  public boolean isQualified() {
-    return getQualifierExpression() != null;
-  }
-
   @Nullable
   public PsiElement getDotToken() {
     return findChildByType(TokenSets.DOTS);

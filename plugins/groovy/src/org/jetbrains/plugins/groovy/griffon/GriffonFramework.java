@@ -36,24 +36,25 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.IgnoredBeanFactory;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.mvc.*;
 
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -76,7 +77,7 @@ public class GriffonFramework extends MvcFramework {
   }
 
   public boolean hasSupport(@NotNull Module module) {
-    return getSdkRoot(module) != null && findAppRoot(module) != null && !isAuxModule(module);
+    return findAppRoot(module) != null && !isAuxModule(module) && getSdkRoot(module) != null;
   }
 
   @Override
@@ -417,6 +418,11 @@ public class GriffonFramework extends MvcFramework {
   }
 
   private static class GriffonProjectStructure extends MvcProjectStructure {
+
+    public static final String[] TEST_DIRS = new String[]{"unit", "integration", "shared"};
+    public static final String[] SRC_DIR_SUBFOLDER = new String[]{"main", "cli"};
+    public static final String[] GRIFFON_APP_SOURCE_ROOTS = new String[]{"models", "views", "controllers", "services", "conf", "lifecycle"};
+
     public GriffonProjectStructure(Module module, final boolean auxModule) {
       super(module, auxModule, getUserHomeGriffon(), GriffonFramework.getInstance().getSdkWorkDir(module));
     }
@@ -426,65 +432,51 @@ public class GriffonFramework extends MvcFramework {
       return GRIFFON_USER_LIBRARY;
     }
 
-    public String[] getSourceFolders() {
-      List<String> sourceFolders = new ArrayList<String>();
+    public MultiMap<JpsModuleSourceRootType<?>, String> getSourceFolders() {
+      MultiMap<JpsModuleSourceRootType<?>, String> res = new MultiMap<JpsModuleSourceRootType<?>, String>();
 
-      for (VirtualFile file : ModuleRootManager.getInstance(myModule).getContentRoots()) {
-        handleSrc(file.findChild("src"), sourceFolders);
-        VirtualFile griffonApp = file.findChild("griffon-app");
-        handleGriffonApp(griffonApp, sourceFolders);
-        List<GriffonSourceInspector.GriffonSource> sources =
-          GriffonSourceInspector.processModuleMetadata(myModule);
-        for (GriffonSourceInspector.GriffonSource source : sources) {
-          sourceFolders.add(source.getPath());
+      for (VirtualFile root : ModuleRootManager.getInstance(myModule).getContentRoots()) {
+        VirtualFile srcDir = root.findChild("src");
+        if (srcDir != null) {
+          for (String child : SRC_DIR_SUBFOLDER) {
+            if (srcDir.findChild(child) != null) {
+              res.putValue(JavaSourceRootType.SOURCE, "src/" + child);
+            }
+          }
         }
+
+        VirtualFile griffonApp = root.findChild("griffon-app");
         if (griffonApp != null) {
-          for (VirtualFile child : file.getChildren()) {
+          for (String child : GRIFFON_APP_SOURCE_ROOTS) {
+            if (griffonApp.findChild(child) != null) {
+              res.putValue(JavaSourceRootType.SOURCE, "griffon-app/" + child);
+            }
+          }
+
+          for (VirtualFile child : root.getChildren()) {
             if (child.getNameWithoutExtension().endsWith("GriffonAddon")) {
-              sourceFolders.add("");
+              res.putValue(JavaSourceRootType.SOURCE, "");
               break;
             }
           }
         }
-      }
-      return sourceFolders.toArray(new String[sourceFolders.size()]);
-    }
 
-    private void handleGriffonApp(VirtualFile griffonApp, List<String> sourceFolders) {
-      if (griffonApp == null) return;
-      // Add standard artifacts, i.e, models, views, controllers, services, conf, lifecycle
-      for (String child : new String[]{"models", "views", "controllers", "services", "conf", "lifecycle"}) {
-        if (griffonApp.findChild(child) != null) {
-          sourceFolders.add("griffon-app/" + child);
+        List<GriffonSourceInspector.GriffonSource> sources = GriffonSourceInspector.processModuleMetadata(myModule);
+        for (GriffonSourceInspector.GriffonSource source : sources) {
+          res.putValue(JavaSourceRootType.SOURCE, source.getPath());
+        }
+
+        VirtualFile testDir = root.findChild("test");
+        if (testDir != null) {
+          for (String child : TEST_DIRS) {
+            if (testDir.findChild(child) != null) {
+              res.putValue(JavaSourceRootType.TEST_SOURCE, "test/" + child);
+            }
+          }
         }
       }
-    }
 
-    private void handleSrc(VirtualFile src, List<String> sourceFolders) {
-      if (src == null) return;
-      for (String child : new String[]{"main", "cli"}) {
-        if (src.findChild(child) != null) {
-          sourceFolders.add("src/" + child);
-        }
-      }
-    }
-
-    private void handleTest(VirtualFile test, List<String> sourceFolders) {
-      if (test == null) return;
-      for (String child : new String[]{"unit", "integration", "shared"}) {
-        if (test.findChild(child) != null) {
-          sourceFolders.add("test/" + child);
-        }
-      }
-    }
-
-    public String[] getTestFolders() {
-      List<String> sourceFolders = new ArrayList<String>();
-
-      for (VirtualFile file : ModuleRootManager.getInstance(myModule).getContentRoots()) {
-        handleTest(file.findChild("test"), sourceFolders);
-      }
-      return sourceFolders.toArray(new String[sourceFolders.size()]);
+      return res;
     }
 
     public String[] getInvalidSourceFolders() {

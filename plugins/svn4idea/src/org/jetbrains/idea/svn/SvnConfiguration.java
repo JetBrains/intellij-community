@@ -75,11 +75,6 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
 
   private final static String SERVERS_FILE_NAME = "servers";
   
-  public static final String UPGRADE_AUTO = "auto";
-  public static final String UPGRADE_AUTO_15 = "auto1.5";
-  public static final String UPGRADE_AUTO_16 = "auto1.6";
-  public static final String UPGRADE_AUTO_17 = "auto1.7";
-  public static final String UPGRADE_NONE = "none";
   public static final String CLEANUP_ON_START_RUN = "cleanupOnStartRun";
   private final Project myProject;
 
@@ -129,6 +124,10 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
   private final Map<File, UpdateRootInfo> myUpdateRootInfos = new HashMap<File, UpdateRootInfo>();
   private SvnInteractiveAuthenticationProvider myInteractiveProvider;
   private IdeaSVNConfigFile myConfigFile;
+
+  public boolean isCommandLine() {
+    return UseAcceleration.commandLine.equals(myUseAcceleration);
+  }
 
   @Override
   public Element getState() {

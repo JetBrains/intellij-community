@@ -81,7 +81,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   private int getApplicabilityLevelInner() {
     if (myArgumentTypes == null) return ApplicabilityLevel.NOT_APPLICABLE;
 
-    int level = PsiUtil.getApplicabilityLevel(getElement(), getSubstitutor(!Registry.is("enable.graph.inference", false)), myArgumentTypes, myLanguageLevel);
+    int level = PsiUtil.getApplicabilityLevel(getElement(), getSubstitutor(), myArgumentTypes, myLanguageLevel);
     if (level > ApplicabilityLevel.NOT_APPLICABLE && !isTypeArgumentsApplicable()) level = ApplicabilityLevel.NOT_APPLICABLE;
     return level;
   }

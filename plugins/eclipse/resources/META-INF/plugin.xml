@@ -13,6 +13,10 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <fileTypeFactory implementation="org.jetbrains.idea.eclipse.config.EclipseFileTypeFactory"/>
     <syntaxHighlighter key="Eclipse" implementationClass="com.intellij.ide.highlighter.XmlFileHighlighter"/>
+    <schemeImporter 
+        name="Eclpse XML Profile"
+        implementationClass="org.jetbrains.idea.eclipse.importer.EclipseCodeStyleSchemeImporter"
+        schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"/>
   </extensions>
   <module-components>
     <component>

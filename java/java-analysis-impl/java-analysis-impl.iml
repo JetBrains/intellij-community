@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="projectModel-impl" exported="" />
     <orderEntry type="module" module-name="java-analysis-api" exported="" />
     <orderEntry type="module" module-name="resources-en" />
+    <orderEntry type="module" module-name="xml-psi-api" />
   </component>
 </module>
 

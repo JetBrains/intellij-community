@@ -64,8 +64,8 @@ class Test2 {
     static <T> void bar3(I<T> i, T t){}
 
     {
-        bar(<error descr="Cyclic inference">x -> x</error>);
-        bar1(<error descr="Cyclic inference">x -> x</error>);
+        bar(x -> x);
+        bar1(x -> x);
         bar2(1, <error descr="Incompatible return type List<Integer> in lambda expression">x -> x</error>);
         bar2("", <error descr="Incompatible return type List<String> in lambda expression">x -> x</error>);
         bar3(<error descr="Incompatible return type List<String> in lambda expression">x -> x</error>, "");
@@ -84,8 +84,8 @@ class Test3 {
     static <T> void bar3(I<T> i, T t){}
 
     {
-        bar(<error descr="Cyclic inference">x -> x</error>);
-        bar1(<error descr="Cyclic inference">x -> x</error>);
+        bar(x -> x);
+        bar1(x -> x);
         bar2(1, x -> x);
         bar2("", x -> x);
 

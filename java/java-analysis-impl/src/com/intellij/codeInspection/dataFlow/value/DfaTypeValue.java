@@ -81,6 +81,10 @@ public class DfaTypeValue extends DfaValue {
     return myNullness == Nullness.NOT_NULL;
   }
 
+  public Nullness getNullness() {
+    return myNullness;
+  }
+
   @NonNls
   public String toString() {
     return myType + ", nullable=" + myNullness;

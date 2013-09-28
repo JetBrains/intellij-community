@@ -30,12 +30,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SchemesManager;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.Alarm;
@@ -848,12 +847,43 @@ public class TemplateListPanel extends JPanel implements Disposable {
       }
     };
 
+    final DumbAwareAction changeContext = new DumbAwareAction("Change context...") {
+
+      @Override
+      public void update(AnActionEvent e) {
+        boolean enabled = !getSelectedTemplates().isEmpty();
+        e.getPresentation().setEnabled(enabled);
+        super.update(e);
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        Map<TemplateImpl, DefaultMutableTreeNode> templates = getSelectedTemplates();
+        Map<TemplateContextType, Boolean> context = ContainerUtil.newHashMap();
+        for (TemplateContextType type : TemplateManagerImpl.getAllContextTypes()) {
+          context.put(type, Boolean.FALSE);
+        }
+        JPanel contextPanel = LiveTemplateSettingsEditor.createPopupContextPanel(EmptyRunnable.INSTANCE, context);
+        DialogBuilder builder = new DialogBuilder(TemplateListPanel.this);
+        builder.setCenterPanel(contextPanel);
+        builder.setTitle("Change Context Type For Selected Templates");
+        int result = builder.show();
+        if (result == DialogWrapper.OK_EXIT_CODE) {
+          for (TemplateImpl template : templates.keySet()) {
+            getTemplateContext(template).putAll(context);
+          }
+        } 
+      }
+    };
+
+
     myTree.addMouseListener(new PopupHandler() {
       @Override
       public void invokePopup(Component comp, int x, int y) {
         final DefaultActionGroup group = new DefaultActionGroup();
         group.add(rename);
         group.add(move);
+        group.add(changeContext);
         ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group).getComponent().show(comp, x, y);
       }
     });

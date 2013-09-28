@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public class RenameMembersInplaceTest extends LightCodeInsightTestCase {
       doTestInplaceRename("bar");
     }
     catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
-      assertEquals("Method bar() is already defined in the class <b><code>Foo</code></b>.", e.getMessage());
+      assertEquals("Method bar() is already defined in the class <b><code>Foo</code></b>", e.getMessage());
       checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
       return;
     }

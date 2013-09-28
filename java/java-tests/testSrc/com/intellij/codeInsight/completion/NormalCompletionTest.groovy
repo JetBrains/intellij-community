@@ -627,8 +627,6 @@ public class ListUtils {
     doTest();
   }
 
-  public void testFieldWithCastingCaret() throws Throwable { doTest(); }
-
   public void testInnerEnumConstant() throws Throwable { doTest('\n'); }
 
   public void testMethodReturnType() throws Throwable {
@@ -798,7 +796,7 @@ public class ListUtils {
   }
 
   private def configure() {
-    configureByFile(getTestName(false) + ".java")
+    configureByTestName()
   }
 
   public void testFinalInForLoop() throws Throwable {
@@ -868,13 +866,6 @@ public class ListUtils {
     checkResult();
   }
 
-  private void doAntiTest() throws Exception {
-    configure()
-    checkResultByFile(getTestName(false) + ".java");
-    assertEmpty(myItems);
-    assertNull(getLookup());
-  }
-
   public void testSecondAnonymousClassParameter() throws Throwable { doTest('\n'); }
 
   public void testSpaceAfterReturn() throws Throwable {
@@ -892,19 +883,7 @@ public class ListUtils {
     assertStringItems "fooa", "foob"
   }
 
-  public void testCastInstanceofedQualifier() throws Throwable { doTest(); }
-  public void testCastInstanceofedQualifierInForeach() throws Throwable { doTest(); }
-  public void testCastComplexInstanceofedQualifier() throws Throwable { doTest(); }
-  public void _testCastIncompleteInstanceofedQualifier() throws Throwable { doTest(); }
-
-  public void testCastTooComplexInstanceofedQualifier() throws Throwable { doAntiTest(); }
-  public void testDontCastInstanceofedQualifier() throws Throwable { doTest(); }
-  public void testQualifierCastingWithUnknownAssignments() throws Throwable { doTest(); }
-  public void testQualifierCastingBeforeLt() throws Throwable { doTest(); }
-  public void testCastQualifierForPrivateFieldReference() throws Throwable { doTest(); }
   public void testNoReturnInTernary() throws Throwable { doTest(); }
-
-  public void testOrAssignmentDfa() throws Throwable { doTest(); }
 
   public void testWildcardsInLookup() throws Exception {
     configure()

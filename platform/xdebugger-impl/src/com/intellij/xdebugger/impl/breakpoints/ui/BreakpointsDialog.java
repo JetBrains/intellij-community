@@ -36,6 +36,7 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState;
+import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemNode;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemsTreeController;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsCheckboxTree;
 import org.jetbrains.annotations.NotNull;
@@ -198,7 +199,30 @@ public class BreakpointsDialog extends DialogWrapper {
   }
 
   private JComponent createMasterView() {
-    myTreeController = new BreakpointItemsTreeController(myRulesEnabled);
+    myTreeController = new BreakpointItemsTreeController(myRulesEnabled) {
+      @Override
+      public void nodeStateWillChangeImpl(CheckedTreeNode node) {
+        if (node instanceof BreakpointItemNode) {
+          ((BreakpointItemNode)node).getBreakpointItem().saveState();
+        }
+        super.nodeStateWillChangeImpl(node);
+      }
+
+      @Override
+      public void nodeStateDidChangeImpl(CheckedTreeNode node) {
+        super.nodeStateDidChangeImpl(node);
+        if (node instanceof BreakpointItemNode) {
+          myDetailController.doUpdateDetailView(true);
+        }
+      }
+
+      @Override
+      protected void selectionChangedImpl() {
+        super.selectionChangedImpl();
+        saveCurrentItem();
+        myDetailController.updateDetailView();
+      }
+    };
     JTree tree = new BreakpointsCheckboxTree(myProject, myTreeController);
 
     new AnAction("BreakpointDialog.GoToSource") {
@@ -215,16 +239,6 @@ public class BreakpointsDialog extends DialogWrapper {
         navigate();
       }
     }.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), tree);
-
-    tree.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseClicked(MouseEvent event) {
-        if (event.getClickCount() == 2 && UIUtil.isActionClick(event, MouseEvent.MOUSE_CLICKED) && !UIUtil.isSelectionButtonDown(event) && !event.isConsumed()) {
-          navigate();
-          close(OK_EXIT_CODE);
-        }
-      }
-    });
 
     final DefaultActionGroup breakpointTypes = new DefaultActionGroup();
     for (BreakpointPanelProvider provider : myBreakpointsPanelProviders) {
@@ -267,8 +281,6 @@ public class BreakpointsDialog extends DialogWrapper {
 
     JPanel decoratedTree = decorator.createPanel();
     myTreeController.setTreeView(tree);
-
-    myDetailController.setTree(tree);
 
     myTreeController.buildTree(myBreakpointItems);
 
@@ -344,8 +356,16 @@ public class BreakpointsDialog extends DialogWrapper {
 
   @Override
   protected void dispose() {
+    saveCurrentItem();
     Disposer.dispose(myListenerDisposable);
     saveBreakpointsDialogState();
     super.dispose();
+  }
+
+  private void saveCurrentItem() {
+    ItemWrapper item = myDetailController.getSelectedItem();
+    if (item instanceof BreakpointItem) {
+      ((BreakpointItem)item).saveState();
+    }
   }
 }

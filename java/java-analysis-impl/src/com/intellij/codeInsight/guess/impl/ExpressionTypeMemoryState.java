@@ -58,14 +58,13 @@ public class ExpressionTypeMemoryState extends DfaMemoryStateImpl {
     super(factory);
   }
 
-  @Override
-  protected DfaMemoryStateImpl createNew() {
-    return new ExpressionTypeMemoryState(getFactory());
+  private ExpressionTypeMemoryState(DfaMemoryStateImpl toCopy) {
+    super(toCopy);
   }
 
   @Override
   public DfaMemoryStateImpl createCopy() {
-    final ExpressionTypeMemoryState copy = (ExpressionTypeMemoryState)super.createCopy();
+    final ExpressionTypeMemoryState copy = new ExpressionTypeMemoryState(this);
     copy.myStates.putAll(myStates);
     return copy;
   }

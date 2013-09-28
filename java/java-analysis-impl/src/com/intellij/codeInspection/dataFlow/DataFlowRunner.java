@@ -24,10 +24,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.instructions.BranchingInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.EmptyInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.application.ApplicationManager;
@@ -38,7 +35,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.MultiMapBasedOnSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,6 +107,17 @@ public class DataFlowRunner {
       myInstructions = flow.getInstructions();
       myFields = flow.getFields();
       myNestedClosures.clear();
+      
+      Set<Instruction> joinInstructions = ContainerUtil.newHashSet();
+      for (Instruction instruction : myInstructions) {
+        if (instruction instanceof GotoInstruction) {
+          joinInstructions.add(myInstructions[((GotoInstruction)instruction).getOffset()]);
+        } else if (instruction instanceof ConditionalGotoInstruction) {
+          joinInstructions.add(myInstructions[((ConditionalGotoInstruction)instruction).getOffset()]);
+        } else if (instruction instanceof GosubInstruction) {
+          joinInstructions.add(myInstructions[((GosubInstruction)instruction).getSubprogramOffset()]);
+        }
+      }
 
       if (LOG.isDebugEnabled()) {
         LOG.debug("Analyzing code block: " + psiBlock.getText());
@@ -123,47 +133,62 @@ public class DataFlowRunner {
         return RunnerResult.TOO_COMPLEX;
       }
 
-      final ArrayList<DfaInstructionState> queue = new ArrayList<DfaInstructionState>();
+      final StateQueue queue = new StateQueue();
       for (final DfaMemoryState initialState : initialStates) {
-        queue.add(new DfaInstructionState(myInstructions[0], initialState));
+        queue.offer(new DfaInstructionState(myInstructions[0], initialState));
       }
+
+      MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState> processedStates = new MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState>();
+      MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState> incomingStates = new MultiMapBasedOnSet<BranchingInstruction, DfaMemoryState>();
 
       WorkingTimeMeasurer measurer = new WorkingTimeMeasurer(shouldCheckTimeLimit() ? ourTimeLimit : ourTimeLimit * 42);
       int count = 0;
       while (!queue.isEmpty()) {
-        if (count % 1024 == 0 && measurer.isTimeOver()) {
-          LOG.debug("Too complex because the analysis took too long");
-          psiBlock.putUserData(TOO_EXPENSIVE_HASH, psiBlock.getText().hashCode());
-          return RunnerResult.TOO_COMPLEX;
-        }
-        ProgressManager.checkCanceled();
+        for (DfaInstructionState instructionState : queue.getNextInstructionStates(joinInstructions)) {
+          if (count++ % 1024 == 0 && measurer.isTimeOver()) {
+            LOG.debug("Too complex because the analysis took too long");
+            psiBlock.putUserData(TOO_EXPENSIVE_HASH, psiBlock.getText().hashCode());
+            return RunnerResult.TOO_COMPLEX;
+          }
+          ProgressManager.checkCanceled();
 
-        DfaInstructionState instructionState = queue.remove(0);
-        if (LOG.isDebugEnabled()) {
-          LOG.debug(instructionState.toString());
-        }
-        //System.out.println(instructionState.toString());
+          if (LOG.isDebugEnabled()) {
+            LOG.debug(instructionState.toString());
+          }
+          //System.out.println(instructionState.toString());
 
-        Instruction instruction = instructionState.getInstruction();
-        long distance = instructionState.getDistanceFromStart();
+          Instruction instruction = instructionState.getInstruction();
 
-        if (instruction instanceof BranchingInstruction) {
-          if (!instruction.setMemoryStateProcessed(instructionState.getMemoryState().createCopy())) {
-            LOG.debug("Too complex because too many different possible states");
-            return RunnerResult.TOO_COMPLEX; // Too complex :(
+          if (instruction instanceof BranchingInstruction) {
+            BranchingInstruction branching = (BranchingInstruction)instruction;
+            Collection<DfaMemoryState> processed = processedStates.get(branching);
+            if (processed.contains(instructionState.getMemoryState())) {
+              continue;
+            }
+            if (processed.size() > MAX_STATES_PER_BRANCH) {
+              LOG.debug("Too complex because too many different possible states");
+              return RunnerResult.TOO_COMPLEX; // Too complex :(
+            }
+            processedStates.putValue(branching, instructionState.getMemoryState().createCopy());
+          }
+
+          DfaInstructionState[] after = acceptInstruction(visitor, instructionState);
+          for (DfaInstructionState state : after) {
+            Instruction nextInstruction = state.getInstruction();
+            if (nextInstruction.getIndex() >= endOffset) {
+              continue;
+            }
+            if (nextInstruction instanceof BranchingInstruction) {
+              BranchingInstruction branching = (BranchingInstruction)nextInstruction;
+              if (processedStates.get(branching).contains(state.getMemoryState()) || 
+                  incomingStates.get(branching).contains(state.getMemoryState())) {
+                continue;
+              }
+              incomingStates.putValue(branching, state.getMemoryState().createCopy());
+            }
+            queue.offer(state);
           }
         }
-
-        DfaInstructionState[] after = acceptInstruction(visitor, instructionState);
-        for (DfaInstructionState state : after) {
-          Instruction nextInstruction = state.getInstruction();
-          if ((!(nextInstruction instanceof BranchingInstruction) || !nextInstruction.isMemoryStateProcessed(state.getMemoryState())) && instruction.getIndex() < endOffset) {
-            state.setDistanceFromStart(distance + 1);
-            queue.add(state);
-          }
-        }
-
-        count++;
       }
 
       psiBlock.putUserData(TOO_EXPENSIVE_HASH, null);

@@ -35,16 +35,13 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyLibraryDescription;
 
 import javax.swing.*;
-import javax.swing.border.CompoundBorder;
-import javax.swing.border.EmptyBorder;
-import javax.swing.border.EtchedBorder;
-import java.awt.*;
 import java.util.ArrayList;
 
 /**
  * @author nik
  */
 public abstract class GroovySdkWizardStepBase extends ModuleWizardStep {
+  private final String myBasePath;
   private LibraryOptionsPanel myPanel;
   private final LibrariesContainer myLibrariesContainer;
   private boolean myDownloaded;
@@ -52,7 +49,8 @@ public abstract class GroovySdkWizardStepBase extends ModuleWizardStep {
   @Nullable
   private final MvcFramework myFramework;
 
-  public GroovySdkWizardStepBase(@Nullable final MvcFramework framework, WizardContext wizardContext) {
+  public GroovySdkWizardStepBase(@Nullable final MvcFramework framework, WizardContext wizardContext, String basePath) {
+    myBasePath = basePath;
     final Project project = wizardContext.getProject();
     myLibrariesContainer = LibrariesContainerFactory.createContainer(project);
     myFramework = framework;
@@ -79,18 +77,7 @@ public abstract class GroovySdkWizardStepBase extends ModuleWizardStep {
 
   @Override
   public JComponent getComponent() {
-    final JComponent component = getPanel().getMainPanel();
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(component, BorderLayout.NORTH);
-
-    final JLabel caption = new JLabel("Please specify " + (myFramework == null ? "Groovy" : myFramework.getDisplayName()) + " SDK");
-    caption.setBorder(new EmptyBorder(0, 0, 10, 0));
-
-    final JPanel mainPanel = new JPanel(new BorderLayout());
-    mainPanel.setBorder(new CompoundBorder(new EtchedBorder(), new EmptyBorder(5, 5, 5, 5)));
-    mainPanel.add(caption, BorderLayout.NORTH);
-    mainPanel.add(panel, BorderLayout.CENTER);
-    return mainPanel;
+    return getPanel().getMainPanel();
   }
 
   @Override
@@ -112,16 +99,12 @@ public abstract class GroovySdkWizardStepBase extends ModuleWizardStep {
     myLibraryCompositionSettings = getPanel().apply();
   }
 
-  private synchronized LibraryOptionsPanel getPanel() {
+  protected LibraryOptionsPanel getPanel() {
     if (myPanel == null) {
       final GroovyLibraryDescription libraryDescription = myFramework == null ? new GroovyLibraryDescription() : myFramework.createLibraryDescription();
-      final String basePath = getBasePath();
-      final String baseDirPath = basePath != null ? FileUtil.toSystemIndependentName(basePath) : "";
+      final String baseDirPath = myBasePath != null ? FileUtil.toSystemIndependentName(myBasePath) : "";
       myPanel = new LibraryOptionsPanel(libraryDescription, baseDirPath, FrameworkLibraryVersionFilter.ALL, myLibrariesContainer, false);
     }
     return myPanel;
   }
-
-  @Nullable
-  protected abstract String getBasePath();
 }

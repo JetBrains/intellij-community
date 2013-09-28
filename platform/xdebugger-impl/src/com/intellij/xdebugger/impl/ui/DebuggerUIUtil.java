@@ -31,6 +31,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
+import com.intellij.xdebugger.breakpoints.XBreakpointAdapter;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
@@ -136,17 +137,13 @@ public class DebuggerUIUtil {
     popup.show(point);
   }
 
-
-
   public static void showXBreakpointEditorBalloon(final Project project,
                                                   @Nullable final Point point,
                                                   final JComponent component,
                                                   final boolean showAllOptions,
                                                   final XBreakpoint breakpoint) {
     final XBreakpointManager breakpointManager = XDebuggerManager.getInstance(project).getBreakpointManager();
-    final XLightBreakpointPropertiesPanel propertiesPanel =
-      new XLightBreakpointPropertiesPanel(project, breakpointManager,
-                                          breakpoint, showAllOptions);
+    final XLightBreakpointPropertiesPanel<XBreakpoint<?>> propertiesPanel = new XLightBreakpointPropertiesPanel<XBreakpoint<?>>(project, breakpointManager, breakpoint, showAllOptions);
 
     final Ref<Balloon> balloonRef = Ref.create(null);
     final Ref<Boolean> isLoading = Ref.create(Boolean.FALSE);
@@ -164,49 +161,32 @@ public class DebuggerUIUtil {
       }
     });
 
-
     isLoading.set(Boolean.TRUE);
     propertiesPanel.loadProperties();
     isLoading.set(Boolean.FALSE);
 
-    final JComponent mainPanel = propertiesPanel.getMainPanel();
-
-    final Runnable viewBreakpoints = new Runnable() {
+    Runnable showMoreOptions = new Runnable() {
       @Override
       public void run() {
         propertiesPanel.saveProperties();
-        //showXBreakpointEditorBalloon(project, point, component, true, breakpoint);
         BreakpointsDialogFactory.getInstance(project).showDialog(breakpoint);
       }
     };
 
-    final Balloon balloon = showBreakpointEditor(project, mainPanel, breakpoint.getType().getDisplayText(breakpoint), point, component, viewBreakpoints,
-                                                 breakpoint);
+    final JComponent mainPanel = propertiesPanel.getMainPanel();
+    final Balloon balloon = showBreakpointEditor(project, mainPanel, point, component, showMoreOptions, breakpoint);
     balloonRef.set(balloon);
 
-
-    final XBreakpointListener<XBreakpoint<?>> breakpointListener = new XBreakpointListener<XBreakpoint<?>>() {
+    final XBreakpointListener<XBreakpoint<?>> breakpointListener = new XBreakpointAdapter<XBreakpoint<?>>() {
       @Override
-      public void breakpointAdded(@NotNull XBreakpoint<?> breakpoint1) {
-      }
-
-      @Override
-      public void breakpointRemoved(@NotNull XBreakpoint<?> breakpoint1) {
-        if (breakpoint1.equals(breakpoint)) {
+      public void breakpointRemoved(@NotNull XBreakpoint<?> removedBreakpoint) {
+        if (removedBreakpoint.equals(breakpoint)) {
           balloon.hide();
         }
       }
-
-      @Override
-      public void breakpointChanged(@NotNull XBreakpoint<?> breakpoint1) {
-      }
     };
 
-    balloon.addListener(new JBPopupListener() {
-      @Override
-      public void beforeShown(LightweightWindowEvent event) {
-      }
-
+    balloon.addListener(new JBPopupListener.Adapter() {
       @Override
       public void onClosed(LightweightWindowEvent event) {
         propertiesPanel.saveProperties();
@@ -214,12 +194,10 @@ public class DebuggerUIUtil {
       }
     });
 
-
-
-
     if (point == null) {
       balloon.showInCenterOf(component);
-    } else {
+    }
+    else {
       balloon.show(new RelativePoint(component, point), Balloon.Position.atRight);
     }
 
@@ -233,7 +211,6 @@ public class DebuggerUIUtil {
   }
 
   public static Balloon showBreakpointEditor(Project project, final JComponent mainPanel,
-                                             final String displayName,
                                              final Point whereToShow,
                                              final JComponent component,
                                              @Nullable final Runnable showMoreOptions, Object breakpoint) {

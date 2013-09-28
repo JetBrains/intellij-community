@@ -1,6 +1,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.hint.ParameterInfoComponent;
+import com.intellij.codeInsight.hint.api.impls.AnnotationParameterInfoHandler;
 import com.intellij.codeInsight.hint.api.impls.MethodParameterInfoHandler;
 import com.intellij.lang.parameterInfo.CreateParameterInfoContext;
 import com.intellij.lang.parameterInfo.ParameterInfoUIContextEx;
@@ -73,5 +74,26 @@ public class ParameterInfoTest extends LightCodeInsightTestCase {
     Assert.assertEquals(expectedString,
                         MethodParameterInfoHandler
                           .updateMethodPresentation(method, ((MethodCandidateInfo)itemsToShow[0]).getSubstitutor(), parameterContext));
+  }
+
+  public void testAnnotationWithGenerics() throws Exception {
+    doTestAnnotationPresentation("<html>Class&lt;List&lt;String[]&gt;&gt; <b>value</b>()</html>");
+  }
+
+  private void doTestAnnotationPresentation(String expectedString) {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+
+    final AnnotationParameterInfoHandler handler = new AnnotationParameterInfoHandler();
+    final CreateParameterInfoContext context = new MockCreateParameterInfoContext(myEditor, myFile);
+    final PsiAnnotationParameterList list = handler.findElementForParameterInfo(context);
+    assertNotNull(list);
+    final Object[] itemsToShow = context.getItemsToShow();
+    assertNotNull(itemsToShow);
+    assertTrue(itemsToShow.length == 1);
+    assertTrue(itemsToShow[0] instanceof PsiAnnotationMethod);
+    final PsiAnnotationMethod method = (PsiAnnotationMethod)itemsToShow[0];
+    final ParameterInfoUIContextEx parameterContext = ParameterInfoComponent.createContext(itemsToShow, myEditor, handler);
+    Assert.assertEquals(expectedString,
+                        AnnotationParameterInfoHandler.updateUIText(method, parameterContext));
   }
 }

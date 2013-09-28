@@ -35,4 +35,6 @@ public interface PsiMethodReferenceExpression extends PsiReferenceExpression {
   */
   @Nullable
   PsiType getFunctionalInterfaceType();
+
+  boolean isExact();
 }

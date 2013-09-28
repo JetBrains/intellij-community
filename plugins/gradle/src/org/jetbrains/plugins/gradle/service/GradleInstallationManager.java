@@ -22,6 +22,7 @@ import org.gradle.wrapper.WrapperConfiguration;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleEnvironment;
@@ -122,32 +123,34 @@ public class GradleInstallationManager {
       return null;
     }
     GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedProjectPath);
-    if (settings == null) {
+    if (settings == null || settings.getDistributionType() == null) {
       return null;
     }
+    return getGradleHome(settings.getDistributionType(), linkedProjectPath, settings.getGradleHome());
+  }
 
+  @Nullable
+  public File getGradleHome(@NotNull DistributionType distributionType, @NotNull String linkedProjectPath, @Nullable String gradleHome) {
     File candidate = null;
-    if (settings.getDistributionType() != null) {
-      switch (settings.getDistributionType()) {
-        case LOCAL:
-          if (settings.getGradleHome() != null) {
-            candidate = new File(settings.getGradleHome());
-          }
-          break;
-        case DEFAULT_WRAPPED:
-          WrapperConfiguration wrapperConfiguration = GradleUtil.getWrapperConfiguration(linkedProjectPath);
-          candidate = getWrappedGradleHome(linkedProjectPath, wrapperConfiguration);
-          break;
-        case WRAPPED:
-          // not supported yet
-          break;
-        case BUNDLED:
-          WrapperConfiguration bundledWrapperSettings = new WrapperConfiguration();
-          DistributionLocator distributionLocator = new DistributionLocator();
-          bundledWrapperSettings.setDistribution(distributionLocator.getDistributionFor(GradleVersion.current()));
-          candidate = getWrappedGradleHome(linkedProjectPath, bundledWrapperSettings);
-          break;
-      }
+    switch (distributionType) {
+      case LOCAL:
+        if (gradleHome != null) {
+          candidate = new File(gradleHome);
+        }
+        break;
+      case DEFAULT_WRAPPED:
+        WrapperConfiguration wrapperConfiguration = GradleUtil.getWrapperConfiguration(linkedProjectPath);
+        candidate = getWrappedGradleHome(linkedProjectPath, wrapperConfiguration);
+        break;
+      case WRAPPED:
+        // not supported yet
+        break;
+      case BUNDLED:
+        WrapperConfiguration bundledWrapperSettings = new WrapperConfiguration();
+        DistributionLocator distributionLocator = new DistributionLocator();
+        bundledWrapperSettings.setDistribution(distributionLocator.getDistributionFor(GradleVersion.current()));
+        candidate = getWrappedGradleHome(linkedProjectPath, bundledWrapperSettings);
+        break;
     }
 
     File result = null;

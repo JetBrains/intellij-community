@@ -2972,4 +2972,33 @@ public void testSCR260() throws Exception {
                "    }\n" +
                "}");
   }
+
+  public void testCommaInMethodDeclParamsList() {
+    getSettings().SPACE_AFTER_COMMA = true;
+    String before = "public class Test {\n" +
+                    "    public static void act(   int a   ,    int b   ,    int c   ,      int d) {\n" +
+                    "        act(1,2,3,4);\n" +
+                    "    }\n" +
+                    "}\n";
+    String after = "public class Test {\n" +
+                   "    public static void act(int a, int b, int c, int d) {\n" +
+                   "        act(1, 2, 3, 4);\n" +
+                   "    }\n" +
+                   "}\n";
+    doTextTest(before, after);
+    getSettings().SPACE_AFTER_COMMA = false;
+    before = "public class Test {\n" +
+             "    public static void act(   int a   ,    int b   ,      int c   ,      int d) {\n" +
+             "        act(1 ,   2 , 3 ,            4);\n" +
+             "    }\n" +
+             "}\n";
+    after = "public class Test {\n" +
+            "    public static void act(int a,int b,int c,int d) {\n" +
+            "        act(1,2,3,4);\n" +
+            "    }\n" +
+            "}\n";
+    doTextTest(before, after);
+  }
+
+
 }

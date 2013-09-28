@@ -18,7 +18,7 @@ package com.intellij.openapi.keymap.impl.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actionMacro.ActionMacro;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -69,7 +69,7 @@ public class ActionsTreeUtil {
     final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
     ActionManagerEx managerEx = ActionManagerEx.getInstanceEx();
     final List<IdeaPluginDescriptor> plugins = new ArrayList<IdeaPluginDescriptor>();
-    Collections.addAll(plugins, PluginManager.getPlugins());
+    Collections.addAll(plugins, PluginManagerCore.getPlugins());
     Collections.sort(plugins, new Comparator<IdeaPluginDescriptor>() {
       public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
         return o1.getName().compareTo(o2.getName());
@@ -150,7 +150,7 @@ public class ActionsTreeUtil {
           return filter == null ? !actionBound : !actionBound && filter.value(action);
         }
 
-        return filter == null ? true : filter.value(action);
+        return filter == null || filter.value(action);
       }
     };
   }
@@ -214,9 +214,11 @@ public class ActionsTreeUtil {
                           ? ((DefaultActionGroup)actionGroup).getChildActionsOrStubs()
                           : actionGroup.getChildren(null);
 
-    for (int i = 0; i < children.length; i++) {
-      AnAction action = children[i];
-      LOG.assertTrue(action != null, groupName + " contains null actions");
+    for (AnAction action : children) {
+      if (action == null) {
+        LOG.error(groupName + " contains null actions");
+        continue;
+      }
       if (action instanceof ActionGroup) {
         Group subGroup = createGroup((ActionGroup)action, getName(action), null, null, ignore, filtered, normalizeSeparators);
         if (subGroup.getSize() > 0) {
@@ -234,7 +236,7 @@ public class ActionsTreeUtil {
       else if (action instanceof Separator) {
         group.addSeparator();
       }
-      else if (action != null) {
+      else {
         String id = action instanceof ActionStub ? ((ActionStub)action).getId() : actionManager.getId(action);
         if (id != null) {
           if (id.startsWith(TOOL_ACTION_PREFIX)) continue;
@@ -490,7 +492,7 @@ public class ActionsTreeUtil {
             .isComponentHighlighted(lowerText, insensitiveFilter, force, null)) {
             return true;
           }
-          else if (lowerText.indexOf(insensitiveFilter) != -1) {
+          else if (lowerText.contains(insensitiveFilter)) {
             return true;
           }
         }
@@ -501,7 +503,7 @@ public class ActionsTreeUtil {
             .isComponentHighlighted(insensitiveDescription, insensitiveFilter, force, null)) {
             return true;
           }
-          else if (insensitiveDescription.indexOf(insensitiveFilter) != -1) {
+          else if (insensitiveDescription.contains(insensitiveFilter)) {
             return true;
           }
         }

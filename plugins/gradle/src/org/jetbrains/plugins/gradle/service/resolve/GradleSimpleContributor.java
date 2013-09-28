@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.service.resolve;
 
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -47,9 +46,6 @@ public abstract class GradleSimpleContributor implements GradleMethodContextCont
       return;
     }
     GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
-    PsiClass contributorClass = psiManager.findClassWithCache(fqName, place.getResolveScope());
-    if (contributorClass != null) {
-      contributorClass.processDeclarations(processor, state, null, place);
-    }
+    GradleResolverUtil.processDeclarations(psiManager, processor, state, place, fqName);
   }
 }

@@ -62,14 +62,13 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
 
   @NotNull
   private HighlightingSession sessionCreated(@NotNull TextRange restrictRange,
-                                              @NotNull PsiFile file,
-                                              @Nullable Editor editor,
-                                              @NotNull ProgressIndicator progress,
-                                              EditorColorsScheme scheme,
-                                              int passId) {
-    HighlightingSessionImpl impl = new HighlightingSessionImpl(file, editor, progress, scheme, passId);
+                                             @NotNull PsiFile file,
+                                             @Nullable Editor editor,
+                                             @NotNull ProgressIndicator progress,
+                                             EditorColorsScheme scheme,
+                                             int passId) {
+    HighlightingSessionImpl impl = new HighlightingSessionImpl(file, editor, progress, scheme, passId, restrictRange);
     myHighlightingSession = impl;
-    impl.init(restrictRange);
     return impl;
   }
 

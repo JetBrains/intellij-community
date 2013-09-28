@@ -82,6 +82,9 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
                 wasExited = mouseExited(p);
               }
             }
+          } else if (e.getID() == MouseEvent.MOUSE_EXITED) {
+            //mouse exits WND
+            mouseExited(((MouseEvent)e).getLocationOnScreen());
           }
         }
         return false;

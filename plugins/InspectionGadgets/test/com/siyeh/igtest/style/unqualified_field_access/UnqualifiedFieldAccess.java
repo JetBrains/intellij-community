@@ -22,4 +22,14 @@ public class UnqualifiedFieldAccess {
       }
     };
   }
+
+  void simpleAnonymous() {
+    new Object() {
+      String s;
+
+      void foo() {
+        System.out.println(s);
+      }
+    };
+  }
 }

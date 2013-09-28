@@ -43,6 +43,10 @@ public class InferenceVariable {
   public void setInstantiation(PsiType instantiation) {
     myInstantiation = instantiation;
   }
+  
+  public void ignoreInstantiation() {
+    myInstantiation = PsiType.NULL;
+  }
 
   public boolean isCaptured() {
     return myCaptured;
@@ -58,7 +62,8 @@ public class InferenceVariable {
       list = new ArrayList<PsiType>();
       myBounds.put(inferenceBound, list);
     }
-    if (!list.contains(classType)) {
+    final int idx = list.indexOf(classType);
+    if (idx < 0 || inferenceBound == InferenceBound.EQ && classType instanceof PsiCapturedWildcardType && list.get(idx) != classType) {
       list.add(classType);
       return true;
     }
@@ -68,5 +73,15 @@ public class InferenceVariable {
   public List<PsiType> getBounds(InferenceBound inferenceBound) {
     final List<PsiType> bounds = myBounds.get(inferenceBound);
     return bounds != null ? new ArrayList<PsiType>(bounds) : Collections.<PsiType>emptyList();
+  }
+
+  public Set<InferenceVariable> getDependencies(InferenceSession session) {
+    final HashSet<InferenceVariable> dependencies = new HashSet<InferenceVariable>();
+    for (InferenceBound inferenceBound : InferenceBound.values()) {
+      for (PsiType bound : getBounds(inferenceBound)) {
+        session.collectDependencies(bound, dependencies, true);
+      }
+    }
+    return dependencies;
   }
 }

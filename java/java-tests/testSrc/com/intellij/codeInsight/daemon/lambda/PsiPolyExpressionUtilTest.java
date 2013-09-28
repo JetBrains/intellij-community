@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.daemon.lambda;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
@@ -78,5 +79,42 @@ public class PsiPolyExpressionUtilTest extends LightCodeInsightFixtureTestCase {
     final PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
     assertNotNull(elementAtCaret);
     return PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
+  }
+
+  public void testPertinentLambdaExpression() throws Exception {
+    assertFalse(doTestLambdaPertinent("  void bar(List<Runnable> l) {" +
+                                      "   foo(() <caret>-> {}, l);" +
+                                      "  }"));
+  }
+
+  public void testPertinentImplicitLambdaExpression() throws Exception {
+    assertFalse(doTestLambdaPertinent("  void bar(List<Comparable<String>> l) {" +
+                                      "   foo((String s) <caret>-> 1, l);" +
+                                      "  }"));
+  }
+
+  public void testPertinentNestedLambdaExpression() throws Exception {
+    assertFalse(doTestLambdaPertinent("  interface Fun<I, O> { O inOut(I i);}\n" +
+                                      "  void bar(List<Fun<String, Fun<String, String>>> l) {" +
+                                      "   foo((sIn, sOut) -> (sInInner, sOutInner) <caret>-> sOutInner, l);" +
+                                      "  }"));
+  }
+
+  private boolean doTestLambdaPertinent(final String barText) {
+    myFixture.configureByText("Foo.java", "import java.util.*;" +
+                                          "class Foo {" +
+                                          "  <T> T foo(T t, List<T> lT) {" +
+                                          "  }" +
+                                          barText +
+                                          "}");
+    final PsiElement elementAtCaret = myFixture.getFile().findElementAt(myFixture.getCaretOffset());
+    assertNotNull(elementAtCaret);
+    final PsiExpression psiExpression = PsiTreeUtil.getParentOfType(elementAtCaret, PsiExpression.class);
+    assertInstanceOf(psiExpression, PsiLambdaExpression.class);
+    final PsiClass aClass = myFixture.findClass("Foo");
+    assertNotNull(aClass);
+    final PsiMethod[] meths = aClass.findMethodsByName("foo", false);
+    assertTrue(meths.length == 1);
+    return InferenceSession.isPertinentToApplicability(psiExpression, meths[0]);
   }
 }

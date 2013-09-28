@@ -33,7 +33,7 @@ public class MvcModuleBuilder extends GroovyAwareModuleBuilder {
   private final MvcFramework myFramework;
 
   protected MvcModuleBuilder(MvcFramework framework, Icon bigIcon) {
-    super(framework.getFrameworkName(), framework.getDisplayName() + " Module",
+    super(framework.getFrameworkName(), framework.getDisplayName(),
           framework.getDisplayName() + " modules are used for creating <b>" + framework.getDisplayName() + "</b> applications.", bigIcon);
     myFramework = framework;
   }

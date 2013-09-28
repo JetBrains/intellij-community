@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.checkout;
 
 import com.intellij.lifecycle.PeriodicalTasksCloser;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -26,6 +27,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.CalledInAwt;
 import com.intellij.openapi.vcs.CheckoutProvider;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
@@ -33,12 +35,18 @@ import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBar;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.ExclusiveBackgroundVcsAction;
 import org.jetbrains.idea.svn.actions.SvnExcludingIgnoredOperation;
+import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
+import org.jetbrains.idea.svn.commandLine.CommitEventHandler;
 import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
+import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
 import org.tmatesoft.svn.core.SVNCancelException;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -48,6 +56,9 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class SvnCheckoutProvider implements CheckoutProvider {
 
@@ -62,13 +73,11 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       target.mkdirs();
     }
 
-    final String selectedFormat = promptForWCopyFormat(target, project);
-    if (selectedFormat == null) {
-      // cancelled
-      return;
+    final WorkingCopyFormat selectedFormat = promptForWCopyFormat(target, project);
+    // UNKNOWN here means operation was cancelled
+    if (selectedFormat != WorkingCopyFormat.UNKNOWN) {
+      checkout(project, target, url, revision, depth, ignoreExternals, listener, selectedFormat);
     }
-
-    checkout(project, target, url, revision, depth, ignoreExternals, listener, WorkingCopyFormat.getInstance(selectedFormat));
   }
 
   public static void checkout(final Project project,
@@ -83,19 +92,16 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project,
                      SvnBundle.message("message.title.check.out"), true, VcsConfiguration.getInstance(project).getCheckoutOption()) {
       public void run(@NotNull final ProgressIndicator indicator) {
-        SvnWorkingCopyFormatHolder.setPresetFormat(selectedFormat);
+        final WorkingCopyFormat format = selectedFormat == null ? WorkingCopyFormat.UNKNOWN : selectedFormat;
+
+        SvnWorkingCopyFormatHolder.setPresetFormat(format);
 
         SvnVcs vcs = SvnVcs.getInstance(project);
-        // TODO: made this way to preserve existing logic, but probably this check could be omitted as setPresetFormat(selectedFormat) invoked above
-        WorkingCopyFormat format = !WorkingCopyFormat.ONE_DOT_SEVEN.equals(SvnWorkingCopyFormatHolder.getPresetFormat())
-                                   ? WorkingCopyFormat.ONE_DOT_SIX
-                                   : selectedFormat;
         ISVNEventHandler handler = new CheckoutEventHandler(vcs, false, ProgressManager.getInstance().getProgressIndicator());
         ProgressManager.progress(SvnBundle.message("progress.text.checking.out", target.getAbsolutePath()));
         try {
-          // TODO: probably rewrite some logic to force ClientFactory provide supported versions (or create special client for that)
           vcs.getFactoryFromSettings().createCheckoutClient()
-            .checkout(SvnTarget.fromURL(SVNURL.parseURIEncoded(url)), target, revision, depth, ignoreExternals, format, handler);
+            .checkout(SvnTarget.fromURL(SVNURL.parseURIEncoded(url)), target, revision, depth, ignoreExternals, true, format, handler);
           ProgressManager.checkCanceled();
           checkoutSuccessful.set(Boolean.TRUE);
         }
@@ -167,45 +173,31 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
   }
 
-  public static boolean promptForWCFormatAndSelect(final File target, final Project project) {
-    final String result = promptForWCopyFormat(target, project);
-    if (result != null) {
-      SvnWorkingCopyFormatHolder.setPresetFormat(WorkingCopyFormat.getInstance(result));
-    }
-    return result != null;
+  @CalledInAwt
+  @NotNull
+  public static WorkingCopyFormat promptForWCopyFormat(final File target, final Project project) {
+    return new CheckoutFormatFromUserProvider(project, target).prompt();
   }
 
-  @Nullable
-  private static String promptForWCopyFormat(final File target, final Project project) {
-    String formatMode = null;
-    final Ref<Boolean> wasOk = new Ref<Boolean>();
-    while ((formatMode == null) && (! Boolean.FALSE.equals(wasOk.get()))) {
-      formatMode = SvnFormatSelector.showUpgradeDialog(target, project, true, SvnConfiguration.UPGRADE_AUTO_17, wasOk);
-    }
-    return Boolean.TRUE.equals(wasOk.get()) ? formatMode : null;
-  }
-
-  public static void doExport(final Project project, final File target, final String url, final SVNDepth depth,
+  public static void doExport(final Project project, final File target, final SVNURL url, final SVNDepth depth,
                               final boolean ignoreExternals, final boolean force, final String eolStyle) {
     try {
-      final SVNException[] exception = new SVNException[1];
-      final SVNUpdateClient client = SvnVcs.getInstance(project).createUpdateClient();
+      final VcsException[] exception = new VcsException[1];
+      final SvnVcs vcs = SvnVcs.getInstance(project);
 
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         public void run() {
           ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-          client.setEventHandler(new CheckoutEventHandler(SvnVcs.getInstance(project), true, progressIndicator));
-          client.setIgnoreExternals(ignoreExternals);
+          ISVNEventHandler handler = new CheckoutEventHandler(vcs, true, progressIndicator);
           try {
             progressIndicator.setText(SvnBundle.message("progress.text.export", target.getAbsolutePath()));
-            client.doExport(SVNURL.parseURIEncoded(url), target, SVNRevision.UNDEFINED, SVNRevision.HEAD, eolStyle, force, depth);
+
+            SvnTarget from = SvnTarget.fromURL(url);
+            ExportClient client = vcs.getFactoryFromSettings().createExportClient();
+            client.export(from, target, SVNRevision.HEAD, depth, eolStyle, force, ignoreExternals, handler);
           }
-          catch (SVNException e) {
+          catch (VcsException e) {
             exception[0] = e;
-          }
-          finally {
-            client.setIgnoreExternals(false);
-            client.setEventHandler(null);
           }
         }
       }, SvnBundle.message("message.title.export"), true, project);
@@ -213,7 +205,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
         throw exception[0];
       }
     }
-    catch (SVNException e1) {
+    catch (VcsException e1) {
       Messages.showErrorDialog(SvnBundle.message("message.text.cannot.export", e1.getMessage()), SvnBundle.message("message.title.export"));
     }
   }
@@ -221,7 +213,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
   public static void doImport(final Project project, final File target, final SVNURL url, final SVNDepth depth,
                               final boolean includeIgnored, final String message) {
     final Ref<String> errorMessage = new Ref<String>();
-    final SVNCommitClient client = SvnVcs.getInstance(project).createCommitClient();
+    final SvnVcs vcs = SvnVcs.getInstance(project);
     final String targetPath = FileUtil.toSystemIndependentName(target.getAbsolutePath());
 
     ExclusiveBackgroundVcsAction.run(project, new Runnable() {
@@ -230,7 +222,6 @@ public class SvnCheckoutProvider implements CheckoutProvider {
           public void run() {
             final FileIndexFacade facade = PeriodicalTasksCloser.getInstance().safeGetService(project, FileIndexFacade.class);
             ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-            client.setEventHandler(new CheckoutEventHandler(SvnVcs.getInstance(project), true, progressIndicator));
             try {
               progressIndicator.setText(SvnBundle.message("progress.text.import", target.getAbsolutePath()));
 
@@ -244,21 +235,20 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                     return facade.isInContent(targetVf);
                   }
                 });
-                if (project.isDefault() || !isInContent) {
-                  // do not pay attention to ignored/excluded settings
-                  client.doImport(target, url, message, null, !includeIgnored, false, depth);
-                } else {
-                  client.setCommitHandler(new MyFilter(LocalFileSystem.getInstance(), new SvnExcludingIgnoredOperation.Filter(project)));
-                  client.doImport(target, url, message, null, !includeIgnored, false, depth);
+                CommitEventHandler handler = new IdeaCommitHandler(progressIndicator);
+                boolean useFileFilter = !project.isDefault() && isInContent;
+                ISVNCommitHandler commitHandler =
+                  useFileFilter ? new MyFilter(LocalFileSystem.getInstance(), new SvnExcludingIgnoredOperation.Filter(project)) : null;
+                long revision = vcs.getFactoryFromSettings().createImportClient()
+                  .doImport(target, url, depth, message, includeIgnored, handler, commitHandler);
+
+                if (revision > 0) {
+                  StatusBar.Info.set(SvnBundle.message("status.text.comitted.revision", revision), project);
                 }
               }
             }
-            catch (SVNException e) {
+            catch (VcsException e) {
               errorMessage.set(e.getMessage());
-            }
-            finally {
-              client.setIgnoreExternals(false);
-              client.setEventHandler(null);
             }
           }
         }, SvnBundle.message("message.title.import"), true, project);
@@ -289,6 +279,79 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     return "_Subversion";
   }
 
+  public static class CheckoutFormatFromUserProvider {
+
+    @NotNull private final Project myProject;
+    @NotNull private final SvnVcs myVcs;
+    @NotNull private final File myPath;
+
+    @NotNull private final AtomicReference<String> error;
+
+    public CheckoutFormatFromUserProvider(@NotNull Project project, @NotNull File path) {
+      myProject = project;
+      myVcs = SvnVcs.getInstance(project);
+      myPath = path;
+
+      error = new AtomicReference<String>();
+    }
+
+    @CalledInAwt
+    public WorkingCopyFormat prompt() {
+      assert !ApplicationManager.getApplication().isUnitTestMode();
+
+      final WorkingCopyFormat result = displayUpgradeDialog(WorkingCopyFormat.ONE_DOT_SEVEN);
+
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(SvnVcs.WC_CONVERTED).run();
+
+      return result;
+    }
+
+    private WorkingCopyFormat displayUpgradeDialog(@NotNull WorkingCopyFormat defaultSelection) {
+      final UpgradeFormatDialog dialog = new UpgradeFormatDialog(myProject, myPath, false);
+      dialog.startLoading();
+
+      ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+        @Override
+        public void run() {
+          final List<WorkingCopyFormat> formats = loadSupportedFormats();
+
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              final String errorMessage = error.get();
+
+              if (errorMessage != null) {
+                dialog.doCancelAction();
+                Messages.showErrorDialog(SvnBundle.message("message.text.cannot.load.supported.formats", errorMessage),
+                                         SvnBundle.message("message.title.check.out"));
+              }
+              else {
+                dialog.setSupported(formats);
+                dialog.setData(ContainerUtil.getFirstItem(formats, WorkingCopyFormat.UNKNOWN));
+                dialog.stopLoading();
+              }
+            }
+          }, ModalityState.stateForComponent(dialog.getWindow()));
+        }
+      });
+
+      dialog.show();
+
+      return dialog.isOK() ? dialog.getUpgradeMode() : WorkingCopyFormat.UNKNOWN;
+    }
+
+    private List<WorkingCopyFormat> loadSupportedFormats() {
+      List<WorkingCopyFormat> result;
+
+      try {
+        result = myVcs.getFactoryFromSettings().createCheckoutClient().getSupportedFormats();
+      }
+      catch (VcsException e) {
+        result = Collections.emptyList();
+        error.set(e.getMessage());
+      }
+
+      return result;
+    }
+  }
 }
-
-

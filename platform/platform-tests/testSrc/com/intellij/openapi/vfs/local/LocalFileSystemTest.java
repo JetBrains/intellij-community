@@ -412,6 +412,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
 
     File top = createTempDirectory(false);
     File file = IoTestUtil.createTestFile(top, "file.txt", "test");
+    File intermediate = new File(top, "_intermediate_");
 
     LocalFileSystem lfs = LocalFileSystem.getInstance();
     VirtualFile topDir = lfs.refreshAndFindFileByIoFile(top);
@@ -420,7 +421,8 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     assertNotNull(sourceFile);
 
     String newName = StringUtil.capitalize(file.getName());
-    FileUtil.rename(file, new File(top, newName));
+    FileUtil.rename(file, intermediate);
+    FileUtil.rename(intermediate, new File(top, newName));
     topDir.refresh(false, true);
     assertFalse(((VirtualDirectoryImpl)topDir).allChildrenLoaded());
     assertTrue(sourceFile.isValid());
@@ -428,7 +430,8 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
 
     topDir.getChildren();
     newName = newName.toLowerCase();
-    FileUtil.rename(file, new File(top, newName));
+    FileUtil.rename(file, intermediate);
+    FileUtil.rename(intermediate, new File(top, newName));
     topDir.refresh(false, true);
     assertTrue(((VirtualDirectoryImpl)topDir).allChildrenLoaded());
     assertTrue(sourceFile.isValid());

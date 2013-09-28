@@ -36,7 +36,7 @@ public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspectio
   @SuppressWarnings({"PublicField"})
   public final ExternalizableStringSet updateNames =
     new ExternalizableStringSet("add", "clear", "drainTo", "insert", "load", "offer", "poll", "push", "put", "remove", "replace",
-                                "retain", "set", "take");
+                                "retain", "set", "take", "compute");
 
   private static boolean isEmptyCollectionInitializer(PsiExpression initializer) {
     if (!(initializer instanceof PsiNewExpression)) {

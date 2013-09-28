@@ -25,6 +25,11 @@ import javax.swing.*;
 
 public class BreakpointNoneItem extends BreakpointItem {
   @Override
+  public void saveState() {
+
+  }
+
+  @Override
   public Object getBreakpoint() {
     return null;
   }

@@ -27,7 +27,8 @@ public enum CommitEventType {
   sending("Sending"),
   replacing("Replacing"),
   transmittingDeltas("Transmitting file data"),
-  committedRevision("Committed revision");
+  committedRevision("Committed revision"),
+  skipped("Skipped");
 
   private final String myText;
 

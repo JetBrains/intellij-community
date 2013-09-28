@@ -27,6 +27,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.impl.PicoPluginExtensionInitializationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Comparing;
@@ -41,6 +42,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.util.List;
 
@@ -98,6 +101,9 @@ public class PluginManager extends PluginManagerCore {
 
     if (t instanceof StartupAbortedException) {
       se = (StartupAbortedException)t;
+    }
+    else if (t.getCause() instanceof StartupAbortedException) {
+      se = (StartupAbortedException)t.getCause();
     }
     else if (!IdeaApplication.isLoaded()) {
       se = new StartupAbortedException(t);
@@ -196,18 +202,30 @@ public class PluginManager extends PluginManagerCore {
       throw (StartupAbortedException)t;
     }
 
-    PluginId pluginId = config != null ? config.getPluginId() : getPluginByClassName(componentClassName);
+    PluginId pluginId = null;
+    if (config != null) {
+      pluginId = config.getPluginId();
+    }
+    if (pluginId == null || CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
+      pluginId = getPluginByClassName(componentClassName);
+    }
+    if (pluginId == null || CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
+      if (t instanceof PicoPluginExtensionInitializationException) {
+        pluginId = ((PicoPluginExtensionInitializationException)t).getPluginId();
+      }
+    }
 
     if (pluginId != null && !CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
       getLogger().warn(t);
 
       disablePlugin(pluginId.getIdString());
 
-      String message =
-        "Plugin '" + pluginId.getIdString() + "' failed to initialize and will be disabled\n" +
-        "(reason: " + t.getMessage() + ")\n\n" +
-        ApplicationNamesInfo.getInstance().getFullProductName() + " will be restarted.";
-      Main.showMessage("Plugin Error", message, false);
+      StringWriter message = new StringWriter();
+      message.append("Plugin '").append(pluginId.getIdString()).append("' failed to initialize and will be disabled. ");
+      message.append(" Please restart ").append(ApplicationNamesInfo.getInstance().getFullProductName()).append('.');
+      message.append("\n\n");
+      t.printStackTrace(new PrintWriter(message));
+      Main.showMessage("Plugin Error", message.toString(), false);
 
       throw new StartupAbortedException(t).exitCode(Main.PLUGIN_ERROR).logError(false);
     }

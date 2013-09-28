@@ -32,6 +32,7 @@ public class PsiDirectoryFactoryImpl extends PsiDirectoryFactory {
   public PsiDirectoryFactoryImpl(final PsiManagerImpl manager) {
     myManager = manager;
   }
+  @NotNull
   @Override
   public PsiDirectory createDirectory(@NotNull final VirtualFile file) {
     return new PsiDirectoryImpl(myManager, file);
@@ -52,7 +53,7 @@ public class PsiDirectoryFactoryImpl extends PsiDirectoryFactory {
   }
 
   @Override
-  public boolean isPackage(PsiDirectory directory) {
+  public boolean isPackage(@NotNull PsiDirectory directory) {
     return false;
   }
 

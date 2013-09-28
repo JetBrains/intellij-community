@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -63,7 +64,7 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
   @Nullable
   @Override
   public PsiType getFunctionalInterfaceType() {
-    return LambdaUtil.getFunctionalInterfaceType(this, true);
+    return FunctionalInterfaceParameterizationUtil.getFunctionalType(LambdaUtil.getFunctionalInterfaceType(this, true), this);
   }
 
   @Override
@@ -118,6 +119,6 @@ public class PsiLambdaExpressionImpl extends ExpressionPsiElement implements Psi
     for (PsiParameter parameter : parameters) {
       if (parameter.getTypeElement() == null) return false;
     }
-    return parameters.length > 0;
+    return true;
   }
 }

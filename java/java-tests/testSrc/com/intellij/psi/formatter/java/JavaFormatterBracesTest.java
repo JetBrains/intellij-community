@@ -155,4 +155,14 @@ public class JavaFormatterBracesTest extends AbstractJavaFormatterTest {
       "}";
     doTextTest(text, text);
   }
+
+  public void testSimpleMethodsInOneLineEvenIfExceedsRightMargin() {
+    getSettings().KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 90;
+    String text = "public class Repr2 {\n" +
+                  "    public void start() { System.out.println(\"kfjsdkfjsdkfjskdjfslkdjfklsdjfklsdjfksjdfkljsdkfjsd!\"); }\n" +
+                  "}";
+    doTextTest(text, text);
+  }
+
 }

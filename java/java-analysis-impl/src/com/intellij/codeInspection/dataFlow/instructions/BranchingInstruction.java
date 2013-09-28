@@ -27,17 +27,19 @@ package com.intellij.codeInspection.dataFlow.instructions;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 public abstract class BranchingInstruction extends Instruction {
   private boolean myIsTrueReachable;
   private boolean myIsFalseReachable;
-  private boolean isConstTrue;
-  private PsiElement myExpression;
+  private final boolean isConstTrue;
+  private final PsiElement myExpression;
 
-  protected BranchingInstruction() {
+  protected BranchingInstruction(@Nullable PsiElement psiAnchor) {
     myIsTrueReachable = false;
     myIsFalseReachable = false;
-    setPsiAnchor(null);
+    myExpression = psiAnchor;
+    isConstTrue = psiAnchor != null && isBoolConst(psiAnchor);
   }
 
   public boolean isTrueReachable() {
@@ -70,8 +72,4 @@ public abstract class BranchingInstruction extends Instruction {
     return "true".equals(text) || "false".equals(text);
   }
 
-  protected void setPsiAnchor(PsiElement psiAnchor) {
-    myExpression = psiAnchor;
-    isConstTrue = psiAnchor != null && isBoolConst(psiAnchor);
-  }
 }
