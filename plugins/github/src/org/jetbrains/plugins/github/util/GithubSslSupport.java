@@ -111,7 +111,13 @@ public class GithubSslSupport {
   }
 
   @CalledInAwt
-  public boolean askIfShouldProceed(final String host) {
+  public boolean askIfShouldProceed(final String url) {
+    String host = GithubUrlUtil.getHostFromUrl(url);
+    if (host == null) {
+      GithubUtil.LOG.warn("Bad SSL host: " + url);
+      return false;
+    }
+
     final String BACK_TO_SAFETY = "No, I don't trust";
     final String TRUST = "Proceed anyway";
     //int choice = Messages.showDialog("The security certificate of " + host + " is not trusted. Do you want to proceed anyway?",

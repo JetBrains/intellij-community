@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.github.util;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.apache.commons.httpclient.URI;
+import org.apache.commons.httpclient.URIException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
@@ -69,6 +71,19 @@ public class GithubUrlUtil {
   @NotNull
   public static String getGithubHost() {
     return "https://" + getGitHostWithoutProtocol();
+  }
+
+  /**
+   * E.g.: https://github.com/suffix/ -> github.com
+   */
+  @Nullable
+  public static String getHostFromUrl(@NotNull String url) {
+    try {
+      return new URI(url, false).getHost();
+    }
+    catch (URIException e) {
+      return null;
+    }
   }
 
   /**
