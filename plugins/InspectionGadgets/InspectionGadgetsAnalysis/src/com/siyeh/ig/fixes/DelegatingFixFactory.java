@@ -32,4 +32,9 @@ public class DelegatingFixFactory {
     final PsiClassType type = TypeUtils.getType(CommonClassNames.JAVA_IO_SERIALIZABLE, aClass);
     return new DelegatingFix(QuickFixFactory.getInstance().createExtendsListFix(aClass, type, true));
   }
+
+  public static InspectionGadgetsFix createMakeCloneableFix(PsiClass aClass) {
+    final PsiClassType type = TypeUtils.getType(CommonClassNames.JAVA_LANG_CLONEABLE, aClass);
+    return new DelegatingFix(QuickFixFactory.getInstance().createExtendsListFix(aClass, type, true));
+  }
 }
