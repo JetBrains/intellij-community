@@ -172,7 +172,6 @@ class StateMerger {
           }
 
           DfaMemoryStateImpl copy = state.createCopy();
-          copy.flushVariable(var);
           copy.setVariableState(var, varStateWithoutType);
           
           complementaryStates.add(state);
