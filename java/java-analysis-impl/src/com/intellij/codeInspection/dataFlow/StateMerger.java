@@ -205,8 +205,10 @@ class StateMerger {
               @Override
               public boolean value(DfaMemoryStateImpl another) {
                 return seemCompatible(state, another, var) &&
+                       another.getVariableState(var).myInstanceofValues.contains(notInstanceof) &&
                        varStateWithoutType.equals(getVarStateWithoutType(another, var, notInstanceof)) &&
-                       areEquivalentModuloVar(another, state, var);
+                       areEquivalentModuloVar(another, state, var) && 
+                       !(state.isNull(var) && another.isNotNull(var));
               }
             });
           if (complementaryStates.isEmpty()) {
