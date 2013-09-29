@@ -40,4 +40,22 @@ class SimpleHash implements Hash {
   public String toShortString() {
     return myHash.substring(0, 7);
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    SimpleHash that = (SimpleHash)o;
+
+    if (myHash != null ? !myHash.equals(that.myHash) : that.myHash != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myHash != null ? myHash.hashCode() : 0;
+  }
+
 }
