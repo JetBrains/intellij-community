@@ -144,7 +144,7 @@ class StateMerger {
     MultiMap<Pair<DfaVariableValue, DfaPsiType>,DfaMemoryStateImpl> byInstanceof = new MultiMap<Pair<DfaVariableValue, DfaPsiType>, DfaMemoryStateImpl>();
     for (final DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
-      for (DfaVariableValue value : state.getChangedVariable()) {
+      for (DfaVariableValue value : state.getChangedVariables()) {
         for (DfaPsiType instanceofValue : state.getVariableState(value).myInstanceofValues) {
           byInstanceof.putValue(Pair.create(value, instanceofValue), state);
         }
@@ -154,7 +154,7 @@ class StateMerger {
     for (final DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
 
-      for (final DfaVariableValue var : state.getChangedVariable()) {
+      for (final DfaVariableValue var : state.getChangedVariables()) {
         for (final DfaPsiType notInstanceof : state.getVariableState(var).myNotInstanceofValues) {
           final DfaVariableState varStateWithoutType = getVarStateWithoutType(state, var, notInstanceof);
           List<DfaMemoryStateImpl> complementaryStates = ContainerUtil.filter(

@@ -817,14 +817,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         }
       }
     }
-    for (DfaVariableValue value : new ArrayList<DfaVariableValue>(getChangedVariable())) {
+    for (DfaVariableValue value : new ArrayList<DfaVariableValue>(getChangedVariables())) {
       if (value.isFlushableByCalls()) {
         doFlush(value, true);
       }
     }
   }
 
-  Set<DfaVariableValue> getChangedVariable() {
+  Set<DfaVariableValue> getChangedVariables() {
     return myVariableStates.keySet();
   }
 
