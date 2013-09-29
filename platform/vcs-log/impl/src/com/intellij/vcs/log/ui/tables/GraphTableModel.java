@@ -2,19 +2,18 @@ package com.intellij.vcs.log.ui.tables;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.render.GraphCommitCell;
-import com.intellij.vcs.log.graph.render.PositionUtil;
 import com.intellij.vcs.log.printmodel.GraphPrintCell;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.AbstractTableModel;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author erokhins
@@ -28,21 +27,18 @@ public class GraphTableModel extends AbstractTableModel {
   private static final int COLUMN_COUNT = DATE_COLUMN + 1;
 
   private static final String[] COLUMN_NAMES = {"Root", "Subject", "Author", "Date"};
-  private final DataPack dataPack;
 
-  private final Map<Hash, String> reworded = new HashMap<Hash, String>();
-  private final Set<Hash> fixedUp = new HashSet<Hash>();
-  private final Set<Hash> applied = new HashSet<Hash>();
+  @NotNull private final DataPack myDataPack;
   @NotNull private final VcsLogDataHolder myDataHolder;
 
   public GraphTableModel(@NotNull VcsLogDataHolder dataHolder) {
     myDataHolder = dataHolder;
-    this.dataPack = dataHolder.getDataPack();
+    myDataPack = dataHolder.getDataPack();
   }
 
   @Override
   public int getRowCount() {
-    return dataPack.getGraphModel().getGraph().getNodeRows().size();
+    return myDataPack.getGraphModel().getGraph().getNodeRows().size();
   }
 
   @Override
@@ -52,7 +48,7 @@ public class GraphTableModel extends AbstractTableModel {
 
   @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
-    Node commitNode = dataPack.getGraphModel().getGraph().getCommitNodeInRow(rowIndex);
+    Node commitNode = myDataPack.getGraphModel().getGraph().getCommitNodeInRow(rowIndex);
     VcsShortCommitDetails data;
     if (commitNode == null) {
       data = null;
@@ -69,20 +65,14 @@ public class GraphTableModel extends AbstractTableModel {
           return null;
         }
       case COMMIT_COLUMN:
-        GraphPrintCell graphPrintCell = dataPack.getPrintCellModel().getGraphPrintCell(rowIndex);
-        GraphCommitCell.Kind cellKind = getCellKind(PositionUtil.getNode(graphPrintCell));
+        GraphPrintCell graphPrintCell = myDataPack.getPrintCellModel().getGraphPrintCell(rowIndex);
         String message = "";
         List<VcsRef> refs = Collections.emptyList();
         if (data != null) {
-          if (cellKind == GraphCommitCell.Kind.REWORD) {
-            message = reworded.get(commitNode.getCommitHash());
-          }
-          else {
-            message = data.getSubject();
-            refs = dataPack.getRefsModel().refsToCommit(data.getHash());
-          }
+          message = data.getSubject();
+          refs = myDataPack.getRefsModel().refsToCommit(data.getHash());
         }
-        return new GraphCommitCell(graphPrintCell, cellKind, message, refs);
+        return new GraphCommitCell(graphPrintCell, GraphCommitCell.Kind.NORMAL, message, refs);
       case AUTHOR_COLUMN:
         if (data == null) {
           return "";
@@ -98,19 +88,8 @@ public class GraphTableModel extends AbstractTableModel {
           return DateFormatUtil.formatDateTime(data.getAuthorTime());
         }
       default:
-        throw new IllegalArgumentException("columnIndex > 2");
+        throw new IllegalArgumentException("columnIndex is " + columnIndex + " > " + (COLUMN_COUNT - 1));
     }
-  }
-
-  private GraphCommitCell.Kind getCellKind(Node node) {
-    if (node == null) {
-      return GraphCommitCell.Kind.NORMAL;
-    }
-    Hash hash = node.getCommitHash();
-    if (applied.contains(hash)) return GraphCommitCell.Kind.APPLIED;
-    if (fixedUp.contains(hash)) return GraphCommitCell.Kind.FIXUP;
-    if (reworded.containsKey(hash)) return GraphCommitCell.Kind.REWORD;
-    return GraphCommitCell.Kind.NORMAL;
   }
 
   @Override
@@ -125,7 +104,7 @@ public class GraphTableModel extends AbstractTableModel {
       case DATE_COLUMN:
         return String.class;
       default:
-        throw new IllegalArgumentException("column > 2");
+        throw new IllegalArgumentException("columnIndex is " + column + " > " + (COLUMN_COUNT - 1));
     }
   }
 
@@ -134,32 +113,4 @@ public class GraphTableModel extends AbstractTableModel {
     return COLUMN_NAMES[column];
   }
 
-  @Override
-  public boolean isCellEditable(int rowIndex, int columnIndex) {
-    return false;
-  }
-
-  public void clearReworded() {
-    reworded.clear();
-    //fireTableDataChanged();
-  }
-
-  public void addReworded(Hash hash, String newMessage) {
-    reworded.put(hash, newMessage);
-    //fireTableDataChanged();
-  }
-
-  public void addReworded(Map<Hash, String> map) {
-    reworded.putAll(map);
-    //fireTableDataChanged();
-  }
-
-  public void addFixedUp(Collection<Hash> collection) {
-    fixedUp.addAll(collection);
-  }
-
-  public void addApplied(Hash commit) {
-    applied.add(commit);
-    fireTableCellUpdated(dataPack.getRowByHash(commit), 0);
-  }
 }
