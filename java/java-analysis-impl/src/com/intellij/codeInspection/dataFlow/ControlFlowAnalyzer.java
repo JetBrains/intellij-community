@@ -720,11 +720,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     if (exceptionClass == null) return;
     for (int i = myCatchStack.size() - 1; i >= 0; i--) {
       CatchDescriptor cd = myCatchStack.get(i);
-      flushVariablesInsideTry(cd);
       if (cd.isFinally()) {
+        flushVariablesInsideTry(cd);
         addInstruction(new GosubInstruction(cd.getJumpOffset(this)));
       }
       else if (cd.getType().isAssignableFrom(exceptionClass)) { // Definite catch.
+        flushVariablesInsideTry(cd);
         addGotoCatch(cd);
         return;
       }
@@ -733,6 +734,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         pushUnknown();
         final ConditionalGotoInstruction branch = new ConditionalGotoInstruction(null, false, null);
         addInstruction(branch);
+        flushVariablesInsideTry(cd);
         addGotoCatch(cd);
         branch.setOffset(myCurrentFlow.getInstructionCount());
       }
