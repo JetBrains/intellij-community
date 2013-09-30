@@ -840,13 +840,13 @@ public class PluginManagerCore {
 
     final List<IdeaPluginDescriptorImpl> result = new ArrayList<IdeaPluginDescriptorImpl>();
 
-    int pluginsCount = countPlugins(PathManager.getPluginsPath()) + countPlugins(PathManager.getPreinstalledPluginsPath());
+    int pluginsCount = countPlugins(PathManager.getPluginsPath()) + countPlugins(PathManager.getPreInstalledPluginsPath());
     loadDescriptors(PathManager.getPluginsPath(), result, progress, pluginsCount);
     Application application = ApplicationManager.getApplication();
     boolean fromSources = false;
     if (application == null || !application.isUnitTestMode()) {
       int size = result.size();
-      loadDescriptors(PathManager.getPreinstalledPluginsPath(), result, progress, pluginsCount);
+      loadDescriptors(PathManager.getPreInstalledPluginsPath(), result, progress, pluginsCount);
       fromSources = size == result.size();
     }
 
