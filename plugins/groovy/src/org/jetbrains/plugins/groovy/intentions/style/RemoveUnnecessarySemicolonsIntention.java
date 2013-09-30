@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,12 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrConstructorInvocation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 
@@ -103,7 +108,7 @@ public class RemoveUnnecessarySemicolonsIntention implements IntentionAction {
       final int end = selectionModel.getSelectionEnd();
       final TextRange range = new TextRange(start, end);
 
-      final ArrayList<PsiElement> colons = new ArrayList<PsiElement>();
+      final ArrayList<PsiElement> semicolons = new ArrayList<PsiElement>();
       file.accept(new PsiRecursiveElementVisitor() {
         @Override
         public void visitElement(PsiElement element) {
@@ -111,7 +116,7 @@ public class RemoveUnnecessarySemicolonsIntention implements IntentionAction {
 
           final IElementType elementType = element.getNode().getElementType();
           if (elementType == GroovyTokenTypes.mSEMI) {
-            colons.add(element);
+            semicolons.add(element);
           }
           else {
             super.visitElement(element);
@@ -120,9 +125,8 @@ public class RemoveUnnecessarySemicolonsIntention implements IntentionAction {
       });
 
       boolean removed = false;
-      for (PsiElement colon : colons) {
-        final boolean b = checkAndRemove(project, colon, document);
-        removed = removed || b;
+      for (PsiElement semicolon : semicolons) {
+        removed = checkAndRemove(project, semicolon, document) || removed;
       }
 
       if (!removed) {
@@ -147,7 +151,7 @@ public class RemoveUnnecessarySemicolonsIntention implements IntentionAction {
 
   private static boolean checkAndRemove(Project project, @Nullable PsiElement element, Document document) {
     if (element != null && element.getNode().getElementType() == GroovyTokenTypes.mSEMI) {
-      if (isColonUnnecessary(element, document.getText(), project)) {
+      if (isSemiColonUnnecessary(element, document.getText(), project)) {
         element.delete();
         return true;
       }
@@ -155,36 +159,92 @@ public class RemoveUnnecessarySemicolonsIntention implements IntentionAction {
     return false;
   }
 
-  private static boolean isColonUnnecessary(PsiElement colon, String text, Project project) {
-    final GrStatement prev = getPreviousStatement(colon);
-    final GrStatement next = getNextStatement(colon);
+  private static boolean isSemiColonUnnecessary(PsiElement semicolon, String text, Project project) {
+    PsiElement parent = semicolon.getParent();
+    if (parent instanceof GrTraditionalForClause) {
+      return false;
+    }
+    else if (parent instanceof GrTypeDefinitionBody) {
+      return isSemiColonUnnecessaryInClassBody(semicolon, text, project);
+    }
+    else {
+      return isSemiColonUnnecessaryInCodeBlock(semicolon, text, project);
+    }
+  }
+
+  private static boolean isSemiColonUnnecessaryInCodeBlock(PsiElement semicolon, String text, Project project) {
+    final GrStatement prev = getPreviousStatement(semicolon, GrStatement.class);
+    final GrStatement next = getNextStatement(semicolon, GrStatement.class);
 
     if (prev == null || next == null) return true;
 
     final int startOffset = prev.getTextRange().getStartOffset();
     final int endOffset = next.getTextRange().getEndOffset();
 
-    final int offset = colon.getTextRange().getStartOffset();
-    final String statementWithoutColon = text.substring(startOffset, offset) + text.substring(offset + 1, endOffset);
-    final GroovyFile file = GroovyPsiElementFactory.getInstance(project).createGroovyFile(statementWithoutColon, false, null);
+    final int offset = semicolon.getTextRange().getStartOffset();
+    final String statementWithoutSemicolon = text.substring(startOffset, offset) + text.substring(offset + 1, endOffset);
+    final GroovyFile file = GroovyPsiElementFactory.getInstance(project).createGroovyFile(statementWithoutSemicolon, false, null);
     final GrStatement[] statements = file.getStatements();
     if (statements.length != 2) return false;
 
-    return GroovyRefactoringUtil.checkPsiElementsAreEqual(prev, statements[0]) &&
-           GroovyRefactoringUtil.checkPsiElementsAreEqual(next, statements[1]);
+    return checkStatementsAreEqual(prev, statements[0]) &&
+           checkStatementsAreEqual(next, statements[1]);
+  }
+
+  private static boolean isSemiColonUnnecessaryInClassBody(PsiElement semicolon, String text, Project project) {
+    final GrMembersDeclaration prev = getPreviousStatement(semicolon, GrMembersDeclaration.class);
+    final GrMembersDeclaration next = getNextStatement(semicolon, GrMembersDeclaration.class);
+
+    if (prev == null || next == null) return true;
+
+
+    final int startOffset = prev.getTextRange().getStartOffset();
+    final int endOffset = next.getTextRange().getEndOffset();
+
+    final int offset = semicolon.getTextRange().getStartOffset();
+    final String declarationsWithoutSemicolon = text.substring(startOffset, offset) + text.substring(offset + 1, endOffset);
+
+    PsiElement parent = semicolon.getParent().getParent();
+
+    String prefix = parent instanceof GrClassDefinition ? "class":
+                    parent instanceof GrEnumTypeDefinition ? "enum":
+                    parent instanceof GrInterfaceDefinition ? "interface":
+                    parent instanceof GrAnnotationTypeDefinition ? "@interface":
+                    parent instanceof GrAnonymousClassDefinition ? "class":
+                    "class";
+    final GroovyFile file = GroovyPsiElementFactory.getInstance(project).createGroovyFile(prefix + " Name {\n" + declarationsWithoutSemicolon + "\n}", false, null);
+    GrTypeDefinition[] typeDefs = file.getTypeDefinitions();
+    if (typeDefs.length != 1) return false;
+
+    GrTypeDefinition clazz = typeDefs[0];
+    GrMembersDeclaration[] declarations = clazz.getMemberDeclarations();
+    if (declarations.length != 2) return false;
+
+    return checkStatementsAreEqual(prev, declarations[0]) &&
+           checkStatementsAreEqual(next, declarations[1]);
+  }
+
+
+  private static <T extends PsiElement> boolean checkStatementsAreEqual(T before, T after) {
+    if (before instanceof GrConstructorInvocation) {
+      return after instanceof GrMethodCall && before.getText().equals(after.getText());
+    }
+    else {
+      return GroovyRefactoringUtil.checkPsiElementsAreEqual(before, after);
+    }
   }
 
   @Nullable
-  private static GrStatement getPreviousStatement(PsiElement colon) {
-    final PsiElement prev = PsiUtil.skipWhitespacesAndComments(colon.getPrevSibling(), false);
-    if (prev instanceof GrStatement) return (GrStatement)prev;
+  private static <T extends PsiElement> T getPreviousStatement(PsiElement semicolon, Class<T> instanceOf) {
+    final PsiElement prev = PsiUtil.skipWhitespacesAndComments(semicolon.getPrevSibling(), false);
+    if (instanceOf.isInstance(prev)) return (T)prev;
     return null;
   }
 
   @Nullable
-  private static GrStatement getNextStatement(PsiElement colon) {
-    final PsiElement next = PsiUtil.skipWhitespacesAndComments(colon.getNextSibling(), true);
-    if (next instanceof GrStatement) return (GrStatement)next;
+  private static <T extends PsiElement> T getNextStatement(PsiElement semicolon, Class<T> instaceOf) {
+    final PsiElement next = PsiUtil.skipWhitespacesAndComments(semicolon.getNextSibling(), true);
+    if (instaceOf.isInstance(next)) return (T)next;
     return null;
   }
 
