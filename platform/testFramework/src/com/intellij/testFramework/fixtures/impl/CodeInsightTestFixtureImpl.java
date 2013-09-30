@@ -1343,10 +1343,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         assert myEditor != null : "Editor couldn't be created for file: " +
                                   copy.getPath() +
                                   ", use copyFileToProject(..) method for this file instead of configureByFile(..)";
-        if (loader.caretMarker != null) {
-          int offset = loader.caretMarker.getStartOffset();
-          myEditor.getCaretModel().moveToOffset(offset);
-        }
+        int offset = loader.caretMarker != null ? loader.caretMarker.getStartOffset() : 0;
+        myEditor.getCaretModel().moveToOffset(offset);
+
         if (loader.selStartMarker != null && loader.selEndMarker != null) {
           int start = loader.selStartMarker.getStartOffset();
           int end = loader.selEndMarker.getStartOffset();
@@ -1356,6 +1355,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           else {
             myEditor.getSelectionModel().setSelection(start, end);
           }
+        }
+        else {
+          myEditor.getSelectionModel().removeSelection();
         }
 
         Module module = getModule();
