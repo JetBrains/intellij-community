@@ -386,6 +386,7 @@ public class InferenceSession {
           }
           PsiType bound = null;
           for (PsiType eqBound : eqBounds) {
+            if (eqBound == null) continue;
             bound = acceptBoundsWithRecursiveDependencies(typeParameter, eqBound);
           }
           if (bound != null) {

@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl;
@@ -45,12 +46,13 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       return false;
     }
 
-    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(myT);
+    final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(myT);
+    final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(classResolveResult);
     if (interfaceMethod == null) {
       return false;
     }
-    
-    final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, PsiUtil.resolveGenericsClassInType(myT));
+
+    final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(interfaceMethod, classResolveResult);
     final PsiParameter[] targetParameters = interfaceMethod.getParameterList().getParameters();
     final PsiType returnType = substitutor.substitute(interfaceMethod.getReturnType());
     LOG.assertTrue(returnType != null, interfaceMethod);
@@ -68,21 +70,28 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
       if (targetParameters.length == parameters.length + 1) {
         final PsiTypeElement qualifierTypeElement = myExpression.getQualifierType();
         final PsiExpression qualifierExpression = myExpression.getQualifierExpression();
-        final PsiType qualifierType;
+        PsiType qualifierType;
         if (qualifierTypeElement != null) {
           qualifierType = qualifierTypeElement.getType();
         }
         else {
           LOG.assertTrue(qualifierExpression != null);
           qualifierType = qualifierExpression.getType();
+          if (qualifierType == null && qualifierExpression instanceof PsiReferenceExpression) {
+            final JavaResolveResult resolveResult = ((PsiReferenceExpression)qualifierExpression).advancedResolve(false);
+            final PsiElement resolve = resolveResult.getElement();
+            if (resolve instanceof PsiClass) {
+              qualifierType = JavaPsiFacade.getElementFactory(resolve.getProject()).createType((PsiClass)resolve, resolveResult.getSubstitutor());
+            }
+          }
         }
-        constraints.add(new SubtypingConstraint(qualifierType, substitutor.substitute(targetParameters[0].getType()), true));
+        constraints.add(new SubtypingConstraint(qualifierType, GenericsUtil.eliminateWildcards(substitutor.substitute(targetParameters[0].getType())), true));
         for (int i = 1; i < targetParameters.length; i++) {
-          constraints.add(new TypeCompatibilityConstraint(psiSubstitutor.substitute(parameters[i - 1].getType()), substitutor.substitute(targetParameters[i].getType())));
+          constraints.add(new TypeCompatibilityConstraint(psiSubstitutor.substitute(parameters[i - 1].getType()), GenericsUtil.eliminateWildcards(substitutor.substitute(targetParameters[i].getType()))));
         }
       } else {
         for (int i = 0; i < targetParameters.length; i++) {
-          constraints.add(new TypeCompatibilityConstraint(psiSubstitutor.substitute(parameters[i].getType()), substitutor.substitute(targetParameters[i].getType())));
+          constraints.add(new TypeCompatibilityConstraint(psiSubstitutor.substitute(parameters[i].getType()), GenericsUtil.eliminateWildcards(substitutor.substitute(targetParameters[i].getType()))));
         }
       }
       if (returnType != PsiType.VOID) {
@@ -92,7 +101,7 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         }
 
         if (applicableMethodReturnType != null) {
-          constraints.add(new TypeCompatibilityConstraint(returnType, psiSubstitutor.substitute(applicableMethodReturnType)));
+          constraints.add(new TypeCompatibilityConstraint(GenericsUtil.eliminateWildcards(returnType), psiSubstitutor.substitute(applicableMethodReturnType)));
         }
       }
       return true;
