@@ -41,10 +41,11 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
-    if (session.isProperType(myT)) {
-      return TypeConversionUtil.areTypesAssignmentCompatible(myT, myExpression);
-    }
     if (!PsiPolyExpressionUtil.isPolyExpression(myExpression)) {
+      if (session.isProperType(myT)) {
+        return TypeConversionUtil.areTypesAssignmentCompatible(myT, myExpression);
+      }
+    
       final PsiType exprType = myExpression.getType();
       if (exprType != null && !exprType.equals(PsiType.NULL)) {
         constraints.add(new TypeCompatibilityConstraint(myT, exprType));
