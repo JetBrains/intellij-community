@@ -1,5 +1,7 @@
 package org.jetbrains.idea.svn.upgrade;
 
+import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
@@ -8,7 +10,7 @@ import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.FileStatusResultParser;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
-import org.jetbrains.idea.svn.commandLine.SvnCommand;
+import org.jetbrains.idea.svn.commandLine.LineCommandListener;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -18,6 +20,7 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -41,14 +44,15 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
 
     CommandUtil.put(parameters, path);
 
-    // TODO: handler should be called in parallel with command execution, but this will be in other thread
-    // TODO: check if that is ok for current handler implementation
-    // TODO: add possibility to invoke "handler.checkCancelled" - process should be killed
+    // TODO: Add general possibility to invoke "handler.checkCancelled" (process should be killed). But currently upgrade process is not
+    // TODO: cancellable from UI - and this makes sense.
     // for 1.8 - no output
     // for 1.7 - output in format "Upgraded '<path>'"
-    SvnCommand command = CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.upgrade, parameters, null);
     FileStatusResultParser parser = new FileStatusResultParser(CHANGED_PATH, handler, new UpgradeStatusConvertor());
-    parser.parse(command.getOutput());
+    UpgradeLineCommandListener listener = new UpgradeLineCommandListener(parser);
+
+    CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.upgrade, parameters, listener);
+    listener.throwIfException();
   }
 
   @Override
@@ -78,6 +82,37 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
       }
 
       return result;
+    }
+  }
+
+  private static class UpgradeLineCommandListener extends LineCommandListener {
+
+    @NotNull private final FileStatusResultParser parser;
+    @NotNull private final AtomicReference<VcsException> exception;
+
+    private UpgradeLineCommandListener(@NotNull FileStatusResultParser parser) {
+      this.parser = parser;
+      exception = new AtomicReference<VcsException>();
+    }
+
+    @Override
+    public void onLineAvailable(String line, Key outputType) {
+      if (ProcessOutputTypes.STDOUT.equals(outputType)) {
+        try {
+          parser.onLine(line);
+        }
+        catch (VcsException e) {
+          exception.set(e);
+        }
+      }
+    }
+
+    public void throwIfException() throws VcsException {
+      VcsException e = exception.get();
+
+      if (e != null) {
+        throw e;
+      }
     }
   }
 }
