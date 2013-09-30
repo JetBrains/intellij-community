@@ -18,15 +18,13 @@ package com.intellij.application.options.emmet;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
-import com.intellij.openapi.options.CompositeConfigurable;
-import com.intellij.openapi.options.Configurable;
-import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.options.*;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,7 +35,8 @@ import java.util.List;
  * User: zolotov
  * Date: 9/24/13
  */
-public class EmmetCompositeConfigurable extends CompositeConfigurable<UnnamedConfigurable> implements Configurable.NoScroll {
+public class EmmetCompositeConfigurable extends CompositeConfigurable<UnnamedConfigurable> implements Configurable.NoScroll,
+                                                                                                      SearchableConfigurable {
   private JPanel myRootPanel;
   private JPanel myGeneratorSettingsPanel;
   private JComboBox myEmmetExpandShortcutCombo;
@@ -61,7 +60,7 @@ public class EmmetCompositeConfigurable extends CompositeConfigurable<UnnamedCon
   @Nullable
   @Override
   public String getHelpTopic() {
-    return "reference.idesettings.emmet";
+    return getId();
   }
 
   @Nullable
@@ -135,5 +134,17 @@ public class EmmetCompositeConfigurable extends CompositeConfigurable<UnnamedCon
       return TemplateSettings.ENTER_CHAR;
     }
     return TemplateSettings.SPACE_CHAR;
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return "reference.idesettings.emmet";
+  }
+
+  @Nullable
+  @Override
+  public Runnable enableSearch(String option) {
+    return null;
   }
 }
