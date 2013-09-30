@@ -49,7 +49,8 @@ public enum SvnCommandName {
   lock("lock", true),
   unlock("unlock", true),
   importFolder("import", false),
-  export("export", false);
+  export("export", false),
+  upgrade("upgrade", true);
 
   private final String myName;
   private final boolean myWriteable;

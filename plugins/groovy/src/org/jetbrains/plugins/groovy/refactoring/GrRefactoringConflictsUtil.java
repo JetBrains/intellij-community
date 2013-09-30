@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.refactoring.util;
+package org.jetbrains.plugins.groovy.refactoring;
 
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -25,37 +25,49 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiSearchScopeUtil;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.FilteringIterator;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Set;
 
-/**
- * @author anna
- * Date: 05-Oct-2009
- */
-public class RefactoringConflictsUtil {
-  private RefactoringConflictsUtil() { }
 
-  public static void analyzeAccessibilityConflicts(@NotNull Set<PsiMember> membersToMove,
+/**
+ * Created by Max Medvedev on 9/28/13
+ */
+public class GrRefactoringConflictsUtil {
+  private GrRefactoringConflictsUtil() { }
+
+  public static void analyzeAccessibilityConflicts(@NotNull Set<GrMember> membersToMove,
                                                    @NotNull PsiClass targetClass,
                                                    @NotNull MultiMap<PsiElement, String> conflicts,
                                                    @Nullable String newVisibility) {
     analyzeAccessibilityConflicts(membersToMove, targetClass, conflicts, newVisibility, targetClass, null);
   }
 
-  public static void analyzeAccessibilityConflicts(@NotNull Set<PsiMember> membersToMove,
+  public static void analyzeAccessibilityConflicts(@NotNull Set<GrMember> membersToMove,
                                                    @Nullable PsiClass targetClass,
                                                    @NotNull MultiMap<PsiElement, String> conflicts,
                                                    @Nullable String newVisibility,
@@ -65,78 +77,15 @@ public class RefactoringConflictsUtil {
       newVisibility = PsiModifier.PUBLIC;
     }
 
-    for (PsiMember member : membersToMove) {
+    for (GrMember member : membersToMove) {
       checkUsedElements(member, member, membersToMove, abstractMethods, targetClass, context, conflicts);
-      checkAccessibilityConflicts(member, newVisibility, targetClass, membersToMove, conflicts);
-    }
-  }
-
-  public static void checkAccessibilityConflicts(@NotNull PsiMember member,
-                                                 @PsiModifier.ModifierConstant @Nullable String newVisibility,
-                                                 @Nullable PsiClass targetClass,
-                                                 @NotNull Set<? extends PsiMember> membersToMove,
-                                                 @NotNull MultiMap<PsiElement, String> conflicts) {
-    PsiModifierList modifierListCopy = member.getModifierList();
-    if (modifierListCopy != null) {
-      modifierListCopy = (PsiModifierList)modifierListCopy.copy();
-      final PsiClass containingClass = member.getContainingClass();
-      if (containingClass != null && containingClass.isInterface()) {
-        VisibilityUtil.setVisibility(modifierListCopy, PsiModifier.PUBLIC);
-      }
-    }
-    if (newVisibility != null && modifierListCopy != null) {
-      try {
-        VisibilityUtil.setVisibility(modifierListCopy, newVisibility);
-      }
-      catch (IncorrectOperationException ignore) { } // do nothing and hope for the best
-    }
-
-    checkAccessibilityConflicts(member, modifierListCopy, targetClass, membersToMove, conflicts);
-  }
-
-  public static void checkAccessibilityConflicts(@NotNull PsiMember member,
-                                                 @Nullable PsiModifierList modifierListCopy,
-                                                 @Nullable PsiClass targetClass,
-                                                 @NotNull Set<? extends PsiMember> membersToMove,
-                                                 @NotNull MultiMap<PsiElement, String> conflicts) {
-    for (PsiReference psiReference : ReferencesSearch.search(member)) {
-      checkAccessibilityConflicts(psiReference, member, modifierListCopy, targetClass, membersToMove, conflicts);
-    }
-  }
-
-  public static void checkAccessibilityConflicts(@NotNull PsiReference reference,
-                                                 @NotNull PsiMember member,
-                                                 @Nullable PsiModifierList modifierListCopy,
-                                                 @Nullable PsiClass targetClass,
-                                                 @NotNull Set<? extends PsiMember> membersToMove,
-                                                 @NotNull MultiMap<PsiElement, String> conflicts) {
-    JavaPsiFacade manager = JavaPsiFacade.getInstance(member.getProject());
-    PsiElement ref = reference.getElement();
-    if (!RefactoringHierarchyUtil.willBeInTargetClass(ref, membersToMove, targetClass, false)) {
-      // check for target class accessibility
-      if (targetClass != null && !manager.getResolveHelper().isAccessible(targetClass, targetClass.getModifierList(), ref, null, null)) {
-        String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
-                                                   RefactoringUIUtil.getDescription(targetClass, true),
-                                                   VisibilityUtil.getVisibilityStringToDisplay(targetClass),
-                                                   RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(ref), true));
-        message = CommonRefactoringUtil.capitalize(message);
-        conflicts.putValue(targetClass, message);
-      }
-      // check for member accessibility
-      else if (!manager.getResolveHelper().isAccessible(member, modifierListCopy, ref, targetClass, null)) {
-        String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
-                                                   RefactoringUIUtil.getDescription(member, true),
-                                                   VisibilityUtil.toPresentableText(VisibilityUtil.getVisibilityModifier(modifierListCopy)),
-                                                   RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(ref), true));
-        message = CommonRefactoringUtil.capitalize(message);
-        conflicts.putValue(member, message);
-      }
+      RefactoringConflictsUtil.checkAccessibilityConflicts(member, newVisibility, targetClass, membersToMove, conflicts);
     }
   }
 
   public static void checkUsedElements(PsiMember member,
                                        PsiElement scope,
-                                       @NotNull Set<PsiMember> membersToMove,
+                                       @NotNull Set<GrMember> membersToMove,
                                        @Nullable Set<PsiMethod> abstractMethods,
                                        @Nullable PsiClass targetClass,
                                        @NotNull PsiElement context,
@@ -145,40 +94,41 @@ public class RefactoringConflictsUtil {
     if (abstractMethods != null) {
       moving.addAll(abstractMethods);
     }
-    if (scope instanceof PsiReferenceExpression) {
-      PsiReferenceExpression refExpr = (PsiReferenceExpression)scope;
+    if (scope instanceof GrReferenceExpression) {
+      GrReferenceExpression refExpr = (GrReferenceExpression)scope;
       PsiElement refElement = refExpr.resolve();
       if (refElement instanceof PsiMember) {
         if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false)) {
-          PsiExpression qualifier = refExpr.getQualifierExpression();
-          PsiClass accessClass = (PsiClass)(qualifier != null ? PsiUtil.getAccessObjectClass(qualifier).getElement() : null);
-          checkAccessibility((PsiMember)refElement, context, accessClass, member, conflicts);
+          GrExpression qualifier = refExpr.getQualifierExpression();
+          PsiClass accessClass = (PsiClass)(qualifier != null ? PsiUtil.getAccessObjectClass(
+            qualifier).getElement() : null);
+          RefactoringConflictsUtil.checkAccessibility((PsiMember)refElement, context, accessClass, member, conflicts);
         }
       }
     }
-    else if (scope instanceof PsiNewExpression) {
-      final PsiNewExpression newExpression = (PsiNewExpression)scope;
-      final PsiAnonymousClass anonymousClass = newExpression.getAnonymousClass();
+    else if (scope instanceof GrNewExpression) {
+      final GrNewExpression newExpression = (GrNewExpression)scope;
+      final GrAnonymousClassDefinition anonymousClass = newExpression.getAnonymousClassDefinition();
       if (anonymousClass != null) {
         if (!RefactoringHierarchyUtil.willBeInTargetClass(anonymousClass, moving, targetClass, false)) {
-          checkAccessibility(anonymousClass, context, anonymousClass, member, conflicts);
+          RefactoringConflictsUtil.checkAccessibility(anonymousClass, context, anonymousClass, member, conflicts);
         }
       }
       else {
-        final PsiMethod refElement = newExpression.resolveConstructor();
+        final PsiMethod refElement = newExpression.resolveMethod();
         if (refElement != null) {
           if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false)) {
-            checkAccessibility(refElement, context, null, member, conflicts);
+            RefactoringConflictsUtil.checkAccessibility(refElement, context, null, member, conflicts);
           }
         }
       }
     }
-    else if (scope instanceof PsiJavaCodeReferenceElement) {
-      PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)scope;
+    else if (scope instanceof GrCodeReferenceElement) {
+      GrCodeReferenceElement refExpr = (GrCodeReferenceElement)scope;
       PsiElement refElement = refExpr.resolve();
       if (refElement instanceof PsiMember) {
         if (!RefactoringHierarchyUtil.willBeInTargetClass(refElement, moving, targetClass, false)) {
-          checkAccessibility((PsiMember)refElement, context, null, member, conflicts);
+          RefactoringConflictsUtil.checkAccessibility((PsiMember)refElement, context, null, member, conflicts);
         }
       }
     }
@@ -189,28 +139,7 @@ public class RefactoringConflictsUtil {
     }
   }
 
-  public static void checkAccessibility(PsiMember refMember,
-                                        @NotNull PsiElement newContext,
-                                        @Nullable PsiClass accessClass,
-                                        PsiMember member,
-                                        MultiMap<PsiElement, String> conflicts) {
-    if (!PsiUtil.isAccessible(refMember, newContext, accessClass)) {
-      String message = RefactoringBundle.message("0.is.1.and.will.not.be.accessible.from.2.in.the.target.class",
-                                                 RefactoringUIUtil.getDescription(refMember, true),
-                                                 VisibilityUtil.getVisibilityStringToDisplay(refMember),
-                                                 RefactoringUIUtil.getDescription(member, false));
-      message = CommonRefactoringUtil.capitalize(message);
-      conflicts.putValue(refMember, message);
-    }
-    else if (newContext instanceof PsiClass && refMember instanceof PsiField && refMember.getContainingClass() == member.getContainingClass()) {
-      final PsiField fieldInSubClass = ((PsiClass)newContext).findFieldByName(refMember.getName(), false);
-      if (fieldInSubClass != null && fieldInSubClass != refMember) {
-        conflicts.putValue(refMember, CommonRefactoringUtil.capitalize(RefactoringUIUtil.getDescription(fieldInSubClass, true) +
-                                                                       " would hide " + RefactoringUIUtil.getDescription(refMember, true) +
-                                                                       " which is used by moved " + RefactoringUIUtil.getDescription(member, false)));
-      }
-    }
-  }
+
 
   public static void analyzeModuleConflicts(final Project project,
                                             final Collection<? extends PsiElement> scopes,
@@ -221,11 +150,16 @@ public class RefactoringConflictsUtil {
     final VirtualFile vFile = PsiUtilCore.getVirtualFile(target);
     if (vFile == null) return;
 
-    analyzeModuleConflicts(project, scopes, usages, vFile, conflicts);
+
+    List<GroovyPsiElement> groovyScopes =
+      ContainerUtil.collect(scopes.iterator(), new FilteringIterator.InstanceOf<GroovyPsiElement>(GroovyPsiElement.class));
+    analyzeModuleConflicts(project, groovyScopes, usages, vFile, conflicts);
+    scopes.removeAll(groovyScopes);
+    RefactoringConflictsUtil.analyzeModuleConflicts(project, scopes, usages, vFile, conflicts);
   }
 
   public static void analyzeModuleConflicts(final Project project,
-                                            final Collection<? extends PsiElement> scopes,
+                                            final Collection<? extends GroovyPsiElement> scopes,
                                             final UsageInfo[] usages,
                                             final VirtualFile vFile,
                                             final MultiMap<PsiElement, String> conflicts) {
@@ -234,19 +168,30 @@ public class RefactoringConflictsUtil {
       if (scope instanceof PsiPackage) return;
     }
 
-    final Module targetModule = ModuleUtil.findModuleForFile(vFile, project);
+    final Module targetModule = ModuleUtilCore.findModuleForFile(vFile, project);
     if (targetModule == null) return;
     final GlobalSearchScope resolveScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(targetModule);
     final HashSet<PsiElement> reported = new HashSet<PsiElement>();
-    for (final PsiElement scope : scopes) {
-      scope.accept(new JavaRecursiveElementVisitor() {
-        @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-          super.visitReferenceElement(reference);
+    for (final GroovyPsiElement scope : scopes) {
+      scope.accept(new GroovyRecursiveElementVisitor() {
+        @Override
+        public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
+          super.visitCodeReferenceElement(refElement);
+          visit(refElement);
+        }
+
+        @Override
+        public void visitReferenceExpression(GrReferenceExpression reference) {
+          super.visitReferenceExpression(reference);
+          visit(reference);
+        }
+
+        private void visit(GrReferenceElement<? extends GroovyPsiElement> reference) {
           final PsiElement resolved = reference.resolve();
           if (resolved != null &&
               !reported.contains(resolved) &&
               !CommonRefactoringUtil.isAncestor(resolved, scopes) &&
-              !PsiSearchScopeUtil.isInScope(resolveScope, resolved) && 
+              !PsiSearchScopeUtil.isInScope(resolveScope, resolved) &&
               !(resolved instanceof LightElement)) {
             final String scopeDescription = RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(reference), true);
             final String message = RefactoringBundle.message("0.referenced.in.1.will.not.be.accessible.in.module.2",
@@ -264,7 +209,7 @@ public class RefactoringConflictsUtil {
     NextUsage:
     for (UsageInfo usage : usages) {
       final PsiElement element = usage.getElement();
-      if (element != null && PsiTreeUtil.getParentOfType(element, PsiImportStatement.class, false) == null) {
+      if (element != null && PsiTreeUtil.getParentOfType(element, GrImportStatement.class, false) == null) {
 
         for (PsiElement scope : scopes) {
           if (PsiTreeUtil.isAncestor(scope, element, false)) continue NextUsage;
@@ -313,4 +258,5 @@ public class RefactoringConflictsUtil {
       }
     }
   }
+
 }

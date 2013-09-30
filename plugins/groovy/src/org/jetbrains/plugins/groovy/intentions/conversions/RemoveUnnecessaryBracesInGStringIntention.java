@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,29 +35,23 @@ public class RemoveUnnecessaryBracesInGStringIntention extends Intention {
   @NotNull
   @Override
   protected PsiElementPredicate getElementPredicate() {
-    return new MyPredicate();
+    return new PsiElementPredicate() {
+      public boolean satisfiedBy(PsiElement element) {
+        if (!(element instanceof GrString)) return false;
+
+        if (ErrorUtil.containsError(element)) return false;
+
+        for (GrStringInjection child : ((GrString)element).getInjections()) {
+          if (GrStringUtil.checkGStringInjectionForUnnecessaryBraces(child)) return true;
+        }
+        return false;
+      }
+    };
   }
 
   @Override
   protected void processIntention(@NotNull PsiElement element, Project project, Editor editor) throws IncorrectOperationException {
     GrStringUtil.removeUnnecessaryBracesInGString((GrString)element);
-  }
-
-  public static class MyPredicate implements PsiElementPredicate {
-    public boolean satisfiedBy(PsiElement element) {
-      return isIntentionAvailable(element);
-    }
-
-    public static boolean isIntentionAvailable(PsiElement element) {
-      if (!(element instanceof GrString)) return false;
-
-      if (ErrorUtil.containsError(element)) return false;
-
-      for (GrStringInjection child : ((GrString)element).getInjections()) {
-        if (GrStringUtil.checkGStringInjectionForUnnecessaryBraces(child)) return true;
-      }
-      return false;
-    }
   }
 }
 

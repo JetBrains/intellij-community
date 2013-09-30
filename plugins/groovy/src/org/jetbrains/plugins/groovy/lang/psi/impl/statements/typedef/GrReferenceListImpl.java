@@ -61,7 +61,10 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
         keyword.delete();
       }
       else {
-        PsiElement comma = PsiUtil.skipWhitespacesAndComments(psi, refs[0] == psi, true);
+        boolean forward = refs[0] == psi;
+        PsiElement comma = forward
+                           ? PsiUtil.skipWhitespacesAndComments(psi.getNextSibling(), forward, true)
+                           : PsiUtil.skipWhitespacesAndComments(psi.getPrevSibling(), forward, true);
         if (comma != null && comma.getNode().getElementType() == GroovyTokenTypes.mCOMMA) {
           comma.delete();
         }

@@ -29,7 +29,6 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.lang.ElementsHandler;
-import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
@@ -168,8 +167,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
       public void run() {
         final PsiDirectory targetDirectory = superClass.getContainingFile().getContainingDirectory();
         final PsiPackage targetPackage = targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
-        conflicts.putAllValues(PullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, targetPackage, targetDirectory,
-                                                                  dialog.getContainmentVerifier()));
+        conflicts.putAllValues(GrPullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, targetPackage, targetDirectory, dialog.getContainmentVerifier()));
       }
     }, RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
       return false;

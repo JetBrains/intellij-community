@@ -113,6 +113,7 @@ public abstract class PullUpDialogBase<Storage extends AbstractMemberInfoStorage
         }
       }
     });
+    updateMemberInfo();
     gbConstraints.gridy++;
     panel.add(myClassCombo, gbConstraints);
 
@@ -123,7 +124,7 @@ public abstract class PullUpDialogBase<Storage extends AbstractMemberInfoStorage
 
   protected abstract Class getPreselection();
 
-  private void updateMemberInfo() {
+  protected void updateMemberInfo() {
     final Class targetClass = (Class) myClassCombo.getSelectedItem();
     myMemberInfos = myMemberInfoStorage.getIntermediateMemberInfosList(targetClass);
   }

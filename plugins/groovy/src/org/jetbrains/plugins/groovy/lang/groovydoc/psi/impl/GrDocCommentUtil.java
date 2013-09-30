@@ -93,9 +93,9 @@ public abstract class GrDocCommentUtil {
       PsiElement parent = owner.getParent();
 
       ASTNode node = owner.getNode();
-      parent.getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", node);
+      parent.getNode().addLeaf(GroovyTokenTypes.mNLS, "\n ", node);
 
-      PsiElement added = parent.addBefore(comment, node.getPsi());
+      PsiElement added = parent.addBefore(comment, owner);
       assert added instanceof GrDocComment;
 
       return (GrDocComment)added;

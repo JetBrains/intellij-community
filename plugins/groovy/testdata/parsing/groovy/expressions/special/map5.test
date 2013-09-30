@@ -7,6 +7,9 @@ Groovy script
       Argument label
         Compound Gstring
           PsiElement(Gstring begin)('"')
+          GrStringContentImpl(GString content element)
+            ASTWrapperPsiElement(Gstring content)
+              <empty list>
           GString injection
             PsiElement($)('$')
             Reference expression
@@ -21,6 +24,9 @@ Groovy script
     PsiWhiteSpace(' ')
     Compound Gstring
       PsiElement(Gstring begin)('"')
+      GrStringContentImpl(GString content element)
+        ASTWrapperPsiElement(Gstring content)
+          <empty list>
       GString injection
         PsiElement($)('$')
         Reference expression

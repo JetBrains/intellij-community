@@ -22,6 +22,7 @@ import org.jetbrains.idea.svn.portable.SvnWcClientI;
 import org.jetbrains.idea.svn.properties.PropertyClient;
 import org.jetbrains.idea.svn.revert.RevertClient;
 import org.jetbrains.idea.svn.update.RelocateClient;
+import org.jetbrains.idea.svn.upgrade.UpgradeClient;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -51,6 +52,7 @@ public abstract class ClientFactory {
   protected VersionClient myVersionClient;
   protected ImportClient myImportClient;
   protected ExportClient myExportClient;
+  protected UpgradeClient myUpgradeClient;
 
   protected ClientFactory(@NotNull SvnVcs vcs) {
     myVcs = vcs;
@@ -164,6 +166,11 @@ public abstract class ClientFactory {
   @NotNull
   public ExportClient createExportClient() {
     return prepare(myExportClient);
+  }
+
+  @NotNull
+  public UpgradeClient createUpgradeClient() {
+    return prepare(myUpgradeClient);
   }
 
   @NotNull

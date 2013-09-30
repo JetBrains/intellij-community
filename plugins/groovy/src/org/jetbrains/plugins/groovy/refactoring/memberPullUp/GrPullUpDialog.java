@@ -46,8 +46,6 @@ import org.jetbrains.plugins.groovy.refactoring.classMembers.GrMemberSelectionTa
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.List;
 
 /**
@@ -94,19 +92,18 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
   }
 
   @Override
+  protected void updateMemberInfo() {
+    super.updateMemberInfo();
+    if (myMemberSelectionPanel != null) {
+      ((MyMemberInfoModel)myMemberInfoModel).setSuperClass(getSuperClass());
+      myMemberSelectionPanel.getTable().setMemberInfos(myMemberInfos);
+      myMemberSelectionPanel.getTable().fireExternalDataChange();
+    }
+  }
+
+  @Override
   protected void initClassCombo(JComboBox classCombo) {
     classCombo.setRenderer(new ClassCellRenderer(classCombo.getRenderer()));
-    classCombo.addItemListener(new ItemListener() {
-      public void itemStateChanged(ItemEvent e) {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          if (myMemberSelectionPanel != null) {
-           // ((MyMemberInfoModel)myMemberInfoModel).setSuperClass(getSuperClass());
-            myMemberSelectionPanel.getTable().setMemberInfos(myMemberInfos);
-            myMemberSelectionPanel.getTable().fireExternalDataChange();
-          }
-        }
-      }
-    });
   }
 
   protected PsiClass getPreselection() {
@@ -140,13 +137,11 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
     final PsiClass superClass = getSuperClass();
     String name = superClass.getQualifiedName();
     if (name != null) {
-      StatisticsManager
-        .getInstance().incUseCount(new StatisticsInfo(PULL_UP_STATISTICS_KEY + myClass.getQualifiedName(), name));
+      StatisticsManager.getInstance().incUseCount(new StatisticsInfo(PULL_UP_STATISTICS_KEY + myClass.getQualifiedName(), name));
     }
 
     List<GrMemberInfo> infos = getSelectedMemberInfos();
-    GrPullUpHelper processor =
-      new GrPullUpHelper(myClass, superClass, infos.toArray(new GrMemberInfo[infos.size()]), new DocCommentPolicy(getJavaDocPolicy()));
+    GrPullUpHelper processor = new GrPullUpHelper(myClass, superClass, infos.toArray(new GrMemberInfo[infos.size()]), new DocCommentPolicy(getJavaDocPolicy()));
     invokeRefactoring(processor);
     close(OK_EXIT_CODE);
   }

@@ -38,6 +38,9 @@ Groovy script
                   Reference expression
                     PsiElement(identifier)('b')
                 PsiElement(})('}')
+            GrStringContentImpl(GString content element)
+              ASTWrapperPsiElement(Gstring content)
+                <empty list>
             PsiElement(Gstring end)('"')
           PsiElement(})('}')
       GrStringContentImpl(GString content element)

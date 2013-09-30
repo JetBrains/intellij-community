@@ -25,7 +25,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -45,6 +44,9 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -187,13 +189,13 @@ public class GrPullUpHelper extends BaseRefactoringProcessor {
     // do actual move
     for (GrMemberInfo info : myMembersToMove) {
       if (info.getMember() instanceof PsiMethod) {
-        doMoveMethod(movedMembers, substitutor, info);
+        doMoveMethod(substitutor, info);
       }
       else if (info.getMember() instanceof GrField) {
-        doMoveField(movedMembers, substitutor, info);
+        doMoveField(substitutor, info);
       }
       else if (info.getMember() instanceof PsiClass) {
-        doMoveClass(movedMembers, substitutor, info);
+        doMoveClass(substitutor, info);
       }
     }
 
@@ -315,7 +317,7 @@ public class GrPullUpHelper extends BaseRefactoringProcessor {
     return false;
   }
 
-  private void doMoveMethod(Set<PsiMember> movedMembers, PsiSubstitutor substitutor, GrMemberInfo info) {
+  private void doMoveMethod(PsiSubstitutor substitutor, GrMemberInfo info) {
     GroovyPsiElementFactory elementFactory = GroovyPsiElementFactory.getInstance(myProject);
     GrMethod method = (GrMethod)info.getMember();
     PsiMethod sibling = method;
@@ -346,10 +348,8 @@ public class GrPullUpHelper extends BaseRefactoringProcessor {
       }
       replaceMovedMemberTypeParameters(methodCopy, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
 
-      myDocCommentPolicy.processCopiedJavaDoc(methodCopy.getDocComment(), method.getDocComment(), isOriginalMethodAbstract);
-
-      final PsiMember movedElement =
-        anchor != null ? (PsiMember)myTargetSuperClass.addBefore(methodCopy, anchor) : (PsiMember)myTargetSuperClass.add(methodCopy);
+      final GrMethod movedElement =
+        anchor != null ? (GrMethod)myTargetSuperClass.addBefore(methodCopy, anchor) : (GrMethod)myTargetSuperClass.add(methodCopy);
       CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(method.getProject());
       if (styleSettings.INSERT_OVERRIDE_ANNOTATION) {
         if (PsiUtil.isLanguageLevel5OrHigher(mySourceClass) && !myTargetSuperClass.isInterface() ||
@@ -359,19 +359,16 @@ public class GrPullUpHelper extends BaseRefactoringProcessor {
         }
       }
 
-      if (!PsiUtil.isLanguageLevel6OrHigher(mySourceClass) && myTargetSuperClass.isInterface()) {
-        if (isOriginalMethodAbstract) {
-          for (PsiMethod oMethod : OverridingMethodsSearch.search(method)) {
-            deleteOverrideAnnotationIfFound(oMethod);
-          }
-        }
-
-        deleteOverrideAnnotationIfFound(method);
+      GrDocComment oldDoc = method.getDocComment();
+      if (oldDoc != null) {
+        GrDocCommentUtil.setDocComment(movedElement, oldDoc);
       }
+
+      myDocCommentPolicy.processCopiedJavaDoc(methodCopy.getDocComment(), oldDoc, isOriginalMethodAbstract);
 
       myMembersAfterMove.add(movedElement);
       if (isOriginalMethodAbstract) {
-        method.delete();
+        deleteMemberWithDocComment(method);
       }
     }
     else {
@@ -382,17 +379,28 @@ public class GrPullUpHelper extends BaseRefactoringProcessor {
       //fixReferencesToStatic(methodCopy, movedMembers);
       replaceMovedMemberTypeParameters(methodCopy, PsiUtil.typeParametersIterable(mySourceClass), substitutor, elementFactory);
       final PsiMethod superClassMethod = myTargetSuperClass.findMethodBySignature(methodCopy, false);
+      final GrMethod movedElement;
       if (superClassMethod != null && superClassMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        superClassMethod.replace(methodCopy);
+        movedElement = (GrMethod)superClassMethod.replace(methodCopy);
       }
       else {
-        final PsiMember movedElement =
-          anchor != null ? (PsiMember)myTargetSuperClass.addBefore(methodCopy, anchor) : (PsiMember)myTargetSuperClass.add(methodCopy);
+        movedElement =
+          anchor != null ? (GrMethod)myTargetSuperClass.addBefore(methodCopy, anchor) : (GrMethod)myTargetSuperClass.add(methodCopy);
         myMembersAfterMove.add(movedElement);
       }
 
-      method.delete();
+      GrDocCommentUtil.setDocComment(movedElement, method.getDocComment());
+
+      deleteMemberWithDocComment(method);
     }
+  }
+
+  private static void deleteMemberWithDocComment(GrDocCommentOwner docCommentOwner) {
+    GrDocComment oldDoc = docCommentOwner.getDocComment();
+    if (oldDoc != null) {
+      oldDoc.delete();
+    }
+    docCommentOwner.delete();
   }
 
   private static void deleteOverrideAnnotationIfFound(PsiMethod oMethod) {
@@ -594,7 +602,7 @@ public class GrPullUpHelper extends BaseRefactoringProcessor {
     }
   }
 
-  private void doMoveField(Set<PsiMember> movedMembers, PsiSubstitutor substitutor, GrMemberInfo info) {
+  private void doMoveField(PsiSubstitutor substitutor, GrMemberInfo info) {
     GroovyPsiElementFactory elementFactory = GroovyPsiElementFactory.getInstance(myProject);
     GrField field = (GrField)info.getMember();
     field.normalizeDeclaration();
@@ -605,10 +613,10 @@ public class GrPullUpHelper extends BaseRefactoringProcessor {
     }
     final PsiMember movedElement = (PsiMember)myTargetSuperClass.add(field);
     myMembersAfterMove.add(movedElement);
-    field.delete();
+    deleteMemberWithDocComment(field);
   }
 
-  private void doMoveClass(Set<PsiMember> movedMembers, PsiSubstitutor substitutor, GrMemberInfo info) {
+  private void doMoveClass(PsiSubstitutor substitutor, GrMemberInfo info) {
     GroovyPsiElementFactory elementFactory = GroovyPsiElementFactory.getInstance(myProject);
     GrTypeDefinition aClass = (GrTypeDefinition)info.getMember();
     if (Boolean.FALSE.equals(info.getOverrides())) {
@@ -654,7 +662,7 @@ public class GrPullUpHelper extends BaseRefactoringProcessor {
       PsiMember movedElement = (PsiMember)myTargetSuperClass.addAfter(aClass, null);
       //movedElement = (PsiMember)CodeStyleManager.getInstance(myProject).reformat(movedElement);
       myMembersAfterMove.add(movedElement);
-      aClass.delete();
+      deleteMemberWithDocComment(aClass);
     }
   }
 

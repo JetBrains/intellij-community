@@ -60,8 +60,7 @@ public class CmdRevertClient extends BaseSvnClient implements RevertClient {
       String statusMessage = matcher.group(1);
       String path = matcher.group(2);
 
-      return new SVNEvent(new File(path), null, null, 0, null, null, null, null, createAction(statusMessage), null, null, null, null, null,
-                          null);
+      return createEvent(new File(path), createAction(statusMessage));
     }
 
     @Nullable

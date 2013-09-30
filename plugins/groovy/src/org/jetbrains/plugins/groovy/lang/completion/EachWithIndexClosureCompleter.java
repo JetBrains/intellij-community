@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
@@ -42,9 +41,7 @@ public class EachWithIndexClosureCompleter extends ClosureCompleter {
   protected List<ClosureParameterInfo> getParameterInfos(InsertionContext context,
                                                          PsiMethod method,
                                                          PsiSubstitutor substitutor,
-                                                         Document document,
-                                                         int offset,
-                                                         PsiElement parent) {
+                                                         PsiElement place) {
     final String name = method.getName();
     if (!"eachWithIndex".equals(name)) return null;
 
@@ -63,7 +60,7 @@ public class EachWithIndexClosureCompleter extends ClosureCompleter {
     final PsiType type = parameters[0].getType();
     final PsiType collection = substitutor.substitute(type);
 
-    final PsiType iterable = getIteratedType(parent, collection);
+    final PsiType iterable = getIteratedType(place, collection);
     if (iterable != null) {
       return Arrays.asList(
         new ClosureParameterInfo(iterable.getCanonicalText(), "entry"),
@@ -76,7 +73,7 @@ public class EachWithIndexClosureCompleter extends ClosureCompleter {
 
       final Project project = context.getProject();
 
-      final PsiClass entry = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_UTIL_MAP_ENTRY, parent.getResolveScope());
+      final PsiClass entry = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_UTIL_MAP_ENTRY, place.getResolveScope());
       if (entry == null) return null;
 
       final PsiClassType entryType = JavaPsiFacade.getElementFactory(project).createType(entry, typeParams);
