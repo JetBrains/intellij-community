@@ -417,8 +417,12 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       }
       final PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(getProject()).getResolveHelper();
       PsiSubstitutor psiSubstitutor = resolveHelper.inferTypeArguments(method.getTypeParameters(), types, rightTypes, languageLevel);
-      psiSubstitutor = psiSubstitutor.putAll(substitutor);
-
+      if (method.isConstructor()) {
+        psiSubstitutor = psiSubstitutor.putAll(resolveHelper.inferTypeArguments(method.getContainingClass().getTypeParameters(), types, rightTypes, languageLevel));
+      }
+      if (!PsiUtil.isRawSubstitutor(method, substitutor)) {
+        psiSubstitutor = psiSubstitutor.putAll(substitutor);
+      }
       return LambdaUtil.inferFromReturnType(method.getTypeParameters(),
                                             psiSubstitutor.substitute(method.getReturnType()),
                                             interfaceMethodReturnType,
