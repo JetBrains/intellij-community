@@ -505,6 +505,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         cmp = myPsiRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       } else {
         cmp = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        final JPanel p = new JPanel(new BorderLayout());
+        p.setBackground(UIUtil.getListBackground(isSelected));
+        p.add(cmp, BorderLayout.CENTER);
+        cmp = p;
       }
       if (myLocationString != null || value instanceof BooleanOptionDescription) {
         final JPanel panel = new JPanel(new BorderLayout());
