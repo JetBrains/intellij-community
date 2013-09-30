@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     return element instanceof PsiMethod || element instanceof PsiClass;
   }
 
+  @Override
   public boolean canInlineElement(final PsiElement element) {
     if (element.getLanguage() != StdLanguages.JAVA) return false;
     if (element instanceof PsiMethod) {
@@ -74,6 +75,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       @Override
       public void run() {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
           public void run() {
             inheritors.addAll(ClassInheritorsSearch.search(element).findAll());
           }
@@ -98,6 +100,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     return false;
   }
 
+  @Override
   public void inlineElement(final Project project, final Editor editor, final PsiElement psiElement) {
     final PsiClass psiClass = psiElement instanceof PsiMethod ? ((PsiMethod) psiElement).getContainingClass() : (PsiClass) psiElement;
     PsiCall callToInline = findCallToInline(editor);
@@ -365,6 +368,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
       myPsiElement = psiElement;
     }
 
+    @Override
     public boolean process(final PsiReference psiReference) {
       if (PsiTreeUtil.isAncestor(myPsiElement, psiReference.getElement(), false)) {
         return true;

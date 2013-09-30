@@ -44,10 +44,9 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
-public class TemplateManagerImpl extends TemplateManager implements ProjectComponent {
+public class TemplateManagerImpl extends TemplateManager implements ProjectComponent, Disposable {
   protected Project myProject;
   private boolean myTemplateTesting;
-  private final List<Disposable> myDisposables = new ArrayList<Disposable>();
 
   private static final Key<TemplateState> TEMPLATE_STATE_KEY = Key.create("TEMPLATE_STATE_KEY");
 
@@ -57,10 +56,10 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
   @Override
   public void disposeComponent() {
-    for (Disposable disposable : myDisposables) {
-      Disposer.dispose(disposable);
-    }
-    myDisposables.clear();
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @Override
@@ -107,9 +106,8 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     });
   }
 
-  private void disposeState(final TemplateState tState) {
+  private static void disposeState(final TemplateState tState) {
     Disposer.dispose(tState);
-    myDisposables.remove(tState);
   }
 
   @Override
@@ -138,7 +136,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   private TemplateState initTemplateState(final Editor editor) {
     clearTemplateState(editor);
     TemplateState state = new TemplateState(myProject, editor);
-    myDisposables.add(state);
+    Disposer.register(this, state);
     editor.putUserData(TEMPLATE_STATE_KEY, state);
     return state;
   }
