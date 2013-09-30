@@ -300,6 +300,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiStatement exitedStatement = statement.findExitedStatement();
 
     if (exitedStatement != null) {
+      flushVariablesOnControlTransfer(exitedStatement);
       addInstruction(new GotoInstruction(getEndOffset(exitedStatement)));
     }
 
@@ -309,26 +310,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitContinueStatement(PsiContinueStatement statement) {
     startElement(statement);
     PsiStatement continuedStatement = statement.findContinuedStatement();
-    if (continuedStatement != null) {
-      ControlFlow.ControlFlowOffset offset = null;
-      if (continuedStatement instanceof PsiForStatement) {
-        PsiStatement body = ((PsiForStatement)continuedStatement).getBody();
-        offset = getEndOffset(body);
-      }
-      else if (continuedStatement instanceof PsiWhileStatement) {
-        PsiStatement body = ((PsiWhileStatement)continuedStatement).getBody();
-        offset = getEndOffset(body);
-      }
-      else if (continuedStatement instanceof PsiDoWhileStatement) {
-        PsiStatement body = ((PsiDoWhileStatement)continuedStatement).getBody();
-        offset = getEndOffset(body);
-      }
-      else if (continuedStatement instanceof PsiForeachStatement) {
-        PsiStatement body = ((PsiForeachStatement)continuedStatement).getBody();
-        offset = getEndOffset(body);
-      }
-      Instruction instruction = offset == null ? new EmptyInstruction(null) : new GotoInstruction(offset);
-      addInstruction(instruction);
+    if (continuedStatement instanceof PsiLoopStatement) {
+      PsiStatement body = ((PsiLoopStatement)continuedStatement).getBody();
+      flushVariablesOnControlTransfer(body);
+      addInstruction(new GotoInstruction(getEndOffset(body)));
+    } else {
+      addInstruction(new EmptyInstruction(null));
     }
     finishElement(statement);
   }
@@ -702,9 +689,13 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void flushVariablesInsideTry(CatchDescriptor cd) {
+    flushVariablesOnControlTransfer(cd.getBlock());
+  }
+
+  private void flushVariablesOnControlTransfer(PsiElement stopWhenAncestorOf) {
     for (int i = myElementStack.size() - 1; i >= 0; i--) {
       PsiElement scope = myElementStack.get(i);
-      if (PsiTreeUtil.isAncestor(scope, cd.getBlock(), false)) {
+      if (PsiTreeUtil.isAncestor(scope, stopWhenAncestorOf, true)) {
         break;
       }
       if (scope instanceof PsiCodeBlock) {
