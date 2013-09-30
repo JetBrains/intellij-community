@@ -25,6 +25,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UnorderedPair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -59,7 +60,7 @@ class StateMerger {
           continue;
         }
 
-        final Set<DfaMemoryStateImpl> complementaryStates = findComplementaryStates(var, statesByValue, state);
+        final THashSet<DfaMemoryStateImpl> complementaryStates = findComplementaryStates(var, statesByValue, state);
         if (complementaryStates == null) {
           continue;
         }
@@ -69,7 +70,7 @@ class StateMerger {
         complementaryStates.add(state);
         mergeNullableState(var, copy, complementaryStates);
         mergeUnknowns(copy, complementaryStates);
-        return getMergeResult(copy, complementaryStates, states);
+        return getMergeResult(states, complementaryStates, copy);
       }
       
     }
@@ -93,15 +94,15 @@ class StateMerger {
     }
   }
 
-  private static List<DfaMemoryStateImpl> getMergeResult(DfaMemoryStateImpl mergeResult,
-                                                         final Set<DfaMemoryStateImpl> complementaryStates,
-                                                         List<DfaMemoryStateImpl> oldStates) {
+  private static List<DfaMemoryStateImpl> getMergeResult(List<DfaMemoryStateImpl> statesBeforeMerge,
+                                                         final THashSet<DfaMemoryStateImpl> mergedStates,
+                                                         DfaMemoryStateImpl mergeResult) {
     List<DfaMemoryStateImpl> result = ContainerUtil.newArrayList();
     result.add(mergeResult);
-    result.addAll(ContainerUtil.filter(oldStates, new Condition<DfaMemoryStateImpl>() {
+    result.addAll(ContainerUtil.filter(statesBeforeMerge, new Condition<DfaMemoryStateImpl>() {
       @Override
       public boolean value(DfaMemoryStateImpl state) {
-        return !complementaryStates.contains(state);
+        return !mergedStates.contains(state);
       }
     }));
     return result;
@@ -130,7 +131,7 @@ class StateMerger {
         if (complementary.size() > 1) {
           DfaMemoryStateImpl copy = state1.createCopy();
           mergeUnknowns(copy, complementary);
-          return getMergeResult(copy, ContainerUtil.newHashSet(complementary), states);
+          return getMergeResult(states, ContainerUtil.newIdentityTroveSet(complementary), copy);
         }
       }
       
@@ -170,7 +171,7 @@ class StateMerger {
           if (complementary.size() > 1) {
             DfaMemoryStateImpl copy = state1.createCopy();
             mergeUnknowns(copy, complementary);
-            return getMergeResult(copy, ContainerUtil.newHashSet(complementary), states);
+            return getMergeResult(states, ContainerUtil.newIdentityTroveSet(complementary), copy);
           }
         }
 
@@ -221,7 +222,7 @@ class StateMerger {
           complementaryStates.add(state);
           mergeNullableState(var, copy, complementaryStates);
           mergeUnknowns(copy, complementaryStates);
-          return getMergeResult(copy, ContainerUtil.newHashSet(complementaryStates), states);
+          return getMergeResult(states, ContainerUtil.newIdentityTroveSet(complementaryStates), copy);
         }
       }
 
@@ -254,10 +255,10 @@ class StateMerger {
   }
 
   @Nullable
-  private Set<DfaMemoryStateImpl> findComplementaryStates(DfaVariableValue var,
+  private THashSet<DfaMemoryStateImpl> findComplementaryStates(DfaVariableValue var,
                                                                  Map<DfaValue, Collection<DfaMemoryStateImpl>> statesByValue,
                                                                  DfaMemoryStateImpl state) {
-    Set<DfaMemoryStateImpl> removedStates = ContainerUtil.newTroveSet(ContainerUtil.<DfaMemoryStateImpl>identityStrategy());
+    THashSet<DfaMemoryStateImpl> removedStates = ContainerUtil.newIdentityTroveSet();
   
   eachValue: 
     for (DfaValue value : statesByValue.keySet()) {
@@ -294,7 +295,7 @@ class StateMerger {
     return statesByValue;
   }
 
-  private boolean areVarStatesEqualModuloNullability(DfaMemoryStateImpl state1, DfaMemoryStateImpl state2, DfaVariableValue var) {
+  private static boolean areVarStatesEqualModuloNullability(DfaMemoryStateImpl state1, DfaMemoryStateImpl state2, DfaVariableValue var) {
     return state1.getVariableState(var).withNullability(Nullness.UNKNOWN).equals(state2.getVariableState(var).withNullability(Nullness.UNKNOWN));
   }
 
