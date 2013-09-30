@@ -770,6 +770,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               files.add((VirtualFile)object);
               myAlreadyAddedFiles.add((VirtualFile)object);
               filesCounter++;
+              if (filesCounter > 15) break;
             }
           }
         }
