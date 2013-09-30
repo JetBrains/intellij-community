@@ -97,6 +97,7 @@ import static com.intellij.ui.popup.PopupPositionManager.Position.*;
  * @author Konstantin Bulenkov
  */
 public class SearchEverywhereAction extends AnAction implements CustomComponentAction {
+  public static final int SEARCH_FIELD_COLUMNS = 25;
   private final SearchEverywhereAction.MyListRenderer myRenderer;
   private final JPanel myContentPanel;
   SearchTextField field;
@@ -167,7 +168,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       @Override
       public void mousePressed(MouseEvent e) {
         myContentPanel.remove(mySearchLabel);
-        field.getTextEditor().setColumns(25);
+        field.getTextEditor().setColumns(SEARCH_FIELD_COLUMNS);
         myContentPanel.add(field, BorderLayout.CENTER);
         myContentPanel.revalidate();
         myContentPanel.repaint();
@@ -239,7 +240,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         search.setText("");
         search.getTextEditor().setForeground(UIUtil.getLabelForeground());
         myTitleIndexes = new TitleIndexes();
-        editor.setColumns(25);
+        editor.setColumns(SEARCH_FIELD_COLUMNS);
         myFocusComponent = e.getOppositeComponent();
         //noinspection SSBasedInspection
         SwingUtilities.invokeLater(new Runnable() {
@@ -412,7 +413,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     myPopupField = new MySearchTextField();
     myPopupField.setOpaque(true);
     initSearchField(myPopupField);
-    myPopupField.getTextEditor().setColumns(20);
+    myPopupField.getTextEditor().setColumns(SEARCH_FIELD_COLUMNS);
     final JPanel panel = new JPanel(new BorderLayout());
     final JLabel title = new JLabel(" Search Everywhere:");
     title.setFont(title.getFont().deriveFont(Font.BOLD, title.getFont().getSize() - 1f));
@@ -1136,7 +1137,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       sz.width++;
     }
     myPopup.setSize(sz);
-    adjustPopup();
+    if (getField() == field) {
+      final Point p = getField().getLocationOnScreen();
+      p.y += getField().getHeight();
+      if (getField().getWidth() < sz.width) {
+        p.x -= sz.width - getField().getWidth();
+      }
+      myPopup.setLocation(p);
+    } else {
+      adjustPopup();
+    }
   }
 
   private void adjustPopup() {
