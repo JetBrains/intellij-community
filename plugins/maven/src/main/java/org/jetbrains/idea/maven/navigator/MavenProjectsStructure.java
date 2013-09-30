@@ -1328,6 +1328,13 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       return mySettings.getName();
     }
 
+    @Override
+    protected void doUpdate() {
+      setNameAndTooltip(getName(),
+                        null,
+                        StringUtil.join(((MavenRunConfiguration)mySettings.getConfiguration()).getRunnerParameters().getGoals(), " "));
+    }
+
     @Nullable
     @Override
     String getMenuId() {
