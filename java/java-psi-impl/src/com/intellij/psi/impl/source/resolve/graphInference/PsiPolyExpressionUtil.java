@@ -16,10 +16,8 @@
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -60,23 +58,27 @@ public class PsiPolyExpressionUtil {
         }
       }
     } else if (expression instanceof PsiMethodCallExpression) {
-      if (isInAssignmentOrInvocationContext(expression) && ((PsiMethodCallExpression)expression).getTypeArguments().length == 0) {
-        final PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
-        if (method != null) {
-          final Set<PsiTypeParameter> typeParameters = new HashSet<PsiTypeParameter>(Arrays.asList(method.getTypeParameters()));
-          if (typeParameters.size() > 0) {
-            final PsiType returnType = method.getReturnType();
-            if (returnType != null) {
-              return mentionsTypeParameters(returnType, typeParameters);
-            }
-          }
-        }
-      }
+      return isMethodCallPolyExpression(expression, ((PsiMethodCallExpression)expression).resolveMethod());
     }
     else if (expression instanceof PsiConditionalExpression) {
       final ConditionalKind conditionalKind = isBooleanOrNumeric(expression);
       if (conditionalKind == null) {
         return isInAssignmentOrInvocationContext(expression);
+      }
+    }
+    return false;
+  }
+
+  public static boolean isMethodCallPolyExpression(PsiExpression expression, final PsiMethod method) {
+    if (isInAssignmentOrInvocationContext(expression) && ((PsiCallExpression)expression).getTypeArguments().length == 0) {
+      if (method != null) {
+        final Set<PsiTypeParameter> typeParameters = new HashSet<PsiTypeParameter>(Arrays.asList(method.getTypeParameters()));
+        if (typeParameters.size() > 0) {
+          final PsiType returnType = method.getReturnType();
+          if (returnType != null) {
+            return mentionsTypeParameters(returnType, typeParameters);
+          }
+        }
       }
     }
     return false;
