@@ -78,9 +78,12 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
     myGroupingRulesPanel = new ArrangementGroupingRulesPanel(settingsManager, colorsProvider);
     myMatchingRulesPanel = new ArrangementMatchingRulesPanel(settingsManager, colorsProvider);
-    
+
     myContent.add(myGroupingRulesPanel, new GridBag().coverLine().fillCellHorizontally().weightx(1));
     myContent.add(myMatchingRulesPanel, new GridBag().fillCell().weightx(1).weighty(1));
+
+    final List<CompositeArrangementSettingsToken> groupingTokens = settingsManager.getSupportedGroupingTokens();
+    myGroupingRulesPanel.setVisible(groupingTokens != null && !groupingTokens.isEmpty());
 
     AnAction removeRuleAction = new RemoveArrangementRuleAction();
     removeRuleAction.copyFrom(ActionManager.getInstance().getAction("Arrangement.Rule.Remove"));
@@ -131,7 +134,6 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     }
     else {
       List<ArrangementGroupingRule> groupings = s.getGroupings();
-      myGroupingRulesPanel.setVisible(!groupings.isEmpty());
       if (!groupings.isEmpty()) {
         myGroupingRulesPanel.setRules(ContainerUtilRt.newArrayList(groupings));
       }
