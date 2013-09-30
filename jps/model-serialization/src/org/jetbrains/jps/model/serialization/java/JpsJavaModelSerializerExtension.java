@@ -32,6 +32,7 @@ import org.jetbrains.jps.model.serialization.artifact.JpsPackagingElementSeriali
 import org.jetbrains.jps.model.serialization.java.compiler.*;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryRootTypeSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
+import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootDummyPropertiesSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertiesSerializer;
 
 import java.util.Arrays;
@@ -55,6 +56,8 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   private static final String JAVADOC_PATHS_TAG = "javadoc-paths";
   private static final String MODULE_LANGUAGE_LEVEL_ATTRIBUTE = "LANGUAGE_LEVEL";
   public static final String ROOT_TAG = "root";
+  public static final JavaSourceRootPropertiesSerializer JAVA_SOURCE_ROOT_PROPERTIES_SERIALIZER =
+    new JavaSourceRootPropertiesSerializer(JavaSourceRootType.SOURCE, JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID);
 
   @Override
   public void loadRootModel(@NotNull JpsModule module, @NotNull Element rootModel) {
@@ -79,12 +82,13 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
                          new RmicCompilerOptionsSerializer("RmicSettings", "Rmic"));
   }
 
+  @NotNull
   @Override
   public List<? extends JpsModuleSourceRootPropertiesSerializer<?>> getModuleSourceRootPropertiesSerializers() {
-    return Arrays.asList(new JavaSourceRootPropertiesSerializer(JavaSourceRootType.SOURCE, JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID),
+    return Arrays.asList(JAVA_SOURCE_ROOT_PROPERTIES_SERIALIZER,
                          new JavaSourceRootPropertiesSerializer(JavaSourceRootType.TEST_SOURCE, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID),
-                         new JavaResourceRootPropertiesSerializer(JavaResourceRootType.RESOURCE, "java-resource"),
-                         new JavaResourceRootPropertiesSerializer(JavaResourceRootType.TEST_RESOURCE, "java-test-resource"));
+                         new JpsModuleSourceRootDummyPropertiesSerializer(JavaResourceRootType.RESOURCE, "java-resource"),
+                         new JpsModuleSourceRootDummyPropertiesSerializer(JavaResourceRootType.TEST_RESOURCE, "java-test-resource"));
   }
 
   @Override
@@ -316,21 +320,6 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
       if (!packagePrefix.isEmpty()) {
         sourceRootTag.setAttribute(JpsModuleRootModelSerializer.PACKAGE_PREFIX_ATTRIBUTE, packagePrefix);
       }
-    }
-  }
-  
-  private static class JavaResourceRootPropertiesSerializer extends JpsModuleSourceRootPropertiesSerializer<JpsDummyElement> {
-    private JavaResourceRootPropertiesSerializer(JpsModuleSourceRootType<JpsDummyElement> type, String typeId) {
-      super(type, typeId);
-    }
-
-    @Override
-    public JpsDummyElement loadProperties(@NotNull Element sourceRootTag) {
-      return JpsElementFactory.getInstance().createDummyElement();
-    }
-
-    @Override
-    public void saveProperties(@NotNull JpsDummyElement properties, @NotNull Element sourceRootTag) {
     }
   }
 }

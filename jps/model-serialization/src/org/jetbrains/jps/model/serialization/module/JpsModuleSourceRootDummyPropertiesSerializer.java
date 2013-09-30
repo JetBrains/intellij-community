@@ -24,8 +24,8 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 /**
  * @author nik
  */
-public class JpsModuleSourceRootPropertiesSerializerImpl extends JpsModuleSourceRootPropertiesSerializer<JpsDummyElement> {
-  public JpsModuleSourceRootPropertiesSerializerImpl(JpsModuleSourceRootType<JpsDummyElement> type, String typeId) {
+public class JpsModuleSourceRootDummyPropertiesSerializer extends JpsModuleSourceRootPropertiesSerializer<JpsDummyElement> {
+  public JpsModuleSourceRootDummyPropertiesSerializer(JpsModuleSourceRootType<JpsDummyElement> type, String typeId) {
     super(type, typeId);
   }
 

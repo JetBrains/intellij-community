@@ -98,6 +98,7 @@ public abstract class JpsModelSerializerExtension {
     return Collections.emptyList();
   }
 
+  @NotNull
   public List<? extends JpsModuleSourceRootPropertiesSerializer<?>> getModuleSourceRootPropertiesSerializers() {
     return Collections.emptyList();
   }
