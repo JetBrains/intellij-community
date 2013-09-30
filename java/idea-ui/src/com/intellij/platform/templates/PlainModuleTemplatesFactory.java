@@ -15,7 +15,7 @@
  */
 package com.intellij.platform.templates;
 
-import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
+import com.intellij.ide.projectWizard.EmptyProjectBuilder;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.platform.ProjectTemplate;
@@ -60,17 +60,7 @@ public class PlainModuleTemplatesFactory extends ProjectTemplatesFactory {
       if (!context.isCreatingNewProject()) {
         return ProjectTemplate.EMPTY_ARRAY;
       }
-      return new ProjectTemplate[]{new BuilderBasedTemplate(new EmptyModuleBuilder() {
-        @Override
-        public String getPresentableName() {
-          return "Empty Project";
-        }
-
-        @Override
-        public String getDescription() {
-          return "Empty project without modules. Use it to create free-style module structure.";
-        }
-      })};
+      return new ProjectTemplate[]{new BuilderBasedTemplate(new EmptyProjectBuilder())};
     }
     List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
     List<ProjectTemplate> templates = ContainerUtil.mapNotNull(builders, new NullableFunction<ModuleBuilder, ProjectTemplate>() {

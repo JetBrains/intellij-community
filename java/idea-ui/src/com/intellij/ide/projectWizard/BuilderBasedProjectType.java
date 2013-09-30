@@ -22,10 +22,13 @@ public class BuilderBasedProjectType extends ProjectCategory {
     return myBuilder;
   }
 
-  /**
-   * @author Dmitry Avdeev
-   *         Date: 04.09.13
-   */
+  public static class Empty extends BuilderBasedProjectType {
+
+    public Empty() {
+      super(new EmptyProjectBuilder());
+    }
+  }
+
   public static class Java extends BuilderBasedProjectType {
 
     public Java() {

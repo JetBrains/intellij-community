@@ -33,11 +33,10 @@ public abstract class TemplateBasedProjectType extends ProjectCategory {
   private final LocalArchivedTemplate myTemplate;
 
   public TemplateBasedProjectType(String templatePath) {
-    ClassLoader loader = getClass().getClassLoader();
-    URL resource = loader.getResource(templatePath);
+    URL resource = getClass().getResource(templatePath);
     assert resource != null : templatePath;
     String name = ArchivedTemplatesFactory.getTemplateName(new File(templatePath).getName());
-    myTemplate = new LocalArchivedTemplate(name, resource, loader);
+    myTemplate = new LocalArchivedTemplate(name, resource, getClass().getClassLoader());
   }
 
   @NotNull
