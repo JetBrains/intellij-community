@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -292,7 +292,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @throws Exception
    */
-  protected void checkResultByFile(@NonNls @NotNull String filePath) {
+  protected void checkResultByFile(@TestDataFile @NonNls @NotNull String filePath) {
     checkResultByFile(null, filePath, false);
   }
 
@@ -304,7 +304,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
    * @throws Exception
    */
-  protected void checkResultByFile(@Nullable String message, @NotNull String filePath, final boolean ignoreTrailingSpaces) {
+  protected void checkResultByFile(@Nullable String message, @TestDataFile @NotNull String filePath, final boolean ignoreTrailingSpaces) {
     bringRealEditorBack();
 
     getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
