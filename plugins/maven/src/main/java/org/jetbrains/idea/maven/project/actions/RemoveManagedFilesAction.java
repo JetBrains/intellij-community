@@ -20,38 +20,50 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.jetbrains.idea.maven.utils.actions.MavenAction;
 import org.jetbrains.idea.maven.utils.actions.MavenActionUtil;
+
+import java.util.List;
 
 public class RemoveManagedFilesAction extends MavenAction {
   @Override
   protected boolean isAvailable(AnActionEvent e) {
     if (!super.isAvailable(e)) return false;
 
-    return !MavenActionUtil.getMavenProjectsFiles(e.getDataContext()).isEmpty();
+    return MavenActionUtil.getMavenProjectsFiles(e.getDataContext()).size() == 1;
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext context = e.getDataContext();
 
-    boolean hasManagedFiles = false;
-
     MavenProjectsManager projectsManager = MavenActionUtil.getProjectsManager(context);
 
-    for (VirtualFile each : MavenActionUtil.getMavenProjectsFiles(context)) {
-      if (projectsManager.isManagedFile(each)) {
-        hasManagedFiles = true;
-        break;
-      }
-    }
+    List<VirtualFile> selectedFiles = MavenActionUtil.getMavenProjectsFiles(context);
+    if (selectedFiles.size() != 1) return;
 
-    if (!hasManagedFiles) {
+    VirtualFile pomXml = selectedFiles.get(0);
+
+    if (!projectsManager.isManagedFile(pomXml)) {
+      MavenProject mavenProject = projectsManager.findProject(pomXml);
+      assert mavenProject != null;
+
+      String aggregatorDescription = "";
+
+      MavenProject aggregator = projectsManager.findAggregator(mavenProject);
+
+      if (aggregator != null) {
+        aggregatorDescription = " (" + aggregator.getMavenId().getDisplayString() + ')';
+      }
+
       Notification notification = new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "Failed to remove project",
                                                    "You can not remove selected project because it's " +
-                                                   "imported as module of other project. You can ignore it. Only root project can be removed.",
+                                                   "imported as a module of another project" +
+                                                   aggregatorDescription
+                                                   +". You can use Ignore action. Only root project can be removed.",
                                                    NotificationType.ERROR);
 
       notification.setImportant(true);
@@ -59,6 +71,6 @@ public class RemoveManagedFilesAction extends MavenAction {
       return;
     }
 
-    projectsManager.removeManagedFiles(MavenActionUtil.getMavenProjectsFiles(context));
+    projectsManager.removeManagedFiles(selectedFiles);
   }
 }
