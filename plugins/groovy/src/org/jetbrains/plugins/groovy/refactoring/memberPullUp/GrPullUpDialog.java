@@ -18,12 +18,12 @@ package org.jetbrains.plugins.groovy.refactoring.memberPullUp;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDocCommentOwner;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -175,7 +175,7 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
     return new MyMemberInfoModel(myClass, getSuperClass(), false);
   }
 
-  private static class MyMemberInfoModel extends AbstractUsesDependencyMemberInfoModel<GrMember, PsiClass, GrMemberInfo> {
+  private class MyMemberInfoModel extends AbstractUsesDependencyMemberInfoModel<GrMember, PsiClass, GrMemberInfo> {
     public MyMemberInfoModel(PsiClass aClass, PsiClass superClass, boolean recursive) {
       super(aClass, superClass, recursive);
     }
@@ -186,6 +186,72 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
         return WARNING;
       }
       return problem;
+    }
+
+    @Override
+    public boolean isMemberEnabled(GrMemberInfo member) {
+      PsiClass currentSuperClass = getSuperClass();
+      if(currentSuperClass == null) return true;
+      if (myMemberInfoStorage.getDuplicatedMemberInfos(currentSuperClass).contains(member)) return false;
+      if (myMemberInfoStorage.getExtending(currentSuperClass).contains(member.getMember())) return false;
+      if (!currentSuperClass.isInterface()) return true;
+
+      PsiElement element = member.getMember();
+      if (element instanceof PsiClass && ((PsiClass) element).isInterface()) return true;
+      if (element instanceof PsiField) {
+        return ((PsiModifierListOwner) element).hasModifierProperty(PsiModifier.STATIC);
+      }
+      if (element instanceof PsiMethod) {
+        if (currentSuperClass.isInterface()) {
+          final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(currentSuperClass, myClass, PsiSubstitutor.EMPTY);
+          final MethodSignature signature = ((PsiMethod)element).getSignature(superSubstitutor);
+          final PsiMethod superClassMethod = MethodSignatureUtil.findMethodBySignature(currentSuperClass, signature, false);
+          if (superClassMethod != null) return false;
+        }
+        return !((PsiModifierListOwner) element).hasModifierProperty(PsiModifier.STATIC);
+      }
+      return true;
+    }
+
+    @Override
+    public boolean isAbstractEnabled(GrMemberInfo member) {
+      PsiClass currentSuperClass = getSuperClass();
+      if (currentSuperClass == null || !currentSuperClass.isInterface()) return true;
+      return false;
+    }
+
+    @Override
+    public boolean isAbstractWhenDisabled(GrMemberInfo member) {
+      PsiClass currentSuperClass = getSuperClass();
+      if(currentSuperClass == null) return false;
+      if (currentSuperClass.isInterface()) {
+        if (member.getMember() instanceof PsiMethod) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    @Override
+    public int checkForProblems(@NotNull GrMemberInfo member) {
+      if (member.isChecked()) return OK;
+      PsiClass currentSuperClass = getSuperClass();
+
+      if (currentSuperClass != null && currentSuperClass.isInterface()) {
+        PsiMember element = member.getMember();
+        if (element.hasModifierProperty(PsiModifier.STATIC)) {
+          return super.checkForProblems(member);
+        }
+        return OK;
+      }
+      else {
+        return super.checkForProblems(member);
+      }
+    }
+
+    @Override
+    public Boolean isFixedAbstract(GrMemberInfo member) {
+      return Boolean.TRUE;
     }
   }
 }
