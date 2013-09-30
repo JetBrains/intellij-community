@@ -26,6 +26,7 @@ import org.jetbrains.jps.incremental.LineOutputWriter;
 import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -334,7 +335,11 @@ public class JavacMain {
         final Class<StandardJavaFileManager> optimizedManagerClass = ClasspathBootstrap.getOptimizedFileManagerClass();
         if (optimizedManagerClass != null) {
           try {
-            stdManager = optimizedManagerClass.newInstance();
+            final Constructor<StandardJavaFileManager> constructor = optimizedManagerClass.getConstructor();
+            // if optimizedManagerClass is loaded by another classloader, cls.newInstance() will not work
+            // that's why we need to call setAccessible() to ensure access
+            constructor.setAccessible(true); 
+            stdManager = constructor.newInstance();
           }
           catch (Throwable e) {
             if (SystemInfo.isWindows) {
