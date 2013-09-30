@@ -63,6 +63,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class SvnCheckoutProvider implements CheckoutProvider {
 
   public void doCheckout(@NotNull final Project project, Listener listener) {
+    // TODO: Several dialogs is invoked while dialog.show() - seems code should be rewritten to be more transparent
     CheckoutDialog dialog = new CheckoutDialog(project, listener);
     dialog.show();
   }
@@ -308,8 +309,9 @@ public class SvnCheckoutProvider implements CheckoutProvider {
 
     private WorkingCopyFormat displayUpgradeDialog(@NotNull WorkingCopyFormat defaultSelection) {
       final UpgradeFormatDialog dialog = new UpgradeFormatDialog(myProject, myPath, false);
-      dialog.startLoading();
+      final ModalityState dialogState = ModalityState.any();
 
+      dialog.startLoading();
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         @Override
         public void run() {
@@ -331,7 +333,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                 dialog.stopLoading();
               }
             }
-          }, ModalityState.stateForComponent(dialog.getWindow()));
+          }, dialogState);
         }
       });
 

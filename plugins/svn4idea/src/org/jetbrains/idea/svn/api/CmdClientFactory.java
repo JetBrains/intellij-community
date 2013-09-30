@@ -23,6 +23,7 @@ import org.jetbrains.idea.svn.update.UpdateClient;
 import org.jetbrains.idea.svn.properties.CmdPropertyClient;
 import org.jetbrains.idea.svn.revert.CmdRevertClient;
 import org.jetbrains.idea.svn.update.CmdRelocateClient;
+import org.jetbrains.idea.svn.upgrade.CmdUpgradeClient;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -53,6 +54,7 @@ public class CmdClientFactory extends ClientFactory {
     myVersionClient = new CmdVersionClient();
     myImportClient = new CmdImportClient();
     myExportClient = new CmdExportClient();
+    myUpgradeClient = new CmdUpgradeClient();
     statusClient = new SvnCommandLineStatusClient(myVcs);
     infoClient = new SvnCommandLineInfoClient(myVcs);
   }
