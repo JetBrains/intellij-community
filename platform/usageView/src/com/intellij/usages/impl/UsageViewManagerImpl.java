@@ -135,7 +135,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                        final boolean showNotFoundMessage,
                                        @NotNull final UsageViewPresentation presentation,
                                        @Nullable final UsageViewStateListener listener) {
-    final AtomicReference<UsageViewImpl> usageView = new AtomicReference<UsageViewImpl>();
+    final AtomicReference<UsageViewImpl> usageViewRef = new AtomicReference<UsageViewImpl>();
 
     final FindUsagesProcessPresentation processPresentation = new FindUsagesProcessPresentation();
     processPresentation.setShowNotFoundMessage(showNotFoundMessage);
@@ -144,7 +144,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     Task.Backgroundable task = new Task.Backgroundable(myProject, getProgressTitle(presentation), true, new SearchInBackgroundOption()) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
-        new SearchForUsagesRunnable(UsageViewManagerImpl.this.myProject, usageView, presentation, searchFor, searcherFactory,
+        new SearchForUsagesRunnable(UsageViewManagerImpl.this.myProject, usageViewRef, presentation, searchFor, searcherFactory,
                                     processPresentation, listener).run();
       }
 
@@ -156,12 +156,12 @@ public class UsageViewManagerImpl extends UsageViewManager {
       @Override
       @Nullable
       public NotificationInfo getNotificationInfo() {
-        String notification = usageView.get() != null ? usageView.get().getUsagesCount() + " Usage(s) Found" : "No Usages Found";
+        String notification = usageViewRef.get() != null ? usageViewRef.get().getUsagesCount() + " Usage(s) Found" : "No Usages Found";
         return new NotificationInfo("Find Usages", "Find Usages Finished", notification);
       }
     };
     ProgressManager.getInstance().run(task);
-    return usageView.get();
+    return usageViewRef.get();
   }
 
   @Override
@@ -249,7 +249,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
         String message = UsageViewBundle.message("find.excessive.usage.count.prompt", usageCount);
         UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(project, message);
         if (ret == UsageLimitUtil.Result.ABORT && usageView != null) {
-          usageView.setCurrentSearchCancelled(true);
+          usageView.cancelCurrentSearch();
           indicator.cancel();
         }
         tooManyUsagesStatus.userResponded();
@@ -267,31 +267,30 @@ public class UsageViewManagerImpl extends UsageViewManager {
     private final Factory<UsageSearcher> mySearcherFactory;
     private final FindUsagesProcessPresentation myProcessPresentation;
     private final UsageViewStateListener myListener;
-    private volatile boolean mySearchHasBeenCancelled;
 
     private SearchForUsagesRunnable(@NotNull Project project,
-                                    @NotNull AtomicReference<UsageViewImpl> usageView,
+                                    @NotNull AtomicReference<UsageViewImpl> usageViewRef,
                                     @NotNull UsageViewPresentation presentation,
                                     @NotNull UsageTarget[] searchFor,
                                     @NotNull Factory<UsageSearcher> searcherFactory,
                                     @NotNull FindUsagesProcessPresentation processPresentation,
                                     @Nullable UsageViewStateListener listener) {
       myProject = project;
-      myUsageViewRef = usageView;
+      myUsageViewRef = usageViewRef;
       myPresentation = presentation;
       mySearchFor = searchFor;
       mySearcherFactory = searcherFactory;
       myProcessPresentation = processPresentation;
       myListener = listener;
-      mySearchHasBeenCancelled = false;
     }
 
-    private UsageViewImpl getUsageView() {
+    private UsageViewImpl getUsageView(ProgressIndicator indicator) {
       UsageViewImpl usageView = myUsageViewRef.get();
       if (usageView != null) return usageView;
       int usageCount = myUsageCountWithoutDefinition.get();
       if (usageCount >= 2 || usageCount == 1 && myProcessPresentation.isShowPanelIfOnlyOneUsage()) {
-        usageView = new MyUsageViewImpl(myProject);
+        usageView = new UsageViewImpl(myProject, myPresentation, mySearchFor, mySearcherFactory);
+        usageView.associateProgress(indicator);
         if (myUsageViewRef.compareAndSet(null, usageView)) {
           openView(usageView);
           final Usage firstUsage = myFirstUsage.get();
@@ -352,7 +351,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
         @Override
         public boolean process(final Usage usage) {
           ProgressIndicator indicator = ProgressWrapper.unwrap(ProgressManager.getInstance().getProgressIndicator());
-          if (searchHasBeenCancelled() || indicator != null && indicator.isCanceled()) return false;
+          if (indicator != null && indicator.isCanceled()) return false;
           TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.getFrom(indicator);
           tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
           boolean incrementCounter = !isSelfUsage(usage, mySearchFor);
@@ -363,7 +362,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
               myFirstUsage.compareAndSet(null, usage);
             }
 
-            final UsageViewImpl usageView = getUsageView();
+            final UsageViewImpl usageView = getUsageView(indicator);
 
             if (usageCount > UsageLimitUtil.USAGES_LIMIT) {
               if (tooManyUsagesStatus.switchTooManyUsagesStatus()) {
@@ -383,7 +382,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
           return indicator == null || !indicator.isCanceled();
         }
       });
-      if (getUsageView() != null) {
+      if (getUsageView(indicator) != null) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
@@ -403,14 +402,6 @@ public class UsageViewManagerImpl extends UsageViewManager {
           }
         }
       }, myProject.getDisposed());
-    }
-
-    public void setCurrentSearchCancelled(boolean cancelled) {
-      mySearchHasBeenCancelled = cancelled;
-    }
-
-    public boolean searchHasBeenCancelled() {
-      return mySearchHasBeenCancelled;
     }
 
     private void endSearchForUsages(@NotNull final AtomicBoolean findStartedBalloonShown) {
@@ -483,28 +474,6 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
       if (myListener != null) {
         myListener.findingUsagesFinished(myUsageViewRef.get());
-      }
-    }
-
-    private class MyUsageViewImpl extends UsageViewImpl {
-      private MyUsageViewImpl(@NotNull Project project) {
-        super(project, SearchForUsagesRunnable.this.myPresentation, mySearchFor, mySearcherFactory);
-      }
-
-      @Override
-      public void close() {
-        setCurrentSearchCancelled(true);
-        super.close();
-      }
-
-      @Override
-      public boolean searchHasBeenCancelled() {
-        return SearchForUsagesRunnable.this.searchHasBeenCancelled();
-      }
-
-      @Override
-      public void setCurrentSearchCancelled(boolean cancelled) {
-        SearchForUsagesRunnable.this.setCurrentSearchCancelled(cancelled);
       }
     }
   }
