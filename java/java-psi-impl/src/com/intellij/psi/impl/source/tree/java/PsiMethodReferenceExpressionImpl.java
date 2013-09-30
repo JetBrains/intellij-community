@@ -73,20 +73,41 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
   @Override
   public boolean isExact() {
-    PsiElement resolve = resolve();
-    if (resolve instanceof PsiMethod) {
-      if (!((PsiMethod)resolve).isVarArgs()) {
-        if (((PsiMethod)resolve).getTypeParameters().length > 0) {
-          final PsiReferenceParameterList parameterList = getParameterList();
-          return parameterList != null && parameterList.getTypeParameterElements().length > 0;
-        }
-        return true;
-      }
-      return false;
-    }
-    return resolve != null;
+    return getPotentiallyApplicableMethod() != null;
   }
 
+  public PsiMethod getPotentiallyApplicableMethod() {
+    final PsiElement element = getReferenceNameElement();
+    final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(this);
+    final PsiClass containingClass = qualifierResolveResult.getContainingClass();
+    if (containingClass != null) {
+      PsiMethod[] methods = null;
+      if (element instanceof PsiIdentifier) {
+        methods = containingClass.findMethodsByName(element.getText(), false);
+      }
+      else if (element instanceof PsiKeyword && PsiKeyword.NEW.equals(element.getText())) {
+        methods = containingClass.getConstructors();
+      }
+      if (methods != null) {
+        PsiMethod psiMethod = null;
+        for (PsiMethod method : methods) {
+          if (PsiUtil.isAccessible(method, this, null)) {
+            if (psiMethod != null) return null;
+            psiMethod = method;
+          }
+        }
+        if (psiMethod == null) return null;
+        if (psiMethod.isVarArgs()) return null;
+        if (psiMethod.getTypeParameters().length > 0) {
+          final PsiReferenceParameterList parameterList = getParameterList();
+          return parameterList != null && parameterList.getTypeParameterElements().length > 0 ? psiMethod : null;
+        }
+        return psiMethod;
+      }
+    }
+    return null;
+  }
+  
   @Override
   public PsiExpression getQualifierExpression() {
     final PsiElement qualifier = getQualifier();
