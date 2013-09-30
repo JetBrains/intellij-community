@@ -37,7 +37,6 @@ import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
 import org.tmatesoft.svn.core.wc.SVNEventAction;
-import org.tmatesoft.svn.core.wc.SVNWCClient;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -122,20 +121,7 @@ public class SvnFormatWorker extends Task.Backgroundable {
     if (supportsChangelists) {
       myBeforeChangeLists = ChangeListManager.getInstance(myProject).getChangeListsCopy();
     }
-    final SVNWCClient wcClient = myVcs.createWCClient();
-    wcClient.setEventHandler(new ISVNEventHandler() {
-      @Override
-      public void handleEvent(SVNEvent event, double progress) throws SVNException {
-        if (SVNEventAction.UPGRADED_PATH.equals(event.getAction()) && event.getFile() != null) {
-          indicator.setText2("Upgraded path " + VcsUtil.getPathForProgressPresentation(event.getFile()));
-        }
-      }
 
-      @Override
-      public void checkCancelled() throws SVNCancelException {
-        indicator.checkCanceled();
-      }
-    });
     try {
       for (WCInfo wcInfo : myWcInfos) {
         File path = new File(wcInfo.getPath());
@@ -143,13 +129,13 @@ public class SvnFormatWorker extends Task.Backgroundable {
           path = SvnUtil.getWorkingCopyRoot(path);
         }
         try {
-          if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(myNewFormat)) {
-            indicator.setText(SvnBundle.message("action.Subversion.cleanup.progress.text", path.getAbsolutePath()));
-            wcClient.doCleanup(path);
-          }
-          indicator.setText(SvnBundle.message("action.change.wcopy.format.task.progress.text", path.getAbsolutePath(),
-                                              SvnUtil.formatRepresentation(wcInfo.getFormat()), SvnUtil.formatRepresentation(myNewFormat)));
-          wcClient.doSetWCFormat(path, myNewFormat.getFormat());
+          String cleanupMessage = SvnBundle.message("action.Subversion.cleanup.progress.text", path.getAbsolutePath());
+          String upgradeMessage = SvnBundle.message("action.change.wcopy.format.task.progress.text", path.getAbsolutePath(),
+                                                    SvnUtil.formatRepresentation(wcInfo.getFormat()),
+                                                    SvnUtil.formatRepresentation(myNewFormat));
+          ISVNEventHandler handler = createUpgradeHandler(indicator, cleanupMessage, upgradeMessage);
+
+          myVcs.getFactory(path).createUpgradeClient().upgrade(path, myNewFormat, handler);
         } catch (Throwable e) {
           myExceptions.add(e);
         }
@@ -165,5 +151,33 @@ public class SvnFormatWorker extends Task.Backgroundable {
 
       ApplicationManager.getApplication().getMessageBus().syncPublisher(SvnVcs.WC_CONVERTED).run();
     }
+  }
+
+  private static ISVNEventHandler createUpgradeHandler(@NotNull final ProgressIndicator indicator,
+                                                       @NotNull final String cleanupMessage,
+                                                       @NotNull final String upgradeMessage) {
+    return new ISVNEventHandler() {
+      @Override
+      public void handleEvent(SVNEvent event, double progress) throws SVNException {
+        if (event.getFile() != null) {
+          if (SVNEventAction.UPGRADED_PATH.equals(event.getAction())) {
+            indicator.setText2("Upgraded path " + VcsUtil.getPathForProgressPresentation(event.getFile()));
+          }
+          // fake event indicating cleanup start
+          if (SVNEventAction.UPDATE_STARTED.equals(event.getAction())) {
+            indicator.setText(cleanupMessage);
+          }
+          // fake event indicating upgrade start
+          if (SVNEventAction.UPDATE_COMPLETED.equals(event.getAction())) {
+            indicator.setText(upgradeMessage);
+          }
+        }
+      }
+
+      @Override
+      public void checkCancelled() throws SVNCancelException {
+        indicator.checkCanceled();
+      }
+    };
   }
 }

@@ -17,12 +17,14 @@ package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.ObjectsConvertor;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -61,11 +63,13 @@ import java.awt.event.FocusEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.File;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
 
 public class CopiesPanel {
+
+  private static final Logger LOG = Logger.getInstance(CopiesPanel.class);
+
   private final Project myProject;
   private MessageBusConnection myConnection;
   private SvnVcs myVcs;
@@ -98,6 +102,7 @@ public class CopiesPanel {
       @Override
       public void run() {
         final List<WCInfo> infoList = myVcs.getAllWcInfos();
+        final List<WorkingCopyFormat> supportedFormats = getSupportedFormats();
         Runnable runnable = new Runnable() {
           @Override
           public void run() {
@@ -117,7 +122,7 @@ public class CopiesPanel {
               myCurrentInfoList = newList;
             }
             Collections.sort(infoList, WCComparator.getInstance());
-            updateList(infoList);
+            updateList(infoList, supportedFormats);
             myRefreshLabel.setEnabled(true);
             SwingUtilities.invokeLater(focus);
           }
@@ -178,7 +183,7 @@ public class CopiesPanel {
     return myRefreshLabel;
   }
 
-  private void updateList(final List<WCInfo> infoList) {
+  private void updateList(@NotNull final List<WCInfo> infoList, @NotNull final List<WorkingCopyFormat> supportedFormats) {
     myPanel.removeAll();
     final Insets nullIndent = new Insets(1, 3, 1, 0);
     final GridBagConstraints gb =
@@ -217,7 +222,7 @@ public class CopiesPanel {
                                              SVNDepth.INFINITY, false, null, wcInfo.getFormat());
               }
             } else if (CHANGE_FORMAT.equals(e.getDescription())) {
-              changeFormat(wcInfo);
+              changeFormat(wcInfo, supportedFormats);
             } else if (MERGE_FROM.equals(e.getDescription())) {
               if (! checkRoot(root, wcInfo.getPath(), " invoke Merge From")) return;
               mergeFrom(wcInfo, root, editorPane);
@@ -237,7 +242,7 @@ public class CopiesPanel {
         }
       });
       editorPane.setBorder(null);
-      editorPane.setText(formatWc(wcInfo));
+      editorPane.setText(formatWc(wcInfo, supportedFormats));
 
       final JPanel copyPanel = new JPanel(new GridBagLayout());
 
@@ -263,14 +268,14 @@ public class CopiesPanel {
   }
 
   @SuppressWarnings("MethodMayBeStatic")
-  private String formatWc(WCInfo info) {
+  private String formatWc(@NotNull WCInfo info, @NotNull List<WorkingCopyFormat> supportedFormats) {
     final StringBuilder sb = new StringBuilder().append("<html><head>").append(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()))
       .append("</head><body><table bgColor=\"").append(ColorUtil.toHex(UIUtil.getPanelBackground())).append("\">");
 
     sb.append("<tr valign=\"top\"><td colspan=\"3\"><b>").append(info.getPath()).append("</b></td></tr>");
     sb.append("<tr valign=\"top\"><td>URL:</td><td colspan=\"2\">").append(info.getRootUrl()).append("</td></tr>");
-    if (! WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat())) {
-      // can convert
+    Collection<WorkingCopyFormat> upgradeFormats = getUpgradeFormats(info, supportedFormats);
+    if (upgradeFormats.size() > 1) {
       sb.append("<tr valign=\"top\"><td>Format:</td><td>").append(info.getFormat().getName()).append("</td><td><a href=\"").
         append(CHANGE_FORMAT).append("\">Change</a></td></tr>");
     } else {
@@ -300,6 +305,33 @@ public class CopiesPanel {
 
     sb.append("</table></body></html>");
     return sb.toString();
+  }
+
+  @NotNull
+  private List<WorkingCopyFormat> getSupportedFormats() {
+    List<WorkingCopyFormat> result = Collections.emptyList();
+
+    try {
+      result = myVcs.getFactory().createUpgradeClient().getSupportedFormats();
+    }
+    catch (VcsException e) {
+      LOG.info(e);
+    }
+
+    return result;
+  }
+
+  public static Set<WorkingCopyFormat> getUpgradeFormats(@NotNull WCInfo info, @NotNull List<WorkingCopyFormat> supportedFormats) {
+    Set<WorkingCopyFormat> canUpgradeTo = EnumSet.noneOf(WorkingCopyFormat.class);
+
+    for (WorkingCopyFormat format : supportedFormats) {
+      if (format.isOrGreater(info.getFormat())) {
+        canUpgradeTo.add(format);
+      }
+    }
+    canUpgradeTo.add(info.getFormat());
+
+    return canUpgradeTo;
   }
 
   private void mergeFrom(@NotNull final WCInfo wcInfo, @NotNull final VirtualFile root, @Nullable final Component mergeLabel) {
@@ -338,8 +370,10 @@ public class CopiesPanel {
     });
   }
 
-  private void changeFormat(final WCInfo wcInfo) {
+  private void changeFormat(@NotNull final WCInfo wcInfo, @NotNull final List<WorkingCopyFormat> supportedFormats) {
     ChangeFormatDialog dialog = new ChangeFormatDialog(myProject, new File(wcInfo.getPath()), false, ! wcInfo.isIsWcRoot());
+
+    dialog.setSupported(supportedFormats);
     dialog.setData(wcInfo.getFormat());
     dialog.show();
     if (! dialog.isOK()) {
