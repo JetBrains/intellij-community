@@ -249,7 +249,7 @@ public class ExecUtil {
 
   @NotNull
   private static String escapeUnixShellArgument(@NotNull String arg) {
-    return "'" + arg.replace("'", "\\'") + "'";
+    return "'" + arg.replace("'", "'\"'\"'") + "'";
   }
 
   /** @deprecated relies on platform-dependent escaping, use {@link #sudoAndGetOutput(List, String, String)} instead (to remove in IDEA 14) */
