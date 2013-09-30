@@ -5,6 +5,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -75,7 +76,13 @@ public abstract class EditorTextFieldCellRenderer extends CellRendererPanel impl
 
   @NotNull
   private EditorEx getEditor() {
-    if (myEditor != null) return myEditor;
+    if (myEditor != null) {
+      EditorColorsScheme scheme = myEditor.getColorsScheme();
+      if (scheme instanceof DelegateColorScheme) {
+        ((DelegateColorScheme)scheme).setDelegate(getColorScheme());
+      }
+      return myEditor;
+    }
 
     // reuse EditorTextField initialization logic
     EditorTextField field = new EditorTextField(new MyDocument(), null, FileTypes.PLAIN_TEXT);
