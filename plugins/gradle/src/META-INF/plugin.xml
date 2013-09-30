@@ -37,7 +37,7 @@
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleDependenciesContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleArtifactsContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleSourceSetsContributor"/>
-    <resolve.contributor order="" implementation="org.jetbrains.plugins.gradle.service.resolve.GradleImplicitContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleImplicitContributor"/>
   </extensions>
   
   <extensions defaultExtensionNs="com.intellij">
