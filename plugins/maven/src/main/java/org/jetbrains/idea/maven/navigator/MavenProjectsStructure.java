@@ -239,6 +239,12 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
   }
 
+  public void updateRunConfigurations() {
+    for (ProjectNode each : myProjectToNodeMapping.values()) {
+      each.updateRunConfigurations();
+    }
+  }
+
   public void select(MavenProject project) {
     ProjectNode node = findNodeFor(project);
     if (node != null) select(node);
@@ -716,6 +722,11 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     public void updateGoals() {
       updateFrom(myLifecycleNode);
       updateFrom(myPluginsNode);
+    }
+
+    public void updateRunConfigurations() {
+      myRunConfigurationsNode.updateRunConfigurations(myMavenProject);
+      updateFrom(myRunConfigurationsNode);
     }
 
     @Override

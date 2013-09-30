@@ -15,8 +15,10 @@
  */
 package org.jetbrains.idea.maven.navigator;
 
+import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerAdapter;
 import com.intellij.execution.RunManagerEx;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -40,6 +42,7 @@ import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
 import icons.MavenIcons;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
@@ -234,6 +237,31 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
             myStructure.updateGoals();
           }
         });
+      }
+    });
+
+    ((RunManagerEx)RunManager.getInstance(myProject)).addRunManagerListener(new RunManagerAdapter() {
+      private void changed() {
+        scheduleStructureRequest(new Runnable() {
+          public void run() {
+            myStructure.updateRunConfigurations();
+          }
+        });
+      }
+
+      @Override
+      public void runConfigurationAdded(@NotNull RunnerAndConfigurationSettings settings) {
+        changed();
+      }
+
+      @Override
+      public void runConfigurationRemoved(@NotNull RunnerAndConfigurationSettings settings) {
+        changed();
+      }
+
+      @Override
+      public void runConfigurationChanged(@NotNull RunnerAndConfigurationSettings settings) {
+        changed();
       }
     });
   }
