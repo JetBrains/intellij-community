@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.resolve.graphInference.constraints;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
 import com.intellij.psi.impl.source.resolve.graphInference.InferenceSession;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl;
@@ -63,10 +62,11 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         }
       }
     } else {
-      final PsiSubstitutor psiSubstitutor = PsiMethodReferenceUtil.getQualifierResolveResult(myExpression).getSubstitutor();
-      final PsiMethod applicableMethod = ((PsiMethodReferenceExpressionImpl)myExpression).getPotentiallyApplicableMethod();
-      LOG.assertTrue(applicableMethod != null);
-      final PsiParameter[] parameters = applicableMethod.getParameterList().getParameters();
+      final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(myExpression);
+      final PsiSubstitutor psiSubstitutor = qualifierResolveResult.getSubstitutor();
+      final PsiMember applicableMember = ((PsiMethodReferenceExpressionImpl)myExpression).getPotentiallyApplicableMember();
+      LOG.assertTrue(applicableMember != null);
+      final PsiParameter[] parameters = applicableMember instanceof PsiMethod ? ((PsiMethod)applicableMember).getParameterList().getParameters() : PsiParameter.EMPTY_ARRAY;
       if (targetParameters.length == parameters.length + 1) {
         final PsiTypeElement qualifierTypeElement = myExpression.getQualifierType();
         final PsiExpression qualifierExpression = myExpression.getQualifierExpression();
@@ -95,13 +95,17 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
         }
       }
       if (returnType != PsiType.VOID) {
-        final PsiType applicableMethodReturnType = applicableMethod.getReturnType();
+        final PsiType applicableMethodReturnType = applicableMember instanceof PsiMethod ? ((PsiMethod)applicableMember).getReturnType() : null;
         if (applicableMethodReturnType == PsiType.VOID) {
           return false;
         }
 
         if (applicableMethodReturnType != null) {
           constraints.add(new TypeCompatibilityConstraint(GenericsUtil.eliminateWildcards(returnType), psiSubstitutor.substitute(applicableMethodReturnType)));
+        } else if (applicableMember instanceof PsiClass || applicableMember instanceof PsiMethod && ((PsiMethod)applicableMember).isConstructor()) {
+          final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(applicableMember.getProject());
+          final PsiClassType classType = elementFactory.createType(qualifierResolveResult.getContainingClass(), PsiSubstitutor.EMPTY);
+          constraints.add(new TypeCompatibilityConstraint(GenericsUtil.eliminateWildcards(returnType), psiSubstitutor.substitute(classType)));
         }
       }
       return true;

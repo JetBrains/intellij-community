@@ -73,10 +73,10 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
   @Override
   public boolean isExact() {
-    return getPotentiallyApplicableMethod() != null;
+    return getPotentiallyApplicableMember() != null;
   }
 
-  public PsiMethod getPotentiallyApplicableMethod() {
+  public PsiMember getPotentiallyApplicableMember() {
     final PsiElement element = getReferenceNameElement();
     final PsiMethodReferenceUtil.QualifierResolveResult qualifierResolveResult = PsiMethodReferenceUtil.getQualifierResolveResult(this);
     final PsiClass containingClass = qualifierResolveResult.getContainingClass();
@@ -87,6 +87,9 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       }
       else if (element instanceof PsiKeyword && PsiKeyword.NEW.equals(element.getText())) {
         methods = containingClass.getConstructors();
+        if (methods.length == 0) { //default constructor
+          return containingClass;
+        }
       }
       if (methods != null) {
         PsiMethod psiMethod = null;
