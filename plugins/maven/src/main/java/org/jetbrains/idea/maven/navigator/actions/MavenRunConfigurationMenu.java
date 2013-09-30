@@ -2,10 +2,7 @@ package org.jetbrains.idea.maven.navigator.actions;
 
 import com.intellij.execution.*;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
@@ -17,7 +14,11 @@ public class MavenRunConfigurationMenu extends DefaultActionGroup implements Dum
 
   @Override
   public void update(AnActionEvent e) {
-    removeAll();
+    for (AnAction action : getChildActionsOrStubs()) {
+      if (action instanceof ExecuteMavenRunConfigurationAction) {
+        remove(action);
+      }
+    }
 
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
 
@@ -25,27 +26,46 @@ public class MavenRunConfigurationMenu extends DefaultActionGroup implements Dum
 
     if (settings == null || project == null) return;
 
-    for (final Executor executor : ExecutorRegistry.getInstance().getRegisteredExecutors()) {
-      final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executor.getId(), settings.getConfiguration());
+    Executor[] executors = ExecutorRegistry.getInstance().getRegisteredExecutors();
+    for (int i = executors.length; --i >= 0; ) {
+      final ProgramRunner runner = RunnerRegistry.getInstance().getRunner(executors[i].getId(), settings.getConfiguration());
 
-      AnAction action = new AnAction(executor.getActionName(), null, executor.getIcon()) {
-        @Override
-        public void actionPerformed(AnActionEvent event) {
-          if (runner == null) return;
+      AnAction action = new ExecuteMavenRunConfigurationAction(executors[i], runner != null, project, settings);
 
-          ProgramRunnerUtil.executeConfiguration(project, settings, executor);
-        }
-
-        @Override
-        public void update(AnActionEvent e) {
-          super.update(e);
-          e.getPresentation().setEnabled(runner != null);
-        }
-      };
-
-      addAction(action);
+      addAction(action, Constraints.FIRST);
     }
 
     super.update(e);
+  }
+
+  private static class ExecuteMavenRunConfigurationAction extends AnAction {
+    private final Executor myExecutor;
+    private final boolean myEnabled;
+    private final Project myProject;
+    private final RunnerAndConfigurationSettings mySettings;
+
+    public ExecuteMavenRunConfigurationAction(Executor executor,
+                                              boolean enabled,
+                                              Project project,
+                                              RunnerAndConfigurationSettings settings) {
+      super(executor.getActionName(), null, executor.getIcon());
+      myExecutor = executor;
+      myEnabled = enabled;
+      myProject = project;
+      mySettings = settings;
+    }
+
+    @Override
+    public void actionPerformed(AnActionEvent event) {
+      if (!myEnabled) return;
+
+      ProgramRunnerUtil.executeConfiguration(myProject, mySettings, myExecutor);
+    }
+
+    @Override
+    public void update(AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setEnabled(myEnabled);
+    }
   }
 }
