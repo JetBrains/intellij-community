@@ -418,7 +418,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     myPopupField.getTextEditor().setColumns(SEARCH_FIELD_COLUMNS);
     final JPanel panel = new JPanel(new BorderLayout());
     final JLabel title = new JLabel(" Search Everywhere:");
-    title.setFont(title.getFont().deriveFont(Font.BOLD, title.getFont().getSize() - 1f));
+    if (SystemInfo.isMac) {
+      title.setFont(title.getFont().deriveFont(Font.BOLD, title.getFont().getSize() - 1f));
+    } else {
+      title.setFont(title.getFont().deriveFont(Font.BOLD));
+    }
     panel.add(title, BorderLayout.NORTH);
     panel.add(myPopupField, BorderLayout.CENTER);
     panel.setBorder(IdeBorderFactory.createEmptyBorder(0, 5, 2, 5));
