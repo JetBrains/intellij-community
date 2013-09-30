@@ -18,6 +18,7 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
@@ -32,6 +33,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
@@ -183,6 +185,11 @@ public class EditorsSplitters extends JBPanel {
 
       final UIUtil.TextPainter painter = new UIUtil.TextPainter().withShadow(true).withLineSpacing(1.4f);
       painter.appendLine("No files are open").underlined(new JBColor(Gray._150, Gray._100));
+
+      if (Registry.is("search.everywhere.enabled")) {
+        painter.appendLine("Search Everywhere with " + KeymapUtil.getShortcutText(CustomShortcutSet.fromString("shift SPACE").getShortcuts()[0]))
+          .smaller().withBullet();
+      }
 
       if (!isProjectViewVisible()) {
         painter.appendLine("Open Project View with " + KeymapUtil.getShortcutText(new KeyboardShortcut(
