@@ -68,7 +68,7 @@ public class PyPep8NamingInspection extends PyInspection {
       final PyClass containingClass = node.getContainingClass();
       final PsiElement superMethod = PySuperMethodsSearch.search(node).findFirst();
       if (superMethod != null && ignoreOverriddenFunctions) return;
-      if(PyTestUtil.isPyTestClass(containingClass) && ignoreTestFunctions) return;
+      if(containingClass != null && PyTestUtil.isPyTestClass(containingClass) && ignoreTestFunctions) return;
       final String name = node.getName();
       if (name == null) return;
       if (containingClass != null && name.startsWith("__") && name.endsWith("__")) {
