@@ -165,7 +165,26 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
       PyParameterList parameterList = (PyParameterList)parent;
       PyFunction func = parameterList.getContainingFunction();
       if (func != null) {
-        final PyFunction.Modifier modifier = func.getModifier();
+        PyAnnotation anno = getAnnotation();
+        if (anno != null) {
+          final PyClass pyClass = anno.resolveToClass();
+          if (pyClass != null) {
+            return new PyClassTypeImpl(pyClass, false);
+          }
+        }
+        StructuredDocString docString = func.getStructuredDocString();
+        if (PyNames.INIT.equals(func.getName()) && docString == null) {
+          PyClass pyClass = func.getContainingClass();
+          if (pyClass != null) {
+            docString = pyClass.getStructuredDocString();
+          }
+        }
+        if (docString != null) {
+          String typeName = docString.getParamType(getName());
+          if (typeName != null) {
+            return PyTypeParser.getTypeByName(this, typeName);
+          }
+        }
         if (isSelf()) {
           // must be 'self' or 'cls'
           final PyClass containingClass = func.getContainingClass();
@@ -190,6 +209,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
             if (initType != null && !(initType instanceof PyNoneType)) {
               return initType;
             }
+            final PyFunction.Modifier modifier = func.getModifier();
             return new PyClassTypeImpl(containingClass, modifier == PyFunction.Modifier.CLASSMETHOD);
           }
         }
@@ -198,27 +218,6 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
         }
         if (isPositionalContainer()) {
           return PyBuiltinCache.getInstance(this).getTupleType();
-        }
-        PyAnnotation anno = getAnnotation();
-        if (anno != null) {
-          final PyClass pyClass = anno.resolveToClass();
-          if (pyClass != null) {
-            return new PyClassTypeImpl(pyClass, false);
-          }
-        }
-
-        StructuredDocString docString = func.getStructuredDocString();
-        if (PyNames.INIT.equals(func.getName()) && docString == null) {
-          PyClass pyClass = func.getContainingClass();
-          if (pyClass != null) {
-            docString = pyClass.getStructuredDocString();
-          }
-        }
-        if (docString != null) {
-          String typeName = docString.getParamType(getName());
-          if (typeName != null) {
-            return PyTypeParser.getTypeByName(this, typeName);
-          }
         }
         for(PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
           PyType result = provider.getParameterType(this, func, context);

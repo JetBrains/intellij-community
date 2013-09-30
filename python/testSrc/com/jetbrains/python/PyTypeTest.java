@@ -760,6 +760,30 @@ public class PyTypeTest extends PyTestCase {
            "        print(expr)\n");
   }
 
+  // PY-8953
+  public void testSelfInDocString() {
+    doTest("int",
+           "class C(object):\n" +
+           "    def foo(self):\n" +
+           "        '''\n" +
+           "        :type self: int\n" +
+           "        '''\n" +
+           "        expr = self\n");
+  }
+
+  // PY-9605
+  public void testPropertyReturnsCallable() {
+    doTest("() -> int",
+           "class C(object):\n" +
+           "    @property\n" +
+           "    def foo(self):\n" +
+           "        return lambda: 0\n" +
+           "\n" +
+
+           "c = C()\n" +
+           "expr = c.foo\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }
