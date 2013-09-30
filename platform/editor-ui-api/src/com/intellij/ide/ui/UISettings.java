@@ -69,7 +69,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public boolean WIDESCREEN_SUPPORT = false;
   public boolean SHOW_MEMORY_INDICATOR = false;
   public boolean ALLOW_MERGE_BUTTONS = true;
-  public boolean SHOW_MAIN_TOOLBAR = true;
+  public boolean SHOW_MAIN_TOOLBAR = false;
   public boolean SHOW_STATUS_BAR = true;
   public boolean SHOW_NAVIGATION_BAR = true;
   public boolean ALWAYS_SHOW_WINDOW_BUTTONS = false;
