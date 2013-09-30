@@ -314,6 +314,8 @@
     <projectTemplatesFactory implementation="com.intellij.platform.templates.PlainModuleTemplatesFactory"/>
     <projectTemplateFileProcessor implementation="com.intellij.platform.templates.SystemFileProcessor"/>
 
+    <projectWizard.projectCategory implementation="com.intellij.ide.projectWizard.BuilderBasedProjectType$Empty"/>
+
     <applicationService serviceImplementation="com.intellij.ide.util.newProjectWizard.SelectTemplateSettings"/>
 
     <gotoFileContributor implementation="com.intellij.ide.util.gotoByName.ProjectBaseDirNavigationContributor"/>
