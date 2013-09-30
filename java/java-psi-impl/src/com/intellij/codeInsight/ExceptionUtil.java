@@ -398,10 +398,10 @@ public class ExceptionUtil {
   @NotNull
   public static List<PsiClassType> getUnhandledExceptions(@NotNull final PsiCallExpression methodCall,
                                                           @Nullable final PsiElement topElement,
-                                                          boolean includeSelfCalls) {
+                                                          final boolean includeSelfCalls) {
     final JavaResolveResult result = methodCall.resolveMethodGenerics();
     final PsiMethod method = (PsiMethod)result.getElement();
-    PsiMethod containingMethod = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
+    final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(methodCall, PsiMethod.class);
     if (!includeSelfCalls && method == containingMethod) {
       return Collections.emptyList();
     }
@@ -410,7 +410,7 @@ public class ExceptionUtil {
     if (method != null && !isArrayClone(method, methodCall) && methodCall instanceof PsiMethodCallExpression) {
       final PsiClassType[] thrownExceptions = method.getThrowsList().getReferencedTypes();
       if (thrownExceptions.length > 0) {
-        PsiFile containingFile = (containingMethod == null ? methodCall : containingMethod).getContainingFile();
+        final PsiFile containingFile = (containingMethod == null ? methodCall : containingMethod).getContainingFile();
         final MethodResolverProcessor processor = new MethodResolverProcessor((PsiMethodCallExpression)methodCall, containingFile);
         try {
           PsiScopesUtil.setupAndRunProcessor(processor, methodCall, false);
