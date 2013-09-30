@@ -45,6 +45,8 @@ import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
@@ -96,7 +98,7 @@ import static com.intellij.ui.popup.PopupPositionManager.Position.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class SearchEverywhereAction extends AnAction implements CustomComponentAction {
+public class SearchEverywhereAction extends AnAction implements CustomComponentAction, DumbAware{
   public static final int SEARCH_FIELD_COLUMNS = 25;
   private final SearchEverywhereAction.MyListRenderer myRenderer;
   private final JPanel myContentPanel;
@@ -676,14 +678,18 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       buildRecentFiles(pattern);
       updatePopup();
       AccessToken readLock = ApplicationManager.getApplication().acquireReadActionLock();
-      try {
-        buildClasses(pattern, false);
-      } finally {readLock.finish();}
-      updatePopup();
+      if (!DumbServiceImpl.getInstance(project).isDumb()) {
+        try {
+          buildClasses(pattern, false);
+        } finally {readLock.finish();}
+        updatePopup();
+      }
+
       readLock = ApplicationManager.getApplication().acquireReadActionLock();
       try {
         buildFiles(pattern);
       } finally {readLock.finish();}
+
       buildActionsAndSettings(pattern);
       updatePopup();
     }
@@ -762,6 +768,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 !myAlreadyAddedFiles.contains((VirtualFile)object) &&
                 !((VirtualFile)object).isDirectory()) {
               files.add((VirtualFile)object);
+              myAlreadyAddedFiles.add((VirtualFile)object);
               filesCounter++;
             }
           }
