@@ -517,8 +517,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         cmp = panel;
       }
 
-      cmp.setBackground(UIUtil.getListBackground(isSelected));
       Color bg = cmp.getBackground();
+      cmp.setBackground(UIUtil.getListBackground(isSelected));
+      if (bg == null) {
+        bg = cmp.getBackground();
+      }
       myMainPanel.setBorder(new CustomLineBorder(bg, 0, 0, 2, 0));
       String title = myTitleIndexes.getTitle(index);
       myMainPanel.removeAll();
@@ -1273,7 +1276,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     titleLabel.setForeground(UIUtil.getLabelDisabledForeground());
     final Color bg = UIUtil.getListBackground();
     SeparatorComponent separatorComponent =
-      new SeparatorComponent(titleLabel.getPreferredSize().height / 2, bg.darker(), bg.brighter());
+      new SeparatorComponent(titleLabel.getPreferredSize().height / 2, new JBColor(bg.darker(), Gray._80), null);
 
     JPanel result = new JPanel(new BorderLayout(5, 10));
     result.add(titleLabel, BorderLayout.WEST);
