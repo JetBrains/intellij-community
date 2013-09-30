@@ -32,9 +32,9 @@ import java.util.List;
 /**
  * @author gregsh
  */
-public abstract class EditorTextFieldCellRenderer extends CellRendererPanel implements TableCellRenderer, Disposable {
+public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, Disposable {
 
-  private EditorEx myEditor;
+  private static final String MY_PANEL_PROPERTY = "EditorTextFieldCellRenderer.MyEditorPanel";
 
   public EditorTextFieldCellRenderer(Disposable parent) {
     Disposer.register(parent, this);
@@ -50,12 +50,13 @@ public abstract class EditorTextFieldCellRenderer extends CellRendererPanel impl
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     String text = getText(table, value, row, column);
-    EditorEx editor = getEditor();
+    MyPanel panel = getEditorPanel(table);
+    EditorEx editor = panel.editor;
     int tableFontSize = table.getFont().getSize();
     if (editor.getColorsScheme().getEditorFontSize() != tableFontSize) {
       editor.getColorsScheme().setEditorFontSize(tableFontSize);
     }
-    setText(text);
+    setText(editor, text);
 
     if (isSelected) {
       ((EditorImpl)editor).setPaintSelection(true);
@@ -71,17 +72,18 @@ public abstract class EditorTextFieldCellRenderer extends CellRendererPanel impl
       editor.setBackgroundColor(!selectedRow ? table.getBackground() : getColorScheme().getColor(EditorColors.CARET_ROW_COLOR));
     }
     customizeEditor(editor, value, isSelected, row, column);
-    return this;
+    return panel;
   }
 
   @NotNull
-  private EditorEx getEditor() {
-    if (myEditor != null) {
-      EditorColorsScheme scheme = myEditor.getColorsScheme();
+  private MyPanel getEditorPanel(JTable table) {
+    MyPanel panel = (MyPanel)table.getClientProperty(MY_PANEL_PROPERTY);
+    if (panel != null) {
+      EditorColorsScheme scheme = panel.editor.getColorsScheme();
       if (scheme instanceof DelegateColorScheme) {
         ((DelegateColorScheme)scheme).setDelegate(getColorScheme());
       }
-      return myEditor;
+      return panel;
     }
 
     // reuse EditorTextField initialization logic
@@ -97,26 +99,37 @@ public abstract class EditorTextFieldCellRenderer extends CellRendererPanel impl
 
     editor.getScrollPane().setBorder(null);
 
-    add(editor.getContentComponent());
+    panel = new MyPanel(editor);
+    Disposer.register(this, panel);
 
-    myEditor = editor;
-    return myEditor;
+    table.putClientProperty(MY_PANEL_PROPERTY, panel);
+    return panel;
   }
 
   @Override
   public void dispose() {
-    if (myEditor != null) {
-      EditorFactory.getInstance().releaseEditor(myEditor);
-    }
   }
 
-  protected void setText(String text) {
-    EditorEx editor = getEditor();
+  private static void setText(EditorEx editor, String text) {
     editor.getMarkupModel().removeAllHighlighters();
 
     editor.getDocument().setText(text);
     editor.getHighlighter().setText(text);
     ((EditorImpl)editor).resetSizes();
+  }
+
+  private static class MyPanel extends CellRendererPanel implements Disposable {
+    EditorEx editor;
+
+    public MyPanel(EditorEx editor) {
+      add(editor.getContentComponent());
+      this.editor = editor;
+    }
+
+    @Override
+    public void dispose() {
+      EditorFactory.getInstance().releaseEditor(editor);
+    }
   }
 
   private static class MyDocument extends UserDataHolderBase implements DocumentEx {
