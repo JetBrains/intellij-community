@@ -49,4 +49,21 @@ public class SimpleCommit implements TimedVcsCommit {
   public List<Hash> getParents() {
     return myParents;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    SimpleCommit commit = (SimpleCommit)o;
+
+    if (myHash != null ? !myHash.equals(commit.myHash) : commit.myHash != null) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myHash != null ? myHash.hashCode() : 0;
+  }
 }

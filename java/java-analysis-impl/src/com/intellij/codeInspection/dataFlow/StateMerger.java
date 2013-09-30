@@ -112,7 +112,7 @@ class StateMerger {
     MultiMap<Integer, DfaMemoryStateImpl> byHash = new MultiMap<Integer, DfaMemoryStateImpl>();
     for (DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
-      byHash.putValue(state.getPartialHashCode(false), state);
+      byHash.putValue(state.getPartialHashCode(false, true), state);
     }
 
     for (Integer key : byHash.keySet()) {
@@ -140,11 +140,53 @@ class StateMerger {
   }
   
   @Nullable
+  public List<DfaMemoryStateImpl> mergeByNullability(List<DfaMemoryStateImpl> states) {
+    MultiMap<Integer, DfaMemoryStateImpl> byHash = new MultiMap<Integer, DfaMemoryStateImpl>();
+    for (DfaMemoryStateImpl state : states) {
+      ProgressManager.checkCanceled();
+      byHash.putValue(state.getPartialHashCode(false, false), state);
+    }
+
+    for (Integer key : byHash.keySet()) {
+      Collection<DfaMemoryStateImpl> similarStates = byHash.get(key);
+      if (similarStates.size() < 2) continue;
+      
+      for (final DfaMemoryStateImpl state1 : similarStates) {
+        ProgressManager.checkCanceled();
+        for (final DfaVariableValue var : state1.getChangedVariables()) {
+          if (state1.getVariableState(var).getNullability() != Nullness.NULLABLE) {
+            continue;
+          }
+          
+          List<DfaMemoryStateImpl> complementary = ContainerUtil.filter(similarStates, new Condition<DfaMemoryStateImpl>() {
+            @Override
+            public boolean value(DfaMemoryStateImpl state2) {
+              return state1.equalsSuperficially(state2) && 
+                     state1.equalsByRelations(state2) && 
+                     areEquivalentModuloVar(state1, state2, var) &&
+                     areVarStatesEqualModuloNullability(state1, state2, var);
+            }
+          });
+          if (complementary.size() > 1) {
+            DfaMemoryStateImpl copy = state1.createCopy();
+            mergeUnknowns(copy, complementary);
+            return getMergeResult(copy, ContainerUtil.newHashSet(complementary), states);
+          }
+        }
+
+      }
+      
+    }
+
+    return null;
+  }
+  
+  @Nullable
   public List<DfaMemoryStateImpl> mergeByType(List<DfaMemoryStateImpl> states) {
     MultiMap<Pair<DfaVariableValue, DfaPsiType>,DfaMemoryStateImpl> byInstanceof = new MultiMap<Pair<DfaVariableValue, DfaPsiType>, DfaMemoryStateImpl>();
     for (final DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
-      for (DfaVariableValue value : state.getChangedVariable()) {
+      for (DfaVariableValue value : state.getChangedVariables()) {
         for (DfaPsiType instanceofValue : state.getVariableState(value).myInstanceofValues) {
           byInstanceof.putValue(Pair.create(value, instanceofValue), state);
         }
@@ -154,7 +196,7 @@ class StateMerger {
     for (final DfaMemoryStateImpl state : states) {
       ProgressManager.checkCanceled();
 
-      for (final DfaVariableValue var : state.getChangedVariable()) {
+      for (final DfaVariableValue var : state.getChangedVariables()) {
         for (final DfaPsiType notInstanceof : state.getVariableState(var).myNotInstanceofValues) {
           final DfaVariableState varStateWithoutType = getVarStateWithoutType(state, var, notInstanceof);
           List<DfaMemoryStateImpl> complementaryStates = ContainerUtil.filter(
@@ -163,8 +205,10 @@ class StateMerger {
               @Override
               public boolean value(DfaMemoryStateImpl another) {
                 return seemCompatible(state, another, var) &&
+                       another.getVariableState(var).myInstanceofValues.contains(notInstanceof) &&
                        varStateWithoutType.equals(getVarStateWithoutType(another, var, notInstanceof)) &&
-                       areEquivalentModuloVar(another, state, var);
+                       areEquivalentModuloVar(another, state, var) && 
+                       !(state.isNull(var) && another.isNotNull(var));
               }
             });
           if (complementaryStates.isEmpty()) {
@@ -238,8 +282,8 @@ class StateMerger {
       List<DfaMemoryStateImpl> compatible = ContainerUtil.filter(statesByEq.get(createPair(var, value)), new Condition<DfaMemoryStateImpl>() {
         @Override
         public boolean value(DfaMemoryStateImpl state2) {
-          return seemCompatible(state, state2, var) && 
-                 state.getVariableState(var).withNullability(Nullness.UNKNOWN).equals(state2.getVariableState(var).withNullability(Nullness.UNKNOWN));
+          return seemCompatible(state, state2, var) &&
+                 areVarStatesEqualModuloNullability(state, state2, var);
         }
       });
       if (compatible.isEmpty()) {
@@ -248,6 +292,10 @@ class StateMerger {
       statesByValue.put(value, compatible);
     }
     return statesByValue;
+  }
+
+  private boolean areVarStatesEqualModuloNullability(DfaMemoryStateImpl state1, DfaMemoryStateImpl state2, DfaVariableValue var) {
+    return state1.getVariableState(var).withNullability(Nullness.UNKNOWN).equals(state2.getVariableState(var).withNullability(Nullness.UNKNOWN));
   }
 
   private boolean seemCompatible(DfaMemoryStateImpl state1, DfaMemoryStateImpl state2, DfaVariableValue differentVar) {
