@@ -15,17 +15,10 @@
  */
 package org.jetbrains.idea.maven.navigator;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.Executor;
+import com.intellij.execution.ProgramRunnerUtil;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.impl.DefaultJavaProgramRunner;
-import com.intellij.execution.impl.RunManagerImpl;
-import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
@@ -1265,14 +1258,15 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     public void updateRunConfigurations(MavenProject mavenProject) {
       boolean childChanged = false;
 
-      List<RunConfiguration> list = RunManager.getInstance(myProject).getConfigurationsList(MavenRunConfigurationType.getInstance());
+      List<RunnerAndConfigurationSettings>
+        list = RunManager.getInstance(myProject).getConfigurationSettingsList(MavenRunConfigurationType.getInstance());
 
-      Set<MavenRunConfiguration> cfgs = new HashSet<MavenRunConfiguration>(((Collection<MavenRunConfiguration>)((Collection)list)));
+      Set<RunnerAndConfigurationSettings> cfgs = new HashSet<RunnerAndConfigurationSettings>(((Collection<RunnerAndConfigurationSettings>)((Collection)list)));
 
       for (Iterator<RunConfigurationNode> itr = myChildren.iterator(); itr.hasNext(); ) {
         RunConfigurationNode node = itr.next();
 
-        if (cfgs.remove(node.getConfiguration())) {
+        if (cfgs.remove(node.getSettings())) {
           node.updateRunConfiguration();
         }
         else {
@@ -1285,8 +1279,10 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
       int oldSize = myChildren.size();
 
-      for (MavenRunConfiguration cfg : cfgs) {
-        if (directory.equals(PathUtil.getCanonicalPath(cfg.getRunnerParameters().getWorkingDirPath()))) {
+      for (RunnerAndConfigurationSettings cfg : cfgs) {
+        MavenRunConfiguration mavenRunConfiguration = (MavenRunConfiguration)cfg.getConfiguration();
+
+        if (directory.equals(PathUtil.getCanonicalPath(mavenRunConfiguration.getRunnerParameters().getWorkingDirPath()))) {
           myChildren.add(new RunConfigurationNode(this, cfg));
         }
       }
@@ -1304,21 +1300,21 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
   public class RunConfigurationNode extends MavenSimpleNode {
 
-    private MavenRunConfiguration myConfiguration;
+    private RunnerAndConfigurationSettings mySettings;
 
-    public RunConfigurationNode(RunConfigurationsNode parent, MavenRunConfiguration configuration) {
+    public RunConfigurationNode(RunConfigurationsNode parent, RunnerAndConfigurationSettings settings) {
       super(parent);
-      setUniformIcon(MavenIcons.Phase);
-      myConfiguration = configuration;
+      mySettings = settings;
+      setUniformIcon(ProgramRunnerUtil.getConfigurationIcon(settings, false));
     }
 
-    public MavenRunConfiguration getConfiguration() {
-      return myConfiguration;
+    public RunnerAndConfigurationSettings getSettings() {
+      return mySettings;
     }
 
     @Override
     public String getName() {
-      return myConfiguration.getName();
+      return mySettings.getName();
     }
 
     @Nullable
@@ -1333,20 +1329,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     public void handleDoubleClickOrEnter(SimpleTree tree, InputEvent inputEvent) {
-      RunManagerImpl runManager = (RunManagerImpl)RunManager.getInstance(myProject);
-
-      RunnerAndConfigurationSettings settings = new RunnerAndConfigurationSettingsImpl(runManager, myConfiguration, false);
-
-      ProgramRunner runner = DefaultJavaProgramRunner.getInstance();
-      Executor executor = DefaultRunExecutor.getRunExecutorInstance();
-      ExecutionEnvironment env = new ExecutionEnvironment(executor, runner, settings, myProject);
-
-      try {
-        runner.execute(env, null);
-      }
-      catch (ExecutionException e) {
-        MavenUtil.showError(myProject, "Failed to execute Maven goal", e);
-      }
+      ProgramRunnerUtil.executeConfiguration(myProject, mySettings, DefaultRunExecutor.getRunExecutorInstance());
     }
   }
 }

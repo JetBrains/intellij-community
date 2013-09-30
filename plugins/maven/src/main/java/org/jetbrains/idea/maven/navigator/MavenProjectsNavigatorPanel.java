@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.execution.Location;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
@@ -36,7 +37,6 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.execution.MavenGoalLocation;
-import org.jetbrains.idea.maven.execution.MavenRunConfiguration;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -136,7 +136,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return extractNavigatables();
 
     if (MavenDataKeys.MAVEN_GOALS.is(dataId)) return extractGoals(true);
-    if (MavenDataKeys.RUN_CONFIGURATION.is(dataId)) return extractRunConfiguration();
+    if (MavenDataKeys.RUN_CONFIGURATION.is(dataId)) return extractRunSettings();
     if (MavenDataKeys.MAVEN_PROFILES.is(dataId)) return extractProfiles();
 
     if (MavenDataKeys.MAVEN_DEPENDENCIES.is(dataId)) {
@@ -192,11 +192,11 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
   }
 
   @Nullable
-  private MavenRunConfiguration extractRunConfiguration() {
+  private RunnerAndConfigurationSettings extractRunSettings() {
     SimpleNode node = myTree.getSelectedNode();
     if (!(node instanceof MavenProjectsStructure.RunConfigurationNode)) return null;
 
-    return ((MavenProjectsStructure.RunConfigurationNode)node).getConfiguration();
+    return ((MavenProjectsStructure.RunConfigurationNode)node).getSettings();
   }
 
   private List<String> extractGoals(boolean qualifiedGoals) {
