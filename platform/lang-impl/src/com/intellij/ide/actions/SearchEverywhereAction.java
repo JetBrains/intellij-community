@@ -109,7 +109,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private String[] myActions;
   private Component myFocusComponent;
   private JBPopup myPopup;
-  private int myLeftWidth;
   private SearchListModel myListModel = new SearchListModel();
   private int myMoreClassesIndex = -1;
   private int myMoreFilesIndex = -1;
@@ -328,6 +327,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private void doNavigate(int index) {
     final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(getField().getTextEditor()));
+
+    assert project != null;
+
     if (isMoreItem(index)) {
       String actionId = null;
       if (index == myMoreClassesIndex) actionId = "GotoClass";
@@ -394,7 +396,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     if (myCalcThread != null) {
       myCalcThread.cancel();
     }
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(getField().getTextEditor()));
+    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(getField().getTextEditor()));
 
     assert project != null;
     myRenderer.myProject = project;
@@ -410,19 +412,21 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     myPopupField = new MySearchTextField();
     myPopupField.setOpaque(true);
     initSearchField(myPopupField);
-    myPopupField.getTextEditor().setColumns(25);
+    myPopupField.getTextEditor().setColumns(20);
     final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(new JLabel(" Search Everywhere:"), BorderLayout.NORTH);
+    final JLabel title = new JLabel(" Search Everywhere:");
+    title.setFont(title.getFont().deriveFont(Font.BOLD, title.getFont().getSize() - 1f));
+    panel.add(title, BorderLayout.NORTH);
     panel.add(myPopupField, BorderLayout.CENTER);
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(5, 5,  2, 5));
+    panel.setBorder(IdeBorderFactory.createEmptyBorder(0, 5, 2, 5));
     myBalloon = JBPopupFactory.getInstance().createBalloonBuilder(panel)
       .setShowCallout(false)
       .setHideOnKeyOutside(false)
       .setHideOnAction(false)
       .setAnimationCycle(0)
       .setDialogMode(false)
-      .setBorderColor(new JBColor(new Color(156, 192, 255), Gray._77))
-      .setFillColor(new JBColor(new Color(77, 121, 231), new Color(60, 63, 65)))
+      .setBorderColor(new JBColor(Gray._130, Gray._77))
+      .setFillColor(new JBColor(Gray._242, new Color(60, 63, 65)))
       .createBalloon();
     myBalloon.show(JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext()), Balloon.Position.below);
 
@@ -481,10 +485,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       myLocationString = locationString;
     }
 
-    public void setLocationIcon(Icon locationIcon) {
-      myLocationIcon = locationIcon;
-    }
-
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       Component cmp;
@@ -523,7 +523,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       myMainPanel.removeAll();
       if (title != null) {
         myTitle.setText(title);
-        myMainPanel.add(SeparatorComponent.createLabeledLineSeparator(" " + title, UIUtil.getListBackground(), UIUtil.getLabelDisabledForeground()), BorderLayout.NORTH);
+        myMainPanel.add(createTitle(" " + title), BorderLayout.NORTH);
       }
       myMainPanel.add(cmp, BorderLayout.CENTER);
       final int width = myMainPanel.getPreferredSize().width;
@@ -553,11 +553,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           final Presentation templatePresentation = anAction.getTemplatePresentation();
           final Icon icon = templatePresentation.getIcon();
 
-          final DataContext dataContext = DataManager.getInstance().getDataContext(myContextComponent);
-
-          final AnActionEvent event = GotoActionModel.updateActionBeforeShow(anAction, dataContext);
-          final Presentation presentation = event.getPresentation();
-
           append(templatePresentation.getText());
 
           final String groupName = actionWithParentGroup == null ? null : (String)actionWithParentGroup.getValue();
@@ -584,33 +579,24 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     public void recalculateWidth() {
-      myLeftWidth = 16;
       ListModel model = myList.getModel();
       myTitle.setIcon(EmptyIcon.ICON_16);
       myTitle.setFont(getTitleFont());
       int index = 0;
       while (index < model.getSize()) {
-        Object el = model.getElementAt(index);
-        Object prev = index == 0 ? null : model.getElementAt(index - 1);
         String title = myTitleIndexes.getTitle(index);
         if (title != null) {
           myTitle.setText(title);
-          myLeftWidth = Math.max(myLeftWidth, myTitle.getPreferredSize().width);
         }
         index++;
       }
 
-      //myLeftWidth += 10;
       myTitle.setForeground(Gray._122);
       myTitle.setAlignmentY(BOTTOM_ALIGNMENT);
     }
-
-    private Font getTitleFont() {
-      return UIUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL));
-    }
   }
 
-  private String getSettingText(OptionDescription value) {
+  private static String getSettingText(OptionDescription value) {
     String hit = value.getHit();
     if (hit == null) {
       hit = value.getOption();
@@ -637,18 +623,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }, 50);
   }
 
-  private static JBColor getTitlePanelBackground() {
-    return new JBColor(Gray._242, JBColor.background());
-  }
-
-  private static Color getRightBackground() {
-    return UIUtil.isUnderAquaLookAndFeel() ? Gray._236 : UIUtil.getListBackground();
-  }
-
-  private static JBColor getSeparatorColor() {
-    return new JBColor(Gray._206, Gray._75);
-  }
-
   private static boolean isActionValue(Object o) {
     return o instanceof Map.Entry || o instanceof AnAction;
   }
@@ -659,6 +633,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private static boolean isVirtualFile(Object o) {
     return o instanceof VirtualFile;
+  }
+
+  private static Font getTitleFont() {
+    return UIUtil.getLabelFont().deriveFont(UIUtil.getFontSize(UIUtil.FontSize.SMALL));
   }
 
   @SuppressWarnings("SSBasedInspection")
@@ -1069,20 +1047,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             myList.repaint();
           }
           ListScrollingUtil.ensureSelectionExists(myList);
-          if (myList.getModel().getSize() == 0) {
-            //rebuildList("");
-          }
-          else {
+          if (myList.getModel().getSize() > 0) {
             updatePopupBounds();
-            //final Point screen = getField().getLocationOnScreen();
-            //final int x;
-            //if (getField() == field) {
-            //   x = screen.x + getField().getWidth() - myPopup.getSize().width;
-            //} else {
-            //  x = screen.x - myLeftWidth - 5;
-            //}
-            //
-            ////myPopup.setLocation(new Point(x, myPopup.getLocationOnScreen().y));
           }
         }
       });
@@ -1248,7 +1214,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
   }
 
+  @SuppressWarnings("unchecked")
   private static class SearchListModel extends DefaultListModel {
+    @SuppressWarnings("UseOfObsoleteCollectionType")
     Vector myDelegate;
 
     private SearchListModel() {
@@ -1258,11 +1226,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         field.setAccessible(true);
         myDelegate = (Vector)field.get(this);
       }
-      catch (NoSuchFieldException e) {
-
-      }
-      catch (IllegalAccessException ignore) {
-      }
+      catch (NoSuchFieldException ignore) {}
+      catch (IllegalAccessException ignore) {}
     }
 
     @Override
@@ -1277,17 +1242,35 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   static class More extends JPanel {
     static final More instance = new More();
-    final JLabel label = new JLabel("    ... more");
+    final JLabel label = new JLabel("    ... more   ");
 
     private More() {
       super(new BorderLayout());
-      add(label, BorderLayout.WEST);
+      add(label, BorderLayout.CENTER);
     }
 
     static More get(boolean isSelected) {
       instance.setBackground(UIUtil.getListBackground(isSelected));
-      instance.label.setForeground(UIUtil.getListForeground(isSelected));
+      instance.label.setForeground(UIUtil.getLabelDisabledForeground());
+      instance.label.setFont(getTitleFont());
       return instance;
     }
   }
+
+  private static JComponent createTitle(String titleText) {
+    JLabel titleLabel = new JLabel(titleText);
+    titleLabel.setFont(getTitleFont());
+    titleLabel.setForeground(UIUtil.getLabelDisabledForeground());
+    final Color bg = UIUtil.getListBackground();
+    SeparatorComponent separatorComponent =
+      new SeparatorComponent(titleLabel.getPreferredSize().height / 2, bg.darker(), bg.brighter());
+
+    JPanel result = new JPanel(new BorderLayout(5, 10));
+    result.add(titleLabel, BorderLayout.WEST);
+    result.add(separatorComponent, BorderLayout.CENTER);
+    result.setBackground(bg);
+
+    return result;
+  }
+
 }
