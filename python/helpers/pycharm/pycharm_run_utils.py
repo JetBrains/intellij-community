@@ -32,9 +32,6 @@ def getModuleName(prefix, cnt):
   return prefix + "%" + str(cnt)
 
 def insert_to_sys_path(script_path):
-  print(script_path)
-  for s in sys.path:
-      print(s)
   while script_path in sys.path:
     sys.path.remove(script_path)
   sys.path.insert(0, script_path)
