@@ -50,7 +50,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
 
-  private static final int VERSION = 25;
+  private static final int VERSION = 26;
 
   private static final DataExternalizer<SerializedStubTree> KEY_EXTERNALIZER = new DataExternalizer<SerializedStubTree>() {
     @Override
@@ -68,7 +68,16 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
     @Override
     public boolean acceptInput(@NotNull final VirtualFile file) {
-      return canHaveStub(file);
+      boolean b = canHaveStub(file);
+      if (b) {
+        if (file.getName().endsWith(".java")) {
+          String path = file.getPath();
+          if (path.indexOf("testData") != -1) {
+            int a = 1;
+          }
+        }
+      }
+      return b;
     }
   };
 
@@ -88,7 +97,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
         if (((IStubFileElementType)elementType).shouldBuildStubFor(file)) {
           return true;
         }
-        final ID indexId = IndexInfrastructure.getStubId(INDEX_ID, file.getFileType());
+        final ID indexId = IndexInfrastructure.getStubId(INDEX_ID, fileType);
         if (IndexingStamp.isFileIndexed(file, indexId, IndexInfrastructure.getIndexCreationStamp(indexId))) {
           return true;
         }

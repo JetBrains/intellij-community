@@ -19,6 +19,8 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
@@ -37,7 +39,6 @@ import java.io.IOException;
  * @author Gregory.Shrago
  */
 public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel> {
-
   public static void pushLanguageLevel(final Project project) {
     PushedFilePropertiesUpdater.getInstance(project).pushAll(new JavaLanguageLevelPusher());
   }
@@ -79,7 +80,12 @@ public class JavaLanguageLevelPusher implements FilePropertyPusher<LanguageLevel
     return false;
   }
 
-  private static final FileAttribute PERSISTENCE = new FileAttribute("language_level_persistence", 2, true);
+  @Override
+  public boolean acceptsDirectory(@NotNull VirtualFile file, @NotNull Project project) {
+    return ProjectFileIndex.SERVICE.getInstance(project).isInSourceContent(file);
+  }
+
+  private static final FileAttribute PERSISTENCE = new FileAttribute("language_level_persistence", 3, true);
 
   @Override
   public void persistAttribute(@NotNull VirtualFile fileOrDir, @NotNull LanguageLevel level) throws IOException {

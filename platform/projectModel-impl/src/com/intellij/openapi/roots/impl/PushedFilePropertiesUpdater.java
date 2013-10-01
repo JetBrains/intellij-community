@@ -118,6 +118,7 @@ public class PushedFilePropertiesUpdater {
         final boolean isDir = fileOrDir.isDirectory();
         for (FilePropertyPusher<Object> pusher : pushers) {
           if (!isDir && (pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir))) continue;
+          else if (isDir && !pusher.acceptsDirectory(fileOrDir, myProject)) continue;
           findAndUpdateValue(project, fileOrDir, pusher, null);
         }
         return true;
@@ -147,7 +148,7 @@ public class PushedFilePropertiesUpdater {
   }
 
   public void pushAll(final FilePropertyPusher... pushers) {
-    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+    for (final Module module : ModuleManager.getInstance(myProject).getModules()) {
       final Object[] moduleValues = new Object[pushers.length];
       for (int i = 0; i < moduleValues.length; i++) {
         moduleValues[i] = pushers[i].getImmediateValue(module);
@@ -162,6 +163,7 @@ public class PushedFilePropertiesUpdater {
             for (int i = 0, pushersLength = pushers.length; i < pushersLength; i++) {
               final FilePropertyPusher<Object> pusher = pushers[i];
               if (!isDir && (pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir))) continue;
+              else if (isDir && !pusher.acceptsDirectory(fileOrDir, myProject)) continue;
               findAndUpdateValue(myProject, fileOrDir, pusher, moduleValues[i]);
             }
             return true;

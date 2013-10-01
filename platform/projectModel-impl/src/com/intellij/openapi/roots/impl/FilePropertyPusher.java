@@ -48,6 +48,7 @@ public interface FilePropertyPusher<T> {
   T getImmediateValue(@NotNull Module module);
 
   boolean acceptsFile(@NotNull VirtualFile file);
+  boolean acceptsDirectory(@NotNull VirtualFile file, @NotNull Project project);
 
   void persistAttribute(@NotNull VirtualFile fileOrDir, @NotNull T value) throws IOException;
 
