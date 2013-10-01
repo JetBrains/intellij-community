@@ -55,7 +55,7 @@ public class ShowCoveringTestsAction extends AnAction {
     final DataContext context = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(context);
     LOG.assertTrue(project != null);
-    final Editor editor = PlatformDataKeys.EDITOR.getData(context);
+    final Editor editor = CommonDataKeys.EDITOR.getData(context);
     LOG.assertTrue(editor != null);
 
     final CoverageSuitesBundle currentSuite = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();
