@@ -3,7 +3,6 @@ package com.jetbrains.python;
 import com.intellij.application.options.InitialConfigurationDialog;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.AppLifecycleListener;
-import com.intellij.ide.OpenJdkNotifier;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,7 +25,6 @@ public class PyCharmInitialConfigurator {
   @NonNls private static final String DISPLAYED_PROPERTY = "PyCharm.initialConfigurationShown";
 
   public PyCharmInitialConfigurator(MessageBus bus, final PropertiesComponent propertiesComponent, final FileTypeManager fileTypeManager) {
-    OpenJdkNotifier.checkJdk(bus);
     if (!propertiesComponent.getBoolean("PyCharm.InitialConfiguration", false)) {
       propertiesComponent.setValue("PyCharm.InitialConfiguration", "true");
       EditorSettingsExternalizable.getInstance().setVirtualSpace(false);
