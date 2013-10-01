@@ -68,16 +68,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
   private static final FileBasedIndex.InputFilter INPUT_FILTER = new FileBasedIndex.InputFilter() {
     @Override
     public boolean acceptInput(@NotNull final VirtualFile file) {
-      boolean b = canHaveStub(file);
-      if (b) {
-        if (file.getName().endsWith(".java")) {
-          String path = file.getPath();
-          if (path.indexOf("testData") != -1) {
-            int a = 1;
-          }
-        }
-      }
-      return b;
+      return canHaveStub(file);
     }
   };
 
