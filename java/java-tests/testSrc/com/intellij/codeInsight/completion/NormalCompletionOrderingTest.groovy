@@ -457,7 +457,7 @@ interface TxANotAnno {}
 
   public void testUnderscoresDontMakeMatchMiddle() {
     CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE;
-    checkPreferredItems(0, '_fooBar', 'FooBar')
+    checkPreferredItems(0, 'fooBar', '_fooBar', 'FooBar')
   }
 
   public void testStatisticsMattersOnNextCompletion() {
