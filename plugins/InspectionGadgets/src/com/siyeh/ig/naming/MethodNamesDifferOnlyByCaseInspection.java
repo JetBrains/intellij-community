@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class MethodNamesDifferOnlyByCaseInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("method.names.differ.only.by.case.ignore.override.option"),
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"),
                                           this, "ignoreIfMethodIsOverride");
   }
 

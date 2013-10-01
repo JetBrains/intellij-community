@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -37,6 +38,9 @@ public class MethodCountInspection extends BaseInspection {
 
   @SuppressWarnings({"PublicField"})
   public boolean ignoreGettersAndSetters = false;
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreOverridingMethods = false;
 
   @Override
   @NotNull
@@ -53,8 +57,7 @@ public class MethodCountInspection extends BaseInspection {
   @Override
   public JComponent createOptionsPanel() {
     final JComponent panel = new JPanel(new GridBagLayout());
-    final Component label = new JLabel(
-      InspectionGadgetsBundle.message("method.count.limit.option"));
+    final Component label = new JLabel(InspectionGadgetsBundle.message("method.count.limit.option"));
     final JFormattedTextField valueField = prepareNumberEditor("m_limit");
 
     final GridBagConstraints constraints = new GridBagConstraints();
@@ -68,17 +71,22 @@ public class MethodCountInspection extends BaseInspection {
     constraints.insets.right = 0;
     panel.add(valueField, constraints);
 
-    final CheckBox gettersSettersCheckBox = new CheckBox(
-      InspectionGadgetsBundle.message(
-        "method.count.ignore.getters.setters.option"),
+    final CheckBox gettersSettersCheckBox = new CheckBox(InspectionGadgetsBundle.message("method.count.ignore.getters.setters.option"),
       this, "ignoreGettersAndSetters");
 
     constraints.gridx = 0;
     constraints.gridy = 1;
-    constraints.weighty = 1.0;
     constraints.gridwidth = 2;
-    constraints.anchor = GridBagConstraints.NORTHWEST;
+    constraints.anchor = GridBagConstraints.WEST;
     panel.add(gettersSettersCheckBox, constraints);
+
+    final CheckBox overridingMethodCheckBox =
+      new CheckBox(InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"), this, "ignoreOverridingMethods");
+
+    constraints.weighty = 1.0;
+    constraints.gridy = 2;
+    constraints.anchor = GridBagConstraints.NORTHWEST;
+    panel.add(overridingMethodCheckBox, constraints);
 
     return panel;
   }
@@ -88,8 +96,7 @@ public class MethodCountInspection extends BaseInspection {
   @NotNull
   public String buildErrorString(Object... infos) {
     final Integer count = (Integer)infos[0];
-    return InspectionGadgetsBundle.message(
-      "too.many.methods.problem.descriptor", count);
+    return InspectionGadgetsBundle.message("too.many.methods.problem.descriptor", count);
   }
 
   @Override
@@ -101,7 +108,6 @@ public class MethodCountInspection extends BaseInspection {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      // note: no call to super
       final int methodCount = calculateTotalMethodCount(aClass);
       if (methodCount <= m_limit) {
         return;
@@ -117,8 +123,12 @@ public class MethodCountInspection extends BaseInspection {
           continue;
         }
         if (ignoreGettersAndSetters) {
-          if (PropertyUtil.isSimpleGetter(method) ||
-              PropertyUtil.isSimpleSetter(method)) {
+          if (PropertyUtil.isSimpleGetter(method) || PropertyUtil.isSimpleSetter(method)) {
+            continue;
+          }
+        }
+        if (ignoreOverridingMethods) {
+          if (MethodUtils.hasSuper(method)) {
             continue;
           }
         }
