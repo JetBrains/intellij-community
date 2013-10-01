@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -39,7 +40,7 @@ import java.util.*;
 /**
  * @author yole
  */
-public class NativeIconProvider extends IconProvider {
+public class NativeIconProvider extends IconProvider implements DumbAware {
   private final Map<Ext, Icon> myIconCache = new HashMap<Ext, Icon>();
   // on Windows .exe and .ico files provide their own icons which can differ for each file, cache them by full file path
   private final Set<Ext> myCustomIconExtensions =
@@ -55,7 +56,7 @@ public class NativeIconProvider extends IconProvider {
   public Icon getIcon(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
     if (element instanceof PsiFileSystemItem) {
       VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
-      return doGetIcon(file, flags);
+      if (file != null) return doGetIcon(file, flags);
     }
     return null;
   }
