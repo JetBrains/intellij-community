@@ -49,7 +49,7 @@ public class ExecuteInConsoleAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
+    Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     if (editor != null) {
       final String selectionText = getSelectionText(editor);
       if (selectionText != null) {
@@ -93,7 +93,7 @@ public class ExecuteInConsoleAction extends AnAction {
   }
 
   private static void execute(final AnActionEvent e, final String selectionText) {
-    final Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
+    final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     Module module = e.getData(LangDataKeys.MODULE);
 
@@ -133,7 +133,7 @@ public class ExecuteInConsoleAction extends AnAction {
   }
 
   public void update(AnActionEvent e) {
-    Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
+    Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     Presentation presentation = e.getPresentation();
 
     boolean enabled = false;

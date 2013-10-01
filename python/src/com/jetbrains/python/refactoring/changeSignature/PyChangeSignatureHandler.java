@@ -1,5 +1,6 @@
 package com.jetbrains.python.refactoring.changeSignature;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -57,7 +58,7 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
   @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, @Nullable DataContext dataContext) {
     if (elements.length != 1) return;
-    Editor editor = dataContext == null ? null : PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = dataContext == null ? null : CommonDataKeys.EDITOR.getData(dataContext);
     invokeOnElement(project, elements[0], editor);
   }
 

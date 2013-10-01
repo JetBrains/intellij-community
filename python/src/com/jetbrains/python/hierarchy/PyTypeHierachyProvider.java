@@ -3,6 +3,7 @@ package com.jetbrains.python.hierarchy;
 import com.intellij.ide.hierarchy.HierarchyBrowser;
 import com.intellij.ide.hierarchy.HierarchyProvider;
 import com.intellij.ide.hierarchy.TypeHierarchyBrowserBase;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -25,7 +26,7 @@ public class PyTypeHierachyProvider implements HierarchyProvider {
   public PsiElement getTarget(@NotNull DataContext dataContext) {
     PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     if (element == null) {
-      final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
       if (editor != null && file != null) {
         element = file.findElementAt(editor.getCaretModel().getOffset());
