@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
 public class MismatchedCollectionQueryUpdateInspectionBase extends BaseInspection {
   @SuppressWarnings({"PublicField"})
   public final ExternalizableStringSet queryNames =
-    new ExternalizableStringSet("copyInto", "drainTo", "propertyNames", "save", "store", "write");
+    new ExternalizableStringSet("copyInto", "drainTo", "propertyNames", "save", "store", "write", "forEach", "replaceAll");
   @SuppressWarnings({"PublicField"})
   public final ExternalizableStringSet updateNames =
     new ExternalizableStringSet("add", "clear", "drainTo", "insert", "load", "offer", "poll", "push", "put", "remove", "replace",
