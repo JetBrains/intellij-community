@@ -246,8 +246,9 @@ public class InferenceSession {
             if (gParent instanceof PsiCallExpression) {
               final PsiExpressionList argumentList = ((PsiCallExpression)gParent).getArgumentList();
               if (argumentList != null) {
-                final JavaResolveResult resolveResult = ((PsiCallExpression)gParent).resolveMethodGenerics();
-                final PsiElement parentMethod = resolveResult.getElement();
+                final Pair<PsiMethod, PsiSubstitutor> pair = MethodCandidateInfo.getCurrentMethod(argumentList);
+                final JavaResolveResult resolveResult = pair == null ? ((PsiCallExpression)gParent).resolveMethodGenerics() : null;
+                final PsiElement parentMethod = pair != null ? pair.first : resolveResult.getElement();
                 if (parentMethod instanceof PsiMethod) {
                   final PsiParameter[] parameters = ((PsiMethod)parentMethod).getParameterList().getParameters();
                   PsiElement arg = context;
@@ -255,12 +256,15 @@ public class InferenceSession {
                     arg = parent.getParent();
                   }
                   final PsiExpression[] args = argumentList.getExpressions();
-                  targetType = getParameterType(parameters, args, ArrayUtilRt.find(args, arg), resolveResult.getSubstitutor());
+                  targetType = getParameterType(parameters, args, ArrayUtilRt.find(args, arg), pair != null ? pair.second : resolveResult.getSubstitutor());
                 }
               }
             }
           } else if (parent instanceof PsiConditionalExpression) {
             targetType = PsiTypesUtil.getExpectedTypeByParent((PsiExpression)parent);
+          }
+          else if (parent instanceof PsiLambdaExpression) {
+            targetType = LambdaUtil.getFunctionalInterfaceReturnType(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
           }
         }
         if (targetType != null) {
