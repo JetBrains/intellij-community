@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
@@ -56,7 +57,7 @@ public class OpenInSceneBuilderAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     LOG.assertTrue(virtualFile != null);
     final String path = virtualFile.getPath();
 
@@ -150,7 +151,7 @@ public class OpenInSceneBuilderAction extends AnAction {
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(false);
     presentation.setVisible(false);
-    final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (virtualFile != null && 
         JavaFxFileTypeFactory.isFxml(virtualFile) &&
         e.getProject() != null) {

@@ -44,7 +44,7 @@ public interface DataConstants {
    *
    * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#VIRTUAL_FILE} instead
    */
-  String VIRTUAL_FILE = PlatformDataKeys.VIRTUAL_FILE.getName();
+  String VIRTUAL_FILE = CommonDataKeys.VIRTUAL_FILE.getName();
 
   /**
    * Returns array of {@link com.intellij.openapi.vfs.VirtualFile}

@@ -448,7 +448,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }
-      if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
+      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
         final VirtualFile selectedFile = myWindow.getSelectedFile();
         return selectedFile != null && selectedFile.isValid() ? selectedFile : null;
       }

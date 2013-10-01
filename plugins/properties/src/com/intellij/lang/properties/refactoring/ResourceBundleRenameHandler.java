@@ -58,7 +58,7 @@ public class ResourceBundleRenameHandler implements RenameHandler {
       return false;
     }
 
-    final VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
 
     ResourceBundleEditor editor = ResourceBundleUtil.getEditor(dataContext);
     return (editor == null || editor.getState(FileEditorStateLevel.NAVIGATION).getPropertyName() == null /* user selected non-bundle key element */)

@@ -40,7 +40,7 @@ public class CloseEditorAction extends AnAction implements DumbAware {
       }
     }
     else {
-      file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+      file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     }
     if (file != null) {
       editorManager.closeFile(file, window);

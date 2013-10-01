@@ -34,7 +34,7 @@ public class PsiFileRule implements GetDataRule {
     }
     Project project = PlatformDataKeys.PROJECT.getData(dataProvider);
     if (project != null) {
-      VirtualFile vFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataProvider);
+      VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(dataProvider);
       if (vFile != null) {
         return PsiManager.getInstance(project).findFile(vFile);
       }

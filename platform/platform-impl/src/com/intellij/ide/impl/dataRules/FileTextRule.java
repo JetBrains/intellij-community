@@ -30,7 +30,7 @@ import com.intellij.openapi.vfs.VirtualFile;
  */
 public class FileTextRule implements GetDataRule {
   public Object getData(DataProvider dataProvider) {
-    final VirtualFile virtualFile = (VirtualFile)dataProvider.getData(PlatformDataKeys.VIRTUAL_FILE.getName());
+    final VirtualFile virtualFile = (VirtualFile)dataProvider.getData(CommonDataKeys.VIRTUAL_FILE.getName());
     if (virtualFile == null) {
       return null;
     }

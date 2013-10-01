@@ -54,7 +54,7 @@ import java.util.List;
 public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
-    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+    final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
     final boolean enabled = isAcceptableFile(file);
     e.getPresentation().setEnabled(enabled);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
@@ -64,7 +64,7 @@ public class GenerateInstanceDocumentFromSchemaAction extends AnAction {
 
   public void actionPerformed(AnActionEvent e) {
     final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
-    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+    final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
 
     final GenerateInstanceDocumentFromSchemaDialog dialog = new GenerateInstanceDocumentFromSchemaDialog(project, file);
     dialog.setOkAction(new Runnable() {

@@ -23,6 +23,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -343,7 +344,7 @@ public class ShowFilePathAction extends AnAction {
 
   @Nullable
   private static VirtualFile getFile(final AnActionEvent e) {
-    return PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+    return CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
   }
 
   public static Boolean showDialog(Project project, String message, String title, File file) {

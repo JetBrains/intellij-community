@@ -39,7 +39,7 @@ public class MacroManagerTest extends CodeInsightFixtureTestCase {
     Project project = myFixture.getProject();
     Map<String, Object> dataId2data = new THashMap<String, Object>();
     dataId2data.put(CommonDataKeys.PROJECT.getName(), project);
-    dataId2data.put(PlatformDataKeys.VIRTUAL_FILE.getName(), file);
+    dataId2data.put(CommonDataKeys.VIRTUAL_FILE.getName(), file);
     dataId2data.put(PlatformDataKeys.PROJECT_FILE_DIRECTORY.getName(), project.getBaseDir());
     return SimpleDataContext.getSimpleContext(dataId2data, null);
   }

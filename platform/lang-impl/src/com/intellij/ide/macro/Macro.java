@@ -16,6 +16,7 @@
 
 package com.intellij.ide.macro;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -68,7 +69,7 @@ public abstract class Macro {
 
   @Nullable
   protected static VirtualFile getVirtualDirOrParent(DataContext dataContext) {
-    VirtualFile vFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (vFile != null && !vFile.isDirectory()) {
       vFile = vFile.getParent();
     }

@@ -47,7 +47,7 @@ abstract class HgAbstractGlobalAction extends AnAction {
     if (project == null) {
       return;
     }
-    VirtualFile file = event.getData(PlatformDataKeys.VIRTUAL_FILE);
+    VirtualFile file = event.getData(CommonDataKeys.VIRTUAL_FILE);
     VirtualFile repo = file != null ? HgUtil.getHgRootOrNull(project, file) : null;
     List<VirtualFile> repos = HgUtil.getHgRepositories(project);
     if (!repos.isEmpty()) {

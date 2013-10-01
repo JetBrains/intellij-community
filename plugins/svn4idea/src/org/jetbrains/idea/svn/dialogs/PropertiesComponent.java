@@ -411,7 +411,7 @@ public class PropertiesComponent extends JPanel {
       if (myVcs == null) {
         return;
       }
-      VirtualFile vf = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+      VirtualFile vf = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
       if (vf != null) {
         File f = new File(vf.getPath());
         if (!f.equals(myFile)) {

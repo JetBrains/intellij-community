@@ -83,7 +83,7 @@ public class ValidateAction extends AnAction {
     super.update(e);
     myOrigAction.update(e);
 
-    final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (file != null) {
       if (file.getUserData(IN_PROGRESS_KEY) == Boolean.TRUE) {
         e.getPresentation().setEnabled(false);

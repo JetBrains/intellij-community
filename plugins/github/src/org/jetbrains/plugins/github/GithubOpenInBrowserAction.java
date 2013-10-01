@@ -56,7 +56,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
   @Override
   public void update(final AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (project == null || project.isDefault() || virtualFile == null) {
       setVisibleEnabled(e, false, false);
       return;
@@ -92,7 +92,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (virtualFile == null || project == null || project.isDisposed()) {
       return;

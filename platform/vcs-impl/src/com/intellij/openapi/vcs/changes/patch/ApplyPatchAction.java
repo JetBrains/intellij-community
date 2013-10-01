@@ -75,7 +75,7 @@ public class ApplyPatchAction extends DumbAwareAction {
     if (ChangeListManager.getInstance(project).isFreezedWithNotification("Can not apply patch now")) return;
 
     if (e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP)) {
-      VirtualFile vFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+      VirtualFile vFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
       if (vFile != null && vFile.getFileType() == StdFileTypes.PATCH) {
         showApplyPatch(project, vFile);
         return;
@@ -301,7 +301,7 @@ public class ApplyPatchAction extends DumbAwareAction {
   public void update(AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP)) {
-      VirtualFile vFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+      VirtualFile vFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
       e.getPresentation().setVisible(project != null && vFile != null && vFile.getFileType() == StdFileTypes.PATCH);
     }
     else {

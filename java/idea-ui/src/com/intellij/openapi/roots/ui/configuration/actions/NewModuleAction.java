@@ -22,6 +22,7 @@ import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ProjectBuilder;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAware;
@@ -53,7 +54,7 @@ public class NewModuleAction extends AnAction implements DumbAware {
     Object dataFromContext = prepareDataFromContext(e);
 
     String defaultPath = null;
-    final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (virtualFile != null && virtualFile.isDirectory()) {
       defaultPath = virtualFile.getPath();
     }

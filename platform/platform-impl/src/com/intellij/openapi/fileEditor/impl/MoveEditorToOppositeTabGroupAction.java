@@ -30,7 +30,7 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
   @Override
   public void actionPerformed(final AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
-    final VirtualFile vFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (vFile == null || project == null){
       return;
@@ -51,7 +51,7 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
   public void update(AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final DataContext dataContext = e.getDataContext();
-    final VirtualFile vFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     final EditorWindow window = EditorWindow.DATA_KEY.getData(dataContext);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       presentation.setVisible(isEnabled(vFile, window));

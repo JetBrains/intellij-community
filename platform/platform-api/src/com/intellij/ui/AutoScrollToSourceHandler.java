@@ -19,6 +19,7 @@ package com.intellij.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -188,7 +189,7 @@ public abstract class AutoScrollToSourceHandler {
       @Override
       public void run() {
         DataContext context = DataManager.getInstance().getDataContext(tree);
-        final VirtualFile vFile = PlatformDataKeys.VIRTUAL_FILE.getData(context);
+        final VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(context);
         if (vFile != null) {
           // Attempt to navigate to the virtual file with unknown file type will show a modal dialog
           // asking to register some file type for this file. This behaviour is undesirable when autoscrolling.

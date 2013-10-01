@@ -44,7 +44,7 @@ public class DumpDirectoryInfoAction extends AnAction {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     final DirectoryIndex index = DirectoryIndex.getInstance(project);
     if (project != null) {
-      final VirtualFile root = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+      final VirtualFile root = e.getData(CommonDataKeys.VIRTUAL_FILE);
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
         @Override
         public void run() {

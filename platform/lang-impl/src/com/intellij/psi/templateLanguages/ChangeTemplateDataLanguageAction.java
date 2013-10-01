@@ -34,7 +34,7 @@ public class ChangeTemplateDataLanguageAction extends AnAction {
   public void update(final AnActionEvent e) {
     e.getPresentation().setVisible(false);
 
-    VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     if (files != null && files.length > 1) {
       virtualFile = null;
@@ -60,7 +60,7 @@ public class ChangeTemplateDataLanguageAction extends AnAction {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 
-    final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     final TemplateDataLanguageConfigurable configurable = new TemplateDataLanguageConfigurable(project);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, new Runnable() {
       @Override

@@ -222,7 +222,7 @@ public class ConfigurationContext {
       element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     }
     if (element == null) {
-      final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+      final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
       if (file != null) {
         element = PsiManager.getInstance(project).findFile(file);
       }

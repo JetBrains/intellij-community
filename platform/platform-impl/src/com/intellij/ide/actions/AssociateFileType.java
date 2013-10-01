@@ -24,14 +24,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 public class AssociateFileType extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     FileTypeChooser.associateFileType(file.getName());
   }
 
   public void update(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     DataContext dataContext = e.getDataContext();
-    VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     boolean haveSmthToDo;
     if (project == null || file == null || file.isDirectory()) {

@@ -89,7 +89,7 @@ public class MavenShowEffectivePom extends AnAction implements DumbAware {
 
   @Nullable
   private static VirtualFile findPomXml(@NotNull DataContext dataContext) {
-    VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (file == null) return null;
 
     if (file.isDirectory()) {

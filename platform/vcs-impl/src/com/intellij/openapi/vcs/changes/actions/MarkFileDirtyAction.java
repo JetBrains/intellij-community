@@ -31,7 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class MarkFileDirtyAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
-    final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (file != null) {
       VcsDirtyScopeManager.getInstance(project).fileDirty(file);
     }

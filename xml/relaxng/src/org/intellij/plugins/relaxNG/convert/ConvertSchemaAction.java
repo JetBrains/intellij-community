@@ -18,6 +18,7 @@ package org.intellij.plugins.relaxNG.convert;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -93,7 +94,7 @@ public class ConvertSchemaAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     if (file != null && project != null) {
       final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);

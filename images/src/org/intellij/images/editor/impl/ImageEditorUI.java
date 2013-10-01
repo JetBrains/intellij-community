@@ -361,7 +361,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
 
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return editor.getProject();
-    } else if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
+    } else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       return editor.getFile();
     } else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       return new VirtualFile[]{editor.getFile()};

@@ -68,7 +68,7 @@ public class GithubRebaseAction extends DumbAwareAction {
 
   public void update(AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
-    final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (project == null || project.isDefault()) {
       setVisibleEnabled(e, false, false);
       return;
@@ -91,7 +91,7 @@ public class GithubRebaseAction extends DumbAwareAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
-    final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
 
     if (project == null || project.isDisposed() || !GithubUtil.testGitExecutable(project)) {
       return;

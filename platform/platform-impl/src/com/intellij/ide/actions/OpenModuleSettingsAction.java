@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
@@ -41,7 +42,7 @@ public class OpenModuleSettingsAction extends EditSourceAction {
       final Project project = getEventProject(e);
       final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
       if (project != null && module != null) {
-        final VirtualFile moduleFolder = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+        final VirtualFile moduleFolder = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
         if (moduleFolder == null) {
           return false;
         }

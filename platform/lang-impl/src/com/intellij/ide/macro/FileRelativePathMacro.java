@@ -44,7 +44,7 @@ public class FileRelativePathMacro extends Macro {
       return null;
     }
 
-    VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (file == null) return null;
     return FileUtil.getRelativePath(VfsUtil.virtualToIoFile(baseDir), VfsUtil.virtualToIoFile(file));
   }

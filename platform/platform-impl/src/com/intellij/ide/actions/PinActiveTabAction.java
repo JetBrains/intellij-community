@@ -39,7 +39,7 @@ public class PinActiveTabAction extends ToggleAction implements DumbAware {
       return null;
     }
 
-    return PlatformDataKeys.VIRTUAL_FILE.getData(context);
+    return CommonDataKeys.VIRTUAL_FILE.getData(context);
   }
 
   /**

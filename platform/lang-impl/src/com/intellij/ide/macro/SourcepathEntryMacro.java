@@ -44,7 +44,7 @@ public final class SourcepathEntryMacro extends Macro {
     if (project == null) {
       return null;
     }
-    VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (file == null) {
       return null;
     }

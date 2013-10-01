@@ -415,7 +415,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
     public Object getData(String dataId) {
         if (CommonDataKeys.PROJECT.is(dataId)) {
             return thumbnailView.getProject();
-        } else if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
+        } else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
             VirtualFile[] selectedFiles = getSelectedFiles();
             return selectedFiles.length > 0 ? selectedFiles[0] : null;
         } else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {

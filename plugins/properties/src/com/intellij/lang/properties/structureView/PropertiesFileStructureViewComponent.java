@@ -36,7 +36,7 @@ public class PropertiesFileStructureViewComponent extends PropertiesGroupingStru
   }
 
   public Object getData(String dataId) {
-    if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
+    if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       return myPropertiesFile.getVirtualFile();
     }
     if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {

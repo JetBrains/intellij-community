@@ -126,7 +126,7 @@ public class AddToFavoritesAction extends AnAction {
     elements = retrieveData(elements, LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext));
     elements = retrieveData(elements, LibraryGroupElement.ARRAY_DATA_KEY.getData(dataContext));
     elements = retrieveData(elements, NamedLibraryElement.ARRAY_DATA_KEY.getData(dataContext));
-    elements = retrieveData(elements, PlatformDataKeys.VIRTUAL_FILE.getData(dataContext));
+    elements = retrieveData(elements, CommonDataKeys.VIRTUAL_FILE.getData(dataContext));
     elements = retrieveData(elements, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
     return elements;
   }

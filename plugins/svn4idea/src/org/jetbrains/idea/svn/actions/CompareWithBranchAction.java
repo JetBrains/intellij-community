@@ -72,7 +72,7 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     assert project != null;
-    final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
 
     SelectBranchPopup.show(project, virtualFile, new SelectBranchPopup.BranchSelectedCallback() {
       public void branchSelected(final Project project, final SvnBranchConfigurationNew configuration, final String url, final long revision) {
@@ -84,7 +84,7 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
   @Override
   public void update(final AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     e.getPresentation().setEnabled(isEnabled(project, virtualFile));
   }
 

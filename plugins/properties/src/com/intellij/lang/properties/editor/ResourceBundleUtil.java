@@ -68,7 +68,7 @@ public class ResourceBundleUtil {
     if (element instanceof IProperty) return null; //rename property
     final ResourceBundle[] bundles = ResourceBundle.ARRAY_DATA_KEY.getData(dataContext);
     if (bundles != null && bundles.length == 1) return bundles[0];
-    VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (virtualFile == null) {
       return null;
     }
@@ -98,7 +98,7 @@ public class ResourceBundleUtil {
       return null;
     }
 
-    VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (virtualFile == null) {
       return null;
     }

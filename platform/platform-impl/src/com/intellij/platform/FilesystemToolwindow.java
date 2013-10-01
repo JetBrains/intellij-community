@@ -19,6 +19,7 @@
  */
 package com.intellij.platform;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -83,7 +84,7 @@ public class FilesystemToolwindow {
           return new OpenFileDescriptor(myProject, file);
         }
       }
-      else if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
+      else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
         return myFsTree.getSelectedFile();
       }
       return null;

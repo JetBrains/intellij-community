@@ -1238,7 +1238,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
     else if (VcsDataKeys.IO_FILE.is(dataId)) {
       return myFilePath.getIOFile();
     }
-    else if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
+    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       if (getVirtualFile() == null) return null;
       if (getVirtualFile().isValid()) {
         return getVirtualFile();

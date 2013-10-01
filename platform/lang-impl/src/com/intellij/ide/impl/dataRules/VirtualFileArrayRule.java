@@ -85,7 +85,7 @@ public class VirtualFileArrayRule implements GetDataRule {
       }
     }
 
-    result = addFile(result, PlatformDataKeys.VIRTUAL_FILE.getData(dataProvider));
+    result = addFile(result, CommonDataKeys.VIRTUAL_FILE.getData(dataProvider));
 
     PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataProvider);
     if (psiFile != null) {

@@ -33,7 +33,7 @@ public class SaveFileAsTemplateAction extends AnAction{
   public void actionPerformed(AnActionEvent e){
     Project project = e.getData(CommonDataKeys.PROJECT);
     String fileText = e.getData(PlatformDataKeys.FILE_TEXT);
-    VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     String extension = file.getExtension();
     String nameWithoutExtension = file.getNameWithoutExtension();
     AllFileTemplatesConfigurable fileTemplateOptions = new AllFileTemplatesConfigurable();
@@ -52,7 +52,7 @@ public class SaveFileAsTemplateAction extends AnAction{
 
   @Override
   public void update(AnActionEvent e) {
-    VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     String fileText = e.getData(PlatformDataKeys.FILE_TEXT);
     e.getPresentation().setEnabled((fileText != null) && (file != null));
   }

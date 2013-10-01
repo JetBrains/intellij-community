@@ -70,7 +70,7 @@ public class CreateExternalAction extends DumbAwareAction {
 
     final DataContext dc = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dc);
-    final VirtualFile vf = PlatformDataKeys.VIRTUAL_FILE.getData(dc);
+    final VirtualFile vf = CommonDataKeys.VIRTUAL_FILE.getData(dc);
 
     //1 select target
     final SelectCreateExternalTargetDialog dialog = new SelectCreateExternalTargetDialog(project, vf);
@@ -173,7 +173,7 @@ public class CreateExternalAction extends DumbAwareAction {
       return;
     }
 
-    final VirtualFile vf = PlatformDataKeys.VIRTUAL_FILE.getData(dc);
+    final VirtualFile vf = CommonDataKeys.VIRTUAL_FILE.getData(dc);
     final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dc);
     if (vf == null || files == null || files.length != 1 || ! vf.isDirectory()) {
       sc.disable();

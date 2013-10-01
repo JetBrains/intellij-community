@@ -63,7 +63,7 @@ public class RunInspectionAction extends GotoActionBase {
 
     final PsiElement psiElement = CommonDataKeys.PSI_ELEMENT.getData(e.getDataContext());
     final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
-    final VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+    final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.inspection");
 

@@ -210,7 +210,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       }
 
       if (myFile == null) {
-        myFile = PlatformDataKeys.VIRTUAL_FILE.getData(myDataContext);
+        myFile = CommonDataKeys.VIRTUAL_FILE.getData(myDataContext);
         myLine = -1;
 
         if (myBookmarkAtPlace == null && myFile != null) {

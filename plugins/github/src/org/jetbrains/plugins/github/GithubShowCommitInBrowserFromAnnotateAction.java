@@ -75,7 +75,7 @@ public class GithubShowCommitInBrowserFromAnnotateAction extends GithubShowCommi
   @Nullable
   private static EventData calcData(AnActionEvent e, int lineNumber) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (project == null || virtualFile == null) {
       return null;
     }

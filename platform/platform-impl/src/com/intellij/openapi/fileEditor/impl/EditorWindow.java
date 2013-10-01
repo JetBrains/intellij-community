@@ -558,7 +558,7 @@ public class EditorWindow {
 
     @Override
     public Object getData(String dataId) {
-      if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)){
+      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)){
         final VirtualFile virtualFile = myEditor.getFile();
         return virtualFile.isValid() ? virtualFile : null;
       }

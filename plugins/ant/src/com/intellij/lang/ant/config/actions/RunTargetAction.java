@@ -89,7 +89,7 @@ public class RunTargetAction extends AnAction {
     if (project == null || editor == null) {
       return null;
     }
-    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (file == null) {
       return null;
     }

@@ -56,7 +56,7 @@ public class MavenActionUtil {
     MavenProject result;
     final MavenProjectsManager manager = getProjectsManager(context);
 
-    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(context);
+    final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
     if (file != null) {
       result = manager.findProject(file);
       if (result != null) return result;

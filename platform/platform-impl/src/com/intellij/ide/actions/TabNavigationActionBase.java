@@ -91,7 +91,7 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware {
   }
 
   private void doNavigate(DataContext dataContext, Project project) {
-    VirtualFile selectedFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    VirtualFile selectedFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     navigateImpl(dataContext, project, selectedFile, myDir);
   }
 

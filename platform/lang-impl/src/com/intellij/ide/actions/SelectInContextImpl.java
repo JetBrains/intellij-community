@@ -99,7 +99,7 @@ public abstract class SelectInContextImpl implements SelectInContext {
     }
 
     if (selectInContext == null) {
-      VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+      VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (virtualFile != null && project != null) {
         return new VirtualFileSelectInContext(project, virtualFile);
@@ -126,7 +126,7 @@ public abstract class SelectInContextImpl implements SelectInContext {
     }
     VirtualFile file = FileEditorManagerEx.getInstanceEx(project).getFile(editor);
     if (file == null) {
-      file = dataContext == null ? null : PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+      file = dataContext == null ? null : CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
       if (file == null) {
         return null;
       }
