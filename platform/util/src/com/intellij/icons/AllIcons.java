@@ -68,6 +68,7 @@ public class AllIcons {
     public static final Icon FileStatus = IconLoader.getIcon("/actions/fileStatus.png"); // 16x16
     public static final Icon Filter_small = IconLoader.getIcon("/actions/filter_small.png"); // 16x16
     public static final Icon Find = IconLoader.getIcon("/actions/find.png"); // 16x16
+    public static final Icon FindPlain = IconLoader.getIcon("/actions/findPlain.png"); // 16x16
     public static final Icon ForceRefresh = IconLoader.getIcon("/actions/forceRefresh.png"); // 16x16
     public static final Icon Forward = IconLoader.getIcon("/actions/forward.png"); // 16x16
     public static final Icon GC = IconLoader.getIcon("/actions/gc.png"); // 16x16
