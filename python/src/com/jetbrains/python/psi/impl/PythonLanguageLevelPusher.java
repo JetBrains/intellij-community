@@ -112,6 +112,11 @@ public class PythonLanguageLevelPusher implements FilePropertyPusher<LanguageLev
     return false;
   }
 
+  @Override
+  public boolean acceptsDirectory(@NotNull VirtualFile file, @NotNull Project project) {
+    return true;
+  }
+
   private static final FileAttribute PERSISTENCE = new FileAttribute("python_language_level_persistence", 2, true);
 
   public void persistAttribute(@NotNull VirtualFile fileOrDir, @NotNull LanguageLevel level) throws IOException {
