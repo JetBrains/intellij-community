@@ -29,7 +29,7 @@ public class CompileQrcAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    VirtualFile[] vFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] vFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     assert vFiles != null;
     Module module = e.getData(LangDataKeys.MODULE);
     String path = QtFileType.findQtTool(module, "pyrcc4");
@@ -68,7 +68,7 @@ public class CompileQrcAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     Module module = e.getData(LangDataKeys.MODULE);
-    VirtualFile[] vFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] vFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     e.getPresentation().setVisible(module != null && filesAreQrc(vFiles));
   }
 
