@@ -62,8 +62,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static java.util.Map.Entry;
-
 /**
  * HgUtil is a collection of static utility methods for Mercurial.
  */
@@ -352,12 +350,12 @@ public abstract class HgUtil {
     return map;
   }
 
+  @NotNull
   public static HgFile getFileNameInTargetRevision(@NotNull Project project,
                                                    @NotNull HgRevisionNumber vcsRevisionNumber,
                                                    @NotNull HgFile localHgFile) {
     //change status command execution to log command because the last one is faster,
     // but need to find file renames manually.
-
     //if virtualFile is null - our parent revision does not contain this file,
     // so this selected localHgFile comes from selected revision from history and his name is result filename
     if (localHgFile.toFilePath().getVirtualFile() == null) {
@@ -366,37 +364,20 @@ public abstract class HgUtil {
     HgLogCommand logCommand = new HgLogCommand(project);
     //--follow could be changed to --branch filter, but the last one is slower
     logCommand.setFollowCopies(true);
-    List<HgFileRevision> revisions = Collections.emptyList();
-    //mercurial returns file paths depends on command and os. for log command hg uses portable format, so all file path should be with '/'.
-    //localHgFile have system dependent path, so it should be converted
-    String targetName = FileUtil.toSystemIndependentName(localHgFile.getRelativePath());
-    int targetRevNumber = Integer.valueOf(vcsRevisionNumber.getRevision());
     try {
       //usually when 'compare' 2 revision or 'compare with local' performed the localHgFile - is really local copy,
       //so we need to get all previous revision from current.
       // But when 'compare with' called from "get Affected path -> compare with..." then localHgFile is hgFile from selected revision,
       //so if this name was changed then file is not in parent revision and log command could not follow history.
-      revisions = logCommand.execute(localHgFile, -1, true, Arrays.asList("-r", ".:0"));
+      return logCommand.getNameThroughCopies(localHgFile, vcsRevisionNumber);
     }
     catch (HgCommandException e) {
       LOG.warn("Could not find filename in target revision: " + localHgFile.toString(), e);
     }
-    for (HgFileRevision revision : revisions) {
-      if (Integer.valueOf(revision.getRevisionNumber().getRevision()) <= targetRevNumber) {
-        break;
-      }
-      for (Entry<String, String> entry : revision.getCopiedFiles().entrySet()) {
-        if (entry.getValue().equals(targetName)) {
-          targetName = entry.getKey();
-        }
-      }
-    }
     //todo: fix: when filename comes from another revision and working copy contains another file with the same name,
     //then 'show diff with local' produce inconvenient behaviour.
     // todo: fix: If performed 'show diff with local' but there are no selected filename in currant working copy - nothing shows.
-
-    VirtualFile root = localHgFile.getRepo();
-    return new HgFile(root, new File(root.getPath(), targetName));
+    return localHgFile;
   }
 
   @NotNull

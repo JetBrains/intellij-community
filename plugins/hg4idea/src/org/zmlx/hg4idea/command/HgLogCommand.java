@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -29,7 +30,9 @@ import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.util.HgChangesetUtil;
 import org.zmlx.hg4idea.util.HgUtil;
+import org.zmlx.hg4idea.util.HgVersion;
 
+import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -66,6 +69,8 @@ public class HgLogCommand {
   private boolean myIncludeRemoved;
   private boolean myFollowCopies;
   private boolean myLogFile = true;
+  private boolean myBuiltInSupported = false;
+  private boolean myLargeFilesWithFollowSupported = false;
 
   public void setIncludeRemoved(boolean includeRemoved) {
     myIncludeRemoved = includeRemoved;
@@ -81,6 +86,14 @@ public class HgLogCommand {
 
   public HgLogCommand(@NotNull Project project) {
     myProject = project;
+    HgVcs vcs = HgVcs.getInstance(myProject);
+    if (vcs == null) {
+      LOG.info("Vcs couldn't be null for project");
+      return;
+    }
+    HgVersion version = vcs.getVersion();
+    myBuiltInSupported = version.isBuildInFunctionSupported();
+    myLargeFilesWithFollowSupported = version.isLargeFilesWithFollowSupported();
   }
 
   /**
@@ -101,16 +114,12 @@ public class HgLogCommand {
 
     String template;
     boolean shouldParseOldTemplate = false;
-    HgVcs vcs = HgVcs.getInstance(myProject);
-    if (vcs == null) {
-      LOG.info("Vcs couldn't be null for project");
-      return Collections.emptyList();
-    }
+
     if (!includeFiles) {
       template = HgChangesetUtil.makeTemplate(SHORT_TEMPLATE_ITEMS);
     }
     else {
-      if (!vcs.getVersion().isBuildInFunctionSupported()) {
+      if (!myBuiltInSupported) {
         template = HgChangesetUtil.makeTemplate(LONG_TEMPLATE_FOR_OLD_VERSIONS);
         shouldParseOldTemplate = true;
       }
@@ -123,8 +132,7 @@ public class HgLogCommand {
 
     FilePath originalFileName = HgUtil.getOriginalFileName(hgFile.toFilePath(), ChangeListManager.getInstance(myProject));
     HgFile originalHgFile = new HgFile(hgFile.getRepo(), originalFileName);
-    HgCommandResult result =
-      execute(hgFile.getRepo(), template, limit, originalHgFile, argsForCmd, vcs.getVersion().isLargeFilesWithFollowSupported());
+    HgCommandResult result = execute(hgFile.getRepo(), template, limit, originalHgFile, argsForCmd);
 
     final List<HgFileRevision> revisions = new LinkedList<HgFileRevision>();
     if (result == null) {
@@ -231,7 +239,7 @@ public class HgLogCommand {
 
   @Nullable
   private HgCommandResult execute(@NotNull VirtualFile repo, @NotNull String template, int limit, HgFile hgFile,
-                                  @Nullable List<String> argsForCmd, boolean largeFilesWithFollowSupported) {
+                                  @Nullable List<String> argsForCmd) {
     List<String> arguments = new LinkedList<String>();
     if (myIncludeRemoved) {
       // There is a bug in mercurial that causes --follow --removed <file> to cause
@@ -245,7 +253,7 @@ public class HgLogCommand {
       arguments.add("--follow");
       //workaround: --follow  options doesn't work with largefiles extension, so we need to switch off this extension in log command
       //see http://selenic.com/pipermail/mercurial-devel/2013-May/051209.html  fixed since 2.7
-      if (!largeFilesWithFollowSupported) {
+      if (!myLargeFilesWithFollowSupported) {
         arguments.add("--config");
         arguments.add("extensions.largefiles=!");
       }
@@ -342,5 +350,46 @@ public class HgLogCommand {
     }
     LOG.info("Unexpected output during parse copied files in log command " + str);
     return -1;
+  }
+
+  @NotNull
+  public HgFile getNameThroughCopies(@NotNull final HgFile hgFile, @NotNull HgRevisionNumber vcsRevisionNumber) throws HgCommandException {
+    String[] COPIES_TEMPLATE =
+      myBuiltInSupported
+      ? new String[]{"{rev}", "{join(file_copies,'" + HgChangesetUtil.FILE_SEPARATOR + "')}"}
+      : new String[]{"{rev}", "{file_copies}"};
+    String template = HgChangesetUtil.makeTemplate(COPIES_TEMPLATE);
+    HgCommandResult result = execute(hgFile.getRepo(), template, -1, hgFile, Arrays.asList("-r", ".:0"));
+    if (result == null) {
+      throw new HgCommandException("Could not execute log command.");
+    }
+
+    List<String> errors = result.getErrorLines();
+    if (errors != null && !errors.isEmpty()) {
+      throw new HgCommandException(errors.toString());
+    }
+    String output = result.getRawOutput();
+    String[] changeSets = output.split(HgChangesetUtil.CHANGESET_SEPARATOR);
+    String targetName = FileUtil.toSystemIndependentName(hgFile.getRelativePath());
+    int targetRevNumber = Integer.valueOf(vcsRevisionNumber.getRevision());
+    for (String line : changeSets) {
+      String[] attributes = line.split(HgChangesetUtil.ITEM_SEPARATOR);
+      if (attributes.length != 2) {
+        continue;
+      }
+
+      if (Integer.valueOf(attributes[0]) <= targetRevNumber) {
+        break;
+      }
+      Map<String, String> copies = myBuiltInSupported ? parseCopiesFileList(attributes[1]) : parseCopiesFileListAsOldVersion(attributes[1]);
+      for (Map.Entry<String, String> entry : copies.entrySet()) {
+        if (entry.getValue().equals(targetName)) {
+          targetName = entry.getKey();
+          break;
+        }
+      }
+    }
+    VirtualFile root = hgFile.getRepo();
+    return new HgFile(root, new File(root.getPath(), targetName));
   }
 }
