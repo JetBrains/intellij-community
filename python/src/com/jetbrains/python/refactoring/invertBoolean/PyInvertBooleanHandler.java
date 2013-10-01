@@ -1,5 +1,6 @@
 package com.jetbrains.python.refactoring.invertBoolean;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -22,7 +23,7 @@ public class PyInvertBooleanHandler implements RefactoringActionHandler {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     if (element == null && editor != null && file != null) {
       element = file.findElementAt(editor.getCaretModel().getOffset());
     }

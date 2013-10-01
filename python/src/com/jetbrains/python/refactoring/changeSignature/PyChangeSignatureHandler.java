@@ -50,7 +50,7 @@ public class PyChangeSignatureHandler implements ChangeSignatureHandler {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiElement element = findTargetMember(file, editor);
     if (element == null) {
-      element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     }
     invokeOnElement(project, element, editor);
   }

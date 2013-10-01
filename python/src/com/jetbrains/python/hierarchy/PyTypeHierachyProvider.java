@@ -24,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 public class PyTypeHierachyProvider implements HierarchyProvider {
   @Nullable
   public PsiElement getTarget(@NotNull DataContext dataContext) {
-    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     if (element == null) {
       final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
