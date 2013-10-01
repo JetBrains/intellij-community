@@ -75,31 +75,6 @@ public class JarHandlerBase {
     }
   }
 
-  @NotNull
-  protected Map<String, EntryInfo> initEntries() {
-    synchronized (lock) {
-      Map<String, EntryInfo> map = myRelPathsToEntries != null ? myRelPathsToEntries.get() : null;
-      if (map == null) {
-        final JarFile zip = getJar();
-
-        map = new THashMap<String, EntryInfo>();
-        if (zip != null) {
-          map.put("", new EntryInfo("", null, true));
-          final Enumeration<? extends JarFile.JarEntry> entries = zip.entries();
-          while (entries.hasMoreElements()) {
-            JarFile.JarEntry entry = entries.nextElement();
-            final String name = entry.getName();
-            final boolean isDirectory = StringUtil.endsWithChar(name, '/');
-            getOrCreate(isDirectory ? name.substring(0, name.length() - 1) : name, isDirectory, map);
-          }
-
-          myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(map);
-        }
-      }
-      return map;
-    }
-  }
-
   public File getMirrorFile(@NotNull File originalFile) {
     return originalFile;
   }
@@ -267,7 +242,27 @@ public class JarHandlerBase {
 
   @NotNull
   protected Map<String, EntryInfo> getEntriesMap() {
-    return initEntries();
+    synchronized (lock) {
+      Map<String, EntryInfo> map = myRelPathsToEntries != null ? myRelPathsToEntries.get() : null;
+      if (map == null) {
+        final JarFile zip = getJar();
+
+        map = new THashMap<String, EntryInfo>();
+        if (zip != null) {
+          map.put("", new EntryInfo("", null, true));
+          final Enumeration<? extends JarFile.JarEntry> entries = zip.entries();
+          while (entries.hasMoreElements()) {
+            JarFile.JarEntry entry = entries.nextElement();
+            final String name = entry.getName();
+            final boolean isDirectory = StringUtil.endsWithChar(name, '/');
+            getOrCreate(isDirectory ? name.substring(0, name.length() - 1) : name, isDirectory, map);
+          }
+
+          myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(map);
+        }
+      }
+      return map;
+    }
   }
 
   @NotNull
