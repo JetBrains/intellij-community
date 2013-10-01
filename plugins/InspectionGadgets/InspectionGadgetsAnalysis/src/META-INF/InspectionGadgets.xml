@@ -1203,6 +1203,10 @@
                       key="missing.package.info.display.name" groupBundle="messages.InspectionsBundle"
                       groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
                       implementationClass="com.siyeh.ig.javadoc.MissingPackageInfoInspection"/>
+    <localInspection shortName="PackageInfoWithoutPackage" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="package.info.java.without.package.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.javadoc.PackageInfoWithoutPackageInspection"/>
     <localInspection shortName="PackageDotHtmlMayBePackageInfo" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="package.dot.html.may.be.package.info.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.javadoc.issues" enabledByDefault="false" level="WARNING"
