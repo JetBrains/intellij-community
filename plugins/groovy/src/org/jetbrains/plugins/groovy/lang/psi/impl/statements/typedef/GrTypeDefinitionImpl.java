@@ -260,12 +260,12 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @Nullable
   public PsiReferenceList getExtendsList() {
-    return null;
+    return PsiImplUtil.getOrCreatePsiReferenceList(getExtendsClause(), PsiReferenceList.Role.EXTENDS_LIST);
   }
 
   @Nullable
   public PsiReferenceList getImplementsList() {
-    return null;
+    return PsiImplUtil.getOrCreatePsiReferenceList(getImplementsClause(), PsiReferenceList.Role.IMPLEMENTS_LIST);
   }
 
   @NotNull

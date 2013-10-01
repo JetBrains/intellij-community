@@ -66,6 +66,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod;
@@ -79,6 +80,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithme
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticExpression;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrSyntheticTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
@@ -100,6 +102,7 @@ public class PsiImplUtil {
   public static final Key<SoftReference<PsiCodeBlock>> PSI_CODE_BLOCK = Key.create("Psi_code_block");
   public static final Key<SoftReference<PsiTypeElement>> PSI_TYPE_ELEMENT = Key.create("psi.type.element");
   public static final Key<SoftReference<PsiExpression>> PSI_EXPRESSION = Key.create("psi.expression");
+  private static final Key<SoftReference<PsiReferenceList>> PSI_REFERENCE_LIST = Key.create("psi.reference.list");
 
   private PsiImplUtil() {
   }
@@ -604,6 +607,17 @@ public class PsiImplUtil {
     final GrSyntheticExpression newExpr = new GrSyntheticExpression(expr);
     expr.putUserData(PSI_EXPRESSION, new SoftReference<PsiExpression>(newExpr));
     return newExpr;
+  }
+
+  public static PsiReferenceList getOrCreatePsiReferenceList(GrReferenceList list, PsiReferenceList.Role role) {
+    if (list == null) return null;
+
+    final SoftReference<PsiReferenceList> ref = list.getUserData(PSI_REFERENCE_LIST);
+    final PsiReferenceList element = ref == null ? null : ref.get();
+    if (element != null) return element;
+    final GrSyntheticReferenceList newList = new GrSyntheticReferenceList(list, role);
+    list.putUserData(PSI_REFERENCE_LIST, new SoftReference<PsiReferenceList>(newList));
+    return newList;
   }
 
 
