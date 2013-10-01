@@ -186,8 +186,8 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, Advan
     else if (key == VcsDataKeys.CHANGE_LISTS) {
       sink.put(VcsDataKeys.CHANGE_LISTS, getSelectedChangeLists());
     }
-    else if (key == PlatformDataKeys.VIRTUAL_FILE_ARRAY) {
-      sink.put(PlatformDataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles());
+    else if (key == CommonDataKeys.VIRTUAL_FILE_ARRAY) {
+      sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles());
     }
     else if (key == PlatformDataKeys.NAVIGATABLE) {
       final VirtualFile[] files = getSelectedFiles();

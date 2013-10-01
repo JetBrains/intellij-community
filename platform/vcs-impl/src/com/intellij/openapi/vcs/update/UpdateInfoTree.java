@@ -242,7 +242,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
       if (mySelectedFile == null || !mySelectedFile.isValid()) return null;
       return new OpenFileDescriptor(myProject, mySelectedFile);
     }
-    else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       return getVirtualFileArray();
     }
     else if (VcsDataKeys.IO_FILE_ARRAY.is(dataId)) {

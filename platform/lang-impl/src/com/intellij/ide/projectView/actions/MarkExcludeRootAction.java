@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 public class MarkExcludeRootAction extends MarkRootActionBase {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
 
     String message = files.length == 1 ? FileUtil.toSystemDependentName(files[0].getPath()) : files.length + " selected files";
     final int rc = Messages.showOkCancelDialog(e.getData(CommonDataKeys.PROJECT), getPromptText(message), "Mark as Excluded",

@@ -400,7 +400,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     }
 
     if (dataContext != null) {
-      final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+      final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
       if (files != null) {
         final List<VirtualFile> openFiles = Arrays.asList(files);
         result.add(new DelegatingGlobalSearchScope(GlobalSearchScope.filesScope(project, openFiles)){

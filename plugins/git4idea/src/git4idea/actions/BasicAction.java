@@ -60,7 +60,7 @@ public abstract class BasicAction extends DumbAwareAction {
         FileDocumentManager.getInstance().saveAllDocuments();
       }
     });
-    final VirtualFile[] vFiles = event.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] vFiles = event.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     assert vFiles != null : "The action is only available when files are selected";
 
     assert project != null;
@@ -220,7 +220,7 @@ public abstract class BasicAction extends DumbAwareAction {
       return;
     }
 
-    VirtualFile[] vFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] vFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (vFiles == null || vFiles.length == 0) {
       presentation.setEnabled(false);
       presentation.setVisible(true);

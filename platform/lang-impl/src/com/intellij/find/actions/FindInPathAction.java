@@ -69,7 +69,7 @@ public class FindInPathAction extends AnAction implements DumbAware {
     if (elements != null && elements.length == 1 && elements[0] instanceof PsiDirectoryContainer) {
       return true;
     }
-    final VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     return virtualFiles != null && virtualFiles.length == 1 && virtualFiles[0].isDirectory();
   }
 }

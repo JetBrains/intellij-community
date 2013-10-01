@@ -19,6 +19,7 @@ package com.intellij.execution.junit;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -107,7 +108,7 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
       }
       return elements;
     } else {
-      final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+      final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
       if (files != null) {
         final List<PsiFile> psiFiles = new ArrayList<PsiFile>();
         final PsiManager psiManager = PsiManager.getInstance(context.getProject());

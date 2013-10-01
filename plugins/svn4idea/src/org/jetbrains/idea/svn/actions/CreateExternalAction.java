@@ -174,7 +174,7 @@ public class CreateExternalAction extends DumbAwareAction {
     }
 
     final VirtualFile vf = CommonDataKeys.VIRTUAL_FILE.getData(dc);
-    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dc);
+    final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dc);
     if (vf == null || files == null || files.length != 1 || ! vf.isDirectory()) {
       sc.disable();
       return;

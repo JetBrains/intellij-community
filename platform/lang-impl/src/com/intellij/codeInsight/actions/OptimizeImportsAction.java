@@ -45,7 +45,7 @@ public class OptimizeImportsAction extends AnAction {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final Editor editor = BaseCodeInsightAction.getInjectedEditor(project, CommonDataKeys.EDITOR.getData(dataContext));
 
-    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
 
     PsiFile file = null;
     PsiDirectory dir;
@@ -144,7 +144,7 @@ public class OptimizeImportsAction extends AnAction {
       return;
     }
 
-    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
 
     final Editor editor = BaseCodeInsightAction.getInjectedEditor(project, CommonDataKeys.EDITOR.getData(dataContext), false);
     if (editor != null){

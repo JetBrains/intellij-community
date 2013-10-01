@@ -164,7 +164,7 @@ public abstract class BaseAnalysisAction extends AnAction {
       return new AnalysisScope(psiFile);
     }
 
-    VirtualFile[] virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    VirtualFile[] virtualFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (virtualFiles != null && project != null) { //analyze on selection
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();

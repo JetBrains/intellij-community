@@ -36,7 +36,7 @@ import java.util.ArrayList;
 public class ToggleReadOnlyAttributeAction extends AnAction implements DumbAware {
   static VirtualFile[] getFiles(DataContext dataContext){
     ArrayList<VirtualFile> filesList = new ArrayList<VirtualFile>();
-    VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     for(int i=0;files!=null&&i<files.length;i++){
       VirtualFile file=files[i];
       if(file.isInLocalFileSystem()){

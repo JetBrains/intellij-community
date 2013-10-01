@@ -18,6 +18,7 @@ package com.intellij.ide.projectView.actions;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.AccessToken;
@@ -43,7 +44,7 @@ public class ImportModuleFromImlFileAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     final Project project = getEventProject(e);
     if (files == null || project == null) return;
 
@@ -88,7 +89,7 @@ public class ImportModuleFromImlFileAction extends AnAction {
   }
 
   private static List<VirtualFile> getModuleNames(AnActionEvent e) {
-    final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     final Project project = getEventProject(e);
     if (project == null || files == null || files.length == 0) {
       return Collections.emptyList();

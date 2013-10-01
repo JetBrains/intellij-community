@@ -129,7 +129,7 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
       @Override
       @Nullable
       public Object getData(String id) {
-        if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(id)) return files;
+        if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(id)) return files;
         if (CommonDataKeys.EDITOR.is(id)) return editor;
         if (CommonDataKeys.PROJECT.is(id)) return p;
         return null;

@@ -125,7 +125,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog<VirtualFile> {
       if (key.equals(PlatformDataKeys.DELETE_ELEMENT_PROVIDER) && myDeleteProvider != null) {
         sink.put(key, myDeleteProvider);
       }
-      else if (key.equals(PlatformDataKeys.VIRTUAL_FILE_ARRAY)) {
+      else if (key.equals(CommonDataKeys.VIRTUAL_FILE_ARRAY)) {
         sink.put(key, ArrayUtil.toObjectArray(getSelectedChanges(), VirtualFile.class));
       }
     }

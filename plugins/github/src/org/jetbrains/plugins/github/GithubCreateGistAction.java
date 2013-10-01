@@ -73,7 +73,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
     }
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
 
     if ((editor == null && file == null && files == null) || (editor != null && editor.getDocument().getTextLength() == 0)) {
       GithubUtil.setVisibleEnabled(e, false, false);
@@ -91,7 +91,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (editor == null && file == null && files == null) {
       return;
     }

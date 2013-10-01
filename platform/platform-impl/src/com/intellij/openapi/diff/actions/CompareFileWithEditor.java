@@ -66,7 +66,7 @@ public class CompareFileWithEditor extends BaseDiffAction {
 
   protected FileEditorContents getDiffData(DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    VirtualFile[] array = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    VirtualFile[] array = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     Document document = getEditingDocument(dataContext);
     if (array == null || array.length != 1 || document == null) {
       return null;

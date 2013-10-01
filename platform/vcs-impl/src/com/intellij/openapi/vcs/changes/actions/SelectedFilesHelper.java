@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
@@ -33,7 +34,7 @@ public class SelectedFilesHelper implements Runnable {
 
   private SelectedFilesHelper(final Project project, final AnActionEvent e) {
     myStatusManager = FileStatusManager.getInstance(project);
-    myData = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    myData = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     myCheckers = new LinkedList<MyChecker>();
   }
 
@@ -124,7 +125,7 @@ public class SelectedFilesHelper implements Runnable {
   }
 
   /*public static boolean hasChangedFiles(final Project project, final AnActionEvent e) {
-    final VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] virtualFiles = e.getData(com.intellij.openapi.actionSystem.CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (virtualFiles != null && virtualFiles.length > 0) {
       final FileStatusManager statusManager = FileStatusManager.getInstance(project);
       for (VirtualFile vf : virtualFiles) {

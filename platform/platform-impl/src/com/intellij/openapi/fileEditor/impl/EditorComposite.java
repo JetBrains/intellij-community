@@ -416,7 +416,7 @@ public abstract class EditorComposite implements Disposable {
       else if(CommonDataKeys.VIRTUAL_FILE.is(dataId)){
         return myFile.isValid() ? myFile : null;
       }
-      else if(PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)){
+      else if(CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)){
         return myFile.isValid() ? new VirtualFile[] {myFile} : null;
       }
       else{

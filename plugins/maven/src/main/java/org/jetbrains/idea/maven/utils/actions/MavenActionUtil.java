@@ -92,7 +92,7 @@ public class MavenActionUtil {
     Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) return Collections.emptyList();
 
-    VirtualFile[] virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
+    VirtualFile[] virtualFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
     if (virtualFiles == null || virtualFiles.length == 0) return Collections.emptyList();
 
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);

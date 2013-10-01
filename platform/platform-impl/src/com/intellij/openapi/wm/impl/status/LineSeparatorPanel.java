@@ -182,7 +182,7 @@ public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWi
     Editor editor = getEditor();
     DataContext parent = DataManager.getInstance().getDataContext((Component)myStatusBar);
     return SimpleDataContext.getSimpleContext(
-      PlatformDataKeys.VIRTUAL_FILE_ARRAY.getName(),
+      CommonDataKeys.VIRTUAL_FILE_ARRAY.getName(),
       new VirtualFile[] {getSelectedFile()},
       SimpleDataContext.getSimpleContext(CommonDataKeys.PROJECT.getName(),
                                          getProject(),

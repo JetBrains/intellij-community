@@ -32,7 +32,7 @@ public class MarkAsOriginalTypeAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final VirtualFile[] selectedFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    final VirtualFile[] selectedFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (selectedFiles == null || selectedFiles.length == 0) return;
     Collection<VirtualFile> filesToUnmark = new ArrayList<VirtualFile>();
     for (VirtualFile file : selectedFiles) {
@@ -48,7 +48,7 @@ public class MarkAsOriginalTypeAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final VirtualFile[] selectedFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    final VirtualFile[] selectedFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     final Presentation presentation = e.getPresentation();
     final EnforcedPlainTextFileTypeManager typeManager = EnforcedPlainTextFileTypeManager.getInstance();
     presentation.setVisible(false);

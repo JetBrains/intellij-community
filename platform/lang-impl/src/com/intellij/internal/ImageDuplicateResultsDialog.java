@@ -133,7 +133,7 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
           if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
             return file;
           }
-          if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId) && file != null) {
+          if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId) && file != null) {
             return new VirtualFile[]{file};
           }
         }

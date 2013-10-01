@@ -34,7 +34,7 @@ public class EditSourceInNewWindowAction extends DumbAwareAction {
   }
 
   protected VirtualFile[] getVirtualFiles(AnActionEvent e) {
-    final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (files != null) return files;
 
     final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);

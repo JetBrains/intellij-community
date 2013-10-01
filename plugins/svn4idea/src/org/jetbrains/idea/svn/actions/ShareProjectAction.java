@@ -65,7 +65,7 @@ public class ShareProjectAction extends BasicAction {
       return;
     }
 
-    VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (files == null || files.length == 0) {
       presentation.setEnabled(false);
       presentation.setVisible(false);

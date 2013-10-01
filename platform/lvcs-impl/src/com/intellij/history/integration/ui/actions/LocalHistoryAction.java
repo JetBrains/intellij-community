@@ -21,6 +21,7 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
@@ -64,7 +65,7 @@ public abstract class LocalHistoryAction extends AnAction implements DumbAware {
 
   @Nullable
   protected VirtualFile getFile(AnActionEvent e) {
-    VirtualFile[] ff = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] ff = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (ff == null || ff.length == 0) return null;
 
     VirtualFile commonParent = ff[0];

@@ -49,7 +49,7 @@ import java.util.Map;
 public final class EditExternallyAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
-    VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     Options options = OptionsManager.getInstance().getOptions();
     String executablePath = options.getExternalEditorOptions().getExecutablePath();
     if (StringUtil.isEmpty(executablePath)) {
@@ -107,7 +107,7 @@ public final class EditExternallyAction extends AnAction {
   }
 
   static void doUpdate(AnActionEvent e) {
-    VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     final boolean isEnabled = isImages(files);
     if (e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP)) {
       e.getPresentation().setVisible(isEnabled);

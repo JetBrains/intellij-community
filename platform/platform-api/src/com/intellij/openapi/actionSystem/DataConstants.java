@@ -51,7 +51,7 @@ public interface DataConstants {
    *
    * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#VIRTUAL_FILE_ARRAY} instead
    */
-  String VIRTUAL_FILE_ARRAY = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getName();
+  String VIRTUAL_FILE_ARRAY = CommonDataKeys.VIRTUAL_FILE_ARRAY.getName();
 
   /**
    * Returns {@link com.intellij.openapi.editor.Editor}

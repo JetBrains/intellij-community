@@ -64,7 +64,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (files == null) {
       return;
     }
@@ -257,7 +257,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
 
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
-    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
 
     if (editor != null){
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());

@@ -38,7 +38,7 @@ public class MergeFilesAction extends AnAction implements DumbAware {
       e.getPresentation().setEnabled(false);
       return;
     }
-    VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
+    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
     if (files == null || files.length != 3){
       e.getPresentation().setEnabled(false);
     }
@@ -46,7 +46,7 @@ public class MergeFilesAction extends AnAction implements DumbAware {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext context = e.getDataContext();
-    VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
+    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
     if (files == null || files.length != 3){
       return;
     }

@@ -629,7 +629,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       return result.isEmpty() ? null : result.toArray(new PsiElement[result.size()]);
     }
 
-    if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       PsiElement[] psiElements = (PsiElement[])getData(LangDataKeys.PSI_ELEMENT_ARRAY.getName());
       if (psiElements == null) return null;
       Set<VirtualFile> files = new LinkedHashSet<VirtualFile>();

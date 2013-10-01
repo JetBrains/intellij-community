@@ -35,7 +35,7 @@ public class ChangeTemplateDataLanguageAction extends AnAction {
     e.getPresentation().setVisible(false);
 
     VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
-    VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (files != null && files.length > 1) {
       virtualFile = null;
     }

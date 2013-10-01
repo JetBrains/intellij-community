@@ -60,7 +60,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
     final DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
-      final VirtualFile[] virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+      final VirtualFile[] virtualFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
       final Presentation presentation = e.getPresentation();
       if (virtualFiles != null) {
         if (virtualFiles.length == 1) {
@@ -84,7 +84,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
       return;
     }
 
-    final VirtualFile[] virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    final VirtualFile[] virtualFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (virtualFiles == null) {
       return;
     }

@@ -21,6 +21,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -35,13 +36,13 @@ import java.io.IOException;
 public class PruneEmptyDirectoriesAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
-    VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
+    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
     e.getPresentation().setEnabled(files != null && files.length > 0);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
+    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
     assert files != null;
 
     FileTypeManager ftManager = FileTypeManager.getInstance();

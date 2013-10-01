@@ -72,7 +72,7 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
     final List<VirtualFile> roots = getGitRoots(project, vcs);
     if (roots == null) return;
     // get default root
-    final VirtualFile[] vFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] vFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     VirtualFile defaultRootVar = null;
     if (vFiles != null) {
       for (VirtualFile file : vFiles) {
@@ -123,7 +123,7 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
   protected static boolean isRebasing(AnActionEvent e) {
     final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
-      final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+      final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
       if (files != null) {
         for (VirtualFile file : files) {
           GitRepositoryManager manager = GitUtil.getRepositoryManager(project);

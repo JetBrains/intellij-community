@@ -37,7 +37,7 @@ public class VirtualFileRule implements GetDataRule {
       }
     }
 
-    VirtualFile[] virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataProvider);
+    VirtualFile[] virtualFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataProvider);
     if (virtualFiles != null && virtualFiles.length == 1) {
       return virtualFiles[0];
     }

@@ -52,9 +52,9 @@ public class ModuleRule implements GetDataRule {
       project = element.getProject();
     }
 
-    VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataProvider);
+    VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataProvider);
     if (files == null) {
-      GetDataRule dataRule = ((DataManagerImpl)DataManager.getInstance()).getDataRule(PlatformDataKeys.VIRTUAL_FILE_ARRAY.getName());
+      GetDataRule dataRule = ((DataManagerImpl)DataManager.getInstance()).getDataRule(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName());
       if (dataRule != null) {
         files = (VirtualFile[])dataRule.getData(dataProvider);
       }

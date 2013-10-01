@@ -1453,11 +1453,11 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         sink.put(USAGE_TARGETS_KEY, getSelectedUsageTargets());
       }
 
-      else if (key == PlatformDataKeys.VIRTUAL_FILE_ARRAY) {
+      else if (key == CommonDataKeys.VIRTUAL_FILE_ARRAY) {
         final Set<Usage> usages = getSelectedUsages();
         Usage[] ua = usages != null ? usages.toArray(new Usage[usages.size()]) : null;
         VirtualFile[] data = UsageDataUtil.provideVirtualFileArray(ua, getSelectedUsageTargets());
-        sink.put(PlatformDataKeys.VIRTUAL_FILE_ARRAY, data);
+        sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, data);
       }
 
       else if (key == PlatformDataKeys.HELP_ID) {
