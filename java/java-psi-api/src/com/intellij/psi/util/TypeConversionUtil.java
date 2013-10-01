@@ -17,6 +17,8 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.*;
 import com.intellij.pom.java.LanguageLevel;
@@ -479,9 +481,15 @@ public class TypeConversionUtil {
       }
       else {
         if (isPrimitiveAndNotNull(ltype)) {
-          return rtype instanceof PsiClassType &&
-                 ((PsiClassType)rtype).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5) &&
-                 areTypesConvertible(ltype, rtype);
+          if (rtype instanceof PsiClassType) {
+            final LanguageLevel languageLevel = ((PsiClassType)rtype).getLanguageLevel();
+            if (languageLevel.isAtLeast(LanguageLevel.JDK_1_5) &&
+                !languageLevel.isAtLeast(LanguageLevel.JDK_1_8) &&
+                areTypesConvertible(ltype, rtype)) {
+              return true;
+            }
+          }
+          return false;
         }
         if (isPrimitiveAndNotNull(rtype)) {
           return ltype instanceof PsiClassType &&
