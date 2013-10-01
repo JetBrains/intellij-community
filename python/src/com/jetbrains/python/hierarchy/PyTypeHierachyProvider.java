@@ -27,7 +27,7 @@ public class PyTypeHierachyProvider implements HierarchyProvider {
     PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     if (element == null) {
       final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-      final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
+      final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
       if (editor != null && file != null) {
         element = file.findElementAt(editor.getCaretModel().getOffset());
       }
