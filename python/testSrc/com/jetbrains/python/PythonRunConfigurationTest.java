@@ -5,6 +5,7 @@ import com.jetbrains.python.run.PythonConfigurationType;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.testing.PythonTestConfigurationType;
 import com.jetbrains.python.testing.unittest.PythonUnitTestRunConfiguration;
+import junit.framework.Assert;
 
 import java.util.List;
 
@@ -19,8 +20,8 @@ public class PythonRunConfigurationTest extends PyCommandLineTestCase {
                                                                        PythonUnitTestRunConfiguration.class);
     configuration.setScriptName(PY_SCRIPT);
     final List<String> params = buildRunCommandLine(configuration);
-    assertTrue(params.get(0).endsWith("utrunner.py"));
-    assertTrue(params.get(1).equals(PY_SCRIPT));
+    Assert.assertTrue(params.get(0).endsWith("utrunner.py"));
+    Assert.assertTrue(params.get(1).equals(PY_SCRIPT));
   }
 
   public void testDebugCommandLine() {
@@ -28,7 +29,7 @@ public class PythonRunConfigurationTest extends PyCommandLineTestCase {
                                                                PythonRunConfiguration.class);
     configuration.setScriptName(PY_SCRIPT);
     final List<String> params = buildDebugCommandLine(configuration);
-    final int index = verifyPyDevDParameters(params);
-    assertEquals(PY_SCRIPT, params.get(index));
+    final int index = PyCommandLineTestCase.verifyPyDevDParameters(params);
+    Assert.assertEquals(PY_SCRIPT, params.get(index));
   }
 }

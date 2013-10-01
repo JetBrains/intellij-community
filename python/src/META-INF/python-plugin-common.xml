@@ -1,7 +1,7 @@
 <idea-plugin version="2"  xmlns:xi="http://www.w3.org/2001/XInclude">
   <!-- Components and extensions declared in this file work both in PyCharm and Python plugin. -->
 
-  <xi:include href="/META-INF/python-plugin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/python-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensions defaultExtensionNs="com.intellij">
 
@@ -225,6 +225,8 @@
 
     <defaultLiveTemplatesProvider implementation="com.jetbrains.django.DjangoDefaultLiveTemplatesProvider"/>
     <projectService serviceImplementation="com.jetbrains.django.console.DjangoConsoleOptions"/>
+
+    <psi.treeChangePreprocessor implementation="com.jetbrains.django.lang.template.DjangoTemplateTreeChangePreprocessor"/>
 
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
@@ -458,18 +460,7 @@
     <pyClassMembersProvider implementation="com.jetbrains.pyramid.codeInsight.PyramidRequestClassMembersProvider"/>
   </extensions>
 
-  <project-components>
-    <component>
-      <implementation-class>com.jetbrains.django.lang.template.DjangoTemplatePsiManager</implementation-class>
-    </component>
-  </project-components>
-
   <actions>
-    <action id="PyInvertBooleanAction" class="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanAction" text="Invert Boolean">
-      <add-to-group group-id="RefactoringMenu" anchor="last" />
-    </action>
-
-
     <group id="PyProjectViewGroup" internal="true" class="com.intellij.ide.actions.NonEmptyActionGroup" popup="true" text="Python">
       <action id="Devmode.AnalyzeReturns" class="com.jetbrains.python.devmode.AnalyzeReturnsAction" text="Analyze return types"
               internal="true"/>

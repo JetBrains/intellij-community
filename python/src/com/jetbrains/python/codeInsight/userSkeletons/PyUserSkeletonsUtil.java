@@ -44,7 +44,7 @@ public class PyUserSkeletonsUtil {
     final List<String> result = new ArrayList<String>();
     result.add(PathManager.getConfigPath() + File.separator + USER_SKELETONS_DIR);
     result.add(ApplicationManager.getApplication().isInternal()
-               ? StringUtil.join(new String[]{PathManager.getHomePath(), "python", "helpers", USER_SKELETONS_DIR}, File.separator)
+               ? StringUtil.join(new String[]{PathManager.getHomePath(), "python", "community", "helpers", USER_SKELETONS_DIR}, File.separator)
                : PythonHelpersLocator.getHelperPath(USER_SKELETONS_DIR));
     return result;
   }
@@ -53,7 +53,7 @@ public class PyUserSkeletonsUtil {
   public static VirtualFile getUserSkeletonsDirectory() {
     if (ourUserSkeletonsDirectory == null) {
       for (String path : getPossibleUserSkeletonsPaths()) {
-        ourUserSkeletonsDirectory = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
+        ourUserSkeletonsDirectory = LocalFileSystem.getInstance().findFileByPath(path);
         if (ourUserSkeletonsDirectory != null) {
           break;
         }

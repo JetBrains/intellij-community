@@ -20,6 +20,7 @@
             <module name="python-pydev"/>
             <module name="python-openapi"/>
             <module name="python-psi-api"/>
+            <module name="python-community-plugin"/>
             <module name="colorSchemes"/>
           </jar>
           <jar name="resources_en.jar">
@@ -28,8 +29,8 @@
           <fileset dir="${project.home}/python/lib" includes="*.jar"/>
         </dir>
         <dir name="helpers">
-          <fileset dir="${project.home}/python/helpers" includes="**/*.py"/>
-          <fileset dir="${project.home}/python/helpers" includes="**/versions.xml"/>
+          <fileset dir="${project.home}/python/community/helpers" includes="**/*.py"/>
+          <fileset dir="${project.home}/python/community/helpers" includes="**/versions.xml"/>
         </dir>
       </dir>
     </layout>

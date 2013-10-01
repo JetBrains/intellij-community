@@ -138,4 +138,9 @@ public class PyArgumentListInspectionTest extends PyTestCase {
   public void testDecoratedChangedParameters() {
     doTest();
   }
+
+  // PY-9605
+  public void testPropertyReturnsCallable() {
+    doTest();
+  }
 }

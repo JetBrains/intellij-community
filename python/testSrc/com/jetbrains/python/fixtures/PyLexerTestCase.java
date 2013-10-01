@@ -2,8 +2,8 @@ package com.jetbrains.python.fixtures;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.testFramework.PlatformLiteFixture;
-import com.jetbrains.cython.CythonTokenSetContributor;
 import com.jetbrains.python.PythonDialectsTokenSetContributor;
+import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.PythonTokenSetContributor;
 
 /**
@@ -16,7 +16,7 @@ public abstract class PyLexerTestCase extends PlatformLiteFixture {
     PyTestCase.initPlatformPrefix();
     registerExtensionPoint(PythonDialectsTokenSetContributor.EP_NAME, PythonDialectsTokenSetContributor.class);
     registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new PythonTokenSetContributor());
-    registerExtension(PythonDialectsTokenSetContributor.EP_NAME, new CythonTokenSetContributor());
+    PythonDialectsTokenSetProvider.reset();
   }
 
   public static void doLexerTest(String text, Lexer lexer, String... expectedTokens) {

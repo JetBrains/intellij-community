@@ -15,6 +15,7 @@ import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
 import com.jetbrains.python.psi.CallArgumentsMapping;
 import com.jetbrains.python.psi.PyArgumentList;
+import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -35,7 +36,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
   protected Map<String, PsiElement> loadTest(int expected_marks) {
     Map<String, PsiElement> marks = loadTest();
-    assertEquals("Test data sanity", marks.size(), expected_marks);
+    Assert.assertEquals("Test data sanity", marks.size(), expected_marks);
     return marks;
   }
 
@@ -402,7 +403,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     final PyArgumentList parameterOwner = handler.findElementForParameterInfo(collector);
     collector.setParameterOwner(parameterOwner); // finds arglist, sets items to show
     if (collector.getParameterOwner() != null) {
-      assertEquals("Collected one analysis result", 1, collector.myItems.length);
+      Assert.assertEquals("Collected one analysis result", 1, collector.myItems.length);
       handler.updateParameterInfo((PyArgumentList)collector.getParameterOwner(), collector); // moves offset to correct parameter
       handler.updateUI((CallArgumentsMapping)collector.getItemsToShow()[0], collector); // sets hint text and flags
     }
@@ -472,7 +473,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
 
     @Override
     public void setParameterOwner(PsiElement o) {
-      assertTrue("Found element is a python arglist", o == null || o instanceof PyArgumentList);
+      Assert.assertTrue("Found element is a python arglist", o == null || o instanceof PyArgumentList);
       myParamOwner = (PyArgumentList)o;
     }
 
@@ -557,7 +558,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
      * @param disabled expected disabled substrings of hint
      */
     public void check(String text, String[] highlighted, String[] disabled) {
-      assertEquals("Signature", text, StringUtil.join(myTexts, ""));
+      Assert.assertEquals("Signature", text, StringUtil.join(myTexts, ""));
       StringBuilder wrongs = new StringBuilder();
       // see if highlighted matches
       Set<String> highlightSet = new HashSet<String>();
@@ -586,7 +587,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
         }
       }
       //
-      if (wrongs.length() > 0) fail(wrongs.toString());
+      if (wrongs.length() > 0) Assert.fail(wrongs.toString());
     }
 
     public void check(String text, String[] highlighted) {
@@ -594,7 +595,7 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     }
 
     public void assertNotFound() {
-      assertNull(myParamOwner);
+      Assert.assertNull(myParamOwner);
     }
   }
 }
