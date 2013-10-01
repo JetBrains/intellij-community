@@ -10,7 +10,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.*;
 import com.intellij.xdebugger.frame.XValue;
-import com.intellij.xdebugger.impl.XSourcePositionImpl;
 import com.jetbrains.django.util.VirtualFileUtil;
 import com.jetbrains.python.console.PythonDebugLanguageConsoleView;
 import com.jetbrains.python.debugger.PyDebugProcess;
@@ -55,7 +54,7 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
     XSourcePosition position = currentSession.getCurrentPosition();
 
 
-    currentSession.runToPosition(XSourcePositionImpl.create(position.getFile(), line), false);
+    currentSession.runToPosition(XDebuggerUtil.getInstance().createPosition(position.getFile(), line), false);
 
     waitForPause();
   }
