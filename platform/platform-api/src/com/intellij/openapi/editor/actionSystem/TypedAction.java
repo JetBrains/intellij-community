@@ -15,8 +15,8 @@
  */
 package com.intellij.openapi.editor.actionSystem;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
@@ -54,7 +54,7 @@ public class TypedAction {
       if (editor.isViewer()) return;
 
       Document doc = editor.getDocument();
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (!FileDocumentManager.getInstance().requestWriting(doc, project)) {
         return;
       }
@@ -103,7 +103,7 @@ public class TypedAction {
 
     Runnable command = new TypingCommand(editor, charTyped, dataContext);
 
-    CommandProcessor.getInstance().executeCommand(PlatformDataKeys.PROJECT.getData(dataContext), command, "", editor.getDocument(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
+    CommandProcessor.getInstance().executeCommand(CommonDataKeys.PROJECT.getData(dataContext), command, "", editor.getDocument(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
   }
 
   public static boolean isTypedActionInProgress() {

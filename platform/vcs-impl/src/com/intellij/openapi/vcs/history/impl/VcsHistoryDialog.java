@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.history.impl;
 
 import com.intellij.diff.Block;
 import com.intellij.diff.FindBlock;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,6 +37,7 @@ import com.intellij.openapi.vcs.history.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -62,7 +64,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
   private final int mySelectionEnd;
 
   // todo equals???
-  private final Map<VcsFileRevision, Block> myRevisionToContentMap = new com.intellij.util.containers.HashMap<VcsFileRevision, Block>();
+  private final Map<VcsFileRevision, Block> myRevisionToContentMap = new HashMap<VcsFileRevision, Block>();
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.history.impl.VcsHistoryDialog");
   private final AbstractVcs myActiveVcs;
@@ -439,7 +441,7 @@ public class VcsHistoryDialog extends DialogWrapper implements DataProvider {
   }
 
   public Object getData(@NonNls String dataId) {
-    if (PlatformDataKeys.PROJECT.is(dataId)) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     } else if (VcsDataKeys.VCS_VIRTUAL_FILE.is(dataId)) {
       return myFile;

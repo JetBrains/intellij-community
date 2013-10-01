@@ -24,6 +24,7 @@ import com.intellij.codeInsight.intention.impl.config.IntentionActionMetaData;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -49,7 +50,7 @@ public class DumpIntentionsAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final VirtualFile file =
-      FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), e.getData(PlatformDataKeys.PROJECT), null);
+      FileChooser.chooseFile(FileChooserDescriptorFactory.createSingleFolderDescriptor(), e.getData(CommonDataKeys.PROJECT), null);
     if (file != null) {
       final List<IntentionActionMetaData> list = IntentionManagerSettings.getInstance().getMetaData();
       final File root = VfsUtil.virtualToIoFile(file);
@@ -98,6 +99,6 @@ public class DumpIntentionsAction extends AnAction implements DumbAware {
 
   @Override
   public void update(final AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getData(PlatformDataKeys.PROJECT) != null);
+    e.getPresentation().setEnabled(e.getData(CommonDataKeys.PROJECT) != null);
   }
 }

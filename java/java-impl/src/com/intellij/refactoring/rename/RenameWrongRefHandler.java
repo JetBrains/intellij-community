@@ -17,6 +17,7 @@
 package com.intellij.refactoring.rename;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.RenameWrongRefFix;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -33,7 +34,7 @@ public class RenameWrongRefHandler implements RenameHandler {
   public final boolean isAvailableOnDataContext(final DataContext dataContext) {
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (editor == null || file == null || project == null) return false;
     return isAvailable(project, editor, file);
   }

@@ -17,7 +17,7 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.DumbService;
@@ -47,7 +47,7 @@ public class ActionUtil {
         actionNames.add(s);
       }
 
-      final Project _project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
+      final Project _project = CommonDataKeys.PROJECT.getData(event.getDataContext());
       if (_project != null && project == null) {
         project = _project;
       }
@@ -92,7 +92,7 @@ public class ActionUtil {
   public static boolean performDumbAwareUpdate(AnAction action, AnActionEvent e, boolean beforeActionPerformed) {
     final Presentation presentation = e.getPresentation();
     final Boolean wasEnabledBefore = (Boolean)presentation.getClientProperty(WAS_ENABLED_BEFORE_DUMB);
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     final boolean dumbMode = project != null && DumbService.getInstance(project).isDumb();
     if (wasEnabledBefore != null && !dumbMode) {
       presentation.putClientProperty(WAS_ENABLED_BEFORE_DUMB, null);
@@ -134,7 +134,7 @@ public class ActionUtil {
   public static boolean lastUpdateAndCheckDumb(AnAction action, AnActionEvent e, boolean visibilityMatters) {
     performDumbAwareUpdate(action, e, true);
 
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project != null && DumbService.getInstance(project).isDumb() && !action.isDumbAware()) {
       if (Boolean.FALSE.equals(e.getPresentation().getClientProperty(WOULD_BE_ENABLED_IF_NOT_DUMB_MODE))) {
         return false;

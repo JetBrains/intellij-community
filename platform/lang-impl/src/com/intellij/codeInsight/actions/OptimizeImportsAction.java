@@ -38,7 +38,7 @@ public class OptimizeImportsAction extends AnAction {
   }
 
   public static void actionPerformedImpl(final DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
@@ -138,7 +138,7 @@ public class OptimizeImportsAction extends AnAction {
 
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null){
       presentation.setEnabled(false);
       return;

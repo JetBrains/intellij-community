@@ -20,7 +20,7 @@ public class MavenRunConfigurationMenu extends DefaultActionGroup implements Dum
       }
     }
 
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
 
     final RunnerAndConfigurationSettings settings = MavenDataKeys.RUN_CONFIGURATION.getData(e.getDataContext());
 

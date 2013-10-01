@@ -2,6 +2,7 @@ package org.jetbrains.plugins.gradle.action;
 
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
@@ -17,7 +18,7 @@ public class GradleToolWindowHelpAction extends ContextHelpAction {
 
   @Override
   public void update(AnActionEvent event) {
-    final Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
     if (project == null) {
       event.getPresentation().setVisible(false);
       return;

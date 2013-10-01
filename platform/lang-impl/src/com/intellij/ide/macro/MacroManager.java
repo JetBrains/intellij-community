@@ -18,6 +18,7 @@ package com.intellij.ide.macro;
 
 import com.intellij.application.options.PathMacrosImpl;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
@@ -122,7 +123,7 @@ public final class MacroManager {
     if (PlatformDataKeys.FILE_EDITOR.getData(dataContext) != null) {
       return dataContext;
     }
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return dataContext;
     }

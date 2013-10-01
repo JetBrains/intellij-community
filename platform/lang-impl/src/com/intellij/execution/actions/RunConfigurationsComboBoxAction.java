@@ -64,7 +64,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   @Override
   public void update(final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (ActionPlaces.MAIN_MENU.equals(e.getPlace())) {
       presentation.setDescription(ExecutionBundle.message("choose.run.configuration.action.description"));
       presentation.setEnabled(findFrame(e.getData(PlatformDataKeys.CONTEXT_COMPONENT)) != null);
@@ -165,7 +165,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   @NotNull
   protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
     final DefaultActionGroup allActionsGroup = new DefaultActionGroup();
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(button));
+    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(button));
     if (project != null) {
       final RunManagerEx runManager = RunManagerEx.getInstanceEx(project);
 
@@ -232,7 +232,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
     @Override
     public void actionPerformed(final AnActionEvent e) {
-      final Project project = e.getData(PlatformDataKeys.PROJECT);
+      final Project project = e.getData(CommonDataKeys.PROJECT);
       if (project != null) {
         RunnerAndConfigurationSettings settings = chooseTempSettings(project);
         if (settings != null) {
@@ -245,7 +245,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     @Override
     public void update(final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
-      final Project project = e.getData(PlatformDataKeys.PROJECT);
+      final Project project = e.getData(CommonDataKeys.PROJECT);
       if (project == null) {
         disable(presentation);
         return;

@@ -36,7 +36,7 @@ public class GenerateCopyrightAction extends AnAction
     {
         Presentation presentation = event.getPresentation();
         DataContext context = event.getDataContext();
-        Project project = PlatformDataKeys.PROJECT.getData(context);
+        Project project = CommonDataKeys.PROJECT.getData(context);
         if (project == null)
         {
             presentation.setEnabled(false);
@@ -64,7 +64,7 @@ public class GenerateCopyrightAction extends AnAction
     public void actionPerformed(AnActionEvent event)
     {
         DataContext context = event.getDataContext();
-        Project project = PlatformDataKeys.PROJECT.getData(context);
+        Project project = CommonDataKeys.PROJECT.getData(context);
         assert project != null;
         Module module = LangDataKeys.MODULE.getData(context);
         PsiDocumentManager.getInstance(project).commitAllDocuments();

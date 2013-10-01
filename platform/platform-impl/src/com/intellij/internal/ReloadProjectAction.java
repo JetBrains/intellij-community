@@ -18,10 +18,10 @@ package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 
 /**
@@ -29,7 +29,7 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl;
  */
 public class ReloadProjectAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project != null) {
       ((ProjectManagerImpl)ProjectManager.getInstance()).reloadProjectImpl(project, false);
     }

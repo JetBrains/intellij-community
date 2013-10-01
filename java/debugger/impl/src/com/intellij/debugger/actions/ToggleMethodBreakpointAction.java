@@ -56,7 +56,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
 
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;
     }
@@ -83,7 +83,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
 
   @Nullable
   private static PlaceInDocument getPlace(AnActionEvent event) {
-    final Project project = event.getData(PlatformDataKeys.PROJECT);
+    final Project project = event.getData(CommonDataKeys.PROJECT);
     if(project == null) {
       return null;
     }

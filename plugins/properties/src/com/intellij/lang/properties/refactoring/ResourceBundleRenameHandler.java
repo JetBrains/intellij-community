@@ -26,6 +26,7 @@ import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
 import com.intellij.lang.properties.editor.ResourceBundleEditor;
 import com.intellij.lang.properties.editor.ResourceBundleUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -48,7 +49,7 @@ public class ResourceBundleRenameHandler implements RenameHandler {
   private static final Logger LOG = Logger.getInstance("#" + ResourceBundleRenameHandler.class.getName());
 
   public boolean isAvailableOnDataContext(DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return false;
     }

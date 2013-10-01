@@ -303,7 +303,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
             DataContext dataContext = DataManager.getInstance().getDataContext(myWelcomePanel);
             int fragment = actionLabel.findFragmentAt(e.getX());
             if (fragment == SimpleColoredComponent.FRAGMENT_ICON) {
-              final int rc = Messages.showOkCancelDialog(PlatformDataKeys.PROJECT.getData(dataContext),
+              final int rc = Messages.showOkCancelDialog(CommonDataKeys.PROJECT.getData(dataContext),
                                                          "Remove '" + action.getTemplatePresentation().getText() +
                                                          "' from recent projects list?",
                                                          "Remove Recent Project",

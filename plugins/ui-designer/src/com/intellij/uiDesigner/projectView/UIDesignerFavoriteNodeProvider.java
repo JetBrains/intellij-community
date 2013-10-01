@@ -19,6 +19,7 @@ package com.intellij.uiDesigner.projectView;
 import com.intellij.ide.favoritesTreeView.FavoriteNodeProvider;
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileTypes.FileType;
@@ -46,7 +47,7 @@ import java.util.*;
 public class UIDesignerFavoriteNodeProvider extends FavoriteNodeProvider {
   @Nullable
   public Collection<AbstractTreeNode> getFavoriteNodes(DataContext context, final ViewSettings viewSettings) {
-    Project project = PlatformDataKeys.PROJECT.getData(context);
+    Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) return null;
     Form[] forms = Form.DATA_KEY.getData(context);
     if (forms != null) {

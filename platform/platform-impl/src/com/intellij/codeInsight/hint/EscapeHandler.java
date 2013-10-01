@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.hint;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
@@ -30,7 +30,7 @@ public class EscapeHandler extends EditorActionHandler {
 
   @Override
   public void execute(Editor editor, DataContext dataContext) {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null || !HintManagerImpl.getInstanceImpl().hideHints(HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_ANY_KEY, true, false)) {
       myOriginalHandler.execute(editor, dataContext);
     }
@@ -38,7 +38,7 @@ public class EscapeHandler extends EditorActionHandler {
 
   @Override
   public boolean isEnabled(Editor editor, DataContext dataContext) {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     if (project != null) {
       HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();

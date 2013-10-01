@@ -524,7 +524,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
   private class MyChangesDeleteProvider implements DeleteProvider {
     public void deleteElement(@NotNull DataContext dataContext) {
-      final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      final Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project == null) return;
       final ShelvedChangeList[] shelved = SHELVED_CHANGELIST_KEY.getData(dataContext);
       if (shelved == null || (shelved.length != 1)) return;

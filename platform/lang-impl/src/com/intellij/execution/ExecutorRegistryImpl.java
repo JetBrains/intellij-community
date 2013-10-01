@@ -206,7 +206,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
     @Override
     public void update(final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
-      final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+      final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
 
       if (project == null || !project.isInitialized() || project.isDisposed() || DumbService.getInstance(project).isDumb()) {
         presentation.setEnabled(false);

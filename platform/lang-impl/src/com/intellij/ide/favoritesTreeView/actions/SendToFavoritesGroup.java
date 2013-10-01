@@ -39,7 +39,7 @@ public class SendToFavoritesGroup extends ActionGroup {
     if (e == null) {
       return EMPTY_ARRAY;
     }
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     final List<String> availableFavoritesLists = FavoritesManager.getInstance(project).getAvailableFavoritesListNames();
     availableFavoritesLists.remove(FavoritesTreeViewPanel.FAVORITES_LIST_NAME_DATA_KEY.getData(e.getDataContext()));
     if (availableFavoritesLists.isEmpty()) {

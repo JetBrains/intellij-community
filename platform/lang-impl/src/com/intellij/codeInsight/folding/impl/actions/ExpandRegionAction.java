@@ -18,6 +18,7 @@ package com.intellij.codeInsight.folding.impl.actions;
 
 import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.folding.impl.FoldingUtil;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -37,7 +38,7 @@ public class ExpandRegionAction extends EditorAction {
       
       @Override
       public boolean isEnabled(Editor editor, DataContext dataContext) {
-        return super.isEnabled(editor, dataContext) && PlatformDataKeys.PROJECT.getData(dataContext) != null;
+        return super.isEnabled(editor, dataContext) && CommonDataKeys.PROJECT.getData(dataContext) != null;
       }
       
     });

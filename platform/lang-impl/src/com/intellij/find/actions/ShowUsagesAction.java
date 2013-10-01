@@ -143,7 +143,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 
     Runnable searchEverywhere = mySearchEverywhereRunnable;

@@ -21,6 +21,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -57,7 +58,7 @@ public class SelectWordHandler extends EditorActionHandler {
       // selection about to spread beyond injected fragment
       editor = ((EditorWindow)editor).getDelegate();
     }
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
+    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
     if (project == null) {
       if (myOriginalHandler != null) {
         myOriginalHandler.execute(editor, dataContext);

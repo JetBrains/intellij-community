@@ -19,7 +19,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -31,7 +31,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 public class CloseAllEditorsAction extends AnAction implements DumbAware {
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
       project, new Runnable(){
@@ -64,7 +64,7 @@ public class CloseAllEditorsAction extends AnAction implements DumbAware {
     else {
       presentation.setText(IdeBundle.message("action.close.all.editors"));
     }
-    Project project = event.getData(PlatformDataKeys.PROJECT);
+    Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       return;

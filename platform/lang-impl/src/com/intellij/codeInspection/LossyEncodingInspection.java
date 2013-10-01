@@ -26,6 +26,7 @@ import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -257,7 +258,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     public static DataContext createDataContext(Editor editor, Component component, VirtualFile selectedFile, Project project) {
       DataContext parent = DataManager.getInstance().getDataContext(component);
       DataContext context = SimpleDataContext.getSimpleContext(PlatformDataKeys.CONTEXT_COMPONENT.getName(), editor == null ? null : editor.getComponent(), parent);
-      DataContext projectContext = SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), project, context);
+      DataContext projectContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PROJECT.getName(), project, context);
       return SimpleDataContext.getSimpleContext(PlatformDataKeys.VIRTUAL_FILE.getName(), selectedFile, projectContext);
     }
   }

@@ -27,6 +27,7 @@ import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.actions.TargetAction;
 import com.intellij.lang.ant.dom.AntDomFileDescription;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -649,7 +650,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
 
         public void run() {
-          Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+          Project project = CommonDataKeys.PROJECT.getData(dataContext);
           if (project == null || project.isDisposed()) {
             result[0] = false;
             return;

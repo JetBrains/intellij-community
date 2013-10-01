@@ -112,7 +112,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       if (myState == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE) {
         resetState();
         final DataContext dataContext = myContext.getDataContext();
-        StatusBar.Info.set(null, dataContext == null ? null : PlatformDataKeys.PROJECT.getData(dataContext));
+        StatusBar.Info.set(null, dataContext == null ? null : CommonDataKeys.PROJECT.getData(dataContext));
       }
     }
   };
@@ -321,7 +321,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     if(KeyEvent.KEY_RELEASED==e.getID()){
       myFirstKeyStroke=null;
       setState(KeyState.STATE_INIT);
-      Project project = PlatformDataKeys.PROJECT.getData(myContext.getDataContext());
+      Project project = CommonDataKeys.PROJECT.getData(myContext.getDataContext());
       StatusBar.Info.set(null, project);
       return false;
     }
@@ -337,7 +337,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     // finally user had managed to enter the second keystroke, so let it be processed
-    Project project = PlatformDataKeys.PROJECT.getData(myContext.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(myContext.getDataContext());
     StatusBarEx statusBar = (StatusBarEx) WindowManager.getInstance().getStatusBar(project);
     if (processAction(e, myActionProcessor)) {
       if (statusBar != null) {
@@ -423,7 +423,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       myFirstKeyStroke=keyStroke;
       final ArrayList<Pair<AnAction, KeyStroke>> secondKeyStrokes = getSecondKeystrokeActions();
 
-      final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      final Project project = CommonDataKeys.PROJECT.getData(dataContext);
       StringBuilder message = new StringBuilder();
       message.append(KeyMapBundle.message("prefix.key.pressed.message"));
       message.append(' ');
@@ -449,7 +449,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
             @Override
             public void run() {
               if (myState == KeyState.STATE_WAIT_FOR_SECOND_KEYSTROKE) {
-                StatusBar.Info.set(null, PlatformDataKeys.PROJECT.getData(oldContext));
+                StatusBar.Info.set(null, CommonDataKeys.PROJECT.getData(oldContext));
                 new SecondaryKeystrokePopup(myFirstKeyStroke, secondKeyStrokes, oldContext).showInBestPositionFor(oldContext);
               }
             }
@@ -575,7 +575,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
 
   public boolean processAction(final InputEvent e, @NotNull ActionProcessor processor) {
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    final Project project = PlatformDataKeys.PROJECT.getData(myContext.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(myContext.getDataContext());
     final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
     List<AnActionEvent> nonDumbAwareAction = new ArrayList<AnActionEvent>();
     List<AnAction> actions = myContext.getActions();

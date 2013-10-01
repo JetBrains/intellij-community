@@ -36,7 +36,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
   @Override
   public void actionPerformed(AnActionEvent e) {
     IdeView view = e.getData(LangDataKeys.IDE_VIEW);
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
 
     if (view == null || project == null) {
       return;
@@ -64,7 +64,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
 
-    Project project = event.getData(PlatformDataKeys.PROJECT);
+    Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       presentation.setVisible(false);
       presentation.setEnabled(false);

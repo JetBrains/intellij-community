@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NonNls;
 public class CompareFileWithEditor extends BaseDiffAction {
   @Nullable
   private static Document getEditingDocument(final DataContext dataContext) {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
     VirtualFile[] selectedFiles = FileEditorManager.getInstance(project).getSelectedFiles();
     if (selectedFiles.length == 0) return null;
@@ -65,7 +65,7 @@ public class CompareFileWithEditor extends BaseDiffAction {
   }
 
   protected FileEditorContents getDiffData(DataContext dataContext) {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     VirtualFile[] array = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     Document document = getEditingDocument(dataContext);
     if (array == null || array.length != 1 || document == null) {

@@ -359,7 +359,7 @@ final class ImageEditorUI extends JPanel implements DataProvider {
   @Nullable
   public Object getData(String dataId) {
 
-    if (PlatformDataKeys.PROJECT.is(dataId)) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
       return editor.getProject();
     } else if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
       return editor.getFile();

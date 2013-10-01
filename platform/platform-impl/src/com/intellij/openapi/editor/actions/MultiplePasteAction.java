@@ -49,7 +49,7 @@ public class MultiplePasteAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     Component focusedComponent = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
 

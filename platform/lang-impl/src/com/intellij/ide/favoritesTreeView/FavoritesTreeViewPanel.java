@@ -402,7 +402,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
 
   @Override
   public Object getData(String dataId) {
-    if (PlatformDataKeys.PROJECT.is(dataId)) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
     if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {

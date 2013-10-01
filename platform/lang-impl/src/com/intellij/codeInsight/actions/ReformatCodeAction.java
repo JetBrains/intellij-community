@@ -58,7 +58,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
@@ -249,7 +249,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null){
       presentation.setEnabled(false);
       return;

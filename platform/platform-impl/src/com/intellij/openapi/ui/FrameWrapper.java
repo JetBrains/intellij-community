@@ -17,8 +17,8 @@ package com.intellij.openapi.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -98,7 +98,7 @@ public class FrameWrapper implements Disposable, DataProvider {
 
   public void setProject(@NotNull final Project project) {
     myProject = project;
-    setData(PlatformDataKeys.PROJECT.getName(), project);
+    setData(CommonDataKeys.PROJECT.getName(), project);
     ProjectManager.getInstance().addProjectManagerListener(project, myProjectListener);
     Disposer.register(this, new Disposable() {
       @Override

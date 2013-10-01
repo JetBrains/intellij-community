@@ -20,6 +20,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.editorActions.PasteHandler;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PasteProvider;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -42,7 +43,7 @@ import java.awt.datatransfer.Transferable;
 public class PasteReferenceProvider implements PasteProvider {
   @Override
   public void performPaste(@NotNull DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     if (project == null || editor == null) return;
 
@@ -65,14 +66,14 @@ public class PasteReferenceProvider implements PasteProvider {
 
   @Override
   public boolean isPastePossible(@NotNull DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     return project != null && editor != null && getCopiedFqn(dataContext) != null;
   }
 
   @Override
   public boolean isPasteEnabled(@NotNull DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     String fqn = getCopiedFqn(dataContext);
     if (project == null || fqn == null) {
       return false;

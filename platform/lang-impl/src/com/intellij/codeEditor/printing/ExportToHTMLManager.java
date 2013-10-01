@@ -18,6 +18,7 @@ package com.intellij.codeEditor.printing;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.BrowserUtil;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -57,7 +58,7 @@ class ExportToHTMLManager {
       psiDirectory = (PsiDirectory)psiElement;
     }
     final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     String shortFileName = null;
     String directoryName = null;
     if(psiFile != null || psiDirectory != null) {

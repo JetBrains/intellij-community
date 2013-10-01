@@ -16,6 +16,7 @@
 package com.intellij.ide.projectView.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.ui.Messages;
@@ -32,7 +33,7 @@ public class MarkExcludeRootAction extends MarkRootActionBase {
     VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
 
     String message = files.length == 1 ? FileUtil.toSystemDependentName(files[0].getPath()) : files.length + " selected files";
-    final int rc = Messages.showOkCancelDialog(e.getData(PlatformDataKeys.PROJECT), getPromptText(message), "Mark as Excluded",
+    final int rc = Messages.showOkCancelDialog(e.getData(CommonDataKeys.PROJECT), getPromptText(message), "Mark as Excluded",
                                                Messages.getQuestionIcon());
     if (rc != 0) {
       return;

@@ -52,7 +52,7 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
   }
 
   private boolean isVisible(final DataContext dc) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dc);
+    final Project project = CommonDataKeys.PROJECT.getData(dc);
     return (project != null) && (VcsDataKeys.LABEL_BEFORE.getData(dc) != null) && (VcsDataKeys.LABEL_AFTER.getData(dc) != null);
   }
 
@@ -65,7 +65,7 @@ public class ShowUpdatedDiffAction extends AnAction implements DumbAware {
     final DataContext dc = e.getDataContext();
     if ((! isVisible(dc)) || (! isEnabled(dc))) return;
 
-    final Project project = PlatformDataKeys.PROJECT.getData(dc);
+    final Project project = CommonDataKeys.PROJECT.getData(dc);
     final Iterable<Pair<VirtualFilePointer, FileStatus>> iterable = VcsDataKeys.UPDATE_VIEW_FILES_ITERABLE.getData(dc);
     final Label before = (Label) VcsDataKeys.LABEL_BEFORE.getData(dc);
     final Label after = (Label) VcsDataKeys.LABEL_AFTER.getData(dc);

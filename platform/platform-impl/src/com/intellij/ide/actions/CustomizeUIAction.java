@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.ui.customization.CustomizationConfigurable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -31,7 +32,7 @@ public class CustomizeUIAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
     util.editConfigurable(project, new CustomizationConfigurable());
   }

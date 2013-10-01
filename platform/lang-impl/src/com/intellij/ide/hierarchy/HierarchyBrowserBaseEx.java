@@ -653,7 +653,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     @Override
     public final void update(final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
-      final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+      final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
       if (project == null) return;
       presentation.setEnabled(isEnabled());
       presentation.setText(getCurrentScopeType());

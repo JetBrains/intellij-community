@@ -32,7 +32,7 @@ public class AssociateFileType extends AnAction {
     Presentation presentation = e.getPresentation();
     DataContext dataContext = e.getDataContext();
     VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     boolean haveSmthToDo;
     if (project == null || file == null || file.isDirectory()) {
       haveSmthToDo = false;

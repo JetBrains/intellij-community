@@ -17,6 +17,7 @@
 package com.intellij.history.integration.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -25,7 +26,7 @@ import com.intellij.openapi.project.DumbAware;
 public class LocalHistoryGroup extends DefaultActionGroup implements DumbAware {
   public void update(AnActionEvent event) {
     Presentation p = event.getPresentation();
-    boolean hasProject = event.getData(PlatformDataKeys.PROJECT) != null;
+    boolean hasProject = event.getData(CommonDataKeys.PROJECT) != null;
 
     p.setVisible(hasProject);
     p.setEnabled(hasProject);

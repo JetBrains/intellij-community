@@ -228,7 +228,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     if (myWindowManager == null) {
       return dataContext;
     }
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     Component focusedComponent = myWindowManager.getFocusedComponent(project);
     if (focusedComponent != null) {
       dataContext = getDataContext(focusedComponent);
@@ -308,7 +308,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
   }
   
   private static final Set<String> ourSafeKeys = new HashSet<String>(Arrays.asList(
-    PlatformDataKeys.PROJECT.getName(),
+    CommonDataKeys.PROJECT.getName(),
     PlatformDataKeys.EDITOR.getName(),
     PlatformDataKeys.IS_MODAL_CONTEXT.getName(),
     PlatformDataKeys.CONTEXT_COMPONENT.getName(),

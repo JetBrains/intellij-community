@@ -22,6 +22,7 @@ import com.intellij.execution.testframework.TestFrameworkRunningModel;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -98,7 +99,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
       return false;
     }
 
-    if (PlatformDataKeys.PROJECT.getData(dataContext) == null) {
+    if (CommonDataKeys.PROJECT.getData(dataContext) == null) {
       return false;
     }
 
@@ -107,7 +108,7 @@ public class ExportTestResultsAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     LOG.assertTrue(project != null);
     final ExportTestResultsConfiguration config = ExportTestResultsConfiguration.getInstance(project);
 

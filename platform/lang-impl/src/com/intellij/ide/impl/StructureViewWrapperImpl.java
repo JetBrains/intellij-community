@@ -146,7 +146,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
     final DataContext dataContext = DataManager.getInstance().getDataContext(owner);
     if (dataContext.getData(myKey) == this) return;
-    if (PlatformDataKeys.PROJECT.getData(dataContext) != myProject) return;
+    if (CommonDataKeys.PROJECT.getData(dataContext) != myProject) return;
 
     final VirtualFile[] files = hasFocus() ? null : PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (!myToolWindow.isVisible()) {

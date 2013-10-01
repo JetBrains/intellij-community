@@ -5,6 +5,7 @@ import com.intellij.execution.RunManagerEx;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
@@ -17,7 +18,7 @@ import javax.swing.*;
 public class RemoveMavenRunConfigurationAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     RunnerAndConfigurationSettings settings = MavenDataKeys.RUN_CONFIGURATION.getData(e.getDataContext());
 
     if (settings == null || project == null) return;

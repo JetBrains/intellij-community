@@ -19,6 +19,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,7 @@ public class NewElementToolbarAction extends NewElementAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     if (e.getData(LangDataKeys.IDE_VIEW) == null) {
-      final Project project = e.getData(PlatformDataKeys.PROJECT);
+      final Project project = e.getData(CommonDataKeys.PROJECT);
       final PsiFileSystemItem psiFile = e.getData(LangDataKeys.PSI_FILE).getParent();
       ProjectViewImpl.getInstance(project).selectCB(psiFile, psiFile.getVirtualFile(), true).doWhenDone(new Runnable() {
         @Override
@@ -53,7 +54,7 @@ public class NewElementToolbarAction extends NewElementAction {
   public void update(AnActionEvent event) {
     super.update(event);
     if (event.getData(LangDataKeys.IDE_VIEW) == null) {
-      Project project = event.getData(PlatformDataKeys.PROJECT);
+      Project project = event.getData(CommonDataKeys.PROJECT);
       PsiFile psiFile = event.getData(LangDataKeys.PSI_FILE);
       if (project != null && psiFile != null) {
         final ToolWindow projectViewWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);

@@ -18,6 +18,7 @@ package com.intellij.ide.hierarchy.method;
 import com.intellij.ide.hierarchy.HierarchyProvider;
 import com.intellij.ide.hierarchy.HierarchyBrowser;
 import com.intellij.ide.hierarchy.MethodHierarchyBrowserBase;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -49,7 +50,7 @@ public class JavaMethodHierarchyProvider implements HierarchyProvider {
 
   @Nullable
   private static PsiMethod getMethodImpl(final DataContext dataContext){
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
     PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);

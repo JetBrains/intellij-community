@@ -16,6 +16,7 @@
 package git4idea.history;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -201,7 +202,7 @@ public class GitAnnotationsClosedTest extends GitTest {
                                                @Nullable
                                                @Override
                                                public Object getData(@NonNls String dataId) {
-                                                 if (PlatformDataKeys.PROJECT.is(dataId)) {
+                                                 if (CommonDataKeys.PROJECT.is(dataId)) {
                                                    return myProject;
                                                  }
                                                  return null;

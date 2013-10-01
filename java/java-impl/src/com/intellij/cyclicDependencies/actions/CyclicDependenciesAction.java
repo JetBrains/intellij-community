@@ -51,12 +51,12 @@ public class CyclicDependenciesAction extends AnAction{
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(
       getInspectionScope(event.getDataContext()) != null || 
-      event.getData(PlatformDataKeys.PROJECT) != null);
+      event.getData(CommonDataKeys.PROJECT) != null);
   }
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Module module = LangDataKeys.MODULE.getData(dataContext);
     if (project != null) {
       AnalysisScope scope = getInspectionScope(dataContext);
@@ -89,7 +89,7 @@ public class CyclicDependenciesAction extends AnAction{
 
   @Nullable
   private static AnalysisScope getInspectionScope(final DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
     AnalysisScope scope = getInspectionScopeImpl(dataContext);
@@ -133,7 +133,7 @@ public class CyclicDependenciesAction extends AnAction{
 
   @Nullable
   private static AnalysisScope getProjectScope(DataContext dataContext) {
-    final Project data = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project data = CommonDataKeys.PROJECT.getData(dataContext);
     if (data == null) {
       return null;
     }

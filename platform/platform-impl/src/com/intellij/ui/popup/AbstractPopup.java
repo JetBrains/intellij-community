@@ -22,6 +22,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.UiActivity;
 import com.intellij.ide.UiActivityMonitor;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -946,7 +947,7 @@ public class AbstractPopup implements JBPopup {
     final Component c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (c != null) {
       final DataContext context = DataManager.getInstance().getDataContext(c);
-      final Project project = PlatformDataKeys.PROJECT.getData(context);
+      final Project project = CommonDataKeys.PROJECT.getData(context);
       if (project != null) {
         myProjectDisposable = new Disposable() {
 

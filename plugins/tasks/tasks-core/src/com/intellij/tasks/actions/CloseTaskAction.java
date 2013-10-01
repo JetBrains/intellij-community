@@ -17,6 +17,7 @@
 package com.intellij.tasks.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
@@ -35,7 +36,7 @@ import java.util.ArrayList;
 public class CloseTaskAction extends BaseTaskAction {
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     assert project != null;
     TaskManagerImpl taskManager = (TaskManagerImpl)TaskManager.getManager(project);
     LocalTask task = taskManager.getActiveTask();

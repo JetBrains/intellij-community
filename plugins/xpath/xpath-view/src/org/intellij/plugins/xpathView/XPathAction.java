@@ -58,7 +58,7 @@ public abstract class XPathAction extends AnAction {
     }
 
     protected boolean isEnabled(AnActionEvent event, boolean checkAvailable) {
-        final Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
+        final Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
         if (project == null) {
             // no active project
             return false;

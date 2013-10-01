@@ -75,7 +75,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
       final String[] text = messageElement.getText();
       final String id = text[0].substring(1, text[0].indexOf("]"));
       final SuppressFix suppressInspectionFix = getSuppressAction(id);
-      final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+      final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
       assert project != null;
       final OpenFileDescriptor navigatable = (OpenFileDescriptor)messageElement.getNavigatable();
       final PsiFile file = PsiManager.getInstance(project).findFile(navigatable.getFile());
@@ -101,7 +101,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
       final Presentation presentation = e.getPresentation();
       presentation.setVisible(false);
       presentation.setEnabled(false);
-      final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+      final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
       if (project == null) {
         return;
       }

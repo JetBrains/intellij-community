@@ -20,10 +20,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
@@ -90,7 +87,7 @@ public class ToggleReadOnlyAttributeAction extends AnAction implements DumbAware
             }
           }
           catch(IOException exc){
-            Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+            Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
             Messages.showMessageDialog(
               project,
               exc.getMessage(),

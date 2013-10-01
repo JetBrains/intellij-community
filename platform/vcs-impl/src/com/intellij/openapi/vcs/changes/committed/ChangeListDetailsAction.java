@@ -19,6 +19,7 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -42,7 +43,7 @@ import javax.swing.*;
  */
 public class ChangeListDetailsAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     final ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
     if (changeLists != null && changeLists.length > 0 && changeLists [0] instanceof CommittedChangeList) {
       showDetailsPopup(project, (CommittedChangeList) changeLists [0]);
@@ -50,7 +51,7 @@ public class ChangeListDetailsAction extends AnAction implements DumbAware {
   }
 
   public void update(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     final ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
     e.getPresentation().setEnabled(project != null && changeLists != null && changeLists.length == 1 &&
       changeLists [0] instanceof CommittedChangeList);

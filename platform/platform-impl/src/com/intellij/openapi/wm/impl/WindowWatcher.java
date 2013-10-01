@@ -16,14 +16,13 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.WeakHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -82,11 +81,11 @@ public final class WindowWatcher implements PropertyChangeListener{
         myWindow2Info.put(window,new WindowInfo(window, true));
       }
       myFocusedWindow=window;
-      final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myFocusedWindow));
+      final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myFocusedWindow));
       for (Iterator i = myFocusedWindows.iterator(); i.hasNext();) {
         final Window w = (Window)i.next();
         final DataContext dataContext = DataManager.getInstance().getDataContext(w);
-        if (project == PlatformDataKeys.PROJECT.getData(dataContext)) {
+        if (project == CommonDataKeys.PROJECT.getData(dataContext)) {
           i.remove();
         }
       }
@@ -297,7 +296,7 @@ public final class WindowWatcher implements PropertyChangeListener{
         }
       }
       final DataContext dataContext = DataManager.getInstance().getDataContext(window);
-      if (project == PlatformDataKeys.PROJECT.getData(dataContext)) {
+      if (project == CommonDataKeys.PROJECT.getData(dataContext)) {
         return window;
       }
     }

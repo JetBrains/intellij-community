@@ -31,9 +31,9 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -3976,12 +3976,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   private DataContext getProjectAwareDataContext(@NotNull final DataContext original) {
-    if (PlatformDataKeys.PROJECT.getData(original) == myProject) return original;
+    if (CommonDataKeys.PROJECT.getData(original) == myProject) return original;
 
     return new DataContext() {
       @Override
       public Object getData(String dataId) {
-        if (PlatformDataKeys.PROJECT.is(dataId)) {
+        if (CommonDataKeys.PROJECT.is(dataId)) {
           return myProject;
         }
         return original.getData(dataId);

@@ -20,6 +20,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -51,7 +52,7 @@ public class OpenOutputAction extends AnAction {
             return Charset.forName("UTF-8");
           }
         };
-        FileEditorManager.getInstance(PlatformDataKeys.PROJECT.getData(e.getDataContext())).openFile(file, true);
+        FileEditorManager.getInstance(CommonDataKeys.PROJECT.getData(e.getDataContext())).openFile(file, true);
       } catch (UnsupportedEncodingException e1) {
         throw new AssertionError(e);
       }

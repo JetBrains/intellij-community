@@ -17,6 +17,7 @@ package com.intellij.util.ui.update;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -57,7 +58,7 @@ public abstract class LazyUiDisposable<T extends Disposable> implements Activata
         public void run(Disposable parent) {
           Project project = null;
           if (ApplicationManager.getApplication() != null) {
-            project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+            project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
           }
           initialize(parent, myChild, project);
           Disposer.register(parent, myChild);

@@ -18,6 +18,7 @@ package com.intellij.lang.properties.editor;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -74,7 +75,7 @@ public class ResourceBundleUtil {
     if (virtualFile instanceof ResourceBundleAsVirtualFile) {
       return ((ResourceBundleAsVirtualFile)virtualFile).getResourceBundle();
     }
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
       if (psiFile instanceof PropertiesFile) {
@@ -92,7 +93,7 @@ public class ResourceBundleUtil {
    */
   @Nullable
   public static ResourceBundleEditor getEditor(@NotNull DataContext dataContext) {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return null;
     }

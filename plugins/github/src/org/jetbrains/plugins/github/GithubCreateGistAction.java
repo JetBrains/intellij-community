@@ -17,6 +17,7 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -64,7 +65,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
   @Override
   public void update(final AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDefault()) {
       e.getPresentation().setVisible(false);
       e.getPresentation().setEnabled(false);
@@ -83,7 +84,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDefault()) {
       return;
     }

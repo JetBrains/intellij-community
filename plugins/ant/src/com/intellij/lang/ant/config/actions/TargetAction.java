@@ -53,7 +53,7 @@ public final class TargetAction extends DumbAwareAction {
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
 
     for (final AntBuildFile buildFile : AntConfiguration.getInstance(project).getBuildFiles()) {

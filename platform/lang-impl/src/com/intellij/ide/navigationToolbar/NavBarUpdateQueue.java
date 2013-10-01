@@ -17,6 +17,7 @@ package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
@@ -96,7 +97,7 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
   private void requestModelUpdateFromContextOrObject(DataContext dataContext, Object object) {
     final NavBarModel model = myPanel.getModel();
     if (dataContext != null) {
-      if (PlatformDataKeys.PROJECT.getData(dataContext) != myPanel.getProject() || myPanel.isNodePopupShowing()) {
+      if (CommonDataKeys.PROJECT.getData(dataContext) != myPanel.getProject() || myPanel.isNodePopupShowing()) {
         requestModelUpdate(null, myPanel.getContextObject(), true);
         return;
       }

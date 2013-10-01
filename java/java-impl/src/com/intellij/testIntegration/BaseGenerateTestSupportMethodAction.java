@@ -59,7 +59,7 @@ public class BaseGenerateTestSupportMethodAction extends BaseGenerateAction {
   @Nullable
   @Override
   public AnAction createEditTemplateAction(DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
     final PsiClass targetClass = editor == null || file == null ? null : getTargetClass(editor, file);

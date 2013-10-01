@@ -18,7 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
@@ -42,7 +42,7 @@ import java.util.Collection;
 public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAware {
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project instanceof ProjectEx) {
       final IProjectStore projectStore = ((ProjectEx)project).getStateStore();
       if (StorageScheme.DIRECTORY_BASED != projectStore.getStorageScheme()) {
@@ -92,7 +92,7 @@ public class SaveAsDirectoryBasedFormatAction extends AnAction implements DumbAw
   public void update(AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
 
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     boolean visible = project != null;
 
     if (project instanceof ProjectEx) {

@@ -34,7 +34,7 @@ public class FindInPathAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
 
     FindInProjectManager findManager = FindInProjectManager.getInstance(project);
     if (!findManager.isEnabled()) {
@@ -57,7 +57,7 @@ public class FindInPathAction extends AnAction implements DumbAware {
 
   static void doUpdate(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     presentation.setEnabled(project != null);
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
       presentation.setVisible(isValidSearchScope(e));

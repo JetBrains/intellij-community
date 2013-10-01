@@ -17,6 +17,7 @@ package com.intellij.psi.templateLanguages;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,7 +41,7 @@ public class ChangeTemplateDataLanguageAction extends AnAction {
     }
     if (virtualFile == null || virtualFile.isDirectory()) return;
 
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 
     final FileViewProvider provider = PsiManager.getInstance(project).findViewProvider(virtualFile);
@@ -56,7 +57,7 @@ public class ChangeTemplateDataLanguageAction extends AnAction {
 
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 
     final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);

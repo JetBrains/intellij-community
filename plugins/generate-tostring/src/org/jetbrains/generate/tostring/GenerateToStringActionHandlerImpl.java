@@ -20,6 +20,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.ide.util.MemberChooserBuilder;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -59,7 +60,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
     private static final Logger logger = Logger.getInstance("#org.jetbrains.generate.tostring.GenerateToStringActionHandlerImpl");
 
     public void executeWriteAction(Editor editor, DataContext dataContext) {
-        final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+        final Project project = CommonDataKeys.PROJECT.getData(dataContext);
         assert project != null;
 
         PsiClass clazz = getSubjectClass(editor, dataContext);

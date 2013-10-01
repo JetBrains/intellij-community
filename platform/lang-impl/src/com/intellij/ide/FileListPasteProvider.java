@@ -18,6 +18,7 @@ package com.intellij.ide;
 
 import com.intellij.ide.dnd.FileCopyPasteUtil;
 import com.intellij.ide.dnd.LinuxDragAndDropSupport;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -45,7 +46,7 @@ import java.util.List;
 public class FileListPasteProvider implements PasteProvider {
   @Override
   public void performPaste(@NotNull DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
     if (project == null || ideView == null) return;
 

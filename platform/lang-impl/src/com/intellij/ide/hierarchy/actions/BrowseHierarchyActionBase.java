@@ -50,7 +50,7 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
   @Override
   public final void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments(); // prevents problems with smart pointers creation

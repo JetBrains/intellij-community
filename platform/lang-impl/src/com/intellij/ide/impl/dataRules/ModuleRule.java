@@ -18,6 +18,7 @@ package com.intellij.ide.impl.dataRules;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -38,7 +39,7 @@ public class ModuleRule implements GetDataRule {
     if (moduleContext != null) {
       return moduleContext;
     }
-    Project project = PlatformDataKeys.PROJECT.getData(dataProvider);
+    Project project = CommonDataKeys.PROJECT.getData(dataProvider);
     if (project == null) {
       PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataProvider);
       if (element == null) {

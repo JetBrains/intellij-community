@@ -16,7 +16,7 @@
 package com.intellij.ui.popup;
 
 import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
@@ -88,7 +88,7 @@ public abstract class WizardPopup extends AbstractPopup implements ActionListene
 
     scrollPane.setBorder(null);
 
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     init(project, scrollPane, getPreferredFocusableComponent(), true, true, true, true, null,
          false, aStep.getTitle(), null, true, null, false, null, null, null, false, null, true, false, true, null, 0f,
          null, true, false, new Component[0], null, SwingConstants.LEFT, true, Collections.<Pair<ActionListener, KeyStroke>>emptyList(), null, null, false, true,

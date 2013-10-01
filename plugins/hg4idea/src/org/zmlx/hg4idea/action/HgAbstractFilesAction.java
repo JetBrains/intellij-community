@@ -40,7 +40,7 @@ abstract class HgAbstractFilesAction extends AnAction {
   public final void actionPerformed(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
 
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (project == null || files == null || files.length == 0) {
       return;
@@ -73,7 +73,7 @@ abstract class HgAbstractFilesAction extends AnAction {
     Presentation presentation = e.getPresentation();
     final DataContext dataContext = e.getDataContext();
 
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;

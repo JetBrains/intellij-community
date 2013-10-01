@@ -18,6 +18,7 @@ package org.jetbrains.idea.devkit.build;
 import com.intellij.compiler.server.CompileServerPlugin;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -77,7 +78,7 @@ public class PrepareToDeployAction extends AnAction {
   public void actionPerformed(final AnActionEvent e) {
     final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
     if (module != null && ModuleType.get(module) instanceof PluginModuleType) {
-      doPrepare(Arrays.asList(module), PlatformDataKeys.PROJECT.getData(e.getDataContext()));
+      doPrepare(Arrays.asList(module), CommonDataKeys.PROJECT.getData(e.getDataContext()));
     }
   }
 

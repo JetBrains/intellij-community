@@ -43,7 +43,7 @@ public class AddToTestsPatternAction extends AnAction {
     final PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     final Set<PsiMember> classes = PatternConfigurationProducer.collectTestMembers(psiElements);
 
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final List<JUnitConfiguration> patternConfigurations = collectPatternConfigurations(classes, project);
     if (patternConfigurations.size() == 1) {
       final JUnitConfiguration configuration = patternConfigurations.get(0);
@@ -83,7 +83,7 @@ public class AddToTestsPatternAction extends AnAction {
     if (psiElements != null) {
       final Set<PsiMember> foundMembers = PatternConfigurationProducer.collectTestMembers(psiElements);
       if (foundMembers.isEmpty()) return;
-      final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      final Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project != null) {
         final List<JUnitConfiguration> foundConfigurations = collectPatternConfigurations(foundMembers, project);
         if (!foundConfigurations.isEmpty()) {

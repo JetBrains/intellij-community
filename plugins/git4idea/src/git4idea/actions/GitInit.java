@@ -17,6 +17,7 @@ package git4idea.actions;
 
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -51,7 +52,7 @@ import java.util.List;
 public class GitInit extends DumbAwareAction {
 
   public void actionPerformed(final AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }

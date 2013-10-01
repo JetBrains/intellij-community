@@ -229,7 +229,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
     }
     else {
       // main menu toolbar
-      final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      final Project project = CommonDataKeys.PROJECT.getData(dataContext);
       final RunContentDescriptor selectedContent =
         project == null ? null : ExecutionManager.getInstance(project).getContentManager().getSelectedContent();
       processHandler = selectedContent == null ? null : selectedContent.getProcessHandler();
@@ -239,7 +239,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
 
   @NotNull
   private static List<RunContentDescriptor> getActiveDescriptors(final DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return Collections.emptyList();
     }

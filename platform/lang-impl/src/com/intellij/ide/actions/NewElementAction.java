@@ -87,7 +87,7 @@ public class NewElementAction extends AnAction  implements DumbAware, PopupActio
   public void update(AnActionEvent e){
     final Presentation presentation = e.getPresentation();
     final DataContext context = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(context);
+    final Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) {
       presentation.setEnabled(false);
       return;

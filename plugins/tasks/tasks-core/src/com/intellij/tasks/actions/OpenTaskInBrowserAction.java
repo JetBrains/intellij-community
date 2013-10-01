@@ -18,6 +18,7 @@ package com.intellij.tasks.actions;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
@@ -54,7 +55,7 @@ public class OpenTaskInBrowserAction extends BaseTaskAction {
 
   @Nullable
   private static String getIssueUrl(AnActionEvent event) {
-    Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
     return project == null ? null : TaskManager.getManager(project).getActiveTask().getIssueUrl();
   }
 }

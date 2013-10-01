@@ -20,6 +20,7 @@ import com.intellij.ide.fileTemplates.impl.AllFileTemplatesConfigurable;
 import com.intellij.ide.fileTemplates.ui.ConfigureTemplatesDialog;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.extensions.Extensions;
@@ -30,7 +31,7 @@ import com.intellij.psi.PsiFile;
 public class SaveFileAsTemplateAction extends AnAction{
   @Override
   public void actionPerformed(AnActionEvent e){
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     String fileText = e.getData(PlatformDataKeys.FILE_TEXT);
     VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     String extension = file.getExtension();

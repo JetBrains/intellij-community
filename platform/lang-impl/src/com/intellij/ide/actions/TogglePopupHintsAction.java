@@ -23,6 +23,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,7 +37,7 @@ public class TogglePopupHintsAction extends AnAction{
   private static final Logger LOG=Logger.getInstance("#com.intellij.ide.actions.TogglePopupHintsAction");
 
   private static PsiFile getTargetFile(DataContext dataContext){
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if(project==null){
       return null;
     }
@@ -59,7 +60,7 @@ public class TogglePopupHintsAction extends AnAction{
   public void actionPerformed(AnActionEvent e){
     PsiFile psiFile=getTargetFile(e.getDataContext());
     LOG.assertTrue(psiFile!=null);
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     LOG.assertTrue(project!=null);
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(project);
     codeAnalyzer.setImportHintsEnabled(psiFile,!codeAnalyzer.isImportHintsEnabled(psiFile));

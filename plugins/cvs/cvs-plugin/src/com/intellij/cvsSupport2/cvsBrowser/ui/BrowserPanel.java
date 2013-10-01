@@ -211,7 +211,7 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
       if (cvsVirtualFile == null || !cvsVirtualFile.isValid()) return null;
       return new OpenFileDescriptor(myProject, cvsVirtualFile);
     }
-    else if (PlatformDataKeys.PROJECT.is(dataId)) {
+    else if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
     else {

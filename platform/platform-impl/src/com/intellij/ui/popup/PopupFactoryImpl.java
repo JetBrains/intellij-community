@@ -440,7 +440,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     JComponent focusOwner = component instanceof JComponent ? (JComponent)component : null;
 
     if (focusOwner == null) {
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
       IdeFrameImpl frame = project == null ? null : ((WindowManagerEx)WindowManager.getInstance()).getFrame(project);
       focusOwner = frame == null ? null : frame.getRootPane();
       if (focusOwner == null) {

@@ -21,6 +21,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.StdLanguages;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -76,7 +77,7 @@ public class DependencyInspection extends BaseLocalInspectionTool {
     editDependencies.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editDependencies));
+        Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editDependencies));
         if (project == null) project = ProjectManager.getInstance().getDefaultProject();
         ShowSettingsUtil.getInstance().editConfigurable(editDependencies, new DependencyConfigurable(project));
       }

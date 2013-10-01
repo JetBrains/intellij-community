@@ -31,7 +31,7 @@ public abstract class BaseExternalToolsGroup<T extends Tool> extends SimpleActio
     Presentation presentation = event.getPresentation();
     removeAll();
     String context = event.getPlace();
-    Project project = event.getData(PlatformDataKeys.PROJECT);
+    Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       presentation.setVisible(false);
       presentation.setEnabled(false);

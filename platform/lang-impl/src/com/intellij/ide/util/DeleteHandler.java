@@ -22,6 +22,7 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -65,7 +66,7 @@ public class DeleteHandler {
   public static class DefaultDeleteProvider implements DeleteProvider {
     @Override
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
-      if (PlatformDataKeys.PROJECT.getData(dataContext) == null) {
+      if (CommonDataKeys.PROJECT.getData(dataContext) == null) {
         return false;
       }
       final PsiElement[] elements = getPsiElements(dataContext);
@@ -94,7 +95,7 @@ public class DeleteHandler {
     public void deleteElement(@NotNull DataContext dataContext) {
       PsiElement[] elements = getPsiElements(dataContext);
       if (elements == null) return;
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project == null) return;
       LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));
       try {

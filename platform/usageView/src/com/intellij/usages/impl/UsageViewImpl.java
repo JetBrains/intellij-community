@@ -1429,8 +1429,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     public void calcData(final DataKey key, final DataSink sink) {
       Node node = getSelectedNode();
 
-      if (key == PlatformDataKeys.PROJECT) {
-        sink.put(PlatformDataKeys.PROJECT, myProject);
+      if (key == CommonDataKeys.PROJECT) {
+        sink.put(CommonDataKeys.PROJECT, myProject);
       }
       else if (key == USAGE_VIEW_KEY) {
         sink.put(USAGE_VIEW_KEY, UsageViewImpl.this);

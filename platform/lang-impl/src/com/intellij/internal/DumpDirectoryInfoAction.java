@@ -17,6 +17,7 @@ package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
@@ -40,7 +41,7 @@ public class DumpDirectoryInfoAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     final DirectoryIndex index = DirectoryIndex.getInstance(project);
     if (project != null) {
       final VirtualFile root = e.getData(PlatformDataKeys.VIRTUAL_FILE);
@@ -71,6 +72,6 @@ public class DumpDirectoryInfoAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getData(PlatformDataKeys.PROJECT) != null);
+    e.getPresentation().setEnabled(e.getData(CommonDataKeys.PROJECT) != null);
   }
 }

@@ -27,6 +27,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -131,8 +132,7 @@ public class SeverityEditorDialog extends DialogWrapper {
           if (name == null) return;
           final TextAttributes textAttributes = CodeInsightColors.WARNINGS_ATTRIBUTES.getDefaultAttributes();
           HighlightInfoType.HighlightInfoTypeImpl info = new HighlightInfoType.HighlightInfoTypeImpl(new HighlightSeverity(name, 50),
-                                                                                                     com.intellij.openapi.editor.colors
-                                                                                                       .TextAttributesKey
+                                                                                                     TextAttributesKey
                                                                                                        .createTextAttributesKey(name));
 
           SeverityBasedTextAttributes newSeverityBasedTextAttributes = new SeverityBasedTextAttributes(textAttributes.clone(), info);
@@ -252,7 +252,7 @@ public class SeverityEditorDialog extends DialogWrapper {
       try {
         final SearchableConfigurable javaPage = colorAndFontOptions.findSubConfigurable(InspectionColorSettingsPage.class);
         LOG.assertTrue(javaPage != null);
-        ShowSettingsUtil.getInstance().editConfigurable(PlatformDataKeys.PROJECT.getData(dataContext), javaPage);
+        ShowSettingsUtil.getInstance().editConfigurable(CommonDataKeys.PROJECT.getData(dataContext), javaPage);
       }
       finally {
         for (Configurable configurable : configurables) {

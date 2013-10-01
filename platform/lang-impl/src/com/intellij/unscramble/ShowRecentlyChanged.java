@@ -16,6 +16,7 @@
 package com.intellij.unscramble;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -39,14 +40,14 @@ public class ShowRecentlyChanged extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     if (! enabled(e)) return;
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     VcsContentAnnotationConfigurable configurable = new VcsContentAnnotationConfigurable(project);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
     // todo recalculate highlight
   }
 
   private boolean enabled(AnActionEvent e) {
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return false;
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
     if (! vcsManager.hasActiveVcss()) return false;

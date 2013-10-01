@@ -131,7 +131,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
 
   private boolean isActive(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
     TestFrameworkRunningModel model = getModel();
     if (model == null || model.getRoot() == null) return false;

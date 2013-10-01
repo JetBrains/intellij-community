@@ -47,7 +47,7 @@ public class ExternalJavaDocAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
@@ -114,7 +114,7 @@ public class ExternalJavaDocAction extends AnAction {
     Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     final PsiElement originalElement = getOriginalElement(LangDataKeys.PSI_FILE.getData(dataContext), editor);
-    DocumentationManager.storeOriginalElement(PlatformDataKeys.PROJECT.getData(dataContext), originalElement, element);
+    DocumentationManager.storeOriginalElement(CommonDataKeys.PROJECT.getData(dataContext), originalElement, element);
     final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
     boolean enabled;
     if (provider instanceof ExternalDocumentationProvider) {

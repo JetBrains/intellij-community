@@ -40,7 +40,7 @@ public abstract class BasicAction extends AnAction implements DumbAware {
       LOG.debug("enter: actionPerformed(id='" + ActionManager.getInstance().getId(this) + "')");
     }
     final DataContext dataContext = event.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (LOG.isDebugEnabled() && files != null) {
@@ -106,7 +106,7 @@ public abstract class BasicAction extends AnAction implements DumbAware {
     Presentation presentation = e.getPresentation();
     final DataContext dataContext = e.getDataContext();
 
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       presentation.setVisible(false);

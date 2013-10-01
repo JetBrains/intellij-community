@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.tasks;
 import com.intellij.execution.BeforeRunTaskProvider;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -154,7 +155,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     try {
       ApplicationManager.getApplication().invokeAndWait(new Runnable() {
           public void run() {
-            final Project project = PlatformDataKeys.PROJECT.getData(context);
+            final Project project = CommonDataKeys.PROJECT.getData(context);
             final MavenProject mavenProject = getMavenProject(task);
 
             if (project == null || project.isDisposed() || mavenProject == null) return;

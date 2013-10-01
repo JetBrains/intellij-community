@@ -94,6 +94,6 @@ public class QuickChangeCodeStyleSchemeAction extends QuickSwitchSchemeAction {
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(PlatformDataKeys.PROJECT.getData(e.getDataContext()) != null);
+    e.getPresentation().setEnabled(CommonDataKeys.PROJECT.getData(e.getDataContext()) != null);
   }
 }

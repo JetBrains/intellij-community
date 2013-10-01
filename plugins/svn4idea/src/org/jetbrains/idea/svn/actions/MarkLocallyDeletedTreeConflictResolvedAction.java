@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -108,7 +109,7 @@ public class MarkLocallyDeletedTreeConflictResolvedAction extends AnAction {
 
     public MyLocallyDeletedChecker(final AnActionEvent e) {
       final DataContext dc = e.getDataContext();
-      myProject = PlatformDataKeys.PROJECT.getData(dc);
+      myProject = CommonDataKeys.PROJECT.getData(dc);
       if (myProject == null) {
         myPath = null;
         myEnabled = false;

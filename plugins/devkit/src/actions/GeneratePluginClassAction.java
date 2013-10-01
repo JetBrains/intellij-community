@@ -85,7 +85,7 @@ public abstract class GeneratePluginClassAction extends CreateElementActionBase 
         presentation.setVisible(false);
       }
       final IdeView view = LangDataKeys.IDE_VIEW.getData(e.getDataContext());
-      final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+      final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
       if (view != null && project != null) {
         // from com.intellij.ide.actions.CreateClassAction.update()
         ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();

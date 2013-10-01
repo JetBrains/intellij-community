@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -161,7 +162,7 @@ public class IncomingChangesIndicator {
         public void consume(final MouseEvent mouseEvent) {
           if (myStatusBar != null) {
           DataContext dataContext = DataManager.getInstance().getDataContext((Component) myStatusBar);
-          final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+          final Project project = CommonDataKeys.PROJECT.getData(dataContext);
           if (project != null) {
             ToolWindow changesView = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
             changesView.show(new Runnable() {

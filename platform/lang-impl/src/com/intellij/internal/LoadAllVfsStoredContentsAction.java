@@ -22,6 +22,7 @@ package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -111,6 +112,6 @@ public class LoadAllVfsStoredContentsAction extends AnAction implements DumbAwar
 
   @Override
   public void update(final AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getData(PlatformDataKeys.PROJECT) != null);
+    e.getPresentation().setEnabled(e.getData(CommonDataKeys.PROJECT) != null);
   }
 }

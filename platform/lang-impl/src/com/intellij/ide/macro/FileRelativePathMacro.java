@@ -17,6 +17,7 @@
 package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
@@ -37,7 +38,7 @@ public class FileRelativePathMacro extends Macro {
 
   @Override
   public String expand(DataContext dataContext) {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final VirtualFile baseDir = project == null ? null : project.getBaseDir();
     if (baseDir == null) {
       return null;

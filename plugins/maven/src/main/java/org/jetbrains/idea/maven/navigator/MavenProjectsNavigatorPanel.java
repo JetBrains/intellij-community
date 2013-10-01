@@ -127,7 +127,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
   public Object getData(@NonNls String dataId) {
     if (PlatformDataKeys.HELP_ID.is(dataId)) return "reference.toolWindows.mavenProjects";
 
-    if (PlatformDataKeys.PROJECT.is(dataId)) return myProject;
+    if (CommonDataKeys.PROJECT.is(dataId)) return myProject;
 
     if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) return extractVirtualFile();
     if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return extractVirtualFiles();

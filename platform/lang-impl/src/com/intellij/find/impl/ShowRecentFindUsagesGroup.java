@@ -40,7 +40,7 @@ import java.util.List;
 public class ShowRecentFindUsagesGroup extends ActionGroup {
   @Override
   public void update(final AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     e.getPresentation().setEnabled(project != null);
     e.getPresentation().setVisible(project != null);
   }
@@ -49,7 +49,7 @@ public class ShowRecentFindUsagesGroup extends ActionGroup {
   @NotNull
   public AnAction[] getChildren(@Nullable final AnActionEvent e) {
     if (e == null) return EMPTY_ARRAY;
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return EMPTY_ARRAY;
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     List<FindUsagesManager.SearchData> history = new ArrayList<FindUsagesManager.SearchData>(findUsagesManager.getFindUsageHistory());

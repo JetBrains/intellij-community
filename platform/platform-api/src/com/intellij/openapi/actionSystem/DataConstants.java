@@ -30,7 +30,7 @@ public interface DataConstants {
    *
    * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#PROJECT} instead
    */
-  String PROJECT = PlatformDataKeys.PROJECT.getName();
+  String PROJECT = CommonDataKeys.PROJECT.getName();
 
   /**
    * Returns {@link com.intellij.openapi.module.Module}

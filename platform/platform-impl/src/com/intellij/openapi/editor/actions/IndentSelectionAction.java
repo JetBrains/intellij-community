@@ -23,8 +23,8 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -53,7 +53,7 @@ public class IndentSelectionAction extends EditorAction {
   private static class Handler extends EditorWriteActionHandler {
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
       indentSelection(editor, project);
     }
   }

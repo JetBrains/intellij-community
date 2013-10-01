@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
@@ -26,7 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 public class ConfigureFileDefaultEncodingAction extends AnAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
 
     assert project != null;
@@ -43,6 +44,6 @@ public class ConfigureFileDefaultEncodingAction extends AnAction {
 
   @Override
   public void update(final AnActionEvent e) {
-    e.getPresentation().setEnabled(e.getData(PlatformDataKeys.PROJECT) != null);
+    e.getPresentation().setEnabled(e.getData(CommonDataKeys.PROJECT) != null);
   }
 }

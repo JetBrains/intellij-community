@@ -16,6 +16,7 @@
 package com.intellij.javadoc;
 
 import com.intellij.codeInsight.CodeInsightSettings;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -80,7 +81,7 @@ public class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
       return Result.CONTINUE;
     }
 
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return Result.CONTINUE;
     }

@@ -42,7 +42,7 @@ public class ViewBreakpointsAction extends AnAction implements AnAction.Transpar
 
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
 
     if (myInitialBreakpoint == null) {
@@ -58,7 +58,7 @@ public class ViewBreakpointsAction extends AnAction implements AnAction.Transpar
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
     if (project == null) {
       presentation.setEnabled(false);
       return;

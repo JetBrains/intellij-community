@@ -16,6 +16,7 @@
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
@@ -32,7 +33,7 @@ import java.util.List;
 public class PrepareAllToDeployAction extends PrepareToDeployAction {
 
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if ( project == null ) return;
 
     List<Module> pluginModules = new ArrayList<Module>();
@@ -53,7 +54,7 @@ public class PrepareAllToDeployAction extends PrepareToDeployAction {
 
   public void update(AnActionEvent e) {
     int moduleCount = 0;
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       for (Module aModule : (ModuleManager.getInstance(project).getModules())) {
         if (ModuleType.get(aModule) instanceof PluginModuleType) {

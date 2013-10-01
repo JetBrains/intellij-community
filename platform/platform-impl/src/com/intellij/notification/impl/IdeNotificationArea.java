@@ -23,6 +23,7 @@ import com.intellij.notification.EventLog;
 import com.intellij.notification.LogModel;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -96,7 +97,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
 
   @Nullable
   private Project getProject() {
-    return PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext((Component) myStatusBar));
+    return CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext((Component) myStatusBar));
   }
 
   @NotNull

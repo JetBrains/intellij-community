@@ -93,7 +93,7 @@ public abstract class BasePopupAction extends DumbAwareAction implements CustomC
   protected void doAction(MouseEvent e) {
     final DefaultActionGroup group = createActionGroup();
     final DataContext parent = DataManager.getInstance().getDataContext(myPanel.getParent());
-    final DataContext dataContext = SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), myProject, parent);
+    final DataContext dataContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PROJECT.getName(), myProject, parent);
     final JBPopup popup = JBPopupFactory.getInstance()
       .createActionGroupPopup(null, group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true,
                               new Runnable() {

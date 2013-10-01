@@ -44,7 +44,7 @@ public class ShowSiblingsAction extends ShowImplementationsAction {
 
   @Override
   public void performForContext(DataContext dataContext, final boolean invokedByShortcut) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
 
     if (project == null) return;

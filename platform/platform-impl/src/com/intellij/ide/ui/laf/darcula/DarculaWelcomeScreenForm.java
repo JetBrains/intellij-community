@@ -125,7 +125,7 @@ public class DarculaWelcomeScreenForm {
             DataContext dataContext = DataManager.getInstance().getDataContext(root);
             int fragment = label.findFragmentAt(e.getX());
             if (fragment == SimpleColoredComponent.FRAGMENT_ICON) {
-              final int rc = Messages.showOkCancelDialog(PlatformDataKeys.PROJECT.getData(dataContext),
+              final int rc = Messages.showOkCancelDialog(CommonDataKeys.PROJECT.getData(dataContext),
                                                          "Remove '" + action.getTemplatePresentation().getText() +
                                                          "' from recent projects list?",
                                                          "Remove Recent Project",

@@ -15,6 +15,7 @@
  */
 package com.intellij.testFramework;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -45,7 +46,7 @@ public class TestDataProvider implements DataProvider {
                                  "If you closed a project in test, please reset IdeaTestApplication.setDataProvider.");
     }
 
-    if (PlatformDataKeys.PROJECT.is(dataId)) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
     else if (PlatformDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {

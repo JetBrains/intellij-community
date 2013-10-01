@@ -17,6 +17,7 @@ package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -55,7 +56,7 @@ public class NullableStuffInspection extends NullableStuffInspectionBase {
       myConfigureAnnotationsButton.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(OptionsPanel.this));
+          Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(OptionsPanel.this));
           if (project == null) project = ProjectManager.getInstance().getDefaultProject();
           final NullableNotNullDialog dialog = new NullableNotNullDialog(project);
           dialog.show();

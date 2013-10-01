@@ -2,6 +2,7 @@ package org.jetbrains.plugins.terminal;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -30,7 +31,7 @@ public class OpenLocalTerminalAction extends AnAction implements DumbAware {
   }
 
   public void runLocalTerminal(AnActionEvent event) {
-    final Project project = event.getData(PlatformDataKeys.PROJECT);
+    final Project project = event.getData(CommonDataKeys.PROJECT);
     runLocalTerminal(project);
   }
 

@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationBundle;
@@ -165,7 +166,7 @@ public class CodeCompletionPanel {
     
     UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = myCbSorting.isSelected();
 
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
+    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myPanel));
     if (project != null){
       DaemonCodeAnalyzer.getInstance(project).settingsChanged();
     }

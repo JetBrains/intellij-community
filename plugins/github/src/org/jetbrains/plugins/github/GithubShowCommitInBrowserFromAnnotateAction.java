@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -73,7 +74,7 @@ public class GithubShowCommitInBrowserFromAnnotateAction extends GithubShowCommi
 
   @Nullable
   private static EventData calcData(AnActionEvent e, int lineNumber) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     if (project == null || virtualFile == null) {
       return null;

@@ -69,7 +69,7 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
 
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;
@@ -119,7 +119,7 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
 

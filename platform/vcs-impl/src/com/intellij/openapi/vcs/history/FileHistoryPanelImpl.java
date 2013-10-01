@@ -1206,7 +1206,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
         return null;
       }
     }
-    else if (PlatformDataKeys.PROJECT.is(dataId)) {
+    else if (CommonDataKeys.PROJECT.is(dataId)) {
       return myVcs.getProject();
     }
     else if (VcsDataKeys.VCS_FILE_REVISION.is(dataId)) {

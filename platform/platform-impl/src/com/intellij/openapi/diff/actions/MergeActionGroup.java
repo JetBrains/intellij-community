@@ -74,7 +74,7 @@ public class MergeActionGroup extends ActionGroup {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      myOperation.perform(PlatformDataKeys.PROJECT.getData(e.getDataContext()));
+      myOperation.perform(CommonDataKeys.PROJECT.getData(e.getDataContext()));
     }
   }
 }

@@ -84,7 +84,7 @@ public class RunTargetAction extends AnAction {
     final DataContext dataContext = e.getDataContext();
 
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     if (project == null || editor == null) {
       return null;

@@ -27,7 +27,7 @@ import com.intellij.psi.PsiFile;
 public abstract class CompileActionBase extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;
     }
@@ -43,7 +43,7 @@ public abstract class CompileActionBase extends AnAction implements DumbAware {
 
   public void update(final AnActionEvent e) {
     super.update(e);
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       e.getPresentation().setEnabled(false);
     }

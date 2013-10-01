@@ -23,6 +23,7 @@ import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.TreeClassChooser;
 import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -93,7 +94,7 @@ public class SpecialAnnotationsUtil {
       .setAddAction(new AnActionButtonRunnable() {
         @Override
         public void run(AnActionButton button) {
-          Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(injectionList));
+          Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(injectionList));
           if (project == null) project = ProjectManager.getInstance().getDefaultProject();
           TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project)
             .createWithInnerClassesScopeChooser(InspectionsBundle.message("special.annotations.list.annotation.class"),
