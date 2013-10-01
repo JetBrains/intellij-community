@@ -301,9 +301,12 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
     }
 
     if (Registry.is("search.everywhere.enabled") && (ActionPlaces.MAIN_TOOLBAR.equals(myPlace) || ActionPlaces.NAVIGATION_BAR.equals(myPlace))) {
-      final JComponent searchEverywhere = getCustomComponent(ActionManager.getInstance().getAction("SearchEverywhere"));
-      searchEverywhere.putClientProperty("SEARCH_EVERYWHERE", Boolean.TRUE);
-      add(searchEverywhere);
+      final AnAction searchEverywhereAction = ActionManager.getInstance().getAction("SearchEverywhere");
+      if (searchEverywhereAction != null) {
+        final JComponent searchEverywhere = getCustomComponent(searchEverywhereAction);
+        searchEverywhere.putClientProperty("SEARCH_EVERYWHERE", Boolean.TRUE);
+        add(searchEverywhere);
+      }
     }
   }
 
