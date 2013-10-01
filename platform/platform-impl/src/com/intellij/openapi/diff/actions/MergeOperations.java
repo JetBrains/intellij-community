@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,15 +31,18 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.List;
 
 public class MergeOperations {
   private final DiffPanelImpl myDiffPanel;
   private final FragmentSide mySide;
-  private static final ArrayList<Operation> NO_OPERATIONS = new ArrayList<Operation>(0);
+  private static final List<Operation> NO_OPERATIONS = ContainerUtil.emptyList();
   private static final Condition<Fragment> NOT_EQUAL_FRAGMENT = new Condition<Fragment>() {
           public boolean value(Fragment fragment) {
             return fragment.getType() != null;
@@ -51,7 +54,8 @@ public class MergeOperations {
     mySide = side;
   }
 
-  public ArrayList<Operation> getOperations() {
+  @NotNull
+  public List<Operation> getOperations() {
     Fragment fragment = getCurrentFragment();
     if (fragment == null) return NO_OPERATIONS;
     ArrayList<Operation> operations = new ArrayList<Operation>(3);

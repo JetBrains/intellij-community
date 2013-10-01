@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +49,6 @@ import java.util.Collection;
 import java.util.List;
 
 public abstract class RefElementImpl extends RefEntityImpl implements RefElement {
-  private static final List<RefElement> EMPTY_REFERNCES_LIST = new ArrayList<RefElement>(0);
   protected static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.reference.RefElement");
 
   private static final int IS_ENTRY_MASK = 0x80;
@@ -168,7 +168,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   @NotNull
   public Collection<RefElement> getOutReferences() {
     if (myOutReferences == null){
-      return EMPTY_REFERNCES_LIST;
+      return ContainerUtil.emptyList();
     }
     return myOutReferences;
   }
@@ -177,7 +177,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   @NotNull
   public Collection<RefElement> getInReferences() {
     if (myInReferences == null){
-      return EMPTY_REFERNCES_LIST;
+      return ContainerUtil.emptyList();
     }
     return myInReferences;
   }
