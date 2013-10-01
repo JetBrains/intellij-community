@@ -16,7 +16,7 @@ public class HideCoverageInfoAction extends AnAction {
   }
 
   public void actionPerformed(final AnActionEvent e) {
-    CoverageDataManager.getInstance(e.getData(PlatformDataKeys.PROJECT)).chooseSuitesBundle(null);
+    CoverageDataManager.getInstance(e.getData(CommonDataKeys.PROJECT)).chooseSuitesBundle(null);
   }
 
   @Override
@@ -24,7 +24,7 @@ public class HideCoverageInfoAction extends AnAction {
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(false);
     presentation.setVisible(ActionPlaces.isToolbarPlace(e.getPlace()));
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       final CoverageSuitesBundle suitesBundle = CoverageDataManager.getInstance(project).getCurrentSuitesBundle();
       presentation.setEnabled(suitesBundle != null);

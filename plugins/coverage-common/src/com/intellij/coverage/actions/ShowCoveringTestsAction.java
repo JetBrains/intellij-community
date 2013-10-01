@@ -53,7 +53,7 @@ public class ShowCoveringTestsAction extends AnAction {
 
   public void actionPerformed(final AnActionEvent e) {
     final DataContext context = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(context);
+    final Project project = CommonDataKeys.PROJECT.getData(context);
     LOG.assertTrue(project != null);
     final Editor editor = PlatformDataKeys.EDITOR.getData(context);
     LOG.assertTrue(editor != null);
@@ -151,7 +151,7 @@ public class ShowCoveringTestsAction extends AnAction {
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(false);
     if (myLineData != null && myLineData.getStatus() != LineCoverage.NONE) {
-      final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+      final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
       if (project != null) {
         final File[] files = getTraceFiles(project);
         if (files != null && files.length > 0) {
