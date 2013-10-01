@@ -97,7 +97,7 @@ public class RenameTo extends ShowSuggestions implements SpellCheckerQuickFix {
         if (editor == null) return;
 
         if (editor instanceof EditorWindow) {
-          map.put(PlatformDataKeys.EDITOR.getName(), editor);
+          map.put(CommonDataKeys.EDITOR.getName(), editor);
           map.put(LangDataKeys.PSI_ELEMENT.getName(), psiElement);
         } else if (ApplicationManager.getApplication().isUnitTestMode()) { // TextEditorComponent / FiledEditorManagerImpl give away the data in real life
           map.put(

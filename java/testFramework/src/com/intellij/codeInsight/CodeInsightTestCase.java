@@ -617,7 +617,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
   @Override
   public Object getData(String dataId) {
-    return PlatformDataKeys.EDITOR.is(dataId) ? myEditor : super.getData(dataId);
+    return CommonDataKeys.EDITOR.is(dataId) ? myEditor : super.getData(dataId);
   }
 
   protected VirtualFile getVirtualFile(@NonNls String filePath) {

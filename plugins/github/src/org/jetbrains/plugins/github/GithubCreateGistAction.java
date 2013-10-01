@@ -71,7 +71,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
       e.getPresentation().setEnabled(false);
       return;
     }
-    Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
     VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
 
@@ -89,7 +89,7 @@ public class GithubCreateGistAction extends DumbAwareAction {
       return;
     }
 
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
     final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
     if (editor == null && file == null && files == null) {

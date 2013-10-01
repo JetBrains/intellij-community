@@ -57,7 +57,7 @@ public class RearrangeCodeAction extends AnAction {
       return;
     }
     
-    final Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
+    final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     if (editor == null) {
       return;
     }

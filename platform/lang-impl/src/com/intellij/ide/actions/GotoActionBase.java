@@ -117,7 +117,7 @@ public abstract class GotoActionBase extends AnAction {
       return Pair.create(predefined, 0);
     }
     if (useEditorSelection) {
-      final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+      final Editor editor = e.getData(CommonDataKeys.EDITOR);
       if (editor != null) {
         final String selectedText = editor.getSelectionModel().getSelectedText();
         if (selectedText != null && !selectedText.contains("\n")) {

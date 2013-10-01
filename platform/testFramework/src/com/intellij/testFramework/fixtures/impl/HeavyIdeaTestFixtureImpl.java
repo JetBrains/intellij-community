@@ -197,12 +197,12 @@ class HeavyIdeaTestFixtureImpl extends BaseFixture implements HeavyIdeaTestFixtu
       if (CommonDataKeys.PROJECT.is(dataId)) {
         return myProject;
       }
-      else if (PlatformDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
+      else if (CommonDataKeys.EDITOR.is(dataId) || OpenFileDescriptor.NAVIGATE_IN_EDITOR.is(dataId)) {
         if (myProject == null) return null;
         return FileEditorManager.getInstance(myProject).getSelectedTextEditor();
       }
       else {
-        Editor editor = (Editor)getData(PlatformDataKeys.EDITOR.getName());
+        Editor editor = (Editor)getData(CommonDataKeys.EDITOR.getName());
         if (editor != null) {
           FileEditorManagerEx manager = FileEditorManagerEx.getInstanceEx(myProject);
           return manager.getData(dataId, editor, manager.getSelectedFiles()[0]);

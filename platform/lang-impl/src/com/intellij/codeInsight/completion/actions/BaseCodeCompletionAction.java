@@ -20,6 +20,7 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -43,7 +44,7 @@ public abstract class BaseCodeCompletionAction extends AnAction implements HintM
 
   protected static void invokeCompletion(AnActionEvent e, CompletionType type, int time) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
-    Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
     assert project != null;
     assert editor != null;
     InputEvent inputEvent = e.getInputEvent();
@@ -57,7 +58,7 @@ public abstract class BaseCodeCompletionAction extends AnAction implements HintM
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) return;
 
     final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.diff.impl.util;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diff.DiffRequest;
@@ -143,7 +144,7 @@ public class DiffPanelOuterComponent extends JPanel implements DataProvider {
     if (myDataProvider == null) {
       return null;
     }
-    if (PlatformDataKeys.EDITOR.is(dataId)) {
+    if (CommonDataKeys.EDITOR.is(dataId)) {
       if (myBottomComponent != null) {
         // we don't want editor actions to be executed when the bottom component has focus
         final Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();

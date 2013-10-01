@@ -60,7 +60,7 @@ public class ToggleShowImportPopupsAction extends ToggleAction {
 
   @Nullable
   private static PsiFile getFile(AnActionEvent e) {
-    Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
     return editor == null ? null : e.getData(LangDataKeys.PSI_FILE);
   }
 }

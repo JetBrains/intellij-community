@@ -116,7 +116,7 @@ public abstract class AbstractQuickFixManager {
 
       @Override
       public void update(AnActionEvent e) {
-        e.getPresentation().setEnabled(e.getData(PlatformDataKeys.EDITOR) == null);
+        e.getPresentation().setEnabled(e.getData(CommonDataKeys.EDITOR) == null);
       }
     };
     showHintAction.registerCustomShortcutSet(

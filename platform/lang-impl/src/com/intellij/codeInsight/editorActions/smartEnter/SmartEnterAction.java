@@ -45,7 +45,7 @@ public class SmartEnterAction extends EditorAction {
 
   @Override
   protected Editor getEditor(final DataContext dataContext) {
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) return null;
     Project project = editor.getProject();
     if (project == null) project = CommonDataKeys.PROJECT.getData(dataContext);

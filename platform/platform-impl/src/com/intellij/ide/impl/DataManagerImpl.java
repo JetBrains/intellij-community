@@ -309,7 +309,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
   
   private static final Set<String> ourSafeKeys = new HashSet<String>(Arrays.asList(
     CommonDataKeys.PROJECT.getName(),
-    PlatformDataKeys.EDITOR.getName(),
+    CommonDataKeys.EDITOR.getName(),
     PlatformDataKeys.IS_MODAL_CONTEXT.getName(),
     PlatformDataKeys.CONTEXT_COMPONENT.getName(),
     PlatformDataKeys.MODALITY_STATE.getName()
@@ -374,7 +374,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
       if (PlatformDataKeys.MODALITY_STATE.is(dataId)) {
         return component != null ? ModalityState.stateForComponent(component) : ModalityState.NON_MODAL;
       }
-      if (PlatformDataKeys.EDITOR.is(dataId)) {
+      if (CommonDataKeys.EDITOR.is(dataId)) {
         Editor editor = (Editor)((DataManagerImpl)DataManager.getInstance()).getData(dataId, component);
         return validateEditor(editor);
       }

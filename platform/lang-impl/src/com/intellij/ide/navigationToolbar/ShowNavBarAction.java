@@ -40,7 +40,7 @@ public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction
       } else {
         final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
         if (!isInsideNavBar(component)) {
-          final Editor editor = PlatformDataKeys.EDITOR.getData(context);
+          final Editor editor = CommonDataKeys.EDITOR.getData(context);
           final NavBarPanel toolbarPanel = new NavBarPanel(project, false);
           toolbarPanel.showHint(editor, context);
         }

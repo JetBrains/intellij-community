@@ -53,7 +53,7 @@ public class GenerateAction extends DumbAwareAction implements PreloadableAction
       return;
     }
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       presentation.setEnabled(false);
       return;

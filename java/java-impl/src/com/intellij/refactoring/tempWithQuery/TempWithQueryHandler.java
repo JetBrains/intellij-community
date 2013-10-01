@@ -17,6 +17,7 @@ package com.intellij.refactoring.tempWithQuery;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -176,7 +177,7 @@ public class TempWithQueryHandler implements RefactoringActionHandler {
     if (elements.length == 1 && elements[0] instanceof PsiLocalVariable) {
       if (dataContext != null) {
         final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
-        final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+        final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
         if (file != null && editor != null) {
           invokeOnVariable(file, project, (PsiLocalVariable)elements[0], editor);
         }

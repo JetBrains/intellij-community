@@ -15,6 +15,7 @@
  */
 package com.intellij.usages;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -35,7 +36,7 @@ public class UsageTargetUtil {
   private static final ExtensionPointName<UsageTargetProvider> EP_NAME = ExtensionPointName.create("com.intellij.usageTargetProvider");
 
   public static UsageTarget[] findUsageTargets(DataProvider dataProvider) {
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataProvider);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataProvider);
     PsiFile file = LangDataKeys.PSI_FILE.getData(dataProvider);
 
     List<UsageTarget> result = new ArrayList<UsageTarget>();

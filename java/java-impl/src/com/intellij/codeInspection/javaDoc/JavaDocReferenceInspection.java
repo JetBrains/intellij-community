@@ -26,6 +26,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.FQNameCellRenderer;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Result;
@@ -304,7 +305,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
       asyncResult.doWhenDone(new AsyncResult.Handler<DataContext>() {
         @Override
         public void run(DataContext dataContext) {
-          final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+          final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
           assert editor != null;
           final TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRange();
           editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());

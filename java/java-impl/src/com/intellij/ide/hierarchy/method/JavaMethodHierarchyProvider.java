@@ -60,7 +60,7 @@ public class JavaMethodHierarchyProvider implements HierarchyProvider {
       return method;
     }
 
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       return null;
     }

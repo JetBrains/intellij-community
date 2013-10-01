@@ -17,6 +17,7 @@ package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -32,18 +33,18 @@ public class EditorCopyAction extends DumbAwareAction {
     e.getPresentation().setEnabled(enabled);
     e.getPresentation().setVisible(enabled);
 
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
     e.getPresentation().setText(editor != null && editor.getSelectionModel().hasSelection()
                                 ? ExecutionBundle.message("copy.selected.content.action.name")
                                 : ExecutionBundle.message("copy.content.action.name"));
   }
 
   protected boolean isEnabled(AnActionEvent e) {
-    return e.getData(PlatformDataKeys.EDITOR) != null;
+    return e.getData(CommonDataKeys.EDITOR) != null;
   }
 
   public void actionPerformed(final AnActionEvent e) {
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
     assert editor != null;
     if (editor.getSelectionModel().hasSelection()) {
       editor.getSelectionModel().copySelectionToClipboard();

@@ -53,7 +53,7 @@ public class GenerateCopyrightAction extends AnAction
     private static PsiFile getFile(DataContext context, Project project) {
       PsiFile file = LangDataKeys.PSI_FILE.getData(context);
       if (file == null) {
-        Editor editor = PlatformDataKeys.EDITOR.getData(context);
+        Editor editor = CommonDataKeys.EDITOR.getData(context);
         if (editor != null) {
           file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
         }

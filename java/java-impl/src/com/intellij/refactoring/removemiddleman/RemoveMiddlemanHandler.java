@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.removemiddleman;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -65,7 +66,7 @@ public class RemoveMiddlemanHandler implements RefactoringActionHandler {
       return;
     }
     if (elements[0] instanceof PsiField) {
-      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       invoke((PsiField)elements[0], editor);
     }
   }

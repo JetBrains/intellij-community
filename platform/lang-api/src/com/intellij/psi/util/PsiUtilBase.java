@@ -22,6 +22,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiParser;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
@@ -271,7 +272,7 @@ public class PsiUtilBase extends PsiUtilCore {
       // We assume that data context from focus-based retrieval should success if performed from EDT.
       AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
       if (asyncResult.isDone()) {
-        Editor editor = PlatformDataKeys.EDITOR.getData(asyncResult.getResult());
+        Editor editor = CommonDataKeys.EDITOR.getData(asyncResult.getResult());
         if (editor != null) {
           Document cachedDocument = PsiDocumentManager.getInstance(psiFile.getProject()).getCachedDocument(psiFile);
           // Ensure that target editor is found by checking its document against the one from given PSI element.

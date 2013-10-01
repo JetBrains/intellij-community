@@ -200,7 +200,7 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
 
       BookmarkManager bookmarkManager = BookmarkManager.getInstance(myProject);
       if (ToolWindowManager.getInstance(myProject).isEditorComponentActive()) {
-        Editor editor = PlatformDataKeys.EDITOR.getData(myDataContext);
+        Editor editor = CommonDataKeys.EDITOR.getData(myDataContext);
         if (editor != null) {
           Document document = editor.getDocument();
           myLine = editor.getCaretModel().getLogicalPosition().line;

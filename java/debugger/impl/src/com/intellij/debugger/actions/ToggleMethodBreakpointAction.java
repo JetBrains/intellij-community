@@ -105,7 +105,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
       }
     }
     else {
-      Editor editor = event.getData(PlatformDataKeys.EDITOR);
+      Editor editor = event.getData(CommonDataKeys.EDITOR);
       if(editor == null) {
         editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
       }

@@ -42,7 +42,7 @@ public class CopyElementAction extends AnAction {
         PsiDocumentManager.getInstance(project).commitAllDocuments();
       }}, "", null
     );
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiElement[] elements;
 
     PsiDirectory defaultTargetDirectory;
@@ -77,7 +77,7 @@ public class CopyElementAction extends AnAction {
       return;
     }
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor != null) {
       updateForEditor(dataContext, presentation);
     }
@@ -88,7 +88,7 @@ public class CopyElementAction extends AnAction {
   }
 
   protected void updateForEditor(DataContext dataContext, Presentation presentation) {
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       presentation.setVisible(false);
       return;

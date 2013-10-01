@@ -81,7 +81,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   protected Editor getEditor(DataContext dataContext) {
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
     if (editor == null) {
       final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
@@ -106,7 +106,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
     final Editor editor = getEditor(dataContext);
 
     PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-    boolean isInvokedFromEditor = PlatformDataKeys.EDITOR.getData(dataContext) != null;
+    boolean isInvokedFromEditor = CommonDataKeys.EDITOR.getData(dataContext) != null;
     element = getElement(project, file, editor, element);
 
     if (element == null && file == null) return;

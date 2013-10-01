@@ -17,6 +17,7 @@ package org.jetbrains.idea.devkit.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.AccessToken;
@@ -40,14 +41,14 @@ import java.util.*;
 public class ShuffleNamesAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
-    Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
+    Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     PsiFile file = LangDataKeys.PSI_FILE.getData(e.getDataContext());
     e.getPresentation().setEnabled(editor != null && file != null);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
+    final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     PsiFile file = LangDataKeys.PSI_FILE.getData(e.getDataContext());
     if (editor == null || file == null) return;
     final Project project = file.getProject();

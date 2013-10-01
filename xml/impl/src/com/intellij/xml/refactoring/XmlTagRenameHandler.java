@@ -25,6 +25,7 @@ package com.intellij.xml.refactoring;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.TitledHandler;
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -100,7 +101,7 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
 
   @Nullable
   private static Editor getEditor(@Nullable DataContext context) {
-    return PlatformDataKeys.EDITOR.getData(context);
+    return CommonDataKeys.EDITOR.getData(context);
   }
 
   @Nullable

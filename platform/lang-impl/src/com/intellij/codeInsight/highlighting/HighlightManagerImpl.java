@@ -20,6 +20,7 @@ import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -313,7 +314,7 @@ public class HighlightManagerImpl extends HighlightManager implements ProjectCom
     }
 
     private void requestHideHighlights(final DataContext dataContext) {
-      final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       if (editor == null) return;
       hideHighlights(editor, HIDE_BY_ANY_KEY);
     }

@@ -16,6 +16,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 
@@ -66,7 +67,7 @@ public class JTableCellEditorHelper {
     if (component instanceof TextComponent) {
       ((TextComponent)component).selectAll();
     } else {
-      Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(component));
+      Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(component));
       if (editor != null) {
         editor.getSelectionModel().setSelection(0, editor.getDocument().getTextLength());
       }

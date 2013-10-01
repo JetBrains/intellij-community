@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -62,7 +63,7 @@ public class XToggleLineBreakpointActionHandler extends DebuggerActionHandler {
     XSourcePosition position = XDebuggerUtilImpl.getCaretPosition(project, event.getDataContext());
     if (position == null) return;
 
-    ExpandRegionAction.expandRegionAtCaret(project, event.getData(PlatformDataKeys.EDITOR));
+    ExpandRegionAction.expandRegionAtCaret(project, event.getData(CommonDataKeys.EDITOR));
 
     int line = position.getLine();
     VirtualFile file = position.getFile();

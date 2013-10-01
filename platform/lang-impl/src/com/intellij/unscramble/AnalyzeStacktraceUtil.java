@@ -160,7 +160,7 @@ public class AnalyzeStacktraceUtil {
 
     @Override
     public Object getData(String dataId) {
-      if (PlatformDataKeys.EDITOR.is(dataId)) {
+      if (CommonDataKeys.EDITOR.is(dataId)) {
         return myEditor;
       }
       return null;

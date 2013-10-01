@@ -25,6 +25,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.CaretModel;
@@ -83,7 +84,7 @@ public class ToggleColumnModeAction extends ToggleAction implements DumbAware {
   }
 
   private static EditorEx getEditor(AnActionEvent e) {
-    return (EditorEx) PlatformDataKeys.EDITOR.getData(e.getDataContext());
+    return (EditorEx) CommonDataKeys.EDITOR.getData(e.getDataContext());
   }
 
   @Override

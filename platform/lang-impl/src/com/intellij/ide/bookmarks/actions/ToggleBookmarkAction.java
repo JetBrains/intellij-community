@@ -53,7 +53,7 @@ public class ToggleBookmarkAction extends BookmarksAction implements DumbAware {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     event.getPresentation().setEnabled(project != null &&
                                        (ToolWindowManager.getInstance(project).isEditorComponentActive() &&
-                                        PlatformDataKeys.EDITOR.getData(dataContext) != null ||
+                                        CommonDataKeys.EDITOR.getData(dataContext) != null ||
                                         PlatformDataKeys.VIRTUAL_FILE.getData(dataContext) != null));
 
     event.getPresentation().setText(IdeBundle.message("action.bookmark.toggle"));

@@ -36,7 +36,7 @@ public class JavaTypeHierarchyProvider implements HierarchyProvider {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null) return null;

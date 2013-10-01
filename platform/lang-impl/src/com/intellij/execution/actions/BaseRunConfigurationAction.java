@@ -126,7 +126,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
       final List<ConfigurationFromContext> producers = getConfigurationsFromContext(context);
       if (producers.isEmpty()) return;
       if (producers.size() > 1) {
-        final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+        final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
         Collections.sort(producers, ConfigurationFromContext.NAME_COMPARATOR);
         final ListPopup popup =
           JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<ConfigurationFromContext>(ExecutionBundle.message("configuration.action.chooser.title"), producers) {

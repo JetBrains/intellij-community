@@ -187,7 +187,7 @@ public class DeleteHandler {
         }
 
         // deleted from project view or something like that.
-        if (PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext()) == null) {
+        if (CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext()) == null) {
           CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
         }
 

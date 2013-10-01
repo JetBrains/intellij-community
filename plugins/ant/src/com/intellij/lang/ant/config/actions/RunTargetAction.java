@@ -83,7 +83,7 @@ public class RunTargetAction extends AnAction {
   private static Pair<AntBuildFileBase, AntDomTarget> findAntTarget(@NotNull AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
 
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     if (project == null || editor == null) {

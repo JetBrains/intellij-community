@@ -48,7 +48,7 @@ public class PrintAction extends AnAction implements DumbAware {
       presentation.setEnabled(true);
       return;
     }
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
     presentation.setEnabled(psiFile != null || editor != null);
   }

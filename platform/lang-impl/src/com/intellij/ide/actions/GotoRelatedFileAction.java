@@ -55,7 +55,7 @@ public class GotoRelatedFileAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
 
     DataContext context = e.getDataContext();
-    Editor editor = PlatformDataKeys.EDITOR.getData(context);
+    Editor editor = CommonDataKeys.EDITOR.getData(context);
     PsiFile psiFile = LangDataKeys.PSI_FILE.getData(context);
     if (psiFile == null) return;
 

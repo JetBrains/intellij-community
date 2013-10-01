@@ -23,7 +23,7 @@ public abstract class MoveParameterAction extends AnAction{
     final DataContext dataContext = e.getDataContext();
     final PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     LOG.assertTrue(psiElement != null);
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     LanguageChangeSignatureDetectors.INSTANCE.forLanguage(psiElement.getLanguage()).moveParameter(psiElement, editor, myLeft);
   }
 
@@ -33,7 +33,7 @@ public abstract class MoveParameterAction extends AnAction{
     final Presentation presentation = e.getPresentation();
     presentation.setEnabled(false);
     final DataContext dataContext = e.getDataContext();
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor != null) {
       final PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
       if (psiElement != null) {

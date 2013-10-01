@@ -74,7 +74,7 @@ class PrintManager {
       }
     }
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     String text = null;
     if (editor != null) {
       if (editor.getSelectionModel().hasSelection()) {

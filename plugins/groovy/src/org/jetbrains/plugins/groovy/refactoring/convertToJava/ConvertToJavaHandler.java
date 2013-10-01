@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -46,7 +47,7 @@ public class ConvertToJavaHandler implements RefactoringActionHandler {
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     Editor editor = null;
     if (dataContext != null) {
-      editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      editor = CommonDataKeys.EDITOR.getData(dataContext);
     }
     invokeInner(project, elements, editor);
   }

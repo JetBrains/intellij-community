@@ -143,7 +143,7 @@ public class XPathEvalAction extends XPathAction {
             return;
         }
 
-        Editor editor = PlatformDataKeys.EDITOR.getData(event.getDataContext());
+        Editor editor = CommonDataKeys.EDITOR.getData(event.getDataContext());
         if (editor == null) {
             FileEditorManager fem = FileEditorManager.getInstance(project);
             editor = fem.getSelectedTextEditor();

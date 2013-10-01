@@ -230,7 +230,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
         IdeFocusManager.findInstance().doWhenFocusSettlesDown(new Runnable() {
           public void run() {
             final PsiClass newClass = (PsiClass)ptr.getElement();
-            final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
+            final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
             if (editor != null && newClass != null) {
               CommandProcessor.getInstance().executeCommand(myClass.getProject(), new Runnable() {
                 public void run() {

@@ -17,6 +17,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -116,7 +117,7 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
     DataContext dataContext = DataManager.getInstance().getDataContext(focusOwner);
     boolean isDisposeInProgress = ApplicationManager.getApplication().isDisposeInProgress(); // ignore caret placing when exiting
-    Editor activeEditor = isDisposeInProgress ? null : PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor activeEditor = isDisposeInProgress ? null : CommonDataKeys.EDITOR.getData(dataContext);
 
     // when virtual space enabled, we can strip whitespace anywhere
     boolean isVirtualSpaceEnabled = activeEditor == null || activeEditor.getSettings().isVirtualSpace();
@@ -144,7 +145,7 @@ public final class TrailingSpacesStripper extends FileDocumentManagerAdapter {
     }
     DataContext dataContext = DataManager.getInstance().getDataContext(IdeFocusManager.getGlobalInstance().getFocusOwner());
     boolean isDisposeInProgress = ApplicationManager.getApplication().isDisposeInProgress(); // ignore caret placing when exiting
-    Editor activeEditor = isDisposeInProgress ? null : PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor activeEditor = isDisposeInProgress ? null : CommonDataKeys.EDITOR.getData(dataContext);
 
     // when virtual space enabled, we can strip whitespace anywhere
     boolean isVirtualSpaceEnabled = activeEditor == null || activeEditor.getSettings().isVirtualSpace();

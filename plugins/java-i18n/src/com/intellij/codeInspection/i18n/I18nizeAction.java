@@ -93,7 +93,7 @@ public class I18nizeAction extends AnAction {
   }
 
   private static Editor getEditor(final AnActionEvent e) {
-    return PlatformDataKeys.EDITOR.getData(e.getDataContext());
+    return CommonDataKeys.EDITOR.getData(e.getDataContext());
   }
 
   public static void doI18nSelectedString(final @NotNull Project project,

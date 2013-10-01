@@ -18,6 +18,7 @@ package com.intellij.openapi.ui.playback.util;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -34,7 +35,7 @@ public class EditorPlaybackCall {
     WindowSystemPlaybackCall.getUiReady(context).doWhenDone(new Runnable() {
       @Override
       public void run() {
-        Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContextFromFocus().getResult());
+        Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContextFromFocus().getResult());
         if (editor == null) {
           editor = PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE.getData(DataManager.getInstance().getDataContextFromFocus().getResult());
         }

@@ -24,6 +24,7 @@
  */
 package com.intellij.refactoring.memberPullUp;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -105,7 +106,7 @@ public class JavaPullUpHandler implements RefactoringActionHandler, PullUpDialog
   }
 
   private void invoke(Project project, DataContext dataContext, PsiClass aClass, PsiElement aMember) {
-    final Editor editor = dataContext != null ? PlatformDataKeys.EDITOR.getData(dataContext) : null;
+    final Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
     if (aClass == null) {
       String message =
         RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", REFACTORING_NAME));

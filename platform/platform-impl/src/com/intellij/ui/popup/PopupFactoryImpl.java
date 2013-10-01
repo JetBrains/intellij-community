@@ -453,7 +453,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       return new RelativePoint(focusOwner, point);
     }
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor != null && focusOwner == editor.getContentComponent()) {
       return guessBestPopupLocation(editor);
     }

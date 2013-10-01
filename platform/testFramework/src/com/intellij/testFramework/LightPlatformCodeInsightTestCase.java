@@ -465,10 +465,10 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   @Override
   public Object getData(String dataId) {
-    if (PlatformDataKeys.EDITOR.is(dataId)) {
+    if (CommonDataKeys.EDITOR.is(dataId)) {
       return myEditor;
     }
-    if (dataId.equals(AnActionEvent.injectedId(PlatformDataKeys.EDITOR.getName()))) {
+    if (dataId.equals(AnActionEvent.injectedId(CommonDataKeys.EDITOR.getName()))) {
       return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(getEditor(), getFile());
     }
     if (LangDataKeys.PSI_FILE.is(dataId)) {
@@ -618,7 +618,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       @Override
       @Nullable
       public Object getData(@NonNls String dataId) {
-        if (PlatformDataKeys.EDITOR.is(dataId)) {
+        if (CommonDataKeys.EDITOR.is(dataId)) {
           return getEditor();
         }
         if (CommonDataKeys.PROJECT.is(dataId)) {

@@ -268,7 +268,7 @@ class TextEditorComponent extends JBLoadingPanel implements DataProvider{
       if (o != null) return o;
     }
 
-    if (PlatformDataKeys.EDITOR.is(dataId)) {
+    if (CommonDataKeys.EDITOR.is(dataId)) {
       return e;
     }
     if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {

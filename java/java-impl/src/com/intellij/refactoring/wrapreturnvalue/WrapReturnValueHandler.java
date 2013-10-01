@@ -16,6 +16,7 @@
 package com.intellij.refactoring.wrapreturnvalue;
 
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -85,7 +86,7 @@ class WrapReturnValueHandler implements RefactoringActionHandler {
         if(method == null){
             return;
         }
-      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       invoke(project, method, editor);
     }
 

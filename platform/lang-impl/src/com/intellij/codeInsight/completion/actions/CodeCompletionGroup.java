@@ -35,7 +35,7 @@ public class CodeCompletionGroup extends DefaultActionGroup implements DumbAware
       return;
     }
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null){
       presentation.setEnabled(false);
       return;

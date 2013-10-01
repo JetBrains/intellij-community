@@ -31,7 +31,7 @@ public abstract class CompileActionBase extends AnAction implements DumbAware {
     if (project == null) {
       return;
     }
-    Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
     PsiFile file = e.getData(LangDataKeys.PSI_FILE);
     if (file != null && editor != null && !DumbService.getInstance(project).isDumb()) {
       DaemonCodeAnalyzer.getInstance(project).autoImportReferenceAtCursor(editor, file); //let autoimport complete

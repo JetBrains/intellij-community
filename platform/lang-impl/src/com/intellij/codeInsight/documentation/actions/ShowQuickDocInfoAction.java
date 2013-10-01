@@ -75,7 +75,7 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
       return;
     }
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     if (editor == null && element == null) {
       presentation.setEnabled(false);
@@ -120,7 +120,7 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
 
     if (project != null && editor != null) {

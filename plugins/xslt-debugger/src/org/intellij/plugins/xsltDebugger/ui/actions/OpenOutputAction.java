@@ -41,7 +41,7 @@ public class OpenOutputAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(myConsole.getComponent()));
+    final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(myConsole.getComponent()));
     if (editor != null) {
       try {
         final byte[] content = editor.getDocument().getText().getBytes("UTF-8");
@@ -60,7 +60,7 @@ public class OpenOutputAction extends AnAction {
   }
 
   public void update(AnActionEvent e) {
-    final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(myConsole.getComponent()));
+    final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(myConsole.getComponent()));
     e.getPresentation().setEnabled(editor != null && editor.getDocument().getTextLength() > 0);
   }
 }

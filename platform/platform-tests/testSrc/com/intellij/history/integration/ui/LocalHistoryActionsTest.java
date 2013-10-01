@@ -130,7 +130,7 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
       @Nullable
       public Object getData(String id) {
         if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(id)) return files;
-        if (PlatformDataKeys.EDITOR.is(id)) return editor;
+        if (CommonDataKeys.EDITOR.is(id)) return editor;
         if (CommonDataKeys.PROJECT.is(id)) return p;
         return null;
       }
