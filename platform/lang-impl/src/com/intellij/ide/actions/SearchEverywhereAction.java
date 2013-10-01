@@ -160,21 +160,36 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   public SearchEverywhereAction() {
     myContentPanel = new JPanel(new BorderLayout());
     myContentPanel.setOpaque(false);
-    mySearchLabel = new JBLabel(AllIcons.Actions.Find) {
+    mySearchLabel = new JBLabel(AllIcons.Actions.FindPlain) {
       {
         enableEvents(AWTEvent.MOUSE_EVENT_MASK);
         enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK);
+        setToolTipText("<html><body>Search Everywhere<br/>Press <b>"
+                       +
+                       KeymapUtil.getShortcutText(CustomShortcutSet.fromString("shift SPACE").getShortcuts()[0]) +
+                       "</b> to access<br/> - Classes<br/> - Files<br/> - Tool Windows<br/> - Actions<br/> - Settings</body></html>");
       }
     };
     mySearchLabel.addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
+        mySearchLabel.setIcon(AllIcons.Actions.FindPlain);
         myContentPanel.remove(mySearchLabel);
         field.getTextEditor().setColumns(SEARCH_FIELD_COLUMNS);
         myContentPanel.add(field, BorderLayout.CENTER);
         myContentPanel.revalidate();
         myContentPanel.repaint();
         IdeFocusManager.findInstanceByComponent(field.getTextEditor()).requestFocus(field.getTextEditor(), true);
+      }
+
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        mySearchLabel.setIcon(AllIcons.Actions.Find);
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        mySearchLabel.setIcon(AllIcons.Actions.FindPlain);
       }
     });
 
@@ -302,6 +317,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myAlarm.cancelAllRequests();
         clearModel();
         myContentPanel.remove(field);
+        mySearchLabel.setIcon(AllIcons.Actions.FindPlain);
         myContentPanel.add(mySearchLabel);
 
         //noinspection SSBasedInspection
