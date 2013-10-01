@@ -37,6 +37,7 @@ import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewToolWindowFactory;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -118,7 +119,7 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
 
     JComponent component = ((ProjectViewImpl)projectView).getComponent();
     DataContext context = DataManager.getInstance().getDataContext(component);
-    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(context);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(context);
     assertEquals("Class1.java", ((PsiJavaFile)element).getName());
   }
 

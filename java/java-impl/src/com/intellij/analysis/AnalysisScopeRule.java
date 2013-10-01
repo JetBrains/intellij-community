@@ -21,6 +21,7 @@
 package com.intellij.analysis;
 
 import com.intellij.ide.impl.dataRules.GetDataRule;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
@@ -37,7 +38,7 @@ public class AnalysisScopeRule implements GetDataRule {
     if (psiFile instanceof PsiJavaFile) {
       return new JavaAnalysisScope((PsiJavaFile)psiFile);
     }
-    Object psiTarget = dataProvider.getData(LangDataKeys.PSI_ELEMENT.getName());
+    Object psiTarget = dataProvider.getData(CommonDataKeys.PSI_ELEMENT.getName());
     if (psiTarget instanceof PsiPackage) {
       PsiPackage pack = (PsiPackage)psiTarget;
       PsiManager manager = pack.getManager();

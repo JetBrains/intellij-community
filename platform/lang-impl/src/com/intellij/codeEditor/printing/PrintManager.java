@@ -54,7 +54,7 @@ class PrintManager {
     if (project == null) return;
 
     PsiDirectory[] psiDirectory = new PsiDirectory[1];
-    PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     if (psiElement instanceof PsiDirectory) {
       psiDirectory[0] = (PsiDirectory)psiElement;
     }

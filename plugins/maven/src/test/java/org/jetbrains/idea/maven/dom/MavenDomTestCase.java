@@ -355,7 +355,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
     MapDataContext context = new MapDataContext();
     context.put(CommonDataKeys.EDITOR, getEditor(f));
     context.put(LangDataKeys.PSI_FILE, getTestPsiFile(f));
-    context.put(LangDataKeys.PSI_ELEMENT, TargetElementUtil.findTargetElement(getEditor(f),
+    context.put(CommonDataKeys.PSI_ELEMENT, TargetElementUtil.findTargetElement(getEditor(f),
                                                                               TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED
                                                                               | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED));
     return context;

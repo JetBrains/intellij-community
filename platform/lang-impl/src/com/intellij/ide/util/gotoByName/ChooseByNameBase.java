@@ -273,7 +273,7 @@ public abstract class ChooseByNameBase {
       if (!myListIsUpToDate) {
         return null;
       }
-      if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         Object element = getChosenElement();
 
         if (element instanceof PsiElement) {
@@ -426,7 +426,7 @@ public abstract class ChooseByNameBase {
             curElements.add((PsiElement)object);
           }
           else if (object instanceof DataProvider) {
-            final PsiElement psi = LangDataKeys.PSI_ELEMENT.getData((DataProvider)object);
+            final PsiElement psi = CommonDataKeys.PSI_ELEMENT.getData((DataProvider)object);
             if (psi != null) {
               curElements.add(psi);
             }
@@ -738,7 +738,7 @@ public abstract class ChooseByNameBase {
         myTextFieldPanel.updateHint((PsiElement)element);
       }
       else if (element instanceof DataProvider) {
-        final Object o = ((DataProvider)element).getData(LangDataKeys.PSI_ELEMENT.getName());
+        final Object o = ((DataProvider)element).getData(CommonDataKeys.PSI_ELEMENT.getName());
         if (o instanceof PsiElement) {
           myTextFieldPanel.updateHint((PsiElement)o);
         }

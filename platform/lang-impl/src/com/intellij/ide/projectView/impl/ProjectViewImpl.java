@@ -1019,7 +1019,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         if (paneSpecificData != null) return paneSpecificData;
       }
 
-      if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         if (currentProjectViewPane == null) return null;
         final PsiElement[] elements = currentProjectViewPane.getSelectedPSIElements();
         return elements.length == 1 ? elements[0] : null;

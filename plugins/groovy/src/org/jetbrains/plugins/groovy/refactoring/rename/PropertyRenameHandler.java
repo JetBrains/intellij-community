@@ -55,7 +55,7 @@ public class PropertyRenameHandler implements RenameHandler, TitledHandler {
 
   @Nullable
   private static PsiElement getElement(DataContext dataContext) {
-    return LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    return CommonDataKeys.PSI_ELEMENT.getData(dataContext);
   }
 
   public boolean isRenaming(DataContext dataContext) {

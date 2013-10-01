@@ -44,7 +44,7 @@ public class UsageTargetUtil {
       UsageTarget[] targets = findUsageTargets(editor, file);
       if (targets != null) Collections.addAll(result, targets);
     }
-    PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataProvider);
+    PsiElement psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataProvider);
     if (psiElement != null) {
       UsageTarget[] targets = findUsageTargets(psiElement);
       if (targets != null)Collections.addAll(result, targets);

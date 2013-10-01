@@ -19,6 +19,7 @@ package com.intellij.usageView.impl;
 import com.intellij.ide.hierarchy.*;
 import com.intellij.ide.hierarchy.actions.BrowseHierarchyActionBase;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -61,7 +62,7 @@ public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
       if (element == null || !element.isValid()) return false;
 
       Project project = element.getProject();
-      DataContext context = SimpleDataContext.getSimpleContext(LangDataKeys.PSI_ELEMENT.getName(), element,
+      DataContext context = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_ELEMENT.getName(), element,
                                                                SimpleDataContext.getProjectContext(project));
       HierarchyProvider provider = BrowseHierarchyActionBase.findBestHierarchyProvider(LanguageCallHierarchy.INSTANCE, element, context);
       if (provider == null) return false;
@@ -117,7 +118,7 @@ public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
 
   @Nullable
   private static HierarchyBrowser createCallHierarchyPanel(@NotNull PsiElement element) {
-    DataContext context = SimpleDataContext.getSimpleContext(LangDataKeys.PSI_ELEMENT.getName(), element, SimpleDataContext.getProjectContext(element.getProject()));
+    DataContext context = SimpleDataContext.getSimpleContext(CommonDataKeys.PSI_ELEMENT.getName(), element, SimpleDataContext.getProjectContext(element.getProject()));
     HierarchyProvider provider = BrowseHierarchyActionBase.findBestHierarchyProvider(LanguageCallHierarchy.INSTANCE, element, context);
     if (provider == null) return null;
     PsiElement providerTarget = provider.getTarget(context);

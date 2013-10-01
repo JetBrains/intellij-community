@@ -141,8 +141,8 @@ public class FileGroupingRule implements UsageGroupingRule {
       if (key == PlatformDataKeys.VIRTUAL_FILE) {
         sink.put(PlatformDataKeys.VIRTUAL_FILE, myFile);
       }
-      if (key == LangDataKeys.PSI_ELEMENT) {
-        sink.put(LangDataKeys.PSI_ELEMENT, getPsiFile());
+      if (key == CommonDataKeys.PSI_ELEMENT) {
+        sink.put(CommonDataKeys.PSI_ELEMENT, getPsiFile());
       }
     }
 

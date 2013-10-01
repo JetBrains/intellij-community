@@ -95,7 +95,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
         ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace()) ||
         ActionPlaces.FAVORITES_VIEW_POPUP.equals(event.getPlace()) ||
         ActionPlaces.NAVIGATION_BAR.equals(event.getPlace())) {
-      final PsiElement psiElement = event.getData(LangDataKeys.PSI_ELEMENT);
+      final PsiElement psiElement = event.getData(CommonDataKeys.PSI_ELEMENT);
       if(psiElement instanceof PsiMethod) {
         final PsiFile containingFile = psiElement.getContainingFile();
         if (containingFile != null) {

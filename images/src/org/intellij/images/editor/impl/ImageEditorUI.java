@@ -366,12 +366,12 @@ final class ImageEditorUI extends JPanel implements DataProvider {
     } else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       return new VirtualFile[]{editor.getFile()};
     } else if (LangDataKeys.PSI_FILE.is(dataId)) {
-      return getData(LangDataKeys.PSI_ELEMENT.getName());
-    } else if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+      return getData(CommonDataKeys.PSI_ELEMENT.getName());
+    } else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       VirtualFile file = editor.getFile();
       return file != null && file.isValid() ? PsiManager.getInstance(editor.getProject()).findFile(file) : null;
     } else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
-      return new PsiElement[]{(PsiElement)getData(LangDataKeys.PSI_ELEMENT.getName())};
+      return new PsiElement[]{(PsiElement)getData(CommonDataKeys.PSI_ELEMENT.getName())};
     } else if (PlatformDataKeys.COPY_PROVIDER.is(dataId) && copyPasteSupport != null) {
       return copyPasteSupport.getCopyProvider();
     } else if (PlatformDataKeys.CUT_PROVIDER.is(dataId) && copyPasteSupport != null) {

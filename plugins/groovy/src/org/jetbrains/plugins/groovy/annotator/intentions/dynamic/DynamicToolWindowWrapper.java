@@ -654,7 +654,7 @@ public class DynamicToolWindowWrapper {
 
     @Nullable
     public Object getData(@NonNls String dataId) {
-      if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         return getSelectedElement();
       }
       else if (LangDataKeys.PSI_FILE.is(dataId)) {

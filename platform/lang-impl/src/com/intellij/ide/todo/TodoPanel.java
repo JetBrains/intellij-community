@@ -372,7 +372,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
       final PsiFile file = getSelectedFile();
       return file != null ? file.getVirtualFile() : null;
     }
-    else if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+    else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       return getSelectedElement();
     }
     else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {

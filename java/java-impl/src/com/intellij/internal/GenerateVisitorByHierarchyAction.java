@@ -139,7 +139,7 @@ public class GenerateVisitorByHierarchyAction extends AnAction {
         return labeledComponent;
       }
     };
-    final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(e.getDataContext());
+    final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(e.getDataContext());
     if (element instanceof PsiPackage) {
       dialog.selectPackage(((PsiPackage)element).getQualifiedName());
     }

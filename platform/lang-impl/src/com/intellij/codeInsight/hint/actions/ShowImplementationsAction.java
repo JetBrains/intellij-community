@@ -105,7 +105,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
     final Editor editor = getEditor(dataContext);
 
-    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     boolean isInvokedFromEditor = CommonDataKeys.EDITOR.getData(dataContext) != null;
     element = getElement(project, file, editor, element);
 

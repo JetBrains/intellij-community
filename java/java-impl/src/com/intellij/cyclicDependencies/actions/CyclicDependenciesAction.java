@@ -115,7 +115,7 @@ public class CyclicDependenciesAction extends AnAction{
       return new AnalysisScope(modulesArray);
     }
 
-    PsiElement psiTarget = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement psiTarget = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     if (psiTarget instanceof PsiDirectory) {
       PsiDirectory psiDirectory = (PsiDirectory)psiTarget;
       if (!psiDirectory.getManager().isInProject(psiDirectory)) return null;

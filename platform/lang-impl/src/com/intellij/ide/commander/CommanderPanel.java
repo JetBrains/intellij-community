@@ -442,7 +442,7 @@ public class CommanderPanel extends JPanel {
   public final Object getDataImpl(final String dataId) {
     if (myBuilder == null) return null;
     final Object selectedValue = getSelectedValue();
-    if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       final PsiElement selectedElement = getSelectedElement();
       return selectedElement != null && selectedElement.isValid() ? selectedElement : null;
     }

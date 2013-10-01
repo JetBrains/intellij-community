@@ -40,7 +40,7 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     final ScrollingModel scrollingModel = editor.getScrollingModel();
     scrollingModel.scrollToCaret(ScrollType.MAKE_VISIBLE);
-    final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     PsiMethod selectedMethod = null;
     if (element instanceof PsiMethod) {
       selectedMethod = (PsiMethod)element;

@@ -615,7 +615,7 @@ public class FileStructurePopup implements Disposable {
         if (PlatformDataKeys.PROJECT.is(dataId)) {
           return myProject;
         }
-        if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+        if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
           final Object node = ContainerUtil.getFirstItem(myAbstractTreeBuilder.getSelectedElements());
           if (!(node instanceof FilteringTreeStructure.FilteringNode)) return null;
           return getPsi((FilteringTreeStructure.FilteringNode)node);

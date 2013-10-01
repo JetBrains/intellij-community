@@ -52,7 +52,7 @@ public class ShowSiblingsAction extends ShowImplementationsAction {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     final Editor editor = getEditor(dataContext);
 
-    PsiElement element = getElement(project, file, editor, LangDataKeys.PSI_ELEMENT.getData(dataContext));
+    PsiElement element = getElement(project, file, editor, CommonDataKeys.PSI_ELEMENT.getData(dataContext));
 
     if (element == null && file == null) return;
     PsiFile containingFile = element != null ? element.getContainingFile() : file;

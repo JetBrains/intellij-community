@@ -201,7 +201,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
-      PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element != null) {
         doUpdateComponent(element);
       }

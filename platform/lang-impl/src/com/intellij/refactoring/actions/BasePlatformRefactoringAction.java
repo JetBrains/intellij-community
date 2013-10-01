@@ -77,7 +77,7 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
       }
     }
 
-    PsiElement referenced = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement referenced = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     if (referenced != null) {
       RefactoringActionHandler handler = getHandler(referenced.getLanguage(), referenced);
       if (handler != null) {

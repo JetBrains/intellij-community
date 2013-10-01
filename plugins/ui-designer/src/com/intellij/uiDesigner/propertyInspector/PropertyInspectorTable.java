@@ -257,7 +257,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
     if(getClass().getName().equals(dataId)){
       return this;
     }
-    else if(LangDataKeys.PSI_ELEMENT.is(dataId)){
+    else if(CommonDataKeys.PSI_ELEMENT.is(dataId)){
       final IntrospectedProperty introspectedProperty = getSelectedIntrospectedProperty();
       if(introspectedProperty == null){
         return null;

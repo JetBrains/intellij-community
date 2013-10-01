@@ -41,7 +41,7 @@ public class ModuleRule implements GetDataRule {
     }
     Project project = CommonDataKeys.PROJECT.getData(dataProvider);
     if (project == null) {
-      PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataProvider);
+      PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataProvider);
       if (element == null) {
         PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataProvider);
         if (psiElements != null && psiElements.length > 0) {

@@ -421,8 +421,8 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
         } else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
             return getSelectedFiles();
         } else if (LangDataKeys.PSI_FILE.is(dataId)) {
-            return getData(LangDataKeys.PSI_ELEMENT.getName());
-        } else if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+            return getData(CommonDataKeys.PSI_ELEMENT.getName());
+        } else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
             VirtualFile[] selectedFiles = getSelectedFiles();
             return selectedFiles.length > 0 ? PsiManager.getInstance(thumbnailView.getProject()).findFile(selectedFiles[0]) : null;
         } else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {

@@ -133,7 +133,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
         return;
       }
 
-      PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element == null) return;
       if (element instanceof PsiDirectoryContainer) {
         dir = ((PsiDirectoryContainer)element).getDirectories()[0];
@@ -298,7 +298,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     }
     else if (LangDataKeys.MODULE_CONTEXT.getData(dataContext) == null &&
              PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext) == null) {
-      PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element == null) {
         presentation.setEnabled(false);
         return;

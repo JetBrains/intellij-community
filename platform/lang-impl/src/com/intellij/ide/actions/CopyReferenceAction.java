@@ -124,7 +124,7 @@ public class CopyReferenceAction extends DumbAwareAction {
     }
 
     if (element == null) {
-      element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     }
     if (element == null && editor == null) {
       VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);

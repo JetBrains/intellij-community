@@ -61,7 +61,7 @@ public class RunInspectionAction extends GotoActionBase {
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    final PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(e.getDataContext());
+    final PsiElement psiElement = CommonDataKeys.PSI_ELEMENT.getData(e.getDataContext());
     final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(e.getDataContext());
     final VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
 

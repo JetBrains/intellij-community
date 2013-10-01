@@ -53,7 +53,7 @@ public class PsiClassFavoriteNodeProvider extends FavoriteNodeProvider {
     if (project == null) return null;
     PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(context);
     if (elements == null) {
-      final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(context);
+      final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(context);
       if (element != null) {
         elements = new PsiElement[]{element};
       }

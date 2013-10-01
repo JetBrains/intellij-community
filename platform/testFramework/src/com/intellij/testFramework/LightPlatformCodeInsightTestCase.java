@@ -627,7 +627,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         if (LangDataKeys.PSI_FILE.is(dataId)) {
           return getFile();
         }
-        if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+        if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
           PsiFile file = getFile();
           if (file == null) return null;
           Editor editor = getEditor();

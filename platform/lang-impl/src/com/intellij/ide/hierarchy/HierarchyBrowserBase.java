@@ -207,7 +207,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   @Override
   @Nullable
   public Object getData(@NonNls final String dataId) {
-    if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       final PsiElement anElement = getSelectedElement();
       return anElement != null && anElement.isValid() ? anElement : super.getData(dataId);
     }

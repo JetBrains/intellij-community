@@ -77,7 +77,7 @@ public class DeleteHandler {
     private static PsiElement[] getPsiElements(DataContext dataContext) {
       PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
       if (elements == null) {
-        final Object data = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+        final Object data = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
         if (data != null) {
           elements = new PsiElement[]{(PsiElement)data};
         }

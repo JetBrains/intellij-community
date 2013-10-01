@@ -656,7 +656,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
       if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
         return getSelectedNavigatable(problem, psiElement);
       }
-      else if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+      else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         return psiElement.isValid() ? psiElement : null;
       }
     }

@@ -86,7 +86,7 @@ public class FindInProjectUtil {
   public static void setDirectoryName(@NotNull FindModel model, @NotNull DataContext dataContext) {
     PsiElement psiElement;
     try {
-      psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     }
     catch (IndexNotReadyException e) {
       psiElement = null;

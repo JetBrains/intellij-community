@@ -429,7 +429,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     if (LangDataKeys.NO_NEW_ACTION.is(dataId)) {
       return Boolean.TRUE;
     }
-    if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       PsiElement[] elements = getSelectedPsiElements();
       if (elements.length != 1) {
         return null;

@@ -16,6 +16,7 @@
 
 package com.intellij.ide.impl.dataRules;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -45,7 +46,7 @@ public class VirtualFileRule implements GetDataRule {
     if (psiFile != null) {
       return psiFile.getVirtualFile();
     }
-    PsiElement elem = LangDataKeys.PSI_ELEMENT.getData(dataProvider);
+    PsiElement elem = CommonDataKeys.PSI_ELEMENT.getData(dataProvider);
     if (elem == null) {
       return null;
     }

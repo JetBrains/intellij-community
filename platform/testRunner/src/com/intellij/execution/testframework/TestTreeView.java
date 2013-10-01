@@ -94,7 +94,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
         for (TreePath path : paths) {
           AbstractTestProxy test = getSelectedTest(path);
           if (test != null) {
-            final PsiElement psiElement = (PsiElement)TestsUIUtil.getData(test, LangDataKeys.PSI_ELEMENT.getName(), myModel);
+            final PsiElement psiElement = (PsiElement)TestsUIUtil.getData(test, CommonDataKeys.PSI_ELEMENT.getName(), myModel);
             if (psiElement != null) {
               els.add(psiElement);
             }
@@ -113,13 +113,13 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
 
   @Override
   public void performCopy(@NotNull DataContext dataContext) {
-    final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     CopyPasteManager.getInstance().setContents(new StringSelection(CopyReferenceAction.elementToFqn(element)));
   }
 
   @Override
   public boolean isCopyEnabled(@NotNull DataContext dataContext) {
-    return LangDataKeys.PSI_ELEMENT.getData(dataContext) != null;
+    return CommonDataKeys.PSI_ELEMENT.getData(dataContext) != null;
   }
 
   @Override

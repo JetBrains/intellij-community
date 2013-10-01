@@ -135,7 +135,7 @@ public class UpdateCopyrightAction extends AnAction {
         return;
       }
 
-      final PsiElement psielement = LangDataKeys.PSI_ELEMENT.getData(context);
+      final PsiElement psielement = CommonDataKeys.PSI_ELEMENT.getData(context);
       if (psielement == null) {
         return;
       }

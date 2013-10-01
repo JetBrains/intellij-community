@@ -219,7 +219,7 @@ public class ConfigurationContext {
       }
     }
     if (element == null) {
-      element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     }
     if (element == null) {
       final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);

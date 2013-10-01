@@ -113,7 +113,7 @@ public class ChangeSignatureAction extends BaseRefactoringAction {
   public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     Language language = LangDataKeys.LANGUAGE.getData(dataContext);
     if (language == null) {
-      PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      PsiElement psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       if (psiElement != null) {
         language = psiElement.getLanguage();
       }

@@ -16,6 +16,7 @@
 
 package com.intellij.ide.impl.dataRules;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -95,7 +96,7 @@ public class VirtualFileArrayRule implements GetDataRule {
       return VfsUtilCore.toVirtualFileArray(result);
     }
 
-    PsiElement elem = LangDataKeys.PSI_ELEMENT.getData(dataProvider);
+    PsiElement elem = CommonDataKeys.PSI_ELEMENT.getData(dataProvider);
     if (elem != null) {
       result = addFilesFromPsiElement(result, elem);
     }

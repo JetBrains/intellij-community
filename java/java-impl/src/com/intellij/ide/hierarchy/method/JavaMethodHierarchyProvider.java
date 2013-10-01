@@ -53,7 +53,7 @@ public class JavaMethodHierarchyProvider implements HierarchyProvider {
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
-    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     final PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
 
     if (method != null) {

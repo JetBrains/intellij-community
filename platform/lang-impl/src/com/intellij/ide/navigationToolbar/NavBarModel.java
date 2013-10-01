@@ -101,7 +101,7 @@ public class NavBarModel {
 
     PsiElement psiElement = LangDataKeys.PSI_FILE.getData(dataContext);
     if (psiElement == null) {
-      psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     }
 
     psiElement = normalize(psiElement);

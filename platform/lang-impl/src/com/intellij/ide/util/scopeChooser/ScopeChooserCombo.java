@@ -20,6 +20,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.ide.projectView.impl.AbstractUrl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -247,7 +248,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     if (dataContext != null) {
       PsiElement dataContextElement = LangDataKeys.PSI_FILE.getData(dataContext);
       if (dataContextElement == null) {
-        dataContextElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+        dataContextElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       }
       if (dataContextElement != null) {
         if (!PlatformUtils.isCidr()) { // TODO: have an API to disable module scopes.

@@ -147,8 +147,8 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
       if (PlatformDataKeys.VIRTUAL_FILE == key) {
         sink.put(PlatformDataKeys.VIRTUAL_FILE, myDir);
       }
-      if (LangDataKeys.PSI_ELEMENT == key) {
-        sink.put(LangDataKeys.PSI_ELEMENT, getDirectory());
+      if (CommonDataKeys.PSI_ELEMENT == key) {
+        sink.put(CommonDataKeys.PSI_ELEMENT, getDirectory());
       }
     }
   }

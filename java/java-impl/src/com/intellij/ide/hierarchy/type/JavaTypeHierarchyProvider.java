@@ -65,7 +65,7 @@ public class JavaTypeHierarchyProvider implements HierarchyProvider {
       return null;
     }
     else {
-      final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       return element instanceof PsiClass ? (PsiClass)element : null;
     }
   }

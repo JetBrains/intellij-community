@@ -16,6 +16,7 @@
 
 package com.intellij.refactoring.ui;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -149,10 +150,10 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
 
   @Override
   public void calcData(final DataKey key, final DataSink sink) {
-    if (key == LangDataKeys.PSI_ELEMENT) {
+    if (key == CommonDataKeys.PSI_ELEMENT) {
       final Collection<M> memberInfos = getSelectedMemberInfos();
       if (memberInfos.size() > 0) {
-        sink.put(LangDataKeys.PSI_ELEMENT, memberInfos.iterator().next().getMember());
+        sink.put(CommonDataKeys.PSI_ELEMENT, memberInfos.iterator().next().getMember());
       }
     }
   }

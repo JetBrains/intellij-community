@@ -698,11 +698,11 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
   @Override
   public void calcData(final DataKey key, final DataSink sink) {
-    if (key.equals(LangDataKeys.PSI_ELEMENT)) {
+    if (key.equals(CommonDataKeys.PSI_ELEMENT)) {
       if (mySelectedElements != null && !mySelectedElements.isEmpty()) {
         T selectedElement = mySelectedElements.iterator().next();
         if (selectedElement instanceof ClassMemberWithElement) {
-          sink.put(LangDataKeys.PSI_ELEMENT, ((ClassMemberWithElement)selectedElement).getElement());
+          sink.put(CommonDataKeys.PSI_ELEMENT, ((ClassMemberWithElement)selectedElement).getElement());
         }
       }
     }
