@@ -137,12 +137,6 @@ public class IdeaApplication {
     new JFrame().pack(); // this peer will prevent shutting down our application
 
     final File file = new File(PathManager.getSystemPath());
-    if (!file.canWrite()) {
-      String fullProductName = ApplicationNamesInfo.getInstance().getFullProductName();
-      String message = "System directory of " + fullProductName + " is read only";
-      LOG.info(message);
-      Messages.showErrorDialog(message, "Fatal Configuration Problem");
-    }
     final AtomicBoolean reported = new AtomicBoolean();
     final long lowDiskSpaceThreshold = 50 * 1024 * 1024;
     final ThreadLocal<Future<Long>> ourFreeSpaceCalculation = new ThreadLocal<Future<Long>>();
