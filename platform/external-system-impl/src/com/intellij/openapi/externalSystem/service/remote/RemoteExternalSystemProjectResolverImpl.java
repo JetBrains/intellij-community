@@ -30,7 +30,7 @@ public class RemoteExternalSystemProjectResolverImpl<S extends ExternalSystemExe
   @Override
   public DataNode<ProjectData> resolveProjectInfo(@NotNull final ExternalSystemTaskId id,
                                                   @NotNull final String projectPath,
-                                                  final boolean downloadLibraries,
+                                                  final boolean isPreviewMode,
                                                   ExternalSystemExecutionSettings settings)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException
   {
@@ -38,7 +38,7 @@ public class RemoteExternalSystemProjectResolverImpl<S extends ExternalSystemExe
       @Nullable
       @Override
       public DataNode<ProjectData> produce() {
-        return myDelegate.resolveProjectInfo(id, projectPath, downloadLibraries, getSettings(), getNotificationListener());
+        return myDelegate.resolveProjectInfo(id, projectPath, isPreviewMode, getSettings(), getNotificationListener());
       }
     });
   }

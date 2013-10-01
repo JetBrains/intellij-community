@@ -339,7 +339,7 @@ public class GradleManager
               @Override
               public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
               }
-            }, true, true);
+            }, false, true);
         }
       }
     });

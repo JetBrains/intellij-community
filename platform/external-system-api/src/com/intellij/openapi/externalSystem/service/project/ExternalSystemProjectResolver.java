@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Defines common interface for resolving external system project..
- * 
+ *
  * @author Denis Zhdanov
  * @since 4/9/13 3:53 PM
  */
@@ -37,7 +37,10 @@ public interface ExternalSystemProjectResolver<S extends ExternalSystemExecution
    *
    * @param id                id of the current 'resolve project info' task
    * @param projectPath       absolute path to the target external system config file
-   * @param downloadLibraries a hint that specifies if third-party libraries that are not available locally should be resolved (downloaded)
+   * @param isPreviewMode     Indicates, that an implementation can not provide/resolve any external dependencies.
+   *                          Only project dependencies and local file dependencies may included on the modules' classpath.
+   *                          And should not include any 'heavy' tasks like not trivial code generations.
+   *                          It is supposed to be fast.
    * @param settings          settings to use for the project resolving;
    *                          <code>null</code> as indication that no specific settings are required
    * @param listener          callback to be notified about the execution
@@ -50,8 +53,9 @@ public interface ExternalSystemProjectResolver<S extends ExternalSystemExecution
   @Nullable
   DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
                                            @NotNull String projectPath,
-                                           boolean downloadLibraries,
+                                           boolean isPreviewMode,
                                            @Nullable S settings,
                                            @NotNull ExternalSystemTaskNotificationListener listener)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException;
 }
+

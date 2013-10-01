@@ -332,7 +332,7 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
 
     for (Map.Entry<ProjectSystemId, Set<String>> entry : copy.entrySet()) {
       for (String path : entry.getValue()) {
-        ExternalSystemUtil.refreshProject(myProject, entry.getKey(), path, myRefreshCallback, true, false, false);
+        ExternalSystemUtil.refreshProject(myProject, entry.getKey(), path, myRefreshCallback, false, false, false);
       }
     }
   }

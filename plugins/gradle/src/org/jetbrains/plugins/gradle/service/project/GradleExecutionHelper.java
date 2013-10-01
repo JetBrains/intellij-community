@@ -28,11 +28,11 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.gradle.StartParameter;
+import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
 import org.gradle.tooling.internal.consumer.Distribution;
-import org.gradle.tooling.model.idea.BasicIdeaProject;
-import org.gradle.tooling.model.idea.IdeaProject;
+import org.gradle.tooling.model.build.BuildEnvironment;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
@@ -43,7 +43,6 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -53,16 +52,6 @@ import java.util.concurrent.TimeUnit;
  */
 public class GradleExecutionHelper {
 
-  @NotNull
-  public ModelBuilder<? extends IdeaProject> getModelBuilder(@NotNull final ExternalSystemTaskId id,
-                                                             @Nullable GradleExecutionSettings settings,
-                                                             @NotNull ProjectConnection connection,
-                                                             @NotNull ExternalSystemTaskNotificationListener listener,
-                                                             boolean downloadLibraries)
-  {
-    return getModelBuilder(downloadLibraries ? IdeaProject.class : BasicIdeaProject.class, id, settings, connection, listener,
-                           Collections.<String>emptyList());
-  }
 
   @SuppressWarnings("MethodMayBeStatic")
   @NotNull
@@ -74,7 +63,7 @@ public class GradleExecutionHelper {
                                              @NotNull List<String> extraJvmArgs)
   {
     ModelBuilder<T> result = connection.model(modelType);
-    prepare(result, id, settings, listener, extraJvmArgs);
+    prepare(result, id, settings, listener, extraJvmArgs, connection);
     return result;
   }
 
@@ -88,7 +77,7 @@ public class GradleExecutionHelper {
   {
     BuildLauncher result = connection.newBuild();
     List<String> extraJvmArgs = vmOptions == null ? ContainerUtil.<String>emptyList() : ContainerUtil.newArrayList(vmOptions.trim());
-    prepare(result, id, settings, listener, extraJvmArgs);
+    prepare(result, id, settings, listener, extraJvmArgs, connection);
     return result;
   }
 
@@ -97,7 +86,8 @@ public class GradleExecutionHelper {
                              @NotNull final ExternalSystemTaskId id,
                              @Nullable GradleExecutionSettings settings,
                              @NotNull final ExternalSystemTaskNotificationListener listener,
-                             @NotNull List<String> extraJvmArgs)
+                             @NotNull List<String> extraJvmArgs,
+                             @NotNull ProjectConnection connection)
   {
     if (settings == null) {
       return;
@@ -119,7 +109,9 @@ public class GradleExecutionHelper {
     jvmArgs.addAll(extraJvmArgs);
 
     if (!jvmArgs.isEmpty()) {
-      operation.setJvmArguments(ArrayUtilRt.toStringArray(jvmArgs));
+      List<String> args = connection.getModel(BuildEnvironment.class).getJava().getJvmArguments();
+      List<String> merged = mergeJvmArgs(args, jvmArgs);
+      operation.setJvmArguments(ArrayUtilRt.toStringArray(merged));
     }
 
     listener.onStart(id);
@@ -229,6 +221,12 @@ public class GradleExecutionHelper {
         // ignore
       }
     }
+  }
+
+  private static List<String> mergeJvmArgs(List<String> jvmArgs1, List<String> jvmArgs2) {
+    JvmOptions jvmOptions = new JvmOptions(null);
+    jvmOptions.setAllJvmArgs(ContainerUtil.concat(jvmArgs1, jvmArgs2));
+    return jvmOptions.getAllJvmArgs();
   }
 
   /**

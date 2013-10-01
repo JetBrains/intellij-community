@@ -92,6 +92,6 @@ public class RefreshExternalProjectAction extends AnAction implements DumbAware,
         @Override
         public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
         }
-      }, true, false);
+      }, false, false);
   }
 }

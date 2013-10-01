@@ -40,13 +40,13 @@ public class ExternalSystemProjectResolverWrapper<S extends ExternalSystemExecut
   @Override
   public DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
                                                     @NotNull String projectPath,
-                                                    boolean downloadLibraries,
+                                                    boolean isPreviewMode,
                                                     @Nullable S settings)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException, RemoteException
   {
     myProgressManager.onQueued(id);
     try {
-      return getDelegate().resolveProjectInfo(id, projectPath, downloadLibraries, settings);
+      return getDelegate().resolveProjectInfo(id, projectPath, isPreviewMode, settings);
     }
     finally {
       myProgressManager.onEnd(id);

@@ -44,7 +44,7 @@ public interface RemoteExternalSystemProjectResolver<S extends ExternalSystemExe
     @Override
     public DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
                                                     @NotNull String projectPath,
-                                                    boolean downloadLibraries,
+                                                    boolean isPreviewMode,
                                                     @Nullable ExternalSystemExecutionSettings settings)
       throws ExternalSystemException, IllegalArgumentException, IllegalStateException
     {
@@ -75,7 +75,7 @@ public interface RemoteExternalSystemProjectResolver<S extends ExternalSystemExe
   @Nullable
   DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
                                            @NotNull String projectPath,
-                                           boolean downloadLibraries,
+                                           boolean isPreviewMode,
                                            @Nullable S settings)
     throws RemoteException, ExternalSystemException, IllegalArgumentException, IllegalStateException;
 }

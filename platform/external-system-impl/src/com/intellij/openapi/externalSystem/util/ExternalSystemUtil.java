@@ -33,6 +33,7 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExe
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.ImportCanceledException;
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
@@ -257,7 +258,7 @@ public class ExternalSystemUtil {
     if (!toRefresh.isEmpty()) {
       counter[0] = toRefresh.size();
       for (String path : toRefresh) {
-        refreshProject(project, externalSystemId, path, callback, true, modal);
+        refreshProject(project, externalSystemId, path, callback, false, modal);
       }
     }
   }
@@ -373,16 +374,16 @@ public class ExternalSystemUtil {
    * @param project               target intellij project to use
    * @param externalProjectPath   path of the target gradle project's file
    * @param callback              callback to be notified on refresh result
-   * @param resolveLibraries      flag that identifies whether gradle libraries should be resolved during the refresh
+   * @param isPreviewMode         flag that identifies whether gradle libraries should be resolved during the refresh
    * @return the most up-to-date gradle project (if any)
    */
   public static void refreshProject(@NotNull final Project project,
                                     @NotNull final ProjectSystemId externalSystemId,
                                     @NotNull final String externalProjectPath,
                                     @NotNull final ExternalProjectRefreshCallback callback,
-                                    final boolean resolveLibraries,
+                                    final boolean isPreviewMode,
                                     final boolean modal) {
-    refreshProject(project, externalSystemId, externalProjectPath, callback, resolveLibraries, modal, true);
+    refreshProject(project, externalSystemId, externalProjectPath, callback, isPreviewMode, modal, true);
   }
 
   /**
@@ -391,7 +392,7 @@ public class ExternalSystemUtil {
    * @param project               target intellij project to use
    * @param externalProjectPath   path of the target gradle project's file
    * @param callback              callback to be notified on refresh result
-   * @param resolveLibraries      flag that identifies whether gradle libraries should be resolved during the refresh
+   * @param isPreviewMode         flag that identifies whether gradle libraries should be resolved during the refresh
    * @param reportRefreshError    prevent to show annoying error notification, e.g. if auto-import mode used
    * @return the most up-to-date gradle project (if any)
    */
@@ -399,7 +400,7 @@ public class ExternalSystemUtil {
                                     @NotNull final ProjectSystemId externalSystemId,
                                     @NotNull final String externalProjectPath,
                                     @NotNull final ExternalProjectRefreshCallback callback,
-                                    final boolean resolveLibraries,
+                                    final boolean isPreviewMode,
                                     final boolean modal,
                                     final boolean reportRefreshError)
   {
@@ -416,7 +417,7 @@ public class ExternalSystemUtil {
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
         ExternalSystemResolveProjectTask task
-          = new ExternalSystemResolveProjectTask(externalSystemId, project, externalProjectPath, resolveLibraries);
+          = new ExternalSystemResolveProjectTask(externalSystemId, project, externalProjectPath, isPreviewMode);
         task.execute(indicator);
         final Throwable error = task.getError();
         if (error == null) {
@@ -428,6 +429,10 @@ public class ExternalSystemUtil {
           }
           DataNode<ProjectData> externalProject = task.getExternalProject();
           callback.onSuccess(externalProject);
+          return;
+        }
+        if(error instanceof ImportCanceledException) {
+          // stop refresh task
           return;
         }
         String message = ExternalSystemApiUtil.buildErrorMessage(error);
@@ -631,7 +636,7 @@ public class ExternalSystemUtil {
    *                                 project has been successfully linked to the given ide project;
    *                                 <code>false</code> otherwise (note that corresponding notification with error details is expected
    *                                 to be shown to the end-user then)
-   * @param resolveLibraries         flag which identifies if missing external project binaries should be downloaded
+   * @param isPreviewMode            flag which identifies if missing external project binaries should be downloaded
    * @param modal                    flag which identifies if progress bar which represents current processing state should be modal
    */
   @SuppressWarnings("UnusedDeclaration")
@@ -639,7 +644,7 @@ public class ExternalSystemUtil {
                                          @NotNull final ExternalProjectSettings projectSettings,
                                          @NotNull final Project project,
                                          @Nullable final Consumer<Boolean> executionResultCallback,
-                                         boolean resolveLibraries,
+                                         boolean isPreviewMode,
                                          boolean modal)
   {
     ExternalProjectRefreshCallback callback = new ExternalProjectRefreshCallback() {
@@ -681,7 +686,7 @@ public class ExternalSystemUtil {
         }
       }
     };
-    refreshProject(project, externalSystemId, projectSettings.getExternalProjectPath(), callback, resolveLibraries, modal);
+    refreshProject(project, externalSystemId, projectSettings.getExternalProjectPath(), callback, isPreviewMode, modal);
   }
   
   private interface TaskUnderProgress {
