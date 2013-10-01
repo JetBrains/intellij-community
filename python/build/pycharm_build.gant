@@ -240,7 +240,7 @@ private scramble() {
 }
 
 private String appInfoFile() {
-  return "$home/out/pycharm/classes/production/python-ide-community/idea/PythonApplicationInfo.xml"
+  return "$home/out/pycharm/classes/production/python-ide/idea/PythonApplicationInfo.xml"
 }
 
 private layoutFull(Map args, String target, Set usedJars) {
