@@ -427,7 +427,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             return selectedFiles.length > 0 ? PsiManager.getInstance(thumbnailView.getProject()).findFile(selectedFiles[0]) : null;
         } else if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
             return getSelectedElements();
-        } else if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+        } else if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
             VirtualFile[] selectedFiles = getSelectedFiles();
             return new ThumbnailNavigatable(selectedFiles.length > 0 ? selectedFiles[0] : null);
         } else if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
@@ -438,7 +438,7 @@ final class ThumbnailViewUI extends JPanel implements DataProvider, Disposable {
             return copyPasteSupport.getPasteProvider();
         } else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
             return deleteProvider;
-        } else if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+        } else if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
             VirtualFile[] selectedFiles = getSelectedFiles();
             Set<Navigatable> navigatables = new HashSet<Navigatable>(selectedFiles.length);
             for (VirtualFile selectedFile : selectedFiles) {

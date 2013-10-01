@@ -88,7 +88,7 @@ public abstract class SelectInContextImpl implements SelectInContext {
     }
 
     if (selectInContext == null) {
-      Navigatable descriptor = PlatformDataKeys.NAVIGATABLE.getData(dataContext);
+      Navigatable descriptor = CommonDataKeys.NAVIGATABLE.getData(dataContext);
       if (descriptor instanceof OpenFileDescriptor) {
         final VirtualFile file = ((OpenFileDescriptor)descriptor).getFile();
         if (file.isValid()) {

@@ -818,7 +818,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @Override
   public Object getData(final String dataId) {
-    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       if (myEditor == null) {
         return null;
       }

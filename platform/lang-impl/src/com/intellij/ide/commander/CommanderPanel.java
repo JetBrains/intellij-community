@@ -454,7 +454,7 @@ public class CommanderPanel extends JPanel {
       final Object element = parentNode != null ? parentNode.getValue() : null;
       return element instanceof PsiElement && ((PsiElement)element).isValid() ? element : null;
     }
-    if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       return getNavigatables();
     }
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {

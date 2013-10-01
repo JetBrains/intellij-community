@@ -28,7 +28,7 @@ import com.intellij.psi.PsiElement;
 public class NavigatableRule implements GetDataRule {
   @Override
   public Object getData(DataProvider dataProvider) {
-    final Navigatable navigatable = PlatformDataKeys.NAVIGATABLE.getData(dataProvider);
+    final Navigatable navigatable = CommonDataKeys.NAVIGATABLE.getData(dataProvider);
     if (navigatable != null && navigatable instanceof OpenFileDescriptor) {
       final OpenFileDescriptor openFileDescriptor = (OpenFileDescriptor)navigatable;
 

@@ -137,7 +137,7 @@ public class EditorsPanel extends JPanel implements TypeSafeDataProvider {
     if (key.equals(CommonDataKeys.PROJECT)) {
       sink.put(CommonDataKeys.PROJECT, myProject);
     }
-    else if (key.equals(PlatformDataKeys.NAVIGATABLE)) {
+    else if (key.equals(CommonDataKeys.NAVIGATABLE)) {
       final EditorInfo editorInfo = myTable.getSelectedObject();
       if (editorInfo == null) {
         return;
@@ -150,7 +150,7 @@ public class EditorsPanel extends JPanel implements TypeSafeDataProvider {
       final File file = new File(editorInfo.getPath(), filePath);
       final VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(file);
       if (vf != null) {
-        sink.put(PlatformDataKeys.NAVIGATABLE, new OpenFileDescriptor(myProject, vf));
+        sink.put(CommonDataKeys.NAVIGATABLE, new OpenFileDescriptor(myProject, vf));
       }
     }
   }

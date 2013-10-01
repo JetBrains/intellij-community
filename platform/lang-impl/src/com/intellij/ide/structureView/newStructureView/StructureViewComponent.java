@@ -689,7 +689,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       if (myAbstractTreeBuilder == null) return;
       myAutoscrollFeedback = true;
 
-      Navigatable editSourceDescriptor = PlatformDataKeys.NAVIGATABLE.getData(DataManager.getInstance().getDataContext(getTree()));
+      Navigatable editSourceDescriptor = CommonDataKeys.NAVIGATABLE.getData(DataManager.getInstance().getDataContext(getTree()));
       if (myFileEditor != null && editSourceDescriptor != null && editSourceDescriptor.canNavigateToSource()) {
         editSourceDescriptor.navigate(false);
       }
@@ -777,7 +777,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     if (PlatformDataKeys.PASTE_PROVIDER.is(dataId)) {
       return myCopyPasteDelegator.getPasteProvider();
     }
-    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       Object[] selectedElements = getSelectedTreeElements();
       if (selectedElements == null || selectedElements.length == 0) return null;
       if (selectedElements[0] instanceof Navigatable) {

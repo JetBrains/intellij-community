@@ -258,7 +258,7 @@ public final class ComponentTree extends Tree implements DataProvider {
       return myFormEditor;
     }
 
-    if (!PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (!CommonDataKeys.NAVIGATABLE.is(dataId)) {
       return null;
     }
 

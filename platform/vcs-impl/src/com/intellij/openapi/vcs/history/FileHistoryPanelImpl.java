@@ -1192,7 +1192,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
 
   public Object getData(String dataId) {
     VcsFileRevision firstSelectedRevision = getFirstSelectedRevision();
-    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       List selectedItems = getSelection();
       if (selectedItems.size() != 1) return null;
       if (!myHistorySession.isContentAvailable(firstSelectedRevision)) {

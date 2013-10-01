@@ -46,12 +46,12 @@ public class StructureTree extends Tree implements TypeSafeDataProvider {
   }
 
   public void calcData(DataKey key, DataSink sink) {
-    if (key.equals(PlatformDataKeys.NAVIGATABLE)) {
+    if (key.equals(CommonDataKeys.NAVIGATABLE)) {
       final TreePath selection = getSelectionPath();
       if (selection != null) {
         final Object o = selection.getLastPathComponent();
         if (o instanceof Navigatable) {
-          sink.put(PlatformDataKeys.NAVIGATABLE, (Navigatable)o);
+          sink.put(CommonDataKeys.NAVIGATABLE, (Navigatable)o);
         }
       }
     } else if (key.equals(CopyValueAction.SELECTED_NODE)) {

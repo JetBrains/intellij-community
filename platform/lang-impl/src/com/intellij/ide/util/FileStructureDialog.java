@@ -417,7 +417,7 @@ public class FileStructureDialog extends DialogWrapper {
 
       if (selectedElement instanceof TreeElement) selectedElement = ((StructureViewTreeElement)selectedElement).getValue();
 
-      if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
         return selectedElement instanceof Navigatable ? selectedElement : myNavigatable;
       }
 

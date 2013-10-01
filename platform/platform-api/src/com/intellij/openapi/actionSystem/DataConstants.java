@@ -128,14 +128,14 @@ public interface DataConstants {
    *
    * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#NAVIGATABLE} instead
    */
-  String NAVIGATABLE = PlatformDataKeys.NAVIGATABLE.getName();
+  String NAVIGATABLE = CommonDataKeys.NAVIGATABLE.getName();
 
   /**
    * Returns an array of {@link com.intellij.pom.Navigatable}
    *
    * @deprecated use {@link com.intellij.openapi.actionSystem.PlatformDataKeys#NAVIGATABLE_ARRAY} instead
    */
-  String NAVIGATABLE_ARRAY = PlatformDataKeys.NAVIGATABLE_ARRAY.getName();
+  String NAVIGATABLE_ARRAY = CommonDataKeys.NAVIGATABLE_ARRAY.getName();
 
   /**
    * Returns {@link com.intellij.ide.ExporterToTextFile}

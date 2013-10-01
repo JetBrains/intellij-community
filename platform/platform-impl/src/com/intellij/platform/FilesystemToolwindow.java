@@ -78,7 +78,7 @@ public class FilesystemToolwindow {
 
     @Nullable
     public Object getData(@NonNls final String dataId) {
-      if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
         final VirtualFile file = myFsTree.getSelectedFile();
         if (file != null) {
           return new OpenFileDescriptor(myProject, file);

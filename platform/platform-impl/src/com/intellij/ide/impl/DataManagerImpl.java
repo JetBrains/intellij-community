@@ -280,7 +280,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     myDataConstantToRuleMap.put(PlatformDataKeys.PASTE_PROVIDER.getName(), new PasteProviderRule());
     myDataConstantToRuleMap.put(PlatformDataKeys.FILE_TEXT.getName(), new FileTextRule());
     myDataConstantToRuleMap.put(PlatformDataKeys.FILE_EDITOR.getName(), new FileEditorRule());
-    myDataConstantToRuleMap.put(PlatformDataKeys.NAVIGATABLE_ARRAY.getName(), new NavigatableArrayRule());
+    myDataConstantToRuleMap.put(CommonDataKeys.NAVIGATABLE_ARRAY.getName(), new NavigatableArrayRule());
     myDataConstantToRuleMap.put(PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE.getName(), new InactiveEditorRule());
   }
 

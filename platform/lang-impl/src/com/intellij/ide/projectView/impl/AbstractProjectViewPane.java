@@ -32,6 +32,7 @@ import com.intellij.ide.projectView.impl.nodes.ModuleGroupNode;
 import com.intellij.ide.util.treeView.*;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -265,7 +266,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @Override
   public Object getData(String dataId) {
-    if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       TreePath[] paths = getSelectionPaths();
       if (paths == null) return null;
       final ArrayList<Navigatable> navigatables = new ArrayList<Navigatable>();

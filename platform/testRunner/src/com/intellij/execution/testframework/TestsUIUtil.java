@@ -54,8 +54,8 @@ public class TestsUIUtil {
     final Project project = properties.getProject();
     if (testProxy == null) return null;
     if (AbstractTestProxy.DATA_KEY.is(dataId)) return testProxy;
-    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) return getOpenFileDescriptor(testProxy, model);
-    if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) return getOpenFileDescriptor(testProxy, model);
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       final Navigatable openFileDescriptor = getOpenFileDescriptor(testProxy, model);
       return openFileDescriptor != null ? new Navigatable[]{openFileDescriptor} : null;
     }

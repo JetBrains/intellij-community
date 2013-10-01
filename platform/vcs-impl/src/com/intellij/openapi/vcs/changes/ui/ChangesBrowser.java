@@ -180,8 +180,8 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     }    else if (key == CommonDataKeys.VIRTUAL_FILE_ARRAY) {
       sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles());
     }
-    else if (key == PlatformDataKeys.NAVIGATABLE_ARRAY) {
-      sink.put(PlatformDataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles()));
+    else if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
+      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getSelectedFiles()));
     } else if (VcsDataKeys.IO_FILE_ARRAY.equals(key)) {
       sink.put(VcsDataKeys.IO_FILE_ARRAY, getSelectedIoFiles());
     }

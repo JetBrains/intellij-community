@@ -526,7 +526,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
   private static class MyTree extends Tree implements DataProvider {
     public Object getData(String dataId) {
       PackageDependenciesNode node = getSelectedNode();
-      if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
         return node;
       }
       return null;

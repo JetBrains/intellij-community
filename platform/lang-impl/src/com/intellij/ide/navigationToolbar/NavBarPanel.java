@@ -647,7 +647,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       return !files.isEmpty() ? VfsUtilCore.toVirtualFileArray(files) : null;
     }
     
-    if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       final List<Navigatable> elements = getSelectedElements(Navigatable.class);
       return elements == null || elements.isEmpty() ? null : elements.toArray(new Navigatable[elements.size()]);
     }

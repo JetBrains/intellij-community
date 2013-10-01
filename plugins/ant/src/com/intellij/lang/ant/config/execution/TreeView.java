@@ -365,7 +365,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     final TreePath path = myTree.getLeadSelectionPath();
     if (path == null) return;
     if (!(path.getLastPathComponent()instanceof MessageNode)) return;
-    if (getData(PlatformDataKeys.NAVIGATABLE_ARRAY.getName()) == null) return;
+    if (getData(CommonDataKeys.NAVIGATABLE_ARRAY.getName()) == null) return;
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.ANT_MESSAGES_POPUP, group);
@@ -382,7 +382,7 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
 
   @Nullable
   public Object getData(String dataId) {
-    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       MessageNode item = getSelectedItem();
       if (item == null) return null;
       if (isValid(item.getFile())) {

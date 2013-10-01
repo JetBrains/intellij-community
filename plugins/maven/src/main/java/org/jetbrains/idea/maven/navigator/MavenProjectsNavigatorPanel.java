@@ -133,7 +133,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) return extractVirtualFiles();
 
     if (Location.DATA_KEY.is(dataId)) return extractLocation();
-    if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return extractNavigatables();
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return extractNavigatables();
 
     if (MavenDataKeys.MAVEN_GOALS.is(dataId)) return extractGoals(true);
     if (MavenDataKeys.RUN_CONFIGURATION.is(dataId)) return extractRunSettings();

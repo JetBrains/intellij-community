@@ -777,7 +777,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     @Override
     public Object getData(String dataId) {
       PackageDependenciesNode node = getSelectedNode();
-      if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
         return node;
       }
       if (CommonDataKeys.PSI_ELEMENT.is(dataId) && node != null)  {

@@ -206,7 +206,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return this;
     }
-    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       final NavigatableMessageElement selectedMessageElement = getSelectedMessageElement();
       return selectedMessageElement != null ? selectedMessageElement.getNavigatable() : null;
     }
@@ -379,7 +379,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
       return;
     }
     DefaultActionGroup group = new DefaultActionGroup();
-    if (getData(PlatformDataKeys.NAVIGATABLE.getName()) != null) {
+    if (getData(CommonDataKeys.NAVIGATABLE.getName()) != null) {
       group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     }
     group.add(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));

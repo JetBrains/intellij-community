@@ -405,11 +405,11 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
-    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       final FavoritesTreeNodeDescriptor[] selectedNodeDescriptors = FavoritesTreeUtil.getSelectedNodeDescriptors(myTree);
       return selectedNodeDescriptors.length == 1 ? selectedNodeDescriptors[0].getElement() : null;
     }
-    if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       final List<Navigatable> selectedElements = getSelectedElements(Navigatable.class);
       return selectedElements.isEmpty() ? null : selectedElements.toArray(new Navigatable[selectedElements.size()]);
     }

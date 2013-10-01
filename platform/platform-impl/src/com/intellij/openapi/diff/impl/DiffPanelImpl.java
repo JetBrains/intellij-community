@@ -868,7 +868,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
       if (FocusDiffSide.DATA_KEY.is(dataId)) {
         return myDiffPanel.myCurrentSide == null ? null : myFocusDiffSide;
       }
-      if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
         final DiffSideView currentSide = myDiffPanel.myCurrentSide;
         if (currentSide != null) {
           return new DiffNavigatable(currentSide);

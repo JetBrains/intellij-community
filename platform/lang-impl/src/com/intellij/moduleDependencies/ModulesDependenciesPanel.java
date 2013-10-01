@@ -527,7 +527,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
       if (PlatformDataKeys.HELP_ID.is(dataId)) {
         return ourHelpID;
       }
-      if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
         final TreePath selectionPath = myTree.getLeadSelectionPath();
         if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode){
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();

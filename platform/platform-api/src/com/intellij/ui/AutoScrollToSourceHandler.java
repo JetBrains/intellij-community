@@ -198,7 +198,7 @@ public abstract class AutoScrollToSourceHandler {
           //IDEA-84881 Don't autoscroll to very large files
           if (vFile.getLength() > PersistentFSConstants.getMaxIntellisenseFileSize()) return;
         }
-        Navigatable[] navigatables = PlatformDataKeys.NAVIGATABLE_ARRAY.getData(context);
+        Navigatable[] navigatables = CommonDataKeys.NAVIGATABLE_ARRAY.getData(context);
         if (navigatables != null) {
           if (navigatables.length > 1) {
             return;
