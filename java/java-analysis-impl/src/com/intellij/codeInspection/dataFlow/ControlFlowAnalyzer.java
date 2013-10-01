@@ -714,6 +714,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       if (cd.isFinally()) {
         flushVariablesInsideTry(cd);
         addInstruction(new GosubInstruction(cd.getJumpOffset(this)));
+        break;
       }
       else if (cd.getType().isAssignableFrom(exceptionClass)) { // Definite catch.
         flushVariablesInsideTry(cd);
