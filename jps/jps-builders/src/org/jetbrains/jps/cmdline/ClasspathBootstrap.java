@@ -37,9 +37,7 @@ import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.impl.JpsModelImpl;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
-import javax.tools.JavaCompiler;
-import javax.tools.StandardJavaFileManager;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.io.File;
 import java.util.*;
 
@@ -52,17 +50,23 @@ public class ClasspathBootstrap {
 
   private static class OptimizedFileManagerClassHolder {
     static final String CLASS_NAME = "org.jetbrains.jps.javac.OptimizedFileManager";
+    @Nullable
     static final Class<StandardJavaFileManager> managerClass;
+    @Nullable
+    static final String initError;
     static {
       Class<StandardJavaFileManager> aClass;
+      String error = null;
       try {
         @SuppressWarnings("unchecked") Class<StandardJavaFileManager> c = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
         aClass = c;
       }
-      catch (Throwable ignored) {
+      catch (Throwable ex) {
         aClass = null;
+        error = ex.getClass().getName() + ": " + ex.getMessage();
       }
       managerClass = aClass;
+      initError = error;
     }
 
     private OptimizedFileManagerClassHolder() {
@@ -71,17 +75,23 @@ public class ClasspathBootstrap {
 
   private static class OptimizedFileManager17ClassHolder {
     static final String CLASS_NAME = "org.jetbrains.jps.javac.OptimizedFileManager17";
+    @Nullable
     static final Class<StandardJavaFileManager> managerClass;
+    @Nullable
+    static final String initError;
     static {
       Class<StandardJavaFileManager> aClass;
+      String error = null;
       try {
         @SuppressWarnings("unchecked") Class<StandardJavaFileManager> c = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
         aClass = c;
       }
-      catch (Throwable ignored) {
+      catch (Throwable ex) {
         aClass = null;
+        error = ex.getClass().getName() + ": " + ex.getMessage();
       }
       managerClass = aClass;
+      initError = error;
     }
 
     private OptimizedFileManager17ClassHolder() {
@@ -225,6 +235,21 @@ public class ClasspathBootstrap {
       return aClass;
     }
     return OptimizedFileManager17ClassHolder.managerClass;
+  }
+
+  @Nullable
+  public static String getOptimizedFileManagerLoadError() {
+    StringBuilder builder = new StringBuilder();
+    if (OptimizedFileManagerClassHolder.initError != null) {
+      builder.append(OptimizedFileManagerClassHolder.initError);
+    }
+    if (OptimizedFileManager17ClassHolder.initError != null) {
+      if (builder.length() > 0) {
+        builder.append("\n");
+      }
+      builder.append(OptimizedFileManager17ClassHolder.initError);
+    }
+    return builder.toString();
   }
 
   public static String getResourcePath(Class aClass) {

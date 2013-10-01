@@ -343,9 +343,16 @@ public class JavacMain {
           }
           catch (Throwable e) {
             if (SystemInfo.isWindows) {
-              System.err.println("Failed to load JPS optimized file manager for javac: " + e.getMessage());
+              outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.NOTE, "JPS build failed to load optimized file manager for javac: " + e.getMessage()));
             }
           }
+        }
+        else {
+          String error = ClasspathBootstrap.getOptimizedFileManagerLoadError();
+          if (error == null) {
+            error = "";
+          }
+          outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.NOTE, "JPS build failed to load optimized file manager for javac:\n" + error));
         }
       }
       if (stdManager != null) {
