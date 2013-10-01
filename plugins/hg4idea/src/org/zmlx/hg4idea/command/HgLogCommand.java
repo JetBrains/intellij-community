@@ -92,7 +92,7 @@ public class HgLogCommand {
       return;
     }
     HgVersion version = vcs.getVersion();
-    myBuiltInSupported = version.isBuildInFunctionSupported();
+    myBuiltInSupported = version.isBuiltInFunctionSupported();
     myLargeFilesWithFollowSupported = version.isLargeFilesWithFollowSupported();
   }
 
