@@ -727,10 +727,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       List<MatchResult> matches = collectResults(pattern, myActions, myActionModel);
 
       for (MatchResult o : matches) {
-        //myProgressIndicator.checkCanceled();
+        myProgressIndicator.checkCanceled();
         Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
         for (Object object : objects) {
-          //myProgressIndicator.checkCanceled();
+          myProgressIndicator.checkCanceled();
           if (isSetting(object) && settings.size() < 7) {
             if (matcher.matches(getSettingText((OptionDescription)object))) {
               settings.add(object);
