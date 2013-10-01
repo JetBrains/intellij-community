@@ -448,8 +448,7 @@ public class LambdaUtil {
       if (lambdaIdx > -1) {
 
         PsiType cachedType = null;
-        final Map<PsiElement,Pair<PsiMethod,PsiSubstitutor>> currentMethodCandidates = MethodCandidateInfo.CURRENT_CANDIDATE.get();
-        final Pair<PsiMethod, PsiSubstitutor> method = currentMethodCandidates != null ? currentMethodCandidates.get(parent) : null;
+        final Pair<PsiMethod, PsiSubstitutor> method = MethodCandidateInfo.getCurrentMethod(parent);
         if (method != null) {
           final PsiParameter[] parameters = method.first.getParameterList().getParameters();
           cachedType = lambdaIdx < parameters.length ? method.second.substitute(getNormalizedType(parameters[adjustLambdaIdx(lambdaIdx, method.first, parameters)])) : null;
@@ -698,14 +697,8 @@ public class LambdaUtil {
       if (parent instanceof PsiExpressionList) {
         final PsiElement gParent = parent.getParent();
         if (gParent instanceof PsiCall) {
-          final Map<PsiElement, Pair<PsiMethod, PsiSubstitutor>> map = MethodCandidateInfo.CURRENT_CANDIDATE.get();
-          if (map != null) {
-            final Pair<PsiMethod, PsiSubstitutor> pair = map.get(parent);
-            myMethod = pair != null ? pair.first : null;
-          }
-          else {
-            myMethod = null;
-          }
+          final Pair<PsiMethod, PsiSubstitutor> pair = MethodCandidateInfo.getCurrentMethod(parent);
+          myMethod = pair != null ? pair.first : null;
           if (myMethod == null) {
             myMethod = ((PsiCall)gParent).resolveMethod();
           }

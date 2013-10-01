@@ -93,12 +93,9 @@ public class InferenceSession {
 
   private static Pair<PsiMethod, PsiCallExpression> getPair(PsiElement parent) {
     if (parent instanceof PsiCallExpression) {
-      final Map<PsiElement, Pair<PsiMethod, PsiSubstitutor>> map = MethodCandidateInfo.CURRENT_CANDIDATE.get();
-      if (map != null) {
-        final Pair<PsiMethod, PsiSubstitutor> pair = map.get(((PsiCallExpression)parent).getArgumentList());
-        if (pair != null) {
-          return Pair.create(pair.first, (PsiCallExpression)parent);
-        }
+      final Pair<PsiMethod, PsiSubstitutor> pair = MethodCandidateInfo.getCurrentMethod(((PsiCallExpression)parent).getArgumentList());
+      if (pair != null) {
+        return Pair.create(pair.first, (PsiCallExpression)parent);
       }
     }
     return null;
