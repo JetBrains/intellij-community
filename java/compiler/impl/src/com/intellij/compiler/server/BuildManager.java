@@ -842,15 +842,25 @@ public class BuildManager implements ApplicationComponent{
     workDirectory.mkdirs();
     cmdLine.addParameter("-Djava.io.tmpdir=" + FileUtil.toSystemIndependentName(workDirectory.getPath()) + "/" + TEMP_DIR_NAME);
 
-    final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath();
-    cp.add(compilerPath);
+    @SuppressWarnings("UnnecessaryFullyQualifiedName")
+    final Class<?> launcherClass = org.jetbrains.jps.cmdline.Launcher.class;
+
+    final List<String> launcherCp = new ArrayList<String>();
+    launcherCp.add(ClasspathBootstrap.getResourcePath(launcherClass));
+    launcherCp.add(compilerPath);
+    ClasspathBootstrap.appendJavaCompilerClasspath(launcherCp);
+
+    cmdLine.addParameter("-classpath");
+    cmdLine.addParameter(classpathToString(launcherCp));
+
+    cmdLine.addParameter(launcherClass.getName());
+
+    final List<String> cp = ClasspathBootstrap.getBuildProcessApplicationClasspath(true);
     cp.addAll(myClasspathManager.getCompileServerPluginsClasspath(project));
     if (isProfilingMode) {
       cp.add(new File(workDirectory, "yjp-controller-api-redist.jar").getPath());
       cmdLine.addParameter("-agentlib:yjpagent=disablej2ee,disablealloc,delay=10000,sessionname=ExternalBuild");
     }
-
-    cmdLine.addParameter("-classpath");
     cmdLine.addParameter(classpathToString(cp));
 
     cmdLine.addParameter(BuildMain.class.getName());

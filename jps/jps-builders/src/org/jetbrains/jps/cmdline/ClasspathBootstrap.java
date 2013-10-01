@@ -89,7 +89,7 @@ public class ClasspathBootstrap {
   private ClasspathBootstrap() {
   }
 
-  public static List<String> getBuildProcessApplicationClasspath() {
+  public static List<String> getBuildProcessApplicationClasspath(boolean isLauncherUsed) {
     final Set<String> cp = ContainerUtil.newHashSet();
 
     cp.add(getResourcePath(BuildMain.class));
@@ -108,9 +108,8 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(NotNullVerifyingInstrumenter.class));  // not-null
     cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
 
-    final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();
-    if (optimizedFileManagerClass != null) {
-      cp.add(getResourcePath(optimizedFileManagerClass));  // optimizedFileManager
+    if (!isLauncherUsed) {
+      appendJavaCompilerClasspath(cp);
     }
 
     try {
@@ -120,6 +119,15 @@ public class ClasspathBootstrap {
     catch (Throwable ignored) {
     }
 
+    return ContainerUtil.newArrayList(cp);
+  }
+
+  public static void appendJavaCompilerClasspath(Collection<String> cp) {
+    final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();
+    if (optimizedFileManagerClass != null) {
+      cp.add(getResourcePath(optimizedFileManagerClass));  // optimizedFileManager
+    }
+
     for (JavaCompiler javaCompiler : ServiceLoader.load(JavaCompiler.class)) { // Eclipse compiler
       final String compilerResource = getResourcePath(javaCompiler.getClass());
       final String name = PathUtilRt.getFileName(compilerResource);
@@ -127,8 +135,6 @@ public class ClasspathBootstrap {
         cp.add(compilerResource);
       }
     }
-
-    return ContainerUtil.newArrayList(cp);
   }
 
   public static List<File> getJavacServerClasspath(String sdkHome, boolean useEclipseCompiler) {
