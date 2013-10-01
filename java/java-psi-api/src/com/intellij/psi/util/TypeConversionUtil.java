@@ -492,9 +492,13 @@ public class TypeConversionUtil {
           return false;
         }
         if (isPrimitiveAndNotNull(rtype)) {
-          return ltype instanceof PsiClassType &&
-                 ((PsiClassType)ltype).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_7) &&
-                 areTypesConvertible(rtype, ltype);
+          if (ltype instanceof PsiClassType) {
+            final LanguageLevel level = ((PsiClassType)ltype).getLanguageLevel();
+            if (level.isAtLeast(LanguageLevel.JDK_1_7) && !level.isAtLeast(LanguageLevel.JDK_1_8) && areTypesConvertible(rtype, ltype)) {
+              return true;
+            }
+          }
+          return false;
         }
         isApplicable = areTypesConvertible(ltype, rtype) || areTypesConvertible(rtype, ltype);
       }
