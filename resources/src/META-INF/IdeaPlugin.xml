@@ -542,7 +542,7 @@
                      implementationClass="com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal"/>
     <localInspection language="JAVA" shortName="JavaDoc" bundle="messages.InspectionsBundle" key="inspection.javadoc.display.name"
                      groupKey="group.names.javadoc.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.javaDoc.JavaDocLocalInspection"/>
+                     implementationClass="com.intellij.codeInspection.javaDoc.JavaDocLocalInspection" alternativeId="javadoc"/>
     <localInspection language="JAVA" shortName="JavadocReference" bundle="messages.InspectionsBundle" key="inspection.javadoc.ref.display.name"
                      groupKey="group.names.javadoc.issues" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection"/>

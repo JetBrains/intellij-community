@@ -1207,6 +1207,12 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     return SHORT_NAME;
   }
 
+  @Nullable
+  @Override
+  public String getAlternativeID() {
+    return "javadoc";
+  }
+
   public void setIgnoreEmptyDescriptions(boolean ignoreEmptyDescriptions) {
     myIgnoreEmptyDescriptions = ignoreEmptyDescriptions;
   }
