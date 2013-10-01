@@ -17,7 +17,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
         </clientProperties>
-        <border type="none" title="Project &amp;Type"/>
+        <border type="none" title="Project Type"/>
         <children>
           <scrollpane id="19f6a" class="com.intellij.ui.components.JBScrollPane">
             <constraints>
@@ -47,7 +47,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
         </clientProperties>
-        <border type="none" title="O&amp;ptions"/>
+        <border type="none" title="Options"/>
         <children/>
       </grid>
     </children>
