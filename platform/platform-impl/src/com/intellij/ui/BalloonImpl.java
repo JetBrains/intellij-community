@@ -1541,4 +1541,8 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
   public void setAnimationEnabled(boolean enabled) {
     myAnimationEnabled = enabled;
   }
+
+  public boolean isAnimationEnabled() {
+    return myAnimationEnabled;
+  }
 }

@@ -42,6 +42,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Processor;
@@ -156,7 +157,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     boolean isVisible = area.contains(area.x, realY);//area.y < realY && area.y + area.height > realY;
 
     TooltipRenderer bigRenderer;
-    if (!ApplicationManager.getApplication().isInternal() || isVisible) {
+    if (!(UIUtil.getRootPane(myEditor.getComponent()) instanceof IdeRootPane) || isVisible) {
       final Set<RangeHighlighter> highlighters = new THashSet<RangeHighlighter>();
       getNearestHighlighters(this, me.getY(), highlighters);
       getNearestHighlighters((MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), getEditor().getProject(), true), me.getY(), highlighters);
@@ -1015,7 +1016,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
   private class EditorFragmentRenderer implements TooltipRenderer {
     private int myLine;
-    private Collection<RangeHighlighterEx> myHighlighters;
+    private List<RangeHighlighterEx> myHighlighters = new ArrayList<RangeHighlighterEx>();
     private BufferedImage myImage;
     private int myStartLine;
     private int myEndLine;
@@ -1025,12 +1026,27 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       update(0, Collections.<RangeHighlighterEx>emptyList());
     }
 
-    public void update(int currentLine, Collection<RangeHighlighterEx> rangeHighlighters) {
+    void update(int currentLine, Collection<RangeHighlighterEx> rangeHighlighters) {
       myLine = currentLine;
-      myHighlighters = rangeHighlighters;
+      myHighlighters.clear();
       myImage = null;
       myStartLine = Math.max(0, myLine - myPreviewLines);
       myEndLine = Math.min(myEditor.getDocument().getLineCount() - 1, myLine + myPreviewLines + 1);
+      int popupStartOffset = myEditor.getDocument().getLineStartOffset(myStartLine);
+      int popupEndOffset = myEditor.getDocument().getLineEndOffset(myEndLine);
+      for (RangeHighlighterEx rangeHighlighter : rangeHighlighters) {
+        if (rangeHighlighter.getEndOffset()> popupStartOffset && rangeHighlighter.getStartOffset() < popupEndOffset) {
+          myHighlighters.add(rangeHighlighter);
+        }
+      }
+      Collections.sort(myHighlighters, new Comparator<RangeHighlighterEx>() {
+        public int compare(RangeHighlighterEx ex1, RangeHighlighterEx ex2) {
+          LogicalPosition startPos1 = myEditor.offsetToLogicalPosition(ex1.getAffectedAreaStartOffset());
+          LogicalPosition startPos2 = myEditor.offsetToLogicalPosition(ex2.getAffectedAreaStartOffset());
+          if (startPos1.line != startPos2.line) return 0;
+          return startPos1.column - startPos2.column;
+        }
+      });
     }
 
     @Override
@@ -1069,14 +1085,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               g2d.setColor(myEditor.getBackgroundColor());
               g2d.fillRect(0, 0, getWidth(), getHeight());
               int lineShift = -myEditor.getLineHeight() * myStartLine;//first fragment line offset
-              int popupStartOffset = myEditor.getDocument().getLineStartOffset(myStartLine);
-              int popupEndOffset = myEditor.getDocument().getLineEndOffset(myEndLine);
-              List<RangeHighlighterEx> exs = new ArrayList<RangeHighlighterEx>();
-              for (RangeHighlighterEx rangeHighlighter : myHighlighters) {
-                if (rangeHighlighter.getEndOffset()> popupStartOffset && rangeHighlighter.getStartOffset() < popupEndOffset) {
-                  exs.add(rangeHighlighter);
-                }
-              }
               AffineTransform translateInstance = AffineTransform.getTranslateInstance(-LEFT_INDENT, lineShift);
               translateInstance.preConcatenate(transform);
               g2d.setTransform(translateInstance);
@@ -1090,16 +1098,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               translateInstance.preConcatenate(transform);
               g2d.setTransform(translateInstance);
               contentComponent.paint(g2d);
-              Collections.sort(exs, new Comparator<RangeHighlighterEx>() {
-                public int compare(RangeHighlighterEx ex1, RangeHighlighterEx ex2) {
-                  LogicalPosition startPos1 = myEditor.offsetToLogicalPosition(ex1.getAffectedAreaStartOffset());
-                  LogicalPosition startPos2 = myEditor.offsetToLogicalPosition(ex2.getAffectedAreaStartOffset());
-                  if (startPos1.line != startPos2.line) return 0;
-                  return startPos1.column - startPos2.column;
-                }
-              });
               TIntIntHashMap rightEdges = new TIntIntHashMap();
-              for (RangeHighlighterEx ex : exs) {
+              int h = myEditor.getLineHeight() - 2;
+              for (RangeHighlighterEx ex : myHighlighters) {
                 //int hStartOffset = ex.getAffectedAreaStartOffset();
                 int hEndOffset = ex.getAffectedAreaEndOffset();
                 Object tooltip = ex.getErrorStripeTooltip();
@@ -1117,7 +1118,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
                 int w = g2d.getFontMetrics().stringWidth(s);
                 int a = g2d.getFontMetrics().getAscent();
-                int h = myEditor.getLineHeight();
 
                 int rightEdge = rightEdges.get(logicalPosition.line);
                 placeToShow.x = Math.max(placeToShow.x, rightEdge);
