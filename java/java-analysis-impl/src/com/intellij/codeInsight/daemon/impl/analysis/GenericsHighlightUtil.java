@@ -1128,9 +1128,12 @@ public class GenericsHighlightUtil {
         if (element instanceof PsiMethod) {
           if (((PsiMethod)element).findSuperMethods().length > 0) return null;
           if (qualifier instanceof PsiReferenceExpression){
-            final PsiClass typeParameter = PsiUtil.resolveClassInType(((PsiReferenceExpression)qualifier).getType());
+            final PsiType type = ((PsiReferenceExpression)qualifier).getType();
+            final boolean isJavac7 = JavaVersionService.getInstance().isAtLeast(containingClass, JavaSdkVersion.JDK_1_7);
+            if (type instanceof PsiClassType && isJavac7 && ((PsiClassType)type).isRaw()) return null;
+            final PsiClass typeParameter = PsiUtil.resolveClassInType(type);
             if (typeParameter instanceof PsiTypeParameter) {
-              if (JavaVersionService.getInstance().isAtLeast(containingClass, JavaSdkVersion.JDK_1_7)) return null;
+              if (isJavac7) return null;
               for (PsiClassType classType : typeParameter.getExtendsListTypes()) {
                 final PsiClass resolve = classType.resolve();
                 if (resolve != null) {
