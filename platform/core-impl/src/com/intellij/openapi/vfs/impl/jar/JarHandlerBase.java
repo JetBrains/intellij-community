@@ -246,6 +246,7 @@ public class JarHandlerBase {
       Map<String, EntryInfo> map = myRelPathsToEntries != null ? myRelPathsToEntries.get() : null;
       if (map == null) {
         final JarFile zip = getJar();
+        LOG.info("mapping " + myBasePath);
 
         map = new THashMap<String, EntryInfo>();
         if (zip != null) {
