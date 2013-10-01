@@ -19,11 +19,10 @@ package com.intellij.conversion;
 import com.intellij.facet.FacetManagerImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer;
 
-import java.util.List;
+import java.util.Collection;
 
-public class DetachFacetConversionProcessor extends ConversionProcessor<ModuleSettings>{
+public class DetachFacetConversionProcessor extends ConversionProcessor<ModuleSettings> {
   private final String[] myFacetNames;
 
   public DetachFacetConversionProcessor(@NotNull String... names) {
@@ -44,20 +43,15 @@ public class DetachFacetConversionProcessor extends ConversionProcessor<ModuleSe
   public void process(ModuleSettings moduleSettings) throws CannotConvertException {
     final Element facetManagerElement = moduleSettings.getComponentElement(FacetManagerImpl.COMPONENT_NAME);
     if (facetManagerElement == null) return;
-
-    final Element[] facetElements = getChildren(facetManagerElement, JpsFacetSerializer.FACET_TAG);
-    for (Element facetElement : facetElements) {
-      final String facetType = facetElement.getAttributeValue(JpsFacetSerializer.TYPE_ATTRIBUTE);
-      for (String facetName : myFacetNames) {
-        if (facetName.equals(facetType)) {
-          facetElement.detach();
-        }
+    for (String facetName : myFacetNames) {
+      for (Element element : getElements(moduleSettings, facetName)) {
+        element.detach();
       }
     }
   }
 
-  private static Element[] getChildren(Element parent, final String name) {
-    final List<?> children = parent.getChildren(name);
-    return children.toArray(new Element[children.size()]);
+  private static Element[] getElements(ModuleSettings moduleSettings, String facetName) {
+    Collection<? extends Element> elements = moduleSettings.getFacetElements(facetName);
+    return elements.toArray(new Element[elements.size()]);
   }
 }
