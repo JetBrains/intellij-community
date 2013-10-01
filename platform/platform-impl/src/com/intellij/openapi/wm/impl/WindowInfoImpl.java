@@ -377,12 +377,12 @@ public final class WindowInfoImpl implements Cloneable,JDOMExternalizable, Windo
   @Override
   public void writeExternal(final Element element){
     element.setAttribute(ID_ATTR,myId);
-    element.setAttribute(ACTIVE_ATTR,myActive?Boolean.TRUE.toString():Boolean.FALSE.toString());
+    element.setAttribute(ACTIVE_ATTR, Boolean.toString(myActive));
     element.setAttribute(ANCHOR_ATTR,myAnchor.toString());
-    element.setAttribute(AUTOHIDE_ATTR,myAutoHide?Boolean.TRUE.toString():Boolean.FALSE.toString());
+    element.setAttribute(AUTOHIDE_ATTR, Boolean.toString(myAutoHide));
     element.setAttribute(INTERNAL_TYPE_ATTR,myInternalType.toString());
     element.setAttribute(TYPE_ATTR,myType.toString());
-    element.setAttribute(VISIBLE_ATTR,myVisible?Boolean.TRUE.toString():Boolean.FALSE.toString());
+    element.setAttribute(VISIBLE_ATTR, Boolean.toString(myVisible));
     element.setAttribute(WEIGHT_ATTR,Float.toString(myWeight));
     element.setAttribute(SIDE_WEIGHT_ATTR, Float.toString(mySideWeight));
     element.setAttribute(ORDER_ATTR,Integer.toString(myOrder));

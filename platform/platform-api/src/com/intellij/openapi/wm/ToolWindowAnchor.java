@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm;
 
+import com.intellij.ide.ui.UISettings;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -52,6 +53,10 @@ public final class ToolWindowAnchor {
     }
 
     throw new IllegalArgumentException("Unknown anchor constant: " + swingOrientationConstant);
+  }
+
+  public boolean isSplitVertically() {
+    return (this == LEFT && !UISettings.getInstance().LEFT_HORIZONTAL_SPLIT) || (this == RIGHT && !UISettings.getInstance().RIGHT_HORIZONTAL_SPLIT);
   }
 
   public static ToolWindowAnchor fromText(String anchor) {

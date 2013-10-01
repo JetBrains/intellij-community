@@ -2184,6 +2184,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       if (!source.isShowing()) return; // do not recalculate the tool window size if it is not yet shown (and, therefore, has 0,0,0,0 bounds)
 
       final WindowInfoImpl info = getInfo(source.getToolWindow().getId());
+      InternalDecorator another = null;
       if (info.isFloating()) {
         final Window owner = SwingUtilities.getWindowAncestor(source);
         if (owner != null) {
@@ -2191,30 +2192,33 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         }
       }
       else { // docked and sliding windows
-        float size =
-          ToolWindowAnchor.TOP == info.getAnchor() || ToolWindowAnchor.BOTTOM == info.getAnchor() ? source.getWidth() : source.getHeight();
+        ToolWindowAnchor anchor = info.getAnchor();
         if (source.getParent() instanceof Splitter) {
+          float sizeInSplit = anchor.isSplitVertically() ? source.getHeight() : source.getWidth();
           Splitter splitter = (Splitter)source.getParent();
           if (splitter.getSecondComponent() == source) {
-            size += splitter.getDividerWidth();
+            sizeInSplit += splitter.getDividerWidth();
+            another = (InternalDecorator)splitter.getFirstComponent();
+          } else {
+            another = (InternalDecorator)splitter.getSecondComponent();
+          }
+          if (anchor.isSplitVertically()) {
+            info.setSideWeight(sizeInSplit / (float)splitter.getHeight());
+          }
+          else {
+            info.setSideWeight(sizeInSplit / (float)splitter.getWidth());
           }
         }
 
-        if (ToolWindowAnchor.TOP == info.getAnchor() || ToolWindowAnchor.BOTTOM == info.getAnchor()) {
-          info.setWeight((float)source.getHeight() / (float)myToolWindowsPane.getMyLayeredPane().getHeight());
-
-
-          float newSideWeight = size / (float)myToolWindowsPane.getMyLayeredPane().getWidth();
-          if (newSideWeight < 1.0f) {
-            info.setSideWeight(newSideWeight);
-          }
-        }
-        else {
-          info.setWeight((float)source.getWidth() / (float)myToolWindowsPane.getMyLayeredPane().getWidth());
-          float newSideWeight = size / (float)myToolWindowsPane.getMyLayeredPane().getHeight();
-          if (newSideWeight < 1.0f) {
-            info.setSideWeight(newSideWeight);
-          }
+        float paneWeight = anchor.isHorizontal()
+                   ? (float)source.getHeight() / (float)myToolWindowsPane.getMyLayeredPane().getHeight()
+                   : (float)source.getWidth() / (float)myToolWindowsPane.getMyLayeredPane().getWidth();
+        info.setWeight(paneWeight);
+        if (another != null && anchor.isSplitVertically()) {
+          paneWeight = anchor.isHorizontal()
+                       ? (float)another.getHeight() / (float)myToolWindowsPane.getMyLayeredPane().getHeight()
+                       : (float)another.getWidth() / (float)myToolWindowsPane.getMyLayeredPane().getWidth();
+          another.getWindowInfo().setWeight(paneWeight);
         }
       }
     }
