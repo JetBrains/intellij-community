@@ -268,7 +268,7 @@ public class InferenceSession {
           }
         }
         if (targetType != null) {
-          myConstraints.add(new TypeCompatibilityConstraint(targetType, PsiImplUtil.normalizeWildcardTypeByPosition(returnType, context)));
+          myConstraints.add(new TypeCompatibilityConstraint(GenericsUtil.eliminateWildcards(targetType, false), PsiImplUtil.normalizeWildcardTypeByPosition(returnType, context)));
         }
       }
     }
