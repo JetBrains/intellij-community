@@ -37,7 +37,7 @@ public class UsageTargetUtil {
 
   public static UsageTarget[] findUsageTargets(DataProvider dataProvider) {
     Editor editor = CommonDataKeys.EDITOR.getData(dataProvider);
-    PsiFile file = LangDataKeys.PSI_FILE.getData(dataProvider);
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataProvider);
 
     List<UsageTarget> result = new ArrayList<UsageTarget>();
     if (file != null && editor != null) {

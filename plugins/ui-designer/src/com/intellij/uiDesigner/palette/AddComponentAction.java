@@ -48,7 +48,7 @@ public class AddComponentAction extends AnAction {
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
     GroupItem groupItem = e.getData(GroupItem.DATA_KEY);
-    PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
+    PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     PsiElement elementToAdd = (psiFile != null) ? findElementToAdd(psiFile) : null;
     String className = "";
     if (elementToAdd instanceof PsiClass) {
@@ -128,7 +128,7 @@ public class AddComponentAction extends AnAction {
       e.getPresentation().setEnabled(project != null && (groupItem == null || !groupItem.isReadOnly()));
     }
     else {
-      PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
+      PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
       e.getPresentation().setVisible(psiFile != null && findElementToAdd(psiFile) != null);
     }
   }

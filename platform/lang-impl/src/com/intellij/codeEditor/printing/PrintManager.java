@@ -59,7 +59,7 @@ class PrintManager {
       psiDirectory[0] = (PsiDirectory)psiElement;
     }
 
-    PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
+    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     String[] shortFileName = new String[1];
     String[] directoryName = new String[1];
     if (psiFile != null || psiDirectory[0] != null) {

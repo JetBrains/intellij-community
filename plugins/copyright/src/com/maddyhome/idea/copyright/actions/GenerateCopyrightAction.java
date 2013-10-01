@@ -51,7 +51,7 @@ public class GenerateCopyrightAction extends AnAction
 
     @Nullable
     private static PsiFile getFile(DataContext context, Project project) {
-      PsiFile file = LangDataKeys.PSI_FILE.getData(context);
+      PsiFile file = CommonDataKeys.PSI_FILE.getData(context);
       if (file == null) {
         Editor editor = CommonDataKeys.EDITOR.getData(context);
         if (editor != null) {

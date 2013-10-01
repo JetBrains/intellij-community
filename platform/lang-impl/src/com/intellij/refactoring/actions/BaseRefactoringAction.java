@@ -143,7 +143,7 @@ public abstract class BaseRefactoringAction extends AnAction {
     }
 
     Editor editor = e.getData(CommonDataKeys.EDITOR);
-    PsiFile file = e.getData(LangDataKeys.PSI_FILE);
+    PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     if (file != null) {
       if (file instanceof PsiCompiledElement || !isAvailableForFile(file)) {
         hideAction(e);

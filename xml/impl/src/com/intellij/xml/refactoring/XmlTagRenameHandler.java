@@ -110,7 +110,7 @@ public class XmlTagRenameHandler implements RenameHandler, TitledHandler {
       final Editor editor = getEditor(context);
       if (editor != null) {
         final int offset = editor.getCaretModel().getOffset();
-        final PsiFile file = LangDataKeys.PSI_FILE.getData(context);
+        final PsiFile file = CommonDataKeys.PSI_FILE.getData(context);
         if (file instanceof XmlFile) {
           return file.getViewProvider().findElementAt(offset);
         }

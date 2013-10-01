@@ -49,7 +49,7 @@ public class PrintAction extends AnAction implements DumbAware {
       return;
     }
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
+    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     presentation.setEnabled(psiFile != null || editor != null);
   }
 

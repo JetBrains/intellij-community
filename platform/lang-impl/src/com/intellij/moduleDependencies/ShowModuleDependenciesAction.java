@@ -51,7 +51,7 @@ public class ShowModuleDependenciesAction extends AnAction{
       panel = new ModulesDependenciesPanel(project, modules);
       scope = new AnalysisScope(modules);
     } else {
-      final PsiElement element = LangDataKeys.PSI_FILE.getData(dataContext);
+      final PsiElement element = CommonDataKeys.PSI_FILE.getData(dataContext);
       final Module module = element != null ? ModuleUtil.findModuleForPsiElement(element) : null;
       if (module != null && ModuleManager.getInstance(project).getModules().length > 1){
         MyModuleOrProjectScope dlg = new MyModuleOrProjectScope(module.getName());

@@ -38,7 +38,7 @@ public class SaveFileAsTemplateAction extends AnAction{
     String nameWithoutExtension = file.getNameWithoutExtension();
     AllFileTemplatesConfigurable fileTemplateOptions = new AllFileTemplatesConfigurable();
     ConfigureTemplatesDialog dialog = new ConfigureTemplatesDialog(project, fileTemplateOptions);
-    PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
+    PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     for(SaveFileAsTemplateHandler handler: Extensions.getExtensions(SaveFileAsTemplateHandler.EP_NAME)) {
       String textFromHandler = handler.getTemplateText(psiFile, fileText, nameWithoutExtension);
       if (textFromHandler != null) {

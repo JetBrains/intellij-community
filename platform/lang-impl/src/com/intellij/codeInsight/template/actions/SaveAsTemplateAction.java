@@ -55,7 +55,7 @@ public class SaveAsTemplateAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
 
     final Project project = file.getProject();
     PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -154,7 +154,7 @@ public class SaveAsTemplateAction extends AnAction {
   public void update(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
 
     if (file == null || editor == null) {
       e.getPresentation().setEnabled(false);

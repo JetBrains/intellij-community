@@ -19,6 +19,7 @@ package com.intellij.refactoring.actions;
 import com.intellij.ide.TitledHandler;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.psi.PsiElement;
@@ -66,7 +67,7 @@ public class ExtractIncludeAction extends BaseRefactoringAction {
 
   @Override
   public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
-    PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     if (file == null) return null;
     return LanguageExtractInclude.INSTANCE.forLanguage(file.getViewProvider().getBaseLanguage());
   }

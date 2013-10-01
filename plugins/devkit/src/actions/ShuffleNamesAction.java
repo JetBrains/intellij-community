@@ -42,14 +42,14 @@ public class ShuffleNamesAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-    PsiFile file = LangDataKeys.PSI_FILE.getData(e.getDataContext());
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     e.getPresentation().setEnabled(editor != null && file != null);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-    PsiFile file = LangDataKeys.PSI_FILE.getData(e.getDataContext());
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     if (editor == null || file == null) return;
     final Project project = file.getProject();
     CommandProcessorEx commandProcessor = (CommandProcessorEx)CommandProcessorEx.getInstance();

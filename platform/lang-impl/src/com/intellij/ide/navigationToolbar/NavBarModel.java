@@ -99,7 +99,7 @@ public class NavBarModel {
 
     if (PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext) instanceof NavBarPanel) return;
 
-    PsiElement psiElement = LangDataKeys.PSI_FILE.getData(dataContext);
+    PsiElement psiElement = CommonDataKeys.PSI_FILE.getData(dataContext);
     if (psiElement == null) {
       psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     }

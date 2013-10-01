@@ -50,7 +50,7 @@ public class ValidateXmlAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(e.getDataContext());
+    final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     if (psiFile != null) {
       doRunAction(psiFile);
     }
@@ -90,7 +90,7 @@ public class ValidateXmlAction extends AnAction {
     super.update(event);
 
     Presentation presentation = event.getPresentation();
-    PsiElement psiElement = LangDataKeys.PSI_FILE.getData(event.getDataContext());
+    PsiElement psiElement = CommonDataKeys.PSI_FILE.getData(event.getDataContext());
 
     boolean flag = psiElement instanceof XmlFile;
     presentation.setVisible(flag);

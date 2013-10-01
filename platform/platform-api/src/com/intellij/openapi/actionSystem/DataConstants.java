@@ -154,7 +154,7 @@ public interface DataConstants {
   /**
    * Returns {@link com.intellij.psi.PsiFile}
    *
-   * @deprecated use {@link com.intellij.openapi.actionSystem.LangDataKeys.PSI_FILE} instead
+   * @deprecated use {@link com.intellij.openapi.actionSystem.com.intellij.openapi.actionSystem.CommonDataKeys.PSI_FILE} instead
    */
   @NonNls String PSI_FILE = "psi.File";
 

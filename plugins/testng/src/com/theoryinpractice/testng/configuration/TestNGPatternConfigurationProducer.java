@@ -27,6 +27,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
@@ -98,7 +99,7 @@ public class TestNGPatternConfigurationProducer extends TestNGConfigurationProdu
       }
       return elements;
     } else {
-      final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
+      final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
       if (file instanceof PsiClassOwner) {
         for (PsiMember psiMember : collectTestMembers(((PsiClassOwner)file).getClasses())) {
           classes.add(((PsiClass)psiMember).getQualifiedName());

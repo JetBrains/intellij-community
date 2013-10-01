@@ -63,7 +63,7 @@ public final class SpellingPopupActionGroup extends ActionGroup {
 
   @NotNull
   private static AnAction[] findActions(@NotNull AnActionEvent e) {
-    PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
+    PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     Project project = e.getData(LangDataKeys.PROJECT);
     Editor editor = e.getData(LangDataKeys.EDITOR);
     if (psiFile != null && project != null && editor != null) {
@@ -124,7 +124,7 @@ public final class SpellingPopupActionGroup extends ActionGroup {
     }
 
     public void actionPerformed(final AnActionEvent e) {
-      final PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
+      final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
       final Project project = e.getData(LangDataKeys.PROJECT);
       final Editor editor = e.getData(LangDataKeys.EDITOR);
       if (psiFile != null && project != null && editor != null) {

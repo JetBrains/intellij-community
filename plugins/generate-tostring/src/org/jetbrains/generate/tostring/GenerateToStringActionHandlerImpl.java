@@ -157,7 +157,7 @@ public class GenerateToStringActionHandlerImpl extends EditorWriteActionHandler 
 
     @Nullable
     private static PsiClass getSubjectClass(Editor editor, DataContext dataContext) {
-        PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
+        PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
         if (file == null) return null;
 
         int offset = editor.getCaretModel().getOffset();

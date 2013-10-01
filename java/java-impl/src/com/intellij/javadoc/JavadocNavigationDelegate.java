@@ -87,7 +87,7 @@ public class JavadocNavigationDelegate extends EditorNavigationDelegateAdapter {
     }
 
     final Document document = editor.getDocument();
-    PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
+    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     if (psiFile == null) {
       psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
     }

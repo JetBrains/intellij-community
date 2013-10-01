@@ -33,7 +33,7 @@ public class RenameWrongRefHandler implements RenameHandler {
 
   public final boolean isAvailableOnDataContext(final DataContext dataContext) {
     final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
+    final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (editor == null || file == null || project == null) return false;
     return isAvailable(project, editor, file);

@@ -42,7 +42,7 @@ public class VirtualFileRule implements GetDataRule {
       return virtualFiles[0];
     }
 
-    PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataProvider);
+    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataProvider);
     if (psiFile != null) {
       return psiFile.getVirtualFile();
     }

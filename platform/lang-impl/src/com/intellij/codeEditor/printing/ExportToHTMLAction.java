@@ -53,7 +53,7 @@ public class ExportToHTMLAction extends AnAction {
       presentation.setEnabled(true);
       return;
     }
-    PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
+    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     presentation.setEnabled(psiFile != null && psiFile.getContainingDirectory() != null);
   }
 

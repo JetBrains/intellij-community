@@ -56,7 +56,7 @@ public class I18nizeAction extends AnAction {
     final Editor editor = getEditor(e);
     if (editor == null) return null;
 
-    PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
+    PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     if (psiFile == null) return null;
 
     TextRange range = JavaI18nUtil.getSelectedRange(editor, psiFile);
@@ -144,7 +144,7 @@ public class I18nizeAction extends AnAction {
     final Editor editor = getEditor(e);
     final Project project = editor.getProject();
     assert project != null;
-    final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(e.getDataContext());
+    final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     if (psiFile == null) return;
     final I18nQuickFixHandler handler = getHandler(e);
     if (handler == null) return;

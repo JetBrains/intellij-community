@@ -30,7 +30,7 @@ public class RenameFileAction extends AnAction implements DumbAware {
   public static final String RENAME_FILE = "Rename File...";
 
   public void actionPerformed(final AnActionEvent e) {
-    final PsiFile file = e.getData(LangDataKeys.PSI_FILE);
+    final PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     assert file != null;
     final VirtualFile virtualFile = file.getVirtualFile();
     assert virtualFile != null;
@@ -40,7 +40,7 @@ public class RenameFileAction extends AnAction implements DumbAware {
   }
 
   public void update(AnActionEvent e) {
-    PsiFile file = e.getData(LangDataKeys.PSI_FILE);
+    PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     Presentation presentation = e.getPresentation();
     boolean enabled = file instanceof PsiClassOwner && e.getPlace() != ActionPlaces.EDITOR_POPUP && e.getData(CommonDataKeys.PROJECT) != null;
     presentation.setEnabled(enabled);

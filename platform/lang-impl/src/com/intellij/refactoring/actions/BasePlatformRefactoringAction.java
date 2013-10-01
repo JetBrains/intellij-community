@@ -66,7 +66,7 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
   protected final RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     PsiElement element = null;
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
-    PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     if (editor != null && file != null) {
       element = getElementAtCaret(editor, file);
       if (element != null) {

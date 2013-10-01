@@ -64,7 +64,7 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(getEventProject(e) != null && e.getData(LangDataKeys.PSI_FILE) != null
+    e.getPresentation().setEnabled(getEventProject(e) != null && e.getData(CommonDataKeys.PSI_FILE) != null
                                    && e.getData(CommonDataKeys.EDITOR) != null);
   }
 
@@ -131,7 +131,7 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
 
   @Nullable
   private static PsiClass getPsiClass(AnActionEvent e) {
-    final PsiFile psiFile = e.getData(LangDataKeys.PSI_FILE);
+    final PsiFile psiFile = e.getData(CommonDataKeys.PSI_FILE);
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor == null || psiFile == null) return null;
     final PsiElement element = psiFile.findElementAt(editor.getCaretModel().getOffset());

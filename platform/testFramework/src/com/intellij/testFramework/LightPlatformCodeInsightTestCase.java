@@ -471,10 +471,10 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
     if (dataId.equals(AnActionEvent.injectedId(CommonDataKeys.EDITOR.getName()))) {
       return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(getEditor(), getFile());
     }
-    if (LangDataKeys.PSI_FILE.is(dataId)) {
+    if (CommonDataKeys.PSI_FILE.is(dataId)) {
       return myFile;
     }
-    if (dataId.equals(AnActionEvent.injectedId(LangDataKeys.PSI_FILE.getName()))) {
+    if (dataId.equals(AnActionEvent.injectedId(CommonDataKeys.PSI_FILE.getName()))) {
       Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(getEditor(), getFile());
       return editor instanceof EditorWindow ? ((EditorWindow)editor).getInjectedFile() : getFile();
     }
@@ -624,7 +624,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
         if (CommonDataKeys.PROJECT.is(dataId)) {
           return getProject();
         }
-        if (LangDataKeys.PSI_FILE.is(dataId)) {
+        if (CommonDataKeys.PSI_FILE.is(dataId)) {
           return getFile();
         }
         if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {

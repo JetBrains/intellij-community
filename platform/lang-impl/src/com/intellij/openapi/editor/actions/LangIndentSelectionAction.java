@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.completion.NextPrevParameterAction;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -32,7 +33,7 @@ public class LangIndentSelectionAction extends IndentSelectionAction {
     if (!super.isEnabled(editor, dataContext)) return false;
     if (LookupManager.getActiveLookup(editor) != null) return false;
 
-    PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
+    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     if (psiFile != null && NextPrevParameterAction.hasSutablePolicy(editor, psiFile)) return false;
 
     return true;

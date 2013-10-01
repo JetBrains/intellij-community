@@ -23,7 +23,7 @@ public class PsiViewerForContextAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
 
     Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
-    PsiFile currentFile = LangDataKeys.PSI_FILE.getData(e.getDataContext());
+    PsiFile currentFile = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     new PsiViewerDialog(currentFile.getProject(), false, currentFile, editor).show();
   }
 
@@ -35,7 +35,7 @@ public class PsiViewerForContextAction extends AnAction implements DumbAware {
       return;
     }
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    PsiFile currentFile = LangDataKeys.PSI_FILE.getData(e.getDataContext());
+    PsiFile currentFile = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     e.getPresentation().setEnabled(project != null && currentFile != null);
   }
 }

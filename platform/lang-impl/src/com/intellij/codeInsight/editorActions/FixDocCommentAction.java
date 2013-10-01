@@ -64,7 +64,7 @@ public class FixDocCommentAction extends EditorAction {
         return;
       }
 
-      PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
+      PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
       if (psiFile == null) {
         return;
       }

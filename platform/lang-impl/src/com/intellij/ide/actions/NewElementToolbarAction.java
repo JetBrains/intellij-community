@@ -37,7 +37,7 @@ public class NewElementToolbarAction extends NewElementAction {
   public void actionPerformed(AnActionEvent e) {
     if (e.getData(LangDataKeys.IDE_VIEW) == null) {
       final Project project = e.getData(CommonDataKeys.PROJECT);
-      final PsiFileSystemItem psiFile = e.getData(LangDataKeys.PSI_FILE).getParent();
+      final PsiFileSystemItem psiFile = e.getData(CommonDataKeys.PSI_FILE).getParent();
       ProjectViewImpl.getInstance(project).selectCB(psiFile, psiFile.getVirtualFile(), true).doWhenDone(new Runnable() {
         @Override
         public void run() {
@@ -55,7 +55,7 @@ public class NewElementToolbarAction extends NewElementAction {
     super.update(event);
     if (event.getData(LangDataKeys.IDE_VIEW) == null) {
       Project project = event.getData(CommonDataKeys.PROJECT);
-      PsiFile psiFile = event.getData(LangDataKeys.PSI_FILE);
+      PsiFile psiFile = event.getData(CommonDataKeys.PSI_FILE);
       if (project != null && psiFile != null) {
         final ToolWindow projectViewWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
         if (projectViewWindow.isVisible()) {

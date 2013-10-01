@@ -64,7 +64,7 @@ public class ExternalJavaDocAction extends AnAction {
     }
 
 
-    PsiFile context = LangDataKeys.PSI_FILE.getData(dataContext);
+    PsiFile context = CommonDataKeys.PSI_FILE.getData(dataContext);
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiElement originalElement = getOriginalElement(context, editor);
     DocumentationManager.storeOriginalElement(project, originalElement, element);
@@ -113,7 +113,7 @@ public class ExternalJavaDocAction extends AnAction {
     DataContext dataContext = event.getDataContext();
     Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
-    final PsiElement originalElement = getOriginalElement(LangDataKeys.PSI_FILE.getData(dataContext), editor);
+    final PsiElement originalElement = getOriginalElement(CommonDataKeys.PSI_FILE.getData(dataContext), editor);
     DocumentationManager.storeOriginalElement(CommonDataKeys.PROJECT.getData(dataContext), originalElement, element);
     final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
     boolean enabled;

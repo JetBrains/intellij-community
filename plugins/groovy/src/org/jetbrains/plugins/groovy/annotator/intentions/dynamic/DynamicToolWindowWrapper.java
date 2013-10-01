@@ -657,7 +657,7 @@ public class DynamicToolWindowWrapper {
       if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         return getSelectedElement();
       }
-      else if (LangDataKeys.PSI_FILE.is(dataId)) {
+      else if (CommonDataKeys.PSI_FILE.is(dataId)) {
         final PsiElement element = getSelectedElement();
 
         if (element == null) return null;

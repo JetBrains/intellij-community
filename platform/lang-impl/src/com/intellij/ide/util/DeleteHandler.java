@@ -82,7 +82,7 @@ public class DeleteHandler {
           elements = new PsiElement[]{(PsiElement)data};
         }
         else {
-          final Object data1 = LangDataKeys.PSI_FILE.getData(dataContext);
+          final Object data1 = CommonDataKeys.PSI_FILE.getData(dataContext);
           if (data1 != null) {
             elements = new PsiElement[]{(PsiFile)data1};
           }

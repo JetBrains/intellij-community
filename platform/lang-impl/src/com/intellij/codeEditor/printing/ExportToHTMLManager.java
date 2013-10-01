@@ -57,7 +57,7 @@ class ExportToHTMLManager {
     if(psiElement instanceof PsiDirectory) {
       psiDirectory = (PsiDirectory)psiElement;
     }
-    final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
+    final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     String shortFileName = null;
     String directoryName = null;

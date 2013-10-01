@@ -58,6 +58,6 @@ public class MavenPropertyRenameHandler extends PsiElementRenameHandler {
   }
 
   private static PsiElement findTarget(DataContext context) {
-    return MavenTargetUtil.getRefactorTarget(CommonDataKeys.EDITOR.getData(context), LangDataKeys.PSI_FILE.getData(context));
+    return MavenTargetUtil.getRefactorTarget(CommonDataKeys.EDITOR.getData(context), CommonDataKeys.PSI_FILE.getData(context));
   }
 }
