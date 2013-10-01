@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -396,21 +396,24 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     }
   }
 
-  private class MyMemberInfoModel extends UsesAndInterfacesDependencyMemberInfoModel {
+  private class MyMemberInfoModel extends UsesAndInterfacesDependencyMemberInfoModel<PsiMember, MemberInfo> {
     PsiClass myTargetClass = null;
     public MyMemberInfoModel() {
       super(mySourceClass, null, false, DEFAULT_CONTAINMENT_VERIFIER);
     }
 
+    @Override
     @Nullable
     public Boolean isFixedAbstract(MemberInfo member) {
       return null;
     }
 
+    @Override
     public boolean isCheckedWhenDisabled(MemberInfo member) {
       return false;
     }
 
+    @Override
     public boolean isMemberEnabled(MemberInfo member) {
       if(myTargetClass != null && myTargetClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(myTargetClass)) {
         return !(member.getMember() instanceof PsiMethod);

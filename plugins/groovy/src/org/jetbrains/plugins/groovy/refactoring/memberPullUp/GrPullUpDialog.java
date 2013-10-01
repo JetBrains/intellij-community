@@ -27,7 +27,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.classMembers.AbstractUsesDependencyMemberInfoModel;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.refactoring.memberPullUp.PullUpDialogBase;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
@@ -37,6 +36,7 @@ import com.intellij.refactoring.ui.DocCommentPanel;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
+import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
@@ -175,17 +175,9 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
     return new MyMemberInfoModel(myClass, getSuperClass(), false);
   }
 
-  private class MyMemberInfoModel extends AbstractUsesDependencyMemberInfoModel<GrMember, PsiClass, GrMemberInfo> {
+  private class MyMemberInfoModel extends UsesAndInterfacesDependencyMemberInfoModel<GrMember, GrMemberInfo> {
     public MyMemberInfoModel(PsiClass aClass, PsiClass superClass, boolean recursive) {
-      super(aClass, superClass, recursive);
-    }
-
-    @Override
-    protected int doCheck(@NotNull GrMemberInfo memberInfo, int problem) {
-      if (problem == ERROR && memberInfo.isStatic()) {
-        return WARNING;
-      }
-      return problem;
+      super(aClass, superClass, recursive, myInterfaceContainmentVerifier);
     }
 
     @Override

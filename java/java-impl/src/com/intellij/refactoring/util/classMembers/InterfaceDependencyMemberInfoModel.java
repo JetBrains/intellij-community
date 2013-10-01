@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,24 +27,27 @@ package com.intellij.refactoring.util.classMembers;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMember;
 import com.intellij.refactoring.classMembers.DependencyMemberInfoModel;
+import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.classMembers.MemberInfoTooltipManager;
 
-public class InterfaceDependencyMemberInfoModel extends DependencyMemberInfoModel<PsiMember, MemberInfo> {
+public class InterfaceDependencyMemberInfoModel<T extends PsiMember, M extends MemberInfoBase<T>> extends DependencyMemberInfoModel<T, M> {
 
   public InterfaceDependencyMemberInfoModel(PsiClass aClass) {
-    super(new InterfaceMemberDependencyGraph(aClass), WARNING);
-    setTooltipProvider(new MemberInfoTooltipManager.TooltipProvider<PsiMember, MemberInfo>() {
-      public String getTooltip(MemberInfo memberInfo) {
+    super(new InterfaceMemberDependencyGraph<T, M>(aClass), WARNING);
+    setTooltipProvider(new MemberInfoTooltipManager.TooltipProvider<T, M>() {
+      public String getTooltip(M memberInfo) {
         return ((InterfaceMemberDependencyGraph) myMemberDependencyGraph).getElementTooltip(memberInfo.getMember());
       }
     });
   }
 
-  public boolean isCheckedWhenDisabled(MemberInfo member) {
+  @Override
+  public boolean isCheckedWhenDisabled(M member) {
     return false;
   }
 
-  public Boolean isFixedAbstract(MemberInfo member) {
+  @Override
+  public Boolean isFixedAbstract(M member) {
     return null;
   }
 }
