@@ -721,6 +721,7 @@ public class GenericsHighlightUtil {
 
     if (!(resolved instanceof PsiField)) return null;
     if (!((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) return null;
+    if (expr.getParent() instanceof PsiSwitchLabelStatement) return null;
     final PsiMember constructorOrInitializer = PsiUtil.findEnclosingConstructorOrInitializer(expr);
     if (constructorOrInitializer == null) return null;
     if (constructorOrInitializer.hasModifierProperty(PsiModifier.STATIC)) return null;
