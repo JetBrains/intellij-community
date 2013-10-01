@@ -39,6 +39,7 @@ import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
 import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.refactoring.classMembers.GrMemberInfo;
 import org.jetbrains.plugins.groovy.refactoring.classMembers.GrMemberInfoStorage;
@@ -94,6 +95,7 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
   @Override
   protected void updateMemberInfo() {
     super.updateMemberInfo();
+    getRefactorAction().setEnabled(GroovyFileType.GROOVY_LANGUAGE.equals(getSuperClass().getLanguage()));
     if (myMemberSelectionPanel != null) {
       ((MyMemberInfoModel)myMemberInfoModel).setSuperClass(getSuperClass());
       myMemberSelectionPanel.getTable().setMemberInfos(myMemberInfos);
