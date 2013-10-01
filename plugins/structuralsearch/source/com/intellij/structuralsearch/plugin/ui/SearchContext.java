@@ -53,7 +53,7 @@ public final class SearchContext implements DataProvider, Cloneable {
     setProject(project);
 
     setFile(CommonDataKeys.PSI_FILE.getData(context));
-    setCurrentFile(PlatformDataKeys.VIRTUAL_FILE.getData(context));
+    setCurrentFile(CommonDataKeys.VIRTUAL_FILE.getData(context));
   }
 
   private Editor selectedEditor() {
