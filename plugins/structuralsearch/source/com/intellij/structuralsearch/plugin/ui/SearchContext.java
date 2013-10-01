@@ -1,5 +1,6 @@
 package com.intellij.structuralsearch.plugin.ui;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -45,7 +46,7 @@ public final class SearchContext implements DataProvider, Cloneable {
   }
 
   public void configureFromDataContext(DataContext context) {
-    Project project = PlatformDataKeys.PROJECT.getData(context);
+    Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }
