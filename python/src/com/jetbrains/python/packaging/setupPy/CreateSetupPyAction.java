@@ -8,6 +8,7 @@ import com.intellij.ide.fileTemplates.actions.CreateFromTemplateAction;
 import com.intellij.ide.fileTemplates.ui.CreateFromTemplateDialog;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -55,7 +56,7 @@ public class CreateSetupPyAction extends CreateFromTemplateAction {
 
   @Override
   public AttributesDefaults getAttributesDefaults(DataContext dataContext) {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final AttributesDefaults defaults = new AttributesDefaults("setup.py").withFixedName(true);
     if (project != null) {
       defaults.add("Package_name", project.getName());

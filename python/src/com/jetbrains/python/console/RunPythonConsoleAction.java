@@ -6,6 +6,7 @@ import com.google.common.collect.Collections2;
 import com.google.common.collect.Maps;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -45,7 +46,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
   public void update(final AnActionEvent e) {
     e.getPresentation().setVisible(true);
     e.getPresentation().setEnabled(false);
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       Pair<Sdk, Module> sdkAndModule = findPythonSdkAndModule(project, e.getData(LangDataKeys.MODULE));
       if (sdkAndModule.first != null) {
@@ -55,7 +56,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     runPythonConsole(project, e.getData(LangDataKeys.MODULE));
   }
 

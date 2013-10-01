@@ -1,6 +1,7 @@
 package com.jetbrains.rest;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -25,7 +26,7 @@ public class RestPythonUtil {
   public static Presentation updateSphinxQuickStartRequiredAction(final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
 
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       Module module = e.getData(LangDataKeys.MODULE);
       if (module == null) {

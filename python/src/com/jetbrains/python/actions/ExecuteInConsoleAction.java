@@ -94,7 +94,7 @@ public class ExecuteInConsoleAction extends AnAction {
 
   private static void execute(final AnActionEvent e, final String selectionText) {
     final Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     Module module = e.getData(LangDataKeys.MODULE);
 
     findCodeExecutor(e, new Consumer<PyCodeExecutor>() {
@@ -227,7 +227,7 @@ public class ExecuteInConsoleAction extends AnAction {
   }
 
   private static boolean canFindConsole(AnActionEvent e) {
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project != null) {
       Collection<RunContentDescriptor> descriptors = getConsoles(project);
       return descriptors.size() > 0;

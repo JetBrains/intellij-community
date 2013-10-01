@@ -16,6 +16,7 @@
 package com.jetbrains.python.newProject;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
@@ -40,7 +41,7 @@ public class PythonNewDirectoryProjectAction extends NewDirectoryProjectAction {
   private boolean myInstallFramework;
 
   public void actionPerformed(final AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }

@@ -9,6 +9,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -235,7 +236,7 @@ public class PythonSdkType extends SdkType {
   }
 
   public void showCustomCreateUI(SdkModel sdkModel, final JComponent parentComponent, final Consumer<Sdk> sdkCreatedCallback) {
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
+    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent));
     InterpreterPathChooser.show(project, sdkModel.getSdks(), RelativePoint.getCenterOf(parentComponent), true, new NullableConsumer<Sdk>() {
       @Override
       public void consume(@Nullable Sdk sdk) {
@@ -477,10 +478,10 @@ public class PythonSdkType extends SdkType {
       ownerComponent = ownerComponentRef.get();
     }
     if (ownerComponent != null) {
-      project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(ownerComponent));
+      project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(ownerComponent));
     }
     else {
-      project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+      project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     }
     setupSdkPaths(sdk, project, ownerComponent);
   }

@@ -5,6 +5,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
@@ -31,14 +32,14 @@ public class PyOpenDebugConsoleAction extends AnAction implements DumbAware {
   public void update(final AnActionEvent e) {
     e.getPresentation().setVisible(false);
     e.getPresentation().setEnabled(true);
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       e.getPresentation().setVisible(getConsoles(project).size() > 0);
     }
   }
 
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       selectRunningProcess(e.getDataContext(), project, new Consumer<PythonDebugLanguageConsoleView>() {
         @Override

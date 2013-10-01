@@ -1,6 +1,7 @@
 package com.jetbrains.python.sdk.flavors;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -32,7 +33,7 @@ public class VirtualEnvSdkFlavor extends CPythonSdkFlavor {
 
   @Override
   public Collection<String> suggestHomePaths() {
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     List<String> candidates = new ArrayList<String>();
     if (project != null) {
       VirtualFile rootDir = project.getBaseDir();
