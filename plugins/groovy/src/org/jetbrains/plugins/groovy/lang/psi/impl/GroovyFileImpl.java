@@ -78,7 +78,8 @@ import static org.jetbrains.plugins.groovy.editor.GroovyImportHelper.processImpl
  */
 public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl");
-  private static final Object lock = new Object();
+
+  private static final String SYNTHETIC_PARAMETER_NAME = "args";
 
   private static final CachedValueProvider<ConcurrentMap<String, GrBindingVariable>> BINDING_PROVIDER = new CachedValueProvider<ConcurrentMap<String, GrBindingVariable>>() {
     @Nullable
@@ -89,10 +90,11 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
   };
 
+  private final Object lock = new Object();
+
   private volatile Boolean myScript;
-  private GroovyScriptClass myScriptClass;
-  private static final String SYNTHETIC_PARAMETER_NAME = "args";
-  private GrParameter mySyntheticArgsParameter = null;
+  private volatile GroovyScriptClass myScriptClass;
+  private volatile GrParameter mySyntheticArgsParameter = null;
   private PsiElement myContext;
 
   public GroovyFileImpl(FileViewProvider viewProvider) {
@@ -382,26 +384,37 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
 
     if (myScript == null) {
-      final GrTopStatement[] topStatements = findChildrenByClass(GrTopStatement.class);
-      boolean hasClassDefinitions = false;
-      boolean hasTopStatements = false;
-      for (GrTopStatement st : topStatements) {
-        if (st instanceof GrTypeDefinition) {
-          hasClassDefinitions = true;
-        }
-        else if (!(st instanceof GrImportStatement || st instanceof GrPackageDefinition)) {
-          hasTopStatements = true;
-          break;
+      synchronized (lock) {
+        boolean isScript = checkIsScript();
+        if (myScript == null) {
+          myScript = isScript;
         }
       }
-      myScript = hasTopStatements || !hasClassDefinitions;
     }
     return myScript;
   }
 
+  private boolean checkIsScript() {
+    final GrTopStatement[] topStatements = findChildrenByClass(GrTopStatement.class);
+    boolean hasClassDefinitions = false;
+    boolean hasTopStatements = false;
+    for (GrTopStatement st : topStatements) {
+      if (st instanceof GrTypeDefinition) {
+        hasClassDefinitions = true;
+      }
+      else if (!(st instanceof GrImportStatement || st instanceof GrPackageDefinition)) {
+        hasTopStatements = true;
+        break;
+      }
+    }
+    return hasTopStatements || !hasClassDefinitions;
+  }
+
   @Override
   public void subtreeChanged() {
-    myScript = null;
+    synchronized (lock) {
+      myScript = null;
+    }
     super.subtreeChanged();
   }
 
@@ -500,9 +513,8 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
 
   public void clearCaches() {
     super.clearCaches();
-//    myScriptClass = null;
-//    myScriptClassInitialized = false;
     synchronized (lock) {
+      myScriptClass = null;
       mySyntheticArgsParameter = null;
     }
   }
