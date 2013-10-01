@@ -92,27 +92,9 @@ fi
 
 VERSION_LOG=`"$MKTEMP" -t java.version.log.XXXXXX`
 "$JDK/bin/java" -version 2> "$VERSION_LOG"
-"$GREP" 'OpenJDK' "$VERSION_LOG" > /dev/null
-OPEN_JDK=$?
 "$GREP" "64-Bit|x86_64" "$VERSION_LOG" > /dev/null
 BITS=$?
 "$RM" -f "$VERSION_LOG"
-if [ $OPEN_JDK -eq 0 ]; then
-  echo "WARNING: You are launching the IDE using OpenJDK Java runtime."
-  echo
-  echo "         ITS KNOWN TO HAVE PERFORMANCE AND GRAPHICS ISSUES!"
-  echo "         SWITCH TO THE ORACLE(SUN) JDK BEFORE REPORTING PROBLEMS!"
-  echo
-  echo "NOTE:    If you have both Oracle (Sun) JDK and OpenJDK installed"
-  echo "         please validate either @@product_uc@@_JDK, JDK_HOME, or JAVA_HOME environment variable points to valid Oracle (Sun) JDK installation."
-  echo "         See http://ow.ly/6TuKQ for more info on switching default JDK."
-  echo
-  echo "Press Enter to continue."
-# ---------------------------------------------------------------------
-# COMMENT LINE BELOW TO REMOVE PAUSE AFTER OPEN JDK WARNING
-# ---------------------------------------------------------------------
-  read IGNORE
-fi
 if [ $BITS -eq 0 ]; then
   BITS="64"
 else

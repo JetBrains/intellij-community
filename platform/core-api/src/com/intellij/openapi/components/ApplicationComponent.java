@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,25 @@
  */
 package com.intellij.openapi.components;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Application-level component's implementation class may implement the <code>ApplicationComponent</code> interface.<br>
  * It may have constructor with parameters that are also application components.
  * See <a href=../../../../../plugins.html>plugins.html</a> for more information.
  */
 public interface ApplicationComponent extends BaseComponent {
+  class Adapter implements ApplicationComponent {
+    @NotNull
+    @Override
+    public String getComponentName() {
+      return getClass().getSimpleName();
+    }
+
+    @Override
+    public void disposeComponent() { }
+
+    @Override
+    public void initComponent() { }
+  }
 }
