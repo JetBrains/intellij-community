@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.jar;
 
+import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
@@ -246,7 +247,7 @@ public class JarHandlerBase {
       Map<String, EntryInfo> map = myRelPathsToEntries != null ? myRelPathsToEntries.get() : null;
       if (map == null) {
         final JarFile zip = getJar();
-        LOG.info("mapping " + myBasePath);
+        LogUtil.debug(LOG, "mapping %s", myBasePath);
 
         map = new THashMap<String, EntryInfo>();
         if (zip != null) {
