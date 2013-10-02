@@ -15,9 +15,8 @@
  */
 package com.intellij.util;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
 import com.intellij.execution.process.UnixProcessManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -144,9 +143,18 @@ public class EnvironmentUtil {
       throw new Exception("shell:" + shell);
     }
 
+    File reader = FileUtil.findFirstThatExist(
+      PathManager.getBinPath() + "/printenv.py",
+      PathManager.getHomePath() + "/community/bin/mac/printenv.py",
+      PathManager.getHomePath() + "/bin/mac/printenv.py"
+    );
+    if (reader == null) {
+      throw new Exception("bin:" + PathManager.getBinPath());
+    }
+
     File envFile = FileUtil.createTempFile("intellij-shell-env", null, false);
     try {
-      String[] command = {shell, "-l", "-c", "/usr/bin/printenv > '" + envFile.getAbsolutePath() + "'"};
+      String[] command = {shell, "-l", "-c", "'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'"};
       LOG.info("loading shell env: " + StringUtil.join(command, " "));
 
       Process process = Runtime.getRuntime().exec(command);
@@ -155,9 +163,9 @@ public class EnvironmentUtil {
       int rv = process.waitFor();
       processKiller.stopWaiting();
 
-      List<String> lines = Files.readLines(envFile, Charsets.UTF_8);
+      String lines = FileUtil.loadFile(envFile);
       if (rv != 0 || lines.isEmpty()) {
-        throw new Exception("rv:" + rv + " lines:" + lines.size());
+        throw new Exception("rv:" + rv + " text:" + lines.length());
       }
       return parseEnv(lines);
     }
@@ -166,25 +174,16 @@ public class EnvironmentUtil {
     }
   }
 
-  private static Map<String, String> parseEnv(List<String> lines) throws Exception {
+  private static Map<String, String> parseEnv(String text) throws Exception {
     Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL"));
     Map<String, String> env = System.getenv();
     Map<String, String> newEnv = new HashMap<String, String>();
 
-    int size = lines.size();
-    String prevVarName = null;
+    String[] lines = text.split("\0");
     for (String line : lines) {
       int pos = line.indexOf('=');
       if (pos <= 0) {
-        String oldValue = newEnv.get(prevVarName);
-        if (oldValue == null) {
-          LOG.warn("malformed:" + line);
-        }
-        else {
-          newEnv.put(prevVarName, oldValue + "\n" + line);
-          size--;
-        }
-        continue;
+        throw new Exception("malformed:" + line);
       }
       String name = line.substring(0, pos);
       if (!toIgnore.contains(name)) {
@@ -193,12 +192,6 @@ public class EnvironmentUtil {
       else if (env.containsKey(name)) {
         newEnv.put(name, env.get(name));
       }
-      prevVarName = name;
-    }
-
-    if (newEnv.size() < size - toIgnore.size()) {
-      // some lines weren't parsed - we're better to fall back to original environment than use possibly incomplete one
-      throw new Exception("env:" + newEnv.size() + " lines:" + size);
     }
 
     LOG.info("shell environment loaded (" + newEnv.size() + " vars)");
@@ -286,7 +279,7 @@ public class EnvironmentUtil {
   }
 
   @TestOnly
-  static Map<String, String> testParser(@NotNull List<String> lines) {
+  static Map<String, String> testParser(@NotNull String lines) {
     try {
       return parseEnv(lines);
     }
