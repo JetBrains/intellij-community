@@ -37,8 +37,7 @@ public abstract class CheckinHandlersManager {
    * Returns the list of all registered factories which provide callbacks to run before and after
    * VCS checkin operations.
    *
-   * @return the list of registered factories.
-   * @param allActiveVcss
+   * @return the list of registered factories
    */
   public abstract List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories(AbstractVcs[] allActiveVcss);
 
@@ -50,9 +49,9 @@ public abstract class CheckinHandlersManager {
    */
   public abstract void registerCheckinHandlerFactory(BaseCheckinHandlerFactory factory);
   /**
-   * Unregisters a factory which provides callbacks to run before and after VCS checkin operations.
+   * Unregister a factory which provides callbacks to run before and after VCS checkin operations.
    *
    * @param factory the factory to unregister.
    */
-  public abstract void unregisterCheckinHandlerFactory(BaseCheckinHandlerFactory handler);
+  public abstract void unregisterCheckinHandlerFactory(BaseCheckinHandlerFactory factory);
 }
