@@ -121,6 +121,6 @@ public final class NettyUtil {
   }
 
   public static void initHttpHandlers(ChannelPipeline pipeline) {
-    pipeline.addLast(new HttpRequestDecoder(), new HttpObjectAggregator(1048576), new HttpResponseEncoder());
+    pipeline.addLast(new HttpRequestDecoder(), new HttpObjectAggregator(1048576 * 10), new HttpResponseEncoder());
   }
 }
