@@ -30,6 +30,7 @@ import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
@@ -50,7 +51,13 @@ public class EnvironmentUtil {
       ourEnvGetter = executor.submit(new Callable<Map<String, String>>() {
         @Override
         public Map<String, String> call() throws Exception {
-          return getShellEnv();
+          try {
+            return getShellEnv();
+          }
+          catch (Throwable t) {
+            LOG.warn("can't get shell environment", t);
+            return System.getenv();
+          }
         }
       });
       executor.shutdown();
@@ -129,37 +136,31 @@ public class EnvironmentUtil {
     return array;
   }
 
-  @SuppressWarnings("SpellCheckingInspection")
-  private static Map<String, String> getShellEnv() {
-    File envFile = null;
-    try {
-      String shell = System.getenv("SHELL");
-      if (shell == null || !new File(shell).canExecute()) {
-        throw new Exception("shell:" + shell);
-      }
+  private static Map<String, String> getShellEnv() throws Exception {
+    String shell = System.getenv("SHELL");
+    if (shell == null || !new File(shell).canExecute()) {
+      throw new Exception("shell:" + shell);
+    }
 
-      envFile = FileUtil.createTempFile("intellij-shell-env", null, false);
+    File envFile = FileUtil.createTempFile("intellij-shell-env", null, false);
+    try {
       String[] command = {shell, "-l", "-c", "/usr/bin/printenv > '" + envFile.getAbsolutePath() + "'"};
       LOG.info("loading shell env: " + StringUtil.join(command, " "));
+
       Process process = Runtime.getRuntime().exec(command);
       ProcessKiller processKiller = new ProcessKiller(process);
       processKiller.killAfter(SHELL_ENV_READING_TIMEOUT);
       int rv = process.waitFor();
       processKiller.stopWaiting();
+
       List<String> lines = Files.readLines(envFile, Charsets.UTF_8);
       if (rv != 0 || lines.isEmpty()) {
         throw new Exception("rv:" + rv + " lines:" + lines.size());
       }
       return parseEnv(lines);
     }
-    catch (Throwable t) {
-      LOG.warn("can't get shell environment", t);
-      return System.getenv();
-    }
     finally {
-      if (envFile != null) {
-        FileUtil.delete(envFile);
-      }
+      FileUtil.delete(envFile);
     }
   }
 
@@ -167,10 +168,20 @@ public class EnvironmentUtil {
     Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL"));
     Map<String, String> env = System.getenv();
     Map<String, String> newEnv = new HashMap<String, String>();
+
+    int size = lines.size();
+    String prevVarName = null;
     for (String line : lines) {
       int pos = line.indexOf('=');
       if (pos <= 0) {
-        LOG.warn("malformed:" + line);
+        String oldValue = newEnv.get(prevVarName);
+        if (oldValue == null) {
+          LOG.warn("malformed:" + line);
+        }
+        else {
+          newEnv.put(prevVarName, oldValue + "\n" + line);
+          size--;
+        }
         continue;
       }
       String name = line.substring(0, pos);
@@ -180,10 +191,12 @@ public class EnvironmentUtil {
       else if (env.containsKey(name)) {
         newEnv.put(name, env.get(name));
       }
+      prevVarName = name;
     }
-    if (newEnv.size() < lines.size() - toIgnore.size()) {
+
+    if (newEnv.size() < size - toIgnore.size()) {
       // some lines weren't parsed - we're better to fall back to original environment than use possibly incomplete one
-      throw new Exception("env:" + newEnv.size() + " lines:" + lines.size());
+      throw new Exception("env:" + newEnv.size() + " lines:" + size);
     }
 
     LOG.info("shell environment loaded (" + newEnv.size() + " vars)");
@@ -246,5 +259,25 @@ public class EnvironmentUtil {
   @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"})
   public static Map<String, String> getEnvironmentProperties() {
     return getEnvironmentMap();
+  }
+
+  @TestOnly
+  static Map<String, String> testLoader() {
+    try {
+      return getShellEnv();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @TestOnly
+  static Map<String, String> testParser(@NotNull List<String> lines) {
+    try {
+      return parseEnv(lines);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }
