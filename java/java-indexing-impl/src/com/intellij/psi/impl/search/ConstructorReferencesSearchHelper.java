@@ -179,7 +179,7 @@ public class ConstructorReferencesSearchHelper {
     }
     for (PsiMethod method : constructors) {
       PsiCodeBlock body = method.getBody();
-      if (body == null || method == constructor) {
+      if (body == null || method == constructor && isStrictSignatureSearch) {
         continue;
       }
       PsiStatement[] statements = body.getStatements();
