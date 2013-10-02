@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.completion.impl.CompletionServiceImpl;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -129,6 +130,7 @@ public abstract class CompletionPhase implements Disposable {
 
       if (actionsHappened || focusStamp.isExpired() || DumbService.getInstance(myProject).isDumb() ||
           myEditor.isDisposed() ||
+          (myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) ||
           ApplicationManager.getApplication().isWriteAccessAllowed()) {
         CompletionServiceImpl.setCompletionPhase(NoCompletion);
         return true;
