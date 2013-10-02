@@ -49,6 +49,28 @@ public class PyWrapTest extends PyTestCase {
     doTest(" AND field");
   }
 
+
+  public void testWrapRightMargin() {
+    final CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings();
+    int oldValue = settings.RIGHT_MARGIN;
+    boolean oldMarginValue = settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
+    settings.RIGHT_MARGIN = 100;
+    settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = true;
+    try {
+      final String testName = "wrap/" + getTestName(true);
+      myFixture.configureByFile(testName + ".py");
+      for (int i = 0; i != 45; ++i) {
+        myFixture.type(' ');
+      }
+      myFixture.checkResultByFile(testName + ".after.py");
+    }
+    finally {
+      settings.RIGHT_MARGIN = oldValue;
+      settings.WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN = oldMarginValue;
+    }
+
+  }
+
   private void doTest(final String textToType) {
     myFixture.configureByFile("wrap/" + getTestName(false) + ".py");
     myFixture.type(textToType);
