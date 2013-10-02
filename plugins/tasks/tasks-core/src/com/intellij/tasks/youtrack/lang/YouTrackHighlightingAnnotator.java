@@ -37,7 +37,7 @@ public class YouTrackHighlightingAnnotator extends ExternalAnnotator<QueryInfo, 
       return new QueryInfo(0, "empty", null);
     }
     final YouTrackIntellisense intellisense = file.getUserData(YouTrackIntellisense.INTELLISENSE_KEY);
-    if (intellisense == null) {
+    if (intellisense == null || !intellisense.getRepository().isConfigured()) {
       return null;
     }
     final String text = file.getText();

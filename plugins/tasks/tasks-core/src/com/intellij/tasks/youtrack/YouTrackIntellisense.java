@@ -118,6 +118,10 @@ public class YouTrackIntellisense {
     return response;
   }
 
+  public YouTrackRepository getRepository() {
+    return myRepository;
+  }
+
   /**
    * Main wrapper around "IntelliSense" element in YouTrack response. It delegates further parsing
    * to {@link com.intellij.tasks.youtrack.YouTrackIntellisense.HighlightRange} and
