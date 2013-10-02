@@ -33,12 +33,10 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
@@ -185,18 +183,6 @@ public class SvnChangeProvider implements ChangeProvider {
     processCopiedAndDeleted(context, null);
   }
 
-  @Nullable
-  private String changeListNameFromStatus(final SVNStatus status) {
-    if (WorkingCopyFormat.getInstance(status.getWorkingCopyFormat()).supportsChangelists()) {
-      if (SVNNodeKind.FILE.equals(status.getKind())) {
-        final String clName = status.getChangelistName();
-        return (clName == null) ? null : clName;
-      }
-    }
-    // always null for earlier versions
-    return null;
-  }
-
   private void processCopiedFile(SvnChangedFile copiedFile,
                                  ChangelistBuilder builder,
                                  SvnChangeProviderContext context, final VcsDirtyScope dirtyScope) throws SVNException {
@@ -221,7 +207,7 @@ public class SvnChangeProvider implements ChangeProvider {
       SvnChangedFile deletedFile = iterator.next();
       final SVNStatus deletedStatus = deletedFile.getStatus();
       if ((deletedStatus != null) && (deletedStatus.getURL() != null) && Comparing.equal(copyFromURL, deletedStatus.getURL().toString())) {
-        final String clName = changeListNameFromStatus(copiedFile.getStatus());
+        final String clName = SvnUtil.getChangelistName(copiedFile.getStatus());
         final Change newChange = context.createMovedChange(createBeforeRevision(deletedFile, true),
                                                         CurrentContentRevision.create(copiedFile.getFilePath()), copiedStatus,
                                                         deletedStatus);
@@ -274,8 +260,8 @@ public class SvnChangeProvider implements ChangeProvider {
         final FilePath filePath = myFactory.createFilePathOnDeleted(wcPath, false);
         final SvnContentRevision beforeRevision = SvnContentRevision.createBaseRevision(myVcs, filePath, status.getRevision());
         final ContentRevision afterRevision = CurrentContentRevision.create(copiedFile.getFilePath());
-        builder.processChangeInList(context.createMovedChange(beforeRevision, afterRevision, copiedStatus, status), changeListNameFromStatus(status),
-                                    SvnVcs.getKey());
+        builder.processChangeInList(context.createMovedChange(beforeRevision, afterRevision, copiedStatus, status),
+                                    SvnUtil.getChangelistName(status), SvnVcs.getKey());
         foundRename = true;
       }
     }

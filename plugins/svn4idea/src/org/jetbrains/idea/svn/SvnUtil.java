@@ -774,4 +774,11 @@ public class SvnUtil {
       throw runtimeException;
     }
   }
+
+  @Nullable
+  public static String getChangelistName(@NotNull final SVNStatus status) {
+    // no explicit check on working copy format supports change lists as they are supported from svn 1.5
+    // and anyway status.getChangelistName() should just return null if change lists are not supported.
+    return SVNNodeKind.FILE.equals(status.getKind()) ? status.getChangelistName() : null;
+  }
 }
