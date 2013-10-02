@@ -15,12 +15,28 @@
  */
 package com.intellij.openapi.vcs.checkin;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CommitExecutor;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public abstract class BeforeCheckinDialogHandler {
+  @Deprecated
+  /**
+   * @deprecated see {@link #beforeCommitDialogShown(com.intellij.openapi.project.Project, java.util.List, Iterable, boolean)}
+   * @return false to cancel commit
+   */
+  public boolean beforeCommitDialogShownCallback(Iterable<CommitExecutor> executors, boolean showVcsCommit) {
+    throw new AbstractMethodError();
+  }
 
   /**
    * @return false to cancel commit
    */
-  public abstract boolean beforeCommitDialogShownCallback(Iterable<CommitExecutor> executors, boolean showVcsCommit);
+  public boolean beforeCommitDialogShown(@NotNull Project project, @NotNull List<Change> changes, @NotNull Iterable<CommitExecutor> executors, boolean showVcsCommit) {
+    //noinspection deprecation
+    return beforeCommitDialogShownCallback(executors, showVcsCommit);
+  }
 }

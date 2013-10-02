@@ -23,11 +23,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-/**
- * @author irengrig
- *         Date: 1/28/11
- *         Time: 6:00 PM
- */
 public abstract class CheckinHandlersManager {
   public static CheckinHandlersManager getInstance() {
     return ServiceManager.getService(CheckinHandlersManager.class);
@@ -37,22 +32,34 @@ public abstract class CheckinHandlersManager {
    * Returns the list of all registered factories which provide callbacks to run before and after
    * VCS checkin operations.
    *
-   * @return the list of registered factories.
-   * @param allActiveVcss
+   * @return the list of registered factories
    */
-  public abstract List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories(AbstractVcs[] allActiveVcss);
+  public abstract List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories(AbstractVcs<?>[] allActiveVcss);
 
-  public abstract List<VcsCheckinHandlerFactory> getMatchingVcsFactories(@NotNull final List<AbstractVcs> keys);
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
   /**
+   * @deprecated to remove in IDEA 13
+   */
+  public abstract List<VcsCheckinHandlerFactory> getMatchingVcsFactories(@NotNull final List<AbstractVcs> keys);
+
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
+  /**
+   * @deprecated to remove in IDEA 13, use EP {@link com.intellij.openapi.vcs.checkin.CheckinHandlerFactory#EP_NAME}
    * Registers a factory which provides callbacks to run before and after VCS checkin operations.
    *
    * @param factory the factory to register.
    */
   public abstract void registerCheckinHandlerFactory(BaseCheckinHandlerFactory factory);
+
+  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated
   /**
-   * Unregisters a factory which provides callbacks to run before and after VCS checkin operations.
+   * @deprecated to remove in IDEA 13, use EP {@link com.intellij.openapi.vcs.checkin.CheckinHandlerFactory#EP_NAME}
+   * Unregister a factory which provides callbacks to run before and after VCS checkin operations.
    *
    * @param factory the factory to unregister.
    */
-  public abstract void unregisterCheckinHandlerFactory(BaseCheckinHandlerFactory handler);
+  public abstract void unregisterCheckinHandlerFactory(BaseCheckinHandlerFactory factory);
 }
