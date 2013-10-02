@@ -16,6 +16,7 @@
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
@@ -24,6 +25,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ComboBoxVisibilityPanel;
@@ -57,6 +59,7 @@ import java.awt.event.*;
  */
 @SuppressWarnings("MethodMayBeStatic")
 public class ExtractMethodDialog extends AbstractExtractDialog {
+  public static final String EXTRACT_METHOD_DEFAULT_VISIBILITY = "extract.method.default.visibility";
   private final Project myProject;
   private final PsiType myReturnType;
   private final PsiTypeParameterList myTypeParameterList;
@@ -188,6 +191,10 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
         data.type = new PsiEllipsisType(((PsiArrayType)data.type).getComponentType());
       }
     }
+    final PsiMethod containingMethod = getContainingMethod();
+    if (containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.PUBLIC)) {
+      PropertiesComponent.getInstance(myProject).setValue(EXTRACT_METHOD_DEFAULT_VISIBILITY, getVisibility());
+    }
     super.doOKAction();
   }
 
@@ -307,7 +314,10 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
 
   private ComboBoxVisibilityPanel<String> createVisibilityPanel() {
     final JavaComboBoxVisibilityPanel panel = new JavaComboBoxVisibilityPanel();
-    panel.setVisibility(PsiModifier.PRIVATE);
+    final PsiMethod containingMethod = getContainingMethod();
+    panel.setVisibility(containingMethod != null && containingMethod.hasModifierProperty(PsiModifier.PUBLIC) 
+                        ? PropertiesComponent.getInstance(myProject).getOrInit( EXTRACT_METHOD_DEFAULT_VISIBILITY, PsiModifier.PRIVATE)
+                        : PsiModifier.PRIVATE);
     panel.addListener(new ChangeListener() {
       @Override
       public void stateChanged(ChangeEvent e) {
@@ -318,6 +328,10 @@ public class ExtractMethodDialog extends AbstractExtractDialog {
       }
     });
     return panel;
+  }
+
+  private PsiMethod getContainingMethod() {
+    return PsiTreeUtil.getParentOfType(PsiTreeUtil.findCommonParent(myElementsToExtract), PsiMethod.class);
   }
 
   private void updateVarargsEnabled() {
