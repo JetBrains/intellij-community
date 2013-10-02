@@ -6,7 +6,6 @@ import com.intellij.execution.impl.EditConfigurationsDialog;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
 
@@ -19,11 +18,20 @@ public class EditMavenRunConfigurationAction extends AnAction {
     Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     RunnerAndConfigurationSettings settings = MavenDataKeys.RUN_CONFIGURATION.getData(e.getDataContext());
 
-    if (settings == null || project == null) return;
+    assert settings != null && project != null;
 
     RunManager.getInstance(project).setSelectedConfiguration(settings);
 
     EditConfigurationsDialog dialog = new EditConfigurationsDialog(project);
     dialog.show();
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    RunnerAndConfigurationSettings settings = MavenDataKeys.RUN_CONFIGURATION.getData(e.getDataContext());
+
+    boolean enabled = settings != null && project != null;
+    e.getPresentation().setEnabledAndVisible(enabled);
   }
 }
