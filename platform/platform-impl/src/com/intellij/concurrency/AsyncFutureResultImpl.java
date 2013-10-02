@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,11 +79,15 @@ public class AsyncFutureResultImpl<V> implements AsyncFutureResult<V> {
 
   @Override
   public void set(V value) {
-    myFuture.set(value);
+    if (!myFuture.set(value)) {
+      throw new Error("already set");
+    }
   }
 
   @Override
   public void setException(@NotNull Throwable t) {
-    myFuture.setException(t);
+    if (!myFuture.setException(t)) {
+      throw new Error("already excepted");
+    }
   }
 }
