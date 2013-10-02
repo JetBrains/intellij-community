@@ -76,6 +76,15 @@ public class DummyCompileContext implements CompileContext {
   public void requestRebuildNextTime(String message) {
   }
 
+  public boolean isRebuildRequested() {
+    return false;
+  }
+
+  @Nullable
+  public String getRebuildReason() {
+    return null;
+  }
+
   public Module getModuleByFile(VirtualFile file) {
     return null;
   }

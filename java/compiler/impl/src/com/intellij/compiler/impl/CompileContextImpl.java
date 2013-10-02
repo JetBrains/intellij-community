@@ -305,7 +305,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     if (!myRebuildRequested) {
       myRebuildRequested = true;
       myRebuildReason = message;
-      addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
+      final boolean isOutOfProcessBuild = myDependencyCache == null;
+      if (!isOutOfProcessBuild) {
+        addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
+      }
     }
   }
 
@@ -313,6 +316,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     return myRebuildRequested;
   }
 
+  @Nullable
   public String getRebuildReason() {
     return myRebuildReason;
   }
