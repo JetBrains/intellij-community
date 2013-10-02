@@ -23,6 +23,7 @@ import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.FixedFuture;
@@ -33,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -201,6 +203,18 @@ public class EnvironmentUtil {
 
     LOG.info("shell environment loaded (" + newEnv.size() + " vars)");
     return Collections.unmodifiableMap(newEnv);
+  }
+
+  public static String getProcessList() {
+    String diagnostics;
+    try {
+      Process p = Runtime.getRuntime().exec(SystemInfo.isWindows ? System.getenv("windir") +"\\system32\\tasklist.exe /v" : "ps a");
+      diagnostics = StreamUtil.readText(p.getInputStream());
+    }
+    catch (IOException e) {
+      diagnostics = ExceptionUtil.getThrowableText(e);
+    }
+    return diagnostics;
   }
 
   private static class ProcessKiller {
