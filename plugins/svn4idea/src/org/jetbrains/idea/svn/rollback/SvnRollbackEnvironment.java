@@ -335,22 +335,11 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
   private boolean is17OrGreaterCopy(final File file, final SVNInfo info) throws VcsException {
     final RootsToWorkingCopies copies = mySvnVcs.getRootsToWorkingCopies();
     WorkingCopy copy = copies.getMatchingCopy(info.getURL());
+
     if (copy == null) {
-      // TODO: Why null could be here?
-      // TODO: Think we could just rewrite it with mySvnVcs.getWorkingCopyFormat(file)
-      SVNStatus status;
-      try {
-        status = mySvnVcs.getFactory(file).createStatusClient().doStatus(file, false);
-      }
-      catch (SVNException e) {
-        throw new VcsException(e);
-      }
-      if (status == null) {
-        throw new VcsException("Can not determine working copy or get 'svn status' for " + file.getPath());
-      } else {
-        // status.getWorkingCopyFormat returns format 12 both for 1.7 and 1.8 - see PortableStatus default constructor
-        return WorkingCopyFormat.ONE_DOT_SEVEN.equals(WorkingCopyFormat.getInstance(status.getWorkingCopyFormat()));
-      }
+      WorkingCopyFormat format = mySvnVcs.getWorkingCopyFormat(file);
+
+      return !WorkingCopyFormat.UNKNOWN.equals(format) && format.isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN);
     } else {
       return copy.is17Copy();
     }
