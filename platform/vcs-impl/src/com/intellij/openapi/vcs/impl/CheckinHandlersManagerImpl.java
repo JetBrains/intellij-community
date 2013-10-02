@@ -29,11 +29,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * @author irengrig
- *         Date: 1/28/11
- *         Time: 5:21 PM
- */
 public class CheckinHandlersManagerImpl extends CheckinHandlersManager {
   private final List<BaseCheckinHandlerFactory> myRegisteredBeforeCheckinHandlers;
   private final MultiMap<VcsKey, VcsCheckinHandlerFactory> myVcsMap;
@@ -48,13 +43,13 @@ public class CheckinHandlersManagerImpl extends CheckinHandlersManager {
   }
 
   @Override
-  public List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories(AbstractVcs[] allActiveVcss) {
-    final ArrayList<BaseCheckinHandlerFactory> list =
+  public List<BaseCheckinHandlerFactory> getRegisteredCheckinHandlerFactories(AbstractVcs<?>[] allActiveVcss) {
+    final List<BaseCheckinHandlerFactory> list =
       new ArrayList<BaseCheckinHandlerFactory>(myRegisteredBeforeCheckinHandlers.size() + allActiveVcss.length);
     list.addAll(myRegisteredBeforeCheckinHandlers);
     for (AbstractVcs vcs : allActiveVcss) {
       final Collection<VcsCheckinHandlerFactory> factories = myVcsMap.get(vcs.getKeyInstanceMethod());
-      if (! factories.isEmpty()) {
+      if (!factories.isEmpty()) {
         list.addAll(factories);
       }
     }
@@ -63,10 +58,10 @@ public class CheckinHandlersManagerImpl extends CheckinHandlersManager {
 
   @Override
   public List<VcsCheckinHandlerFactory> getMatchingVcsFactories(@NotNull List<AbstractVcs> vcsList) {
-    final SmartList<VcsCheckinHandlerFactory> result = new SmartList<VcsCheckinHandlerFactory>();
+    final List<VcsCheckinHandlerFactory> result = new SmartList<VcsCheckinHandlerFactory>();
     for (AbstractVcs vcs : vcsList) {
       final Collection<VcsCheckinHandlerFactory> factories = myVcsMap.get(vcs.getKeyInstanceMethod());
-      if (! factories.isEmpty()) {
+      if (!factories.isEmpty()) {
         result.addAll(factories);
       }
     }
