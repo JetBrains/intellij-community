@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
-import io.netty.channel.ChannelException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -111,7 +110,7 @@ public class BuiltInServerManagerImpl extends BuiltInServerManager {
           server = new BuiltInServer();
           detectedPortNumber = server.start(workerCount, defaultPort, PORTS_COUNT, true);
         }
-        catch (ChannelException e) {
+        catch (Exception e) {
           LOG.info(e);
           String groupDisplayId = "Built-in Server";
           Notifications.Bus.register(groupDisplayId, NotificationDisplayType.STICKY_BALLOON);
