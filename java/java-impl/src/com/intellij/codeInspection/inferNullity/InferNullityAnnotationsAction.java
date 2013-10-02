@@ -163,6 +163,12 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
                   }
                 }
               }.execute();
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  analyze(project, scope);
+                }
+              });
             }
           }
         });
