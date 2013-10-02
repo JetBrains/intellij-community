@@ -23,9 +23,6 @@
           </grid>
         </constraints>
         <properties/>
-        <clientProperties>
-          <caretAspectRatio class="java.lang.Float" value="0.04"/>
-        </clientProperties>
       </component>
       <scrollpane id="83208" class="com.intellij.ui.components.JBScrollPane">
         <constraints>
@@ -34,14 +31,11 @@
           </grid>
         </constraints>
         <properties/>
-        <border type="none"/>
+        <border type="empty"/>
         <children>
           <component id="26029" class="javax.swing.JTextArea" binding="myDescriptionTextArea">
             <constraints/>
             <properties/>
-            <clientProperties>
-              <caretAspectRatio class="java.lang.Float" value="0.04"/>
-            </clientProperties>
           </component>
         </children>
       </scrollpane>
