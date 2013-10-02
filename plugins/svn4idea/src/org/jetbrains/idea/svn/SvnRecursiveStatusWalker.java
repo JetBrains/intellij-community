@@ -275,7 +275,7 @@ public class SvnRecursiveStatusWalker {
             myReceiver.processCopyRoot(vf, statusInner.getURL(),
                                      WorkingCopyFormat.getInstance(statusInner.getWorkingCopyFormat()), statusInner.getRepositoryRootURL());
           } else {
-            myReceiver.bewareRoot(vf, statusInner.getURL(), WorkingCopyFormat.getInstance(statusInner.getWorkingCopyFormat()));
+            myReceiver.bewareRoot(vf, statusInner.getURL());
           }
         }
       }

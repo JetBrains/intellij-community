@@ -74,7 +74,7 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   @Override
-  public void bewareRoot(VirtualFile vf, SVNURL url, WorkingCopyFormat copyFormat) {
+  public void bewareRoot(VirtualFile vf, SVNURL url) {
   }
 
   public ChangelistBuilder getBuilder() {

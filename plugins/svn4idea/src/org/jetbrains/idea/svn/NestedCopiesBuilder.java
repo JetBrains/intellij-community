@@ -74,7 +74,7 @@ public class NestedCopiesBuilder implements StatusReceiver {
   }
 
   @Override
-  public void bewareRoot(VirtualFile vf, SVNURL url, WorkingCopyFormat copyFormat) {
+  public void bewareRoot(VirtualFile vf, SVNURL url) {
     final File ioFile = new File(vf.getPath());
     final RootUrlInfo info = myMapping.getWcRootForFilePath(ioFile);
     if (info != null && FileUtil.filesEqual(ioFile, info.getIoFile()) && ! info.getAbsoluteUrlAsUrl().equals(url)) {
