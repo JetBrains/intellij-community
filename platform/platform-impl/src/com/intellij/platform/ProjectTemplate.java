@@ -20,6 +20,8 @@ import com.intellij.openapi.ui.ValidationInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
  * @author Dmitry Avdeev
  *         Date: 9/28/12
@@ -33,6 +35,8 @@ public interface ProjectTemplate {
 
   @Nullable
   String getDescription();
+
+  Icon getIcon();
 
   @NotNull
   AbstractModuleBuilder createModuleBuilder();

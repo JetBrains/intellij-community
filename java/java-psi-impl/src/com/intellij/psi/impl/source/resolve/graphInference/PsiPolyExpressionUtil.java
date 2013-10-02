@@ -130,7 +130,8 @@ public class PsiPolyExpressionUtil {
     return PsiUtil.isCondition(expr, context) ||
            context instanceof PsiReturnStatement ||
            context instanceof PsiAssignmentExpression ||
-           context instanceof PsiVariable;
+           context instanceof PsiVariable ||
+           context instanceof PsiLambdaExpression;
   }
 
   private enum ConditionalKind {

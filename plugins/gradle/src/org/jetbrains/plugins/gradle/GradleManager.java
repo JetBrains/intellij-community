@@ -40,6 +40,7 @@ import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAwa
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.JavaModuleType;
@@ -339,7 +340,7 @@ public class GradleManager
               @Override
               public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
               }
-            }, false, true);
+            }, false, ProgressExecutionMode.MODAL_SYNC);
         }
       }
     });

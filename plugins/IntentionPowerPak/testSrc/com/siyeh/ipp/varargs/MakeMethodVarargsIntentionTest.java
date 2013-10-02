@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.siyeh.ipp.varargs;
 
-/*
- * @author max
- */
-package com.intellij.psi.stubs;
+import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ipp.IPPTestCase;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.util.indexing.ID;
-import org.jetbrains.annotations.NonNls;
+public class MakeMethodVarargsIntentionTest extends IPPTestCase {
 
-public final class StubIndexKey<K, Psi extends PsiElement> extends ID<K, Psi> {
-  private StubIndexKey(@NonNls String name) {
-    super(name);
+  public void testFinal() { doTest(); }
+  public void testDeepArray() { doTest(); }
+
+  @Override
+  protected String getRelativePath() {
+    return "varargs/make_method_varargs";
   }
 
-  public static synchronized <K, Psi extends PsiElement> StubIndexKey<K, Psi> createIndexKey(@NonNls String name) {
-    return new StubIndexKey<K, Psi>(name);
+  @Override
+  protected String getIntentionName() {
+    return IntentionPowerPackBundle.message("make.method.varargs.intention.name");
   }
-
 }

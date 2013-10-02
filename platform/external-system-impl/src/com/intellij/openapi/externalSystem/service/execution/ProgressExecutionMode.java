@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.openapi.externalSystem.service.execution;
 
-/*
- * @author max
+/**
+ * @author Vladislav.Soroka
+ * @since 10/2/13
  */
-package com.intellij.psi.stubs;
-
-import com.intellij.psi.PsiElement;
-import com.intellij.util.indexing.ID;
-import org.jetbrains.annotations.NonNls;
-
-public final class StubIndexKey<K, Psi extends PsiElement> extends ID<K, Psi> {
-  private StubIndexKey(@NonNls String name) {
-    super(name);
-  }
-
-  public static synchronized <K, Psi extends PsiElement> StubIndexKey<K, Psi> createIndexKey(@NonNls String name) {
-    return new StubIndexKey<K, Psi>(name);
-  }
-
+public enum ProgressExecutionMode {
+  /**
+   * Perform synchronously using modal window without option to sent to background
+   */
+  MODAL_SYNC,
+  /**
+   * Perform asynchronously using background mode
+   */
+  IN_BACKGROUND_ASYNC,
+  /**
+   * Perform asynchronously using foreground window with option to sent to background
+   */
+  START_IN_FOREGROUND_ASYNC
 }

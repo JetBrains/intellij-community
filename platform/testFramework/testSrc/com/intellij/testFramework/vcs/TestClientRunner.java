@@ -19,10 +19,9 @@ import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import com.intellij.util.ExceptionUtil;
+import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -108,15 +107,7 @@ public class TestClientRunner {
     }
 
     if (result.isTimeout()) {
-      String diagnostics = "none";
-      try {
-        Process p = Runtime.getRuntime().exec(SystemInfo.isWindows ? System.getenv("windir") +"\\system32\\tasklist.exe /v" : "ps a");
-        diagnostics = StreamUtil.readText(p.getInputStream());
-      }
-      catch (IOException e) {
-        diagnostics = ExceptionUtil.getThrowableText(e);
-      }
-      throw new RuntimeException("Timeout waiting for VCS client to finish execution:\n" + diagnostics);
+      throw new RuntimeException("Timeout waiting for VCS client to finish execution:\n" + EnvironmentUtil.getProcessList());
     }
     return result;
   }

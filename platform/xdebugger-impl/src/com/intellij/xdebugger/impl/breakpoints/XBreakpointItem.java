@@ -85,7 +85,7 @@ class XBreakpointItem extends BreakpointItem {
 
   public void doUpdateDetailView(DetailView panel, boolean editorOnly) {
     Project project = ((XBreakpointBase)myBreakpoint).getProject();
-    saveState();
+    //saveState();
     myPropertiesPanel = null;
     if (!editorOnly) {
       myPropertiesPanel = new XLightBreakpointPropertiesPanel<XBreakpoint<?>>(project, getManager(), myBreakpoint, true);

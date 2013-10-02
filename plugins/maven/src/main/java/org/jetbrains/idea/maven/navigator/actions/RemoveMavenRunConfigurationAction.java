@@ -22,9 +22,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import org.jetbrains.idea.maven.utils.MavenDataKeys;
-
-import javax.swing.*;
 
 /**
  * @author Sergey Evdokimov
@@ -37,11 +36,8 @@ public class RemoveMavenRunConfigurationAction extends AnAction {
 
     assert settings != null && project != null;
 
-    int res = JOptionPane.showConfirmDialog(JOptionPane.getRootFrame(),
-                                            "Delete \"" + settings.getName() + "\"?",
-                                            "Confirmation", JOptionPane.YES_NO_OPTION);
-
-    if (res == JOptionPane.YES_OPTION) {
+    int res = Messages.showYesNoDialog(project, "Delete \"" + settings.getName() + "\"?", "Confirmation", Messages.getQuestionIcon());
+    if (res == 0) {
       ((RunManagerEx)RunManager.getInstance(project)).removeConfiguration(settings);
     }
   }

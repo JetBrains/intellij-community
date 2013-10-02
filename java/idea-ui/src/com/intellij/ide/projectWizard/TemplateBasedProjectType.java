@@ -16,6 +16,7 @@
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.templates.ArchivedTemplatesFactory;
 import com.intellij.platform.templates.LocalArchivedTemplate;
 import org.jetbrains.annotations.NotNull;
@@ -28,9 +29,9 @@ import java.net.URL;
  * @author Dmitry Avdeev
  *         Date: 20.09.13
  */
-public abstract class TemplateBasedProjectType extends ProjectCategory {
+public class TemplateBasedProjectType extends ProjectCategory {
 
-  private final LocalArchivedTemplate myTemplate;
+  private final ProjectTemplate myTemplate;
 
   public TemplateBasedProjectType(String templatePath) {
     URL resource = getClass().getResource(templatePath);
@@ -39,10 +40,14 @@ public abstract class TemplateBasedProjectType extends ProjectCategory {
     myTemplate = new LocalArchivedTemplate(name, resource, getClass().getClassLoader());
   }
 
+  public TemplateBasedProjectType(ProjectTemplate template) {
+    myTemplate = template;
+  }
+
   @NotNull
   @Override
   public ModuleBuilder createModuleBuilder() {
-    return myTemplate.createModuleBuilder();
+    return (ModuleBuilder)myTemplate.createModuleBuilder();
   }
 
   @Override

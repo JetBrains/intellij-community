@@ -80,7 +80,7 @@ public class InferenceSession {
     if (parameters.length > 0) {
       for (int i = 0; i < args.length; i++) {
         PsiType parameterType = getParameterType(parameters, args, i, mySiteSubstitutor);
-        if (args[i] != null && (pair == null || isPertinentToApplicability(args[i], pair.first))) {
+        if (args[i] != null && (pair == null || isPertinentToApplicability(args[i], pair.first, mySiteSubstitutor, parameterType, this))) {
           myConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
         }
       }
@@ -101,11 +101,30 @@ public class InferenceSession {
     return null;
   }
 
+  private static boolean areLambdaParameterTypesKnown(PsiSubstitutor siteSubstitutor, PsiType targetType, @NotNull InferenceSession session) {
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(targetType);
+    final PsiMethod method = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
+    if (method != null) {
+      final PsiSubstitutor substitutor = LambdaUtil.getSubstitutor(method, resolveResult);
+      for (PsiParameter parameter : method.getParameterList().getParameters()) {
+        if (!session.isProperType(siteSubstitutor.substitute(substitutor.substitute(parameter.getType())))) return false;
+      }
+      return true;
+    }
+    return false;
+  }
+
   public static boolean isPertinentToApplicability(PsiExpression expr, PsiMethod method) {
+    return isPertinentToApplicability(expr, method, PsiSubstitutor.EMPTY, null, null);
+  }
+
+  public static boolean isPertinentToApplicability(PsiExpression expr, PsiMethod method, PsiSubstitutor siteSubstitutor, @Nullable PsiType targetType, @Nullable InferenceSession session) {
     if (expr instanceof PsiLambdaExpression) {
-      if (!((PsiLambdaExpression)expr).hasFormalParameterTypes()) return false;
+      if (!((PsiLambdaExpression)expr).hasFormalParameterTypes() && (session == null || !areLambdaParameterTypesKnown(siteSubstitutor, targetType, session))) {
+        return false;
+      }
       for (PsiExpression expression : LambdaUtil.getReturnExpressions((PsiLambdaExpression)expr)) {
-        if (!isPertinentToApplicability(expression, method)) return false;
+        if (!isPertinentToApplicability(expression, method, siteSubstitutor, targetType, session)) return false;
       }
       if (method.getTypeParameters().length > 0) {
         final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expr.getParent());
@@ -133,13 +152,13 @@ public class InferenceSession {
       return ((PsiMethodReferenceExpression)expr).isExact();
     }
     if (expr instanceof PsiParenthesizedExpression) {
-      return isPertinentToApplicability(((PsiParenthesizedExpression)expr).getExpression(), method);
+      return isPertinentToApplicability(((PsiParenthesizedExpression)expr).getExpression(), method, siteSubstitutor, targetType, session);
     }
     if (expr instanceof PsiConditionalExpression) {
       final PsiExpression thenExpression = ((PsiConditionalExpression)expr).getThenExpression();
-      if (!isPertinentToApplicability(thenExpression, method)) return false;
+      if (!isPertinentToApplicability(thenExpression, method, siteSubstitutor, targetType, session)) return false;
       final PsiExpression elseExpression = ((PsiConditionalExpression)expr).getElseExpression();
-      if (!isPertinentToApplicability(elseExpression, method)) return false;
+      if (!isPertinentToApplicability(elseExpression, method, siteSubstitutor, targetType, session)) return false;
     }
     return true;
   }
@@ -172,7 +191,7 @@ public class InferenceSession {
         for (int i = 0; i < args.length; i++) {
           PsiType parameterType = getParameterType(parameters, args, i, mySiteSubstitutor);
           if (args[i] != null) {
-            if (pair == null || !isPertinentToApplicability(args[i], pair.first)) {
+            if (pair == null || !isPertinentToApplicability(args[i], pair.first, mySiteSubstitutor, parameterType, this)) {
               additionalConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
             }
             additionalConstraints.add(new CheckedExceptionCompatibilityConstraint(args[i], parameterType));
@@ -389,6 +408,7 @@ public class InferenceSession {
           for (PsiType eqBound : eqBounds) {
             if (eqBound == null) continue;
             bound = acceptBoundsWithRecursiveDependencies(typeParameter, eqBound);
+            if (bound != null) break;
           }
           if (bound != null) {
             if (bound instanceof PsiCapturedWildcardType && eqBounds.size() > 1) {

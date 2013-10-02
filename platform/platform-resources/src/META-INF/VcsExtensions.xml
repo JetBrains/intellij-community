@@ -38,8 +38,6 @@
     <applicationService serviceInterface="com.intellij.openapi.vcs.impl.CheckinHandlersManager"
                         serviceImplementation="com.intellij.openapi.vcs.impl.CheckinHandlersManagerImpl"/>
     <pathMacroFilter implementation="com.intellij.openapi.vcs.VcsPathMacroFilter"/>
-
-    <beforeCommitDialog implementation="com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog$MyBeforeCommitDialogHandler" order="last"/>
   </extensions>
 </idea-plugin>
 

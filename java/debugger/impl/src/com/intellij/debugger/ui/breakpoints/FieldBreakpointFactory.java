@@ -49,11 +49,6 @@ public class FieldBreakpointFactory extends BreakpointFactory{
   }
 
   @Override
-  protected void configureBreakpointPanel(BreakpointPanel panel) {
-    panel.getTree().setGroupByMethods(false);
-  }
-
-  @Override
   protected String getHelpID() {
     return HelpID.FIELD_WATCHPOINTS;
   }

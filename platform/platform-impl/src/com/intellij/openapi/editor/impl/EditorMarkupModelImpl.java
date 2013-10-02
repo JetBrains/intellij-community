@@ -42,6 +42,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ProperTextRange;
+import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Processor;
@@ -156,7 +157,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     boolean isVisible = area.contains(area.x, realY);//area.y < realY && area.y + area.height > realY;
 
     TooltipRenderer bigRenderer;
-    if (!ApplicationManager.getApplication().isInternal() || isVisible) {
+    if (!(UIUtil.getRootPane(myEditor.getComponent()) instanceof IdeRootPane) || isVisible) {
       final Set<RangeHighlighter> highlighters = new THashSet<RangeHighlighter>();
       getNearestHighlighters(this, me.getY(), highlighters);
       getNearestHighlighters((MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), getEditor().getProject(), true), me.getY(), highlighters);
@@ -1022,13 +1023,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     private int myRelativeY;
 
     private EditorFragmentRenderer() {
-      update(0, Collections.<RangeHighlighterEx>emptyList());
+      update(-1, Collections.<RangeHighlighterEx>emptyList());
     }
 
     public void update(int currentLine, Collection<RangeHighlighterEx> rangeHighlighters) {
       myLine = currentLine;
       myHighlighters = rangeHighlighters;
       myImage = null;
+      if (currentLine ==-1) return;
       myStartLine = Math.max(0, myLine - myPreviewLines);
       myEndLine = Math.min(myEditor.getDocument().getLineCount() - 1, myLine + myPreviewLines + 1);
     }
@@ -1054,17 +1056,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
           @Override
           protected void paintComponent(Graphics g) {
+            if (myLine ==-1) return;
             if (myImage == null) {
               myRelativeY = SwingUtilities.convertPoint(this, 0, 0, myEditor.getScrollPane()).y;
               Dimension size = getPreferredSize();
               myImage = UIUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
               Graphics2D g2d = myImage.createGraphics();
-              AffineTransform transform;
-              if (UIUtil.isRetina()) {
-                transform = AffineTransform.getScaleInstance(2, 2);
-              } else {
-                transform = AffineTransform.getScaleInstance(1, 1);
-              }
+              AffineTransform transform = g2d.getTransform();
               UISettings.setupAntialiasing(g2d);
               g2d.setColor(myEditor.getBackgroundColor());
               g2d.fillRect(0, 0, getWidth(), getHeight());

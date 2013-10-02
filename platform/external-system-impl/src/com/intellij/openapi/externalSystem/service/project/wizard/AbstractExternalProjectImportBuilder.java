@@ -16,6 +16,7 @@ import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -293,7 +294,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
             externalProjectPath,
             callback,
             true,
-            true
+            ProgressExecutionMode.MODAL_SYNC
           );
         }
         catch (IllegalArgumentException e) {

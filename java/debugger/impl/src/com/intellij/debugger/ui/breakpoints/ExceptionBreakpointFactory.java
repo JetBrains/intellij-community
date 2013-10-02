@@ -60,12 +60,6 @@ public class ExceptionBreakpointFactory extends BreakpointFactory {
   }
 
   @Override
-  protected void configureBreakpointPanel(BreakpointPanel panel) {
-    super.configureBreakpointPanel(panel);
-    panel.getTree().setGroupByMethods(false);
-  }
-
-  @Override
   public BreakpointPropertiesPanel createBreakpointPropertiesPanel(Project project, boolean compact) {
     return new ExceptionBreakpointPropertiesPanel(project, compact);
   }

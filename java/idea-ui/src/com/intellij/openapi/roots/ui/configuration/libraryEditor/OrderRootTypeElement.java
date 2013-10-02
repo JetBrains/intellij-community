@@ -24,15 +24,14 @@ import javax.swing.*;
 /**
  * @author nik
  */
-public class OrderRootTypeElement extends LibraryTableTreeContentElement {
+public class OrderRootTypeElement extends LibraryTableTreeContentElement<OrderRootTypeElement> {
   private final OrderRootType myRootType;
-  private String myNodeText;
-  private Icon myIcon;
 
-  public OrderRootTypeElement(@NotNull OrderRootType rootType, final String nodeText, final Icon icon) {
+  public OrderRootTypeElement(NodeDescriptor rootElementDescriptor, @NotNull OrderRootType rootType, final String nodeText, final Icon icon) {
+    super(rootElementDescriptor);
     myRootType = rootType;
-    myNodeText = nodeText;
-    myIcon = icon;
+    setIcon(icon);
+    myName = nodeText;
   }
 
   @NotNull
@@ -51,7 +50,12 @@ public class OrderRootTypeElement extends LibraryTableTreeContentElement {
   }
 
   @Override
-  public NodeDescriptor createDescriptor(final NodeDescriptor parentDescriptor, final LibraryRootsComponent parentEditor) {
-    return new OrderRootTypeElementDescriptor(parentDescriptor, this, myNodeText, myIcon);
+  public boolean update() {
+    return false;
+  }
+
+  @Override
+  public OrderRootTypeElement getElement() {
+    return this;
   }
 }

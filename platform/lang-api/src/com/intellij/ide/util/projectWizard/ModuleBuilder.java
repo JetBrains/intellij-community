@@ -50,7 +50,7 @@ import java.io.IOException;
 import java.util.*;
 
 public abstract class ModuleBuilder extends AbstractModuleBuilder {
-  private static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleBuilder");
+  public static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleBuilder");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ModuleBuilder");
   protected Sdk myJdk;

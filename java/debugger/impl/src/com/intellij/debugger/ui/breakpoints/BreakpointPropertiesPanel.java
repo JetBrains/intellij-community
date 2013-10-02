@@ -121,33 +121,8 @@ public abstract class BreakpointPropertiesPanel {
   private boolean myMoreOptionsVisible = true;
   private Breakpoint myBreakpoint;
 
-  public boolean isSaveOnRemove() {
-    return mySaveOnRemove;
-  }
-
-  public void setSaveOnRemove(boolean saveOnRemove) {
-    mySaveOnRemove = saveOnRemove;
-  }
-
-  private boolean mySaveOnRemove = false;
-
   public boolean isMoreOptionsVisible() {
     return myMoreOptionsVisible;
-  }
-
-  private void createUIComponents() {
-    myPanel = new JPanel() {
-      @Override
-      public void removeNotify() {
-        super.removeNotify();
-        if (mySaveOnRemove) {
-          saveTo(myBreakpoint, new Runnable() {
-            @Override
-            public void run() {}
-          });
-        }
-      }
-    };
   }
 
   public interface Delegate {

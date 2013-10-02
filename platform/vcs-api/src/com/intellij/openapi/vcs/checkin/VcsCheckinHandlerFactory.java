@@ -22,11 +22,6 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.CommitContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author irengrig
- *         Date: 1/28/11
- *         Time: 3:49 PM
- */
 public abstract class VcsCheckinHandlerFactory implements BaseCheckinHandlerFactory {
   public static final ExtensionPointName<VcsCheckinHandlerFactory> EP_NAME = ExtensionPointName.create("com.intellij.vcsCheckinHandlerFactory");
 

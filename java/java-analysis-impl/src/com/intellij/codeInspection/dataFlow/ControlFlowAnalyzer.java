@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +51,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       throw new UnsupportedOperationException("Not implemented");
     }
   };
-  public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = "org.jetbrains.annotations.Contract";
+  public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
   private boolean myIgnoreAssertions;
 
   private static class CannotAnalyzeException extends RuntimeException { }
