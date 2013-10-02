@@ -195,6 +195,8 @@ public class CopiesPanel {
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
     final Insets topIndent = new Insets(10, 3, 0, 0);
     for (final WCInfo wcInfo : infoList) {
+      final Collection<WorkingCopyFormat> upgradeFormats = getUpgradeFormats(wcInfo, supportedFormats);
+
       final VirtualFile vf = lfs.refreshAndFindFileByIoFile(new File(wcInfo.getPath()));
       final VirtualFile root = (vf == null) ? wcInfo.getVcsRoot() : vf;
 
@@ -222,7 +224,7 @@ public class CopiesPanel {
                                              SVNDepth.INFINITY, false, null, wcInfo.getFormat());
               }
             } else if (CHANGE_FORMAT.equals(e.getDescription())) {
-              changeFormat(wcInfo, supportedFormats);
+              changeFormat(wcInfo, upgradeFormats);
             } else if (MERGE_FROM.equals(e.getDescription())) {
               if (! checkRoot(root, wcInfo.getPath(), " invoke Merge From")) return;
               mergeFrom(wcInfo, root, editorPane);
@@ -242,7 +244,7 @@ public class CopiesPanel {
         }
       });
       editorPane.setBorder(null);
-      editorPane.setText(formatWc(wcInfo, supportedFormats));
+      editorPane.setText(formatWc(wcInfo, upgradeFormats));
 
       final JPanel copyPanel = new JPanel(new GridBagLayout());
 
@@ -268,13 +270,12 @@ public class CopiesPanel {
   }
 
   @SuppressWarnings("MethodMayBeStatic")
-  private String formatWc(@NotNull WCInfo info, @NotNull List<WorkingCopyFormat> supportedFormats) {
+  private String formatWc(@NotNull WCInfo info, @NotNull Collection<WorkingCopyFormat> upgradeFormats) {
     final StringBuilder sb = new StringBuilder().append("<html><head>").append(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()))
       .append("</head><body><table bgColor=\"").append(ColorUtil.toHex(UIUtil.getPanelBackground())).append("\">");
 
     sb.append("<tr valign=\"top\"><td colspan=\"3\"><b>").append(info.getPath()).append("</b></td></tr>");
     sb.append("<tr valign=\"top\"><td>URL:</td><td colspan=\"2\">").append(info.getRootUrl()).append("</td></tr>");
-    Collection<WorkingCopyFormat> upgradeFormats = getUpgradeFormats(info, supportedFormats);
     if (upgradeFormats.size() > 1) {
       sb.append("<tr valign=\"top\"><td>Format:</td><td>").append(info.getFormat().getName()).append("</td><td><a href=\"").
         append(CHANGE_FORMAT).append("\">Change</a></td></tr>");
@@ -370,7 +371,7 @@ public class CopiesPanel {
     });
   }
 
-  private void changeFormat(@NotNull final WCInfo wcInfo, @NotNull final List<WorkingCopyFormat> supportedFormats) {
+  private void changeFormat(@NotNull final WCInfo wcInfo, @NotNull final Collection<WorkingCopyFormat> supportedFormats) {
     ChangeFormatDialog dialog = new ChangeFormatDialog(myProject, new File(wcInfo.getPath()), false, ! wcInfo.isIsWcRoot());
 
     dialog.setSupported(supportedFormats);
