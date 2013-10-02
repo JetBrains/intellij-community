@@ -66,8 +66,8 @@ public class GraphFragmentController implements FragmentManager.GraphPreDecorato
 
   public void show(@NotNull GraphFragment fragment) {
     Edge hideFragmentEdge = getHideFragmentEdge(fragment);
-    upNodeEdges.removeValue(hideFragmentEdge.getUpNode(), hideFragmentEdge);
-    downNodeEdges.removeValue(hideFragmentEdge.getDownNode(), hideFragmentEdge);
+    upNodeEdges.remove(hideFragmentEdge.getUpNode(), hideFragmentEdge);
+    downNodeEdges.remove(hideFragmentEdge.getDownNode(), hideFragmentEdge);
 
     GraphFragment hideFragment = hideFragments.remove(hideFragmentEdge);
     hideNodes.removeAll(hideFragment.getIntermediateNodes());

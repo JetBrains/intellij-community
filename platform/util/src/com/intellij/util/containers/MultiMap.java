@@ -142,7 +142,14 @@ public class MultiMap<K, V> implements Serializable {
     myMap.put(key, values);
   }
 
-  public boolean removeValue(final K key, final V value) {
+  /**
+   * @deprecated use {@link #remove(Object, Object)} instead
+   */
+  public void removeValue(K key, V value) {
+    remove(key, value);
+  }
+
+  public boolean remove(final K key, final V value) {
     final Collection<V> values = myMap.get(key);
     if (values != null) {
       boolean removed = values.remove(value);

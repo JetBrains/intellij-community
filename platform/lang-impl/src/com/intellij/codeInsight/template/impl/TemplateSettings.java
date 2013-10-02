@@ -405,7 +405,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
           mySchemesManager.removeScheme(group);
         }
       }
-      myTemplates.removeValue(template.getKey(), existing);
+      myTemplates.remove(template.getKey(), existing);
     }
   }
 
@@ -430,7 +430,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   }
 
   public void removeTemplate(Template template) {
-    myTemplates.removeValue(template.getKey(), (TemplateImpl )template);
+    myTemplates.remove(template.getKey(), (TemplateImpl)template);
 
     TemplateImpl templateImpl = (TemplateImpl)template;
     String groupName = templateImpl.getGroupName();

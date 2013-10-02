@@ -143,7 +143,7 @@ public class NewLibraryEditor extends LibraryEditorBase {
 
   @Override
   public void removeRoot(String url, OrderRootType rootType) {
-    myRoots.removeValue(rootType, new LightFilePointer(url));
+    myRoots.remove(rootType, new LightFilePointer(url));
     myJarDirectories.remove(rootType, url);
   }
 

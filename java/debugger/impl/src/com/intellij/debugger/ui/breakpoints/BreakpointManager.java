@@ -673,7 +673,7 @@ public class BreakpointManager {
       myBreakpointsListForIteration = null;
       if (breakpoint instanceof BreakpointWithHighlighter) {
         for (Document document : myDocumentBreakpoints.keySet()) {
-          if (myDocumentBreakpoints.removeValue(document, (BreakpointWithHighlighter)breakpoint)) {
+          if (myDocumentBreakpoints.remove(document, (BreakpointWithHighlighter)breakpoint)) {
             break;
           }
         }

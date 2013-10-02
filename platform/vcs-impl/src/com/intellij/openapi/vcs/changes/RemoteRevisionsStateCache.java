@@ -84,7 +84,7 @@ public class RemoteRevisionsStateCache implements ChangesOnServerTracker {
     synchronized (myLock) {
       final VcsRoot key = new VcsRoot(pair.getSecond(), root);
       if (myQueries.containsKey(key)) {
-        myQueries.removeValue(key, pair.getFirst());
+        myQueries.remove(key, pair.getFirst());
       }
       myChanged.remove(pair.getFirst());
     }

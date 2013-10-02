@@ -50,7 +50,7 @@ class HighlightersRecycler {
     Collection<RangeHighlighter> collection = incinerator.get(range);
     for (RangeHighlighter highlighter : collection) {
       if (highlighter.isValid() && highlighter.getLayer() == layer) {
-        incinerator.removeValue(range, highlighter);
+        incinerator.remove(range, highlighter);
         return highlighter;
       }
     }
