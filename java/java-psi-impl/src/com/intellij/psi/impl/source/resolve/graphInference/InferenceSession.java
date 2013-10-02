@@ -408,6 +408,7 @@ public class InferenceSession {
           for (PsiType eqBound : eqBounds) {
             if (eqBound == null) continue;
             bound = acceptBoundsWithRecursiveDependencies(typeParameter, eqBound);
+            if (bound != null) break;
           }
           if (bound != null) {
             if (bound instanceof PsiCapturedWildcardType && eqBounds.size() > 1) {
