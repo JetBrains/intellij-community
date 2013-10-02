@@ -89,6 +89,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     myProjectsManager.projectClosed();
     removeFromLocalRepository("test");
     if (useJps()) {
+      CompilerTestUtil.disableExternalCompiler(myProject);
       FileUtil.delete(BuildManager.getInstance().getBuildSystemDirectory());
     }
     super.tearDown();
