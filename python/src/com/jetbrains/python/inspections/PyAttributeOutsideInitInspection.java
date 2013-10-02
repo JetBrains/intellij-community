@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -54,8 +55,13 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
       if (!isApplicable(containingClass)) {
         return;
       }
+      final List<PyTargetExpression> classAttributes = containingClass.getClassAttributes();
 
       Map<String, PyTargetExpression> attributesInInit = new HashMap<String, PyTargetExpression>();
+      for (PyTargetExpression classAttr : classAttributes) {
+        attributesInInit.put(classAttr.getName(), classAttr);
+      }
+
       final PyFunction initMethod = containingClass.findMethodByName(PyNames.INIT, false);
       if (initMethod != null) {
         PyClassImpl.collectInstanceAttributes(initMethod, attributesInInit);
