@@ -539,7 +539,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
   }
 
   private void updateVcsOptionsVisibility() {
-    Collection<AbstractVcs<?>> affectedVcses = getAffectedVcses(myProject, myBrowser.getSelectedChangeList().getChanges());
+    Collection<AbstractVcs> affectedVcses = getAffectedVcses(myProject, myBrowser.getSelectedChangeList().getChanges());
     for (Map.Entry<AbstractVcs, JPanel> entry : myPerVcsOptionsPanels.entrySet()) {
       entry.getValue().setVisible(affectedVcses.contains(entry.getKey()));
     }
@@ -1090,8 +1090,8 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
     return myBrowserExtender.getAffectedVcses();
   }
 
-  private static Collection<AbstractVcs<?>> getAffectedVcses(Project project, final Collection<Change> changes) {
-    Set<AbstractVcs<?>> result = new THashSet<AbstractVcs<?>>();
+  private static Collection<AbstractVcs> getAffectedVcses(Project project, final Collection<Change> changes) {
+    Set<AbstractVcs> result = new THashSet<AbstractVcs>();
     for (Change change : changes) {
       ContainerUtilRt.addIfNotNull(result, ChangesUtil.getVcsForChange(change, project));
     }
