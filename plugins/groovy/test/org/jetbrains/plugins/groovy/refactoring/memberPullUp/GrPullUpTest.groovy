@@ -157,6 +157,10 @@ class GrPullUpTest extends LightGroovyTestCase {
     doTest(false, new MemberDescriptor("foo", PsiMethod))
   }
 
+  void testSupers() {
+    doTest(false, new MemberDescriptor("bar", PsiMethod))
+  }
+
   private void doTest(MemberDescriptor... membersToFind) {
     doTest(true, membersToFind);
   }

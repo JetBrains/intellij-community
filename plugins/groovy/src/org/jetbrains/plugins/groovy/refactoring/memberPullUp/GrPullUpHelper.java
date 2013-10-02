@@ -559,7 +559,9 @@ public class GrPullUpHelper extends BaseRefactoringProcessor {
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(myProject);
       GrReferenceExpression thisExpression = (GrReferenceExpression) factory.createExpressionFromText("this", null);
       for (GrExpression expression : mySupersToDelete) {
-        expression.delete();
+        if (expression.getParent() instanceof GrReferenceExpression) {
+          ((GrReferenceExpression)expression.getParent()).setQualifier(null);
+        }
       }
 
       for (GrReferenceExpression superExpression : mySupersToChangeToThis) {
