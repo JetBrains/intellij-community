@@ -24,6 +24,7 @@ import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationSession;
 import com.intellij.lang.annotation.ExternalAnnotator;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -153,7 +154,7 @@ public class ExternalToolPass extends TextEditorHighlightingPass {
                 UpdateHighlightersUtil
                   .setHighlightersToEditor(myProject, myDocument, myStartOffset, myEndOffset, infos, getColorsScheme(), getId());
               }
-            });
+            }, ModalityState.stateForComponent(myEditor.getComponent()));
           }
         });
       }
