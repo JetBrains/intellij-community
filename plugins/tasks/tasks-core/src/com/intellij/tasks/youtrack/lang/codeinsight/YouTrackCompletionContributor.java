@@ -3,18 +3,18 @@ package com.intellij.tasks.youtrack.lang.codeinsight;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
-import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.tasks.youtrack.YouTrackIntellisense;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -56,6 +56,8 @@ public class YouTrackCompletionContributor extends CompletionContributor {
     });
     try {
       final List<CompletionItem> suggestions = future.get(TIMEOUT, TimeUnit.MILLISECONDS);
+      // actually backed by original CompletionResultSet
+      result = result.withPrefixMatcher(extractPrefix(parameters));
       result.addAllElements(ContainerUtil.map(suggestions, new Function<CompletionItem, LookupElement>() {
         @Override
         public LookupElement fun(CompletionItem item) {
@@ -78,6 +80,29 @@ public class YouTrackCompletionContributor extends CompletionContributor {
     }
   }
 
+  /**
+   * Find first word left boundary before cursor and strip leading braces and '#' signs
+   */
+  @NotNull
+  private static String extractPrefix(CompletionParameters parameters) {
+    String text = parameters.getOriginalFile().getText();
+    final int caretOffset = parameters.getOffset();
+    if (text.isEmpty() || caretOffset == 0) {
+      return "";
+    }
+    final int lastSpace = text.lastIndexOf(' ', caretOffset - 1);
+    //int start = CharArrayUtil.shiftForward(text, lastSpace < 0 ? 0 : lastSpace + 1, "#{ ");
+    int start = Math.min(lastSpace + 1, text.length() - 1);
+    if (text.charAt(start) == '#') {
+      start++;
+    }
+    if (start < text.length() && text.charAt(start) == '{') {
+      start++;
+    }
+    return StringUtil.trimLeading(text.substring(start, caretOffset));
+  }
+
+
 
   /**
    * Inserts additional braces around values that contains spaces, colon after attribute names
@@ -95,13 +120,21 @@ public class YouTrackCompletionContributor extends CompletionContributor {
 
       final String prefix = completionItem.getPrefix();
       final String suffix = completionItem.getSuffix();
-      if (!prefix.isEmpty()) {
+      if (!prefix.isEmpty() && !hasPrefixAt(document, context.getStartOffset() - prefix.length(), prefix)) {
         document.insertString(context.getStartOffset(), prefix);
       }
-      if (!suffix.isEmpty()) {
+      if (!suffix.isEmpty() && !hasPrefixAt(document, context.getTailOffset(), suffix)) {
         document.insertString(context.getTailOffset(), suffix);
       }
       editor.getCaretModel().moveToOffset(context.getTailOffset());
     }
+  }
+
+  static boolean hasPrefixAt(Document document, int offset, String prefix) {
+    String text = document.getText();
+    if (text.isEmpty() || offset < 0) {
+      return false;
+    }
+    return text.regionMatches(true, offset, prefix, 0, prefix.length());
   }
 }
