@@ -133,8 +133,8 @@ class c2 {
     public c2() {
         c = "";
     }
-    // its ok
-    int k3 = c.length();
+
+    int k3 = <error descr="Variable 'c' might not have been initialized">c</error>.length();
 
     c2(int i) {
       this();
