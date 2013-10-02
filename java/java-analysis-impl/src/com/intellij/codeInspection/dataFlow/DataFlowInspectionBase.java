@@ -296,6 +296,10 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
 
         @Override
         public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+          if (!FileModificationService.getInstance().preparePsiElementsForWrite(descriptor.getPsiElement())) {
+            return;
+          }
+
           JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
           PsiElement newElement = descriptor.getPsiElement().replace(facade.getElementFactory().createExpressionFromText(exprText, null));
           newElement = JavaCodeStyleManager.getInstance(project).shortenClassReferences(newElement);
