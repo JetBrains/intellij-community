@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.portable;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Getter;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.tmatesoft.svn.core.SVNLock;
@@ -33,6 +34,9 @@ import java.util.Map;
  * Time: 12:29 PM
  */
 public class PortableStatus extends SVNStatus {
+
+  private static final Logger LOG = Logger.getInstance(PortableStatus.class);
+
   private boolean myConflicted;
   private Getter<SVNInfo> myInfoGetter;
   private SVNInfo myInfo;
@@ -117,8 +121,12 @@ public class PortableStatus extends SVNStatus {
         return null;
       }
     };
-    // TODO: Update working copy format detection
-    setWorkingCopyFormat(WorkingCopyFormat.ONE_DOT_SEVEN.getFormat());
+  }
+
+  @Override
+  public int getWorkingCopyFormat() {
+    LOG.error("Do not use working copy format detection through status");
+    return 0;
   }
 
   @Override

@@ -198,10 +198,11 @@ class SvnChangeProviderContext implements StatusReceiver {
   }
 
   void processStatus(final FilePath filePath, final SVNStatus status) throws SVNException {
-    final int wcFormat = status.getWorkingCopyFormat();
-    if (WorkingCopyFormat.ONE_DOT_SEVEN.getFormat() != wcFormat && ISVNWCDb.WC_FORMAT_17 != wcFormat) {
+    WorkingCopyFormat format = myVcs.getWorkingCopyFormat(filePath.getIOFile());
+    if (!WorkingCopyFormat.UNKNOWN.equals(format) && format.less(WorkingCopyFormat.ONE_DOT_SEVEN)) {
       loadEntriesFile(filePath);
     }
+
     if (status != null) {
       FileStatus fStatus = SvnStatusConvertor.convertStatus(status);
 

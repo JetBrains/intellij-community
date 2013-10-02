@@ -77,7 +77,7 @@ public class SvnChangeProvider implements ChangeProvider {
       final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, progress);
 
       final StatusWalkerPartnerImpl partner = new StatusWalkerPartnerImpl(myVcs, progress);
-      final NestedCopiesBuilder nestedCopiesBuilder = new NestedCopiesBuilder(myVcs.getProject(), mySvnFileUrlMapping);
+      final NestedCopiesBuilder nestedCopiesBuilder = new NestedCopiesBuilder(myVcs, mySvnFileUrlMapping);
 
       final EventDispatcher<StatusReceiver> statusReceiver = EventDispatcher.create(StatusReceiver.class);
       statusReceiver.addListener(context);

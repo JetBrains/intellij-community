@@ -357,7 +357,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
                 final SVNStatus svnStatus = SvnUtil.getStatus(myVcs, infoFile);
                 if (svnStatus.getURL() == null) continue;
                 info.setUrl(svnStatus.getURL());
-                info.setFormat(WorkingCopyFormat.getInstance(svnStatus.getWorkingCopyFormat()));
+                info.setFormat(myVcs.getWorkingCopyFormat(infoFile));
                 if (svnStatus.getRepositoryRootURL() != null) {
                   info.setRootURL(svnStatus.getRepositoryRootURL());
                 }

@@ -33,9 +33,11 @@ public class NestedCopiesBuilder implements StatusReceiver {
   private final Set<MyPointInfo> mySet;
   private final Project myProject;
   private final SvnFileUrlMapping myMapping;
+  @NotNull private final SvnVcs myVcs;
 
-  public NestedCopiesBuilder(final Project project, final SvnFileUrlMapping mapping) {
-    myProject = project;
+  public NestedCopiesBuilder(@NotNull final SvnVcs vcs, final SvnFileUrlMapping mapping) {
+    myVcs = vcs;
+    myProject = vcs.getProject();
     myMapping = mapping;
     mySet = new HashSet<MyPointInfo>();
   }
@@ -56,8 +58,10 @@ public class NestedCopiesBuilder implements StatusReceiver {
     } else {
       return;
     }
-    final MyPointInfo info = new MyPointInfo(path.getVirtualFile(), status.getURL(),
-                                             WorkingCopyFormat.getInstance(status.getWorkingCopyFormat()), type, status.getRepositoryRootURL());
+    // this one called when there is switched directory under nested working copy
+    // TODO: some other cases?
+    final MyPointInfo info = new MyPointInfo(path.getVirtualFile(), status.getURL(), myVcs.getWorkingCopyFormat(path.getIOFile()), type,
+                                             status.getRepositoryRootURL());
     mySet.add(info);
   }
 
