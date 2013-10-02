@@ -58,7 +58,6 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
     super(element, contentEntry);
     LOG.assertTrue(element.getName().equals(ELEMENT_NAME));
     final String testSource = element.getAttributeValue(TEST_SOURCE_ATTR);
-    if (testSource == null) throw new InvalidDataException();
     myIsTestSource = Boolean.valueOf(testSource).booleanValue();
     final String packagePrefix = element.getAttributeValue(JpsModuleRootModelSerializer.PACKAGE_PREFIX_ATTRIBUTE);
     if (packagePrefix != null) {
