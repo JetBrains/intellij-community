@@ -113,7 +113,7 @@ public class AutoHardWrapHandler {
     if (margin <= 0) {
       return;
     }
-    
+
     VisualPosition visEndLinePosition = editor.offsetToVisualPosition(endOffset);
     if (margin > visEndLinePosition.column) {
       if (change != null) {
@@ -145,8 +145,10 @@ public class AutoHardWrapHandler {
       myAutoWrapChanges.put(document, change);
     }
     else {
-      if (!change.isEmpty()) {
-        document.replaceString(change.change.getStart(), change.change.getEnd(), change.change.getText());
+      final int start = change.change.getStart();
+      final int end = change.change.getEnd();
+      if (!change.isEmpty() && start < end) {
+        document.replaceString(start, end, change.change.getText());
       }
       change.reset();
     }
@@ -181,10 +183,6 @@ public class AutoHardWrapHandler {
           caretOffsetDiff[0] += event.getNewLength() - event.getOldLength();
         }
 
-        if (event.getNewLength() <= event.getOldLength()) {
-          // There is a possible case that document fragment is removed because of auto-formatting. We don't want to process such events.
-          return;
-        }
         wrapIntroducedSymbolsNumber[0] += event.getNewLength() - event.getOldLength();
       }
 
