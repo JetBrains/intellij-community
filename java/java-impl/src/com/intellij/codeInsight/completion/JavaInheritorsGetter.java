@@ -19,10 +19,12 @@ import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
 import com.intellij.codeInsight.lookup.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.getters.ExpectedTypesGetter;
+import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsInfo;
@@ -44,6 +46,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
  * @author peter
  */
 public class JavaInheritorsGetter extends CompletionProvider<CompletionParameters> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.JavaInheritorsGetter");
   private final ConstructorInsertHandler myConstructorInsertHandler;
 
   public JavaInheritorsGetter(final ConstructorInsertHandler constructorInsertHandler) {
@@ -149,9 +152,15 @@ public class JavaInheritorsGetter extends CompletionProvider<CompletionParameter
         PsiUtil.getLanguageLevel(parameters.getOriginalFile()).isAtLeast(LanguageLevel.JDK_1_7)) {
       final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(psiClass.getProject());
       if (psiClass.hasTypeParameters() && !((PsiClassType)type).isRaw()) {
-        final String canonicalText = TypeConversionUtil.erasure(psiType).getCanonicalText();
+        final String erasedText = TypeConversionUtil.erasure(psiType).getCanonicalText();
+        String canonicalText = psiType.getCanonicalText();
+        if (canonicalText.contains("?extends") || canonicalText.contains("?super")) {
+          LOG.error("Malformed canonical text: " + psiType + " of " + psiType.getClass() + "; " +
+                    (psiType instanceof PsiClassReferenceType ? ((PsiClassReferenceType)psiType).getReference().getClass() : ""));
+          return null;
+        }
         final PsiStatement statement = elementFactory
-          .createStatementFromText(psiType.getCanonicalText() + " v = new " + canonicalText + "<>()", parameters.getOriginalFile());
+          .createStatementFromText(canonicalText + " v = new " + erasedText + "<>()", parameters.getOriginalFile());
         final PsiVariable declaredVar = (PsiVariable)((PsiDeclarationStatement)statement).getDeclaredElements()[0];
         final PsiNewExpression initializer = (PsiNewExpression)declaredVar.getInitializer();
         final boolean hasDefaultConstructorOrNoGenericsOne = PsiDiamondTypeImpl.hasDefaultConstructor(psiClass) ||

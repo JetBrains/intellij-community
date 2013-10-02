@@ -18,13 +18,9 @@ package com.intellij.util;
 import com.intellij.openapi.util.SystemInfo;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.junit.Assume.assumeTrue;
 
 /**
@@ -48,12 +44,13 @@ public class EnvironmentUtilTest {
 
   @Test
   public void parse() {
-    List<String> lines = Arrays.asList("V1=single line", "V2=multiple", "lines", "V3=single line");
-    Map<String, String> map = EnvironmentUtil.testParser(lines);
-    assertEquals(3, map.size());
+    String text = "V1=single line\0V2=multiple\nlines\0V3=single line\0PWD=?\0";
+    Map<String, String> map = EnvironmentUtil.testParser(text);
+    assertEquals(4, map.size());
     assertEquals("single line", map.get("V1"));
     assertEquals("multiple\nlines", map.get("V2"));
     assertEquals("single line", map.get("V3"));
+    assertEquals(System.getenv("PWD"), map.get("PWD"));
   }
 
   @Test(timeout = 30000)

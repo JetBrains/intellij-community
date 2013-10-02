@@ -38,6 +38,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ClickListener;
@@ -239,6 +240,7 @@ public abstract class DebuggerEditorImpl extends CompletionEditor{
     myCurrentDocument = PsiDocumentManager.getInstance(getProject()).getDocument(codeFragment);
 
     if (myCurrentDocument != null) {
+      PsiDocumentManagerBase.cachePsi(myCurrentDocument, codeFragment);
       for (DocumentListener documentListener : myDocumentListeners) {
         myCurrentDocument.addDocumentListener(documentListener);
       }
