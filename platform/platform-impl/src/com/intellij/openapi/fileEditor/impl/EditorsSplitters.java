@@ -47,6 +47,7 @@ import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.tabs.JBTabs;
 import com.intellij.util.Alarm;
 import com.intellij.util.PairFunction;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -107,7 +108,7 @@ public class EditorsSplitters extends JBPanel {
 
   private void updateBackground() {
     if (UIUtil.isUnderDarcula()) {
-      setBackgroundImage(IconLoader.getIcon("/frame_background.png"));
+      setBackgroundImage(PlatformUtils.isCidr() ? null : IconLoader.getIcon("/frame_background.png"));
       String icon = ApplicationInfoEx.getInstanceEx().getEditorBackgroundImageUrl();
       if (icon != null) setCenterImage(IconLoader.getIcon(icon));
     } else {

@@ -42,6 +42,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBPanel;
+import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -205,12 +206,12 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       @Nullable
       @Override
       public Icon getBackgroundImage() {
-        return UIUtil.isUnderDarcula() ? BG : null;
+        return UIUtil.isUnderDarcula() && !PlatformUtils.isCidr() ? BG : null;
       }
 
       @Override
       public Color getBackground() {
-        return UIUtil.isUnderDarcula() ? super.getBackground() : JBColor.GRAY;
+        return UIUtil.isUnderDarcula() ? UIUtil.getSlightlyDarkerColor(UIUtil.getPanelBackground()) : JBColor.GRAY;
       }
     };
 
