@@ -95,6 +95,24 @@ comment3<caret>
 '''
   }
 
+  public void "test complete in string literal"() {
+    myFixture.configureByText "a.java", '''
+class Foo {
+  public Collection<JetFile> allInScope(@NotNull GlobalSearchScope scope) {
+    System.out.println("allInSco<caret>: " + scope);
+  }
+}
+'''
+    complete()
+    myFixture.checkResult '''
+class Foo {
+  public Collection<JetFile> allInScope(@NotNull GlobalSearchScope scope) {
+    System.out.println("allInScope<caret>: " + scope);
+  }
+}
+'''
+  }
+
   private void complete() {
     myFixture.performEditorAction(IdeActions.ACTION_HIPPIE_COMPLETION)
   }
