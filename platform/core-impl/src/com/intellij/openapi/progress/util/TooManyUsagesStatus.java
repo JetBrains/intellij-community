@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.progress.util;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
@@ -68,7 +67,7 @@ public class TooManyUsagesStatus {
 
   public void pauseProcessingIfTooManyUsages() {
     if (tooManyUsagesStatus.get() == Status.WARNING_DIALOG_SHOWN) {
-      assert ApplicationManager.getApplication().isDispatchThread() || !ApplicationManager.getApplication().isReadAccessAllowed();
+      //assert ApplicationManager.getApplication().isDispatchThread() || !ApplicationManager.getApplication().isReadAccessAllowed();
       try {
         waitWhileUserClick.await(1, TimeUnit.SECONDS);
       }
