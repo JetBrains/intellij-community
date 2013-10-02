@@ -92,12 +92,12 @@ public class PackageInfoWithoutPackageInspection extends BaseInspection {
 
     @Override
     public void visitJavaFile(PsiJavaFile file) {
-      final PsiPackageStatement packageStatement = file.getPackageStatement();
-      if (packageStatement != null) {
-        return;
-      }
       @NonNls final String name = file.getName();
       if (!PsiPackage.PACKAGE_INFO_FILE.equals(name)) {
+        return;
+      }
+      final PsiPackageStatement packageStatement = file.getPackageStatement();
+      if (packageStatement != null) {
         return;
       }
       final JavaDirectoryService directoryService = JavaDirectoryService.getInstance();
