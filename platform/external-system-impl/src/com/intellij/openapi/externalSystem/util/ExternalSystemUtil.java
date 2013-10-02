@@ -36,6 +36,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.ImportCanceledException;
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemIdeNotificationManager;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
@@ -165,7 +166,7 @@ public class ExternalSystemUtil {
    * @param force             flag which defines if external project refresh should be performed if it's config is up-to-date
    */
   public static void refreshProjects(@NotNull final Project project, @NotNull final ProjectSystemId externalSystemId, boolean force) {
-    refreshProjects(project, externalSystemId, force, false);
+    refreshProjects(project, externalSystemId, force, ProgressExecutionMode.IN_BACKGROUND_ASYNC);
   }
 
   /**
@@ -177,7 +178,7 @@ public class ExternalSystemUtil {
    * @param externalSystemId  target external system which projects should be refreshed
    * @param force             flag which defines if external project refresh should be performed if it's config is up-to-date
    */
-  public static void refreshProjects(@NotNull final Project project, @NotNull final ProjectSystemId externalSystemId, boolean force, boolean modal) {
+  public static void refreshProjects(@NotNull final Project project, @NotNull final ProjectSystemId externalSystemId, boolean force, @NotNull final ProgressExecutionMode progressExecutionMode) {
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     if (manager == null) {
       return;
@@ -258,7 +259,7 @@ public class ExternalSystemUtil {
     if (!toRefresh.isEmpty()) {
       counter[0] = toRefresh.size();
       for (String path : toRefresh) {
-        refreshProject(project, externalSystemId, path, callback, false, modal);
+        refreshProject(project, externalSystemId, path, callback, false, progressExecutionMode);
       }
     }
   }
@@ -382,8 +383,8 @@ public class ExternalSystemUtil {
                                     @NotNull final String externalProjectPath,
                                     @NotNull final ExternalProjectRefreshCallback callback,
                                     final boolean isPreviewMode,
-                                    final boolean modal) {
-    refreshProject(project, externalSystemId, externalProjectPath, callback, isPreviewMode, modal, true);
+                                    @NotNull final ProgressExecutionMode progressExecutionMode) {
+    refreshProject(project, externalSystemId, externalProjectPath, callback, isPreviewMode, progressExecutionMode, true);
   }
 
   /**
@@ -401,7 +402,7 @@ public class ExternalSystemUtil {
                                     @NotNull final String externalProjectPath,
                                     @NotNull final ExternalProjectRefreshCallback callback,
                                     final boolean isPreviewMode,
-                                    final boolean modal,
+                                    @NotNull final ProgressExecutionMode progressExecutionMode,
                                     final boolean reportRefreshError)
   {
     File projectFile = new File(externalProjectPath);
@@ -464,23 +465,34 @@ public class ExternalSystemUtil {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        if (modal) {
-          String title = ExternalSystemBundle.message("progress.import.text", projectName, externalSystemId.getReadableName());
-          new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              refreshProjectStructureTask.execute(indicator);
-            }
-          }.queue();
-        }
-        else {
-          String title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
-          new Task.Backgroundable(project, title) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              refreshProjectStructureTask.execute(indicator);
-            }
-          }.queue();
+        final String title;
+        switch (progressExecutionMode) {
+          case MODAL_SYNC:
+            title = ExternalSystemBundle.message("progress.import.text", projectName, externalSystemId.getReadableName());
+            new Task.Modal(project, title, true) {
+              @Override
+              public void run(@NotNull ProgressIndicator indicator) {
+                refreshProjectStructureTask.execute(indicator);
+              }
+            }.queue();
+            break;
+          case IN_BACKGROUND_ASYNC:
+            title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
+            new Task.Backgroundable(project, title) {
+              @Override
+              public void run(@NotNull ProgressIndicator indicator) {
+                refreshProjectStructureTask.execute(indicator);
+              }
+            }.queue();
+            break;
+          case START_IN_FOREGROUND_ASYNC:
+            title = ExternalSystemBundle.message("progress.refresh.text", projectName, externalSystemId.getReadableName());
+            new Task.Backgroundable(project, title, true, PerformInBackgroundOption.DEAF) {
+              @Override
+              public void run(@NotNull ProgressIndicator indicator) {
+                refreshProjectStructureTask.execute(indicator);
+              }
+            }.queue();
         }
       }
     });
@@ -637,7 +649,7 @@ public class ExternalSystemUtil {
    *                                 <code>false</code> otherwise (note that corresponding notification with error details is expected
    *                                 to be shown to the end-user then)
    * @param isPreviewMode            flag which identifies if missing external project binaries should be downloaded
-   * @param modal                    flag which identifies if progress bar which represents current processing state should be modal
+   * @param progressExecutionMode         identifies how progress bar will be represented for the current processing
    */
   @SuppressWarnings("UnusedDeclaration")
   public static void linkExternalProject(@NotNull final ProjectSystemId externalSystemId,
@@ -645,7 +657,7 @@ public class ExternalSystemUtil {
                                          @NotNull final Project project,
                                          @Nullable final Consumer<Boolean> executionResultCallback,
                                          boolean isPreviewMode,
-                                         boolean modal)
+                                         @NotNull final ProgressExecutionMode progressExecutionMode)
   {
     ExternalProjectRefreshCallback callback = new ExternalProjectRefreshCallback() {
       @SuppressWarnings("unchecked")
@@ -686,7 +698,7 @@ public class ExternalSystemUtil {
         }
       }
     };
-    refreshProject(project, externalSystemId, projectSettings.getExternalProjectPath(), callback, isPreviewMode, modal);
+    refreshProject(project, externalSystemId, projectSettings.getExternalProjectPath(), callback, isPreviewMode, progressExecutionMode);
   }
   
   private interface TaskUnderProgress {
