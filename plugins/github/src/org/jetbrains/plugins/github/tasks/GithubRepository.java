@@ -91,7 +91,7 @@ public class GithubRepository extends BaseRepositoryImpl {
       return new Task[0];
     }
     catch (GithubAuthenticationException e) {
-      throw new Exception(e.getMessage(), e);
+      throw new Exception(e.getMessage(), e); // Wrap to show error message
     }
     catch (GithubStatusCodeException e) {
       throw new Exception(e.getMessage(), e);

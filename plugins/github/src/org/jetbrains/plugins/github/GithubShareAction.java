@@ -330,7 +330,7 @@ public class GithubShareAction extends DumbAwareAction {
     catch (VcsException e) {
       LOG.warn(e);
       GithubNotifications.showErrorURL(project, "Can't finish GitHub sharing process", "Successfully created project ", "'" + name + "'",
-                                       " on GitHub, but initial commit failed:<br/>" + e.getMessage(), url);
+                                       " on GitHub, but initial commit failed:<br/>" + GithubUtil.getErrorTextFromException(e), url);
       return false;
     }
     LOG.info("Successfully created initial commit");
