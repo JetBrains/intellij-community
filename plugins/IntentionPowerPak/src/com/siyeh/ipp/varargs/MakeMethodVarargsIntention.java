@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.varargs;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.IncorrectOperationException;
@@ -24,6 +25,8 @@ import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
 public class MakeMethodVarargsIntention extends Intention {
+
+  private static final Logger LOG = Logger.getInstance("#" + MakeMethodVarargsIntention.class.getName());
 
   @NotNull
   protected PsiElementPredicate getElementPredicate() {
@@ -42,14 +45,11 @@ public class MakeMethodVarargsIntention extends Intention {
     final PsiParameter[] parameters = parameterList.getParameters();
     final PsiParameter lastParameter = parameters[parameters.length - 1];
     final PsiType type = lastParameter.getType();
-    final PsiType componentType = type.getDeepComponentType();
-    final String text = componentType.getCanonicalText();
-    final PsiManager manager = element.getManager();
-    final PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-    final PsiParameter newParameter =
-      factory.createParameterFromText(text + "... " +
-                                      lastParameter.getName(), element);
-    lastParameter.replace(newParameter);
+    final PsiElementFactory factory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
+    final PsiTypeElement typeElement = lastParameter.getTypeElement();
+    LOG.assertTrue(typeElement != null);
+    final PsiType ellipsisType = PsiEllipsisType.createEllipsis(((PsiArrayType)type).getComponentType(), type.getAnnotations());
+    typeElement.replace(factory.createTypeElement(ellipsisType));
   }
 
   private static void makeMethodCallsVarargs(PsiElement element)
