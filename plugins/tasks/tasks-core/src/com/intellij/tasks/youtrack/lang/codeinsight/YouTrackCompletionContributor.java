@@ -1,13 +1,15 @@
 package com.intellij.tasks.youtrack.lang.codeinsight;
 
-import com.intellij.codeInsight.completion.CompletionContributor;
-import com.intellij.codeInsight.completion.CompletionParameters;
-import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
+import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.tasks.youtrack.YouTrackIntellisense;
@@ -28,6 +30,8 @@ import static com.intellij.tasks.youtrack.YouTrackIntellisense.CompletionItem;
 public class YouTrackCompletionContributor extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance(YouTrackCompletionContributor.class);
   private static final int TIMEOUT = 2000;
+
+  private static final InsertHandler<LookupElement> INSERT_HANDLER = new MyInsertHandler();
 
   @Override
   public void fillCompletionVariants(final CompletionParameters parameters, CompletionResultSet result) {
@@ -55,8 +59,9 @@ public class YouTrackCompletionContributor extends CompletionContributor {
       result.addAllElements(ContainerUtil.map(suggestions, new Function<CompletionItem, LookupElement>() {
         @Override
         public LookupElement fun(CompletionItem item) {
-          LookupElementBuilder builder = LookupElementBuilder.create(item.getOption())
-            .withTypeText(item.getDescription(), true);
+          LookupElementBuilder builder = LookupElementBuilder.create(item, item.getOption())
+            .withTypeText(item.getDescription(), true)
+            .withInsertHandler(INSERT_HANDLER);
           // doesn't work actually TODO: write about it to guys in YouTrack
           //if (item.getStyleClass().equals("keyword")) {
           //  builder = builder.bold();
@@ -70,6 +75,33 @@ public class YouTrackCompletionContributor extends CompletionContributor {
         LOG.debug("YouTrack request took more than %d ms to complete");
       }
       result.stopHere();
+    }
+  }
+
+
+  /**
+   * Inserts additional braces around values that contains spaces, colon after attribute names
+   * and '#' before short-cut attributes if any
+   */
+  private static class MyInsertHandler implements InsertHandler<LookupElement> {
+    @Override
+    public void handleInsert(InsertionContext context, LookupElement item) {
+      final CompletionItem completionItem = (CompletionItem)item.getObject();
+      final Document document = context.getDocument();
+      final Editor editor = context.getEditor();
+
+      context.commitDocument();
+      context.setAddCompletionChar(false);
+
+      final String prefix = completionItem.getPrefix();
+      final String suffix = completionItem.getSuffix();
+      if (!prefix.isEmpty()) {
+        document.insertString(context.getStartOffset(), prefix);
+      }
+      if (!suffix.isEmpty()) {
+        document.insertString(context.getTailOffset(), suffix);
+      }
+      editor.getCaretModel().moveToOffset(context.getTailOffset());
     }
   }
 }

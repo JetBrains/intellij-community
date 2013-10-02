@@ -214,6 +214,7 @@ public class YouTrackIntellisense {
     private int myCaretPosition;
     private String myDescription;
     private String mySuffix;
+    private String myPrefix;
     private String myOption;
     private String myStyleClass;
 
@@ -228,6 +229,7 @@ public class YouTrackIntellisense {
       myDescription = item.getChildText("description");
       myOption = item.getChildText("option");
       mySuffix = item.getChildText("suffix");
+      myPrefix = item.getChildText("prefix");
       myStyleClass = item.getChildText("styleClass");
       myCaretPosition = Integer.valueOf(item.getChildText("caret"));
     }
@@ -253,7 +255,12 @@ public class YouTrackIntellisense {
 
     @NotNull
     public String getSuffix() {
-      return mySuffix;
+      return mySuffix == null ? "" : mySuffix;
+    }
+
+    @NotNull
+    public String getPrefix() {
+      return myPrefix == null? "" : myPrefix;
     }
 
     @NotNull
