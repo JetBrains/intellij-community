@@ -12,12 +12,19 @@ except:
   except:
     raise NameError("No py.test runner found in selected interpreter")
 
+def get_plugin_manager():
+  try:
+    from _pytest.config import get_plugin_manager
+    return get_plugin_manager()
+  except ImportError:
+    from _pytest.core import PluginManager
+    return PluginManager(load=True)
+
 if has_pytest:
   _preinit = []
-  from _pytest.core import PluginManager
   def main():
     args = sys.argv[1:]
-    _pluginmanager = PluginManager(load=True)
+    _pluginmanager = get_plugin_manager()
     hook = _pluginmanager.hook
     try:
       config = hook.pytest_cmdline_parse(
