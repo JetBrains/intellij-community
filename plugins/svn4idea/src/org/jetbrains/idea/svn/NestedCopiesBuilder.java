@@ -43,26 +43,21 @@ public class NestedCopiesBuilder implements StatusReceiver {
   }
 
   public void process(final FilePath path, final SVNStatus status) throws SVNException {
-    if ((path.getVirtualFile() != null) && SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_EXTERNAL)) {
-      final MyPointInfo info = new MyPointInfo(path.getVirtualFile(), null, WorkingCopyFormat.UNKNOWN, NestedCopyType.external, null);
+    VirtualFile file = path.getVirtualFile();
+    if (file != null && SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_EXTERNAL)) {
+      final MyPointInfo info = new MyPointInfo(file, null, WorkingCopyFormat.UNKNOWN, NestedCopyType.external, null);
       mySet.add(info);
       return;
     }
-    if ((path.getVirtualFile() == null) || (status.getURL() == null)) return;
+    if (file == null || status.getURL() == null) return;
 
-    final NestedCopyType type;
-    if (SvnVcs.svnStatusIsUnversioned(status)) {
-      return;
-    } else if (status.isSwitched()) {
-      type = NestedCopyType.switched;
-    } else {
-      return;
+    if (!SvnVcs.svnStatusIsUnversioned(status) && status.isSwitched()) {
+      // this one called when there is switched directory under nested working copy
+      // TODO: some other cases?
+      final MyPointInfo info = new MyPointInfo(file, status.getURL(), myVcs.getWorkingCopyFormat(path.getIOFile()), NestedCopyType.switched,
+                                               status.getRepositoryRootURL());
+      mySet.add(info);
     }
-    // this one called when there is switched directory under nested working copy
-    // TODO: some other cases?
-    final MyPointInfo info = new MyPointInfo(path.getVirtualFile(), status.getURL(), myVcs.getWorkingCopyFormat(path.getIOFile()), type,
-                                             status.getRepositoryRootURL());
-    mySet.add(info);
   }
 
   public void processIgnored(final VirtualFile vFile) {
