@@ -50,7 +50,7 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
 
   public static final ID<Integer, SerializedStubTree> INDEX_ID = ID.create("Stubs");
 
-  private static final int VERSION = 25;
+  private static final int VERSION = 26;
 
   private static final DataExternalizer<SerializedStubTree> KEY_EXTERNALIZER = new DataExternalizer<SerializedStubTree>() {
     @Override
