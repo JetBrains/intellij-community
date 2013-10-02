@@ -2,7 +2,7 @@ import org.jetbrains.annotations.Nullable;
 
 class Zoo2 {
 
-  void foo(@Nullable Object foo, @Nullable Object bar) {
+  void foo(@Nullable final Object foo, @Nullable final Object bar) {
     if (foo == null) {
       return;
     }

@@ -16,14 +16,15 @@
 package com.intellij.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.ConditionCheckManager;
+import com.intellij.codeInsight.ConditionChecker;
 import com.intellij.codeInspection.dataFlow.DataFlowInspection;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
@@ -31,6 +32,13 @@ import java.io.IOException;
  * @author peter
  */
 public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_1_7;
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -122,26 +130,6 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testEqualsImpliesNotNull() throws Throwable { doTest(); }
   public void testEffectivelyUnqualified() throws Throwable { doTest(); }
 
-  public void testAnnotatedTypeParameters() throws Throwable {
-    setupCustomAnnotations();
-    doTest();
-  }
-
-  private void setupCustomAnnotations() {
-    myFixture.addClass("package foo;\n\nimport java.lang.annotation.*;\n\n@Target({ElementType.TYPE_USE}) public @interface Nullable { }");
-    myFixture.addClass("package foo;\n\nimport java.lang.annotation.*;\n\n@Target({ElementType.TYPE_USE}) public @interface NotNull { }");
-    final NullableNotNullManager nnnManager = NullableNotNullManager.getInstance(getProject());
-    nnnManager.setNotNulls("foo.NotNull");
-    nnnManager.setNullables("foo.Nullable");
-    Disposer.register(myTestRootDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        nnnManager.setNotNulls();
-        nnnManager.setNullables();
-      }
-    });
-  }
-
   public void testSkipAssertions() {
     final DataFlowInspection inspection = new DataFlowInspection();
     inspection.DONT_REPORT_TRUE_ASSERT_STATEMENTS = true;
@@ -206,11 +194,6 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void _testSymmetricUncheckedCast() { doTest(); } // http://youtrack.jetbrains.com/issue/IDEABKL-6871
   public void testNullCheckDoesntAffectUncheckedCast() { doTest(); }
   public void testThrowNull() { doTest(); }
-
-  public void testNullableForeachVariable() {
-    setupCustomAnnotations();
-    doTest();
-  }
 
   public void testTryWithResourcesNullability() { doTest(); }
   public void testTryWithResourcesInstanceOf() { doTest(); }

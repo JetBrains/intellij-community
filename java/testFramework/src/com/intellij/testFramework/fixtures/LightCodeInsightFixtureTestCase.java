@@ -41,6 +41,12 @@ public abstract class LightCodeInsightFixtureTestCase extends UsefulTestCase{
       model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_6);
     }
   };
+  public static final LightProjectDescriptor JAVA_1_7 = new DefaultLightProjectDescriptor() {
+    @Override
+    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
+      model.getModuleExtension(LanguageLevelModuleExtension.class).setLanguageLevel(LanguageLevel.JDK_1_7);
+    }
+  };
   public static final LightProjectDescriptor JAVA_LATEST = new DefaultLightProjectDescriptor();
 
 
