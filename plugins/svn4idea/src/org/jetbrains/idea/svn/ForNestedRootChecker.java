@@ -24,7 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 
@@ -40,23 +40,23 @@ public class ForNestedRootChecker {
     }
 
     @Nullable
-    public Real createReal(final VirtualFile file, final VirtualFile vcsRoot) {
+    public Node createReal(final VirtualFile file) {
       final SVNInfo info = myVcs.getInfo(file);
       if (info == null || info.getRepositoryRootURL() == null || info.getURL() == null) {
         return null;
       }
-      return new Real(file, info, vcsRoot);
+      return new Node(file, info.getURL(), info.getRepositoryRootURL());
     }
 
     public Node createReplaceable(final VirtualFile file) {
       return new Node(file, null);
     }
 
-    public Node createSupposed(final Real parent, final VirtualFile child) {
+    public Node createSupposed(final Node parent, final VirtualFile child) {
       return new Node(child, getForChild(parent.getUrl(), child.getName()));
     }
 
-    public boolean replaceWithReal(final Real real, final Node supposed) {
+    public boolean replaceWithReal(final Node real, final Node supposed) {
       return supposed.getUrl() == null || ((supposed.getUrl() != null) && (! supposed.getUrl().equals(real.getUrl())));
     }
 
@@ -67,8 +67,8 @@ public class ForNestedRootChecker {
       return SVNPathUtil.append(parentUrl, relativePath);
     }
 
-    public String getForChild(final String parentUrl, final String childName) {
-      return parentUrl == null ? null : SVNPathUtil.append(parentUrl, SVNEncodingUtil.uriEncode(childName));
+    public SVNURL getForChild(@Nullable final SVNURL parent, @NotNull final String childName) {
+      return parent != null ? SvnUtil.append(parent, childName) : null;
     }
   }
 
@@ -121,16 +121,16 @@ public class ForNestedRootChecker {
     return result;
   }
 
-  public static List<Real> getAllNestedWorkingCopies(final VirtualFile root, final SvnVcs vcs, final boolean goIntoNested, final Getter<Boolean> cancelledGetter) {
+  public static List<Node> getAllNestedWorkingCopies(final VirtualFile root, final SvnVcs vcs, final boolean goIntoNested, final Getter<Boolean> cancelledGetter) {
     final VcsRootIterator rootIterator = new VcsRootIterator(vcs.getProject(), vcs);
     return getForOne(root, vcs, goIntoNested, rootIterator, cancelledGetter);
   }
 
-  private static List<Real> getForOne(final VirtualFile root, final SvnVcs vcs, final boolean goIntoNested,
+  private static List<Node> getForOne(final VirtualFile root, final SvnVcs vcs, final boolean goIntoNested,
                                       final VcsRootIterator rootIterator, final Getter<Boolean> cancelledGetter) {
     final UrlConstructor constructor = new UrlConstructor(vcs);
     final LinkedList<Node> queue = new LinkedList<Node>();
-    final LinkedList<Real> result = new LinkedList<Real>();
+    final LinkedList<Node> result = new LinkedList<Node>();
 
     queue.add(constructor.createReplaceable(root));
     while (! queue.isEmpty()) {
@@ -138,7 +138,7 @@ public class ForNestedRootChecker {
       if (Boolean.TRUE.equals(cancelledGetter.get())) throw new ProcessCanceledException();
 
       // check self
-      final Real real = constructor.createReal(node.getFile(), root);
+      final Node real = constructor.createReal(node.getFile());
       if (real != null) {
         if (constructor.replaceWithReal(real, node)) {
           result.add(real);

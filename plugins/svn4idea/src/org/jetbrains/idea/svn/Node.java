@@ -16,21 +16,33 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNURL;
 
 class Node {
   private final VirtualFile myFile;
-  private final String myUrl;
+  private final SVNURL myUrl;
+  @Nullable private final SVNURL myRepositoryUrl;
 
-  Node(final VirtualFile file, final String url) {
+  Node(final VirtualFile file, final SVNURL url) {
+    this(file, url, null);
+  }
+
+  Node(final VirtualFile file, final SVNURL url, @Nullable final SVNURL repositoryUrl) {
     myFile = file;
     myUrl = url;
+    myRepositoryUrl = repositoryUrl;
   }
 
   public VirtualFile getFile() {
     return myFile;
   }
 
-  public String getUrl() {
+  public SVNURL getUrl() {
     return myUrl;
+  }
+
+  public SVNURL getRepositoryRootUrl() {
+    return myRepositoryUrl;
   }
 }

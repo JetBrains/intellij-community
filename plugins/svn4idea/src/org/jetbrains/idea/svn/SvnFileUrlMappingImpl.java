@@ -312,7 +312,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
 
       for (final VirtualFile vcsRoot : roots) {
         // go into nested = false => only find a working copys below passed roots, but not nested
-        final List<Real> foundRoots = ForNestedRootChecker.getAllNestedWorkingCopies(vcsRoot, myVcs, false, cancelGetter);
+        final List<Node> foundRoots = ForNestedRootChecker.getAllNestedWorkingCopies(vcsRoot, myVcs, false, cancelGetter);
         if (foundRoots.isEmpty()) {
           myLonelyRoots.add(vcsRoot);
         }
@@ -322,15 +322,15 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       addNestedRoots(clearState, callback);
     }
 
-    private void registerTopRoots(@NotNull VirtualFile vcsRoot, @NotNull List<Real> foundRoots) {
+    private void registerTopRoots(@NotNull VirtualFile vcsRoot, @NotNull List<Node> foundRoots) {
       // filter out bad(?) items
-      for (Real foundRoot : foundRoots) {
-        final SVNURL repoRoot = foundRoot.getInfo().getRepositoryRootURL();
+      for (Node foundRoot : foundRoots) {
+        final SVNURL repoRoot = foundRoot.getRepositoryRootUrl();
         if (repoRoot == null) {
           LOG.info("Error: cannot find repository URL for versioned folder: " + foundRoot.getFile().getPath());
         } else {
           myRepositoryRoots.register(repoRoot);
-          myTopRoots.add(new RootUrlInfo(repoRoot, foundRoot.getInfo().getURL(), SvnFormatSelector.findRootAndGetFormat(
+          myTopRoots.add(new RootUrlInfo(repoRoot, foundRoot.getUrl(), SvnFormatSelector.findRootAndGetFormat(
             new File(foundRoot.getFile().getPath())), foundRoot.getFile(), vcsRoot));
         }
       }

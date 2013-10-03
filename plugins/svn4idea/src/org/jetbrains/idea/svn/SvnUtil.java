@@ -769,10 +769,23 @@ public class SvnUtil {
       return SVNURL.parseURIEncoded(url);
     }
     catch (SVNException e) {
-      IllegalArgumentException runtimeException = new IllegalArgumentException();
-      runtimeException.initCause(e);
-      throw runtimeException;
+      throw createIllegalArgument(e);
     }
+  }
+
+  public static SVNURL append(@NotNull SVNURL parent, String child) {
+    try {
+      return parent.appendPath(child, false);
+    }
+    catch (SVNException e) {
+      throw createIllegalArgument(e);
+    }
+  }
+
+  private static IllegalArgumentException createIllegalArgument(SVNException e) {
+    IllegalArgumentException runtimeException = new IllegalArgumentException();
+    runtimeException.initCause(e);
+    return runtimeException;
   }
 
   @Nullable
