@@ -17,6 +17,7 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -232,5 +233,35 @@ public class ActionCallback implements Disposable {
         setRejected();
       }
     };
+  }
+
+  public boolean waitFor(long msTimeout) {
+    if (isProcessed()) {
+      return true;
+    }
+
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    doWhenProcessed(new Runnable() {
+      @Override
+      public void run() {
+        semaphore.up();
+      }
+    });
+
+    try {
+      if (msTimeout == -1) {
+        semaphore.waitForUnsafe();
+      }
+      else if (!semaphore.waitForUnsafe(msTimeout)) {
+        reject("Time limit exceeded");
+        return false;
+      }
+    }
+    catch (InterruptedException e) {
+      reject(e.getMessage());
+      return false;
+    }
+    return true;
   }
 }
