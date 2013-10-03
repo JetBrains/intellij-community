@@ -477,24 +477,6 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     }
   }
 
-  private static class RepoInfo {
-    private final SVNURL myUrl;
-    private final boolean myRepoSupportsMergeinfo;
-
-    private RepoInfo(final SVNURL url, final boolean repoSupportsMergeinfo) {
-      myRepoSupportsMergeinfo = repoSupportsMergeinfo;
-      myUrl = url;
-    }
-
-    public boolean isRepoSupportsMergeinfo() {
-      return myRepoSupportsMergeinfo;
-    }
-
-    public SVNURL getUrl() {
-      return myUrl;
-    }
-  }
-
   @Nullable
   public String getUrlRootForUrl(final String currentUrl) {
     for (String url : myMoreRealMapping.getUrls()) {

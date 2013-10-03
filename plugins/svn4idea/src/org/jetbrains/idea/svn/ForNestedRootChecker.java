@@ -31,23 +31,6 @@ import org.tmatesoft.svn.core.wc.SVNInfo;
 import java.util.*;
 
 public class ForNestedRootChecker {
-  static class DirInfo {
-    private final VirtualFile myFile;
-    private final String myUrl;
-
-    DirInfo(final VirtualFile file, final String url) {
-      myFile = file;
-      myUrl = url;
-    }
-
-    public VirtualFile getFile() {
-      return myFile;
-    }
-
-    public String getUrl() {
-      return myUrl;
-    }
-  }
 
   private static class UrlConstructor {
     final SvnVcs myVcs;
@@ -135,26 +118,6 @@ public class ForNestedRootChecker {
 
     return result;
   }
-
-  /*public static List<Real> getAllNestedWorkingCopies(final VirtualFile[] roots, final SvnVcs vcs, final boolean goIntoNested) {
-    if (goIntoNested) {
-      FilterDescendantVirtualFiles.filter(Arrays.asList(roots));
-    }
-
-    final VcsRootIterator rootIterator = new VcsRootIterator(vcs.getProject(), vcs);
-    final List<Real> result = new ArrayList<Real>();
-    for (VirtualFile root : roots) {
-      result.addAll(getForOne(root, vcs, goIntoNested, rootIterator));
-    }
-
-    if (! goIntoNested) {
-      final List<Real> filtered = new ArrayList<Real>(result.size());
-      filterOutSuperfluousChildren(vcs, result, filtered);
-      return filtered;
-    }
-
-    return result;
-  }*/
 
   public static List<Real> getAllNestedWorkingCopies(final VirtualFile root, final SvnVcs vcs, final boolean goIntoNested, final Getter<Boolean> cancelledGetter) {
     final VcsRootIterator rootIterator = new VcsRootIterator(vcs.getProject(), vcs);
