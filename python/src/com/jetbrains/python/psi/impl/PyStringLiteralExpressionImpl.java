@@ -384,16 +384,24 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
     }
 
     @Override
-    public int getOffsetInHost(final int offsetInDecoded, @NotNull TextRange rangeInsideHost) {
-      final PyDocStringOwner
-        docStringOwner = PsiTreeUtil.getParentOfType(myHost, PyDocStringOwner.class);
-      if (docStringOwner != null && myHost.equals(docStringOwner.getDocStringExpression())) {
-        int offset = offsetInDecoded + rangeInsideHost.getStartOffset();
-        if (offset < rangeInsideHost.getStartOffset()) offset = rangeInsideHost.getStartOffset();
-        if (offset > rangeInsideHost.getEndOffset()) offset = rangeInsideHost.getEndOffset();
-        return offset;
-      }
-      return myHost.valueOffsetToTextOffset(offsetInDecoded);
+    public int getOffsetInHost(final int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
+      final Ref<Integer> result = Ref.create(-1);
+      final Ref<Integer> index = Ref.create(0);
+      myHost.iterateCharacterRanges(new TextRangeConsumer() {
+        @Override
+        public boolean process(int startOffset, int endOffset, String value) {
+          if (startOffset >= rangeInsideHost.getStartOffset()) {
+            final Integer i = index.get();
+            if (i == offsetInDecoded) {
+              result.set(startOffset);
+              return false;
+            }
+            index.set(i + 1);
+          }
+          return true;
+        }
+      });
+      return result.get();
     }
 
     @Override
