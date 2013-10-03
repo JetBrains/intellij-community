@@ -366,8 +366,6 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
             }
             registerRootUrlFromNestedPoint(info, nestedRoots);
           }
-          // check those top roots which ARE externals, but that was not detected due to they itself were the status request target
-          //new SvnNestedTypeRechecker(myVcs.getProject(), myTopRoots).run();
 
           myTopRoots.addAll(nestedRoots);
           myApplier.apply(myTopRoots, myLonelyRoots);
