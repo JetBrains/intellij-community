@@ -2011,6 +2011,10 @@
                      level="WARNING" implementationClass="com.siyeh.ig.redundancy.UnusedLabelInspection"/>
 
     <!--group.names.resource.management.issues-->
+    <localInspection language="JAVA" suppressId="resource" shortName="AutoCloseableResource" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="auto.closeable.resource.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.resource.management.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.resources.AutoCloseableResourceInspection"/>
     <localInspection language="JAVA" suppressId="ChannelOpenedButNotSafelyClosed" shortName="ChannelResource" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="channel.opened.not.closed.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.resource.management.issues" enabledByDefault="false" level="WARNING"

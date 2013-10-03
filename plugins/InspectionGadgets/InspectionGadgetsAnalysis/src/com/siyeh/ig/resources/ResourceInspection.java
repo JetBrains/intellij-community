@@ -74,6 +74,9 @@ public abstract class ResourceInspection extends BaseInspection {
         return;
       }
       final PsiVariable boundVariable = getVariable(expression);
+      if (boundVariable instanceof PsiResourceVariable) {
+        return;
+      }
       if (isSafelyClosed(boundVariable, expression, insideTryAllowed)) {
         return;
       }
@@ -94,7 +97,7 @@ public abstract class ResourceInspection extends BaseInspection {
   }
 
   @Nullable
-  private static PsiVariable getVariable(@NotNull PsiExpression expression) {
+  public static PsiVariable getVariable(@NotNull PsiExpression expression) {
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(expression);
     if (parent instanceof PsiAssignmentExpression) {
       final PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
@@ -261,9 +264,9 @@ public abstract class ResourceInspection extends BaseInspection {
     return referent != null && referent.equals(resource);
   }
 
-  private static boolean isResourceEscapingFromMethod(PsiVariable boundVariable, PsiExpression resourceCreationExpression) {
+  public static boolean isResourceEscapingFromMethod(PsiVariable boundVariable, PsiExpression resourceCreationExpression) {
     final PsiElement parent = ParenthesesUtils.getParentSkipParentheses(resourceCreationExpression);
-    if (parent instanceof PsiReturnStatement || parent instanceof PsiResourceVariable) {
+    if (parent instanceof PsiReturnStatement) {
       return true;
     }
     else if (parent instanceof PsiAssignmentExpression) {
