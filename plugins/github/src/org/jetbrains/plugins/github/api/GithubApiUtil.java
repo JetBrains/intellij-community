@@ -237,7 +237,7 @@ public class GithubApiUtil {
 
   @NotNull
   private static JsonElement parseResponse(@NotNull InputStream githubResponse) throws IOException {
-    Reader reader = new InputStreamReader(githubResponse);
+    Reader reader = new InputStreamReader(githubResponse, "UTF-8");
     try {
       return new JsonParser().parse(reader);
     }
