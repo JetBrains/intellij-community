@@ -10,6 +10,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import com.jetbrains.python.psi.types.PyModuleType;
+import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.testing.pytest.PyTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,6 +51,13 @@ public class PyPep8NamingInspection extends PyInspection {
       for (PyExpression expression : node.getTargets()) {
         final String name = expression.getName();
         if (name == null) continue;
+        if (expression instanceof PyTargetExpression) {
+          final PyExpression qualifier = ((PyTargetExpression)expression).getQualifier();
+          if (qualifier != null) {
+            final PyType type = TypeEvalContext.codeAnalysis(node.getContainingFile()).getType(qualifier);
+            if (type instanceof PyModuleType) return;
+          }
+        }
         if (!LOWERCASE_REGEX.matcher(name).matches() && !name.startsWith("_")) {
           registerProblem(expression, "Variable in function should be lowercase", new PyRenameElementQuickFix());
         }
