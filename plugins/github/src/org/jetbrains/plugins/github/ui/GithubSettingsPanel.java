@@ -70,8 +70,8 @@ public class GithubSettingsPanel {
 
   private boolean myCredentialsModified;
 
-  public GithubSettingsPanel(@NotNull final GithubSettings settings) {
-    mySettings = settings;
+  public GithubSettingsPanel() {
+    mySettings = GithubSettings.getInstance();
     mySignupTextField.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(final HyperlinkEvent e) {
@@ -246,13 +246,17 @@ public class GithubSettingsPanel {
     resetCredentialsModification();
   }
 
+  public void apply() {
+    if (myCredentialsModified) {
+      mySettings.setCredentials(getHost(), getAuthData(), true);
+    }
+    mySettings.setConnectionTimeout(getConnectionTimeout());
+    resetCredentialsModification();
+  }
+
   public boolean isModified() {
     return myCredentialsModified || !Comparing.equal(mySettings.getHost(), getHost()) ||
            !Comparing.equal(mySettings.getConnectionTimeout(), getConnectionTimeout());
-  }
-
-  public boolean isCredentialsModified() {
-    return myCredentialsModified;
   }
 
   public void resetCredentialsModification() {
