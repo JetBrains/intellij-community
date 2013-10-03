@@ -241,7 +241,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       mapping.reportLonelyRoots(lonelyRoots);
 
       final SvnMapping filteredMapping = new SvnMapping();
-      filteredMapping.addAll(ForNestedRootChecker.filterOutSuperfluousChildren(roots));
+      filteredMapping.addAll(new UniqueRootsFilter().filter(roots));
 
       runUpdateMappings(mapping, filteredMapping);
     }
@@ -312,7 +312,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
 
       for (final VirtualFile vcsRoot : roots) {
         // go into nested = false => only find a working copys below passed roots, but not nested
-        final List<Node> foundRoots = ForNestedRootChecker.getAllNestedWorkingCopies(vcsRoot, myVcs, false, cancelGetter);
+        final List<Node> foundRoots = new ForNestedRootChecker(myVcs).getAllNestedWorkingCopies(vcsRoot, false, cancelGetter);
         if (foundRoots.isEmpty()) {
           myLonelyRoots.add(vcsRoot);
         }
