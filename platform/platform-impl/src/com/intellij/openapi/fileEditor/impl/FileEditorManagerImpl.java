@@ -64,7 +64,6 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.FocusTrackback;
-import com.intellij.ui.Gray;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
@@ -238,17 +237,8 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     if (myPanels == null) {
       synchronized (myInitLock) {
         if (myPanels == null) {
-          myPanels = new JPanel(new BorderLayout()) {
-            @Override
-            public Color getBackground() {
-              boolean navBar = UISettings.getInstance().SHOW_NAVIGATION_BAR;
-              if (navBar) {
-                return  UIUtil.getSlightlyDarkerColor(UIUtil.isUnderAquaLookAndFeel() ? Gray._200 : UIUtil.getPanelBackground());
-              } else {
-                return UIUtil.isUnderAquaLookAndFeel() ? Gray._189 : UIUtil.getPanelBackground();
-              }
-            }
-          };
+          myPanels = new JPanel(new BorderLayout());
+          myPanels.setOpaque(false);
           myPanels.setBorder(new MyBorder());
           mySplitters = new EditorsSplitters(this, myDockManager, true);
           myPanels.add(mySplitters, BorderLayout.CENTER);

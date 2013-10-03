@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf.darcula;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.WelcomeScreen;
+import com.intellij.openapi.wm.impl.IdePanePanel;
 import com.intellij.ui.Gray;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ui.GraphicsUtil;
@@ -36,7 +37,7 @@ public class DarculaIntelliJWelcomeScreen implements WelcomeScreen {
 
   @Override
   public JComponent getWelcomePanel() {
-    final JBPanel root = new JBPanel(new BorderLayout()) {
+    final JBPanel root = new IdePanePanel(new BorderLayout()) {
       @Override
       public Dimension getPreferredSize() {
         return new Dimension(940, 580);
@@ -62,8 +63,6 @@ public class DarculaIntelliJWelcomeScreen implements WelcomeScreen {
 
       }
     };
-    root.setBackgroundImage(IconLoader.getIcon("/frame_background.png"));
-    root.setOpaque(false);
     root.setBorder(new LineBorder(Gray._128));
     root.add(new DarculaWelcomeScreenForm(this).getComponent(), BorderLayout.CENTER);
     return root;

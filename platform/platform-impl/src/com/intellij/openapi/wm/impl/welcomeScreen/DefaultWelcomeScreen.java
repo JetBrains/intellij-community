@@ -36,6 +36,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WelcomeScreen;
+import com.intellij.openapi.wm.impl.IdePanePanel;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
@@ -129,16 +130,12 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
   public DefaultWelcomeScreen(JComponent rootPane) {
     initApplicationSpecificImages();
 
-    myWelcomePanel = new JBPanel(new GridBagLayout()) {
+    myWelcomePanel = new IdePanePanel(new GridBagLayout()) {
       @Override
       public Dimension getPreferredSize() {
         return new Dimension(1024, 768);
       }
     };
-
-    myWelcomePanel.setBackgroundImage(IconLoader.getIcon("/frame_background.png"));
-    String icon = ApplicationInfoEx.getInstanceEx().getEditorBackgroundImageUrl();
-    if (icon != null) myWelcomePanel.setCenterImage(IconLoader.getIcon(icon));
 
     // Create caption pane
     JPanel topPanel = createCaptionPane();
