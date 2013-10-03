@@ -20,16 +20,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class NestedCopiesSink {
+public class NestedCopiesHolder {
 
-  private final Set<NestedCopiesBuilder.MyPointInfo> mySet = ContainerUtil.newHashSet();
+  private final Set<NestedCopyInfo> mySet = ContainerUtil.newHashSet();
 
-  public synchronized void add(@NotNull final Set<NestedCopiesBuilder.MyPointInfo> data) {
+  public synchronized void add(@NotNull final Set<NestedCopyInfo> data) {
     mySet.addAll(data);
   }
 
-  public synchronized Set<NestedCopiesBuilder.MyPointInfo> getAndClear() {
-    Set<NestedCopiesBuilder.MyPointInfo> copy = ContainerUtil.newHashSet(mySet);
+  public synchronized Set<NestedCopyInfo> getAndClear() {
+    Set<NestedCopyInfo> copy = ContainerUtil.newHashSet(mySet);
     mySet.clear();
 
     return copy;

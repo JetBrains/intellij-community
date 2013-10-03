@@ -73,7 +73,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   private final SvnMapping myMoreRealMapping;
   private final MyRootsHelper myHelper;
   private final Project myProject;
-  private final NestedCopiesSink myTempSink;
+  private final NestedCopiesHolder myNestedCopiesHolder;
   private boolean myInitialized;
   private boolean myInitedReloaded;
 
@@ -99,7 +99,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     myMoreRealMapping = new SvnMapping();
     myHelper = new MyRootsHelper(vcsManager);
     myChecker = new SvnCompatibilityChecker(project);
-    myTempSink = new NestedCopiesSink();
+    myNestedCopiesHolder = new NestedCopiesHolder();
   }
 
   @Nullable
@@ -211,8 +211,8 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     }
   }
 
-  public void acceptNestedData(final Set<NestedCopiesBuilder.MyPointInfo> set) {
-    myTempSink.add(set);
+  public void acceptNestedData(final Set<NestedCopyInfo> set) {
+    myNestedCopiesHolder.add(set);
   }
 
   private boolean init() {
@@ -228,7 +228,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     final VirtualFile[] roots = myHelper.executeDefended(myProject);
 
     final CopiesApplier copiesApplier = new CopiesApplier();
-    final CopiesDetector copiesDetector = new CopiesDetector(vcs, copiesApplier, myTempSink);
+    final CopiesDetector copiesDetector = new CopiesDetector(vcs, copiesApplier, myNestedCopiesHolder);
     // do not send additional request for nested copies when in init state
     copiesDetector.detectCopyRoots(roots, init(), afterRefreshCallback);
   }
@@ -292,12 +292,12 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     private final List<VirtualFile> myLonelyRoots;
     private final List<RootUrlInfo> myTopRoots;
     private final RepositoryRoots myRepositoryRoots;
-    private final NestedCopiesSink myTempSink;
+    private final NestedCopiesHolder myNestedCopiesHolder;
 
-    private CopiesDetector(final SvnVcs vcs, final CopiesApplier applier, @NotNull final NestedCopiesSink sink) {
+    private CopiesDetector(final SvnVcs vcs, final CopiesApplier applier, @NotNull final NestedCopiesHolder holder) {
       myVcs = vcs;
       myApplier = applier;
-      myTempSink = sink;
+      myNestedCopiesHolder = holder;
       myTopRoots = new ArrayList<RootUrlInfo>();
       myLonelyRoots = new ArrayList<VirtualFile>();
       myRepositoryRoots = new RepositoryRoots(myVcs);
@@ -347,13 +347,13 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
 
       if (clearState) {
         // clear what was reported before (could be for currently-not-existing roots)
-        myTempSink.getAndClear();
+        myNestedCopiesHolder.getAndClear();
       }
       clManager.invokeAfterUpdate(new Runnable() {
         public void run() {
           final List<RootUrlInfo> nestedRoots = new ArrayList<RootUrlInfo>();
 
-          for (NestedCopiesBuilder.MyPointInfo info : myTempSink.getAndClear()) {
+          for (NestedCopyInfo info : myNestedCopiesHolder.getAndClear()) {
             if (NestedCopyType.external.equals(info.getType()) || NestedCopyType.switched.equals(info.getType())) {
               RootUrlInfo topRoot = findTopRoot(VfsUtilCore.virtualToIoFile(info.getFile()));
 
@@ -385,7 +385,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       }, null);
     }
 
-    private void registerRootUrlFromNestedPoint(@NotNull NestedCopiesBuilder.MyPointInfo info, @NotNull List<RootUrlInfo> nestedRoots) {
+    private void registerRootUrlFromNestedPoint(@NotNull NestedCopyInfo info, @NotNull List<RootUrlInfo> nestedRoots) {
       // TODO: Seems there could be issues if myTopRoots contains nested roots => RootUrlInfo.myRoot could be incorrect
       // TODO: (not nearest ancestor) for new RootUrlInfo
       RootUrlInfo topRoot = findAncestorTopRoot(info.getFile());
@@ -401,7 +401,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       }
     }
 
-    private boolean refreshPointInfo(@NotNull NestedCopiesBuilder.MyPointInfo info) {
+    private boolean refreshPointInfo(@NotNull NestedCopyInfo info) {
       boolean refreshed = false;
 
       // TODO: No checked exceptions are thrown - remove catch/LOG.error/rethrow to fix real cause if any

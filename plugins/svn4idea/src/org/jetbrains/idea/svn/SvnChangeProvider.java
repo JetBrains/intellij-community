@@ -103,9 +103,9 @@ public class SvnChangeProvider implements ChangeProvider {
       processCopiedAndDeleted(context, dirtyScope);
       processUnsaved(dirtyScope, addGate, context);
 
-      final Set<NestedCopiesBuilder.MyPointInfo> pointInfos = nestedCopiesBuilder.getSet();
-      mySvnFileUrlMapping.acceptNestedData(pointInfos);
-      putAdministrative17UnderVfsListener(pointInfos);
+      final Set<NestedCopyInfo> nestedCopies = nestedCopiesBuilder.getCopies();
+      mySvnFileUrlMapping.acceptNestedData(nestedCopies);
+      putAdministrative17UnderVfsListener(nestedCopies);
     } catch (SvnExceptionWrapper e) {
       LOG.info(e);
       throw new VcsException(e.getCause());
@@ -117,10 +117,10 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
-  private static void putAdministrative17UnderVfsListener(Set<NestedCopiesBuilder.MyPointInfo> pointInfos) {
+  private static void putAdministrative17UnderVfsListener(Set<NestedCopyInfo> pointInfos) {
     if (! SvnVcs.ourListenToWcDb) return;
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    for (NestedCopiesBuilder.MyPointInfo info : pointInfos) {
+    for (NestedCopyInfo info : pointInfos) {
       if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat()) && ! NestedCopyType.switched.equals(info.getType())) {
         final VirtualFile root = info.getFile();
         lfs.refreshIoFiles(Collections.singletonList(SvnUtil.getWcDb(new File(root.getPath()))), true, false, null);

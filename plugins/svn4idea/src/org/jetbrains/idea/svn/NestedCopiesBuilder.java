@@ -30,7 +30,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class NestedCopiesBuilder implements StatusReceiver {
-  private final Set<MyPointInfo> mySet;
+  private final Set<NestedCopyInfo> mySet;
   private final Project myProject;
   private final SvnFileUrlMapping myMapping;
   @NotNull private final SvnVcs myVcs;
@@ -39,13 +39,13 @@ public class NestedCopiesBuilder implements StatusReceiver {
     myVcs = vcs;
     myProject = vcs.getProject();
     myMapping = mapping;
-    mySet = new HashSet<MyPointInfo>();
+    mySet = new HashSet<NestedCopyInfo>();
   }
 
   public void process(final FilePath path, final SVNStatus status) throws SVNException {
     VirtualFile file = path.getVirtualFile();
     if (file != null && SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_EXTERNAL)) {
-      final MyPointInfo info = new MyPointInfo(file, null, WorkingCopyFormat.UNKNOWN, NestedCopyType.external, null);
+      final NestedCopyInfo info = new NestedCopyInfo(file, null, WorkingCopyFormat.UNKNOWN, NestedCopyType.external, null);
       mySet.add(info);
       return;
     }
@@ -54,7 +54,8 @@ public class NestedCopiesBuilder implements StatusReceiver {
     if (!SvnVcs.svnStatusIsUnversioned(status) && status.isSwitched()) {
       // this one called when there is switched directory under nested working copy
       // TODO: some other cases?
-      final MyPointInfo info = new MyPointInfo(file, status.getURL(), myVcs.getWorkingCopyFormat(path.getIOFile()), NestedCopyType.switched,
+      final NestedCopyInfo
+        info = new NestedCopyInfo(file, status.getURL(), myVcs.getWorkingCopyFormat(path.getIOFile()), NestedCopyType.switched,
                                                status.getRepositoryRootURL());
       mySet.add(info);
     }
@@ -68,7 +69,7 @@ public class NestedCopiesBuilder implements StatusReceiver {
 
   @Override
   public void processCopyRoot(VirtualFile file, SVNURL url, WorkingCopyFormat format, SVNURL rootURL) {
-    final MyPointInfo info = new MyPointInfo(file, url, format, NestedCopyType.inner, rootURL);
+    final NestedCopyInfo info = new NestedCopyInfo(file, url, format, NestedCopyType.inner, rootURL);
     mySet.add(info);
   }
 
@@ -81,80 +82,7 @@ public class NestedCopiesBuilder implements StatusReceiver {
     }
   }
 
-  static class MyPointInfo {
-    private final VirtualFile myFile;
-    private SVNURL myUrl;
-    private WorkingCopyFormat myFormat;
-    private final NestedCopyType myType;
-    private SVNURL myRootURL;
-
-    MyPointInfo(@NotNull final VirtualFile file,
-                final SVNURL url,
-                final WorkingCopyFormat format,
-                final NestedCopyType type,
-                SVNURL rootURL) {
-      myFile = file;
-      myUrl = url;
-      myFormat = format;
-      myType = type;
-      myRootURL = rootURL;
-    }
-
-    public void setUrl(SVNURL url) {
-      myUrl = url;
-    }
-
-    public SVNURL getRootURL() {
-      return myRootURL;
-    }
-
-    public void setFormat(WorkingCopyFormat format) {
-      myFormat = format;
-    }
-
-    public VirtualFile getFile() {
-      return myFile;
-    }
-
-    public SVNURL getUrl() {
-      return myUrl;
-    }
-
-    public WorkingCopyFormat getFormat() {
-      return myFormat;
-    }
-
-    public NestedCopyType getType() {
-      return myType;
-    }
-
-    private String key(final VirtualFile file) {
-      return file.getPath();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      MyPointInfo info = (MyPointInfo)o;
-
-      if (! key(myFile).equals(key(info.myFile))) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return key(myFile).hashCode();
-    }
-
-    public void setRootURL(final SVNURL value) {
-      myRootURL = value;
-    }
-  }
-
-  public Set<MyPointInfo> getSet() {
+  public Set<NestedCopyInfo> getCopies() {
     return mySet;
   }
 }
