@@ -12,150 +12,51 @@
  */
 package git4idea.history.wholeTree;
 
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.impl.HashImpl;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
 
 /**
  * @author irengrig
  */
-public abstract class AbstractHash {
+@Deprecated
+public class AbstractHash {
+
+  @NotNull private final Hash myHash;
+
+  private AbstractHash(@NotNull Hash hash) {
+    myHash = hash;
+  }
 
   @NotNull
   public static AbstractHash create(final String hash) {
-    return createImpl(hash);
+    return new AbstractHash(HashImpl.build(hash));
   }
 
-  private static AbstractHash createImpl(final String hash) {
-    final String trimmed = hash.trim();
-    final int len = trimmed.length();
-    try {
-      if (len <= 8 && trimmed.charAt(0) != '0') {
-        return new One(trimmed);
-      } else {
-        return new Many(trimmed);
-      }
-    } catch (NumberFormatException e) {
-      return new StringPresentation(trimmed);
-    }
+  public String getString() {
+    return myHash.asString();
   }
-
-  public abstract String getString();
 
   @Override
   public String toString() {
     return getString();
   }
 
-  private static class One extends AbstractHash {
-    private long myLong;
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
 
-    private One(final String shortForm) {
-      assert shortForm.length() <= 8;
-      myLong = Long.parseLong(shortForm, 16);
-    }
+    AbstractHash hash = (AbstractHash)o;
 
-    @Override
-    public String getString() {
-      return Long.toHexString(myLong);
-    }
+    if (!myHash.equals(hash.myHash)) return false;
 
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      One one = (One)o;
-
-      if (myLong != one.myLong) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return (int)(myLong ^ (myLong >>> 32));
-    }
+    return true;
   }
 
-  private static class Many extends AbstractHash {
-    private final long[] myData;
-
-    private Many(final String shortForm) {
-      int nullsSize = 0;
-      for (; nullsSize < shortForm.length(); nullsSize++) {
-        if (shortForm.charAt(nullsSize) != '0') break;
-      }
-      final String withoutNulls = shortForm.substring(nullsSize);
-      final int length = withoutNulls.length();
-      final int size = (length >> 3) + 1 + nullsSize;
-      myData = new long[size];
-      for (int i = 0; i < nullsSize; i++) {
-        myData[i] = 0;
-      }
-      for (int i = 0; i < (size - nullsSize); i++) {
-        final int idx = i << 3;
-        final int end = Math.min(idx + 8, length);
-        myData[i + nullsSize] = Long.parseLong(withoutNulls.substring(idx, end), 16);
-      }
-    }
-
-    // todo?
-    @Override
-    public String getString() {
-      final StringBuilder sb = new StringBuilder(myData.length << 3);
-      for (long l : myData) {
-        sb.append(Long.toHexString(l));
-      }
-      return sb.toString();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      Many many = (Many)o;
-
-      if (!Arrays.equals(myData, many.myData)) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return Arrays.hashCode(myData);
-    }
-  }
-
-  private static class StringPresentation extends AbstractHash {
-    private final String myVal;
-
-    public StringPresentation(String val) {
-      myVal = val;
-    }
-
-    @Override
-    public String getString() {
-      return myVal;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-
-      StringPresentation that = (StringPresentation)o;
-
-      if (myVal != null ? !myVal.equals(that.myVal) : that.myVal != null) return false;
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return myVal != null ? myVal.hashCode() : 0;
-    }
+  @Override
+  public int hashCode() {
+    return myHash.hashCode();
   }
 
   public static boolean hashesEqual(@NotNull final AbstractHash hash1, @NotNull final AbstractHash hash2) {
