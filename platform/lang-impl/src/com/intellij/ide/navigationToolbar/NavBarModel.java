@@ -113,13 +113,30 @@ public class NavBarModel {
     else {
       if (UISettings.getInstance().SHOW_NAVIGATION_BAR && !myModel.isEmpty()) return;
 
-      Object moduleOrProject = LangDataKeys.MODULE.getData(dataContext);
-      if (moduleOrProject == null) {
-        moduleOrProject = CommonDataKeys.PROJECT.getData(dataContext);
+      // Narrow down the root element to the first interesting one
+      Object root = LangDataKeys.MODULE.getData(dataContext);
+      if (root == null) {
+        Project project = CommonDataKeys.PROJECT.getData(dataContext);
+        if (project != null) {
+          Module[] modules = getProjectChildren(project);
+          if (modules.length == 1) {
+            Module soleModule = modules[0];
+            List<Object> contentRoots = getModuleChildren(soleModule);
+            if (contentRoots.size() == 1) {
+              root = contentRoots.get(0);
+            }
+            else {
+              root = soleModule;
+            }
+          }
+          else {
+            root = project;
+          }
+        }
       }
-
-      if (moduleOrProject != null) {
-        setModel(Collections.singletonList(moduleOrProject));
+      
+      if (root != null) {
+        setModel(Collections.singletonList(root));
       }
     }
     setChanged(false);
@@ -342,36 +359,11 @@ public class NavBarModel {
     final List<Object> result = new ArrayList<Object>();
     final Object rootElement = size() > 1 ? getElement(1) : null;
     if (!(object instanceof Project) && rootElement instanceof Module && ((Module)rootElement).isDisposed()) return result;
-    final PsiManager psiManager = PsiManager.getInstance(myProject);
     if (object instanceof Project) {
-      ContainerUtil.addAll(result, ApplicationManager.getApplication().runReadAction(
-        new Computable<Module[]>() {
-          @Override
-          public Module[] compute() {
-            return ModuleManager.getInstance((Project)object).getModules();
-          }
-        }
-      ));
+      ContainerUtil.addAll(result, getProjectChildren((Project)object));
     }
     else if (object instanceof Module) {
-      Module module = (Module)object;
-      if (!module.isDisposed()) {
-        ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-        VirtualFile[] roots = moduleRootManager.getContentRoots();
-        for (final VirtualFile root : roots) {
-          final PsiDirectory psiDirectory = ApplicationManager.getApplication().runReadAction(
-              new Computable<PsiDirectory>() {
-                @Override
-                public PsiDirectory compute() {
-                  return psiManager.findDirectory(root);
-                }
-              }
-          );
-          if (psiDirectory != null) {
-            result.add(psiDirectory);
-          }
-        }
-      }
+      ContainerUtil.addAll(result, getModuleChildren((Module)object));
     }
     else if (object instanceof PsiDirectoryContainer) {
       final PsiDirectoryContainer psiPackage = (PsiDirectoryContainer)object;
@@ -423,6 +415,40 @@ public class NavBarModel {
       });
     }
     Collections.sort(result, new SiblingsComparator());
+    return result;
+  }
+
+  private static Module[] getProjectChildren(final Project object) {
+    return ApplicationManager.getApplication().runReadAction(
+      new Computable<Module[]>() {
+        @Override
+        public Module[] compute() {
+          return ModuleManager.getInstance(object).getModules();
+        }
+      }
+    );
+  }
+
+  private List<Object> getModuleChildren(Module module) {
+    if (module.isDisposed()) return Collections.emptyList();
+
+    final PsiManager psiManager = PsiManager.getInstance(myProject);
+    ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+    VirtualFile[] roots = moduleRootManager.getContentRoots();
+    List<Object> result = new ArrayList<Object>(roots.length);
+    for (final VirtualFile root : roots) {
+      final PsiDirectory psiDirectory = ApplicationManager.getApplication().runReadAction(
+        new Computable<PsiDirectory>() {
+          @Override
+          public PsiDirectory compute() {
+            return psiManager.findDirectory(root);
+          }
+        }
+      );
+      if (psiDirectory != null) {
+        result.add(psiDirectory);
+      }
+    }
     return result;
   }
 
