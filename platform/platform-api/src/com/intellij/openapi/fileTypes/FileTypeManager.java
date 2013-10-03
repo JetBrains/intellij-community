@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
 
   private static FileTypeManager ourInstance = CachedSingletonsRegistry.markCachedField(FileTypeManager.class);
 
+  @NotNull
   public static final Topic<FileTypeListener> TOPIC = new Topic<FileTypeListener>("File types change", FileTypeListener.class);
 
   /**
@@ -108,7 +109,7 @@ public abstract class FileTypeManager extends FileTypeRegistry {
   @NotNull
   public abstract List<FileNameMatcher> getAssociations(@NotNull FileType type);
 
-  public abstract boolean isFileOfType(VirtualFile file, FileType type);
+  public abstract boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type);
 
   /**
    * Adds a listener for receiving notifications about changes in the list of
@@ -191,7 +192,8 @@ public abstract class FileTypeManager extends FileTypeRegistry {
 
   public abstract void removeAssociation(@NotNull FileType type, @NotNull FileNameMatcher matcher);
 
-  public static FileNameMatcher parseFromString(String pattern) {
+  @NotNull
+  public static FileNameMatcher parseFromString(@NotNull String pattern) {
     return FileNameMatcherFactory.getInstance().createMatcher(pattern);
   }
 
