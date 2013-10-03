@@ -56,7 +56,7 @@
           </grid>
         </constraints>
         <properties/>
-        <border type="none"/>
+        <border type="empty"/>
         <children>
           <component id="21aa4" class="javax.swing.JTextArea" binding="myDescriptionTextArea">
             <constraints/>
