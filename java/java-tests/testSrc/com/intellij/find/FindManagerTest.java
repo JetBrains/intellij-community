@@ -247,6 +247,28 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     assertEquals(2, usages.size());
   }
 
+  public void testDollars() throws Exception {
+    createFile(myModule, "A.java", "foo foo$ $foo");
+    createFile(myModule, "A.txt", "foo foo$ $foo");
+    
+    FindModel findModel = new FindModel();
+    findModel.setWholeWordsOnly(true);
+    findModel.setFromCursor(false);
+    findModel.setGlobal(true);
+    findModel.setMultipleFiles(true);
+    findModel.setProjectScope(true);
+
+    findModel.setStringToFind("foo");
+    assertSize(2, findUsages(findModel));
+
+    findModel.setStringToFind("foo$");
+    assertSize(2, findUsages(findModel));
+
+    findModel.setStringToFind("$foo");
+    assertSize(2, findUsages(findModel));
+
+  }
+
   public void testReplaceRegexp() throws Throwable {
     FindManager findManager = FindManager.getInstance(myProject);
 
