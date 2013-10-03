@@ -111,7 +111,9 @@ class LayoutRowGenerator extends AbstractGenerator<LayoutRow, MutableLayoutRow> 
   @Override
   public LayoutRow generateFirst() {
     List<NodeRow> rows = graph.getNodeRows();
-    assert !rows.isEmpty();
+    if (rows.isEmpty()) {
+      return new MutableLayoutRow();
+    }
 
     NodeRow firstRow = rows.get(0);
     MutableLayoutRow firstCellRow = new MutableLayoutRow();
