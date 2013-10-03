@@ -146,11 +146,16 @@ public class Runner {
       in.close();
     }
 
-    try {
-      UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-    }
-    catch (Exception ignore) {
-    }
+    SwingUtilities.invokeAndWait(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        }
+        catch (Exception ignore) {
+        }
+      }
+    });
 
     new SwingUpdaterUI(props.getProperty(OLD_BUILD_DESCRIPTION),
                   props.getProperty(NEW_BUILD_DESCRIPTION),
