@@ -1285,7 +1285,7 @@ class FormatProcessor {
       super(FormattingStateId.WRAPPING_BLOCKS);
       myModel = model;
       myWrapper = InitialInfoBuilder.prepareToBuildBlocksSequentially(
-        root, model, affectedRanges, myDefaultIndentOption, interestingOffset, myProgressCallback
+        root, model, affectedRanges, mySettings, myDefaultIndentOption, interestingOffset, myProgressCallback
       );
     }
 

@@ -3001,4 +3001,18 @@ public void testSCR260() throws Exception {
   }
 
 
+
+  public void testFormatterOnOffTags() throws Exception {
+    getSettings().getRootSettings().FORMATTER_TAGS_ENABLED = true;
+    doTest();
+  }
+
+  public void testFormatterOnOffTagsWithRegexp() throws Exception {
+    CodeStyleSettings settings = getSettings().getRootSettings();
+    settings.FORMATTER_TAGS_ENABLED = true;
+    settings.FORMATTER_TAGS_ACCEPT_REGEXP = true;
+    settings.FORMATTER_OFF_TAG = "not.*format";
+    settings.FORMATTER_ON_TAG = "end.*fragment";
+    doTest();
+  }
 }

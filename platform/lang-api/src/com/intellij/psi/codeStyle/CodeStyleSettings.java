@@ -36,6 +36,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class CodeStyleSettings extends CommonCodeStyleSettings implements Cloneable, JDOMExternalizable {
   
@@ -371,6 +373,55 @@ public class CodeStyleSettings extends CommonCodeStyleSettings implements Clonea
   public boolean JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST = false;
 
   //----------------------------------------------------------------------------------------
+
+  // region Formatter control
+
+  public boolean FORMATTER_TAGS_ENABLED = false;
+  public String FORMATTER_ON_TAG = "@formatter:on";
+  public String FORMATTER_OFF_TAG = "@formatter:off";
+
+  public volatile boolean FORMATTER_TAGS_ACCEPT_REGEXP = false;
+  private volatile Pattern myFormatterOffPattern = null;
+  private volatile Pattern myFormatterOnPattern = null;
+
+  @Nullable
+  public Pattern getFormatterOffPattern() {
+    if (myFormatterOffPattern == null && FORMATTER_TAGS_ENABLED && FORMATTER_TAGS_ACCEPT_REGEXP) {
+      myFormatterOffPattern = getPatternOrDisableRegexp(FORMATTER_OFF_TAG);
+    }
+    return myFormatterOffPattern;
+  }
+
+  public void setFormatterOffPattern(@Nullable Pattern formatterOffPattern) {
+    myFormatterOffPattern = formatterOffPattern;
+  }
+
+  @Nullable
+  public Pattern getFormatterOnPattern() {
+    if (myFormatterOffPattern == null && FORMATTER_TAGS_ENABLED && FORMATTER_TAGS_ACCEPT_REGEXP) {
+      myFormatterOnPattern = getPatternOrDisableRegexp(FORMATTER_ON_TAG);
+    }
+    return myFormatterOnPattern;
+  }
+
+  public void setFormatterOnPattern(@Nullable Pattern formatterOnPattern) {
+    myFormatterOnPattern = formatterOnPattern;
+  }
+
+  @Nullable
+  private Pattern getPatternOrDisableRegexp(@NotNull String markerText) {
+    try {
+      return Pattern.compile(markerText);
+    }
+    catch (PatternSyntaxException pse) {
+      LOG.error("Loaded regexp pattern is invalid: '" + markerText + "', error message: " + pse.getMessage());
+      FORMATTER_TAGS_ACCEPT_REGEXP = false;
+      return null;
+    }
+  }
+
+
+  // endregion
 
   //----------------------------------------------------------------------------------------
 
