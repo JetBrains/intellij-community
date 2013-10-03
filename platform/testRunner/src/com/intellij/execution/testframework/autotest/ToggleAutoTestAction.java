@@ -1,11 +1,11 @@
 package com.intellij.execution.testframework.autotest;
 
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.project.Project;
 
@@ -13,9 +13,10 @@ import com.intellij.openapi.project.Project;
  * @author yole
  */
 public class ToggleAutoTestAction extends ToggleAction {
-  public ToggleAutoTestAction() {
+  public ToggleAutoTestAction(ExecutionEnvironment environment) {
     super("Toggle auto-test", "Toggle automatic rerun of tests on code changes",
           AllIcons.Actions.SwapPanels);
+    environment.putUserData(AutoTestManager.AUTOTESTABLE, true);
   }
 
   @Override
