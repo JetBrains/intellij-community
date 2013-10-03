@@ -40,6 +40,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
@@ -74,6 +75,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
   private VirtualFile myModule1OutputDir;
   private VirtualFile myResDir;
   private VirtualFile myTestResDir;
+  private VirtualFile myExcludedLibSrcDir;
+  private VirtualFile myExcludedLibClsDir;
 
   @Override
   protected void setUp() throws Exception {
@@ -99,7 +102,9 @@ public class DirectoryIndexTest extends IdeaTestCase {
                     testRes
                     lib
                         src
+                          exc
                         cls
+                          exc
                     module2
                         src2
                             CVS
@@ -124,7 +129,9 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
           myLibDir = myModule1Dir.createChildDirectory(DirectoryIndexTest.this, "lib");
           myLibSrcDir = myLibDir.createChildDirectory(DirectoryIndexTest.this, "src");
+          myExcludedLibSrcDir = myLibSrcDir.createChildDirectory(DirectoryIndexTest.this, "exc");
           myLibClsDir = myLibDir.createChildDirectory(DirectoryIndexTest.this, "cls");
+          myExcludedLibClsDir = myLibClsDir.createChildDirectory(DirectoryIndexTest.this, "exc");
           myModule2Dir = myModule1Dir.createChildDirectory(DirectoryIndexTest.this, "module2");
           mySrcDir2 = myModule2Dir.createChildDirectory(DirectoryIndexTest.this, "src2");
           myCvsDir = mySrcDir2.createChildDirectory(DirectoryIndexTest.this, "CVS");
@@ -149,6 +156,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
             ModuleRootModificationUtil.addModuleLibrary(myModule, "lib.js",
                                                         singletonList(myFileLibCls.getUrl()), singletonList(myFileLibSrc.getUrl()));
+            PsiTestUtil.addExcludedRoot(myModule, myExcludedLibClsDir);
+            PsiTestUtil.addExcludedRoot(myModule, myExcludedLibSrcDir);
           }
 
           // fill roots of module2
@@ -160,7 +169,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
             PsiTestUtil.addSourceRoot(myModule2, mySrcDir2);
             PsiTestUtil.addExcludedRoot(myModule2, myExcludeDir);
             ModuleRootModificationUtil.addModuleLibrary(myModule2, "lib",
-                                                        singletonList(myLibClsDir.getUrl()), singletonList(myLibSrcDir.getUrl()));
+                                                        singletonList(myLibClsDir.getUrl()), singletonList(myLibSrcDir.getUrl()),
+                                                        Arrays.asList(myExcludedLibClsDir.getUrl(), myExcludedLibSrcDir.getUrl()), DependencyScope.COMPILE);
           }
 
           // fill roots of module3
@@ -212,6 +222,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfo(mySrcDir2, myModule2, false, false, "", JavaSourceRootType.SOURCE, myModule2, myModule3);
     checkInfoNull(myCvsDir);
     checkInfoNull(myExcludeDir);
+    checkInfoNull(myExcludedLibClsDir);
+    checkInfoNull(myExcludedLibSrcDir);
 
     checkInfo(myModule3Dir, myModule3, false, false, null, null);
   }
@@ -337,6 +349,14 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
 
     myIndex.checkConsistency();
+  }
+
+  public void testExcludedDirsInLibraries() {
+    ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
+    assertFalse(index.isInLibraryClasses(myExcludedLibClsDir));
+    assertTrue(index.isIgnored(myExcludedLibClsDir));
+    assertFalse(index.isInLibrarySource(myExcludedLibSrcDir));
+    assertTrue(index.isIgnored(myExcludedLibSrcDir));
   }
 
   public void testExplicitExcludeOfInner() throws Exception {

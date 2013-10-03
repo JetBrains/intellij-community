@@ -151,7 +151,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     if (myGeneratedSources.contains(FileBasedIndex.getFileId(file))) {
       return true;
     }
-    if (isUnderRoots(myRootToModuleMap.keySet(), file)) {
+    if (VfsUtilCore.isUnder(file, myRootToModuleMap.keySet())) {
       return true;
     }
     final Module module = getModuleByFile(file);
@@ -449,7 +449,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     if (myProjectFileIndex.isInTestSourceContent(fileOrDir)) {
       return true;
     }
-    if (isUnderRoots(myGeneratedTestRoots, fileOrDir)) {
+    if (VfsUtilCore.isUnder(fileOrDir, myGeneratedTestRoots)) {
       return true;
     }
     return false;
@@ -459,23 +459,10 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     if (myProjectFileIndex.isInSourceContent(fileOrDir)) {
       return true;
     }
-    if (isUnderRoots(myRootToModuleMap.keySet(), fileOrDir)) {
+    if (VfsUtilCore.isUnder(fileOrDir, myRootToModuleMap.keySet())) {
       return true;
     }
     return false;
-  }
-
-  public static boolean isUnderRoots(@NotNull Set<VirtualFile> roots, @NotNull VirtualFile file) {
-    VirtualFile parent = file;
-    while (true) {
-      if (parent == null) {
-        return false;
-      }
-      if (roots.contains(parent)) {
-        return true;
-      }
-      parent = parent.getParent();
-    }
   }
 
   public UUID getSessionId() {

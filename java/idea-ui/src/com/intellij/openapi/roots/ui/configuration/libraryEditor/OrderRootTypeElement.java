@@ -48,14 +48,4 @@ public class OrderRootTypeElement extends LibraryTableTreeContentElement<OrderRo
   public boolean equals(Object obj) {
     return obj instanceof OrderRootTypeElement && ((OrderRootTypeElement)obj).getOrderRootType().equals(myRootType);
   }
-
-  @Override
-  public boolean update() {
-    return false;
-  }
-
-  @Override
-  public OrderRootTypeElement getElement() {
-    return this;
-  }
 }
