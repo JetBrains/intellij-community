@@ -72,15 +72,17 @@ public class ForNestedRootChecker {
     }
   }
 
-  public static<T extends RootUrlPair> void filterOutSuperfluousChildren(final SvnVcs vcs, final List<T> list, final List<T> result) {
-    sort(list);
+  public static<T extends RootUrlPair> List<T> filterOutSuperfluousChildren(@NotNull final List<T> list) {
+    List<T> result = new ArrayList<T>();
 
-    // TODO: replace with ContainerUtil.process or ContainerUtil.filter
+    sort(list);
     for (final T child : list) {
       if (!alreadyRegistered(child, result)) {
         result.add(child);
       }
     }
+
+    return result;
   }
 
   private static <T extends RootUrlPair> void sort(List<T> list) {

@@ -238,17 +238,19 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   }
 
   private class CopiesApplier {
-    public void apply(final SvnVcs vcs, final List<RootUrlInfo> roots, final List<VirtualFile> lonelyRoots) {
+
+    public void apply(@NotNull final List<RootUrlInfo> roots, @NotNull final List<VirtualFile> lonelyRoots) {
       final SvnMapping mapping = new SvnMapping();
       mapping.addAll(roots);
       mapping.reportLonelyRoots(lonelyRoots);
 
       final SvnMapping filteredMapping = new SvnMapping();
-      final List<RootUrlInfo> filtered = new ArrayList<RootUrlInfo>();
-      ForNestedRootChecker.filterOutSuperfluousChildren(vcs, roots, filtered);
+      filteredMapping.addAll(ForNestedRootChecker.filterOutSuperfluousChildren(roots));
 
-      filteredMapping.addAll(filtered);
+      runUpdateMappings(mapping, filteredMapping);
+    }
 
+    private void runUpdateMappings(@NotNull final SvnMapping mapping, @NotNull final SvnMapping filteredMapping) {
       // TODO: Not clear so far why read action is used here - may be because of ROOTS_RELOADED message sent?
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
@@ -375,7 +377,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
           //new SvnNestedTypeRechecker(myVcs.getProject(), myTopRoots).run();
 
           myTopRoots.addAll(nestedRoots);
-          myApplier.apply(myVcs, myTopRoots, myLonelyRoots);
+          myApplier.apply(myTopRoots, myLonelyRoots);
 
           callback.run();
         }

@@ -1256,9 +1256,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       }
       infos.add(new MyPair<S>(vf, url.toString(), s));
     }
-    final List<MyPair<S>> filtered = new ArrayList<MyPair<S>>(infos.size());
-    ForNestedRootChecker.filterOutSuperfluousChildren(this, infos, filtered);
-
+    final List<MyPair<S>> filtered = ForNestedRootChecker.filterOutSuperfluousChildren(infos);
     final List<S> converted = ObjectsConvertor.convert(filtered, new Convertor<MyPair<S>, S>() {
       @Override
       public S convert(final MyPair<S> o) {
