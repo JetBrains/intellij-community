@@ -54,6 +54,25 @@ public class ParameterInfoTest extends LightCodeInsightTestCase {
     doTestPresentation("<html>List&lt;String&gt; param</html>");
   }
 
+  public void testAfterGenericsInsideCall() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+
+    final MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
+    final CreateParameterInfoContext context = new MockCreateParameterInfoContext(myEditor, myFile);
+    final PsiExpressionList list = handler.findElementForParameterInfo(context);
+    assertNotNull(list);
+    final Object[] itemsToShow = context.getItemsToShow();
+    assertNotNull(itemsToShow);
+    assertTrue(itemsToShow.length == 2);
+    assertTrue(itemsToShow[0] instanceof MethodCandidateInfo);
+    final PsiMethod method = ((MethodCandidateInfo)itemsToShow[0]).getElement();
+    final ParameterInfoUIContextEx parameterContext = ParameterInfoComponent.createContext(itemsToShow, myEditor, handler, 1);
+    parameterContext.setUIComponentEnabled(true);
+    Assert.assertEquals("<html>Class&lt;T&gt; type, <b>boolean tags</b></html>",
+                        MethodParameterInfoHandler
+                          .updateMethodPresentation(method, ((MethodCandidateInfo)itemsToShow[0]).getSubstitutor(), parameterContext));
+  }
+
   public void testGenericsOutsideCall() throws Exception {
     doTestPresentation("<html>List&lt;String&gt; param</html>");
   }
@@ -70,7 +89,7 @@ public class ParameterInfoTest extends LightCodeInsightTestCase {
     assertTrue(itemsToShow.length == 1);
     assertTrue(itemsToShow[0] instanceof MethodCandidateInfo);
     final PsiMethod method = ((MethodCandidateInfo)itemsToShow[0]).getElement();
-    final ParameterInfoUIContextEx parameterContext = ParameterInfoComponent.createContext(itemsToShow, myEditor, handler);
+    final ParameterInfoUIContextEx parameterContext = ParameterInfoComponent.createContext(itemsToShow, myEditor, handler, -1);
     Assert.assertEquals(expectedString,
                         MethodParameterInfoHandler
                           .updateMethodPresentation(method, ((MethodCandidateInfo)itemsToShow[0]).getSubstitutor(), parameterContext));
@@ -92,7 +111,7 @@ public class ParameterInfoTest extends LightCodeInsightTestCase {
     assertTrue(itemsToShow.length == 1);
     assertTrue(itemsToShow[0] instanceof PsiAnnotationMethod);
     final PsiAnnotationMethod method = (PsiAnnotationMethod)itemsToShow[0];
-    final ParameterInfoUIContextEx parameterContext = ParameterInfoComponent.createContext(itemsToShow, myEditor, handler);
+    final ParameterInfoUIContextEx parameterContext = ParameterInfoComponent.createContext(itemsToShow, myEditor, handler, -1);
     Assert.assertEquals(expectedString,
                         AnnotationParameterInfoHandler.updateUIText(method, parameterContext));
   }

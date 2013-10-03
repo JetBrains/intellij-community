@@ -43,6 +43,6 @@ public class AllInPackageConfigurationProducer extends JUnitConfigurationProduce
 
   @Override
   public boolean isPreferredConfiguration(ConfigurationFromContext self, ConfigurationFromContext other) {
-    return !other.isProducedBy(AllInDirectoryConfigurationProducer.class);
+    return !other.isProducedBy(AllInDirectoryConfigurationProducer.class) && !other.isProducedBy(PatternConfigurationProducer.class);
   }
 }

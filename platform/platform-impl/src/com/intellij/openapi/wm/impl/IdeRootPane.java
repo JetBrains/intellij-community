@@ -27,18 +27,15 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBPanel;
@@ -59,8 +56,6 @@ import java.util.List;
  * @author Vladimir Kondratyev
  */
 public class IdeRootPane extends JRootPane implements UISettingsListener {
-  private static final Icon BG = IconLoader.getIcon("/frame_background.png");
-
   /**
    * Toolbar and status bar.
    */
@@ -189,32 +184,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   protected final Container createContentPane(){
-    myContentPane = new JBPanel(new BorderLayout()) {
-      @Nullable
-      @Override
-      public Icon getCenterImage() {
-        if (UIUtil.isUnderDarcula()) {
-          String url = ApplicationInfoEx.getInstanceEx().getEditorBackgroundImageUrl();
-          if (url != null) {
-            return IconLoader.getIcon(url);
-          }
-        }
-        return null;
-      }
-
-      @Nullable
-      @Override
-      public Icon getBackgroundImage() {
-        return UIUtil.isUnderDarcula() ? BG : null;
-      }
-
-      @Override
-      public Color getBackground() {
-        return UIUtil.isUnderDarcula() ? super.getBackground() : JBColor.GRAY;
-      }
-    };
-
-    return myContentPane;
+    return myContentPane = new IdePanePanel(new BorderLayout());
   }
 
   void updateToolbar() {

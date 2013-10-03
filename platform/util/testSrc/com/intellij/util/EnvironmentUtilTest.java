@@ -18,14 +18,17 @@ package com.intellij.util;
 import com.intellij.openapi.util.SystemInfo;
 import org.junit.Test;
 
-import static org.junit.Assert.assertNotNull;
+import java.util.Map;
+
+import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * @author mike
  * @since Sep 19, 2002
  */
 public class EnvironmentUtilTest {
-  @Test(timeout = 60000)
+  @Test(timeout = 30000)
   public void map() throws Exception {
     System.setProperty("idea.fix.mac.env", "true");
     assertNotNull(EnvironmentUtil.getEnvironmentMap());
@@ -37,5 +40,23 @@ public class EnvironmentUtilTest {
     if (SystemInfo.isWindows) {
       assertNotNull(EnvironmentUtil.getValue("Path"));
     }
+  }
+
+  @Test
+  public void parse() {
+    String text = "V1=single line\0V2=multiple\nlines\0V3=single line\0PWD=?\0";
+    Map<String, String> map = EnvironmentUtil.testParser(text);
+    assertEquals(4, map.size());
+    assertEquals("single line", map.get("V1"));
+    assertEquals("multiple\nlines", map.get("V2"));
+    assertEquals("single line", map.get("V3"));
+    assertEquals(System.getenv("PWD"), map.get("PWD"));
+  }
+
+  @Test(timeout = 30000)
+  public void load() {
+    assumeTrue(SystemInfo.isUnix);
+    Map<String, String> env = EnvironmentUtil.testLoader();
+    assertTrue(env.size() >= System.getenv().size() / 2);
   }
 }

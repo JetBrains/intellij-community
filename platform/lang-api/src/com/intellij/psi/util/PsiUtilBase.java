@@ -19,12 +19,10 @@ package com.intellij.psi.util;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.PsiParser;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -39,7 +37,6 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,13 +44,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class PsiUtilBase extends PsiUtilCore {
-  public static final PsiParser NULL_PARSER = new PsiParser() {
-    @Override
-    @NotNull
-    public ASTNode parse(IElementType root, PsiBuilder builder) {
-      throw new IllegalAccessError();
-    }
-  };
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtilBase");
   public static final Comparator<Language> LANGUAGE_COMPARATOR = new Comparator<Language>() {
     @Override
     public int compare(Language o1, Language o2) {
@@ -191,7 +182,12 @@ public class PsiUtilBase extends PsiUtilCore {
           return null;
         }
       }
-      int endOffset = elt.getTextRange().getEndOffset();
+      TextRange range = elt.getTextRange();
+      if (range == null) {
+        LOG.error("Null range for element " + elt + " of " + elt.getClass() + " in file " + file + " at offset " + curOffset);
+        return file.getLanguage();
+      }
+      int endOffset = range.getEndOffset();
       curOffset = endOffset <= curOffset ? curOffset + 1 : endOffset;
     }
     while (curOffset < end);

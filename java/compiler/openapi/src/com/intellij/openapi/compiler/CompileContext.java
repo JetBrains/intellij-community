@@ -100,6 +100,11 @@ public interface CompileContext extends UserDataHolder {
    */
   void requestRebuildNextTime(String message);
 
+  boolean isRebuildRequested();
+
+  @Nullable
+  String getRebuildReason();
+
   /**
    * Returns the module to which the specified file belongs. This method is aware of the file->module mapping
    * for generated files.

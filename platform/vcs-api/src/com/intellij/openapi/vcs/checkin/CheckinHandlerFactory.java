@@ -31,7 +31,6 @@ import org.jetbrains.annotations.NotNull;
  * and unregistered in {@link com.intellij.openapi.vcs.AbstractVcs#deactivate()}
  *
  * @author lesya
- * @see com.intellij.openapi.vcs.ProjectLevelVcsManager#registerCheckinHandlerFactory(BaseCheckinHandlerFactory)
  * @since 5.1
  */
 public abstract class CheckinHandlerFactory implements BaseCheckinHandlerFactory {
@@ -44,6 +43,7 @@ public abstract class CheckinHandlerFactory implements BaseCheckinHandlerFactory
    *                      and to get or set the commit message.
    * @return the handler instance.
    */
+  @Override
   @NotNull
   public abstract CheckinHandler createHandler(final CheckinProjectPanel panel, CommitContext commitContext);
 

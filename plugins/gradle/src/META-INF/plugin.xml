@@ -22,6 +22,7 @@
 
   <depends>com.intellij.modules.lang</depends>
   <depends>org.intellij.groovy</depends>
+  <depends optional="true" config-file="gradle-ext-plugin.xml">org.jetbrains.idea.gradle.ext</depends>
 
   <extensionPoints>
     <extensionPoint name="projectResolve" interface="org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension"/>

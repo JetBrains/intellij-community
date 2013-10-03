@@ -28,7 +28,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 public class LibraryTreeStructure extends AbstractTreeStructure {
-  private final Object myRootElement;
   private final NodeDescriptor myRootElementDescriptor;
   private final LibraryRootsComponent myParentEditor;
   private final LibraryRootsComponentDescriptor myComponentDescriptor;
@@ -36,7 +35,6 @@ public class LibraryTreeStructure extends AbstractTreeStructure {
   public LibraryTreeStructure(LibraryRootsComponent parentElement, LibraryRootsComponentDescriptor componentDescriptor) {
     myParentEditor = parentElement;
     myComponentDescriptor = componentDescriptor;
-    myRootElement = new Object();
     myRootElementDescriptor = new NodeDescriptor(null, null) {
       @Override
       public boolean update() {
@@ -45,19 +43,19 @@ public class LibraryTreeStructure extends AbstractTreeStructure {
       }
       @Override
       public Object getElement() {
-        return myRootElement;
+        return this;
       }
     };
   }
 
   @Override
   public Object getRootElement() {
-    return myRootElement;
+    return myRootElementDescriptor;
   }
 
   @Override
   public Object[] getChildElements(Object element) {
-    if (element == myRootElement) {
+    if (element == myRootElementDescriptor) {
       ArrayList<LibraryTableTreeContentElement> elements = new ArrayList<LibraryTableTreeContentElement>(3);
       final LibraryEditor parentEditor = myParentEditor.getLibraryEditor();
       for (OrderRootType type : myComponentDescriptor.getRootTypes()) {
@@ -67,7 +65,7 @@ public class LibraryTreeStructure extends AbstractTreeStructure {
           if (presentation == null) {
             presentation = DefaultLibraryRootsComponentDescriptor.getDefaultPresentation(type);
           }
-          elements.add(new OrderRootTypeElement(type, presentation.getNodeText(), presentation.getIcon()));
+          elements.add(new OrderRootTypeElement(myRootElementDescriptor, type, presentation.getNodeText(), presentation.getIcon()));
         }
       }
       return elements.toArray();
@@ -99,25 +97,12 @@ public class LibraryTreeStructure extends AbstractTreeStructure {
 
   @Override
   public Object getParentElement(Object element) {
-    Object rootElement = getRootElement();
-    if (element == rootElement) {
-      return null;
-    }
-    if (element instanceof ItemElement) {
-      return ((ItemElement)element).getParent();
-    }
-    return rootElement;
+    return ((NodeDescriptor)element).getParentDescriptor();
   }
 
   @Override
   @NotNull
   public NodeDescriptor createDescriptor(Object element, NodeDescriptor parentDescriptor) {
-    if (element == myRootElement) {
-      return myRootElementDescriptor;
-    }
-    if (element instanceof LibraryTableTreeContentElement) {
-      return ((LibraryTableTreeContentElement)element).createDescriptor(parentDescriptor, myParentEditor);
-    }
-    return null;
+    return (NodeDescriptor)element;
   }
 }

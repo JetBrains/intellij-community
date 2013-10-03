@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -40,104 +39,97 @@ import java.util.List;
 import java.util.Set;
 
 public class DelayedDocumentWatcher implements Runnable {
-  private final Project project;
-  private final Alarm alarm;
-  private final Consumer<VirtualFile[]> consumer;
-  private final int delay;
+  private final Project myProject;
+  private final Alarm myAlarm;
+  private final Consumer<VirtualFile[]> myConsumer;
+  private final int myDelay;
 
-  private final MyDocumentAdapter listener;
+  private final MyDocumentAdapter myListener;
 
-  private final Set<VirtualFile> changedFiles = new THashSet<VirtualFile>();
-  private boolean wasRequested;
+  private final Set<VirtualFile> myChangedFiles = new THashSet<VirtualFile>();
+  private boolean myWasRequested;
 
-  private final Condition<VirtualFile> documentChangedFilter;
+  private final Condition<VirtualFile> myDocumentChangedFilter;
 
-  private MessageBusConnection messageBusConnection;
+  private MessageBusConnection myMessageBusConnection;
 
   public DelayedDocumentWatcher(Project project,
                                 Alarm alarm,
                                 int delay,
                                 Consumer<VirtualFile[]> consumer,
                                 Condition<VirtualFile> documentChangedFilter) {
-    this.project = project;
-    this.alarm = alarm;
-    this.delay = delay;
-    this.consumer = consumer;
-    this.documentChangedFilter = documentChangedFilter;
+    myProject = project;
+    myAlarm = alarm;
+    myDelay = delay;
+    myConsumer = consumer;
+    myDocumentChangedFilter = documentChangedFilter;
 
-    listener = new MyDocumentAdapter();
-  }
-
-  public DelayedDocumentWatcher(Project project,
-                                Alarm alarm,
-                                int delay,
-                                Consumer<VirtualFile[]> consumer) {
-    this(project, alarm, delay, consumer, Conditions.<VirtualFile>alwaysTrue());
+    myListener = new MyDocumentAdapter();
   }
 
   @Override
   public void run() {
     final VirtualFile[] files;
-    synchronized (changedFiles) {
-      wasRequested = false;
-      files = changedFiles.toArray(new VirtualFile[changedFiles.size()]);
-      changedFiles.clear();
+    synchronized (myChangedFiles) {
+      myWasRequested = false;
+      files = myChangedFiles.toArray(new VirtualFile[myChangedFiles.size()]);
+      myChangedFiles.clear();
     }
 
-    final WolfTheProblemSolver problemSolver = WolfTheProblemSolver.getInstance(project);
+    final WolfTheProblemSolver problemSolver = WolfTheProblemSolver.getInstance(myProject);
     for (VirtualFile file : files) {
       if (problemSolver.hasSyntaxErrors(file)) {
         // threat any other file in queue as dependency of this file — don't flush if some of the queued file is invalid
         // Vladimir.Krivosheev AutoTestManager behavior behavior is preserved.
         // LiveEdit version used another strategy (flush all valid files), but now we use AutoTestManager-inspired strategy
-        synchronized (changedFiles) {
-          Collections.addAll(changedFiles, files);
+        synchronized (myChangedFiles) {
+          Collections.addAll(myChangedFiles, files);
         }
 
         return;
       }
     }
 
-    consumer.consume(files);
+    myConsumer.consume(files);
   }
 
   public Project getProject() {
-    return project;
+    return myProject;
   }
 
   public void activate() {
-    if (messageBusConnection != null) {
+    if (myMessageBusConnection != null) {
       return;
     }
 
-    messageBusConnection = project.getMessageBus().connect();
-    messageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
+    myMessageBusConnection = myProject.getMessageBus().connect(myProject);
+    myMessageBusConnection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
         for (VFileEvent event : events) {
           if (event instanceof VFileDeleteEvent) {
-            synchronized (changedFiles) {
-              changedFiles.remove(event.getFile());
+            synchronized (myChangedFiles) {
+              myChangedFiles.remove(event.getFile());
             }
           }
         }
       }
     });
 
-    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(listener, project);
+    EditorFactory.getInstance().getEventMulticaster().addDocumentListener(myListener, myProject);
   }
 
   public void deactivate() {
-    if (messageBusConnection == null) {
+    if (myMessageBusConnection == null) {
       return;
     }
 
     try {
-      EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(listener);
+      EditorFactory.getInstance().getEventMulticaster().removeDocumentListener(myListener);
     }
     finally {
-      messageBusConnection.disconnect();
-      messageBusConnection = null;
+      myMessageBusConnection.disconnect();
+      myMessageBusConnection = null;
     }
   }
 
@@ -146,19 +138,20 @@ public class DelayedDocumentWatcher implements Runnable {
     public void documentChanged(DocumentEvent event) {
       final Document document = event.getDocument();
       final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-      if (file == null || !documentChangedFilter.value(file)) {
+      if (file == null || !myDocumentChangedFilter.value(file)) {
         return;
       }
 
-      synchronized (changedFiles) {
+      synchronized (myChangedFiles) {
         // changedFiles contains is not enough, because it can contain not-flushed files from prev request (which are not flushed because some is invalid)
-        if (!changedFiles.add(file) && wasRequested) {
+        if (!myChangedFiles.add(file) && myWasRequested) {
           return;
         }
       }
 
-      alarm.cancelRequest(DelayedDocumentWatcher.this);
-      alarm.addRequest(DelayedDocumentWatcher.this, delay);
+      myAlarm.cancelRequest(DelayedDocumentWatcher.this);
+      myAlarm.addRequest(DelayedDocumentWatcher.this, myDelay);
     }
   }
+
 }

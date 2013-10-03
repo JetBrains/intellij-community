@@ -16,8 +16,10 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import org.jetbrains.annotations.Nullable;
 
-public abstract class LibraryTableTreeContentElement {
-
-  public abstract NodeDescriptor createDescriptor(NodeDescriptor parentDescriptor, final LibraryRootsComponent parentEditor);
+public abstract class LibraryTableTreeContentElement<E> extends NodeDescriptor<E> {
+  protected LibraryTableTreeContentElement(@Nullable NodeDescriptor parentDescriptor) {
+    super(null, parentDescriptor);
+  }
 }

@@ -49,6 +49,7 @@ import org.jetbrains.plugins.github.ui.GithubBasicLoginDialog;
 import org.jetbrains.plugins.github.ui.GithubLoginDialog;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -381,7 +382,10 @@ public class GithubUtil {
   }
 
   @NotNull
-  public static String getErrorTextFromException(@NotNull IOException e) {
+  public static String getErrorTextFromException(@NotNull Exception e) {
+    if (e instanceof UnknownHostException) {
+      return "Unknown host: " + e.getMessage();
+    }
     return e.getMessage();
   }
 

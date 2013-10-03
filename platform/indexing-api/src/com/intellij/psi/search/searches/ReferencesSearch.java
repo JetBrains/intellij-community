@@ -70,6 +70,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
       return myIgnoreAccessScope;
     }
 
+    @NotNull
     public SearchRequestCollector getOptimizer() {
       return myOptimizer;
     }

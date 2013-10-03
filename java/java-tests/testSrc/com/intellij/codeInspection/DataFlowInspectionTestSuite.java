@@ -26,6 +26,7 @@ public class DataFlowInspectionTestSuite {
   public static Test suite() {
     TestSuite suite = new TestSuite();
     suite.addTestSuite(DataFlowInspectionTest.class);
+    suite.addTestSuite(DataFlowInspection8Test.class);
     suite.addTestSuite(DataFlowInspectionAncientTest.class);
     suite.addTestSuite(SliceTreeTest.class);
     suite.addTestSuite(SliceBackwardTest.class);

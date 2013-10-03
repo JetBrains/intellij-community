@@ -59,7 +59,5 @@
     <extensionPoint name="vcs.rootFinder" interface="com.intellij.openapi.vcs.VcsRootFinder" area="IDEA_PROJECT"/>
 
     <extensionPoint name="logProvider" interface="com.intellij.vcs.log.VcsLogProvider" area="IDEA_PROJECT"/>
-
-    <extensionPoint name="beforeCommitDialog" interface="com.intellij.openapi.vcs.checkin.BeforeCommitDialogHandler"/>
   </extensionPoints>
 </idea-plugin>

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
 */
 public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter implements CustomReferenceConverter<PsiType> {
-
-  @NonNls static final String[] PRIMITIVES = new String[]{"boolean", "byte",
-    "char", "double", "float", "int", "long", "short"};
+  @NonNls static final String[] PRIMITIVES = {"boolean", "byte", "char", "double", "float", "int", "long", "short"};
   @NonNls private static final String ARRAY_PREFIX = "[L";
   private static final JavaClassReferenceProvider CLASS_REFERENCE_PROVIDER = new JavaClassReferenceProvider();
 
@@ -71,9 +69,8 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
       }
     }
     return new JavaClassReferenceSet(trimmed, element, offset, false, CLASS_REFERENCE_PROVIDER) {
-      protected JavaClassReference createReference(final int referenceIndex, final String subreferenceText, final TextRange textRange,
-                                                   final boolean staticImport) {
-        return new JavaClassReference(this, textRange, referenceIndex, subreferenceText, staticImport) {
+      protected JavaClassReference createReference(int refIndex, String subRefText, TextRange textRange, boolean staticImport) {
+        return new JavaClassReference(this, textRange, refIndex, subRefText, staticImport) {
           public boolean isSoft() {
             return true;
           }
@@ -103,7 +100,7 @@ public class CanonicalPsiTypeConverterImpl extends CanonicalPsiTypeConverter imp
           public Object[] getVariants() {
             final Object[] variants = super.getVariants();
             if (myIndex == 0) {
-              return ArrayUtil.mergeArrays(variants, PRIMITIVES);
+              return ArrayUtil.mergeArrays(variants, PRIMITIVES, ArrayUtil.OBJECT_ARRAY_FACTORY);
             }
             return variants;
           }

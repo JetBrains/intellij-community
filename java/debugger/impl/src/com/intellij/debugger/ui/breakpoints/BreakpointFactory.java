@@ -55,9 +55,6 @@ public abstract class BreakpointFactory {
     return null;
   }
 
-  protected void configureBreakpointPanel(BreakpointPanel panel) {
-  }
-
   protected abstract String getHelpID();
 
   public abstract String getDisplayName();

@@ -15,14 +15,14 @@
  */
 package com.intellij.util;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Files;
 import com.intellij.execution.process.UnixProcessManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.FixedFuture;
@@ -30,8 +30,10 @@ import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -50,7 +52,13 @@ public class EnvironmentUtil {
       ourEnvGetter = executor.submit(new Callable<Map<String, String>>() {
         @Override
         public Map<String, String> call() throws Exception {
-          return getShellEnv();
+          try {
+            return getShellEnv();
+          }
+          catch (Throwable t) {
+            LOG.warn("can't get shell environment", t);
+            return System.getenv();
+          }
         }
       });
       executor.shutdown();
@@ -129,49 +137,53 @@ public class EnvironmentUtil {
     return array;
   }
 
-  @SuppressWarnings("SpellCheckingInspection")
-  private static Map<String, String> getShellEnv() {
-    File envFile = null;
-    try {
-      String shell = System.getenv("SHELL");
-      if (shell == null || !new File(shell).canExecute()) {
-        throw new Exception("shell:" + shell);
-      }
+  private static Map<String, String> getShellEnv() throws Exception {
+    String shell = System.getenv("SHELL");
+    if (shell == null || !new File(shell).canExecute()) {
+      throw new Exception("shell:" + shell);
+    }
 
-      envFile = FileUtil.createTempFile("intellij-shell-env", null, false);
-      String[] command = {shell, "-l", "-c", "/usr/bin/printenv > '" + envFile.getAbsolutePath() + "'"};
+    File reader = FileUtil.findFirstThatExist(
+      PathManager.getBinPath() + "/printenv.py",
+      PathManager.getHomePath() + "/community/bin/mac/printenv.py",
+      PathManager.getHomePath() + "/bin/mac/printenv.py"
+    );
+    if (reader == null) {
+      throw new Exception("bin:" + PathManager.getBinPath());
+    }
+
+    File envFile = FileUtil.createTempFile("intellij-shell-env", null, false);
+    try {
+      String[] command = {shell, "-l", "-c", "'" + reader.getAbsolutePath() + "' '" + envFile.getAbsolutePath() + "'"};
       LOG.info("loading shell env: " + StringUtil.join(command, " "));
+
       Process process = Runtime.getRuntime().exec(command);
       ProcessKiller processKiller = new ProcessKiller(process);
       processKiller.killAfter(SHELL_ENV_READING_TIMEOUT);
       int rv = process.waitFor();
       processKiller.stopWaiting();
-      List<String> lines = Files.readLines(envFile, Charsets.UTF_8);
+
+      String lines = FileUtil.loadFile(envFile);
       if (rv != 0 || lines.isEmpty()) {
-        throw new Exception("rv:" + rv + " lines:" + lines.size());
+        throw new Exception("rv:" + rv + " text:" + lines.length());
       }
       return parseEnv(lines);
     }
-    catch (Throwable t) {
-      LOG.warn("can't get shell environment", t);
-      return System.getenv();
-    }
     finally {
-      if (envFile != null) {
-        FileUtil.delete(envFile);
-      }
+      FileUtil.delete(envFile);
     }
   }
 
-  private static Map<String, String> parseEnv(List<String> lines) throws Exception {
+  private static Map<String, String> parseEnv(String text) throws Exception {
     Set<String> toIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL"));
     Map<String, String> env = System.getenv();
     Map<String, String> newEnv = new HashMap<String, String>();
+
+    String[] lines = text.split("\0");
     for (String line : lines) {
       int pos = line.indexOf('=');
       if (pos <= 0) {
-        LOG.warn("malformed:" + line);
-        continue;
+        throw new Exception("malformed:" + line);
       }
       String name = line.substring(0, pos);
       if (!toIgnore.contains(name)) {
@@ -181,13 +193,21 @@ public class EnvironmentUtil {
         newEnv.put(name, env.get(name));
       }
     }
-    if (newEnv.size() < lines.size() - toIgnore.size()) {
-      // some lines weren't parsed - we're better to fall back to original environment than use possibly incomplete one
-      throw new Exception("env:" + newEnv.size() + " lines:" + lines.size());
-    }
 
     LOG.info("shell environment loaded (" + newEnv.size() + " vars)");
     return Collections.unmodifiableMap(newEnv);
+  }
+
+  public static String getProcessList() {
+    String diagnostics;
+    try {
+      Process p = Runtime.getRuntime().exec(SystemInfo.isWindows ? System.getenv("windir") +"\\system32\\tasklist.exe /v" : "ps a");
+      diagnostics = StreamUtil.readText(p.getInputStream());
+    }
+    catch (IOException e) {
+      diagnostics = ExceptionUtil.getThrowableText(e);
+    }
+    return diagnostics;
   }
 
   private static class ProcessKiller {
@@ -246,5 +266,25 @@ public class EnvironmentUtil {
   @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"})
   public static Map<String, String> getEnvironmentProperties() {
     return getEnvironmentMap();
+  }
+
+  @TestOnly
+  static Map<String, String> testLoader() {
+    try {
+      return getShellEnv();
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @TestOnly
+  static Map<String, String> testParser(@NotNull String lines) {
+    try {
+      return parseEnv(lines);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
   }
 }

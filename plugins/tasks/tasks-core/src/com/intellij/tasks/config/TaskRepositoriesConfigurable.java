@@ -13,10 +13,9 @@ import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.tasks.TaskRepositorySubtype;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.TaskRepository;
+import com.intellij.tasks.TaskRepositorySubtype;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.ui.*;
@@ -196,7 +195,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
     myRepositoryEditor.doLayout();
     JComponent preferred = editor.getPreferredFocusedComponent();
     if (preferred != null && requestFocus) {
-      IdeFocusManager.getInstance(myProject).requestFocus(preferred, false);
+//      IdeFocusManager.getInstance(myProject).requestFocus(preferred, false);
     }
   }
 

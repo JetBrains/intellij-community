@@ -25,6 +25,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataMan
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -142,7 +143,7 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
                 @Override
                 public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
                 }
-              }, true, true);
+              }, true, ProgressExecutionMode.START_IN_FOREGROUND_ASYNC);
           }
         });
         return panel;

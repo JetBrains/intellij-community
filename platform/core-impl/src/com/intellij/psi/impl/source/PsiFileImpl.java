@@ -387,7 +387,8 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   private void clearStub() {
-    StubTree stubHolder = myStub == null ? null : myStub.get();
+    SoftReference<StubTree> stubRef = myStub;
+    StubTree stubHolder = stubRef == null ? null : stubRef.get();
     if (stubHolder != null) {
       ((StubBase<?>)stubHolder.getRoot()).setPsi(null);
     }

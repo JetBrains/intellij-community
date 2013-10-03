@@ -139,7 +139,7 @@ public class ExternalSystemTasksPanel extends SimpleToolWindowPanel implements D
   private static JComponent wrap(@NotNull JComponent content, @NotNull String title) {
     JPanel result = new JPanel(new BorderLayout());
     result.setOpaque(false);
-    result.setBorder(IdeBorderFactory.createTitledBorder(title));
+    result.setBorder(IdeBorderFactory.createTitledBorder(title, false));
     result.add(content, BorderLayout.CENTER);
     return result;
   }

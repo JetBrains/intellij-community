@@ -28,6 +28,9 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.LicensingFacade;
+import com.intellij.util.ui.UIUtil;
+
+import java.awt.*;
 
 public class SendFeedbackAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
@@ -41,8 +44,50 @@ public class SendFeedbackAction extends AnAction implements DumbAware {
     urlTemplate = urlTemplate
       .replace("$BUILD", eap ? appInfo.getBuild().asStringWithoutProductCode() : appInfo.getBuild().asString())
       .replace("$TIMEZONE", System.getProperty("user.timezone"))
-      .replace("$EVAL", isEvaluationLicense() ? "true" : "false");
+      .replace("$EVAL", isEvaluationLicense() ? "true" : "false")
+      .replace("$DESCR", getDescription());
     BrowserUtil.launchBrowser(urlTemplate);
+  }
+
+  private static String getDescription() {
+    StringBuilder sb = new StringBuilder("\n\n");
+    String javaVersion = System.getProperty("java.runtime.version", System.getProperty("java.version", "unknown"));
+    sb.append(javaVersion);
+    String archDataModel = System.getProperty("sun.arch.data.model");
+    if (archDataModel != null) {
+      sb.append("x").append(archDataModel);
+    }
+    String javaVendor = System.getProperty("java.vm.vendor");
+    if (javaVendor != null) {
+      sb.append(" ").append(javaVendor);
+    }
+    sb.append(", ").append(System.getProperty("os.name"));
+    String osArch = System.getProperty("os.arch");
+    if (osArch != null) {
+      sb.append("(").append(osArch).append(")");
+    }
+
+    String osVersion = System.getProperty("os.version");
+    String osPatchLevel = System.getProperty("sun.os.patch.level");
+    if (osVersion != null) {
+      sb.append(" v").append(osVersion);
+      if (osPatchLevel != null) {
+        sb.append(" ").append(osPatchLevel);
+      }
+    }
+    if (!GraphicsEnvironment.isHeadless()) {
+      GraphicsDevice[] devices = GraphicsEnvironment.getLocalGraphicsEnvironment().getScreenDevices();
+      sb.append(" (");
+      for (int i = 0; i < devices.length; i++) {
+        if (i > 0) sb.append(", ");
+        GraphicsDevice device = devices[i];
+        Rectangle bounds = device.getDefaultConfiguration().getBounds();
+        sb.append(bounds.width).append("x").append(bounds.height);
+      }
+      if (UIUtil.isRetina()) sb.append(" R");
+      sb.append(")");
+    }
+    return sb.toString();
   }
 
   private static boolean isEvaluationLicense() {

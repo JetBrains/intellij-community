@@ -27,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
+import static org.jetbrains.plugins.github.util.GithubUtil.getErrorTextFromException;
+
 /**
  * @author Aleksey Pivovarov
  */
@@ -61,7 +63,7 @@ public class GithubNotifications {
 
   public static void showError(@NotNull Project project, @NotNull String title, @NotNull Exception e) {
     LOG.warn(title + "; ", e);
-    Notification notification = new Notification(GITHUB_NOTIFICATION_GROUP, title, e.getMessage(), NotificationType.ERROR);
+    Notification notification = new Notification(GITHUB_NOTIFICATION_GROUP, title, getErrorTextFromException(e), NotificationType.ERROR);
     Notificator.getInstance(project).notify(notification);
   }
 
@@ -126,7 +128,7 @@ public class GithubNotifications {
 
   public static void showErrorDialog(final @Nullable Project project, final @NotNull String title, final @NotNull Exception e) {
     LOG.warn(title, e);
-    Messages.showErrorDialog(project, e.getMessage(), title);
+    Messages.showErrorDialog(project, getErrorTextFromException(e), title);
   }
 
   public static void showErrorDialog(final @NotNull Component component, final @NotNull String title, final @NotNull String message) {
@@ -136,7 +138,7 @@ public class GithubNotifications {
 
   public static void showErrorDialog(final @NotNull Component component, final @NotNull String title, final @NotNull Exception e) {
     LOG.info(title, e);
-    Messages.showInfoMessage(component, e.getMessage(), title);
+    Messages.showInfoMessage(component, getErrorTextFromException(e), title);
   }
 
   public static int showYesNoDialog(final @Nullable Project project, final @NotNull String title, final @NotNull String message) {

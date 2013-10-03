@@ -219,7 +219,8 @@ public class ConfigurationContext {
       }
     }
     if (element == null) {
-      element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+      final PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+      element = elements != null && elements.length >= 1 ? elements[0] : null;
     }
     if (element == null) {
       final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
