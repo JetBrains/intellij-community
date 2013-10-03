@@ -27,6 +27,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleDocumentationBundle;
+import org.jetbrains.plugins.groovy.dsl.CustomMembersGenerator;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
@@ -56,13 +57,29 @@ public class GradleDocumentationProvider implements DocumentationProvider {
   @Nullable
   @Override
   public String generateDoc(PsiElement element, PsiElement originalElement) {
-    String result = null;
-
     PsiFile file = element.getContainingFile();
-    if (file == null || !file.getName().endsWith(GradleConstants.EXTENSION)) {
-      return null;
-    }
+    if (file == null || !file.getName().endsWith(GradleConstants.EXTENSION)) return null;
+    return element instanceof GrLiteral ? findDoc(element, GrLiteral.class.cast(element).getValue()) : null;
+  }
 
+  @Nullable
+  @Override
+  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
+    final PsiFile file = element.getContainingFile();
+    if (file == null || !file.getName().endsWith(GradleConstants.EXTENSION)) return null;
+    final String doc = findDoc(element, object);
+    return !StringUtil.isEmpty(doc) ? new CustomMembersGenerator.GdslNamedParameter(String.valueOf(object), doc, element, null) : null;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
+    return JavaDocUtil.findReferenceTarget(psiManager, link, context);
+  }
+
+  @Nullable
+  private static String findDoc(@Nullable PsiElement element, Object argValue) {
+    String result = null;
     if (element instanceof GrLiteral) {
       GrLiteral grLiteral = (GrLiteral)element;
       PsiElement stmt = PsiTreeUtil.findFirstParent(grLiteral, new Condition<PsiElement>() {
@@ -84,28 +101,15 @@ public class GradleDocumentationProvider implements DocumentationProvider {
               qualifiedName,
               psiMethod.getName(),
               namedArgument.getLabelName(),
-              String.valueOf(grLiteral.getValue()),
+              String.valueOf(argValue),
             }, "."
             );
 
-            String bndMsg = GradleDocumentationBundle.messageOrDefault(key, "");
-            result = bndMsg.isEmpty() ? null : bndMsg;
+            result = GradleDocumentationBundle.messageOrDefault(key, "");
           }
         }
       }
     }
     return result;
-  }
-
-  @Nullable
-  @Override
-  public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
-    return null;
-  }
-
-  @Nullable
-  @Override
-  public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
-    return JavaDocUtil.findReferenceTarget(psiManager, link, context);
   }
 }
