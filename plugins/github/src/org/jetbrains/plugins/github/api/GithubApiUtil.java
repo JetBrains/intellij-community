@@ -30,10 +30,7 @@ import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
 import org.jetbrains.plugins.github.exceptions.GithubJsonException;
 import org.jetbrains.plugins.github.exceptions.GithubRateLimitExceededException;
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
-import org.jetbrains.plugins.github.util.GithubAuthData;
-import org.jetbrains.plugins.github.util.GithubSslSupport;
-import org.jetbrains.plugins.github.util.GithubUrlUtil;
-import org.jetbrains.plugins.github.util.GithubUtil;
+import org.jetbrains.plugins.github.util.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,7 +46,6 @@ public class GithubApiUtil {
 
   public static final String DEFAULT_GITHUB_HOST = "github.com";
 
-  private static final int CONNECTION_TIMEOUT = 5000;
   private static final String PER_PAGE = "per_page=100";
   private static final Logger LOG = GithubUtil.LOG;
 
@@ -178,10 +174,11 @@ public class GithubApiUtil {
 
   @NotNull
   private static HttpClient getHttpClient(@Nullable GithubAuthData.BasicAuth basicAuth, boolean useProxy) {
+    int timeout = GithubSettings.getInstance().getConnectionTimeout();
     final HttpClient client = new HttpClient();
     HttpConnectionManagerParams params = client.getHttpConnectionManager().getParams();
-    params.setConnectionTimeout(CONNECTION_TIMEOUT); //set connection timeout (how long it takes to connect to remote host)
-    params.setSoTimeout(CONNECTION_TIMEOUT); //set socket timeout (how long it takes to retrieve data from remote host)
+    params.setConnectionTimeout(timeout); //set connection timeout (how long it takes to connect to remote host)
+    params.setSoTimeout(timeout); //set socket timeout (how long it takes to retrieve data from remote host)
 
     client.getParams().setContentCharset("UTF-8");
     // Configure proxySettings if it is required

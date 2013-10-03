@@ -18,6 +18,7 @@ package org.jetbrains.plugins.github.ui;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
@@ -65,6 +66,7 @@ public class GithubSettingsPanel {
   private ComboBox myAuthTypeComboBox;
   private JPanel myCardPanel;
   private JBLabel myAuthTypeLabel;
+  private JSpinner myTimeoutSpinner;
 
   private boolean myCredentialsModified;
 
@@ -227,16 +229,30 @@ public class GithubSettingsPanel {
     return GithubAuthData.createAnonymous(getHost());
   }
 
+  public void setConnectionTimeout(int timeout) {
+    myTimeoutSpinner.setValue(Integer.valueOf(timeout));
+  }
+
+  public int getConnectionTimeout() {
+    return ((SpinnerNumberModel)myTimeoutSpinner.getModel()).getNumber().intValue();
+  }
+
   public void reset() {
     setHost(mySettings.getHost());
     setLogin(mySettings.getLogin());
     setPassword(mySettings.isAuthConfigured() ? DEFAULT_PASSWORD_TEXT : "");
     setAuthType(mySettings.getAuthType());
+    setConnectionTimeout(mySettings.getConnectionTimeout());
     resetCredentialsModification();
   }
 
   public boolean isModified() {
-    return !Comparing.equal(mySettings.getHost(), getHost()) || myCredentialsModified;
+    return myCredentialsModified || !Comparing.equal(mySettings.getHost(), getHost()) ||
+           !Comparing.equal(mySettings.getConnectionTimeout(), getConnectionTimeout());
+  }
+
+  public boolean isCredentialsModified() {
+    return myCredentialsModified;
   }
 
   public void resetCredentialsModification() {
@@ -247,5 +263,7 @@ public class GithubSettingsPanel {
     Document doc = new PlainDocument();
     myPasswordField = new JPasswordField(doc, null, 0);
     myTokenField = new JPasswordField(doc, null, 0);
+    myTimeoutSpinner =
+      new JSpinner(new SpinnerNumberModel(Integer.valueOf(5000), Integer.valueOf(0), Integer.valueOf(60000), Integer.valueOf(500)));
   }
 }

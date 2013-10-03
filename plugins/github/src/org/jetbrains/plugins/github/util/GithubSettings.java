@@ -62,10 +62,19 @@ public class GithubSettings implements PersistentStateComponent<GithubSettings.S
     public boolean PRIVATE_GIST = true;
     public boolean SAVE_PASSWORD = true;
     @NotNull public Collection<String> TRUSTED_HOSTS = new ArrayList<String>();
+    public int CONNECTION_TIMEOUT = 5000;
   }
 
   public static GithubSettings getInstance() {
     return ServiceManager.getService(GithubSettings.class);
+  }
+
+  public int getConnectionTimeout() {
+    return myState.CONNECTION_TIMEOUT;
+  }
+
+  public void setConnectionTimeout(int timeout) {
+    myState.CONNECTION_TIMEOUT = timeout;
   }
 
   @NotNull
