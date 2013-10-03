@@ -356,6 +356,9 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
               RootUrlInfo topRoot = findTopRoot(VfsUtilCore.virtualToIoFile(info.getFile()));
 
               if (topRoot != null) {
+                // TODO: Seems that type is not set in ForNestedRootChecker as we could not determine it for sure. Probably, for the case
+                // TODO: (or some other casese) when vcs root from settings belongs is in externals of some other working copy upper
+                // TODO: the tree (I did not check this). Leave this setter for now.
                 topRoot.setType(info.getType());
                 continue;
               }
@@ -390,9 +393,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
         SVNURL repoRoot = info.getRootURL();
         repoRoot = repoRoot == null ? myRepositoryRoots.ask(info.getUrl(), info.getFile()) : repoRoot;
         if (repoRoot != null) {
-          final RootUrlInfo rootInfo = new RootUrlInfo(repoRoot, info.getUrl(), info.getFormat(), info.getFile(), topRoot.getRoot());
-          rootInfo.setType(info.getType());
-          nestedRoots.add(rootInfo);
+          nestedRoots.add(new RootUrlInfo(repoRoot, info.getUrl(), info.getFormat(), info.getFile(), topRoot.getRoot(), info.getType()));
         }
       }
     }
