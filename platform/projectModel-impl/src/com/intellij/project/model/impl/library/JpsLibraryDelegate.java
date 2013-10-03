@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -145,20 +145,8 @@ public class JpsLibraryDelegate implements LibraryEx {
 
   @NotNull
   @Override
-  public ModifiableModelEx getModifiableModel() {
+  public ModifiableModel getModifiableModel() {
     throw new UnsupportedOperationException("'getModifiableModel' not implemented in " + getClass().getName());
-  }
-
-  @NotNull
-  @Override
-  public String[] getExcludedRootUrls() {
-    return ArrayUtil.EMPTY_STRING_ARRAY;
-  }
-
-  @NotNull
-  @Override
-  public VirtualFile[] getExcludedRoots() {
-    return VirtualFile.EMPTY_ARRAY;
   }
 
   @Override

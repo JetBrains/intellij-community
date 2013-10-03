@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -151,7 +151,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     if (myGeneratedSources.contains(FileBasedIndex.getFileId(file))) {
       return true;
     }
-    if (VfsUtilCore.isUnder(file, myRootToModuleMap.keySet())) {
+    if (isUnderRoots(myRootToModuleMap.keySet(), file)) {
       return true;
     }
     final Module module = getModuleByFile(file);
@@ -449,7 +449,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     if (myProjectFileIndex.isInTestSourceContent(fileOrDir)) {
       return true;
     }
-    if (VfsUtilCore.isUnder(fileOrDir, myGeneratedTestRoots)) {
+    if (isUnderRoots(myGeneratedTestRoots, fileOrDir)) {
       return true;
     }
     return false;
@@ -459,10 +459,23 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
     if (myProjectFileIndex.isInSourceContent(fileOrDir)) {
       return true;
     }
-    if (VfsUtilCore.isUnder(fileOrDir, myRootToModuleMap.keySet())) {
+    if (isUnderRoots(myRootToModuleMap.keySet(), fileOrDir)) {
       return true;
     }
     return false;
+  }
+
+  public static boolean isUnderRoots(@NotNull Set<VirtualFile> roots, @NotNull VirtualFile file) {
+    VirtualFile parent = file;
+    while (true) {
+      if (parent == null) {
+        return false;
+      }
+      if (roots.contains(parent)) {
+        return true;
+      }
+      parent = parent.getParent();
+    }
   }
 
   public UUID getSessionId() {

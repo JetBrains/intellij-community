@@ -32,8 +32,6 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.libraries.LibraryEx;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -247,13 +245,12 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
       if (parentInfo.hasLibraryClassRoot()) {
         String newDirPackageName = getPackageNameForSubdir(parentPackage, file.getName());
-        state.fillMapWithLibraryClasses(file, newDirPackageName, (NewVirtualFile)parentInfo.getLibraryClassRoot(), null, interned,
-                                        null);
+        state.fillMapWithLibraryClasses(file, newDirPackageName, (NewVirtualFile)parentInfo.getLibraryClassRoot(), null, interned);
       }
 
       if (parentInfo.isInLibrarySource()) {
         String newDirPackageName = getPackageNameForSubdir(parentPackage, file.getName());
-        state.fillMapWithLibrarySources(file, newDirPackageName, (NewVirtualFile)parentInfo.getSourceRoot(), null, interned, null);
+        state.fillMapWithLibrarySources(file, newDirPackageName, (NewVirtualFile)parentInfo.getSourceRoot(), null, interned);
       }
 
       OrderEntry[] entries = parentInfo.getOrderEntries();
@@ -975,10 +972,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       return myDirToPackageName.get(id) == ArrayUtil.EMPTY_INT_ARRAY;
     }
 
-    private void initLibrarySources(@NotNull Module module,
-                                    @NotNull ProgressIndicator progress,
-                                    @Nullable TObjectIntHashMap<String> interned,
-                                    Map<Library, TIntHashSet> libraryExcludedRoots) {
+    private void initLibrarySources(@NotNull Module module, @NotNull ProgressIndicator progress,
+                                    @Nullable TObjectIntHashMap<String> interned) {
       assertWritable();
       progress.checkCanceled();
       progress.setText2(ProjectBundle.message("project.index.processing.library.sources.progress", module.getName()));
@@ -986,10 +981,9 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       for (OrderEntry orderEntry : getOrderEntries(module)) {
         if (orderEntry instanceof LibraryOrSdkOrderEntry) {
           VirtualFile[] sourceRoots = ((LibraryOrSdkOrderEntry)orderEntry).getRootFiles(OrderRootType.SOURCES);
-          TIntHashSet excludedRoots = getExcludedRootsOfLibrary((LibraryOrSdkOrderEntry)orderEntry, libraryExcludedRoots);
           for (final VirtualFile sourceRoot : sourceRoots) {
             if (sourceRoot instanceof NewVirtualFile) {
-              fillMapWithLibrarySources((NewVirtualFile)sourceRoot, "", (NewVirtualFile)sourceRoot, progress, interned, excludedRoots);
+              fillMapWithLibrarySources((NewVirtualFile)sourceRoot, "", (NewVirtualFile)sourceRoot, progress, interned);
             }
           }
         }
@@ -1000,8 +994,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                            @Nullable final String packageName,
                                            @NotNull final NewVirtualFile sourceRoot,
                                            @Nullable final ProgressIndicator progress,
-                                           @Nullable final TObjectIntHashMap<String> interned,
-                                           @Nullable final TIntHashSet excludedRoots) {
+                                           @Nullable final TObjectIntHashMap<String> interned) {
       assertWritable();
       if (!isValid(dir)) return;
       VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor<String>() {
@@ -1012,7 +1005,6 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           if (progress != null) progress.checkCanceled();
           int dirId = ((NewVirtualFile)file).getId();
           if (!file.isDirectory() && dirId != dir.getId() || isIgnored(file)) return false;
-          if (excludedRoots != null && excludedRoots.contains(dirId)) return false;
           DirectoryInfo info = getOrCreateDirInfo(dirId);
 
           if (info.isInLibrarySource()) { // library sources overlap
@@ -1032,10 +1024,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       });
     }
 
-    private void initLibraryClasses(@NotNull Module module,
-                                    @NotNull ProgressIndicator progress,
-                                    @Nullable TObjectIntHashMap<String> interned,
-                                    @Nullable Map<Library, TIntHashSet> libraryExcludedRoots) {
+    private void initLibraryClasses(@NotNull Module module, @NotNull ProgressIndicator progress,
+                                    @Nullable TObjectIntHashMap<String> interned) {
       assertWritable();
       progress.checkCanceled();
       progress.setText2(ProjectBundle.message("project.index.processing.library.classes.progress", module.getName()));
@@ -1043,10 +1033,9 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       for (OrderEntry orderEntry : getOrderEntries(module)) {
         if (orderEntry instanceof LibraryOrSdkOrderEntry) {
           VirtualFile[] classRoots = ((LibraryOrSdkOrderEntry)orderEntry).getRootFiles(OrderRootType.CLASSES);
-          TIntHashSet excludedRoots = getExcludedRootsOfLibrary((LibraryOrSdkOrderEntry)orderEntry, libraryExcludedRoots);
           for (final VirtualFile classRoot : classRoots) {
             if (classRoot instanceof NewVirtualFile) {
-              fillMapWithLibraryClasses((NewVirtualFile)classRoot, "", (NewVirtualFile)classRoot, progress, interned, excludedRoots);
+              fillMapWithLibraryClasses((NewVirtualFile)classRoot, "", (NewVirtualFile)classRoot, progress, interned);
             }
           }
         }
@@ -1054,11 +1043,11 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     private void fillMapWithLibraryClasses(@NotNull final NewVirtualFile dir,
-                                           @NotNull final String packageName,
-                                           @NotNull final NewVirtualFile classRoot,
-                                           @Nullable final ProgressIndicator progress,
-                                           @Nullable final TObjectIntHashMap<String> interned,
-                                           final TIntHashSet excludedRoots) {
+                                             @NotNull final String packageName,
+                                             @NotNull final NewVirtualFile classRoot,
+                                             @Nullable final ProgressIndicator progress,
+                                             @Nullable final TObjectIntHashMap<String> interned
+                                             ) {
       assertWritable();
       if (!isValid(dir)) return;
       VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor<String>() {
@@ -1070,7 +1059,6 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           if (!file.isDirectory() && !Comparing.equal(file, dir) || isIgnored(file)) return false;
 
           int dirId = ((NewVirtualFile)file).getId();
-          if (excludedRoots != null && excludedRoots.contains(dirId)) return false;
           DirectoryInfo info = getOrCreateDirInfo(dirId);
 
           if (info.hasLibraryClassRoot()) { // library classes overlap
@@ -1091,30 +1079,6 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       });
     }
 
-    @Nullable
-    private TIntHashSet getExcludedRootsOfLibrary(LibraryOrSdkOrderEntry orderEntry, Map<Library, TIntHashSet> libraryExcludedRoots) {
-      if (orderEntry instanceof LibraryOrderEntry) {
-        Library library = ((LibraryOrderEntry)orderEntry).getLibrary();
-        if (library != null) {
-          TIntHashSet cached = libraryExcludedRoots.get(library);
-          if (cached != null) return cached;
-
-          VirtualFile[] files = ((LibraryEx)library).getExcludedRoots();
-          if (files.length > 0) {
-            TIntHashSet set = new TIntHashSet();
-            for (VirtualFile file : files) {
-              if (file instanceof NewVirtualFile) {
-                set.add(((NewVirtualFile)file).getId());
-              }
-            }
-            libraryExcludedRoots.put(library, set);
-            return set;
-          }
-        }
-      }
-      return null;
-    }
-    
     private void initOrderEntries(@NotNull Module module,
                                   @NotNull MultiMap<VirtualFile, OrderEntry> depEntries,
                                   @NotNull MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
@@ -1288,11 +1252,10 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       // Important! Because module's contents may overlap,
       // first modules should be marked and only after that sources markup
       // should be added. (src markup depends on module markup)
-      IdentityHashMap<Library, TIntHashSet> libraryExcludedRoots = new IdentityHashMap<Library, TIntHashSet>();
       for (Module module : modules) {
         initModuleSources(module, reverseAllSets, progress, interned);
-        initLibrarySources(module, progress, interned, libraryExcludedRoots);
-        initLibraryClasses(module, progress , interned, libraryExcludedRoots);
+        initLibrarySources(module, progress, interned);
+        initLibraryClasses(module, progress , interned);
       }
 
       progress.checkCanceled();

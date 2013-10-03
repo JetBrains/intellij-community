@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,25 +23,69 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.ex.http.HttpFileSystem;
+import com.intellij.ui.JBColor;
 import com.intellij.util.PlatformIcons;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.io.File;
 
 
 class ItemElement extends LibraryTableTreeContentElement<ItemElement> {
-  protected final String myUrl;
+  private final String myUrl;
   private final OrderRootType myRootType;
 
-  public ItemElement(@NotNull OrderRootTypeElement parent, @NotNull String url, @NotNull OrderRootType rootType, final boolean isJarDirectory,
+  public ItemElement(OrderRootTypeElement parent, String url, OrderRootType rootType, final boolean isJarDirectory,
                      boolean isValid) {
     super(parent);
     myUrl = url;
-    myName = getPresentablePath(url).replace('/', File.separatorChar);
-    myColor = getForegroundColor(isValid);
-    setIcon(getIconForUrl(url, isValid, isJarDirectory));
     myRootType = rootType;
+    myName = getPresentablePath(url).replace('/', File.separatorChar);
+    myColor = isValid ? UIUtil.getListForeground() : JBColor.RED;
+    setIcon(getIconForUrl(url, isValid, isJarDirectory));
+  }
+
+  public OrderRootTypeElement getParent() {
+    return (OrderRootTypeElement)getParentDescriptor();
+  }
+
+  @Override
+  public boolean update() {
+    return false;
+  }
+
+  @Override
+  public ItemElement getElement() {
+    return this;
+  }
+
+  public String getUrl() {
+    return myUrl;
+  }
+
+  public OrderRootType getRootType() {
+    return myRootType;
+  }
+
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof ItemElement)) return false;
+
+    final ItemElement itemElement = (ItemElement)o;
+
+    if (!getParent().equals(itemElement.getParent())) return false;
+    if (!myRootType.equals(itemElement.myRootType)) return false;
+    if (!myUrl.equals(itemElement.myUrl)) return false;
+
+    return true;
+  }
+
+  public int hashCode() {
+    int result;
+    result = getParent().hashCode();
+    result = 29 * result + myUrl.hashCode();
+    result = 29 * result + myRootType.hashCode();
+    return result;
   }
 
   private static Icon getIconForUrl(final String url, final boolean isValid, final boolean isJarDirectory) {
@@ -82,7 +126,7 @@ class ItemElement extends LibraryTableTreeContentElement<ItemElement> {
     return icon;
   }
 
-  public static String getPresentablePath(final String url) {
+  private static String getPresentablePath(final String url) {
     String presentablePath = VirtualFileManager.extractPath(url);
     if (isJarFileRoot(url)) {
       presentablePath = presentablePath.substring(0, presentablePath.length() - JarFileSystem.JAR_SEPARATOR.length());
@@ -92,40 +136,5 @@ class ItemElement extends LibraryTableTreeContentElement<ItemElement> {
 
   private static boolean isJarFileRoot(final String url) {
     return VirtualFileManager.extractPath(url).endsWith(JarFileSystem.JAR_SEPARATOR);
-  }
-
-  public OrderRootTypeElement getParent() {
-    return (OrderRootTypeElement)getParentDescriptor();
-  }
-
-  @NotNull
-  public OrderRootType getRootType() {
-    return myRootType;
-  }
-
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (!(o instanceof ItemElement)) return false;
-
-    final ItemElement itemElement = (ItemElement)o;
-
-    if (!getParent().equals(itemElement.getParent())) return false;
-    if (!myRootType.equals(itemElement.myRootType)) return false;
-    if (!myUrl.equals(itemElement.myUrl)) return false;
-
-    return true;
-  }
-
-  @NotNull
-  public String getUrl() {
-    return myUrl;
-  }
-
-  public int hashCode() {
-    int result;
-    result = getParent().hashCode();
-    result = 29 * result + myUrl.hashCode();
-    result = 29 * result + myRootType.hashCode();
-    return result;
   }
 }

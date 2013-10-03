@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.containers.LinkedMultiMap;
@@ -154,8 +153,8 @@ public class MavenFoldersImporter {
   private void addSourceFolderIfNotOverlap(String path, JpsModuleSourceRootType<?> type, List<String> addedPaths) {
     String canonicalPath = myModel.toPath(path).getPath();
     for (String existing : addedPaths) {
-      if (VfsUtilCore.isEqualOrAncestor(existing, canonicalPath)
-          || VfsUtilCore.isEqualOrAncestor(canonicalPath, existing)) {
+      if (MavenRootModelAdapter.isEqualOrAncestor(existing, canonicalPath)
+          || MavenRootModelAdapter.isEqualOrAncestor(canonicalPath, existing)) {
         return;
       }
     }

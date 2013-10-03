@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -35,8 +34,6 @@ public interface LibraryEditor {
 
   VirtualFile[] getFiles(OrderRootType rootType);
 
-  String[] getExcludedRootUrls();
-
   void setName(String name);
 
   void addRoot(VirtualFile file, OrderRootType rootType);
@@ -47,11 +44,7 @@ public interface LibraryEditor {
 
   void addJarDirectory(String url, boolean recursive, OrderRootType rootType);
 
-  void addExcludedRoot(@NotNull String url);
-
   void removeRoot(String url, OrderRootType rootType);
-
-  void removeExcludedRoot(@NotNull String url);
 
   void removeAllRoots();
 

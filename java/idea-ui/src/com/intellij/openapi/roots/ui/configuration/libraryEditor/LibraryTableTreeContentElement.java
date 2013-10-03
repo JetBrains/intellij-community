@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,10 @@
 package com.intellij.openapi.roots.ui.configuration.libraryEditor;
 
 import com.intellij.ide.util.treeView.NodeDescriptor;
-import com.intellij.ui.JBColor;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
-
-import java.awt.*;
 
 public abstract class LibraryTableTreeContentElement<E> extends NodeDescriptor<E> {
   protected LibraryTableTreeContentElement(@Nullable NodeDescriptor parentDescriptor) {
     super(null, parentDescriptor);
-  }
-
-  protected static Color getForegroundColor(boolean isValid) {
-    return isValid ? UIUtil.getListForeground() : JBColor.RED;
-  }
-
-  @Override
-  public boolean update() {
-    return false;
-  }
-
-  @Override
-  public E getElement() {
-    return (E)this;
   }
 }

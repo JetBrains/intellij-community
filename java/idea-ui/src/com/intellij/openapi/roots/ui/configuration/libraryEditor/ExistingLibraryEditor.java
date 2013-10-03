@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,17 +29,17 @@ import java.util.Arrays;
 import java.util.Collection;
 
 public class ExistingLibraryEditor extends LibraryEditorBase implements Disposable {
-  private final LibraryEx myLibrary;
+  private final Library myLibrary;
   private final LibraryEditorListener myListener;
   private String myLibraryName = null;
   private LibraryProperties myLibraryProperties;
   private LibraryProperties myDetectedLibraryProperties;
-  private LibraryEx.ModifiableModelEx myModel = null;
+  private Library.ModifiableModel myModel = null;
   private LibraryType<?> myDetectedType;
   private boolean myDetectedTypeComputed;
 
   public ExistingLibraryEditor(@NotNull Library library, @Nullable LibraryEditorListener listener) {
-    myLibrary = (LibraryEx)library;
+    myLibrary = library;
     myListener = listener;
   }
 
@@ -66,7 +66,7 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
 
   @Override
   public void setType(@NotNull LibraryType<?> type) {
-    getModel().setKind(type.getKind());
+    ((LibraryEx.ModifiableModelEx)getModel()).setKind(type.getKind());
   }
 
   private LibraryType detectType() {
@@ -104,7 +104,7 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
   }
 
   private LibraryProperties getOriginalProperties() {
-    return myLibrary.getProperties();
+    return ((LibraryEx)myLibrary).getProperties();
   }
 
   @Override
@@ -132,14 +132,6 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
   }
 
   @Override
-  public String[] getExcludedRootUrls() {
-    if (myModel != null) {
-      return myModel.getExcludedRootUrls();
-    }
-    return myLibrary.getExcludedRootUrls();
-  }
-
-  @Override
   public void setName(String name) {
     String oldName = getModel().getName();
     myLibraryName = name;
@@ -160,11 +152,6 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
   }
 
   @Override
-  public void addExcludedRoot(@NotNull String url) {
-    getModel().addExcludedRoot(url);
-  }
-
-  @Override
   public void addJarDirectory(VirtualFile file, boolean recursive, OrderRootType rootType) {
     getModel().addJarDirectory(file, recursive, rootType);
   }
@@ -176,22 +163,13 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
 
   @Override
   public void removeRoot(String url, OrderRootType rootType) {
-    boolean removed;
-    do {
-      removed = getModel().removeRoot(url, rootType);
-    }
-    while (removed);
-  }
-
-  @Override
-  public void removeExcludedRoot(@NotNull String url) {
-    getModel().removeExcludedRoot(url);
+    while (getModel().removeRoot(url, rootType)) ;
   }
 
   public void commit() {
     if (myModel != null) {
       if (myLibraryProperties != null) {
-        myModel.setProperties(myLibraryProperties);
+        ((LibraryEx.ModifiableModelEx)myModel).setProperties(myLibraryProperties);
       }
       myModel.commit();
       myModel = null;
@@ -200,7 +178,7 @@ public class ExistingLibraryEditor extends LibraryEditorBase implements Disposab
     }
   }
 
-  public LibraryEx.ModifiableModelEx getModel() {
+  public Library.ModifiableModel getModel() {
     if (myModel == null) {
       myModel = myLibrary.getModifiableModel();
     }

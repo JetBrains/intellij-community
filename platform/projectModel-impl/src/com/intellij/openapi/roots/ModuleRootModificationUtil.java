@@ -19,7 +19,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -41,28 +40,17 @@ public class ModuleRootModificationUtil {
                                       final List<String> classesRoots,
                                       final List<String> sourceRoots,
                                       final DependencyScope scope) {
-    addModuleLibrary(module, libName, classesRoots, sourceRoots, Collections.<String>emptyList(), scope);
-  }
-
-  public static void addModuleLibrary(final Module module, final String libName,
-                                      final List<String> classesRoots,
-                                      final List<String> sourceRoots,
-                                      final List<String> excludedRoots,
-                                      final DependencyScope scope) {
     updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(final ModifiableRootModel model) {
-        final LibraryEx library = (LibraryEx)model.getModuleLibraryTable().createLibrary(libName);
-        final LibraryEx.ModifiableModelEx libraryModel = library.getModifiableModel();
+        final Library library = model.getModuleLibraryTable().createLibrary(libName);
+        final Library.ModifiableModel libraryModel = library.getModifiableModel();
 
         for (String root : classesRoots) {
           libraryModel.addRoot(root, OrderRootType.CLASSES);
         }
         for (String root : sourceRoots) {
           libraryModel.addRoot(root, OrderRootType.SOURCES);
-        }
-        for (String excluded : excludedRoots) {
-          libraryModel.addExcludedRoot(excluded);
         }
 
         LibraryOrderEntry entry = model.findLibraryOrderEntry(library);
