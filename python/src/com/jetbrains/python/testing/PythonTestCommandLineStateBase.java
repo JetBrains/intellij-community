@@ -132,7 +132,7 @@ public abstract class PythonTestCommandLineStateBase extends PythonCommandLineSt
     });
     }
 
-    executionResult.setRestartActions(rerunFailedTestsAction, new ToggleAutoTestAction());
+    executionResult.setRestartActions(rerunFailedTestsAction, new ToggleAutoTestAction(getEnvironment()));
     return executionResult;
   }
 
