@@ -933,7 +933,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
               fetchDocInfo(new DocumentationCollector() {
                 @Override
                 public String getDocumentation() throws Exception {
-                  return externalDocumentationHandler.fetchExternalDocumentation(url, myProject);
+                  return externalDocumentationHandler.fetchExternalDocumentation(url, psiElement);
                 }
 
                 @Override
