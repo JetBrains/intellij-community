@@ -10,6 +10,7 @@ import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,10 +20,10 @@ import java.util.List;
  */
 public class PythonRegexpInjector implements LanguageInjector {
   private static class RegexpMethodDescriptor {
-    private final String methodName;
+    @NotNull private final String methodName;
     private final int argIndex;
 
-    private RegexpMethodDescriptor(String methodName, int argIndex) {
+    private RegexpMethodDescriptor(@NotNull String methodName, int argIndex) {
       this.methodName = methodName;
       this.argIndex = argIndex;
     }
@@ -41,7 +42,7 @@ public class PythonRegexpInjector implements LanguageInjector {
     addMethod("subn");
   }
 
-  private void addMethod(final String name) {
+  private void addMethod(@NotNull String name) {
     myDescriptors.add(new RegexpMethodDescriptor(name, 0));
   }
 
@@ -66,7 +67,7 @@ public class PythonRegexpInjector implements LanguageInjector {
     }
   }
 
-  private static boolean isVerbose(PyCallExpression call) {
+  private static boolean isVerbose(@NotNull PyCallExpression call) {
     PyExpression[] arguments = call.getArguments();
     if (arguments.length <= 1) {
       return false;
@@ -74,7 +75,7 @@ public class PythonRegexpInjector implements LanguageInjector {
     return isVerbose(arguments[arguments.length-1]);
   }
 
-  private static boolean isVerbose(PyExpression expr) {
+  private static boolean isVerbose(@Nullable PyExpression expr) {
     if (expr instanceof PyKeywordArgument) {
       PyKeywordArgument keywordArgument = (PyKeywordArgument)expr;
       if (!"flags".equals(keywordArgument.getName())) {
@@ -91,7 +92,7 @@ public class PythonRegexpInjector implements LanguageInjector {
     return false;
   }
 
-  private boolean isRegexpMethod(PsiElement element, int index) {
+  private boolean isRegexpMethod(@NotNull PsiElement element, int index) {
     if (!(element instanceof PyFunction)) {
       return false;
     }
@@ -104,7 +105,7 @@ public class PythonRegexpInjector implements LanguageInjector {
     return false;
   }
 
-  private boolean canBeRegexpCall(PyExpression callee) {
+  private boolean canBeRegexpCall(@NotNull PyExpression callee) {
     String text = callee.getText();
     for (RegexpMethodDescriptor descriptor : myDescriptors) {
       if (text.endsWith(descriptor.methodName)) {
