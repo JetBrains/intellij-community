@@ -134,11 +134,9 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
   public static void clearRecents() {
     if (ourInstance != null) {
       if (ourInstance instanceof WelcomeFrame) {
-      WelcomeScreen screen = ((WelcomeFrame)ourInstance).myScreen;
-      if (screen instanceof DefaultWelcomeScreen) {
-        ((DefaultWelcomeScreen)screen).hideRecentProjectsPanel();
+        WelcomeScreen screen = ((WelcomeFrame)ourInstance).myScreen;
+        // todo clear recent projects
       }
-    }
     }
   }
 
@@ -150,7 +148,6 @@ public class WelcomeFrame extends JFrame implements IdeFrame {
       if (screen != null) break;
     }
     if (screen == null) {
-      //screen = new DefaultWelcomeScreen(rootPane);
       screen = new NewWelcomeScreen();
     }
     return screen;
