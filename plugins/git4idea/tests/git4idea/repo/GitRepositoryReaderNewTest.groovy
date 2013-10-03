@@ -21,6 +21,7 @@ import git4idea.GitLocalBranch
 import git4idea.test.GitLightTest
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
 import static git4idea.test.GitScenarios.commit
@@ -33,6 +34,7 @@ import static junit.framework.Assert.assertNull
  *
  * @author Kirill Likhodedov
  */
+@Ignore
 class GitRepositoryReaderNewTest extends GitLightTest {
 
   GitRepository myRepository
