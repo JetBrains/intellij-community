@@ -16,10 +16,13 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.impl.VcsRootIterator;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.internal.util.SVNEncodingUtil;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
@@ -75,16 +78,10 @@ public class ForNestedRootChecker {
     }
 
     @Nullable
-    private String getSupposedUrl(final String parentUrl, final List<String> subpath) {
+    private static String getSupposedUrl(final String parentUrl, final String relativePath) {
       if (parentUrl == null) return null;
-      final StringBuilder sb = new StringBuilder();
-      for (String s : subpath) {
-        sb.append(s).append('/');
-      }
-      if (sb.length() > 0) {
-        sb.deleteCharAt(sb.length() - 1);
-      }
-      return SVNPathUtil.append(parentUrl, sb.toString());
+
+      return SVNPathUtil.append(parentUrl, relativePath);
     }
 
     public String getForChild(final String parentUrl, final String childName) {
@@ -92,52 +89,50 @@ public class ForNestedRootChecker {
     }
   }
 
-  public static<T extends RootUrlPair> void filterOutSuperfluousChildren(final SvnVcs vcs, final List<T> list,
-                                                                               final List<T> result) {
-    final UrlConstructor constructor = new UrlConstructor(vcs);
+  public static<T extends RootUrlPair> void filterOutSuperfluousChildren(final SvnVcs vcs, final List<T> list, final List<T> result) {
+    sort(list);
 
-    Collections.sort(list, new Comparator<RootUrlPair>() {
-      public int compare(final RootUrlPair o1, final RootUrlPair o2) {
-        return o1.getVirtualFile().getPath().compareTo(o2.getVirtualFile().getPath());
-      }
-    });
-
-    for (int i = 0; i < list.size(); i++) {
-      final T child = list.get(i);
-      boolean add = true;
-      for (T parent : result) {
-        if (parent.getVirtualFile().getPath().equals(child.getVirtualFile().getPath())) {
-          add = false;
-          break;
-        }
-        final List<String> subpath = subpathIfAncestor(parent.getVirtualFile(), child.getVirtualFile());
-        if (subpath != null) {
-          // get child's supposed and real urls
-          final String supposed = constructor.getSupposedUrl(parent.getUrl(), subpath);
-          if (supposed.equals(child.getUrl())) {
-            add = false;
-            break;
-          }
-        }
-      }
-      if (add) {
+    // TODO: replace with ContainerUtil.process or ContainerUtil.filter
+    for (final T child : list) {
+      if (!alreadyRegistered(child, result)) {
         result.add(child);
       }
     }
   }
 
-  @Nullable
-  private static List<String> subpathIfAncestor(final VirtualFile parent, final VirtualFile child) {
-    if (! VfsUtil.isAncestor(parent, child, true)) return null;
+  private static <T extends RootUrlPair> void sort(List<T> list) {
+    Collections.sort(list, new Comparator<RootUrlPair>() {
+      public int compare(final RootUrlPair o1, final RootUrlPair o2) {
+        return o1.getVirtualFile().getPath().compareTo(o2.getVirtualFile().getPath());
+      }
+    });
+  }
 
-    final List<String> result = new ArrayList<String>();
-    VirtualFile tmp = child;
-    final String parentPath = parent.getPath();
-    while ((tmp != null) && (! tmp.getPath().equals(parentPath))) {
-      result.add(tmp.getName());
-      tmp = tmp.getParent();
+  private static <T extends RootUrlPair> boolean alreadyRegistered(@NotNull final T child, @NotNull List<T> registered) {
+    return ContainerUtil.exists(registered, new Condition<T>() {
+      @Override
+      public boolean value(T parent) {
+        return isSamePath(child, parent) || isSameSupposedUrl(child, parent);
+      }
+    });
+  }
+
+  private static <T extends RootUrlPair> boolean isSamePath(@NotNull T child, @NotNull T parent) {
+    return parent.getVirtualFile().getPath().equals(child.getVirtualFile().getPath());
+  }
+
+  private static <T extends RootUrlPair> boolean isSameSupposedUrl(@NotNull T child, @NotNull T parent) {
+    boolean result = false;
+
+    if (VfsUtilCore.isAncestor(parent.getVirtualFile(), child.getVirtualFile(), true)) {
+      String relativePath = VfsUtilCore.getRelativePath(child.getVirtualFile(), parent.getVirtualFile(), '/');
+      // get child's supposed and real urls
+      final String supposed = UrlConstructor.getSupposedUrl(parent.getUrl(), relativePath);
+      if (supposed.equals(child.getUrl())) {
+        result = true;
+      }
     }
-    Collections.reverse(result);
+
     return result;
   }
 
