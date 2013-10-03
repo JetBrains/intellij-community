@@ -37,7 +37,7 @@ public class RemoveMavenRunConfigurationAction extends AnAction {
     assert settings != null && project != null;
 
     int res = Messages.showYesNoDialog(project, "Delete \"" + settings.getName() + "\"?", "Confirmation", Messages.getQuestionIcon());
-    if (res == 0) {
+    if (res == Messages.YES) {
       ((RunManagerEx)RunManager.getInstance(project)).removeConfiguration(settings);
     }
   }
