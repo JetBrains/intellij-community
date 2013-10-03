@@ -14,20 +14,24 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
  */
 public class PyStringLiteralTest extends PyTestCase {
   public void testLiteralEscaper() {
-    PyStringLiteralExpression expr = createLiteralFromText("'\\nfoo'");
+    final PyStringLiteralExpression expr = createLiteralFromText("'\\nfoo'");
     assertNotNull(expr);
-    final LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper = expr.createLiteralTextEscaper();
-    StringBuilder builder = new StringBuilder();
-    escaper.decode(new TextRange(3, 5), builder);
-    assertEquals("fo", builder.toString());
-    
-    builder.setLength(0);
-    escaper.decode(new TextRange(1, 3), builder);
-    assertEquals("\n", builder.toString());
 
-    assertEquals(1, escaper.getOffsetInHost(0, new TextRange(1, 5)));
-    assertEquals(3, escaper.getOffsetInHost(1, new TextRange(1, 5)));
-    assertEquals(6, escaper.getOffsetInHost(4, new TextRange(1, 5)));
+    assertEquals("fo", decodeRange(expr, TextRange.create(3, 5)));
+    assertEquals("\n", decodeRange(expr, TextRange.create(1, 3)));
+
+    final LiteralTextEscaper<? extends PsiLanguageInjectionHost> escaper = expr.createLiteralTextEscaper();
+
+    final TextRange newLineFoo = TextRange.create(1, 6);
+    assertEquals(1, escaper.getOffsetInHost(0, newLineFoo));
+    assertEquals(3, escaper.getOffsetInHost(1, newLineFoo));
+    assertEquals(6, escaper.getOffsetInHost(4, newLineFoo));
+  }
+
+  private static String decodeRange(PyStringLiteralExpression expr, TextRange range) {
+    final StringBuilder builder = new StringBuilder();
+    expr.createLiteralTextEscaper().decode(range, builder);
+    return builder.toString();
   }
 
   private PyStringLiteralExpression createLiteralFromText(final String text) {
