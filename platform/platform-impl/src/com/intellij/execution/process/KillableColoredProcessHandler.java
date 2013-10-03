@@ -32,6 +32,8 @@ import java.nio.charset.Charset;
  *         P.S: probably OSProcessHandler is better place for this feature but it can affect other run configurations and should be tested
  */
 public class KillableColoredProcessHandler extends ColoredProcessHandler implements KillableProcess {
+  private boolean myShouldKillProcessSoftly = true;
+
   public KillableColoredProcessHandler(GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
   }
@@ -42,6 +44,10 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
 
   public KillableColoredProcessHandler(final Process process, final String commandLine) {
     super(process, commandLine);
+  }
+
+  public void setShouldKillProcessSoftly(boolean shouldKillProcessSoftly) {
+    myShouldKillProcessSoftly = shouldKillProcessSoftly;
   }
 
   /**
@@ -76,7 +82,7 @@ public class KillableColoredProcessHandler extends ColoredProcessHandler impleme
    * @return
    */
   protected boolean shouldKillProcessSoftly() {
-    return true;
+    return myShouldKillProcessSoftly;
   }
 
   @Override
