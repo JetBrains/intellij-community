@@ -16,28 +16,21 @@
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.NestedCopyType;
+import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNURL;
 
 public class WCInfo implements WCPaths {
-  private final String myPath;
-  private final SVNURL myUrl;
-  private final WorkingCopyFormat myFormat;
-  private final String myRepositoryRoot;
   private final boolean myIsWcRoot;
-  private final NestedCopyType myType;
   private final SVNDepth myStickyDepth;
+  private final RootUrlInfo myRootInfo;
 
-  public WCInfo(final String path, final SVNURL url, final WorkingCopyFormat format, final String repositoryRoot, final boolean isWcRoot,
-                final NestedCopyType type, SVNDepth stickyDepth) {
-    myPath = path;
-    myUrl = url;
-    myFormat = format;
-    myRepositoryRoot = repositoryRoot;
+  public WCInfo(@NotNull RootUrlInfo rootInfo, boolean isWcRoot, SVNDepth stickyDepth) {
+    myRootInfo = rootInfo;
     myIsWcRoot = isWcRoot;
-    myType = type;
     myStickyDepth = stickyDepth;
   }
 
@@ -46,7 +39,7 @@ public class WCInfo implements WCPaths {
   }
 
   public String getPath() {
-    return myPath;
+    return myRootInfo.getPath();
   }
 
   public VirtualFile getVcsRoot() {
@@ -54,23 +47,27 @@ public class WCInfo implements WCPaths {
   }
 
   public SVNURL getUrl() {
-    return myUrl;
+    return myRootInfo.getAbsoluteUrlAsUrl();
   }
 
   public String getRootUrl() {
-    return myUrl.toString();
+    return getUrl().toString();
   }
 
   public String getRepoUrl() {
-    return myRepositoryRoot;
+    return getRepositoryRoot();
+  }
+
+  public RootUrlInfo getRootInfo() {
+    return myRootInfo;
   }
 
   public WorkingCopyFormat getFormat() {
-    return myFormat;
+    return myRootInfo.getFormat();
   }
 
   public String getRepositoryRoot() {
-    return myRepositoryRoot;
+    return myRootInfo.getRepositoryUrl();
   }
 
   public boolean isIsWcRoot() {
@@ -83,18 +80,21 @@ public class WCInfo implements WCPaths {
     if (!(o instanceof WCInfo)) return false;
 
     final WCInfo wcInfo = (WCInfo)o;
+    final String path = getPath();
 
-    if (myPath != null ? !myPath.equals(wcInfo.myPath) : wcInfo.myPath != null) return false;
+    if (path != null ? !path.equals(wcInfo.getPath()) : wcInfo.getPath() != null) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    return (myPath != null ? myPath.hashCode() : 0);
+    final String path = getPath();
+
+    return (path != null ? path.hashCode() : 0);
   }
 
   public NestedCopyType getType() {
-    return myType;
+    return myRootInfo.getType();
   }
 }

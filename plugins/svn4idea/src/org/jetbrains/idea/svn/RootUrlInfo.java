@@ -74,6 +74,10 @@ public class RootUrlInfo implements RootUrlPair {
     return myIoFile;
   }
 
+  public String getPath() {
+    return myIoFile.getAbsolutePath();
+  }
+
   // vcs root
   public VirtualFile getRoot() {
     return myRoot;
