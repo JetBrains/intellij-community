@@ -12,7 +12,7 @@ public class PythonGeneratorTest extends PyEnvTestCase{
     runPythonTest(new PyUnitTestTask("", "test_generator.py") {
       @Override
       protected String getTestDataPath() {
-        return PathManager.getHomePath() + "/python/helpers";
+        return PathManager.getHomePath() + "/python/community/helpers";
       }
 
       @Override

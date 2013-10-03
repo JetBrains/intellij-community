@@ -56,7 +56,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyUnitTestTask("", "test_debug.py") {
       @Override
       protected String getTestDataPath() {
-        return PathManager.getHomePath() + "/python/helpers/pydev";
+        return PathManager.getHomePath() + "/python/community/helpers/pydev";
       }
 
       @Override
