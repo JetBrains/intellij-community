@@ -4,6 +4,9 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
+import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageBuilder;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -24,11 +27,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ideaConfigurationServer.CommitToIcsDialog;
 import org.jetbrains.plugins.ideaConfigurationServer.IcsBundle;
+import org.jetbrains.plugins.ideaConfigurationServer.IcsManager;
 import org.jetbrains.plugins.ideaConfigurationServer.ProjectId;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 class CommitToIcsAction extends CommonCheckinFilesAction {
   static class IcsBeforeCommitDialogHandler extends CheckinHandlerFactory {
@@ -40,10 +45,7 @@ class CommitToIcsAction extends CommonCheckinFilesAction {
                                              boolean showVcsCommit) {
         ProjectChangeCollectConsumer collectConsumer = new ProjectChangeCollectConsumer(project);
         collectProjectChanges(changes, collectConsumer);
-
-        if (collectConsumer.hasResult()) {
-          new CommitToIcsDialog(project, collectConsumer.getResult()).show();
-        }
+        showDialog(project, collectConsumer, null);
         return true;
       }
     };
@@ -90,9 +92,9 @@ class CommitToIcsAction extends CommonCheckinFilesAction {
 
   @Override
   protected void performCheckIn(VcsContext context, Project project, FilePath[] roots) {
-    ProjectId projectId = ServiceManager.getService(project, ProjectId.class);
-    if (projectId.uid == null) {
-
+    String projectId = getProjectId(project);
+    if (projectId == null) {
+      return;
     }
 
     Change[] changes = context.getSelectedChanges();
@@ -110,8 +112,47 @@ class CommitToIcsAction extends CommonCheckinFilesAction {
       }
     }
 
+    showDialog(project, collectConsumer, projectId);
+  }
+
+  @Nullable
+  private static String getProjectId(@NotNull Project project) {
+    ProjectId projectId = ServiceManager.getService(project, ProjectId.class);
+    if (projectId.uid == null) {
+      if (MessageBuilder.yesNo("Settings Server Project Mapping", "Project is not mapped on Settings Server. Would you like to map?").project(project).icon(Messages.getQuestionIcon()).doNotAskOption(
+        new DialogWrapper.PropertyDoNotAskOption("") {
+          @Override
+          public void setToBeShown(boolean value, int exitCode) {
+            IcsManager.getInstance().getSettings().doNoAskMapProject = !value;
+          }
+
+          @Override
+          public boolean isToBeShown() {
+            return !IcsManager.getInstance().getSettings().doNoAskMapProject;
+          }
+
+          @Override
+          public boolean canBeHidden() {
+            return true;
+          }
+        }).show() == Messages.YES) {
+        projectId.uid = UUID.randomUUID().toString();
+      }
+    }
+
+    return projectId.uid;
+  }
+
+  private static void showDialog(Project project, ProjectChangeCollectConsumer collectConsumer, String projectId) {
     if (!collectConsumer.hasResult()) {
       return;
+    }
+
+    if (projectId == null) {
+      projectId = getProjectId(project);
+      if (projectId == null) {
+        return;
+      }
     }
 
     new CommitToIcsDialog(project, collectConsumer.getResult()).show();

@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.ideaConfigurationServer;
 
 import com.intellij.ide.ApplicationLoadListener;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,12 +31,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
-import java.util.UUID;
 
 public class IcsManager implements ApplicationLoadListener, Disposable {
   static final Logger LOG = Logger.getInstance(IcsManager.class);
-
-  private static final String PROJECT_ID_KEY = "IDEA_SERVER_PROJECT_ID";
 
   public static final String PLUGIN_NAME = "Idea Configuration Server";
 
@@ -79,15 +75,6 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
   public static IcsManager getInstance() {
     return ApplicationLoadListener.EP_NAME.findExtension(IcsManager.class);
-  }
-
-  private static String getProjectId(final Project project) {
-    String id = PropertiesComponent.getInstance(project).getValue(PROJECT_ID_KEY);
-    if (id == null) {
-      id = UUID.randomUUID().toString();
-      PropertiesComponent.getInstance(project).setValue(PROJECT_ID_KEY, id);
-    }
-    return id;
   }
 
   public static File getPluginSystemDir() {

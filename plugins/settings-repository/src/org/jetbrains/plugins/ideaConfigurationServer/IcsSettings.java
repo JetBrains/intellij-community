@@ -32,6 +32,8 @@ public class IcsSettings {
   @Tag
   public int commitDelay = DEFAULT_COMMIT_DELAY;
 
+  public boolean doNoAskMapProject;
+
   @Transient
   private final File settingsFile;
 
