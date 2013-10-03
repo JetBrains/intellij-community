@@ -16,15 +16,14 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.vcs.impl.VcsRootIterator;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
 
 public class ForNestedRootChecker {
 
@@ -37,7 +36,7 @@ public class ForNestedRootChecker {
   }
 
   @Nullable
-  public Node createReal(final VirtualFile file) {
+  public Node resolveVcsElement(@NotNull final VirtualFile file) {
     final SVNInfo info = myVcs.getInfo(file);
     if (info == null || info.getRepositoryRootURL() == null || info.getURL() == null) {
       return null;
@@ -45,55 +44,44 @@ public class ForNestedRootChecker {
     return new Node(file, info.getURL(), info.getRepositoryRootURL());
   }
 
-  public Node createReplaceable(final VirtualFile file) {
-    return new Node(file, null);
-  }
-
-  public Node createSupposed(final Node parent, final VirtualFile child) {
-    return new Node(child, getForChild(parent.getUrl(), child.getName()));
-  }
-
-  public boolean replaceWithReal(final Node real, final Node supposed) {
-    return supposed.getUrl() == null || ((supposed.getUrl() != null) && (! supposed.getUrl().equals(real.getUrl())));
-  }
-
-  public SVNURL getForChild(@Nullable final SVNURL parent, @NotNull final String childName) {
-    return parent != null ? SvnUtil.append(parent, childName) : null;
-  }
-
-  public List<Node> getAllNestedWorkingCopies(final VirtualFile root, final boolean goIntoNested, final Getter<Boolean> cancelledGetter) {
-    final LinkedList<Node> queue = new LinkedList<Node>();
+  public List<Node> getAllNestedWorkingCopies(@NotNull final VirtualFile root, final boolean goIntoNested) {
+    final LinkedList<Node> workItems = new LinkedList<Node>();
     final LinkedList<Node> result = new LinkedList<Node>();
 
-    queue.add(createReplaceable(root));
-    while (! queue.isEmpty()) {
-      final Node node = queue.removeFirst();
-      if (Boolean.TRUE.equals(cancelledGetter.get())) throw new ProcessCanceledException();
+    workItems.add(new Node(root));
+    while (!workItems.isEmpty()) {
+      final Node item = workItems.removeFirst();
+      checkCancelled();
 
       // check self
-      final Node real = createReal(node.getFile());
-      if (real != null) {
-        if (replaceWithReal(real, node)) {
-          result.add(real);
-          if (!goIntoNested) continue;
+      final Node vcsElement = resolveVcsElement(item.getFile());
+      // TODO: actually goIntoNested = false always => item.inVcs() will be always false when this line is reached
+      if (vcsElement != null && (!item.inVcs() || !item.sameVcsItem(vcsElement))) {
+        result.add(vcsElement);
+        if (!goIntoNested) {
+          continue;
         }
       }
 
       // for next step
-      final VirtualFile file = node.getFile();
+      final VirtualFile file = item.getFile();
       if (file.isDirectory() && (! SvnUtil.isAdminDirectory(file))) {
         for (VirtualFile child : file.getChildren()) {
-          if (Boolean.TRUE.equals(cancelledGetter.get())) throw new ProcessCanceledException();
+          checkCancelled();
+
           if (myRootIterator.acceptFolderUnderVcs(root, child)) {
-            if (real == null) {
-              queue.add(createReplaceable(child));
-            } else {
-              queue.add(createSupposed(real, child));
-            }
+            // TODO: actually goIntoNested = false always => we could reach this line only when vcsElement is null
+            workItems.add(vcsElement == null ? new Node(child) : vcsElement.append(child));
           }
         }
       }
     }
     return result;
+  }
+
+  private void checkCancelled() {
+    if (myVcs.getProject().isDisposed()) {
+      throw new ProcessCanceledException();
+    }
   }
 }

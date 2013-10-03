@@ -16,33 +16,56 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNURL;
 
 class Node {
-  private final VirtualFile myFile;
-  private final SVNURL myUrl;
+
+  @NotNull private final VirtualFile myFile;
+  @Nullable private final SVNURL myUrl;
   @Nullable private final SVNURL myRepositoryUrl;
 
-  Node(final VirtualFile file, final SVNURL url) {
+  Node(@NotNull VirtualFile file) {
+    this(file, null);
+  }
+
+  Node(@NotNull VirtualFile file, @Nullable SVNURL url) {
     this(file, url, null);
   }
 
-  Node(final VirtualFile file, final SVNURL url, @Nullable final SVNURL repositoryUrl) {
+  Node(@NotNull VirtualFile file, @Nullable SVNURL url, @Nullable SVNURL repositoryUrl) {
     myFile = file;
     myUrl = url;
     myRepositoryUrl = repositoryUrl;
   }
 
+  @NotNull
   public VirtualFile getFile() {
     return myFile;
   }
 
+  @Nullable
   public SVNURL getUrl() {
     return myUrl;
   }
 
+  public boolean inVcs() {
+    return myUrl != null;
+  }
+
+  public boolean sameVcsItem(@NotNull Node node) {
+    //noinspection ConstantConditions
+    return inVcs() && node.inVcs() && myUrl.equals(node.myUrl);
+  }
+
+  @Nullable
   public SVNURL getRepositoryRootUrl() {
     return myRepositoryUrl;
+  }
+
+  @NotNull
+  public Node append(@NotNull VirtualFile childFile) {
+    return new Node(childFile, myUrl != null ? SvnUtil.append(myUrl, childFile.getName()) : null);
   }
 }

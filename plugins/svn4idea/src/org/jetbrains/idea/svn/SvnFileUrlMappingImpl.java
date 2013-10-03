@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -93,6 +92,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, SvnFileUrlMappingImpl.class);
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   private SvnFileUrlMappingImpl(final Project project, final ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myMapping = new SvnMapping();
@@ -304,22 +304,20 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     }
 
     public void detectCopyRoots(final VirtualFile[] roots, final boolean clearState, Runnable callback) {
-      final Getter<Boolean> cancelGetter = new Getter<Boolean>() {
-        public Boolean get() {
-          return myVcs.getProject().isDisposed();
-        }
-      };
-
       for (final VirtualFile vcsRoot : roots) {
         // go into nested = false => only find a working copys below passed roots, but not nested
-        final List<Node> foundRoots = new ForNestedRootChecker(myVcs).getAllNestedWorkingCopies(vcsRoot, false, cancelGetter);
-        if (foundRoots.isEmpty()) {
-          myLonelyRoots.add(vcsRoot);
-        }
+        final List<Node> foundRoots = new ForNestedRootChecker(myVcs).getAllNestedWorkingCopies(vcsRoot, false);
+        registerLonelyRoots(vcsRoot, foundRoots);
         registerTopRoots(vcsRoot, foundRoots);
       }
 
       addNestedRoots(clearState, callback);
+    }
+
+    private void registerLonelyRoots(VirtualFile vcsRoot, List<Node> foundRoots) {
+      if (foundRoots.isEmpty()) {
+        myLonelyRoots.add(vcsRoot);
+      }
     }
 
     private void registerTopRoots(@NotNull VirtualFile vcsRoot, @NotNull List<Node> foundRoots) {
