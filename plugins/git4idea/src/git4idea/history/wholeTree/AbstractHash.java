@@ -13,7 +13,6 @@
 package git4idea.history.wholeTree;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -21,17 +20,13 @@ import java.util.Arrays;
  * @author irengrig
  */
 public abstract class AbstractHash {
-  @Nullable
-  public static AbstractHash createStrict(final String hash) {
-    return createImpl(hash, true);
-  }
 
   @NotNull
   public static AbstractHash create(final String hash) {
-    return createImpl(hash, false);
+    return createImpl(hash);
   }
 
-  private static AbstractHash createImpl(final String hash, final boolean strict) {
+  private static AbstractHash createImpl(final String hash) {
     final String trimmed = hash.trim();
     final int len = trimmed.length();
     try {
@@ -41,7 +36,6 @@ public abstract class AbstractHash {
         return new Many(trimmed);
       }
     } catch (NumberFormatException e) {
-      if (strict) return null;
       return new StringPresentation(trimmed);
     }
   }
