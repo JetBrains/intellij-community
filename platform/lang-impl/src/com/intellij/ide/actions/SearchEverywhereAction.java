@@ -52,14 +52,13 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -78,6 +77,7 @@ import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.IconUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -451,7 +451,17 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       .setBorderColor(new JBColor(Gray._130, Gray._77))
       .setFillColor(new JBColor(Gray._242, new Color(60, 63, 65)))
       .createBalloon();
-    myBalloon.show(JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext()), Balloon.Position.below);
+    final Window window = WindowManager.getInstance().suggestParentWindow(e.getProject());
+
+    Component parent = UIUtil.findUltimateParent(window);
+
+    final RelativePoint showPoint;
+    if (parent != null) {
+      showPoint = new RelativePoint(parent, new Point((parent.getSize().width - panel.getPreferredSize().width)/ 2, parent.getHeight()/3));
+    } else {
+      showPoint = JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext());
+    }
+    myBalloon.show(showPoint, Balloon.Position.below);
 
     IdeFocusManager focusManager = IdeFocusManager.getInstance(e.getProject());
     focusManager.requestFocus(myPopupField.getTextEditor(), true);
@@ -575,7 +585,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           append(name);
         }
         else if (isVirtualFile(value)) {
-          append(((VirtualFile)value).getName());
+          final VirtualFile file = (VirtualFile)value;
+          if (file instanceof VirtualFilePathWrapper) {
+            append(((VirtualFilePathWrapper)file).getPresentablePath());
+          } else {
+            append(file.getName());
+          }
+          setIcon(IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, myProject));
         }
         else if (isActionValue(value)) {
           final Map.Entry actionWithParentGroup = value instanceof Map.Entry ? (Map.Entry)value : null;
@@ -590,7 +606,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             setLocationString(groupName);
           }
           if (icon != null && icon.getIconWidth() <= 16 && icon.getIconHeight() <= 16) {
-            setIcon(icon);
+            setIcon(IconUtil.toSize(icon, 16, 16));
           }
         }
         else if (isSetting(value)) {
@@ -780,8 +796,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       List<MatchResult> matches = collectResults(pattern, myFiles, myFileModel);
       final List<VirtualFile> files = new ArrayList<VirtualFile>();
 
+      final int maxFiles = 8;
       for (MatchResult o : matches) {
-        if (filesCounter > 15) break;
+        if (filesCounter > maxFiles) break;
         Object[] objects = myFileModel.getElementsByName(o.elementName, false, pattern, myProgressIndicator);
         for (Object object : objects) {
           if (!myListModel.contains(object)) {
@@ -794,7 +811,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               files.add((VirtualFile)object);
               myAlreadyAddedFiles.add((VirtualFile)object);
               filesCounter++;
-              if (filesCounter > 15) break;
+              if (filesCounter > maxFiles) break;
             }
           }
         }
@@ -811,7 +828,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               for (Object file : files) {
                 myListModel.addElement(file);
               }
-              myMoreFilesIndex = files.size() >= 15 ? myListModel.size() - 1 : -1;
+              myMoreFilesIndex = files.size() >= maxFiles ? myListModel.size() - 1 : -1;
             }
           }
         });
@@ -820,7 +837,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private void buildClasses(String pattern, boolean includeLibraries) {
       int clsCounter = 0;
-      final int maxCount = includeLibraries ? 5 : 15;
+      final int maxCount = includeLibraries ? 5 : 8;
       List<MatchResult> matches = collectResults(pattern, includeLibraries ? myClassModel.getNames(true) : myClasses, myClassModel);
       final List<Object> classes = new ArrayList<Object>();
       for (MatchResult matchResult : matches) {
