@@ -44,8 +44,9 @@ public class PythonRegexpInjector implements LanguageInjector {
   }
 
   public void getLanguagesToInject(@NotNull PsiLanguageInjectionHost host, @NotNull InjectedLanguagePlaces injectionPlacesRegistrar) {
-    if (host instanceof PyStringLiteralExpression && host.getParent() instanceof PyArgumentList) {
-      final PyExpression[] args = ((PyArgumentList)host.getParent()).getArguments();
+    final PsiElement hostParent = host.getParent();
+    if (host instanceof PyStringLiteralExpression && hostParent instanceof PyArgumentList) {
+      final PyExpression[] args = ((PyArgumentList)hostParent).getArguments();
       int index = ArrayUtil.indexOf(args, host);
       PyCallExpression call = PsiTreeUtil.getParentOfType(host, PyCallExpression.class);
       if (call != null) {
