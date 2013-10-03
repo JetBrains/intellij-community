@@ -273,7 +273,7 @@ public class MavenProjectsNavigator extends MavenSimpleProjectComponent implemen
     JPanel panel = new MavenProjectsNavigatorPanel(myProject, myTree);
 
     AnAction removeAction = ActionManager.getInstance().getAction("Maven.RemoveRunConfiguration");
-    removeAction.registerCustomShortcutSet(CommonShortcuts.DELETE, myTree, myProject);
+    removeAction.registerCustomShortcutSet(CommonShortcuts.getDelete(), myTree, myProject);
     AnAction editSource = ActionManager.getInstance().getAction("Maven.EditRunConfiguration");
     editSource.registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree, myProject);
 
