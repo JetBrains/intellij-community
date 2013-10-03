@@ -1,10 +1,7 @@
 package com.jetbrains.python.codeInsight.regexp;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.InjectedLanguagePlaces;
-import com.intellij.psi.LanguageInjector;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.psi.*;
@@ -54,12 +51,15 @@ public class PythonRegexpInjector implements LanguageInjector {
       if (call != null) {
         final PyExpression callee = call.getCallee();
         if (callee instanceof PyReferenceExpression && canBeRegexpCall(callee)) {
-          final PsiElement element = ((PyReferenceExpression)callee).getReference(PyResolveContext.noImplicits()).resolve();
-          if (element != null && element.getContainingFile().getName().equals("re.py") && isRegexpMethod(element, index)) {
-            List<TextRange> ranges = ((PyStringLiteralExpression)host).getStringValueTextRanges();
-            if (ranges.size() == 1) {
-              injectionPlacesRegistrar.addPlace(isVerbose(call) ? PythonVerboseRegexpLanguage.INSTANCE : PythonRegexpLanguage.INSTANCE,
-                                                ranges.get(0), null, null);
+          final PsiPolyVariantReference ref = ((PyReferenceExpression)callee).getReference(PyResolveContext.noImplicits());
+          if (ref != null) {
+            final PsiElement element = ref.resolve();
+            if (element != null && element.getContainingFile().getName().equals("re.py") && isRegexpMethod(element, index)) {
+              List<TextRange> ranges = ((PyStringLiteralExpression)host).getStringValueTextRanges();
+              if (ranges.size() == 1) {
+                injectionPlacesRegistrar.addPlace(isVerbose(call) ? PythonVerboseRegexpLanguage.INSTANCE : PythonRegexpLanguage.INSTANCE,
+                                                  ranges.get(0), null, null);
+              }
             }
           }
         }
