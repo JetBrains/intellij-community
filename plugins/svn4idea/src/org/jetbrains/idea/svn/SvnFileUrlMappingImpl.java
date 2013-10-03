@@ -228,11 +228,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     final VirtualFile[] roots = myHelper.executeDefended(myProject);
 
     final CopiesApplier copiesApplier = new CopiesApplier();
-    final CopiesDetector copiesDetector = new CopiesDetector(vcs, copiesApplier, new Getter<NestedCopiesData>() {
-      public NestedCopiesData get() {
-        return myTempSink.receive();
-      }
-    });
+    final CopiesDetector copiesDetector = new CopiesDetector(vcs, copiesApplier, myTempSink);
     // do not send additional request for nested copies when in init state
     copiesDetector.detectCopyRoots(roots, init(), afterRefreshCallback);
   }
@@ -296,12 +292,12 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     private final List<VirtualFile> myLonelyRoots;
     private final List<RootUrlInfo> myTopRoots;
     private final RepositoryRoots myRepositoryRoots;
-    private final Getter<NestedCopiesData> myGate;
+    private final NestedCopiesSink myTempSink;
 
-    private CopiesDetector(final SvnVcs vcs, final CopiesApplier applier, final Getter<NestedCopiesData> gate) {
+    private CopiesDetector(final SvnVcs vcs, final CopiesApplier applier, @NotNull final NestedCopiesSink sink) {
       myVcs = vcs;
       myApplier = applier;
-      myGate = gate;
+      myTempSink = sink;
       myTopRoots = new ArrayList<RootUrlInfo>();
       myLonelyRoots = new ArrayList<VirtualFile>();
       myRepositoryRoots = new RepositoryRoots(myVcs);
@@ -351,14 +347,13 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
 
       if (clearState) {
         // clear what was reported before (could be for currently-not-existing roots)
-        myGate.get();
+        myTempSink.getAndClear();
       }
       clManager.invokeAfterUpdate(new Runnable() {
         public void run() {
           final List<RootUrlInfo> nestedRoots = new ArrayList<RootUrlInfo>();
 
-          final NestedCopiesData data = myGate.get();
-          for (NestedCopiesBuilder.MyPointInfo info : data.getSet()) {
+          for (NestedCopiesBuilder.MyPointInfo info : myTempSink.getAndClear()) {
             if (NestedCopyType.external.equals(info.getType()) || NestedCopyType.switched.equals(info.getType())) {
               RootUrlInfo topRoot = findTopRoot(VfsUtilCore.virtualToIoFile(info.getFile()));
 

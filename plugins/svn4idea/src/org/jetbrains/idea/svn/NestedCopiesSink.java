@@ -15,16 +15,23 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.util.Factory;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class NestedCopiesSink extends FragmentsMerger<Set<NestedCopiesBuilder.MyPointInfo>, NestedCopiesData> {
-  public NestedCopiesSink() {
-    super(new Factory<NestedCopiesData>() {
-      public NestedCopiesData create() {
-        return new NestedCopiesData();
-      }
-    });
+public class NestedCopiesSink {
+
+  private final Set<NestedCopiesBuilder.MyPointInfo> mySet = ContainerUtil.newHashSet();
+
+  public synchronized void add(@NotNull final Set<NestedCopiesBuilder.MyPointInfo> data) {
+    mySet.addAll(data);
+  }
+
+  public synchronized Set<NestedCopiesBuilder.MyPointInfo> getAndClear() {
+    Set<NestedCopiesBuilder.MyPointInfo> copy = ContainerUtil.newHashSet(mySet);
+    mySet.clear();
+
+    return copy;
   }
 }
