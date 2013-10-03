@@ -17,6 +17,7 @@ package com.intellij.ui.mac;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -26,9 +27,9 @@ import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ui.UIUtil;
 import com.sun.jna.Callback;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.awt.SunToolkit;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,7 +39,6 @@ import java.lang.reflect.Method;
 import java.util.HashMap;
 
 import static com.intellij.ui.mac.foundation.Foundation.*;
-import static com.intellij.ui.mac.foundation.Foundation.invoke;
 
 /**
  * @author pegov
@@ -246,6 +246,7 @@ public class MacMessagesImpl extends MacMessages {
   @Override
   public int showYesNoDialog(String title, String message, String yesButton, String noButton, @Nullable Window window,
                              @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption) {
+    //noinspection MagicConstant
     return showAlertDialog(title, yesButton, null, noButton, message, window, false, doNotAskDialogOption);
   }
 
@@ -443,7 +444,7 @@ public class MacMessagesImpl extends MacMessages {
     }
   }
 
-
+  @MagicConstant(intValues = {Messages.YES, Messages.NO, Messages.CANCEL, Messages.OK, OPERATION_CANCELED})
   public static int showAlertDialog(final String title,
                                     final String defaultText,
                                     @Nullable final String alternateText,
@@ -599,33 +600,35 @@ public class MacMessagesImpl extends MacMessages {
     return windowTitle;
   }
 
+  @MagicConstant(intValues = {Messages.YES, Messages.NO, Messages.CANCEL, Messages.OK, OPERATION_CANCELED})
   private static int convertReturnCodeFromNativeAlertDialog(Integer returnCode, String alternateText) {
-
     // DEFAULT = 1
     // ALTERNATE = 0
     // OTHER = -1 (cancel)
 
-    int cancelCode = 1;
+    int cancelCode;
     int code;
     if (alternateText != null) {
       // DEFAULT = 0
       // ALTERNATE = 1
       // CANCEL = 2
 
-      cancelCode = 2;
+      cancelCode = Messages.CANCEL;
 
-      if (returnCode == null) returnCode = 2;
+      if (returnCode == null) {
+        returnCode = Messages.CANCEL;
+      }
 
       switch (returnCode) {
         case 1:
-          code = 0;
+          code = Messages.YES;
           break;
         case 0:
-          code = 1;
+          code = Messages.NO;
           break;
         case -1: // cancel
         default:
-          code = 2;
+          code = Messages.CANCEL;
           break;
       }
     }
@@ -635,22 +638,22 @@ public class MacMessagesImpl extends MacMessages {
 
       cancelCode = 1;
 
-      if (returnCode == null) returnCode = -1;
+      if (returnCode == null) {
+        returnCode = -1;
+      }
 
       switch (returnCode) {
         case 1:
-          code = 0;
+          code = Messages.YES;
           break;
         case -1: // cancel
         default:
-          code = 1;
+          code = Messages.NO;
           break;
       }
     }
 
-    if (cancelCode == code) { code = OPERATION_CANCELED; };
-
-    return code;
+    return cancelCode == code ? OPERATION_CANCELED : code;
   }
 
   private static void runOrPostponeForWindow(Window documentRoot, Runnable task) {
