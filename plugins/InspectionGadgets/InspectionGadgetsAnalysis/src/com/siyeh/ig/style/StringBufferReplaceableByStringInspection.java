@@ -222,7 +222,13 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
             if (type instanceof PsiPrimitiveType) {
               if (argument instanceof PsiLiteralExpression) {
                 final PsiLiteralExpression literalExpression = (PsiLiteralExpression)argument;
-                result.append('"').append(literalExpression.getValue()).append('"');
+                if (PsiType.CHAR.equals(literalExpression.getType())) {
+                  final String text = literalExpression.getText();
+                  result.append('"').append(text.substring(1, text.length() - 1)).append('"');
+                }
+                else {
+                  result.append('"').append(literalExpression.getValue()).append('"');
+                }
               }
               else {
                 result.append("String.valueOf(").append(argumentText).append(")");
