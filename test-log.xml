@@ -18,7 +18,7 @@
     </layout>
   </appender>
 
-  <appender name="FILE" class="org.apache.log4j.FileAppender">
+  <appender name="FILE" class="org.apache.log4j.RollingFileAppender">
     <param name="append" value="false"/>
     <param name="file" value="$LOG_DIR$/idea.log"/>
     <layout class="org.apache.log4j.PatternLayout">
