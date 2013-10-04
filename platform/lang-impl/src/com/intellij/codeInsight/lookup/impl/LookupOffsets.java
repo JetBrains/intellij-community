@@ -108,7 +108,12 @@ public class LookupOffsets {
   }
 
   int getLookupStart(String disposeTrace) {
-    LOG.assertTrue(myLookupStartMarker.isValid(), disposeTrace);
+    if (myLookupStartMarker == null) {
+      LOG.error("disposed: " + disposeTrace);
+    }
+    if (!myLookupStartMarker.isValid()) {
+      LOG.error("invalid marker: " + disposeTrace);
+    }
     return myLookupStartMarker.getStartOffset();
   }
 

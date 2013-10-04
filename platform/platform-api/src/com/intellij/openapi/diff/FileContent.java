@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,7 @@ public class FileContent extends DiffContent {
     myType = detectType(file);
   }
 
+  @Override
   public Document getDocument() {
     if (myDocument == null && DiffContentUtil.isTextFile(myFile)) {
       myDocument = FileDocumentManager.getInstance().getDocument(myFile);
@@ -51,26 +52,31 @@ public class FileContent extends DiffContent {
     return myDocument;
   }
 
+  @Override
   public OpenFileDescriptor getOpenFileDescriptor(int offset) {
     return new OpenFileDescriptor(myProject, myFile, offset);
   }
 
+  @Override
   @NotNull
   public VirtualFile getFile() {
     return myFile;
   }
 
+  @Override
   @Nullable
   public FileType getContentType() {
     FileType type = myFile.getFileType();
     return isUnknown(type) ? myType : type;
   }
 
+  @Override
   public byte[] getBytes() throws IOException {
     if (myFile.isDirectory()) return null;
     return myFile.contentsToByteArray();
   }
 
+  @Override
   public boolean isBinary() {
     if (myFile.isDirectory()) return false;
     if (myType != null && !myType.isBinary()) {

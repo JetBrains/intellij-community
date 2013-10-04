@@ -239,8 +239,9 @@ public final class HgCommandExecutor {
     final int lastSlashIndex = settings.getHgExecutable().lastIndexOf(File.separator);
     exeName = settings.getHgExecutable().substring(lastSlashIndex + 1);
 
-    final String cmdString = String.format("%s %s %s", exeName, operation, arguments == null ? "" : StringUtil.join(arguments, " "));
-
+    String str = String.format("%s %s %s", exeName, operation, arguments == null ? "" : StringUtil.join(arguments, " "));
+    //remove password from path before log
+    final String cmdString = myDestination != null ? HgUtil.removePasswordIfNeeded(str) : str;
     final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     // log command
     if (isUnitTestMode) {

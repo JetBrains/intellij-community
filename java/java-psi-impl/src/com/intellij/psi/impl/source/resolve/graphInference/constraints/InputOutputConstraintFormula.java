@@ -102,7 +102,7 @@ public abstract class InputOutputConstraintFormula implements ConstraintFormula 
 
   @Nullable
   public Set<InferenceVariable> getOutputVariables(Set<InferenceVariable> inputVariables, InferenceSession session) {
-    if (!PsiPolyExpressionUtil.isPolyExpression(getExpression())) {
+    if (PsiPolyExpressionUtil.isPolyExpression(getExpression())) {
       final HashSet<InferenceVariable> mentionedVariables = new HashSet<InferenceVariable>();
       session.collectDependencies(getT(), mentionedVariables, true);
       if (inputVariables != null) {

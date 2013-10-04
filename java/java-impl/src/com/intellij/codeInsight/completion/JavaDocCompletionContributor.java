@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -207,7 +207,15 @@ public class JavaDocCompletionContributor extends CompletionContributor {
       final PsiElement position = parameters.getPosition();
       final PsiDocComment comment = PsiTreeUtil.getParentOfType(position, PsiDocComment.class);
       assert comment != null;
-      final PsiElement parent = comment.getContext();
+      PsiElement parent = comment.getContext();
+      if (parent instanceof PsiJavaFile) {
+        final PsiJavaFile file = (PsiJavaFile)parent;
+        if (PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
+          final String packageName = file.getPackageName();
+          parent = JavaPsiFacade.getInstance(position.getProject()).findPackage(packageName);
+        }
+      }
+
       final boolean isInline = position.getContext() instanceof PsiInlineDocTag;
 
       for (JavadocTagInfo info : JavadocManager.SERVICE.getInstance(position.getProject()).getTagInfos(parent)) {

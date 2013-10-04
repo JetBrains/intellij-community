@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -43,6 +44,7 @@ import com.intellij.testFramework.exceptionCases.AbstractExceptionCase;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -137,6 +139,7 @@ public abstract class UsefulTestCase extends TestCase {
     try {
       Disposer.dispose(myTestRootDisposable);
       cleanupSwingDataStructures();
+      cleanupDeleteOnExitHookList();
     }
     finally {
       if (shouldContainTempFiles()) {
@@ -159,6 +162,38 @@ public abstract class UsefulTestCase extends TestCase {
 
     UIUtil.removeLeakingAppleListeners();
     super.tearDown();
+  }
+
+  private static final Set<String> DELETE_ON_EXIT_HOOK_DOT_FILES;
+  private static final Class DELETE_ON_EXIT_HOOK_CLASS;
+  static {
+    Class<?> aClass = null;
+    Set<String> files = null;
+    try {
+      aClass = Class.forName("java.io.DeleteOnExitHook");
+      files = ReflectionUtil.getField(aClass, null, Set.class, "files");
+    }
+    catch (Exception e) {
+    }
+    DELETE_ON_EXIT_HOOK_CLASS = aClass;
+    DELETE_ON_EXIT_HOOK_DOT_FILES = files;
+  }
+
+  public static void cleanupDeleteOnExitHookList() throws ClassNotFoundException, NoSuchFieldException, IllegalAccessException {
+    // try to reduce file set retained by java.io.DeleteOnExitHook
+    List<String> list;
+    synchronized (DELETE_ON_EXIT_HOOK_CLASS) {
+      if (DELETE_ON_EXIT_HOOK_DOT_FILES.isEmpty()) return;
+      list = new ArrayList<String>(DELETE_ON_EXIT_HOOK_DOT_FILES);
+    }
+    for (int i = list.size() - 1; i >= 0; i--) {
+      String path = list.get(i);
+      if (FileSystemUtil.getAttributes(path) == null || new File(path).delete()) {
+        synchronized (DELETE_ON_EXIT_HOOK_CLASS) {
+          DELETE_ON_EXIT_HOOK_DOT_FILES.remove(path);
+        }
+      }
+    }
   }
 
   private static void cleanupSwingDataStructures() throws Exception {

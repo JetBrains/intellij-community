@@ -17,6 +17,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.formatting.FormatConstants;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategy;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -107,7 +108,8 @@ public class AutoHardWrapHandler {
     int line = document.getLineNumber(caretOffset);
     int startOffset = document.getLineStartOffset(line);
     int endOffset = document.getLineEndOffset(line);
-
+    final String endOfString = document.getText().substring(caretOffset, endOffset);
+    final boolean endsWithSpaces = StringUtil.isEmptyOrSpaces(endOfString);
     // Check if right margin is exceeded.
     int margin = editor.getSettings().getRightMargin(project);
     if (margin <= 0) {
@@ -183,6 +185,11 @@ public class AutoHardWrapHandler {
           caretOffsetDiff[0] += event.getNewLength() - event.getOldLength();
         }
 
+        if (event.getNewLength() <= event.getOldLength() && endsWithSpaces) {
+          // There is a possible case that document fragment is removed because of auto-formatting.
+          // We don't want to process such events in case of current string ends with spaces.
+          return;
+        }
         wrapIntroducedSymbolsNumber[0] += event.getNewLength() - event.getOldLength();
       }
 

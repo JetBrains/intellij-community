@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,7 @@ abstract class DocumentsSynchronizer {
 
   protected abstract Document createOriginal();
 
+  @NotNull
   protected abstract Document createCopy();
 
   protected void replaceString(@NotNull final Document document, final int startOffset, final int endOffset, @NotNull final String newText) {
@@ -110,7 +111,7 @@ abstract class DocumentsSynchronizer {
   private void startListen() {
     final Document original = getOriginal();
     final Document copy = getCopy();
-    if (original == null || copy == null) return;
+    if (original == null) return;
 
     beforeListenersAttached(original, copy);
     original.addDocumentListener(myOriginalListener);
@@ -138,6 +139,7 @@ abstract class DocumentsSynchronizer {
     return myOriginal;
   }
 
+  @NotNull
   public Document getCopy() {
     if (myCopy == null) myCopy = createCopy();
     return myCopy;

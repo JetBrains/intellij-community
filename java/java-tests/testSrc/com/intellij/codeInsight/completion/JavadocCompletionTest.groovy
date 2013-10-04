@@ -38,6 +38,12 @@ public class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.enableInspections(new JavaDocLocalInspection());
   }
 
+  public void testNamesInPackage() throws Exception {
+    myFixture.configureFromExistingVirtualFile(myFixture.copyFileToProject("package-info.java", "p/package-info.java"));
+    complete();
+    assertStringItems("author", 'author ' + SystemProperties.getUserName(), "deprecated", "see", "since", "version")
+  }
+
   public void testNamesInClass() throws Exception {
     configureByFile("ClassTagName.java");
     assertStringItems("author", 'author ' + SystemProperties.getUserName(), "deprecated", "param", "see", "serial", "since", "version");
