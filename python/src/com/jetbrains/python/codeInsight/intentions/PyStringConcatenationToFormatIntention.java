@@ -15,6 +15,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
+import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -120,9 +121,16 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
     List<String> parameters = new ArrayList<String>();
     Pair<String, String> quotes = new Pair<String, String>("\"", "\"");
     boolean quotesDetected = false;
+    final TypeEvalContext context = TypeEvalContext.userInitiated(file);
     int paramCount = 0;
+    boolean isUnicode = false;
+    final PyClassTypeImpl unicodeType = PyBuiltinCache.getInstance(element).getObjectType("unicode");
     for (PyExpression expression : getSimpleExpressions((PyBinaryExpression) element)) {
       if (expression instanceof PyStringLiteralExpression) {
+        final PyType type = context.getType(expression);
+        if (PyTypeChecker.match(unicodeType, type, context)) {
+          isUnicode = true;
+        }
         if (!quotesDetected) {
           quotes = PythonStringUtil.getQuotes(expression.getText());
           quotesDetected = true;
@@ -141,6 +149,8 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
     if (quotes == null)
       quotes = new Pair<String, String>("\"", "\"");
     stringLiteral.insert(0, quotes.getFirst());
+    if (isUnicode && !quotes.getFirst().toLowerCase().contains("u"))
+      stringLiteral.insert(0, "u");
     stringLiteral.append(quotes.getSecond());
 
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);

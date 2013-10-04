@@ -128,7 +128,6 @@ public class PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.negate.$0.to.$1", ">", "<="));
   }
 
-
   public void testFlipComparison() {
     doTest(PyBundle.message("INTN.flip.$0.to.$1", ">", "<"));
   }
