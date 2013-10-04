@@ -206,7 +206,6 @@ public class FileSystemUtil {
   }
 
 
-  // todo[r.sh] remove reflection after migration to JDK 7
   @SuppressWarnings("OctalInteger")
   private static class Nio2MediatorImpl implements Mediator {
     private final Object myDefaultFileSystem;
@@ -297,13 +296,10 @@ public class FileSystemUtil {
     @Override
     public String resolveSymLink(@NotNull final String path) throws Exception {
       if (!new File(path).exists()) return null;
-      assert Patches.USE_REFLECTION_TO_ACCESS_JDK7;
-
       final Object pathObj = myGetPath.invoke(myDefaultFileSystem, path, ArrayUtil.EMPTY_STRING_ARRAY);
       final Method toRealPath = pathObj.getClass().getMethod("toRealPath", myLinkOptions.getClass());
       toRealPath.setAccessible(true);
       return toRealPath.invoke(pathObj, myLinkOptions).toString();
-
     }
 
     @Override
