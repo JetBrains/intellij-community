@@ -1,9 +1,11 @@
 package org.jetbrains.idea.maven.dom.model.completion;
 
 import com.google.common.collect.ImmutableSet;
+import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.openapi.editor.CaretModel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,16 +27,6 @@ import java.util.Set;
 public class MavenPomXmlCompletionTagListenerContributor extends CompletionContributor {
 
   private final Set<String> myHandledTags = ImmutableSet.of("dependency");
-
-  //private final MultiMap<String, TagInsertListener> myListenersMap;
-  //{
-  //  MultiMap<String, TagInsertListener> listenersMap = new MultiMap<String, TagInsertListener>();
-  //  for (TagInsertListener listener : new TagInsertListener[]{}) {
-  //
-  //  }
-  //
-  //  myListenersMap = listenersMap;
-  //}
 
   @Override
   public void fillCompletionVariants(CompletionParameters parameters, final CompletionResultSet result) {
@@ -64,17 +56,20 @@ public class MavenPomXmlCompletionTagListenerContributor extends CompletionContr
                     && "maven-4.0.0.xsd".equals(((XmlTag)object).getContainingFile().getName())) {
                   context.commitDocument();
 
-                  PsiElement psiElement = context.getFile().findElementAt(context.getEditor().getCaretModel().getOffset());
+                  CaretModel caretModel = context.getEditor().getCaretModel();
+
+                  PsiElement psiElement = context.getFile().findElementAt(caretModel.getOffset());
                   XmlTag xmlTag = PsiTreeUtil.getParentOfType(psiElement, XmlTag.class);
                   if (xmlTag != null) {
                     DomElement domElement = DomManager.getDomManager(context.getProject()).getDomElement(xmlTag);
                     if (domElement instanceof MavenDomDependency) {
-                      context.setLaterRunnable(new Runnable() {
-                        @Override
-                        public void run() {
-                          new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(context.getProject(), context.getEditor());
-                        }
-                      });
+                      String s = "\n<groupId></groupId>\n<artifactId></artifactId>\n";
+                      context.getDocument().insertString(caretModel.getOffset(), s);
+                      caretModel.moveToOffset(caretModel.getOffset() + s.length() - "</artifactId>\n".length());
+
+                      context.commitDocument();
+
+                      new ReformatCodeProcessor(context.getProject(), context.getFile(), xmlTag.getTextRange(), true).run();
                     }
                   }
                 }
