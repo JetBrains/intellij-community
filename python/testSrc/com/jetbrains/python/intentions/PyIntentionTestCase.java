@@ -17,7 +17,7 @@ public abstract class PyIntentionTestCase extends PyTestCase {
     return PythonTestUtil.getTestDataPath() + "/intentions/" + getClass().getSimpleName();
   }
 
-  protected void doIntentionTest(String hint, LanguageLevel languageLevel) {
+  protected void doTest(String hint, LanguageLevel languageLevel) {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
     try {
       doIntentionTest(hint);
@@ -36,7 +36,7 @@ public abstract class PyIntentionTestCase extends PyTestCase {
     myFixture.checkResultByFile(testFileName + "_after.py", true);
   }
 
-  protected void doNegateIntentionTest(final String hint) {
+  protected void doNegativeTest(final String hint) {
     final String testFileName = getTestName(true);
     myFixture.configureByFile(testFileName + ".py");
     final IntentionAction intentionAction = myFixture.getAvailableIntention(hint);

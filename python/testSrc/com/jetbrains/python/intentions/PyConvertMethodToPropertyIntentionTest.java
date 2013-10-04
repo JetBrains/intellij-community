@@ -8,7 +8,7 @@ import com.jetbrains.python.PyBundle;
 public class PyConvertMethodToPropertyIntentionTest extends PyIntentionTestCase {
 
   public void testParamList() throws Exception {
-    doNegateIntentionTest(PyBundle.message("INTN.convert.method.to.property"));
+    doNegativeTest(PyBundle.message("INTN.convert.method.to.property"));
   }
 
   public void testSimple() throws Exception {
@@ -16,11 +16,11 @@ public class PyConvertMethodToPropertyIntentionTest extends PyIntentionTestCase 
   }
 
   public void testProperty() throws Exception {
-    doNegateIntentionTest(PyBundle.message("INTN.convert.method.to.property"));
+    doNegativeTest(PyBundle.message("INTN.convert.method.to.property"));
   }
 
   public void testEmptyReturn() throws Exception {
-    doNegateIntentionTest(PyBundle.message("INTN.convert.method.to.property"));
+    doNegativeTest(PyBundle.message("INTN.convert.method.to.property"));
   }
 
   public void testYield() throws Exception {
@@ -28,7 +28,7 @@ public class PyConvertMethodToPropertyIntentionTest extends PyIntentionTestCase 
   }
 
   public void testNoReturn() throws Exception {
-    doNegateIntentionTest(PyBundle.message("INTN.convert.method.to.property"));
+    doNegativeTest(PyBundle.message("INTN.convert.method.to.property"));
   }
 
 }

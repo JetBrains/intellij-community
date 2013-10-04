@@ -84,7 +84,8 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
     List<PyExpression> res = new ArrayList<PyExpression>();
     if (expression.getLeftExpression() instanceof PyBinaryExpression) {
       res.addAll(getSimpleExpressions((PyBinaryExpression) expression.getLeftExpression()));
-    } else {
+    }
+    else {
       res.add(expression.getLeftExpression());
     }
     if (expression.getRightExpression() instanceof PyBinaryExpression) {
@@ -108,10 +109,8 @@ public class PyStringConcatenationToFormatIntention extends BaseIntentionAction 
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElement element = PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyBinaryExpression.class, false);
-    while (element != null && element.getParent() instanceof PyBinaryExpression) {
-      element = element.getParent();
-    }
+    PsiElement element = PsiTreeUtil.getTopmostParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyBinaryExpression.class);
+
     if (element == null) return;
     final LanguageLevel languageLevel = LanguageLevel.forElement(element);
     final boolean useFormatMethod = languageLevel.isAtLeast(LanguageLevel.PYTHON27);
