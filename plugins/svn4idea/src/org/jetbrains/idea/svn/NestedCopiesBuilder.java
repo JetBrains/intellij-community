@@ -45,6 +45,10 @@ public class NestedCopiesBuilder implements StatusReceiver {
   public void process(final FilePath path, final SVNStatus status) throws SVNException {
     VirtualFile file = path.getVirtualFile();
     if (file != null && SvnVcs.svnStatusIs(status, SVNStatusType.STATUS_EXTERNAL)) {
+      // We do not determine here url, repository url - because url, repository url in status will determine location in the
+      // repository where folder is located and not where svn:externals property points. We want the later parameters - they'll
+      // determined while creating RootUrlInfos later. Format will be also determined later.
+      // TODO: Probably we could move that logic here.
       final NestedCopyInfo info = new NestedCopyInfo(file, null, WorkingCopyFormat.UNKNOWN, NestedCopyType.external, null);
       mySet.add(info);
       return;

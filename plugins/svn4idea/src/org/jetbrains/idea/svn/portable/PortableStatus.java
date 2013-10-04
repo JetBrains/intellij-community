@@ -263,6 +263,18 @@ public class PortableStatus extends SVNStatus {
   }
 
   @Override
+  public SVNURL getRepositoryRootURL() {
+    SVNURL url = super.getRepositoryRootURL();
+
+    if (url == null) {
+      SVNInfo info = initInfo();
+      url = info != null ? info.getRepositoryRootURL() : url;
+    }
+
+    return url;
+  }
+
+  @Override
   public File getFile() {
     File file = super.getFile();
 

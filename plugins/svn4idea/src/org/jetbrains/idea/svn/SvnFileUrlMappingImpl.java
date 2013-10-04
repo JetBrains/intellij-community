@@ -362,7 +362,6 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
                 topRoot.setType(info.getType());
                 continue;
               }
-              // TODO: Not clear so far why we need to "refresh" urls and format here
               if (!refreshPointInfo(info)) {
                 continue;
               }
@@ -399,6 +398,8 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     }
 
     private boolean refreshPointInfo(@NotNull NestedCopyInfo info) {
+      // TODO: Here we refresh url, repository url, format because they are not set for some NestedCopies in NestedCopiesBuilder.
+      // TODO: For example they are not set for externals. Probably this logic could be moved to NestedCopiesBuilder instead.
       boolean refreshed = false;
 
       // TODO: No checked exceptions are thrown - remove catch/LOG.error/rethrow to fix real cause if any
@@ -462,6 +463,8 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
           return root;
         }
       }
+      // TODO: Seems that RepositoryRoots class should be removed. And necessary repository root should be determined explicitly
+      // TODO: using info command.
       final SVNURL newUrl = SvnUtil.getRepositoryRoot(myVcs, new File(file.getPath()));
       if (newUrl != null) {
         myRoots.add(newUrl);
