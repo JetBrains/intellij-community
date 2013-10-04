@@ -1039,7 +1039,10 @@ public final class PsiUtil extends PsiUtilCore {
       }
       if (type instanceof PsiClassType) {
         try {
-          ((PsiClassType)type).resolve(); // should throw exception
+          PsiClass psiClass = ((PsiClassType)type).resolve(); // should throw exception
+          if (psiClass != null) {
+            ensureValid(psiClass);
+          }
         }
         catch (PsiInvalidElementAccessException e) {
           throw customMessage == null? e : new RuntimeException(customMessage, e);
