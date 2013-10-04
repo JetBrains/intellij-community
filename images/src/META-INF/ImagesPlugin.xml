@@ -29,8 +29,8 @@
       <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
     </action>
     <action class="org.intellij.images.actions.EditExternallyAction"
-            id="Images.EditExternaly"
-            icon="ImagesIcons.EditExternaly"
+            id="Images.EditExternally"
+            icon="ImagesIcons.EditExternally"
             text="Open Image in External Editor">
       <keyboard-shortcut first-keystroke="control alt F4" keymap="$default"/>
       <add-to-group anchor="after" group-id="ProjectViewPopupMenu" relative-to-action="EditSource"/>
@@ -89,7 +89,7 @@
       <reference id="VersionControlsGroup"/>
       <separator/>
       <reference id="images.color.picker" />
-      <reference id="Images.EditExternaly"/>
+      <reference id="Images.EditExternally"/>
       <reference id="ExternalToolsGroup"/>
     </group>
     <group id="Images.ThumbnailsToolbar">
@@ -136,7 +136,7 @@
       <reference id="VersionControlsGroup"/>
       <reference id="CompareTwoFiles"/>
       <separator/>
-      <reference id="Images.EditExternaly"/>
+      <reference id="Images.EditExternally"/>
       <reference id="ExternalToolsGroup"/>
     </group>
   </actions>
