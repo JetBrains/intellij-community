@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.UIUtil;
+import com.sun.awt.AWTUtilities;
 
 import javax.swing.*;
 import java.awt.*;
@@ -135,7 +136,13 @@ public interface PopupComponent {
       if (!myRequestFocus) {
         myDialog.setFocusableWindowState(false);
       }
+      if (UIUtil.isUnderDarcula()) {
+        AWTUtilities.setWindowOpaque(myDialog, false);
+      }
       myDialog.setVisible(true);
+      if (UIUtil.isUnderDarcula()) {
+        AWTUtilities.setWindowOpaque(myDialog, true);
+      }
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           myDialog.setFocusableWindowState(true);
@@ -182,8 +189,16 @@ public interface PopupComponent {
     }
 
     public void show() {
-      myPopup.show();
       Window wnd = getWindow();
+      if (UIUtil.isUnderDarcula() && wnd != null) {
+        AWTUtilities.setWindowOpaque(wnd, false);
+      }
+
+      myPopup.show();
+
+      if (UIUtil.isUnderDarcula() && wnd != null) {
+        AWTUtilities.setWindowOpaque(wnd, true);
+      }
       if (wnd instanceof JWindow) {
         ((JWindow)wnd).getRootPane().putClientProperty(JBPopup.KEY, myJBPopup);
       }
