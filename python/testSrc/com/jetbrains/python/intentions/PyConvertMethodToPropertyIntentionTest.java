@@ -1,7 +1,3 @@
-/*
- * User: anna
- * Date: 06-Mar-2008
- */
 package com.jetbrains.python.intentions;
 
 import com.jetbrains.python.PyBundle;

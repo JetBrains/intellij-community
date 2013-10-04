@@ -3,6 +3,8 @@ package com.jetbrains.python.intentions;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -15,6 +17,15 @@ public abstract class PyIntentionTestCase extends PyTestCase {
     return PythonTestUtil.getTestDataPath() + "/intentions/" + getClass().getSimpleName();
   }
 
+  protected void doIntentionTest(String hint, LanguageLevel languageLevel) {
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
+    try {
+      doIntentionTest(hint);
+    }
+    finally {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+    }
+  }
 
   protected void doIntentionTest(final String hint) {
     final String testFileName = getTestName(true);

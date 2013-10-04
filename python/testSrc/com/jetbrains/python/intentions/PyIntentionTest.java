@@ -161,18 +161,6 @@ public class PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.replace.plus.with.str.format"), LanguageLevel.PYTHON33);
   }
 
-  public void testConvertFormatOperatorToMethod() {
-    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);
-  }
-
-  public void testConvertFormatOperatorToMethodMulti() {
-    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);
-  }
-
-  public void testConvertFormatOperatorToMethodEscaped() {
-    doTest(PyBundle.message("INTN.replace.with.method"), LanguageLevel.PYTHON26);
-  }
-
   public void testFlipComparison() {
     doTest(PyBundle.message("INTN.flip.$0.to.$1", ">", "<"));
   }
