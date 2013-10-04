@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -233,7 +233,8 @@ public class ContainerUtilRt {
   }
 
   /**
-   * Optimized toArray() as opposed to the {@link java.util.Collections#emptyList()}.
+   * A variant of {@link java.util.Collections#emptyList()},
+   * except that {@link #toArray()} here does not create garbage <code>new Object[0]</code> constantly.
    */
   private static class EmptyList<T> extends AbstractList<T> implements RandomAccess {
     private static final EmptyList INSTANCE = new EmptyList();
