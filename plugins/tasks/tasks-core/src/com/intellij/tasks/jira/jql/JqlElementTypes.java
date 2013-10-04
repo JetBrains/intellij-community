@@ -93,6 +93,6 @@ public interface JqlElementTypes {
   IElementType HISTORY_PREDICATE = new JqlElementType("HISTORY_PREDICATE", JqlHistoryPredicateImpl.class);
 
   TokenSet OPERAND_NODES = TokenSet.create(
-    JqlTokenTypes.NUMBER_LITERAL, JqlTokenTypes.STRING_LITERAL, LIST, FUNCTION_CALL
+    JqlTokenTypes.NUMBER_LITERAL, JqlTokenTypes.STRING_LITERAL, LIST, FUNCTION_CALL, EMPTY
   );
 }
