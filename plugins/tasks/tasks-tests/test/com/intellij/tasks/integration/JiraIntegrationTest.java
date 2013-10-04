@@ -20,6 +20,7 @@ import com.intellij.tasks.TaskManagerTestCase;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.jira.JiraRepository;
 import com.intellij.tasks.jira.JiraRepositoryType;
+import com.intellij.tasks.jira.JiraVersion;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -113,6 +114,13 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
       }
       throw e;
     }
+  }
+
+  public void testParseVersionNumbers() throws Exception {
+    assertEquals(new JiraVersion("6.1-OD-09-WN").toString(), "6.1.9");
+    assertEquals(new JiraVersion("5.0.6").toString(), "5.0.6");
+    assertEquals(new JiraVersion("4.4.5").toString(), "4.4.5");
+
   }
 
   @Override

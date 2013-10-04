@@ -92,6 +92,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
       if (paths != null && paths.length > 1) {
         final List<PsiElement> els = new ArrayList<PsiElement>(paths.length);
         for (TreePath path : paths) {
+          if (isPathSelected(path.getParentPath())) continue;
           AbstractTestProxy test = getSelectedTest(path);
           if (test != null) {
             final PsiElement psiElement = (PsiElement)TestsUIUtil.getData(test, CommonDataKeys.PSI_ELEMENT.getName(), myModel);

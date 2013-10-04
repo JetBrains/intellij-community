@@ -1,6 +1,7 @@
 package com.intellij.tasks.jira;
 
 
+import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Matcher;
@@ -9,10 +10,11 @@ import java.util.regex.Pattern;
 /**
  * @author Mikhail Golubev
  */
-public class JiraVersion {
-  private static final Pattern VERSION_PATTERN = Pattern.compile("(\\d+)(?:\\.(\\d+))?(?:\\.(\\d+))?");
+public class JiraVersion implements Comparable<JiraVersion> {
+  // Fix for IDEA-113944
+  private static final Pattern VERSION_PATTERN = Pattern.compile("(\\d+)(?:[^\\d]+(\\d+))?(?:[^\\d]+(\\d+))?.*");
 
-  private final int myMajorNumber, myMinorNumber, myBuildNumber;
+  private final int myMajorNumber, myMinorNumber, myMicroNumber;
 
   public JiraVersion(int majorNumber) {
     this(majorNumber, 0, 0);
@@ -22,10 +24,10 @@ public class JiraVersion {
     this(majorNumber, minorNumber, 0);
   }
 
-  public JiraVersion(int majorNumber, int minorNumber, int buildNumber) {
+  public JiraVersion(int majorNumber, int minorNumber, int microNumber) {
     myMajorNumber = majorNumber;
     myMinorNumber = minorNumber;
-    myBuildNumber = buildNumber;
+    myMicroNumber = microNumber;
   }
 
   public JiraVersion(@NotNull String version) {
@@ -35,7 +37,7 @@ public class JiraVersion {
     }
     myMajorNumber = m.group(1) == null ? 0 : Integer.parseInt(m.group(1));
     myMinorNumber = m.group(2) == null ? 0 : Integer.parseInt(m.group(2));
-    myBuildNumber = m.group(3) == null ? 0 : Integer.parseInt(m.group(3));
+    myMicroNumber = m.group(3) == null ? 0 : Integer.parseInt(m.group(3));
   }
 
   public int getMajorNumber() {
@@ -46,12 +48,17 @@ public class JiraVersion {
     return myMinorNumber;
   }
 
-  public int getBuildNumber() {
-    return myBuildNumber;
+  public int getMicroNumber() {
+    return myMicroNumber;
   }
 
   @Override
   public String toString() {
-    return String.format("%d.%d.%d", myMajorNumber, myMinorNumber, myBuildNumber);
+    return String.format("%d.%d.%d", myMajorNumber, myMinorNumber, myMicroNumber);
+  }
+
+  @Override
+  public int compareTo(@NotNull JiraVersion o) {
+    return VersionComparatorUtil.compare(toString(), o.toString());
   }
 }

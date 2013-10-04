@@ -29,7 +29,7 @@ import static com.intellij.tasks.youtrack.YouTrackIntellisense.CompletionItem;
  */
 public class YouTrackCompletionContributor extends CompletionContributor {
   private static final Logger LOG = Logger.getInstance(YouTrackCompletionContributor.class);
-  private static final int TIMEOUT = 2000;
+  private static final int TIMEOUT = 2000; // ms
 
   private static final InsertHandler<LookupElement> INSERT_HANDLER = new MyInsertHandler();
 
@@ -57,26 +57,23 @@ public class YouTrackCompletionContributor extends CompletionContributor {
     try {
       final List<CompletionItem> suggestions = future.get(TIMEOUT, TimeUnit.MILLISECONDS);
       // actually backed by original CompletionResultSet
-      result = result.withPrefixMatcher(extractPrefix(parameters));
+      result = result.withPrefixMatcher(extractPrefix(parameters)).caseInsensitive();
       result.addAllElements(ContainerUtil.map(suggestions, new Function<CompletionItem, LookupElement>() {
         @Override
         public LookupElement fun(CompletionItem item) {
-          LookupElementBuilder builder = LookupElementBuilder.create(item, item.getOption())
+          return LookupElementBuilder.create(item, item.getOption())
             .withTypeText(item.getDescription(), true)
-            .withInsertHandler(INSERT_HANDLER);
-          // doesn't work actually TODO: write about it to guys in YouTrack
-          //if (item.getStyleClass().equals("keyword")) {
-          //  builder = builder.bold();
-          //}
-          return builder;
+            .withInsertHandler(INSERT_HANDLER)
+            .withBoldness(item.getStyleClass().equals("keyword"));
         }
       }));
     }
     catch (Exception ignored) {
+      //noinspection InstanceofCatchParameter
       if (ignored instanceof TimeoutException) {
-        LOG.debug("YouTrack request took more than %d ms to complete");
+        LOG.debug(String.format("YouTrack request took more than %d ms to complete", TIMEOUT));
       }
-      result.stopHere();
+      LOG.debug(ignored);
     }
   }
 
@@ -90,18 +87,25 @@ public class YouTrackCompletionContributor extends CompletionContributor {
     if (text.isEmpty() || caretOffset == 0) {
       return "";
     }
-    final int lastSpace = text.lastIndexOf(' ', caretOffset - 1);
+    int stopAt = text.lastIndexOf('{', caretOffset - 1);
+    // caret isn't inside braces
+    if (stopAt <= text.lastIndexOf('}', caretOffset - 1)) {
+      // we stay right after colon
+      if (text.charAt(caretOffset - 1) == ':') {
+        stopAt = caretOffset - 1;
+      }
+      // use rightmost word boundary as last resort
+      else {
+        stopAt = text.lastIndexOf(' ', caretOffset - 1);
+      }
+    }
     //int start = CharArrayUtil.shiftForward(text, lastSpace < 0 ? 0 : lastSpace + 1, "#{ ");
-    int start = Math.min(lastSpace + 1, text.length() - 1);
-    if (text.charAt(start) == '#') {
-      start++;
+    int prefixStart = stopAt + 1;
+    if (prefixStart < text.length() && text.charAt(prefixStart) == '#') {
+      prefixStart++;
     }
-    if (start < text.length() && text.charAt(start) == '{') {
-      start++;
-    }
-    return StringUtil.trimLeading(text.substring(start, caretOffset));
+    return StringUtil.trimLeading(text.substring(prefixStart, caretOffset));
   }
-
 
 
   /**
@@ -120,21 +124,37 @@ public class YouTrackCompletionContributor extends CompletionContributor {
 
       final String prefix = completionItem.getPrefix();
       final String suffix = completionItem.getSuffix();
-      if (!prefix.isEmpty() && !hasPrefixAt(document, context.getStartOffset() - prefix.length(), prefix)) {
-        document.insertString(context.getStartOffset(), prefix);
+      String text = document.getText();
+      int offset = context.getStartOffset();
+      // skip possible spaces after '{', e.g. "{  My Project <caret>"
+      if (prefix.endsWith("{")) {
+        while (offset > prefix.length() && Character.isWhitespace(text.charAt(offset - 1))) {
+          offset--;
+        }
       }
-      if (!suffix.isEmpty() && !hasPrefixAt(document, context.getTailOffset(), suffix)) {
-        document.insertString(context.getTailOffset(), suffix);
+      if (!prefix.isEmpty() && !hasPrefixAt(document.getText(), offset - prefix.length(), prefix)) {
+        document.insertString(offset, prefix);
+      }
+      offset = context.getTailOffset();
+      text = document.getText();
+      if (suffix.startsWith("} ")) {
+        while (offset < text.length() - suffix.length() && Character.isWhitespace(text.charAt(offset))) {
+          offset++;
+        }
+      }
+      if (!suffix.isEmpty() && !hasPrefixAt(text, offset, suffix)) {
+        document.insertString(offset, suffix);
       }
       editor.getCaretModel().moveToOffset(context.getTailOffset());
     }
   }
 
-  static boolean hasPrefixAt(Document document, int offset, String prefix) {
-    String text = document.getText();
-    if (text.isEmpty() || offset < 0) {
+  static boolean hasPrefixAt(String text, int offset, String prefix) {
+    if (text.isEmpty() || offset < 0 || offset >= text.length()) {
       return false;
     }
     return text.regionMatches(true, offset, prefix, 0, prefix.length());
   }
 }
+
+

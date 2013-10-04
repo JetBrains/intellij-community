@@ -450,7 +450,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
                                                                             final Collection<CandidateInfo> candidates,
                                                                             Collection<CandidateInfo> secondary) {
 
-    if (toImplement && PsiUtil.isLanguageLevel8OrHigher(aClass)) {
+    if (toImplement) {
       for (Iterator<CandidateInfo> iterator = candidates.iterator(); iterator.hasNext(); ) {
         CandidateInfo candidate = iterator.next();
         PsiElement element = candidate.getElement();

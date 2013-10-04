@@ -90,6 +90,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
 
     if (userConfirm(selection)) {
       final ArrayList<PluginNode> list = new ArrayList<PluginNode>();
+      final PluginTableModel pluginTableModel = host.getPluginsModel();
       for (IdeaPluginDescriptor descr : selection) {
         PluginNode pluginNode = null;
         if (descr instanceof PluginNode) {
@@ -101,8 +102,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
           pluginNode.setName(descr.getName());
           pluginNode.setDepends(Arrays.asList(descr.getDependentPluginIds()), descr.getOptionalDependentPluginIds());
           pluginNode.setSize("-1");
-          pluginNode.setRepositoryName(((InstalledPluginsTableModel)host.getPluginsModel())
-                                         .getPluginHostUrl(pluginId.getIdString()));
+          pluginNode.setRepositoryName(((InstalledPluginsTableModel)pluginTableModel).getPluginHostUrl(pluginId.getIdString()));
         }
 
         if (pluginNode != null) {
@@ -158,7 +158,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
             }
           }
         };
-        PluginManagerMain.downloadPlugins(list, host.getPluginsModel().view, onInstallRunnable, new Runnable(){
+        PluginManagerMain.downloadPlugins(list, pluginTableModel.getAllPlugins(), onInstallRunnable, new Runnable(){
           @Override
           public void run() {
             ourInstallingNodes.removeAll(list);

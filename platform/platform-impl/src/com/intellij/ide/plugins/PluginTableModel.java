@@ -103,7 +103,7 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
 
   public ArrayList<IdeaPluginDescriptorImpl> dependent(IdeaPluginDescriptorImpl plugin) {
     ArrayList<IdeaPluginDescriptorImpl> list = new ArrayList<IdeaPluginDescriptorImpl>();
-    for (IdeaPluginDescriptor any : view) {
+    for (IdeaPluginDescriptor any : getAllPlugins()) {
       if (any instanceof IdeaPluginDescriptorImpl) {
         PluginId[] dep = any.getDependentPluginIds();
         for (PluginId id : dep) {
@@ -167,5 +167,12 @@ abstract public class PluginTableModel extends AbstractTableModel implements Sor
 
   public void setSortByStatus(boolean sortByStatus) {
     mySortByStatus = sortByStatus;
+  }
+  
+  public List<IdeaPluginDescriptor> getAllPlugins() {
+    final ArrayList<IdeaPluginDescriptor> list = new ArrayList<IdeaPluginDescriptor>();
+    list.addAll(view);
+    list.addAll(filtered);
+    return list;
   }
 }

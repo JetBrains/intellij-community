@@ -70,7 +70,7 @@
       <action id="ExportToHTML" class="com.intellij.codeEditor.printing.ExportToHTMLAction"/>
       <action id="Print" class="com.intellij.codeEditor.printing.PrintAction" icon="AllIcons.Graph.Print"/>
       <reference ref="AddToFavorites"/>
-      
+
       <add-to-group group-id="FileMenu" anchor="after" relative-to-action="InvalidateCaches"/>
     </group>
 
@@ -160,7 +160,7 @@
 
       <add-to-group group-id="ViewMenu" relative-to-action="QuickActions" anchor="after"/>
     </group>
-    
+
     <action id="FixDocComment" class="com.intellij.codeInsight.editorActions.FixDocCommentAction"/>
 
     <action id="ViewNavigationBar" class="com.intellij.ide.actions.ViewNavigationBarAction">
@@ -284,7 +284,7 @@
         <action id="ExtractSuperclass" class="com.intellij.refactoring.actions.ExtractSuperclassAction"/>
         <action id="ExtractModule" class="com.intellij.refactoring.actions.ExtractModuleAction"/>
       </group>
-      
+
       <action id="Inline" class="com.intellij.refactoring.actions.InlineAction"/>
       <separator/>
       <action id="MembersPullUp" class="com.intellij.refactoring.actions.PullUpAction"/>
@@ -431,6 +431,7 @@
       <separator/>
       <action id="RevealIn" class="com.intellij.ide.actions.RevealFileAction"/>
       <reference ref="ShowFilePath"/>
+      <action id="GoToLinkTarget" class="com.intellij.ide.actions.GoToLinkTargetAction"/>
       <separator/>
       <reference ref="CompareTwoFiles"/>
       <reference ref="CompareFileWithEditor"/>
@@ -823,24 +824,24 @@
     <action id="Arrangement.Rule.Group.Condition.Move.Down"
             class="com.intellij.application.options.codeStyle.arrangement.action.MoveArrangementGroupingRuleDownAction"
             icon="AllIcons.ToolbarDecorator.MoveDown"/>
-    
+
     <group id="Arrangement.Rule.Match.Control.Context.Menu">
       <reference ref="Arrangement.Rule.Add"/>
       <reference ref="Arrangement.Rule.Remove"/>
       <reference ref="Arrangement.Rule.Edit"/>
     </group>
-    
+
     <group id="Arrangement.Rule.Match.Control.ToolBar">
       <reference ref="Arrangement.Rule.Add"/>
       <reference ref="Arrangement.Rule.Remove"/>
       <reference ref="Arrangement.Rule.Match.Condition.Move.Up"/>
       <reference ref="Arrangement.Rule.Match.Condition.Move.Down"/>
     </group>
-    
+
     <group id="Arrangement.Rule.Group.Control.ToolBar">
       <reference ref="Arrangement.Rule.Group.Condition.Move.Up"/>
       <reference ref="Arrangement.Rule.Group.Condition.Move.Down"/>
     </group>
-    
+
   </actions>
 </component>
