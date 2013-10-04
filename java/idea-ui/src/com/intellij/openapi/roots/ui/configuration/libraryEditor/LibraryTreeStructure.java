@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,14 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import com.intellij.openapi.roots.libraries.ui.OrderRootTypePresentation;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 public class LibraryTreeStructure extends AbstractTreeStructure {
   private final NodeDescriptor myRootElementDescriptor;
@@ -55,11 +58,11 @@ public class LibraryTreeStructure extends AbstractTreeStructure {
 
   @Override
   public Object[] getChildElements(Object element) {
+    final LibraryEditor libraryEditor = myParentEditor.getLibraryEditor();
     if (element == myRootElementDescriptor) {
       ArrayList<LibraryTableTreeContentElement> elements = new ArrayList<LibraryTableTreeContentElement>(3);
-      final LibraryEditor parentEditor = myParentEditor.getLibraryEditor();
       for (OrderRootType type : myComponentDescriptor.getRootTypes()) {
-        final String[] urls = parentEditor.getUrls(type);
+        final String[] urls = libraryEditor.getUrls(type);
         if (urls.length > 0) {
           OrderRootTypePresentation presentation = myComponentDescriptor.getRootTypePresentation(type);
           if (presentation == null) {
@@ -75,13 +78,28 @@ public class LibraryTreeStructure extends AbstractTreeStructure {
       OrderRootTypeElement rootTypeElement = (OrderRootTypeElement)element;
       OrderRootType orderRootType = rootTypeElement.getOrderRootType();
       ArrayList<ItemElement> items = new ArrayList<ItemElement>();
-      final LibraryEditor libraryEditor = myParentEditor.getLibraryEditor();
       final String[] urls = libraryEditor.getUrls(orderRootType).clone();
       Arrays.sort(urls, LibraryRootsComponent.ourUrlComparator);
       for (String url : urls) {
         items.add(new ItemElement(rootTypeElement, url, orderRootType, libraryEditor.isJarDirectory(url, orderRootType), libraryEditor.isValid(url, orderRootType)));
       }
       return items.toArray();
+    }
+
+    if (element instanceof ItemElement) {
+      ItemElement itemElement = (ItemElement)element;
+      List<String> excludedUrls = new ArrayList<String>();
+      for (String excludedUrl : libraryEditor.getExcludedRootUrls()) {
+        if (VfsUtilCore.isEqualOrAncestor(itemElement.getUrl(), excludedUrl)) {
+          excludedUrls.add(excludedUrl);
+        }
+      }
+      ExcludedRootElement[] items = new ExcludedRootElement[excludedUrls.size()];
+      Collections.sort(excludedUrls, LibraryRootsComponent.ourUrlComparator);
+      for (int i = 0; i < excludedUrls.size(); i++) {
+        items[i] = new ExcludedRootElement(itemElement, itemElement.getUrl(), excludedUrls.get(i));
+      }
+      return items;
     }
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
   }

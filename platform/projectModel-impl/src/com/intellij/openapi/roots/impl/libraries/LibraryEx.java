@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,8 @@ import com.intellij.openapi.roots.impl.RootModelImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryProperties;
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -35,10 +37,20 @@ public interface LibraryEx extends Library {
 
   boolean isDisposed();
 
+  @NotNull
+  @Override
+  ModifiableModelEx getModifiableModel();
+
   @Nullable
   PersistentLibraryKind<?> getKind();
 
   LibraryProperties getProperties();
+
+  @NotNull
+  String[] getExcludedRootUrls();
+
+  @NotNull
+  VirtualFile[] getExcludedRoots();
 
   interface ModifiableModelEx extends ModifiableModel {
     void setProperties(LibraryProperties properties);
@@ -48,5 +60,12 @@ public interface LibraryEx extends Library {
     void setKind(PersistentLibraryKind<?> type);
 
     PersistentLibraryKind<?> getKind();
+
+    void addExcludedRoot(@NotNull String url);
+
+    boolean removeExcludedRoot(@NotNull String url);
+
+    @NotNull
+    String[] getExcludedRootUrls();
   }
 }

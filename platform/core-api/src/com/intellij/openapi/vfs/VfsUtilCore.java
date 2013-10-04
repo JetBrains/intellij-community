@@ -40,6 +40,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.openapi.vfs.VirtualFileVisitor.VisitorException;
 
@@ -67,6 +68,26 @@ public class VfsUtilCore {
       if (parent.equals(ancestor)) return true;
       parent = parent.getParent();
     }
+  }
+
+  /**
+   * @return {@code true} if {@code file} is located under one of {@code roots} or equal to one of them
+   */
+  public static boolean isUnder(@NotNull VirtualFile file, @Nullable Set<VirtualFile> roots) {
+    if (roots == null || roots.isEmpty()) return false;
+
+    VirtualFile parent = file;
+    while (parent != null) {
+      if (roots.contains(parent)) {
+        return true;
+      }
+      parent = parent.getParent();
+    }
+    return false;
+  }
+
+  public static boolean isEqualOrAncestor(@NotNull String ancestorUrl, @NotNull String fileUrl) {
+    return ancestorUrl.equals(fileUrl) || StringUtil.startsWithConcatenation(fileUrl, ancestorUrl, "/");
   }
 
   public static boolean isAncestor(@NotNull File ancestor, @NotNull File file, boolean strict) {

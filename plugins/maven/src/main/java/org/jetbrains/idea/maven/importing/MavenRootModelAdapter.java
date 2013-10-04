@@ -25,8 +25,8 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Processor;
@@ -81,7 +81,7 @@ public class MavenRootModelAdapter {
 
   private ContentEntry getContentRootFor(Url url) {
     for (ContentEntry e : myRootModel.getContentEntries()) {
-      if (isEqualOrAncestor(e.getUrl(), url.getUrl())) return e;
+      if (VfsUtilCore.isEqualOrAncestor(e.getUrl(), url.getUrl())) return e;
     }
     return null;
   }
@@ -155,7 +155,7 @@ public class MavenRootModelAdapter {
     String url = toUrl(f.getPath()).getUrl();
     for (ContentEntry eachEntry : myRootModel.getContentEntries()) {
       for (SourceFolder eachFolder : eachEntry.getSourceFolders()) {
-        if (isEqualOrAncestor(url, eachFolder.getUrl())) return true;
+        if (VfsUtilCore.isEqualOrAncestor(url, eachFolder.getUrl())) return true;
       }
     }
     return false;
@@ -165,14 +165,10 @@ public class MavenRootModelAdapter {
     String url = toUrl(f.getPath()).getUrl();
     for (ContentEntry eachEntry : myRootModel.getContentEntries()) {
       for (ExcludeFolder eachFolder : eachEntry.getExcludeFolders()) {
-        if (isEqualOrAncestor(eachFolder.getUrl(), url)) return true;
+        if (VfsUtilCore.isEqualOrAncestor(eachFolder.getUrl(), url)) return true;
       }
     }
     return false;
-  }
-
-  public static boolean isEqualOrAncestor(String ancestor, String child) {
-    return ancestor.equals(child) || StringUtil.startsWithConcatenation(child, ancestor, "/");
   }
 
   private boolean exists(String path) {
@@ -196,7 +192,7 @@ public class MavenRootModelAdapter {
         for (SourceFolder eachFolder : eachEntry.getSourceFolders()) {
           String ancestor = under ? url.getUrl() : eachFolder.getUrl();
           String child = under ? eachFolder.getUrl() : url.getUrl();
-          if (isEqualOrAncestor(ancestor, child)) {
+          if (VfsUtilCore.isEqualOrAncestor(ancestor, child)) {
             eachEntry.removeSourceFolder(eachFolder);
           }
         }
@@ -206,7 +202,7 @@ public class MavenRootModelAdapter {
         String ancestor = under ? url.getUrl() : eachFolder.getUrl();
         String child = under ? eachFolder.getUrl() : url.getUrl();
 
-        if (isEqualOrAncestor(ancestor, child)) {
+        if (VfsUtilCore.isEqualOrAncestor(ancestor, child)) {
           if (eachFolder.isSynthetic()) {
             getCompilerExtension().setExcludeOutput(false);
           }
@@ -225,7 +221,7 @@ public class MavenRootModelAdapter {
       for (SourceFolder eachFolder : eachEntry.getSourceFolders()) {
         String ancestor = url.getUrl();
         String child = eachFolder.getUrl();
-        if (isEqualOrAncestor(ancestor, child) || isEqualOrAncestor(child, ancestor)) {
+        if (VfsUtilCore.isEqualOrAncestor(ancestor, child) || VfsUtilCore.isEqualOrAncestor(child, ancestor)) {
           return true;
         }
       }
@@ -234,7 +230,7 @@ public class MavenRootModelAdapter {
         String ancestor = url.getUrl();
         String child = eachFolder.getUrl();
 
-        if (isEqualOrAncestor(ancestor, child) || isEqualOrAncestor(child, ancestor)) {
+        if (VfsUtilCore.isEqualOrAncestor(ancestor, child) || VfsUtilCore.isEqualOrAncestor(child, ancestor)) {
           return true;
         }
       }
