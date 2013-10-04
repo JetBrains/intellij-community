@@ -15,26 +15,23 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNURL;
 
-class Node {
+import java.io.File;
+
+// TODO: Probably we could utilize VcsVirtualFile instead of this class. VcsVirtualVile contains VcsFileRevision that
+// TODO: provides RepositoryLocation
+public class Node {
 
   @NotNull private final VirtualFile myFile;
-  @Nullable private final SVNURL myUrl;
-  @Nullable private final SVNURL myRepositoryUrl;
+  @NotNull private final SVNURL myUrl;
+  @NotNull private final SVNURL myRepositoryUrl;
 
-  Node(@NotNull VirtualFile file) {
-    this(file, null);
-  }
-
-  Node(@NotNull VirtualFile file, @Nullable SVNURL url) {
-    this(file, url, null);
-  }
-
-  Node(@NotNull VirtualFile file, @Nullable SVNURL url, @Nullable SVNURL repositoryUrl) {
+  public Node(@NotNull VirtualFile file, @NotNull SVNURL url, @NotNull SVNURL repositoryUrl) {
     myFile = file;
     myUrl = url;
     myRepositoryUrl = repositoryUrl;
@@ -45,27 +42,22 @@ class Node {
     return myFile;
   }
 
-  @Nullable
+  @NotNull
+  public File getIoFile() {
+    return VfsUtilCore.virtualToIoFile(getFile());
+  }
+
+  @NotNull
   public SVNURL getUrl() {
     return myUrl;
   }
 
-  public boolean inVcs() {
-    return myUrl != null;
-  }
-
-  public boolean sameVcsItem(@NotNull Node node) {
-    //noinspection ConstantConditions
-    return inVcs() && node.inVcs() && myUrl.equals(node.myUrl);
-  }
-
-  @Nullable
+  @NotNull
   public SVNURL getRepositoryRootUrl() {
     return myRepositoryUrl;
   }
 
-  @NotNull
-  public Node append(@NotNull VirtualFile childFile) {
-    return new Node(childFile, myUrl != null ? SvnUtil.append(myUrl, childFile.getName()) : null);
+  public boolean onUrl(@Nullable SVNURL url) {
+    return myUrl.equals(url);
   }
 }

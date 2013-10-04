@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.impl.VcsRootIterator;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNInfo;
 
 import java.util.LinkedList;
@@ -45,18 +46,18 @@ public class ForNestedRootChecker {
   }
 
   public List<Node> getAllNestedWorkingCopies(@NotNull final VirtualFile root, final boolean goIntoNested) {
-    final LinkedList<Node> workItems = new LinkedList<Node>();
+    final LinkedList<WorkItem> workItems = new LinkedList<WorkItem>();
     final LinkedList<Node> result = new LinkedList<Node>();
 
-    workItems.add(new Node(root));
+    workItems.add(new WorkItem(root));
     while (!workItems.isEmpty()) {
-      final Node item = workItems.removeFirst();
+      final WorkItem item = workItems.removeFirst();
       checkCancelled();
 
       // check self
-      final Node vcsElement = resolveVcsElement(item.getFile());
-      // TODO: actually goIntoNested = false always => item.inVcs() will be always false when this line is reached
-      if (vcsElement != null && (!item.inVcs() || !item.sameVcsItem(vcsElement))) {
+      final Node vcsElement = resolveVcsElement(item.file);
+      // TODO: actually goIntoNested = false always => item.url will be always null when this line is reached
+      if (vcsElement != null && (item.url == null || vcsElement.onUrl(item.url))) {
         result.add(vcsElement);
         if (!goIntoNested) {
           continue;
@@ -64,14 +65,14 @@ public class ForNestedRootChecker {
       }
 
       // for next step
-      final VirtualFile file = item.getFile();
+      final VirtualFile file = item.file;
       if (file.isDirectory() && (! SvnUtil.isAdminDirectory(file))) {
         for (VirtualFile child : file.getChildren()) {
           checkCancelled();
 
           if (myRootIterator.acceptFolderUnderVcs(root, child)) {
             // TODO: actually goIntoNested = false always => we could reach this line only when vcsElement is null
-            workItems.add(vcsElement == null ? new Node(child) : vcsElement.append(child));
+            workItems.add(WorkItem.create(vcsElement, child));
           }
         }
       }
@@ -82,6 +83,26 @@ public class ForNestedRootChecker {
   private void checkCancelled() {
     if (myVcs.getProject().isDisposed()) {
       throw new ProcessCanceledException();
+    }
+  }
+
+  private static class WorkItem {
+
+    @NotNull private final VirtualFile file;
+    @Nullable private final SVNURL url;
+
+    private WorkItem(@NotNull VirtualFile file) {
+      this(file, null);
+    }
+
+    private WorkItem(@NotNull VirtualFile file, @Nullable SVNURL url) {
+      this.file = file;
+      this.url = url;
+    }
+
+    @NotNull
+    private static WorkItem create(@Nullable Node node, @NotNull VirtualFile child) {
+      return node == null ? new WorkItem(child) : new WorkItem(child, SvnUtil.append(node.getUrl(), child.getName()));
     }
   }
 }
