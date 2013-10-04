@@ -440,8 +440,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
     if (newVal) {
       Collections.addAll(descriptorsToCheckDependencies, ideaPluginDescriptors);
     } else {
-      descriptorsToCheckDependencies.addAll(view);
-      descriptorsToCheckDependencies.addAll(filtered);
+      descriptorsToCheckDependencies.addAll(getAllPlugins());
       descriptorsToCheckDependencies.removeAll(Arrays.asList(ideaPluginDescriptors));
 
       for (Iterator<IdeaPluginDescriptor> iterator = descriptorsToCheckDependencies.iterator(); iterator.hasNext(); ) {
