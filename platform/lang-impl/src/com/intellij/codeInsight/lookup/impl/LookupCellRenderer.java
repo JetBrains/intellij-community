@@ -22,6 +22,7 @@ import com.intellij.codeInsight.lookup.LookupValueWithUIHint;
 import com.intellij.codeInsight.lookup.RealLookupElementPresentation;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -51,6 +52,7 @@ import java.util.Set;
  * @author Konstantin Bulenkov
  */
 public class LookupCellRenderer implements ListCellRenderer {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupCellRenderer");
   //TODO[kb]: move all these awesome constants to Editor's Fonts & Colors settings
   private static final int AFTER_TAIL = 10;
   private static final int AFTER_TYPE = 6;
@@ -139,7 +141,15 @@ public class LookupCellRenderer implements ListCellRenderer {
     AccessToken token = ReadAction.start();
     try {
       if (item.isValid()) {
-        item.renderElement(presentation);
+        try {
+          item.renderElement(presentation);
+        }
+        catch (Exception e) {
+          LOG.error(e);
+        }
+        catch (Error e) {
+          LOG.error(e);
+        }
       } else {
         presentation.setItemTextForeground(JBColor.RED);
         presentation.setItemText("Invalid");
