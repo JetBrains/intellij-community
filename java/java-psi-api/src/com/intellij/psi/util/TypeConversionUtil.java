@@ -17,8 +17,6 @@ package com.intellij.psi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
 import com.intellij.openapi.util.*;
 import com.intellij.pom.java.LanguageLevel;
@@ -1059,6 +1057,7 @@ public class TypeConversionUtil {
       for (PsiClass aClass : visited) {
         msg.append("  each: " + classInfo(aClass));
       }
+      msg.append("isInheritor: " + InheritanceUtil.isInheritorOrSelf(derivedClass, superClass, true) + " " + derivedClass.isInheritor(superClass, true));
       msg.append("hierarchy:\n");
       InheritanceUtil.processSupers(derivedClass, true, new Processor<PsiClass>() {
         @Override
