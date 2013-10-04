@@ -18,7 +18,7 @@ public abstract class PyQuickFixTestCase extends PyTestCase {
     return PythonTestUtil.getTestDataPath() + "/quickFixes/" + getClass().getSimpleName();
   }
 
-  protected void doInspectionTest(final Class inspectionClass, final String hint) {
+  protected void doQuickFixTest(final Class inspectionClass, final String hint) {
     final String testFileName = getTestName(true);
     myFixture.enableInspections(inspectionClass);
     myFixture.configureByFile(testFileName + ".py");
@@ -27,6 +27,13 @@ public abstract class PyQuickFixTestCase extends PyTestCase {
     assertNotNull(intentionAction);
     myFixture.launchAction(intentionAction);
     myFixture.checkResultByFile(testFileName + "_after.py", true);
+  }
+
+  protected void doInspectionTest(final Class inspectionClass) {
+    final String testFileName = getTestName(true);
+    myFixture.enableInspections(inspectionClass);
+    myFixture.configureByFile(testFileName + ".py");
+    myFixture.checkHighlighting(true, false, false);
   }
 
   protected void doMultifilesTest(@NotNull final Class inspectionClass, @NotNull final String hint, @NotNull final String[] files) {
