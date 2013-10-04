@@ -140,6 +140,24 @@ public class OutputChecker {
         System.out.println("actual:");
         System.out.println(actual);
 
+        final int len = Math.min(expected.length(), actual.length());
+        if (expected.length() != actual.length()) {
+          System.out.println("Text sizes differ: expected " + expected.length() + " but actual: " + actual.length());
+        }
+        for (int idx = 0; idx < len; idx++) {
+          final char expectedChar = expected.charAt(idx);
+          final char actualChar = actual.charAt(idx);
+          if (expectedChar != actualChar) {
+            System.out.println("Difference at index " + idx + ": ;" + expectedChar + "' != '" + actualChar + "'");
+          }
+        }
+        if (expected.length() > len) {
+          System.out.println("Rest from expected text is: \"" + expected.substring(len) + "\"");
+        }
+        else if (actual.length() > len) {
+          System.out.println("Rest from actual text is: \"" + actual.substring(len) + "\"");
+        }
+
         Assert.assertEquals(originalText, actual);
       }
     }

@@ -223,7 +223,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabledAndVisible(!ourShiftCanBeUsed.get() && Registry.is("search.everywhere.enabled"));
+    final InputEvent event = e.getInputEvent();
+    if (event instanceof KeyEvent && event.isShiftDown() && ((KeyEvent)event).getKeyCode() == KeyEvent.VK_SPACE) {
+      e.getPresentation().setEnabledAndVisible(!ourShiftCanBeUsed.get() && Registry.is("search.everywhere.enabled"));
+    } else {
+      e.getPresentation().setEnabled(true);
+    }
   }
 
 

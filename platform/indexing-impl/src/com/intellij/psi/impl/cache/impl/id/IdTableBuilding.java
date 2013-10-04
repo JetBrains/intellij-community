@@ -17,6 +17,7 @@
 package com.intellij.psi.impl.cache.impl.id;
 
 import com.intellij.ide.highlighter.custom.CustomFileTypeLexer;
+import com.intellij.ide.highlighter.custom.SyntaxTable;
 import com.intellij.lang.Language;
 import com.intellij.lang.cacheBuilder.*;
 import com.intellij.lang.findUsages.FindUsagesProvider;
@@ -107,14 +108,14 @@ public class IdTableBuilding {
     }
 
     if (fileType instanceof CustomSyntaxTableFileType) {
-      return new WordsScannerFileTypeIdIndexerAdapter(createWordScanner((CustomSyntaxTableFileType)fileType));
+      return new WordsScannerFileTypeIdIndexerAdapter(createCustomFileTypeScanner(((CustomSyntaxTableFileType)fileType).getSyntaxTable()));
     }
 
     return null;
   }
 
-  private static WordsScanner createWordScanner(final CustomSyntaxTableFileType customSyntaxTableFileType) {
-    return new DefaultWordsScanner(new CustomFileTypeLexer(customSyntaxTableFileType.getSyntaxTable(), true),
+  public static WordsScanner createCustomFileTypeScanner(SyntaxTable syntaxTable) {
+    return new DefaultWordsScanner(new CustomFileTypeLexer(syntaxTable, true),
                                    TokenSet.create(CustomHighlighterTokenType.IDENTIFIER),
                                    TokenSet.create(CustomHighlighterTokenType.LINE_COMMENT,
                                                    CustomHighlighterTokenType.MULTI_LINE_COMMENT),

@@ -408,6 +408,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     DefaultActionGroup group = createActionGroup(true);
     group.addAction(new ToggleAction("Show Toolbar") {
       @Override
+      public boolean isDumbAware() {
+        return true;
+      }
+
+      @Override
       public boolean isSelected(AnActionEvent e) {
         return getSettings().SHOW_TOOLBAR;
       }

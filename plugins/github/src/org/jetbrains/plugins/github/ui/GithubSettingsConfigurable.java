@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsConfigurableProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.util.GithubSettings;
 
 import javax.swing.*;
 
@@ -16,10 +15,8 @@ import javax.swing.*;
  */
 public class GithubSettingsConfigurable implements SearchableConfigurable, VcsConfigurableProvider {
   private GithubSettingsPanel mySettingsPane;
-  private final GithubSettings mySettings;
 
   public GithubSettingsConfigurable() {
-    mySettings = GithubSettings.getInstance();
   }
 
   @NotNull
@@ -35,7 +32,7 @@ public class GithubSettingsConfigurable implements SearchableConfigurable, VcsCo
   @NotNull
   public JComponent createComponent() {
     if (mySettingsPane == null) {
-      mySettingsPane = new GithubSettingsPanel(mySettings);
+      mySettingsPane = new GithubSettingsPanel();
     }
     return mySettingsPane.getPanel();
   }
@@ -46,8 +43,7 @@ public class GithubSettingsConfigurable implements SearchableConfigurable, VcsCo
 
   public void apply() throws ConfigurationException {
     if (mySettingsPane != null) {
-      mySettings.setCredentials(mySettingsPane.getHost(), mySettingsPane.getAuthData(), true);
-      mySettingsPane.resetCredentialsModification();
+      mySettingsPane.apply();
     }
   }
 

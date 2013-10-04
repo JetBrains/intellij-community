@@ -15,11 +15,15 @@
  * limitations under the License.
  */
 package com.intellij.ide.highlighter.custom
+
+import com.intellij.lang.cacheBuilder.WordOccurrence
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.fileTypes.PlainTextSyntaxHighlighterFactory
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.impl.cache.impl.id.IdTableBuilding
 import com.intellij.testFramework.LexerTestCase
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.util.Processor
 import com.intellij.util.ThrowableRunnable
 import junit.framework.TestCase
 import org.jetbrains.annotations.NonNls
@@ -329,6 +333,23 @@ KEYWORD_2 ('e')
 WHITESPACE (' ')
 KEYWORD_2 ('foo{}')
 '''
+  }
+
+  public void testWordsScanner() {
+    SyntaxTable table = new SyntaxTable()
+    table.addKeyword1("a*")
+    def scanner = IdTableBuilding.createCustomFileTypeScanner(table)
+    def words = []
+    String text = 'a* b-c d# e$ foo{}'
+    def expectedWords = ['a', 'b', 'c', 'd', 'e$', 'foo']
+
+    scanner.processWords(text, { WordOccurrence w ->
+      words.add(w.baseText.subSequence(w.start, w.end))
+    } as Processor)
+    assert words == expectedWords
+
+    // words searched by find usages should be the same as words produced by word scanner
+    assert StringUtil.getWordsIn(text) == expectedWords 
   }
 
   public void "test quote block comment"() {

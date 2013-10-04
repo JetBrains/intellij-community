@@ -66,7 +66,7 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
   private String myName;
   private final LibraryTable myLibraryTable;
   private final Map<OrderRootType, VirtualFilePointerContainer> myRoots;
-  private VirtualFilePointerContainer myExcludedRoots;
+  private @Nullable VirtualFilePointerContainer myExcludedRoots;
   private final JarDirectories myJarDirectories = new JarDirectories();
   private final LibraryImpl mySource;
   private PersistentLibraryKind<?> myKind;
@@ -489,11 +489,13 @@ public class LibraryImpl extends TraceableDisposable implements LibraryEx.Modifi
     final VirtualFilePointer byUrl = container.findByUrl(url);
     if (byUrl != null) {
       container.remove(byUrl);
-      for (String excludedRoot : myExcludedRoots.getUrls()) {
-        if (!isUnderRoots(excludedRoot)) {
-          VirtualFilePointer pointer = myExcludedRoots.findByUrl(url);
-          if (pointer != null) {
-            myExcludedRoots.remove(pointer);
+      if (myExcludedRoots != null) {
+        for (String excludedRoot : myExcludedRoots.getUrls()) {
+          if (!isUnderRoots(excludedRoot)) {
+            VirtualFilePointer pointer = myExcludedRoots.findByUrl(url);
+            if (pointer != null) {
+              myExcludedRoots.remove(pointer);
+            }
           }
         }
       }

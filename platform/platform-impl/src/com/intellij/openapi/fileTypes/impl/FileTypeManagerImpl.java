@@ -433,7 +433,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     }
   }
 
-  private static boolean guessIfText(VirtualFile file, ByteSequence byteSequence) {
+  private static boolean guessIfText(@NotNull VirtualFile file, @NotNull ByteSequence byteSequence) {
     byte[] bytes = byteSequence.getBytes();
     Trinity<Charset, CharsetToolkit.GuessedEncoding, byte[]> guessed = LoadTextUtil.guessFromContent(file, bytes, byteSequence.getLength());
     if (guessed == null) return false;
@@ -448,7 +448,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   }
 
   @Override
-  public boolean isFileOfType(VirtualFile file, FileType type) {
+  public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type) {
     if (type instanceof FileTypeIdentifiableByVirtualFile) {
       return ((FileTypeIdentifiableByVirtualFile)type).isMyFileType(file);
     }
