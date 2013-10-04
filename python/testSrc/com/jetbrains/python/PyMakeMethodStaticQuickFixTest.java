@@ -8,31 +8,31 @@ import com.jetbrains.python.inspections.PyMethodMayBeStaticInspection;
 public class PyMakeMethodStaticQuickFixTest extends PyQuickFixTestCase {
 
   public void testOneParam() {
-    doInspectionTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.static"));
+    doQuickFixTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.static"));
   }
 
   public void testTwoParams() {
-    doInspectionTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.static"));
+    doQuickFixTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.static"));
   }
 
   public void testEmptyParam() {
-    doInspectionTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.static"));
+    doQuickFixTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.static"));
   }
 
   public void testFunctionWithDeco() {
-    doInspectionTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.static"));
+    doQuickFixTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.static"));
   }
 
   public void testDecoWithParams() {
-    doInspectionTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.static"));
+    doQuickFixTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.static"));
   }
 
   public void testNoSelf() {
-    doInspectionTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.static"));
+    doQuickFixTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.static"));
   }
 
   public void testUsage() {
-    doInspectionTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.static"));
+    doQuickFixTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.static"));
   }
 
   public void testUsageImport() {
