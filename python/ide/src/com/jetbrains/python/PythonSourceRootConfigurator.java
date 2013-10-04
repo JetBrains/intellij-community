@@ -39,10 +39,6 @@ public class PythonSourceRootConfigurator implements DirectoryProjectConfigurato
       }
     }
 
-    VirtualFile web2Py = baseDir.findChild("web2py");
-    if (web2Py != null) {
-      addSourceRoot(project, baseDir, web2Py, false);
-    }
   }
 
   private static void addSourceRoot(Project project, final VirtualFile baseDir, final VirtualFile root, final boolean unique) {
