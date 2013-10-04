@@ -876,16 +876,19 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
       }
     });
 
-    Disposer.register(this, new UiNotifyConnector(myEditor.getContentComponent(), new Activatable() {
-      @Override
-      public void showNotify() {
-      }
-
-      @Override
-      public void hideNotify() {
-        hideLookup(false);
-      }
-    }));
+    JComponent editorComponent = myEditor.getContentComponent();
+    if (editorComponent.isShowing()) {
+      Disposer.register(this, new UiNotifyConnector(editorComponent, new Activatable() {
+        @Override
+        public void showNotify() {
+        }
+  
+        @Override
+        public void hideNotify() {
+          hideLookup(false);
+        }
+      }));
+    }
 
     myList.addListSelectionListener(new ListSelectionListener() {
       private LookupElement oldItem = null;
