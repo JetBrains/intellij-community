@@ -36,14 +36,14 @@ class TeamcityDocTestResult(TeamcityTestResult):
     return name
 
   def getTestId(self, test):
-    file = os.path.realpath(self.current_suite.filename)
+    file = os.path.realpath(self.current_suite.filename) if self.current_suite.filename else ""
     line_no = test.lineno
     if self.current_suite.lineno:
       line_no += self.current_suite.lineno
     return "file://" + file + ":" + str(line_no)
 
   def getSuiteLocation(self):
-    file = os.path.realpath(self.current_suite.filename)
+    file = os.path.realpath(self.current_suite.filename) if self.current_suite.filename else ""
     location = "file://" + file
     if self.current_suite.lineno:
       location += ":" + str(self.current_suite.lineno)
@@ -300,7 +300,7 @@ if __name__ == "__main__":
         raise NameError('File "%s" is not python file' % (a[0], ))
       if hasattr(module, a[1]):
         testcase = getattr(module, a[1])
-        tests = finder.find(testcase, testcase.__name__)
+        tests = finder.find(testcase, getattr(testcase, "__name__", None))
         runner.addTests(tests)
       else:
         raise NameError('Module "%s" has no class "%s"' % (a[0], a[1]))
@@ -315,7 +315,7 @@ if __name__ == "__main__":
         debug("/ from method " + a[2] + " in " + a[0])
         if hasattr(module, a[2]):
           testcase = getattr(module, a[2])
-          tests = finder.find(testcase, testcase.__name__)
+          tests = finder.find(testcase, getattr(testcase, "__name__", None))
           runner.addTests(tests)
         else:
           raise NameError('Module "%s" has no method "%s"' % (a[0], a[2]))
@@ -325,7 +325,10 @@ if __name__ == "__main__":
           testCaseClass = getattr(module, a[1])
           if hasattr(testCaseClass, a[2]):
             testcase = getattr(testCaseClass, a[2])
-            tests = finder.find(testcase, testcase.__name__)
+            name = getattr(testcase, "__name__", None)
+            if not name:
+              name = testCaseClass.__name__
+            tests = finder.find(testcase, name)
             runner.addTests(tests)
           else:
             raise NameError('Class "%s" has no function "%s"' % (testCaseClass, a[2]))
