@@ -61,14 +61,10 @@ public class YouTrackCompletionContributor extends CompletionContributor {
       result.addAllElements(ContainerUtil.map(suggestions, new Function<CompletionItem, LookupElement>() {
         @Override
         public LookupElement fun(CompletionItem item) {
-          LookupElementBuilder builder = LookupElementBuilder.create(item, item.getOption())
+          return LookupElementBuilder.create(item, item.getOption())
             .withTypeText(item.getDescription(), true)
-            .withInsertHandler(INSERT_HANDLER);
-          // doesn't work actually TODO: write about it to guys in YouTrack
-          //if (item.getStyleClass().equals("keyword")) {
-          //  builder = builder.bold();
-          //}
-          return builder;
+            .withInsertHandler(INSERT_HANDLER)
+            .withBoldness(item.getStyleClass().equals("keyword"));
         }
       }));
     }
