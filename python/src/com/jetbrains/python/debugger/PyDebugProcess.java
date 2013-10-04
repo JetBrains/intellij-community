@@ -635,8 +635,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   private void setKillingStrategy() {
     if (myProcessHandler instanceof PythonProcessHandler) {
-      ((PythonProcessHandler)myProcessHandler)
-        .setShouldTryToKillSoftly(false);    //while process is suspended it can't terminate softly,
+      ((PythonProcessHandler)myProcessHandler).setShouldKillProcessSoftly(false);
+      //while process is suspended it can't terminate softly,
       //multiple processes in debug mode also can not terminate properly
       //so its better to kill all the tree in a hard way
     }

@@ -11,23 +11,12 @@ import java.nio.charset.Charset;
  * @author traff
  */
 public class PythonProcessHandler extends KillableColoredProcessHandler {
-  private boolean myShouldTryToKillSoftly = true;
-
   protected PythonProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine) {
     super(process, commandLine.getCommandLineString());
   }
 
   public PythonProcessHandler(Process process, String commandLine, @NotNull Charset charset) {
     super(process, commandLine, charset);
-  }
-
-  public void setShouldTryToKillSoftly(boolean shouldTryToKillSoftly) {
-    myShouldTryToKillSoftly = shouldTryToKillSoftly;
-  }
-
-  @Override
-  protected boolean shouldKillProcessSoftly() {
-    return myShouldTryToKillSoftly;
   }
 
   @Override
