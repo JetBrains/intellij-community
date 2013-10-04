@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,7 @@ import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.javadoc.JavadocManager;
 import com.intellij.psi.javadoc.JavadocTagInfo;
 import org.jetbrains.annotations.NotNull;
@@ -41,12 +38,12 @@ public class JavadocManagerImpl implements JavadocManager {
   public JavadocManagerImpl(Project project) {
     myInfos = new ArrayList<JavadocTagInfo>();
 
-    myInfos.add(new SimpleDocTagInfo("author", PsiClass.class, false, LanguageLevel.JDK_1_3));
+    myInfos.add(new SimpleDocTagInfo("author", PsiClass.class, PsiPackage.class, LanguageLevel.JDK_1_3));
     myInfos.add(new SimpleDocTagInfo("deprecated", PsiElement.class, false, LanguageLevel.JDK_1_3));
     myInfos.add(new SimpleDocTagInfo("serialData", PsiMethod.class, false, LanguageLevel.JDK_1_3));
     myInfos.add(new SimpleDocTagInfo("serialField", PsiField.class, false, LanguageLevel.JDK_1_3));
-    myInfos.add(new SimpleDocTagInfo("since", PsiElement.class, false, LanguageLevel.JDK_1_3));
-    myInfos.add(new SimpleDocTagInfo("version", PsiClass.class, false, LanguageLevel.JDK_1_3));
+    myInfos.add(new SimpleDocTagInfo("since", PsiElement.class, PsiPackage.class, LanguageLevel.JDK_1_3));
+    myInfos.add(new SimpleDocTagInfo("version", PsiClass.class, PsiPackage.class, LanguageLevel.JDK_1_3));
 
     myInfos.add(new SimpleDocTagInfo("docRoot", PsiElement.class, true, LanguageLevel.JDK_1_3));
     myInfos.add(new SimpleDocTagInfo("inheritDoc", PsiElement.class, true, LanguageLevel.JDK_1_4));
