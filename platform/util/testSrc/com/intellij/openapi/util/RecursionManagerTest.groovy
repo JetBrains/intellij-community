@@ -164,18 +164,35 @@ public class RecursionManagerTest extends TestCase {
   }
 
   public void "test exception from hashCode on exiting"() {
-    boolean fail = false
-    Object key = new Object() {
-      @Override
-      int hashCode() {
-        if (fail) {
-          throw new RuntimeException()
+    def key1 = new ThrowingKey()
+    def key2 = new ThrowingKey()
+    def key3 = new ThrowingKey()
+    prevent(key1) {
+      prevent(key2) {
+        prevent(key3) {
+          key1.fail = key2.fail = key3.fail = true
         }
-        return super.hashCode()
       }
     }
-    prevent(key) {
-      fail = true
+  }
+
+  private static class ThrowingKey {
+    boolean fail = false
+
+    @Override
+    int hashCode() {
+      if (fail) {
+        throw new RuntimeException()
+      }
+      return 0
+    }
+
+    @Override
+    boolean equals(Object obj) {
+      if (fail) {
+        throw new RuntimeException()
+      }
+      return super.equals(obj)
     }
   }
 
