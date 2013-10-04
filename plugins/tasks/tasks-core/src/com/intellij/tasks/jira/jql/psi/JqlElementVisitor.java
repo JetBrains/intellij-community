@@ -10,37 +10,71 @@ import com.intellij.tasks.jira.jql.psi.impl.JqlSubClauseImpl;
  */
 public abstract class JqlElementVisitor extends PsiElementVisitor {
 
-  public abstract void visitJqlQuery(JqlQuery query);
+  public void visitJqlQuery(JqlQuery query) {
+    visitElement(query);
+  }
 
-  public abstract void visitJqlOrderBy(JqlOrderBy orderBy);
+  public void visitJqlOrderBy(JqlOrderBy orderBy){
+    visitElement(orderBy);
+  }
 
-  public abstract void visitJqlOrClause(JqlOrClause clause);
+  public void visitJqlOrClause(JqlOrClause clause) {
+    visitElement(clause);
+  }
 
-  public abstract void visitJqlAndClause(JqlAndClause clause);
+  public void visitJqlAndClause(JqlAndClause clause) {
+    visitElement(clause);
+  }
 
-  public abstract void visitJqlNotClause(JqlNotClause clause);
+  public void visitJqlNotClause(JqlNotClause clause) {
+    visitElement(clause);
+  }
 
-  public abstract void visitJqlSimpleClause(JqlSimpleClause clause);
+  public void visitJqlSimpleClause(JqlSimpleClause clause) {
+    visitElement(clause);
+  }
 
-  public abstract void visitJqlWasClause(JqlWasClause clause);
+  public void visitJqlWasClause(JqlWasClause clause) {
+    visitJqlSimpleClause(clause);
+  }
 
-  public abstract void visitJqlChangedClause(JqlChangedClause clause);
+  public void visitJqlChangedClause(JqlChangedClause clause) {
+    visitElement(clause);
+  }
 
-  public abstract void visitJqlIdentifier(JqlIdentifier identifier);
+  public void visitJqlIdentifier(JqlIdentifier identifier) {
+    visitElement(identifier);
+  }
 
-  public abstract void visitJqlLiteral(JqlLiteral literal);
+  public void visitJqlLiteral(JqlLiteral literal) {
+    visitElement(literal);
+  }
 
-  public abstract void visitEmptyValue(JqlEmptyValue emptyValue);
+  public void visitEmptyValue(JqlEmptyValue emptyValue) {
+    visitElement(emptyValue);
+  }
 
-  public abstract void visitJqlFunctionCall(JqlFunctionCall call);
+  public void visitJqlFunctionCall(JqlFunctionCall call) {
+    visitElement(call);
+  }
 
-  public abstract void visitJqlList(JqlList list);
+  public void visitJqlList(JqlList list) {
+    visitElement(list);
+  }
 
-  public abstract void visitJqlSortKey(JqlSortKey key);
+  public void visitJqlSortKey(JqlSortKey key) {
+    visitElement(key);
+  }
 
-  public abstract void visitJqlArgumentList(JqlArgumentListImpl list);
+  public void visitJqlArgumentList(JqlArgumentListImpl list) {
+    visitElement(list);
+  }
 
-  public abstract void visitJqlHistoryPredicate(JqlHistoryPredicateImpl predicate);
+  public void visitJqlHistoryPredicate(JqlHistoryPredicateImpl predicate) {
+    visitElement(predicate);
+  }
 
-  public abstract void visitJqlSubClause(JqlSubClauseImpl subClause);
+  public void visitJqlSubClause(JqlSubClauseImpl subClause) {
+    visitElement(subClause);
+  }
 }
