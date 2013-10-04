@@ -191,7 +191,7 @@ public class InferenceSession {
         for (int i = 0; i < args.length; i++) {
           PsiType parameterType = getParameterType(parameters, args, i, mySiteSubstitutor);
           if (args[i] != null) {
-            if (pair == null || !isPertinentToApplicability(args[i], pair.first, mySiteSubstitutor, parameterType, this)) {
+            if (pair == null || !isPertinentToApplicability(args[i], pair.first, mySiteSubstitutor, parameterType, this) || !isProperType(LambdaUtil.getFunctionalInterfaceReturnType(parameterType))) {
               additionalConstraints.add(new ExpressionCompatibilityConstraint(args[i], parameterType));
             }
             additionalConstraints.add(new CheckedExceptionCompatibilityConstraint(args[i], parameterType));
@@ -527,6 +527,7 @@ public class InferenceSession {
             boolean dependsOnOutput = false;
             for (InferenceVariable inputVariable : inputVariables) {
               final Set<InferenceVariable> dependencies = inputVariable.getDependencies(this);
+              dependencies.add(inputVariable);
               dependencies.retainAll(outputVariables);
               if (!dependencies.isEmpty()) {
                 dependsOnOutput = true;
