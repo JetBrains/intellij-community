@@ -49,17 +49,17 @@ public class FileSystemUtil {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.io.FileSystemUtil");
 
-  private interface Mediator {
+  private abstract static class Mediator {
     @Nullable
-    FileAttributes getAttributes(@NotNull String path) throws Exception;
+    protected abstract FileAttributes getAttributes(@NotNull String path) throws Exception;
 
     @Nullable
-    String resolveSymLink(@NotNull String path) throws Exception;
+    protected abstract String resolveSymLink(@NotNull String path) throws Exception;
 
-    void setPermissions(@NotNull String path, int permissions) throws Exception;
+    protected boolean clonePermissions(@NotNull String source, @NotNull String target) throws Exception { return false; }
 
     @NotNull
-    String getName();
+    private String getName() { return getClass().getSimpleName().replace("MediatorImpl", ""); }
   }
 
   @NotNull
@@ -101,23 +101,13 @@ public class FileSystemUtil {
       "Failed to load filesystem access layer (" + SystemInfo.OS_NAME + ", " + SystemInfo.JAVA_VERSION + ", " + forceUseNio2 + ")";
     LOG.error(message, error);
 
-    return new StandardMediatorImpl();
+    return new FallbackMediatorImpl();
   }
 
   private static Mediator check(final Mediator mediator) throws Exception {
     final String quickTestPath = SystemInfo.isWindows ? "C:\\" :  "/";
     mediator.getAttributes(quickTestPath);
     return mediator;
-  }
-
-  @TestOnly
-  static void resetMediator() {
-    ourMediator = getMediator();
-  }
-
-  @TestOnly
-  static String getMediatorName() {
-    return ourMediator.getName();
   }
 
   private FileSystemUtil() { }
@@ -180,34 +170,42 @@ public class FileSystemUtil {
     return resolveSymLink(file.getAbsolutePath());
   }
 
+  /** @deprecated use {@link #clonePermissions(String, String)} (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
   public static int getPermissions(@NotNull String path) {
-    final FileAttributes attributes = getAttributes(path);
-    return attributes != null ? attributes.permissions : -1;
+    return -1;
   }
 
+  /** @deprecated use {@link #clonePermissions(String, String)} (to remove in IDEA 14) */
   @SuppressWarnings("UnusedDeclaration")
   public static int getPermissions(@NotNull File file) {
-    return getPermissions(file.getAbsolutePath());
+    return -1;
   }
 
-  public static void setPermissions(@NotNull String path, int permissions) {
-    if (SystemInfo.isUnix) {
-      try {
-        ourMediator.setPermissions(path, permissions);
-      }
-      catch (Exception e) {
-        LOG.warn(e);
-      }
+  /** @deprecated use {@link #clonePermissions(String, String)} (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static void setPermissions(@NotNull String path, int permissions) { }
+
+  /** @deprecated use {@link #clonePermissions(String, String)} (to remove in IDEA 14) */
+  @SuppressWarnings({"UnusedDeclaration", "deprecation"})
+  public static void setPermissions(@NotNull File file, int permissions) { }
+
+  /**
+   * Gives the second file permissions of the first one if possible; returns true if succeed.
+   * Will do nothing on Windows.
+   */
+  public static boolean clonePermissions(@NotNull String source, @NotNull String target) {
+    try {
+      return ourMediator.clonePermissions(source, target);
+    }
+    catch (Exception e) {
+      LOG.warn(e);
+      return false;
     }
   }
 
-  public static void setPermissions(@NotNull File file, int permissions) {
-    setPermissions(file.getAbsolutePath(), permissions);
-  }
 
-
-  @SuppressWarnings("OctalInteger")
-  private static class Nio2MediatorImpl implements Mediator {
+  private static class Nio2MediatorImpl extends Mediator {
     private final Object myDefaultFileSystem;
     private final Method myGetPath;
     private final Method myIsSymbolicLink;
@@ -216,7 +214,6 @@ public class FileSystemUtil {
     private final Method myReadAttributes;
     private final Method mySetAttribute;
     private final Method myToMillis;
-    private final String mySchema;
 
     private Nio2MediatorImpl() throws Exception {
       if (Patches.USE_REFLECTION_TO_ACCESS_JDK7) {
@@ -244,21 +241,19 @@ public class FileSystemUtil {
       final Class<?> fileTimeClass = Class.forName("java.nio.file.attribute.FileTime");
       myToMillis = fileTimeClass.getMethod("toMillis");
       myToMillis.setAccessible(true);
-
-      mySchema = SystemInfo.isWindows ? "dos:*" : "posix:*";
       }
     }
 
     @Override
-    public FileAttributes getAttributes(@NotNull final String path) throws Exception {
+    protected FileAttributes getAttributes(@NotNull final String path) throws Exception {
       try {
         final Object pathObj = myGetPath.invoke(myDefaultFileSystem, path, ArrayUtil.EMPTY_STRING_ARRAY);
 
-        Map attributes = (Map)myReadAttributes.invoke(null, pathObj, mySchema, myNoFollowLinkOptions);
+        Map attributes = (Map)myReadAttributes.invoke(null, pathObj, "dos:*", myNoFollowLinkOptions);
         final boolean isSymbolicLink = (Boolean)attributes.get("isSymbolicLink");
         if (isSymbolicLink) {
           try {
-            attributes = (Map)myReadAttributes.invoke(null, pathObj, mySchema, myLinkOptions);
+            attributes = (Map)myReadAttributes.invoke(null, pathObj, "dos:*", myLinkOptions);
           }
           catch (InvocationTargetException e) {
             final Throwable cause = e.getCause();
@@ -272,15 +267,9 @@ public class FileSystemUtil {
         final boolean isOther = (Boolean)attributes.get("isOther");
         final long size = (Long)attributes.get("size");
         final long lastModified = (Long)myToMillis.invoke(attributes.get("lastModifiedTime"));
-        if (SystemInfo.isWindows) {
-          final boolean isHidden = (Boolean)attributes.get("hidden");
-          final boolean isWritable = !(Boolean)attributes.get("readonly");
-          return new FileAttributes(isDirectory, isOther, isSymbolicLink, isHidden, size, lastModified, isWritable);
-        }
-        else {
-          final int permissions = decodePermissions(attributes.get("permissions"));
-          return new FileAttributes(isDirectory, isOther, isSymbolicLink, size, lastModified, permissions);
-        }
+        final boolean isHidden = (Boolean)attributes.get("hidden");
+        final boolean isWritable = !(Boolean)attributes.get("readonly");
+        return new FileAttributes(isDirectory, isOther, isSymbolicLink, isHidden, size, lastModified, isWritable);
       }
       catch (InvocationTargetException e) {
         final Throwable cause = e.getCause();
@@ -294,7 +283,7 @@ public class FileSystemUtil {
     }
 
     @Override
-    public String resolveSymLink(@NotNull final String path) throws Exception {
+    protected String resolveSymLink(@NotNull final String path) throws Exception {
       if (!new File(path).exists()) return null;
       final Object pathObj = myGetPath.invoke(myDefaultFileSystem, path, ArrayUtil.EMPTY_STRING_ARRAY);
       final Method toRealPath = pathObj.getClass().getMethod("toRealPath", myLinkOptions.getClass());
@@ -303,96 +292,43 @@ public class FileSystemUtil {
     }
 
     @Override
-    public void setPermissions(@NotNull final String path, final int permissions) throws Exception {
-      final Object pathObj = myGetPath.invoke(myDefaultFileSystem, path, ArrayUtil.EMPTY_STRING_ARRAY);
-      final Object attribute = encodePermissions(permissions);
-      if (attribute != null) {
-        mySetAttribute.invoke(null, pathObj, "posix:permissions", attribute, myLinkOptions);
-      }
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return "NIO2";
-    }
-
-    private static final Map<String, Integer> ATTRIBUTES_MAP;
-    static {
-      ATTRIBUTES_MAP = new HashMap<String, Integer>();
-      ATTRIBUTES_MAP.put("OWNER_READ", FileAttributes.OWNER_READ);
-      ATTRIBUTES_MAP.put("OWNER_WRITE", FileAttributes.OWNER_WRITE);
-      ATTRIBUTES_MAP.put("OWNER_EXECUTE", FileAttributes.OWNER_EXECUTE);
-      ATTRIBUTES_MAP.put("GROUP_READ", FileAttributes.GROUP_READ);
-      ATTRIBUTES_MAP.put("GROUP_WRITE", FileAttributes.GROUP_WRITE);
-      ATTRIBUTES_MAP.put("GROUP_EXECUTE", FileAttributes.GROUP_EXECUTE);
-      ATTRIBUTES_MAP.put("OTHERS_READ", FileAttributes.OTHERS_READ);
-      ATTRIBUTES_MAP.put("OTHERS_WRITE", FileAttributes.OTHERS_WRITE);
-      ATTRIBUTES_MAP.put("OTHERS_EXECUTE", FileAttributes.OTHERS_EXECUTE);
-    }
-
-    @FileAttributes.Permissions
-    private static int decodePermissions(final Object o) {
-      if (!(o instanceof Collection)) return -1;
-
-      int value = 0;
-      for (Object attr : (Collection)o) {
-        final Integer bit = ATTRIBUTES_MAP.get(attr.toString());
-        if (bit != null) value |= bit;
-      }
-      //noinspection MagicConstant
-      return value;
-    }
-
-    @Nullable
-    @SuppressWarnings("unchecked")
-    private static Object encodePermissions(final int value) {
-      try {
-        final Class aClass = Class.forName("java.nio.file.attribute.PosixFilePermission");
-        final Set values = new HashSet();
-        for (Map.Entry<String, Integer> entry : ATTRIBUTES_MAP.entrySet()) {
-          if ((value & entry.getValue()) > 0) {
-            final String name = entry.getKey();
-            values.add(Enum.valueOf(aClass, name));
+    protected boolean clonePermissions(@NotNull String source, @NotNull String target) throws Exception {
+      // todo: check ownership
+      if (SystemInfo.isUnix) {
+        Object pathObj = myGetPath.invoke(myDefaultFileSystem, source, ArrayUtil.EMPTY_STRING_ARRAY);
+        Map attributes = (Map)myReadAttributes.invoke(null, pathObj, "posix:permissions", myLinkOptions);
+        if (attributes != null) {
+          Object permissions = attributes.get("permissions");
+          if (permissions instanceof Collection) {
+            mySetAttribute.invoke(null, pathObj, "posix:permissions", permissions, myLinkOptions);
+            return true;
           }
         }
-        return values;
       }
-      catch (Exception ignore) { }
 
-      return null;
+      return false;
     }
   }
 
 
-  private static class IdeaWin32MediatorImpl implements Mediator {
+  private static class IdeaWin32MediatorImpl extends Mediator {
     private IdeaWin32 myInstance = IdeaWin32.getInstance();
 
     @Override
-    public FileAttributes getAttributes(@NotNull final String path) throws Exception {
+    protected FileAttributes getAttributes(@NotNull final String path) throws Exception {
       final FileInfo fileInfo = myInstance.getInfo(path);
       return fileInfo != null ? fileInfo.toFileAttributes() : null;
     }
 
     @Override
-    public String resolveSymLink(@NotNull final String path) throws Exception {
+    protected String resolveSymLink(@NotNull final String path) throws Exception {
       return myInstance.resolveSymLink(path);
-    }
-
-    @Override
-    public void setPermissions(@NotNull final String path, final int permissions) throws Exception {
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return "IdeaWin32";
     }
   }
 
 
   // thanks to SVNKit for the idea
-  private static class JnaUnixMediatorImpl implements Mediator {
+  private static class JnaUnixMediatorImpl extends Mediator {
     @SuppressWarnings({"OctalInteger", "SpellCheckingInspection"})
     private interface LibC extends Library {
       // from stat(2)
@@ -434,7 +370,7 @@ public class FileSystemUtil {
     }
 
     @Override
-    public FileAttributes getAttributes(@NotNull final String path) throws Exception {
+    protected FileAttributes getAttributes(@NotNull final String path) throws Exception {
       Memory buffer = new Memory(256);
       int res = SystemInfo.isLinux ? myLibC.__lxstat64(0, path, buffer) : myLibC.lstat(path, buffer);
       if (res != 0) return null;
@@ -455,12 +391,12 @@ public class FileSystemUtil {
       long mTime1 = SystemInfo.is32Bit ? buffer.getInt(myTimeOffset) : buffer.getLong(myTimeOffset);
       long mTime2 = myCoarseTs ? 0 : SystemInfo.is32Bit ? buffer.getInt(myTimeOffset + 4) : buffer.getLong(myTimeOffset + 8);
       long mTime = mTime1 * 1000 + mTime2 / 1000000;
-      @FileAttributes.Permissions int permissions = mode & LibC.PERM_MASK;
-      return new FileAttributes(isDirectory, isSpecial, isSymlink, size, mTime, permissions);
+      boolean writable = (mode & 0444) != 0;
+      return new FileAttributes(isDirectory, isSpecial, isSymlink, false, size, mTime, writable);
     }
 
     @Override
-    public String resolveSymLink(@NotNull final String path) throws Exception {
+    protected String resolveSymLink(@NotNull final String path) throws Exception {
       try {
         return new File(path).getCanonicalPath();
       }
@@ -475,19 +411,21 @@ public class FileSystemUtil {
     }
 
     @Override
-    public void setPermissions(@NotNull final String path, final int permissions) throws Exception {
-      myLibC.chmod(path, permissions & LibC.PERM_MASK);
-    }
+    protected boolean clonePermissions(@NotNull String source, @NotNull String target) throws Exception {
+      // todo: check ownership
+      Memory buffer = new Memory(256);
+      int res = SystemInfo.isLinux ? myLibC.__xstat64(0, source, buffer) : myLibC.stat(source, buffer);
+      if (res == 0) {
+        int permissions = (SystemInfo.isLinux ? buffer.getInt(myModeOffset) : buffer.getShort(myModeOffset)) & LibC.PERM_MASK;
+        return myLibC.chmod(target, permissions) == 0;
+      }
 
-    @NotNull
-    @Override
-    public String getName() {
-      return "JnaUnix";
+      return false;
     }
   }
 
 
-  private static class StandardMediatorImpl implements Mediator {
+  private static class FallbackMediatorImpl extends Mediator {
     // from java.io.FileSystem
     private static final int BA_REGULAR   = 0x02;
     private static final int BA_DIRECTORY = 0x04;
@@ -496,7 +434,7 @@ public class FileSystemUtil {
     private final Object myFileSystem;
     private final Method myGetBooleanAttributes;
 
-    private StandardMediatorImpl() {
+    private FallbackMediatorImpl() {
       Object fileSystem;
       Method getBooleanAttributes;
       try {
@@ -516,7 +454,7 @@ public class FileSystemUtil {
     }
 
     @Override
-    public FileAttributes getAttributes(@NotNull final String path) throws Exception {
+    protected FileAttributes getAttributes(@NotNull final String path) throws Exception {
       final File file = new File(path);
       if (myFileSystem != null) {
         final int flags = (Integer)myGetBooleanAttributes.invoke(myFileSystem, file);
@@ -540,18 +478,18 @@ public class FileSystemUtil {
     }
 
     @Override
-    public String resolveSymLink(@NotNull final String path) throws Exception {
+    protected String resolveSymLink(@NotNull final String path) throws Exception {
       return new File(path).getCanonicalPath();
     }
+  }
 
-    @Override
-    public void setPermissions(@NotNull final String path, final int permissions) throws Exception {
-    }
+  @TestOnly
+  static void resetMediator() {
+    ourMediator = getMediator();
+  }
 
-    @NotNull
-    @Override
-    public String getName() {
-      return "fallback";
-    }
+  @TestOnly
+  static String getMediatorName() {
+    return ourMediator.getName();
   }
 }

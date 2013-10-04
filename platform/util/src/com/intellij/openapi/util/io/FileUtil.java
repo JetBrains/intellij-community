@@ -484,11 +484,7 @@ public class FileUtil extends FileUtilRt {
     }
 
     if (SystemInfo.isUnix && fromFile.canExecute()) {
-      final int oldPermissions = FileSystemUtil.getPermissions(fromFile);
-      final int newPermissions = FileSystemUtil.getPermissions(toFile);
-      if (oldPermissions != -1 && newPermissions != -1) {
-        FileSystemUtil.setPermissions(toFile, oldPermissions | newPermissions);
-      }
+      FileSystemUtil.clonePermissions(fromFile.getPath(), toFile.getPath());
     }
   }
 

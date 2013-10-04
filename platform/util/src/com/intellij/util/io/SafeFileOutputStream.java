@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,8 +114,6 @@ public class SafeFileOutputStream extends OutputStream {
                                                  myTargetFile, myBackDoorFile.getName()));
     }
 
-    final int permissions = myPreserveAttributes ? FileSystemUtil.getPermissions(myTargetFile) : -1;
-
     final File oldFile = new File(myTargetFile.getParent(), myTargetFile.getName() + EXTENSION_OLD);
     try {
       FileUtil.rename(myTargetFile, oldFile);
@@ -135,8 +133,8 @@ public class SafeFileOutputStream extends OutputStream {
                                                  myTargetFile, oldFile.getName(), myBackDoorFile.getName()));
     }
 
-    if (permissions != -1) {
-      FileSystemUtil.setPermissions(myTargetFile, permissions);
+    if (myPreserveAttributes) {
+      FileSystemUtil.clonePermissions(oldFile.getPath(), myTargetFile.getPath());
     }
 
     if (!FileUtil.delete(oldFile)) {
