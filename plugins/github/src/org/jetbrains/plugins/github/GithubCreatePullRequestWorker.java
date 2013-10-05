@@ -1,11 +1,13 @@
 package org.jetbrains.plugins.github;
 
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,6 +18,7 @@ import com.intellij.util.Function;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import git4idea.DialogManager;
 import git4idea.GitCommit;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
@@ -222,7 +225,7 @@ public class GithubCreatePullRequestWorker {
       }
     };
     GithubSelectForkDialog dialog = new GithubSelectForkDialog(myProject, info.getForks(), getForkPath);
-    dialog.show();
+    DialogManager.show(dialog);
     if (!dialog.isOK()) {
       return null;
     }
