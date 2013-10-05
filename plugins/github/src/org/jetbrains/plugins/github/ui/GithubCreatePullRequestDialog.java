@@ -29,6 +29,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
+import java.util.Collections;
 
 /**
  * @author Aleksey Pivovarov
@@ -102,6 +103,13 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
     myGithubCreatePullRequestPanel.setForkName(forkPath.getFullName());
   }
 
+  @Override
+  protected void doOKAction() {
+    super.doOKAction();
+    myProjectSettings.setCreatePullRequestDefaultBranch(getTargetBranch());
+    myWorker.performAction(getRequestTitle(), getDescription(), getTargetBranch());
+  }
+
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
@@ -139,13 +147,6 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
     return myGithubCreatePullRequestPanel.getBranch();
   }
 
-  @Override
-  protected void doOKAction() {
-    super.doOKAction();
-    myProjectSettings.setCreatePullRequestDefaultBranch(getTargetBranch());
-    myWorker.performAction(getTitle(), getDescription(), getTargetBranch());
-  }
-
   @Nullable
   @Override
   protected ValidationInfo doValidate() {
@@ -163,6 +164,11 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
 
   @TestOnly
   public void setBranch(String branch) {
-    myGithubCreatePullRequestPanel.setSelectedBranch(branch);
+    myGithubCreatePullRequestPanel.setBranches(Collections.singleton(branch));
+  }
+
+  @TestOnly
+  public void createPullRequest() {
+    myWorker.performAction(getRequestTitle(), getDescription(), getTargetBranch());
   }
 }
