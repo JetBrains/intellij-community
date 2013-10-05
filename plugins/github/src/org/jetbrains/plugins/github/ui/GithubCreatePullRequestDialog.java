@@ -171,4 +171,14 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
   public void createPullRequest() {
     myWorker.performAction(getRequestTitle(), getDescription(), getTargetBranch());
   }
+
+  @TestOnly
+  public void initTarget(@NotNull GithubFullPath forkPath) {
+    GithubCreatePullRequestWorker.GithubTargetInfo forkInfo = myWorker.setTarget(forkPath);
+    if (forkInfo == null) {
+      doCancelAction();
+      return;
+    }
+    myGithubCreatePullRequestPanel.setDiffEnabled(forkInfo.isCanShowDiff());
+  }
 }

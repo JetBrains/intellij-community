@@ -22,8 +22,7 @@ import com.intellij.notification.NotificationType;
  */
 public class GithubCreatePullRequestTest extends GithubCreatePullRequestTestBase {
   public void testSimple() throws Exception {
-    registerDefaultCreatePullRequestDialogHandler("master");
-    setDefaultForkUser(myLogin1);
+    registerDefaultCreatePullRequestDialogHandler("master", myLogin1);
 
     GithubCreatePullRequestAction.createPullRequest(myProject, myProjectRoot);
 
@@ -33,8 +32,7 @@ public class GithubCreatePullRequestTest extends GithubCreatePullRequestTestBase
   }
 
   public void testParent() throws Exception {
-    registerDefaultCreatePullRequestDialogHandler("file2");
-    setDefaultForkUser(myLogin2);
+    registerDefaultCreatePullRequestDialogHandler("file2", myLogin2);
     addRemote(myLogin2);
 
     GithubCreatePullRequestAction.createPullRequest(myProject, myProjectRoot);

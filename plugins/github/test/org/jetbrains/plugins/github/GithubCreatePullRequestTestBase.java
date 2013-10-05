@@ -72,19 +72,17 @@ public abstract class GithubCreatePullRequestTestBase extends GithubTest {
     }
   }
 
-  protected void registerDefaultCreatePullRequestDialogHandler(final String branch) {
+  protected void registerDefaultCreatePullRequestDialogHandler(@NotNull final String branch, @NotNull final String user) {
     myDialogManager.registerDialogHandler(GithubCreatePullRequestDialog.class, new TestDialogHandler<GithubCreatePullRequestDialog>() {
       @Override
       public int handleDialog(GithubCreatePullRequestDialog dialog) {
         dialog.setRequestTitle(BRANCH_NAME);
         dialog.setBranch(branch);
+        dialog.initTarget(new GithubFullPath(user, PROJECT_NAME));
+        dialog.createPullRequest();
         return DialogWrapper.OK_EXIT_CODE;
       }
     });
-  }
-
-  protected void setDefaultForkUser(@NotNull String user) {
-    GithubProjectSettings.getInstance(myProject).setCreatePullRequestDefaultRepo(new GithubFullPath(user, PROJECT_NAME));
   }
 
   protected void cloneRepo() {
