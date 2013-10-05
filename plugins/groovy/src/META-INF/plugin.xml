@@ -986,14 +986,6 @@
                      displayName="Method parameter naming convention"
                      groupName="Naming Conventions" enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.naming.GroovyParameterNamingConventionInspection"/>
-    <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyGetterCallCanBePropertyAccess"
-                     displayName="Getter call can be property access"
-                     groupName="GPath inspections" enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.gpath.GroovyGetterCallCanBePropertyAccessInspection"/>
-    <localInspection language="Groovy" groupPath="Groovy" shortName="GroovySetterCallCanBePropertyAccess"
-                     displayName="Setter call can be property access"
-                     groupName="GPath inspections" enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.gpath.GroovySetterCallCanBePropertyAccessInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyMapGetCanBeKeyedAccess"
                      displayName="Call to Map.get can be keyed access"
                      groupName="GPath inspections" enabledByDefault="false" level="WARNING"

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
@@ -132,7 +133,7 @@ public class JavaStylePropertiesUtil {
     return false;
   }
 
-  private static boolean isGetterInvocation(GrMethodCall call) {
+  private static boolean isGetterInvocation(@NotNull GrMethodCall call) {
     GrExpression expr = call.getInvokedExpression();
     if (!(expr instanceof GrReferenceExpression)) return false;
 
