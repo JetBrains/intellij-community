@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import git4idea.DialogManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -86,16 +85,16 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
   }
 
   private void setTarget(@NotNull GithubFullPath forkPath) {
-    Collection<String> branches = myWorker.setTarget(forkPath);
-    updateBranches(branches, forkPath);
-  }
-
-  private void updateBranches(@Nullable Collection<String> branches, @NotNull GithubFullPath forkPath) {
-    if (branches == null) {
+    GithubCreatePullRequestWorker.GithubTargetInfo forkInfo = myWorker.setTarget(forkPath);
+    if (forkInfo == null) {
       doCancelAction();
       return;
     }
+    myGithubCreatePullRequestPanel.setDiffEnabled(forkInfo.isCanShowDiff());
+    updateBranches(forkInfo.getBranches(), forkPath);
+  }
 
+  private void updateBranches(@NotNull Collection<String> branches, @NotNull GithubFullPath forkPath) {
     myGithubCreatePullRequestPanel.setBranches(branches);
 
     String configBranch = GithubProjectSettings.getInstance(myProject).getCreatePullRequestDefaultBranch();

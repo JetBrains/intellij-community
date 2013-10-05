@@ -137,7 +137,7 @@ public class GithubCreatePullRequestWorker {
   }
 
   @Nullable
-  public Collection<String> setTarget(@NotNull final GithubFullPath forkPath) {
+  public GithubTargetInfo setTarget(@NotNull final GithubFullPath forkPath) {
     try {
       GithubInfo info =
         GithubUtil.computeValueInModal(myProject, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubInfo, IOException>() {
@@ -161,13 +161,13 @@ public class GithubCreatePullRequestWorker {
             }
 
             // load available branches
-            List<String> repos = ContainerUtil.map(GithubApiUtil.getRepoBranches(myAuth, forkPath.getUser(), forkPath.getRepository()),
-                                                   new Function<GithubBranch, String>() {
-                                                     @Override
-                                                     public String fun(GithubBranch githubBranch) {
-                                                       return githubBranch.getName();
-                                                     }
-                                                   });
+            List<String> branches = ContainerUtil.map(GithubApiUtil.getRepoBranches(myAuth, forkPath.getUser(), forkPath.getRepository()),
+                                                      new Function<GithubBranch, String>() {
+                                                        @Override
+                                                        public String fun(GithubBranch githubBranch) {
+                                                          return githubBranch.getName();
+                                                        }
+                                                      });
 
             // fetch
             if (targetRemoteName != null) {
@@ -178,13 +178,13 @@ public class GithubCreatePullRequestWorker {
               }
             }
 
-            return new GithubInfo(repos, targetRemoteName);
+            return new GithubInfo(branches, targetRemoteName);
           }
         });
 
       myForkPath = forkPath;
       myTargetRemote = info.getTargetRemote();
-      return info.getBranches();
+      return new GithubTargetInfo(info.getBranches(), myTargetRemote != null);
     }
     catch (GithubAuthenticationCanceledException e) {
       return null;
@@ -457,6 +457,25 @@ public class GithubCreatePullRequestWorker {
     @NotNull
     public GithubRepo getSource() {
       return mySource;
+    }
+  }
+
+  public static class GithubTargetInfo {
+    @NotNull private final List<String> myBranches;
+    private final boolean myCanShowDiff;
+
+    private GithubTargetInfo(@NotNull List<String> branches, boolean canShowDiff) {
+      myBranches = branches;
+      myCanShowDiff = canShowDiff;
+    }
+
+    @NotNull
+    public List<String> getBranches() {
+      return myBranches;
+    }
+
+    public boolean isCanShowDiff() {
+      return myCanShowDiff;
     }
   }
 
