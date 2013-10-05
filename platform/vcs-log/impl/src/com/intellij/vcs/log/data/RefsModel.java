@@ -10,17 +10,16 @@ import java.util.*;
  * @author erokhins
  */
 public class RefsModel {
-  private final Collection<VcsRef> allRefs;
-  private final Set<Hash> trackedCommitHashes = new HashSet<Hash>();
 
-  public RefsModel(Collection<VcsRef> allRefs) {
-    this.allRefs = allRefs;
-    computeTrackedCommitHash();
-  }
+  @NotNull private final Collection<VcsRef> myRefs;
+  @NotNull private final Set<Hash> myRefHashes;
 
-  private void computeTrackedCommitHash() {
-    for (VcsRef ref : allRefs) {
-      trackedCommitHashes.add(ref.getCommitHash());
+  public RefsModel(@NotNull Collection<VcsRef> allRefs) {
+    myRefs = allRefs;
+
+    myRefHashes = new HashSet<Hash>();
+    for (VcsRef ref : myRefs) {
+      myRefHashes.add(ref.getCommitHash());
     }
   }
 
@@ -36,8 +35,8 @@ public class RefsModel {
   @NotNull
   public List<VcsRef> refsToCommit(@NotNull Hash hash) {
     List<VcsRef> refs = new ArrayList<VcsRef>();
-    if (trackedCommitHashes.contains(hash)) {
-      for (VcsRef ref : allRefs) {
+    if (myRefHashes.contains(hash)) {
+      for (VcsRef ref : myRefs) {
         if (ref.getCommitHash().equals(hash)) {
           refs.add(ref);
         }
@@ -47,14 +46,8 @@ public class RefsModel {
   }
 
   @NotNull
-  public Set<Hash> getTrackedCommitHashes() {
-    return Collections.unmodifiableSet(trackedCommitHashes);
-  }
-
-  @NotNull
   public Collection<VcsRef> getAllRefs() {
-    return Collections.unmodifiableCollection(allRefs);
+    return Collections.unmodifiableCollection(myRefs);
   }
-
 
 }
