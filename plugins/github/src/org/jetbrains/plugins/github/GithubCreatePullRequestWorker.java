@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableConvertor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -58,8 +57,8 @@ public class GithubCreatePullRequestWorker {
   @NotNull private final String myRemoteName;
   @NotNull private final String myRemoteUrl;
   @NotNull private final String myCurrentBranch;
+  @NotNull private final GithubAuthData myAuth;
 
-  private volatile GithubAuthData myAuth;
   private volatile GithubFullPath myForkPath;
   private volatile String myTargetRemote;
 
@@ -69,7 +68,8 @@ public class GithubCreatePullRequestWorker {
                                         @NotNull GithubFullPath path,
                                         @NotNull String remoteName,
                                         @NotNull String remoteUrl,
-                                        @NotNull String currentBranch) {
+                                        @NotNull String currentBranch,
+                                        @NotNull GithubAuthData auth) {
     myProject = project;
     myGit = git;
     myGitRepository = gitRepository;
@@ -77,6 +77,7 @@ public class GithubCreatePullRequestWorker {
     myRemoteName = remoteName;
     myRemoteUrl = remoteUrl;
     myCurrentBranch = currentBranch;
+    myAuth = auth;
   }
 
   @NotNull
@@ -114,7 +115,25 @@ public class GithubCreatePullRequestWorker {
       return null;
     }
 
-    return new GithubCreatePullRequestWorker(project, git, gitRepository, path, remoteName, remoteUrl, currentBranch.getName());
+    GithubAuthData auth;
+    try {
+      auth = GithubUtil
+        .computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubAuthData, IOException>() {
+          @Override
+          public GithubAuthData convert(ProgressIndicator indicator) throws IOException {
+            return GithubUtil.getValidAuthDataFromConfig(project, indicator);
+          }
+        });
+    }
+    catch (GithubAuthenticationCanceledException e) {
+      return null;
+    }
+    catch (IOException e) {
+      GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, e);
+      return null;
+    }
+
+    return new GithubCreatePullRequestWorker(project, git, gitRepository, path, remoteName, remoteUrl, currentBranch.getName(), auth);
   }
 
   @Nullable
@@ -142,21 +161,13 @@ public class GithubCreatePullRequestWorker {
             }
 
             // load available branches
-            final AtomicReference<List<String>> reposRef = new AtomicReference<List<String>>();
-            final GithubAuthData auth =
-              runAndGetValidAuthIfNeeded(myProject, myAuth, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
-                @Override
-                public void consume(GithubAuthData authData) throws IOException {
-                  reposRef.set(ContainerUtil.map(GithubApiUtil.getRepoBranches(authData, forkPath.getUser(), forkPath.getRepository()),
-                                                 new Function<GithubBranch, String>() {
-                                                   @Override
-                                                   public String fun(GithubBranch githubBranch) {
-                                                     return githubBranch.getName();
-                                                   }
-                                                 }));
-                }
-              });
-
+            List<String> repos = ContainerUtil.map(GithubApiUtil.getRepoBranches(myAuth, forkPath.getUser(), forkPath.getRepository()),
+                                                   new Function<GithubBranch, String>() {
+                                                     @Override
+                                                     public String fun(GithubBranch githubBranch) {
+                                                       return githubBranch.getName();
+                                                     }
+                                                   });
 
             // fetch
             if (targetRemoteName != null) {
@@ -167,11 +178,10 @@ public class GithubCreatePullRequestWorker {
               }
             }
 
-            return new GithubInfo(auth, reposRef.get(), targetRemoteName);
+            return new GithubInfo(repos, targetRemoteName);
           }
         });
 
-      myAuth = info.getAuthData();
       myForkPath = forkPath;
       myTargetRemote = info.getTargetRemote();
       return info.getBranches();
@@ -197,7 +207,6 @@ public class GithubCreatePullRequestWorker {
     if (info == null) {
       return null;
     }
-    myAuth = info.getAuthData();
 
     Convertor<String, GithubFullPath> getForkPath = new Convertor<String, GithubFullPath>() {
       @Nullable
@@ -224,15 +233,6 @@ public class GithubCreatePullRequestWorker {
     new Task.Backgroundable(myProject, "Creating pull request...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        if (myAuth == null) {
-          try {
-            myAuth = GithubUtil.getValidAuthData(myProject, indicator);
-          }
-          catch (GithubAuthenticationCanceledException e) {
-            return;
-          }
-        }
-
         LOG.info("Pushing current branch");
         indicator.setText("Pushing current branch...");
         GitCommandResult result = myGit.push(myGitRepository, myRemoteName, myRemoteUrl, myCurrentBranch, true);
@@ -332,7 +332,7 @@ public class GithubCreatePullRequestWorker {
   @Nullable
   private static GithubInfo2 getAvailableForksInModal(@NotNull final Project project,
                                                       @NotNull final GitRepository gitRepository,
-                                                      @Nullable final GithubAuthData auth,
+                                                      @NotNull final GithubAuthData auth,
                                                       @NotNull final GithubFullPath path) {
     return GithubUtil.computeValueInModal(project, "Access to GitHub", new Convertor<ProgressIndicator, GithubInfo2>() {
       @Nullable
@@ -342,32 +342,20 @@ public class GithubCreatePullRequestWorker {
           final Set<GithubFullPath> forks = new HashSet<GithubFullPath>();
 
           // GitHub
-          final AtomicReference<GithubRepo> sourceRef = new AtomicReference<GithubRepo>();
-          GithubAuthData authData =
-            runAndGetValidAuthIfNeeded(project, auth, indicator, new ThrowableConsumer<GithubAuthData, IOException>() {
-              @Override
-              public void consume(GithubAuthData authData) throws IOException {
-                GithubRepoDetailed repo = GithubApiUtil.getDetailedRepoInfo(authData, path.getUser(), path.getRepository());
-                forks.add(path);
-                if (repo.getParent() != null) {
-                  forks.add(repo.getParent().getFullPath());
-                }
-                if (repo.getSource() != null) {
-                  forks.add(repo.getSource().getFullPath());
-                }
-                if (repo.getSource() != null) {
-                  sourceRef.set(repo.getSource());
-                }
-                else {
-                  sourceRef.set(repo);
-                }
-              }
-            });
+          GithubRepoDetailed repo = GithubApiUtil.getDetailedRepoInfo(auth, path.getUser(), path.getRepository());
+          forks.add(path);
+          if (repo.getParent() != null) {
+            forks.add(repo.getParent().getFullPath());
+          }
+          if (repo.getSource() != null) {
+            forks.add(repo.getSource().getFullPath());
+          }
 
           // Git
           forks.addAll(getAvailableForksFromGit(gitRepository));
 
-          return new GithubInfo2(forks, authData, sourceRef.get());
+          GithubRepo forkTreeRoot = repo.getSource() == null ? repo : repo.getSource();
+          return new GithubInfo2(forks, forkTreeRoot);
         }
         catch (GithubAuthenticationCanceledException e) {
           return null;
@@ -432,27 +420,11 @@ public class GithubCreatePullRequestWorker {
     return null;
   }
 
-  @NotNull
-  public static GithubAuthData runAndGetValidAuthIfNeeded(@Nullable Project project,
-                                                          @Nullable GithubAuthData auth,
-                                                          @NotNull ProgressIndicator indicator,
-                                                          @NotNull ThrowableConsumer<GithubAuthData, IOException> task) throws IOException {
-    if (auth == null) {
-      return GithubUtil.runAndGetValidAuth(project, indicator, task);
-    }
-    else {
-      task.consume(auth);
-      return auth;
-    }
-  }
-
   private static class GithubInfo {
     @NotNull private final List<String> myBranches;
-    @NotNull private final GithubAuthData myAuthData;
     @Nullable private final String myTargetRemote;
 
-    private GithubInfo(@NotNull GithubAuthData authData, @NotNull List<String> repo, @Nullable String targetRemote) {
-      myAuthData = authData;
+    private GithubInfo(@NotNull List<String> repo, @Nullable String targetRemote) {
       myBranches = repo;
       myTargetRemote = targetRemote;
     }
@@ -460,11 +432,6 @@ public class GithubCreatePullRequestWorker {
     @NotNull
     public List<String> getBranches() {
       return myBranches;
-    }
-
-    @NotNull
-    public GithubAuthData getAuthData() {
-      return myAuthData;
     }
 
     @Nullable
@@ -475,23 +442,16 @@ public class GithubCreatePullRequestWorker {
 
   private static class GithubInfo2 {
     @NotNull private final Set<GithubFullPath> myForks;
-    @NotNull private final GithubAuthData myAuthData;
     @NotNull private final GithubRepo mySource;
 
-    private GithubInfo2(@NotNull Set<GithubFullPath> forks, @NotNull GithubAuthData authData, @NotNull GithubRepo source) {
+    private GithubInfo2(@NotNull Set<GithubFullPath> forks, @NotNull GithubRepo source) {
       myForks = forks;
-      myAuthData = authData;
       mySource = source;
     }
 
     @NotNull
     public Set<GithubFullPath> getForks() {
       return myForks;
-    }
-
-    @NotNull
-    public GithubAuthData getAuthData() {
-      return myAuthData;
     }
 
     @NotNull
