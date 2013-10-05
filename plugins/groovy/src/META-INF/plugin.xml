@@ -413,7 +413,8 @@
     <langCodeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyLanguageCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettingsProvider"/>
 
-    <typeHierarchyProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.lang.GroovyTypeHierarchyProvider"/>
+    <typeHierarchyProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.hierarchy.type.GroovyTypeHierarchyProvider"/>
+    <callHierarchyProvider language="Groovy" implementationClass="org.jetbrains.plugins.groovy.hierarchy.call.GrCallHierarchyProvider"/>
 
     <lang.unwrapDescriptor language="Groovy" implementationClass="org.jetbrains.plugins.groovy.unwrap.GroovyUnwrapDescriptor"/>
 
@@ -1458,6 +1459,7 @@
     <refactoring.pullUpHelperFactory language="Groovy"
                                      implementationClass="org.jetbrains.plugins.groovy.refactoring.memberPullUp.GrPullUpHelperFactory"/>
     <classTypePointerFactory implementation="org.jetbrains.plugins.groovy.lang.psi.impl.smartPointers.GrClassReferenceTypePointerFactory"/>
+    <hierarchy.referenceProcessor implementation="org.jetbrains.plugins.groovy.hierarchy.call.GrCallReferenceProcessor"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

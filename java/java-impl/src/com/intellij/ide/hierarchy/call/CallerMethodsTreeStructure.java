@@ -17,12 +17,11 @@ package com.intellij.ide.hierarchy.call;
 
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.HierarchyTreeStructure;
+import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -63,69 +62,15 @@ public final class CallerMethodsTreeStructure extends HierarchyTreeStructure {
     methodsToFind.add(method);
     ContainerUtil.addAll(methodsToFind, method.findDeepestSuperMethods());
 
-    final Map<PsiMember, CallHierarchyNodeDescriptor> methodToDescriptorMap = new HashMap<PsiMember, CallHierarchyNodeDescriptor>();
+    final Map<PsiMember, NodeDescriptor> methodToDescriptorMap = new HashMap<PsiMember, NodeDescriptor>();
     for (final PsiMethod methodToFind : methodsToFind) {
+      final JavaCallHierarchyData data = new JavaCallHierarchyData(originalClass, methodToFind, originalType, method, methodsToFind, descriptor, methodToDescriptorMap, myProject);
+
       MethodReferencesSearch.search(methodToFind, searchScope, true).forEach(new Processor<PsiReference>() {
         @Override
         public boolean process(final PsiReference reference) {
-          if (reference instanceof PsiReferenceExpression) {
-            final PsiExpression qualifier = ((PsiReferenceExpression)reference).getQualifierExpression();
-            if (qualifier instanceof PsiSuperExpression) { // filter super.foo() call inside foo() and similar cases (bug 8411)
-              final PsiClass superClass = PsiUtil.resolveClassInType(qualifier.getType());
-              if (originalClass.isInheritor(superClass, true)) {
-                return true;
-              }
-            }
-            if (qualifier != null && !methodToFind.hasModifierProperty(PsiModifier.STATIC)) {
-              final PsiType qualifierType = qualifier.getType();
-              if (qualifierType instanceof PsiClassType &&
-                  !TypeConversionUtil.isAssignable(qualifierType, originalType) &&
-                  methodToFind != method) {
-                final PsiClass psiClass = ((PsiClassType)qualifierType).resolve();
-                if (psiClass != null) {
-                  final PsiMethod callee = psiClass.findMethodBySignature(methodToFind, true);
-                  if (callee != null && !methodsToFind.contains(callee)) {
-                    // skip sibling methods
-                    return true;
-                  }
-                }
-              }
-            }
-          }
-          else {
-            if (!(reference instanceof PsiElement)) {
-              return true;
-            }
-
-            final PsiElement parent = ((PsiElement)reference).getParent();
-            if (parent instanceof PsiNewExpression) {
-              if (((PsiNewExpression)parent).getClassReference() != reference) {
-                return true;
-              }
-            }
-            else if (parent instanceof PsiAnonymousClass) {
-              if (((PsiAnonymousClass)parent).getBaseClassReference() != reference) {
-                return true;
-              }
-            }
-            else {
-              return true;
-            }
-          }
-
-          final PsiElement element = reference.getElement();
-          final PsiMember key = CallHierarchyNodeDescriptor.getEnclosingElement(element);
-
-          synchronized (methodToDescriptorMap) {
-            CallHierarchyNodeDescriptor d = methodToDescriptorMap.get(key);
-            if (d == null) {
-              d = new CallHierarchyNodeDescriptor(myProject, descriptor, element, false, true);
-              methodToDescriptorMap.put(key, d);
-            }
-            else if (!d.hasReference(reference)) {
-              d.incrementUsageCount();
-            }
-            d.addReference(reference);
+          for (CallReferenceProcessor processor : CallReferenceProcessor.EP_NAME.getExtensions()) {
+            if (!processor.process(reference, data)) break;
           }
           return true;
         }
