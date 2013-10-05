@@ -288,7 +288,7 @@ public class GithubCreatePullRequestWorker {
   private static void showDiffByRef(@NotNull final Project project,
                                     @Nullable final String branch,
                                     @NotNull final GitRepository gitRepository,
-                                    @NotNull final String targetRemote,
+                                    @NotNull final String targetRemoteName,
                                     @NotNull final String currentBranch) {
     if (branch == null) {
       return;
@@ -298,7 +298,7 @@ public class GithubCreatePullRequestWorker {
       @Override
       @Nullable
       public DiffInfo convert(ProgressIndicator indicator) {
-        return getDiffInfo(project, gitRepository, currentBranch, targetRemote + "/" + branch);
+        return getDiffInfo(project, gitRepository, currentBranch, targetRemoteName + "/" + branch);
       }
     });
     if (info == null) {
