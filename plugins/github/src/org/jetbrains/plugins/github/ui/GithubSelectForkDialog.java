@@ -68,7 +68,6 @@ public class GithubSelectForkDialog extends DialogWrapper {
     }
     else {
       myFullPath = path;
-      GithubProjectSettings.getInstance(myProject).setCreatePullRequestDefaultRepo(path);
       super.doOKAction();
     }
   }

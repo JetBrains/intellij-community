@@ -88,6 +88,7 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
       doCancelAction();
       return;
     }
+    myProjectSettings.setCreatePullRequestDefaultRepo(forkPath);
     myGithubCreatePullRequestPanel.setDiffEnabled(forkInfo.isCanShowDiff());
     updateBranches(forkInfo.getBranches(), forkPath);
   }
