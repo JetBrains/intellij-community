@@ -28,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.api.GithubFullPath;
 import org.jetbrains.plugins.github.test.GithubTest;
 import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog;
-import org.jetbrains.plugins.github.util.GithubProjectSettings;
 import org.jetbrains.plugins.github.util.GithubUrlUtil;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
@@ -76,10 +75,10 @@ public abstract class GithubCreatePullRequestTestBase extends GithubTest {
     myDialogManager.registerDialogHandler(GithubCreatePullRequestDialog.class, new TestDialogHandler<GithubCreatePullRequestDialog>() {
       @Override
       public int handleDialog(GithubCreatePullRequestDialog dialog) {
-        dialog.setRequestTitle(BRANCH_NAME);
-        dialog.setBranch(branch);
-        dialog.initTarget(new GithubFullPath(user, PROJECT_NAME));
-        dialog.createPullRequest();
+        dialog.testSetRequestTitle(BRANCH_NAME);
+        dialog.testSetBranch(branch);
+        dialog.testSetTarget(new GithubFullPath(user, PROJECT_NAME));
+        dialog.testCreatePullRequest();
         return DialogWrapper.OK_EXIT_CODE;
       }
     });

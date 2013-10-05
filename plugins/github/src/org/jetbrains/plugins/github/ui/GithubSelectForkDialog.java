@@ -84,7 +84,7 @@ public class GithubSelectForkDialog extends DialogWrapper {
   }
 
   @TestOnly
-  public void setUser(@NotNull String user) {
+  public void testSetUser(@NotNull String user) {
     myPanel.setSelectedUser(user);
   }
 }

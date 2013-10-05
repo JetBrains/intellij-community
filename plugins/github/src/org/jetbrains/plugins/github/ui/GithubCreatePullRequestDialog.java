@@ -153,27 +153,26 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
     if (StringUtil.isEmptyOrSpaces(getRequestTitle())) {
       return new ValidationInfo("Title can't be empty'", myGithubCreatePullRequestPanel.getTitleTextField());
     }
-
     return null;
   }
 
   @TestOnly
-  public void setRequestTitle(String title) {
+  public void testSetRequestTitle(String title) {
     myGithubCreatePullRequestPanel.setTitle(title);
   }
 
   @TestOnly
-  public void setBranch(String branch) {
+  public void testSetBranch(String branch) {
     myGithubCreatePullRequestPanel.setBranches(Collections.singleton(branch));
   }
 
   @TestOnly
-  public void createPullRequest() {
+  public void testCreatePullRequest() {
     myWorker.performAction(getRequestTitle(), getDescription(), getTargetBranch());
   }
 
   @TestOnly
-  public void initTarget(@NotNull GithubFullPath forkPath) {
+  public void testSetTarget(@NotNull GithubFullPath forkPath) {
     GithubCreatePullRequestWorker.GithubTargetInfo forkInfo = myWorker.setTarget(forkPath);
     if (forkInfo == null) {
       doCancelAction();
