@@ -1383,4 +1383,6 @@ class Bar {
     assert ('valueOf' in myFixture.lookupElementStrings)
   }
 
+  public void testNoMathTargetMethods() { doAntiTest() }
+
 }
