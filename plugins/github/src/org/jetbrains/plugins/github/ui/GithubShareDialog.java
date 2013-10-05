@@ -86,7 +86,7 @@ public class GithubShareDialog extends DialogWrapper {
   }
 
   @TestOnly
-  public void setRepositoryName(@NotNull String name) {
+  public void testSetRepositoryName(@NotNull String name) {
     myGithubSharePanel.setRepositoryName(name);
   }
 }
