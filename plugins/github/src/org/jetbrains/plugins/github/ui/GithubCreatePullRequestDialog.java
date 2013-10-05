@@ -38,7 +38,7 @@ import java.util.Collection;
 public class GithubCreatePullRequestDialog extends DialogWrapper {
   @NotNull private final GithubCreatePullRequestPanel myGithubCreatePullRequestPanel;
   @NotNull private final Project myProject;
-  @NotNull GithubCreatePullRequestWorker myWorker;
+  @NotNull private final GithubCreatePullRequestWorker myWorker;
 
   @Nullable private final GithubFullPath myInitForkPath;
 

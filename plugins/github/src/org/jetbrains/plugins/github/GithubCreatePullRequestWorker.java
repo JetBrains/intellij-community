@@ -86,9 +86,9 @@ public class GithubCreatePullRequestWorker {
 
   @Nullable
   public static GithubCreatePullRequestWorker createPullRequestWorker(@NotNull final Project project, @Nullable final VirtualFile file) {
-    final Git git = ServiceManager.getService(Git.class);
+    Git git = ServiceManager.getService(Git.class);
 
-    final GitRepository gitRepository = GithubUtil.getGitRepository(project, file);
+    GitRepository gitRepository = GithubUtil.getGitRepository(project, file);
     if (gitRepository == null) {
       GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Can't find git repository");
       return null;
@@ -100,15 +100,15 @@ public class GithubCreatePullRequestWorker {
       GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Can't find GitHub remote");
       return null;
     }
-    final String remoteName = remote.getFirst().getName();
-    final String remoteUrl = remote.getSecond();
-    final GithubFullPath path = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);
+    String remoteName = remote.getFirst().getName();
+    String remoteUrl = remote.getSecond();
+    GithubFullPath path = GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl);
     if (path == null) {
       GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Can't process remote: " + remoteUrl);
       return null;
     }
 
-    final GitLocalBranch currentBranch = gitRepository.getCurrentBranch();
+    GitLocalBranch currentBranch = gitRepository.getCurrentBranch();
     if (currentBranch == null) {
       GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "No current branch");
       return null;
