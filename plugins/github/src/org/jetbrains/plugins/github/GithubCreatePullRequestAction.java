@@ -76,14 +76,14 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
 
   static void createPullRequest(@NotNull Project project, @Nullable VirtualFile file) {
     final GithubProjectSettings projectSettings = GithubProjectSettings.getInstance(project);
-    GithubFullPath forkPath = projectSettings.getCreatePullRequestDefaultRepo();
+    GithubFullPath defaultForkPath = projectSettings.getCreatePullRequestDefaultRepo();
 
     GithubCreatePullRequestWorker worker = createPullRequestWorker(project, file);
     if (worker == null) {
       return;
     }
 
-    GithubCreatePullRequestDialog dialog = new GithubCreatePullRequestDialog(worker, forkPath);
+    GithubCreatePullRequestDialog dialog = new GithubCreatePullRequestDialog(worker, defaultForkPath);
     DialogManager.show(dialog);
   }
 }
