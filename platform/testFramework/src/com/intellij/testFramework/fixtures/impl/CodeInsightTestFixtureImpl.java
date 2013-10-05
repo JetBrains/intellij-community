@@ -1857,9 +1857,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
   }
 
-  private String getFoldingDescription(@NotNull String content, @NotNull String initialFileName,
-                                       boolean doCheckCollapseStatus) {
-    configureByText(FileTypeManager.getInstance().getFileTypeByFileName(initialFileName), content);
+  public String getFoldingDescription(boolean withCollapseStatus) {
     CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(myEditor);
 
     final FoldingModel model = myEditor.getFoldingModel();
@@ -1875,7 +1873,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     StringBuilder result = new StringBuilder(myEditor.getDocument().getText());
     for (Border border : borders) {
       result.insert(border.getOffset(), border.isSide() == Border.LEFT ? "<fold text=\'" + border.getText() + "\'" +
-                                                                         (doCheckCollapseStatus ? " expand=\'" +
+                                                                         (withCollapseStatus ? " expand=\'" +
                                                                                                     border.isExpanded() +
                                                                                                     "\'" : "") +
                                                                           ">" : END_FOLD);
@@ -1896,7 +1894,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     expectedContent = StringUtil.replace(expectedContent, "\r", "");
     final String cleanContent = expectedContent.replaceAll(START_FOLD, "").replaceAll(END_FOLD, "");
-    final String actual = getFoldingDescription(cleanContent, verificationFileName, doCheckCollapseStatus);
+
+    configureByText(FileTypeManager.getInstance().getFileTypeByFileName(verificationFileName), cleanContent);
+    final String actual = getFoldingDescription(doCheckCollapseStatus);
 
     Assert.assertEquals(expectedContent, actual);
   }
