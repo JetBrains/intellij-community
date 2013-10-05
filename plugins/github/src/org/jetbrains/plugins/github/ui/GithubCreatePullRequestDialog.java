@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.github.ui;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -36,16 +35,14 @@ import java.util.Collection;
  */
 public class GithubCreatePullRequestDialog extends DialogWrapper {
   @NotNull private final GithubCreatePullRequestPanel myGithubCreatePullRequestPanel;
-  @NotNull private final Project myProject;
   @NotNull private final GithubCreatePullRequestWorker myWorker;
+  @NotNull private final GithubProjectSettings myProjectSettings;
 
-  @Nullable private final GithubFullPath myInitForkPath;
-
-  public GithubCreatePullRequestDialog(@NotNull GithubCreatePullRequestWorker worker, @Nullable GithubFullPath forkPath) {
+  public GithubCreatePullRequestDialog(@NotNull GithubCreatePullRequestWorker worker) {
     super(worker.getProject(), true);
     myWorker = worker;
-    myProject = myWorker.getProject();
-    myInitForkPath = forkPath;
+
+    myProjectSettings = GithubProjectSettings.getInstance(myWorker.getProject());
 
     myGithubCreatePullRequestPanel = new GithubCreatePullRequestPanel(new ActionListener() {
       @Override
@@ -66,8 +63,9 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
 
   @Override
   public void show() {
-    if (myInitForkPath != null) {
-      setTarget(myInitForkPath);
+    GithubFullPath defaultForkPath = myProjectSettings.getCreatePullRequestDefaultRepo();
+    if (defaultForkPath != null) {
+      setTarget(defaultForkPath);
     }
     else {
       showTargetDialog();
@@ -97,7 +95,7 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
   private void updateBranches(@NotNull Collection<String> branches, @NotNull GithubFullPath forkPath) {
     myGithubCreatePullRequestPanel.setBranches(branches);
 
-    String configBranch = GithubProjectSettings.getInstance(myProject).getCreatePullRequestDefaultBranch();
+    String configBranch = myProjectSettings.getCreatePullRequestDefaultBranch();
     if (configBranch != null) myGithubCreatePullRequestPanel.setSelectedBranch(configBranch);
 
     myGithubCreatePullRequestPanel.setForkName(forkPath.getFullName());
@@ -143,7 +141,7 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     super.doOKAction();
-    GithubProjectSettings.getInstance(myProject).setCreatePullRequestDefaultBranch(getTargetBranch());
+    myProjectSettings.setCreatePullRequestDefaultBranch(getTargetBranch());
     myWorker.performAction(getTitle(), getDescription(), getTargetBranch());
   }
 

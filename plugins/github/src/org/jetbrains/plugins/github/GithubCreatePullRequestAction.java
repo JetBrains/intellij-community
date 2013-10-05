@@ -25,7 +25,6 @@ import git4idea.repo.GitRepository;
 import icons.GithubIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.api.*;
 import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog;
 import org.jetbrains.plugins.github.util.*;
 
@@ -75,15 +74,12 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
   }
 
   static void createPullRequest(@NotNull Project project, @Nullable VirtualFile file) {
-    final GithubProjectSettings projectSettings = GithubProjectSettings.getInstance(project);
-    GithubFullPath defaultForkPath = projectSettings.getCreatePullRequestDefaultRepo();
-
     GithubCreatePullRequestWorker worker = createPullRequestWorker(project, file);
     if (worker == null) {
       return;
     }
 
-    GithubCreatePullRequestDialog dialog = new GithubCreatePullRequestDialog(worker, defaultForkPath);
+    GithubCreatePullRequestDialog dialog = new GithubCreatePullRequestDialog(worker);
     DialogManager.show(dialog);
   }
 }
