@@ -313,44 +313,46 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   private static Pair<Integer, Integer> getRemotePortsFromProcess(RemoteSshProcess process) throws ExecutionException {
     Scanner s = new Scanner(process.getInputStream());
 
+    return Pair.create(readInt(s, process), readInt(s, process));
+  }
 
+  private static int readInt(Scanner s, Process process) throws ExecutionException {
     long started = System.currentTimeMillis();
 
     while (System.currentTimeMillis() - started < PORTS_WAITING_TIMEOUT) {
-      try {
-        int port = s.nextInt();
-        int port2 = s.nextInt();
-
-        return Pair.create(port, port2);
-      }
-      catch (Exception e) {
+      if (s.hasNextLine()) {
+        String line = s.nextLine();
         try {
-          Thread.sleep(200);
+          return Integer.parseInt(line);
         }
-        catch (InterruptedException e1) {
+        catch (NumberFormatException e) {
+          continue;
         }
       }
+
       try {
-        if (process.exitValue() != 0) {
-          String error;
-          try {
-            error = "Console process terminated with error:\n" + StreamUtil.readText(process.getErrorStream());
-          }
-          catch (Exception e) {
-            error = "Console process terminated with exit code " + process.exitValue();
-          }
-          throw new ExecutionException(error);
-        }
-        else {
-          break;
-        }
+
+        Thread.sleep(200);
       }
-      catch (IllegalThreadStateException e) {
-        //continue
+      catch (InterruptedException e1) {
+      }
+
+      if (process.exitValue() != 0) {
+        String error;
+        try {
+          error = "Console process terminated with error:\n" + StreamUtil.readText(process.getErrorStream());
+        }
+        catch (Exception e) {
+          error = "Console process terminated with exit code " + process.exitValue();
+        }
+        throw new ExecutionException(error);
+      }
+      else {
+        break;
       }
     }
 
-    throw new ExecutionException("Couldn't get remote ports for console connection.");
+    throw new ExecutionException("Couldn't read integer value from stream");
   }
 
   @Override
@@ -679,7 +681,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       mySelected = state;
-      
+
       if (mySelected) {
         PyConsoleStackFrameConnector session = new PyConsoleStackFrameConnector(getProject(), myPydevConsoleCommunication);
         final XVariablesView view = new XVariablesView(session, null);
