@@ -75,8 +75,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     @NonNls public String ACCESS_JAVADOC_REQUIRED_FOR = NONE;
     @NonNls public String REQUIRED_TAGS = "";
 
-    public Options() {
-    }
+    public Options() {}
 
     public Options(String ACCESS_JAVADOC_REQUIRED_FOR, String REQUIRED_TAGS) {
       this.ACCESS_JAVADOC_REQUIRED_FOR = ACCESS_JAVADOC_REQUIRED_FOR;
@@ -94,7 +93,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
   }
 
-  @NonNls public Options PACKAGE_OPTIONS          = new Options("none", "");
+  @NonNls private Options PACKAGE_OPTIONS         = new Options("none", "");
   @NonNls public Options TOP_LEVEL_CLASS_OPTIONS  = new Options("none", "");
   @NonNls public Options INNER_CLASS_OPTIONS      = new Options("none", "");
   @NonNls public Options METHOD_OPTIONS           = new Options("none", "@return@param@throws or @exception");
@@ -110,6 +109,11 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
   public void setIgnoreSimpleAccessors(boolean ignoreSimpleAccessors) {
     myIgnoreSimpleAccessors = ignoreSimpleAccessors;
+  }
+
+  public void setPackageOption(@NonNls String modifier, @NonNls String tags) {
+    PACKAGE_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = modifier;
+    PACKAGE_OPTIONS.REQUIRED_TAGS = tags;
   }
 
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.javaDoc.JavaDocLocalInspection");
@@ -331,6 +335,9 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       option.setAttribute("value", String.valueOf(true));
       node.addContent(option);
     }
+    if (!PACKAGE_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR.equals("none") || !PACKAGE_OPTIONS.REQUIRED_TAGS.isEmpty()) {
+      PACKAGE_OPTIONS.writeExternal(node);
+    }
   }
 
   @Override
@@ -340,11 +347,12 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     if (ignoreAccessorsTag != null) {
       myIgnoreSimpleAccessors = Boolean.parseBoolean(ignoreAccessorsTag.getAttributeValue("value"));
     }
+    PACKAGE_OPTIONS.readExternal(node);
   }
 
   private static ProblemDescriptor createDescriptor(@NotNull PsiElement element, String template, InspectionManager manager,
                                                     boolean onTheFly) {
-    return manager.createProblemDescriptor(element, template, onTheFly, (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+    return manager.createProblemDescriptor(element, template, onTheFly, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
   private static ProblemDescriptor createDescriptor(@NotNull PsiElement element, String template, @NotNull LocalQuickFix fix,
