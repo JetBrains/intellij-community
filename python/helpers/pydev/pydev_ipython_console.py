@@ -11,10 +11,10 @@ os.environ['TERM'] = 'emacs' #to use proper page_more() for paging
 #raise ImportError()
 
 try:
-    from pydev_ipython_console_010 import PyDevFrontEnd
-except:
     #IPython 0.11 broke compatibility...
     from pydev_ipython_console_011 import PyDevFrontEnd
+except:
+    from pydev_ipython_console_010 import PyDevFrontEnd
 
 #=======================================================================================================================
 # InterpreterInterface
