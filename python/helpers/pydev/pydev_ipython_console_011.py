@@ -1,4 +1,7 @@
-from IPython.frontend.terminal.interactiveshell import TerminalInteractiveShell
+try:
+    from IPython.terminal.interactiveshell import TerminalInteractiveShell
+except ImportError:
+    from IPython.frontend.terminal.interactiveshell import TerminalInteractiveShell
 from IPython.utils import io
 import sys
 import codeop, re
