@@ -171,7 +171,11 @@ def varToXML(val, name, doTrim=True):
         except:
             value = 'Unable to get repr for %s' % v.__class__
 
-    xml = '<var name="%s" type="%s"' % (makeValidXmlValue(quote(name, '/>_= ')), makeValidXmlValue(typeName))
+    try:
+        name = quote(name, '/>_= ') #TODO: Fix PY-5834 without using quote
+    except:
+        pass
+    xml = '<var name="%s" type="%s"' % (makeValidXmlValue(name), makeValidXmlValue(typeName))
 
     if value:
         #cannot be too big... communication may not handle it.
