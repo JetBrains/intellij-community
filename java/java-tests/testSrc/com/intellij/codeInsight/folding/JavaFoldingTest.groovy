@@ -24,6 +24,10 @@ import com.intellij.openapi.editor.FoldRegion
 import com.intellij.openapi.editor.ex.FoldingModelEx
 import com.intellij.openapi.editor.impl.FoldingModelImpl
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiMethod
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 /**
@@ -425,6 +429,40 @@ class Test {
     def foldingModel = myFixture.editor.foldingModel as FoldingModelEx
     foldingModel.rebuild()
     myFixture.doHighlighting()
+  }
+
+  public void "test simple property accessors in one line"() {
+    configure """class Foo {
+ int field;
+ 
+ int getField()
+ {
+   return field;
+ }
+ 
+ void setField(int f) {
+   field = f;
+ }
+
+}"""
+    PsiClass fooClass = JavaPsiFacade.getInstance(project).findClass('Foo', GlobalSearchScope.allScope(project))
+    def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
+    assert regions.size() == 4
+    
+    Closure checkAccessorFolding = { FoldRegion region1, FoldRegion region2, PsiMethod method ->
+      assert region1.startOffset == method.parameterList.textRange.endOffset
+      assert region1.endOffset == method.body.statements[0].textRange.startOffset
+      assert region1.placeholderText == ' { '
+
+      assert region2.startOffset == method.body.statements[0].textRange.endOffset
+      assert region2.endOffset == method.textRange.endOffset
+      assert region2.placeholderText == ' }'
+      assert region1.group == region2.group
+    }
+    
+    checkAccessorFolding(regions[0], regions[1], fooClass.methods[0])
+    checkAccessorFolding(regions[2], regions[3], fooClass.methods[1])
+    
   }
 
   private def changeFoldRegions(Closure op) {
