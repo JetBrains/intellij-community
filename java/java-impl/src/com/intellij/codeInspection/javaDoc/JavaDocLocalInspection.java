@@ -518,7 +518,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       }
       if (absentParameters != null) {
         for (PsiTypeParameter psiTypeParameter : absentParameters) {
-          problems.add(createMissingParamTagDescriptor(nameIdentifier, psiTypeParameter, manager, isOnTheFly));
+          problems.add(createMissingParamTagDescriptor(docComment.getFirstChild(), psiTypeParameter, manager, isOnTheFly));
         }
       }
     }
@@ -578,11 +578,11 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     return problems;
   }
 
-  private static ProblemDescriptor createMissingParamTagDescriptor(final PsiIdentifier nameIdentifier,
+  private static ProblemDescriptor createMissingParamTagDescriptor(final PsiElement elementToHighlight,
                                                                    final PsiTypeParameter psiTypeParameter,
                                                                    final InspectionManager manager, boolean isOnTheFly) {
     String message = InspectionsBundle.message("inspection.javadoc.problem.missing.tag", "<code>@param</code>");
-    return createDescriptor(nameIdentifier, message, new AddMissingTagFix("param", "<" + psiTypeParameter.getName() + ">"), manager,
+    return createDescriptor(elementToHighlight, message, new AddMissingTagFix("param", "<" + psiTypeParameter.getName() + ">"), manager,
                             isOnTheFly);
   }
 
@@ -885,8 +885,11 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     protected PsiElement getAnchor(ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       PsiElement parent = element == null ? null : element.getParent();
-      if (!(parent instanceof PsiMethod)) return null;
-      PsiParameter[] parameters = ((PsiMethod)parent).getParameterList().getParameters();
+      if (!(parent instanceof PsiDocComment)) return null;
+      final PsiDocComment docComment = (PsiDocComment)parent;
+      final PsiDocCommentOwner owner = docComment.getOwner();
+      if (!(owner instanceof PsiMethod)) return null;
+      PsiParameter[] parameters = ((PsiMethod)owner).getParameterList().getParameters();
       PsiParameter myParam = ContainerUtil.find(parameters, new Condition<PsiParameter>() {
         @Override
         public boolean value(PsiParameter psiParameter) {
@@ -895,10 +898,6 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       });
       if (myParam == null) return null;
 
-      final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(myParam, PsiMethod.class);
-      LOG.assertTrue(psiMethod != null);
-      final PsiDocComment docComment = psiMethod.getDocComment();
-      LOG.assertTrue(docComment != null);
       PsiDocTag[] tags = docComment.findTagsByName("param");
       if (tags.length == 0) { //insert as first tag or append to description
         tags = docComment.getTags();
