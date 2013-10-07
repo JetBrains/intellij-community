@@ -273,7 +273,7 @@ public class FileSystemUtil {
         long size = (Long)attributes.get("size");
         long lastModified = (Long)myToMillis.invoke(attributes.get("lastModifiedTime"));
         if (SystemInfo.isWindows) {
-          boolean isHidden = (Boolean)attributes.get("hidden");
+          boolean isHidden = new File(path).getParent() == null ? false : (Boolean)attributes.get("hidden");
           boolean isWritable = !(Boolean)attributes.get("readonly");
           return new FileAttributes(isDirectory, isOther, isSymbolicLink, isHidden, size, lastModified, isWritable);
         }
