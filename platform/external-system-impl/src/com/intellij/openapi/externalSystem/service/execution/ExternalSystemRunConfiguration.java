@@ -4,7 +4,10 @@ import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.LocatableConfigurationBase;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.filters.TextConsoleBuilderImpl;
 import com.intellij.execution.process.ProcessHandler;
@@ -137,8 +140,6 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
     public ExecutionResult execute(Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
       ExternalSystemUtil.updateRecentTasks(new ExternalTaskExecutionInfo(mySettings.clone(), executor.getId()), myProject);
       ConsoleView console = new TextConsoleBuilderImpl(myProject).getConsole();
-      final MyProcessHandler processHandler = new MyProcessHandler();
-      console.attachToProcess(processHandler);
       final List<ExternalTaskPojo> tasks = ContainerUtilRt.newArrayList();
       for (String taskName : mySettings.getTaskNames()) {
         tasks.add(new ExternalTaskPojo(taskName, mySettings.getExternalProjectPath(), null));
@@ -156,6 +157,10 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
                                                                                    tasks,
                                                                                    mySettings.getVmOptions(),
                                                                                    debuggerSetup);
+
+      final MyProcessHandler processHandler = new MyProcessHandler(task);
+      console.attachToProcess(processHandler);
+
       ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
         @Override
         public void run() {
@@ -190,14 +195,37 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
       return new DefaultExecutionResult(console, processHandler);
     }
   }
-  
+
   private static class MyProcessHandler extends ProcessHandler {
+    private final ExternalSystemExecuteTaskTask myTask;
+
+    public MyProcessHandler(ExternalSystemExecuteTaskTask task) {
+      myTask = task;
+    }
+
     @Override
     protected void destroyProcessImpl() {
     }
 
     @Override
     protected void detachProcessImpl() {
+      myTask.cancel(new ExternalSystemTaskNotificationListenerAdapter() {
+
+        private boolean myResetGreeting = true;
+
+        @Override
+        public void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) {
+          if (myResetGreeting) {
+            notifyTextAvailable("\r", ProcessOutputTypes.SYSTEM);
+            myResetGreeting = false;
+          }
+          notifyTextAvailable(text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
+        }
+
+        @Override
+        public void onEnd(@NotNull ExternalSystemTaskId id) {
+        }
+      });
       notifyProcessDetached();
     }
 
