@@ -1,6 +1,7 @@
 package com.jetbrains.python.console.pydev;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.net.NetUtils;
 import org.apache.xmlrpc.*;
 
@@ -46,26 +47,6 @@ public class PydevXmlRpcClient implements IPydevXmlRpcClient {
     throws MalformedURLException {
 
     String hostname = NetUtils.getLocalHostString();
-
-    //try {
-    //  Socket s = new Socket(hostname, port);
-    //  PrintWriter p = new PrintWriter(s.getOutputStream());
-    //  p.println("Hi there");
-    //  p.flush();
-    //  Scanner sc = new Scanner(s.getInputStream());
-    //  try {
-    //    Thread.sleep(1000);
-    //    String line = sc.nextLine();
-    //    System.out.println(line);
-    //  }
-    //  catch (Exception e) {
-    //  }
-    //  s.close();
-    //}
-    //catch (IOException e) {
-    //
-    //}
-
 
     URL url = new URL("http://" + hostname + ':' + port + "/RPC2");
 

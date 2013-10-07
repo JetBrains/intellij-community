@@ -155,6 +155,13 @@ class PyDBCommandThread(PyDBDaemonThread):
             #PydevdLog(0, 'Finishing debug communication...(3)')
 
 
+def killAllPydevThreads():
+    threads = threadingEnumerate()
+    for t in threads:
+        if hasattr(t, 'doKillPydevThread'):
+            t.doKillPydevThread()
+    
+
 #=======================================================================================================================
 # PyDBCheckAliveThread
 #=======================================================================================================================
@@ -174,10 +181,7 @@ class PyDBCheckAliveThread(PyDBDaemonThread):
                     try:
                         pydev_log.debug("No alive threads, finishing debug session")
                         self.pyDb.FinishDebuggingSession()
-                        threads = threadingEnumerate()
-                        for t in threads:
-                            if hasattr(t, 'doKillPydevThread'):
-                                t.doKillPydevThread()
+                        killAllPydevThreads()
                     except:
                         traceback.print_exc()
 
@@ -1350,6 +1354,36 @@ def _locked_settrace(host, stdoutToServer, stderrToServer, port, suspend, trace_
 
         if suspend:
             debugger.setSuspend(t, CMD_SET_BREAK)
+
+def stoptrace():
+    global connected
+    if connected:
+        pydevd_tracing.RestoreSysSetTraceFunc()
+        sys.settrace(None)
+        try:
+            #not available in jython!
+            threading.settrace(None) # for all future threads
+        except:
+            pass
+        
+        try:
+            thread.start_new_thread = _original_start_new_thread
+            thread.start_new = _original_start_new_thread
+        except:
+            pass
+    
+        debugger = GetGlobalDebugger()
+        
+        if debugger:
+            debugger.trace_dispatch = None
+    
+            debugger.SetTraceForFrameAndParents(GetFrame(), False)
+        
+            debugger.exiting()
+        
+            killAllPydevThreads()  
+        
+        connected = False
 
 class Dispatcher(object):
     def __init__(self):
