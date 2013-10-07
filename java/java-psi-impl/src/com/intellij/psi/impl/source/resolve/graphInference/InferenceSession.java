@@ -145,6 +145,12 @@ public class InferenceSession {
             if (psiClass instanceof PsiTypeParameter && ((PsiTypeParameter)psiClass).getOwner() == method) return false;
           }
         }
+
+        for (PsiExpression expression : LambdaUtil.getReturnExpressions((PsiLambdaExpression)expr)) {
+          if (PsiPolyExpressionUtil.isPolyExpression(expression)) {
+            return false;
+          }
+        }
       }
       return true;
     }
