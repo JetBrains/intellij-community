@@ -79,6 +79,8 @@ public class PsiPolyExpressionUtil {
             return mentionsTypeParameters(returnType, typeParameters);
           }
         }
+      } else {
+        return true;
       }
     }
     return false;
