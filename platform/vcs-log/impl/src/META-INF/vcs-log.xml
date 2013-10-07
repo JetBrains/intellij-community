@@ -6,6 +6,9 @@
     </component>
   </project-components>
 
+  <extensionPoints>
+    <extensionPoint name="logProvider" interface="com.intellij.vcs.log.VcsLogProvider" area="IDEA_PROJECT"/>
+  </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory" serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl" />

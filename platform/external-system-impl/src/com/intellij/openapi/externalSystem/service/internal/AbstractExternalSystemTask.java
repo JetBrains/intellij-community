@@ -143,6 +143,50 @@ public abstract class AbstractExternalSystemTask implements ExternalSystemTask {
 
   protected abstract void doExecute() throws Exception;
 
+  @Override
+  public void cancel(@NotNull final ProgressIndicator indicator, @NotNull ExternalSystemTaskNotificationListener... listeners) {
+    indicator.setIndeterminate(true);
+    ExternalSystemTaskNotificationListenerAdapter adapter = new ExternalSystemTaskNotificationListenerAdapter() {
+      @Override
+      public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
+        indicator.setText(wrapProgressText(event.getDescription()));
+      }
+    };
+    final ExternalSystemTaskNotificationListener[] ls;
+    if (listeners.length > 0) {
+      ls = ArrayUtil.append(listeners, adapter);
+    }
+    else {
+      ls = new ExternalSystemTaskNotificationListener[] { adapter };
+    }
+
+    cancel(ls);
+  }
+
+  @Override
+  public void cancel(@NotNull ExternalSystemTaskNotificationListener... listeners) {
+    ExternalSystemProgressNotificationManager progressManager = ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
+    for (ExternalSystemTaskNotificationListener listener : listeners) {
+      progressManager.addNotificationListener(getId(), listener);
+    }
+    try {
+      doCancel();
+    }
+    catch (Throwable e) {
+      setState(ExternalSystemTaskState.FAILED);
+      myError.set(e);
+      LOG.warn(e);
+    }
+    finally {
+      for (ExternalSystemTaskNotificationListener listener : listeners) {
+        progressManager.removeNotificationListener(listener);
+      }
+    }
+  }
+
+  protected abstract void doCancel() throws Exception;
+
+
   @NotNull
   protected String wrapProgressText(@NotNull String text) {
     return ExternalSystemBundle.message("progress.update.text", getExternalSystemId(), text);

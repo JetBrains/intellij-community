@@ -198,7 +198,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   }
 
   public String getFileNameToCreate() {
-    return getCanonicalText();
+    return decode(getCanonicalText());
   }
 
   public

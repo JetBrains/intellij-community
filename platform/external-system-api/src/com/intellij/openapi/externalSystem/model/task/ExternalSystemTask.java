@@ -38,6 +38,21 @@ public interface ExternalSystemTask {
   void execute(@NotNull ExternalSystemTaskNotificationListener... listeners);
 
   /**
+   * Cancels current task and updates given indicator's {@link ProgressIndicator#setText2(String) status} during that.
+   *
+   * @param indicator  target progress indicator
+   * @param listeners  callbacks to be notified on task execution update
+   */
+  void cancel(@NotNull ProgressIndicator indicator, @NotNull ExternalSystemTaskNotificationListener... listeners);
+
+  /**
+   * Cancels current task at the calling thread, i.e. the call to this method blocks.
+   *
+   * @param listeners  callbacks to be notified about the task execution update
+   */
+  void cancel(@NotNull ExternalSystemTaskNotificationListener... listeners);
+
+  /**
    * Forces current task to refresh {@link #getState() its state}.
    */
   void refreshState();

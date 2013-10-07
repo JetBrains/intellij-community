@@ -2,5 +2,5 @@
 /**
  * @param <T>
  */
-class <caret>a<T> {
+class a<T> {
 }

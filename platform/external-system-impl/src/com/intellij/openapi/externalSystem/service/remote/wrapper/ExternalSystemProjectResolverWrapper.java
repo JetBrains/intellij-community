@@ -3,11 +3,11 @@ package com.intellij.openapi.externalSystem.service.remote.wrapper;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +47,18 @@ public class ExternalSystemProjectResolverWrapper<S extends ExternalSystemExecut
     myProgressManager.onQueued(id);
     try {
       return getDelegate().resolveProjectInfo(id, projectPath, isPreviewMode, settings);
+    }
+    finally {
+      myProgressManager.onEnd(id);
+    }
+  }
+
+  @Override
+  public void cancelTask(@NotNull ExternalSystemTaskId id)
+    throws ExternalSystemException, IllegalArgumentException, IllegalStateException, RemoteException {
+    myProgressManager.onQueued(id);
+    try {
+      getDelegate().cancelTask(id);
     }
     finally {
       myProgressManager.onEnd(id);

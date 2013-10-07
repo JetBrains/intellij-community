@@ -1,12 +1,12 @@
 package com.intellij.openapi.externalSystem.service;
 
-import com.intellij.openapi.externalSystem.service.internal.ExternalSystemTaskAware;
+import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
-import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager;
+import com.intellij.openapi.externalSystem.service.internal.ExternalSystemTaskAware;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver;
+import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.rmi.Remote;
@@ -54,6 +54,10 @@ public interface RemoteExternalSystemFacade<S extends ExternalSystemExecutionSet
     @Override
     public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) throws RemoteException {
       return false;
+    }
+
+    @Override
+    public void cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException {
     }
 
     @NotNull

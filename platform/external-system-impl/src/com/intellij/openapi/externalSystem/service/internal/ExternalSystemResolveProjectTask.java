@@ -62,6 +62,20 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     }
   }
 
+  protected void doCancel() throws Exception {
+    final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
+    Project ideProject = getIdeProject();
+    RemoteExternalSystemProjectResolver resolver = manager.getFacade(ideProject, myProjectPath, getExternalSystemId()).getResolver();
+
+    setState(ExternalSystemTaskState.CANCELING);
+    try {
+      resolver.cancelTask(getId());
+    }
+    finally {
+      setState(ExternalSystemTaskState.CANCELED);
+    }
+  }
+
   @Nullable
   public DataNode<ProjectData> getExternalProject() {
     return myExternalProject.get();

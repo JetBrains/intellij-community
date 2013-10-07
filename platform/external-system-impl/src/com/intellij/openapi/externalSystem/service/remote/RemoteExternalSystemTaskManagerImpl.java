@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.externalSystem.service.remote;
 
-import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,5 +56,11 @@ public class RemoteExternalSystemTaskManagerImpl<S extends ExternalSystemExecuti
         return null;
       }
     });
+  }
+
+  @Override
+  public void cancelTask(@NotNull final ExternalSystemTaskId id) throws RemoteException, ExternalSystemException
+  {
+    myDelegate.cancelTask(id, getNotificationListener());
   }
 }

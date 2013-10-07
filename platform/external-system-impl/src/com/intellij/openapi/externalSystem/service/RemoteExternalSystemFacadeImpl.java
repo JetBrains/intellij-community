@@ -18,6 +18,8 @@ package com.intellij.openapi.externalSystem.service;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.Alarm;
 import org.jetbrains.annotations.NotNull;
 
@@ -81,6 +83,11 @@ public class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecutionSet
         buildManagerClass, ExternalSystemTaskManager.class
       ));
     }
+
+    // running the code indicates remote communication mode with external system
+    Registry.get(
+      System.getProperty(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY) +
+      ExternalSystemConstants.USE_IN_PROCESS_COMMUNICATION_REGISTRY_KEY_SUFFIX).setValue(false);
 
     RemoteExternalSystemFacadeImpl facade = new RemoteExternalSystemFacadeImpl(resolverClass, buildManagerClass);
     facade.init();

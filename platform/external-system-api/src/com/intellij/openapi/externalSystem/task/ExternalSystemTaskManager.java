@@ -40,4 +40,8 @@ public interface ExternalSystemTaskManager<S extends ExternalSystemExecutionSett
                     @Nullable String debuggerSetup,
                     @NotNull ExternalSystemTaskNotificationListener listener)
     throws ExternalSystemException;
+
+  void cancelTask(@NotNull ExternalSystemTaskId id,
+                  @NotNull ExternalSystemTaskNotificationListener listener)
+    throws ExternalSystemException;
 }

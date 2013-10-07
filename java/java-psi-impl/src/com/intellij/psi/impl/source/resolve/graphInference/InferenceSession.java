@@ -361,17 +361,17 @@ public class InferenceSession {
     return dependencies != null ? !dependencies.isEmpty() : isProper;
   }
 
-  private void repeatInferencePhases() {
+  private boolean repeatInferencePhases() {
     do {
       if (!reduceConstraints()) {
         //inference error occurred
-        return;
+        return false;
       }
       myIncorporationPhase.incorporate();
 
     } while (!myIncorporationPhase.isFullyIncorporated() || myConstraintIdx < myConstraints.size());
 
-    mySiteSubstitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor);
+    return true;
   }
 
   private boolean reduceConstraints() {
@@ -407,7 +407,7 @@ public class InferenceSession {
           PsiType bound = null;
           for (PsiType eqBound : eqBounds) {
             if (eqBound == null) continue;
-            bound = acceptBoundsWithRecursiveDependencies(typeParameter, eqBound);
+            bound = acceptBoundsWithRecursiveDependencies(typeParameter, eqBound, substitutor);
             if (bound != null) break;
           }
           if (bound != null) {
@@ -418,7 +418,7 @@ public class InferenceSession {
           } else {
             PsiType lub = null;
             for (PsiType lowerBound : lowerBounds) {
-              lowerBound = acceptBoundsWithRecursiveDependencies(typeParameter, lowerBound);
+              lowerBound = acceptBoundsWithRecursiveDependencies(typeParameter, lowerBound, substitutor);
               if (isProperType(lowerBound, false)) {
                 if (lub == null) {
                   lub = lowerBound;
@@ -434,7 +434,7 @@ public class InferenceSession {
             else {
               PsiType glb = null;
               for (PsiType upperBound : upperBounds) {
-                upperBound = acceptBoundsWithRecursiveDependencies(typeParameter, upperBound);
+                upperBound = acceptBoundsWithRecursiveDependencies(typeParameter, upperBound, substitutor);
                 if (isProperType(upperBound, false)) {
                   if (glb == null) {
                     glb = upperBound;
@@ -461,10 +461,10 @@ public class InferenceSession {
     return substitutor;
   }
 
-  private PsiType acceptBoundsWithRecursiveDependencies(PsiTypeParameter typeParameter, PsiType bound) {
+  private PsiType acceptBoundsWithRecursiveDependencies(PsiTypeParameter typeParameter, PsiType bound, PsiSubstitutor substitutor) {
     if (!isProperType(bound)) {
-      final PsiSubstitutor substitutor = PsiUtil.resolveClassInType(bound) != typeParameter ? mySiteSubstitutor.put(typeParameter, null) : mySiteSubstitutor;
-      return substitutor.substitute(bound);
+      final PsiSubstitutor subst = PsiUtil.resolveClassInType(bound) != typeParameter ? substitutor.put(typeParameter, null) : substitutor;
+      return subst.substitute(bound);
     }
     return bound;
   }
@@ -548,15 +548,14 @@ public class InferenceSession {
       }
       additionalConstraints.removeAll(subset);
 
-      mySiteSubstitutor = resolveBounds(varsToResolve, mySiteSubstitutor);
-      for (ConstraintFormula constraint : subset) {
-        constraint.apply(mySiteSubstitutor);
-        if (!constraint.reduce(this, myConstraints)) {
-          return false;
-        }
+      myConstraints.addAll(subset);
+      if (!repeatInferencePhases()) {
+        return false;
       }
-      myConstraintIdx = myConstraints.size();
-      myIncorporationPhase.incorporate();
+
+      for (ConstraintFormula additionalConstraint : additionalConstraints) {
+        additionalConstraint.apply(mySiteSubstitutor);
+      }
     }
     return true;
   }

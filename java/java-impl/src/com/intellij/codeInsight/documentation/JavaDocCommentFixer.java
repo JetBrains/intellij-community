@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
+import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -179,7 +180,8 @@ public class JavaDocCommentFixer implements DocCommentFixer {
       if (element == null) {
         continue;
       }
-      if (comment.getTextRange().contains(element.getTextRange())) {
+      if ((!(element instanceof PsiDocToken) || !JavaDocTokenType.DOC_COMMENT_START.equals(((PsiDocToken)element).getTokenType())) &&
+          comment.getTextRange().contains(element.getTextRange())) {
         // Unnecessary element like '@return' at the void method's javadoc.
         for (PsiElement e = element; e != null; e = e.getParent()) {
           if (e instanceof PsiDocTag) {

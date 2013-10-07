@@ -23,15 +23,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,35 +62,14 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     final CreateFileFromTemplateDialog.Builder builder = CreateFileFromTemplateDialog.createDialog(project);
     buildDialog(project, dir, builder);
 
-    final Ref<T> createdElement = Ref.create(null);
-    final Ref<PsiFile> createdFile = Ref.create(null);
     final Ref<String> selectedTemplateName = Ref.create(null);
-    builder.show(getErrorTitle(), getDefaultTemplateName(dir), new CreateFileFromTemplateDialog.FileCreator<T>() {
+    final T createdElement =
+      builder.show(getErrorTitle(), getDefaultTemplateName(dir), new CreateFileFromTemplateDialog.FileCreator<T>() {
 
         @Override
         public T createFile(@NotNull String name, @NotNull String templateName) {
-          if (StringUtil.countChars(name, '.') == 1) {
-            FileType fileType = CreateDirectoryOrPackageHandler.findFileTypeBoundToName(name);
-            if (fileType != null) {
-              String message = "The name you entered looks like a file name. Do you want to create a file named " + name + " instead?";
-              int ec = Messages.showYesNoDialog(project, message, 
-                                                "File Name Detected", 
-                                                "Yes, create " + name, 
-                                                "No, create " + e.getPresentation().getText(), 
-                                                fileType.getIcon());
-              if (ec == Messages.OK) {
-                PsiFile newFile = dir.createFile(name);
-                createdFile.set(newFile);
-                //noinspection unchecked
-                return (T)newFile;
-              }
-            }
-          }
-
           selectedTemplateName.set(templateName);
-          T created = CreateFromTemplateAction.this.createFile(name, templateName, dir);
-          createdElement.set(created);
-          return created;
+          return CreateFromTemplateAction.this.createFile(name, templateName, dir);
         }
 
         @Override
@@ -103,12 +78,9 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
           return CreateFromTemplateAction.this.getActionName(dir, name, templateName);
         }
       });
-    if (!createdFile.isNull()) {
-      view.selectElement(createdFile.get());
-    }
-    else if (!createdElement.isNull()) {
-      view.selectElement(createdElement.get());
-      postProcess(createdElement.get(), selectedTemplateName.get(), builder.getCustomProperties());
+    if (createdElement != null) {
+      view.selectElement(createdElement);
+      postProcess(createdElement, selectedTemplateName.get(), builder.getCustomProperties());
     }
   }
 

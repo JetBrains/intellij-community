@@ -9,7 +9,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
@@ -70,14 +69,14 @@ public class GradleUtil {
    */
   @Nullable
   public static WrapperConfiguration getWrapperConfiguration(@Nullable String gradleProjectPath) {
-    final VirtualFile wrapperPropertiesFile = findDefaultWrapperPropertiesFile(gradleProjectPath);
+    final File wrapperPropertiesFile = findDefaultWrapperPropertiesFile(gradleProjectPath);
     if (wrapperPropertiesFile == null) return null;
 
     final WrapperConfiguration wrapperConfiguration = new WrapperConfiguration();
     final Properties props = new Properties();
     BufferedReader reader = null;
     try {
-      reader = new BufferedReader(new FileReader(wrapperPropertiesFile.getPath()));
+      reader = new BufferedReader(new FileReader(wrapperPropertiesFile));
       props.load(reader);
       String distributionUrl = props.getProperty(WrapperExecutor.DISTRIBUTION_URL_PROPERTY);
       if(StringUtil.isEmpty(distributionUrl)) {
@@ -97,7 +96,7 @@ public class GradleUtil {
     }
     catch (Exception e) {
       GradleLog.LOG.warn(
-        String.format("I/O exception on reading gradle wrapper properties file at '%s'", wrapperPropertiesFile.getPath()), e);
+        String.format("I/O exception on reading gradle wrapper properties file at '%s'", wrapperPropertiesFile.getAbsolutePath()), e);
     }
     finally {
       if (reader != null) {
@@ -190,7 +189,7 @@ public class GradleUtil {
   }
 
   @Nullable
-  public static VirtualFile findDefaultWrapperPropertiesFile(@Nullable String gradleProjectPath) {
+  public static File findDefaultWrapperPropertiesFile(@Nullable String gradleProjectPath) {
     if (gradleProjectPath == null) {
       return null;
     }
@@ -232,6 +231,6 @@ public class GradleUtil {
       return null;
     }
 
-    return LocalFileSystem.getInstance().findFileByIoFile(candidates[0]);
+    return candidates[0];
   }
 }

@@ -284,15 +284,15 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
     XDebugSessionImpl session = getBreakpointManager().getDebuggerManager().getCurrentSession();
     if (session == null) {
       if (getBreakpointManager().getDependentBreakpointManager().getMasterBreakpoint(this) != null) {
-        return getType().getDisabledDependentIcon();
+        return getType().getInactiveDependentIcon();
       }
     }
     else {
       if (session.areBreakpointsMuted()) {
         return AllIcons.Debugger.Db_muted_breakpoint;
       }
-      if (session.isDisabledSlaveBreakpoint(this)) {
-        return getType().getDisabledDependentIcon();
+      if (session.isInactiveSlaveBreakpoint(this)) {
+        return getType().getInactiveDependentIcon();
       }
       CustomizedBreakpointPresentation presentation = session.getBreakpointPresentation(this);
       if (presentation != null) {
