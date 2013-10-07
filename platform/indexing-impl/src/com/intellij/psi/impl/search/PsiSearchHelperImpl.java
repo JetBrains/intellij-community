@@ -33,7 +33,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.cache.CacheManager;
@@ -207,7 +206,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
 
     String text = searcher.getPattern();
-    List<VirtualFile> fileSet = new ArrayList<VirtualFile>();
+    Set<VirtualFile> fileSet = new THashSet<VirtualFile>();
     getFilesWithText(scope, searchContext, caseSensitively, text, progress, fileSet);
 
     if (progress != null) {
@@ -216,49 +215,45 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
     final Processor<PsiElement> localProcessor = localProcessor(processor, progress, true, searcher);
     if (containerName != null) {
-      List<VirtualFile> containerFiles = new ArrayList<VirtualFile>();
-      getFilesWithText(scope, searchContext, caseSensitively, containerName, progress, containerFiles);
-      if (!containerFiles.isEmpty()) {
-        Comparator<VirtualFile> byId = new Comparator<VirtualFile>() {
-          @Override
-          public int compare(VirtualFile o1, VirtualFile o2) {
-            return ((VirtualFileWithId)o1).getId() - ((VirtualFileWithId)o2).getId();
-          }
-        };
-        ContainerUtil.quickSort(fileSet, byId);
-        ContainerUtil.quickSort(containerFiles, byId);
-
-        List<VirtualFile> intersection = new ArrayList<VirtualFile>(fileSet.size());
-        final List<VirtualFile> rest = new ArrayList<VirtualFile>();
-        splitSortedLists(fileSet, containerFiles, byId, intersection, rest);
-        if (!intersection.isEmpty()) {
-          int totalSize = rest.size() + intersection.size();
-          AsyncFuture<Boolean> intersectionResult = processPsiFileRootsAsync(intersection, totalSize, 0, progress, localProcessor);
-          AsyncFuture<Boolean> result;
-          try {
-            if (intersectionResult.get()) {
-              AsyncFuture<Boolean> restResult = processPsiFileRootsAsync(rest, totalSize, intersection.size(), progress, localProcessor);
-              result = bind(intersectionResult, restResult);
-            }
-            else {
+      List<VirtualFile> intersectionWithContainerFiles = new ArrayList<VirtualFile>();
+      // intersectionWithContainerFiles holds files containing words from both `text` and `containerName`
+      getFilesWithText(scope, searchContext, caseSensitively, text+" "+containerName, progress, intersectionWithContainerFiles);
+      if (!intersectionWithContainerFiles.isEmpty()) {
+        int totalSize = fileSet.size();
+        AsyncFuture<Boolean> intersectionResult = processPsiFileRootsAsync(intersectionWithContainerFiles, totalSize, 0, progress, localProcessor);
+        AsyncFuture<Boolean> result;
+        try {
+          if (intersectionResult.get()) {
+            fileSet.removeAll(intersectionWithContainerFiles);
+            if (fileSet.isEmpty()) {
               result = intersectionResult;
             }
+            else {
+              AsyncFuture<Boolean> restResult =
+                processPsiFileRootsAsync(new ArrayList<VirtualFile>(fileSet), totalSize, intersectionWithContainerFiles.size(), progress, localProcessor);
+              result = bind(intersectionResult, restResult);
+            }
           }
-          catch (ExecutionException e) {
-            Throwable cause = e.getCause();
-            if (cause instanceof RuntimeException) throw (RuntimeException)cause;
-            if (cause instanceof Error) throw (Error)cause;
-            result = AsyncFutureFactory.wrapException(cause);
+          else {
+            result = intersectionResult;
           }
-          catch (InterruptedException e) {
-            result = AsyncFutureFactory.wrapException(e);
-          }
-          return popStateAfter(result, progress);
         }
+        catch (ExecutionException e) {
+          Throwable cause = e.getCause();
+          if (cause instanceof RuntimeException) throw (RuntimeException)cause;
+          if (cause instanceof Error) throw (Error)cause;
+          result = AsyncFutureFactory.wrapException(cause);
+        }
+        catch (InterruptedException e) {
+          result = AsyncFutureFactory.wrapException(e);
+        }
+        return popStateAfter(result, progress);
       }
     }
 
-    AsyncFuture<Boolean> result = processPsiFileRootsAsync(fileSet, fileSet.size(), 0, progress, localProcessor);
+    AsyncFuture<Boolean> result = fileSet.isEmpty()
+                                  ? AsyncFutureFactory.wrap(true)
+                                  : processPsiFileRootsAsync(new ArrayList<VirtualFile>(fileSet), fileSet.size(), 0, progress, localProcessor);
     return popStateAfter(result, progress);
   }
 
@@ -318,6 +313,12 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
   }
 
+  /**
+   * @param files to scan for references in this pass.
+   * @param totalSize the number of files to scan in both passes. Can be different from <code>files.size()</code> in case of
+   *                  two-pass scan, where we first scan files containing container name and then all the rest files.
+   * @param alreadyProcessedFiles the number of files scanned in previous pass.
+   */
   @NotNull
   private AsyncFuture<Boolean> processPsiFileRootsAsync(@NotNull List<VirtualFile> files,
                                                         final int totalSize,
@@ -339,7 +340,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
           }
         });
         if (file != null && !(file instanceof PsiBinaryFile)) {
-          file.getViewProvider().getContents(); // load contents outside readaction
+          file.getViewProvider().getContents(); // load contents outside read action
           if (myManager.getProject().isDisposed()) throw new ProcessCanceledException();
           List<PsiFile> psiRoots = ApplicationManager.getApplication().runReadAction(new Computable<List<PsiFile>>() {
             @Override
@@ -707,7 +708,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
       progress.setText(PsiBundle.message("psi.scanning.files.progress"));
     }
 
+    // intersectionCandidateFiles holds files containing words from all requests in `singles` and words in corresponding container names
     final MultiMap<VirtualFile, RequestWithProcessor> intersectionCandidateFiles = createMultiMap();
+    // restCandidateFiles holds files containing words from all requests in `singles` but EXCLUDING words in corresponding container names
     final MultiMap<VirtualFile, RequestWithProcessor> restCandidateFiles = createMultiMap();
     collectFiles(singles, progress, intersectionCandidateFiles, restCandidateFiles);
 
@@ -829,7 +832,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
 
       final Collection<RequestWithProcessor> data = singles.get(keys);
       final GlobalSearchScope commonScope = uniteScopes(data);
-      final Set<VirtualFile> commonContainerNameFiles = commonContainerNameFiles(commonScope, data, progress);
+      final Set<VirtualFile> intersectionWithContainerNameFiles = intersectionWithContainerNameFiles(commonScope, data, keys);
 
       List<VirtualFile> files = new ArrayList<VirtualFile>();
       CommonProcessors.CollectProcessor<VirtualFile> processor = new CommonProcessors.CollectProcessor<VirtualFile>(files);
@@ -848,7 +851,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
                     final PsiSearchRequest request = single.request;
                     if ((mask & request.searchContext) != 0 && ((GlobalSearchScope)request.searchScope).contains(file)) {
                       MultiMap<VirtualFile, RequestWithProcessor> result =
-                        commonContainerNameFiles == null || !commonContainerNameFiles.contains(file) ? restResult : intersectionResult;
+                        intersectionWithContainerNameFiles == null || !intersectionWithContainerNameFiles.contains(file) ? restResult : intersectionResult;
                       result.putValue(file, single);
                     }
                   }
@@ -863,9 +866,9 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   }
 
   @Nullable("null means we did not find common container files")
-  private Set<VirtualFile> commonContainerNameFiles(GlobalSearchScope commonScope,
-                                                    @NotNull Collection<RequestWithProcessor> data,
-                                                    ProgressIndicator progress) {
+  private Set<VirtualFile> intersectionWithContainerNameFiles(@NotNull GlobalSearchScope commonScope,
+                                                              @NotNull Collection<RequestWithProcessor> data,
+                                                              @NotNull Set<IdIndexEntry> keys) {
     String commonName = null;
     short searchContext = 0;
     boolean caseSensitive = true;
@@ -888,7 +891,19 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     }
     if (commonName == null) return null;
     Set<VirtualFile> containerFiles = new THashSet<VirtualFile>();
-    getFilesWithText(commonScope, searchContext, caseSensitive, commonName, progress, containerFiles);
+
+    List<IdIndexEntry> entries = getWordEntries(commonName, caseSensitive);
+    if (entries.isEmpty()) return null;
+    entries.addAll(keys); // should find words from both text and container names
+
+    final short finalSearchContext = searchContext;
+    Condition<Integer> contextMatches = new Condition<Integer>() {
+      @Override
+      public boolean value(Integer context) {
+        return (context.intValue() & finalSearchContext) != 0;
+      }
+    };
+    processFilesContainingAllKeys(myManager.getProject(), commonScope, contextMatches, entries, new CommonProcessors.CollectProcessor<VirtualFile>(containerFiles));
 
     return containerFiles;
   }
@@ -1027,6 +1042,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
   @NotNull
   private static List<IdIndexEntry> getWordEntries(@NotNull String name, boolean caseSensitively) {
     List<String> words = StringUtil.getWordsInStringLongestFirst(name);
+    if (words.isEmpty()) return Collections.emptyList();
     List<IdIndexEntry> keys = new ArrayList<IdIndexEntry>(words.size());
     for (String word : words) {
       keys.add(new IdIndexEntry(word, caseSensitively));
