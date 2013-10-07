@@ -23,7 +23,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -242,7 +242,7 @@ public class SliceForwardUtil {
     //method call
     else if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiCallExpression) {
       PsiExpression[] expressions = ((PsiExpressionList)parent).getExpressions();
-      int index = ArrayUtil.find(expressions, element);
+      int index = ArrayUtilRt.find(expressions, element);
       PsiCallExpression methodCall = (PsiCallExpression)parent.getParent();
       JavaResolveResult result = methodCall.resolveMethodGenerics();
       PsiMethod method = (PsiMethod)result.getElement();
