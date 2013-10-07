@@ -53,7 +53,7 @@ public class CollectionListModel<T> extends AbstractListModel implements Editabl
     fireIntervalAdded(this, i, i);
   }
 
-  public void add(final T element, int i) {
+  public void add(int i,final T element) {
     myItems.add(i, element);
     fireIntervalAdded(this, i, i);
   }
