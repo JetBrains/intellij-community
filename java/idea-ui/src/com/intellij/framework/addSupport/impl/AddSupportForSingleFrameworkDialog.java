@@ -158,7 +158,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
     if (!existingEntries.isEmpty()) {
       String message;
       if (existingEntries.size() > 1) {
-        message = "There are already " + existingEntries.size() + " " + myFrameworkType.getPresentableName() + " libraries.\n Do you want to replace they?";
+        message = "There are already " + existingEntries.size() + " " + myFrameworkType.getPresentableName() + " libraries.\n Do you want to replace them?";
       }
       else {
         final String name = existingEntries.get(0).getPresentableName();
