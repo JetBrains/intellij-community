@@ -4,9 +4,9 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.lang.ASTNode;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 /**
@@ -39,6 +40,8 @@ public class PyPep8NamingInspection extends PyInspection {
     Pattern LOWERCASE_REGEX = Pattern.compile("[_a-z][_a-z0-9]*");
     Pattern UPPERCASE_REGEX = Pattern.compile("[_A-Z][_A-Z0-9]*");
     Pattern MIXEDCASE_REGEX = Pattern.compile("_?[A-Z][a-zA-Z0-9]*");
+
+    private final Map<PyFunction, Boolean> myHasSupers = new HashMap<PyFunction, Boolean>();
 
     public Visitor(@NotNull final ProblemsHolder holder, LocalInspectionToolSession session) {
       super(holder, session);
@@ -76,8 +79,7 @@ public class PyPep8NamingInspection extends PyInspection {
     @Override
     public void visitPyFunction(PyFunction node) {
       final PyClass containingClass = node.getContainingClass();
-      final PsiElement superMethod = PySuperMethodsSearch.search(node).findFirst();
-      if (superMethod != null && ignoreOverriddenFunctions) return;
+      if (hasSupers(node) && ignoreOverriddenFunctions) return;
       if(containingClass != null && PyTestUtil.isPyTestClass(containingClass) && ignoreTestFunctions) return;
       final String name = node.getName();
       if (name == null) return;
@@ -126,6 +128,16 @@ public class PyPep8NamingInspection extends PyInspection {
       else if (UPPERCASE_REGEX.matcher(asName).matches()) {
         registerProblem(node.getAsNameElement(), "CamelCase variable imported as constant", new PyRenameElementQuickFix());
       }
+    }
+
+    private boolean hasSupers(@NotNull PyFunction function) {
+      final Boolean cached = myHasSupers.get(function);
+      if (cached != null) {
+        return cached;
+      }
+      final boolean result = PySuperMethodsSearch.search(function).findFirst() != null;
+      myHasSupers.put(function, result);
+      return result;
     }
   }
 
