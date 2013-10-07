@@ -127,7 +127,10 @@ public class SimpleDuplicatesFinder {
     if (pattern == null || candidate == null) return pattern == candidate;
     final PsiElement[] children1 = PsiEquivalenceUtil.getFilteredChildren(pattern, null, true);
     final PsiElement[] children2 = PsiEquivalenceUtil.getFilteredChildren(candidate, null, true);
-    if (pattern.getUserData(PARAMETER) != null && pattern.getParent().getClass() == candidate.getParent().getClass()) {
+    final PsiElement patternParent = pattern.getParent();
+    final PsiElement candidateParent = candidate.getParent();
+    if (patternParent == null || candidateParent == null) return false;
+    if (pattern.getUserData(PARAMETER) != null && patternParent.getClass() == candidateParent.getClass()) {
       match.changeParameter(pattern.getText(), candidate.getText());
       return true;
     }
@@ -140,7 +143,7 @@ public class SimpleDuplicatesFinder {
     }
 
     if (children1.length == 0) {
-      if (pattern.getUserData(PARAMETER) != null && pattern.getParent().getClass() == candidate.getParent().getClass()) {
+      if (pattern.getUserData(PARAMETER) != null && patternParent.getClass() == candidateParent.getClass()) {
         match.changeParameter(pattern.getText(), candidate.getText());
         return true;
       }
