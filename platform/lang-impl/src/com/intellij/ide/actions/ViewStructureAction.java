@@ -23,7 +23,10 @@ import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.util.FileStructureDialog;
 import com.intellij.ide.util.FileStructurePopup;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
@@ -94,34 +97,34 @@ public class ViewStructureAction extends AnAction {
 
   @Nullable
   public static FileStructurePopup createPopup(@Nullable Editor editor, @NotNull Project project, @Nullable Navigatable navigatable, @NotNull FileEditor fileEditor) {
-    final StructureViewBuilder structureViewBuilder = fileEditor.getStructureViewBuilder();
+    StructureViewBuilder structureViewBuilder = fileEditor.getStructureViewBuilder();
     if (structureViewBuilder == null) return null;
     StructureView structureView = structureViewBuilder.createStructureView(fileEditor, project);
-    final StructureViewModel model = structureView.getTreeModel();
+    StructureViewModel model = structureView.getTreeModel();
     if (model instanceof PlaceHolder) {
       //noinspection unchecked
       ((PlaceHolder)model).setPlace(PLACE);
     }
-    return createStructureViewPopup(model, editor, project, navigatable, structureView);
+    return createStructureViewPopup(project, editor, fileEditor, structureView);
   }
 
   public static boolean isInStructureViewPopup(@NotNull PlaceHolder<String> model) {
     return PLACE.equals(model.getPlace());
   }
 
-  public static FileStructureDialog createStructureViewBasedDialog(final StructureViewModel structureViewModel,
-                                                                   final Editor editor,
-                                                                   final Project project,
-                                                                   final Navigatable navigatable,
-                                                                   final @NotNull Disposable alternativeDisposable) {
+  private static FileStructureDialog createStructureViewBasedDialog(StructureViewModel structureViewModel,
+                                                                    Editor editor,
+                                                                    Project project,
+                                                                    Navigatable navigatable,
+                                                                    @NotNull Disposable alternativeDisposable) {
     return new FileStructureDialog(structureViewModel, editor, project, navigatable, alternativeDisposable, true);
   }
-  public static FileStructurePopup createStructureViewPopup(final StructureViewModel structureViewModel,
-                                                                   final Editor editor,
-                                                                   final Project project,
-                                                                   final Navigatable navigatable,
-                                                                   final @NotNull Disposable alternativeDisposable) {
-    return new FileStructurePopup(structureViewModel, editor, project, alternativeDisposable, true);
+
+  private static FileStructurePopup createStructureViewPopup(Project project,
+                                                             Editor editor,
+                                                             FileEditor fileEditor,
+                                                             StructureView structureView) {
+    return new FileStructurePopup(project, editor, fileEditor, structureView, true);
   }
 
   @Override

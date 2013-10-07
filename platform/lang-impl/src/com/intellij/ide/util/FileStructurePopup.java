@@ -21,7 +21,6 @@ import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.structureView.StructureView;
-import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
 import com.intellij.ide.structureView.impl.StructureViewComposite;
@@ -42,7 +41,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -121,50 +119,48 @@ public class FileStructurePopup implements Disposable {
   private boolean myInitialNodeIsLeaf;
   private final List<Pair<String, JCheckBox>> myTriggeredCheckboxes = new ArrayList<Pair<String, JCheckBox>>();
   private final TreeExpander myTreeExpander;
-  private StructureView myStructureView;
+  @NotNull private final FileEditor myFileEditor;
+  private final StructureView myStructureViewDelegate;
 
 
-  public FileStructurePopup(StructureViewModel structureViewModel,
+  public FileStructurePopup(@NotNull Project project,
                             @Nullable Editor editor,
-                            Project project,
-                            @NotNull final Disposable auxDisposable,
+                            @NotNull FileEditor fileEditor,
+                            @NotNull StructureView structureView,
                             final boolean applySortAndFilter) {
     myProject = project;
     myEditor = editor;
+    myFileEditor = fileEditor;
+    myStructureViewDelegate = structureView;
 
     //Stop code analyzer to speedup EDT
     DaemonCodeAnalyzer.getInstance(myProject).disableUpdateByTimer(this);
     IdeFocusManager.getInstance(myProject).typeAheadUntil(myTreeHasBuilt);
+    Disposer.register(this, myStructureViewDelegate);
 
     //long l = System.currentTimeMillis();
     if (editor instanceof EditorImpl) {
       VirtualFile file = ((EditorImpl)editor).getVirtualFile();
-      FileEditor fileEditor = FileEditorManager.getInstance(myProject).getSelectedEditor(file);
-      if (fileEditor != null) {
-        StructureViewBuilder builder = fileEditor.getStructureViewBuilder();
-        myPsiFile = PsiManager.getInstance(project).findFile(file);
-        if (builder != null && myPsiFile != null) {
-          myStructureView = builder.createStructureView(fileEditor, project);
-          Disposer.register(this, myStructureView);
-        }
-      }
+      myPsiFile = PsiManager.getInstance(project).findFile(file);
     }
+
     //System.out.println(System.currentTimeMillis() - l);
-    if (myStructureView instanceof StructureViewComposite) {
-      StructureViewComposite.StructureViewDescriptor[] views = ((StructureViewComposite)myStructureView).getStructureViews();
+    if (myStructureViewDelegate instanceof StructureViewComposite) {
+      StructureViewComposite.StructureViewDescriptor[] views = ((StructureViewComposite)myStructureViewDelegate).getStructureViews();
       myBaseTreeModel = new StructureViewCompositeModel(myPsiFile, views);
       Disposer.register(this, (Disposable)myBaseTreeModel);
-    } else {
-      myBaseTreeModel = structureViewModel;
     }
-    Disposer.register(this, auxDisposable);
+    else {
+      myBaseTreeModel = myStructureViewDelegate.getTreeModel();
+    }
+
     if (applySortAndFilter) {
       myTreeActionsOwner = new TreeStructureActionsOwner(myBaseTreeModel);
       myTreeModel = new TreeModelWrapper(myBaseTreeModel, myTreeActionsOwner);
     }
     else {
       myTreeActionsOwner = null;
-      myTreeModel = structureViewModel;
+      myTreeModel = myStructureViewDelegate.getTreeModel();
     }
 
     myTreeStructure = new SmartTreeStructure(project, myTreeModel){
@@ -436,7 +432,7 @@ public class FileStructurePopup implements Disposable {
     Set<PsiElement> parents = getAllParents(element);
 
     FilteringTreeStructure.FilteringNode node = (FilteringTreeStructure.FilteringNode)myAbstractTreeBuilder.getRootElement();
-    if (element != null && node != null && myStructureView instanceof StructureViewComposite) {
+    if (element != null && node != null && myStructureViewDelegate instanceof StructureViewComposite) {
       parents.remove(element.getContainingFile());
       final List<FilteringTreeStructure.FilteringNode> fileNodes = node.children();
 
@@ -610,13 +606,26 @@ public class FileStructurePopup implements Disposable {
     DataManager.registerDataProvider(panel, new DataProvider() {
       @Override
       public Object getData(@NonNls String dataId) {
-        if (PlatformDataKeys.PROJECT.is(dataId)) {
+        if (CommonDataKeys.PROJECT.is(dataId)) {
           return myProject;
         }
+        if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+          return myFileEditor;
+        }
         if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
-          final Object node = ContainerUtil.getFirstItem(myAbstractTreeBuilder.getSelectedElements());
+          Object node = ContainerUtil.getFirstItem(myAbstractTreeBuilder.getSelectedElements());
           if (!(node instanceof FilteringTreeStructure.FilteringNode)) return null;
           return getPsi((FilteringTreeStructure.FilteringNode)node);
+        }
+        if (LangDataKeys.PSI_ELEMENT_ARRAY.is(dataId)) {
+          Set<Object> nodes = myAbstractTreeBuilder.getSelectedElements();
+          if (nodes.isEmpty()) return PsiElement.EMPTY_ARRAY;
+          ArrayList<PsiElement> result = new ArrayList<PsiElement>();
+          for (Object o : nodes) {
+            if (!(o instanceof FilteringTreeStructure.FilteringNode)) continue;
+            ContainerUtil.addIfNotNull(result, getPsi((FilteringTreeStructure.FilteringNode)o));
+          }
+          return ContainerUtil.toArray(result, PsiElement.ARRAY_FACTORY);
         }
         if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
           return myPopup;
