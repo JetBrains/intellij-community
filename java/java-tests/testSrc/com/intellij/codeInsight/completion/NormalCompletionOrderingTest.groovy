@@ -460,6 +460,10 @@ interface TxANotAnno {}
     checkPreferredItems(0, 'fooBar', '_fooBar', 'FooBar')
   }
 
+  public void testDispreferUnderscoredCaseMismatch() {
+    checkPreferredItems(0, 'fooBar', '__FOO_BAR')
+  }
+
   public void testStatisticsMattersOnNextCompletion() {
     configureByFile(getTestName(false) + ".java")
     myFixture.completeBasic();
