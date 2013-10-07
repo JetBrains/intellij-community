@@ -379,6 +379,7 @@ public class HgLogCommand {
     String[] changeSets = output.split(HgChangesetUtil.CHANGESET_SEPARATOR);
     for (String line : changeSets) {
       String[] attributes = line.split(HgChangesetUtil.ITEM_SEPARATOR);
+      //if there are no moved/renamed files in the revision, then this revision should be skipped
       if (attributes.length != 2) {
         continue;
       }
