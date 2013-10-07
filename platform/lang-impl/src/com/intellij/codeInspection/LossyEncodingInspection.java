@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction;
 import com.intellij.openapi.vfs.encoding.EncodingUtil;
@@ -99,7 +98,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     if (file.getViewProvider().getBaseLanguage() != file.getLanguage()) return null;
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return null;
-    if (virtualFile.getFileSystem() != LocalFileSystem.getInstance()
+    if (!virtualFile.isInLocalFileSystem()
         // tests
         && virtualFile.getFileSystem() != TempFileSystem.getInstance()) return null;
     String text = file.getText();

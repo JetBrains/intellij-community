@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 package org.intellij.images.index;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -95,7 +94,7 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
     return new DefaultFileTypeSpecificInputFilter(ImageFileTypeManager.getInstance().getImageFileType()) {
       @Override
       public boolean acceptInput(final VirtualFile file) {
-        return (file.getFileSystem() == LocalFileSystem.getInstance() || file.getFileSystem() instanceof TempFileSystem) &&
+        return (file.isInLocalFileSystem() || file.getFileSystem() instanceof TempFileSystem) &&
                (file.getLength() / 1024) < ourMaxImageSize
           ;
       }
