@@ -184,6 +184,8 @@ public class InferenceSession {
   public PsiSubstitutor infer(@Nullable PsiParameter[] parameters, @Nullable PsiExpression[] args, @Nullable PsiElement parent) {
     repeatInferencePhases();
 
+    mySiteSubstitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, false);
+
     if (parameters != null && args != null) {
       final Set<ConstraintFormula> additionalConstraints = new HashSet<ConstraintFormula>();
       if (parameters.length > 0) {
@@ -207,7 +209,7 @@ public class InferenceSession {
       }
     }
 
-    mySiteSubstitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor);
+    mySiteSubstitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, true);
     
     for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
       if (inferenceVariable.isCaptured()) continue;
@@ -389,7 +391,7 @@ public class InferenceSession {
     return true;
   }
 
-  private PsiSubstitutor resolveBounds(final Collection<InferenceVariable> inferenceVariables, PsiSubstitutor substitutor) {
+  private PsiSubstitutor resolveBounds(final Collection<InferenceVariable> inferenceVariables, PsiSubstitutor substitutor, boolean acceptObject) {
     final List<List<InferenceVariable>> independentVars = InferenceVariablesOrder.resolveOrder(inferenceVariables, this);
     for (List<InferenceVariable> variables : independentVars) {
       for (InferenceVariable inferenceVariable : variables) {
@@ -431,7 +433,7 @@ public class InferenceSession {
             if (lub != null) {
               inferenceVariable.setInstantiation(lub instanceof PsiCapturedWildcardType ? ((PsiCapturedWildcardType)lub).getWildcard() : lub);
             }
-            else {
+            else if (acceptObject || upperBounds.size() > 1) {
               PsiType glb = null;
               for (PsiType upperBound : upperBounds) {
                 upperBound = acceptBoundsWithRecursiveDependencies(typeParameter, upperBound, substitutor);
@@ -552,6 +554,7 @@ public class InferenceSession {
       if (!repeatInferencePhases()) {
         return false;
       }
+      mySiteSubstitutor = resolveBounds(varsToResolve, mySiteSubstitutor, true);
 
       for (ConstraintFormula additionalConstraint : additionalConstraints) {
         additionalConstraint.apply(mySiteSubstitutor);
