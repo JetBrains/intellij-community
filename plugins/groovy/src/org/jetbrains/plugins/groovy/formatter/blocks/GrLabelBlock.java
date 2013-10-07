@@ -29,9 +29,8 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class GrLabelBlock extends GroovyBlock {
+public class GrLabelBlock extends GroovyBlockWithRange {
   private List<Block> myBlocks;
-  private TextRange myRange;
 
   public GrLabelBlock(@NotNull ASTNode node,
                       List<ASTNode> subStatements,
@@ -39,18 +38,16 @@ public class GrLabelBlock extends GroovyBlock {
                       @NotNull Indent indent,
                       @Nullable Wrap wrap,
                       @NotNull FormattingContext context) {
-    super(node, indent, wrap, context);
+    super(node, indent, createTextRange(subStatements), wrap, context);
 
     final GroovyBlockGenerator generator = new GroovyBlockGenerator(this);
     myBlocks = generator.generateSubBlockForCodeBlocks(classLevel, subStatements, false);
-    myRange = new TextRange(subStatements.get(0).getTextRange().getStartOffset(),
-                            subStatements.get(subStatements.size() - 1).getTextRange().getEndOffset());
   }
 
-  @NotNull
-  @Override
-  public TextRange getTextRange() {
-    return myRange;
+  private static TextRange createTextRange(List<ASTNode> subStatements) {
+    ASTNode first = subStatements.get(0);
+    ASTNode last = subStatements.get(subStatements.size() - 1);
+    return new TextRange(first.getTextRange().getStartOffset(), last.getTextRange().getEndOffset());
   }
 
   @NotNull
