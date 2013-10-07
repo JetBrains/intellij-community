@@ -73,6 +73,7 @@ public class IntroduceTargetChooser {
       model.addElement(expr);
     }
     final JList list = new JBList(model);
+    list.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     if (selection > -1) list.setSelectedIndex(selection);
     list.setCellRenderer(new DefaultListCellRenderer() {
 
