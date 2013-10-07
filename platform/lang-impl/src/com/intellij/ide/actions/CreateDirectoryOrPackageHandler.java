@@ -105,8 +105,8 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
     
     boolean createFile = false;
     if (StringUtil.countChars(subDirName, '.') == 1) {
-      FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(subDirName);
-      if (!(fileType instanceof UnknownFileType)) {
+      FileType fileType = findFileTypeBoundToName(subDirName);
+      if (fileType != null) {
         String message = "The name you entered looks like a file name. Do you want to create a file named " + subDirName + " instead?";
         int ec = Messages.showYesNoDialog(myProject, message,
                                            "File Name Detected", "Yes, create file",
@@ -121,6 +121,12 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
     doCreateElement(subDirName, createFile);
 
     return myCreatedElement != null;
+  }
+
+  @Nullable
+  public static FileType findFileTypeBoundToName(String name) {
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(name);
+    return fileType instanceof UnknownFileType ? null : fileType;
   }
 
   private void doCreateElement(final String subDirName, final boolean createFile) {
