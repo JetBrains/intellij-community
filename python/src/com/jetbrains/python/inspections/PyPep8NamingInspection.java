@@ -12,7 +12,6 @@ import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.testing.pytest.PyTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +56,7 @@ public class PyPep8NamingInspection extends PyInspection {
         if (expression instanceof PyTargetExpression) {
           final PyExpression qualifier = ((PyTargetExpression)expression).getQualifier();
           if (qualifier != null) {
-            final PyType type = TypeEvalContext.codeAnalysis(node.getContainingFile()).getType(qualifier);
+            final PyType type = myTypeEvalContext.getType(qualifier);
             if (type instanceof PyModuleType) return;
           }
         }
