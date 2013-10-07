@@ -28,7 +28,7 @@ import java.util.List;
 public final class HgErrorUtil {
 
   public static final String SETTINGS_LINK = "settings";
-  public static final String MAPPING_ERROR_MASSAGE = String.format(
+  public static final String MAPPING_ERROR_MESSAGE = String.format(
     "Please, ensure that your project base dir is hg root directory or specify full repository path in  <a href='" +
     SETTINGS_LINK +
     "'>directory mappings panel</a>.");

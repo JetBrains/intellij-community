@@ -164,7 +164,7 @@ public class HgWorkingCopyRevisionsCommand {
       }
     }
     if (!result.getRawError().isEmpty() && !HgErrorUtil.isAuthorizationError(result)) {
-      new HgCommandResultNotifier(myProject).notifyError(result, "identify command failure", HgErrorUtil.MAPPING_ERROR_MASSAGE,
+      new HgCommandResultNotifier(myProject).notifyError(result, "identify command failure", HgErrorUtil.MAPPING_ERROR_MESSAGE,
                                                          HgErrorUtil.getMappingErrorNotificationListener(myProject));
     }
     return Pair.create(HgRevisionNumber.NULL_REVISION_NUMBER, null);
@@ -226,7 +226,7 @@ public class HgWorkingCopyRevisionsCommand {
       revisions.add(HgRevisionNumber.getInstance(parts.get(0), parts.get(1)));
     }
     if (!result.getRawError().isEmpty() && !HgErrorUtil.isAuthorizationError(result)) {
-      new HgCommandResultNotifier(myProject).notifyError(result, "identify command failure", HgErrorUtil.MAPPING_ERROR_MASSAGE,
+      new HgCommandResultNotifier(myProject).notifyError(result, "identify command failure", HgErrorUtil.MAPPING_ERROR_MESSAGE,
                                                          HgErrorUtil.getMappingErrorNotificationListener(myProject));
     }
     return revisions;
