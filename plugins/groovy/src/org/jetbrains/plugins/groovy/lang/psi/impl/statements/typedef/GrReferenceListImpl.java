@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.tree.IElementType;
@@ -42,7 +43,7 @@ import java.util.ArrayList;
 public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceListStub> implements StubBasedPsiElement<GrReferenceListStub>, GrReferenceList {
   private static final Logger LOG = Logger.getInstance(GrReferenceListImpl.class);
   
-  private PsiClassType[] cachedTypes = null;
+  private PsiClassType[] myCachedTypes = null;
 
   public GrReferenceListImpl(@NotNull ASTNode node) {
     super(node);
@@ -54,7 +55,7 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
 
     if (psi instanceof GrCodeReferenceElement) {
 
-      GrCodeReferenceElement[] refs = getReferenceElements();
+      GrCodeReferenceElement[] refs = getReferenceElementsGroovy();
       if (refs.length == 1) {
         PsiElement keyword = getKeyword();
         LOG.assertTrue(keyword != null);
@@ -63,8 +64,8 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
       else {
         boolean forward = refs[0] == psi;
         PsiElement comma = forward
-                           ? PsiUtil.skipWhitespacesAndComments(psi.getNextSibling(), forward, true)
-                           : PsiUtil.skipWhitespacesAndComments(psi.getPrevSibling(), forward, true);
+                           ? PsiUtil.skipWhitespacesAndComments(psi.getNextSibling(), true, true)
+                           : PsiUtil.skipWhitespacesAndComments(psi.getPrevSibling(), false, true);
         if (comma != null && comma.getNode().getElementType() == GroovyTokenTypes.mCOMMA) {
           comma.delete();
         }
@@ -77,8 +78,9 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
     }
   }
 
+  @Override
   @Nullable
-  private PsiElement getKeyword() {
+  public PsiElement getKeyword() {
     PsiElement firstChild = getFirstChild();
     if (firstChild != null && firstChild.getNode().getElementType() == getKeywordType()) {
       return firstChild;
@@ -96,7 +98,7 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
   }
 
   @NotNull
-  public GrCodeReferenceElement[] getReferenceElements() {
+  public GrCodeReferenceElement[] getReferenceElementsGroovy() {
     final GrReferenceListStub stub = getStub();
     if (stub != null) {
       final String[] baseClasses = stub.getBaseClasses();
@@ -112,25 +114,26 @@ public abstract class GrReferenceListImpl extends GrStubElementBase<GrReferenceL
 
   @NotNull
   @Override
-  public PsiClassType[] getReferenceTypes() {
-    if (cachedTypes == null || !isValid()) {
+  public PsiClassType[] getReferencedTypes() {
+    if (myCachedTypes == null || !isValid()) {
       final ArrayList<PsiClassType> types = new ArrayList<PsiClassType>();
-      for (GrCodeReferenceElement ref : getReferenceElements()) {
+      for (GrCodeReferenceElement ref : getReferenceElementsGroovy()) {
         types.add(new GrClassReferenceType(ref));
       }
-      cachedTypes = types.toArray(new PsiClassType[types.size()]);
+      myCachedTypes = types.toArray(new PsiClassType[types.size()]);
     }
-    return cachedTypes;
+    return myCachedTypes;
   }
 
   @Override
   public void subtreeChanged() {
-    cachedTypes = null;
+    myCachedTypes = null;
   }
 
   @Override
   public PsiElement add(@NotNull PsiElement element) throws IncorrectOperationException {
-    if (element instanceof GrCodeReferenceElement) {
+    //hack for inserting references from java code
+    if (element instanceof GrCodeReferenceElement || element instanceof PsiJavaCodeReferenceElement) {
       if (findChildByType(getKeywordType()) == null) {
         getNode().addLeaf(getKeywordType(), getKeywordType().toString(), null);
       }

@@ -183,8 +183,8 @@ public class DelegatedMethodsContributor extends AstTransformContributor {
       if (elist == null && ilist == null) return ContainerUtil.emptyList();
 
       final ArrayList<PsiClassType> types = new ArrayList<PsiClassType>();
-      if (elist != null) ContainerUtil.addAll(types, elist.getReferenceTypes());
-      if (ilist != null) ContainerUtil.addAll(types, ilist.getReferenceTypes());
+      if (elist != null) ContainerUtil.addAll(types, elist.getReferencedTypes());
+      if (ilist != null) ContainerUtil.addAll(types, ilist.getReferencedTypes());
       return types;
     }
     else {

@@ -76,12 +76,12 @@ public class ChangeExtendsImplementsQuickFix implements IntentionAction {
     Set<String> unknownInterfaces = new LinkedHashSet<String>();
 
     if (myExtendsClause != null) {
-      collectRefs(myExtendsClause.getReferenceElements(), classes, interfaces, myClass.isInterface() ? unknownInterfaces : unknownClasses);
+      collectRefs(myExtendsClause.getReferenceElementsGroovy(), classes, interfaces, myClass.isInterface() ? unknownInterfaces : unknownClasses);
       myExtendsClause.delete();
     }
 
     if (myImplementsClause != null) {
-      collectRefs(myImplementsClause.getReferenceElements(), classes, interfaces, unknownInterfaces);
+      collectRefs(myImplementsClause.getReferenceElementsGroovy(), classes, interfaces, unknownInterfaces);
       myImplementsClause.delete();
     }
 

@@ -55,7 +55,7 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
 
   @Override
   public int getStubVersion() {
-    return super.getStubVersion() + 17;
+    return super.getStubVersion() + 18;
   }
 
   @NotNull
@@ -64,7 +64,7 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
   }
 
   @Override
-  public void indexStub(PsiFileStub stub, IndexSink sink) {
+  public void indexStub(@NotNull PsiFileStub stub, @NotNull IndexSink sink) {
     super.indexStub(stub, sink);
   }
 

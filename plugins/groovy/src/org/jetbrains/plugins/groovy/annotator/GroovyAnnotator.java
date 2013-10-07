@@ -1572,7 +1572,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
                                          boolean interfaceExpected,
                                          @NotNull String message,
                                          @Nullable IntentionAction fix) {
-    for (GrCodeReferenceElement refElement : list.getReferenceElements()) {
+    for (GrCodeReferenceElement refElement : list.getReferenceElementsGroovy()) {
       final PsiElement psiClass = refElement.resolve();
       if (psiClass instanceof PsiClass && ((PsiClass)psiClass).isInterface() != interfaceExpected) {
         if (fix != null) {
@@ -1993,7 +1993,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
   private static void checkForWildCards(AnnotationHolder holder, @Nullable GrReferenceList clause) {
     if (clause == null) return;
-    final GrCodeReferenceElement[] elements = clause.getReferenceElements();
+    final GrCodeReferenceElement[] elements = clause.getReferenceElementsGroovy();
     for (GrCodeReferenceElement element : elements) {
       final GrTypeArgumentList list = element.getTypeArgumentList();
       if (list != null) {

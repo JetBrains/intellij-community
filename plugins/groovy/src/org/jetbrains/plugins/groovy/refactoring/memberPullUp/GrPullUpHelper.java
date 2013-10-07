@@ -681,7 +681,7 @@ public class GrPullUpHelper extends BaseRefactoringProcessor {
   }
 
   public static GrCodeReferenceElement findReferenceToClass(GrReferenceList refList, PsiClass aClass) {
-    GrCodeReferenceElement[] refs = refList.getReferenceElements();
+    GrCodeReferenceElement[] refs = refList.getReferenceElementsGroovy();
     for (GrCodeReferenceElement ref : refs) {
       if (ref.isReferenceTo(aClass)) {
         return ref;
@@ -697,7 +697,7 @@ public class GrPullUpHelper extends BaseRefactoringProcessor {
    * @return if removed  - a reference to the class or null if there were no references to this class in the reference list
    */
   public static GrCodeReferenceElement removeFromReferenceList(GrReferenceList refList, PsiClass aClass) throws IncorrectOperationException {
-    GrCodeReferenceElement[] refs = refList.getReferenceElements();
+    GrCodeReferenceElement[] refs = refList.getReferenceElementsGroovy();
     for (GrCodeReferenceElement ref : refs) {
       if (ref.isReferenceTo(aClass)) {
         GrCodeReferenceElement refCopy = (GrCodeReferenceElement)ref.copy();
