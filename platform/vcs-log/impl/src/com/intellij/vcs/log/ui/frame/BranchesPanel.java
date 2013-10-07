@@ -82,7 +82,7 @@ public class BranchesPanel extends JPanel {
 
   @NotNull
   private List<VcsRef> getRefsToDisplayOnPanel() {
-    Collection<VcsRef> allRefs = myDataHolder.getDataPack().getRefsModel().getAllRefs();
+    Collection<VcsRef> allRefs = myDataHolder.getDataPack().getRefsModel().getBranches();
 
     List<VcsRef> refsToShow = new ArrayList<VcsRef>();
     for (Map.Entry<VirtualFile, Collection<VcsRef>> entry : groupByRoot(allRefs).entrySet()) {
