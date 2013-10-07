@@ -12,8 +12,8 @@ import com.intellij.vcs.log.printmodel.GraphPrintCell;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.table.AbstractTableModel;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
 /**
  * @author erokhins
@@ -67,7 +67,7 @@ public class GraphTableModel extends AbstractTableModel {
       case COMMIT_COLUMN:
         GraphPrintCell graphPrintCell = myDataPack.getPrintCellModel().getGraphPrintCell(rowIndex);
         String message = "";
-        List<VcsRef> refs = Collections.emptyList();
+        Collection<VcsRef> refs = Collections.emptyList();
         if (data != null) {
           message = data.getSubject();
           refs = myDataPack.getRefsModel().refsToCommit(data.getHash());

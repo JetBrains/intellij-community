@@ -19,7 +19,7 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.image.BufferedImage;
-import java.util.List;
+import java.util.Collection;
 
 import static com.intellij.vcs.log.graph.render.PrintParameters.HEIGHT_CELL;
 import static com.intellij.vcs.log.graph.render.PrintParameters.WIDTH_NODE;
@@ -85,7 +85,7 @@ public class GraphCommitCellRender implements TableCellRenderer {
 
     int countCells = cell.getPrintCell().countCell();
     int padding = countCells * WIDTH_NODE;
-    List<VcsRef> refs = cell.getRefsToThisCommit();
+    Collection<VcsRef> refs = cell.getRefsToThisCommit();
     if (!refs.isEmpty()) {
       VirtualFile root = refs.iterator().next().getRoot(); // all refs are from the same commit => they have the same root
       refs = myDataHolder.getLogProvider(root).getReferenceManager().sort(refs);
