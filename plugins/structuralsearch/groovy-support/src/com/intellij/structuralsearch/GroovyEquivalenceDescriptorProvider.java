@@ -81,7 +81,7 @@ public class GroovyEquivalenceDescriptorProvider extends EquivalenceDescriptorPr
         .element(f.getIteratedExpression());
     }
     else if (e instanceof GrReferenceList) {
-      return builder.inAnyOrder(((GrReferenceList)e).getReferenceElements());
+      return builder.inAnyOrder(((GrReferenceList)e).getReferenceElementsGroovy());
     }
     else if (e instanceof GrCodeBlock) {
       return builder.codeBlock(((GrStatementOwner)e).getStatements());
