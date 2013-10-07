@@ -93,6 +93,7 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
     javaSettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = true;
     indentOptions.USE_TAB_CHARACTER = false;
     indentOptions.SMART_TABS = false;
+    settings.FORMATTER_TAGS_ENABLED = false;
 
     InputStream inputStream = new FileInputStream(input);
     try {
@@ -158,6 +159,9 @@ public class EclipseSettingsImportTest extends PlatformTestCase {
       assertFalse(javaSettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE);
       assertTrue(indentOptions.USE_TAB_CHARACTER);
       assertTrue(indentOptions.SMART_TABS);
+      assertTrue(settings.FORMATTER_TAGS_ENABLED);
+      assertEquals("@off_tag", settings.FORMATTER_OFF_TAG);
+      assertEquals("@on_tag", settings.FORMATTER_ON_TAG);
     }
     finally {
       inputStream.close();

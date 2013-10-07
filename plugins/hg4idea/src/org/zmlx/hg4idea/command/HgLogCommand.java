@@ -354,6 +354,13 @@ public class HgLogCommand {
 
   @NotNull
   public HgFile getNameThroughCopies(@NotNull final HgFile hgFile, @NotNull HgRevisionNumber vcsRevisionNumber) throws HgCommandException {
+    String targetName = FileUtil.toSystemIndependentName(hgFile.getRelativePath());
+    String revNumber = vcsRevisionNumber.getRevisionNumber();
+    if (StringUtil.isEmptyOrSpaces(revNumber)) {
+      LOG.info("Revision Number shouldn't be empty, may be vcsDirectory mapping problem for: " + hgFile.getRepo().getPath());
+      return hgFile;
+    }
+    int targetRevNumber = Integer.valueOf(revNumber);
     String[] COPIES_TEMPLATE =
       myBuiltInSupported
       ? new String[]{"{rev}", "{join(file_copies,'" + HgChangesetUtil.FILE_SEPARATOR + "')}"}
@@ -370,8 +377,6 @@ public class HgLogCommand {
     }
     String output = result.getRawOutput();
     String[] changeSets = output.split(HgChangesetUtil.CHANGESET_SEPARATOR);
-    String targetName = FileUtil.toSystemIndependentName(hgFile.getRelativePath());
-    int targetRevNumber = Integer.valueOf(vcsRevisionNumber.getRevision());
     for (String line : changeSets) {
       String[] attributes = line.split(HgChangesetUtil.ITEM_SEPARATOR);
       if (attributes.length != 2) {

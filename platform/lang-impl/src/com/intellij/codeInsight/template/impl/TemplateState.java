@@ -51,6 +51,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
+import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
@@ -659,13 +661,18 @@ public class TemplateState implements Disposable {
     PsiDocumentManager.getInstance(myProject).commitDocument(myDocument);
     PsiFile psiFile = getPsiFile();
     PsiElement element = psiFile.findElementAt(start);
+    if (element != null) {
+      PsiUtilCore.ensureValid(element);
+    }
 
     ExpressionContext context = createExpressionContext(start);
     Result result = isQuick ? expressionNode.calculateQuickResult(context) : expressionNode.calculateResult(context);
     if ((result == null || result.equalsToText("", element)) && defaultValue != null) {
       result = defaultValue.calculateResult(context);
     }
-    assert element == null || element.isValid();
+    if (element != null) {
+      PsiUtilCore.ensureValid(element);
+    }
     if (result == null || result.equalsToText(oldValue, element)) return;
 
     replaceString(StringUtil.notNullize(result.toString()), start, end, segmentNumber);

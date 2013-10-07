@@ -145,7 +145,8 @@ class CompletionAssertions {
     }
 
     final TextRange range = insertedElement.getTextRange();
-    if (!range.substring(fileCopy.getText()).equals(insertedElement.getText())) {
+    String fileCopyText = fileCopy.getText();
+    if ((range.getEndOffset() > fileCopyText.length()) || !range.substring(fileCopyText).equals(insertedElement.getText())) {
       throw new LogEventException("Inconsistent completion tree", "range=" + range + "\n" + DebugUtil.currentStackTrace(),
                                          createFileTextAttachment(fileCopy, originalFile), createAstAttachment(fileCopy, originalFile),
                                          new Attachment("Element at caret.txt", insertedElement.getText()));

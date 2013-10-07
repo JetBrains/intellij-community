@@ -51,6 +51,11 @@ public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecuti
       }
 
       @Override
+      public void cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException, ExternalSystemException
+      {
+      }
+
+      @Override
       public void setSettings(@NotNull ExternalSystemExecutionSettings settings) throws RemoteException {
       }
 
@@ -76,4 +81,6 @@ public interface RemoteExternalSystemTaskManager<S extends ExternalSystemExecuti
                     @Nullable S settings,
                     @Nullable String vmOptions,
                     @Nullable String debuggerSetup) throws RemoteException, ExternalSystemException;
+
+  void cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException, ExternalSystemException;
 }

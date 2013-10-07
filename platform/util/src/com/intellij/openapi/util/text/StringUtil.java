@@ -1109,9 +1109,13 @@ public class StringUtil extends StringUtilRt {
     };
   }
 
+  /**
+   * @return list containing all words in {@code text}, or {@link ContainerUtil#emptyList()} if there are none.
+   * The <b>word</b> here means the maximum sub-string consisting entirely of characters which are <code>Character.isJavaIdentifierPart(c)</code>.
+   */
   @NotNull
   public static List<String> getWordsIn(@NotNull String text) {
-    List<String> result = new SmartList<String>();
+    List<String> result = null;
     int start = -1;
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
@@ -1120,12 +1124,21 @@ public class StringUtil extends StringUtilRt {
         start = i;
       }
       if (isIdentifierPart && i == text.length() - 1 && start != -1) {
+        if (result == null) {
+          result = new SmartList<String>();
+        }
         result.add(text.substring(start, i + 1));
       }
       else if (!isIdentifierPart && start != -1) {
+        if (result == null) {
+          result = new SmartList<String>();
+        }
         result.add(text.substring(start, i));
         start = -1;
       }
+    }
+    if (result == null) {
+      return ContainerUtil.emptyList();
     }
     return result;
   }

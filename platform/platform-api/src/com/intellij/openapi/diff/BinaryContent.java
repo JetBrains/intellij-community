@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import java.nio.charset.IllegalCharsetNameException;
  * Represents bytes as content. May has text representaion.
  */
 public class BinaryContent extends DiffContent {
+  @NotNull
   private final FileType myFileType;
   private final byte[] myBytes;
   private final Charset myCharset;
@@ -44,8 +45,6 @@ public class BinaryContent extends DiffContent {
   private String myFilePath;
 
   /**
-   *
-   * @param bytes
    * @param charset use to convert bytes to String. null means bytes can't be converted to text.
    * Has no sense if fileType.isBinary()
    * @param fileType type of content
@@ -66,6 +65,7 @@ public class BinaryContent extends DiffContent {
     myFilePath = filePath;
   }
 
+  @Override
   @SuppressWarnings({"EmptyCatchBlock"})
   @Nullable
   public Document getDocument() {
@@ -98,10 +98,12 @@ public class BinaryContent extends DiffContent {
   /**
    * @return null
    */
+  @Override
   public OpenFileDescriptor getOpenFileDescriptor(int offset) {
     return null;
   }
 
+  @Override
   @Nullable
   public VirtualFile getFile() {
     if (myFileType instanceof UIBasedFileType) {
@@ -115,15 +117,18 @@ public class BinaryContent extends DiffContent {
     return null;
   }
 
-  @Nullable
+  @Override
+  @NotNull
   public FileType getContentType() {
     return myFileType;
   }
 
+  @Override
   public byte[] getBytes() throws IOException {
     return myBytes;
   }
 
+  @Override
   public boolean isBinary() {
     return myCharset == null;
   }

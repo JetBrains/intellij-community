@@ -73,6 +73,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
+import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -85,8 +87,10 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class LookupImpl extends LightweightHint implements LookupEx, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.lookup.impl.LookupImpl");
@@ -871,6 +875,20 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         myEditor.removeEditorMouseListener(mouseListener);
       }
     });
+
+    JComponent editorComponent = myEditor.getContentComponent();
+    if (editorComponent.isShowing()) {
+      Disposer.register(this, new UiNotifyConnector(editorComponent, new Activatable() {
+        @Override
+        public void showNotify() {
+        }
+  
+        @Override
+        public void hideNotify() {
+          hideLookup(false);
+        }
+      }));
+    }
 
     myList.addListSelectionListener(new ListSelectionListener() {
       private LookupElement oldItem = null;

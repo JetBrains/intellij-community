@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ public class JavadocResolveTest extends DaemonAnalyzerTestCase {
   public void testSee1() throws Exception { doTest(); }
   public void testSee2() throws Exception { doTest(); }
   public void testSee3() throws Exception { doTest(); }
+  public void testPackageInfo() throws Exception { doTest(BASE_PATH + "/pkg/package-info.java", BASE_PATH, false, false); }
 
   private void doTest() throws Exception {
     doTest(BASE_PATH + "/pkg/" + getTestName(false) + ".java", BASE_PATH, false, false);

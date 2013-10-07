@@ -117,6 +117,27 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     checkResultByText("foo");
   }
 
+  public void testTemplateWithEndOnEmptyLine() throws Exception {
+    configureFromFileText("empty.java", "class C {\n" +
+                                        "  bar() {\n" +
+                                        "    <caret>\n" +
+                                        "  }\n" +
+                                        "}");
+    TemplateManager manager = TemplateManager.getInstance(getProject());
+    Template template = manager.createTemplate("empty", "user", 'foo()\n' +
+                                                                '  $END$\n' +
+                                                                'foo()');
+    template.setToReformat(true);
+    manager.startTemplate(getEditor(), template);
+    checkResultByText("class C {\n" +
+                      "  bar() {\n" +
+                      "      foo()\n" +
+                      "              <caret>\n" +
+                      "      foo()\n" +
+                      "  }\n" +
+                      "}");
+  }
+
   private void checkResultByText(String text) {
     myFixture.checkResult(text);
   }

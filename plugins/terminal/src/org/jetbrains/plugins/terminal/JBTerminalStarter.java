@@ -21,7 +21,7 @@ public class JBTerminalStarter extends TerminalStarter {
       @Override
       protected void unsupported(char... sequenceChars) {
         if (sequenceChars[0] == 7) { //ESC BEL
-          handleCommandExecutedSequence();
+          refreshAfterExecution();
         }
         else {
           super.unsupported();
@@ -30,7 +30,7 @@ public class JBTerminalStarter extends TerminalStarter {
     };
   }
 
-  private static void handleCommandExecutedSequence() {
+  public static void refreshAfterExecution() {
     //we need to refresh local file system after a command has been executed in the terminal
     SwingUtilities.invokeLater(new Runnable() {
       @Override

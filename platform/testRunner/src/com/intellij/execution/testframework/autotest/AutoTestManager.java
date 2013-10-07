@@ -23,6 +23,7 @@ import java.util.Collection;
  */
 public class AutoTestManager {
   static final Key<Boolean> AUTOTESTABLE = Key.create("auto.test.manager.supported");
+  public static final String AUTO_TEST_MANAGER_DELAY = "auto.test.manager.delay";
 
   private final Project myProject;
 
@@ -37,7 +38,7 @@ public class AutoTestManager {
   public AutoTestManager(Project project) {
     myProject = project;
     myDocumentWatcher = createWatcher();
-    myDelay = PropertiesComponent.getInstance(myProject).getOrInitInt("auto.test.manager.delay", 3000);
+    myDelay = PropertiesComponent.getInstance(myProject).getOrInitInt(AUTO_TEST_MANAGER_DELAY, 3000);
   }
 
   private DelayedDocumentWatcher createWatcher() {
@@ -104,5 +105,6 @@ public class AutoTestManager {
     if (!myEnabledDescriptors.isEmpty()) {
       myDocumentWatcher.activate();
     }
+    PropertiesComponent.getInstance(myProject).getOrInitInt(AUTO_TEST_MANAGER_DELAY, myDelay);
   }
 }

@@ -55,7 +55,7 @@ public abstract class GithubShareProjectTestBase extends GithubTest {
     myDialogManager.registerDialogHandler(GithubShareDialog.class, new TestDialogHandler<GithubShareDialog>() {
       @Override
       public int handleDialog(GithubShareDialog dialog) {
-        dialog.setRepositoryName(PROJECT_NAME);
+        dialog.testSetRepositoryName(PROJECT_NAME);
         return DialogWrapper.OK_EXIT_CODE;
       }
     });

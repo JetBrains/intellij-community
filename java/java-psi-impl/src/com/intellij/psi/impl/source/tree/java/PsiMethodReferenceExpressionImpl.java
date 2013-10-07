@@ -47,10 +47,7 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase implements PsiMethodReferenceExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiMethodReferenceExpressionImpl");
@@ -480,7 +477,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
           final boolean varArgs = psiMethod.isVarArgs();
 
-          if (parameterTypes.length == signatureParameterTypes2.length || (varArgs && !myFunctionalMethodVarArgs)) {
+          if (parameterTypes.length == signatureParameterTypes2.length || (varArgs && !myFunctionalMethodVarArgs && Math.abs(parameterTypes.length - signatureParameterTypes2.length) <= 1)) {
             boolean correct = true;
             for (int i = 0; i < parameterTypes.length; i++) {
               final PsiType type1 = subst.substitute(GenericsUtil.eliminateWildcards(parameterTypes[i]));
@@ -538,13 +535,27 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       @Override
       public CandidateInfo resolveConflict(@NotNull List<CandidateInfo> conflicts) {
         boolean varargs = false;
+        boolean fixedArity = false;
         for (CandidateInfo conflict : conflicts) {
           final PsiElement psiElement = conflict.getElement();
-          if (psiElement instanceof PsiMethod && ((PsiMethod)psiElement).isVarArgs()) {
-            varargs = true;
-            break;
+          if (psiElement instanceof PsiMethod) {
+            final boolean isVarargs = ((PsiMethod)psiElement).isVarArgs();
+            if (isVarargs) {
+              varargs = true;
+            } else {
+              fixedArity = true;
+            }
+            if (varargs && fixedArity) break;
           }
         }
+        if (varargs && fixedArity) {
+          for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext(); ) {
+            CandidateInfo conflict = iterator.next();
+            final PsiElement element = conflict.getElement();
+            if (element instanceof PsiMethod && ((PsiMethod)element).isVarArgs()) iterator.remove();
+          }
+        }
+
         checkSpecifics(conflicts,
                        varargs ? MethodCandidateInfo.ApplicabilityLevel.VARARGS : MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY,
                        myLanguageLevel);

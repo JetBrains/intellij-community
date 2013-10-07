@@ -98,7 +98,7 @@ public class PluginsAdvertiser implements StartupActivity {
             int idx = 0;
             final Set<PluginId> ids = new HashSet<PluginId>();
             for (UnknownFeature feature : unknownFeatures) {
-              indicator.setText("Searching for: " + feature.getFeatureType());
+              indicator.setText("Searching for plugin supporting \'" + feature.getImplementationName() + "\'");
               final List<PluginId> pluginId = retrieve(feature);
               if (pluginId != null) {
                 //do not suggest to download disabled plugins

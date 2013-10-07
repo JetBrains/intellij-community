@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ public class FragmentContent extends DiffContent {
     this(original, range, project, (FileType)null);
   }
 
-  private String subText(Document document, int startOffset, int length) {
+  private static String subText(Document document, int startOffset, int length) {
     return document.getCharsSequence().subSequence(startOffset, startOffset + length).toString();
   }
 
@@ -70,6 +70,7 @@ public class FragmentContent extends DiffContent {
   }
 
   @Override
+  @NotNull
   public Document getDocument() {
     return mySynchonizer.getCopy();
   }
@@ -125,12 +126,12 @@ public class FragmentContent extends DiffContent {
 
     @Override
     protected void beforeListenersAttached(@NotNull Document original, @NotNull Document copy) {
-      boolean writable = copy.isWritable();
-      if (!writable) {
+      boolean readOnly = !copy.isWritable();
+      if (readOnly) {
         copy.setReadOnly(false);
       }
       replaceString(copy, 0, copy.getTextLength(), subText(original, myRangeMarker.getStartOffset(), getLength()));
-      copy.setReadOnly(!writable);
+      copy.setReadOnly(readOnly);
     }
 
     private int getLength() {
@@ -142,6 +143,7 @@ public class FragmentContent extends DiffContent {
       return myRangeMarker.getDocument();
     }
 
+    @NotNull
     @Override
     protected Document createCopy() {
       final Document originalDocument = myRangeMarker.getDocument();

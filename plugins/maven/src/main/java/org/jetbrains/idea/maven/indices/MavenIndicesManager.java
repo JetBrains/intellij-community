@@ -24,8 +24,6 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -48,7 +46,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class MavenIndicesManager {
+public class MavenIndicesManager implements Disposable {
   private static final String ELEMENT_ARCHETYPES = "archetypes";
   private static final String ELEMENT_ARCHETYPE = "archetype";
   private static final String ELEMENT_GROUP_ID = "groupId";
@@ -112,12 +110,6 @@ public class MavenIndicesManager {
       }
     });
 
-    Disposer.register(ApplicationManager.getApplication(), new Disposable() {
-      public void dispose() {
-        doShutdown();
-      }
-    });
-
     loadUserArchetypes();
   }
 
@@ -127,7 +119,7 @@ public class MavenIndicesManager {
            : myTestIndicesDir;
   }
 
-  public void disposeComponent() {
+  public void dispose() {
     doShutdown();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       FileUtil.delete(getIndicesDir());

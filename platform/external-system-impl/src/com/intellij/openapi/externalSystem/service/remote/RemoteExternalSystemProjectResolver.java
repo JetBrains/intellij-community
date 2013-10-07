@@ -20,9 +20,9 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemService;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +62,10 @@ public interface RemoteExternalSystemProjectResolver<S extends ExternalSystemExe
     @Override
     public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) throws RemoteException {
       return false;
+    }
+
+    @Override
+    public void cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException {
     }
 
     @NotNull

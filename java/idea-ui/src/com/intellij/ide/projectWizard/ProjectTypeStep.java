@@ -41,8 +41,6 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -110,17 +108,12 @@ public class ProjectTypeStep extends ModuleWizardStep {
       }
     };
 
-    List<ProjectCategory> categories = new ArrayList<ProjectCategory>();
-    /*
-    categories.addAll(ContainerUtil.map(ModuleBuilder.getAllBuilders(), new Function<ModuleBuilder, ProjectCategory>() {
-      @Override
-      public ProjectCategory fun(ModuleBuilder builder) {
-        return new BuilderBasedProjectType(builder);
-      }
-    }));
-    */
-    categories.addAll(Arrays.asList(ProjectCategory.EXTENSION_POINT_NAME.getExtensions()));
+    final MultiMap<String, ProjectCategory> categories = new MultiMap<String, ProjectCategory>();
+    for (ProjectCategory category : ProjectCategory.EXTENSION_POINT_NAME.getExtensions()) {
+      categories.putValue(category.getGroupName(), category);
+    }
 
+    List<ProjectCategory> list = new ArrayList<ProjectCategory>();
     DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     MultiMap<TemplatesGroup,ProjectTemplate> templatesMap = CreateFromTemplateMode.getTemplatesMap(context, false);
     List<TemplatesGroup> groups = new ArrayList<TemplatesGroup>(templatesMap.keySet());
@@ -128,32 +121,21 @@ public class ProjectTypeStep extends ModuleWizardStep {
     for (TemplatesGroup group : groups) {
       DefaultMutableTreeNode groupNode = new DefaultMutableTreeNode(group);
       root.add(groupNode);
+      Collection<ProjectCategory> collection = categories.get(group.getName());
+      for (ProjectCategory category : collection) {
+        groupNode.add(new DefaultMutableTreeNode(category));
+        list.add(category);
+      }
       for (ProjectTemplate template : templatesMap.get(group)) {
         TemplateBasedProjectType projectType = new TemplateBasedProjectType(template);
         groupNode.add(new DefaultMutableTreeNode(projectType));
+        list.add(projectType);
       }
     }
-
-    categories.addAll(ContainerUtil.map(templatesMap.values(), new Function<ProjectTemplate, ProjectCategory>() {
-      @Override
-      public ProjectCategory fun(ProjectTemplate template) {
-        return new TemplateBasedProjectType(template);
-      }
-    }));
-
-    final MultiMap<String, ProjectCategory> map = new MultiMap<String, ProjectCategory>();
-    for (ProjectCategory category : categories) {
-      map.putValue(category.getGroupName(), category);
-    }
-    Collections.sort(categories, new Comparator<ProjectCategory>() {
-      @Override
-      public int compare(ProjectCategory o1, ProjectCategory o2) {
-        return map.get(o2.getGroupName()).size() - map.get(o1.getGroupName()).size();
-      }
-    });
 
     myProjectTypeTree.setModel(new DefaultTreeModel(root));
     TreeUtil.expandAll(myProjectTypeTree);
+    myProjectTypeTree.addSelectionRow(0);
 
     myProjectTypeTree.setCellRenderer(new ColoredTreeCellRenderer() {
       @Override
@@ -191,7 +173,7 @@ public class ProjectTypeStep extends ModuleWizardStep {
       }
     });
 
-    for (ProjectCategory category : categories) {
+    for (ProjectCategory category : list) {
       myWizard.getSequence().addStepsForBuilder(myBuilders.get(category), context, modulesProvider, true);
     }
 

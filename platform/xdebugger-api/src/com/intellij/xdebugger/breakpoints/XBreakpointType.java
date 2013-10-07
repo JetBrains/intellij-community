@@ -103,6 +103,17 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return AllIcons.Debugger.Db_disabled_breakpoint;
   }
 
+  /**
+   * @return the icon which is shown for a dependent breakpoint until its master breakpoint is reached
+   */
+  @NotNull
+  public Icon getInactiveDependentIcon() {
+    return getDisabledDependentIcon();
+  }
+
+  /**
+   * @deprecated override {@link #getInactiveDependentIcon()} instead
+   */
   @NotNull
   public Icon getDisabledDependentIcon() {
     return AllIcons.Debugger.Db_dep_line_breakpoint;

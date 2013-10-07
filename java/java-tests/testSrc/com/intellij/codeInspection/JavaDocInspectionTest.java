@@ -70,4 +70,11 @@ public class JavaDocInspectionTest extends InspectionTestCase {
     inspection.setIgnoreSimpleAccessors(true);
     doTest("javaDocInspection/" + getTestName(true), inspection);
   }
+
+  public void testPackageInfo() throws Exception {
+    final JavaDocLocalInspection inspection = new JavaDocLocalInspection();
+    inspection.IGNORE_DEPRECATED = true;
+    inspection.setPackageOption("public", "@author");
+    doTest("javaDocInspection/" + getTestName(true), inspection);
+  }
 }

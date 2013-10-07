@@ -168,7 +168,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     }
     if (!disabledIds.isEmpty()) {
       final Set<IdeaPluginDescriptor> dependencies = new HashSet<IdeaPluginDescriptor>();
-      for (IdeaPluginDescriptor ideaPluginDescriptor : pluginsModel.view) {
+      for (IdeaPluginDescriptor ideaPluginDescriptor : pluginsModel.getAllPlugins()) {
         if (disabledIds.contains(ideaPluginDescriptor.getPluginId())) {
           dependencies.add(ideaPluginDescriptor);
         }

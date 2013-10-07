@@ -75,8 +75,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     @NonNls public String ACCESS_JAVADOC_REQUIRED_FOR = NONE;
     @NonNls public String REQUIRED_TAGS = "";
 
-    public Options() {
-    }
+    public Options() {}
 
     public Options(String ACCESS_JAVADOC_REQUIRED_FOR, String REQUIRED_TAGS) {
       this.ACCESS_JAVADOC_REQUIRED_FOR = ACCESS_JAVADOC_REQUIRED_FOR;
@@ -94,6 +93,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
   }
 
+  @NonNls private Options PACKAGE_OPTIONS         = new Options("none", "");
   @NonNls public Options TOP_LEVEL_CLASS_OPTIONS  = new Options("none", "");
   @NonNls public Options INNER_CLASS_OPTIONS      = new Options("none", "");
   @NonNls public Options METHOD_OPTIONS           = new Options("none", "@return@param@throws or @exception");
@@ -109,6 +109,11 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
   public void setIgnoreSimpleAccessors(boolean ignoreSimpleAccessors) {
     myIgnoreSimpleAccessors = ignoreSimpleAccessors;
+  }
+
+  public void setPackageOption(@NonNls String modifier, @NonNls String tags) {
+    PACKAGE_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR = modifier;
+    PACKAGE_OPTIONS.REQUIRED_TAGS = tags;
   }
 
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.javaDoc.JavaDocLocalInspection");
@@ -225,7 +230,12 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 2, 1, 1, 0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0),0,0 );
       add(createAdditionalJavadocTagsPanel(), gc);
       JTabbedPane tabs = new JBTabbedPane(SwingConstants.BOTTOM);
-      @NonNls String[] tags = new String[]{"@author", "@version", "@since", "@param"};
+      @NonNls String[] tags;
+      tags = new String[]{"@author", "@version", "@since"};
+      tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title.package"), createOptionsPanel(new String[]{NONE, PUBLIC},
+                                                                                                            tags,PACKAGE_OPTIONS));
+
+      tags = new String[]{"@author", "@version", "@since", "@param"};
       tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title"), createOptionsPanel(new String[]{NONE, PUBLIC, PACKAGE_LOCAL},
                                                                                                     tags,
                                                                                                     TOP_LEVEL_CLASS_OPTIONS));
@@ -325,6 +335,9 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       option.setAttribute("value", String.valueOf(true));
       node.addContent(option);
     }
+    if (!PACKAGE_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR.equals("none") || !PACKAGE_OPTIONS.REQUIRED_TAGS.isEmpty()) {
+      PACKAGE_OPTIONS.writeExternal(node);
+    }
   }
 
   @Override
@@ -334,11 +347,12 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     if (ignoreAccessorsTag != null) {
       myIgnoreSimpleAccessors = Boolean.parseBoolean(ignoreAccessorsTag.getAttributeValue("value"));
     }
+    PACKAGE_OPTIONS.readExternal(node);
   }
 
   private static ProblemDescriptor createDescriptor(@NotNull PsiElement element, String template, InspectionManager manager,
                                                     boolean onTheFly) {
-    return manager.createProblemDescriptor(element, template, onTheFly, (LocalQuickFix [])null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+    return manager.createProblemDescriptor(element, template, onTheFly, null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
   private static ProblemDescriptor createDescriptor(@NotNull PsiElement element, String template, @NotNull LocalQuickFix fix,
@@ -368,22 +382,19 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();
       try {
-        final PsiDocCommentOwner owner = PsiTreeUtil.getParentOfType(descriptor.getEndElement(), PsiDocCommentOwner.class);
-        if (owner != null) {
-          if (!CodeInsightUtil.preparePsiElementsForWrite(owner)) return;
-          final PsiDocComment docComment = owner.getDocComment();
+        final PsiDocComment docComment = PsiTreeUtil.getParentOfType(descriptor.getEndElement(), PsiDocComment.class);
+        if (docComment != null) {
+          if (!CodeInsightUtil.preparePsiElementsForWrite(docComment)) return;
           final PsiDocTag tag = factory.createDocTagFromText("@" + myTag + " " + myValue);
-          if (docComment != null) {
-            PsiElement addedTag;
-            final PsiElement anchor = getAnchor(descriptor);
-            if (anchor != null) {
-              addedTag = docComment.addBefore(tag, anchor);
-            }
-            else {
-              addedTag = docComment.add(tag);
-            }
-            moveCaretTo(addedTag);
+          PsiElement addedTag;
+          final PsiElement anchor = getAnchor(descriptor);
+          if (anchor != null) {
+            addedTag = docComment.addBefore(tag, anchor);
           }
+          else {
+            addedTag = docComment.add(tag);
+          }
+          moveCaretTo(addedTag);
         }
       }
       catch (IncorrectOperationException e) {
@@ -415,6 +426,55 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       return InspectionsBundle.message("inspection.javadoc.problem.add.tag.family");
     }
   }
+
+  @Nullable
+  @Override
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    if (!PsiPackage.PACKAGE_INFO_FILE.equals(file.getName()) || !(file instanceof PsiJavaFile)) {
+      return null;
+    }
+    final PsiDocComment docComment = PsiTreeUtil.getChildOfType(file, PsiDocComment.class);
+    final JavaDirectoryService directoryService = JavaDirectoryService.getInstance();
+    final PsiDirectory directory = file.getContainingDirectory();
+    final PsiPackage aPackage = directoryService.getPackage(directory);
+    if (IGNORE_DEPRECATED && aPackage != null) {
+      final PsiModifierList modifierList = aPackage.getModifierList();
+      if (modifierList != null && modifierList.findAnnotation("java.lang.Deprecated") != null) {
+        return null;
+      }
+    }
+    final PsiJavaFile javaFile = (PsiJavaFile)file;
+    final PsiPackageStatement packageStatement = javaFile.getPackageStatement();
+    final PsiElement elementToHighlight = packageStatement != null ? packageStatement : file;
+
+    final boolean required = isJavaDocRequired(aPackage);
+    if (docComment != null) {
+      if (IGNORE_DEPRECATED && docComment.findTagByName("deprecated") != null) {
+        return null;
+      }
+    }
+    else {
+      return required
+             ? new ProblemDescriptor[]{createDescriptor(elementToHighlight, REQUIRED_JAVADOC_IS_ABSENT, manager, isOnTheFly)}
+             : null;
+    }
+
+    final PsiDocTag[] tags = docComment.getTags();
+    final ArrayList<ProblemDescriptor> problems =
+      getRequiredTagProblems(aPackage, docComment.getFirstChild(), tags, manager, isOnTheFly, required);
+    final ArrayList<ProblemDescriptor> tagProblems = getTagValuesProblems(aPackage, tags, manager, isOnTheFly);
+    if (tagProblems != null) {
+      problems.addAll(tagProblems);
+    }
+    checkInlineTags(manager, problems, docComment.getDescriptionElements(),
+                    JavadocManager.SERVICE.getInstance(docComment.getProject()), isOnTheFly);
+    checkForPeriodInDoc(aPackage, docComment, problems, manager, isOnTheFly);
+    checkForBadCharacters(docComment, problems, manager, isOnTheFly);
+    return problems.isEmpty()
+           ? null
+           : problems.toArray(new ProblemDescriptor[problems.size()]);
+  }
+
   @Override
   @Nullable
   public ProblemDescriptor[] checkClass(@NotNull PsiClass psiClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
@@ -435,6 +495,43 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
 
     PsiDocTag[] tags = docComment.getTags();
+    final ArrayList<ProblemDescriptor> problems = getRequiredTagProblems(psiClass, docComment.getFirstChild(), tags, manager, isOnTheFly, required);
+
+    ArrayList<ProblemDescriptor> tagProblems = getTagValuesProblems(psiClass, tags, manager, isOnTheFly);
+    if (tagProblems != null) {
+      problems.addAll(tagProblems);
+    }
+    checkForPeriodInDoc(psiClass, docComment, problems, manager, isOnTheFly);
+    checkInlineTags(manager, problems, docComment.getDescriptionElements(),
+                    JavadocManager.SERVICE.getInstance(docComment.getProject()), isOnTheFly);
+    checkForBadCharacters(docComment, problems, manager, isOnTheFly);
+    checkDuplicateTags(tags, problems, manager, isOnTheFly);
+
+    if (required && isTagRequired(psiClass, "param") && psiClass.hasTypeParameters() && nameIdentifier != null) {
+      ArrayList<PsiTypeParameter> absentParameters = null;
+      final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
+      for (PsiTypeParameter typeParameter : typeParameters) {
+        if (!isFound(tags, typeParameter)) {
+          if (absentParameters == null) absentParameters = new ArrayList<PsiTypeParameter>(1);
+          absentParameters.add(typeParameter);
+        }
+      }
+      if (absentParameters != null) {
+        for (PsiTypeParameter psiTypeParameter : absentParameters) {
+          problems.add(createMissingParamTagDescriptor(docComment.getFirstChild(), psiTypeParameter, manager, isOnTheFly));
+        }
+      }
+    }
+
+    return problems.isEmpty()
+           ? null
+           : problems.toArray(new ProblemDescriptor[problems.size()]);
+  }
+
+  private ArrayList<ProblemDescriptor> getRequiredTagProblems(PsiElement context,
+                                                              PsiElement elementToHighlight,
+                                                              PsiDocTag[] tags,
+                                                              InspectionManager manager, boolean isOnTheFly, boolean required) {
     @NonNls String[] tagsToCheck = {"author", "version", "since"};
     @NonNls String[] absentDescriptionKeys = {
       "inspection.javadoc.problem.missing.author.description",
@@ -448,7 +545,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       boolean someTagsAreRequired = false;
       for (int i = 0; i < tagsToCheck.length; i++) {
         final String tag = tagsToCheck[i];
-        someTagsAreRequired |= isTagRequired[i] = isTagRequired(psiClass, tag);
+        someTagsAreRequired |= isTagRequired[i] = isTagRequired(context, tag);
       }
 
       if (someTagsAreRequired) {
@@ -470,52 +567,22 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         }
       }
     }
-
-    ArrayList<ProblemDescriptor> tagProblems = getTagValuesProblems(psiClass, tags, manager, isOnTheFly);
-    if (tagProblems != null) {
-      problems.addAll(tagProblems);
-    }
-    checkForPeriodInDoc(docComment, problems, manager, isOnTheFly);
-    checkInlineTags(manager, problems, docComment.getDescriptionElements(),
-                    JavadocManager.SERVICE.getInstance(docComment.getProject()), isOnTheFly);
-    checkForBadCharacters(docComment, problems, manager, isOnTheFly);
     for (PsiDocTag tag : tags) {
       for (int i = 0; i < tagsToCheck.length; i++) {
         final String tagToCheck = tagsToCheck[i];
-        if (tagToCheck.equals(tag.getName()) && extractTagDescription(tag).length() == 0) {
-          problems.add(createDescriptor(elementToHighlight, InspectionsBundle.message(absentDescriptionKeys[i]), manager, isOnTheFly));
+        if (tagToCheck.equals(tag.getName()) && extractTagDescription(tag).isEmpty()) {
+          problems.add(createDescriptor(tag.getNameElement(), InspectionsBundle.message(absentDescriptionKeys[i]), manager, isOnTheFly));
         }
       }
     }
-
-    checkDuplicateTags(tags, problems, manager, isOnTheFly);
-
-    if (required && isTagRequired(psiClass, "param") && psiClass.hasTypeParameters() && nameIdentifier != null) {
-      ArrayList<PsiTypeParameter> absentParameters = null;
-      final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
-      for (PsiTypeParameter typeParameter : typeParameters) {
-        if (!isFound(tags, typeParameter)) {
-          if (absentParameters == null) absentParameters = new ArrayList<PsiTypeParameter>(1);
-          absentParameters.add(typeParameter);
-        }
-      }
-      if (absentParameters != null) {
-        for (PsiTypeParameter psiTypeParameter : absentParameters) {
-          problems.add(createMissingParamTagDescriptor(nameIdentifier, psiTypeParameter, manager, isOnTheFly));
-        }
-      }
-    }
-
-    return problems.isEmpty()
-           ? null
-           : problems.toArray(new ProblemDescriptor[problems.size()]);
+    return problems;
   }
 
-  private static ProblemDescriptor createMissingParamTagDescriptor(final PsiIdentifier nameIdentifier,
+  private static ProblemDescriptor createMissingParamTagDescriptor(final PsiElement elementToHighlight,
                                                                    final PsiTypeParameter psiTypeParameter,
                                                                    final InspectionManager manager, boolean isOnTheFly) {
     String message = InspectionsBundle.message("inspection.javadoc.problem.missing.tag", "<code>@param</code>");
-    return createDescriptor(nameIdentifier, message, new AddMissingTagFix("param", "<" + psiTypeParameter.getName() + ">"), manager,
+    return createDescriptor(elementToHighlight, message, new AddMissingTagFix("param", "<" + psiTypeParameter.getName() + ">"), manager,
                             isOnTheFly);
   }
 
@@ -540,7 +607,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     }
     checkInlineTags(manager, problems, docComment.getDescriptionElements(),
                     JavadocManager.SERVICE.getInstance(docComment.getProject()), isOnTheFly);
-    checkForPeriodInDoc(docComment, problems, manager, isOnTheFly);
+    checkForPeriodInDoc(psiField, docComment, problems, manager, isOnTheFly);
     checkDuplicateTags(docComment.getTags(), problems, manager, isOnTheFly);
     checkForBadCharacters(docComment, problems, manager, isOnTheFly);
     return problems.isEmpty()
@@ -632,18 +699,12 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
 
     if (required && isReturnRequired && isReturnAbsent) {
-      final PsiIdentifier psiIdentifier = psiMethod.getNameIdentifier();
-      if (psiIdentifier != null) {
-        problems.add(createMissingTagDescriptor(psiIdentifier, "return", manager, isOnTheFly));
-      }
+      problems.add(createMissingTagDescriptor(docComment.getFirstChild(), "return", manager, isOnTheFly));
     }
 
     if (absentParameters != null) {
       for (PsiParameter psiParameter : absentParameters) {
-        final PsiIdentifier nameIdentifier = psiMethod.getNameIdentifier();
-        if (nameIdentifier != null) {
-          problems.add(createMissingParamTagDescriptor(nameIdentifier, psiParameter, manager, isOnTheFly));
-        }
+        problems.add(createMissingParamTagDescriptor(docComment.getFirstChild(), psiParameter, manager, isOnTheFly));
       }
     }
 
@@ -686,7 +747,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       processThrowsTags(tags, declaredExceptions, manager, problems, isOnTheFly);
       if (!declaredExceptions.isEmpty()) {
         for (PsiClassType declaredException : declaredExceptions.keySet()) {
-          problems.add(createMissingThrowsTagDescriptor(psiMethod, manager, declaredException, isOnTheFly));
+          problems.add(createMissingThrowsTagDescriptor(docComment.getFirstChild(), manager, declaredException, isOnTheFly));
         }
       }
     }
@@ -696,7 +757,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       problems.addAll(tagProblems);
     }
 
-    checkForPeriodInDoc(docComment, problems, manager, isOnTheFly);
+    checkForPeriodInDoc(psiMethod, docComment, problems, manager, isOnTheFly);
     checkForBadCharacters(docComment, problems, manager, isOnTheFly);
     for (PsiDocTag tag : tags) {
       if ("param".equals(tag.getName())) {
@@ -782,23 +843,22 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   }
 
   @Nullable
-  private static ProblemDescriptor createMissingThrowsTagDescriptor(final PsiMethod method,
+  private static ProblemDescriptor createMissingThrowsTagDescriptor(final PsiElement elementToHighlight,
                                                                     final InspectionManager manager,
                                                                     final PsiClassType exceptionClassType, boolean isOnTheFly) {
     @NonNls String tag = "throws";
     String message = InspectionsBundle.message("inspection.javadoc.problem.missing.tag", "<code>@" + tag + "</code> " + exceptionClassType.getCanonicalText());
     final String firstDeclaredException = exceptionClassType.getCanonicalText();
-    final PsiIdentifier nameIdentifier = method.getNameIdentifier();
-    return nameIdentifier != null ? createDescriptor(nameIdentifier, message,new AddMissingTagFix(tag, firstDeclaredException), manager,
-                                                     isOnTheFly) : null;
+    return createDescriptor(elementToHighlight, message, new AddMissingTagFix(tag, firstDeclaredException), manager, isOnTheFly);
   }
 
   private static ProblemDescriptor createMissingTagDescriptor(PsiElement elementToHighlight,
                                                               @NonNls String tag,
                                                               final InspectionManager manager, boolean isOnTheFly) {
     String message = InspectionsBundle.message("inspection.javadoc.problem.missing.tag", "<code>@" + tag + "</code>");
-    return createDescriptor(elementToHighlight, message,new AddMissingTagFix(tag), manager, isOnTheFly);
+    return createDescriptor(elementToHighlight, message, new AddMissingTagFix(tag), manager, isOnTheFly);
   }
+
   private static ProblemDescriptor createMissingParamTagDescriptor(PsiElement elementToHighlight,
                                                                    PsiParameter param,
                                                                    final InspectionManager manager, boolean isOnTheFly) {
@@ -825,8 +885,11 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     protected PsiElement getAnchor(ProblemDescriptor descriptor) {
       PsiElement element = descriptor.getPsiElement();
       PsiElement parent = element == null ? null : element.getParent();
-      if (!(parent instanceof PsiMethod)) return null;
-      PsiParameter[] parameters = ((PsiMethod)parent).getParameterList().getParameters();
+      if (!(parent instanceof PsiDocComment)) return null;
+      final PsiDocComment docComment = (PsiDocComment)parent;
+      final PsiDocCommentOwner owner = docComment.getOwner();
+      if (!(owner instanceof PsiMethod)) return null;
+      PsiParameter[] parameters = ((PsiMethod)owner).getParameterList().getParameters();
       PsiParameter myParam = ContainerUtil.find(parameters, new Condition<PsiParameter>() {
         @Override
         public boolean value(PsiParameter psiParameter) {
@@ -835,10 +898,6 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       });
       if (myParam == null) return null;
 
-      final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(myParam, PsiMethod.class);
-      LOG.assertTrue(psiMethod != null);
-      final PsiDocComment docComment = psiMethod.getDocComment();
-      LOG.assertTrue(docComment != null);
       PsiDocTag[] tags = docComment.findTagsByName("param");
       if (tags.length == 0) { //insert as first tag or append to description
         tags = docComment.getTags();
@@ -928,7 +987,8 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     });
   }
 
-  private void checkForPeriodInDoc(PsiDocComment docComment,
+  private void checkForPeriodInDoc(PsiElement context,
+                                   PsiDocComment docComment,
                                    ArrayList<ProblemDescriptor> problems,
                                    InspectionManager manager, boolean onTheFly) {
     if (IGNORE_JAVADOC_PERIOD) return;
@@ -936,11 +996,10 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     int dotIndex = docComment.getText().indexOf('.');
     int tagOffset = 0;
     if (dotIndex >= 0) {      //need to find first valid tag
-      final PsiDocCommentOwner owner = PsiTreeUtil.getParentOfType(docComment, PsiDocCommentOwner.class);
       for (PsiDocTag tag : tags) {
         final String tagName = tag.getName();
         final JavadocTagInfo tagInfo = JavadocManager.SERVICE.getInstance(tag.getProject()).getTagInfo(tagName);
-        if (tagInfo != null && tagInfo.isValidInContext(owner) && !tagInfo.isInline()) {
+        if (tagInfo != null && tagInfo.isValidInContext(context) && !tagInfo.isInline()) {
           tagOffset = tag.getTextOffset();
           break;
         }
@@ -956,23 +1015,21 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   }
 
   @Nullable
-  private ArrayList<ProblemDescriptor> getTagValuesProblems(PsiDocCommentOwner context, PsiDocTag[] tags, InspectionManager inspectionManager,
+  private ArrayList<ProblemDescriptor> getTagValuesProblems(PsiElement context, PsiDocTag[] tags, InspectionManager inspectionManager,
                                                             boolean isOnTheFly) {
     final ArrayList<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>(2);
-    nextTag:
     for (PsiDocTag tag : tags) {
       final JavadocManager manager = JavadocManager.SERVICE.getInstance(tag.getProject());
       String tagName = tag.getName();
       JavadocTagInfo tagInfo = manager.getTagInfo(tagName);
 
       if (tagInfo == null || !tagInfo.isValidInContext(context)) {
-        if (checkTagInfo(inspectionManager, tagInfo, tag, isOnTheFly, problems)) continue nextTag;
+        if (checkTagInfo(inspectionManager, tagInfo, tag, isOnTheFly, problems)) continue;
       }
 
       PsiDocTagValue value = tag.getValueElement();
-      final JavadocTagInfo info = manager.getTagInfo(tagName);
-      if (info != null && !info.isValidInContext(context)) continue;
-      String message = info == null ? null : info.checkTagValue(value);
+      if (tagInfo != null && !tagInfo.isValidInContext(context)) continue;
+      String message = tagInfo == null ? null : tagInfo.checkTagValue(value);
 
       final PsiReference reference = value != null ? value.getReference() : null;
       if (message == null && reference != null) {
@@ -990,9 +1047,10 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
       if (message != null) {
         final PsiDocTagValue valueElement = tag.getValueElement();
         if (valueElement == null){
-          problems.add(inspectionManager.createProblemDescriptor(tag, InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", "<code>" + tag.getName() + "</code>"), null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                                                 isOnTheFly, true));
-        } else {
+          problems.add(inspectionManager.createProblemDescriptor(tag, InspectionsBundle.message(
+            "inspection.javadoc.method.problem.missing.tag.description", "<code>" + tag.getName() + "</code>"), (LocalQuickFix)null,
+                                                                 ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly)); }
+        else {
           problems.add(createDescriptor(valueElement, message, inspectionManager, isOnTheFly));
         }
       }
@@ -1059,6 +1117,10 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
   @SuppressWarnings({"SimplifiableIfStatement"})
   private boolean isTagRequired(PsiElement context, @NonNls String tag) {
+    if (context instanceof PsiPackage) {
+      return isTagRequired(PACKAGE_OPTIONS, tag);
+    }
+
     if (context instanceof PsiClass) {
       if (PsiTreeUtil.getParentOfType(context, PsiClass.class) != null) {
         return isTagRequired(INNER_CLASS_OPTIONS, tag);
@@ -1085,6 +1147,10 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   private boolean isJavaDocRequired(PsiModifierListOwner psiElement) {
     final RefJavaUtil refUtil = RefJavaUtil.getInstance();
     int actualAccess = getAccessNumber(refUtil.getAccessModifier(psiElement));
+    if (psiElement instanceof PsiPackage) {
+      return 1 <= getAccessNumber(PACKAGE_OPTIONS.ACCESS_JAVADOC_REQUIRED_FOR);
+    }
+
     if (psiElement instanceof PsiClass) {
       PsiClass psiClass = (PsiClass)psiElement;
       if (PsiTreeUtil.getParentOfType(psiClass, PsiClass.class) != null) {

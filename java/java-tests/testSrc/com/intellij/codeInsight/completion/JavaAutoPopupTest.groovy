@@ -882,6 +882,8 @@ class Foo {
 } """)
     type 'a'
     println myFixture.lookupElementStrings
+    type 'a'
+    println myFixture.lookupElementStrings
     type ','
     assert myFixture.editor.document.text.contains('foo(aaa, )')
   }

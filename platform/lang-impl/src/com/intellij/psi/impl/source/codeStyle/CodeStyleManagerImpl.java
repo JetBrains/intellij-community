@@ -37,7 +37,9 @@ import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.CharTable;
@@ -482,25 +484,10 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
    * </ol>
    * </pre>
    * <p/>
-   * This method inserts that dummy text if necessary (if target line contains white space symbols only).
+   * This method inserts that dummy comment (fallback to identifier <code>xxx</code>, see {@link CodeStyleManagerImpl#createDummy(PsiFile)}) 
+   * if necessary (if target line contains white space symbols only).
    * <p/>
-   * Please note that it tries to do that via PSI at first (checks if given offset points to
-   * {@link TokenType#WHITE_SPACE white space element} and inserts dummy text as dedicated element if necessary) and,
-   * in case of the negative answer, tries to perform the examination considering document just as a sequence of characters
-   * and assuming that white space symbols are white spaces, tabulations and line feeds. The rationale for such an approach is:
-   * <pre>
-   * <ul>
-   *   <li>
-   *      there is a possible case that target language considers symbols over than white spaces, tabulations and line feeds
-   *      to be white spaces and the answer lays at PSI structure of the file;
-   *   </li>
-   *   <li>
-   *      dummy text inserted during PSI-based processing has {@link TokenType#NEW_LINE_INDENT special type} that may be treated
-   *      specifically during formatting;
-   *   </li>
-   * </ul>
-   * </pre>
-   * <p/>
+   
    * <b>Note:</b> it's expected that the whole white space region that contains given offset is processed in a way that all
    * {@link RangeMarker range markers} registered for the given offset are expanded to the whole white space region.
    * E.g. there is a possible case that particular range marker serves for defining formatting range, hence, its start/end offsets
@@ -513,90 +500,12 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
    * @throws IncorrectOperationException  if given file is read-only
    */
   @Nullable
-  public static TextRange insertNewLineIndentMarker(@NotNull PsiFile file, @NotNull Document document, int offset)
-    throws IncorrectOperationException
-  {
-    TextRange result = insertNewLineIndentMarker(file, offset);
-    if (result == null) {
-      result = insertNewLineIndentMarker(document, offset);
-    }
-    return result;
-  }
-
-
-  @Nullable
-  private static TextRange insertNewLineIndentMarker(@NotNull PsiFile file, int offset) throws IncorrectOperationException {
-    CheckUtil.checkWritable(file);
-
-    final Pair<PsiElement, CharTable> pair = doFindWhiteSpaceNode(file, offset);
-    PsiElement element = pair.first;
-    if (element == null) {
-      return null;
-    }
-
-    ASTNode node = SourceTreeToPsiMap.psiElementToTree(element);
-    if (node == null) {
-      return null;
-    }
-    ASTNode parent = node.getTreeParent();
-    int elementStart = element.getTextRange().getStartOffset();
-    int rangeShift = 0;
-    if (element.getContainingFile() != null) {
-      // Map injected element offset to the real file offset.
-      rangeShift = InjectedLanguageManager.getInstance(file.getProject()).injectedToHost(element, elementStart) - elementStart;
-      elementStart += rangeShift;
-    }
-
-    if (elementStart > offset) {
-      return null;
-    }
-
-    // We don't want to insert a marker if target line is not blank (doesn't consist from white space symbols only).
-    if (offset == elementStart) {
-      for (ASTNode prev = TreeUtil.prevLeaf(node); ; prev = TreeUtil.prevLeaf(prev)) {
-        if (prev == null) {
-          return null;
-        }
-        if (prev.getTextRange().isEmpty()) {
-          continue;
-        }
-        if (prev.getElementType() != TokenType.WHITE_SPACE) {
-          return null;
-        }
-      }
-    }
-
-    CharTable charTable = pair.second;
-    ASTNode marker;
-
-    // The thing is that we have a sub-system that monitors tree changes and marks newly generated elements for postponed
-    // formatting (PostprocessReformattingAspect). In case of injected context that results in marking whole injected region
-    // in case its sub-range is changed.
-    //
-    // We want to avoid that here, so, temporarily suppress that functionality.
-    CodeEditUtil.setAllowSuspendNodesReformatting(false);
-    try {
-
-      ASTNode space1 = splitSpaceElement((TreeElement)element, offset - elementStart, charTable);
-      marker = Factory.createSingleLeafElement(TokenType.NEW_LINE_INDENT, DUMMY_IDENTIFIER, charTable, file.getManager());
-      setSequentialProcessingAllowed(false);
-      parent.addChild(marker, space1.getTreeNext());
-    }
-    finally {
-      CodeEditUtil.setAllowSuspendNodesReformatting(true);
-    }
-    PsiElement psiElement = SourceTreeToPsiMap.treeElementToPsi(marker);
-    return psiElement == null ? null : psiElement.getTextRange().shiftRight(rangeShift);
-  }
-
-  @Nullable
-  private static TextRange insertNewLineIndentMarker(@NotNull Document document, final int offset) {
+  public static TextRange insertNewLineIndentMarker(@NotNull PsiFile file, @NotNull Document document, int offset) {
     CharSequence text = document.getCharsSequence();
     if (offset < 0 || offset >= text.length() || !isWhiteSpaceSymbol(text.charAt(offset))) {
       return null;
     }
 
-    int start = offset;
     for (int i = offset - 1; i >= 0; i--) {
       char c = text.charAt(i);
       // We don't want to insert a marker if target line is not blank (doesn't consist from white space symbols only).
@@ -606,7 +515,6 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       if (!isWhiteSpaceSymbol(c)) {
         return null;
       }
-      start = i;
     }
 
     int end = offset;
@@ -616,16 +524,23 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       }
     }
 
-    StringBuilder buffer = new StringBuilder();
-    buffer.append(text.subSequence(start, end));
-
-    // Modify the document in order to expand range markers pointing to the given offset to the whole white space range.
-    document.deleteString(start, end);
-    document.insertString(start, buffer);
-
     setSequentialProcessingAllowed(false);
-    document.insertString(offset, DUMMY_IDENTIFIER);
-    return new TextRange(offset, offset + DUMMY_IDENTIFIER.length());
+    String dummy = createDummy(file);
+    document.insertString(offset, dummy);
+    return new TextRange(offset, offset + dummy.length());
+  }
+
+  @NotNull
+  private static String createDummy(@NotNull PsiFile file) {
+    Language language = file.getLanguage();
+    PsiComment comment = null;
+    try {
+      comment = PsiParserFacade.SERVICE.getInstance(file.getProject()).createLineOrBlockCommentFromText(language, "");
+    }
+    catch (Exception ignored) {
+    }
+    String text = comment != null ? comment.getText() : null;
+    return text != null ? text : DUMMY_IDENTIFIER;
   }
 
   /**
@@ -701,17 +616,6 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     return new IndentImpl(getSettings(), 0, 0, null);
   }
 
-
-  private static ASTNode splitSpaceElement(TreeElement space, int offset, CharTable charTable) {
-    LOG.assertTrue(space.getElementType() == TokenType.WHITE_SPACE);
-    CharSequence chars = space.getChars();
-    LeafElement space1 = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, chars, 0, offset, charTable, SharedImplUtil.getManagerByTree(space));
-    LeafElement space2 = Factory.createSingleLeafElement(TokenType.WHITE_SPACE, chars, offset, chars.length(), charTable, SharedImplUtil.getManagerByTree(space));
-    ASTNode parent = space.getTreeParent();
-    parent.replaceChild(space, space1);
-    parent.addChild(space2, space1.getTreeNext());
-    return space1;
-  }
 
   @NotNull
   private CodeStyleSettings getSettings() {

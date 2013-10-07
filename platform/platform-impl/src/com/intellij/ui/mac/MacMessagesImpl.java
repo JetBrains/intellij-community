@@ -22,7 +22,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.ui.mac.foundation.Foundation;
+import com.intellij.openapi.wm.impl.ModalityHelper;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ui.UIUtil;
@@ -34,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 
@@ -67,7 +66,7 @@ public class MacMessagesImpl extends MacMessages {
         processResult(documentRoot);
         ID suppressState = invoke(invoke(alert, "suppressionButton"), "state");
         resultsFromDocumentRoot.put(documentRoot, new MessageResult(returnCode.intValue(),
-                                                                    suppressState.intValue() == 1 ? true : false));
+                                                                    suppressState.intValue() == 1));
         queuesFromDocumentRoot.get(windowFromId.get(contextInfo.longValue())).runFromQueue();
       }
       cfRelease(self);
@@ -198,34 +197,20 @@ public class MacMessagesImpl extends MacMessages {
 
   private MacMessagesImpl() {}
 
-  private static Method  isModalBlockedMethod = null;
-  private static Method  getModalBlockerMethod = null;
-
   static {
     if (SystemInfo.isMac) {
-      final ID delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSAlertDelegate_");
-      if (!Foundation.addMethod(delegateClass, Foundation.createSelector("alertDidEnd:returnCode:contextInfo:"), SHEET_DID_END, "v*")) {
+      final ID delegateClass = allocateObjcClassPair(getObjcClass("NSObject"), "NSAlertDelegate_");
+      if (!addMethod(delegateClass, createSelector("alertDidEnd:returnCode:contextInfo:"), SHEET_DID_END, "v*")) {
         throw new RuntimeException("Unable to add method to objective-c delegate class!");
       }
-      if (!Foundation.addMethod(delegateClass, Foundation.createSelector("showSheet:"), SIMPLE_SHEET_PANEL, "v*")) {
+      if (!addMethod(delegateClass, createSelector("showSheet:"), SIMPLE_SHEET_PANEL, "v*")) {
         throw new RuntimeException("Unable to add method to objective-c delegate class!");
       }
-      if (!Foundation.addMethod(delegateClass, Foundation.createSelector("showVariableButtonsSheet:"), VARIABLE_BUTTONS_SHEET_PANEL, "v*")) {
+      if (!addMethod(delegateClass, createSelector("showVariableButtonsSheet:"), VARIABLE_BUTTONS_SHEET_PANEL, "v*")) {
         throw new RuntimeException("Unable to add method to objective-c delegate class!");
       }
-      Foundation.registerObjcClassPair(delegateClass);
+      registerObjcClassPair(delegateClass);
     }
-
-    Class [] noParams = new Class [] {};
-
-    try {
-      isModalBlockedMethod =  Window.class.getDeclaredMethod("isModalBlocked", noParams);
-      getModalBlockerMethod =  Window.class.getDeclaredMethod("getModalBlocker", noParams);
-    }
-    catch (NoSuchMethodException e) {
-      LOG.error(e);
-    }
-
   }
 
   @Override
@@ -265,9 +250,6 @@ public class MacMessagesImpl extends MacMessages {
                                    @Nullable DialogWrapper.DoNotAskOption doNotAskOption) {
     return showAlertDialog(title, defaultButton, alternateButton, otherButton, message, window, false, doNotAskOption);
   }
-
-
-
 
   final private static Object lock = new Object();
 
@@ -669,24 +651,19 @@ public class MacMessagesImpl extends MacMessages {
     }
   }
 
-  @NotNull
   private static Window getForemostWindow(final Window window) {
     Window _window = null;
+    IdeFocusManager ideFocusManager = IdeFocusManager.getGlobalInstance();
 
     Component focusOwner = IdeFocusManager.findInstance().getFocusOwner();
+    // Let's ask for a focused component first
     if (focusOwner != null) {
       _window = SwingUtilities.getWindowAncestor(focusOwner);
     }
 
-    if (_window == null && window != null) {
-      focusOwner = window.getMostRecentFocusOwner();
-      if (focusOwner != null) {
-        _window = SwingUtilities.getWindowAncestor(focusOwner);
-      }
-    }
-
     if (_window == null) {
-      focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+      // Looks like ide lost focus, let's ask about the last focused component
+      focusOwner = ideFocusManager.getLastFocusedFor(ideFocusManager.getLastFocusedFrame());
       if (focusOwner != null) {
         _window = SwingUtilities.getWindowAncestor(focusOwner);
       }
@@ -696,26 +673,26 @@ public class MacMessagesImpl extends MacMessages {
       _window = WindowManager.getInstance().findVisibleFrame();
     }
 
-    if (_window != null) {
-      synchronized (_window.getTreeLock()) {
-        try {
-          isModalBlockedMethod.setAccessible(true);
-          if ((Boolean)isModalBlockedMethod.invoke(_window, null)) {
-
-            getModalBlockerMethod.setAccessible(true);
-            _window = (Dialog)getModalBlockerMethod.invoke(_window, null);
-          }
-        }
-        catch (InvocationTargetException e) {
-          LOG.error(e);
-        }
-        catch (IllegalAccessException e) {
-          LOG.error(e);
-        }
+    if (_window == null && window != null) {
+      // It might be we just has not opened a frame yet.
+      // So let's ask AWT
+      focusOwner = window.getMostRecentFocusOwner();
+      if (focusOwner != null) {
+        _window = SwingUtilities.getWindowAncestor(focusOwner);
       }
     }
 
-    while (getWindowTitle(_window) == null) {
+    if (_window != null) {
+      // We have successfully found the window
+      // Let's check that we have not missed a blocker
+      if (ModalityHelper.isModalBlocked(_window)) {
+        _window = ModalityHelper.getModalBlockerFor(_window);
+      }
+    }
+
+    //Actually can, but not in this implementation. If you know a reasonable scenario, please ask Denis Fokin for the improvement.
+    LOG.assertTrue(getWindowTitle(_window) != null, "A window without a title should not be used for showing MacMessages");
+    while (_window != null && getWindowTitle(_window) == null) {
       _window = _window.getOwner();
       //At least our frame should have a title
     }

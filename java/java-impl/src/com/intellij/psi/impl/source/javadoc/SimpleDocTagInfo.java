@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,13 +30,23 @@ import org.jetbrains.annotations.NonNls;
 class SimpleDocTagInfo implements JavadocTagInfo {
   private final String myName;
   private final Class myContext;
+  private final Class myAdditionalContext;
   private final boolean myInline;
   private final LanguageLevel myLanguageLevel;
 
   public SimpleDocTagInfo(@NonNls String name, Class context, boolean isInline, LanguageLevel level) {
     myName = name;
     myContext = context;
+    myAdditionalContext = null;
     myInline = isInline;
+    myLanguageLevel = level;
+  }
+
+  public SimpleDocTagInfo(@NonNls String name, Class context, Class additionalContext, LanguageLevel level) {
+    myName = name;
+    myContext = context;
+    myAdditionalContext = additionalContext;
+    myInline = false;
     myLanguageLevel = level;
   }
 
@@ -51,7 +61,7 @@ class SimpleDocTagInfo implements JavadocTagInfo {
       return false;
     }
 
-    return myContext.isInstance(element);
+    return myContext.isInstance(element) || (myAdditionalContext != null && myAdditionalContext.isInstance(element));
   }
 
   @Override
