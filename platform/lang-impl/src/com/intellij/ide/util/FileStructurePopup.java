@@ -20,6 +20,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TreeExpander;
+import com.intellij.ide.structureView.ModelListener;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewModel;
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -163,7 +164,7 @@ public class FileStructurePopup implements Disposable {
       myTreeModel = myStructureViewDelegate.getTreeModel();
     }
 
-    myTreeStructure = new SmartTreeStructure(project, myTreeModel){
+    myTreeStructure = new SmartTreeStructure(project, myTreeModel) {
       @Override
       public void rebuildTree() {
         if (ApplicationManager.getApplication().isUnitTestMode() || !myPopup.isDisposed()) {
@@ -196,9 +197,10 @@ public class FileStructurePopup implements Disposable {
                               @NotNull SimpleTextAttributes attributes,
                               boolean isMainText,
                               boolean selected) {
-        if (!isMainText ) {
+        if (!isMainText) {
           super.doAppend(fragment, attributes, isMainText, selected);
-        } else {
+        }
+        else {
           SpeedSearchUtil.appendFragmentsForSpeedSearch(myTree, fragment, attributes, selected, this);
         }
       }
@@ -243,6 +245,19 @@ public class FileStructurePopup implements Disposable {
     };
 
     myTreeExpander = new DefaultTreeExpander(myTree);
+    final ModelListener modelListener = new ModelListener() {
+      @Override
+      public void onModelChanged() {
+        myAbstractTreeBuilder.queueUpdate();
+      }
+    };
+    myTreeModel.addModelListener(modelListener);
+    Disposer.register(this, new Disposable() {
+      @Override
+      public void dispose() {
+        myTreeModel.removeModelListener(modelListener);
+      }
+    });
 
     //myAbstractTreeBuilder.getUi().setPassthroughMode(true);
     myAbstractTreeBuilder.getUi().getUpdater().setDelay(1);
@@ -302,7 +317,8 @@ public class FileStructurePopup implements Disposable {
     final Point location = DimensionService.getInstance().getLocation(getDimensionServiceKey(), myProject);
     if (location != null && myEditor != null) {
       myPopup.showInScreenCoordinates(myEditor.getContentComponent(), location);
-    } else {
+    }
+    else {
       myPopup.showCenteredInCurrentWindow(myProject);
     }
 
@@ -442,7 +458,8 @@ public class FileStructurePopup implements Disposable {
           return found;
         }
       }
-    } else {
+    }
+    else {
       final FilteringTreeStructure.FilteringNode found = findNode(parents, node);
       if (found == null) {
         TreeUtil.ensureSelection(myTree);
@@ -537,7 +554,7 @@ public class FileStructurePopup implements Disposable {
     List<FileStructureFilter> fileStructureFilters = new ArrayList<FileStructureFilter>();
     List<FileStructureNodeProvider> fileStructureNodeProviders = new ArrayList<FileStructureNodeProvider>();
     if (myTreeActionsOwner != null) {
-      for(Filter filter: myBaseTreeModel.getFilters()) {
+      for (Filter filter : myBaseTreeModel.getFilters()) {
         if (filter instanceof FileStructureFilter) {
           final FileStructureFilter fsFilter = (FileStructureFilter)filter;
           myTreeActionsOwner.setActionIncluded(fsFilter, true);
@@ -574,7 +591,8 @@ public class FileStructurePopup implements Disposable {
       public void actionPerformed(AnActionEvent e) {
         if (mySpeedSearch != null && mySpeedSearch.isPopupActive()) {
           mySpeedSearch.hidePopup();
-        } else {
+        }
+        else {
           myPopup.cancel();
         }
       }
@@ -590,7 +608,7 @@ public class FileStructurePopup implements Disposable {
       }
     }.installOn(myTree);
 
-    for(FileStructureFilter filter: fileStructureFilters) {
+    for (FileStructureFilter filter : fileStructureFilters) {
       addCheckbox(comboPanel, filter);
     }
 
@@ -729,8 +747,7 @@ public class FileStructurePopup implements Disposable {
     if (text == null) return;
 
     Shortcut[] shortcuts = action instanceof FileStructureFilter ?
-                          ((FileStructureFilter)action).getShortcut() : ((FileStructureNodeProvider)action).getShortcut();
-
+                           ((FileStructureFilter)action).getShortcut() : ((FileStructureNodeProvider)action).getShortcut();
 
 
     final JCheckBox chkFilter = new JCheckBox();
@@ -777,7 +794,8 @@ public class FileStructurePopup implements Disposable {
         };
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           runnable.run();
-        } else {
+        }
+        else {
           ApplicationManager.getApplication().invokeLater(runnable);
         }
       }
@@ -918,10 +936,10 @@ public class FileStructurePopup implements Disposable {
             myVisibleParents.add(o);
           }
           return true;
-        } else {
+        }
+        else {
           return false;
         }
-
       }
       return true;
     }
@@ -933,7 +951,6 @@ public class FileStructurePopup implements Disposable {
       }
       return mySpeedSearch.matchingFragments(text) != null;
     }
-
   }
 
   @Nullable
@@ -941,7 +958,7 @@ public class FileStructurePopup implements Disposable {
     if (ApplicationManager.getApplication().isUnitTestMode()) return myTestSearchFilter;
 
     return mySpeedSearch != null && !StringUtil.isEmpty(mySpeedSearch.getEnteredPrefix())
-                    ? mySpeedSearch.getEnteredPrefix() : null;
+           ? mySpeedSearch.getEnteredPrefix() : null;
   }
 
   public class MyTreeSpeedSearch extends TreeSpeedSearch {
@@ -1004,7 +1021,8 @@ public class FileStructurePopup implements Disposable {
             max = size;
             cur.clear();
             cur.add(p);
-          } else if (size == max) {
+          }
+          else if (size == max) {
             cur.add(p);
           }
         }
@@ -1020,7 +1038,6 @@ public class FileStructurePopup implements Disposable {
       });
       return cur.isEmpty() ? null : cur.get(0).node;
     }
-
   }
 
   class FileStructureTree extends JBTreeWithHintProvider implements AlwaysExpandedTree {
@@ -1045,7 +1062,8 @@ public class FileStructurePopup implements Disposable {
           newValueIsSet = false;
         }
         fast = newValueIsSet;
-      } else {
+      }
+      else {
         fast = false;
       }
 
