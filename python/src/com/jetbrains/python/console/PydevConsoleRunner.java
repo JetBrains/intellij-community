@@ -94,6 +94,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   private Map<String, String> myEnvironmentVariables;
   private String myCommandLine;
   private String[] myStatementsToExecute = ArrayUtil.EMPTY_STRING_ARRAY;
+  private ConsoleHistoryController myHistoryController;
 
   public static Key<ConsoleCommunication> CONSOLE_KEY = new Key<ConsoleCommunication>("PYDEV_CONSOLE_KEY");
 
@@ -144,6 +145,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
     AnAction showVarsAction = new ShowVarsAction();
     toolbarActions.add(showVarsAction);
+    toolbarActions.add(myHistoryController.getBrowseHistory());
     return actions;
   }
 
@@ -552,8 +554,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     myConsoleExecuteActionHandler =
       new PydevConsoleExecuteActionHandler(getConsoleView(), getProcessHandler(), myPydevConsoleCommunication);
     myConsoleExecuteActionHandler.setEnabled(false);
-    new ConsoleHistoryController(myConsoleType.getTypeId(), "", getLanguageConsole(),
-                                 myConsoleExecuteActionHandler.getConsoleHistoryModel()).install();
+    myHistoryController = new ConsoleHistoryController(myConsoleType.getTypeId(), "", getLanguageConsole(),
+                                 myConsoleExecuteActionHandler.getConsoleHistoryModel());
+    myHistoryController.install();
     return myConsoleExecuteActionHandler;
   }
 
