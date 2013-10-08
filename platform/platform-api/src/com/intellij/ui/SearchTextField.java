@@ -110,7 +110,7 @@ public class SearchTextField extends JPanel {
       }
     });
 
-    if (hasNativeLeopardSearchControl() || UIUtil.isUnderDarcula()) {
+    if (hasNativeLeopardSearchControl() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       myTextField.putClientProperty("JTextField.variant", "search");
     }
     if (hasNativeLeopardSearchControl()) {
@@ -204,7 +204,7 @@ public class SearchTextField extends JPanel {
   }
 
   private static boolean hasNativeLeopardSearchControl() {
-    return (SystemInfo.isMacOSLeopard && UIUtil.isUnderAquaLookAndFeel()) || UIUtil.isUnderDarcula();
+    return (SystemInfo.isMacOSLeopard && UIUtil.isUnderAquaLookAndFeel()) || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF();
   }
 
   private static boolean hasIconsOutsideOfTextField() {
