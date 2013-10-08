@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.project.ProjectBundle;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -31,7 +32,7 @@ import java.awt.event.KeyEvent;
  * @author nik
  */
 public class JavaTestSourceRootEditHandler extends JavaSourceRootEditHandlerBase {
-  private static final Color TESTS_COLOR = new Color(0x008C2E);
+  private static final Color TESTS_COLOR = new JBColor(new Color(0x008C2E), new Color(73, 140, 101));
 
   public JavaTestSourceRootEditHandler() {
     super(JavaSourceRootType.TEST_SOURCE);
