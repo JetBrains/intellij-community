@@ -534,6 +534,9 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
       @Override
       public CandidateInfo resolveConflict(@NotNull List<CandidateInfo> conflicts) {
+        checkAccessStaticLevels(conflicts, true);
+        if (conflicts.size() == 1) return conflicts.get(0);
+
         boolean varargs = false;
         boolean fixedArity = false;
         for (CandidateInfo conflict : conflicts) {
