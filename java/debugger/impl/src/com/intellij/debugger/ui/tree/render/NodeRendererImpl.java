@@ -15,13 +15,18 @@
  */
 package com.intellij.debugger.ui.tree.render;
 
+import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
+import com.intellij.debugger.ui.impl.watch.ValueDescriptorImpl;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Value;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -80,5 +85,10 @@ public abstract class NodeRendererImpl implements NodeRenderer{
 
   public String toString() {
     return getName();
+  }
+
+  @Nullable
+  public String getIdLabel(Value value, DebugProcess process) {
+    return value instanceof ObjectReference ? ValueDescriptorImpl.getIdLabel((ObjectReference)value) : null;
   }
 }
