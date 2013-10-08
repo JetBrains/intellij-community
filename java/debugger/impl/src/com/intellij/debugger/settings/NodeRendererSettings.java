@@ -43,6 +43,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -107,11 +108,17 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
   public static NodeRendererSettings getInstance() {
     return ServiceManager.getService(NodeRendererSettings.class);
   }
-  
+
+  /**
+   * use {@link com.intellij.debugger.ui.tree.render.NodeRenderer} extension
+   * @param renderer
+   */
+  @Deprecated
   public void addPluginRenderer(NodeRenderer renderer) {
     myPluginRenderers.add(renderer);
   }
 
+  @Deprecated
   public void removePluginRenderer(NodeRenderer renderer) {
     myPluginRenderers.remove(renderer);
   }
@@ -253,15 +260,14 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     allRenderers.add(myHexRenderer);
     allRenderers.add(myPrimitiveRenderer);
     allRenderers.addAll(myPluginRenderers);
+    Collections.addAll(allRenderers, NodeRenderer.EP_NAME.getExtensions());
     myCustomRenderers.iterateRenderers(new InternalIterator<NodeRenderer>() {
       public boolean visit(final NodeRenderer renderer) {
         allRenderers.add(renderer);
         return true;
       }
     });
-    for (NodeRenderer myAlternateCollectionRenderer : myAlternateCollectionRenderers) {
-      allRenderers.add(myAlternateCollectionRenderer);
-    }
+    Collections.addAll(allRenderers, myAlternateCollectionRenderers);
     allRenderers.add(myColorRenderer);
     allRenderers.add(myToStringRenderer);
     allRenderers.add(myArrayRenderer);
