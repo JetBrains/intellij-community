@@ -32,6 +32,7 @@ import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -385,6 +386,11 @@ public class XDebugSessionImpl implements XDebugSession {
   @Override
   public boolean areBreakpointsMuted() {
     return myBreakpointsMuted;
+  }
+
+  @Override
+  public void addSessionListener(@NotNull XDebugSessionListener listener, @NotNull Disposable parentDisposable) {
+    myDispatcher.addListener(listener, parentDisposable);
   }
 
   @Override
