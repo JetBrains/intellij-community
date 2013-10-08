@@ -239,6 +239,7 @@ public class PyCompatibilityInspection extends PyInspection {
     @Override
     public void visitPyFromImportStatement(PyFromImportStatement node) {
       super.visitPyFromImportStatement(node);
+      if (node.getRelativeLevel() > 0) return;
       int len = 0;
       StringBuilder message = new StringBuilder("Python version ");
       PyQualifiedName name = node.getImportSourceQName();

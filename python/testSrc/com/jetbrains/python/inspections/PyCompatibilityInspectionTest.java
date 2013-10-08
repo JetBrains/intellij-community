@@ -130,6 +130,11 @@ public class PyCompatibilityInspectionTest extends PyTestCase {
     doTest(LanguageLevel.PYTHON33);
   }
 
+  // PY-11047
+  public void testRelativeImport() {
+    doTest();
+  }
+
   private void doTest(@NotNull LanguageLevel level) {
     runWithLanguageLevel(level, new Runnable() {
       @Override
