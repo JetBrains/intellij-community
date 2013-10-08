@@ -17,7 +17,6 @@ package org.intellij.images.index;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
@@ -94,8 +93,8 @@ public class ImageInfoIndex extends SingleEntryFileBasedIndexExtension<ImageInfo
     return new DefaultFileTypeSpecificInputFilter(ImageFileTypeManager.getInstance().getImageFileType()) {
       @Override
       public boolean acceptInput(final VirtualFile file) {
-        return (file.isInLocalFileSystem() || file.getFileSystem() instanceof TempFileSystem) &&
-               (file.getLength() / 1024) < ourMaxImageSize
+        return file.isInLocalFileSystem() &&
+               file.getLength() / 1024 < ourMaxImageSize
           ;
       }
     };

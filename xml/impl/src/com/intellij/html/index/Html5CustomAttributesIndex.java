@@ -25,7 +25,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.HashMap;
@@ -97,11 +96,7 @@ public class Html5CustomAttributesIndex extends ScalarIndexExtension<String> {
     return new DefaultFileTypeSpecificInputFilter(StdFileTypes.HTML, StdFileTypes.XHTML) {
       @Override
       public boolean acceptInput(final VirtualFile file) {
-        if (!file.isInLocalFileSystem() && !(file.getFileSystem() instanceof TempFileSystem)) {
-          return false;
-        }
-
-        return true;
+        return file.isInLocalFileSystem();
       }
     };
   }
