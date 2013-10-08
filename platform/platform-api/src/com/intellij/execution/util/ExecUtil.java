@@ -23,14 +23,13 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ExecUtil {
   private static final NotNullLazyValue<Boolean> hasGkSudo = new NotNullLazyValue<Boolean>() {
@@ -167,6 +166,85 @@ public class ExecUtil {
     return null;
   }
 
+  /**
+   * Run the command with superuser privileges using safe escaping and quoting.
+   *
+   * No shell substitutions, input/output redirects, etc. in the command are applied.
+   *
+   * @param command the command and its arguments, can contain any characters
+   * @param prompt the prompt string for the users
+   * @param workDir working directory
+   * @return the results of running the process
+   */
+  @NotNull
+  public static ProcessOutput sudoAndGetOutput(@NotNull List<String> command, @NotNull String prompt,
+                                               @Nullable String workDir) throws IOException, ExecutionException {
+    if (SystemInfo.isMac) {
+      final String escapedCommandLine = StringUtil.join(command, new Function<String, String>() {
+        @Override
+        public String fun(String s) {
+          return escapeAppleScriptArgument(s);
+        }
+      }, " & \" \" & ");
+      final String escapedScript = "do shell script " + escapedCommandLine + " with administrator privileges";
+      return execAndGetOutput(Arrays.asList(getOsascriptPath(), "-e", escapedScript), workDir);
+    }
+    else if ("root".equals(System.getenv("USER"))) {
+      return execAndGetOutput(command, workDir);
+    }
+    else if (hasGkSudo.getValue()) {
+      final List<String> sudoCommand = new ArrayList<String>();
+      sudoCommand.add("gksudo");
+      sudoCommand.add("--message");
+      sudoCommand.add(prompt);
+      sudoCommand.add("--");
+      sudoCommand.addAll(command);
+      return execAndGetOutput(sudoCommand, workDir);
+    }
+    else if (hasKdeSudo.getValue()) {
+      final List<String> sudoCommand = new ArrayList<String>();
+      sudoCommand.add("kdesudo");
+      sudoCommand.add("--comment");
+      sudoCommand.add(prompt);
+      sudoCommand.add("--");
+      sudoCommand.addAll(command);
+      return execAndGetOutput(sudoCommand, workDir);
+    }
+    else if (SystemInfo.isUnix && hasTerminalApp()) {
+      final String escapedCommandLine = StringUtil.join(command, new Function<String, String>() {
+        @Override
+        public String fun(String s) {
+          return escapeUnixShellArgument(s);
+        }
+      }, " ");
+      final File script = createTempExecutableScript(
+        "sudo", ".sh",
+        "#!/bin/sh\n" +
+        "echo " + escapeUnixShellArgument(prompt) + "\n" +
+        "echo\n" +
+        "sudo -- " + escapedCommandLine + "\n" +
+        "STATUS=$?\n" +
+        "echo\n" +
+        "read -p \"Press Enter to close this window...\" TEMP\n" +
+        "exit $STATUS\n");
+      return execAndGetOutput(getTerminalCommand("Install", script.getAbsolutePath()), workDir);
+    }
+    throw new UnsupportedSystemException();
+  }
+
+  @NotNull
+  private static String escapeAppleScriptArgument(@NotNull String arg) {
+    return "quoted form of \"" + arg.replace("\"", "\\\"") + "\"";
+  }
+
+  @NotNull
+  private static String escapeUnixShellArgument(@NotNull String arg) {
+    return "'" + arg.replace("'", "'\"'\"'") + "'";
+  }
+
+  /**
+   * @deprecated It relies on platform-dependent escaping, use {@link #sudoAndGetOutput(java.util.List, String, String)} instead
+   */
   @NotNull
   public static ProcessOutput sudoAndGetOutput(@NotNull final String scriptPath,
                                                @NotNull final String prompt) throws IOException, ExecutionException {
@@ -175,6 +253,7 @@ public class ExecUtil {
 
   /**
    * @param scriptPath is already escaped file path
+   * @deprecated It relies on platform-dependent escaping, use {@link #sudoAndGetOutput(java.util.List, String, String)} instead
    */
   @NotNull
   public static ProcessOutput sudoAndGetOutput(@NotNull final String scriptPath,
@@ -209,6 +288,9 @@ public class ExecUtil {
     throw new UnsupportedSystemException();
   }
 
+  /**
+   * @deprecated It relies on platform-dependent escaping, use {@link #sudoAndGetOutput(java.util.List, String, String)} instead
+   */
   public static int sudoAndGetResult(@NotNull final String scriptPath,
                                      @NotNull final String prompt) throws IOException, ExecutionException {
     return sudoAndGetOutput(scriptPath, prompt).getExitCode();

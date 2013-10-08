@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.codeInsight.template.emmet.tokens.ZenCodingToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiWhiteSpace;
@@ -61,6 +62,8 @@ public abstract class ZenCodingGenerator {
   }
 
   public abstract boolean isAppliedByDefault(@NotNull PsiElement context);
+  
+  public abstract boolean isEnabled();
 
   public static List<ZenCodingGenerator> getInstances() {
     List<ZenCodingGenerator> generators = new ArrayList<ZenCodingGenerator>();
@@ -72,6 +75,8 @@ public abstract class ZenCodingGenerator {
   @Nullable
   public String computeTemplateKey(@NotNull CustomTemplateCallback callback) {
     Editor editor = callback.getEditor();
+    final int currentOffset = editor.getCaretModel().getOffset();
+    final CharSequence documentText = editor.getDocument().getCharsSequence();
     PsiElement element = callback.getContext();
     int line = editor.getCaretModel().getLogicalPosition().line;
     int lineStart = editor.getDocument().getLineStartOffset(line);
@@ -84,8 +89,8 @@ public abstract class ZenCodingGenerator {
         e = e.getPrevSibling();
       }
       if (elementStart >= 0) {
-        int startOffset = elementStart > lineStart ? elementStart : lineStart;
-        String key = computeKey(editor, startOffset);
+        int startOffset = Math.max(elementStart, lineStart);
+        String key = computeKey(startOffset, currentOffset, documentText);
         if (key != null) {
           while (key.length() > 0 && !ZenCodingTemplate.checkTemplateKey(key, callback, this)) {
             key = key.substring(1);
@@ -102,9 +107,11 @@ public abstract class ZenCodingGenerator {
   }
 
   @Nullable
-  protected static String computeKey(Editor editor, int startOffset) {
-    int offset = editor.getCaretModel().getOffset();
-    String s = editor.getDocument().getCharsSequence().subSequence(startOffset, offset).toString();
+  protected static String computeKey(int startOffset, int currentOffset, CharSequence documentText) {
+    if (currentOffset < startOffset || startOffset > documentText.length() || currentOffset > documentText.length()) {
+      return null;
+    }
+    String s = documentText.subSequence(startOffset, currentOffset).toString();
     int index = 0;
     while (index < s.length() && Character.isWhitespace(s.charAt(index))) {
       index++;
@@ -166,5 +173,10 @@ public abstract class ZenCodingGenerator {
                                   ZenCodingGenerator generator,
                                   boolean surroundWithTemplate) {
     return new XmlEmmetParser(tokens, callback, generator, surroundWithTemplate);
+  }
+  
+  @Nullable
+  public UnnamedConfigurable createConfigurable() {
+    return null;
   }
 }

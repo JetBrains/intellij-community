@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCon
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenType;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -164,7 +165,7 @@ public class DefaultArrangementEntryMatcherSerializer {
     public void visit(@NotNull ArrangementAtomMatchCondition condition) {
       ArrangementSettingsToken type = condition.getType();
       final Element element = new Element(type.getId());
-      if (StdArrangementTokens.Regexp.is(type)) {
+      if (StdArrangementTokenType.REG_EXP.is(type)) {
         element.setText(StringUtil.escapeStringCharacters(condition.getValue().toString()));
       }
       register(element);
