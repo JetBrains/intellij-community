@@ -109,7 +109,7 @@ public class PluginsAdvertiser implements StartupActivity {
                   }
                 }
               }
-              indicator.setFraction(idx++ / unknownFeatures.size());
+              indicator.setFraction(((double) idx++) / unknownFeatures.size());
             }
 
             try {
