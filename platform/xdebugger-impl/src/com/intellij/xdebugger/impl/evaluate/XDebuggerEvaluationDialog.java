@@ -29,6 +29,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.EvaluationMode;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
+import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
@@ -51,7 +52,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private final JPanel myResultPanel;
   private final XDebuggerTreePanel myTreePanel;
   private EvaluationInputComponent myInputComponent;
-  private final XDebuggerEvaluator myEvaluator;
+  private final XDebuggerEvaluator myInitialEvaluator;
   private final XDebugSession mySession;
   private final XDebuggerEditorsProvider myEditorsProvider;
   private EvaluationMode myMode;
@@ -88,7 +89,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     myResultPanel = new JPanel(new BorderLayout());
     myResultPanel.add(new JLabel(XDebuggerBundle.message("xdebugger.evaluate.label.result")), BorderLayout.NORTH);
     myResultPanel.add(myTreePanel.getMainPanel(), BorderLayout.CENTER);
-    myEvaluator = evaluator;
+    myInitialEvaluator = evaluator;
     myMainPanel = new JPanel(new BorderLayout());
 
     mySwitchModeAction = new SwitchModeAction();
@@ -108,7 +109,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
     EvaluationMode mode = EvaluationMode.EXPRESSION;
     if (text.indexOf('\n') != -1) {
-      if (myEvaluator.isCodeFragmentEvaluationSupported()) {
+      if (getEffectiveEvaluator().isCodeFragmentEvaluationSupported()) {
         mode = EvaluationMode.CODE_FRAGMENT;
       }
       else {
@@ -125,9 +126,21 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   }
 
   @NotNull
+  private XDebuggerEvaluator getEffectiveEvaluator() {
+    XStackFrame frame = mySession.getCurrentStackFrame();
+    if (frame != null) {
+      XDebuggerEvaluator evaluator = frame.getEvaluator();
+      if (evaluator != null) {
+        return evaluator;
+      }
+    }
+    return myInitialEvaluator;
+  }
+
+  @NotNull
   @Override
   protected Action[] createActions() {
-    if (myEvaluator.isCodeFragmentEvaluationSupported()) {
+    if (getEffectiveEvaluator().isCodeFragmentEvaluationSupported()) {
       return new Action[]{getOKAction(), mySwitchModeAction, getCancelAction()};
     }
     return super.createActions();
@@ -203,7 +216,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     final XDebuggerEditorBase inputEditor = myInputComponent.getInputEditor();
     inputEditor.saveTextInHistory();
     String expression = inputEditor.getText();
-    myEvaluator.evaluate(expression, evaluationCallback, null, inputEditor.getMode());
+    getEffectiveEvaluator().evaluate(expression, evaluationCallback, null, inputEditor.getMode());
   }
 
   @Override
