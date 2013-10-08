@@ -103,8 +103,8 @@ public class StartupUtil {
     Logger.setFactory(LoggerFactory.class);
     Logger log = Logger.getInstance(Main.class);
     startLogging(log);
-    fixProcessEnvironment(log);
     loadSystemLibraries(log);
+    fixProcessEnvironment(log);
 
     if (!Main.isHeadless()) {
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
