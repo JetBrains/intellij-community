@@ -1,5 +1,6 @@
 package com.intellij.framework;
 
+import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -30,5 +31,9 @@ public abstract class FrameworkGroup<V extends FrameworkGroupVersion> {
   @NotNull
   public List<V> getGroupVersions() {
     return Collections.emptyList();
+  }
+
+  public FrameworkRole getRole() {
+    return new FrameworkRole(myId);
   }
 }

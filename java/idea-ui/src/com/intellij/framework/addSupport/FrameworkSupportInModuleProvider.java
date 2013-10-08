@@ -15,6 +15,7 @@
  */
 package com.intellij.framework.addSupport;
 
+import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.framework.FrameworkTypeEx;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
@@ -57,6 +58,10 @@ public abstract class FrameworkSupportInModuleProvider {
   @NotNull
   public String[] getProjectCategories() {
     return getFrameworkType().getProjectCategories();
+  }
+
+  public FrameworkRole[] getRoles() {
+    return getFrameworkType().getRoles();
   }
 
   public String getVersionLabel() {
