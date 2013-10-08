@@ -132,6 +132,7 @@
     <lang.braceMatcher language="JQL" implementationClass="com.intellij.tasks.jira.jql.JqlBraceMatcher"/>
     <completion.contributor language="JQL"
                             implementationClass="com.intellij.tasks.jira.jql.codeinsight.JqlCompletionContributor"/>
+    <annotator language="JQL" implementationClass="com.intellij.tasks.jira.jql.codeinsight.JqlAnnotator"/>
 
     <checkinHandlerFactory implementation="com.intellij.tasks.impl.TaskCheckinHandlerFactory"/>
 
