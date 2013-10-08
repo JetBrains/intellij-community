@@ -1,5 +1,6 @@
 package com.jetbrains.python.codeInsight.override;
 
+import com.google.common.collect.Lists;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
@@ -217,7 +218,16 @@ public class PyOverrideImplementUtil {
         if (!langLevel.isPy3K()) {
           final String baseFirstName = !baseParams.isEmpty() ? baseParams.get(0).getName() : null;
           final String firstName = baseFirstName != null ? baseFirstName : PyNames.CANONICAL_SELF;
-          statementBody.append(pyClass.getName()).append(", ").append(firstName);
+          PsiElement outerClass = PsiTreeUtil.getParentOfType(pyClass, PyClass.class, true);
+          String className = pyClass.getName();
+          final List<String> nameResult = Lists.newArrayList(className);
+          while(outerClass instanceof PyClass) {
+            nameResult.add(0, ((PyClass)outerClass).getName());
+            outerClass = PsiTreeUtil.getParentOfType(outerClass, PyClass.class, true);
+          }
+
+          className = StringUtil.join(nameResult, ".");
+          statementBody.append(className).append(", ").append(firstName);
         }
         statementBody.append(").").append(baseFunction.getName()).append("(");
         if (parameters.size() > 0) {
