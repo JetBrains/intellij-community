@@ -76,7 +76,7 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
   private final ConfigurableEP myEp;
 
-  public ConfigurableWrapper(ConfigurableEP ep) {
+  private ConfigurableWrapper(ConfigurableEP ep) {
     myEp = ep;
   }
 
@@ -162,7 +162,7 @@ public class ConfigurableWrapper implements SearchableConfigurable {
 
     private Configurable[] myKids;
 
-    public CompositeWrapper(ConfigurableEP ep, Configurable... kids) {
+    private CompositeWrapper(ConfigurableEP ep, Configurable... kids) {
       super(ep);
       if (ep.dynamic) {
         kids = ((Composite)getConfigurable()).getConfigurables();

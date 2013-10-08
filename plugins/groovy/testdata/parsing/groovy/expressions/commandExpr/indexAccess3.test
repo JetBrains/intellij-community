@@ -1,5 +1,5 @@
 foo a1 a2[1](){}{} a3 a4
-------
+-----
 Groovy script
   Call expression
     Reference expression

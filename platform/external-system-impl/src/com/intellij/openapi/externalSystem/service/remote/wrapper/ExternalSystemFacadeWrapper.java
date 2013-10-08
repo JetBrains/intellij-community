@@ -1,12 +1,12 @@
 package com.intellij.openapi.externalSystem.service.remote.wrapper;
 
+import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade;
-import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver;
+import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager;
 import org.jetbrains.annotations.NotNull;
 
 import java.rmi.RemoteException;
@@ -71,5 +71,10 @@ public class ExternalSystemFacadeWrapper<S extends ExternalSystemExecutionSettin
   @Override
   public Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() throws RemoteException {
     return myDelegate.getTasksInProgress();
+  }
+
+  @Override
+  public void cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException {
+    myDelegate.cancelTask(id);
   }
 }

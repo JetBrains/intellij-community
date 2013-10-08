@@ -276,7 +276,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     }
 
     ExportableTemplateSettings exportableSettings = ServiceManager.getService(ExportableTemplateSettings.class);
-    assert exportableSettings != null : "Can't find required ExportablTemplateSettings service.";
+    assert exportableSettings != null : "Can't find required ExportableTemplateSettings service.";
     exportableSettings.setParentSettings(this);
     if (exportableSettings.isLoaded()) {
       myDeletedTemplates.addAll(exportableSettings.getDeletedKeys());

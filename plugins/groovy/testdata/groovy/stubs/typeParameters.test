@@ -9,6 +9,8 @@
     [Type parameter list]
       [Type parameter : A]
       [Type parameter : B]
+    [Extends clause]
+    [Implements clause]
     [Type definition body]
       [Method : foo]
         [Modifiers]

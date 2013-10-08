@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.Nullable;
@@ -39,7 +40,7 @@ public class PsiPolyExpressionUtil {
     return true;
   }
 
-  public static boolean isPolyExpression(PsiExpression expression) {
+  public static boolean isPolyExpression(final PsiExpression expression) {
     if (expression instanceof PsiLambdaExpression || expression instanceof PsiMethodReferenceExpression) {
       return true;
     } 
@@ -58,7 +59,9 @@ public class PsiPolyExpressionUtil {
         }
       }
     } else if (expression instanceof PsiMethodCallExpression) {
-      return isMethodCallPolyExpression(expression, ((PsiMethodCallExpression)expression).resolveMethod());
+      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(expression, PsiLambdaExpression.class);
+      final boolean isLambdaReturnStmt = lambdaExpression != null && LambdaUtil.getReturnExpressions(lambdaExpression).contains(expression);
+      return isMethodCallPolyExpression(expression, isLambdaReturnStmt ? null : ((PsiMethodCallExpression)expression).resolveMethod());
     }
     else if (expression instanceof PsiConditionalExpression) {
       final ConditionalKind conditionalKind = isBooleanOrNumeric(expression);
@@ -79,6 +82,8 @@ public class PsiPolyExpressionUtil {
             return mentionsTypeParameters(returnType, typeParameters);
           }
         }
+      } else {
+        return true;
       }
     }
     return false;

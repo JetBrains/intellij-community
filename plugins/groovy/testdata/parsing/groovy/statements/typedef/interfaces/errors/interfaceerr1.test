@@ -14,6 +14,8 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(identifier)('q')
     PsiWhiteSpace(' ')
+    Extends clause
+      <empty list>
     Type definition body
       PsiElement({)('{')
       PsiWhiteSpace('\n  ')

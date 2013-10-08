@@ -15,9 +15,8 @@
  */
 package com.intellij.ide.projectWizard;
 
-import com.intellij.framework.FrameworkGroup;
-import com.intellij.framework.FrameworkTypeEx;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
+import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
 import com.intellij.ide.util.newProjectWizard.TemplatesGroup;
@@ -41,6 +40,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -236,8 +236,13 @@ public class ProjectTypeStep extends ModuleWizardStep {
     ((CardLayout)myOptionsPanel.getLayout()).show(myOptionsPanel, card);
   }
 
-  private static boolean matchFramework(ProjectCategory projectCategory, FrameworkSupportInModuleProvider framework) {
+  private boolean matchFramework(ProjectCategory projectCategory, FrameworkSupportInModuleProvider framework) {
 
+    if (!framework.isEnabledForModuleBuilder(myBuilders.get(projectCategory))) return false;
+
+    if (framework.getRoles().length == 0) return true;
+
+    /*
     String[] ids = framework.getProjectCategories();
     if (ids.length > 0) {
       return ArrayUtil.contains(projectCategory.getId(), ids);
@@ -262,6 +267,11 @@ public class ProjectTypeStep extends ModuleWizardStep {
     }
 
     return framework.isEnabledForModuleBuilder(projectCategory.createModuleBuilder());
+    */
+
+    List<FrameworkRole> frameworkRoles = Arrays.asList(framework.getRoles());
+    List<FrameworkRole> acceptable = Arrays.asList(projectCategory.getAcceptableFrameworkRoles());
+    return ContainerUtil.intersects(frameworkRoles, acceptable);
   }
 
   @Override

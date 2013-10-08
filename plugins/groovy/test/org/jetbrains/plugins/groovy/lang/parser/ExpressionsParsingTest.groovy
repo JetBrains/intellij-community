@@ -419,7 +419,7 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testNoArrowClosure2() throws Throwable { doTest(); }
 
   public void testPropertyAccessError() throws Throwable {
-    checkParsing "a[b{}}", """Groovy script
+    checkParsingByText "a[b{}}", """Groovy script
   Property by index
     Reference expression
       PsiElement(identifier)('a')
@@ -450,7 +450,7 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testsuper$super() throws Throwable { doTest(); }
 
   public void testTripleEqual() throws Exception {
-    checkParsing "2===3", """Groovy script
+    checkParsingByText "2===3", """Groovy script
   Relational expression
     Literal
       PsiElement(Integer)('2')
@@ -523,7 +523,7 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testpath$stringMethodCall3() { doTest() }
 
   void testSpacesInStringAfterSlash() {
-    checkParsing '''
+    checkParsingByText '''
 print 'abc \\ \ncde' ''', '''
 Groovy script
   PsiElement(new line)(\'\\n\')
@@ -538,7 +538,7 @@ Groovy script
   }
 
   void testDiamondInPathRefElement() {
-    checkParsing 'Map<String, String> map = new java.util.concurrent.ConcurrentHashMap<>()', '''
+    checkParsingByText 'Map<String, String> map = new java.util.concurrent.ConcurrentHashMap<>()', '''
 Groovy script
   Variable definitions
     Modifiers
@@ -587,7 +587,7 @@ Groovy script
   }
 
   void testNewMethodName() {
-    checkParsing 'def a = qualifer.new X()', '''
+    checkParsingByText 'def a = qualifer.new X()', '''
 Groovy script
   Variable definitions
     Modifiers
@@ -615,7 +615,7 @@ Groovy script
   }
 
   void testRefElementsWithKeywords() {
-    checkParsing('''\
+    checkParsingByText('''\
 def a = new def.as.Foo()
 def b = new foo.as.in.Foo()
 ''', '''\
@@ -675,7 +675,7 @@ Groovy script
   }
 
   public void "test finish argument list on keyword occurrence"() {
-    checkParsing '''switch (obj) {
+    checkParsingByText '''switch (obj) {
       case 1: return bar([param)
       case 3: return bar([param]
       case 2:
@@ -801,7 +801,7 @@ Groovy script
   }
 
   void testConditionalExpressionWithLineFeed() {
-    checkParsing('''\
+    checkParsingByText('''\
 print true ? abc
 :cde
 ''', '''\

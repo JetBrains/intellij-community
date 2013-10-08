@@ -31,7 +31,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.formatter.AlignmentProvider;
@@ -536,24 +535,9 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     final int start = myNode.getTextRange().getStartOffset();
     final int end = myNode.getTextRange().getEndOffset();
 
-    subBlocks.add(new GroovyBlock(myNode, Indent.getNoneIndent(), Wrap.createWrap(WrapType.NONE, false), myContext) {
-      @NotNull
-      public TextRange getTextRange() {
-        return new TextRange(start, start + 3);
-      }
-    });
-    subBlocks.add(new GroovyBlock(myNode, Indent.getAbsoluteNoneIndent(), Wrap.createWrap(WrapType.NONE, false), myContext) {
-      @NotNull
-      public TextRange getTextRange() {
-        return new TextRange(start + 3, end - 3);
-      }
-    });
-    subBlocks.add(new GroovyBlock(myNode, Indent.getAbsoluteNoneIndent(), Wrap.createWrap(WrapType.NONE, false), myContext) {
-      @NotNull
-      public TextRange getTextRange() {
-        return new TextRange(end - 3, end);
-      }
-    });
+    subBlocks.add(new GroovyBlockWithRange(myNode, Indent.getNoneIndent(), new TextRange(start, start + 3), Wrap.createWrap(WrapType.NONE, false), myContext));
+    subBlocks.add(new GroovyBlockWithRange(myNode, Indent.getAbsoluteNoneIndent(), new TextRange(start + 3, end - 3), Wrap.createWrap(WrapType.NONE, false), myContext));
+    subBlocks.add(new GroovyBlockWithRange(myNode, Indent.getAbsoluteNoneIndent(), new TextRange(end - 3, end), Wrap.createWrap(WrapType.NONE, false), myContext));
     return subBlocks;
   }
 

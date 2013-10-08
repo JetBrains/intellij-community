@@ -49,7 +49,7 @@ public class GrSyntheticReferenceList extends LightElement implements PsiReferen
   @NotNull
   @Override
   public PsiClassType[] getReferencedTypes() {
-    return myList.getReferenceTypes();
+    return myList.getReferencedTypes();
   }
 
   @Override

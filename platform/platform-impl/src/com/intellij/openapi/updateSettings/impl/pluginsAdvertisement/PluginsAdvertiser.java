@@ -141,11 +141,12 @@ public class PluginsAdvertiser implements StartupActivity {
                       for (UnknownFeature feature : unknownFeatures) {
                         collectorSuggester.ignoreFeature(feature);
                       }
+                      notification.expire();
                     } else if ("configure".equals(description)) {
                       LOG.assertTrue(myAllPlugins != null);
+                      notification.expire();
                       new PluginsAdvertiserDialog(myProject, myPlugins.toArray(new PluginDownloader[myPlugins.size()]), myAllPlugins).show();
                     }
-                    notification.expire();
                   }
                 }
               }).notify(project);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.FQNameCellRenderer;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
@@ -57,6 +56,19 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
     return manager.createProblemDescriptor(element, template, onTheFly, null, ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
   }
 
+  @Nullable
+  @Override
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    if (!PsiPackage.PACKAGE_INFO_FILE.equals(file.getName()) || !(file instanceof PsiJavaFile)) {
+      return null;
+    }
+    final PsiDocComment docComment = PsiTreeUtil.getChildOfType(file, PsiDocComment.class);
+    final PsiJavaFile javaFile = (PsiJavaFile)file;
+    final String packageName = javaFile.getPackageName();
+    final PsiPackage aPackage = JavaPsiFacade.getInstance(file.getProject()).findPackage(packageName);
+    return checkComment(docComment, aPackage, manager, isOnTheFly);
+  }
+
   @Override
   @Nullable
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod psiMethod, @NotNull InspectionManager manager, boolean isOnTheFly) {
@@ -77,12 +89,15 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
 
   @Nullable
   private ProblemDescriptor[] checkMember(final PsiDocCommentOwner docCommentOwner, final InspectionManager manager, final boolean isOnTheFly) {
-    final ArrayList<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
-    final PsiDocComment docComment = docCommentOwner.getDocComment();
+    return checkComment(docCommentOwner.getDocComment(), docCommentOwner, manager, isOnTheFly);
+  }
+
+  private ProblemDescriptor[] checkComment(PsiDocComment docComment, PsiElement context, InspectionManager manager, boolean isOnTheFly) {
     if (docComment == null) return null;
 
+    final ArrayList<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
     final Set<PsiJavaCodeReferenceElement> references = new HashSet<PsiJavaCodeReferenceElement>();
-    docComment.accept(getVisitor(references, docCommentOwner, problems, manager, isOnTheFly));
+    docComment.accept(getVisitor(references, context, problems, manager, isOnTheFly));
     for (PsiJavaCodeReferenceElement reference : references) {
       final List<PsiClass> classesToImport = new ImportClassFix(reference).getClassesToImport();
       final PsiElement referenceNameElement = reference.getReferenceNameElement();

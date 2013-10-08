@@ -106,4 +106,18 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
       setState(ExternalSystemTaskState.FINISHED);
     }
   }
+
+  @Override
+  protected void doCancel() throws Exception {
+    final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
+    RemoteExternalSystemFacade facade = manager.getFacade(getIdeProject(), getExternalProjectPath(), getExternalSystemId());
+    RemoteExternalSystemTaskManager taskManager = facade.getTaskManager();
+    setState(ExternalSystemTaskState.CANCELING);
+    try {
+      taskManager.cancelTask(getId());
+    }
+    finally {
+      setState(ExternalSystemTaskState.CANCELED);
+    }
+  }
 }

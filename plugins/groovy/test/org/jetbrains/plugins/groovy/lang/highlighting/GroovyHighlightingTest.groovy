@@ -22,7 +22,6 @@ import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilit
 import org.jetbrains.plugins.groovy.codeInspection.confusing.GrUnusedIncDecInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.codeInspection.unusedDef.UnusedDefInspection
-
 /**
  * @author peter
  */
@@ -1414,15 +1413,15 @@ A.foo = 3 //no error
 
   void testSOEIfExtendsItself() {
     testHighlighting('''\
-<error descr="Cyclic inheritance involving 'A'"><error descr="Method 'invokeMethod' is not implemented">class A extends A</error></error> {
+<error descr="Cyclic inheritance involving 'A'"><error descr="Method 'invokeMethod' is not implemented">class A extends A </error></error>{
   def foo
 }
 
-<error descr="Cyclic inheritance involving 'B'"><error descr="Method 'invokeMethod' is not implemented">class B extends C</error></error> {
+<error descr="Cyclic inheritance involving 'B'"><error descr="Method 'invokeMethod' is not implemented">class B extends C </error></error>{
   def foo
 }
 
-<error descr="Cyclic inheritance involving 'C'"><error descr="Method 'invokeMethod' is not implemented">class C extends B</error></error> {
+<error descr="Cyclic inheritance involving 'C'"><error descr="Method 'invokeMethod' is not implemented">class C extends B </error></error>{
 }
 ''')
   }
@@ -1585,7 +1584,7 @@ public abstract class Base {
 }
 ''')
     testHighlighting('''\
-<error>class Foo extends p.Base</error> {
+<error>class Foo extends p.Base </error>{
 }
 ''')
   }
