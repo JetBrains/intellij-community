@@ -269,10 +269,9 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     private boolean updateMappings() {
       boolean mappingsChanged;
       synchronized (myMonitor) {
-        mappingsChanged = ! myMapping.equals(myNewMapping);
-        if (mappingsChanged) {
-          mappingsChanged = ! myMoreRealMapping.equals(myNewFilteredMapping);
-        }
+        mappingsChanged = ! myMoreRealMapping.equals(myNewFilteredMapping);
+        mappingsChanged |= !myErrorRoots.equals(myResult.getErrorRoots());
+
         myMapping.copyFrom(myNewMapping);
         myMoreRealMapping.copyFrom(myNewFilteredMapping);
         myErrorRoots.clear();
