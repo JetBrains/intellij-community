@@ -57,7 +57,6 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
   private EvaluationMode myMode;
   private final XSourcePosition mySourcePosition;
   private final SwitchModeAction mySwitchModeAction;
-  private final XDebugSessionAdapter mySessionListener;
 
   public XDebuggerEvaluationDialog(@NotNull XDebugSession session,
                                    final @NotNull XDebuggerEditorsProvider editorsProvider,
@@ -72,7 +71,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
     setOKButtonText(XDebuggerBundle.message("xdebugger.button.evaluate"));
     setCancelButtonText(XDebuggerBundle.message("xdebugger.evaluate.dialog.close"));
 
-    mySessionListener = new XDebugSessionAdapter() {
+    mySession.addSessionListener(new XDebugSessionAdapter() {
       @Override
       public void sessionStopped() {
         SwingUtilities.invokeLater(new Runnable() {
@@ -82,8 +81,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
           }
         });
       }
-    };
-    mySession.addSessionListener(mySessionListener, myDisposable);
+    }, myDisposable);
 
     myTreePanel = new XDebuggerTreePanel(session.getProject(), editorsProvider, myDisposable, sourcePosition, XDebuggerActions.EVALUATE_DIALOG_TREE_POPUP_GROUP,
                                          ((XDebugSessionImpl)session).getValueMarkers());
