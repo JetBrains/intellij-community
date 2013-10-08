@@ -782,7 +782,7 @@ public class SvnUtil {
     }
   }
 
-  private static IllegalArgumentException createIllegalArgument(SVNException e) {
+  public static IllegalArgumentException createIllegalArgument(SVNException e) {
     IllegalArgumentException runtimeException = new IllegalArgumentException();
     runtimeException.initCause(e);
     return runtimeException;
@@ -793,5 +793,13 @@ public class SvnUtil {
     // no explicit check on working copy format supports change lists as they are supported from svn 1.5
     // and anyway status.getChangelistName() should just return null if change lists are not supported.
     return SVNNodeKind.FILE.equals(status.getKind()) ? status.getChangelistName() : null;
+  }
+
+  public static boolean isUnversionedOrNotFound(@NotNull SVNErrorCode code) {
+    return SVNErrorCode.WC_PATH_NOT_FOUND.equals(code) ||
+           SVNErrorCode.UNVERSIONED_RESOURCE.equals(code) ||
+           SVNErrorCode.WC_NOT_WORKING_COPY.equals(code) ||
+           // thrown when getting info from repository for non-existent item - like HEAD revision for deleted file
+           SVNErrorCode.ILLEGAL_TARGET.equals(code);
   }
 }

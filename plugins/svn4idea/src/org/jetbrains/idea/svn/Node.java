@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
@@ -30,11 +31,17 @@ public class Node {
   @NotNull private final VirtualFile myFile;
   @NotNull private final SVNURL myUrl;
   @NotNull private final SVNURL myRepositoryUrl;
+  @Nullable private final SVNException myError;
 
   public Node(@NotNull VirtualFile file, @NotNull SVNURL url, @NotNull SVNURL repositoryUrl) {
+    this(file, url, repositoryUrl, null);
+  }
+
+  public Node(@NotNull VirtualFile file, @NotNull SVNURL url, @NotNull SVNURL repositoryUrl, @Nullable SVNException error) {
     myFile = file;
     myUrl = url;
     myRepositoryUrl = repositoryUrl;
+    myError = error;
   }
 
   @NotNull
@@ -55,6 +62,15 @@ public class Node {
   @NotNull
   public SVNURL getRepositoryRootUrl() {
     return myRepositoryUrl;
+  }
+
+  @Nullable
+  public SVNException getError() {
+    return myError;
+  }
+
+  public boolean hasError() {
+    return myError != null;
   }
 
   public boolean onUrl(@Nullable SVNURL url) {

@@ -1000,12 +1000,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private void handleInfoException(SVNException e) {
     final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
 
-    if (!myLogExceptions || 
-        SVNErrorCode.WC_PATH_NOT_FOUND.equals(errorCode) ||
-        SVNErrorCode.UNVERSIONED_RESOURCE.equals(errorCode) ||
-        SVNErrorCode.WC_NOT_WORKING_COPY.equals(errorCode) ||
-        // thrown when getting info from repository for non-existent item - like HEAD revision for deleted file
-        SVNErrorCode.ILLEGAL_TARGET.equals(errorCode) ||
+    if (!myLogExceptions ||
+        SvnUtil.isUnversionedOrNotFound(errorCode) ||
         // do not log working copy format vs client version inconsistencies as errors
         SVNErrorCode.WC_UNSUPPORTED_FORMAT.equals(errorCode) ||
         SVNErrorCode.WC_UPGRADE_REQUIRED.equals(errorCode)) {
@@ -1207,6 +1203,16 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       infos.add(new WCInfo(info, SvnUtil.isWorkingCopyRoot(file), SvnUtil.getDepth(this, file)));
     }
     return infos;
+  }
+
+  public List<WCInfo> getWcInfosWithErrors() {
+    List<WCInfo> result = new ArrayList<WCInfo>(getAllWcInfos());
+
+    for (RootUrlInfo info : getSvnFileUrlMapping().getErrorRoots()) {
+      result.add(new WCInfo(info, SvnUtil.isWorkingCopyRoot(info.getIoFile()), SVNDepth.UNKNOWN));
+    }
+
+    return result;
   }
 
   @Override

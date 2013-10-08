@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +58,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   private final SvnMapping myMapping;
   // grouped; if there are several mappings one under another, will return the upmost
   private final SvnMapping myMoreRealMapping;
+  private final List<RootUrlInfo> myErrorRoots;
   private final MyRootsHelper myHelper;
   private final Project myProject;
   private final NestedCopiesHolder myNestedCopiesHolder;
@@ -84,6 +86,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     myProject = project;
     myMapping = new SvnMapping();
     myMoreRealMapping = new SvnMapping();
+    myErrorRoots = ContainerUtil.newArrayList();
     myHelper = new MyRootsHelper(vcsManager);
     myChecker = new SvnCompatibilityChecker(project);
     myNestedCopiesHolder = new NestedCopiesHolder();
@@ -181,6 +184,13 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     }
   }
 
+  @Override
+  public List<RootUrlInfo> getErrorRoots() {
+    synchronized (myMonitor) {
+      return ContainerUtil.newArrayList(myErrorRoots);
+    }
+  }
+
   public List<VirtualFile> convertRoots(final List<VirtualFile> result) {
     if (ThreadLocalDefendedInvoker.isInside()) return result;
 
@@ -265,6 +275,8 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
         }
         myMapping.copyFrom(myNewMapping);
         myMoreRealMapping.copyFrom(myNewFilteredMapping);
+        myErrorRoots.clear();
+        myErrorRoots.addAll(myResult.getErrorRoots());
       }
       return mappingsChanged;
     }

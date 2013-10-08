@@ -82,13 +82,14 @@ public class SvnRootsDetector {
   private void registerTopRoots(@NotNull VirtualFile vcsRoot, @NotNull List<Node> foundRoots) {
     // filter out bad(?) items
     for (Node foundRoot : foundRoots) {
-      final SVNURL repoRoot = foundRoot.getRepositoryRootUrl();
-      if (repoRoot == null) {
-        LOG.info("Error: cannot find repository URL for versioned folder: " + foundRoot.getFile().getPath());
+      RootUrlInfo root = new RootUrlInfo(foundRoot.getRepositoryRootUrl(), foundRoot.getUrl(), SvnFormatSelector.findRootAndGetFormat(
+        new File(foundRoot.getFile().getPath())), foundRoot.getFile(), vcsRoot);
+
+      if (!foundRoot.hasError()) {
+        myRepositoryRoots.register(foundRoot.getRepositoryRootUrl());
+        myResult.myTopRoots.add(root);
       } else {
-        myRepositoryRoots.register(repoRoot);
-        myResult.myTopRoots.add(new RootUrlInfo(repoRoot, foundRoot.getUrl(), SvnFormatSelector.findRootAndGetFormat(
-          new File(foundRoot.getFile().getPath())), foundRoot.getFile(), vcsRoot));
+        myResult.myErrorRoots.add(root);
       }
     }
   }
@@ -168,7 +169,7 @@ public class SvnRootsDetector {
 
       if (svnStatus != null && svnStatus.getURL() != null) {
         info.setUrl(svnStatus.getURL());
-        info.setFormat(myVcs.getWorkingCopyFormat(infoFile));
+        info.setFormat(myVcs.getWorkingCopyFormat(infoFile, false));
         if (svnStatus.getRepositoryRootURL() != null) {
           info.setRootURL(svnStatus.getRepositoryRootURL());
         }
@@ -236,9 +237,11 @@ public class SvnRootsDetector {
 
     @NotNull private final List<VirtualFile> myLonelyRoots;
     @NotNull private final List<RootUrlInfo> myTopRoots;
+    @NotNull private final List<RootUrlInfo> myErrorRoots;
 
     public Result() {
       myTopRoots = new ArrayList<RootUrlInfo>();
+      myErrorRoots = new ArrayList<RootUrlInfo>();
       myLonelyRoots = new ArrayList<VirtualFile>();
     }
 
@@ -250,6 +253,11 @@ public class SvnRootsDetector {
     @NotNull
     public List<RootUrlInfo> getTopRoots() {
       return myTopRoots;
+    }
+
+    @NotNull
+    public List<RootUrlInfo> getErrorRoots() {
+      return myErrorRoots;
     }
   }
 }
