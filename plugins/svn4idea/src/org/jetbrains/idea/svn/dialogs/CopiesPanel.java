@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -41,9 +42,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.NestedCopyType;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.WorkingCopyFormat;
+import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.actions.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
@@ -66,9 +65,13 @@ import java.io.File;
 import java.util.*;
 import java.util.List;
 
+import static com.intellij.notification.NotificationDisplayType.STICKY_BALLOON;
+
 public class CopiesPanel {
 
   private static final Logger LOG = Logger.getInstance(CopiesPanel.class);
+
+  private static final NotificationGroup NOTIFICATION_GROUP = new NotificationGroup("Svn Roots Detection Errors", STICKY_BALLOON, true);
 
   private final Project myProject;
   private MessageBusConnection myConnection;
@@ -102,6 +105,7 @@ public class CopiesPanel {
       @Override
       public void run() {
         final List<WCInfo> infoList = myVcs.getWcInfosWithErrors();
+        final boolean hasErrors = !myVcs.getSvnFileUrlMapping().getErrorRoots().isEmpty();
         final List<WorkingCopyFormat> supportedFormats = getSupportedFormats();
         Runnable runnable = new Runnable() {
           @Override
@@ -124,6 +128,7 @@ public class CopiesPanel {
             Collections.sort(infoList, WCComparator.getInstance());
             updateList(infoList, supportedFormats);
             myRefreshLabel.setEnabled(true);
+            showErrorNotification(hasErrors);
             SwingUtilities.invokeLater(focus);
           }
         };
@@ -406,6 +411,23 @@ public class CopiesPanel {
     myRefreshLabel.doClick();
   }
 
+  private void showErrorNotification(boolean hasErrors) {
+    NotificationsManager manager = NotificationsManager.getNotificationsManager();
+    ErrorsFoundNotification[] notifications = manager.getNotificationsOfType(ErrorsFoundNotification.class, myProject);
+
+    if (hasErrors) {
+      // do not show notification if it is already shown
+      if (notifications.length == 0) {
+        new ErrorsFoundNotification(myProject).notify(myProject.isDefault() ? null : myProject);
+      }
+    } else {
+      // expire notification
+      for (ErrorsFoundNotification notification : notifications) {
+        notification.expire();
+      }
+    }
+  }
+
   public JComponent getComponent() {
     return myHolder;
   }
@@ -513,6 +535,28 @@ public class CopiesPanel {
     public Dimension getPreferredSize() {
       final Dimension preferredSize = super.getPreferredSize();
       return new Dimension(preferredSize.width, myHeight);
+    }
+  }
+
+  private static class ErrorsFoundNotification extends Notification {
+
+    private static final String FIX_ACTION = "FIX";
+    private static final String TITLE = "";
+    private static final String DESCRIPTION = SvnBundle.message("subversion.roots.detection.errors.found.description");
+
+    private ErrorsFoundNotification(@NotNull final Project project) {
+      super(NOTIFICATION_GROUP.getDisplayId(), TITLE, DESCRIPTION, NotificationType.ERROR, createListener(project));
+    }
+
+    private static NotificationListener.Adapter createListener(@NotNull final Project project) {
+      return new NotificationListener.Adapter() {
+        @Override
+        protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+          if (FIX_ACTION.equals(event.getDescription())) {
+            WorkingCopiesContent.show(project);
+          }
+        }
+      };
     }
   }
 }
