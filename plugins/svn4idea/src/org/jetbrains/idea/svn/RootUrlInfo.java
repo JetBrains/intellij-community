@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
@@ -26,28 +27,33 @@ public class RootUrlInfo implements RootUrlPair {
   private final SVNURL myAbsoluteUrlAsUrl;
   private final WorkingCopyFormat myFormat;
 
+  @NotNull private final Node myNode;
   private final File myIoFile;
   private final VirtualFile myVfile;
   // vcs root
   private final VirtualFile myRoot;
   private volatile NestedCopyType myType;
 
-  public RootUrlInfo(final SVNURL repositoryUrl, final SVNURL absoluteUrlAsUrl, final WorkingCopyFormat format, final VirtualFile vfile,
-                     final VirtualFile root) {
-    this(repositoryUrl, absoluteUrlAsUrl, format, vfile, root, null);
+  public RootUrlInfo(@NotNull final Node node, final WorkingCopyFormat format, final VirtualFile root) {
+    this(node, format, root, null);
   }
 
-  public RootUrlInfo(final SVNURL repositoryUrl, final SVNURL absoluteUrlAsUrl, final WorkingCopyFormat format, final VirtualFile vfile,
-                     final VirtualFile root, NestedCopyType type) {
-    myRepositoryUrlUrl = repositoryUrl;
+  public RootUrlInfo(@NotNull final Node node, final WorkingCopyFormat format, final VirtualFile root, final NestedCopyType type) {
+    myNode = node;
+    myRepositoryUrlUrl = node.getRepositoryRootUrl();
     myFormat = format;
-    myVfile = vfile;
+    myVfile = node.getFile();
     myRoot = root;
     myIoFile = new File(myVfile.getPath());
-    final String asString = repositoryUrl.toString();
+    final String asString = myRepositoryUrlUrl.toString();
     myRepositoryUrl = asString.endsWith("/") ? asString.substring(0, asString.length() - 1) : asString;
-    myAbsoluteUrlAsUrl = absoluteUrlAsUrl;
+    myAbsoluteUrlAsUrl = node.getUrl();
     myType = type;
+  }
+
+  @NotNull
+  public Node getNode() {
+    return myNode;
   }
 
   public String getRepositoryUrl() {
@@ -99,6 +105,7 @@ public class RootUrlInfo implements RootUrlPair {
     myType = type;
   }
 
+  // TODO: Update equals and hashCode to use underlying node instance
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;

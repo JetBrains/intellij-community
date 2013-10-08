@@ -82,8 +82,7 @@ public class SvnRootsDetector {
   private void registerTopRoots(@NotNull VirtualFile vcsRoot, @NotNull List<Node> foundRoots) {
     // filter out bad(?) items
     for (Node foundRoot : foundRoots) {
-      RootUrlInfo root = new RootUrlInfo(foundRoot.getRepositoryRootUrl(), foundRoot.getUrl(), SvnFormatSelector.findRootAndGetFormat(
-        new File(foundRoot.getFile().getPath())), foundRoot.getFile(), vcsRoot);
+      RootUrlInfo root = new RootUrlInfo(foundRoot, SvnFormatSelector.findRootAndGetFormat(foundRoot.getIoFile()), vcsRoot);
 
       if (!foundRoot.hasError()) {
         myRepositoryRoots.register(foundRoot.getRepositoryRootUrl());
@@ -152,7 +151,8 @@ public class SvnRootsDetector {
       SVNURL repoRoot = info.getRootURL();
       repoRoot = repoRoot == null ? myRepositoryRoots.ask(info.getUrl(), info.getFile()) : repoRoot;
       if (repoRoot != null) {
-        nestedRoots.add(new RootUrlInfo(repoRoot, info.getUrl(), info.getFormat(), info.getFile(), topRoot.getRoot(), info.getType()));
+        Node node = new Node(info.getFile(), info.getUrl(), repoRoot);
+        nestedRoots.add(new RootUrlInfo(node, info.getFormat(), topRoot.getRoot(), info.getType()));
       }
     }
   }

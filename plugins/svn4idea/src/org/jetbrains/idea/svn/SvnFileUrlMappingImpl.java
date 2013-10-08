@@ -392,9 +392,9 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       final SVNInfo svnInfo = vcs.getInfo(copyRoot);
       if ((svnInfo == null) || (svnInfo.getRepositoryRootURL() == null)) continue;
 
-      final RootUrlInfo info =
-        new RootUrlInfo(svnInfo.getRepositoryRootURL(), svnInfo.getURL(), SvnFormatSelector.findRootAndGetFormat(svnInfo.getFile()),
-                        copyRoot, vcsRoot);
+      Node node = new Node(copyRoot, svnInfo.getURL(), svnInfo.getRepositoryRootURL());
+      final RootUrlInfo info = new RootUrlInfo(node, SvnFormatSelector.findRootAndGetFormat(svnInfo.getFile()), vcsRoot);
+
       mapping.add(info);
     }
   }
