@@ -5,6 +5,7 @@ import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.refactoring.introduce.IntroduceHandler;
+import com.jetbrains.python.refactoring.introduce.IntroduceOperation;
 import com.jetbrains.python.refactoring.introduce.variable.PyIntroduceVariableHandler;
 
 import java.util.Collection;
@@ -206,6 +207,23 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
   // PY-8372
   public void testSubstringNewStyleKeywords() {
     doTest();
+  }
+
+  // PY-10964
+  public void testMultiReference() {
+    myFixture.configureByFile(getTestName(true) + ".py");
+    boolean inplaceEnabled = myFixture.getEditor().getSettings().isVariableInplaceRenameEnabled();
+    try {
+      myFixture.getEditor().getSettings().setVariableInplaceRenameEnabled(true);
+      IntroduceHandler handler = createHandler();
+      final IntroduceOperation operation = new IntroduceOperation(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile(), "a_");
+      operation.setReplaceAll(true);
+      handler.performAction(operation);
+      myFixture.checkResultByFile(getTestName(true) + ".after.py");
+    }
+    finally {
+      myFixture.getEditor().getSettings().setVariableInplaceRenameEnabled(inplaceEnabled);
+    }
   }
 
   private void doTestCannotPerform() {
