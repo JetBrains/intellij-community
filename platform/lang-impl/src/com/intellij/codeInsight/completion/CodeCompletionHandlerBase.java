@@ -58,6 +58,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
@@ -233,7 +234,7 @@ public class CodeCompletionHandlerBase {
     }
     if (elementAt == null) return true;
 
-    Language language = PsiUtilBase.findLanguageFromElement(elementAt);
+    Language language = PsiUtilCore.findLanguageFromElement(elementAt);
 
     for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
       final ThreeState result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset);

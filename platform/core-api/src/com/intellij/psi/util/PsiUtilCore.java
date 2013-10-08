@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -482,5 +482,30 @@ public class PsiUtilCore {
       next = PsiTreeUtil.getParentOfType(next, elementClass, true);
     }
     return parent;
+  }
+
+  @NotNull
+  public static Language findLanguageFromElement(final PsiElement elt) {
+    if (elt.getFirstChild() == null) { //is leaf
+      final PsiElement parent = elt.getParent();
+      if (parent != null) {
+        return parent.getLanguage();
+      }
+    }
+
+    return elt.getLanguage();
+  }
+
+  @NotNull
+  public static Language getLanguageAtOffset (@NotNull PsiFile file, int offset) {
+    final PsiElement elt = file.findElementAt(offset);
+    if (elt == null) return file.getLanguage();
+    if (elt instanceof PsiWhiteSpace) {
+      final int decremented = elt.getTextRange().getStartOffset() - 1;
+      if (decremented >= 0) {
+        return getLanguageAtOffset(file, decremented);
+      }
+    }
+    return findLanguageFromElement(elt);
   }
 }

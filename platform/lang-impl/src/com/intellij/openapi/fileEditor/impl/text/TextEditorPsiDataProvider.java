@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -132,7 +132,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
       return getLanguageAtOffset(psiFile, mostProbablyCorrectLanguageOffset, selectionModel.getSelectionEnd());
     }
 
-    return PsiUtilBase.getLanguageAtOffset(psiFile, mostProbablyCorrectLanguageOffset);
+    return PsiUtilCore.getLanguageAtOffset(psiFile, mostProbablyCorrectLanguageOffset);
   }
 
   private static Language getLanguageAtOffset(PsiFile psiFile, int mostProbablyCorrectLanguageOffset, int end) {
@@ -144,7 +144,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
         return getLanguageAtOffset(psiFile, incremented, end);
       }
     }
-    return PsiUtilBase.findLanguageFromElement(elt);
+    return PsiUtilCore.findLanguageFromElement(elt);
   }
 
   @Nullable
