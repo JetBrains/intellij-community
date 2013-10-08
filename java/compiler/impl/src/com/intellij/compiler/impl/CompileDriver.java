@@ -684,7 +684,14 @@ public class CompileDriver {
             if (message != null) {
               compileContext.addMessage(message);
             }
-
+            if (isRebuild) {
+              CompilerUtil.runInContext(compileContext, "Clearing build system data...", new ThrowableRunnable<Throwable>() {
+                @Override
+                public void run() throws Throwable {
+                  CompilerCacheManager.getInstance(myProject).clearCaches(compileContext);
+                }
+              });
+            }
             final boolean beforeTasksOk = executeCompileTasks(compileContext, true);
 
             final int errorCount = compileContext.getMessageCount(CompilerMessageCategory.ERROR);
