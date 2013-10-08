@@ -101,7 +101,7 @@ public class CopiesPanel {
     final Runnable refreshView = new Runnable() {
       @Override
       public void run() {
-        final List<WCInfo> infoList = myVcs.getAllWcInfos();
+        final List<WCInfo> infoList = myVcs.getWcInfosWithErrors();
         final List<WorkingCopyFormat> supportedFormats = getSupportedFormats();
         Runnable runnable = new Runnable() {
           @Override
@@ -275,7 +275,13 @@ public class CopiesPanel {
       .append("</head><body><table bgColor=\"").append(ColorUtil.toHex(UIUtil.getPanelBackground())).append("\">");
 
     sb.append("<tr valign=\"top\"><td colspan=\"3\"><b>").append(info.getPath()).append("</b></td></tr>");
-    sb.append("<tr valign=\"top\"><td>URL:</td><td colspan=\"2\">").append(info.getRootUrl()).append("</td></tr>");
+    if (info.hasError()) {
+      sb.append("<tr valign=\"top\"><td>URL:</td><td colspan=\"2\" color=\"").append(ColorUtil.toHex(JBColor.red)).append("\">")
+        .append(info.getErrorMessage()).append("</td></tr>");
+    }
+    else {
+      sb.append("<tr valign=\"top\"><td>URL:</td><td colspan=\"2\">").append(info.getRootUrl()).append("</td></tr>");
+    }
     if (upgradeFormats.size() > 1) {
       sb.append("<tr valign=\"top\"><td>Format:</td><td>").append(info.getFormat().getName()).append("</td><td><a href=\"").
         append(CHANGE_FORMAT).append("\">Change</a></td></tr>");
@@ -283,7 +289,7 @@ public class CopiesPanel {
       sb.append("<tr valign=\"top\"><td>Format:</td><td colspan=\"2\">").append(info.getFormat().getName()).append("</td></tr>");
     }
 
-    if (! SVNDepth.INFINITY.equals(info.getStickyDepth())) {
+    if (!SVNDepth.INFINITY.equals(info.getStickyDepth()) && !info.hasError()) {
       // can fix
       sb.append("<tr valign=\"top\"><td>Depth:</td><td>").append(info.getStickyDepth().getName()).append("</td><td><a href=\"").
         append(FIX_DEPTH).append("\">Fix</a></td></tr>");
@@ -298,13 +304,15 @@ public class CopiesPanel {
     if (info.isIsWcRoot()) {
       sb.append("<tr valign=\"top\"><td colspan=\"3\"><i>").append("Working copy root</i></td></tr>");
     }
-    if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat()) || WorkingCopyFormat.ONE_DOT_EIGHT.equals(info.getFormat())) {
-      sb.append("<tr valign=\"top\"><td colspan=\"3\"><a href=\"").append(CLEANUP).append("\">Cleanup</a></td></tr>");
-    }
-    sb.append("<tr valign=\"top\"><td colspan=\"3\"><a href=\"").append(CONFIGURE_BRANCHES).append("\">Configure Branches</a></td></tr>");
-    sb.append("<tr valign=\"top\"><td colspan=\"3\"><a href=\"").append(MERGE_FROM).append("\"><b>Merge From...</b></a></i></td></tr>");
+    if (!info.hasError()) {
+      if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat()) || WorkingCopyFormat.ONE_DOT_EIGHT.equals(info.getFormat())) {
+        sb.append("<tr valign=\"top\"><td colspan=\"3\"><a href=\"").append(CLEANUP).append("\">Cleanup</a></td></tr>");
+      }
+      sb.append("<tr valign=\"top\"><td colspan=\"3\"><a href=\"").append(CONFIGURE_BRANCHES).append("\">Configure Branches</a></td></tr>");
+      sb.append("<tr valign=\"top\"><td colspan=\"3\"><a href=\"").append(MERGE_FROM).append("\"><b>Merge From...</b></a></i></td></tr>");
 
-    sb.append("</table></body></html>");
+      sb.append("</table></body></html>");
+    }
     return sb.toString();
   }
 

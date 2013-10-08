@@ -21,6 +21,7 @@ import org.jetbrains.idea.svn.NestedCopyType;
 import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.tmatesoft.svn.core.SVNDepth;
+import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
 public class WCInfo implements WCPaths {
@@ -60,6 +61,17 @@ public class WCInfo implements WCPaths {
 
   public RootUrlInfo getRootInfo() {
     return myRootInfo;
+  }
+
+  public boolean hasError() {
+    return getRootInfo().getNode().hasError();
+  }
+
+  public String getErrorMessage() {
+    @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+    SVNException error = getRootInfo().getNode().getError();
+
+    return error != null ? error.getMessage() : "";
   }
 
   public WorkingCopyFormat getFormat() {
