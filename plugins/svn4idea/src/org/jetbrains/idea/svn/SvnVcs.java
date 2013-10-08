@@ -1017,14 +1017,18 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   public WorkingCopyFormat getWorkingCopyFormat(@NotNull File ioFile) {
-    RootUrlInfo rootInfo = getSvnFileUrlMapping().getWcRootForFilePath(ioFile);
-    WorkingCopyFormat format = rootInfo != null ? rootInfo.getFormat() : WorkingCopyFormat.UNKNOWN;
+    return getWorkingCopyFormat(ioFile, true);
+  }
 
-    if (WorkingCopyFormat.UNKNOWN.equals(format)) {
-      format = SvnFormatSelector.findRootAndGetFormat(ioFile);
+  public WorkingCopyFormat getWorkingCopyFormat(@NotNull File ioFile, boolean useMapping) {
+    WorkingCopyFormat format = WorkingCopyFormat.UNKNOWN;
+
+    if (useMapping) {
+      RootUrlInfo rootInfo = getSvnFileUrlMapping().getWcRootForFilePath(ioFile);
+      format = rootInfo != null ? rootInfo.getFormat() : WorkingCopyFormat.UNKNOWN;
     }
 
-    return format;
+    return WorkingCopyFormat.UNKNOWN.equals(format) ? SvnFormatSelector.findRootAndGetFormat(ioFile) : format;
   }
 
   public void refreshSSLProperty() {
@@ -1373,7 +1377,12 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @NotNull
   public ClientFactory getFactory(@NotNull File file) {
-    return getFactory(getWorkingCopyFormat(file), true);
+    return getFactory(file, true);
+  }
+
+  @NotNull
+  public ClientFactory getFactory(@NotNull File file, boolean useMapping) {
+    return getFactory(getWorkingCopyFormat(file, useMapping), true);
   }
 
   @NotNull
