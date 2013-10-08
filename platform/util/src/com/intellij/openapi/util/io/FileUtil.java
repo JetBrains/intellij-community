@@ -1043,9 +1043,9 @@ public class FileUtil extends FileUtilRt {
     writeToFile(file, text, 0, text.length, append);
   }
 
-  private static void writeToFile(@NotNull File file, @NotNull byte[] text, final int off, final int len, boolean append)
-    throws IOException {
+  private static void writeToFile(@NotNull File file, @NotNull byte[] text, int off, int len, boolean append) throws IOException {
     createParentDirs(file);
+
     OutputStream stream = new FileOutputStream(file, append);
     try {
       stream.write(text, off, len);
