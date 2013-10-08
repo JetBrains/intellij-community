@@ -6,11 +6,11 @@ import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.PyMoveAttributeToInitQuickFix;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
+import com.jetbrains.python.psi.Property;
+import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyClassImpl;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.testing.PythonUnitTestUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -65,14 +65,11 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
       final PyFunction initMethod = containingClass.findMethodByName(PyNames.INIT, false);
       if (initMethod != null) {
         PyClassImpl.collectInstanceAttributes(initMethod, attributesInInit);
-        collectAttributesFromSuper(attributesInInit, initMethod);
       }
-      else {
-        for (PyClass superClass : containingClass.getAncestorClasses(myTypeEvalContext)) {
-          final PyFunction superInit = superClass.findMethodByName(PyNames.INIT, false);
-          if (superInit != null)
-            PyClassImpl.collectInstanceAttributes(superInit, attributesInInit);
-        }
+      for (PyClass superClass : containingClass.getAncestorClasses(myTypeEvalContext)) {
+        final PyFunction superInit = superClass.findMethodByName(PyNames.INIT, false);
+        if (superInit != null)
+          PyClassImpl.collectInstanceAttributes(superInit, attributesInInit);
       }
 
       Map<String, PyTargetExpression> attributes = new HashMap<String, PyTargetExpression>();
@@ -83,28 +80,6 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
         if (!attributesInInit.containsKey(attribute.getKey()) && property == null) {
           registerProblem(attribute.getValue(), PyBundle.message("INSP.attribute.$0.outside.init", attribute.getKey()),
                           new PyMoveAttributeToInitQuickFix());
-        }
-      }
-    }
-
-    private void collectAttributesFromSuper(Map<String, PyTargetExpression> attributesInInit, PyFunction initMethod) {
-      final PyStatementList statementList = initMethod.getStatementList();
-      if (statementList != null) {
-        for (PyStatement statement : statementList.getStatements()) {
-          if (statement instanceof PyExpressionStatement) {
-            final PyExpression expression = ((PyExpressionStatement)statement).getExpression();
-            if (expression instanceof PyCallExpression) {
-              final PyType callType = PyCallExpressionHelper.getCallType((PyCallExpression)expression, myTypeEvalContext);
-              if (callType instanceof PyClassType) {
-                final PyClass superClass = ((PyClassType)callType).getPyClass();
-                final PyFunction superInit = superClass.findMethodByName(PyNames.INIT, false);
-                if (superInit != null) {
-                  PyClassImpl.collectInstanceAttributes(superInit, attributesInInit);
-                  collectAttributesFromSuper(attributesInInit, superInit);
-                }
-              }
-            }
-          }
         }
       }
     }
