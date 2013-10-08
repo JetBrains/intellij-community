@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,17 +24,13 @@ import org.tmatesoft.svn.core.SVNURL;
 import java.io.File;
 
 public class RootUrlInfo implements RootUrlPair {
-  private final SVNURL myRepositoryUrlUrl;
-  private final String myRepositoryUrl;
-  private final SVNURL myAbsoluteUrlAsUrl;
-  @NotNull private final WorkingCopyFormat myFormat;
 
+  @NotNull private final String myRepositoryUrl;
+  @NotNull private final WorkingCopyFormat myFormat;
   @NotNull private final Node myNode;
-  private final File myIoFile;
-  private final VirtualFile myVfile;
   // vcs root
   @NotNull private final VirtualFile myRoot;
-  private volatile NestedCopyType myType;
+  @Nullable private volatile NestedCopyType myType;
 
   public RootUrlInfo(@NotNull final Node node, @NotNull final WorkingCopyFormat format, @NotNull final VirtualFile root) {
     this(node, format, root, null);
@@ -44,14 +41,9 @@ public class RootUrlInfo implements RootUrlPair {
                      @NotNull final VirtualFile root,
                      @Nullable final NestedCopyType type) {
     myNode = node;
-    myRepositoryUrlUrl = node.getRepositoryRootUrl();
     myFormat = format;
-    myVfile = node.getFile();
     myRoot = root;
-    myIoFile = new File(myVfile.getPath());
-    final String asString = myRepositoryUrlUrl.toString();
-    myRepositoryUrl = asString.endsWith("/") ? asString.substring(0, asString.length() - 1) : asString;
-    myAbsoluteUrlAsUrl = node.getUrl();
+    myRepositoryUrl = StringUtil.trimEnd(node.getRepositoryRootUrl().toString(), "/");
     myType = type;
   }
 
@@ -60,20 +52,24 @@ public class RootUrlInfo implements RootUrlPair {
     return myNode;
   }
 
+  @NotNull
   public String getRepositoryUrl() {
     return myRepositoryUrl;
   }
 
+  @NotNull
   public SVNURL getRepositoryUrlUrl() {
-    return myRepositoryUrlUrl;
+    return myNode.getRepositoryRootUrl();
   }
 
+  @NotNull
   public String getAbsoluteUrl() {
-    return myAbsoluteUrlAsUrl.toString();
+    return getAbsoluteUrlAsUrl().toString();
   }
 
+  @NotNull
   public SVNURL getAbsoluteUrlAsUrl() {
-    return myAbsoluteUrlAsUrl;
+    return myNode.getUrl();
   }
 
   @NotNull
@@ -81,12 +77,14 @@ public class RootUrlInfo implements RootUrlPair {
     return myFormat;
   }
 
+  @NotNull
   public File getIoFile() {
-    return myIoFile;
+    return myNode.getIoFile();
   }
 
+  @NotNull
   public String getPath() {
-    return myIoFile.getAbsolutePath();
+    return getIoFile().getAbsolutePath();
   }
 
   // vcs root
@@ -95,12 +93,14 @@ public class RootUrlInfo implements RootUrlPair {
     return myRoot;
   }
 
+  @NotNull
   public VirtualFile getVirtualFile() {
-    return myVfile;
+    return myNode.getFile();
   }
 
+  @NotNull
   public String getUrl() {
-    return myAbsoluteUrlAsUrl.toString();
+    return getAbsoluteUrl();
   }
 
   @Nullable
@@ -112,7 +112,6 @@ public class RootUrlInfo implements RootUrlPair {
     myType = type;
   }
 
-  // TODO: Update equals and hashCode to use underlying node instance
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -120,11 +119,9 @@ public class RootUrlInfo implements RootUrlPair {
 
     RootUrlInfo info = (RootUrlInfo)o;
 
-    if (myAbsoluteUrlAsUrl != null ? !myAbsoluteUrlAsUrl.equals(info.myAbsoluteUrlAsUrl) : info.myAbsoluteUrlAsUrl != null) return false;
     if (myFormat != info.myFormat) return false;
-    if (myIoFile != null ? !myIoFile.equals(info.myIoFile) : info.myIoFile != null) return false;
-    if (myRepositoryUrlUrl != null ? !myRepositoryUrlUrl.equals(info.myRepositoryUrlUrl) : info.myRepositoryUrlUrl != null) return false;
-    if (myRoot != null ? !myRoot.equals(info.myRoot) : info.myRoot != null) return false;
+    if (!myNode.equals(info.myNode)) return false;
+    if (!myRoot.equals(info.myRoot)) return false;
     if (myType != info.myType) return false;
 
     return true;
@@ -132,11 +129,9 @@ public class RootUrlInfo implements RootUrlPair {
 
   @Override
   public int hashCode() {
-    int result = myRepositoryUrlUrl != null ? myRepositoryUrlUrl.hashCode() : 0;
-    result = 31 * result + (myAbsoluteUrlAsUrl != null ? myAbsoluteUrlAsUrl.hashCode() : 0);
-    result = 31 * result + (myFormat != null ? myFormat.hashCode() : 0);
-    result = 31 * result + (myIoFile != null ? myIoFile.hashCode() : 0);
-    result = 31 * result + (myRoot != null ? myRoot.hashCode() : 0);
+    int result = myFormat.hashCode();
+    result = 31 * result + myNode.hashCode();
+    result = 31 * result + myRoot.hashCode();
     result = 31 * result + (myType != null ? myType.hashCode() : 0);
     return result;
   }

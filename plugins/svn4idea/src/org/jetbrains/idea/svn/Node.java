@@ -76,4 +76,30 @@ public class Node {
   public boolean onUrl(@Nullable SVNURL url) {
     return myUrl.equals(url);
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    Node node = (Node)o;
+
+    if (myError != null ? (node.myError == null || !myError.getMessage().equals(node.myError.getMessage())) : node.myError != null) {
+      return false;
+    }
+    if (!myFile.equals(node.myFile)) return false;
+    if (!myRepositoryUrl.equals(node.myRepositoryUrl)) return false;
+    if (!myUrl.equals(node.myUrl)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myFile.hashCode();
+    result = 31 * result + myUrl.hashCode();
+    result = 31 * result + myRepositoryUrl.hashCode();
+    result = 31 * result + (myError != null ? myError.getMessage().hashCode() : 0);
+    return result;
+  }
 }
