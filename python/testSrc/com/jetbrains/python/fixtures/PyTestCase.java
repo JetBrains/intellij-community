@@ -36,7 +36,7 @@ import java.io.File;
 /**
  * @author yole
  */
-@TestDataPath("$CONTENT_ROOT/../testData/")
+@TestDataPath("$CONTENT_ROOT/../../testData/")
 public abstract class PyTestCase extends UsefulTestCase {
   public static String PYTHON_2_MOCK_SDK = "2.7";
   public static String PYTHON_3_MOCK_SDK = "3.2";
