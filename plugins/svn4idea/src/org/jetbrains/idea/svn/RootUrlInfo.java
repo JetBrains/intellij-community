@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
@@ -25,20 +26,23 @@ public class RootUrlInfo implements RootUrlPair {
   private final SVNURL myRepositoryUrlUrl;
   private final String myRepositoryUrl;
   private final SVNURL myAbsoluteUrlAsUrl;
-  private final WorkingCopyFormat myFormat;
+  @NotNull private final WorkingCopyFormat myFormat;
 
   @NotNull private final Node myNode;
   private final File myIoFile;
   private final VirtualFile myVfile;
   // vcs root
-  private final VirtualFile myRoot;
+  @NotNull private final VirtualFile myRoot;
   private volatile NestedCopyType myType;
 
-  public RootUrlInfo(@NotNull final Node node, final WorkingCopyFormat format, final VirtualFile root) {
+  public RootUrlInfo(@NotNull final Node node, @NotNull final WorkingCopyFormat format, @NotNull final VirtualFile root) {
     this(node, format, root, null);
   }
 
-  public RootUrlInfo(@NotNull final Node node, final WorkingCopyFormat format, final VirtualFile root, final NestedCopyType type) {
+  public RootUrlInfo(@NotNull final Node node,
+                     @NotNull final WorkingCopyFormat format,
+                     @NotNull final VirtualFile root,
+                     @Nullable final NestedCopyType type) {
     myNode = node;
     myRepositoryUrlUrl = node.getRepositoryRootUrl();
     myFormat = format;
@@ -72,6 +76,7 @@ public class RootUrlInfo implements RootUrlPair {
     return myAbsoluteUrlAsUrl;
   }
 
+  @NotNull
   public WorkingCopyFormat getFormat() {
     return myFormat;
   }
@@ -85,6 +90,7 @@ public class RootUrlInfo implements RootUrlPair {
   }
 
   // vcs root
+  @NotNull
   public VirtualFile getRoot() {
     return myRoot;
   }
@@ -97,11 +103,12 @@ public class RootUrlInfo implements RootUrlPair {
     return myAbsoluteUrlAsUrl.toString();
   }
 
+  @Nullable
   public NestedCopyType getType() {
     return myType;
   }
 
-  public void setType(NestedCopyType type) {
+  public void setType(@Nullable NestedCopyType type) {
     myType = type;
   }
 

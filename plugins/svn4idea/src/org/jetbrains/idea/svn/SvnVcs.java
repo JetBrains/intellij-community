@@ -1012,10 +1012,12 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
   }
 
+  @NotNull
   public WorkingCopyFormat getWorkingCopyFormat(@NotNull File ioFile) {
     return getWorkingCopyFormat(ioFile, true);
   }
 
+  @NotNull
   public WorkingCopyFormat getWorkingCopyFormat(@NotNull File ioFile, boolean useMapping) {
     WorkingCopyFormat format = WorkingCopyFormat.UNKNOWN;
 

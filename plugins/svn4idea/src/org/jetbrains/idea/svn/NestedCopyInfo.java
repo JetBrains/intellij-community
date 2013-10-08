@@ -17,23 +17,24 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNURL;
 
 /**
  * @author Konstantin Kolosovsky.
  */
 public class NestedCopyInfo {
-  private final VirtualFile myFile;
-  private SVNURL myUrl;
-  private WorkingCopyFormat myFormat;
-  private final NestedCopyType myType;
-  private SVNURL myRootURL;
+  @NotNull private final VirtualFile myFile;
+  @Nullable private SVNURL myUrl;
+  @NotNull private WorkingCopyFormat myFormat;
+  @NotNull private final NestedCopyType myType;
+  @Nullable private SVNURL myRootURL;
 
   public NestedCopyInfo(@NotNull final VirtualFile file,
-                 final SVNURL url,
-                 final WorkingCopyFormat format,
-                 final NestedCopyType type,
-                 SVNURL rootURL) {
+                        @Nullable final SVNURL url,
+                        @NotNull final WorkingCopyFormat format,
+                        @NotNull final NestedCopyType type,
+                        @Nullable SVNURL rootURL) {
     myFile = file;
     myUrl = url;
     myFormat = format;
@@ -41,30 +42,35 @@ public class NestedCopyInfo {
     myRootURL = rootURL;
   }
 
-  public void setUrl(SVNURL url) {
+  public void setUrl(@Nullable SVNURL url) {
     myUrl = url;
   }
 
+  @Nullable
   public SVNURL getRootURL() {
     return myRootURL;
   }
 
-  public void setFormat(WorkingCopyFormat format) {
+  public void setFormat(@NotNull WorkingCopyFormat format) {
     myFormat = format;
   }
 
+  @NotNull
   public VirtualFile getFile() {
     return myFile;
   }
 
+  @Nullable
   public SVNURL getUrl() {
     return myUrl;
   }
 
+  @NotNull
   public WorkingCopyFormat getFormat() {
     return myFormat;
   }
 
+  @NotNull
   public NestedCopyType getType() {
     return myType;
   }
@@ -90,7 +96,7 @@ public class NestedCopyInfo {
     return key(myFile).hashCode();
   }
 
-  public void setRootURL(final SVNURL value) {
+  public void setRootURL(@Nullable final SVNURL value) {
     myRootURL = value;
   }
 }

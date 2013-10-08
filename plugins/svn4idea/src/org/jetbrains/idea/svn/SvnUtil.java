@@ -367,6 +367,7 @@ public class SvnUtil {
    * @param path
    * @return
    */
+  @NotNull
   public static WorkingCopyFormat getFormat(final File path) {
     int format = 0;
     File dbFile = resolveDatabase(path);
