@@ -82,7 +82,7 @@ public class SvnExecutableChecker extends ExecutableValidator {
   }
 
   private boolean validateVersion(@NotNull Version version) {
-    if (!version.is(1) || version.lessThan(1, 7)) {
+    if (version.lessThan(1, 7)) {
       setNotificationErrorDescription(getOldExecutableMessage(version));
       return false;
     }
