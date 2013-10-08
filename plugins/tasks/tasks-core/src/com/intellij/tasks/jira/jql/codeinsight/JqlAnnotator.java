@@ -1,5 +1,6 @@
 package com.intellij.tasks.jira.jql.codeinsight;
 
+import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.psi.PsiElement;
@@ -7,17 +8,25 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.tasks.jira.jql.psi.*;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.CONSTANT;
+
 /**
- * Checks the following errors:
+ * At first, it checks the following errors:
  * <ol>
- * <li>Not list operand was given inside 'IN' clauses or vice-versa
- * <li>constants 'empty' or 'null' weren't used inside 'IS' clauses or vice-versa
+ * <li>not-list operand was given inside 'IN' clauses and vice-versa
+ * <li>constants 'empty' or 'null' weren't used inside 'IS' clauses and vice-versa
  * </ol>
+ *
+ *
+ * It also highlights JQL identifiers (fields and function names) differently
+ * from unquoted strings.
+ *
  * @author Mikhail Golubev
  */
 public class JqlAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, final @NotNull AnnotationHolder holder) {
+    // error checks
     element.accept(new JqlElementVisitor() {
       @Override
       public void visitEmptyValue(JqlEmptyValue emptyValue) {
@@ -57,6 +66,12 @@ public class JqlAnnotator implements Annotator {
         if (isEmptyClause(clause) && !hasEmptyOperand) {
           holder.createErrorAnnotation(operand, "Expecting 'empty' or 'null' here");
         }
+      }
+
+      @Override
+      public void visitJqlIdentifier(JqlIdentifier identifier) {
+        Annotation annotation = holder.createInfoAnnotation(identifier, null);
+        annotation.setEnforcedTextAttributes(CONSTANT.getDefaultAttributes());
       }
     });
   }
