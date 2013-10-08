@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
@@ -45,7 +46,6 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHand
     final XDebuggerEvaluator evaluator = stackFrame.getEvaluator();
     if (evaluator == null) return;
 
-    @Nullable Project project = CommonDataKeys.PROJECT.getData(dataContext);
     @Nullable Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
     String selectedText = editor != null ? editor.getSelectionModel().getSelectedText() : null;
@@ -55,7 +55,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHand
     String text = selectedText;
 
     if (text == null && editor != null) {
-      text = getExpressionText(evaluator, project, editor);
+      text = getExpressionText(evaluator, CommonDataKeys.PROJECT.getData(dataContext), editor);
     }
 
     if (text == null) {
@@ -64,10 +64,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHand
         text = value.getEvaluationExpression();
       }
     }
-    if (text == null) {
-      text = "";
-    }
-    new XDebuggerEvaluationDialog(session, editorsProvider, evaluator, text, stackFrame.getSourcePosition()).show();
+    new XDebuggerEvaluationDialog(session, editorsProvider, evaluator, StringUtil.notNullize(text), stackFrame.getSourcePosition()).show();
   }
 
   @Nullable
