@@ -239,8 +239,9 @@ public final class HgCommandExecutor {
     exeName = settings.getHgExecutable().substring(lastSlashIndex + 1);
 
     final String executable = settings.isRunViaBash() ? "bash -c " + exeName : exeName;
-    final String cmdString = String.format("%s %s %s", executable, operation, arguments == null ? "" : StringUtil.join(arguments, " "));
-
+    final String str = String.format("%s %s %s", executable, operation, arguments == null ? "" : StringUtil.join(arguments, " "));
+    //remove password from path before log
+    final String cmdString = myDestination != null ? HgUtil.removePasswordIfNeeded(str) : str;
     final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     // log command
     if (isUnitTestMode) {
