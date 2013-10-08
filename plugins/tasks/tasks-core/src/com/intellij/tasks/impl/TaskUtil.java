@@ -16,13 +16,17 @@
 
 package com.intellij.tasks.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepository;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.InputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -107,7 +111,7 @@ public class TaskUtil {
 
   /**
    * {@link Task#equals(Object)} implementation compares tasks by they unique IDs only.
-   * This method should be used then full comparison is necessary.
+   * This method should be used when full comparison is necessary.
    */
   public static boolean tasksEqual(@NotNull Task t1, @NotNull Task t2) {
     if (!t1.getId().equals(t2.getId())) return false;
@@ -138,5 +142,44 @@ public class TaskUtil {
 
   public static boolean tasksEqual(@NotNull Task[] task1, @NotNull Task[] task2) {
     return tasksEqual(Arrays.asList(task1), Arrays.asList(task2));
+  }
+
+  /**
+   * Print pretty-formatted XML in {@code logger} if its level is DEBUG or below
+   */
+  public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull Element element) {
+    if (logger.isDebugEnabled()) {
+      // alternatively
+      //new XMLOutputter(Format.getPrettyFormat()).outputString(root)
+      logger.debug(JDOMUtil.createOutputter("\n").outputString(element));
+    }
+  }
+
+  /**
+   * Parse and print pretty-formatted XML in {@code logger} if its level is DEBUG or below
+   */
+  public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull InputStream xmlStream) {
+    if (logger.isDebugEnabled()) {
+      try {
+        logger.debug(JDOMUtil.createOutputter("\n").outputString(JDOMUtil.loadDocument(xmlStream)));
+      }
+      catch (Exception e) {
+        logger.debug(e);
+      }
+    }
+  }
+
+  /**
+   * Parse and print pretty-formatted XML in {@code logger} if its level is DEBUG or below
+   */
+  public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull String xmlString) {
+    if (logger.isDebugEnabled()) {
+      try {
+        logger.debug(JDOMUtil.createOutputter("\n").outputString(JDOMUtil.loadDocument(xmlString)));
+      }
+      catch (Exception e) {
+        logger.debug(e);
+      }
+    }
   }
 }

@@ -7,6 +7,7 @@ import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.tasks.impl.LocalTaskImpl;
+import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -161,6 +162,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
     if (status == 400) {
       InputStream string = method.getResponseBodyAsStream();
       Element element = new SAXBuilder(false).build(string).getRootElement();
+      TaskUtil.prettyFormatXmlToLog(LOG, element);
       if ("error".equals(element.getName())) {
         throw new Exception(element.getText());
       }
