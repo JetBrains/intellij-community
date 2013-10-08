@@ -58,6 +58,8 @@ class TeamcityPlugin(ErrorClassPlugin, TextTestResult, TeamcityTestResult):
 
   def formatErr(self, err):
     exctype, value, tb = err
+    if isinstance(value, str):
+      value = exctype(value)
     return ''.join(traceback.format_exception(exctype, value, tb))
 
   def is_gen(self, test):
