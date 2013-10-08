@@ -155,7 +155,7 @@ class CommitToIcsAction extends CommonCheckinFilesAction {
       }
     }
 
-    new CommitToIcsDialog(project, collectConsumer.getResult()).show();
+    new CommitToIcsDialog(project, projectId, collectConsumer.getResult()).show();
   }
 
   private static void collectProjectChanges(Collection<Change> changes, ProjectChangeCollectConsumer collectConsumer) {

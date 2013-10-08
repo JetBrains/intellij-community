@@ -147,7 +147,8 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
       @Override
       public boolean isApplicable(@NotNull String fileSpec, @NotNull RoamingType roamingType) {
         if (StorageUtil.isProjectOrModuleFile(fileSpec)) {
-          return false;
+          // applicable only if file was committed to Settings Server explicitly
+          return repositoryManager.has(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId));
         }
 
         return settings.shareProjectWorkspace || !fileSpec.equals(StoragePathMacros.WORKSPACE_FILE);
@@ -239,7 +240,7 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
   }
 
   private class IcsStreamProvider extends StreamProvider {
-    private final String projectId;
+    protected final String projectId;
 
     public IcsStreamProvider(@Nullable String projectId) {
       this.projectId = projectId;
@@ -247,9 +248,8 @@ public class IcsManager implements ApplicationLoadListener, Disposable {
 
     @Override
     public final boolean saveContent(@NotNull String fileSpec, @NotNull byte[] content, int size, @NotNull RoamingType roamingType, boolean async) {
-      boolean scheduleToAdd = isAutoCommit(fileSpec, roamingType);
-      repositoryManager.write(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId), content, size, async, scheduleToAdd);
-      if (scheduleToAdd) {
+      repositoryManager.write(IcsUrlBuilder.buildPath(fileSpec, roamingType, projectId), content, size, async);
+      if (isAutoCommit(fileSpec, roamingType)) {
         commitAlarm.cancelAndRequest();
       }
       return false;

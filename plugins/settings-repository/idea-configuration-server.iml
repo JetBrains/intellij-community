@@ -24,6 +24,7 @@
       </library>
     </orderEntry>
     <orderEntry type="module" module-name="vcs-impl" />
+    <orderEntry type="module" module-name="projectModel-impl" />
   </component>
 </module>
 

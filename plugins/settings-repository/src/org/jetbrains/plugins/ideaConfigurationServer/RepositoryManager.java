@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collection;
+import java.util.List;
 
 public interface RepositoryManager {
   @Nullable
@@ -21,9 +22,8 @@ public interface RepositoryManager {
 
   /**
    * @param async Write postpone or immediately
-   * @param scheduleToAdd Mark file as changed (git add)
    */
-  void write(@NotNull String path, @NotNull byte[] content, int size, boolean async, boolean scheduleToAdd);
+  void write(@NotNull String path, @NotNull byte[] content, int size, boolean async);
 
   void deleteAsync(@NotNull String path);
 
@@ -35,6 +35,8 @@ public interface RepositoryManager {
   @NotNull
   ActionCallback commit();
 
+  void commit(@NotNull List<String> paths);
+
   @NotNull
   ActionCallback push(@NotNull ProgressIndicator indicator);
 
@@ -42,4 +44,6 @@ public interface RepositoryManager {
   ActionCallback pull(@NotNull ProgressIndicator indicator);
 
   void initRepository(@NotNull File dir) throws IOException;
+
+  boolean has(String path);
 }

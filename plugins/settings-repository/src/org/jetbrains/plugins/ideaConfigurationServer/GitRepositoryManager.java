@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.Iterator;
+import java.util.List;
 
 final class GitRepositoryManager extends BaseRepositoryManager {
   private final Git git;
@@ -36,8 +37,15 @@ final class GitRepositoryManager extends BaseRepositoryManager {
     Repository repository = repositoryBuilder.build();
     if (!dir.exists()) {
       repository.create(false);
+      disableAutoCrLf(repository);
     }
     git = Git.wrap(repository);
+  }
+
+  private static void disableAutoCrLf(Repository repository) throws IOException {
+    StoredConfig config = repository.getConfig();
+    config.setString(ConfigConstants.CONFIG_CORE_SECTION, null, ConfigConstants.CONFIG_KEY_AUTOCRLF, ConfigConstants.CONFIG_KEY_FALSE);
+    config.save();
   }
 
   @Override
@@ -133,6 +141,11 @@ final class GitRepositoryManager extends BaseRepositoryManager {
         git.commit().setAuthor(author).setCommitter(committer).setMessage("").call();
       }
     }, new EmptyProgressIndicator());
+  }
+
+  @Override
+  public void commit(@NotNull List<String> paths) {
+
   }
 
   @Override
