@@ -4,6 +4,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
@@ -37,6 +38,7 @@ public class PyDocstringCompletionContributor extends CompletionContributor {
     protected void addCompletions(@NotNull CompletionParameters parameters,
                                   ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
+      if (parameters.getInvocationCount() == 0) return;
       final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(parameters.getOriginalPosition(), PyDocStringOwner.class);
       if (docStringOwner != null) {
         final PsiFile file = docStringOwner.getContainingFile();
@@ -69,5 +71,10 @@ public class PyDocstringCompletionContributor extends CompletionContributor {
       offset--;
     }
     return prefixBuilder.toString();
+  }
+
+  @Override
+  public boolean invokeAutoPopup(@NotNull PsiElement position, char typeChar) {
+    return false;
   }
 }
