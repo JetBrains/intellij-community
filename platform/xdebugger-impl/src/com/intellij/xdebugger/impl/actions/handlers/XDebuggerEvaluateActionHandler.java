@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
  * @author nik
  */
 public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHandler {
+  @Override
   protected void perform(@NotNull final XDebugSession session, final DataContext dataContext) {
     XDebuggerEditorsProvider editorsProvider = session.getDebugProcess().getEditorsProvider();
     XStackFrame stackFrame = session.getCurrentStackFrame();
@@ -86,6 +87,7 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerSuspendedActionHand
     return expressionInfo.second == null ? document.getText(expressionInfo.first) : expressionInfo.second;
   }
 
+  @Override
   protected boolean isEnabled(final @NotNull XDebugSession session, final DataContext dataContext) {
     if (!super.isEnabled(session, dataContext)) {
       return false;
