@@ -57,7 +57,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   private XValuePresentation myValuePresentation;
 
   //todo[nik] annotate 'name' with @NotNull
-  public XValueNodeImpl(XDebuggerTree tree, XDebuggerTreeNode parent, String name, @NotNull XValue value) {
+  public XValueNodeImpl(XDebuggerTree tree, @Nullable XDebuggerTreeNode parent, String name, @NotNull XValue value) {
     super(tree, parent, value);
     myName = name;
 
@@ -162,6 +162,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     valuePresenter.renderValue(new XValueTextRendererImpl(text));
   }
 
+  @Override
   public void markChanged() {
     if (myChanged) return;
 

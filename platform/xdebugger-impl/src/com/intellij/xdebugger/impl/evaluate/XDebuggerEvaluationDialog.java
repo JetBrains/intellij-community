@@ -190,8 +190,7 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
   private void evaluate() {
     final XDebuggerTree tree = myTreePanel.getTree();
-    final EvaluatingExpressionRootNode root = new EvaluatingExpressionRootNode(this, tree);
-    tree.setRoot(root, false);
+    tree.setRoot(new EvaluatingExpressionRootNode(this, tree), false);
     myResultPanel.invalidate();
     myInputComponent.getInputEditor().selectAll();
   }
