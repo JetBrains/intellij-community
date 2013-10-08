@@ -179,7 +179,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return false;
   }
 
-  private static void checkAccessStaticLevels(List<CandidateInfo> conflicts, boolean checkAccessible) {
+  protected static void checkAccessStaticLevels(List<CandidateInfo> conflicts, boolean checkAccessible) {
     int conflictsCount = conflicts.size();
 
     int maxCheckLevel = -1;
