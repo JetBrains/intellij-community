@@ -10,6 +10,5 @@
   <depends optional="true" config-file="python-remote-interpreter-plugin.xml">com.jetbrains.plugins.webDeployment</depends>
   <depends>org.jetbrains.plugins.remote-run</depends>
 
-  <xi:include href="/META-INF/pycharm-numpy-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <xi:include href="/META-INF/pycharm-flask-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>
