@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.MacUIUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -25,24 +26,28 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class DarculaUIUtil {
-  public static final Color GLOW_COLOR = new Color(96, 175, 255);
+  public static final Color GLOW_COLOR = new JBColor(new Color(96, 132, 212), new Color(96, 175, 255));
 
   public static void paintFocusRing(Graphics g, int x, int y, int width, int height) {
-    MacUIUtil.paintFocusRing((Graphics2D)g, GLOW_COLOR, new Rectangle(x, y, width, height));
+    MacUIUtil.paintFocusRing((Graphics2D)g, getGlow(), new Rectangle(x, y, width, height));
   }
 
   public static void paintFocusOval(Graphics g, int x, int y, int width, int height) {
-    MacUIUtil.paintFocusRing((Graphics2D)g, GLOW_COLOR, new Rectangle(x, y, width, height), true);
+    MacUIUtil.paintFocusRing((Graphics2D)g, getGlow(), new Rectangle(x, y, width, height), true);
+  }
+
+  private static Color getGlow() {
+    return new JBColor(new Color(35, 121, 212), new Color(96, 175, 255));
   }
 
   public static void paintSearchFocusRing(Graphics2D g, Rectangle bounds) {
     int correction = UIUtil.isUnderDarcula() ? 50 : 0;
     final Color[] colors = new Color[]{
-      ColorUtil.toAlpha(GLOW_COLOR, 180 - correction),
-      ColorUtil.toAlpha(GLOW_COLOR, 120 - correction),
-      ColorUtil.toAlpha(GLOW_COLOR, 70  - correction),
-      ColorUtil.toAlpha(GLOW_COLOR, 100 - correction),
-      ColorUtil.toAlpha(GLOW_COLOR, 50  - correction)
+      ColorUtil.toAlpha(getGlow(), 180 - correction),
+      ColorUtil.toAlpha(getGlow(), 120 - correction),
+      ColorUtil.toAlpha(getGlow(), 70  - correction),
+      ColorUtil.toAlpha(getGlow(), 100 - correction),
+      ColorUtil.toAlpha(getGlow(), 50  - correction)
     };
 
     final Object oldAntialiasingValue = g.getRenderingHint(RenderingHints.KEY_ANTIALIASING);
