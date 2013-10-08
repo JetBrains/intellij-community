@@ -38,7 +38,7 @@ public class PyDocstringCompletionContributor extends CompletionContributor {
     protected void addCompletions(@NotNull CompletionParameters parameters,
                                   ProcessingContext context,
                                   @NotNull CompletionResultSet result) {
-      if (parameters.getInvocationCount() == 0) return;
+      if (parameters.isAutoPopup()) return;
       final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(parameters.getOriginalPosition(), PyDocStringOwner.class);
       if (docStringOwner != null) {
         final PsiFile file = docStringOwner.getContainingFile();
