@@ -53,6 +53,9 @@ public class EvaluatingExpressionRootNode extends XValueContainerNode<Evaluating
         public void evaluated(@NotNull final XValue result) {
           String name = UIUtil.removeMnemonic(XDebuggerBundle.message("xdebugger.evaluate.result"));
           node.addChildren(XValueChildrenList.singleton(name, result), true);
+          if (node instanceof XValueContainerNode) {
+            ((XValueContainerNode<?>)node).expandChildren();
+          }
         }
 
         @Override
