@@ -26,9 +26,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.WorkingCopyFormat;
-
-import java.io.File;
 
 /**
  * Created with IntelliJ IDEA.
@@ -90,13 +87,6 @@ public class SvnExecutableChecker extends ExecutableValidator {
       return false;
     }
 
-    WorkingCopyFormat format = getVcs().getWorkingCopyFormat(new File(myProject.getBaseDir().getPath()));
-    if (!version.is(format.getVersion().major, format.getVersion().minor)) {
-      setNotificationErrorDescription(getInconsistentExecutableMessage(version, format));
-      return false;
-    }
-    // TODO: Show also "upgrade/convert" option if possible
-
     return true;
   }
 
@@ -124,9 +114,5 @@ public class SvnExecutableChecker extends ExecutableValidator {
 
   private static String getOldExecutableMessage(@NotNull Version version) {
     return SvnBundle.message("subversion.executable.too.old", version);
-  }
-
-  private static String getInconsistentExecutableMessage(@NotNull Version version, @NotNull WorkingCopyFormat format) {
-    return SvnBundle.message("subversion.executable.inconsistent.to.working.copy", version, format.getName());
   }
 }
