@@ -45,6 +45,36 @@ public class PsiMethodReferenceUtil {
     return false;
   }
 
+  public static String checkReturnType(PsiMethodReferenceExpression expression, JavaResolveResult result, PsiType functionalInterfaceType) {
+    final QualifierResolveResult qualifierResolveResult = getQualifierResolveResult(expression);
+    final PsiElement resolve = result.getElement();
+    if (resolve instanceof PsiMethod) {
+      PsiSubstitutor subst = PsiSubstitutor.EMPTY;
+      subst = subst.putAll(qualifierResolveResult.getSubstitutor());
+      subst = subst.putAll(result.getSubstitutor());
+
+      final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(functionalInterfaceType);
+
+      PsiType returnType = PsiTypesUtil.patchMethodGetClassReturnType(expression, expression,
+                                                                      (PsiMethod)resolve, null,
+                                                                      PsiUtil.getLanguageLevel(expression));
+      if (returnType == null) {
+        returnType = ((PsiMethod)resolve).getReturnType();
+      }
+      PsiType methodReturnType = subst.substitute(returnType);
+      if (interfaceReturnType != null && interfaceReturnType != PsiType.VOID) {
+        if (methodReturnType == null) {
+          methodReturnType =
+            JavaPsiFacade.getElementFactory(expression.getProject()).createType(((PsiMethod)resolve).getContainingClass(), subst);
+        }
+        if (!TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType, false)) {
+          return "Bad return type in method reference: cannot convert " + methodReturnType.getCanonicalText() + " to " + interfaceReturnType.getCanonicalText();
+        }
+      }
+    }
+    return null;
+  }
+
   public static class QualifierResolveResult {
     private final PsiClass myContainingClass;
     private final PsiSubstitutor mySubstitutor;
@@ -178,7 +208,7 @@ public class PsiMethodReferenceUtil {
           if (methodReturnType == null) {
             methodReturnType = JavaPsiFacade.getElementFactory(methodReferenceExpression.getProject()).createType(((PsiMethod)resolve).getContainingClass(), subst);
           }
-          if (!TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType, false)) return false;
+          //if (!TypeConversionUtil.isAssignable(interfaceReturnType, methodReturnType, false)) return false;
         }
         if (areAcceptable(signature1, signature2, qualifierResolveResult.getContainingClass(), qualifierResolveResult.getSubstitutor(), ((PsiMethod)resolve).isVarArgs())) return true;
       } else if (resolve instanceof PsiClass) {

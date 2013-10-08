@@ -20,7 +20,7 @@ class MyTest {
       System.out.println(i);
     }
 
-    private static void foo(I2 i) {  
+    private static void <warning descr="Private method 'foo(MyTest.I2)' is never used">foo</warning>(I2 i) {  
       System.out.println(i);
     }
 
@@ -29,7 +29,7 @@ class MyTest {
     }
 
     public static void main(String[] args) {
-        foo(Foo::m);
+        foo<error descr="Ambiguous method call: both 'MyTest.foo(I1)' and 'MyTest.foo(I2)' match">(Foo::m)</error>;
     }
 }
 
