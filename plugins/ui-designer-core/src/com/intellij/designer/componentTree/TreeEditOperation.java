@@ -46,6 +46,10 @@ public abstract class TreeEditOperation extends AbstractEditOperation {
     return true;
   }
 
+  protected Object[] getChildren() {
+    return myContainer.getTreeChildren();
+  }
+
   @Override
   public void showFeedback() {
     Point location = myContext.getLocation();
@@ -67,7 +71,7 @@ public abstract class TreeEditOperation extends AbstractEditOperation {
   }
 
   protected final boolean isChildren(RadComponent component) {
-    return ArrayUtil.indexOf(myContainer.getTreeChildren(), component) != -1;
+    return ArrayUtil.indexOf(getChildren(), component) != -1;
   }
 
   @Override
@@ -85,7 +89,7 @@ public abstract class TreeEditOperation extends AbstractEditOperation {
         return false;
       }
 
-      Object[] children = myContainer.getTreeChildren();
+      Object[] children = getChildren();
       int index = ArrayUtil.indexOf(children, myTarget) + (myInsertBefore ? -1 : 1);
       if (0 <= index && index < children.length) {
         return !myComponents.contains(children[index]);
@@ -103,7 +107,7 @@ public abstract class TreeEditOperation extends AbstractEditOperation {
       execute(myTarget);
     }
     else {
-      Object[] children = myContainer.getTreeChildren();
+      Object[] children = getChildren();
       int index = ArrayUtil.indexOf(children, myTarget) + 1;
       if (index < children.length) {
         execute((RadComponent)children[index]);
