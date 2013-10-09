@@ -15,14 +15,23 @@
  */
 package com.siyeh.ig.javadoc;
 
-import com.siyeh.ig.IGInspectionTestCase;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.siyeh.ig.LightInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class MissingPackageInfoInspectionTest extends IGInspectionTestCase {
+public class LocalMissingPackageInfoInspectionTest extends LightInspectionTestCase {
 
-  public void test() {
-    doTest("com/siyeh/igtest/javadoc/missing_package_info", new MissingPackageInfoInspection());
+  public void testLocalInspection() {
+    addEnvironmentClass("package a;" +
+                        "class Y {}");
+    doTest("package /*Package 'a' is missing a 'package-info.java' file*/a/**/;" +
+           "class X {}");
+  }
+
+  @Override
+  protected InspectionProfileEntry getInspection() {
+    return new MissingPackageInfoInspection();
   }
 }
