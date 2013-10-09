@@ -24,7 +24,7 @@ public class DaemonCodeAnalyzerSettings {
     return ServiceManager.getService(DaemonCodeAnalyzerSettings.class);
   }
 
-  public boolean NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = false;
+  public boolean NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = true;
   public int AUTOREPARSE_DELAY = 300;
   public boolean SHOW_ADD_IMPORT_HINTS = true;
   @NonNls public String NO_AUTO_IMPORT_PATTERN = "[a-z].?";
