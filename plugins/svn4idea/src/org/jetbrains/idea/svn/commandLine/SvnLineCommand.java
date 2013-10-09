@@ -220,6 +220,14 @@ public class SvnLineCommand extends SvnCommand {
     if (errText.startsWith(UNABLE_TO_CONNECT_CODE) && errText.contains(CANNOT_AUTHENTICATE_TO_PROXY)) {
       return new ProxyCallback(callback, url);
     }
+    // https one-way protocol untrusted server certificate
+    if (errText.contains(UNTRUSTED_SERVER_CERTIFICATE)) {
+      return new CertificateCallbackCase(callback, url);
+    }
+    // https two-way protocol invalid client certificate
+    if (errText.contains(ACCESS_TO_PREFIX) && errText.contains(FORBIDDEN_STATUS)) {
+      return new TwoWaySslCallback(callback, url);
+    }
     // http/https protocol invalid credentials
     if (errText.contains(AUTHENTICATION_FAILED_MESSAGE)) {
       return new UsernamePasswordCallback(callback, url);
@@ -232,14 +240,6 @@ public class SvnLineCommand extends SvnCommand {
     // http/https protocol, svn 1.7, non-interactive
     if (errText.contains(UNABLE_TO_CONNECT_MESSAGE)) {
       return new UsernamePasswordCallback(callback, url);
-    }
-    // https one-way protocol untrusted server certificate
-    if (errText.contains(UNTRUSTED_SERVER_CERTIFICATE)) {
-      return new CertificateCallbackCase(callback, url);
-    }
-    // https two-way protocol invalid client certificate
-    if (errText.contains(ACCESS_TO_PREFIX) && errText.contains(FORBIDDEN_STATUS)) {
-      return new TwoWaySslCallback(callback, url);
     }
     return null;
   }
