@@ -31,8 +31,9 @@ public class JavaFxTagNameReference extends TagNameReference{
     if (tagElement != null) {
       final String tagElementName = tagElement.getName();
       final int dotIdx = tagElementName.indexOf(".");
-      if (dotIdx > -1 && dotIdx + 2 < rangeInElement.getEndOffset()) {
-        return new TextRange(rangeInElement.getStartOffset() + dotIdx + 1, rangeInElement.getEndOffset());
+      final int startOffset = rangeInElement.getStartOffset();
+      if (dotIdx > -1 && startOffset + dotIdx + 2 < rangeInElement.getEndOffset()) {
+        return new TextRange(startOffset + dotIdx + 1, rangeInElement.getEndOffset());
       }
     }
     return rangeInElement;

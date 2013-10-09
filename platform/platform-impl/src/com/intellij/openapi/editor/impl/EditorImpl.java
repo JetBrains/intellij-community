@@ -1907,6 +1907,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     LogicalPosition clipEndPosition = xyToLogicalPosition(new Point(0, clip.y + clip.height + getLineHeight()));
     int clipEndOffset = logicalPositionToOffset(clipEndPosition);
     paintBackgrounds(g, clip, clipStartPosition, clipStartVisualPos, clipStartOffset, clipEndOffset);
+    if (paintPlaceholderText(g, clip)) return;
+
     paintRectangularSelection(g);
     paintRightMargin(g, clip);
     paintCustomRenderers(g, clipStartOffset, clipEndOffset);
@@ -1914,7 +1916,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     paintLineMarkersSeparators(g, clip, docMarkup, clipStartOffset, clipEndOffset);
     paintLineMarkersSeparators(g, clip, myMarkupModel, clipStartOffset, clipEndOffset);
     paintText(g, clip, clipStartPosition, clipStartOffset, clipEndOffset);
-    paintPlaceholderText(g, clip);
     paintSegmentHighlightersBorderAndAfterEndOfLine(g, clip, clipStartOffset, clipEndOffset, docMarkup);
     BorderEffect borderEffect = new BorderEffect(this, g, clipStartOffset, clipEndOffset);
     borderEffect.paintHighlighters(getHighlighter());
@@ -2775,10 +2776,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     flushCachedChars(g);
   }
 
-  private void paintPlaceholderText(@NotNull Graphics g, @NotNull Rectangle clip) {
+  private boolean paintPlaceholderText(@NotNull Graphics g, @NotNull Rectangle clip) {
     CharSequence hintText = myPlaceholderText;
     if (myDocument.getTextLength() > 0 || hintText == null || hintText.length() == 0) {
-      return;
+      return false;
     }
 
     if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == myEditorComponent) {
@@ -2788,6 +2789,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myLastBackgroundPosition = new Point(0, 0);
       myLastBackgroundWidth = myLastPaintedPlaceholderWidth;
       flushBackground(g, clip);
+      return false;
     }
     else {
       myLastPaintedPlaceholderWidth = drawString(
@@ -2795,6 +2797,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myFoldingModel.getPlaceholderAttributes().getForegroundColor()
       );
       flushCachedChars(g);
+      return true;
     }
   }
 

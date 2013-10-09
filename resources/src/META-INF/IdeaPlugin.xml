@@ -99,6 +99,9 @@
     <extensionPoint name="debugger.codeFragmentFactory"
                     interface="com.intellij.debugger.engine.evaluation.CodeFragmentFactory"/>
 
+    <extensionPoint name="debugger.nodeRenderer"
+                    interface="com.intellij.debugger.ui.tree.render.NodeRenderer"/>
+
     <extensionPoint name="debugger.breakpointFactory"
                     interface="com.intellij.debugger.ui.breakpoints.BreakpointFactory"/>
 

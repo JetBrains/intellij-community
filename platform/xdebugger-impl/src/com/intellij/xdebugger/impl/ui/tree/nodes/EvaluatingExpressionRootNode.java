@@ -34,6 +34,7 @@ public class EvaluatingExpressionRootNode extends XValueContainerNode<Evaluating
     setLeaf(false);
   }
 
+  @Override
   protected MessageTreeNode createLoadingMessageNode() {
     return MessageTreeNode.createEvaluatingMessage(myTree, this);
   }
@@ -45,13 +46,19 @@ public class EvaluatingExpressionRootNode extends XValueContainerNode<Evaluating
       myDialog = dialog;
     }
 
+    @Override
     public void computeChildren(@NotNull final XCompositeNode node) {
       myDialog.startEvaluation(new XEvaluationCallbackBase() {
+        @Override
         public void evaluated(@NotNull final XValue result) {
           String name = UIUtil.removeMnemonic(XDebuggerBundle.message("xdebugger.evaluate.result"));
           node.addChildren(XValueChildrenList.singleton(name, result), true);
+          if (node instanceof XValueContainerNode) {
+            ((XValueContainerNode<?>)node).expandChildren();
+          }
         }
 
+        @Override
         public void errorOccurred(@NotNull final String errorMessage) {
           node.setErrorMessage(errorMessage);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.impl.source.resolve.CompletionParameterTypeInferencePoli
 import com.intellij.psi.impl.source.resolve.DefaultParameterTypeInferencePolicy;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -137,7 +138,7 @@ public class ExpectedTypeUtil {
   public static class ExpectedClassesFromSetProvider implements ExpectedTypesProvider.ExpectedClassProvider {
     private final Set<PsiClass> myOccurrenceClasses;
 
-    public ExpectedClassesFromSetProvider(Set<PsiClass> occurrenceClasses) {
+    public ExpectedClassesFromSetProvider(@NotNull Set<PsiClass> occurrenceClasses) {
       myOccurrenceClasses = occurrenceClasses;
     }
 

@@ -703,6 +703,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       if (toolWrapper instanceof LocalInspectionToolWrapper) {
         wrapper = (LocalInspectionToolWrapper)toolWrapper;
       }
+      else if (toolWrapper instanceof GlobalInspectionToolWrapper) {
+        final GlobalInspectionToolWrapper globalInspectionToolWrapper = (GlobalInspectionToolWrapper)toolWrapper;
+        wrapper = globalInspectionToolWrapper.getSharedLocalInspectionToolWrapper();
+      }
       if (wrapper == null) continue;
       if (myIgnoreSuppressed) {
         if (wrapper.isApplicable(language) && SuppressionUtil.inspectionResultSuppressed(myFile, wrapper.getTool())) {

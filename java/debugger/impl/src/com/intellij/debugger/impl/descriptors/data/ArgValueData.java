@@ -18,19 +18,23 @@ package com.intellij.debugger.impl.descriptors.data;
 import com.intellij.debugger.ui.impl.watch.ArgumentValueDescriptorImpl;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.Value;
+import org.jetbrains.annotations.Nullable;
 
 public class ArgValueData extends DescriptorData<ArgumentValueDescriptorImpl>{
   private final int myIndex;
   private final Value myValue;
+  @Nullable
+  private final String myDisplayName;
 
-  public ArgValueData(int index, Value value) {
+  public ArgValueData(int index, Value value, @Nullable String displayName) {
     super();
     myIndex = index;
     myValue = value;
+    myDisplayName = displayName;
   }
 
   protected ArgumentValueDescriptorImpl createDescriptorImpl(Project project) {
-    return new ArgumentValueDescriptorImpl(project, myIndex, myValue);
+    return new ArgumentValueDescriptorImpl(project, myIndex, myValue, myDisplayName);
   }
 
   public boolean equals(Object object) {

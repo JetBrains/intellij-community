@@ -16,6 +16,7 @@
 package com.intellij.framework;
 
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
+import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -54,5 +55,10 @@ public abstract class FrameworkTypeEx extends FrameworkType {
   @NotNull
   public String[] getProjectCategories() {
     return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  public FrameworkRole[] getRoles() {
+    FrameworkGroup<?> parentGroup = getParentGroup();
+    return parentGroup == null ? FrameworkRole.UNKNOWN : new FrameworkRole[] {parentGroup.getRole()};
   }
 }

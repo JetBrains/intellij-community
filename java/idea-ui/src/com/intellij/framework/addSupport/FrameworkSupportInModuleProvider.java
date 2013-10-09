@@ -15,6 +15,8 @@
  */
 package com.intellij.framework.addSupport;
 
+import com.intellij.framework.FrameworkOrGroup;
+import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.framework.FrameworkTypeEx;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
@@ -23,13 +25,15 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.FacetsProvider;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
 /**
  * @author nik
  */
-public abstract class FrameworkSupportInModuleProvider {
+public abstract class FrameworkSupportInModuleProvider implements FrameworkOrGroup {
+
   @NotNull
   public abstract FrameworkTypeEx getFrameworkType();
 
@@ -59,12 +63,27 @@ public abstract class FrameworkSupportInModuleProvider {
     return getFrameworkType().getProjectCategories();
   }
 
+  public FrameworkRole[] getRoles() {
+    return getFrameworkType().getRoles();
+  }
+
   public String getVersionLabel() {
     return "Version:";
   }
 
   public List<String> getOptionalDependenciesFrameworkIds() {
     return Collections.emptyList();
+  }
+
+  @NotNull
+  @Override
+  public String getId() {
+    return getFrameworkType().getId();
+  }
+
+  @Override
+  public Icon getIcon() {
+    return getFrameworkType().getIcon();
   }
 
   @Override

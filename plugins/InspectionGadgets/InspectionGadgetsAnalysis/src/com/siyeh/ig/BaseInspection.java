@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
 
   @Override
   @NotNull
-  public final String getShortName() {
+  public String getShortName() {
     if (m_shortName == null) {
       final Class<? extends BaseInspection> aClass = getClass();
       final String name = aClass.getName();
@@ -150,7 +150,7 @@ public abstract class BaseInspection extends BaseJavaBatchLocalInspectionTool {
     for (List<String> out : outs) {
       out.clear();
     }
-    int iMax = strings.size();
+    final int iMax = strings.size();
     for (int i = 0; i < iMax; i += outs.length) {
       for (int j = 0; j < outs.length; j++) {
         final List<String> out = outs[j];

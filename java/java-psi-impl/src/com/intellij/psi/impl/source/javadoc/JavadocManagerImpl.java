@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.source.javadoc;
 
-import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.codeInspection.SuppressionUtilCore;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
@@ -51,7 +51,7 @@ public class JavadocManagerImpl implements JavadocManager {
     myInfos.add(new SimpleDocTagInfo("code", PsiElement.class, true, LanguageLevel.JDK_1_5));
 
     //Not a standard tag, but added by IDEA for inspection suppression
-    myInfos.add(new SimpleDocTagInfo(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME, PsiElement.class, false, LanguageLevel.JDK_1_3));
+    myInfos.add(new SimpleDocTagInfo(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME, PsiElement.class, false, LanguageLevel.JDK_1_3));
 
     myInfos.add(new ParamDocTagInfo());
     myInfos.add(new ReturnDocTagInfo());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,15 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
+import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicButtonUI;
 import java.awt.*;
 
@@ -35,17 +39,60 @@ public class DarculaButtonUI extends BasicButtonUI {
   @Override
   public void paint(Graphics g, JComponent c) {
     final Border border = c.getBorder();
+    final GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
     if (c.isEnabled() && border != null) {
       final Insets ins = border.getBorderInsets(c);
       final int yOff = (ins.top + ins.bottom) / 4;
       if (((JButton)c).isDefaultButton()) {
-        ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, new Color(0x384F6B), 0, c.getHeight(), new Color(0x233143)));
+        ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getSelectedButtonColor1(), 0, c.getHeight(), getSelectedButtonColor2()));
       }
       else {
-        ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, new Color(85, 90, 92), 0, c.getHeight(), new Color(65, 70, 72)));
+        ((Graphics2D)g).setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, c.getHeight(), getButtonColor2()));
       }
       g.fillRoundRect(4, yOff, c.getWidth() - 2 * 4, c.getHeight() - 2 * yOff, 5, 5);
     }
+    config.restore();
     super.paint(g, c);
+  }
+
+  protected void paintText(Graphics g, JComponent c, Rectangle textRect, String text) {
+    AbstractButton button = (AbstractButton)c;
+    ButtonModel model = button.getModel();
+
+    if (model.isEnabled()) {
+      FontMetrics metrics = SwingUtilities2.getFontMetrics(c, g);
+      int mnemonicIndex = button.getDisplayedMnemonicIndex();
+
+      Color fg = button.getForeground();
+      if (fg instanceof UIResource && button instanceof JButton && ((JButton)button).isDefaultButton()) {
+        final Color selectedFg = UIManager.getColor("Button.selectedButtonForeground");
+        if (selectedFg != null) {
+          fg = selectedFg;
+        }
+      }
+      g.setColor(fg);
+      SwingUtilities2.drawStringUnderlineCharAt(c, g, text, mnemonicIndex,
+                                                textRect.x + getTextShiftOffset(),
+                                                textRect.y + metrics.getAscent() + getTextShiftOffset());
+    }
+    else {
+      super.paintText(g, c, textRect, text);
+    }
+  }
+
+  protected Color getButtonColor1() {
+    return UIManager.getColor("Button.darcula.color1");
+  }
+
+  protected Color getButtonColor2() {
+    return UIManager.getColor("Button.darcula.color2");
+  }
+
+  protected Color getSelectedButtonColor1() {
+    return UIManager.getColor("Button.darcula.selection.color1");
+  }
+
+  protected Color getSelectedButtonColor2() {
+    return UIManager.getColor("Button.darcula.selection.color2");
   }
 }

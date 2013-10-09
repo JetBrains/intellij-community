@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -51,6 +52,8 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.DisposeAwareRunnable;
 import com.intellij.util.Function;
 import com.intellij.util.SystemProperties;
@@ -358,6 +361,11 @@ public class MavenUtil {
     }
     else {
       VfsUtil.saveText(file, template.getTemplateText());
+
+      PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+      if (psiFile != null) {
+        new ReformatCodeProcessor(project, psiFile, null, false).run();
+      }
     }
   }
 

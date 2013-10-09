@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,12 +34,12 @@ public class XmlContextType extends TemplateContextType {
   @Override
   public boolean isInContext(@NotNull PsiFile file, int offset) {
     return file.getLanguage().isKindOf(XMLLanguage.INSTANCE) && !isEmbeddedContent(file, offset) &&
-           !HtmlContextType.isMyLanguage(PsiUtilBase.getLanguageAtOffset(file, offset)) &&
+           !HtmlContextType.isMyLanguage(PsiUtilCore.getLanguageAtOffset(file, offset)) &&
            file.getFileType() != StdFileTypes.JSPX && file.getFileType() != StdFileTypes.JSP;
   }
 
   public static boolean isEmbeddedContent(@NotNull final PsiFile file, final int offset) {
-    Language languageAtOffset = PsiUtilBase.getLanguageAtOffset(file, offset);
+    Language languageAtOffset = PsiUtilCore.getLanguageAtOffset(file, offset);
     return !(languageAtOffset.isKindOf(XMLLanguage.INSTANCE) || languageAtOffset instanceof XMLLanguage);
   }
 }

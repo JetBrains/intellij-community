@@ -29,11 +29,9 @@ import org.jetbrains.idea.maven.server.MavenModelConverter;
 import org.jetbrains.idea.maven.server.UnresolvedArtifactsCollector;
 import org.sonatype.aether.RepositorySystem;
 import org.sonatype.aether.RepositorySystemSession;
-import org.sonatype.aether.repository.LocalRepository;
 import org.sonatype.aether.repository.LocalRepositoryManager;
 import org.sonatype.aether.resolution.ArtifactRequest;
 import org.sonatype.aether.resolution.ArtifactResult;
-import org.sonatype.aether.util.FilterRepositorySystemSession;
 
 import java.io.File;
 import java.util.*;
@@ -76,8 +74,8 @@ public class CustomMaven3ArtifactResolver
 
   private final Executor executor;
 
-  private MavenWorkspaceMap myWorkspaceMap;
-  private UnresolvedArtifactsCollector myUnresolvedCollector;
+  private volatile MavenWorkspaceMap myWorkspaceMap;
+  private volatile UnresolvedArtifactsCollector myUnresolvedCollector;
 
 
   public CustomMaven3ArtifactResolver()

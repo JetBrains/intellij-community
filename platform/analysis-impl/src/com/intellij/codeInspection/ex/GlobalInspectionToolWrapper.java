@@ -18,10 +18,12 @@ package com.intellij.codeInspection.ex;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.GlobalInspectionTool;
 import com.intellij.codeInspection.InspectionEP;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * User: anna
@@ -71,5 +73,14 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
 
   public boolean worksInBatchModeOnly() {
     return getTool().worksInBatchModeOnly();
+  }
+
+  @Nullable
+  public LocalInspectionToolWrapper getSharedLocalInspectionToolWrapper() {
+    final LocalInspectionTool sharedTool = getTool().getSharedLocalInspectionTool();
+    if (sharedTool == null) {
+      return null;
+    }
+    return new LocalInspectionToolWrapper(sharedTool);
   }
 }

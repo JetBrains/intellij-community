@@ -51,7 +51,7 @@ import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.scope.ElementClassFilter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Consumer;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ProcessingContext;
@@ -260,7 +260,7 @@ public class JavaCompletionContributor extends CompletionContributor {
   }
 
   public static boolean isInJavaContext(PsiElement position) {
-    return PsiUtilBase.findLanguageFromElement(position).isKindOf(JavaLanguage.INSTANCE);
+    return PsiUtilCore.findLanguageFromElement(position).isKindOf(JavaLanguage.INSTANCE);
   }
 
   public static void addAllClasses(CompletionParameters parameters,

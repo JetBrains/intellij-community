@@ -45,11 +45,11 @@ class MyTestConstructor {
    }
    
    private static void <warning descr="Private method 'foo(MyTestConstructor.I1)' is never used">foo</warning>(I1 i) {System.out.println(i);}
-   private static void foo(I2 i) {System.out.println(i);}
+   private static void <warning descr="Private method 'foo(MyTestConstructor.I2)' is never used">foo</warning>(I2 i) {System.out.println(i);}
    private static void <warning descr="Private method 'foo(MyTestConstructor.I3)' is never used">foo</warning>(I3 i) {System.out.println(i);}
 
    static {
-       foo(Foo::new);
+       foo<error descr="Ambiguous method call: both 'MyTestConstructor.foo(I1)' and 'MyTestConstructor.foo(I2)' match">(Foo::new)</error>;
    }
 }
 
@@ -74,10 +74,10 @@ class MyTestMethod {
     static <X extends Number> Foo<X> m() { return null; }
     
     private static void <warning descr="Private method 'foo(MyTestMethod.I1)' is never used">foo</warning>(I1 i) {System.out.println(i);}
-    private static void foo(I2 i) {System.out.println(i);}
+    private static void <warning descr="Private method 'foo(MyTestMethod.I2)' is never used">foo</warning>(I2 i) {System.out.println(i);}
     private static void <warning descr="Private method 'foo(MyTestMethod.I3)' is never used">foo</warning>(I3 i) {System.out.println(i);}
 
     static {
-       foo(MyTestMethod::m);
+       foo<error descr="Ambiguous method call: both 'MyTestMethod.foo(I1)' and 'MyTestMethod.foo(I2)' match">(MyTestMethod::m)</error>;
     }
 }

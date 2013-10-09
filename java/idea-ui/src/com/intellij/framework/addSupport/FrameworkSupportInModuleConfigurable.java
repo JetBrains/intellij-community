@@ -33,10 +33,6 @@ public abstract class FrameworkSupportInModuleConfigurable implements Disposable
   @Nullable
   public abstract JComponent createComponent();
 
-  public JComponent createComponent(boolean inline) {
-    return createComponent();
-  }
-
   public abstract void addSupport(@NotNull Module module, @NotNull ModifiableRootModel rootModel,
                                   @NotNull ModifiableModelsProvider modifiableModelsProvider);
 

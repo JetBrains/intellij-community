@@ -184,7 +184,7 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
 
   public void onFrameworkSelectionChanged(FrameworkSupportNode node) {
     final FrameworkSupportModelListener multicaster = myDispatcher.getMulticaster();
-    final FrameworkSupportInModuleProvider provider = node.getProvider();
+    final FrameworkSupportInModuleProvider provider = node.getUserObject();
     //todo[nik]
     if (provider instanceof OldFrameworkSupportProviderWrapper) {
       final FrameworkSupportProvider oldProvider = ((OldFrameworkSupportProviderWrapper) provider).getProvider();

@@ -141,7 +141,8 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
       field = CreateFieldFromUsageHelper.insertField(targetClass, field, psiElement);
 
       final PsiClassType fieldType = factory.createType(checkContext(reference.getXmlAttributeValue()));
-      final ExpectedTypeInfo[] types = {new ExpectedTypeInfoImpl(fieldType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, fieldType, TailType.NONE)};
+      final ExpectedTypeInfo[] types = {new ExpectedTypeInfoImpl(fieldType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, fieldType, TailType.NONE,
+                                                                 null, ExpectedTypeInfoImpl.NULL)};
       CreateFieldFromUsageFix.createFieldFromUsageTemplate(targetClass, project, types, field, false, psiElement);
     }
   }

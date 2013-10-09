@@ -33,6 +33,7 @@ import javax.swing.plaf.FontUIResource;
 import javax.swing.plaf.IconUIResource;
 import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.basic.BasicLookAndFeel;
+import javax.swing.plaf.metal.DefaultMetalTheme;
 import javax.swing.plaf.metal.MetalLookAndFeel;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
@@ -46,7 +47,7 @@ import java.util.Properties;
 /**
  * @author Konstantin Bulenkov
  */
-public final class DarculaLaf extends BasicLookAndFeel {
+public class DarculaLaf extends BasicLookAndFeel {
   public static final String NAME = "Darcula";
   BasicLookAndFeel base;
 
@@ -105,7 +106,7 @@ public final class DarculaLaf extends BasicLookAndFeel {
       patchComboBox(metalDefaults, defaults);
       defaults.remove("Spinner.arrowButtonBorder");
       defaults.put("Spinner.arrowButtonSize", new Dimension(16, 5));
-      MetalLookAndFeel.setCurrentTheme(new DarculaMetalTheme());
+      MetalLookAndFeel.setCurrentTheme(createMetalTheme());
       if (SystemInfo.isWindows) {
         //JFrame.setDefaultLookAndFeelDecorated(true);
       }
@@ -116,6 +117,10 @@ public final class DarculaLaf extends BasicLookAndFeel {
       log(e);
     }
     return super.getDefaults();
+  }
+
+  protected DefaultMetalTheme createMetalTheme() {
+    return new DarculaMetalTheme();
   }
 
   private static Font findFont(String name) {
@@ -135,10 +140,10 @@ public final class DarculaLaf extends BasicLookAndFeel {
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  private static void patchStyledEditorKit() {
+  private void patchStyledEditorKit() {
     try {
       StyleSheet defaultStyles = new StyleSheet();
-	InputStream is = DarculaLaf.class.getResourceAsStream("darcula.css");
+	InputStream is = getClass().getResourceAsStream(getPrefix() + ".css");
 	Reader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
 	defaultStyles.loadRules(r, null);
 	r.close();
@@ -149,6 +154,10 @@ public final class DarculaLaf extends BasicLookAndFeel {
     } catch (Exception e) {
       log(e);
     }
+  }
+
+  protected String getPrefix() {
+    return "darcula";
   }
 
   private void call(String method) {
@@ -167,7 +176,7 @@ public final class DarculaLaf extends BasicLookAndFeel {
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
-  static void initIdeaDefaults(UIDefaults defaults) {
+  protected void initIdeaDefaults(UIDefaults defaults) {
     loadDefaults(defaults);
     defaults.put("Table.ancestorInputMap", new UIDefaults.LazyInputMap(new Object[] {
       "ctrl C", "copy",
@@ -222,20 +231,20 @@ public final class DarculaLaf extends BasicLookAndFeel {
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
-  private static void loadDefaults(UIDefaults defaults) {
+  protected void loadDefaults(UIDefaults defaults) {
     final Properties properties = new Properties();
     final String osSuffix = SystemInfo.isMac ? "mac" : SystemInfo.isWindows ? "windows" : "linux";
     try {
-      InputStream stream = DarculaLaf.class.getResourceAsStream("darcula.properties");
+      InputStream stream = getClass().getResourceAsStream(getPrefix() + ".properties");
       properties.load(stream);
       stream.close();
 
-      stream = DarculaLaf.class.getResourceAsStream("darcula_" + osSuffix + ".properties");
+      stream = getClass().getResourceAsStream(getPrefix() + "_" + osSuffix + ".properties");
       properties.load(stream);
       stream.close();
 
       HashMap<String, Object> darculaGlobalSettings = new HashMap<String, Object>();
-      final String prefix = "darcula.";
+      final String prefix = getPrefix() + ".";
       for (String key : properties.stringPropertyNames()) {
         if (key.startsWith(prefix)) {
           darculaGlobalSettings.put(key.substring(prefix.length()), parseValue(key, properties.getProperty(key)));
@@ -260,7 +269,7 @@ public final class DarculaLaf extends BasicLookAndFeel {
     catch (IOException e) {log(e);}
   }
 
-  private static Object parseValue(String key, @NotNull String value) {
+  protected Object parseValue(String key, @NotNull String value) {
     if (key.endsWith("Insets")) {
       final List<String> numbers = StringUtil.split(value, ",");
       return new InsetsUIResource(Integer.parseInt(numbers.get(0)),
@@ -272,7 +281,7 @@ public final class DarculaLaf extends BasicLookAndFeel {
         return Class.forName(value).newInstance();
       } catch (Exception e) {log(e);}
     } else {
-      final Color color = ColorUtil.fromHex(value, null);
+      final Color color = parseColor(value);
       final Integer invVal = getInteger(value);
       final Boolean boolVal = "true".equals(value) ? Boolean.TRUE : "false".equals(value) ? Boolean.FALSE : null;
       Icon icon = value.startsWith("AllIcons.") ? IconLoader.getIcon(value) : null;
@@ -287,6 +296,21 @@ public final class DarculaLaf extends BasicLookAndFeel {
       }
     }
     return value;
+  }
+
+  @SuppressWarnings("UseJBColor")
+  private static Color parseColor(String value) {
+    if (value != null && value.length() == 8) {
+      final Color color = ColorUtil.fromHex(value.substring(0, 6));
+      if (color != null) {
+        try {
+          int alpha = Integer.parseInt(value.substring(6, 8), 16);
+          return new ColorUIResource(new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha));
+        } catch (Exception ignore){}
+      }
+      return null;
+    }
+    return ColorUtil.fromHex(value, null);
   }
 
   private static Integer getInteger(String value) {
