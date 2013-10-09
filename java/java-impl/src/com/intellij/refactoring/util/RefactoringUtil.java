@@ -56,7 +56,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.refactoring.introduceField.ElementToWorkOn;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
-import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -136,35 +135,32 @@ public class RefactoringUtil {
   }
 
   /**
-   * @see com.intellij.psi.codeStyle.CodeStyleManager#suggestUniqueVariableName(String,com.intellij.psi.PsiElement,boolean)
-   *      Cannot use method from code style manager: a collision with fieldToReplace is not a collision
+   * @see com.intellij.psi.codeStyle.CodeStyleManager#suggestUniqueVariableName(String, com.intellij.psi.PsiElement, boolean)
+   * Cannot use method from code style manager: a collision with fieldToReplace is not a collision
    */
   public static String suggestUniqueVariableName(String baseName, PsiElement place, PsiField fieldToReplace) {
-    int index = 0;
-    while (true) {
+    for(int index = 0;;index++) {
       final String name = index > 0 ? baseName + index : baseName;
-      index++;
       final PsiManager manager = place.getManager();
       PsiResolveHelper helper = JavaPsiFacade.getInstance(manager.getProject()).getResolveHelper();
       PsiVariable refVar = helper.resolveAccessibleReferencedVariable(name, place);
       if (refVar != null && !manager.areElementsEquivalent(refVar, fieldToReplace)) continue;
-      class CancelException extends RuntimeException {
-      }
+      final boolean[] found = {false};
+      place.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitClass(PsiClass aClass) {
 
-      try {
-        place.accept(new JavaRecursiveElementWalkingVisitor() {
-          @Override public void visitClass(PsiClass aClass) {
+        }
 
+        @Override
+        public void visitVariable(PsiVariable variable) {
+          if (name.equals(variable.getName())) {
+            found[0] = true;
+            stopWalking();
           }
-
-          @Override public void visitVariable(PsiVariable variable) {
-            if (name.equals(variable.getName())) {
-              throw new CancelException();
-            }
-          }
-        });
-      }
-      catch (CancelException e) {
+        }
+      });
+      if (found[0]) {
         continue;
       }
 
