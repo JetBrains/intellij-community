@@ -3,6 +3,7 @@ package com.intellij.tasks.youtrack;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
@@ -11,6 +12,8 @@ import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
+import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import org.apache.axis.utils.XMLChar;
 import org.apache.commons.httpclient.HttpClient;
@@ -29,7 +32,9 @@ import javax.swing.*;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.util.Date;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Dmitry Avdeev
@@ -38,6 +43,13 @@ import java.util.List;
 public class YouTrackRepository extends BaseRepositoryImpl {
 
   private String myDefaultSearch = "for: me sort by: updated #Unresolved";
+  private Map<TaskState, String> myCustomStateNames = new EnumMap<TaskState, String>(TaskState.class);
+
+  // Default names for supported issues states
+  {
+    myCustomStateNames.put(TaskState.IN_PROGRESS, "In Progress");
+    myCustomStateNames.put(TaskState.RESOLVED, "Fixed");
+  }
 
   /**
    * for serialization
@@ -58,6 +70,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   private YouTrackRepository(YouTrackRepository other) {
     super(other);
     myDefaultSearch = other.getDefaultSearch();
+    myCustomStateNames = new EnumMap<TaskState, String>(other.getCustomStateNames());
   }
 
   public Task[] getIssues(@Nullable String request, int max, long since) throws Exception {
@@ -172,18 +185,11 @@ public class YouTrackRepository extends BaseRepositoryImpl {
 
   @Override
   public void setTaskState(Task task, TaskState state) throws Exception {
-    String s;
-    switch (state) {
-      case IN_PROGRESS:
-        s = "In+Progress";
-        break;
-      case RESOLVED:
-        s = "fixed";
-        break;
-      default:
-        s = state.name();
+    String s = myCustomStateNames.get(state);
+    if (StringUtil.isEmpty(s)) {
+      s = state.name();
     }
-    doREST("/rest/issue/execute/" + task.getId() + "?command=state+" + s, true);
+    doREST("/rest/issue/execute/" + task.getId() + "?command=" + encodeUrl("state " + s), true);
   }
 
   @Nullable
@@ -291,7 +297,11 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   @SuppressWarnings({"EqualsWhichDoesntCheckParameterClass"})
   @Override
   public boolean equals(Object o) {
-    return super.equals(o) && Comparing.equal(((YouTrackRepository)o).getDefaultSearch(), getDefaultSearch());
+    if (!super.equals(o)) return false;
+    YouTrackRepository repository = (YouTrackRepository)o;
+    if (!Comparing.equal(repository.getDefaultSearch(), getDefaultSearch())) return false;
+    if (!Comparing.equal(repository.getCustomStateNames(), getCustomStateNames())) return false;
+    return true;
   }
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.tasks.youtrack.YouTrackRepository");
@@ -320,5 +330,27 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   @Override
   protected int getFeatures() {
     return super.getFeatures() | TIME_MANAGEMENT;
+  }
+
+  public void setCustomStateNames(Map<TaskState, String> customStateNames) {
+    myCustomStateNames.putAll(customStateNames);
+  }
+
+  @Tag("customStates")
+  @Property(surroundWithTag = false)
+  @MapAnnotation(
+    surroundWithTag = false,
+    keyAttributeName = "state",
+    valueAttributeName = "name",
+    surroundKeyWithTag = false,
+    surroundValueWithTag = false
+  )
+
+  public Map<TaskState, String> getCustomStateNames() {
+    return myCustomStateNames;
+  }
+
+  public void setCustomStateName(TaskState state, String name) {
+    myCustomStateNames.put(state, name);
   }
 }
