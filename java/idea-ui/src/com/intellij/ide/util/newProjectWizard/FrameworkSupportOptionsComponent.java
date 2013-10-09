@@ -22,7 +22,6 @@ import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.framework.library.FrameworkLibraryVersionFilter;
-import com.intellij.framework.library.impl.FrameworkLibraryVersionImpl;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableListener;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelAdapter;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
@@ -46,7 +45,7 @@ import java.util.List;
 public class FrameworkSupportOptionsComponent {
   private final JPanel myMainPanel;
   private final FrameworkSupportModelBase myModel;
-  private FrameworkVersionComponent myFrameworkVersionComponent;
+  private final FrameworkVersionComponent myFrameworkVersionComponent;
   private LibraryCompositionSettings myLibraryCompositionSettings;
   private LibraryOptionsPanel myLibraryOptionsPanel;
   private final FrameworkSupportInModuleConfigurable myConfigurable;
@@ -67,6 +66,9 @@ public class FrameworkSupportOptionsComponent {
     if (!versions.isEmpty()) {
       myFrameworkVersionComponent = new FrameworkVersionComponent(model, provider.getFrameworkType().getId(), versions, "Versions:");
       myMainPanel.add(myFrameworkVersionComponent.getMainPanel());
+    }
+    else {
+      myFrameworkVersionComponent = null;
     }
 
     final JComponent component = myConfigurable.createComponent();
@@ -98,7 +100,9 @@ public class FrameworkSupportOptionsComponent {
                                                       container, !myConfigurable.isOnlyLibraryAdded()) {
         @Override
         protected void onVersionChanged(FrameworkLibraryVersion version) {
-          myModel.setSelectedVersion(provider.getId(), version);
+          if (myFrameworkVersionComponent == null) {
+            myModel.setSelectedVersion(provider.getId(), version);
+          }
         }
       };
       myLibraryOptionsPanel.setLibraryProvider(myModel.getLibraryProvider());
@@ -134,7 +138,7 @@ public class FrameworkSupportOptionsComponent {
       @Override
       public boolean isAccepted(@NotNull FrameworkLibraryVersion version) {
         return myConfigurable.getLibraryVersionFilter().isAccepted(version) &&
-               ((FrameworkLibraryVersionImpl)version).getAvailabilityCondition().isAvailableFor(myModel);
+               version.getAvailabilityCondition().isAvailableFor(myModel);
       }
     };
   }
