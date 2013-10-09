@@ -967,9 +967,6 @@
   <item name='java.util.Set java.util.Iterator&lt;E&gt; iterator()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name="java.util.SortedMap java.util.Comparator&lt;? super K&gt; comparator()">
-    <annotation name="org.jetbrains.annotations.NotNull" />
-  </item>
   <item name="java.util.SortedMap java.util.SortedMap&lt;K,V&gt; headMap(K)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
