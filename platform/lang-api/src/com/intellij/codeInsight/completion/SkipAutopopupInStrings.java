@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiErrorElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +47,7 @@ public class SkipAutopopupInStrings extends CompletionConfidence {
   }
 
   public static boolean isInStringLiteral(PsiElement element) {
-    ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(PsiUtilBase.findLanguageFromElement(element));
+    ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(PsiUtilCore.findLanguageFromElement(element));
     if (definition == null) {
       return false;
     }

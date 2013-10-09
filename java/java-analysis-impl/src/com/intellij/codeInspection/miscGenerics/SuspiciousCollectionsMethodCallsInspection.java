@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@ package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.guess.GuessManager;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.util.containers.IntArrayList;
@@ -33,8 +33,13 @@ import java.util.List;
 /**
  * @author ven
  */
-public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspectionTool {
+public class SuspiciousCollectionsMethodCallsInspection extends AbstractBaseJavaLocalInspectionTool {
   public boolean REPORT_CONVERTIBLE_METHOD_CALLS = true;
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
 
   @Override
   @Nullable

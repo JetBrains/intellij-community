@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.codeInsight;
 
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,6 +28,10 @@ public interface ExpectedTypeInfo {
   int TYPE_OR_SUBTYPE = 1;
   int TYPE_OR_SUPERTYPE = 2;
   int TYPE_BETWEEN = 3;
+
+  @MagicConstant(valuesFromClass = ExpectedTypeInfo.class)
+  @interface Type {}
+
   ExpectedTypeInfo[] EMPTY_ARRAY = new ExpectedTypeInfo[0];
 
   PsiMethod getCalledMethod();
@@ -36,13 +41,16 @@ public interface ExpectedTypeInfo {
 
   PsiType getDefaultType();
 
+  @Type
   int getKind();
 
   boolean equals(ExpectedTypeInfo info);
 
   String toString();
 
-  ExpectedTypeInfo[] intersect(ExpectedTypeInfo info);
+  @NotNull
+  ExpectedTypeInfo[] intersect(@NotNull ExpectedTypeInfo info);
 
+  @NotNull
   TailType getTailType();
 }

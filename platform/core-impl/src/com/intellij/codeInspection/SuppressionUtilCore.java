@@ -13,16 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.codeInspection;
 
-/*
- * @author max
- */
-package com.intellij.openapi.util;
+import org.jetbrains.annotations.NonNls;
 
-import org.jetbrains.annotations.Nullable;
-
-public interface NullableComputable<T> extends Computable<T> {
-  @Override
-  @Nullable
-  T compute();
+public class SuppressionUtilCore {
+  @NonNls public static final String SUPPRESS_INSPECTIONS_TAG_NAME = "noinspection";
 }

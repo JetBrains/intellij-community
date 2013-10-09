@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
 
   @Override
   @Nullable
-  public ProblemDescriptor[] getDescriptions(PsiElement where, InspectionManager manager, boolean isOnTheFly) {
+  public ProblemDescriptor[] getDescriptions(@NotNull PsiElement where, @NotNull InspectionManager manager, boolean isOnTheFly) {
     List<PsiTypeCastExpression> redundantCasts = RedundantCastUtil.getRedundantCastsInside(where);
     if (redundantCasts.isEmpty()) return null;
     List<ProblemDescriptor> descriptions = new ArrayList<ProblemDescriptor>(redundantCasts.size());
