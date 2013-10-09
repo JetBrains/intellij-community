@@ -35,6 +35,7 @@ import com.intellij.xdebugger.impl.ui.XDebuggerEditorBase;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
 import com.intellij.xdebugger.impl.ui.tree.nodes.EvaluatingExpressionRootNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -195,7 +196,13 @@ public class XDebuggerEvaluationDialog extends DialogWrapper {
 
   private void evaluate() {
     final XDebuggerTree tree = myTreePanel.getTree();
-    tree.setRoot(new EvaluatingExpressionRootNode(this, tree), false);
+    XDebuggerTreeNode root = tree.getRoot();
+    if (root instanceof EvaluatingExpressionRootNode) {
+      root.clearChildren();
+    }
+    else {
+      tree.setRoot(new EvaluatingExpressionRootNode(this, tree), false);
+    }
     myResultPanel.invalidate();
     myInputComponent.getInputEditor().selectAll();
   }
