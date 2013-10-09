@@ -12,6 +12,7 @@ import com.jetbrains.python.inspections.quickfix.PyMakeMethodStaticQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import com.jetbrains.python.testing.PythonUnitTestUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +50,7 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
       if (PyNames.getBuiltinMethods(LanguageLevel.forElement(node)).containsKey(node.getName())) return;
       final PyClass containingClass = node.getContainingClass();
       if (containingClass == null) return;
+      if (PythonUnitTestUtil.isUnitTestCaseClass(containingClass)) return;
       final Collection<PsiElement> supers = PySuperMethodsSearch.search(node).findAll();
       if (!supers.isEmpty()) return;
       final Collection<PyFunction> overrides = PyOverridingMethodsSearch.search(node, true).findAll();
