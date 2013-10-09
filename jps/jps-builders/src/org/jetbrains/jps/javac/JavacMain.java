@@ -24,8 +24,10 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.LineOutputWriter;
 
 import javax.tools.*;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -71,7 +73,17 @@ public class JavacMain {
     if (compiler == null) {
       compiler = ToolProvider.getSystemJavaCompiler();
       if (compiler == null) {
-        diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "System Java Compiler was not found in classpath"));
+        String message = "System Java Compiler was not found in classpath";
+        // trying to obtain additional diagnostic for the case when compiler.jar is present, but there were problems with compiler class loading:
+        try {
+          Class.forName("com.sun.tools.javac.api.JavacTool", false, JavacMain.class.getClassLoader());
+        }
+        catch (Throwable ex) {
+          final ByteArrayOutputStream out = new ByteArrayOutputStream();
+          ex.printStackTrace(new PrintStream(out));
+          message = message + ":\n" + out.toString();
+        }
+        diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, message));
         return false;
       }
       nowUsingJavac = true;
