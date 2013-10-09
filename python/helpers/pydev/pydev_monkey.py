@@ -29,7 +29,7 @@ def patch_args(args):
         if is_python(args[0]):
             try:
                 indC = args.index('-c')
-            except KeyError:
+            except ValueError:
                 indC = -1
 
             if indC != -1:
