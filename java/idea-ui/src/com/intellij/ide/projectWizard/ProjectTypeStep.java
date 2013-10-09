@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
@@ -200,7 +201,7 @@ public class ProjectTypeStep extends ModuleWizardStep {
   private void updateOptionsPanel(Object object) {
     String card = GROUP_CARD;
     if (object instanceof ProjectCategory) {
-      ProjectCategory projectCategory = (ProjectCategory)object;
+      final ProjectCategory projectCategory = (ProjectCategory)object;
       ModuleBuilder builder = myBuilders.get(projectCategory);
       JComponent panel = builder.getCustomOptionsPanel(new Disposable() {
         @Override
@@ -216,14 +217,16 @@ public class ProjectTypeStep extends ModuleWizardStep {
       }
       else {
         card = FRAMEWORKS_CARD;
-        List<FrameworkSupportInModuleProvider> providers = new ArrayList<FrameworkSupportInModuleProvider>();
-        for (FrameworkSupportInModuleProvider framework : FrameworkSupportUtil.getAllProviders()) {
-          if (matchFramework(projectCategory, framework)) {
-            providers.add(framework);
-          }
-        }
-        myFrameworksPanel.setProviders(providers);
-        for (FrameworkSupportInModuleProvider provider : providers) {
+        List<FrameworkSupportInModuleProvider> allProviders = FrameworkSupportUtil.getProviders(builder);
+        List<FrameworkSupportInModuleProvider> matched =
+          ContainerUtil.filter(allProviders, new Condition<FrameworkSupportInModuleProvider>() {
+            @Override
+            public boolean value(FrameworkSupportInModuleProvider provider) {
+              return matchFramework(projectCategory, provider);
+            }
+          });
+        myFrameworksPanel.setProviders(matched);
+        for (FrameworkSupportInModuleProvider provider : matched) {
           if (ArrayUtil.contains(provider.getFrameworkType().getId(), projectCategory.getAssociatedFrameworkIds())) {
             CheckedTreeNode treeNode = myFrameworksPanel.findNodeFor(provider);
             treeNode.setChecked(true);
