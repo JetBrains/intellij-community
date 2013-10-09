@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -227,7 +227,7 @@ public class JavaCompletionSorting {
 
   private static int calcMatch(final List<String> words, int max, ExpectedTypeInfo[] myExpectedInfos) {
     for (ExpectedTypeInfo myExpectedInfo : myExpectedInfos) {
-      String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).expectedName.compute();
+      String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).getExpectedName().compute();
       if (expectedName == null) continue;
       max = calcMatch(expectedName, words, max);
       max = calcMatch(truncDigits(expectedName), words, max);
@@ -269,7 +269,7 @@ public class JavaCompletionSorting {
           if (type == info.getType() && defaultType == info.getDefaultType()) {
             return info;
           }
-          return new ExpectedTypeInfoImpl(type, info.getKind(), defaultType, info.getTailType());
+          return new ExpectedTypeInfoImpl(type, info.getKind(), defaultType, info.getTailType(), null, ExpectedTypeInfoImpl.NULL);
         }
       });
       myParameters = parameters;
@@ -500,7 +500,7 @@ public class JavaCompletionSorting {
         int max = 0;
         final List<String> wordsNoDigits = NameUtil.nameToWordsLowerCase(truncDigits(name));
         for (ExpectedTypeInfo myExpectedInfo : myExpectedTypes) {
-          String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).expectedName.compute();
+          String expectedName = ((ExpectedTypeInfoImpl)myExpectedInfo).getExpectedName().compute();
           if (expectedName != null) {
             final THashSet<String> set = new THashSet<String>(NameUtil.nameToWordsLowerCase(truncDigits(expectedName)));
             set.retainAll(wordsNoDigits);
