@@ -115,7 +115,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   public void setProviders(List<FrameworkSupportInModuleProvider> providers) {
     myProviders = providers;
-    createNodes();
+    myRoots = createNodes(myProviders);
     myFrameworksTree.setRoots(myRoots);
     myFrameworksTree.setSelectionRow(0);
   }
@@ -231,49 +231,50 @@ public class AddSupportForFrameworksPanel implements Disposable {
     return true;
   }
 
-  private void createNodes() {
+  private List<FrameworkSupportNodeBase> createNodes(List<FrameworkSupportInModuleProvider> providers) {
     Map<String, FrameworkSupportNode> nodes = new HashMap<String, FrameworkSupportNode>();
     Map<FrameworkGroup<?>, FrameworkGroupNode> groups = new HashMap<FrameworkGroup<?>, FrameworkGroupNode>();
     List<FrameworkSupportNodeBase> roots = new ArrayList<FrameworkSupportNodeBase>();
-    for (FrameworkSupportInModuleProvider provider : myProviders) {
-      createNode(provider, nodes, groups, roots);
+    for (FrameworkSupportInModuleProvider provider : providers) {
+      createNode(provider, nodes, groups, roots, providers);
     }
 
     FrameworkSupportNodeBase.sortByName(roots);
-    myRoots = roots;
+    return roots;
   }
 
   @Nullable
   private FrameworkSupportNode createNode(final FrameworkSupportInModuleProvider provider, final Map<String, FrameworkSupportNode> nodes,
                                           final Map<FrameworkGroup<?>, FrameworkGroupNode> groupNodes,
-                                          List<FrameworkSupportNodeBase> roots) {
+                                          List<FrameworkSupportNodeBase> roots, List<FrameworkSupportInModuleProvider> providers) {
     FrameworkSupportNode node = nodes.get(provider.getFrameworkType().getId());
-    if (node == null) {
-      String underlyingTypeId = provider.getFrameworkType().getUnderlyingFrameworkTypeId();
-      FrameworkSupportNodeBase parentNode = null;
-      final FrameworkGroup<?> group = provider.getFrameworkType().getParentGroup();
-      if (underlyingTypeId != null) {
-        FrameworkSupportInModuleProvider parentProvider = FrameworkSupportUtil.findProvider(underlyingTypeId, myProviders);
-        if (parentProvider == null) {
-          LOG.info("Cannot find id = " + underlyingTypeId);
-          return null;
-        }
-        parentNode = createNode(parentProvider, nodes, groupNodes, roots);
+    if (node != null) {
+      return node;
+    }
+    String underlyingTypeId = provider.getFrameworkType().getUnderlyingFrameworkTypeId();
+    FrameworkSupportNodeBase parentNode = null;
+    final FrameworkGroup<?> group = provider.getFrameworkType().getParentGroup();
+    if (underlyingTypeId != null) {
+      FrameworkSupportInModuleProvider parentProvider = FrameworkSupportUtil.findProvider(underlyingTypeId, providers);
+      if (parentProvider == null) {
+        LOG.info("Cannot find id = " + underlyingTypeId);
+        return null;
       }
-      else if (group != null) {
-        parentNode = groupNodes.get(group);
-        if (parentNode == null) {
-          FrameworkGroupNode groupNode = new FrameworkGroupNode(group, null);
-          groupNodes.put(group, groupNode);
-          parentNode = groupNode;
-          roots.add(groupNode);
-        }
-      }
-      node = new FrameworkSupportNode(provider, parentNode, myModel, this);
-      nodes.put(provider.getFrameworkType().getId(), node);
+      parentNode = createNode(parentProvider, nodes, groupNodes, roots, providers);
+    }
+    else if (group != null) {
+      parentNode = groupNodes.get(group);
       if (parentNode == null) {
-        roots.add(node);
+        FrameworkGroupNode groupNode = new FrameworkGroupNode(group, null);
+        groupNodes.put(group, groupNode);
+        parentNode = groupNode;
+        roots.add(groupNode);
       }
+    }
+    node = new FrameworkSupportNode(provider, parentNode, myModel, this);
+    nodes.put(provider.getFrameworkType().getId(), node);
+    if (parentNode == null) {
+      roots.add(node);
     }
     return node;
   }
