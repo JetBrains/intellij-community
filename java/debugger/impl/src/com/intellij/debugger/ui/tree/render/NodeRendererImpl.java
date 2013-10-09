@@ -26,6 +26,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.sun.jdi.ObjectReference;
 import com.sun.jdi.Value;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -39,8 +40,11 @@ public abstract class NodeRendererImpl implements NodeRenderer{
   protected BasicRendererProperties myProperties = new BasicRendererProperties();
 
   protected NodeRendererImpl() {
-    //noinspection HardCodedStringLiteral
-    myProperties.setName("unnamed");
+    this("unnamed");
+  }
+
+  protected NodeRendererImpl(@NotNull String presentableName) {
+    myProperties.setName(presentableName);
   }
 
   public String getName() {

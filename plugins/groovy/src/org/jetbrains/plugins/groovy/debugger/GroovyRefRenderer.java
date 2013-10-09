@@ -27,8 +27,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
  */
 public class GroovyRefRenderer extends NodeRendererImpl {
   public GroovyRefRenderer() {
+    super("Groovy Reference");
     myProperties.setEnabled(true);
-    myProperties.setName("Groovy Reference");
   }
 
   @Override
