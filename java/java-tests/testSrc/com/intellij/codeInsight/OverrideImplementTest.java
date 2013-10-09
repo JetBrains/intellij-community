@@ -51,6 +51,7 @@ public class OverrideImplementTest extends LightCodeInsightTestCase {
 
   public void testSimple() { doTest(true); }
   public void testAnnotation() { doTest(true); }
+  public void testJavadocForChangedParamName() { doTest(true); }
   public void testIncomplete() { doTest(false); }
   public void testSubstitutionInTypeParametersList() { doTest(false); }
   public void testTestMissed() { doTest(false); }
