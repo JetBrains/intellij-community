@@ -156,12 +156,15 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     options.add("-");
     ProcessOutput output = PySdkUtil.getProcessOutput(new File(collectedInfo.interpreterPath).getParent(),
                                                       ArrayUtil.toStringArray(options),
-                                                      null,
-                                                      5000,
+                                                      new String[] { "PYTHONUNBUFFERED=1" },
+                                                      10000,
                                                       collectedInfo.fileText.getBytes());
 
     Results results = new Results(collectedInfo.level);
-    if (output.getStderrLines().isEmpty()) {
+    if (output.isTimeout()) {
+      LOG.info("Timeout running pep8.py");
+    }
+    else if (output.getStderrLines().isEmpty()) {
       for (String line : output.getStdoutLines()) {
         final Problem problem = parseProblem(line);
         if (problem != null) {
