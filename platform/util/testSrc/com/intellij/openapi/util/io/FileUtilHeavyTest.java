@@ -210,4 +210,17 @@ public class FileUtilHeavyTest {
     FileUtilRt.doIOOperation(lastShot);
     assertEquals(10, lastShot.count);
   }
+
+  @Test
+  public void testSymlinkDeletion() throws Exception {
+    File targetDir = IoTestUtil.createTestDir(myTempDirectory, "link_del_test_1");
+    IoTestUtil.createTestFile(targetDir, "file");
+    File linkDir = IoTestUtil.createTestDir(myTempDirectory, "link_del_test_2");
+    IoTestUtil.createTestFile(linkDir, "file");
+    IoTestUtil.createSymLink(targetDir.getPath(), linkDir.getPath() + "/link");
+
+    assertEquals(1, targetDir.list().length);
+    FileUtil.delete(linkDir);
+    assertEquals(1, targetDir.list().length);
+  }
 }

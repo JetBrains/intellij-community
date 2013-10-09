@@ -417,7 +417,12 @@ public class FileUtil extends FileUtilRt {
     if (attributes == null) return true;
 
     if (attributes.isDirectory() && !attributes.isSymLink()) {
-      if (!deleteChildren(file)) return false;
+      File[] files = file.listFiles();
+      if (files != null) {
+        for (File child : files) {
+          if (!delete(child)) return false;
+        }
+      }
     }
 
     return deleteFile(file);
