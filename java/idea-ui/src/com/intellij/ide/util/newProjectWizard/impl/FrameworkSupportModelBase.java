@@ -16,8 +16,6 @@
 package com.intellij.ide.util.newProjectWizard.impl;
 
 import com.intellij.facet.impl.ui.libraries.FrameworkLibraryProvider;
-import com.intellij.framework.FrameworkGroup;
-import com.intellij.framework.FrameworkGroupVersion;
 import com.intellij.framework.FrameworkVersion;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.framework.addSupport.FrameworkVersionListener;
@@ -25,7 +23,10 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelListener;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
-import com.intellij.ide.util.newProjectWizard.*;
+import com.intellij.ide.util.newProjectWizard.FrameworkSupportNode;
+import com.intellij.ide.util.newProjectWizard.FrameworkSupportNodeBase;
+import com.intellij.ide.util.newProjectWizard.FrameworkSupportOptionsComponent;
+import com.intellij.ide.util.newProjectWizard.OldFrameworkSupportProviderWrapper;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
@@ -175,11 +176,6 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
   @Nullable
   public <V extends FrameworkVersion> V getSelectedVersion(@NotNull String frameworkOrGroupId) {
     return (V)mySelectedVersions.get(frameworkOrGroupId);
-  }
-
-  @Nullable
-  public <V extends FrameworkGroupVersion> V getSelectedVersion(@NotNull FrameworkGroup<V> group) {
-    return (V)mySelectedVersions.get(group.getId());
   }
 
   public void onFrameworkSelectionChanged(FrameworkSupportNode node) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.framework.library;
 
+import com.intellij.framework.FrameworkVersion;
 import com.intellij.util.download.DownloadableFileSetDescription;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +24,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public interface FrameworkLibraryVersion extends DownloadableFileSetDescription {
+public interface FrameworkLibraryVersion extends DownloadableFileSetDescription, FrameworkVersion {
   @NotNull
   String getDefaultLibraryName();
 

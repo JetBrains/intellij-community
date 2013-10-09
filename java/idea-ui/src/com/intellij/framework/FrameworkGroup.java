@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public abstract class FrameworkGroup<V extends FrameworkGroupVersion> implements FrameworkOrGroup {
+public abstract class FrameworkGroup<V extends FrameworkVersion> implements FrameworkOrGroup {
   private final String myId;
 
   public FrameworkGroup(String id) {

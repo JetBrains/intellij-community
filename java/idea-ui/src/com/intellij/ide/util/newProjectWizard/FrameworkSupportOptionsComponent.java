@@ -55,7 +55,7 @@ public class FrameworkSupportOptionsComponent {
   public FrameworkSupportOptionsComponent(FrameworkSupportModelBase model,
                                           LibrariesContainer container,
                                           Disposable parentDisposable,
-                                          FrameworkSupportInModuleProvider provider,
+                                          final FrameworkSupportInModuleProvider provider,
                                           final FrameworkSupportInModuleConfigurable configurable) {
     myModel = model;
     myConfigurable = configurable;
@@ -95,7 +95,12 @@ public class FrameworkSupportOptionsComponent {
     final CustomLibraryDescription description = myConfigurable.createLibraryDescription();
     if (description != null) {
       myLibraryOptionsPanel = new LibraryOptionsPanel(description, myModel.getBaseDirectoryForLibrariesPath(), createLibraryVersionFilter(),
-                                                      container, !myConfigurable.isOnlyLibraryAdded());
+                                                      container, !myConfigurable.isOnlyLibraryAdded()) {
+        @Override
+        protected void onVersionChanged(FrameworkLibraryVersion version) {
+          myModel.setSelectedVersion(provider.getId(), version);
+        }
+      };
       myLibraryOptionsPanel.setLibraryProvider(myModel.getLibraryProvider());
       Disposer.register(myConfigurable, myLibraryOptionsPanel);
       if (addSeparator) {

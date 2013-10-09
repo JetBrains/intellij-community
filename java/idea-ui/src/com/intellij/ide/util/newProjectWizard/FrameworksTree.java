@@ -15,7 +15,8 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
+import com.intellij.framework.FrameworkOrGroup;
+import com.intellij.framework.FrameworkVersion;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
@@ -61,6 +62,7 @@ public class FrameworksTree extends CheckboxTree {
       if (node instanceof FrameworkSupportNode) {
         final Rectangle checkboxBounds = ((CheckboxTreeCellRendererBase)getCellRenderer()).myCheckbox.getBounds();
         final Rectangle pathBounds = getPathBounds(path);
+        assert pathBounds != null;
         checkboxBounds.setLocation(pathBounds.getLocation());
         if (checkboxBounds.contains(e.getPoint())) {
           try {
@@ -110,13 +112,16 @@ public class FrameworksTree extends CheckboxTree {
         final FrameworkSupportNodeBase node = (FrameworkSupportNodeBase)value;
         SimpleTextAttributes attributes = node instanceof FrameworkGroupNode ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
         getTextRenderer().append(node.getTitle(), attributes);
+        if (node.isChecked()) {
+          FrameworkOrGroup object = node.getUserObject();
+          FrameworkVersion version = myModel.getSelectedVersion(object.getId());
+          if (version != null) {
+            getTextRenderer().append(" " + version.getPresentableName());
+          }
+        }
         getTextRenderer().setIcon(node.getIcon());
         getCheckbox().setVisible(value instanceof FrameworkSupportNode);
 
-        Object object = node.getUserObject();
-        if (object instanceof FrameworkSupportInModuleProvider) {
-//          myModel.getSelectedVersion()
-        }
       }
     }
   }
