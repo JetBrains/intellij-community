@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.framework.library;
+package com.intellij.framework;
 
-import com.intellij.framework.PresentableVersion;
-import com.intellij.util.download.DownloadableFileSetDescription;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 /**
- * @author nik
+ * @author Dmitry Avdeev
+ *         Date: 09.10.13
  */
-public interface FrameworkLibraryVersion extends DownloadableFileSetDescription, PresentableVersion {
-  @NotNull
-  String getDefaultLibraryName();
+public interface PresentableVersion {
 
+  /** Full version name as presented in combos, like JavaEE 6 */
   @NotNull
-  @Override
-  List<? extends DownloadableLibraryFileDescription> getFiles();
+  String getPresentableName();
+
+  /** Just version number, like 2.2.1 */
+  String getVersionNumber();
 }

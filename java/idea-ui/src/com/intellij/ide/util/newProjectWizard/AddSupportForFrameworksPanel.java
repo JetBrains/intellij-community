@@ -101,7 +101,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     };
     model.addFrameworkVersionListener(new FrameworkVersionListener() {
       @Override
-      public void versionChanged(@NotNull FrameworkVersion version) {
+      public void versionChanged(FrameworkVersion version) {
         ((DefaultTreeModel)myFrameworksTree.getModel()).nodeChanged(getSelectedNode());
       }
     }, this);

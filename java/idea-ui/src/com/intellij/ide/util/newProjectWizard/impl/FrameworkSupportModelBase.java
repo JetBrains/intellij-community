@@ -17,6 +17,7 @@ package com.intellij.ide.util.newProjectWizard.impl;
 
 import com.intellij.facet.impl.ui.libraries.FrameworkLibraryProvider;
 import com.intellij.framework.FrameworkVersion;
+import com.intellij.framework.PresentableVersion;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.framework.addSupport.FrameworkVersionListener;
 import com.intellij.framework.library.FrameworkLibraryVersion;
@@ -206,9 +207,11 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
 
   public void setSelectedLibraryVersion(String id, FrameworkLibraryVersion version) {
     myLibraryVersions.put(id, version);
+    myVersionEventDispatcher.getMulticaster().versionChanged(getSelectedVersion(id));
   }
 
-  public FrameworkLibraryVersion getSelectedLibraryVersion(String id) {
-    return myLibraryVersions.get(id);
+  public PresentableVersion getPresentableVersion(String id) {
+    FrameworkVersion version = mySelectedVersions.get(id);
+    return version == null ? myLibraryVersions.get(id) : version;
   }
 }
