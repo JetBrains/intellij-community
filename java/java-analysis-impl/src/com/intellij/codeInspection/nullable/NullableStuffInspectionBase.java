@@ -289,7 +289,8 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
           && annotated.isDeclaredNullable
           && NullableNotNullManager.isNotNull(superMethod)) {
         reported_nullable_method_overrides_notnull = true;
-        holder.registerProblem(method.getNameIdentifier(),
+        final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, nullableManager.getNullables(), true);
+        holder.registerProblem(annotation != null ? annotation : method.getNameIdentifier(),
                                InspectionsBundle.message("inspection.nullable.problems.Nullable.method.overrides.NotNull"),
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       }
@@ -321,7 +322,8 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
               nullableManager.isNotNull(parameter, false) &&
               nullableManager.isNullable(superParameter, false)) {
             reported_notnull_parameter_overrides_nullable[i] = true;
-            holder.registerProblem(parameter.getNameIdentifier(),
+            final PsiAnnotation annotation = AnnotationUtil.findAnnotation(parameter, nullableManager.getNotNulls(), true);
+            holder.registerProblem(annotation != null ? annotation : parameter.getNameIdentifier(),
                                    InspectionsBundle.message("inspection.nullable.problems.NotNull.parameter.overrides.Nullable"),
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
