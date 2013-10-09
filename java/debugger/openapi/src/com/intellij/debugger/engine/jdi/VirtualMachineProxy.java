@@ -26,6 +26,8 @@ import java.util.List;
 public interface VirtualMachineProxy {
   List<ReferenceType> allClasses();
 
+  boolean canGetBytecodes();
+
   boolean versionHigher(String version);
 
   boolean canWatchFieldModification();

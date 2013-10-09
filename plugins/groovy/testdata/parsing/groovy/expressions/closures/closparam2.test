@@ -1,5 +1,5 @@
 {def a = 1, final String b = 3 -> a+b; 3}
-------
+-----
 Groovy script
   Closable block
     PsiElement({)('{')

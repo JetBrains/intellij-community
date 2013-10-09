@@ -19,6 +19,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.win32.FileInfo;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
@@ -151,7 +152,7 @@ public class FileAttributesReadingTest {
 
     final FileAttributes attributes = getAttributes(link);
     assertEquals(FileAttributes.Type.FILE, attributes.type);
-    assertEquals(FileAttributes.SYM_LINK, attributes.flags);
+    assertEquals(FileAttributes.SYM_LINK | FileAttributes.READ_ONLY, attributes.flags);
     assertEquals(myTestData.length, attributes.length);
     assertTimestampsEqual(file.lastModified(), attributes.lastModified);
     assertFalse(attributes.isWritable());
@@ -173,7 +174,7 @@ public class FileAttributesReadingTest {
 
     final FileAttributes attributes = getAttributes(link2);
     assertEquals(FileAttributes.Type.FILE, attributes.type);
-    assertEquals(FileAttributes.SYM_LINK, attributes.flags);
+    assertEquals(FileAttributes.SYM_LINK | FileAttributes.READ_ONLY, attributes.flags);
     assertEquals(myTestData.length, attributes.length);
     assertTimestampsEqual(file.lastModified(), attributes.lastModified);
     assertFalse(attributes.isWritable());
@@ -193,7 +194,7 @@ public class FileAttributesReadingTest {
 
     final FileAttributes attributes = getAttributes(link);
     assertEquals(FileAttributes.Type.DIRECTORY, attributes.type);
-    assertEquals(FileAttributes.SYM_LINK, attributes.flags);
+    assertEquals(SystemInfo.isUnix ? FileAttributes.SYM_LINK | FileAttributes.READ_ONLY : FileAttributes.SYM_LINK, attributes.flags);
     assertEquals(file.length(), attributes.length);
     assertTimestampsEqual(file.lastModified(), attributes.lastModified);
     if (SystemInfo.isUnix) assertFalse(attributes.isWritable());
@@ -411,6 +412,21 @@ public class FileAttributesReadingTest {
     attributes = getAttributes(file);
     assertTrue(attributes.lastModified + " not in " + t1 + ".." + t2, t1 <= attributes.lastModified && attributes.lastModified <= t2);
   }
+
+  @Test
+  public void notOwned() throws Exception {
+    assumeTrue(SystemInfo.isUnix);
+    File userHome = new File(SystemProperties.getUserHome());
+
+    FileAttributes homeAttributes = getAttributes(userHome);
+    assertTrue(homeAttributes.isDirectory());
+    assertTrue(homeAttributes.isWritable());
+
+    FileAttributes parentAttributes = getAttributes(userHome.getParentFile());
+    assertTrue(parentAttributes.isDirectory());
+    assertFalse(parentAttributes.isWritable());
+  }
+
 
   @NotNull
   private static FileAttributes getAttributes(@NotNull final File file) {

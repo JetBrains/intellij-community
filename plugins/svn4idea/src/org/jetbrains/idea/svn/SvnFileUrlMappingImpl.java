@@ -22,34 +22,23 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.ObjectsConvertor;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.ThreadLocalDefendedInvoker;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.impl.VcsInitObject;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
-import org.tmatesoft.svn.core.internal.util.SVNURLUtil;
 import org.tmatesoft.svn.core.wc.SVNInfo;
-import org.tmatesoft.svn.core.wc.SVNStatus;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -69,9 +58,10 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   private final SvnMapping myMapping;
   // grouped; if there are several mappings one under another, will return the upmost
   private final SvnMapping myMoreRealMapping;
+  private final List<RootUrlInfo> myErrorRoots;
   private final MyRootsHelper myHelper;
   private final Project myProject;
-  private final NestedCopiesSink myTempSink;
+  private final NestedCopiesHolder myNestedCopiesHolder;
   private boolean myInitialized;
   private boolean myInitedReloaded;
 
@@ -91,13 +81,15 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     return PeriodicalTasksCloser.getInstance().safeGetComponent(project, SvnFileUrlMappingImpl.class);
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   private SvnFileUrlMappingImpl(final Project project, final ProjectLevelVcsManager vcsManager) {
     myProject = project;
     myMapping = new SvnMapping();
     myMoreRealMapping = new SvnMapping();
+    myErrorRoots = ContainerUtil.newArrayList();
     myHelper = new MyRootsHelper(vcsManager);
     myChecker = new SvnCompatibilityChecker(project);
-    myTempSink = new NestedCopiesSink();
+    myNestedCopiesHolder = new NestedCopiesHolder();
   }
 
   @Nullable
@@ -192,6 +184,13 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     }
   }
 
+  @Override
+  public List<RootUrlInfo> getErrorRoots() {
+    synchronized (myMonitor) {
+      return ContainerUtil.newArrayList(myErrorRoots);
+    }
+  }
+
   public List<VirtualFile> convertRoots(final List<VirtualFile> result) {
     if (ThreadLocalDefendedInvoker.isInside()) return result;
 
@@ -209,8 +208,8 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     }
   }
 
-  public void acceptNestedData(final Set<NestedCopiesBuilder.MyPointInfo> set) {
-    myTempSink.add(set);
+  public void acceptNestedData(final Set<NestedCopyInfo> set) {
+    myNestedCopiesHolder.add(set);
   }
 
   private boolean init() {
@@ -224,222 +223,73 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   public void realRefresh(final Runnable afterRefreshCallback) {
     final SvnVcs vcs = SvnVcs.getInstance(myProject);
     final VirtualFile[] roots = myHelper.executeDefended(myProject);
-
-    final CopiesApplier copiesApplier = new CopiesApplier();
-    final CopiesDetector copiesDetector = new CopiesDetector(vcs, copiesApplier, new Getter<NestedCopiesData>() {
-      public NestedCopiesData get() {
-        return myTempSink.receive();
-      }
-    });
+    final SvnRootsDetector rootsDetector = new SvnRootsDetector(vcs, this, myNestedCopiesHolder);
     // do not send additional request for nested copies when in init state
-    copiesDetector.detectCopyRoots(roots, init(), afterRefreshCallback);
+    rootsDetector.detectCopyRoots(roots, init(), afterRefreshCallback);
   }
 
-  private class CopiesApplier {
-    public void apply(final SvnVcs vcs, final List<RootUrlInfo> roots, final List<VirtualFile> lonelyRoots) {
-      final SvnMapping mapping = new SvnMapping();
-      mapping.addAll(roots);
-      mapping.reportLonelyRoots(lonelyRoots);
+  public void applyDetectionResult(@NotNull SvnRootsDetector.Result result) {
+    new NewRootsApplier(result).apply();
+  }
 
-      final SvnMapping groupedMapping = new SvnMapping();
-      final List<RootUrlInfo> filtered = new ArrayList<RootUrlInfo>();
-      ForNestedRootChecker.filterOutSuperfluousChildren(vcs, roots, filtered);
+  private class NewRootsApplier {
 
-      groupedMapping.addAll(filtered);
+    @NotNull private final SvnRootsDetector.Result myResult;
+    @NotNull private final SvnMapping myNewMapping;
+    @NotNull private final SvnMapping myNewFilteredMapping;
 
+    private NewRootsApplier(@NotNull SvnRootsDetector.Result result) {
+      myResult = result;
+      myNewMapping = new SvnMapping();
+      myNewFilteredMapping = new SvnMapping();
+    }
+
+    public void apply() {
+      myNewMapping.addAll(myResult.getTopRoots());
+      myNewMapping.reportLonelyRoots(myResult.getLonelyRoots());
+      myNewFilteredMapping.addAll(new UniqueRootsFilter().filter(myResult.getTopRoots()));
+
+      runUpdateMappings();
+    }
+
+    private void runUpdateMappings() {
+      // TODO: Not clear so far why read action is used here - may be because of ROOTS_RELOADED message sent?
       ApplicationManager.getApplication().runReadAction(new Runnable() {
         @Override
         public void run() {
           if (myProject.isDisposed()) return;
-          boolean mappingsChanged = false;
-          synchronized (myMonitor) {
-            mappingsChanged = ! myMapping.equals(mapping);
-            if (mappingsChanged) {
-              mappingsChanged = ! myMoreRealMapping.equals(groupedMapping);
-            }
-            myMapping.copyFrom(mapping);
-            myMoreRealMapping.copyFrom(groupedMapping);
-          }
 
-          final MessageBus bus = myProject.getMessageBus();
-          if (mappingsChanged || ! myInitedReloaded) {
-            myInitedReloaded = true;
-            // all listeners are asynchronous
-            bus.syncPublisher(SvnVcs.ROOTS_RELOADED).consume(true);
-            bus.syncPublisher(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN).directoryMappingChanged();
-          } else {
-            bus.syncPublisher(SvnVcs.ROOTS_RELOADED).consume(false);
-          }
+          boolean mappingsChanged = updateMappings();
+
+          notifyRootsReloaded(mappingsChanged);
         }
       });
     }
-  }
 
-  private static class CopiesDetector {
-    private final SvnVcs myVcs;
-    private final CopiesApplier myApplier;
-    private final List<VirtualFile> myLonelyRoots;
-    private final List<RootUrlInfo> myTopRoots;
-    private final RepositoryRoots myRepositoryRoots;
-    private final Getter<NestedCopiesData> myGate;
+    private boolean updateMappings() {
+      boolean mappingsChanged;
+      synchronized (myMonitor) {
+        mappingsChanged = ! myMoreRealMapping.equals(myNewFilteredMapping);
+        mappingsChanged |= !myErrorRoots.equals(myResult.getErrorRoots());
 
-    private CopiesDetector(final SvnVcs vcs, final CopiesApplier applier, final Getter<NestedCopiesData> gate) {
-      myVcs = vcs;
-      myApplier = applier;
-      myGate = gate;
-      myTopRoots = new ArrayList<RootUrlInfo>();
-      myLonelyRoots = new ArrayList<VirtualFile>();
-      myRepositoryRoots = new RepositoryRoots(myVcs);
-    }
-
-    public void detectCopyRoots(final VirtualFile[] roots, final boolean clearState, Runnable callback) {
-      final Getter<Boolean> cancelGetter = new Getter<Boolean>() {
-        public Boolean get() {
-          return myVcs.getProject().isDisposed();
-        }
-      };
-
-      for (final VirtualFile vcsRoot : roots) {
-        // go into nested = false => only find a working copys below passed roots, but not nested
-        final List<Real> foundRoots = ForNestedRootChecker.getAllNestedWorkingCopies(vcsRoot, myVcs, false, cancelGetter);
-        if (foundRoots.isEmpty()) {
-          myLonelyRoots.add(vcsRoot);
-        }
-        // filter out bad(?) items
-        for (Real foundRoot : foundRoots) {
-          final SVNURL repoRoot = foundRoot.getInfo().getRepositoryRootURL();
-          if (repoRoot == null) {
-            LOG.info("Error: cannot find repository URL for versioned folder: " + foundRoot.getFile().getPath());
-          } else {
-            myRepositoryRoots.register(repoRoot);
-            myTopRoots.add(new RootUrlInfo(repoRoot, foundRoot.getInfo().getURL(), SvnFormatSelector.findRootAndGetFormat(
-              new File(foundRoot.getFile().getPath())), foundRoot.getFile(), vcsRoot));
-          }
-        }
+        myMapping.copyFrom(myNewMapping);
+        myMoreRealMapping.copyFrom(myNewFilteredMapping);
+        myErrorRoots.clear();
+        myErrorRoots.addAll(myResult.getErrorRoots());
       }
-
-      addNestedRoots(clearState, callback);
+      return mappingsChanged;
     }
 
-    private void addNestedRoots(final boolean clearState, final Runnable callback) {
-      final List<VirtualFile> basicVfRoots = ObjectsConvertor.convert(myTopRoots, new Convertor<RootUrlInfo, VirtualFile>() {
-        public VirtualFile convert(final RootUrlInfo real) {
-          return real.getVirtualFile();
-        }
-      });
-
-      final ChangeListManager clManager = ChangeListManager.getInstance(myVcs.getProject());
-
-      if (clearState) {
-        // clear what was reported before (could be for currently-not-existing roots)
-        myGate.get();
+    private void notifyRootsReloaded(boolean mappingsChanged) {
+      final MessageBus bus = myProject.getMessageBus();
+      if (mappingsChanged || ! myInitedReloaded) {
+        myInitedReloaded = true;
+        // all listeners are asynchronous
+        bus.syncPublisher(SvnVcs.ROOTS_RELOADED).consume(true);
+        bus.syncPublisher(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN).directoryMappingChanged();
+      } else {
+        bus.syncPublisher(SvnVcs.ROOTS_RELOADED).consume(false);
       }
-      clManager.invokeAfterUpdate(new Runnable() {
-        public void run() {
-          final List<RootUrlInfo> nestedRoots = new ArrayList<RootUrlInfo>();
-
-          final NestedCopiesData data = myGate.get();
-          for (NestedCopiesBuilder.MyPointInfo info : data.getSet()) {
-            if (NestedCopyType.external.equals(info.getType()) || NestedCopyType.switched.equals(info.getType())) {
-              final File infoFile = new File(info.getFile().getPath());
-              boolean copyFound = false;
-              for (RootUrlInfo topRoot : myTopRoots) {
-                if (FileUtil.filesEqual(topRoot.getIoFile(), infoFile)) {
-                  topRoot.setType(info.getType());
-                  copyFound = true;
-                  break;
-                }
-              }
-              if (copyFound) {
-                continue;
-              }
-              try {
-                final SVNStatus svnStatus = SvnUtil.getStatus(myVcs, infoFile);
-                if (svnStatus.getURL() == null) continue;
-                info.setUrl(svnStatus.getURL());
-                info.setFormat(WorkingCopyFormat.getInstance(svnStatus.getWorkingCopyFormat()));
-                if (svnStatus.getRepositoryRootURL() != null) {
-                  info.setRootURL(svnStatus.getRepositoryRootURL());
-                }
-              }
-              catch (Exception e) {
-                continue;
-              }
-            }
-            for (RootUrlInfo topRoot : myTopRoots) {
-              if (VfsUtil.isAncestor(topRoot.getVirtualFile(), info.getFile(), true)) {
-                SVNURL repoRoot = info.getRootURL();
-                repoRoot = repoRoot == null ? myRepositoryRoots.ask(info.getUrl(), info.getFile()) : repoRoot;
-                if (repoRoot != null) {
-                  final RootUrlInfo rootInfo = new RootUrlInfo(repoRoot, info.getUrl(), info.getFormat(), info.getFile(), topRoot.getRoot());
-                  rootInfo.setType(info.getType());
-                  nestedRoots.add(rootInfo);
-                }
-                break;
-              }
-            }
-          }
-          // check those top roots which ARE externals, but that was not detected due to they itself were the status request target
-          //new SvnNestedTypeRechecker(myVcs.getProject(), myTopRoots).run();
-
-          myTopRoots.addAll(nestedRoots);
-          myApplier.apply(myVcs, myTopRoots, myLonelyRoots);
-
-          callback.run();
-        }
-      }, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, null, new Consumer<VcsDirtyScopeManager>() {
-        public void consume(VcsDirtyScopeManager vcsDirtyScopeManager) {
-          if (clearState) {
-            vcsDirtyScopeManager.filesDirty(null, basicVfRoots);
-          }
-        }
-      }, null);
-    }
-  }
-
-  private static class RepositoryRoots {
-    private final SvnVcs myVcs;
-    private final Set<SVNURL> myRoots;
-
-    private RepositoryRoots(final SvnVcs vcs) {
-      myVcs = vcs;
-      myRoots = new HashSet<SVNURL>();
-    }
-
-    public void register(final SVNURL url) {
-      myRoots.add(url);
-    }
-
-    public SVNURL ask(final SVNURL url, VirtualFile file) {
-      for (SVNURL root : myRoots) {
-        if (root.equals(SVNURLUtil.getCommonURLAncestor(root, url))) {
-          return root;
-        }
-      }
-      final SVNURL newUrl = SvnUtil.getRepositoryRoot(myVcs, new File(file.getPath()));
-      if (newUrl != null) {
-        myRoots.add(newUrl);
-        return newUrl;
-      }
-      return null;
-    }
-  }
-
-  private static class RepoInfo {
-    private final SVNURL myUrl;
-    private final boolean myRepoSupportsMergeinfo;
-
-    private RepoInfo(final SVNURL url, final boolean repoSupportsMergeinfo) {
-      myRepoSupportsMergeinfo = repoSupportsMergeinfo;
-      myUrl = url;
-    }
-
-    public boolean isRepoSupportsMergeinfo() {
-      return myRepoSupportsMergeinfo;
-    }
-
-    public SVNURL getUrl() {
-      return myUrl;
     }
   }
 
@@ -541,9 +391,9 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
       final SVNInfo svnInfo = vcs.getInfo(copyRoot);
       if ((svnInfo == null) || (svnInfo.getRepositoryRootURL() == null)) continue;
 
-      final RootUrlInfo info =
-        new RootUrlInfo(svnInfo.getRepositoryRootURL(), svnInfo.getURL(), SvnFormatSelector.findRootAndGetFormat(svnInfo.getFile()),
-                        copyRoot, vcsRoot);
+      Node node = new Node(copyRoot, svnInfo.getURL(), svnInfo.getRepositoryRootURL());
+      final RootUrlInfo info = new RootUrlInfo(node, SvnFormatSelector.findRootAndGetFormat(svnInfo.getFile()), vcsRoot);
+
       mapping.add(info);
     }
   }

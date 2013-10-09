@@ -41,9 +41,7 @@ import java.util.regex.Pattern;
 /**
  * @author yole
  */
-public class SuppressionUtil {
-  @NonNls public static final String SUPPRESS_INSPECTIONS_TAG_NAME = "noinspection";
-
+public class SuppressionUtil extends SuppressionUtilCore {
   /**
    * Common part of regexp for suppressing in line comments for different languages.
    * Comment start prefix isn't included, e.g. add '//' for Java/C/JS or '#' for Ruby

@@ -78,6 +78,10 @@ public abstract class FrameworkSupportProvider {
     return getGroupId() == null ? ArrayUtil.EMPTY_STRING_ARRAY : new String[] { getGroupId() };
   }
 
+  public FrameworkRole[] getRoles() {
+    return getGroupId() == null ? FrameworkRole.UNKNOWN : new FrameworkRole[] { new FrameworkRole(getGroupId()) };
+  }
+
   @Nullable
   public Icon getIcon() {
     return null;

@@ -26,7 +26,6 @@ import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.GeneratorFilter;
 import com.intellij.psi.filters.OrFilter;
 import com.intellij.psi.filters.getters.*;
-import com.intellij.psi.filters.position.FilterPattern;
 import com.intellij.psi.filters.types.AssignableFromFilter;
 import com.intellij.psi.filters.types.AssignableGroupFilter;
 import com.intellij.psi.filters.types.AssignableToFilter;
@@ -385,11 +384,11 @@ public class JavaSmartCompletionContributor extends CompletionContributor {
       final PsiClassType classType = factory
           .createTypeByFQClassName(CommonClassNames.JAVA_LANG_RUNTIME_EXCEPTION, position.getResolveScope());
       final List<ExpectedTypeInfo> result = new SmartList<ExpectedTypeInfo>();
-      result.add(new ExpectedTypeInfoImpl(classType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, classType, TailType.SEMICOLON));
+      result.add(new ExpectedTypeInfoImpl(classType, ExpectedTypeInfo.TYPE_OR_SUBTYPE, classType, TailType.SEMICOLON, null, ExpectedTypeInfoImpl.NULL));
       final PsiMethod method = PsiTreeUtil.getContextOfType(position, PsiMethod.class, true);
       if (method != null) {
         for (final PsiClassType type : method.getThrowsList().getReferencedTypes()) {
-          result.add(new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.SEMICOLON));
+          result.add(new ExpectedTypeInfoImpl(type, ExpectedTypeInfo.TYPE_OR_SUBTYPE, type, TailType.SEMICOLON, null, ExpectedTypeInfoImpl.NULL));
         }
       }
       return result.toArray(new ExpectedTypeInfo[result.size()]);

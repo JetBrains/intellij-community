@@ -128,7 +128,11 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       lafList.add(new UIManager.LookAndFeelInfo("Default", UIManager.getSystemLookAndFeelClassName()));
     }
     else {
-      lafList.add(new IdeaLookAndFeelInfo());
+      if (Registry.is("idea.4.5.laf.enabled")) {
+        lafList.add(new IdeaLookAndFeelInfo());
+      } else {
+        lafList.add(new IntelliJLookAndFeelInfo());
+      }
       for (UIManager.LookAndFeelInfo laf : UIManager.getInstalledLookAndFeels()) {
         String name = laf.getName();
         if (!"Metal".equalsIgnoreCase(name) && !"CDE/Motif".equalsIgnoreCase(name)) {

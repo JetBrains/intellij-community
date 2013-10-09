@@ -23,39 +23,70 @@ import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.intellij.xdebugger.frame.XValueContainer;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeListener;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author nik
  */
 public class EvaluatingExpressionRootNode extends XValueContainerNode<EvaluatingExpressionRootNode.EvaluatingResultContainer> {
   public EvaluatingExpressionRootNode(XDebuggerEvaluationDialog evaluationDialog, final XDebuggerTree tree) {
-    super(tree, null, new EvaluatingResultContainer(evaluationDialog));
+    super(tree, null, new EvaluatingResultContainer(evaluationDialog, tree));
     setLeaf(false);
   }
 
+  @Override
   protected MessageTreeNode createLoadingMessageNode() {
     return MessageTreeNode.createEvaluatingMessage(myTree, this);
   }
 
-  public static class EvaluatingResultContainer extends XValueContainer {
+  public static class EvaluatingResultContainer extends XValueContainer implements XDebuggerTreeListener {
     private final XDebuggerEvaluationDialog myDialog;
+    private XDebuggerTree myTree;
 
-    public EvaluatingResultContainer(final XDebuggerEvaluationDialog dialog) {
+    public EvaluatingResultContainer(final XDebuggerEvaluationDialog dialog, XDebuggerTree tree) {
       myDialog = dialog;
+      myTree = tree;
     }
 
+    @Override
     public void computeChildren(@NotNull final XCompositeNode node) {
       myDialog.startEvaluation(new XEvaluationCallbackBase() {
+        @Override
         public void evaluated(@NotNull final XValue result) {
+          myTree.addTreeListener(EvaluatingResultContainer.this);
           String name = UIUtil.removeMnemonic(XDebuggerBundle.message("xdebugger.evaluate.result"));
           node.addChildren(XValueChildrenList.singleton(name, result), true);
         }
 
+        @Override
         public void errorOccurred(@NotNull final String errorMessage) {
           node.setErrorMessage(errorMessage);
         }
       });
+    }
+
+    @Override
+    public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
+      if (node.getParent() instanceof EvaluatingExpressionRootNode) {
+        if (node.isLeaf()) {
+          myTree.removeTreeListener(this);
+        }
+        else {
+          // cause children computing
+          node.getChildCount();
+        }
+      }
+    }
+
+    @Override
+    public void childrenLoaded(@NotNull XDebuggerTreeNode node, @NotNull List<XValueContainerNode<?>> children, boolean last) {
+      if (node.getParent() instanceof EvaluatingExpressionRootNode) {
+        myTree.removeTreeListener(this);
+        myTree.expandPath(node.getPath());
+      }
     }
   }
 }

@@ -16,6 +16,7 @@
 package com.intellij.ide.projectWizard;
 
 import com.intellij.framework.FrameworkGroup;
+import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.ArrayUtil;
@@ -62,6 +63,10 @@ public abstract class ProjectCategory {
   @Nullable
   public String getParentId() {
     return null;
+  }
+
+  public FrameworkRole[] getAcceptableFrameworkRoles() {
+    return new FrameworkRole[] {createModuleBuilder().getDefaultAcceptableRole()};
   }
 
   @Nullable

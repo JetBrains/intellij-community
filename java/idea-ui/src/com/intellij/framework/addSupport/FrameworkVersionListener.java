@@ -16,7 +16,6 @@
 package com.intellij.framework.addSupport;
 
 import com.intellij.framework.FrameworkVersion;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
@@ -24,5 +23,5 @@ import java.util.EventListener;
  * @author nik
  */
 public interface FrameworkVersionListener extends EventListener {
-  void versionChanged(@NotNull FrameworkVersion version);
+  void versionChanged(FrameworkVersion version);
 }

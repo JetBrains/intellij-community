@@ -20,15 +20,11 @@ import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 /**
 * @author nik
 */
-public class FrameworkSupportNode extends FrameworkSupportNodeBase {
-  private final FrameworkSupportInModuleProvider myProvider;
+public class FrameworkSupportNode extends FrameworkSupportNodeBase<FrameworkSupportInModuleProvider> {
   private FrameworkSupportInModuleConfigurable myConfigurable;
   private final FrameworkSupportModelBase myModel;
   private final Disposable myParentDisposable;
@@ -37,37 +33,15 @@ public class FrameworkSupportNode extends FrameworkSupportNodeBase {
                               Disposable parentDisposable) {
     super(provider, parentNode);
     myParentDisposable = parentDisposable;
-    myProvider = provider;
     model.registerComponent(provider, this);
     myModel = model;
   }
 
-  public FrameworkSupportInModuleProvider getProvider() {
-    return myProvider;
-  }
-
   public synchronized FrameworkSupportInModuleConfigurable getConfigurable() {
     if (myConfigurable == null) {
-      myConfigurable = myProvider.createConfigurable(myModel);
+      myConfigurable = getUserObject().createConfigurable(myModel);
       Disposer.register(myParentDisposable, myConfigurable);
     }
     return myConfigurable;
-  }
-
-  @NotNull
-  public String getTitle() {
-    return myProvider.getPresentableName();
-  }
-
-  @NotNull
-  @Override
-  public Icon getIcon() {
-    return myProvider.getFrameworkType().getIcon();
-  }
-
-  @NotNull
-  @Override
-  public String getId() {
-    return myProvider.getFrameworkType().getId();
   }
 }

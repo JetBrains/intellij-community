@@ -37,10 +37,10 @@ public interface StateStorageManager {
   TrackingPathMacroSubstitutor getMacroSubstitutor();
 
   @Nullable
-  StateStorage   getStateStorage(@NotNull Storage storageSpec) throws StateStorageException;
+  StateStorage getStateStorage(@NotNull Storage storageSpec) throws StateStorageException;
 
   @Nullable
-  StateStorage getFileStateStorage(String fileName);
+  StateStorage getFileStateStorage(@NotNull String fileSpec);
 
   Collection<String> getStorageFileNames();
 
@@ -48,8 +48,10 @@ public interface StateStorageManager {
 
   @NotNull
   ExternalizationSession startExternalization();
+
   @NotNull
-  SaveSession startSave(@NotNull ExternalizationSession externalizationSession) ;
+  SaveSession startSave(@NotNull ExternalizationSession externalizationSession);
+
   void finishSave(@NotNull SaveSession saveSession);
 
   @Nullable

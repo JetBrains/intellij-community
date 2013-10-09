@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -165,10 +165,12 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     final ExpectedTypeInfo[] expectedTypes = ExpectedTypesProvider.getExpectedTypes(myMainOccurrence, false, myOccurrenceClassProvider, false);
     final ArrayList<PsiType> allowedTypes = new ArrayList<PsiType>();
     RefactoringHierarchyUtil.processSuperTypes(getDefaultType(), new RefactoringHierarchyUtil.SuperTypeVisitor() {
+      @Override
       public void visitType(PsiType aType) {
         checkIfAllowed(aType);
       }
 
+      @Override
       public void visitClass(PsiClass aClass) {
         checkIfAllowed(myFactory.createType(aClass));
       }
@@ -204,10 +206,12 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
 
     final ArrayList<PsiType> allowedTypes = new ArrayList<PsiType>();
     RefactoringHierarchyUtil.processSuperTypes(getDefaultType(), new RefactoringHierarchyUtil.SuperTypeVisitor() {
+      @Override
       public void visitType(PsiType aType) {
         checkIfAllowed(aType);
       }
 
+      @Override
       public void visitClass(PsiClass aClass) {
         checkIfAllowed(myFactory.createType(aClass));
       }
@@ -270,6 +274,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     return result;
   }
 
+  @Override
   public void setAllOccurrences(boolean allOccurrences) {
     if (myIsOneSuggestion) return;
     setTypesAndPreselect(allOccurrences ? myTypesForAll : myTypesForMain);
@@ -292,6 +297,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     }
   }
 
+  @Override
   public boolean isSuggestedType(final String fqName) {
     for(PsiType type: myTypesForAll) {
       if (type.getCanonicalText().equals(fqName)) {
@@ -308,6 +314,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     return false;
   }
 
+  @Override
   public void typeSelected(@NotNull PsiType type) {
     typeSelected(type, getDefaultType());
   }
@@ -329,6 +336,7 @@ public class TypeSelectorManagerImpl implements TypeSelectorManager {
     return TypeConversionUtil.erasure(type).getCanonicalText();
   }
 
+  @Override
   public TypeSelector getTypeSelector() {
     return myTypeSelector;
   }

@@ -557,7 +557,8 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     }
     if (preserveMarkup) {
       duplicateHighlighters(markupModel, DocumentMarkupModel.forDocument(consoleEditor.getDocument(), myProject, true), offset, textRange);
-      duplicateHighlighters(markupModel, consoleEditor.getMarkupModel(), offset, textRange);
+      // don't copy editor markup model, i.e. brace matcher, spell checker, etc.
+      // duplicateHighlighters(markupModel, consoleEditor.getMarkupModel(), offset, textRange);
     }
     if (!text.endsWith("\n")) {
       appendToHistoryDocument(history, "\n");

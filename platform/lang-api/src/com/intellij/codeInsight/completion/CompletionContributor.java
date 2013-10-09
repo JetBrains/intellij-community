@@ -28,7 +28,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.containers.MultiMap;
@@ -237,7 +237,7 @@ public abstract class CompletionContributor {
     return ApplicationManager.getApplication().runReadAction(new Computable<List<CompletionContributor>>() {
       @Override
       public List<CompletionContributor> compute() {
-        return forLanguage(PsiUtilBase.getLanguageAtOffset(parameters.getPosition().getContainingFile(), parameters.getOffset()));
+        return forLanguage(PsiUtilCore.getLanguageAtOffset(parameters.getPosition().getContainingFile(), parameters.getOffset()));
       }
     });
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,25 +29,27 @@ public final class FileAttributes {
   public enum Type { FILE, DIRECTORY, SPECIAL }
 
   public static final byte SYM_LINK = 0x01;
-  public static final byte HIDDEN = 0x20;
+  public static final byte HIDDEN = 0x02;
+  public static final byte READ_ONLY = 0x04;
 
-  @MagicConstant(flags = {SYM_LINK, HIDDEN})
+  @MagicConstant(flags = {SYM_LINK, HIDDEN, READ_ONLY})
   public @interface Flags { }
 
-  public static final int OWNER_READ = 0400;
-  public static final int OWNER_WRITE = 0200;
-  public static final int OWNER_EXECUTE = 0100;
-  public static final int GROUP_READ = 0040;
-  public static final int GROUP_WRITE = 0020;
-  public static final int GROUP_EXECUTE = 0010;
-  public static final int OTHERS_READ = 0004;
-  public static final int OTHERS_WRITE = 0002;
-  public static final int OTHERS_EXECUTE = 0001;
+  /** @deprecated (to remove in IDEA 14) */ @SuppressWarnings("unused") public static final int OWNER_READ = 0400;
+  /** @deprecated (to remove in IDEA 14) */ @SuppressWarnings("unused") public static final int OWNER_WRITE = 0200;
+  /** @deprecated (to remove in IDEA 14) */ @SuppressWarnings("unused") public static final int OWNER_EXECUTE = 0100;
+  /** @deprecated (to remove in IDEA 14) */ @SuppressWarnings("unused") public static final int GROUP_READ = 0040;
+  /** @deprecated (to remove in IDEA 14) */ @SuppressWarnings("unused") public static final int GROUP_WRITE = 0020;
+  /** @deprecated (to remove in IDEA 14) */ @SuppressWarnings("unused") public static final int GROUP_EXECUTE = 0010;
+  /** @deprecated (to remove in IDEA 14) */ @SuppressWarnings("unused") public static final int OTHERS_READ = 0004;
+  /** @deprecated (to remove in IDEA 14) */ @SuppressWarnings("unused") public static final int OTHERS_WRITE = 0002;
+  /** @deprecated (to remove in IDEA 14) */ @SuppressWarnings("unused") public static final int OTHERS_EXECUTE = 0001;
 
-  @MagicConstant(flags = {OWNER_READ, OWNER_WRITE, OWNER_EXECUTE, GROUP_READ, GROUP_WRITE, GROUP_EXECUTE, OTHERS_READ, OTHERS_WRITE, OTHERS_EXECUTE})
+  /** @deprecated (to remove in IDEA 14) */
+  @SuppressWarnings("unused")
   public @interface Permissions { }
 
-  public static final FileAttributes BROKEN_SYMLINK = new FileAttributes(null, SYM_LINK, 0, 0, -1);
+  public static final FileAttributes BROKEN_SYMLINK = new FileAttributes(null, SYM_LINK, 0, 0);
 
   /**
    * {@code null} means unknown type - typically broken symlink.
@@ -70,55 +72,39 @@ public final class FileAttributes {
    */
   public final long lastModified;
 
-  /**
-   * UNIX permission bits (for Windows only OWNER_WRITE matters and OWNER_READ/EXECUTE are always set), or {@code -1} if not supported.<br/>
-   * For symlinks - permissions of a link target.
-   */
-  @Permissions
-  public final int permissions;
+  /** @deprecated use {@linkplain #isWritable()} (to remove in IDEA 14) */
+  @SuppressWarnings("unused") public final int permissions;
 
 
-  public FileAttributes(final boolean isDirectory,
-                        final boolean isSpecial,
-                        final boolean isSymlink,
-                        final boolean isHidden,
-                        final long length,
-                        final long lastModified,
-                        final boolean isWritable) {
-    this(type(isDirectory, isSpecial), flags(isSymlink, isHidden), length, lastModified,
-         OWNER_READ | OWNER_EXECUTE | (isWritable ? OWNER_WRITE : 0));
+  public FileAttributes(boolean directory, boolean special, boolean symlink, boolean hidden, long length, long lastModified, boolean writable) {
+    this(type(directory, special), flags(symlink, hidden, !writable), length, lastModified);
   }
 
-  public FileAttributes(final boolean isDirectory,
-                        final boolean isSpecial,
-                        final boolean isSymlink,
-                        final long length,
-                        final long lastModified,
-                        @Permissions final int permissions) {
-    this(type(isDirectory, isSpecial), flags(isSymlink, false), length, lastModified, permissions);
+  /** @deprecated use {@linkplain #FileAttributes(boolean, boolean, boolean, boolean, long, long, boolean)} (to remove in IDEA 14) */
+  @SuppressWarnings("unused")
+  public FileAttributes(boolean directory, boolean special, boolean symlink, long length, long lastModified, int permissions) {
+    this(type(directory, special), flags(symlink, false, true), length, lastModified);
   }
 
-  private FileAttributes(@Nullable final Type type,
-                         @Flags final byte flags,
-                         final long length,
-                         final long lastModified,
-                         @Permissions final int permissions) {
+  @SuppressWarnings("deprecation")
+  private FileAttributes(@Nullable Type type, @Flags byte flags, long length, long lastModified) {
     this.type = type;
     this.flags = flags;
     this.length = length;
     this.lastModified = lastModified;
-    this.permissions = permissions;
+    this.permissions = -1;
   }
 
-  private static Type type(final boolean isDirectory, final boolean isSpecial) {
+  private static Type type(boolean isDirectory, boolean isSpecial) {
     return isDirectory ? Type.DIRECTORY : isSpecial ? Type.SPECIAL : Type.FILE;
   }
 
   @Flags
-  private static byte flags(final boolean isSymlink, final boolean isHidden) {
+  private static byte flags(boolean isSymlink, boolean isHidden, boolean isReadOnly) {
     @Flags byte flags = 0;
     if (isSymlink) flags |= SYM_LINK;
     if (isHidden) flags |= HIDDEN;
+    if (isReadOnly) flags |= READ_ONLY;
     return flags;
   }
 
@@ -143,7 +129,7 @@ public final class FileAttributes {
   }
 
   public boolean isWritable() {
-    return permissions == -1 || isSet(permissions, OWNER_WRITE) || isSet(permissions, GROUP_WRITE) || isSet(permissions, OTHERS_WRITE);
+    return !isSet(flags, READ_ONLY);
   }
 
   @Override
@@ -155,7 +141,6 @@ public final class FileAttributes {
     if (flags != that.flags) return false;
     if (lastModified != that.lastModified) return false;
     if (length != that.length) return false;
-    if (permissions != that.permissions) return false;
     if (type != that.type) return false;
 
     return true;
@@ -167,13 +152,13 @@ public final class FileAttributes {
     result = 31 * result + (int)flags;
     result = 31 * result + (int)(length ^ (length >>> 32));
     result = 31 * result + (int)(lastModified ^ (lastModified >>> 32));
-    result = 31 * result + permissions;
     return result;
   }
 
   @Override
   public String toString() {
-    final StringBuilder sb = new StringBuilder();
+    StringBuilder sb = new StringBuilder();
+
     sb.append("[type:");
     if (type == Type.FILE) sb.append('f');
     else if (type == Type.DIRECTORY) sb.append('d');
@@ -183,13 +168,11 @@ public final class FileAttributes {
     if (isSet(flags, SYM_LINK)) sb.append('l');
     if (isSet(flags, HIDDEN)) sb.append('.');
 
+    if (isSet(flags, READ_ONLY)) sb.append(" ro");
+
     sb.append(" length:").append(length);
 
     sb.append(" modified:").append(lastModified);
-
-    if (permissions != -1) {
-      sb.append(" mode:").append(Integer.toOctalString(permissions));
-    }
 
     sb.append(']');
     return sb.toString();

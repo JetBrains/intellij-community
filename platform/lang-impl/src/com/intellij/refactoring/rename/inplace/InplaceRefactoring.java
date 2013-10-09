@@ -61,6 +61,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -530,6 +531,18 @@ public abstract class InplaceRefactoring {
     final PsiReference reference = (myEditorFile != null ?
                                     myEditorFile : myElementToRename.getContainingFile())
       .findReferenceAt(myEditor.getCaretModel().getOffset());
+    if (reference instanceof PsiMultiReference) {
+      final PsiReference[] references = ((PsiMultiReference)reference).getReferences();
+      for (PsiReference ref : references) {
+        addReferenceIfNeeded(refs, ref);
+      }
+    }
+    else {
+      addReferenceIfNeeded(refs, reference);
+    }
+  }
+
+  private void addReferenceIfNeeded(@NotNull final Collection<PsiReference> refs, @Nullable final PsiReference reference) {
     if (reference != null && reference.isReferenceTo(myElementToRename) && !refs.contains(reference)) {
       refs.add(reference);
     }

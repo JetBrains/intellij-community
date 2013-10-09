@@ -30,17 +30,21 @@ import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
 
+import java.util.Stack;
+
 public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
   private final int myIndex;
   private final Value myValue;
   private String myName;
   private boolean myParameterNameCalcutated;
+  private final String myDefaultName;
 
-  public ArgumentValueDescriptorImpl(Project project, int index, Value value) {
+  public ArgumentValueDescriptorImpl(Project project, int index, Value value, String name) {
     super(project);
     myIndex = index;
     myValue = value;
-    myName = "arg" + String.valueOf(index);
+    myDefaultName = name != null ? name : "arg" + String.valueOf(index);
+    myName = myDefaultName;
     setLvalue(true);
   }
 
@@ -60,6 +64,55 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
               final PsiParameter param = params.getParameters()[myIndex];
               myName = param.getName();
               myParameterNameCalcutated = true;
+            }
+            else {
+              // treat myIndex as a variable slot index
+              final PsiCodeBlock body = method.getBody();
+              if (body != null) {
+                final StringBuilder nameBuilder = new StringBuilder();
+                nameBuilder.append(myDefaultName);
+                try {
+                  final int startSlot = params.getParametersCount() + (method.hasModifierProperty(PsiModifier.STATIC)? 0 : 1);
+                  body.accept(new JavaRecursiveElementVisitor() {
+                    private int myCurrentSlotIndex = startSlot;
+                    private final Stack<Integer> myIndexStack = new Stack<Integer>();
+                    @Override
+                    public void visitCodeBlock(PsiCodeBlock block) {
+                      myIndexStack.push(myCurrentSlotIndex);
+                      try {
+                        super.visitCodeBlock(block);
+                      }
+                      finally {
+                        myCurrentSlotIndex = myIndexStack.pop();
+                      }
+                    }
+
+                    @Override
+                    public void visitLocalVariable(PsiLocalVariable variable) {
+                      if (myCurrentSlotIndex == myIndex) {
+                        if (nameBuilder.length() == myDefaultName.length()) {
+                          nameBuilder.append(": ");
+                        }
+                        else {
+                          nameBuilder.append("|");
+                        }
+                        nameBuilder.append(variable.getName());
+                      }
+                      final PsiType varType = variable.getType();
+                      myCurrentSlotIndex += (varType == PsiType.DOUBLE || varType == PsiType.LONG)? 2 : 1;
+                    }
+
+                    @Override
+                    public void visitClass(PsiClass aClass) {
+                      // skip local and anonymous classes
+                    }
+
+                  });
+                }
+                finally {
+                  myName = nameBuilder.toString();
+                }
+              }
             }
           }
         }

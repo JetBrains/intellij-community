@@ -64,12 +64,12 @@ class MyTest1 {
     }
     
     void foo(Object[] arr) {
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I1'">I1 c1 = arr :: clone;</error>
+        I1 c1 = <error descr="Bad return type in method reference: cannot convert java.lang.Object[] to int[]">arr :: clone</error>;
         I2 c2 = arr :: clone;
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I3'">I3 c3 = arr::clone;</error>
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I4'">I4 c5 = arr::clone;</error>
+        I3 c3 = <error descr="Bad return type in method reference: cannot convert java.lang.Object[] to char[]">arr::clone</error>;
+        I4 c5 = <error descr="Bad return type in method reference: cannot convert java.lang.Object[] to boolean">arr::clone</error>;
 
         I5 c4 = this::getClass;
-        <error descr="Incompatible types. Found: '<method reference>', required: 'MyTest1.I6'">I6 c6 = this::getClass;</error>
+        I6 c6 = <error descr="Bad return type in method reference: cannot convert java.lang.Class<? extends MyTest1> to java.lang.Class<MyTest1>">this::getClass</error>;
     }
 }

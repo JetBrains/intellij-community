@@ -22,14 +22,9 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.WorkingCopiesContent;
 
 public class MergeFromAction extends DumbAwareAction {
   public MergeFromAction() {
@@ -42,18 +37,8 @@ public class MergeFromAction extends DumbAwareAction {
     final DataContext dc = e.getDataContext();
     final Project project = CommonDataKeys.PROJECT.getData(dc);
     if (project == null) return;
-    final ToolWindowManager manager = ToolWindowManager.getInstance(project);
-    if (manager != null) {
-      final ToolWindow window = manager.getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
-      if (window != null) {
-        window.show(null);
-        final ContentManager cm = window.getContentManager();
-        final Content content = cm.findContent(SvnBundle.message("dialog.show.svn.map.title"));
-        if (content != null) {
-          cm.setSelectedContent(content, true);
-        }
-      }
-    }
+
+    WorkingCopiesContent.show(project);
   }
 
   @Override

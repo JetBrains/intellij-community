@@ -20,8 +20,10 @@ import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
 import com.intellij.framework.FrameworkGroup;
+import com.intellij.framework.FrameworkVersion;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
+import com.intellij.framework.addSupport.FrameworkVersionListener;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
@@ -49,6 +51,7 @@ import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -81,7 +84,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
     myLabel.setVisible(!vertical);
     Splitter splitter = vertical ? new Splitter(true, 0.6f) : new Splitter(false, 0.3f, 0.1f, 0.7f);
-    myFrameworksTree = new FrameworksTree() {
+    myFrameworksTree = new FrameworksTree(model) {
       @Override
       protected void onNodeStateChanged(CheckedTreeNode node) {
         if (!(node instanceof FrameworkSupportNode)) return;
@@ -96,6 +99,12 @@ public class AddSupportForFrameworksPanel implements Disposable {
         onFrameworkStateChanged();
       }
     };
+    model.addFrameworkVersionListener(new FrameworkVersionListener() {
+      @Override
+      public void versionChanged(FrameworkVersion version) {
+        ((DefaultTreeModel)myFrameworksTree.getModel()).nodeChanged(getSelectedNode());
+      }
+    }, this);
     setProviders(providers);
 
     myFrameworksTree.addTreeSelectionListener(new TreeSelectionListener() {
@@ -115,7 +124,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
 
   public void setProviders(List<FrameworkSupportInModuleProvider> providers) {
     myProviders = providers;
-    createNodes();
+    myRoots = createNodes(myProviders);
     myFrameworksTree.setRoots(myRoots);
     myFrameworksTree.setSelectionRow(0);
   }
@@ -156,12 +165,12 @@ public class AddSupportForFrameworksPanel implements Disposable {
     if (node instanceof FrameworkSupportNode) {
       FrameworkSupportNode frameworkSupportNode = (FrameworkSupportNode)node;
       initializeOptionsPanel(frameworkSupportNode);
-      showCard(frameworkSupportNode.getProvider().getFrameworkType().getId());
+      showCard(frameworkSupportNode.getId());
       UIUtil.setEnabled(myOptionsPanel, frameworkSupportNode.isChecked(), true);
       frameworkSupportNode.getConfigurable().onFrameworkSelectionChanged(node.isChecked());
     }
     else if (node instanceof FrameworkGroupNode) {
-      FrameworkGroup<?> group = ((FrameworkGroupNode)node).getGroup();
+      FrameworkGroup<?> group = ((FrameworkGroupNode)node).getUserObject();
       initializeGroupPanel(group);
       showCard(group.getId());
       UIUtil.setEnabled(myOptionsPanel, true, true);
@@ -192,13 +201,12 @@ public class AddSupportForFrameworksPanel implements Disposable {
         initializeOptionsPanel((FrameworkSupportNode)parentNode);
       }
       else if (parentNode instanceof FrameworkGroupNode) {
-        initializeGroupPanel(((FrameworkGroupNode)parentNode).getGroup());
+        initializeGroupPanel(((FrameworkGroupNode)parentNode).getUserObject());
       }
 
       FrameworkSupportOptionsComponent optionsComponent = new FrameworkSupportOptionsComponent(myModel, myLibrariesContainer, this,
-                                                                                               node.getProvider(), node.getConfigurable());
-      final String id = node.getProvider().getFrameworkType().getId();
-      myOptionsPanel.add(id, optionsComponent.getMainPanel());
+                                                                                               node.getUserObject(), node.getConfigurable());
+      myOptionsPanel.add(node.getId(), optionsComponent.getMainPanel());
       myInitializedOptionsComponents.put(node, optionsComponent);
     }
   }
@@ -231,49 +239,50 @@ public class AddSupportForFrameworksPanel implements Disposable {
     return true;
   }
 
-  private void createNodes() {
+  private List<FrameworkSupportNodeBase> createNodes(List<FrameworkSupportInModuleProvider> providers) {
     Map<String, FrameworkSupportNode> nodes = new HashMap<String, FrameworkSupportNode>();
     Map<FrameworkGroup<?>, FrameworkGroupNode> groups = new HashMap<FrameworkGroup<?>, FrameworkGroupNode>();
     List<FrameworkSupportNodeBase> roots = new ArrayList<FrameworkSupportNodeBase>();
-    for (FrameworkSupportInModuleProvider provider : myProviders) {
-      createNode(provider, nodes, groups, roots);
+    for (FrameworkSupportInModuleProvider provider : providers) {
+      createNode(provider, nodes, groups, roots, providers);
     }
 
     FrameworkSupportNodeBase.sortByName(roots);
-    myRoots = roots;
+    return roots;
   }
 
   @Nullable
   private FrameworkSupportNode createNode(final FrameworkSupportInModuleProvider provider, final Map<String, FrameworkSupportNode> nodes,
                                           final Map<FrameworkGroup<?>, FrameworkGroupNode> groupNodes,
-                                          List<FrameworkSupportNodeBase> roots) {
+                                          List<FrameworkSupportNodeBase> roots, List<FrameworkSupportInModuleProvider> providers) {
     FrameworkSupportNode node = nodes.get(provider.getFrameworkType().getId());
-    if (node == null) {
-      String underlyingTypeId = provider.getFrameworkType().getUnderlyingFrameworkTypeId();
-      FrameworkSupportNodeBase parentNode = null;
-      final FrameworkGroup<?> group = provider.getFrameworkType().getParentGroup();
-      if (underlyingTypeId != null) {
-        FrameworkSupportInModuleProvider parentProvider = FrameworkSupportUtil.findProvider(underlyingTypeId, myProviders);
-        if (parentProvider == null) {
-          LOG.info("Cannot find id = " + underlyingTypeId);
-          return null;
-        }
-        parentNode = createNode(parentProvider, nodes, groupNodes, roots);
+    if (node != null) {
+      return node;
+    }
+    String underlyingTypeId = provider.getFrameworkType().getUnderlyingFrameworkTypeId();
+    FrameworkSupportNodeBase parentNode = null;
+    final FrameworkGroup<?> group = provider.getFrameworkType().getParentGroup();
+    if (underlyingTypeId != null) {
+      FrameworkSupportInModuleProvider parentProvider = FrameworkSupportUtil.findProvider(underlyingTypeId, providers);
+      if (parentProvider == null) {
+        LOG.info("Cannot find id = " + underlyingTypeId);
+        return null;
       }
-      else if (group != null) {
-        parentNode = groupNodes.get(group);
-        if (parentNode == null) {
-          FrameworkGroupNode groupNode = new FrameworkGroupNode(group, null);
-          groupNodes.put(group, groupNode);
-          parentNode = groupNode;
-          roots.add(groupNode);
-        }
-      }
-      node = new FrameworkSupportNode(provider, parentNode, myModel, this);
-      nodes.put(provider.getFrameworkType().getId(), node);
+      parentNode = createNode(parentProvider, nodes, groupNodes, roots, providers);
+    }
+    else if (group != null) {
+      parentNode = groupNodes.get(group);
       if (parentNode == null) {
-        roots.add(node);
+        FrameworkGroupNode groupNode = new FrameworkGroupNode(group, null);
+        groupNodes.put(group, groupNode);
+        parentNode = groupNode;
+        roots.add(groupNode);
       }
+    }
+    node = new FrameworkSupportNode(provider, parentNode, myModel, this);
+    nodes.put(provider.getFrameworkType().getId(), node);
+    if (parentNode == null) {
+      roots.add(node);
     }
     return node;
   }
@@ -332,7 +341,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
       }
     }
     for (FrameworkSupportNode node : selectedFrameworks) {
-      FrameworkSupportInModuleProvider provider = node.getProvider();
+      FrameworkSupportInModuleProvider provider = node.getUserObject();
       if (provider instanceof OldFrameworkSupportProviderWrapper) {
         final FrameworkSupportProvider oldProvider = ((OldFrameworkSupportProviderWrapper)provider).getProvider();
         if (oldProvider instanceof FacetBasedFrameworkSupportProvider && !addedLibraries.isEmpty()) {
@@ -349,7 +358,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
     final Comparator<FrameworkSupportInModuleProvider> comparator = FrameworkSupportUtil.getFrameworkSupportProvidersComparator(myProviders);
     Collections.sort(nodes, new Comparator<FrameworkSupportNode>() {
       public int compare(final FrameworkSupportNode o1, final FrameworkSupportNode o2) {
-        return comparator.compare(o1.getProvider(), o2.getProvider());
+        return comparator.compare(o1.getUserObject(), o2.getUserObject());
       }
     });
   }

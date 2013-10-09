@@ -26,6 +26,10 @@ import javax.swing.tree.DefaultMutableTreeNode;
 public class CheckedTreeNode extends DefaultMutableTreeNode {
   protected boolean isChecked = true;
   private boolean isEnabled = true;
+
+  public CheckedTreeNode() {
+  }
+
   public CheckedTreeNode(Object userObject) {
     super(userObject);
   }

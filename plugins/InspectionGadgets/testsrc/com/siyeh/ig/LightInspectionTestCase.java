@@ -15,8 +15,9 @@
  */
 package com.siyeh.ig;
 
-import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import com.intellij.util.ArrayUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -36,11 +37,11 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
     myFixture.enableInspections(getInspection());
   }
 
-  protected abstract LocalInspectionTool getInspection();
+  protected abstract InspectionProfileEntry getInspection();
 
   @NonNls
   protected String[] getEnvironmentClasses() {
-    return new String[]{};
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   protected void addEnvironmentClass(@Language("JAVA") @NotNull @NonNls String classText) {
@@ -82,7 +83,7 @@ public abstract class LightInspectionTestCase extends LightCodeInsightFixtureTes
 
   @Override
   protected String getBasePath() {
-    final Class<? extends LocalInspectionTool> inspectionClass = getInspection().getClass();
+    final Class<? extends InspectionProfileEntry> inspectionClass = getInspection().getClass();
     final String className = inspectionClass.getName();
     final String[] words = className.split("\\.");
     @NonNls final StringBuilder basePath = new StringBuilder("/plugins/InspectionGadgets/test/");

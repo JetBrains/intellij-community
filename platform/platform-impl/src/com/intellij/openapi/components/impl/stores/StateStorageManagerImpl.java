@@ -93,7 +93,6 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   }
 
   @Override
-  @SuppressWarnings({"unchecked"})
   public TrackingPathMacroSubstitutor getMacroSubstitutor() {
     return myPathMacroSubstitutor;
   }
@@ -125,7 +124,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   @Override
   @Nullable
-  public StateStorage getFileStateStorage(final String fileName) {
+  public StateStorage getFileStateStorage(@NotNull String fileName) {
     myStorageLock.lock();
     try {
       StateStorage stateStorage = myStorages.get(fileName);
@@ -238,7 +237,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
 
     String extension = FileUtilRt.getExtension(new File(expandedFile).getName());
-    if (!ourHeadlessEnvironment && extension.length() == 0) {
+    if (!ourHeadlessEnvironment && extension.isEmpty()) {
       throw new IllegalArgumentException("Extension is missing for storage file: " + expandedFile);
     }
 

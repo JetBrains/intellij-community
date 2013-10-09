@@ -19,12 +19,18 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefPackage;
 import com.intellij.codeInspection.ui.ConventionOptionsPanel;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.psi.PsiPackageStatement;
+import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.BaseSharedLocalInspection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -91,8 +97,7 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
     else {
       final String errorString =
         InspectionGadgetsBundle.message("package.naming.convention.problem.descriptor.regex.mismatch", name, m_regex);
-      return new CommonProblemDescriptor[]{
-        inspectionManager.createProblemDescriptor(errorString)};
+      return new CommonProblemDescriptor[]{inspectionManager.createProblemDescriptor(errorString)};
     }
   }
 
@@ -105,5 +110,77 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
   @Override
   public JComponent createOptionsPanel() {
     return new ConventionOptionsPanel(this, "m_minLength", "m_maxLength", "m_regex", "m_regexPattern");
+  }
+
+  boolean isValid(String name) {
+    final int length = name.length();
+    if (length < m_minLength) {
+      return false;
+    }
+    if (m_maxLength > 0 && length > m_maxLength) {
+      return false;
+    }
+    if (HardcodedMethodConstants.SERIAL_VERSION_UID.equals(name)) {
+      return true;
+    }
+    final Matcher matcher = m_regexPattern.matcher(name);
+    return matcher.matches();
+  }
+
+  @Nullable
+  public LocalInspectionTool getSharedLocalInspectionTool() {
+    return new LocalPackageNamingConventionInspection(this);
+  }
+
+  private static class LocalPackageNamingConventionInspection extends BaseSharedLocalInspection<PackageNamingConventionInspection> {
+
+    public LocalPackageNamingConventionInspection(PackageNamingConventionInspection inspection) {
+      super(inspection);
+    }
+
+    @NotNull
+    @Override
+    protected String buildErrorString(Object... infos) {
+      final String name = (String)infos[0];
+      if (name.length() < mySettingsDelegate.m_minLength) {
+        return InspectionGadgetsBundle.message("package.naming.convention.problem.descriptor.short", name);
+      }
+      else if (name.length() > mySettingsDelegate.m_maxLength) {
+        return InspectionGadgetsBundle.message("package.naming.convention.problem.descriptor.long", name);
+      }
+      else {
+        return InspectionGadgetsBundle.message("package.naming.convention.problem.descriptor.regex.mismatch",
+                                               name, mySettingsDelegate.m_regex);
+      }
+    }
+
+    @Override
+    public BaseInspectionVisitor buildVisitor() {
+      return new BaseInspectionVisitor() {
+
+        @Override
+        public void visitPackageStatement(PsiPackageStatement statement) {
+          final PsiJavaCodeReferenceElement reference = statement.getPackageReference();
+          if (reference == null) {
+            return;
+          }
+          final String text = reference.getText();
+          int start = 0;
+          int index = text.indexOf('.', start);
+          while (index > 0) {
+            final String name = text.substring(start, index);
+            if (!mySettingsDelegate.isValid(name)) {
+              registerErrorAtOffset(reference, start, index - start, name);
+            }
+            start = index + 1;
+            index = text.indexOf('.', start);
+          }
+          final String lastName = text.substring(start);
+          if (!mySettingsDelegate.isValid(lastName)) {
+            registerErrorAtOffset(reference, start, lastName.length(), lastName);
+          }
+        }
+      };
+    }
   }
 }

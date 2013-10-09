@@ -15,9 +15,8 @@
  */
 package com.intellij.ide.projectWizard;
 
-import com.intellij.framework.FrameworkGroup;
-import com.intellij.framework.FrameworkTypeEx;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
+import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
 import com.intellij.ide.util.newProjectWizard.TemplatesGroup;
@@ -33,6 +32,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
@@ -41,6 +41,7 @@ import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -135,7 +136,6 @@ public class ProjectTypeStep extends ModuleWizardStep {
 
     myProjectTypeTree.setModel(new DefaultTreeModel(root));
     TreeUtil.expandAll(myProjectTypeTree);
-    myProjectTypeTree.addSelectionRow(0);
 
     myProjectTypeTree.setCellRenderer(new ColoredTreeCellRenderer() {
       @Override
@@ -181,7 +181,9 @@ public class ProjectTypeStep extends ModuleWizardStep {
     Disposer.register(wizard.getDisposable(), myFrameworksPanel);
 
     myOptionsPanel.add(myFrameworksPanel.getMainPanel(), FRAMEWORKS_CARD);
-//    myProjectTypeTree.getSelectionModel().s
+
+    // todo save selection
+    myProjectTypeTree.addSelectionRow(1);
   }
 
   @Nullable
@@ -199,7 +201,7 @@ public class ProjectTypeStep extends ModuleWizardStep {
   private void updateOptionsPanel(Object object) {
     String card = GROUP_CARD;
     if (object instanceof ProjectCategory) {
-      ProjectCategory projectCategory = (ProjectCategory)object;
+      final ProjectCategory projectCategory = (ProjectCategory)object;
       ModuleBuilder builder = myBuilders.get(projectCategory);
       JComponent panel = builder.getCustomOptionsPanel(new Disposable() {
         @Override
@@ -215,14 +217,16 @@ public class ProjectTypeStep extends ModuleWizardStep {
       }
       else {
         card = FRAMEWORKS_CARD;
-        List<FrameworkSupportInModuleProvider> providers = new ArrayList<FrameworkSupportInModuleProvider>();
-        for (FrameworkSupportInModuleProvider framework : FrameworkSupportUtil.getAllProviders()) {
-          if (matchFramework(projectCategory, framework)) {
-            providers.add(framework);
-          }
-        }
-        myFrameworksPanel.setProviders(providers);
-        for (FrameworkSupportInModuleProvider provider : providers) {
+        List<FrameworkSupportInModuleProvider> allProviders = FrameworkSupportUtil.getProviders(builder);
+        List<FrameworkSupportInModuleProvider> matched =
+          ContainerUtil.filter(allProviders, new Condition<FrameworkSupportInModuleProvider>() {
+            @Override
+            public boolean value(FrameworkSupportInModuleProvider provider) {
+              return matchFramework(projectCategory, provider);
+            }
+          });
+        myFrameworksPanel.setProviders(matched);
+        for (FrameworkSupportInModuleProvider provider : matched) {
           if (ArrayUtil.contains(provider.getFrameworkType().getId(), projectCategory.getAssociatedFrameworkIds())) {
             CheckedTreeNode treeNode = myFrameworksPanel.findNodeFor(provider);
             treeNode.setChecked(true);
@@ -236,8 +240,13 @@ public class ProjectTypeStep extends ModuleWizardStep {
     ((CardLayout)myOptionsPanel.getLayout()).show(myOptionsPanel, card);
   }
 
-  private static boolean matchFramework(ProjectCategory projectCategory, FrameworkSupportInModuleProvider framework) {
+  private boolean matchFramework(ProjectCategory projectCategory, FrameworkSupportInModuleProvider framework) {
 
+    if (!framework.isEnabledForModuleBuilder(myBuilders.get(projectCategory))) return false;
+
+    if (framework.getRoles().length == 0) return true;
+
+    /*
     String[] ids = framework.getProjectCategories();
     if (ids.length > 0) {
       return ArrayUtil.contains(projectCategory.getId(), ids);
@@ -262,6 +271,11 @@ public class ProjectTypeStep extends ModuleWizardStep {
     }
 
     return framework.isEnabledForModuleBuilder(projectCategory.createModuleBuilder());
+    */
+
+    List<FrameworkRole> frameworkRoles = Arrays.asList(framework.getRoles());
+    List<FrameworkRole> acceptable = Arrays.asList(projectCategory.getAcceptableFrameworkRoles());
+    return ContainerUtil.intersects(frameworkRoles, acceptable);
   }
 
   @Override

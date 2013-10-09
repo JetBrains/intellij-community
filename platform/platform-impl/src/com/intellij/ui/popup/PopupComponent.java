@@ -136,12 +136,23 @@ public interface PopupComponent {
       if (!myRequestFocus) {
         myDialog.setFocusableWindowState(false);
       }
-      if (UIUtil.isUnderDarcula()) {
-        AWTUtilities.setWindowOpaque(myDialog, false);
+
+      try {
+        if (UIUtil.isUnderDarcula()) {
+          AWTUtilities.setWindowOpaque(myDialog, false);
+        }
       }
+      catch (Exception ignore) {
+      }
+
       myDialog.setVisible(true);
-      if (UIUtil.isUnderDarcula()) {
-        AWTUtilities.setWindowOpaque(myDialog, true);
+
+      try {
+        if (UIUtil.isUnderDarcula()) {
+          AWTUtilities.setWindowOpaque(myDialog, true);
+        }
+      }
+      catch (Exception ignore) {
       }
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {

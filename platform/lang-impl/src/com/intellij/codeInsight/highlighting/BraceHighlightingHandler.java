@@ -55,6 +55,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
@@ -493,7 +494,8 @@ public class BraceHighlightingHandler {
               int start = lbraceStart;
               if (!(myPsiFile instanceof PsiPlainTextFile) && myPsiFile.isValid()) {
                 PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-                start = BraceMatchingUtil.getBraceMatcher(getFileTypeByOffset(lbraceStart), PsiUtilBase.getLanguageAtOffset(myPsiFile, lbraceStart)).getCodeConstructStart(myPsiFile, lbraceStart);
+                start = BraceMatchingUtil.getBraceMatcher(getFileTypeByOffset(lbraceStart), PsiUtilCore
+                  .getLanguageAtOffset(myPsiFile, lbraceStart)).getCodeConstructStart(myPsiFile, lbraceStart);
               }
               TextRange range = new TextRange(start, lbraceEnd);
               int line1 = myDocument.getLineNumber(range.getStartOffset());

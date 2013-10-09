@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,9 +43,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -56,6 +58,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
@@ -231,7 +234,7 @@ public class CodeCompletionHandlerBase {
     }
     if (elementAt == null) return true;
 
-    Language language = PsiUtilBase.findLanguageFromElement(elementAt);
+    Language language = PsiUtilCore.findLanguageFromElement(elementAt);
 
     for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
       final ThreeState result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset);
@@ -759,7 +762,7 @@ public class CodeCompletionHandlerBase {
 
   private static PsiFile createFileCopy(PsiFile file) {
     final VirtualFile virtualFile = file.getVirtualFile();
-    if (file.isPhysical() && virtualFile != null && virtualFile.getFileSystem() == LocalFileSystem.getInstance()
+    if (file.isPhysical() && virtualFile != null && virtualFile.isInLocalFileSystem()
         // must not cache injected file copy, since it does not reflect changes in host document
         && !InjectedLanguageManager.getInstance(file.getProject()).isInjectedFragment(file)) {
       final SoftReference<Pair<PsiFile, Document>> reference = file.getUserData(FILE_COPY_KEY);

@@ -124,7 +124,7 @@ public class VfsImplUtil {
   @Nullable
   private static Pair<NewVirtualFile, Iterable<String>> prepare(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
     String normalizedPath = normalize(vfs, path);
-    if (StringUtil.isEmptyOrSpaces(normalizedPath) || normalizedPath == null) {
+    if (StringUtil.isEmptyOrSpaces(normalizedPath)) {
       return null;
     }
 

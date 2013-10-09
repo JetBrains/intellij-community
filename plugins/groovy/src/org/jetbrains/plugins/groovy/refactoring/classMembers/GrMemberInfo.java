@@ -165,7 +165,7 @@ public class GrMemberInfo extends MemberInfoBase<GrMember> {
                                                               final List<GrMemberInfo> result,
                                                               final Set<PsiClass> processed) {
     if (referenceList != null) {
-      final PsiClassType[] extendsListTypes = referenceList.getReferenceTypes();
+      final PsiClassType[] extendsListTypes = referenceList.getReferencedTypes();
       for (PsiClassType extendsListType : extendsListTypes) {
         final PsiClass aSuper = extendsListType.resolve();
         if (aSuper instanceof GrTypeDefinition) {

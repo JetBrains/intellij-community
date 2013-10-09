@@ -1202,12 +1202,22 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
           myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression)
                          .descriptionAndTooltip(HighlightUtil.buildProblemWithAccessDescription(expression, resolveResult)).create());
         }
-      }
 
-      if (functionalInterfaceType != null && LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType) != null && !myHolder.hasErrorResults()) {
-        final String errorMessage = PsiMethodReferenceUtil.checkMethodReferenceContext(expression);
-        if (errorMessage != null) {
-          myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(errorMessage).create());
+        final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(resolveResult);
+        if (interfaceMethod != null) {
+          if (!myHolder.hasErrorResults()) {
+            final String errorMessage = PsiMethodReferenceUtil.checkMethodReferenceContext(expression);
+            if (errorMessage != null) {
+              myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(errorMessage).create());
+            }
+          }
+
+          if (!myHolder.hasErrorResults()) {
+            final String badReturnTypeMessage = PsiMethodReferenceUtil.checkReturnType(expression, result, functionalInterfaceType);
+            if (badReturnTypeMessage != null) {
+              myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(badReturnTypeMessage).create());
+            }
+          }
         }
       }
     }

@@ -21,6 +21,7 @@ package org.jetbrains.plugins.terminal;
 
 import com.google.common.base.Predicate;
 import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -64,7 +65,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener {
     });
 
     registerKeymapActions(this);
-    
+
     addFocusListener(this);
   }
 
@@ -174,7 +175,9 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener {
 
   @Override
   public void focusGained(FocusEvent event) {
-    FileDocumentManager.getInstance().saveAllDocuments();
+    if (GeneralSettings.getInstance().isAutoSaveIfInactive()) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+    }
   }
 
   @Override

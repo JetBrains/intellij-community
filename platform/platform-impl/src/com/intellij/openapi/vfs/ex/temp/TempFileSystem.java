@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,14 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -35,12 +36,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author max
  */
-public class TempFileSystem extends NewVirtualFileSystem {
+public class TempFileSystem extends LocalFileSystemBase {
   private final FSItem myRoot = new FSDir(null, "/");
 
   public static TempFileSystem getInstance() {
@@ -180,7 +183,7 @@ public class TempFileSystem extends NewVirtualFileSystem {
   }
 
   @Override
-  public void setTimeStamp(@NotNull final VirtualFile file, final long timeStamp) throws IOException {
+  public void setTimeStamp(@NotNull final VirtualFile file, final long timeStamp) {
     final FSItem fsItem = convert(file);
     assert fsItem != null;
 
@@ -369,5 +372,29 @@ public class TempFileSystem extends NewVirtualFileSystem {
     if (item == null) return null;
     final long length = item instanceof FSFile ? ((FSFile)item).myContent.length : 0;
     return new FileAttributes(item.isDirectory(), false, false, false, length, item.myTimestamp, item.myWritable);
+  }
+
+  @NotNull
+  @Override
+  public Set<WatchRequest> addRootsToWatch(@NotNull Collection<String> rootPaths, boolean watchRecursively) {
+    throw new IncorrectOperationException();
+  }
+
+  @Override
+  public void removeWatchedRoots(@NotNull Collection<WatchRequest> watchRequests) {
+    throw new IncorrectOperationException();
+  }
+
+  @Override
+  public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequests,
+                                               @Nullable Collection<String> recursiveRoots,
+                                               @Nullable Collection<String> flatRoots) {
+    throw new IncorrectOperationException();
+  }
+
+  @Nullable
+  @Override
+  protected String normalize(@NotNull String path) {
+    return path;
   }
 }
