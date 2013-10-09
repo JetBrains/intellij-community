@@ -17,6 +17,7 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.framework.FrameworkOrGroup;
 import com.intellij.framework.FrameworkVersion;
+import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
@@ -117,6 +118,12 @@ public class FrameworksTree extends CheckboxTree {
           FrameworkVersion version = myModel.getSelectedVersion(object.getId());
           if (version != null) {
             getTextRenderer().append(" " + version.getPresentableName());
+          }
+          else {
+            FrameworkLibraryVersion libraryVersion = myModel.getSelectedLibraryVersion(object.getId());
+            if (libraryVersion != null) {
+              getTextRenderer().append(" " + libraryVersion.getDefaultLibraryName());
+            }
           }
         }
         getTextRenderer().setIcon(node.getIcon());

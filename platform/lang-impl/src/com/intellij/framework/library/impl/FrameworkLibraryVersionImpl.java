@@ -45,18 +45,6 @@ public class FrameworkLibraryVersionImpl extends DownloadableFileSetDescriptionI
   }
 
   @NotNull
-  @Override
-  public String getId() {
-    return myVersionString;
-  }
-
-  @NotNull
-  @Override
-  public String getPresentableName() {
-    return getDefaultLibraryName();
-  }
-
-  @NotNull
   public FrameworkAvailabilityCondition getAvailabilityCondition() {
     return myAvailabilityCondition;
   }

@@ -22,6 +22,7 @@ import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.framework.library.FrameworkLibraryVersionFilter;
+import com.intellij.framework.library.impl.FrameworkLibraryVersionImpl;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableListener;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelAdapter;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
@@ -101,7 +102,7 @@ public class FrameworkSupportOptionsComponent {
         @Override
         protected void onVersionChanged(FrameworkLibraryVersion version) {
           if (myFrameworkVersionComponent == null) {
-            myModel.setSelectedVersion(provider.getId(), version);
+            myModel.setSelectedLibraryVersion(provider.getId(), version);
           }
         }
       };
@@ -138,7 +139,7 @@ public class FrameworkSupportOptionsComponent {
       @Override
       public boolean isAccepted(@NotNull FrameworkLibraryVersion version) {
         return myConfigurable.getLibraryVersionFilter().isAccepted(version) &&
-               version.getAvailabilityCondition().isAvailableFor(myModel);
+               ((FrameworkLibraryVersionImpl)version).getAvailabilityCondition().isAvailableFor(myModel);
       }
     };
   }

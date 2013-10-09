@@ -19,6 +19,7 @@ import com.intellij.facet.impl.ui.libraries.FrameworkLibraryProvider;
 import com.intellij.framework.FrameworkVersion;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.framework.addSupport.FrameworkVersionListener;
+import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelListener;
@@ -53,6 +54,7 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
   private final Map<String, FrameworkSupportNode> mySettingsMap = new HashMap<String, FrameworkSupportNode>();
   private final Map<String, FrameworkSupportOptionsComponent> myOptionsComponentsMap = new HashMap<String, FrameworkSupportOptionsComponent>();
   private final Map<String, FrameworkVersion> mySelectedVersions = new HashMap<String, FrameworkVersion>();
+  private final Map<String, FrameworkLibraryVersion> myLibraryVersions = new HashMap<String, FrameworkLibraryVersion>();
   private FrameworkLibraryProvider myLibraryProvider;
 
   public FrameworkSupportModelBase(final @Nullable Project project, @Nullable ModuleBuilder builder, @NotNull LibrariesContainer librariesContainer) {
@@ -200,5 +202,13 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
   @NotNull
   public LibrariesContainer getLibrariesContainer() {
     return myLibrariesContainer;
+  }
+
+  public void setSelectedLibraryVersion(String id, FrameworkLibraryVersion version) {
+    myLibraryVersions.put(id, version);
+  }
+
+  public FrameworkLibraryVersion getSelectedLibraryVersion(String id) {
+    return myLibraryVersions.get(id);
   }
 }

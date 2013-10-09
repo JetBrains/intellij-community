@@ -20,8 +20,10 @@ import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
 import com.intellij.framework.FrameworkGroup;
+import com.intellij.framework.FrameworkVersion;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
+import com.intellij.framework.addSupport.FrameworkVersionListener;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
@@ -49,6 +51,7 @@ import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -96,6 +99,12 @@ public class AddSupportForFrameworksPanel implements Disposable {
         onFrameworkStateChanged();
       }
     };
+    model.addFrameworkVersionListener(new FrameworkVersionListener() {
+      @Override
+      public void versionChanged(@NotNull FrameworkVersion version) {
+        ((DefaultTreeModel)myFrameworksTree.getModel()).nodeChanged(getSelectedNode());
+      }
+    }, this);
     setProviders(providers);
 
     myFrameworksTree.addTreeSelectionListener(new TreeSelectionListener() {
