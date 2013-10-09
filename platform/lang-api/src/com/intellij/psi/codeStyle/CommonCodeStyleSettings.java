@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,7 @@ public class CommonCodeStyleSettings {
   private ArrangementSettings myArrangementSettings;
   private CodeStyleSettings   myRootSettings;
   private IndentOptions       myIndentOptions;
-  private FileType            myFileType;
+  private final FileType myFileType;
   private boolean             myForceArrangeMenuAvailable;
 
   @NonNls private static final String INDENT_OPTIONS_TAG = "indentOptions";
@@ -61,10 +61,7 @@ public class CommonCodeStyleSettings {
   }
 
   public CommonCodeStyleSettings(Language language) {
-    myLanguage = language;
-    if (language != null) {
-      myFileType = language.getAssociatedFileType();
-    }
+    this(language, language == null ? null : language.getAssociatedFileType());
   }
 
   void setRootSettings(@NotNull CodeStyleSettings rootSettings) {
