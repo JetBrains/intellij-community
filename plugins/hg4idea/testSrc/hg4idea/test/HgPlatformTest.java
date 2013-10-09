@@ -19,8 +19,11 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.UsefulTestCase;
+import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import org.zmlx.hg4idea.HgVcs;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,20 +36,22 @@ import static hg4idea.test.HgExecutor.hg;
  * The base class for tests of hg4idea plugin.<br/>
  * Extend this test to write a test on Mercurial which has the following features/limitations:
  * <ul>
- *   <li>This is a {@link LightPlatformTestCase}, which means that IDEA [almost] production platform is set up before the test starts.</li>
- *   <li>Project base directory is the root of everything. It can contain as much nested repositories as needed,
- *       but if you need to test the case when hg repository is <b>above</b> the project dir, you need either to adjust this base class,
- *       or create another one.</li>
- *   <li>Initially one repository is created with the project dir as its root. I. e. all project is under Mercurial.</li>
+ * <li>This is a "platform test case", which means that IDEA [almost] production platform is set up before the test starts.</li>
+ * <li>Project base directory is the root of everything. It can contain as much nested repositories as needed,
+ * but if you need to test the case when hg repository is <b>above</b> the project dir, you need either to adjust this base class,
+ * or create another one.</li>
+ * <li>Initially one repository is created with the project dir as its root. I. e. all project is under Mercurial.</li>
  * </ul>
  *
  * @author Kirill Likhodedov
  */
-public abstract class HgPlatformTest extends LightPlatformTestCase {
+public abstract class HgPlatformTest extends UsefulTestCase {
 
   protected Project myProject;
   protected VirtualFile myProjectRoot;
   protected VirtualFile myRepository;
+
+  private IdeaProjectTestFixture myProjectFixture;
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected HgPlatformTest() {
@@ -55,17 +60,28 @@ public abstract class HgPlatformTest extends LightPlatformTestCase {
 
   @Override
   protected void setUp() throws Exception {
-    cd(FileUtil.getTempDirectory());
-    hg("version");
-
     super.setUp();
+    myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getTestName(true)).getFixture();
+    myProjectFixture.setUp();
 
-    myProject = getProject();
+    myProject = myProjectFixture.getProject();
     myProjectRoot = myProject.getBaseDir();
 
+    cd(myProjectRoot);
+    hg("version");
+
     createRepository(myProjectRoot);
+    HgVcs hgVcs = HgVcs.getInstance(myProject);
+    assertNotNull(hgVcs);
+    hgVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
     myRepository = myProjectRoot;
     setUpHgrc(myRepository);
+  }
+
+  @Override
+  protected void tearDown() throws Exception {
+    myProjectFixture.tearDown();
+    super.tearDown();
   }
 
   private static void setUpHgrc(VirtualFile repository) {
@@ -95,5 +111,4 @@ public abstract class HgPlatformTest extends LightPlatformTestCase {
     hg("add file.txt");
     hg("commit -m initial");
   }
-
 }
