@@ -55,7 +55,7 @@ public class PluginsAdvertiser implements StartupActivity {
     final String buildNumber = ApplicationInfo.getInstance().getBuild().asString();
     final String pluginRepositoryUrl = "http://plugins.jetbrains.com/feature/getImplementations?" +
                                        "featureType=" + featureType +
-                                       "&implementationName=" + implementationName +
+                                       "&implementationName=" + implementationName.replaceAll("#", "%23") +
                                        "&build=" + buildNumber;
     try {
       HttpURLConnection connection = HttpConfigurable.getInstance().openHttpConnection(pluginRepositoryUrl);
