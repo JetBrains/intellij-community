@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,10 +41,20 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.HtmlUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.LinkedList;
 import java.util.List;
 
 public class HtmlSelectioner extends AbstractWordSelectioner {
+
+  private static final SelectWordUtil.CharCondition JAVA_IDENTIFIER_AND_HYPHEN_CONDITION = new SelectWordUtil.CharCondition() {
+    @Override
+    public boolean value(char ch) {
+      return Character.isJavaIdentifierPart(ch) || ch == '-';
+    }
+  };
 
   public boolean canSelect(PsiElement e) {
     return canSelectElement(e);
@@ -57,7 +67,7 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
     return false;
   }
 
-  public List<TextRange> select(PsiElement e, CharSequence editorText, int cursorOffset, Editor editor) {
+  public List<TextRange> select(PsiElement e, @NotNull CharSequence editorText, int cursorOffset, @NotNull Editor editor) {
     List<TextRange> result;
 
     if (!(e instanceof XmlToken) ||
@@ -77,11 +87,11 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
     PsiFile psiFile = e.getContainingFile();
     FileType fileType = psiFile.getVirtualFile().getFileType();
 
-    addAttributeSelection(result, e);
+    addAttributeSelection(result, editor, editorText, e);
     final FileViewProvider fileViewProvider = psiFile.getViewProvider();
     for (Language lang : fileViewProvider.getLanguages()) {
       final PsiFile langFile = fileViewProvider.getPsi(lang);
-      if (langFile != psiFile) addAttributeSelection(result, fileViewProvider.findElementAt(cursorOffset, lang));
+      if (langFile != psiFile) addAttributeSelection(result, editor, editorText, fileViewProvider.findElementAt(cursorOffset, lang));
     }
 
     EditorHighlighter highlighter = HighlighterFactory.createHighlighter(e.getProject(), psiFile.getVirtualFile());
@@ -92,11 +102,8 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
     return result;
   }
 
-  private static void addTagSelection(CharSequence editorText,
-                                      int cursorOffset,
-                                      FileType fileType,
-                                      EditorHighlighter highlighter,
-                                      List<TextRange> result) {
+  private static void addTagSelection(CharSequence editorText, int cursorOffset, FileType fileType,
+                                      @NotNull EditorHighlighter highlighter, @NotNull List<TextRange> result) {
     int start = cursorOffset;
 
     while (true) {
@@ -136,7 +143,8 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
     }
   }
 
-  private static void addAttributeSelection(List<TextRange> result, PsiElement e) {
+  private static void addAttributeSelection(@NotNull List<TextRange> result, @NotNull Editor editor, 
+                                            @NotNull CharSequence editorText, @Nullable PsiElement e) {
     final XmlAttribute attribute = PsiTreeUtil.getParentOfType(e, XmlAttribute.class);
 
     if (attribute != null) {
@@ -144,12 +152,28 @@ public class HtmlSelectioner extends AbstractWordSelectioner {
       final XmlAttributeValue value = attribute.getValueElement();
 
       if (value != null) {
+        if ("class".equalsIgnoreCase(attribute.getName())) {
+          addClassAttributeRanges(result, editor, editorText, value);
+        }
         final TextRange range = value.getTextRange();
         result.add(range);
         if (value.getFirstChild() != null &&
             value.getFirstChild().getNode().getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER) {
           result.add(new TextRange(range.getStartOffset() + 1, range.getEndOffset() - 1));
         }
+      }
+    }
+  }
+
+  private static void addClassAttributeRanges(@NotNull List<TextRange> result, @NotNull Editor editor, 
+                                              @NotNull CharSequence editorText, @NotNull XmlAttributeValue attributeValue) {
+    final TextRange attributeValueTextRange = attributeValue.getTextRange();
+    final LinkedList<TextRange> wordRanges = ContainerUtil.newLinkedList();
+    SelectWordUtil.addWordSelection(editor.getSettings().isCamelWords(), editorText, editor.getCaretModel().getOffset(), wordRanges,
+                                    JAVA_IDENTIFIER_AND_HYPHEN_CONDITION);
+    for (TextRange range : wordRanges) {
+      if (attributeValueTextRange.contains(range)) {
+        result.add(range);
       }
     }
   }
