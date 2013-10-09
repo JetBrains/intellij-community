@@ -15,24 +15,23 @@
  */
 package org.jetbrains.idea.svn;
 
-import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.HashSet;
 import java.util.Set;
 
-public class NestedCopiesData implements Consumer<Set<NestedCopiesBuilder.MyPointInfo>> {
-  // we can keep the type here also, but 
-  private final Set<NestedCopiesBuilder.MyPointInfo> mySet;
+public class NestedCopiesHolder {
 
-  public NestedCopiesData() {
-    mySet = new HashSet<NestedCopiesBuilder.MyPointInfo>();
+  private final Set<NestedCopyInfo> mySet = ContainerUtil.newHashSet();
+
+  public synchronized void add(@NotNull final Set<NestedCopyInfo> data) {
+    mySet.addAll(data);
   }
 
-  public void consume(final Set<NestedCopiesBuilder.MyPointInfo> nestedCopyTypeSet) {
-    mySet.addAll(nestedCopyTypeSet);
-  }
+  public synchronized Set<NestedCopyInfo> getAndClear() {
+    Set<NestedCopyInfo> copy = ContainerUtil.newHashSet(mySet);
+    mySet.clear();
 
-  public Set<NestedCopiesBuilder.MyPointInfo> getSet() {
-    return mySet;
+    return copy;
   }
 }

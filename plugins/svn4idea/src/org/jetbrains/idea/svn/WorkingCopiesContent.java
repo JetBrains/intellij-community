@@ -15,10 +15,15 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentI;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.dialogs.CopiesPanel;
 
 public class WorkingCopiesContent {
@@ -45,6 +50,21 @@ public class WorkingCopiesContent {
       final ChangesViewContentI cvcm = ChangesViewContentManager.getInstance(myVcs.getProject());
       cvcm.removeContent(myShownContent);
       myShownContent = null;
+    }
+  }
+
+  public static void show(@NotNull Project project) {
+    final ToolWindowManager manager = ToolWindowManager.getInstance(project);
+    if (manager != null) {
+      final ToolWindow window = manager.getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID);
+      if (window != null) {
+        window.show(null);
+        final ContentManager cm = window.getContentManager();
+        final Content content = cm.findContent(SvnBundle.message("dialog.show.svn.map.title"));
+        if (content != null) {
+          cm.setSelectedContent(content, true);
+        }
+      }
     }
   }
 }

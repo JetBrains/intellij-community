@@ -159,13 +159,7 @@ public class CommandUtil {
   }
 
   public static String escape(@NotNull String path) {
-    String result = path;
-
-    if (path.contains("@")) {
-      result += "@";
-    }
-
-    return result;
+    return path.contains("@") ? path + "@" : path;
   }
 
   public static <T> T parse(@NotNull String data, @NotNull Class<T> type) throws JAXBException {

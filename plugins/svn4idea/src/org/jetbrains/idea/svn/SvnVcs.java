@@ -1000,12 +1000,8 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private void handleInfoException(SVNException e) {
     final SVNErrorCode errorCode = e.getErrorMessage().getErrorCode();
 
-    if (!myLogExceptions || 
-        SVNErrorCode.WC_PATH_NOT_FOUND.equals(errorCode) ||
-        SVNErrorCode.UNVERSIONED_RESOURCE.equals(errorCode) ||
-        SVNErrorCode.WC_NOT_WORKING_COPY.equals(errorCode) ||
-        // thrown when getting info from repository for non-existent item - like HEAD revision for deleted file
-        SVNErrorCode.ILLEGAL_TARGET.equals(errorCode) ||
+    if (!myLogExceptions ||
+        SvnUtil.isUnversionedOrNotFound(errorCode) ||
         // do not log working copy format vs client version inconsistencies as errors
         SVNErrorCode.WC_UNSUPPORTED_FORMAT.equals(errorCode) ||
         SVNErrorCode.WC_UPGRADE_REQUIRED.equals(errorCode)) {
@@ -1016,15 +1012,21 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
   }
 
+  @NotNull
   public WorkingCopyFormat getWorkingCopyFormat(@NotNull File ioFile) {
-    RootUrlInfo rootInfo = getSvnFileUrlMapping().getWcRootForFilePath(ioFile);
-    WorkingCopyFormat format = rootInfo != null ? rootInfo.getFormat() : WorkingCopyFormat.UNKNOWN;
+    return getWorkingCopyFormat(ioFile, true);
+  }
 
-    if (WorkingCopyFormat.UNKNOWN.equals(format)) {
-      format = SvnFormatSelector.findRootAndGetFormat(ioFile);
+  @NotNull
+  public WorkingCopyFormat getWorkingCopyFormat(@NotNull File ioFile, boolean useMapping) {
+    WorkingCopyFormat format = WorkingCopyFormat.UNKNOWN;
+
+    if (useMapping) {
+      RootUrlInfo rootInfo = getSvnFileUrlMapping().getWcRootForFilePath(ioFile);
+      format = rootInfo != null ? rootInfo.getFormat() : WorkingCopyFormat.UNKNOWN;
     }
 
-    return format;
+    return WorkingCopyFormat.UNKNOWN.equals(format) ? SvnFormatSelector.findRootAndGetFormat(ioFile) : format;
   }
 
   public void refreshSSLProperty() {
@@ -1199,11 +1201,20 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     final List<WCInfo> infos = new ArrayList<WCInfo>();
     for (RootUrlInfo info : infoList) {
       final File file = info.getIoFile();
-      infos.add(new WCInfo(file.getAbsolutePath(), info.getAbsoluteUrlAsUrl(),
-                           info.getFormat(), info.getRepositoryUrl(), SvnUtil.isWorkingCopyRoot(file), info.getType(),
-                           SvnUtil.getDepth(this, file)));
+
+      infos.add(new WCInfo(info, SvnUtil.isWorkingCopyRoot(file), SvnUtil.getDepth(this, file)));
     }
     return infos;
+  }
+
+  public List<WCInfo> getWcInfosWithErrors() {
+    List<WCInfo> result = new ArrayList<WCInfo>(getAllWcInfos());
+
+    for (RootUrlInfo info : getSvnFileUrlMapping().getErrorRoots()) {
+      result.add(new WCInfo(info, SvnUtil.isWorkingCopyRoot(info.getIoFile()), SVNDepth.UNKNOWN));
+    }
+
+    return result;
   }
 
   @Override
@@ -1256,9 +1267,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
       }
       infos.add(new MyPair<S>(vf, url.toString(), s));
     }
-    final List<MyPair<S>> filtered = new ArrayList<MyPair<S>>(infos.size());
-    ForNestedRootChecker.filterOutSuperfluousChildren(this, infos, filtered);
-
+    final List<MyPair<S>> filtered = new UniqueRootsFilter().filter(infos);
     final List<S> converted = ObjectsConvertor.convert(filtered, new Convertor<MyPair<S>, S>() {
       @Override
       public S convert(final MyPair<S> o) {
@@ -1376,7 +1385,12 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
   @NotNull
   public ClientFactory getFactory(@NotNull File file) {
-    return getFactory(getWorkingCopyFormat(file), true);
+    return getFactory(file, true);
+  }
+
+  @NotNull
+  public ClientFactory getFactory(@NotNull File file, boolean useMapping) {
+    return getFactory(getWorkingCopyFormat(file, useMapping), true);
   }
 
   @NotNull

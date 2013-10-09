@@ -272,10 +272,9 @@ public class SvnRecursiveStatusWalker {
         }
         if (vf != null) {
           if (myCurrentItem.isIsInnerCopyRoot()) {
-            myReceiver.processCopyRoot(vf, statusInner.getURL(),
-                                     WorkingCopyFormat.getInstance(statusInner.getWorkingCopyFormat()), statusInner.getRepositoryRootURL());
+            myReceiver.processCopyRoot(vf, statusInner.getURL(), myVcs.getWorkingCopyFormat(ioFile), statusInner.getRepositoryRootURL());
           } else {
-            myReceiver.bewareRoot(vf, statusInner.getURL(), WorkingCopyFormat.getInstance(statusInner.getWorkingCopyFormat()));
+            myReceiver.bewareRoot(vf, statusInner.getURL());
           }
         }
       }

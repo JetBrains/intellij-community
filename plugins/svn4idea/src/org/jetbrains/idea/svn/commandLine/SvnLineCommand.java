@@ -220,6 +220,14 @@ public class SvnLineCommand extends SvnCommand {
     if (errText.startsWith(UNABLE_TO_CONNECT_CODE) && errText.contains(CANNOT_AUTHENTICATE_TO_PROXY)) {
       return new ProxyCallback(callback, url);
     }
+    // https one-way protocol untrusted server certificate
+    if (errText.contains(UNTRUSTED_SERVER_CERTIFICATE)) {
+      return new CertificateCallbackCase(callback, url);
+    }
+    // https two-way protocol invalid client certificate
+    if (errText.contains(ACCESS_TO_PREFIX) && errText.contains(FORBIDDEN_STATUS)) {
+      return new TwoWaySslCallback(callback, url);
+    }
     // http/https protocol invalid credentials
     if (errText.contains(AUTHENTICATION_FAILED_MESSAGE)) {
       return new UsernamePasswordCallback(callback, url);
@@ -232,14 +240,6 @@ public class SvnLineCommand extends SvnCommand {
     // http/https protocol, svn 1.7, non-interactive
     if (errText.contains(UNABLE_TO_CONNECT_MESSAGE)) {
       return new UsernamePasswordCallback(callback, url);
-    }
-    // https one-way protocol untrusted server certificate
-    if (errText.contains(UNTRUSTED_SERVER_CERTIFICATE)) {
-      return new CertificateCallbackCase(callback, url);
-    }
-    // https two-way protocol invalid client certificate
-    if (errText.contains(ACCESS_TO_PREFIX) && errText.contains(FORBIDDEN_STATUS)) {
-      return new TwoWaySslCallback(callback, url);
     }
     return null;
   }
@@ -289,15 +289,6 @@ public class SvnLineCommand extends SvnCommand {
       }
 
       return urlValue != null ? parseUrl(urlValue) : null;
-    }
-
-    private SVNURL parseUrl(String urlValue) {
-      try {
-        return SVNURL.parseURIEncoded(urlValue);
-      }
-      catch (SVNException e) {
-        return null;
-      }
     }
   }
 
@@ -350,7 +341,24 @@ public class SvnLineCommand extends SvnCommand {
 
     @Override
     public boolean getCredentials(final String errText) throws SvnBindException {
-      // parse realm from error text
+      String realm = getRealm(errText);
+
+      if (!errText.startsWith(CERTIFICATE_ERROR)) {
+        // if we do not have explicit realm in error message - use server url and not full repository url
+        // as SVNKit lifecycle resolves ssl realm (for saving certificate to runtime storage) as server url
+        SVNURL serverUrl = getServerUrl(realm);
+        realm = serverUrl != null ? serverUrl.toString() : realm;
+      }
+
+      if (! myTried && myAuthenticationCallback.acceptSSLServerCertificate(myUrl, realm)) {
+        accepted = true;
+        myTried = true;
+        return true;
+      }
+      throw new SvnBindException("Server SSL certificate rejected");
+    }
+
+    private static String getRealm(String errText) throws SvnBindException {
       String realm = errText;
       final int idx1 = realm.indexOf('\'');
       if (idx1 == -1) {
@@ -361,12 +369,7 @@ public class SvnLineCommand extends SvnCommand {
         throw new SvnBindException("Can not detect authentication realm name: " + errText);
       }
       realm = realm.substring(idx1 + 1, idx2);
-      if (! myTried && myAuthenticationCallback.acceptSSLServerCertificate(myUrl, realm)) {
-        accepted = true;
-        myTried = true;
-        return true;
-      }
-      throw new SvnBindException("Server SSL certificate rejected");
+      return realm;
     }
 
     @Override
@@ -376,6 +379,21 @@ public class SvnLineCommand extends SvnCommand {
         // force --non-interactive as it is required by --trust-server-cert, but --non-interactive is not default mode for 1.7 or earlier
         parameters.add("--non-interactive");
       }
+    }
+
+    private SVNURL getServerUrl(String realm) {
+      SVNURL result = parseUrl(realm);
+
+      while(result != null && !StringUtil.isEmpty(result.getPath())) {
+        try {
+          result = result.removePathTail();
+        }
+        catch (SVNException e) {
+          result = null;
+        }
+      }
+
+      return result;
     }
   }
 
@@ -421,6 +439,15 @@ public class SvnLineCommand extends SvnCommand {
     abstract boolean getCredentials(final String errText) throws SvnBindException;
 
     public void updateParameters(List<String> parameters) {
+    }
+
+    protected SVNURL parseUrl(String urlValue) {
+      try {
+        return SVNURL.parseURIEncoded(urlValue);
+      }
+      catch (SVNException e) {
+        return null;
+      }
     }
   }
 
