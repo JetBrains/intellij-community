@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util.io;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
 import org.junit.AfterClass;
@@ -27,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * @author Irina.Chernushina, lene
@@ -213,6 +215,8 @@ public class FileUtilHeavyTest {
 
   @Test
   public void testSymlinkDeletion() throws Exception {
+    assumeTrue(SystemInfo.isWin7OrNewer || SystemInfo.isUnix);
+
     File targetDir = IoTestUtil.createTestDir(myTempDirectory, "link_del_test_1");
     IoTestUtil.createTestFile(targetDir, "file");
     File linkDir = IoTestUtil.createTestDir(myTempDirectory, "link_del_test_2");
