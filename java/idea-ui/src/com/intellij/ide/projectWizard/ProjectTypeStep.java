@@ -135,7 +135,6 @@ public class ProjectTypeStep extends ModuleWizardStep {
 
     myProjectTypeTree.setModel(new DefaultTreeModel(root));
     TreeUtil.expandAll(myProjectTypeTree);
-    myProjectTypeTree.addSelectionRow(0);
 
     myProjectTypeTree.setCellRenderer(new ColoredTreeCellRenderer() {
       @Override
@@ -181,7 +180,9 @@ public class ProjectTypeStep extends ModuleWizardStep {
     Disposer.register(wizard.getDisposable(), myFrameworksPanel);
 
     myOptionsPanel.add(myFrameworksPanel.getMainPanel(), FRAMEWORKS_CARD);
-//    myProjectTypeTree.getSelectionModel().s
+
+    // todo save selection
+    myProjectTypeTree.addSelectionRow(1);
   }
 
   @Nullable
