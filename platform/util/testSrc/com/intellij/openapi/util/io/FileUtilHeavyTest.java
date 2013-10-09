@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,10 @@
  */
 package com.intellij.openapi.util.io;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
@@ -26,69 +26,85 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.Assert.*;
+
 /**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 11/22/12
- * Time: 11:41 AM
+ * @author Irina.Chernushina, lene
  */
 public class FileUtilHeavyTest {
-  private File myTempDirectory;
+  private static File myTempDirectory;
+  private static File myVisitorTestDirectory;
+  private static File myFindTestDirectory;
+  private static File myFindTestFirstFile;
+  private static File myFindTestSecondFile;
 
-  @Before
-  public void setUp() throws Exception {
-    myTempDirectory = FileUtil.createTempDirectory(getClass().getSimpleName() + ".", ".tmp");
+  @BeforeClass
+  public static void setUp() throws Exception {
+    myTempDirectory = FileUtil.createTempDirectory("FileUtilHeavyTest.", ".tmp");
+
+    myVisitorTestDirectory = IoTestUtil.createTestDir(myTempDirectory, "visitor_test_dir");
+    File dir1 = IoTestUtil.createTestDir(myVisitorTestDirectory, "dir1");
+    IoTestUtil.createTestFile(dir1, "1");
+    IoTestUtil.createTestFile(dir1, "2");
+    File dir2 = IoTestUtil.createTestDir(myVisitorTestDirectory, "dir2");
+    IoTestUtil.createTestFile(dir2, "1");
+    IoTestUtil.createTestFile(dir2, "2");
+    File dir21 = IoTestUtil.createTestDir(dir2, "inner");
+    IoTestUtil.createTestFile(dir21, "1");
+    IoTestUtil.createTestFile(dir21, "2");
+
+    myFindTestDirectory = IoTestUtil.createTestDir(myTempDirectory, "find_file_test_dir");
+    myFindTestFirstFile = IoTestUtil.createTestFile(myFindTestDirectory, "first");
+    myFindTestSecondFile = IoTestUtil.createTestFile(myFindTestDirectory, "second");
   }
 
-  @After
-  public void tearDown() throws Exception {
+  @AfterClass
+  public static void tearDown() {
     if (myTempDirectory != null) {
       FileUtil.delete(myTempDirectory);
     }
   }
 
   @Test
-  public void testSimpleRecursiveIteration() throws Exception {
-    final Tree tree = new Tree(myTempDirectory);
+  public void testProcessSimple() {
     final Map<String, Integer> result = new HashMap<String, Integer>();
-    FileUtil.processFilesRecursively(myTempDirectory, new Processor<File>() {
+    FileUtil.processFilesRecursively(myVisitorTestDirectory, new Processor<File>() {
       @Override
       public boolean process(File file) {
-        final Integer integer = result.get(file.getName());
+        Integer integer = result.get(file.getName());
         result.put(file.getName(), integer == null ? 1 : (integer + 1));
         return true;
       }
     });
 
-    Assert.assertEquals(6, result.size());
-    Assert.assertEquals(1, result.get(myTempDirectory.getName()).intValue());
-    Assert.assertEquals(3, result.get("1").intValue());
-    Assert.assertEquals(3, result.get("2").intValue());
-    Assert.assertEquals(1, result.get("dir1").intValue());
+    assertEquals(6, result.size());
+    assertEquals(1, result.get(myVisitorTestDirectory.getName()).intValue());
+    assertEquals(3, result.get("1").intValue());
+    assertEquals(3, result.get("2").intValue());
+    assertEquals(1, result.get("dir1").intValue());
   }
 
   @Test
-  public void testStops() throws Exception {
-    final Tree tree = new Tree(myTempDirectory);
+  public void testProcessStops() {
     final int[] cnt = new int[]{0};
-    FileUtil.processFilesRecursively(myTempDirectory, new Processor<File>() {
+    FileUtil.processFilesRecursively(myVisitorTestDirectory, new Processor<File>() {
       @Override
       public boolean process(File file) {
-        ++ cnt[0];
+        ++cnt[0];
         return false;
       }
     });
-    Assert.assertEquals(1, cnt[0]);
+
+    assertEquals(1, cnt[0]);
   }
 
   @Test
-  public void testDirectoryFilter() throws Exception {
-    final Tree tree = new Tree(myTempDirectory);
+  public void testProcessDirectoryFilter() {
     final Map<String, Integer> result = new HashMap<String, Integer>();
-    FileUtil.processFilesRecursively(myTempDirectory, new Processor<File>() {
+    FileUtil.processFilesRecursively(myVisitorTestDirectory, new Processor<File>() {
       @Override
       public boolean process(File file) {
-        final Integer integer = result.get(file.getName());
+        Integer integer = result.get(file.getName());
         result.put(file.getName(), integer == null ? 1 : (integer + 1));
         return true;
       }
@@ -98,54 +114,100 @@ public class FileUtilHeavyTest {
                                          return ! "dir2".equals(file.getName());
                                        }
                                      });
-    Assert.assertEquals(5, result.size());
-    Assert.assertEquals(1, result.get(myTempDirectory.getName()).intValue());
-    Assert.assertEquals(1, result.get("1").intValue());
-    Assert.assertEquals(1, result.get("2").intValue());
-    Assert.assertEquals(1, result.get("dir1").intValue());
-    Assert.assertEquals(1, result.get("dir2").intValue());
-    Assert.assertNull(result.get("dir21"));
+
+    assertEquals(5, result.size());
+    assertEquals(1, result.get(myVisitorTestDirectory.getName()).intValue());
+    assertEquals(1, result.get("1").intValue());
+    assertEquals(1, result.get("2").intValue());
+    assertEquals(1, result.get("dir1").intValue());
+    assertEquals(1, result.get("dir2").intValue());
+    assertNull(result.get("dir21"));
   }
 
-  private static class Tree {
-    private final File dir1;
-    private final File file11;
-    private final File file12;
+  @Test
+  public void nonExistingFileInNonExistentDirectory() {
+    String path = FileUtil.findFileInProvidedPath("123", "zero");
+    assertTrue(StringUtil.isEmpty(path));
+  }
 
-    private final File dir2;
-    private final File file21;
-    private final File file22;
+  @Test
+  public void nonExistingFileInDirectory() {
+    String path = FileUtil.findFileInProvidedPath(myFindTestDirectory.getAbsolutePath(), "zero");
+    assertTrue(StringUtil.isEmpty(path));
+  }
 
-    private final File dir21;
-    private final File file211;
-    private final File file212;
+  @Test
+  public void nonExistingFile() {
+    String path = FileUtil.findFileInProvidedPath(myFindTestFirstFile.getAbsolutePath() + "123", myFindTestFirstFile.getName() + "123");
+    assertTrue(StringUtil.isEmpty(path));
+  }
 
-    private Tree(final File root) throws IOException {
-      dir1 = new File(root, "dir1");
-      dir2 = new File(root, "dir2");
-      dir21 = new File(dir2, "inner");
+  @Test
+  public void existingFileInDirectory() {
+    String path = FileUtil.findFileInProvidedPath(myFindTestDirectory.getAbsolutePath(), "first");
+    assertEquals(path, myFindTestFirstFile.getAbsolutePath());
+  }
 
-      Assert.assertTrue(dir1.mkdir());
-      Assert.assertTrue(dir2.mkdir());
-      Assert.assertTrue(dir21.mkdir());
+  @Test
+  public void existingFile() {
+    String path = FileUtil.findFileInProvidedPath(myFindTestFirstFile.getAbsolutePath(), "first");
+    assertEquals(path, myFindTestFirstFile.getAbsolutePath());
+  }
 
-      file11 = new File(dir1, "1");
-      file12 = new File(dir1, "2");
+  @Test
+  public void twoFilesOrderInDirectory() {
+    String path = FileUtil.findFileInProvidedPath(myFindTestDirectory.getAbsolutePath(), "first", "second");
+    assertEquals(path, myFindTestFirstFile.getAbsolutePath());
+  }
 
-      file21 = new File(dir2, "1");
-      file22 = new File(dir2, "2");
+  @Test
+  public void twoFilesOrderInDirectory2() {
+    String path = FileUtil.findFileInProvidedPath(myFindTestDirectory.getAbsolutePath(), "second", "first");
+    assertEquals(path, myFindTestSecondFile.getAbsolutePath());
+  }
 
-      file211 = new File(dir21, "1");
-      file212 = new File(dir21, "2");
+  @Test
+  public void twoFilesOrder() {
+    String path = FileUtil.findFileInProvidedPath(myFindTestFirstFile.getAbsolutePath(), "first", "second");
+    assertEquals(path, myFindTestFirstFile.getAbsolutePath());
+  }
 
-      file11.createNewFile();
-      file12.createNewFile();
+  @Test
+  public void twoFilesOrder2() {
+    String path = FileUtil.findFileInProvidedPath(myFindTestFirstFile.getAbsolutePath(), "second", "first");
+    assertEquals(path, myFindTestFirstFile.getAbsolutePath());
+  }
 
-      file21.createNewFile();
-      file22.createNewFile();
+  @Test
+  public void testRepeatableOperation() throws IOException {
+    abstract class CountableIOOperation implements FileUtilRt.RepeatableIOOperation<Boolean, IOException> {
+      private int count = 0;
 
-      file211.createNewFile();
-      file212.createNewFile();
+      @Override
+      public Boolean execute(boolean lastAttempt) throws IOException {
+        count++;
+        return stop(lastAttempt) ? true : null;
+      }
+
+      protected abstract boolean stop(boolean lastAttempt);
     }
+
+    CountableIOOperation successful = new CountableIOOperation() {
+      @Override protected boolean stop(boolean lastAttempt) { return true; }
+    };
+    FileUtilRt.doIOOperation(successful);
+    assertEquals(1, successful.count);
+
+    CountableIOOperation failed = new CountableIOOperation() {
+      @Override protected boolean stop(boolean lastAttempt) { return false; }
+    };
+    FileUtilRt.doIOOperation(failed);
+    assertEquals(10, failed.count);
+
+    CountableIOOperation lastShot = new CountableIOOperation() {
+      @Override protected boolean stop(boolean lastAttempt) { return lastAttempt; }
+    };
+    FileUtilRt.doIOOperation(lastShot);
+    assertEquals(10, lastShot.count);
   }
 }

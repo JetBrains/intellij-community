@@ -22,13 +22,13 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.Convertor;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
-public class FileUtilTest {
+public class FileUtilLightTest {
   private static final char UNIX_SEPARATOR = '/';
   private static final char WINDOWS_SEPARATOR = '\\';
 
@@ -102,62 +102,47 @@ public class FileUtilTest {
 
   @Test
   public void testRemoveAncestors() throws Exception {
-    final String[] arr = {"/a/b/c", "/a", "/a/b", "/d/e", "/b/c", "/a/d", "/b/c/ttt", "/a/ewq.euq"};
-    final String[] expectedResult = {"/a","/b/c","/d/e"};
-    @SuppressWarnings("unchecked") final Collection<String> result = FileUtil.removeAncestors(Arrays.asList(arr), Convertor.SELF, PairProcessor.TRUE);
-    assertArrayEquals(expectedResult, ArrayUtil.toStringArray(result));
+    List<String> data = Arrays.asList("/a/b/c", "/a", "/a/b", "/d/e", "/b/c", "/a/d", "/b/c/ttt", "/a/ewq.euq");
+    String[] expected = {"/a","/b/c","/d/e"};
+    @SuppressWarnings("unchecked") Collection<String> result = FileUtil.removeAncestors(data, Convertor.SELF, PairProcessor.TRUE);
+    assertArrayEquals(expected, ArrayUtil.toStringArray(result));
   }
 
   @Test
   public void testCheckImmediateChildren() throws Exception {
-    final String root = "/a";
-    final String[] arr = {"/a/b/c", "/a", "/a/b", "/d/e", "/b/c", "/a/d", "/a/b/c/d/e"};
-    final ThreeState[] expectedResult = {ThreeState.UNSURE, ThreeState.YES, ThreeState.YES, ThreeState.NO, ThreeState.NO, ThreeState.YES, ThreeState.UNSURE};
-    final ThreeState[] expectedResult2 = {ThreeState.UNSURE, ThreeState.NO, ThreeState.YES, ThreeState.NO, ThreeState.NO, ThreeState.YES, ThreeState.UNSURE};
+    String root = "/a";
+    String[] data = {"/a/b/c", "/a", "/a/b", "/d/e", "/b/c", "/a/d", "/a/b/c/d/e"};
+    ThreeState[] expected1 = {ThreeState.UNSURE, ThreeState.YES, ThreeState.YES, ThreeState.NO, ThreeState.NO, ThreeState.YES, ThreeState.UNSURE};
+    ThreeState[] expected2 = {ThreeState.UNSURE, ThreeState.NO, ThreeState.YES, ThreeState.NO, ThreeState.NO, ThreeState.YES, ThreeState.UNSURE};
 
-    for (int i = 0; i < arr.length; i++) {
-      String s = arr[i];
-      final ThreeState state = FileUtil.isAncestorThreeState(root, s, false);
-      assertEquals(String.valueOf(i), expectedResult[i], state);
+    for (int i = 0; i < data.length; i++) {
+      ThreeState state = FileUtil.isAncestorThreeState(root, data[i], false);
+      assertEquals(String.valueOf(i), expected1[i], state);
     }
 
-    for (int i = 0; i < arr.length; i++) {
-      String s = arr[i];
-      final ThreeState state = FileUtil.isAncestorThreeState(root, s, true);
-      assertEquals(String.valueOf(i), expectedResult2[i], state);
+    for (int i = 0; i < data.length; i++) {
+      ThreeState state = FileUtil.isAncestorThreeState(root, data[i], true);
+      assertEquals(String.valueOf(i), expected2[i], state);
     }
   }
 
   @Test
-  public void testRepeatableOperation() throws Exception {
-    abstract class CountableIOOperation implements FileUtilRt.RepeatableIOOperation<Boolean, IOException> {
-      private int count = 0;
+  public void testStartsWith() {
+    assertTrue(FileUtil.startsWith("/usr/local/jeka", "/usr/local/jeka"));
+    assertTrue(FileUtil.startsWith("/usr/local/jeka", "/usr/local/"));
+    assertTrue(FileUtil.startsWith("/usr/local/jeka", "/usr/"));
+    assertTrue(FileUtil.startsWith("/usr/local/jeka", "/usr"));
+    assertTrue(FileUtil.startsWith("/usr/local/jeka", "/"));
+    assertTrue(FileUtil.startsWith("c:/idea", "c:/"));
+    assertTrue(FileUtil.startsWith("c:/idea", "c:"));
+    assertTrue(FileUtil.startsWith("c:/idea", ""));
+    assertTrue(FileUtil.startsWith("c:/idea/x", "C:/IDEA", false));
 
-      @Override
-      public Boolean execute(boolean lastAttempt) throws IOException {
-        count++;
-        return stop(lastAttempt) ? true : null;
-      }
-
-      protected abstract boolean stop(boolean lastAttempt);
-    }
-
-    CountableIOOperation successful = new CountableIOOperation() {
-      @Override protected boolean stop(boolean lastAttempt) { return true; }
-    };
-    FileUtilRt.doIOOperation(successful);
-    assertEquals(1, successful.count);
-
-    CountableIOOperation failed = new CountableIOOperation() {
-      @Override protected boolean stop(boolean lastAttempt) { return false; }
-    };
-    FileUtilRt.doIOOperation(failed);
-    assertEquals(10, failed.count);
-
-    CountableIOOperation lastShot = new CountableIOOperation() {
-      @Override protected boolean stop(boolean lastAttempt) { return lastAttempt; }
-    };
-    FileUtilRt.doIOOperation(lastShot);
-    assertEquals(10, lastShot.count);
+    assertFalse(FileUtil.startsWith("/usr/local/jeka", "/usr/local/jek"));
+    assertFalse(FileUtil.startsWith("/usr/local/jeka", "/usr/local/aaa"));
+    assertFalse(FileUtil.startsWith("/usr/local/jeka", "/usr/local/jeka/"));
+    assertFalse(FileUtil.startsWith("/usr/local/jeka", "/aaa"));
+    assertFalse(FileUtil.startsWith("c:/idea2", "c:/idea"));
+    assertFalse(FileUtil.startsWith("c:/idea_branches/i18n", "c:/idea"));
   }
 }
