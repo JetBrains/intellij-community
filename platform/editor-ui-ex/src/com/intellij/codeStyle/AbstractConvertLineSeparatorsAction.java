@@ -21,12 +21,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.Processor;
@@ -40,14 +40,13 @@ import java.io.IOException;
  * @author Nikolai Matveev
  */
 public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
-
-  private static Logger LOG = Logger.getInstance("#com.intellij.codeStyle.AbstractConvertLineSeparatorsAction");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeStyle.AbstractConvertLineSeparatorsAction");
 
   @NotNull
   private final String mySeparator;
 
   protected AbstractConvertLineSeparatorsAction(@Nullable String text, @NotNull LineSeparator separator) {
-    this(separator.toString() + " - " + text, separator.getSeparatorString());
+    this(separator + " - " + text, separator.getSeparatorString());
   }
 
   protected AbstractConvertLineSeparatorsAction(@Nullable String text, @NotNull String separator) {
@@ -98,9 +97,9 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
       projectVirtualDirectory = null;
     }
 
-    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    final FileTypeRegistry fileTypeManager = FileTypeRegistry.getInstance();
     for (VirtualFile file : virtualFiles) {
-      VfsUtil.processFilesRecursively(
+      VfsUtilCore.processFilesRecursively(
         file,
         new Processor<VirtualFile>() {
           @Override
@@ -115,7 +114,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
           @Override
           public Boolean convert(VirtualFile dir) {
             return !dir.equals(projectVirtualDirectory)
-                   && !fileTypeManager.isFileIgnored(dir.getName()); // Exclude files like '.git'
+                   && !fileTypeManager.isFileIgnored(dir); // Exclude files like '.git'
           }
         }
       );
@@ -125,7 +124,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
   public static boolean shouldProcess(@NotNull VirtualFile file, @NotNull Project project) {
     if (file.isDirectory()
         || !file.isWritable()
-        || FileTypeManager.getInstance().isFileIgnored(file)
+        || FileTypeRegistry.getInstance().isFileIgnored(file)
         || file.getFileType().isBinary()
         || file.equals(project.getProjectFile())
         || file.equals(project.getWorkspaceFile()))

@@ -19,6 +19,7 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,10 +47,7 @@ public class InconsistentLineSeparatorsInspection extends LocalInspectionTool {
         }
 
         final Project project = holder.getProject();
-        final String projectLineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
-        if (projectLineSeparator == null) {
-          return;
-        }
+        final String projectLineSeparator = FileDocumentManager.getInstance().getLineSeparator(null, project);
 
         final VirtualFile virtualFile = file.getVirtualFile();
         if (virtualFile == null || !AbstractConvertLineSeparatorsAction.shouldProcess(virtualFile, project)) {
@@ -88,10 +86,7 @@ public class InconsistentLineSeparatorsInspection extends LocalInspectionTool {
         return;
       }
 
-      final String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
-      if (lineSeparator == null) {
-        return;
-      }
+      final String lineSeparator = FileDocumentManager.getInstance().getLineSeparator(null, project);
 
       final VirtualFile virtualFile = ((PsiFile)psiElement).getVirtualFile();
       if (virtualFile != null) {
