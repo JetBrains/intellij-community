@@ -351,16 +351,6 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
       myHost = host;
     }
 
-    @NotNull
-    @Override
-    public TextRange getRelevantTextRange() {
-      // We return the text range only of the first string AST node only, because of the language injection, see PY-10691.
-      // For proper injection handling for multi-node string literals we probably need our own LanguageInjector for Python,
-      // see also ConcatenationInjector for Java
-      final List<TextRange> ranges = myHost.getStringValueTextRanges();
-      return !ranges.isEmpty() ? ranges.get(0) : super.getRelevantTextRange();
-    }
-
     @Override
     public boolean decode(@NotNull final TextRange rangeInsideHost, @NotNull final StringBuilder outChars) {
       final PyDocStringOwner
@@ -385,23 +375,37 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
     @Override
     public int getOffsetInHost(final int offsetInDecoded, @NotNull final TextRange rangeInsideHost) {
-      final Ref<Integer> result = Ref.create(-1);
-      final Ref<Integer> index = Ref.create(0);
+      final Ref<Integer> resultRef = Ref.create(-1);
+      final Ref<Integer> indexRef = Ref.create(0);
+      final Ref<Integer> lastEndOffsetRef = Ref.create(-1);
       myHost.iterateCharacterRanges(new TextRangeConsumer() {
         @Override
         public boolean process(int startOffset, int endOffset, String value) {
+          if (startOffset > rangeInsideHost.getEndOffset()) {
+            return false;
+          }
+          lastEndOffsetRef.set(endOffset);
           if (startOffset >= rangeInsideHost.getStartOffset()) {
-            final Integer i = index.get();
+            final int i = indexRef.get();
             if (i == offsetInDecoded) {
-              result.set(startOffset);
+              resultRef.set(startOffset);
               return false;
             }
-            index.set(i + 1);
+            indexRef.set(i + 1);
           }
           return true;
         }
       });
-      return result.get();
+      final int result = resultRef.get();
+      if (result != -1) {
+        return result;
+      }
+      // We should handle the position of a character at the end of rangeInsideHost, because LeafPatcher expects it to be valid
+      final int lastEndOffset = lastEndOffsetRef.get();
+      if (indexRef.get() == offsetInDecoded && lastEndOffset == rangeInsideHost.getEndOffset()) {
+        return lastEndOffset;
+      }
+      return -1;
     }
 
     @Override

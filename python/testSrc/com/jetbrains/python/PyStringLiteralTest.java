@@ -33,7 +33,8 @@ public class PyStringLiteralTest extends PyTestCase {
     assertEquals(3, escaper.getOffsetInHost(1, newLineFoo));
     assertEquals(4, escaper.getOffsetInHost(2, newLineFoo));
     assertEquals(5, escaper.getOffsetInHost(3, newLineFoo));
-    assertEquals(-1, escaper.getOffsetInHost(4, newLineFoo));
+    assertEquals(6, escaper.getOffsetInHost(4, newLineFoo));
+    assertEquals(-1, escaper.getOffsetInHost(5, newLineFoo));
   }
 
   public void testEscaperOffsetInHostSubString() {
@@ -44,7 +45,8 @@ public class PyStringLiteralTest extends PyTestCase {
     assertEquals(3, escaper.getOffsetInHost(0, fooOnly));
     assertEquals(4, escaper.getOffsetInHost(1, fooOnly));
     assertEquals(5, escaper.getOffsetInHost(2, fooOnly));
-    assertEquals(-1, escaper.getOffsetInHost(3, fooOnly));
+    assertEquals(6, escaper.getOffsetInHost(3, fooOnly));
+    assertEquals(-1, escaper.getOffsetInHost(4, fooOnly));
   }
 
   public void testIterateCharacterRanges() {
