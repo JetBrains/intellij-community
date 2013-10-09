@@ -57,6 +57,7 @@ import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -589,27 +590,24 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
         new Runnable() {
         @Override
         public void run() {
-          if (myAbstractTreeBuilder == null) {
-            return;
-          }
-          try {
-            selectViewableElement();
-          }
-          catch (IndexNotReadyException ignore) {
-          }
+          if (myAbstractTreeBuilder == null) return;
+          if (UIUtil.isFocusAncestor(StructureViewComponent.this)) return;
+          scrollToSelectedElementInner();
         }
-      }, 1000
-    );
+      }, 1000);
   }
 
-  private void selectViewableElement() {
-    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-    final Object currentEditorElement = myTreeModel.getCurrentEditorElement();
-    if (currentEditorElement != null) {
-      select(currentEditorElement, false);
+  private void scrollToSelectedElementInner() {
+    try {
+      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+      final Object currentEditorElement = myTreeModel.getCurrentEditorElement();
+      if (currentEditorElement != null) {
+        select(currentEditorElement, false);
+      }
+    }
+    catch (IndexNotReadyException ignore) {
     }
   }
-
 
   @Override
   public void dispose() {
@@ -741,7 +739,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       getSettings().AUTOSCROLL_FROM_SOURCE = state;
       final FileEditor[] selectedEditors = FileEditorManager.getInstance(myProject).getSelectedEditors();
       if (selectedEditors.length > 0 && state) {
-        scrollToSelectedElement();
+        scrollToSelectedElementInner();
       }
     }
   }
