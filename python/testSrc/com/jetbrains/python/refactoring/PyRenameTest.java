@@ -170,6 +170,11 @@ public class PyRenameTest extends PyTestCase {
     doTest("bar");
   }
 
+  // PY-4200
+  public void testRenameUpdatesImportReferences() {
+    doMultiFileTest("baz.py");
+  }
+
   private void doRenameConflictTest(String newName, String expectedConflict) {
     myFixture.configureByFile(RENAME_DATA_PATH + getTestName(true) + ".py");
     try {
