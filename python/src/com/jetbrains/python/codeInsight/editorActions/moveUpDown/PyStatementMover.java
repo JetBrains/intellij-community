@@ -27,33 +27,30 @@ public class PyStatementMover extends LineMover {
     if (!(file instanceof PyFile)) return false;
     final int offset = editor.getCaretModel().getOffset();
     final SelectionModel selectionModel = editor.getSelectionModel();
+    final Document document = editor.getDocument();
+    final int lineNumber = document.getLineNumber(offset);
+    int start = getLineStartSafeOffset(document, lineNumber);
+    int end = document.getLineEndOffset(lineNumber) - 1;
 
-    if (!selectionModel.hasSelection()) {
-      PsiElement elementToMove = PyUtil.findNonWhitespaceAtOffset(file, offset);
-      if (elementToMove == null) return false;
-      elementToMove = getCommentOrStatement(editor.getDocument(), elementToMove);
-      info.toMove = new MyLineRange(elementToMove, elementToMove);
-      info.toMove2 = getDestinationScope(file, editor, elementToMove, down);
+    if (selectionModel.hasSelection()) {
+      start = selectionModel.getSelectionStart();
+      end = selectionModel.getSelectionEnd() - 1;
     }
-    else {
-      final int start = selectionModel.getSelectionStart();
-      final int end = selectionModel.getSelectionEnd() - 1;
-      PsiElement elementToMove1 = PyUtil.findNonWhitespaceAtOffset(file, start);
-      PsiElement elementToMove2 = PyUtil.findNonWhitespaceAtOffset(file, end);
-      if (elementToMove1 == null || elementToMove2 == null) return false;
-      elementToMove1 = getCommentOrStatement(editor.getDocument(), elementToMove1);
-      elementToMove2 = getCommentOrStatement(editor.getDocument(), elementToMove2);
+    PsiElement elementToMove1 = PyUtil.findNonWhitespaceAtOffset(file, start);
+    PsiElement elementToMove2 = PyUtil.findNonWhitespaceAtOffset(file, end);
+    if (elementToMove1 == null || elementToMove2 == null) return false;
+    elementToMove1 = getCommentOrStatement(document, elementToMove1);
+    elementToMove2 = getCommentOrStatement(document, elementToMove2);
 
-      if (PsiTreeUtil.isAncestor(elementToMove1, elementToMove2, false)) {
-        elementToMove2 = elementToMove1;
-      }
-      else if (PsiTreeUtil.isAncestor(elementToMove2, elementToMove1, false)) {
-        elementToMove1 = elementToMove2;
-      }
-      info.toMove = new MyLineRange(elementToMove1, elementToMove2);
-      info.toMove2 = getDestinationScope(file, editor, down ? elementToMove2 : elementToMove1, down);
-
+    if (PsiTreeUtil.isAncestor(elementToMove1, elementToMove2, false)) {
+      elementToMove2 = elementToMove1;
     }
+    else if (PsiTreeUtil.isAncestor(elementToMove2, elementToMove1, false)) {
+      elementToMove1 = elementToMove2;
+    }
+    info.toMove = new MyLineRange(elementToMove1, elementToMove2);
+    info.toMove2 = getDestinationScope(file, editor, down ? elementToMove2 : elementToMove1, down);
+
     info.indentTarget = false;
     info.indentSource = false;
 
@@ -76,6 +73,12 @@ public class PyStatementMover extends LineMover {
     final PyStatementList statementList = getStatementList(elementToMove);
 
     final PsiElement destination = getDestinationElement(elementToMove, document, lineEndOffset, down);
+
+    final int start = destination != null ? destination.getTextRange().getStartOffset() : lineNumber;
+    final int end = destination != null ? destination.getTextRange().getEndOffset() : lineNumber;
+    final int startLine = document.getLineNumber(start);
+    final int endLine = document.getLineNumber(end);
+
     if (elementToMove instanceof PsiComment && destination instanceof  PsiComment) {
       return new LineRange(lineNumber, lineNumber + 1);
     }
@@ -95,7 +98,9 @@ public class PyStatementMover extends LineMover {
     if (scopeRange != null) return scopeRange;
 
     final PyElement scope = statementList == null ? (PyElement)elementToMove.getContainingFile() : statementList;
-    return new ScopeRange(scope, destination, !down, true);
+    if ((elementToMove instanceof PyClass) || (elementToMove instanceof PyFunction))
+      return new ScopeRange(scope, null, !down, true);
+    return new LineRange(startLine, endLine + 1);
   }
 
   private static boolean moveOutsideFile(@NotNull final PsiElement elementToMove, @NotNull final Document document, int lineNumber) {
