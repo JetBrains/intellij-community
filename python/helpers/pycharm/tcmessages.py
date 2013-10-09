@@ -8,7 +8,11 @@ class TeamcityServiceMessages:
         self.prepend_linebreak = prepend_linebreak
     
     def escapeValue(self, value):
-        return "".join([self.quote.get(x, x) for x in str(value)])
+        if isinstance(value, unicode):
+            s = value.encode("utf-8")
+        else:
+            s = str(value)
+        return "".join([self.quote.get(x, x) for x in s])
     
     def message(self, messageName, **properties):
         s = "##teamcity[" + messageName
