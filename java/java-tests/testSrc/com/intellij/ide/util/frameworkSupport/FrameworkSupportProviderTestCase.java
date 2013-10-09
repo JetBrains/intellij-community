@@ -62,7 +62,7 @@ public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
           final IdeaModifiableModelsProvider modelsProvider = new IdeaModifiableModelsProvider();
           for (FrameworkSupportNode node : myNodes.values()) {
             if (node.isChecked()) {
-              final FrameworkSupportInModuleConfigurable configurable = getOrCreateConfigurable(node.getProvider());
+              final FrameworkSupportInModuleConfigurable configurable = getOrCreateConfigurable(node.getUserObject());
               configurable.addSupport(myModule, model, modelsProvider);
               if (configurable instanceof OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper) {
                 selectedConfigurables.add(((OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper)configurable).getConfigurable());

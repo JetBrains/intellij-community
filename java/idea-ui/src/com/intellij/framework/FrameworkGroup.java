@@ -10,20 +10,18 @@ import java.util.List;
 /**
  * @author nik
  */
-public abstract class FrameworkGroup<V extends FrameworkGroupVersion> {
+public abstract class FrameworkGroup<V extends FrameworkGroupVersion> implements FrameworkOrGroup {
   private final String myId;
 
   public FrameworkGroup(String id) {
     myId = id;
   }
 
+  @Override
   @NotNull
   public final String getId() {
     return myId;
   }
-
-  @NotNull
-  public abstract String getPresentableName();
 
   @NotNull
   public abstract Icon getIcon();
