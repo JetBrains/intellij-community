@@ -13,12 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * @author max
- */
 package com.intellij.concurrency;
 
-public abstract class JobSchedulerImpl {
-  public static final int CORES_COUNT = Runtime.getRuntime().availableProcessors();
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.ProgressWrapper;
+import org.jetbrains.annotations.NotNull;
+
+/**
+ * Progress indicator wrapper which reacts to its own cancellation in addition to the cancellation of its wrappee.
+ */
+public class SensitiveProgressWrapper extends ProgressWrapper {
+  public SensitiveProgressWrapper(@NotNull ProgressIndicator indicator) {
+    super(indicator);
+  }
+
+  @Override
+  public boolean isCanceled() {
+    return super.isCanceled() || getOriginalProgressIndicator().isCanceled();
+  }
 }

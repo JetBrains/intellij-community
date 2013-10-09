@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,6 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.concurrency.Job;
-import com.intellij.concurrency.JobImpl;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
@@ -47,7 +46,6 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.*;
@@ -79,16 +77,16 @@ public abstract class PassExecutorService implements Disposable {
       submittedPass.cancel();
     }
     if (waitForTermination) {
-      for (Job<Void> job : mySubmittedPasses.values()) {
-        try {
-          if (job instanceof JobImpl) {
-            JobImpl ji = (JobImpl)job;
-            if (!job.isDone()) ji.waitForTermination();
-          }
+      try {
+        while (!waitFor(50)) {
+          int i = 0;
         }
-        catch (Throwable throwable) {
-          LOG.error(throwable);
-        }
+      }
+      catch (ProcessCanceledException ignored) {
+
+      }
+      catch (Throwable throwable) {
+        LOG.error(throwable);
       }
     }
     mySubmittedPasses.clear();
@@ -360,7 +358,9 @@ public abstract class PassExecutorService implements Disposable {
               catch (ProcessCanceledException e) {
                 log(myUpdateProgress, myPass, "Canceled ");
 
-                myUpdateProgress.cancel(e); //in case when some smart asses throw PCE just for fun
+                if (!myUpdateProgress.isCanceled()) {
+                  myUpdateProgress.cancel(e); //in case when some smart asses throw PCE just for fun
+                }
               }
               catch (RuntimeException e) {
                 myUpdateProgress.cancel(e);
@@ -518,20 +518,23 @@ public abstract class PassExecutorService implements Disposable {
     return indicator.getUserData(THROWABLE_KEY);
   }
 
-  @TestOnly
-  public void waitFor(int millis) throws Exception {
+  // return true if terminated
+  public boolean waitFor(int millis) throws Throwable {
     ApplicationManager.getApplication().assertIsDispatchThread();
     try {
       for (Job<Void> job : mySubmittedPasses.values()) {
-        if (!job.isDone()) {
-          for (FutureTask task : ((JobImpl)job).getTasks()) {
-            task.get(millis, TimeUnit.MILLISECONDS);
-          }
-        }
+        job.waitForCompletion(millis);
       }
+      return true;
     }
     catch (TimeoutException ignored) {
-
+      return false;
+    }
+    catch (InterruptedException e) {
+      return true;
+    }
+    catch (ExecutionException e) {
+      throw e.getCause();
     }
   }
 }
