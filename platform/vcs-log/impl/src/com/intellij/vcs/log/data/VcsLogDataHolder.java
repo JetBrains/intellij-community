@@ -32,7 +32,6 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,15 +41,14 @@ import java.util.Map;
 /**
  * <p>Holds the commit data loaded from the VCS, and is capable to refresh this data by
  * {@link VcsLogProvider#subscribeToRootRefreshEvents(Collection, VcsLogRefresher) events from the VCS}.</p>
- * <p>The commit data is acquired via {@link #getDataPack()}.</p>
- * <p>If refresh is in progress, {@link #getDataPack()} returns the previous data pack (possible not actual anymore).
+ * <p>If refresh is in progress, {@link #getDataPack()} returns the previous data pack (possibly not actual anymore).
  *    When refresh completes, the data pack instance is updated. Refreshes are chained.</p>
  *
  * <p><b>Thread-safety:</b> the class is thread-safe:
  *   <ul>
  *     <li>All write-operations made to the log and data pack are made sequentially, from the same background queue;</li>
  *     <li>Once a refresh request is received, we read logs and refs from all providers, join refresh data, join repositories,
- *         and build the new data pack sequentially in a single thread.</li>
+ *         and build the new data pack sequentially in a single thread. After that we substitute the instance of the LogData object.</li>
  *     <li>Whilst we are in the middle of this refresh process, anyone who requests the data pack (and possibly the log if this would
  *         be available in the future), will get the consistent previous version of it.</li>
  *   </ul></p>
@@ -64,8 +62,8 @@ import java.util.Map;
  *        memory would be occupied and performance would suffer.</li>
  *    <li>If user requests a commit that is not displayed (by clicking on an old branch reference, by going to a hash,
  *        just by scrolling down to the end of the table), we take the whole log, build the graph and show to the user.</li>
- *    <li>Once the whole log was once requested, we never hide it after a refresh, because it could annoy the user if the log would hide
- *        because of some external event which forces log refresh (fetch, branch switch, etc.) while he was looking at old history.</li>
+ *    <li>Once the whole log was once requested, we never hide it after refresh, because the reverse could annoy the user
+ *        if he was looking at old history when refresh happened.</li>
  *    </li></ul>
  * </p>
  *
@@ -73,7 +71,7 @@ import java.util.Map;
  *    <li>When a refresh request comes, we ask {@link VcsLogProvider log providers} about the last N commits unordered (which
  *        adds a significant performance gain in the case of Git).</li>
  *    <li>Then we order and attach these commits to the log with the help of {@link VcsLogJoiner}.</li>
- *    <li>In the multiple repository case logs from different providers are joined together in a single log.</li>
+ *    <li>In the multiple repository case logs from different providers are joined together to a single log.</li>
  *    <li>If user was looking at the top part of the log, the log is rebuilt, and new top of the log is shown to the user.
  *        If, however, he was looking at the whole log, the data pack for the whole log is rebuilt and shown to the user.
  *    </li></ul></p>
@@ -95,9 +93,21 @@ public class VcsLogDataHolder implements Disposable {
   @NotNull private final VcsLogJoiner myLogJoiner;
   @NotNull private final VcsLogMultiRepoJoiner myMultiRepoJoiner;
 
-  // all write-access to myDataPack & myLogData is performed only via the myDataLoaderQueue
-  @Nullable private volatile DataPack myDataPack;
-  @Nullable private volatile LogData myLogData;
+  /**
+   * Encapsulates all information about the log, which can be accessed by external clients.
+   * When something changes in the log (on refresh, for example), the whole object is replaced with the new one;
+   * all write-access operations with are performed from the myDataLoaderQueue;
+   * therefore it is guaranteed that myData doesn't change within a single runInBackground() task.
+   *
+   * The object is null only before the first refresh, the whole component is not available before the first refresh at all.
+   */
+  private volatile LogData myLogData;
+
+  /**
+   * Indicates if user wants the whole log graph to be shown.
+   * Initially we show only the top of the log (even after we've loaded the whole log structure) for performance reasons.
+   * However, if user once navigates to some old commit, we build the whole graph and show it until the next full refresh or project reload.
+   */
   private volatile boolean myFullLogShowing;
 
   public VcsLogDataHolder(@NotNull Project project, @NotNull VcsLogObjectsFactory logObjectsFactory,
@@ -154,7 +164,10 @@ public class VcsLogDataHolder implements Disposable {
           logs.put(root, logProvider.readAllHashes(root));
           refs.put(root, logProvider.readAllRefs(root));
         }
-        myLogData = new LogData(logs, refs);
+        DataPack existingDataPack = myLogData.getDataPack();
+        // keep existing data pack: we don't want to rebuild the graph,
+        // we just make the whole log structure available for our cunning refresh procedure of if user requests the whole graph
+        myLogData = new LogData(logs, refs, existingDataPack, true);
       }
     });
   }
@@ -163,9 +176,10 @@ public class VcsLogDataHolder implements Disposable {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
-        if (myLogData != null) {
+        if (myLogData.isFullLogReady()) { // TODO if not ready, wait for it
           List<TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(myLogData.myLogsByRoot.values());
-          myDataPack = DataPack.build(compoundLog, myLogData.getAllRefs(), indicator);
+          DataPack fullDataPack = DataPack.build(compoundLog, myLogData.getAllRefs(), indicator);
+          myLogData = new LogData(myLogData.getLogs(), myLogData.getRefs(), fullDataPack, true);
           myFullLogShowing = true;
           UIUtil.invokeAndWaitIfNeeded(new Runnable() {
             @Override
@@ -190,72 +204,66 @@ public class VcsLogDataHolder implements Disposable {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
-        if (invalidateWholeLog) {
-          myLogData = null;
-        }
-        boolean ordered = !isFullLogReady(); // full log is not ready (or it is initial loading) => need to fairly query the VCS
+        boolean initialization = myLogData == null; // the object is null before the first refresh
+        boolean isFullLogReady = !initialization && myLogData.isFullLogReady();
+        // if we don't have the full log yet, the VcsLogJoiner won't work  => we need to fairly query the VCS
+        boolean fairRefresh = invalidateWholeLog || !isFullLogReady;
 
         Map<VirtualFile, List<TimedVcsCommit>> logsToBuild = ContainerUtil.newHashMap();
-        Collection<VcsRef> allRefs = ContainerUtil.newHashSet();
+        Map<VirtualFile, Collection<VcsRef>> refsByRoot = ContainerUtil.newHashMap();
 
         for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
           VirtualFile root = entry.getKey();
           VcsLogProvider logProvider = entry.getValue();
-          List<? extends VcsFullCommitDetails> firstBlockDetails = logProvider.readFirstBlock(root, ordered);
+
+          // read info from VCS
+          List<? extends VcsFullCommitDetails> firstBlockDetails = logProvider.readFirstBlock(root, fairRefresh);
           Collection<VcsRef> newRefs = logProvider.readAllRefs(root);
 
           myDetailsGetter.saveInCache(firstBlockDetails);
           myMiniDetailsGetter.saveInCache(firstBlockDetails);
 
-          List<TimedVcsCommit> firstBlockCommits = ContainerUtil.map(firstBlockDetails, new Function<VcsFullCommitDetails, TimedVcsCommit>() {
-            @Override
-            public TimedVcsCommit fun(VcsFullCommitDetails details) {
-              return myFactory.createTimedCommit(details.getHash(), details.getParents(), details.getAuthorTime());
-            }
-          });
+          // get commits from details
+          List<TimedVcsCommit> firstBlockCommits =
+            ContainerUtil.map(firstBlockDetails, new Function<VcsFullCommitDetails, TimedVcsCommit>() {
+              @Override
+              public TimedVcsCommit fun(VcsFullCommitDetails details) {
+                return myFactory.createTimedCommit(details.getHash(), details.getParents(), details.getAuthorTime());
+              }
+            });
 
+          // refresh
           List<TimedVcsCommit> refreshedLog;
           int newCommitsCount;
-          if (ordered) {
-            // the whole log is not loaded before the first refresh
-            refreshedLog = new ArrayList<TimedVcsCommit>(firstBlockCommits);
-            newCommitsCount = 0;
+          if (fairRefresh) {
+            refreshedLog = firstBlockCommits;
+            newCommitsCount = -1; // this value won't be used
           }
           else {
             Pair<List<TimedVcsCommit>, Integer> joinResult = myLogJoiner.addCommits(myLogData.getLog(root), myLogData.getRefs(root),
-                                                                                       firstBlockCommits, newRefs);
+                                                                                    firstBlockCommits, newRefs);
             refreshedLog = joinResult.getFirst();
             newCommitsCount = joinResult.getSecond();
           }
 
-          if (myFullLogShowing) {
-            logsToBuild.put(root, refreshedLog);
-          }
-          else {
-            int commitsToShow;
-            if (myDataPack != null) {
-              commitsToShow = myDataPack.getGraphModel().getGraph().getNodeRows().size() + newCommitsCount;
-            }
-            else {
-              commitsToShow = firstBlockDetails.size();
-            }
-            logsToBuild.put(root, refreshedLog.subList(0, Math.min(commitsToShow, refreshedLog.size())));
-          }
-          allRefs.addAll(newRefs);
+          logsToBuild.put(root, refreshedLog);
+          refsByRoot.put(root, newRefs);
 
-          if (myLogData != null) {
-            myLogData.setRefs(root, newRefs); // update references, because the joiner needs to know reference changes after each refresh
-            // log is not updated: once loaded, joiner always join to the old part of it
-          }
+          // TODO form the number of commits for the graph to build
         }
 
         List<TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(logsToBuild.values());
-        myDataPack = DataPack.build(compoundLog, allRefs, indicator);
+        Collection<VcsRef> allRefs = new ArrayList<VcsRef>();
+        for (Collection<VcsRef> refs : refsByRoot.values()) {
+          allRefs.addAll(refs);
+        }
+        final DataPack dataPack = DataPack.build(compoundLog, allRefs, indicator);
+        myLogData = new LogData(logsToBuild, refsByRoot, dataPack, isFullLogReady);
 
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
           public void run() {
-            onSuccess.consume(myDataPack);
+            onSuccess.consume(dataPack);
           }
         });
       }
@@ -322,7 +330,7 @@ public class VcsLogDataHolder implements Disposable {
 
   @NotNull
   public DataPack getDataPack() {
-    return myDataPack;
+    return myLogData.getDataPack();
   }
 
   private void notifyAboutDataRefresh() {
@@ -347,7 +355,7 @@ public class VcsLogDataHolder implements Disposable {
   }
 
   public boolean isFullLogReady() {
-    return myLogData != null;
+    return myLogData.isFullLogReady();
   }
 
   @NotNull
@@ -357,15 +365,22 @@ public class VcsLogDataHolder implements Disposable {
 
   /**
    * Contains full logs per repository root & references per root.
+   *
+   * Until we have loaded the full log of the repository, we store the top part of the log which was loaded.
+   * When we load the full structure, it is substituted.
    */
   private static class LogData {
     @NotNull private final Map<VirtualFile, List<TimedVcsCommit>> myLogsByRoot;
     @NotNull private final Map<VirtualFile, Collection<VcsRef>> myRefsByRoot;
+    @NotNull private final DataPack myDataPack;
+    private final boolean myFullLog;
 
     private LogData(@NotNull Map<VirtualFile, List<TimedVcsCommit>> logsByRoot,
-                    @NotNull Map<VirtualFile, Collection<VcsRef>> refsByRoot) {
+                    @NotNull Map<VirtualFile, Collection<VcsRef>> refsByRoot, @NotNull DataPack dataPack, boolean fullLog) {
       myLogsByRoot = logsByRoot;
       myRefsByRoot = refsByRoot;
+      myDataPack = dataPack;
+      myFullLog = fullLog;
     }
 
     @NotNull
@@ -387,8 +402,21 @@ public class VcsLogDataHolder implements Disposable {
       return allRefs;
     }
 
-    public void setRefs(@NotNull VirtualFile root, @NotNull Collection<VcsRef> refs) {
-      myRefsByRoot.put(root, refs);
+    @NotNull
+    public DataPack getDataPack() {
+      return myDataPack;
+    }
+
+    public boolean isFullLogReady() {
+      return myFullLog;
+    }
+
+    public Map<VirtualFile,List<TimedVcsCommit>> getLogs() {
+      return myLogsByRoot;
+    }
+
+    public Map<VirtualFile, Collection<VcsRef>> getRefs() {
+      return myRefsByRoot;
     }
   }
 
