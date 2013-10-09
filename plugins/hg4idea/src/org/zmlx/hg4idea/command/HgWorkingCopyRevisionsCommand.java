@@ -23,11 +23,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
-import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.util.HgChangesetUtil;
-import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.ArrayList;
@@ -163,10 +161,6 @@ public class HgWorkingCopyRevisionsCommand {
         }
       }
     }
-    if (!result.getRawError().isEmpty() && !HgErrorUtil.isAuthorizationError(result)) {
-      new HgCommandResultNotifier(myProject).notifyError(result, "identify command failure", HgErrorUtil.MAPPING_ERROR_MESSAGE,
-                                                         HgErrorUtil.getMappingErrorNotificationListener(myProject));
-    }
     return Pair.create(HgRevisionNumber.NULL_REVISION_NUMBER, null);
   }
 
@@ -224,10 +218,6 @@ public class HgWorkingCopyRevisionsCommand {
         continue;
       }
       revisions.add(HgRevisionNumber.getInstance(parts.get(0), parts.get(1)));
-    }
-    if (!result.getRawError().isEmpty() && !HgErrorUtil.isAuthorizationError(result)) {
-      new HgCommandResultNotifier(myProject).notifyError(result, "identify command failure", HgErrorUtil.MAPPING_ERROR_MESSAGE,
-                                                         HgErrorUtil.getMappingErrorNotificationListener(myProject));
     }
     return revisions;
   }
