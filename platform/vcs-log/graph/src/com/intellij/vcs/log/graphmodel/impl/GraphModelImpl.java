@@ -79,7 +79,11 @@ public class GraphModelImpl implements GraphModel {
   private void fullUpdate() {
     int oldSize = graph.getNodeRows().size();
     graph.updateVisibleRows();
-    UpdateRequest updateRequest = UpdateRequest.buildFromToInterval(0, oldSize - 1, 0, graph.getNodeRows().size() - 1);
+
+    int newSize = graph.getNodeRows().size();
+    int newTo = newSize == 0 ? 0 : newSize - 1;
+    int oldTo = oldSize == 0 ? 0 : oldSize - 1;
+    UpdateRequest updateRequest = UpdateRequest.buildFromToInterval(0, oldTo, 0, newTo);
     callUpdateListener(updateRequest);
   }
 
