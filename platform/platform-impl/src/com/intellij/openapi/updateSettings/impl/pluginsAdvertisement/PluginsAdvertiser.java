@@ -18,6 +18,7 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
 import com.intellij.ide.plugins.*;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.Application;
@@ -61,7 +62,9 @@ public class PluginsAdvertiser implements StartupActivity {
       connection.connect();
       final InputStreamReader streamReader = new InputStreamReader(connection.getInputStream());
       try {
-        final JsonElement jsonRootElement = new JsonParser().parse(streamReader);
+        final JsonReader jsonReader = new JsonReader(streamReader);
+        jsonReader.setLenient(true);
+        final JsonElement jsonRootElement = new JsonParser().parse(jsonReader);
         final List<PluginId> result = new ArrayList<PluginId>();
         for (JsonElement jsonElement : jsonRootElement.getAsJsonArray()) {
           final JsonObject jsonObject = jsonElement.getAsJsonObject();
