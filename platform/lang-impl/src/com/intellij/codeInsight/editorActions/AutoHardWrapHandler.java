@@ -108,8 +108,9 @@ public class AutoHardWrapHandler {
     int line = document.getLineNumber(caretOffset);
     int startOffset = document.getLineStartOffset(line);
     int endOffset = document.getLineEndOffset(line);
-    final String endOfString = document.getText().substring(caretOffset, endOffset);
-    final boolean endsWithSpaces = StringUtil.isEmptyOrSpaces(endOfString);
+
+    final CharSequence endOfString = document.getCharsSequence().subSequence(caretOffset, endOffset);
+    final boolean endsWithSpaces = StringUtil.isEmptyOrSpaces(String.valueOf(endOfString));
     // Check if right margin is exceeded.
     int margin = editor.getSettings().getRightMargin(project);
     if (margin <= 0) {
