@@ -32,6 +32,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.net.HttpConfigurable;
 import org.jetbrains.annotations.NotNull;
@@ -85,6 +86,7 @@ public class PluginsAdvertiser implements StartupActivity {
 
   @Override
   public void runActivity(@NotNull final Project project) {
+    if (!UpdateSettings.getInstance().CHECK_NEEDED) return;
     final UnknownFeaturesCollector collectorSuggester = UnknownFeaturesCollector.getInstance(project);
     final Set<UnknownFeature> unknownFeatures = collectorSuggester.getUnknownFeatures();
     if (unknownFeatures.isEmpty()) return;
