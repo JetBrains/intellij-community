@@ -79,7 +79,7 @@ import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.roots.GitIntegrationEnabler;
 import git4idea.roots.GitRootChecker;
 import com.intellij.openapi.vcs.roots.VcsRootDetectInfo;
-import git4idea.roots.VcsRootDetector;
+import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import git4idea.status.GitChangeProvider;
 import git4idea.ui.branch.GitBranchWidget;
 import git4idea.update.GitUpdateEnvironment;
