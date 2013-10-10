@@ -37,7 +37,7 @@ class GithubOrgRaw implements DataConstructor {
   @NotNull
   @Override
   public <T> T create(@NotNull Class<T> resultClass) {
-    if (resultClass.isAssignableFrom(GithubOrg.class)) {
+    if (resultClass == GithubOrg.class) {
       return (T)createGithubOrg();
     }
 

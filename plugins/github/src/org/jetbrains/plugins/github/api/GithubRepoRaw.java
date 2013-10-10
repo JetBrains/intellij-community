@@ -112,13 +112,13 @@ class GithubRepoRaw implements DataConstructor {
   @NotNull
   @Override
   public <T> T create(@NotNull Class<T> resultClass) {
-    if (resultClass.isAssignableFrom(GithubRepo.class)) {
+    if (resultClass == GithubRepo.class) {
       return (T)createRepo();
     }
-    if (resultClass.isAssignableFrom(GithubRepoOrg.class)) {
+    if (resultClass == GithubRepoOrg.class) {
       return (T)createRepoOrg();
     }
-    if (resultClass.isAssignableFrom(GithubRepoDetailed.class)) {
+    if (resultClass == GithubRepoDetailed.class) {
       return (T)createRepoDetailed();
     }
 

@@ -34,7 +34,7 @@ class GithubBranchRaw implements DataConstructor {
   @NotNull
   @Override
   public <T> T create(@NotNull Class<T> resultClass) {
-    if (resultClass.isAssignableFrom(GithubBranch.class)) {
+    if (resultClass == GithubBranch.class) {
       return (T)createBranch();
     }
 

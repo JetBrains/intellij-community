@@ -80,7 +80,7 @@ class GithubGistRaw implements DataConstructor {
   @NotNull
   @Override
   public <T> T create(@NotNull Class<T> resultClass) {
-    if (resultClass.isAssignableFrom(GithubGist.class)) {
+    if (resultClass == GithubGist.class) {
       return (T)createGist();
     }
 
