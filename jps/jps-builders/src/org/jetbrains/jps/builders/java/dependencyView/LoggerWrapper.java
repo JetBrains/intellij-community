@@ -19,7 +19,7 @@ package org.jetbrains.jps.builders.java.dependencyView;
  * @author: db
  * Date: 20.01.12
  */
-public interface Logger<T> {
+public interface LoggerWrapper<T> {
   void debug(String comment, T t);
   void debug(String comment, String t);
   void debug(String comment, boolean t);
