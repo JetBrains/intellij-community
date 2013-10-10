@@ -72,7 +72,7 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
   }
 
   public void doTest() throws IOException {
-    doTest(getTestName(true).replace('$', '/') + ".java");
+    doTest(StringUtils.capitalize(getTestName(true)).replace('$', '/') + ".java");
   }
 
   protected void doTest(String fileName) throws IOException {
