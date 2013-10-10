@@ -15,58 +15,14 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameterList;
 import com.siyeh.HardcodedMethodConstants;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
-public class MisspelledHashcodeInspection extends BaseInspection {
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "misspelled.hashcode.display.name");
-  }
-
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "misspelled.hashcode.problem.descriptor");
-  }
+public class MisspelledHashcodeInspection extends MisspelledHashcodeInspectionBase {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix(HardcodedMethodConstants.HASH_CODE);
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new MisspelledHashcodeVisitor();
-  }
-
-  private static class MisspelledHashcodeVisitor
-    extends BaseInspectionVisitor {
-
-    @Override
-    public void visitMethod(@NotNull PsiMethod method) {
-      //note: no call to super
-      @NonNls final String methodName = method.getName();
-      if (!"hashcode".equals(methodName)) {
-        return;
-      }
-      final PsiParameterList parameterList = method.getParameterList();
-      if (parameterList.getParametersCount() != 0) {
-        return;
-      }
-      registerMethodError(method);
-    }
   }
 }
