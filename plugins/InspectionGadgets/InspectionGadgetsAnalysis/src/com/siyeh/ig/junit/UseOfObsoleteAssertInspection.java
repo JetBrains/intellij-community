@@ -17,7 +17,7 @@ package com.siyeh.ig.junit;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
@@ -61,7 +61,7 @@ public class UseOfObsoleteAssertInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       final Project project = expression.getProject();
-      final Module module = ModuleUtil.findModuleForPsiElement(expression);
+      final Module module = ModuleUtilCore.findModuleForPsiElement(expression);
       if (module == null) {
         return;
       }
