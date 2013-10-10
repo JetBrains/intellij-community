@@ -1,5 +1,7 @@
-package com.jetbrains.python;
+package com.jetbrains.python.quickFixes;
 
+import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyClassHasNoInitInspection;
 import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
 
