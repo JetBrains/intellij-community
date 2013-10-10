@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,8 @@ class TypeArgumentCompletionProvider extends CompletionProvider<CompletionParame
                                            PsiElement context,
                                            final PsiClass actualClass,
                                            final int index,
-                                           PsiClassType.ClassResolveResult expectedType, TailType globalTail) {
+                                           PsiClassType.ClassResolveResult expectedType,
+                                           TailType globalTail) {
     final PsiClass expectedClass = expectedType.getElement();
 
     if (!InheritanceUtil.isInheritorOrSelf(actualClass, expectedClass, true)) return;
