@@ -23,7 +23,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -34,21 +33,18 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
+import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.InvocationTargetException;
-
 /**
  * User: cdr
  */
 class StaticInheritanceFix extends InspectionGadgetsFix {
-  private static final Logger LOG = Logger.getInstance("#com.siyeh.ig.inheritance.StaticInheritanceFix");
   private final boolean myReplaceInWholeProject;
 
   StaticInheritanceFix(boolean replaceInWholeProject) {
@@ -152,24 +148,16 @@ class StaticInheritanceFix extends InspectionGadgetsFix {
   }
 
   private static void invokeWriteAction(final Runnable runnable, final PsiFile file) {
-    try {
-      GuiUtils.runOrInvokeAndWait(new Runnable() {
-        @Override
-        public void run() {
-          new WriteCommandAction(file.getProject(), file) {
-            @Override
-            protected void run(Result result) throws Throwable {
-              runnable.run();
-            }
-          }.execute();
-        }
-      });
-    }
-    catch (InvocationTargetException e) {
-      LOG.error(e);
-    }
-    catch (InterruptedException e) {
-      LOG.error(e);
-    }
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        new WriteCommandAction(file.getProject(), file) {
+          @Override
+          protected void run(Result result) throws Throwable {
+            runnable.run();
+          }
+        }.execute();
+      }
+    });
   }
 }
