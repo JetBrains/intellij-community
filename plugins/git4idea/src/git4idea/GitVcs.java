@@ -79,7 +79,7 @@ import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.roots.GitIntegrationEnabler;
 import git4idea.roots.GitRootChecker;
 import com.intellij.openapi.vcs.roots.VcsRootDetectInfo;
-import git4idea.roots.GitRootDetector;
+import git4idea.roots.VcsRootDetector;
 import git4idea.status.GitChangeProvider;
 import git4idea.ui.branch.GitBranchWidget;
 import git4idea.update.GitUpdateEnvironment;
@@ -592,7 +592,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   public void enableIntegration() {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        VcsRootDetectInfo detectInfo = new GitRootDetector(myProject, myPlatformFacade).detect();
+        VcsRootDetectInfo detectInfo = new VcsRootDetector(myProject).detect();
         new GitIntegrationEnabler(myProject, myGit, myPlatformFacade).enable(detectInfo);
       }
     });

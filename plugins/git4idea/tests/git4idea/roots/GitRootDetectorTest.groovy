@@ -165,7 +165,7 @@ class GitRootDetectorTest extends AbstractGitRootTest {
 
   /**
    * Perform test. Map contains actual Git repositories to be created on disk,
-   * and Git repositories expected to be detected by the GitRootDetector.
+   * and Git repositories expected to be detected by the VcsRootDetector.
    * @param map
    */
   private void doTest(Map map) {
@@ -215,7 +215,7 @@ class GitRootDetectorTest extends AbstractGitRootTest {
   }
 
   private VcsRootDetectInfo detect() {
-    new GitRootDetector(myProject, myPlatformFacade).detect()
+    new VcsRootDetector(myProject).detect()
   }
 
 }

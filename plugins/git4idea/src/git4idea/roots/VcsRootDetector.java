@@ -16,10 +16,9 @@
 package git4idea.roots;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.roots.VcsRootDetectInfo;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitPlatformFacade;
-import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,33 +28,33 @@ import java.util.Set;
 
 /**
  * <p>
- *   Scans the file system looking for Git roots, which contain the Project or its parts,
- *   and returns the information enclosed to the {@link com.intellij.openapi.vcs.roots.VcsRootDetectInfo}.
- *   The main part of the information are Git roots which will be proposed to the user to be added as VCS roots.
+ * Scans the file system looking for Git roots, which contain the Project or its parts,
+ * and returns the information enclosed to the {@link com.intellij.openapi.vcs.roots.VcsRootDetectInfo}.
+ * The main part of the information are Git roots which will be proposed to the user to be added as VCS roots.
  * </p>
  * <p>
- *   Linked sources are not scanned. User should add Git roots for them explicitly.
+ * Linked sources are not scanned. User should add Git roots for them explicitly.
  * </p>
  *
  * @author Kirill Likhodedov
  */
-public class GitRootDetector {
+public class VcsRootDetector {
 
   private static final int MAXIMUM_SCAN_DEPTH = 2;
 
   @NotNull private final Project myProject;
-  @NotNull private final GitPlatformFacade myPlatformFacade;
+  @NotNull private final ProjectRootManager myProjectManager;
 
-  public GitRootDetector(@NotNull Project project, @NotNull GitPlatformFacade platformFacade) {
+  public VcsRootDetector(@NotNull Project project) {
     myProject = project;
-    myPlatformFacade = platformFacade;
+    myProjectManager = ProjectRootManager.getInstance(project);
   }
 
   @NotNull
   public VcsRootDetectInfo detect() {
     return detect(myProject.getBaseDir());
   }
-  
+
   @NotNull
   public VcsRootDetectInfo detect(@Nullable VirtualFile startDir) {
     if (startDir == null) {
@@ -79,7 +78,7 @@ public class GitRootDetector {
 
   private Set<VirtualFile> scanForRootsInContentRoots() {
     Set<VirtualFile> gitRoots = new HashSet<VirtualFile>();
-    VirtualFile[] roots = myPlatformFacade.getProjectRootManager(myProject).getContentRoots();
+    VirtualFile[] roots = myProjectManager.getContentRoots();
     for (VirtualFile contentRoot : roots) {
       Set<VirtualFile> rootsInsideRoot = scanForRootsInsideDir(contentRoot);
       if (!rootsInsideRoot.contains(contentRoot)) {
@@ -135,8 +134,7 @@ public class GitRootDetector {
   }
 
   private static boolean hasGitDir(@NotNull VirtualFile dir) {
-    VirtualFile gitDir = dir.findChild(GitUtil.DOT_GIT);
+    VirtualFile gitDir = dir.findChild(".git");
     return gitDir != null && gitDir.exists();
   }
-
 }

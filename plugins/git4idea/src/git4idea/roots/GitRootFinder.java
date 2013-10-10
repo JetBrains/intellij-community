@@ -30,7 +30,7 @@ public class GitRootFinder implements VcsRootFinder {
   @NotNull
   @Override
   public Collection<VcsDirectoryMapping> findRoots(@NotNull VirtualFile root) {
-    VcsRootDetectInfo info = new GitRootDetector(myProject, myPlatformFacade).detect(root);
+    VcsRootDetectInfo info = new VcsRootDetector(myProject).detect(root);
     Collection<VirtualFile> roots = info.getRoots();
     if (roots.isEmpty()) {
       return Collections.emptyList();
