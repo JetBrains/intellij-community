@@ -10,7 +10,7 @@ import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.openapi.util.io.FileUtil;
 import com.jetbrains.python.duplocator.PyDuplicatesProfile;
 import com.jetbrains.python.duplocator.PyDuplocatorSettings;
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.fixtures.PyProfessionalTestCase;
 
 import java.io.File;
 import java.io.FileReader;
@@ -22,7 +22,7 @@ import java.util.Set;
 /**
  * User : ktisha
  */
-public class PyDuplocatorTest extends PyTestCase {
+public class PyDuplocatorTest extends PyProfessionalTestCase {
   private int myOldLowerBound;
   private PyDuplocatorSettings myDuplocatorSettings;
 

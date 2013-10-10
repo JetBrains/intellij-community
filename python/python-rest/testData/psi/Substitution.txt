@@ -1,0 +1,11 @@
+rest file
+  PsiElement(EXPLISIT_MARKUP_START)('.. ')
+  RestReferenceTarget:REFERENCE
+    PsiElement(SUBSTITUTION)('|caution|')
+  PsiElement(WHITESPACE)(' ')
+  RestDirective:DIRECTIVE_BLOCK
+    PsiElement(DIRECTIVE)('image::')
+    PsiElement(LINE)(' warning.png')
+    PsiElement(WHITESPACE)('\n    ')
+    PsiElement(FIELD)(':alt:')
+    PsiElement(LINE)(' Warning!')

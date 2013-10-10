@@ -1,6 +1,6 @@
 package com.jetbrains.python;
 
-import com.intellij.openapi.application.PathManager;
+import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
  * @author yole
@@ -10,6 +10,6 @@ public class PythonTestUtil {
   }
 
   public static String getTestDataPath() {
-    return PathManager.getHomePath() + "/python/testData";
+    return PyTestCase.getPythonCommunityPath() + "/testData";
   }
 }

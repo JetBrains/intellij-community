@@ -1,12 +1,5 @@
 package com.jetbrains.rest.fixtures;
 
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.module.EmptyModuleType;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.UsefulTestCase;
@@ -23,10 +16,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @TestDataPath("$CONTENT_ROOT/../testData/rest")
 public abstract class RestFixtureTestCase extends UsefulTestCase {
-  private static final RestDescriptor ourDescriptor = new RestDescriptor();
-
   protected CodeInsightTestFixture myFixture;
-  private static boolean ourPlatformPrefixInitialized;
 
   @Override
   protected void setUp() throws Exception {
@@ -43,7 +33,7 @@ public abstract class RestFixtureTestCase extends UsefulTestCase {
   }
 
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/python/testData/rest";
+    return PyTestCase.getPythonCommunityPath() + "/python-rest/testData";
   }
 
   @Override
@@ -54,25 +44,7 @@ public abstract class RestFixtureTestCase extends UsefulTestCase {
   }
 
   @Nullable
-  protected RestDescriptor getProjectDescriptor() {
-    return ourDescriptor;
-  }
-
-  protected static class RestDescriptor implements LightProjectDescriptor {
-    public RestDescriptor() {}
-
-    @Override
-    public ModuleType getModuleType() {
-      return EmptyModuleType.getInstance();
-    }
-
-    @Override
-    public Sdk getSdk() {
-      return null;
-    }
-
-    @Override
-    public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
-    }
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR;
   }
 }
