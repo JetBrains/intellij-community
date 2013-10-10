@@ -16,6 +16,7 @@ import org.apache.commons.httpclient.Header;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,21 +34,25 @@ import static com.intellij.tasks.generic.TemplateVariable.*;
 public class GenericRepository extends BaseRepositoryImpl {
   private static final Logger LOG = Logger.getInstance(GenericRepository.class);
 
-  public final FactoryVariable SERVER_URL_TEMPLATE_VARIABLE = new FactoryVariable("serverUrl") {
+  @NonNls public static final String SERVER_URL = "serverUrl";
+  @NonNls public static final String USERNAME = "username";
+  @NonNls public static final String PASSWORD = "password";
+
+  public final FactoryVariable SERVER_URL_TEMPLATE_VARIABLE = new FactoryVariable(SERVER_URL) {
     @NotNull
     @Override
     public String getValue() {
       return GenericRepository.this.getUrl();
     }
   };
-  public final FactoryVariable USERNAME_TEMPLATE_VARIABLE = new FactoryVariable("username") {
+  public final FactoryVariable USERNAME_TEMPLATE_VARIABLE = new FactoryVariable(USERNAME) {
     @NotNull
     @Override
     public String getValue() {
       return GenericRepository.this.getUsername();
     }
   };
-  public final FactoryVariable PASSWORD_TEMPLATE_VARIABLE = new FactoryVariable("password", true) {
+  public final FactoryVariable PASSWORD_TEMPLATE_VARIABLE = new FactoryVariable(PASSWORD, true) {
     @NotNull
     @Override
     public String getValue() {

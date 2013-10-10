@@ -56,9 +56,15 @@ public class GenericRepositoryUtil {
       String name = m.group(1);
       String replacement = lookup.get(name);
       if (replacement == null) {
-        throw new Exception((String.format("Template variable '%s' is not defined", name)));
+        throw new Exception((String.format("Template variable '%s' is undefined", name)));
       }
-      m.appendReplacement(sb, escape? URLEncoder.encode(replacement, "utf-8") : replacement);
+      // TODO: add proper escape|unescape property to template variables
+      if (escape && !name.equals(GenericRepository.SERVER_URL)) {
+        m.appendReplacement(sb, URLEncoder.encode(replacement, "utf-8"));
+      }
+      else {
+        m.appendReplacement(sb, replacement);
+      }
     }
     return m.appendTail(sb).toString();
   }
