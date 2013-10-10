@@ -25,10 +25,10 @@ import org.jetbrains.annotations.NotNull;
 class SerializableInnerClassWithNonSerializableOuterClassVisitor
   extends BaseInspectionVisitor {
 
-  private final SerializableInspection inspection;
+  private final SerializableInspectionBase inspection;
 
   public SerializableInnerClassWithNonSerializableOuterClassVisitor(
-    SerializableInspection inspection) {
+    SerializableInspectionBase inspection) {
     this.inspection = inspection;
   }
 

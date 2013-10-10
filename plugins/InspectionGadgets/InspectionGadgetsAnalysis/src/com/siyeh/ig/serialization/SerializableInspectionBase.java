@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2011 Bas Leijdekkers
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,63 +19,22 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.ui.CheckBox;
-import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.psiutils.SerializationUtils;
-import com.siyeh.ig.ui.UiUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class SerializableInspection extends BaseInspection {
-
+public abstract class SerializableInspectionBase extends BaseInspection {
   private static final JComponent[] EMPTY_COMPONENT_ARRAY = {};
-
   @SuppressWarnings({"PublicField"})
   public boolean ignoreAnonymousInnerClasses = false;
-
   @Deprecated @SuppressWarnings({"PublicField"})
   public String superClassString = "java.awt.Component";
-  protected List<String> superClassList = new ArrayList();
-
-  @Override
-  public final JComponent createOptionsPanel() {
-    final JComponent panel = new JPanel(new GridBagLayout());
-
-    final JPanel chooserList = UiUtils.createTreeClassChooserList(
-      superClassList, InspectionGadgetsBundle.message("ignore.classes.in.hierarchy.column.name"),
-      InspectionGadgetsBundle.message("choose.super.class.to.ignore"));
-    UiUtils.setComponentSize(chooserList, 7, 25);
-    final CheckBox checkBox = new CheckBox(InspectionGadgetsBundle.message(
-      "ignore.anonymous.inner.classes"), this, "ignoreAnonymousInnerClasses");
-
-    final GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-
-    constraints.weightx = 1.0;
-    constraints.weighty = 1.0;
-    constraints.fill = GridBagConstraints.BOTH;
-    panel.add(chooserList, constraints);
-
-    constraints.fill = GridBagConstraints.BOTH;
-    final JComponent[] additionalOptions = createAdditionalOptions();
-    for (JComponent additionalOption : additionalOptions) {
-      constraints.gridy++;
-      panel.add(additionalOption, constraints);
-    }
-
-    constraints.fill = GridBagConstraints.HORIZONTAL;
-    constraints.gridy++;
-    constraints.weighty = 0.0;
-    panel.add(checkBox, constraints);
-    return panel;
-  }
+  protected List<String> superClassList = new ArrayList<String>();
 
   @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {
