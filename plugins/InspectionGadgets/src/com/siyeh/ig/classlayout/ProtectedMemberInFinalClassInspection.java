@@ -34,26 +34,11 @@ import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveModifierFix;
-import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class ProtectedMemberInFinalClassInspection extends BaseInspection {
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("protected.member.in.final.class.display.name");
-  }
-
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("protected.member.in.final.class.problem.descriptor");
-  }
+public class ProtectedMemberInFinalClassInspection extends ProtectedMemberInFinalClassInspectionBase {
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
@@ -164,41 +149,6 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
       if (conflictsDialogOK) {
         modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
       }
-    }
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new ProtectedMemberInFinalClassVisitor();
-  }
-
-  private static class ProtectedMemberInFinalClassVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitMethod(@NotNull PsiMethod method) {
-      if (!method.hasModifierProperty(PsiModifier.PROTECTED)) {
-        return;
-      }
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null || !containingClass.hasModifierProperty(PsiModifier.FINAL)) {
-        return;
-      }
-      if (MethodUtils.hasSuper(method)) {
-        return;
-      }
-      registerModifierError(PsiModifier.PROTECTED, method, PsiModifier.PROTECTED);
-    }
-
-    @Override
-    public void visitField(@NotNull PsiField field) {
-      if (!field.hasModifierProperty(PsiModifier.PROTECTED)) {
-        return;
-      }
-      final PsiClass containingClass = field.getContainingClass();
-      if (containingClass == null || !containingClass.hasModifierProperty(PsiModifier.FINAL)) {
-        return;
-      }
-      registerModifierError(PsiModifier.PROTECTED, field, PsiModifier.PROTECTED);
     }
   }
 }
