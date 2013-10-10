@@ -675,7 +675,7 @@ public class FileWatcherTest extends PlatformLangTestCase {
   }
 
   public void testPartialRefresh() throws Exception {
-    // tests the same scenario with an active file watcher: this affects
+    // tests the same scenario with an active file watcher (prevents explicit marking of refreshed paths)
     File top = createTestDir("top");
     LocalFileSystemTest.doTestPartialRefresh(top);
   }
