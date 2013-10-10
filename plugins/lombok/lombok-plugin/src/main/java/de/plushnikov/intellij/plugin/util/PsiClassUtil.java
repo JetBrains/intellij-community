@@ -1,3 +1,4 @@
+<<<<<<< HEAD:lombok-plugin/src/main/java/de/plushnikov/intellij/plugin/util/PsiClassUtil.java
 package de.plushnikov.intellij.plugin.util;
 
 import com.google.common.base.Function;
@@ -141,6 +142,21 @@ public class PsiClassUtil {
       result = factory.createType(psiClass, factory.createSubstitutor(substitutionMap));
     } else {
       result = factory.createType(psiClass);
+    }
+    return result;
+  }
+  
+  /**
+   * Return true if class is final.
+   *
+   * @param psiClass
+   * @return
+   */
+  public static boolean isFinalClass(@NotNull PsiClass psiClass) {
+    boolean result = false;
+    final PsiModifierList modifierList = psiClass.getModifierList();
+    if (null != modifierList) {
+      result = modifierList.hasModifierProperty(PsiModifier.FINAL);
     }
     return result;
   }

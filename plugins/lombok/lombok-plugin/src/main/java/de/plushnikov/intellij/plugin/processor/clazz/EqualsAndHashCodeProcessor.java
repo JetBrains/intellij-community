@@ -104,7 +104,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     target.addAll(createEqualAndHashCode(psiClass, psiAnnotation));
   }
 
-  protected Collection<PsiMethod> createEqualAndHashCode(PsiClass psiClass, PsiElement psiNavTargetElement) {
+  protected Collection<PsiMethod> createEqualAndHashCode(PsiClass psiClass, PsiElement psiNavTargetElement, boolean tryGenerateCanEqual) {
     if (areMethodsAlreadyExists(psiClass)) {
       return Collections.emptyList();
     }
@@ -112,7 +112,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     result.add(createEqualsMethod(psiClass, psiNavTargetElement));
     result.add(createHashCodeMethod(psiClass, psiNavTargetElement));
 
-    final boolean shouldGenerateCanEqual = shouldGenerateCanEqual(psiClass);
+    final boolean shouldGenerateCanEqual = tryGenerateCanEqual && shouldGenerateCanEqual(psiClass);
     if (shouldGenerateCanEqual) {
       result.add(createCanEqualMethod(psiClass, psiNavTargetElement));
     }
