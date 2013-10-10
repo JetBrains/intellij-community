@@ -17,33 +17,16 @@ package com.siyeh.ig.naming;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import org.jetbrains.annotations.NotNull;
 
-public class MethodNameSameAsClassNameInspection extends BaseInspection {
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "method.name.same.as.class.name.display.name");
-  }
-
-  @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "method.name.same.as.class.name.problem.descriptor");
-  }
+public class MethodNameSameAsClassNameInspection extends MethodNameSameAsClassNameInspectionBase {
 
   @Override
   @NotNull
@@ -58,11 +41,6 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
         new MethodNameSameAsClassNameFix()
       };
     }
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
   }
 
   private static class MethodNameSameAsClassNameFix
@@ -95,36 +73,6 @@ public class MethodNameSameAsClassNameInspection extends BaseInspection {
         return;
       }
       returnTypeElement.delete();
-    }
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new MethodNameSameAsClassNameVisitor();
-  }
-
-  private static class MethodNameSameAsClassNameVisitor
-    extends BaseInspectionVisitor {
-
-    @Override
-    public void visitMethod(@NotNull PsiMethod method) {
-      // no call to super, so it doesn't drill down into inner classes
-      if (method.isConstructor()) {
-        return;
-      }
-      final String methodName = method.getName();
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      final String className = containingClass.getName();
-      if (className == null) {
-        return;
-      }
-      if (!methodName.equals(className)) {
-        return;
-      }
-      registerMethodError(method, Boolean.valueOf(isOnTheFly()));
     }
   }
 }
