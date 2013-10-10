@@ -16,6 +16,9 @@
 
 package com.intellij.tasks.impl;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
@@ -145,23 +148,23 @@ public class TaskUtil {
   }
 
   /**
-   * Print pretty-formatted XML in {@code logger} if its level is DEBUG or below
+   * Print pretty-formatted XML to {@code logger} if its level is DEBUG or below
    */
   public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull Element element) {
     if (logger.isDebugEnabled()) {
       // alternatively
       //new XMLOutputter(Format.getPrettyFormat()).outputString(root)
-      logger.debug(JDOMUtil.createOutputter("\n").outputString(element));
+      logger.debug("\n" + JDOMUtil.createOutputter("\n").outputString(element));
     }
   }
 
   /**
-   * Parse and print pretty-formatted XML in {@code logger} if its level is DEBUG or below
+   * Parse and print pretty-formatted XML to {@code logger} if its level is DEBUG or below
    */
-  public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull InputStream xmlStream) {
+  public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull InputStream xml) {
     if (logger.isDebugEnabled()) {
       try {
-        logger.debug(JDOMUtil.createOutputter("\n").outputString(JDOMUtil.loadDocument(xmlStream)));
+        logger.debug("\n" + JDOMUtil.createOutputter("\n").outputString(JDOMUtil.loadDocument(xml)));
       }
       catch (Exception e) {
         logger.debug(e);
@@ -170,16 +173,26 @@ public class TaskUtil {
   }
 
   /**
-   * Parse and print pretty-formatted XML in {@code logger} if its level is DEBUG or below
+   * Parse and print pretty-formatted XML to {@code logger} if its level is DEBUG or below
    */
-  public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull String xmlString) {
+  public static void prettyFormatXmlToLog(@NotNull Logger logger, @NotNull String xml) {
     if (logger.isDebugEnabled()) {
       try {
-        logger.debug(JDOMUtil.createOutputter("\n").outputString(JDOMUtil.loadDocument(xmlString)));
+        logger.debug("\n" + JDOMUtil.createOutputter("\n").outputString(JDOMUtil.loadDocument(xml)));
       }
       catch (Exception e) {
         logger.debug(e);
       }
+    }
+  }
+
+  /**
+   * Parse and print pretty-formatted Json to {@code logger} if its level is DEBUG or below
+   */
+  public static void prettyFormatJsonToLog(@NotNull Logger logger, @NotNull String json) {
+    if (logger.isDebugEnabled()) {
+      Gson gson = new GsonBuilder().setPrettyPrinting().create();
+      logger.debug("\n" + gson.toJson(gson.fromJson(json, JsonElement.class)));
     }
   }
 }
