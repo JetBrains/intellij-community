@@ -89,7 +89,7 @@ class GitIntegrationEnablerTest extends GitLightTest {
                   notification("Added Git roots: ${path("community")}, ${path("contrib")}"))
   }
 
-  private void doTest(GitRootDetectInfo detectInfo, Map map) {
+  private void doTest(VcsRootDetectInfo detectInfo, Map map) {
 
     // defaults
     if (!map.vcs_roots) {
@@ -117,8 +117,8 @@ class GitIntegrationEnablerTest extends GitLightTest {
     assertEquals expectedVcsRoots.toSet(), actualRoots.collect() { it.path }.toSet()
   }
 
-  GitRootDetectInfo given(Collection<String> roots, boolean full = true, boolean below = false) {
-    new GitRootDetectInfo(roots.collect { (VirtualFile)new MockVirtualFile(toAbsolute(it, myProject)) }, full, below)
+  VcsRootDetectInfo given(Collection<String> roots, boolean full = true, boolean below = false) {
+    new VcsRootDetectInfo(roots.collect { (VirtualFile)new MockVirtualFile(toAbsolute(it, myProject)) }, full, below)
   }
 
   Map expect(Map map, Notification notification = null, Class dialogClass = null) {

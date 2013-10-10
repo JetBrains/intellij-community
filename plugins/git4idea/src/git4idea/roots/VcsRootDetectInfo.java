@@ -26,7 +26,7 @@ import java.util.Collection;
  *
  * @author Kirill Likhodedov
  */
-public class GitRootDetectInfo {
+public class VcsRootDetectInfo {
 
   private final @NotNull Collection<VirtualFile> myRoots;
   private final boolean myFull;
@@ -38,7 +38,7 @@ public class GitRootDetectInfo {
    * @param below Pass true to indicate that the project dir is below Git dir,
    *              i.e. .git is above the project dir, and there is no .git directly under the project dir.
    */
-  GitRootDetectInfo(@NotNull Collection<VirtualFile> roots, boolean full, boolean below) {
+  VcsRootDetectInfo(@NotNull Collection<VirtualFile> roots, boolean full, boolean below) {
     myRoots = new ArrayList<VirtualFile>(roots);
     myFull = full;
     myBelow = below;

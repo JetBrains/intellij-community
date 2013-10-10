@@ -78,7 +78,7 @@ import git4idea.merge.GitMergeProvider;
 import git4idea.rollback.GitRollbackEnvironment;
 import git4idea.roots.GitIntegrationEnabler;
 import git4idea.roots.GitRootChecker;
-import git4idea.roots.GitRootDetectInfo;
+import git4idea.roots.VcsRootDetectInfo;
 import git4idea.roots.GitRootDetector;
 import git4idea.status.GitChangeProvider;
 import git4idea.ui.branch.GitBranchWidget;
@@ -592,7 +592,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   public void enableIntegration() {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        GitRootDetectInfo detectInfo = new GitRootDetector(myProject, myPlatformFacade).detect();
+        VcsRootDetectInfo detectInfo = new GitRootDetector(myProject, myPlatformFacade).detect();
         new GitIntegrationEnabler(myProject, myGit, myPlatformFacade).enable(detectInfo);
       }
     });

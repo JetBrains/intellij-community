@@ -29,7 +29,7 @@ import java.util.Set;
 /**
  * <p>
  *   Scans the file system looking for Git roots, which contain the Project or its parts,
- *   and returns the information enclosed to the {@link GitRootDetectInfo}.
+ *   and returns the information enclosed to the {@link VcsRootDetectInfo}.
  *   The main part of the information are Git roots which will be proposed to the user to be added as VCS roots.
  * </p>
  * <p>
@@ -51,29 +51,29 @@ public class GitRootDetector {
   }
 
   @NotNull
-  public GitRootDetectInfo detect() {
+  public VcsRootDetectInfo detect() {
     return detect(myProject.getBaseDir());
   }
   
   @NotNull
-  public GitRootDetectInfo detect(@Nullable VirtualFile startDir) {
+  public VcsRootDetectInfo detect(@Nullable VirtualFile startDir) {
     if (startDir == null) {
-      return new GitRootDetectInfo(Collections.<VirtualFile>emptyList(), false, false);
+      return new VcsRootDetectInfo(Collections.<VirtualFile>emptyList(), false, false);
     }
 
     final Set<VirtualFile> roots = scanForRootsInsideDir(startDir);
     roots.addAll(scanForRootsInContentRoots());
 
     if (roots.contains(startDir)) {
-      return new GitRootDetectInfo(roots, true, false);
+      return new VcsRootDetectInfo(roots, true, false);
     }
 
     VirtualFile rootAbove = scanForSingleRootAboveDir(startDir);
     if (rootAbove != null) {
       roots.add(rootAbove);
-      return new GitRootDetectInfo(roots, true, true);
+      return new VcsRootDetectInfo(roots, true, true);
     }
-    return new GitRootDetectInfo(roots, false, false);
+    return new VcsRootDetectInfo(roots, false, false);
   }
 
   private Set<VirtualFile> scanForRootsInContentRoots() {

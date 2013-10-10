@@ -190,7 +190,7 @@ class GitRootDetectorTest extends AbstractGitRootTest {
     assertInfo(expected, detect())
   }
 
-  void assertInfo(Map expected, GitRootDetectInfo actual) {
+  void assertInfo(Map expected, VcsRootDetectInfo actual) {
     assertEquals(expected.empty, actual.empty())
     if (expected.full ^ actual.totallyUnderGit()) {
       fail("The project is unexpectedly ${actual.totallyUnderGit() ? "" : "not "}under Git${roots(actual.roots)}")
@@ -213,7 +213,7 @@ class GitRootDetectorTest extends AbstractGitRootTest {
     files.collect { it.path }
   }
 
-  private GitRootDetectInfo detect() {
+  private VcsRootDetectInfo detect() {
     new GitRootDetector(myProject, myPlatformFacade).detect()
   }
 

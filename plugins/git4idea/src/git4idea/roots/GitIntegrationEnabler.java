@@ -51,7 +51,7 @@ public class GitIntegrationEnabler {
     myPlatformFacade = platformFacade;
   }
 
-  public void enable(@NotNull GitRootDetectInfo detectInfo) {
+  public void enable(@NotNull VcsRootDetectInfo detectInfo) {
     Notificator notificator = myPlatformFacade.getNotificator(myProject);
     Collection<VirtualFile> roots = detectInfo.getRoots();
     VirtualFile projectDir = myProject.getBaseDir();
