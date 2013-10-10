@@ -15,90 +15,14 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiModifier;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
-import org.jetbrains.annotations.NotNull;
 
 public class InstanceVariableNamingConventionInspection
-  extends ConventionInspection {
-
-  private static final int DEFAULT_MIN_LENGTH = 5;
-  private static final int DEFAULT_MAX_LENGTH = 32;
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "instance.variable.naming.convention.display.name");
-  }
+  extends InstanceVariableNamingConventionInspectionBase {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix();
-  }
-
-  @Override
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    final String fieldName = (String)infos[0];
-    if (fieldName.length() < getMinLength()) {
-      return InspectionGadgetsBundle.message(
-        "instance.variable.name.convention.problem.descriptor.short");
-    }
-    else if (fieldName.length() > getMaxLength()) {
-      return InspectionGadgetsBundle.message(
-        "instance.variable.name.convention.problem.descriptor.long");
-    }
-    return InspectionGadgetsBundle.message(
-      "instance.variable.name.convention.problem.descriptor.regex.mismatch",
-      getRegex());
-  }
-
-  @Override
-  protected String getDefaultRegex() {
-    return "m_[a-z][A-Za-z\\d]*";
-  }
-
-  @Override
-  protected int getDefaultMinLength() {
-    return DEFAULT_MIN_LENGTH;
-  }
-
-  @Override
-  protected int getDefaultMaxLength() {
-    return DEFAULT_MAX_LENGTH;
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new NamingConventionsVisitor();
-  }
-
-  private class NamingConventionsVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitField(@NotNull PsiField field) {
-      super.visitField(field);
-      if (field.hasModifierProperty(PsiModifier.STATIC)) {
-        return;
-      }
-      final String name = field.getName();
-      if (name == null) {
-        return;
-      }
-      if (isValid(name)) {
-        return;
-      }
-      registerFieldError(field, name);
-    }
   }
 }
