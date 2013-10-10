@@ -17,11 +17,9 @@ package com.intellij.openapi.vcs.roots;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsRootError;
-import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -115,5 +113,4 @@ public class VcsRootErrorsFinder {
     }
     return paths;
   }
-
 }
