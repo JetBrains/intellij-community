@@ -65,16 +65,17 @@ public final class XPathResponseHandler extends SelectorBasedResponseHandler {
 
   @NotNull
   private XPath lazyCompile(@NotNull String path) throws Exception {
-    if (!myCompiledCache.containsKey(path)) {
+    XPath xPath = myCompiledCache.get(path);
+    if (xPath == null) {
       try {
-        final XPath compiled =  XPath.newInstance(path);
-        myCompiledCache.put(path, compiled);
+        xPath = XPath.newInstance(path);
+        myCompiledCache.put(path, xPath);
       }
       catch (JDOMException e) {
         throw new Exception(String.format("Malformed XPath expression '%s'", path));
       }
     }
-    return myCompiledCache.get(path);
+    return xPath;
   }
 
   @NotNull
