@@ -303,11 +303,6 @@ public class PyMultiFileResolveTest extends PyMultiFileResolveTestCase {
     assertResolvesTo(PyFunction.class, "foo");
   }
 
-  // PY-6289
-  public void testCythonIndirectStarImport() {
-    assertResolvesTo(PyFunction.class, "foo");
-  }
-
   // PY-7156
   public void testPython33NamespacePackage() {
     setLanguageLevel(LanguageLevel.PYTHON33);

@@ -149,7 +149,11 @@ public abstract class PyTestCase extends UsefulTestCase {
     PlatformTestCase.autodetectPlatformPrefix();
   }
 
+  public static String getPythonCommunityPath() {
+    return new File(PathManager.getHomePath(), "python/community").getPath();
+  }
+
   public static String getHelpersPath() {
-    return new File(PathManager.getHomePath(), "python/community/helpers").getPath();
+    return new File(getPythonCommunityPath(), "helpers").getPath();
   }
 }

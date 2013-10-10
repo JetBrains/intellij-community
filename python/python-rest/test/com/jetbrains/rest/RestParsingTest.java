@@ -1,6 +1,5 @@
 package com.jetbrains.rest;
 
-import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.ParsingTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.rest.parsing.RestParserDefinition;
@@ -36,7 +35,7 @@ public class RestParsingTest extends ParsingTestCase {
   }
 
   protected String getTestDataPath() {
-    return PathManager.getHomePath() + "/python/testData/rest/psi";
+    return PyTestCase.getPythonCommunityPath() + "/python-rest/testData/psi";
   }
 
 
