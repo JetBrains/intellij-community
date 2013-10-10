@@ -17,6 +17,7 @@ package git4idea.roots
 
 import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vcs.VcsRootError
+import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder
 import git4idea.test.GitMockVcsManager
 import org.junit.After
 import org.junit.Before

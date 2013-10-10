@@ -29,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsRootError;
+import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder;
 import com.intellij.util.Function;
 import git4idea.GitPlatformFacade;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,7 @@ import static git4idea.GitVcs.MINOR_NOTIFICATION;
 import static git4idea.Notificator.createNotification;
 
 /**
- * Searches for Git roots problems via {@link VcsRootErrorsFinder} and notifies about them.
+ * Searches for Git roots problems via {@link com.intellij.openapi.vcs.roots.VcsRootErrorsFinder} and notifies about them.
  *
  * @author Kirill Likhodedov
  */

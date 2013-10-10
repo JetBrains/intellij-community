@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vcs.VcsRootError;
+import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
