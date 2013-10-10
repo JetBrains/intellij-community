@@ -28,6 +28,7 @@ import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -439,7 +440,7 @@ public class InferenceSession {
             if (lub != null) {
               inferenceVariable.setInstantiation(lub instanceof PsiCapturedWildcardType ? ((PsiCapturedWildcardType)lub).getWildcard() : lub);
             }
-            else if (acceptObject || upperBounds.size() > 1) {
+            else if (acceptObject || upperBounds.size() > 1 || !upperBounds.get(0).equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
               PsiType glb = null;
               for (PsiType upperBound : upperBounds) {
                 upperBound = acceptBoundsWithRecursiveDependencies(typeParameter, upperBound, substitutor);

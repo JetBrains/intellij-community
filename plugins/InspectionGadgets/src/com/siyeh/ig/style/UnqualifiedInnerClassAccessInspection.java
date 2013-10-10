@@ -20,37 +20,19 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.HighlightUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
-public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
-
-  @SuppressWarnings({"PublicField"})
-  public boolean ignoreReferencesToLocalInnerClasses = false;
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("unqualified.inner.class.access.display.name");
-  }
-
-  @NotNull
-  @Override
-  protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("unqualified.inner.class.access.problem.descriptor");
-  }
+public class UnqualifiedInnerClassAccessInspection extends UnqualifiedInnerClassAccessInspectionBase {
 
   @Override
   public JComponent createOptionsPanel() {
@@ -207,95 +189,6 @@ public class UnqualifiedInnerClassAccessInspection extends BaseInspection {
         return true;
       }
       return manager.areElementsEquivalent(targetClass, referencedClass);
-    }
-  }
-
-  private static class ReferenceCollector extends JavaRecursiveElementVisitor {
-
-    private final String name;
-    private final boolean onDemand;
-    private final Set<PsiJavaCodeReferenceElement> references = new HashSet();
-
-    ReferenceCollector(String name, boolean onDemand) {
-      this.name = name;
-      this.onDemand = onDemand;
-    }
-
-    @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-      super.visitReferenceElement(reference);
-      if (reference.isQualified()) {
-        return;
-      }
-      final PsiElement target = reference.resolve();
-      if (!(target instanceof PsiClass)) {
-        return;
-      }
-      final PsiClass aClass = (PsiClass)target;
-      if (!onDemand) {
-        final String qualifiedName = aClass.getQualifiedName();
-        if (name.equals(qualifiedName)) {
-          references.add(reference);
-        }
-        return;
-      }
-      final PsiClass containingClass = aClass.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      final String qualifiedName = containingClass.getQualifiedName();
-      if (name.equals(qualifiedName)) {
-        references.add(reference);
-      }
-    }
-
-    @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-      visitReferenceElement(expression);
-    }
-
-    public Collection<PsiJavaCodeReferenceElement> getReferences() {
-      return references;
-    }
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new UnqualifiedInnerClassAccessVisitor();
-  }
-
-  private class UnqualifiedInnerClassAccessVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-      super.visitReferenceElement(reference);
-      if (reference.isQualified()) {
-        return;
-      }
-      final PsiElement target = reference.resolve();
-      if (!(target instanceof PsiClass)) {
-        return;
-      }
-      final PsiClass aClass = (PsiClass)target;
-      final PsiClass containingClass = aClass.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      if (ignoreReferencesToLocalInnerClasses) {
-        if (PsiTreeUtil.isAncestor(containingClass, reference, true)) {
-          return;
-        }
-        final PsiClass referenceClass = PsiTreeUtil.getParentOfType(reference, PsiClass.class);
-        if (referenceClass != null && referenceClass.isInheritor(containingClass, true)) {
-          return;
-        }
-      }
-      registerError(reference, containingClass.getName());
-    }
-
-    @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-      visitReferenceElement(expression);
     }
   }
 }

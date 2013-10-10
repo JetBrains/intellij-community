@@ -16,6 +16,7 @@
 
 package com.maddyhome.idea.copyright;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
@@ -76,7 +77,12 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
     super(project);
     if (!myProject.isDefault()) {
       final NewFileTracker newFileTracker = NewFileTracker.getInstance();
-      Disposer.register(myProject, newFileTracker);
+      Disposer.register(myProject, new Disposable() {
+        @Override
+        public void dispose() {
+          newFileTracker.clear();
+        }
+      });
       startupManager.runWhenProjectIsInitialized(new Runnable() {
         @Override
         public void run() {

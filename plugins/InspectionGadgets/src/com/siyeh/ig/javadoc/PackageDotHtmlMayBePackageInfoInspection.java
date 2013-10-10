@@ -23,8 +23,6 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -35,31 +33,12 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
-
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("package.dot.html.may.be.package.info.display.name");
-  }
-
-  @NotNull
-  @Override
-  protected String buildErrorString(Object... infos) {
-    if (((Boolean)infos[1]).booleanValue()) {
-      return InspectionGadgetsBundle.message("package.dot.html.may.be.package.info.exists.problem.descriptor");
-    }
-    return InspectionGadgetsBundle.message("package.dot.html.may.be.package.info.problem.descriptor");
-  }
+public class PackageDotHtmlMayBePackageInfoInspection extends PackageDotHtmlMayBePackageInfoInspectionBase {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
@@ -217,44 +196,6 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
         }
       }
       return null;
-    }
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new PackageDotHtmlMayBePackageInfoVisitor();
-  }
-
-  private static class PackageDotHtmlMayBePackageInfoVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitFile(PsiFile file) {
-      super.visitFile(file);
-      if (!(file instanceof XmlFile)) {
-        return;
-      }
-      @NonNls final String fileName = file.getName();
-      if (!"package.html".equals(fileName)) {
-        return;
-      }
-      final PsiDirectory directory = file.getContainingDirectory();
-      if (directory == null) {
-        return;
-      }
-      final String aPackage = getPackage(directory);
-      if (aPackage == null) {
-        return;
-      }
-      final boolean exists = directory.findFile("package-info.java") != null;
-      registerError(file, aPackage, Boolean.valueOf(exists));
-    }
-
-    public static String getPackage(@NotNull PsiDirectory directory) {
-      final VirtualFile virtualFile = directory.getVirtualFile();
-      final Project project = directory.getProject();
-      final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(project);
-      final ProjectFileIndex fileIndex = projectRootManager.getFileIndex();
-      return fileIndex.getPackageNameByDirectory(virtualFile);
     }
   }
 }

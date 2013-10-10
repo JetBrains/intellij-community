@@ -163,6 +163,7 @@ public class CommonContentEntriesEditor extends ModuleElementsEditor {
     entriesPanel.add(new ToolbarPanel(myScrollPane, group), BorderLayout.CENTER);
 
     final Splitter splitter = new Splitter(false);
+    splitter.setProportion(0.4f);
     splitter.setHonorComponentsMinimumSize(true);
     mainPanel.add(splitter, BorderLayout.CENTER);
 

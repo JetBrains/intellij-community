@@ -80,7 +80,7 @@ class GithubPullRequestRaw implements DataConstructor {
   @NotNull
   @Override
   public <T> T create(@NotNull Class<T> resultClass) {
-    if (resultClass.isAssignableFrom(GithubPullRequest.class)) {
+    if (resultClass == GithubPullRequest.class) {
       return (T)createPullRequest();
     }
 

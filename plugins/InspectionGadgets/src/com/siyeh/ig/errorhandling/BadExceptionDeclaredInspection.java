@@ -15,80 +15,20 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.LibraryUtil;
-import com.siyeh.ig.psiutils.TestUtils;
-import com.siyeh.ig.ui.ExternalizableStringSet;
 import com.siyeh.ig.ui.UiUtils;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
-public class BadExceptionDeclaredInspection extends BaseInspection {
-
-  /**
-   * @noinspection PublicField
-   */
-  public String exceptionsString = "";
-
-  /**
-   * @noinspection PublicField
-   */
-  public final ExternalizableStringSet exceptions =
-    new ExternalizableStringSet(
-      "java.lang.Throwable",
-      "java.lang.Exception",
-      "java.lang.Error",
-      "java.lang.RuntimeException",
-      "java.lang.NullPointerException",
-      "java.lang.ClassCastException",
-      "java.lang.ArrayIndexOutOfBoundsException"
-    );
-
-  /**
-   * @noinspection PublicField
-   */
-  public boolean ignoreTestCases = false;
-
-  public boolean ignoreLibraryOverrides = false;
+public class BadExceptionDeclaredInspection extends BadExceptionDeclaredInspectionBase {
 
   public BadExceptionDeclaredInspection() {
-    if (exceptionsString.length() != 0) {
-      exceptions.clear();
-      final List<String> strings = StringUtil.split(exceptionsString, ",");
-      for (String string : strings) {
-        exceptions.add(string);
-      }
-      exceptionsString = "";
-    }
-  }
-
-  @Override
-  @NotNull
-  public String getID() {
-    return "ProhibitedExceptionDeclared";
-  }
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("bad.exception.declared.display.name");
-  }
-
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("bad.exception.declared.problem.descriptor");
   }
 
   @Override
@@ -119,41 +59,5 @@ public class BadExceptionDeclaredInspection extends BaseInspection {
     constraints.gridy = 2;
     panel.add(checkBox2, constraints);
     return panel;
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new BadExceptionDeclaredVisitor();
-  }
-
-  private class BadExceptionDeclaredVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitMethod(@NotNull PsiMethod method) {
-      super.visitMethod(method);
-      if (ignoreTestCases) {
-        final PsiClass containingClass = method.getContainingClass();
-        final TestFrameworks testFrameworks = TestFrameworks.getInstance();
-        if (containingClass != null && testFrameworks.isTestOrConfig(containingClass)) {
-          return;
-        }
-      }
-      if (ignoreLibraryOverrides && LibraryUtil.isOverrideOfLibraryMethod(method)) {
-        return;
-      }
-      final PsiReferenceList throwsList = method.getThrowsList();
-      final PsiJavaCodeReferenceElement[] references = throwsList.getReferenceElements();
-      for (PsiJavaCodeReferenceElement reference : references) {
-        final PsiElement element = reference.resolve();
-        if (!(element instanceof PsiClass)) {
-          continue;
-        }
-        final PsiClass thrownClass = (PsiClass)element;
-        final String qualifiedName = thrownClass.getQualifiedName();
-        if (qualifiedName != null && exceptions.contains(qualifiedName)) {
-          registerError(reference);
-        }
-      }
-    }
   }
 }

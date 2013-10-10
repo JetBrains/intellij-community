@@ -108,8 +108,9 @@ public class AutoHardWrapHandler {
     int line = document.getLineNumber(caretOffset);
     int startOffset = document.getLineStartOffset(line);
     int endOffset = document.getLineEndOffset(line);
-    final String endOfString = document.getText().substring(caretOffset, endOffset);
-    final boolean endsWithSpaces = StringUtil.isEmptyOrSpaces(endOfString);
+
+    final CharSequence endOfString = document.getCharsSequence().subSequence(caretOffset, endOffset);
+    final boolean endsWithSpaces = StringUtil.isEmptyOrSpaces(String.valueOf(endOfString));
     // Check if right margin is exceeded.
     int margin = editor.getSettings().getRightMargin(project);
     if (margin <= 0) {
@@ -185,12 +186,14 @@ public class AutoHardWrapHandler {
           caretOffsetDiff[0] += event.getNewLength() - event.getOldLength();
         }
 
-        if (event.getNewLength() <= event.getOldLength() && endsWithSpaces) {
-          // There is a possible case that document fragment is removed because of auto-formatting.
-          // We don't want to process such events in case of current string ends with spaces.
+        if (autoFormatted(event)) {
           return;
         }
         wrapIntroducedSymbolsNumber[0] += event.getNewLength() - event.getOldLength();
+      }
+
+      private boolean autoFormatted(DocumentEvent event) {
+        return event.getNewLength() <= event.getOldLength() && endsWithSpaces;
       }
 
       @Override

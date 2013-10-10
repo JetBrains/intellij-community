@@ -27,6 +27,7 @@ import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.DistinctRootsCollection;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.StringFactory;
@@ -548,6 +549,29 @@ public class VfsUtilCore {
     @Override
     protected boolean isAncestor(@NotNull VirtualFile ancestor, @NotNull VirtualFile virtualFile) {
       return VfsUtilCore.isAncestor(ancestor, virtualFile, false);
+    }
+  }
+
+  public static void processFilesRecursively(@NotNull VirtualFile root,
+                                             @NotNull Processor<VirtualFile> processor,
+                                             @NotNull Convertor<VirtualFile, Boolean> directoryFilter) {
+    if (!processor.process(root)) return;
+
+    if (root.isDirectory() && directoryFilter.convert(root)) {
+      final LinkedList<VirtualFile[]> queue = new LinkedList<VirtualFile[]>();
+
+      queue.add(root.getChildren());
+
+      do {
+        final VirtualFile[] files = queue.removeFirst();
+
+        for (VirtualFile file : files) {
+          if (!processor.process(file)) return;
+          if (file.isDirectory() && directoryFilter.convert(file)) {
+            queue.add(file.getChildren());
+          }
+        }
+      } while (!queue.isEmpty());
     }
   }
 }

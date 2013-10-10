@@ -26,6 +26,8 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
@@ -261,12 +263,12 @@ public class GenerateMembersUtil {
 
     try {
       final PsiMethod resultMethod = createMethod(factory, sourceMethod, target);
-      copyDocComment(sourceMethod, resultMethod, factory);
       copyModifiers(sourceMethod.getModifierList(), resultMethod.getModifierList());
       final PsiSubstitutor collisionResolvedSubstitutor =
         substituteTypeParameters(factory, target, sourceMethod.getTypeParameterList(), resultMethod.getTypeParameterList(), substitutor, sourceMethod);
       substituteReturnType(PsiManager.getInstance(project), resultMethod, sourceMethod.getReturnType(), collisionResolvedSubstitutor);
       substituteParameters(factory, codeStyleManager, sourceMethod.getParameterList(), resultMethod.getParameterList(), collisionResolvedSubstitutor, target);
+      copyDocComment(sourceMethod, resultMethod, factory);
       final List<PsiClassType> thrownTypes = ExceptionUtil.collectSubstituted(collisionResolvedSubstitutor, sourceMethod.getThrowsList().getReferencedTypes());
       if (target instanceof PsiClass) {
         final PsiClass[] supers = ((PsiClass)target).getSupers();
@@ -435,6 +437,18 @@ public class GenerateMembersUtil {
         target.addAfter(factory.createDocCommentFromText(docComment.getText()), null);
       }
     }
+    final PsiParameter[] sourceParameters = source.getParameterList().getParameters();
+    final PsiParameterList targetParameterList = target.getParameterList();
+    RefactoringUtil.fixJavadocsForParams(target, new HashSet<PsiParameter>(Arrays.asList(targetParameterList.getParameters())), new Condition<Pair<PsiParameter, String>>() {
+      @Override
+      public boolean value(Pair<PsiParameter, String> pair) {
+        final int parameterIndex = targetParameterList.getParameterIndex(pair.first);
+        if (parameterIndex >= 0 && parameterIndex < sourceParameters.length) {
+          return Comparing.strEqual(pair.second, sourceParameters[parameterIndex].getName());
+        }
+        return false;
+      }
+    });
   }
 
   @NotNull

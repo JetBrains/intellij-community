@@ -898,7 +898,8 @@ public class ControlFlowUtil {
 
       @Override
       public Boolean getResult() {
-        return !maybeUnassigned[0];
+        final int variableDeclarationOffset = flow.getStartOffset(variable.getParent());
+        return !maybeUnassigned[variableDeclarationOffset > -1 ? variableDeclarationOffset : 0];
       }
     }
     if (flow.getSize() == 0) return false;

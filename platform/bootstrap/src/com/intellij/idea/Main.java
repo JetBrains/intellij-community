@@ -40,13 +40,18 @@ public class Main {
 
   private static final String AWT_HEADLESS = "java.awt.headless";
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
+  private static final String[] NO_ARGS = {};
 
   private static boolean isHeadless;
   private static boolean isCommandLine;
 
   private Main() { }
 
-  public static void main(final String[] args) {
+  public static void main(String[] args) {
+    if (args.length == 1 && "%f".equals(args[0])) {
+      args = NO_ARGS;
+    }
+
     setFlags(args);
 
     if (isHeadless()) {

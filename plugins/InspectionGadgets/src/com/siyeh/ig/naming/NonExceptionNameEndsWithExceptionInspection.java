@@ -19,32 +19,14 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class NonExceptionNameEndsWithExceptionInspection
-  extends BaseInspection {
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.exception.name.ends.with.exception.display.name");
-  }
-
-  @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "non.exception.name.ends.with.exception.problem.descriptor");
-  }
+  extends NonExceptionNameEndsWithExceptionInspectionBase {
 
   @Override
   @NotNull
@@ -108,39 +90,6 @@ public class NonExceptionNameEndsWithExceptionInspection
         referenceElement.delete();
       }
       extendsList.add(reference);
-    }
-  }
-
-  @Override
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new NonExceptionNameEndsWithExceptionVisitor();
-  }
-
-  private static class NonExceptionNameEndsWithExceptionVisitor
-    extends BaseInspectionVisitor {
-
-    @Override
-    public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so it doesn't drill down into inner classes
-      final String className = aClass.getName();
-      if (className == null) {
-        return;
-      }
-      @NonNls final String exception = "Exception";
-      if (!className.endsWith(exception)) {
-        return;
-      }
-      if (InheritanceUtil.isInheritor(aClass,
-                                      CommonClassNames.JAVA_LANG_EXCEPTION)) {
-        return;
-      }
-      registerClassError(aClass, className,
-                         Boolean.valueOf(isOnTheFly()));
     }
   }
 }

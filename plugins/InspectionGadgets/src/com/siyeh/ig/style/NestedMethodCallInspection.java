@@ -16,36 +16,13 @@
 package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.IntroduceVariableFix;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class NestedMethodCallInspection extends BaseInspection {
-
-  /**
-   * @noinspection PublicField
-   */
-  public boolean m_ignoreFieldInitializations = true;
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("nested.method.call.display.name");
-  }
-
-  @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("nested.method.call.problem.descriptor");
-  }
+public class NestedMethodCallInspection extends NestedMethodCallInspectionBase {
 
   @Override
   public JComponent createOptionsPanel() {
@@ -54,52 +31,7 @@ public class NestedMethodCallInspection extends BaseInspection {
   }
 
   @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new NestedMethodCallVisitor();
-  }
-
-  @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new IntroduceVariableFix(false);
-  }
-
-  @Override
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  private class NestedMethodCallVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      PsiExpression outerExpression = expression;
-      while (outerExpression != null && outerExpression.getParent() instanceof PsiExpression) {
-        outerExpression = (PsiExpression)outerExpression.getParent();
-      }
-      if (outerExpression == null) {
-        return;
-      }
-      final PsiElement parent = outerExpression.getParent();
-      if (!(parent instanceof PsiExpressionList)) {
-        return;
-      }
-      final PsiElement grandParent = parent.getParent();
-      if (!(grandParent instanceof PsiCallExpression)) {
-        return;
-      }
-      if (ExpressionUtils.isConstructorInvocation(grandParent)) {
-        //ignore nested method calls at the start of a constructor,
-        //where they can't be extracted
-        return;
-      }
-      if (m_ignoreFieldInitializations) {
-        final PsiElement field = PsiTreeUtil.getParentOfType(expression, PsiField.class);
-        if (field != null) {
-          return;
-        }
-      }
-      registerMethodCallError(expression);
-    }
   }
 }

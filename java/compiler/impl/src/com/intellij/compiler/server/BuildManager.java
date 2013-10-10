@@ -100,8 +100,7 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -890,7 +889,8 @@ public class
     launcherCp.add(ClasspathBootstrap.getResourcePath(launcherClass));
     launcherCp.add(compilerPath);
     ClasspathBootstrap.appendJavaCompilerClasspath(launcherCp);
-
+    // this will disable standard extensions to ensure javac is loaded from the right tools.jar
+    cmdLine.addParameter("-Djava.ext.dirs=");
     cmdLine.addParameter("-classpath");
     cmdLine.addParameter(classpathToString(launcherCp));
     

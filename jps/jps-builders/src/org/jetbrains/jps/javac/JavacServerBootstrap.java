@@ -86,6 +86,9 @@ public class JavacServerBootstrap {
       appendParam(cmdLine, "-D" + JavacServer.USE_ECLIPSE_COMPILER_PROPERTY);
     }
 
+    // this will disable standard extensions to ensure javac is loaded from the right tools.jar
+    appendParam(cmdLine, "-Djava.ext.dirs=");
+
     for (String option : vmOptions) {
       appendParam(cmdLine, option);
     }

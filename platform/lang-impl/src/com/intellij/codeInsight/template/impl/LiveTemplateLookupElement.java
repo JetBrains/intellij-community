@@ -65,7 +65,10 @@ public class LiveTemplateLookupElement extends LookupElement {
         }
         presentation.setTypeText("  [" + KeyEvent.getKeyText(shortcutChar) + "] ");
       }
-      presentation.setTailText(" (" + myTemplate.getDescription() + ")", true);
+      String description = myTemplate.getDescription();
+      if (description != null) {
+        presentation.setTailText(" (" + description + ")", true);
+      }
     } else {
       presentation.setTypeText(myTemplate.getDescription());
 

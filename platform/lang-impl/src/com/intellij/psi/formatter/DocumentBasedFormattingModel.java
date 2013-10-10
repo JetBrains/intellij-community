@@ -39,14 +39,14 @@ import org.jetbrains.annotations.Nullable;
 public class DocumentBasedFormattingModel implements FormattingModel {
   private final Block                   myRootBlock;
   private final FormattingDocumentModel myDocumentModel;
-  private final Document                myDocument;
+  @NotNull private final Document       myDocument;
   private final Project                 myProject;
   private final CodeStyleSettings       mySettings;
   private final FileType                myFileType;
   private final PsiFile                 myFile;
 
   public DocumentBasedFormattingModel(final Block rootBlock,
-                                      final Document document,
+                                      @NotNull final Document document,
                                       final Project project,
                                       final CodeStyleSettings settings,
                                       final FileType fileType,
@@ -221,6 +221,7 @@ public class DocumentBasedFormattingModel implements FormattingModel {
     return mySettings.getIndentOptions(myFileType);
   }
 
+  @NotNull
   public Document getDocument() {
     return myDocument;
   }

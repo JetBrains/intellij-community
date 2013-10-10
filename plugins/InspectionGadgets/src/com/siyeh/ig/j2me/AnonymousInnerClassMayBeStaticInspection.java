@@ -15,70 +15,16 @@
  */
 package com.siyeh.ig.j2me;
 
-import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MoveAnonymousToInnerClassFix;
-import com.siyeh.ig.performance.InnerClassReferenceVisitor;
-import org.jetbrains.annotations.NotNull;
 
-public class AnonymousInnerClassMayBeStaticInspection extends BaseInspection {
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "anonymous.inner.may.be.named.static.inner.class.display.name");
-  }
-
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "anonymous.inner.may.be.named.static.inner.class.problem.descriptor");
-  }
+public class AnonymousInnerClassMayBeStaticInspection extends AnonymousInnerClassMayBeStaticInspectionBase {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new MoveAnonymousToInnerClassFix(
       InspectionGadgetsBundle.message(
         "anonymous.inner.may.be.named.static.inner.class.quickfix"));
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new AnonymousInnerClassMayBeStaticVisitor();
-  }
-
-  private static class AnonymousInnerClassMayBeStaticVisitor
-    extends BaseInspectionVisitor {
-
-    @Override
-    public void visitClass(@NotNull PsiClass aClass) {
-      if (!(aClass instanceof PsiAnonymousClass)) {
-        return;
-      }
-      if (aClass instanceof PsiEnumConstantInitializer) {
-        return;
-      }
-      final PsiMember containingMember =
-        PsiTreeUtil.getParentOfType(aClass, PsiMember.class);
-      if (containingMember == null ||
-          containingMember.hasModifierProperty(PsiModifier.STATIC)) {
-        return;
-      }
-      final PsiAnonymousClass anAnonymousClass =
-        (PsiAnonymousClass)aClass;
-      final InnerClassReferenceVisitor visitor =
-        new InnerClassReferenceVisitor(anAnonymousClass);
-      anAnonymousClass.accept(visitor);
-      if (!visitor.canInnerClassBeStatic()) {
-        return;
-      }
-      registerClassError(aClass);
-    }
   }
 }

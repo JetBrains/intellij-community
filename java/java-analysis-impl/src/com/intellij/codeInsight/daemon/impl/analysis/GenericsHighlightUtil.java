@@ -276,7 +276,9 @@ public class GenericsHighlightUtil {
         return checkExtendsWildcardCaptureFailure((PsiWildcardType)type, bound);
       }
       else if (((PsiWildcardType)type).isSuper()) {
-        return checkNotAssignable(bound, ((PsiWildcardType)type).getSuperBound(), false);
+        final PsiType superBound = ((PsiWildcardType)type).getSuperBound();
+        if (PsiUtil.resolveClassInType(superBound) instanceof PsiTypeParameter) return TypesDistinctProver.provablyDistinct(type, bound);
+        return checkNotAssignable(bound, superBound, false);
       }
     }
     else if (type instanceof PsiArrayType) {

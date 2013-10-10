@@ -52,7 +52,7 @@ public class HighlightUtils {
   private HighlightUtils() {
   }
 
-  public static void highlightElement(PsiElement element) {
+  public static void highlightElement(@NotNull PsiElement element) {
     highlightElements(Collections.singleton(element));
   }
 
@@ -72,6 +72,7 @@ public class HighlightUtils {
           return;
         }
         final Project project = firstElement.getProject();
+        if (project.isDisposed()) return;
         final FileEditorManager editorManager =
           FileEditorManager.getInstance(project);
         final EditorColorsManager editorColorsManager =

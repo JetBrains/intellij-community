@@ -21,42 +21,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.TestUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspection {
-
-  private static final String IGNORE = "org.junit.Ignore";
-
-  @Override
-  @Nls
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("junit4.test.method.in.class.extending.junit3.testcase.display.name");
-  }
-
-  @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
-    if (AnnotationUtil.isAnnotated((PsiMethod)infos[1], IGNORE, false)) {
-      return InspectionGadgetsBundle.message("ignore.test.method.in.class.extending.junit3.testcase.problem.descriptor");
-    }
-    return InspectionGadgetsBundle.message("junit4.test.method.in.class.extending.junit3.testcase.problem.descriptor");
-  }
-
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
+public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends JUnit4AnnotatedMethodInJUnit3TestCaseInspectionBase {
 
   @NotNull
   @Override
@@ -275,31 +249,6 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
       deleteAnnotation(descriptor, "org.junit.Test");
-    }
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new Junit4AnnotatedMethodInJunit3TestCaseVisitor();
-  }
-
-  private static class Junit4AnnotatedMethodInJunit3TestCaseVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitMethod(PsiMethod method) {
-      super.visitMethod(method);
-      final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
-      if (!TestUtils.isJUnitTestClass(containingClass)) {
-        return;
-      }
-      if (AnnotationUtil.isAnnotated(method, IGNORE, false) && method.getName().startsWith("test")) {
-        registerMethodError(method, containingClass, method);
-      } else if (TestUtils.isJUnit4TestMethod(method)) {
-        registerMethodError(method, containingClass, method);
-      }
     }
   }
 }

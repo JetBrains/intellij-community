@@ -23,8 +23,12 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.codeInsight.template.JavaCodeContextType
+import com.intellij.codeInsight.template.LiveTemplateTest
 import com.intellij.codeInsight.template.Template
+import com.intellij.codeInsight.template.TemplateContextType
 import com.intellij.codeInsight.template.TemplateManager
+import com.intellij.codeInsight.template.impl.TemplateImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
@@ -49,6 +53,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
+import com.intellij.util.containers.ContainerUtil
 /**
  * @author peter
  */
@@ -1518,6 +1523,30 @@ class X extends Foo {
     type '.'
     myFixture.checkResult 'myprop=java.<caret>'
     assert lookup
+  }
+
+  public void "test live template without description"() {
+    final TemplateManager manager = TemplateManager.getInstance(getProject());
+    final Template template = manager.createTemplate("tpl", "user", null);
+    final JavaCodeContextType contextType =
+      ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.Statement);
+    ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true);
+    LiveTemplateTest.addTemplate(template, testRootDisposable)
+    
+    myFixture.configureByText 'a.java', '''
+class Foo {
+ int tplMn;
+ 
+ { <caret> }
+}
+'''
+    type 'tpl'
+    myFixture.assertPreferredCompletionItems 0, 'tplMn', 'tpl'
+
+    LookupElementPresentation p = LookupElementPresentation.renderElement(myFixture.lookupElements[1])
+    assert p.itemText == 'tpl'
+    assert !p.tailText
+    assert p.typeText == '  [Tab] '
   }
 
 }

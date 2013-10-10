@@ -43,7 +43,7 @@ class GithubFileRaw implements DataConstructor {
   @NotNull
   @Override
   public <T> T create(@NotNull Class<T> resultClass) {
-    if (resultClass.isAssignableFrom(GithubFile.class)) {
+    if (resultClass == GithubFile.class) {
       return (T)createFile();
     }
 

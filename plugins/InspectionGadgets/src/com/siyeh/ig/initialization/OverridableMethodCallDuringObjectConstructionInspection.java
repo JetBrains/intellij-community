@@ -18,32 +18,15 @@ package com.siyeh.ig.initialization;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.MakeClassFinalFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class OverridableMethodCallDuringObjectConstructionInspection extends BaseInspection {
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("overridable.method.call.in.constructor.display.name");
-  }
-
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("overridable.method.call.in.constructor.problem.descriptor");
-  }
+public class OverridableMethodCallDuringObjectConstructionInspection extends OverridableMethodCallDuringObjectConstructionInspectionBase {
 
   @Override
   @NotNull
@@ -96,42 +79,6 @@ public class OverridableMethodCallDuringObjectConstructionInspection extends Bas
       }
       final PsiModifierList modifierList = method.getModifierList();
       modifierList.setModifierProperty(PsiModifier.FINAL, true);
-    }
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new OverridableMethodCallInConstructorVisitor();
-  }
-
-  private static class OverridableMethodCallInConstructorVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
-      super.visitMethodCallExpression(expression);
-      if (!MethodCallUtils.isCallDuringObjectConstruction(expression)) {
-        return;
-      }
-      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final PsiExpression qualifier = methodExpression.getQualifierExpression();
-      if (qualifier != null) {
-        if (!(qualifier instanceof PsiThisExpression || qualifier instanceof PsiSuperExpression)) {
-          return;
-        }
-      }
-      final PsiClass containingClass = PsiTreeUtil.getParentOfType(expression, PsiClass.class);
-      if (containingClass == null || containingClass.hasModifierProperty(PsiModifier.FINAL)) {
-        return;
-      }
-      final PsiMethod calledMethod = expression.resolveMethod();
-      if (calledMethod == null || !PsiUtil.canBeOverriden(calledMethod)) {
-        return;
-      }
-      final PsiClass calledMethodClass = calledMethod.getContainingClass();
-      if (calledMethodClass == null || !calledMethodClass.equals(containingClass)) {
-        return;
-      }
-      registerMethodCallError(expression, expression);
     }
   }
 }

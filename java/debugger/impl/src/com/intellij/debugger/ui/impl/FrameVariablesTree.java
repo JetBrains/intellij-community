@@ -170,6 +170,8 @@ public class FrameVariablesTree extends DebuggerTree {
             final DebuggerTreeNodeImpl variableNode = myNodeManager.createNode(descriptor, evaluationContext);
             myChildren.add(variableNode);
           }
+          myChildren.add(myNodeManager.createMessageNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE));
+          // trying to collect values from variable slots
           final List<DecompiledLocalVariable> decompiled = collectVariablesFromBytecode(frame, argValues.size());
           if (!decompiled.isEmpty()) {
             try {
@@ -185,7 +187,6 @@ public class FrameVariablesTree extends DebuggerTree {
               LOG.info(ex);
             }
           }
-          myChildren.add(myNodeManager.createMessageNode(MessageDescriptor.LOCAL_VARIABLES_INFO_UNAVAILABLE));
         }
         else {
           throw e;

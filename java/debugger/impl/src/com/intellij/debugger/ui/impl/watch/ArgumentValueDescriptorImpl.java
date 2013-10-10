@@ -70,47 +70,12 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
               final PsiCodeBlock body = method.getBody();
               if (body != null) {
                 final StringBuilder nameBuilder = new StringBuilder();
-                nameBuilder.append(myDefaultName);
                 try {
                   final int startSlot = params.getParametersCount() + (method.hasModifierProperty(PsiModifier.STATIC)? 0 : 1);
-                  body.accept(new JavaRecursiveElementVisitor() {
-                    private int myCurrentSlotIndex = startSlot;
-                    private final Stack<Integer> myIndexStack = new Stack<Integer>();
-                    @Override
-                    public void visitCodeBlock(PsiCodeBlock block) {
-                      myIndexStack.push(myCurrentSlotIndex);
-                      try {
-                        super.visitCodeBlock(block);
-                      }
-                      finally {
-                        myCurrentSlotIndex = myIndexStack.pop();
-                      }
-                    }
-
-                    @Override
-                    public void visitLocalVariable(PsiLocalVariable variable) {
-                      if (myCurrentSlotIndex == myIndex) {
-                        if (nameBuilder.length() == myDefaultName.length()) {
-                          nameBuilder.append(": ");
-                        }
-                        else {
-                          nameBuilder.append("|");
-                        }
-                        nameBuilder.append(variable.getName());
-                      }
-                      final PsiType varType = variable.getType();
-                      myCurrentSlotIndex += (varType == PsiType.DOUBLE || varType == PsiType.LONG)? 2 : 1;
-                    }
-
-                    @Override
-                    public void visitClass(PsiClass aClass) {
-                      // skip local and anonymous classes
-                    }
-
-                  });
+                  body.accept(new LocalVariableNameFinder(startSlot, nameBuilder));
                 }
                 finally {
-                  myName = nameBuilder.toString();
+                  myName = nameBuilder.length() > 0? myDefaultName + ": " + nameBuilder.toString() : myDefaultName;
                 }
               }
             }
@@ -139,6 +104,92 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
     }
     catch (IncorrectOperationException e) {
       throw new EvaluateException(DebuggerBundle.message("error.invalid.local.variable.name", getName()), e);
+    }
+  }
+
+  private class LocalVariableNameFinder extends JavaRecursiveElementVisitor {
+    private final int myStartSlot;
+    private final StringBuilder myNameBuilder;
+    private int myCurrentSlotIndex;
+    private final Stack<Integer> myIndexStack;
+
+    public LocalVariableNameFinder(int startSlot, StringBuilder nameBuilder) {
+      myStartSlot = startSlot;
+      myNameBuilder = nameBuilder;
+      myCurrentSlotIndex = myStartSlot;
+      myIndexStack = new Stack<Integer>();
+    }
+
+    @Override
+    public void visitLocalVariable(PsiLocalVariable variable) {
+      if (myCurrentSlotIndex == myIndex) {
+        if (myNameBuilder.length() != 0) {
+          myNameBuilder.append("|");
+        }
+        myNameBuilder.append(variable.getName());
+      }
+      final PsiType varType = variable.getType();
+      myCurrentSlotIndex += (varType == PsiType.DOUBLE || varType == PsiType.LONG)? 2 : 1;
+    }
+
+    @Override
+    public void visitCodeBlock(PsiCodeBlock block) {
+      myIndexStack.push(myCurrentSlotIndex);
+      try {
+        super.visitCodeBlock(block);
+      }
+      finally {
+        myCurrentSlotIndex = myIndexStack.pop();
+      }
+    }
+
+    @Override
+    public void visitForStatement(PsiForStatement statement) {
+      myIndexStack.push(myCurrentSlotIndex);
+      try {
+        super.visitForStatement(statement);
+      }
+      finally {
+        myCurrentSlotIndex = myIndexStack.pop();
+      }
+    }
+
+    @Override
+    public void visitForeachStatement(PsiForeachStatement statement) {
+      myIndexStack.push(myCurrentSlotIndex);
+      try {
+        super.visitForeachStatement(statement);
+      }
+      finally {
+        myCurrentSlotIndex = myIndexStack.pop();
+      }
+    }
+
+    @Override
+    public void visitCatchSection(PsiCatchSection section) {
+      myIndexStack.push(myCurrentSlotIndex);
+      try {
+        super.visitCatchSection(section);
+      }
+      finally {
+        myCurrentSlotIndex = myIndexStack.pop();
+      }
+    }
+
+    @Override
+    public void visitResourceList(PsiResourceList resourceList) {
+      myIndexStack.push(myCurrentSlotIndex);
+      try {
+        super.visitResourceList(resourceList);
+      }
+      finally {
+        myCurrentSlotIndex = myIndexStack.pop();
+      }
+    }
+
+    @Override
+    public void visitClass(PsiClass aClass) {
+      // skip local and anonymous classes
     }
   }
 }

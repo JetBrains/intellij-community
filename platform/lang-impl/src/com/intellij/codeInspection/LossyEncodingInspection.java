@@ -22,7 +22,6 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
@@ -153,7 +152,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     if (separator == null) {
       separator = documentManager.isDocumentUnsaved(document) ?
                   FileDocumentManagerImpl.getLineSeparator(document, virtualFile) :
-                  CodeStyleFacade.getInstance(project).getLineSeparator();
+                  FileDocumentManager.getInstance().getLineSeparator(null, project);
     }
     String toSave = StringUtil.convertLineSeparators(text, separator);
     byte[] bom = virtualFile.getBOM();

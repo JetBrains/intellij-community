@@ -23,6 +23,7 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="CGLIB" level="project" />
     <orderEntry type="library" name="asm" level="project" />
+    <orderEntry type="library" exported="" name="ForkJoin" level="project" />
   </component>
   <component name="copyright">
     <Base>

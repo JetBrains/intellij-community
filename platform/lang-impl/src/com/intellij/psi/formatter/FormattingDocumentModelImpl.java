@@ -38,13 +38,13 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
 
   private final WhiteSpaceFormattingStrategy myWhiteSpaceStrategy;
   //private final CharBuffer myBuffer = CharBuffer.allocate(1);
-  private final Document myDocument;
+  @NotNull private final Document myDocument;
   private final PsiFile myFile;
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.formatter.FormattingDocumentModelImpl");
   private final CodeStyleSettings mySettings;
 
-  public FormattingDocumentModelImpl(final Document document, PsiFile file) {
+  public FormattingDocumentModelImpl(@NotNull final Document document, PsiFile file) {
     myDocument = document;
     myFile = file;
     if (file != null) {
@@ -117,6 +117,7 @@ public class FormattingDocumentModelImpl implements FormattingDocumentModel {
     return myDocument.getTextLength();
   }
 
+  @NotNull
   @Override
   public Document getDocument() {
     return myDocument;
