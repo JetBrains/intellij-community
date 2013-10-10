@@ -175,6 +175,7 @@ public class CodeFormatterFacade {
 
     if (builder != null) {
       if (file.getTextLength() > 0) {
+        LOG.assertTrue(document != null);
         try {
           final PsiElement startElement = file.findElementAt(textRanges.get(0).getTextRange().getStartOffset());
           final PsiElement endElement = file.findElementAt(textRanges.get(textRanges.size() - 1).getTextRange().getEndOffset() - 1);
