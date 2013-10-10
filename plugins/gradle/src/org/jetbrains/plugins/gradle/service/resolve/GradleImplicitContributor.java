@@ -26,6 +26,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -124,7 +125,9 @@ public class GradleImplicitContributor implements GradleMethodContextContributor
     }
   }
 
-  public static void processImplicitDeclarations(PsiScopeProcessor processor, ResolveState state, PsiElement place) {
+  public static void processImplicitDeclarations(@NotNull PsiScopeProcessor processor,
+                                                 @NotNull ResolveState state,
+                                                 @NotNull PsiElement place) {
     if (!place.getText().equals("resources")) {
       GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
       GradleResolverUtil.processDeclarations(psiManager, processor, state, place, GRADLE_API_PROJECT);
@@ -132,10 +135,11 @@ public class GradleImplicitContributor implements GradleMethodContextContributor
   }
 
   private static void checkForAvailableTasks(int level,
-                                             String taskName,
-                                             PsiScopeProcessor processor,
-                                             ResolveState state,
-                                             PsiElement place) {
+                                             @Nullable String taskName,
+                                             @NotNull PsiScopeProcessor processor,
+                                             @NotNull ResolveState state,
+                                             @NotNull PsiElement place) {
+    if (taskName == null) return;
     final GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
     PsiClass gradleApiProjectClass = psiManager.findClassWithCache(GRADLE_API_PROJECT, place.getResolveScope());
     if (canBeMethodOf(taskName, gradleApiProjectClass)) return;
@@ -165,12 +169,12 @@ public class GradleImplicitContributor implements GradleMethodContextContributor
     }
   }
 
-  private static void processTask(String taskName,
-                                  String fqName,
-                                  GroovyPsiManager psiManager,
-                                  PsiScopeProcessor processor,
-                                  ResolveState state,
-                                  PsiElement place) {
+  private static void processTask(@NotNull String taskName,
+                                  @NotNull String fqName,
+                                  @NotNull GroovyPsiManager psiManager,
+                                  @NotNull PsiScopeProcessor processor,
+                                  @NotNull ResolveState state,
+                                  @NotNull PsiElement place) {
     if (taskName.equals(place.getText())) {
       if (!(place instanceof GrClosableBlock)) {
         GrLightMethodBuilder methodBuilder = GradleResolverUtil.createMethodWithClosure(taskName, fqName, fqName, place, psiManager);
@@ -187,7 +191,10 @@ public class GradleImplicitContributor implements GradleMethodContextContributor
     }
   }
 
-  private static void processAvailableTasks(String taskName, PsiScopeProcessor processor, ResolveState state, PsiElement place) {
+  private static void processAvailableTasks(@NotNull String taskName,
+                                            @NotNull PsiScopeProcessor processor,
+                                            @NotNull ResolveState state,
+                                            @NotNull PsiElement place) {
     final GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
     PsiClass gradleApiProjectClass = psiManager.findClassWithCache(GRADLE_API_PROJECT, place.getResolveScope());
     if (canBeMethodOf(taskName, gradleApiProjectClass)) return;
