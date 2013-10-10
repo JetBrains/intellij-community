@@ -674,6 +674,12 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
   }
 
+  public void testPartialRefresh() throws Exception {
+    // tests the same scenario with an active file watcher: this affects
+    File top = createTestDir("top");
+    LocalFileSystemTest.doTestPartialRefresh(top);
+  }
+
 
   @NotNull
   private LocalFileSystem.WatchRequest watch(File watchFile) {

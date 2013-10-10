@@ -228,7 +228,9 @@ public class RefreshWorker {
         }
       }
 
-      file.markClean();
+      if (myIsRecursive || !file.isDirectory()) {
+        file.markClean();
+      }
     }
   }
 
