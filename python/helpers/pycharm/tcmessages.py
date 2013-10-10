@@ -8,7 +8,7 @@ class TeamcityServiceMessages:
         self.prepend_linebreak = prepend_linebreak
     
     def escapeValue(self, value):
-        if isinstance(value, unicode):
+        if sys.version_info.major <= 2 and isinstance(value, unicode):
             s = value.encode("utf-8")
         else:
             s = str(value)
