@@ -1,9 +1,14 @@
 class X(object):
-    def foo(self): pass
-
-class Outer(object):
-  class Inner(X):
     def foo(self):
-        super(Outer.Inner, self).foo()
+        pass
 
-    
+class A:
+    class Inner(X):
+        def foo(self):
+            <selection>super(A.Inner, self).foo()</selection>
+
+    def doStuff(self, foo=True): pass
+
+class B(A):
+    def otherMethod(self, foo, bar):
+        print foo, bar

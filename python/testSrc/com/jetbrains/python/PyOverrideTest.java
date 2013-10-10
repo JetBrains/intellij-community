@@ -1,7 +1,5 @@
 package com.jetbrains.python;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.codeInsight.override.PyMethodMember;
 import com.jetbrains.python.codeInsight.override.PyOverrideImplementUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -68,9 +66,7 @@ public class PyOverrideTest extends PyTestCase {
   public void testInnerClass() {  // PY-10976
     myFixture.configureByFile("override/" + getTestName(true) + ".py");
     PyFunction toOverride = getTopLevelClass(0).getMethods()[0];
-    final PsiElement element = myFixture.getElementAtCaret();
-    PyClass pyClass = PsiTreeUtil.getParentOfType(element, PyClass.class, false);
-    assertNotNull(pyClass);
+    PyClass pyClass = getTopLevelClass(1).getNestedClasses()[0];
     PyOverrideImplementUtil.overrideMethods(myFixture.getEditor(), pyClass,
                                             Collections.singletonList(new PyMethodMember(toOverride)));
     myFixture.checkResultByFile("override/" + getTestName(true) + "_after.py", true);
