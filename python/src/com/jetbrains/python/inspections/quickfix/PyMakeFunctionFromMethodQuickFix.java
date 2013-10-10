@@ -60,7 +60,7 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
     PyClass aClass = PsiTreeUtil.getTopmostParentOfType(containingClass, PyClass.class);
     if (aClass == null)
       aClass = containingClass;
-    copy = file.addAfter(copy, aClass);
+    copy = file.addBefore(copy, aClass);
 
     for (UsageInfo usage : usages) {
       final PsiElement usageElement = usage.getElement();
