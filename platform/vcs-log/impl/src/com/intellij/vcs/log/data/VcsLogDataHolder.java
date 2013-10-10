@@ -32,6 +32,7 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -110,6 +111,14 @@ public class VcsLogDataHolder implements Disposable {
    */
   private volatile boolean myFullLogShowing;
 
+  /**
+   * Cached details of the latest commits.
+   * We store them separately from the cache of {@link DataGetter}, to make sure that they are always available,
+   * which is important because these details will be constantly visible to the user,
+   * thus it would be annoying to re-load them from VCS if the cache overflows.
+   */
+  @NotNull private final Map<Hash, VcsFullCommitDetails> myTopCommitsDetailsCache = ContainerUtil.newConcurrentMap();
+
   public VcsLogDataHolder(@NotNull Project project, @NotNull VcsLogObjectsFactory logObjectsFactory,
                           @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
     myProject = project;
@@ -167,7 +176,7 @@ public class VcsLogDataHolder implements Disposable {
         DataPack existingDataPack = myLogData.getDataPack();
         // keep existing data pack: we don't want to rebuild the graph,
         // we just make the whole log structure available for our cunning refresh procedure of if user requests the whole graph
-        myLogData = new LogData(logs, refs, existingDataPack, true);
+        myLogData = new LogData(logs, refs, myLogData.getTopCommits(), existingDataPack, true);
       }
     });
   }
@@ -179,7 +188,7 @@ public class VcsLogDataHolder implements Disposable {
         if (myLogData.isFullLogReady()) { // TODO if not ready, wait for it
           List<TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(myLogData.myLogsByRoot.values());
           DataPack fullDataPack = DataPack.build(compoundLog, myLogData.getAllRefs(), indicator);
-          myLogData = new LogData(myLogData.getLogs(), myLogData.getRefs(), fullDataPack, true);
+          myLogData = new LogData(myLogData.getLogs(), myLogData.getRefs(), myLogData.getTopCommits(), fullDataPack, true);
           myFullLogShowing = true;
           UIUtil.invokeAndWaitIfNeeded(new Runnable() {
             @Override
@@ -211,6 +220,7 @@ public class VcsLogDataHolder implements Disposable {
 
         Map<VirtualFile, List<TimedVcsCommit>> logsToBuild = ContainerUtil.newHashMap();
         Map<VirtualFile, Collection<VcsRef>> refsByRoot = ContainerUtil.newHashMap();
+        int topCommitCount = myLogData == null ? 0 : myLogData.getTopCommitsCount();
 
         for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
           VirtualFile root = entry.getKey();
@@ -220,8 +230,11 @@ public class VcsLogDataHolder implements Disposable {
           List<? extends VcsFullCommitDetails> firstBlockDetails = logProvider.readFirstBlock(root, fairRefresh);
           Collection<VcsRef> newRefs = logProvider.readAllRefs(root);
 
-          myDetailsGetter.saveInCache(firstBlockDetails);
-          myMiniDetailsGetter.saveInCache(firstBlockDetails);
+          // some commits may be no longer available (e.g. rewritten after rebase), but let them stay in the cache:
+          // they won't occupy too much place, while checking & removing them is not easy.
+          for (VcsFullCommitDetails detail : firstBlockDetails) {
+            myTopCommitsDetailsCache.put(detail.getHash(), detail);
+          }
 
           // get commits from details
           List<TimedVcsCommit> firstBlockCommits =
@@ -234,31 +247,36 @@ public class VcsLogDataHolder implements Disposable {
 
           // refresh
           List<TimedVcsCommit> refreshedLog;
-          int newCommitsCount;
           if (fairRefresh) {
             refreshedLog = firstBlockCommits;
-            newCommitsCount = -1; // this value won't be used
+            // in this case new commits won't be attached to the log, but will substitute existing ones.
+            topCommitCount = firstBlockCommits.size();
           }
           else {
             Pair<List<TimedVcsCommit>, Integer> joinResult = myLogJoiner.addCommits(myLogData.getLog(root), myLogData.getRefs(root),
                                                                                     firstBlockCommits, newRefs);
             refreshedLog = joinResult.getFirst();
-            newCommitsCount = joinResult.getSecond();
+            int newCommitsCount = joinResult.getSecond();
+            // the value can significantly increase if user keeps IDEA open for a long time, and frequently receives many new commits,
+            // but it is expected: we can work with long logs. A limit can be added in future if this becomes a problem.
+            topCommitCount += newCommitsCount;
           }
 
           logsToBuild.put(root, refreshedLog);
           refsByRoot.put(root, newRefs);
-
-          // TODO form the number of commits for the graph to build
         }
 
         List<TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(logsToBuild.values());
+        List<TimedVcsCommit> topPartOfTheLog = compoundLog.subList(0, topCommitCount);
+
         Collection<VcsRef> allRefs = new ArrayList<VcsRef>();
         for (Collection<VcsRef> refs : refsByRoot.values()) {
           allRefs.addAll(refs);
         }
-        final DataPack dataPack = DataPack.build(compoundLog, allRefs, indicator);
-        myLogData = new LogData(logsToBuild, refsByRoot, dataPack, isFullLogReady);
+        List<TimedVcsCommit> logToBuild = myFullLogShowing ? compoundLog : topPartOfTheLog; // keep looking at the full log after refresh
+        final DataPack dataPack = DataPack.build(logToBuild, allRefs, indicator);
+
+        myLogData = new LogData(logsToBuild, refsByRoot, topPartOfTheLog, dataPack, isFullLogReady);
 
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
@@ -333,6 +351,11 @@ public class VcsLogDataHolder implements Disposable {
     return myLogData.getDataPack();
   }
 
+  @Nullable
+  public VcsFullCommitDetails getTopCommitDetails(@NotNull Hash hash) {
+    return myTopCommitsDetailsCache.get(hash);
+  }
+
   private void notifyAboutDataRefresh() {
     if (!myProject.isDisposed()) {
       myProject.getMessageBus().syncPublisher(REFRESH_COMPLETED).run();
@@ -372,13 +395,16 @@ public class VcsLogDataHolder implements Disposable {
   private static class LogData {
     @NotNull private final Map<VirtualFile, List<TimedVcsCommit>> myLogsByRoot;
     @NotNull private final Map<VirtualFile, Collection<VcsRef>> myRefsByRoot;
+    @NotNull private final List<TimedVcsCommit> myCompoundTopCommits;
     @NotNull private final DataPack myDataPack;
     private final boolean myFullLog;
 
     private LogData(@NotNull Map<VirtualFile, List<TimedVcsCommit>> logsByRoot,
-                    @NotNull Map<VirtualFile, Collection<VcsRef>> refsByRoot, @NotNull DataPack dataPack, boolean fullLog) {
+                    @NotNull Map<VirtualFile, Collection<VcsRef>> refsByRoot, @NotNull List<TimedVcsCommit> compoundTopCommits,
+                    @NotNull DataPack dataPack, boolean fullLog) {
       myLogsByRoot = logsByRoot;
       myRefsByRoot = refsByRoot;
+      myCompoundTopCommits = compoundTopCommits;
       myDataPack = dataPack;
       myFullLog = fullLog;
     }
@@ -411,12 +437,23 @@ public class VcsLogDataHolder implements Disposable {
       return myFullLog;
     }
 
+    @NotNull
     public Map<VirtualFile,List<TimedVcsCommit>> getLogs() {
       return myLogsByRoot;
     }
 
+    @NotNull
     public Map<VirtualFile, Collection<VcsRef>> getRefs() {
       return myRefsByRoot;
+    }
+
+    public int getTopCommitsCount() {
+      return myCompoundTopCommits.size();
+    }
+
+    @NotNull
+    public List<TimedVcsCommit> getTopCommits() {
+      return myCompoundTopCommits;
     }
   }
 
