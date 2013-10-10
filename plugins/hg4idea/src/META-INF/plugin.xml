@@ -10,6 +10,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <vcs name="hg4idea" vcsClass="org.zmlx.hg4idea.HgVcs" displayName="Mercurial" administrativeAreaName=".hg"/>
     <checkoutProvider implementation="org.zmlx.hg4idea.provider.HgCheckoutProvider"/>
+    <vcsRootChecker implementation="org.zmlx.hg4idea.roots.HgRootChecker"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <vcsPopupProvider implementation="org.zmlx.hg4idea.provider.HgQuickListProvider"/>
     <logProvider implementation="org.zmlx.hg4idea.log.HgLogProvider"/>

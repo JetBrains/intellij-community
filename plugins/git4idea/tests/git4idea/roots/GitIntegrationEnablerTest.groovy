@@ -20,7 +20,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.vcs.roots.VcsRootDetectInfo
 import com.intellij.openapi.vfs.VirtualFile
-import git4idea.test.GitLightTest
+import com.intellij.testFramework.UsefulTestCase
 import git4idea.test.TestNotificator
 import org.junit.After
 import org.junit.Before
@@ -28,18 +28,20 @@ import org.junit.Test
 
 import static git4idea.test.GitGTestUtil.toAbsolute
 import static junit.framework.Assert.*
+import static org.junit.Assume.assumeTrue
 
 /**
- * 
+ *
  * @author Kirill Likhodedov
  */
-class GitIntegrationEnablerTest extends GitLightTest {
+class GitIntegrationEnablerTest extends UsefulTestCase {
 
   public static final String TEST_NOTIFICATION_GROUP = "Test"
 
   @Override
   @Before
   public void setUp() {
+    assumeTrue(false);
     super.setUp();
   }
 
@@ -157,5 +159,4 @@ class GitIntegrationEnablerTest extends GitLightTest {
   void assertNotificationShown(String title, String message, NotificationType type) {
     assertNotificationShown(new Notification(TEST_NOTIFICATION_GROUP, title, message, type))
   }
-
 }

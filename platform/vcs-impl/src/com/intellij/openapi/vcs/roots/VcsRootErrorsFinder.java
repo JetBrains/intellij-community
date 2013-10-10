@@ -1,40 +1,24 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.intellij.openapi.vcs.roots;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsDirectoryMapping;
-import com.intellij.openapi.vcs.VcsRootError;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 /**
- * Detects actual Git roots and compares them to the ones registered in Settings | Version Control.
- *
- * @author Kirill Likhodedov
+ * @author Nadya Zabrodina
  */
 public class VcsRootErrorsFinder {
-
   private final @NotNull Project myProject;
   private final @NotNull ProjectLevelVcsManager myVcsManager;
 
@@ -46,61 +30,67 @@ public class VcsRootErrorsFinder {
   @NotNull
   public Collection<VcsRootError> find() {
     List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
-    Collection<VirtualFile> gitRoots = new VcsRootDetector(myProject).detect().getRoots();
+    Collection<VcsRoot> vcsRoots = new VcsRootDetector(myProject).detect().getRoots();
 
     Collection<VcsRootError> errors = new ArrayList<VcsRootError>();
-    Collection<String> gitPaths = rootsToPaths(gitRoots);
-    errors.addAll(findExtraMappings(mappings, gitPaths));
-    errors.addAll(findUnregisteredRoots(mappings, gitPaths));
+    errors.addAll(findExtraMappings(mappings, vcsRoots.isEmpty()));
+    errors.addAll(findUnregisteredRoots(mappings, vcsRoots));
     return errors;
   }
 
-  private Collection<VcsRootError> findUnregisteredRoots(List<VcsDirectoryMapping> mappings, Collection<String> gitPaths) {
+  @NotNull
+  private Collection<VcsRootError> findUnregisteredRoots(@NotNull List<VcsDirectoryMapping> mappings,
+                                                         @NotNull Collection<VcsRoot> vcsRoots) {
     Collection<VcsRootError> errors = new ArrayList<VcsRootError>();
-    List<String> mappedPaths = mappingsToPaths(mappings);
-    for (String gitPath : gitPaths) {
-      if (!mappedPaths.contains(gitPath)) {
-        errors.add(new VcsRootError(VcsRootError.Type.UNREGISTERED_ROOT, gitPath));
+    List<String> mappedPaths = mappingsToPathsWithSelectedVcs(mappings);
+    for (VcsRoot root : vcsRoots) {
+      VirtualFile virtualFileFromRoot = root.getPath();
+      if (virtualFileFromRoot == null) {
+        continue;
+      }
+      String vcsPath = virtualFileFromRoot.getPath();
+      if (!mappedPaths.contains(vcsPath) && root.getVcs() != null) {
+        errors.add(new VcsRootError(VcsRootError.Type.UNREGISTERED_ROOT, vcsPath, root.getVcs().getName()));
       }
     }
     return errors;
   }
 
-  private static Collection<VcsRootError> findExtraMappings(List<VcsDirectoryMapping> mappings, Collection<String> gitPaths) {
+  @NotNull
+  private Collection<VcsRootError> findExtraMappings(@NotNull List<VcsDirectoryMapping> mappings, boolean isEmptyVcsRoots) {
     Collection<VcsRootError> errors = new ArrayList<VcsRootError>();
     for (VcsDirectoryMapping mapping : mappings) {
       if (mapping.isDefaultMapping()) {
-        if (gitPaths.isEmpty()) {
-          errors.add(new VcsRootError(VcsRootError.Type.EXTRA_MAPPING, VcsDirectoryMapping.PROJECT_CONSTANT));
+        if (isEmptyVcsRoots && !StringUtil.isEmptyOrSpaces(mapping.getVcs())) {
+          errors.add(new VcsRootError(VcsRootError.Type.EXTRA_MAPPING, VcsDirectoryMapping.PROJECT_CONSTANT, mapping.getVcs()));
         }
       }
       else {
         String mappedPath = mapping.systemIndependentPath();
-        if (!gitPaths.contains(mappedPath) && !hasGitDir(mappedPath)) {
-          errors.add(new VcsRootError(VcsRootError.Type.EXTRA_MAPPING, mappedPath));
+        if (!isRoot(mapping)) {
+          errors.add(new VcsRootError(VcsRootError.Type.EXTRA_MAPPING, mappedPath, mapping.getVcs()));
         }
       }
     }
     return errors;
   }
 
-  private static boolean hasGitDir(String path) {
-    File file = new File(path, ".git");
-    return file.exists();
-  }
-
   @NotNull
-  private static Collection<String> rootsToPaths(@NotNull Collection<VirtualFile> gitRoots) {
-    Collection<String> gitPaths = new ArrayList<String>(gitRoots.size());
-    for (VirtualFile root : gitRoots) {
-      gitPaths.add(root.getPath());
-    }
-    return gitPaths;
+  public static Collection<VirtualFile> vcsRootsToVirtualFiles(@NotNull Collection<VcsRoot> vcsRoots) {
+    return ContainerUtil.map(vcsRoots, new Function<VcsRoot, VirtualFile>() {
+      @Override
+      public VirtualFile fun(VcsRoot root) {
+        return root.getPath();
+      }
+    });
   }
 
-  private List<String> mappingsToPaths(List<VcsDirectoryMapping> mappings) {
+  private List<String> mappingsToPathsWithSelectedVcs(@NotNull List<VcsDirectoryMapping> mappings) {
     List<String> paths = new ArrayList<String>();
     for (VcsDirectoryMapping mapping : mappings) {
+      if (StringUtil.isEmptyOrSpaces(mapping.getVcs())) {
+        continue;
+      }
       if (!mapping.isDefaultMapping()) {
         paths.add(mapping.systemIndependentPath());
       }
@@ -112,5 +102,20 @@ public class VcsRootErrorsFinder {
       }
     }
     return paths;
+  }
+
+  public static VcsRootErrorsFinder getInstance(Project project) {
+    return new VcsRootErrorsFinder(project);
+  }
+
+  private boolean isRoot(@NotNull final VcsDirectoryMapping mapping) {
+    VcsRootChecker[] checkers = Extensions.getExtensions(VcsRootChecker.EXTENSION_POINT_NAME);
+    final String pathToCheck = mapping.isDefaultMapping() ? myProject.getBasePath() : mapping.getDirectory();
+    return ContainerUtil.find(checkers, new Condition<VcsRootChecker>() {
+      @Override
+      public boolean value(VcsRootChecker checker) {
+        return checker.getSupportedVcs().getName().equals(mapping.getVcs()) && checker.isRoot(pathToCheck);
+      }
+    }) != null;
   }
 }

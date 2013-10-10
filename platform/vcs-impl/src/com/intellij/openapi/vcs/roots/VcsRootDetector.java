@@ -1,53 +1,32 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 package com.intellij.openapi.vcs.roots;
 
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.vcs.roots.VcsRootDetectInfo;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsRoot;
+import com.intellij.openapi.vcs.VcsRootChecker;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
- * <p>
- * Scans the file system looking for Git roots, which contain the Project or its parts,
- * and returns the information enclosed to the {@link com.intellij.openapi.vcs.roots.VcsRootDetectInfo}.
- * The main part of the information are Git roots which will be proposed to the user to be added as VCS roots.
- * </p>
- * <p>
- * Linked sources are not scanned. User should add Git roots for them explicitly.
- * </p>
- *
- * @author Kirill Likhodedov
+ * @author Nadya Zabrodina
  */
 public class VcsRootDetector {
-
   private static final int MAXIMUM_SCAN_DEPTH = 2;
 
   @NotNull private final Project myProject;
   @NotNull private final ProjectRootManager myProjectManager;
+  @NotNull private final ProjectLevelVcsManager myVcsManager;
 
   public VcsRootDetector(@NotNull Project project) {
     myProject = project;
     myProjectManager = ProjectRootManager.getInstance(project);
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
   }
 
   @NotNull
@@ -58,34 +37,40 @@ public class VcsRootDetector {
   @NotNull
   public VcsRootDetectInfo detect(@Nullable VirtualFile startDir) {
     if (startDir == null) {
-      return new VcsRootDetectInfo(Collections.<VirtualFile>emptyList(), false, false);
+      return new VcsRootDetectInfo(Collections.<VcsRoot>emptyList(), false, false);
     }
 
-    final Set<VirtualFile> roots = scanForRootsInsideDir(startDir);
+    final Set<VcsRoot> roots = scanForRootsInsideDir(startDir);
     roots.addAll(scanForRootsInContentRoots());
-
-    if (roots.contains(startDir)) {
-      return new VcsRootDetectInfo(roots, true, false);
+    for (VcsRoot root : roots) {
+      if (startDir.equals(root.getPath())) {
+        return new VcsRootDetectInfo(roots, true, false);
+      }
     }
-
-    VirtualFile rootAbove = scanForSingleRootAboveDir(startDir);
-    if (rootAbove != null) {
-      roots.add(rootAbove);
+    List<VcsRoot> rootsAbove = scanForSingleRootAboveDir(startDir);
+    if (!rootsAbove.isEmpty()) {
+      roots.addAll(rootsAbove);
       return new VcsRootDetectInfo(roots, true, true);
     }
     return new VcsRootDetectInfo(roots, false, false);
   }
 
-  private Set<VirtualFile> scanForRootsInContentRoots() {
-    Set<VirtualFile> gitRoots = new HashSet<VirtualFile>();
+  @NotNull
+  private Set<VcsRoot> scanForRootsInContentRoots() {
+    Set<VcsRoot> gitRoots = new HashSet<VcsRoot>();
     VirtualFile[] roots = myProjectManager.getContentRoots();
     for (VirtualFile contentRoot : roots) {
-      Set<VirtualFile> rootsInsideRoot = scanForRootsInsideDir(contentRoot);
-      if (!rootsInsideRoot.contains(contentRoot)) {
-        VirtualFile rootAbove = scanForSingleRootAboveDir(contentRoot);
-        if (rootAbove != null) {
-          rootsInsideRoot.add(rootAbove);
+
+      Set<VcsRoot> rootsInsideRoot = scanForRootsInsideDir(contentRoot);
+      boolean shouldScanAbove = true;
+      for (VcsRoot root : rootsInsideRoot) {
+        if (contentRoot.equals(root.getPath())) {
+          shouldScanAbove = false;
         }
+      }
+      if (shouldScanAbove) {
+        List<VcsRoot> rootsAbove = scanForSingleRootAboveDir(contentRoot);
+        rootsInsideRoot.addAll(rootsAbove);
       }
       gitRoots.addAll(rootsInsideRoot);
     }
@@ -93,8 +78,8 @@ public class VcsRootDetector {
   }
 
   @NotNull
-  private Set<VirtualFile> scanForRootsInsideDir(@NotNull final VirtualFile dir, final int depth) {
-    final Set<VirtualFile> roots = new HashSet<VirtualFile>();
+  private Set<VcsRoot> scanForRootsInsideDir(@NotNull final VirtualFile dir, final int depth) {
+    final Set<VcsRoot> roots = new HashSet<VcsRoot>();
     if (depth > MAXIMUM_SCAN_DEPTH) {
       // performance optimization via limitation: don't scan deep though the whole VFS, 2 levels under a content root is enough
       return roots;
@@ -103,8 +88,9 @@ public class VcsRootDetector {
     if (myProject.isDisposed() || !dir.isDirectory()) {
       return roots;
     }
-    if (hasGitDir(dir)) {
-      roots.add(dir);
+    List<AbstractVcs> vcsList = getVcsListFor(dir);
+    for (AbstractVcs vcs : vcsList) {
+      roots.add(new VcsRoot(vcs, dir));
     }
     for (VirtualFile child : dir.getChildren()) {
       roots.addAll(scanForRootsInsideDir(child, depth + 1));
@@ -113,28 +99,40 @@ public class VcsRootDetector {
   }
 
   @NotNull
-  private Set<VirtualFile> scanForRootsInsideDir(@NotNull VirtualFile dir) {
+  private Set<VcsRoot> scanForRootsInsideDir(@NotNull VirtualFile dir) {
     return scanForRootsInsideDir(dir, 0);
   }
 
-  @Nullable
-  private VirtualFile scanForSingleRootAboveDir(@NotNull final VirtualFile dir) {
+  @NotNull
+  private List<VcsRoot> scanForSingleRootAboveDir(@NotNull final VirtualFile dir) {
+    List<VcsRoot> roots = new ArrayList<VcsRoot>();
     if (myProject.isDisposed()) {
-      return null;
+      return roots;
     }
 
     VirtualFile par = dir.getParent();
     while (par != null) {
-      if (hasGitDir(par)) {
-        return par;
+      List<AbstractVcs> vcsList = getVcsListFor(par);
+      for (AbstractVcs vcs : vcsList) {
+        roots.add(new VcsRoot(vcs, par));
+      }
+      if (!roots.isEmpty()) {
+        return roots;
       }
       par = par.getParent();
     }
-    return null;
+    return roots;
   }
 
-  private static boolean hasGitDir(@NotNull VirtualFile dir) {
-    VirtualFile gitDir = dir.findChild(".git");
-    return gitDir != null && gitDir.exists();
+  @NotNull
+  private List<AbstractVcs> getVcsListFor(@NotNull VirtualFile dir) {
+    VcsRootChecker[] checkers = Extensions.getExtensions(VcsRootChecker.EXTENSION_POINT_NAME);
+    List<AbstractVcs> vcsList = new ArrayList<AbstractVcs>();
+    for (VcsRootChecker checker : checkers) {
+      if (checker.isRoot(dir.getPath())) {
+        vcsList.add(myVcsManager.findVcsByName(checker.getSupportedVcs().getName()));
+      }
+    }
+    return vcsList;
   }
 }

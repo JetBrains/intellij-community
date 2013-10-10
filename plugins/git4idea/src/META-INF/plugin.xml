@@ -109,6 +109,7 @@
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>
     <checkoutProvider implementation="git4idea.checkout.GitCheckoutProvider"/>
+    <vcsRootChecker implementation="git4idea.roots.GitRootChecker"/>
     <vcsPopupProvider implementation="git4idea.actions.GitQuickListContentProvider"/>
     <vcsCheckinHandlerFactory implementation="git4idea.checkin.GitCheckinHandlerFactory"/>
     <checkinHandlerFactory implementation="git4idea.checkin.UnresolvedMergeCheckFactory"/>
@@ -160,8 +161,6 @@
                     serviceImplementation="git4idea.Notificator"/>
     <projectService serviceInterface="git4idea.history.wholeTree.GitLogSettings"
                     serviceImplementation="git4idea.history.wholeTree.GitLogSettings"/>
-    <projectService serviceInterface="git4idea.roots.GitRootProblemNotifier"
-                    serviceImplementation="git4idea.roots.GitRootProblemNotifier"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
 

@@ -17,11 +17,15 @@ package git4idea.roots;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vcs.roots.VcsRootDetectInfo;
+import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitVcs;
@@ -54,11 +58,18 @@ public class GitIntegrationEnabler {
 
   public void enable(@NotNull VcsRootDetectInfo detectInfo) {
     Notificator notificator = myPlatformFacade.getNotificator(myProject);
-    Collection<VirtualFile> roots = detectInfo.getRoots();
+    Collection<VcsRoot> gitRoots = ContainerUtil.filter(detectInfo.getRoots(), new Condition<VcsRoot>() {
+      @Override
+      public boolean value(VcsRoot root) {
+        AbstractVcs gitVcs = root.getVcs();
+        return gitVcs != null && gitVcs.getKeyInstanceMethod().equals(GitVcs.getKey());
+      }
+    });
+    Collection<VirtualFile> roots = VcsRootErrorsFinder.vcsRootsToVirtualFiles(gitRoots);
     VirtualFile projectDir = myProject.getBaseDir();
     assert projectDir != null : "Base dir is unexpectedly null for project: " + myProject;
 
-    if (detectInfo.empty()) {
+    if (gitRoots.isEmpty()) {
       boolean succeeded = gitInitOrNotifyError(notificator, projectDir);
       if (succeeded) {
         addVcsRoots(Collections.singleton(projectDir));
@@ -66,7 +77,7 @@ public class GitIntegrationEnabler {
     }
     else {
       assert !roots.isEmpty();
-      if (roots.size() > 1 || detectInfo.projectIsBelowGit()) {
+      if (roots.size() > 1 || detectInfo.projectIsBelowVcs()) {
         notifyAddedRoots(notificator, roots);
       }
       addVcsRoots(roots);
@@ -95,9 +106,11 @@ public class GitIntegrationEnabler {
 
   private void refreshGitDir(final VirtualFile projectDir) {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override public void run() {
+      @Override
+      public void run() {
         myPlatformFacade.runReadAction(new Runnable() {
-          @Override public void run() {
+          @Override
+          public void run() {
             myPlatformFacade.getLocalFileSystem().refreshAndFindFileByPath(projectDir.getPath() + "/.git");
           }
         });

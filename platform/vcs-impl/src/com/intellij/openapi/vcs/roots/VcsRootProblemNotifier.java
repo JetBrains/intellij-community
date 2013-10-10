@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.roots;
+package com.intellij.openapi.vcs.roots;
 
 import com.intellij.idea.ActionsBundle;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -29,9 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsRootError;
-import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder;
 import com.intellij.util.Function;
-import git4idea.GitPlatformFacade;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,33 +36,31 @@ import java.util.Collection;
 import static com.intellij.notification.NotificationType.ERROR;
 import static com.intellij.notification.NotificationType.INFORMATION;
 import static com.intellij.openapi.util.text.StringUtil.pluralize;
-import static git4idea.GitVcs.IMPORTANT_ERROR_NOTIFICATION;
-import static git4idea.GitVcs.MINOR_NOTIFICATION;
-import static git4idea.Notificator.createNotification;
 
 /**
- * Searches for Git roots problems via {@link com.intellij.openapi.vcs.roots.VcsRootErrorsFinder} and notifies about them.
+ * Searches for Vcs roots problems via {@link VcsRootErrorsFinder} and notifies about them.
  *
- * @author Kirill Likhodedov
+ * @author Nadya Zabrodina
  */
-public class GitRootProblemNotifier {
+public class VcsRootProblemNotifier {
 
   private final @NotNull Project myProject;
-  private final @NotNull GitPlatformFacade myPlatformFacade;
   private final @NotNull VcsConfiguration mySettings;
 
   private @Nullable Notification myNotification;
   private final @NotNull Object NOTIFICATION_LOCK = new Object();
 
-  public static GitRootProblemNotifier getInstance(@NotNull Project project) {
-    return ServiceManager.getService(project, GitRootProblemNotifier.class);
+  public static final NotificationGroup IMPORTANT_ERROR_NOTIFICATION = new NotificationGroup(
+    "Vcs Important Messages", NotificationDisplayType.STICKY_BALLOON, true);
+  public static final NotificationGroup MINOR_NOTIFICATION = new NotificationGroup(
+    "Vcs Minor Notifications", NotificationDisplayType.BALLOON, true);
+
+  public static VcsRootProblemNotifier getInstance(@NotNull Project project) {
+    return new VcsRootProblemNotifier(project);
   }
 
-  // registered as a project service
-  @SuppressWarnings("UnusedDeclaration")
-  private GitRootProblemNotifier(@NotNull Project project, @NotNull GitPlatformFacade platformFacade) {
+  private VcsRootProblemNotifier(@NotNull Project project) {
     myProject = project;
-    myPlatformFacade = platformFacade;
     mySettings = VcsConfiguration.getInstance(myProject);
   }
 
@@ -85,8 +77,8 @@ public class GitRootProblemNotifier {
       return;
     }
 
-    Collection<String> unregisteredRoots = getUnregisteredRoots(errors);
-    Collection<String> invalidRoots = getInvalidRoots(errors);
+    Collection<VcsRootError> unregisteredRoots = getUnregisteredRoots(errors);
+    Collection<VcsRootError> invalidRoots = getInvalidRoots(errors);
 
     String title = makeTitle(unregisteredRoots, invalidRoots);
     String description = makeDescription(unregisteredRoots, invalidRoots);
@@ -95,9 +87,9 @@ public class GitRootProblemNotifier {
       expireNotification();
       NotificationGroup notificationGroup = invalidRoots.isEmpty() ? MINOR_NOTIFICATION : IMPORTANT_ERROR_NOTIFICATION;
       NotificationType notificationType = invalidRoots.isEmpty() ? INFORMATION : ERROR;
-      myNotification = createNotification(notificationGroup, title, description, notificationType,
-                                          new MyNotificationListener(myProject, mySettings));
-      myPlatformFacade.getNotificator(myProject).notify(myNotification);
+      myNotification = notificationGroup.createNotification(title, description, notificationType,
+                                                            new MyNotificationListener(myProject, mySettings));
+      myNotification.notify(myProject);
     }
   }
 
@@ -121,25 +113,29 @@ public class GitRootProblemNotifier {
   }
 
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
-  private static String makeDescription(@NotNull Collection<String> unregisteredRoots, @NotNull Collection<String> invalidRoots) {
-    Function<String, String> rootToDisplayableString = new Function<String, String>() {
+  @NotNull
+  private static String makeDescription(@NotNull Collection<VcsRootError> unregisteredRoots,
+                                        @NotNull Collection<VcsRootError> invalidRoots) {
+    Function<VcsRootError, String> rootToDisplayableString = new Function<VcsRootError, String>() {
       @Override
-      public String fun(String path) {
-        if (path.equals(VcsDirectoryMapping.PROJECT_CONSTANT)) {
-          return StringUtil.escapeXml(path);
+      public String fun(VcsRootError rootError) {
+        if (rootError.getMapping().equals(VcsDirectoryMapping.PROJECT_CONSTANT)) {
+          return StringUtil.escapeXml(rootError.getMapping());
         }
-        return FileUtil.toSystemDependentName(path);
+        return FileUtil.toSystemDependentName(rootError.getMapping());
       }
     };
 
     StringBuilder description = new StringBuilder();
     if (!invalidRoots.isEmpty()) {
       if (invalidRoots.size() == 1) {
-        description.append("The directory " + rootToDisplayableString.fun(invalidRoots.iterator().next()) + " is registered as a Git root, " +
-                           "but no Git repositories were found there.");
+        VcsRootError rootError = invalidRoots.iterator().next();
+        description
+          .append("The directory " + rootToDisplayableString.fun(rootError) + " is registered as a " + rootError.getVcsKey() + " root, " +
+                  "but no " + rootError.getVcsKey() + " repositories were found there.");
       }
       else {
-        description.append("The following directories are registered as Git roots, but they are not: <br/>" +
+        description.append("The following directories are registered as Vcs roots, but they are not: <br/>" +
                            StringUtil.join(invalidRoots, rootToDisplayableString, ", "));
       }
       description.append("<br/>");
@@ -147,11 +143,13 @@ public class GitRootProblemNotifier {
 
     if (!unregisteredRoots.isEmpty()) {
       if (unregisteredRoots.size() == 1) {
-        description.append("The directory " + rootToDisplayableString.fun(unregisteredRoots.iterator().next()) + " is under Git, " +
-                           "but is not registered in the Settings.");
+        VcsRootError unregisteredRoot = unregisteredRoots.iterator().next();
+        description
+          .append("The directory " + rootToDisplayableString.fun(unregisteredRoot) + " is under " + unregisteredRoot.getVcsKey() + ", " +
+                  "but is not registered in the Settings.");
       }
       else {
-        description.append("The following directories are roots of Git repositories, but they are not registered in the Settings: <br/>" +
+        description.append("The following directories are roots of Vcs repositories, but they are not registered in the Settings: <br/>" +
                            StringUtil.join(unregisteredRoots, rootToDisplayableString, ", "));
       }
       description.append("<br/>");
@@ -163,36 +161,36 @@ public class GitRootProblemNotifier {
   }
 
   @NotNull
-  private static String makeTitle(@NotNull Collection<String> unregisteredRoots, @NotNull Collection<String> invalidRoots) {
+  private static String makeTitle(@NotNull Collection<VcsRootError> unregisteredRoots, @NotNull Collection<VcsRootError> invalidRoots) {
     String title;
     if (unregisteredRoots.isEmpty()) {
-      title = "Invalid Git root " + pluralize("mapping", invalidRoots.size());
+      title = "Invalid Vcs root " + pluralize("mapping", invalidRoots.size());
     }
     else if (invalidRoots.isEmpty()) {
-      title = "Unregistered Git " + pluralize("root", unregisteredRoots.size()) + " detected";
+      title = "Unregistered Vcs " + pluralize("root", unregisteredRoots.size()) + " detected";
     }
     else {
-      title = "Git root configuration problems";
+      title = "Vcs root configuration problems";
     }
     return title;
   }
 
   @NotNull
-  private static Collection<String> getUnregisteredRoots(@NotNull Collection<VcsRootError> errors) {
+  private static Collection<VcsRootError> getUnregisteredRoots(@NotNull Collection<VcsRootError> errors) {
     return filterErrorsByType(errors, VcsRootError.Type.UNREGISTERED_ROOT);
   }
 
   @NotNull
-  private static Collection<String> getInvalidRoots(@NotNull Collection<VcsRootError> errors) {
+  private static Collection<VcsRootError> getInvalidRoots(@NotNull Collection<VcsRootError> errors) {
     return filterErrorsByType(errors, VcsRootError.Type.EXTRA_MAPPING);
   }
 
   @NotNull
-  private static Collection<String> filterErrorsByType(@NotNull Collection<VcsRootError> errors, @NotNull VcsRootError.Type type) {
-    Collection<String> roots = new ArrayList<String>();
+  private static Collection<VcsRootError> filterErrorsByType(@NotNull Collection<VcsRootError> errors, @NotNull VcsRootError.Type type) {
+    Collection<VcsRootError> roots = new ArrayList<VcsRootError>();
     for (VcsRootError error : errors) {
       if (error.getType() == type) {
-        roots.add(error.getMapping());
+        roots.add(error);
       }
     }
     return roots;
@@ -213,7 +211,7 @@ public class GitRootProblemNotifier {
       if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         if (event.getDescription().equals("configure") && !myProject.isDisposed()) {
           ShowSettingsUtil.getInstance().showSettingsDialog(myProject, ActionsBundle.message("group.VcsGroup.text"));
-          Collection<VcsRootError> errorsAfterPossibleFix = GitRootProblemNotifier.getInstance(myProject).scan();
+          Collection<VcsRootError> errorsAfterPossibleFix = getInstance(myProject).scan();
           if (errorsAfterPossibleFix.isEmpty() && !notification.isExpired()) {
             notification.expire();
           }
