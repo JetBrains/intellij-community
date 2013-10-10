@@ -139,6 +139,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
               }
             }
           });
+          restartAnalysis(project, scope);
         }
       }
       else if (Messages.showOkCancelDialog(project, "Infer Nullity Annotations requires that the nullity annotations" +
@@ -163,12 +164,7 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
                   }
                 }
               }.execute();
-              ApplicationManager.getApplication().invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  analyze(project, scope);
-                }
-              });
+              restartAnalysis(project, scope);
             }
           }
         });
@@ -226,6 +222,15 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
       }
     };
     SwingUtilities.invokeLater(applyRunnable);
+  }
+
+  private void restartAnalysis(final Project project, final AnalysisScope scope) {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        analyze(project, scope);
+      }
+    });
   }
 
 
