@@ -15,66 +15,13 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.util.InheritanceUtil;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
-public class MisspelledTearDownInspection extends BaseInspection {
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "misspelled.tear.down.display.name");
-  }
-
-  @Override
-  @NotNull
-  protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "misspelled.tear.down.problem.descriptor");
-  }
+public class MisspelledTearDownInspection extends MisspelledTearDownInspectionBase {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix("tearDown");
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new MisspelledSetUpVisitor();
-  }
-
-  @Override
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  private static class MisspelledSetUpVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitMethod(@NotNull PsiMethod method) {
-      // note: no call to super
-      @NonNls final String methodName = method.getName();
-      if (!"teardown".equals(methodName)) {
-        return;
-      }
-      final PsiClass aClass = method.getContainingClass();
-      if (aClass == null) {
-        return;
-      }
-      if (!InheritanceUtil.isInheritor(aClass,
-                                       "junit.framework.TestCase")) {
-        return;
-      }
-      registerMethodError(method);
-    }
   }
 }
