@@ -4,7 +4,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.jetbrains.django.fixtures.DjangoTestCase;
-import com.jetbrains.python.PythonTestUtil;
 import junit.framework.Assert;
 
 /**
@@ -13,7 +12,7 @@ import junit.framework.Assert;
 public class DjangoTemplateBreakpointsTest extends DjangoTestCase {
   @Override
   protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/django/debug/";
+    return super.getTestDataPath() + "/django/debug/";
   }
 
   public void testCanSetBreakpoints() {
