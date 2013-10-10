@@ -15,87 +15,13 @@
  */
 package com.siyeh.ig.naming;
 
-import com.intellij.psi.PsiClass;
-import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RenameFix;
-import org.jetbrains.annotations.NotNull;
 
-public class InterfaceNamingConventionInspection extends ConventionInspection {
-
-  private static final int DEFAULT_MIN_LENGTH = 8;
-  private static final int DEFAULT_MAX_LENGTH = 64;
-
-  @Override
-  @NotNull
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "interface.naming.convention.display.name");
-  }
+public class InterfaceNamingConventionInspection extends InterfaceNamingConventionInspectionBase {
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
     return new RenameFix();
-  }
-
-  @Override
-  protected boolean buildQuickFixesOnlyForOnTheFlyErrors() {
-    return true;
-  }
-
-  @Override
-  @NotNull
-  public String buildErrorString(Object... infos) {
-    final String interfaceName = (String)infos[0];
-    if (interfaceName.length() < getMinLength()) {
-      return InspectionGadgetsBundle.message(
-        "interface.name.convention.problem.descriptor.short");
-    }
-    else if (interfaceName.length() > getMaxLength()) {
-      return InspectionGadgetsBundle.message(
-        "interface.name.convention.problem.descriptor.long");
-    }
-    return InspectionGadgetsBundle.message(
-      "interface.name.convention.problem.descriptor.regex.mismatch",
-      getRegex());
-  }
-
-  @Override
-  protected String getDefaultRegex() {
-    return "[A-Z][A-Za-z\\d]*";
-  }
-
-  @Override
-  protected int getDefaultMinLength() {
-    return DEFAULT_MIN_LENGTH;
-  }
-
-  @Override
-  protected int getDefaultMaxLength() {
-    return DEFAULT_MAX_LENGTH;
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new NamingConventionsVisitor();
-  }
-
-  private class NamingConventionsVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitClass(@NotNull PsiClass aClass) {
-      if (!aClass.isInterface() || aClass.isAnnotationType()) {
-        return;
-      }
-      final String name = aClass.getName();
-      if (name == null) {
-        return;
-      }
-      if (isValid(name)) {
-        return;
-      }
-      registerClassError(aClass, name);
-    }
   }
 }
