@@ -21,7 +21,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -643,7 +642,9 @@ public class EditorWindow {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            myTabbedPane.setSelectedIndex(index, focusEditor);
+            if (myTabbedPane != null) {
+              myTabbedPane.setSelectedIndex(index, focusEditor);
+            }
           }
         });
       }

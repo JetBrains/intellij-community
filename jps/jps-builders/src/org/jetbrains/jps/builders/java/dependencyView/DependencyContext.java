@@ -109,8 +109,8 @@ class DependencyContext {
     myEnumerator.force();
   }
 
-  public Logger<Integer> getLogger(final com.intellij.openapi.diagnostic.Logger log) {
-    return new Logger<Integer>() {
+  public LoggerWrapper<Integer> getLogger(final com.intellij.openapi.diagnostic.Logger log) {
+    return new LoggerWrapper<Integer>() {
       @Override
       public void debug(String comment, Integer s) {
         if (log.isDebugEnabled()) {
