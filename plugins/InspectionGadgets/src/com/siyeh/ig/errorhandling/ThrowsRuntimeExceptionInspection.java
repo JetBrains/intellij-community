@@ -25,28 +25,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
-import com.siyeh.ig.BaseInspection;
-import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-public class ThrowsRuntimeExceptionInspection extends BaseInspection {
-  @Nls
-  @NotNull
-  @Override
-  public String getDisplayName() {
-    return InspectionGadgetsBundle.message("throws.runtime.exception.display.name");
-  }
-
-  @NotNull
-  @Override
-  protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("throws.runtime.exception.problem.descriptor");
-  }
+public class ThrowsRuntimeExceptionInspection extends ThrowsRuntimeExceptionInspectionBase {
 
   @NotNull
   @Override
@@ -181,33 +165,6 @@ public class ThrowsRuntimeExceptionInspection extends BaseInspection {
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       descriptor.getPsiElement().delete();
-    }
-  }
-
-  @Override
-  public BaseInspectionVisitor buildVisitor() {
-    return new ThrowsRuntimeExceptionVisitor();
-  }
-
-  private static class ThrowsRuntimeExceptionVisitor extends BaseInspectionVisitor {
-
-    @Override
-    public void visitMethod(PsiMethod method) {
-      super.visitMethod(method);
-      final PsiReferenceList throwsList = method.getThrowsList();
-      final PsiJavaCodeReferenceElement[] referenceElements = throwsList.getReferenceElements();
-      for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
-        final PsiElement target = referenceElement.resolve();
-        if (!(target instanceof PsiClass)) {
-          continue;
-        }
-        final PsiClass aClass = (PsiClass)target;
-        if (!InheritanceUtil.isInheritor(aClass, "java.lang.RuntimeException")) {
-          continue;
-        }
-        final String className = aClass.getName();
-        registerError(referenceElement, className, referenceElement);
-      }
     }
   }
 }
