@@ -46,7 +46,7 @@ import static git4idea.GitVcs.MINOR_NOTIFICATION;
 import static git4idea.Notificator.createNotification;
 
 /**
- * Searches for Git roots problems via {@link GitRootErrorsFinder} and notifies about them.
+ * Searches for Git roots problems via {@link VcsRootErrorsFinder} and notifies about them.
  *
  * @author Kirill Likhodedov
  */
@@ -116,7 +116,7 @@ public class GitRootProblemNotifier {
 
   @NotNull
   private Collection<VcsRootError> scan() {
-    return new GitRootErrorsFinder(myProject, myPlatformFacade).find();
+    return new VcsRootErrorsFinder(myProject).find();
   }
 
   @SuppressWarnings("StringConcatenationInsideStringBufferAppend")

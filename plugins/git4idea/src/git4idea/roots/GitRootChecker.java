@@ -36,7 +36,7 @@ public class GitRootChecker implements VcsRootChecker {
   private final boolean myProjectMappingIsInvalid;
 
   public GitRootChecker(@NotNull Project project, @NotNull GitPlatformFacade platformFacade) {
-    myErrors = new GitRootErrorsFinder(project, platformFacade).find();
+    myErrors = new VcsRootErrorsFinder(project).find();
     myProjectMappingIsInvalid = isProjectMappingInvalid();
   }
 
@@ -66,7 +66,7 @@ public class GitRootChecker implements VcsRootChecker {
     // this information is available in myErrors,
     // but the method may be called in VcsDirectoryConfigurationPanel after adding a mapping (to highlight errors right away)
     // in which case ProjectLevelVcsManager#getAllVcsRoots() is not aware of new roots yet,
-    // while GitRootErrorsFinder relies on the set of roots returned from ProjectLevelVcsManager.
+    // while VcsRootErrorsFinder relies on the set of roots returned from ProjectLevelVcsManager.
     if (mapping.isDefaultMapping()) {
       return myProjectMappingIsInvalid;
     }

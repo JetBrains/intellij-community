@@ -23,8 +23,6 @@ import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsRootError;
 import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vfs.VirtualFile;
-import git4idea.GitPlatformFacade;
-import git4idea.GitUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -37,23 +35,19 @@ import java.util.List;
  *
  * @author Kirill Likhodedov
  */
-public class GitRootErrorsFinder {
+public class VcsRootErrorsFinder {
 
   private final @NotNull Project myProject;
-  private final @NotNull GitPlatformFacade myPlatformFacade;
   private final @NotNull ProjectLevelVcsManager myVcsManager;
-  private final AbstractVcs myVcs;
 
-  public GitRootErrorsFinder(@NotNull Project project, @NotNull GitPlatformFacade platformFacade) {
+  public VcsRootErrorsFinder(@NotNull Project project) {
     myProject = project;
-    myPlatformFacade = platformFacade;
-    myVcsManager = myPlatformFacade.getVcsManager(myProject);
-    myVcs = myPlatformFacade.getVcs(myProject);
+    myVcsManager = ProjectLevelVcsManager.getInstance(project);
   }
 
   @NotNull
   public Collection<VcsRootError> find() {
-    List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings(myVcs);
+    List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
     Collection<VirtualFile> gitRoots = new VcsRootDetector(myProject).detect().getRoots();
 
     Collection<VcsRootError> errors = new ArrayList<VcsRootError>();
@@ -93,7 +87,7 @@ public class GitRootErrorsFinder {
   }
 
   private static boolean hasGitDir(String path) {
-    File file = new File(path, GitUtil.DOT_GIT);
+    File file = new File(path, ".git");
     return file.exists();
   }
 
