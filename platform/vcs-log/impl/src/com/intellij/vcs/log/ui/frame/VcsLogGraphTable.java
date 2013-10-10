@@ -1,6 +1,7 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.table.JBTable;
@@ -31,8 +32,6 @@ import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.vcs.log.graph.render.PrintParameters.HEIGHT_CELL;
@@ -42,6 +41,7 @@ import static com.intellij.vcs.log.graph.render.PrintParameters.HEIGHT_CELL;
  */
 public class VcsLogGraphTable extends JBTable {
 
+  private static final Logger LOG = Logger.getInstance(VcsLogGraphTable.class);
   private static final int ROOT_INDICATOR_WIDTH = 5;
 
   @NotNull private final VcsLogUI myUI;
@@ -101,6 +101,16 @@ public class VcsLogGraphTable extends JBTable {
     }
     GraphCommitCell commitCell = (GraphCommitCell)model.getValueAt(rowIndex, GraphTableModel.COMMIT_COLUMN);
     return commitCell.getPrintCell();
+  }
+
+  @Nullable
+  public List<Change> getSelectedChanges() {
+    TableModel model = getModel();
+    if (!(model instanceof GraphTableModel)) {
+      LOG.error("Unexpected table model passed to the VcsLogGraphTable: " + model);
+      return null;
+    }
+    return ((GraphTableModel)model).getSelectedChanges(getSelectedRows());
   }
 
   private class MyMouseAdapter extends MouseAdapter {
@@ -176,23 +186,6 @@ public class VcsLogGraphTable extends JBTable {
     public void mouseExited(MouseEvent e) {
       // Do nothing
     }
-  }
-
-  public List<Node> getSelectedNodes() {
-    int[] selectedRows = getSelectedRows();
-    return nodes(selectedRows);
-  }
-
-  private List<Node> nodes(int[] selectedRows) {
-    List<Node> result = new ArrayList<Node>();
-    Arrays.sort(selectedRows);
-    for (int rowIndex : selectedRows) {
-      Node node = PositionUtil.getNode(getGraphPrintCellForRow(getModel(), rowIndex));
-      if (node != null) {
-        result.add(node);
-      }
-    }
-    return result;
   }
 
   private static class RootCellRenderer extends JPanel implements TableCellRenderer {
