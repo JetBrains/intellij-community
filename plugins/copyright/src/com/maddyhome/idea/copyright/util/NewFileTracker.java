@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Set;
 
-public class NewFileTracker implements Disposable{
+public class NewFileTracker {
   public static NewFileTracker getInstance() {
     return instance;
   }
@@ -41,14 +41,13 @@ public class NewFileTracker implements Disposable{
         if (event.isFromRefresh()) return;
         newFiles.add(event.getFile());
       }
-    }, this);
+    });
   }
 
   private final Set<VirtualFile> newFiles = Collections.synchronizedSet(new THashSet<VirtualFile>());
   private static final NewFileTracker instance = new NewFileTracker();
 
-  @Override
-  public void dispose() {
+  public void clear() {
     newFiles.clear();
   }
 }
