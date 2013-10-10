@@ -244,3 +244,13 @@ class IDEA89640 {
     System.out.println(flag);
   }
 }
+
+interface Parametrized<<warning descr="Type parameter 'T' is never used">T</warning> extends Number> {
+  class Bug1<T extends java.io.Serializable> {
+    void bug1(Parametrized<? super T> <warning descr="Parameter 'param' is never used">param</warning>) {}
+  }
+
+  class Bug2<T extends String> {
+    void bug1(Parametrized<<error descr="Type parameter '? super T' is not within its bound; should extend 'java.lang.Number'">? super T</error>> <warning descr="Parameter 'param' is never used">param</warning>) {}
+  }
+}

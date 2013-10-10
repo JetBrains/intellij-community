@@ -72,7 +72,16 @@ public class TypesDistinctProver {
               proveArrayTypeDistinct(((PsiWildcardType)type1).getManager().getProject(), (PsiArrayType)superBound, type2)) return true;
 
           final PsiClass boundClass1 = PsiUtil.resolveClassInType(superBound);
-          if (boundClass1 == null || boundClass1 instanceof PsiTypeParameter) return false;
+          if (boundClass1 == null) return false;
+          if (boundClass1 instanceof PsiTypeParameter) {
+            final PsiClassType[] extendsListTypes = boundClass1.getExtendsListTypes();
+            for (PsiClassType classType : extendsListTypes) {
+              final PsiClass psiClass = classType.resolve();
+              if (InheritanceUtil.isInheritorOrSelf(psiClass, psiClass2, true) || InheritanceUtil.isInheritorOrSelf(psiClass2, psiClass, true)) return false;
+            }
+            return extendsListTypes.length > 0;
+          }
+
           return !InheritanceUtil.isInheritorOrSelf(boundClass1, psiClass2, true);
         }
 
