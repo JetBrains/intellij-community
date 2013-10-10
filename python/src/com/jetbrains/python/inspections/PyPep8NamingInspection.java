@@ -4,6 +4,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.hash.HashMap;
@@ -26,12 +27,14 @@ import java.util.regex.Pattern;
  */
 public class PyPep8NamingInspection extends PyInspection {
   public boolean ignoreOverriddenFunctions = true;
-  public boolean ignoreTestFunctions = true;
+  public boolean ignoreTestFunctions = false;
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
                                         boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
+    if (ApplicationManager.getApplication().isUnitTestMode())
+      ignoreTestFunctions = true;
     return new Visitor(holder, session);
   }
 
