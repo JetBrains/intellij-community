@@ -143,7 +143,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 
     Runnable searchEverywhere = mySearchEverywhereRunnable;
@@ -160,7 +160,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.usages");
 
     UsageTarget[] usageTargets = e.getData(UsageView.USAGE_TARGETS_KEY);
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (usageTargets == null) {
       FindUsagesAction.chooseAmbiguousTargetAndPerform(project, editor, new PsiElementProcessor<PsiElement>() {
         @Override
@@ -1061,7 +1061,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
     @Override
     public Object getData(@NonNls String dataId) {
-      if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         final int[] selected = getSelectedRows();
         if (selected.length == 1) {
           return getPsiElementForHint(getValueAt(selected[0], 0));

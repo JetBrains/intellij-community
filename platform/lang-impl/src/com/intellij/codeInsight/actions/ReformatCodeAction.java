@@ -58,13 +58,13 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (files == null) {
       return;
     }
@@ -133,7 +133,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
         return;
       }
 
-      PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element == null) return;
       if (element instanceof PsiDirectoryContainer) {
         dir = ((PsiDirectoryContainer)element).getDirectories()[0];
@@ -249,15 +249,15 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null){
       presentation.setEnabled(false);
       return;
     }
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
-    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
 
     if (editor != null){
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -298,7 +298,7 @@ public class ReformatCodeAction extends AnAction implements DumbAware {
     }
     else if (LangDataKeys.MODULE_CONTEXT.getData(dataContext) == null &&
              PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext) == null) {
-      PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element == null) {
         presentation.setEnabled(false);
         return;

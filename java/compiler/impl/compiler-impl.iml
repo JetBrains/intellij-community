@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="jsp-openapi" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="module" module-name="jps-builders" />
+    <orderEntry type="module" module-name="jps-launcher" />
     <orderEntry type="library" name="Netty" level="project" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="jps-model-impl" />

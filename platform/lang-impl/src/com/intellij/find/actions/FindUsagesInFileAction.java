@@ -42,10 +42,10 @@ public class FindUsagesInFileAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
     UsageTarget[] usageTargets = UsageView.USAGE_TARGETS_KEY.getData(dataContext);
     if (usageTargets != null) {
@@ -73,12 +73,12 @@ public class FindUsagesInFileAction extends AnAction {
   }
 
   private static boolean isEnabled(DataContext dataContext) {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return false;
     }
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       UsageTarget[] target = UsageView.USAGE_TARGETS_KEY.getData(dataContext);
       return target != null && target.length > 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,11 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     List<String> listPaths = new ArrayList<String>(fileNames);
     final String CREATE_MISSING_OPTION = "Create Missing Files";
     if (fileNames.size() == 2) {
-      listPaths.add(CREATE_MISSING_OPTION);
+      VirtualFile file1 = LocalFileSystem.getInstance().refreshAndFindFileByPath(fileNames.get(0));
+      VirtualFile file2 = LocalFileSystem.getInstance().refreshAndFindFileByPath(fileNames.get(1));
+      if (file1 == null || file2 == null) {
+        listPaths.add(CREATE_MISSING_OPTION);
+      }
     }
     final JList list = new JBList(ArrayUtil.toStringArray(listPaths));
     list.setCellRenderer(new ColoredListCellRenderer() {

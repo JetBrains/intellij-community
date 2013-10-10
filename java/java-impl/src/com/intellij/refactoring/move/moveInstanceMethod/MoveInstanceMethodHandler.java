@@ -16,6 +16,7 @@
 package com.intellij.refactoring.move.moveInstanceMethod;
 
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -52,7 +53,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
   static final String REFACTORING_NAME = RefactoringBundle.message("move.instance.method.title");
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
-    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
     if (element == null) {
       element = file.findElementAt(editor.getCaretModel().getOffset());
@@ -97,7 +98,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
         for (PsiClass aClass : classes) {
           if (aClass instanceof JspClass) {
             message = RefactoringBundle.message("synthetic.jsp.class.is.referenced.in.the.method");
-            Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+            Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
             CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.MOVE_INSTANCE_METHOD);
             break;
           }
@@ -133,7 +134,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
   }
 
   private static void showErrorHint(Project project, DataContext dataContext, String message) {
-    Editor editor = dataContext == null ? null : PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = dataContext == null ? null : CommonDataKeys.EDITOR.getData(dataContext);
     CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), REFACTORING_NAME, HelpID.MOVE_INSTANCE_METHOD);
   }
 

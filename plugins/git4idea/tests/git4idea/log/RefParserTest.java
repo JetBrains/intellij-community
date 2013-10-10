@@ -14,7 +14,7 @@ import static junit.framework.Assert.assertEquals;
 public class RefParserTest {
 
   public String toStr(VcsRef ref) {
-    return String.format("%s %s %s", ref.getCommitHash().asString(), ref.getType(), ref.getName());
+    return String.format("%s TAG %s", ref.getCommitHash().asString(), ref.getName());
   }
 
   public void runTest(String inputStr, String outStr) {

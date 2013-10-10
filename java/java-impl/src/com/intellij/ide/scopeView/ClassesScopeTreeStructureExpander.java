@@ -70,36 +70,38 @@ public class ClassesScopeTreeStructureExpander implements ScopeTreeStructureExpa
               return;
             }
             final PsiClass[] psiClasses = ((PsiJavaFile)file).getClasses();
-            if (classNodes == null) {
-              classNodes = new HashSet<ClassNode>();
-            }
-            commitDocument((PsiFile)file);
-            for (final PsiClass psiClass : psiClasses) {
-              if (psiClass != null && psiClass.isValid()) {
-                final ClassNode classNode = new ClassNode(psiClass);
-                classNodes.add(classNode);
-                if (projectView.isShowMembers(ScopeViewPane.ID)) {
-                  final List<PsiElement> result = new ArrayList<PsiElement>();
-                  PsiClassChildrenSource.DEFAULT_CHILDREN.addChildren(psiClass, result);
-                  for (PsiElement psiElement : result) {
-                    psiElement.accept(new JavaElementVisitor() {
-                      @Override public void visitClass(PsiClass aClass) {
-                        classNode.add(new ClassNode(aClass));
-                      }
-
-                      @Override public void visitMethod(PsiMethod method) {
-                        classNode.add(new MethodNode(method));
-                      }
-
-                      @Override public void visitField(PsiField field) {
-                        classNode.add(new FieldNode(field));
-                      }
-                    });
+            if (psiClasses.length > 0) {
+              if (classNodes == null) {
+                classNodes = new HashSet<ClassNode>();
+              }
+              commitDocument((PsiFile)file);
+              for (final PsiClass psiClass : psiClasses) {
+                if (psiClass != null && psiClass.isValid()) {
+                  final ClassNode classNode = new ClassNode(psiClass);
+                  classNodes.add(classNode);
+                  if (projectView.isShowMembers(ScopeViewPane.ID)) {
+                    final List<PsiElement> result = new ArrayList<PsiElement>();
+                    PsiClassChildrenSource.DEFAULT_CHILDREN.addChildren(psiClass, result);
+                    for (PsiElement psiElement : result) {
+                      psiElement.accept(new JavaElementVisitor() {
+                        @Override public void visitClass(PsiClass aClass) {
+                          classNode.add(new ClassNode(aClass));
+                        }
+  
+                        @Override public void visitMethod(PsiMethod method) {
+                          classNode.add(new MethodNode(method));
+                        }
+  
+                        @Override public void visitField(PsiField field) {
+                          classNode.add(new FieldNode(field));
+                        }
+                      });
+                    }
                   }
                 }
               }
+              node.remove(fileNode);
             }
-            node.remove(fileNode);
           }
         }
       }

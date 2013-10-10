@@ -87,6 +87,9 @@ public class JavaSdkUtil {
       "jre/bin/default/jclSC170/vm.jar",
       "jre/lib/i386/default/jclSC170/vm.jar",
       "jre/lib/amd64/default/jclSC170/vm.jar",
+      "jre/bin/default/jclSC160/vm.jar",
+      "jre/lib/i386/default/jclSC160/vm.jar",
+      "jre/lib/amd64/default/jclSC160/vm.jar",
       "lib/classes.zip"
     };
     for (String relativePath : additionalJars) {

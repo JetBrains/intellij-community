@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.action;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
@@ -45,7 +46,7 @@ public class ExternalActionUtil {
       return MyInfo.EMPTY;
     }
 
-    Project ideProject = PlatformDataKeys.PROJECT.getData(context);
+    Project ideProject = CommonDataKeys.PROJECT.getData(context);
     if (ideProject == null) {
       return MyInfo.EMPTY;
     }

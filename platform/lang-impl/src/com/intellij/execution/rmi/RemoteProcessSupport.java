@@ -34,6 +34,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,7 @@ import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Gregory.Shrago
@@ -102,6 +104,12 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
     return result;
   }
 
+  public Set<Pair<Target, Parameters>> getActiveConfigurations() {
+    synchronized (myProcMap) {
+      return new HashSet<Pair<Target, Parameters>>(myProcMap.keySet());
+    }
+  }
+
   public EntryPoint acquire(@NotNull Target target, @NotNull Parameters configuration) throws Exception {
     ApplicationManagerEx.getApplicationEx().assertTimeConsuming();
 
@@ -145,6 +153,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
         }
       }
     }
+    if (handlers.isEmpty()) return;
     for (ProcessHandler handler : handlers) {
       handler.destroyProcess();
     }

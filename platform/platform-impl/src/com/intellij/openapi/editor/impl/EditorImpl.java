@@ -31,9 +31,9 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager;
 import com.intellij.openapi.application.ApplicationManager;
@@ -61,7 +61,6 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.EditorsSplitters;
-import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
@@ -681,10 +680,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       validateSize();
     }
 
-    final EditorColorsScheme scheme =
-      myScheme instanceof DelegateColorScheme ? ((DelegateColorScheme)myScheme).getDelegate() : myScheme;
-    if (scheme instanceof MyColorSchemeDelegate) {
-      ((MyColorSchemeDelegate)scheme).updateGlobalScheme();
+    for (EditorColorsScheme scheme = myScheme; scheme instanceof DelegateColorScheme; scheme = ((DelegateColorScheme)scheme).getDelegate()) {
+      if (scheme instanceof MyColorSchemeDelegate) {
+        ((MyColorSchemeDelegate)scheme).updateGlobalScheme();
+        break;
+      }
     }
     myHighlighter.setColorScheme(myScheme);
     myFoldingModel.refreshSettings();
@@ -1907,6 +1907,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     LogicalPosition clipEndPosition = xyToLogicalPosition(new Point(0, clip.y + clip.height + getLineHeight()));
     int clipEndOffset = logicalPositionToOffset(clipEndPosition);
     paintBackgrounds(g, clip, clipStartPosition, clipStartVisualPos, clipStartOffset, clipEndOffset);
+    if (paintPlaceholderText(g, clip)) return;
+
     paintRectangularSelection(g);
     paintRightMargin(g, clip);
     paintCustomRenderers(g, clipStartOffset, clipEndOffset);
@@ -1914,7 +1916,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     paintLineMarkersSeparators(g, clip, docMarkup, clipStartOffset, clipEndOffset);
     paintLineMarkersSeparators(g, clip, myMarkupModel, clipStartOffset, clipEndOffset);
     paintText(g, clip, clipStartPosition, clipStartOffset, clipEndOffset);
-    paintPlaceholderText(g, clip);
     paintSegmentHighlightersBorderAndAfterEndOfLine(g, clip, clipStartOffset, clipEndOffset, docMarkup);
     BorderEffect borderEffect = new BorderEffect(this, g, clipStartOffset, clipEndOffset);
     borderEffect.paintHighlighters(getHighlighter());
@@ -2775,10 +2776,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     flushCachedChars(g);
   }
 
-  private void paintPlaceholderText(@NotNull Graphics g, @NotNull Rectangle clip) {
+  private boolean paintPlaceholderText(@NotNull Graphics g, @NotNull Rectangle clip) {
     CharSequence hintText = myPlaceholderText;
     if (myDocument.getTextLength() > 0 || hintText == null || hintText.length() == 0) {
-      return;
+      return false;
     }
 
     if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner() == myEditorComponent) {
@@ -2788,6 +2789,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myLastBackgroundPosition = new Point(0, 0);
       myLastBackgroundWidth = myLastPaintedPlaceholderWidth;
       flushBackground(g, clip);
+      return false;
     }
     else {
       myLastPaintedPlaceholderWidth = drawString(
@@ -2795,6 +2797,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myFoldingModel.getPlaceholderAttributes().getForegroundColor()
       );
       flushCachedChars(g);
+      return true;
     }
   }
 
@@ -3976,12 +3979,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @NotNull
   private DataContext getProjectAwareDataContext(@NotNull final DataContext original) {
-    if (PlatformDataKeys.PROJECT.getData(original) == myProject) return original;
+    if (CommonDataKeys.PROJECT.getData(original) == myProject) return original;
 
     return new DataContext() {
       @Override
       public Object getData(String dataId) {
-        if (PlatformDataKeys.PROJECT.is(dataId)) {
+        if (CommonDataKeys.PROJECT.is(dataId)) {
           return myProject;
         }
         return original.getData(dataId);
@@ -5820,7 +5823,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private class MyColorSchemeDelegate implements EditorColorsScheme {
+  private class MyColorSchemeDelegate extends DelegateColorScheme {
 
     private final FontPreferences                        myFontPreferences = new FontPreferences();
     private final Map<TextAttributesKey, TextAttributes> myOwnAttributes   = ContainerUtilRt.newHashMap();
@@ -5830,22 +5833,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private int                       myMaxFontSize = OptionsConstants.MAX_EDITOR_FONT_SIZE;
     private int                       myFontSize    = -1;
     private String                    myFaceName    = null;
-    private EditorColorsScheme myGlobalScheme;
 
-    private MyColorSchemeDelegate(@Nullable final EditorColorsScheme globalScheme) {
+    private MyColorSchemeDelegate(@Nullable EditorColorsScheme globalScheme) {
+      super(globalScheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : globalScheme);
       myCustomGlobalScheme = globalScheme;
       updateGlobalScheme();
     }
 
     private EditorColorsScheme getGlobal() {
-      return myGlobalScheme;
+      return getDelegate();
     }
-
-    @Override
-    public String getName() {
-      return getGlobal().getName();
-    }
-
 
     protected void initFonts() {
       String editorFontName = getEditorFontName();
@@ -5870,11 +5867,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
-    public void setName(String name) {
-      getGlobal().setName(name);
-    }
-
-    @Override
     public TextAttributes getAttributes(TextAttributesKey key) {
       if (myOwnAttributes.containsKey(key)) return myOwnAttributes.get(key);
       return getGlobal().getAttributes(key);
@@ -5883,18 +5875,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public void setAttributes(TextAttributesKey key, TextAttributes attributes) {
       myOwnAttributes.put(key, attributes);
-    }
-
-    @NotNull
-    @Override
-    public Color getDefaultBackground() {
-      return getGlobal().getDefaultBackground();
-    }
-
-    @NotNull
-    @Override
-    public Color getDefaultForeground() {
-      return getGlobal().getDefaultForeground();
     }
 
     @Override
@@ -5927,16 +5907,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (fontSize > myMaxFontSize) fontSize = myMaxFontSize;
       myFontSize = fontSize;
       initFonts();
-    }
-
-    @Override
-    public FontSize getQuickDocFontSize() {
-      return myGlobalScheme.getQuickDocFontSize();
-    }
-
-    @Override
-    public void setQuickDocFontSize(@NotNull FontSize fontSize) {
-      myGlobalScheme.setQuickDocFontSize(fontSize);
     }
 
     @NotNull
@@ -5984,16 +5954,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     @Override
-    public float getLineSpacing() {
-      return getGlobal().getLineSpacing();
-    }
-
-    @Override
-    public void setLineSpacing(float lineSpacing) {
-      getGlobal().setLineSpacing(lineSpacing);
-    }
-
-    @Override
     @Nullable
     public Object clone() {
       return null;
@@ -6008,51 +5968,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     public void updateGlobalScheme() {
-      myGlobalScheme = myCustomGlobalScheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : myCustomGlobalScheme;
+      setDelegate(myCustomGlobalScheme == null ? EditorColorsManager.getInstance().getGlobalScheme() : myCustomGlobalScheme);
+    }
+
+    @Override
+    public void setDelegate(@NotNull EditorColorsScheme delegate) {
+      super.setDelegate(delegate);
       int globalFontSize = getGlobal().getEditorFontSize();
       myMaxFontSize = Math.max(OptionsConstants.MAX_EDITOR_FONT_SIZE, globalFontSize);
-    }
-
-    @NotNull
-    @Override
-    public FontPreferences getConsoleFontPreferences() {
-      return getGlobal().getConsoleFontPreferences();
-    }
-
-    @Override
-    public void setConsoleFontPreferences(@NotNull FontPreferences preferences) {
-      getGlobal().setConsoleFontPreferences(preferences);
-    }
-
-    @Override
-    public String getConsoleFontName() {
-      return getGlobal().getConsoleFontName();
-    }
-
-    @Override
-    public void setConsoleFontName(String fontName) {
-      getGlobal().setConsoleFontName(fontName);
-    }
-
-    @Override
-    public int getConsoleFontSize() {
-      return getGlobal().getConsoleFontSize();
     }
 
     @Override
     public void setConsoleFontSize(int fontSize) {
       getGlobal().setConsoleFontSize(fontSize);
       reinitSettings();
-    }
-
-    @Override
-    public float getConsoleLineSpacing() {
-      return getGlobal().getConsoleLineSpacing();
-    }
-
-    @Override
-    public void setConsoleLineSpacing(float lineSpacing) {
-      getGlobal().setConsoleLineSpacing(lineSpacing);
     }
   }
 

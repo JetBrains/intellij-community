@@ -184,7 +184,7 @@ class UpdateFoldRegionsOperation implements Runnable {
               break;
             }
             else {
-              myElementsToFoldMap.removeValue(element, descriptor);
+              myElementsToFoldMap.remove(element, descriptor);
             }
           }
         }

@@ -15,13 +15,14 @@
  */
 package com.intellij.ide.impl.dataRules;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.pom.Navigatable;
 
 public class NavigatableArrayRule implements GetDataRule {
   public Object getData(DataProvider dataProvider) {
-    final Navigatable element = PlatformDataKeys.NAVIGATABLE.getData(dataProvider);
+    final Navigatable element = CommonDataKeys.NAVIGATABLE.getData(dataProvider);
     if (element == null) {
       return null;
     }

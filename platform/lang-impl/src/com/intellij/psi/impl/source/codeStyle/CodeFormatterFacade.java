@@ -22,9 +22,9 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -175,6 +175,7 @@ public class CodeFormatterFacade {
 
     if (builder != null) {
       if (file.getTextLength() > 0) {
+        LOG.assertTrue(document != null);
         try {
           final PsiElement startElement = file.findElementAt(textRanges.get(0).getTextRange().getStartOffset());
           final PsiElement endElement = file.findElementAt(textRanges.get(textRanges.size() - 1).getTextRange().getEndOffset() - 1);
@@ -700,7 +701,7 @@ public class CodeFormatterFacade {
       @Override
       public Object getData(@NonNls String dataId) {
         Object result = baseDataContext.getData(dataId);
-        if (result == null && PlatformDataKeys.PROJECT.is(dataId)) {
+        if (result == null && CommonDataKeys.PROJECT.is(dataId)) {
           result = project;
         }
         return result;

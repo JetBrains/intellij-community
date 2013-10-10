@@ -75,6 +75,7 @@ public abstract class DomHardCoreTestCase extends CodeInsightTestCase {
     final XmlTagValue tagValue = value.getXmlTag().getValue();
     final TextRange textRange = tagValue.getTextRange();
     final String s = value.getStringValue();
+    assertNotNull(s);
     final int i = tagValue.getText().indexOf(s);
     return assertReference(value, resolveTo, textRange.getStartOffset() + i + s.length());
   }
@@ -83,18 +84,21 @@ public abstract class DomHardCoreTestCase extends CodeInsightTestCase {
     final XmlTag tag = value.getXmlTag();
     final PsiReference reference = tag.getContainingFile().findReferenceAt(offset);
     assertNotNull(reference);
+    reference.getVariants();
     assertEquals(resolveTo, reference.resolve());
     return reference;
   }
 
   protected PsiReference getReference(final GenericAttributeValue value) {
     final XmlAttributeValue attributeValue = value.getXmlAttributeValue();
+    assertNotNull(attributeValue);
     final PsiReference reference = attributeValue.getContainingFile().findReferenceAt(attributeValue.getTextRange().getStartOffset() + 1);
     assertNotNull(reference);
     assertEquals(attributeValue, reference.resolve());
     return reference;
   }
 
+  @SuppressWarnings("deprecation")
   protected void assertVariants(PsiReference reference, String... variants) {
     Object[] refVariants = reference.getVariants();
     assertNotNull(refVariants);

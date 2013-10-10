@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -276,7 +276,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     }
 
     ExportableTemplateSettings exportableSettings = ServiceManager.getService(ExportableTemplateSettings.class);
-    assert exportableSettings != null : "Can't find required ExportablTemplateSettings service.";
+    assert exportableSettings != null : "Can't find required ExportableTemplateSettings service.";
     exportableSettings.setParentSettings(this);
     if (exportableSettings.isLoaded()) {
       myDeletedTemplates.addAll(exportableSettings.getDeletedKeys());
@@ -405,7 +405,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
           mySchemesManager.removeScheme(group);
         }
       }
-      myTemplates.removeValue(template.getKey(), existing);
+      myTemplates.remove(template.getKey(), existing);
     }
   }
 
@@ -430,7 +430,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
   }
 
   public void removeTemplate(Template template) {
-    myTemplates.removeValue(template.getKey(), (TemplateImpl )template);
+    myTemplates.remove(template.getKey(), (TemplateImpl)template);
 
     TemplateImpl templateImpl = (TemplateImpl)template;
     String groupName = templateImpl.getGroupName();
@@ -724,7 +724,7 @@ public class TemplateSettings implements PersistentStateComponent<Element>, Expo
     return mySchemesManager.getAllSchemes();
   }
 
-  public List<TemplateImpl> collectMatchingCandidates(String key, Character shortcutChar, boolean hasArgument) {
+  public List<TemplateImpl> collectMatchingCandidates(String key, @Nullable Character shortcutChar, boolean hasArgument) {
     final Collection<TemplateImpl> templates = getTemplates(key);
     List<TemplateImpl> candidates = new ArrayList<TemplateImpl>();
     for (TemplateImpl template : templates) {

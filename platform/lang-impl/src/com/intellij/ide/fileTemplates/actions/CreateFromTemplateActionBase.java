@@ -43,7 +43,7 @@ public abstract class CreateFromTemplateActionBase extends AnAction {
     if (view == null) {
       return;
     }
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     PsiDirectory dir = getTargetDirectory(dataContext, view);
     if (dir == null) return;

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.dom.refactorings;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -45,7 +46,7 @@ public class MavenPropertyRenameHandler extends PsiElementRenameHandler {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) element = findTarget(dataContext);
 
-    RenameDialog dialog = new RenameDialog(project, element, null, PlatformDataKeys.EDITOR.getData(dataContext));
+    RenameDialog dialog = new RenameDialog(project, element, null, CommonDataKeys.EDITOR.getData(dataContext));
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       String name = DEFAULT_NAME.getData(dataContext);
       dialog.performRename(name);
@@ -57,6 +58,6 @@ public class MavenPropertyRenameHandler extends PsiElementRenameHandler {
   }
 
   private static PsiElement findTarget(DataContext context) {
-    return MavenTargetUtil.getRefactorTarget(PlatformDataKeys.EDITOR.getData(context), LangDataKeys.PSI_FILE.getData(context));
+    return MavenTargetUtil.getRefactorTarget(CommonDataKeys.EDITOR.getData(context), CommonDataKeys.PSI_FILE.getData(context));
   }
 }

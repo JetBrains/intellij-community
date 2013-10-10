@@ -136,14 +136,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public int hashCode() {
-    return getPartialHashCode(true);
+    return getPartialHashCode(true, true);
   }
 
-  int getPartialHashCode(boolean unknowns) {
-    int hash = ((getNonTrivialEqClasses().hashCode() * 31 +
+  int getPartialHashCode(boolean unknowns, boolean varStates) {
+    int hash = (getNonTrivialEqClasses().hashCode() * 31 +
               getDistinctClassPairs().hashCode()) * 31 +
-             myStack.hashCode()) * 31 +
-            myVariableStates.hashCode();
+             myStack.hashCode();
+    if (varStates) {
+      hash = hash * 31 + myVariableStates.hashCode();
+    }
     if (unknowns) {
       hash = hash * 31 + myUnknownVariables.hashCode();
     }
@@ -817,14 +819,14 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         }
       }
     }
-    for (DfaVariableValue value : new ArrayList<DfaVariableValue>(getChangedVariable())) {
+    for (DfaVariableValue value : new ArrayList<DfaVariableValue>(getChangedVariables())) {
       if (value.isFlushableByCalls()) {
         doFlush(value, true);
       }
     }
   }
 
-  Set<DfaVariableValue> getChangedVariable() {
+  Set<DfaVariableValue> getChangedVariables() {
     return myVariableStates.keySet();
   }
 

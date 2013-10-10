@@ -388,7 +388,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       if (staticContext && (modifierList != null && !modifierList.hasModifierProperty(PsiModifier.STATIC))) continue;
 
       if (fieldType.equals(varType)) {
-        final String getterName = PropertyUtil.suggestGetterName(field.getProject(), field);
+        final String getterName = PropertyUtil.suggestGetterName(field);
         if ((psiClass.findMethodsByName(getterName, true).length == 0 ||
              psiClass.findMethodBySignature(PropertyUtil.generateGetterPrototype(field), true) == null)) {
           propertyHandlers.add(getterName);
@@ -396,7 +396,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
       }
 
       if (PsiType.VOID.equals(varType)) {
-        final String setterName = PropertyUtil.suggestSetterName(field.getProject(), field);
+        final String setterName = PropertyUtil.suggestSetterName(field);
         if ((psiClass.findMethodsByName(setterName, true).length == 0 ||
              psiClass.findMethodBySignature(PropertyUtil.generateSetterPrototype(field), true) == null)) {
           propertyHandlers.add(setterName);

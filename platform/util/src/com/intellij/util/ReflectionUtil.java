@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.*;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class ReflectionUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ReflectionUtil");
@@ -32,12 +33,12 @@ public class ReflectionUtil {
   }
 
   @Nullable
-  public static Type resolveVariable(TypeVariable variable, final Class classType) {
+  public static Type resolveVariable(@NotNull TypeVariable variable, @NotNull Class classType) {
     return resolveVariable(variable, classType, true);
   }
 
   @Nullable
-  public static Type resolveVariable(TypeVariable variable, final Class classType, boolean resolveInInterfacesOnly) {
+  public static Type resolveVariable(@NotNull TypeVariable variable, @NotNull Class classType, boolean resolveInInterfacesOnly) {
     final Class aClass = getRawType(classType);
     int index = ArrayUtilRt.find(ReflectionCache.getTypeParameters(aClass), variable);
     if (index >= 0) {
@@ -81,13 +82,14 @@ public class ReflectionUtil {
     return null;
   }
 
+  @NotNull
   public static String declarationToString(@NotNull GenericDeclaration anInterface) {
     return anInterface.toString()
            + Arrays.asList(anInterface.getTypeParameters())
            + " loaded by " + ((Class)anInterface).getClassLoader();
   }
 
-  public static Class<?> getRawType(Type type) {
+  public static Class<?> getRawType(@NotNull Type type) {
     if (type instanceof Class) {
       return (Class)type;
     }
@@ -102,12 +104,13 @@ public class ReflectionUtil {
     return null;
   }
 
-  public static Type[] getActualTypeArguments(final ParameterizedType parameterizedType) {
+  @NotNull
+  public static Type[] getActualTypeArguments(@NotNull ParameterizedType parameterizedType) {
     return ReflectionCache.getActualTypeArguments(parameterizedType);
   }
 
   @Nullable
-  public static Class<?> substituteGenericType(final Type genericType, final Type classType) {
+  public static Class<?> substituteGenericType(@NotNull Type genericType, @NotNull Type classType) {
     if (genericType instanceof TypeVariable) {
       final Class<?> aClass = getRawType(classType);
       final Type type = resolveVariable((TypeVariable)genericType, aClass);
@@ -129,14 +132,16 @@ public class ReflectionUtil {
     return null;
   }
 
-  public static ArrayList<Field> collectFields(Class clazz) {
-    ArrayList<Field> result = new ArrayList<Field>();
+  @NotNull
+  public static List<Field> collectFields(@NotNull Class clazz) {
+    List<Field> result = new ArrayList<Field>();
     collectFields(clazz, result);
     return result;
   }
 
-  public static Field findField(Class clazz, @Nullable Class type, String name) throws NoSuchFieldException {
-    final ArrayList<Field> fields = collectFields(clazz);
+  @NotNull
+  public static Field findField(@NotNull Class clazz, @Nullable Class type, @NotNull String name) throws NoSuchFieldException {
+    List<Field> fields = collectFields(clazz);
     for (Field each : fields) {
       if (name.equals(each.getName()) && (type == null || each.getType().equals(type))) return each;
     }
@@ -144,8 +149,9 @@ public class ReflectionUtil {
     throw new NoSuchFieldException("Class: " + clazz + " name: " + name + " type: " + type);
   }
 
-  public static Field findAssignableField(Class clazz, Class type, String name) throws NoSuchFieldException {
-    final ArrayList<Field> fields = collectFields(clazz);
+  @NotNull
+  public static Field findAssignableField(@NotNull Class clazz, @NotNull Class type, @NotNull String name) throws NoSuchFieldException {
+    List<Field> fields = collectFields(clazz);
     for (Field each : fields) {
       if (name.equals(each.getName()) && type.isAssignableFrom(each.getType())) return each;
     }
@@ -153,7 +159,7 @@ public class ReflectionUtil {
     throw new NoSuchFieldException("Class: " + clazz + " name: " + name + " type: " + type);
   }
 
-  private static void collectFields(final Class clazz, final ArrayList<Field> result) {
+  private static void collectFields(@NotNull Class clazz, @NotNull List<Field> result) {
     final Field[] fields = clazz.getDeclaredFields();
     result.addAll(Arrays.asList(fields));
     final Class superClass = clazz.getSuperclass();
@@ -166,7 +172,7 @@ public class ReflectionUtil {
     }
   }
 
-  public static void resetField(Class clazz, Class type, String name)  {
+  public static void resetField(@NotNull Class clazz, @NotNull Class type, @NotNull String name)  {
     try {
       resetField(null, findField(clazz, type, name));
     }
@@ -174,7 +180,7 @@ public class ReflectionUtil {
       LOG.info(e);
     }
   }
-  public static void resetField(Object object, Class type, String name)  {
+  public static void resetField(@NotNull Object object, @NotNull Class type, @NotNull String name)  {
     try {
       resetField(object, findField(object.getClass(), type, name));
     }
@@ -183,7 +189,7 @@ public class ReflectionUtil {
     }
   }
 
-  public static void resetField(Object object, String name) {
+  public static void resetField(@NotNull Object object, @NotNull String name) {
     try {
       resetField(object, findField(object.getClass(), null, name));
     }
@@ -192,21 +198,25 @@ public class ReflectionUtil {
     }
   }
 
-  public static void resetField(@Nullable final Object object, final Field field)  {
+  public static void resetField(@Nullable final Object object, @NotNull Field field) {
     field.setAccessible(true);
     Class<?> type = field.getType();
     try {
       if (type.isPrimitive()) {
         if (boolean.class.equals(type)) {
           field.set(object, Boolean.FALSE);
-        } else if (int.class.equals(type)){
+        }
+        else if (int.class.equals(type)) {
           field.set(object, new Integer(0));
-        } else if (double.class.equals(type)) {
+        }
+        else if (double.class.equals(type)) {
           field.set(object, new Double(0));
-        } else if (float.class.equals(type)) {
+        }
+        else if (float.class.equals(type)) {
           field.set(object, new Float(0));
         }
-      } else {
+      }
+      else {
         field.set(object, null);
       }
     }
@@ -216,7 +226,7 @@ public class ReflectionUtil {
   }
 
   @Nullable
-  public static Method findMethod(Method[] methods, @NonNls @NotNull String name, Class... parameters) {
+  public static Method findMethod(@NotNull Method[] methods, @NonNls @NotNull String name, @NotNull Class... parameters) {
     for (final Method method : methods) {
       if (name.equals(method.getName()) && Arrays.equals(parameters, method.getParameterTypes())) return method;
     }
@@ -224,20 +234,20 @@ public class ReflectionUtil {
   }
 
   @Nullable
-  public static Method getMethod(@NotNull Class aClass, @NonNls @NotNull String name, Class... parameters) {
+  public static Method getMethod(@NotNull Class aClass, @NonNls @NotNull String name, @NotNull Class... parameters) {
     return findMethod(ReflectionCache.getMethods(aClass), name, parameters);
   }
 
   @Nullable
-  public static Method getDeclaredMethod(@NotNull Class aClass, @NonNls @NotNull String name, Class... parameters) {
+  public static Method getDeclaredMethod(@NotNull Class aClass, @NonNls @NotNull String name, @NotNull Class... parameters) {
     return findMethod(aClass.getDeclaredMethods(), name, parameters);
   }
 
-  public static Object getField(Class objectClass, Object object, Class type, @NonNls String name) {
+  public static <T> T getField(@NotNull Class objectClass, Object object, @NotNull Class<T> type, @NotNull @NonNls String name) {
     try {
       final Field field = findAssignableField(objectClass, type, name);
       field.setAccessible(true);
-      return field.get(object);
+      return (T)field.get(object);
     }
     catch (NoSuchFieldException e) {
       LOG.debug(e);
@@ -249,7 +259,7 @@ public class ReflectionUtil {
     }
   }
 
-  public static Type resolveVariableInHierarchy(final TypeVariable variable, final Class aClass) {
+  public static Type resolveVariableInHierarchy(@NotNull TypeVariable variable, @NotNull Class aClass) {
     Type type;
     Class current = aClass;
     while ((type = resolveVariable(variable, current, false)) == null) {
@@ -265,34 +275,24 @@ public class ReflectionUtil {
   }
 
   @NotNull
-  public static <T> Constructor<T> getDefaultConstructor(final Class<T> aClass) {
+  public static <T> Constructor<T> getDefaultConstructor(@NotNull Class<T> aClass) {
     try {
       final Constructor<T> constructor = aClass.getConstructor();
       constructor.setAccessible(true);
       return constructor;
     }
     catch (NoSuchMethodException e) {
-      LOG.error("No default constructor in " + aClass, e);
-      return null;
+      throw new RuntimeException("No default constructor in " + aClass, e);
     }
   }
 
   @NotNull
-  public static <T> T createInstance(final Constructor<T> constructor, final Object... args) {
+  public static <T> T createInstance(@NotNull Constructor<T> constructor, @NotNull Object... args) {
     try {
       return constructor.newInstance(args);
     }
-    catch (InstantiationException e) {
-      LOG.error(e);
-      return null;
-    }
-    catch (IllegalAccessException e) {
-      LOG.error(e);
-      return null;
-    }
-    catch (InvocationTargetException e) {
-      LOG.error(e);
-      return null;
+    catch (Exception e) {
+      throw new RuntimeException(e);
     }
   }
 

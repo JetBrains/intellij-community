@@ -1,4 +1,4 @@
-42 + 42   
+42 + 42
 -----
 Groovy script
   Additive expression
@@ -9,4 +9,3 @@ Groovy script
     PsiWhiteSpace(' ')
     Literal
       PsiElement(Integer)('42')
-  PsiWhiteSpace('   ')

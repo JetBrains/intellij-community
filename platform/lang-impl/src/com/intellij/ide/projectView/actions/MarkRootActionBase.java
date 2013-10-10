@@ -17,6 +17,7 @@ package com.intellij.ide.projectView.actions;
 
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,7 +40,7 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     Module module = e.getData(LangDataKeys.MODULE);
-    VirtualFile[] vFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] vFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (module == null || vFiles == null) {
       return;
     }
@@ -91,7 +92,7 @@ public abstract class MarkRootActionBase extends DumbAwareAction {
 
   protected static RootsSelection getSelection(AnActionEvent e) {
     Module module = e.getData(LangDataKeys.MODULE);
-    VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (module == null || files == null) {
       return RootsSelection.EMPTY;
     }

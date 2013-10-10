@@ -20,6 +20,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.ide.PasteProvider;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -71,7 +72,7 @@ public class PasteHandler extends EditorActionHandler implements EditorTextInser
     if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
     final Document document = editor.getDocument();
 
-    if (!FileDocumentManager.getInstance().requestWriting(document, PlatformDataKeys.PROJECT.getData(dataContext))) {
+    if (!FileDocumentManager.getInstance().requestWriting(document, CommonDataKeys.PROJECT.getData(dataContext))) {
       return;
     }
 

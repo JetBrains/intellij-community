@@ -17,8 +17,8 @@ package com.intellij.util;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.treeView.NodeDescriptor;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.DoubleClickListener;
@@ -51,7 +51,7 @@ public class EditSourceOnDoubleClickHandler {
         if (ModalityState.current().dominates(ModalityState.NON_MODAL)) return false;
         if (treeTable.getTree().getPathForLocation(e.getX(), e.getY()) == null) return false;
         DataContext dataContext = DataManager.getInstance().getDataContext(treeTable);
-        Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+        Project project = CommonDataKeys.PROJECT.getData(dataContext);
         if (project == null) return false;
         OpenSourceUtil.openSourcesFrom(dataContext, true);
         return true;
@@ -67,7 +67,7 @@ public class EditSourceOnDoubleClickHandler {
         if (table.columnAtPoint(e.getPoint()) < 0) return false;
         if (table.rowAtPoint(e.getPoint()) < 0) return false;
         DataContext dataContext = DataManager.getInstance().getDataContext(table);
-        Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+        Project project = CommonDataKeys.PROJECT.getData(dataContext);
         if (project == null) return false;
         OpenSourceUtil.openSourcesFrom(dataContext, true);
         return true;
@@ -111,7 +111,7 @@ public class EditSourceOnDoubleClickHandler {
       if (clickPath == null) return false;
 
       final DataContext dataContext = DataManager.getInstance().getDataContext(myTree);
-      final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      final Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project == null) return false;
 
       final TreePath selectionPath = myTree.getSelectionPath();

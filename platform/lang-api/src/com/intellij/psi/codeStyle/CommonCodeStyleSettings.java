@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,7 +50,8 @@ public class CommonCodeStyleSettings {
   private ArrangementSettings myArrangementSettings;
   private CodeStyleSettings   myRootSettings;
   private IndentOptions       myIndentOptions;
-  private FileType            myFileType;
+  private final FileType myFileType;
+  private boolean             myForceArrangeMenuAvailable;
 
   @NonNls private static final String INDENT_OPTIONS_TAG = "indentOptions";
 
@@ -60,10 +61,7 @@ public class CommonCodeStyleSettings {
   }
 
   public CommonCodeStyleSettings(Language language) {
-    myLanguage = language;
-    if (language != null) {
-      myFileType = language.getAssociatedFileType();
-    }
+    this(language, language == null ? null : language.getAssociatedFileType());
   }
 
   void setRootSettings(@NotNull CodeStyleSettings rootSettings) {
@@ -131,11 +129,20 @@ public class CommonCodeStyleSettings {
     myArrangementSettings = settings;
   }
 
+  public void setForceArrangeMenuAvailable(boolean value) {
+    myForceArrangeMenuAvailable = value;
+  }
+
+  public boolean isForceArrangeMenuAvailable() {
+    return myForceArrangeMenuAvailable;
+  }
+
   @SuppressWarnings("unchecked")
   public CommonCodeStyleSettings clone(@NotNull CodeStyleSettings rootSettings) {
     CommonCodeStyleSettings commonSettings = new CommonCodeStyleSettings(myLanguage, getFileType());
     copyPublicFields(this, commonSettings);
     commonSettings.setRootSettings(rootSettings);
+    commonSettings.myForceArrangeMenuAvailable = this.myForceArrangeMenuAvailable;
     if (myIndentOptions != null) {
       IndentOptions targetIndentOptions = commonSettings.initIndentOptions();
       targetIndentOptions.copyFrom(myIndentOptions);
@@ -225,6 +232,7 @@ public class CommonCodeStyleSettings {
     Set<String> supportedFields = getSupportedFields();
     if (supportedFields != null) {
       supportedFields.add("PARENT_SETTINGS_INSTALLED");
+      supportedFields.add("FORCE_REARRANGE_MODE");
     }
     DefaultJDOMExternalizer.writeExternal(this, element, new SupportedFieldsDiffFilter(this, supportedFields, defaultSettings));
     if (myIndentOptions != null) {
@@ -915,6 +923,14 @@ public class CommonCodeStyleSettings {
   // values from shared code style settings (happens upon the very first initialization).
   //
   public boolean PARENT_SETTINGS_INSTALLED = false;
+
+  //-------------------------Force rearrange settings---------------------------------------
+  public static int REARRANGE_ACCORDIND_TO_DIALOG = 0;
+  public static int REARRANGE_ALWAYS = 1;
+  public static int REARRANGE_NEVER = 2;
+
+  public int FORCE_REARRANGE_MODE = REARRANGE_ACCORDIND_TO_DIALOG;
+
 
   //-------------------------Indent options-------------------------------------------------
   public static class IndentOptions implements JDOMExternalizable, Cloneable {

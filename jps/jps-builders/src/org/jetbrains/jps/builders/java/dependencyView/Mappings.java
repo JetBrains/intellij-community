@@ -72,7 +72,7 @@ public class Mappings {
   private final int myInitName;
   private final int myEmptyName;
   private final int myObjectClassName;
-  private org.jetbrains.jps.builders.java.dependencyView.Logger<Integer> myDebugS;
+  private LoggerWrapper<Integer> myDebugS;
 
   private IntIntMultiMaplet myClassToSubclasses;
 

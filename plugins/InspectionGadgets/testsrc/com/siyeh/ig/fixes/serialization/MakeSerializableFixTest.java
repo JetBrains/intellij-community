@@ -13,14 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * (c) 2013 Desert Island BV
- * created: 16 09 2013
- */
 package com.siyeh.ig.fixes.serialization;
 
-import com.siyeh.InspectionGadgetsBundle;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.serialization.ComparatorNotSerializableInspection;
 
@@ -34,9 +29,8 @@ public class MakeSerializableFixTest extends IGQuickFixesTestCase {
     super.setUp();
     myFixture.enableInspections(new ComparatorNotSerializableInspection());
     myRelativePath = "serialization/comparator";
-    myDefaultHint = InspectionGadgetsBundle.message("make.class.serializable.quickfix");
   }
 
-  public void testExtendsInterface() { doTest(); }
-  public void testImplementsClass() { doTest(); }
+  public void testExtendsInterface() { doTest(QuickFixBundle.message("add.class.to.extends.list", "ExtendsInterface", "java.io.Serializable")); }
+  public void testImplementsClass() { doTest(QuickFixBundle.message("add.interface.to.implements.list", "ImplementsClass", "java.io.Serializable")); }
 }

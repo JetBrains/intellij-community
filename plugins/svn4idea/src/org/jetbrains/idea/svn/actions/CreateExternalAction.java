@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -68,8 +69,8 @@ public class CreateExternalAction extends DumbAwareAction {
     if (! helper.isOk()) return;
 
     final DataContext dc = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dc);
-    final VirtualFile vf = PlatformDataKeys.VIRTUAL_FILE.getData(dc);
+    final Project project = CommonDataKeys.PROJECT.getData(dc);
+    final VirtualFile vf = CommonDataKeys.VIRTUAL_FILE.getData(dc);
 
     //1 select target
     final SelectCreateExternalTargetDialog dialog = new SelectCreateExternalTargetDialog(project, vf);
@@ -165,15 +166,15 @@ public class CreateExternalAction extends DumbAwareAction {
 
   private void checkState(AnActionEvent e, final ActionStateConsumer sc) {
     final DataContext dc = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dc);
+    final Project project = CommonDataKeys.PROJECT.getData(dc);
     final ProjectLevelVcsManager manager = ProjectLevelVcsManager.getInstance(project);
     if (project == null || ! manager.checkVcsIsActive(SvnVcs.getKey().getName())) {
       sc.hide();
       return;
     }
 
-    final VirtualFile vf = PlatformDataKeys.VIRTUAL_FILE.getData(dc);
-    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dc);
+    final VirtualFile vf = CommonDataKeys.VIRTUAL_FILE.getData(dc);
+    final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dc);
     if (vf == null || files == null || files.length != 1 || ! vf.isDirectory()) {
       sc.disable();
       return;

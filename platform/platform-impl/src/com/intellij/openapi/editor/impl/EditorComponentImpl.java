@@ -17,6 +17,7 @@ package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -73,7 +74,7 @@ public class EditorComponentImpl extends JComponent implements Scrollable, DataP
   public Object getData(String dataId) {
     if (myEditor.isRendererMode()) return null;
 
-    if (PlatformDataKeys.EDITOR.is(dataId)) {
+    if (CommonDataKeys.EDITOR.is(dataId)) {
       // for 'big' editors return null to allow injected editors (see com.intellij.openapi.fileEditor.impl.text.TextEditorComponent.getData())
       return myEditor.getVirtualFile() == null ? myEditor : null;
     }

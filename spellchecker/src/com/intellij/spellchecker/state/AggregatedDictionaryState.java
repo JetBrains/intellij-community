@@ -23,13 +23,11 @@ import com.intellij.spellchecker.dictionary.UserDictionary;
 import org.jetbrains.annotations.NotNull;
 
 public class AggregatedDictionaryState {
-
   private ProjectDictionaryState projectDictionaryState;
   private CachedDictionaryState cachedDictionaryState;
   private AggregatedDictionary dictionary;
   private String currentUser;
   private Project project;
-
 
   public AggregatedDictionaryState() {
   }
@@ -55,8 +53,6 @@ public class AggregatedDictionaryState {
   public AggregatedDictionary getDictionary() {
     return dictionary;
   }
-
-
 
   public void loadState() {
     assert project != null;

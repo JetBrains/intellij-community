@@ -219,7 +219,7 @@ public class VcsLogManager extends AbstractProjectComponent {
     private Set<VirtualFile> safeGetAndClear(@NotNull Set<VirtualFile> unsafeRefs) {
       Set<VirtualFile> safeRefs = ContainerUtil.newHashSet();
       synchronized (REFRESH_LOCK) {
-        safeRefs.addAll(safeRefs);
+        safeRefs.addAll(unsafeRefs);
         unsafeRefs.clear();
       }
       return safeRefs;

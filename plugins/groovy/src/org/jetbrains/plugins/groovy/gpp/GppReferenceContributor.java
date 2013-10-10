@@ -92,7 +92,7 @@ public class GppReferenceContributor extends PsiReferenceContributor {
             if (setter != null) {
               applicable.add(new PsiElementResolveResult(setter));
             } else {
-              final PsiField field = PropertyUtil.findPropertyField(psiClass.getProject(), psiClass, memberName, false);
+              final PsiField field = PropertyUtil.findPropertyField(psiClass, memberName, false);
               if (field != null) {
                 applicable.add(new PsiElementResolveResult(field));
               }

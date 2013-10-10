@@ -19,7 +19,7 @@ import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.caches.FileContent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
@@ -42,7 +42,7 @@ public class ToggleDumbModeAction extends AnAction implements DumbAware {
     }
     else {
       myDumb = true;
-      final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+      final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
       if (project == null) return;
 
       CacheUpdater updater = new CacheUpdater() {
@@ -73,7 +73,7 @@ public class ToggleDumbModeAction extends AnAction implements DumbAware {
   @Override
   public void update(final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     presentation.setEnabled(project != null && myDumb == DumbServiceImpl.getInstance(project).isDumb());
     if (myDumb) {
       presentation.setText("Exit dumb mode");

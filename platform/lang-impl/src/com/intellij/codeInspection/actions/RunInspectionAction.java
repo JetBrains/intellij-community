@@ -29,6 +29,7 @@ import com.intellij.ide.actions.GotoActionBase;
 import com.intellij.ide.util.gotoByName.ChooseByNameFilter;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -55,14 +56,14 @@ public class RunInspectionAction extends GotoActionBase {
 
   @Override
   protected void gotoActionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    final PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(e.getDataContext());
-    final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(e.getDataContext());
-    final VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+    final PsiElement psiElement = CommonDataKeys.PSI_ELEMENT.getData(e.getDataContext());
+    final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
+    final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.goto.inspection");
 

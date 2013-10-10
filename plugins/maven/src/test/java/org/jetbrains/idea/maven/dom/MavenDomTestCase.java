@@ -24,6 +24,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.lang.documentation.DocumentationProvider;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -352,9 +353,9 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
 
   private MapDataContext createDataContext(VirtualFile f) throws IOException {
     MapDataContext context = new MapDataContext();
-    context.put(PlatformDataKeys.EDITOR, getEditor(f));
-    context.put(LangDataKeys.PSI_FILE, getTestPsiFile(f));
-    context.put(LangDataKeys.PSI_ELEMENT, TargetElementUtil.findTargetElement(getEditor(f),
+    context.put(CommonDataKeys.EDITOR, getEditor(f));
+    context.put(CommonDataKeys.PSI_FILE, getTestPsiFile(f));
+    context.put(CommonDataKeys.PSI_ELEMENT, TargetElementUtil.findTargetElement(getEditor(f),
                                                                               TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED
                                                                               | TargetElementUtilBase.ELEMENT_NAME_ACCEPTED));
     return context;

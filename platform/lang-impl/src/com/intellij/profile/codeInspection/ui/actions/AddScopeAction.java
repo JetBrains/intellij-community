@@ -71,7 +71,7 @@ public abstract class AddScopeAction extends AnAction {
   }
 
   private static Project getProject(AnActionEvent e) {
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }

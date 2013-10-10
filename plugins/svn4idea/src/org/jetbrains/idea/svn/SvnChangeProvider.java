@@ -33,12 +33,10 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.actions.CleanupWorker;
 import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNNodeKind;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.internal.util.SVNPathUtil;
 import org.tmatesoft.svn.core.wc.ISVNStatusFileProvider;
@@ -54,7 +52,7 @@ import java.util.*;
  */
 public class SvnChangeProvider implements ChangeProvider {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.SvnChangeProvider");
-  public static final String ourDefaultListName = VcsBundle.message("changes.default.changlist.name");
+  public static final String ourDefaultListName = VcsBundle.message("changes.default.changelist.name");
   public static final String PROPERTY_LAYER = "Property";
 
   private final SvnVcs myVcs;
@@ -79,7 +77,7 @@ public class SvnChangeProvider implements ChangeProvider {
       final SvnChangeProviderContext context = new SvnChangeProviderContext(myVcs, builder, progress);
 
       final StatusWalkerPartnerImpl partner = new StatusWalkerPartnerImpl(myVcs, progress);
-      final NestedCopiesBuilder nestedCopiesBuilder = new NestedCopiesBuilder(myVcs.getProject(), mySvnFileUrlMapping);
+      final NestedCopiesBuilder nestedCopiesBuilder = new NestedCopiesBuilder(myVcs, mySvnFileUrlMapping);
 
       final EventDispatcher<StatusReceiver> statusReceiver = EventDispatcher.create(StatusReceiver.class);
       statusReceiver.addListener(context);
@@ -105,9 +103,9 @@ public class SvnChangeProvider implements ChangeProvider {
       processCopiedAndDeleted(context, dirtyScope);
       processUnsaved(dirtyScope, addGate, context);
 
-      final Set<NestedCopiesBuilder.MyPointInfo> pointInfos = nestedCopiesBuilder.getSet();
-      mySvnFileUrlMapping.acceptNestedData(pointInfos);
-      putAdministrative17UnderVfsListener(pointInfos);
+      final Set<NestedCopyInfo> nestedCopies = nestedCopiesBuilder.getCopies();
+      mySvnFileUrlMapping.acceptNestedData(nestedCopies);
+      putAdministrative17UnderVfsListener(nestedCopies);
     } catch (SvnExceptionWrapper e) {
       LOG.info(e);
       throw new VcsException(e.getCause());
@@ -119,10 +117,10 @@ public class SvnChangeProvider implements ChangeProvider {
     }
   }
 
-  private static void putAdministrative17UnderVfsListener(Set<NestedCopiesBuilder.MyPointInfo> pointInfos) {
+  private static void putAdministrative17UnderVfsListener(Set<NestedCopyInfo> pointInfos) {
     if (! SvnVcs.ourListenToWcDb) return;
     final LocalFileSystem lfs = LocalFileSystem.getInstance();
-    for (NestedCopiesBuilder.MyPointInfo info : pointInfos) {
+    for (NestedCopyInfo info : pointInfos) {
       if (WorkingCopyFormat.ONE_DOT_SEVEN.equals(info.getFormat()) && ! NestedCopyType.switched.equals(info.getType())) {
         final VirtualFile root = info.getFile();
         lfs.refreshIoFiles(Collections.singletonList(SvnUtil.getWcDb(new File(root.getPath()))), true, false, null);
@@ -185,18 +183,6 @@ public class SvnChangeProvider implements ChangeProvider {
     processCopiedAndDeleted(context, null);
   }
 
-  @Nullable
-  private String changeListNameFromStatus(final SVNStatus status) {
-    if (WorkingCopyFormat.getInstance(status.getWorkingCopyFormat()).supportsChangelists()) {
-      if (SVNNodeKind.FILE.equals(status.getKind())) {
-        final String clName = status.getChangelistName();
-        return (clName == null) ? null : clName;
-      }
-    }
-    // always null for earlier versions
-    return null;
-  }
-
   private void processCopiedFile(SvnChangedFile copiedFile,
                                  ChangelistBuilder builder,
                                  SvnChangeProviderContext context, final VcsDirtyScope dirtyScope) throws SVNException {
@@ -221,7 +207,7 @@ public class SvnChangeProvider implements ChangeProvider {
       SvnChangedFile deletedFile = iterator.next();
       final SVNStatus deletedStatus = deletedFile.getStatus();
       if ((deletedStatus != null) && (deletedStatus.getURL() != null) && Comparing.equal(copyFromURL, deletedStatus.getURL().toString())) {
-        final String clName = changeListNameFromStatus(copiedFile.getStatus());
+        final String clName = SvnUtil.getChangelistName(copiedFile.getStatus());
         final Change newChange = context.createMovedChange(createBeforeRevision(deletedFile, true),
                                                         CurrentContentRevision.create(copiedFile.getFilePath()), copiedStatus,
                                                         deletedStatus);
@@ -274,8 +260,8 @@ public class SvnChangeProvider implements ChangeProvider {
         final FilePath filePath = myFactory.createFilePathOnDeleted(wcPath, false);
         final SvnContentRevision beforeRevision = SvnContentRevision.createBaseRevision(myVcs, filePath, status.getRevision());
         final ContentRevision afterRevision = CurrentContentRevision.create(copiedFile.getFilePath());
-        builder.processChangeInList(context.createMovedChange(beforeRevision, afterRevision, copiedStatus, status), changeListNameFromStatus(status),
-                                    SvnVcs.getKey());
+        builder.processChangeInList(context.createMovedChange(beforeRevision, afterRevision, copiedStatus, status),
+                                    SvnUtil.getChangelistName(status), SvnVcs.getKey());
         foundRename = true;
       }
     }

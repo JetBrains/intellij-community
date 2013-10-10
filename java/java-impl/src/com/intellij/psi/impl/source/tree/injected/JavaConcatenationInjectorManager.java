@@ -144,7 +144,7 @@ public class JavaConcatenationInjectorManager implements ModificationTracker {
 
       MultiHostRegistrarImpl result;
       ParameterizedCachedValue<MultiHostRegistrarImpl, PsiElement> data = null;
-      if (noInjectionTimestamp != null && noInjectionTimestamp == modificationCount) {
+      if (operands.length == 0 || noInjectionTimestamp != null && noInjectionTimestamp == modificationCount) {
         result = null;
       }
       else {
@@ -172,7 +172,7 @@ public class JavaConcatenationInjectorManager implements ModificationTracker {
                 PsiFile containingFile1 = context.getContainingFile();
                 Project project1 = containingFile1.getProject();
                 Pair<PsiElement, PsiElement[]> pair = computeAnchorAndOperands(context);
-                MultiHostRegistrarImpl registrar = doCompute(containingFile1, project1, pair.first, pair.second);
+                MultiHostRegistrarImpl registrar = pair.second.length == 0 ? null : doCompute(containingFile1, project1, pair.first, pair.second);
                 return registrar == null ? null : CachedValueProvider.Result.create(registrar, PsiModificationTracker.MODIFICATION_COUNT, getInstance(project1));
               }
             }, false);

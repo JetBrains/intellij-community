@@ -145,8 +145,20 @@ public class JpsLibraryDelegate implements LibraryEx {
 
   @NotNull
   @Override
-  public ModifiableModel getModifiableModel() {
+  public ModifiableModelEx getModifiableModel() {
     throw new UnsupportedOperationException("'getModifiableModel' not implemented in " + getClass().getName());
+  }
+
+  @NotNull
+  @Override
+  public String[] getExcludedRootUrls() {
+    return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  @NotNull
+  @Override
+  public VirtualFile[] getExcludedRoots() {
+    return VirtualFile.EMPTY_ARRAY;
   }
 
   @Override

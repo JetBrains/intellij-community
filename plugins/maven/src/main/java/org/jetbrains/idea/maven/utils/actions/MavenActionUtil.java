@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.utils.actions;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -37,16 +38,16 @@ public class MavenActionUtil {
   }
 
   public static boolean hasProject(DataContext context) {
-    return PlatformDataKeys.PROJECT.getData(context) != null;
+    return CommonDataKeys.PROJECT.getData(context) != null;
   }
 
   @NotNull
   public static Project getProject(DataContext context) {
-    return PlatformDataKeys.PROJECT.getData(context);
+    return CommonDataKeys.PROJECT.getData(context);
   }
 
   public static boolean isMavenizedProject(DataContext context) {
-    Project project = PlatformDataKeys.PROJECT.getData(context);
+    Project project = CommonDataKeys.PROJECT.getData(context);
     return project != null && MavenProjectsManager.getInstance(project).isMavenizedProject();
   }
 
@@ -55,7 +56,7 @@ public class MavenActionUtil {
     MavenProject result;
     final MavenProjectsManager manager = getProjectsManager(context);
 
-    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(context);
+    final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(context);
     if (file != null) {
       result = manager.findProject(file);
       if (result != null) return result;
@@ -88,10 +89,10 @@ public class MavenActionUtil {
   }
 
   public static List<MavenProject> getMavenProjects(DataContext context) {
-    Project project = PlatformDataKeys.PROJECT.getData(context);
+    Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) return Collections.emptyList();
 
-    VirtualFile[] virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
+    VirtualFile[] virtualFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
     if (virtualFiles == null || virtualFiles.length == 0) return Collections.emptyList();
 
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);

@@ -181,7 +181,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
       ProcessProxy proxy = ProcessProxyFactory.getInstance().getAttachedProxy(myProcessHandler);
       if (proxy != null) {
         final WiseDumpThreadsListener wiseListener = Boolean.TRUE.equals(Boolean.getBoolean(ourWiseThreadDumpProperty)) ?
-                                                     new WiseDumpThreadsListener(PlatformDataKeys.PROJECT.getData(e.getDataContext()), myProcessHandler) : null;
+                                                     new WiseDumpThreadsListener(CommonDataKeys.PROJECT.getData(e.getDataContext()), myProcessHandler) : null;
 
         proxy.sendBreak();
 

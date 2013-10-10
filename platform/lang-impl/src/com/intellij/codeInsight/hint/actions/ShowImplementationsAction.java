@@ -81,10 +81,10 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   protected Editor getEditor(DataContext dataContext) {
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
 
     if (editor == null) {
-      final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
+      final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
       if (file != null) {
         final FileEditor fileEditor = FileEditorManager.getInstance(file.getProject()).getSelectedEditor(file.getVirtualFile());
         if (fileEditor instanceof TextEditor) {
@@ -96,8 +96,8 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
   }
 
   public void performForContext(DataContext dataContext, boolean invokedByShortcut) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
 
     if (project == null) return;
 
@@ -105,8 +105,8 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
     final Editor editor = getEditor(dataContext);
 
-    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-    boolean isInvokedFromEditor = PlatformDataKeys.EDITOR.getData(dataContext) != null;
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+    boolean isInvokedFromEditor = CommonDataKeys.EDITOR.getData(dataContext) != null;
     element = getElement(project, file, editor, element);
 
     if (element == null && file == null) return;
@@ -359,7 +359,7 @@ public class ShowImplementationsAction extends AnAction implements PopupAction {
 
   @Override
   public void update(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     e.getPresentation().setEnabled(project != null);
   }
 

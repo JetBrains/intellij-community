@@ -1,5 +1,6 @@
 package com.intellij.ide.util.newProjectWizard;
 
+import com.intellij.framework.FrameworkOrGroup;
 import com.intellij.ui.CheckedTreeNode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -12,16 +13,21 @@ import java.util.List;
 /**
  * @author nik
  */
-public abstract class FrameworkSupportNodeBase extends CheckedTreeNode {
+public abstract class FrameworkSupportNodeBase<T extends FrameworkOrGroup> extends CheckedTreeNode {
   private final FrameworkSupportNodeBase myParentNode;
 
-  public FrameworkSupportNodeBase(Object userObject, final FrameworkSupportNodeBase parentNode) {
+  public FrameworkSupportNodeBase(T userObject, final FrameworkSupportNodeBase parentNode) {
     super(userObject);
     setChecked(false);
     myParentNode = parentNode;
     if (parentNode != null) {
       parentNode.add(this);
     }
+  }
+
+  @Override
+  public T getUserObject() {
+    return (T)super.getUserObject();
   }
 
   public static void sortByName(@Nullable List<FrameworkSupportNodeBase> nodes) {
@@ -42,13 +48,19 @@ public abstract class FrameworkSupportNodeBase extends CheckedTreeNode {
   }
 
   @NotNull
-  protected abstract String getTitle();
+  protected final String getTitle() {
+    return getUserObject().getPresentableName();
+  }
 
   @NotNull
-  public abstract Icon getIcon();
+  public final Icon getIcon() {
+    return getUserObject().getIcon();
+  }
 
   @NotNull
-  public abstract String getId();
+  public final String getId() {
+    return getUserObject().getId();
+  }
 
   @NotNull
   public List<FrameworkSupportNodeBase> getChildren() {

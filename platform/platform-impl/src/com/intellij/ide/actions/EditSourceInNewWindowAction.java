@@ -16,6 +16,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
@@ -33,10 +34,10 @@ public class EditSourceInNewWindowAction extends DumbAwareAction {
   }
 
   protected VirtualFile[] getVirtualFiles(AnActionEvent e) {
-    final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (files != null) return files;
 
-    final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     return file == null ? VirtualFile.EMPTY_ARRAY : new VirtualFile[]{file};
   }
 

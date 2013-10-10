@@ -19,6 +19,7 @@ import com.intellij.ide.navigationToolbar.NavBarItem;
 import com.intellij.ide.navigationToolbar.NavBarPanel;
 import com.intellij.ide.navigationToolbar.NavBarRootPaneExtension;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.containers.HashMap;
@@ -58,7 +59,7 @@ public abstract class AbstractNavBarUI implements NavBarUI {
 
   @Override
   public Font getElementFont(NavBarItem navBarItem) {
-    return UIUtil.getLabelFont(UIUtil.FontSize.SMALL);
+    return SystemInfo.isMac ? UIUtil.getLabelFont(UIUtil.FontSize.SMALL) : UIUtil.getLabelFont();
   }
 
   @Override

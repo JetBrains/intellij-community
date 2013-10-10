@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.module;
 
+import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.SettingsStep;
@@ -33,9 +34,11 @@ public abstract class ModuleType<T extends ModuleBuilder> {
 
   @NotNull
   private final String myId;
+  private final FrameworkRole myFrameworkRole;
 
   protected ModuleType(@NotNull @NonNls String id) {
     myId = id;
+    myFrameworkRole = new FrameworkRole(id);
   }
 
   @NotNull
@@ -106,5 +109,10 @@ public abstract class ModuleType<T extends ModuleBuilder> {
   public static ModuleType get(@NotNull Module module) {
     ModuleTypeManager instance = ModuleTypeManager.getInstance();
     return instance == null && ApplicationManager.getApplication().isUnitTestMode() ? EMPTY : instance.findByID(module.getOptionValue(Module.ELEMENT_TYPE));
+  }
+
+  @NotNull
+  public FrameworkRole getDefaultAcceptableRole() {
+    return myFrameworkRole;
   }
 }

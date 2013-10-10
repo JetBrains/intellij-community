@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package git4idea.history;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -201,7 +201,7 @@ public class GitAnnotationsClosedTest extends GitTest {
                                                @Nullable
                                                @Override
                                                public Object getData(@NonNls String dataId) {
-                                                 if (PlatformDataKeys.PROJECT.is(dataId)) {
+                                                 if (CommonDataKeys.PROJECT.is(dataId)) {
                                                    return myProject;
                                                  }
                                                  return null;
@@ -215,7 +215,8 @@ public class GitAnnotationsClosedTest extends GitTest {
 
   private void annotateFirst(final VirtualFile first) throws VcsException {
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
-    final FileAnnotation annotation = myVcs.getAnnotationProvider().annotate(first);
+    final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), first);
+
     annotation.setCloser(new Runnable() {
       @Override
       public void run() {
@@ -228,7 +229,7 @@ public class GitAnnotationsClosedTest extends GitTest {
 
   private void annotateSecond() throws VcsException {
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
-    final FileAnnotation annotation = myVcs.getAnnotationProvider().annotate(second);
+    final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), second);
     annotation.setCloser(new Runnable() {
       @Override
       public void run() {

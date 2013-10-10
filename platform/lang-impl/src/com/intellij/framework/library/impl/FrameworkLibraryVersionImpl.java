@@ -55,4 +55,15 @@ public class FrameworkLibraryVersionImpl extends DownloadableFileSetDescriptionI
     String libName = StringUtil.isEmptyOrSpaces(myLibraryName) ? myLibraryCategory : myLibraryName;
     return myVersionString.length() > 0 ? libName + "-" + myVersionString : myLibraryCategory;
   }
+
+  @NotNull
+  @Override
+  public String getPresentableName() {
+    return getDefaultLibraryName();
+  }
+
+  @Override
+  public String getVersionNumber() {
+    return getVersionString();
+  }
 }

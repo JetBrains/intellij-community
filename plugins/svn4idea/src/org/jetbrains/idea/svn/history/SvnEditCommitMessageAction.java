@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -59,7 +60,7 @@ public class SvnEditCommitMessageAction extends AnAction {
     final boolean enabled = lists != null && lists.length == 1 && lists[0] instanceof SvnChangeList;
     if (! enabled) return;
     final SvnChangeList svnList = (SvnChangeList) lists[0];
-    Project project = PlatformDataKeys.PROJECT.getData(dc);
+    Project project = CommonDataKeys.PROJECT.getData(dc);
     project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
     final Consumer<String> listener = VcsDataKeys.REMOTE_HISTORY_CHANGED_LISTENER.getData(dc);
 
@@ -82,7 +83,7 @@ public class SvnEditCommitMessageAction extends AnAction {
     final ChangeList[] lists = VcsDataKeys.CHANGE_LISTS.getData(dc);
     final boolean enabled = lists != null && lists.length == 1 && lists[0] instanceof SvnChangeList;
     boolean visible = enabled;
-    Project project = PlatformDataKeys.PROJECT.getData(dc);
+    Project project = CommonDataKeys.PROJECT.getData(dc);
     if (project == null) {
       visible = VcsDataKeys.REMOTE_HISTORY_LOCATION.getData(dc) instanceof SvnRepositoryLocation;
     } else {

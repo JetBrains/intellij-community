@@ -20,6 +20,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -40,7 +41,7 @@ public class OpenOutputAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(myConsole.getComponent()));
+    final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(myConsole.getComponent()));
     if (editor != null) {
       try {
         final byte[] content = editor.getDocument().getText().getBytes("UTF-8");
@@ -51,7 +52,7 @@ public class OpenOutputAction extends AnAction {
             return Charset.forName("UTF-8");
           }
         };
-        FileEditorManager.getInstance(PlatformDataKeys.PROJECT.getData(e.getDataContext())).openFile(file, true);
+        FileEditorManager.getInstance(CommonDataKeys.PROJECT.getData(e.getDataContext())).openFile(file, true);
       } catch (UnsupportedEncodingException e1) {
         throw new AssertionError(e);
       }
@@ -59,7 +60,7 @@ public class OpenOutputAction extends AnAction {
   }
 
   public void update(AnActionEvent e) {
-    final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(myConsole.getComponent()));
+    final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext(myConsole.getComponent()));
     e.getPresentation().setEnabled(editor != null && editor.getDocument().getTextLength() > 0);
   }
 }

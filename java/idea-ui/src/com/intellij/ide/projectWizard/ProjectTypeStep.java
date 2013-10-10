@@ -15,12 +15,13 @@
  */
 package com.intellij.ide.projectWizard;
 
-import com.intellij.framework.FrameworkGroup;
-import com.intellij.framework.FrameworkTypeEx;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
+import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
+import com.intellij.ide.util.newProjectWizard.TemplatesGroup;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
+import com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -31,23 +32,28 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.platform.ProjectTemplate;
 import com.intellij.ui.CheckedTreeNode;
-import com.intellij.ui.CollectionListModel;
-import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.components.JBList;
+import com.intellij.ui.ColoredTreeCellRenderer;
+import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -59,12 +65,14 @@ import java.util.List;
 public class ProjectTypeStep extends ModuleWizardStep {
 
   private static final String FRAMEWORKS_CARD = "frameworks card";
+  private static final String GROUP_CARD = "group description card";
   private final WizardContext myContext;
   private final NewProjectWizard myWizard;
   private final ModulesProvider myModulesProvider;
   private JPanel myPanel;
-  private JBList myProjectTypeList;
   private JPanel myOptionsPanel;
+  private Tree myProjectTypeTree;
+  private JBLabel myGroupDescriptionLabel;
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final FactoryMap<ProjectCategory, ModuleBuilder> myBuilders = new FactoryMap<ProjectCategory, ModuleBuilder>() {
@@ -89,7 +97,9 @@ public class ProjectTypeStep extends ModuleWizardStep {
       @NotNull
       @Override
       public String getBaseDirectoryForLibrariesPath() {
-        return StringUtil.notNullize(getSelectedBuilder().getContentEntryPath());
+        ModuleBuilder builder = getSelectedBuilder();
+        assert builder != null;
+        return StringUtil.notNullize(builder.getContentEntryPath());
       }
     };
     myConfigurationUpdater = new ModuleBuilder.ModuleConfigurationUpdater() {
@@ -99,48 +109,71 @@ public class ProjectTypeStep extends ModuleWizardStep {
       }
     };
 
-    myProjectTypeList.setCellRenderer(new ColoredListCellRenderer() {
-      @Override
-      protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
-        ProjectCategory category = (ProjectCategory)value;
-        append(category.getDisplayName());
-        setIcon(category.getIcon());
-      }
-    });
-
-    List<ProjectCategory> categories = new ArrayList<ProjectCategory>();
-    categories.addAll(ContainerUtil.map(ModuleBuilder.getAllBuilders(), new Function<ModuleBuilder, ProjectCategory>() {
-      @Override
-      public ProjectCategory fun(ModuleBuilder builder) {
-        return new BuilderBasedProjectType(builder);
-      }
-    }));
-    categories.addAll(Arrays.asList(ProjectCategory.EXTENSION_POINT_NAME.getExtensions()));
-
-    final MultiMap<String, ProjectCategory> map = new MultiMap<String, ProjectCategory>();
-    for (ProjectCategory category : categories) {
-      map.putValue(category.getGroupName(), category);
+    final MultiMap<String, ProjectCategory> categories = new MultiMap<String, ProjectCategory>();
+    for (ProjectCategory category : ProjectCategory.EXTENSION_POINT_NAME.getExtensions()) {
+      categories.putValue(category.getGroupName(), category);
     }
-    Collections.sort(categories, new Comparator<ProjectCategory>() {
+
+    List<ProjectCategory> list = new ArrayList<ProjectCategory>();
+    DefaultMutableTreeNode root = new DefaultMutableTreeNode();
+    MultiMap<TemplatesGroup,ProjectTemplate> templatesMap = CreateFromTemplateMode.getTemplatesMap(context, false);
+    List<TemplatesGroup> groups = new ArrayList<TemplatesGroup>(templatesMap.keySet());
+    Collections.sort(groups);
+    for (TemplatesGroup group : groups) {
+      DefaultMutableTreeNode groupNode = new DefaultMutableTreeNode(group);
+      root.add(groupNode);
+      Collection<ProjectCategory> collection = categories.get(group.getName());
+      for (ProjectCategory category : collection) {
+        groupNode.add(new DefaultMutableTreeNode(category));
+        list.add(category);
+      }
+      for (ProjectTemplate template : templatesMap.get(group)) {
+        TemplateBasedProjectType projectType = new TemplateBasedProjectType(template);
+        groupNode.add(new DefaultMutableTreeNode(projectType));
+        list.add(projectType);
+      }
+    }
+
+    myProjectTypeTree.setModel(new DefaultTreeModel(root));
+    TreeUtil.expandAll(myProjectTypeTree);
+
+    myProjectTypeTree.setCellRenderer(new ColoredTreeCellRenderer() {
       @Override
-      public int compare(ProjectCategory o1, ProjectCategory o2) {
-        return map.get(o2.getGroupName()).size() - map.get(o1.getGroupName()).size();
+      public void customizeCellRenderer(JTree tree,
+                                        Object value,
+                                        boolean selected,
+                                        boolean expanded,
+                                        boolean leaf,
+                                        int row,
+                                        boolean hasFocus) {
+        Object object = ((DefaultMutableTreeNode)value).getUserObject();
+        if (object instanceof ProjectCategory) {
+          ProjectCategory category = (ProjectCategory)object;
+          append(category.getDisplayName());
+          setIcon(category.getIcon());
+        }
+        else {
+          TemplatesGroup group = (TemplatesGroup)object;
+          append(group.getName());
+          setIcon(group.getIcon());
+        }
       }
     });
 
-    myProjectTypeList.setModel(new CollectionListModel<ProjectCategory>(categories));
-    myProjectTypeList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+    myProjectTypeTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
-      public void valueChanged(ListSelectionEvent e) {
+      public void valueChanged(TreeSelectionEvent e) {
         ModuleBuilder builder = getSelectedBuilder();
-        myContext.setProjectBuilder(builder);
-        myWizard.getSequence().setType(builder.getBuilderId());
-        builder.addModuleConfigurationUpdater(myConfigurationUpdater);
-        updateOptionsPanel((ProjectCategory)myProjectTypeList.getSelectedValue());
+        if (builder != null) {
+          myContext.setProjectBuilder(builder);
+          myWizard.getSequence().setType(builder.getBuilderId());
+          builder.addModuleConfigurationUpdater(myConfigurationUpdater);
+        }
+        updateOptionsPanel(getSelectedObject());
       }
     });
 
-    for (ProjectCategory category : categories) {
+    for (ProjectCategory category : list) {
       myWizard.getSequence().addStepsForBuilder(myBuilders.get(category), context, modulesProvider, true);
     }
 
@@ -148,51 +181,72 @@ public class ProjectTypeStep extends ModuleWizardStep {
     Disposer.register(wizard.getDisposable(), myFrameworksPanel);
 
     myOptionsPanel.add(myFrameworksPanel.getMainPanel(), FRAMEWORKS_CARD);
-    myProjectTypeList.setSelectedIndex(0);
+
+    // todo save selection
+    myProjectTypeTree.addSelectionRow(1);
   }
 
+  @Nullable
+  private Object getSelectedObject() {
+    TreePath path = myProjectTypeTree.getSelectionPath();
+    return path == null ? null : ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+  }
+
+  @Nullable
   private ModuleBuilder getSelectedBuilder() {
-    ProjectCategory projectCategory = (ProjectCategory)myProjectTypeList.getSelectedValue();
-    return myBuilders.get(projectCategory);
+    Object projectCategory = getSelectedObject();
+    return projectCategory instanceof ProjectCategory ? myBuilders.get(projectCategory) : null;
   }
 
-  private void updateOptionsPanel(ProjectCategory projectCategory) {
-    if (projectCategory == null) return;
-    ModuleBuilder builder = myBuilders.get(projectCategory);
-    JComponent panel = builder.getCustomOptionsPanel(new Disposable() {
-      @Override
-      public void dispose() {
-        disposeUIResources();
+  private void updateOptionsPanel(Object object) {
+    String card = GROUP_CARD;
+    if (object instanceof ProjectCategory) {
+      final ProjectCategory projectCategory = (ProjectCategory)object;
+      ModuleBuilder builder = myBuilders.get(projectCategory);
+      JComponent panel = builder.getCustomOptionsPanel(new Disposable() {
+        @Override
+        public void dispose() {
+          disposeUIResources();
+        }
+      });
+      if (panel != null) {
+        card = builder.getBuilderId();
+        if (myCards.add(card)) {
+          myOptionsPanel.add(panel, card);
+        }
       }
-    });
-    String card;
-    if (panel != null) {
-      card = builder.getBuilderId();
-      if (myCards.add(card)) {
-         myOptionsPanel.add(panel, card);
+      else {
+        card = FRAMEWORKS_CARD;
+        List<FrameworkSupportInModuleProvider> allProviders = FrameworkSupportUtil.getProviders(builder);
+        List<FrameworkSupportInModuleProvider> matched =
+          ContainerUtil.filter(allProviders, new Condition<FrameworkSupportInModuleProvider>() {
+            @Override
+            public boolean value(FrameworkSupportInModuleProvider provider) {
+              return matchFramework(projectCategory, provider);
+            }
+          });
+        myFrameworksPanel.setProviders(matched);
+        for (FrameworkSupportInModuleProvider provider : matched) {
+          if (ArrayUtil.contains(provider.getFrameworkType().getId(), projectCategory.getAssociatedFrameworkIds())) {
+            CheckedTreeNode treeNode = myFrameworksPanel.findNodeFor(provider);
+            treeNode.setChecked(true);
+          }
+        }
       }
     }
-    else {
-      card = FRAMEWORKS_CARD;
-      List<FrameworkSupportInModuleProvider> providers = new ArrayList<FrameworkSupportInModuleProvider>();
-      for (FrameworkSupportInModuleProvider framework : FrameworkSupportUtil.getAllProviders()) {
-        if (matchFramework(projectCategory, framework)) {
-          providers.add(framework);
-        }
-      }
-      myFrameworksPanel.setProviders(providers);
-      for (FrameworkSupportInModuleProvider provider : providers) {
-        if (ArrayUtil.contains(provider.getFrameworkType().getId(), projectCategory.getAssociatedFrameworkIds())) {
-          CheckedTreeNode treeNode = myFrameworksPanel.findNodeFor(provider);
-          treeNode.setChecked(true);
-        }
-      }
+    else if (object instanceof TemplatesGroup) {
+      myGroupDescriptionLabel.setText(((TemplatesGroup)object).getDescription());
     }
     ((CardLayout)myOptionsPanel.getLayout()).show(myOptionsPanel, card);
   }
 
-  private static boolean matchFramework(ProjectCategory projectCategory, FrameworkSupportInModuleProvider framework) {
+  private boolean matchFramework(ProjectCategory projectCategory, FrameworkSupportInModuleProvider framework) {
 
+    if (!framework.isEnabledForModuleBuilder(myBuilders.get(projectCategory))) return false;
+
+    if (framework.getRoles().length == 0) return true;
+
+    /*
     String[] ids = framework.getProjectCategories();
     if (ids.length > 0) {
       return ArrayUtil.contains(projectCategory.getId(), ids);
@@ -217,6 +271,11 @@ public class ProjectTypeStep extends ModuleWizardStep {
     }
 
     return framework.isEnabledForModuleBuilder(projectCategory.createModuleBuilder());
+    */
+
+    List<FrameworkRole> frameworkRoles = Arrays.asList(framework.getRoles());
+    List<FrameworkRole> acceptable = Arrays.asList(projectCategory.getAcceptableFrameworkRoles());
+    return ContainerUtil.intersects(frameworkRoles, acceptable);
   }
 
   @Override
@@ -226,11 +285,13 @@ public class ProjectTypeStep extends ModuleWizardStep {
 
   @Override
   public void updateDataModel() {
-    myWizard.getSequence().addStepsForBuilder(getSelectedBuilder(), myContext, myModulesProvider, true);
+    ModuleBuilder builder = getSelectedBuilder();
+    assert builder != null;
+    myWizard.getSequence().addStepsForBuilder(builder, myContext, myModulesProvider, true);
   }
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myProjectTypeList;
+    return myProjectTypeTree;
   }
 }

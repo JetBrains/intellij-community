@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -44,10 +45,9 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 
-public class TemplateManagerImpl extends TemplateManager implements ProjectComponent {
+public class TemplateManagerImpl extends TemplateManager implements ProjectComponent, Disposable {
   protected Project myProject;
   private boolean myTemplateTesting;
-  private final List<Disposable> myDisposables = new ArrayList<Disposable>();
 
   private static final Key<TemplateState> TEMPLATE_STATE_KEY = Key.create("TEMPLATE_STATE_KEY");
 
@@ -57,10 +57,10 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
   @Override
   public void disposeComponent() {
-    for (Disposable disposable : myDisposables) {
-      Disposer.dispose(disposable);
-    }
-    myDisposables.clear();
+  }
+
+  @Override
+  public void dispose() {
   }
 
   @Override
@@ -107,9 +107,8 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
     });
   }
 
-  private void disposeState(final TemplateState tState) {
+  private static void disposeState(final TemplateState tState) {
     Disposer.dispose(tState);
-    myDisposables.remove(tState);
   }
 
   @Override
@@ -138,7 +137,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   private TemplateState initTemplateState(final Editor editor) {
     clearTemplateState(editor);
     TemplateState state = new TemplateState(myProject, editor);
-    myDisposables.add(state);
+    Disposer.register(this, state);
     editor.putUserData(TEMPLATE_STATE_KEY, state);
     return state;
   }
@@ -404,7 +403,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
   public static List<TemplateImpl> findMatchingTemplates(CharSequence text,
                                                          int caretOffset,
-                                                         Character shortcutChar,
+                                                         @Nullable Character shortcutChar,
                                                          TemplateSettings settings,
                                                          boolean hasArgument) {
     String key;
@@ -572,7 +571,7 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
 
     // if we have, for example, a Ruby fragment in RHTML selected with its exact bounds, the file language and the base
     // language will be ERb, so we won't match HTML templates for it. but they're actually valid
-    Language languageAtOffset = PsiUtilBase.getLanguageAtOffset(file, offset);
+    Language languageAtOffset = PsiUtilCore.getLanguageAtOffset(file, offset);
     if (languageAtOffset != file.getLanguage() && languageAtOffset != baseLanguage) {
       PsiFile basePsi = file.getViewProvider().getPsi(languageAtOffset);
       if (basePsi != null) {

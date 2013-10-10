@@ -25,6 +25,7 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -57,7 +58,7 @@ import static java.util.Arrays.asList;
 
 public class RollbackAction extends AnAction implements DumbAware {
   public void update(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     final boolean visible = project != null && ProjectLevelVcsManager.getInstance(project).hasActiveVcss();
     e.getPresentation().setVisible(visible);
     if (! visible) return;
@@ -77,7 +78,7 @@ public class RollbackAction extends AnAction implements DumbAware {
   }
 
   private static boolean hasReversibleFiles(AnActionEvent e, Project project) {
-    final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (files != null) {
       ChangeListManager clManager = ChangeListManager.getInstance(project);
       for (VirtualFile file : files) {
@@ -90,7 +91,7 @@ public class RollbackAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;
     }
@@ -136,7 +137,7 @@ public class RollbackAction extends AnAction implements DumbAware {
     public ChangesCheckHelper(final Project project, final AnActionEvent e) {
       Change[] changes = e.getData(VcsDataKeys.CHANGES);
       if (changes == null) {
-        final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+        final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
         if (files != null) {
           final ChangeListManager clManager = ChangeListManager.getInstance(project);
           final List<Change> changesList = new LinkedList<Change>();
@@ -170,7 +171,7 @@ public class RollbackAction extends AnAction implements DumbAware {
     final ChangesCheckHelper helper = new ChangesCheckHelper(project, e);
     if (helper.isChangesSet() && helper.getChanges() != null) return ContainerUtil.newArrayList(helper.getChanges());
 
-    final VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (virtualFiles != null && virtualFiles.length > 0) {
       List<Change> result = new ArrayList<Change>();
       for(VirtualFile file: virtualFiles) {
@@ -188,7 +189,7 @@ public class RollbackAction extends AnAction implements DumbAware {
       return new LinkedHashSet<VirtualFile>(modifiedWithoutEditing);
     }
 
-    final VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (virtualFiles != null && virtualFiles.length > 0) {
       LinkedHashSet<VirtualFile> result = new LinkedHashSet<VirtualFile>(asList(virtualFiles));
       result.retainAll(ChangeListManager.getInstance(project).getModifiedWithoutEditing());

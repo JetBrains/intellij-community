@@ -21,6 +21,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -45,7 +46,7 @@ import java.util.List;
 public class MavenExecuteGoalAction extends DumbAwareAction {
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getRequiredData(PlatformDataKeys.PROJECT);
+    final Project project = e.getRequiredData(CommonDataKeys.PROJECT);
 
     ExecuteMavenGoalHistoryService historyService = ExecuteMavenGoalHistoryService.getInstance(project);
 

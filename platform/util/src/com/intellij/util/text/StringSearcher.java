@@ -175,13 +175,14 @@ public class StringSearcher {
 
   /**
    * @deprecated Use {@link #scan(CharSequence)} instead
-   * @param text
-   * @param startOffset
-   * @param endOffset
-   * @return
    */
   public int scan(char[] text, int startOffset, int endOffset){
     final int res = scan(new CharArrayCharSequence(text),text, startOffset, endOffset);
     return res >= 0 ? res: -1;
+  }
+
+  @Override
+  public String toString() {
+    return "pattern " + myPattern;
   }
 }

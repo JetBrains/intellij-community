@@ -17,6 +17,7 @@
 package com.intellij.ide.impl.dataRules;
 
 import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -27,7 +28,7 @@ import com.intellij.psi.PsiElement;
 public class NavigatableRule implements GetDataRule {
   @Override
   public Object getData(DataProvider dataProvider) {
-    final Navigatable navigatable = PlatformDataKeys.NAVIGATABLE.getData(dataProvider);
+    final Navigatable navigatable = CommonDataKeys.NAVIGATABLE.getData(dataProvider);
     if (navigatable != null && navigatable instanceof OpenFileDescriptor) {
       final OpenFileDescriptor openFileDescriptor = (OpenFileDescriptor)navigatable;
 
@@ -35,7 +36,7 @@ public class NavigatableRule implements GetDataRule {
         return openFileDescriptor;
       }
     }
-    final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataProvider);
+    final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataProvider);
     if (element instanceof Navigatable) {
       return element;
     }

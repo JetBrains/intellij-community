@@ -22,6 +22,7 @@ import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.DeleteProvider;
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -65,7 +66,7 @@ public class DeleteHandler {
   public static class DefaultDeleteProvider implements DeleteProvider {
     @Override
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
-      if (PlatformDataKeys.PROJECT.getData(dataContext) == null) {
+      if (CommonDataKeys.PROJECT.getData(dataContext) == null) {
         return false;
       }
       final PsiElement[] elements = getPsiElements(dataContext);
@@ -76,12 +77,12 @@ public class DeleteHandler {
     private static PsiElement[] getPsiElements(DataContext dataContext) {
       PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
       if (elements == null) {
-        final Object data = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+        final Object data = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
         if (data != null) {
           elements = new PsiElement[]{(PsiElement)data};
         }
         else {
-          final Object data1 = LangDataKeys.PSI_FILE.getData(dataContext);
+          final Object data1 = CommonDataKeys.PSI_FILE.getData(dataContext);
           if (data1 != null) {
             elements = new PsiElement[]{(PsiFile)data1};
           }
@@ -94,7 +95,7 @@ public class DeleteHandler {
     public void deleteElement(@NotNull DataContext dataContext) {
       PsiElement[] elements = getPsiElements(dataContext);
       if (elements == null) return;
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project == null) return;
       LocalHistoryAction a = LocalHistory.getInstance().startAction(IdeBundle.message("progress.deleting"));
       try {
@@ -186,7 +187,7 @@ public class DeleteHandler {
         }
 
         // deleted from project view or something like that.
-        if (PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext()) == null) {
+        if (CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext()) == null) {
           CommandProcessor.getInstance().markCurrentCommandAsGlobal(project);
         }
 

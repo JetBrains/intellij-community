@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,9 @@ package com.intellij.codeInspection.miscGenerics;
 import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +36,17 @@ public abstract class GenericsInspectionToolBase extends BaseJavaBatchLocalInspe
   public boolean isEnabledByDefault() {
     return true;
   }
+
+  @NotNull
+  @Override
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    PsiFile file = holder.getFile();
+    if (!PsiUtil.isLanguageLevel5OrHigher(file)) return new PsiElementVisitor() {
+    };
+
+    return super.buildVisitor(holder, isOnTheFly);
+  }
+
   @Override
   public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiClassInitializer[] initializers = aClass.getInitializers();
@@ -71,5 +84,5 @@ public abstract class GenericsInspectionToolBase extends BaseJavaBatchLocalInspe
   }
 
   @Nullable
-  public abstract ProblemDescriptor[] getDescriptions(PsiElement place, InspectionManager manager, boolean isOnTheFly);
+  public abstract ProblemDescriptor[] getDescriptions(@NotNull PsiElement place, @NotNull InspectionManager manager, boolean isOnTheFly);
 }

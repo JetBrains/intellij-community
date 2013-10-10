@@ -76,12 +76,20 @@ public class ModuleSettingsImpl extends ComponentManagerSettingsImpl implements 
   public Collection<? extends Element> getFacetElements(@NotNull String facetTypeId) {
     final Element facetManager = getComponentElement(FacetManagerImpl.COMPONENT_NAME);
     final ArrayList<Element> elements = new ArrayList<Element>();
-    for (Element child : JDOMUtil.getChildren(facetManager, JpsFacetSerializer.FACET_TAG)) {
+
+    addFacetTypes(facetTypeId, facetManager, elements);
+
+    return elements;
+  }
+
+  private static void addFacetTypes(@NotNull String facetTypeId, @Nullable Element parent, @NotNull ArrayList<Element> elements) {
+    for (Element child : JDOMUtil.getChildren(parent, JpsFacetSerializer.FACET_TAG)) {
       if (facetTypeId.equals(child.getAttributeValue(JpsFacetSerializer.TYPE_ATTRIBUTE))) {
         elements.add(child);
+      } else {
+        addFacetTypes(facetTypeId, child, elements);
       }
     }
-    return elements;
   }
 
   @Override

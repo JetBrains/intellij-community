@@ -8,6 +8,10 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(identifier)('BacklogItem')
     PsiWhiteSpace(' ')
+    Extends clause
+      <empty list>
+    Implements clause
+      <empty list>
     Type definition body
       PsiElement({)('{')
       PsiWhiteSpace(' ')

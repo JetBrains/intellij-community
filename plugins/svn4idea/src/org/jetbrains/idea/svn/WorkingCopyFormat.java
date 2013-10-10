@@ -77,6 +77,7 @@ public enum WorkingCopyFormat {
     return myVersion;
   }
 
+  @NotNull
   public static WorkingCopyFormat getInstance(final int value) {
     // somewhy 1.7 wc format can also be 29
     if (INTERNAL_FORMAT_17 == value) {
@@ -99,6 +100,14 @@ public enum WorkingCopyFormat {
 
   public int getFormat() {
     return myFormat;
+  }
+
+  public boolean isOrGreater(@NotNull WorkingCopyFormat format) {
+    return myVersion.isOrGreaterThan(format.getVersion().major, format.getVersion().minor);
+  }
+
+  public boolean less(@NotNull WorkingCopyFormat format) {
+    return myVersion.lessThan(format.getVersion().major, format.getVersion().minor);
   }
 
   @NotNull

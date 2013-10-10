@@ -34,6 +34,7 @@ import com.intellij.debugger.ui.impl.WatchDebuggerTree;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -60,7 +61,7 @@ public class AddToWatchActionHandler extends DebuggerActionHandler {
       }
     }
     else {
-      final Editor editor = event.getData(PlatformDataKeys.EDITOR);
+      final Editor editor = event.getData(CommonDataKeys.EDITOR);
       enabled = DebuggerUtilsEx.getEditorText(editor) != null;
     }
     return enabled;
@@ -88,7 +89,7 @@ public class AddToWatchActionHandler extends DebuggerActionHandler {
       addFromNodes(debuggerContext, watchPanel, selectedNodes);
     }
     else {
-      final Editor editor = event.getData(PlatformDataKeys.EDITOR);
+      final Editor editor = event.getData(CommonDataKeys.EDITOR);
       if (editor != null) {
         final TextWithImports editorText = DebuggerUtilsEx.getEditorText(editor);
         if (editorText != null) {

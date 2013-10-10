@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import git4idea.test.GitLightTest
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
 import static com.intellij.dvcs.test.Executor.cd
@@ -31,6 +32,7 @@ import static org.junit.Assert.assertTrue
  *
  * @author Kirill Likhodedov
  */
+@Ignore
 class GitCrlfProblemsDetectorTest extends GitLightTest {
 
   private String myOldGlobalAutoCrlfValue

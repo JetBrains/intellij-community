@@ -20,6 +20,7 @@ import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.NavigationItemFileStatus;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -105,7 +106,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
     if (value instanceof PsiElement || value instanceof DataProvider) {
       final PsiElement psiElement = value instanceof PsiElement
                                     ? (PsiElement)value
-                                    : LangDataKeys.PSI_ELEMENT.getData((DataProvider) value);
+                                    : CommonDataKeys.PSI_ELEMENT.getData((DataProvider) value);
       if (psiElement != null) {
         final FileColorManager fileColorManager = FileColorManager.getInstance(psiElement.getProject());
         final Color fileColor = fileColorManager.getRendererBackground(psiElement.getContainingFile());
@@ -157,7 +158,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
         if (element instanceof PsiElement || element instanceof DataProvider) {
           final PsiElement psiElement = element instanceof PsiElement
                                         ? (PsiElement)element
-                                        : LangDataKeys.PSI_ELEMENT.getData((DataProvider) element);
+                                        : CommonDataKeys.PSI_ELEMENT.getData((DataProvider) element);
           if (psiElement != null) {
             final Project project = psiElement.getProject();
 

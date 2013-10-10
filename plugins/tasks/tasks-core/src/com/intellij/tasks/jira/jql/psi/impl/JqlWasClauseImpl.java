@@ -3,8 +3,10 @@ package com.intellij.tasks.jira.jql.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.tasks.jira.jql.JqlTokenTypes;
 import com.intellij.tasks.jira.jql.psi.JqlElementVisitor;
+import com.intellij.tasks.jira.jql.psi.JqlOperand;
 import com.intellij.tasks.jira.jql.psi.JqlWasClause;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Mikhail Golubev
@@ -17,6 +19,15 @@ public class JqlWasClauseImpl extends JqlClauseWithHistoryPredicatesImpl impleme
   @Override
   public void accept(JqlElementVisitor visitor) {
     visitor.visitJqlWasClause(this);
+  }
+
+  /**
+   * Operand can be missing in malformed query.
+   */
+  @Nullable
+  @Override
+  public JqlOperand getOperand() {
+    return findChildByClass(JqlOperand.class);
   }
 
   @NotNull

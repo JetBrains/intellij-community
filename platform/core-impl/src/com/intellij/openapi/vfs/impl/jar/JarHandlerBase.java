@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vfs.impl.jar;
 
+import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayInputStream;
 import com.intellij.openapi.util.io.FileAttributes;
@@ -33,10 +34,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.Reference;
-import java.util.Enumeration;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -72,31 +70,6 @@ public class JarHandlerBase {
     synchronized (lock) {
       myRelPathsToEntries = null;
       myJarFile.set(null);
-    }
-  }
-
-  @NotNull
-  protected Map<String, EntryInfo> initEntries() {
-    synchronized (lock) {
-      Map<String, EntryInfo> map = myRelPathsToEntries != null ? myRelPathsToEntries.get() : null;
-      if (map == null) {
-        final JarFile zip = getJar();
-
-        map = new THashMap<String, EntryInfo>();
-        if (zip != null) {
-          map.put("", new EntryInfo("", null, true));
-          final Enumeration<? extends JarFile.JarEntry> entries = zip.entries();
-          while (entries.hasMoreElements()) {
-            JarFile.JarEntry entry = entries.nextElement();
-            final String name = entry.getName();
-            final boolean isDirectory = StringUtil.endsWithChar(name, '/');
-            getOrCreate(isDirectory ? name.substring(0, name.length() - 1) : name, isDirectory, map);
-          }
-
-          myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(map);
-        }
-      }
-      return map;
     }
   }
 
@@ -267,7 +240,33 @@ public class JarHandlerBase {
 
   @NotNull
   protected Map<String, EntryInfo> getEntriesMap() {
-    return initEntries();
+    synchronized (lock) {
+      Map<String, EntryInfo> map = SoftReference.dereference(myRelPathsToEntries);
+
+      if (map == null) {
+        final JarFile zip = getJar();
+        if (zip != null) {
+          LogUtil.debug(LOG, "mapping %s", myBasePath);
+
+          map = new THashMap<String, EntryInfo>();
+          map.put("", new EntryInfo("", null, true));
+          final Enumeration<? extends JarFile.JarEntry> entries = zip.entries();
+          while (entries.hasMoreElements()) {
+            final JarFile.JarEntry entry = entries.nextElement();
+            final String name = entry.getName();
+            final boolean isDirectory = StringUtil.endsWithChar(name, '/');
+            getOrCreate(isDirectory ? name.substring(0, name.length() - 1) : name, isDirectory, map);
+          }
+
+          myRelPathsToEntries = new SoftReference<Map<String, EntryInfo>>(map);
+        }
+        else {
+          map = Collections.emptyMap();
+        }
+      }
+
+      return map;
+    }
   }
 
   @NotNull

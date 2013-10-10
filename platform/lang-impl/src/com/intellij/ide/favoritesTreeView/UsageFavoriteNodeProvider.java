@@ -17,6 +17,7 @@ package com.intellij.ide.favoritesTreeView;
 
 import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -92,7 +93,7 @@ public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
 
   @Override
   public Collection<AbstractTreeNode> getFavoriteNodes(DataContext context, ViewSettings viewSettings) {
-    final Project project = PlatformDataKeys.PROJECT.getData(context);
+    final Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) {
       return null;
     }
@@ -285,7 +286,7 @@ public class UsageFavoriteNodeProvider extends FavoriteNodeProvider {
       if (set != null && !set.isEmpty()) {
         final int version = Integer.parseInt(parts.get(1));
         final String cut = StringUtil.join(parts.subList(2, parts.size()), " ");
-        for (java.util.Iterator<WorkingSetSerializable> iterator = set.descendingIterator(); iterator.hasNext(); ) {
+        for (Iterator<WorkingSetSerializable> iterator = set.descendingIterator(); iterator.hasNext(); ) {
           WorkingSetSerializable serializable = iterator.next();
           if (serializable.getVersion() == version) {
             return readWithSerializable(project, url, cut, serializable);

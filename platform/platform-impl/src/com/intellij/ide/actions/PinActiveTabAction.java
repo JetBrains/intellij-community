@@ -34,12 +34,12 @@ public class PinActiveTabAction extends ToggleAction implements DumbAware {
    */
   @Nullable
   private static VirtualFile getFile(final DataContext context){
-    Project project = PlatformDataKeys.PROJECT.getData(context);
+    Project project = CommonDataKeys.PROJECT.getData(context);
     if(project == null){
       return null;
     }
 
-    return PlatformDataKeys.VIRTUAL_FILE.getData(context);
+    return CommonDataKeys.VIRTUAL_FILE.getData(context);
   }
 
   /**
@@ -103,7 +103,7 @@ public class PinActiveTabAction extends ToggleAction implements DumbAware {
   }
 
   private static EditorWindow getEditorWindow(DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final FileEditorManagerEx fileEditorManager = FileEditorManagerEx.getInstanceEx(project);
     EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(dataContext);
     if (editorWindow == null) {

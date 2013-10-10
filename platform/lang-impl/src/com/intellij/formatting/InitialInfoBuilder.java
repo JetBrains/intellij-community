@@ -17,9 +17,14 @@
 package com.intellij.formatting;
 
 import com.intellij.diagnostic.LogMessageEx;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormattingDocumentModelImpl;
 import com.intellij.psi.formatter.ReadOnlyBlockInformationProvider;
@@ -33,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Allows to build {@link AbstractBlockWrapper formatting block wrappers} for the target {@link Block formatting blocks}.
@@ -49,8 +55,11 @@ class InitialInfoBuilder {
   @NotNull
   private final FormattingProgressCallback            myProgressCallback;
   private final CommonCodeStyleSettings.IndentOptions myOptions;
+  private final CodeStyleSettings                     mySettings;
 
   private final Stack<State> myStates = new Stack<State>();
+
+  private enum FormatterTag {ON, OFF, NONE}
 
   private WhiteSpace                       myCurrentWhiteSpace;
   private CompositeBlockWrapper            myRootBlockWrapper;
@@ -59,11 +68,13 @@ class InitialInfoBuilder {
   private LeafBlockWrapper                 myLastTokenBlock;
   private SpacingImpl                      myCurrentSpaceProperty;
   private ReadOnlyBlockInformationProvider myReadOnlyBlockInformationProvider;
+  private boolean                          myReadOnlyMode;
 
   private static final boolean INLINE_TABS_ENABLED = "true".equalsIgnoreCase(System.getProperty("inline.tabs.enabled"));
 
   private InitialInfoBuilder(final FormattingDocumentModel model,
                              @Nullable final FormatTextRanges affectedRanges,
+                             @NotNull CodeStyleSettings settings,
                              final CommonCodeStyleSettings.IndentOptions options,
                              final int positionOfInterest,
                              @NotNull FormattingProgressCallback progressCallback)
@@ -74,16 +85,19 @@ class InitialInfoBuilder {
     myCurrentWhiteSpace = new WhiteSpace(0, true);
     myOptions = options;
     myPositionOfInterest = positionOfInterest;
+    myReadOnlyMode = false;
+    mySettings = settings;
   }
 
   public static InitialInfoBuilder prepareToBuildBlocksSequentially(Block root,
                                                                     FormattingDocumentModel model,
                                                                     @Nullable final FormatTextRanges affectedRanges,
+                                                                    @NotNull CodeStyleSettings settings,
                                                                     final CommonCodeStyleSettings.IndentOptions options,
                                                                     int interestingOffset,
                                                                     @NotNull FormattingProgressCallback progressCallback)
   {
-    InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRanges, options, interestingOffset, progressCallback);
+    InitialInfoBuilder builder = new InitialInfoBuilder(model, affectedRanges, settings, options, interestingOffset, progressCallback);
     builder.buildFrom(root, 0, null, null, null, true);
     return builder;
   }
@@ -283,6 +297,17 @@ class InitialInfoBuilder {
       info.arrangeParentTextRange();
     }
 
+    switch (getFormatterTag(rootBlock)) {
+      case ON:
+        myReadOnlyMode = false;
+        break;
+      case OFF:
+        myReadOnlyMode = true;
+        break;
+      case NONE:
+        break;
+    }
+
     TextRange textRange = rootBlock.getTextRange();
     if (textRange.getLength() == 0) {
       assertInvalidRanges(
@@ -309,6 +334,7 @@ class InitialInfoBuilder {
 
     info.setSpaceProperty(myCurrentSpaceProperty);
     myCurrentWhiteSpace = new WhiteSpace(textRange.getEndOffset(), false);
+    if (myReadOnlyMode) myCurrentWhiteSpace.setReadOnly(true);
     myPreviousBlock = info;
 
     if (myPositionOfInterest != -1 && (textRange.contains(myPositionOfInterest) || textRange.getEndOffset() == myPositionOfInterest)) {
@@ -388,6 +414,42 @@ class InitialInfoBuilder {
     }
 
     LogMessageEx.error(LOG, messageBuffer.toString(), buffer.toString());
+  }
+
+  private FormatterTag getFormatterTag(Block block) {
+    if (mySettings.FORMATTER_TAGS_ENABLED &&
+        !StringUtil.isEmpty(mySettings.FORMATTER_ON_TAG) &&
+        !StringUtil.isEmpty(mySettings.FORMATTER_OFF_TAG) &&
+        block instanceof ASTBlock) {
+      ASTNode node = ((ASTBlock)block).getNode();
+      PsiElement element = node.getPsi();
+      if (element != null && element instanceof PsiComment) {
+        CharSequence nodeChars = node.getChars();
+        if (mySettings.FORMATTER_TAGS_ACCEPT_REGEXP) {
+          Pattern onPattern = mySettings.getFormatterOnPattern();
+          Pattern offPattern = mySettings.getFormatterOffPattern();
+          if (onPattern != null && onPattern.matcher(nodeChars).find()) return FormatterTag.ON;
+          if (offPattern != null && offPattern.matcher(nodeChars).find()) return FormatterTag.OFF;
+        }
+        else {
+          for (int i = 0; i < nodeChars.length(); i++) {
+            if (isFormatterTagAt(nodeChars, i, mySettings.FORMATTER_ON_TAG)) return FormatterTag.ON;
+            if (isFormatterTagAt(nodeChars, i, mySettings.FORMATTER_OFF_TAG)) return FormatterTag.OFF;
+          }
+        }
+      }
+    }
+    return FormatterTag.NONE;
+  }
+
+  private static boolean isFormatterTagAt(@NotNull CharSequence s, int pos, @NotNull String tagName) {
+    if (!tagName.isEmpty() && tagName.charAt(0) == s.charAt(pos)) {
+      int end = pos + tagName.length();
+      if (end <= s.length()) {
+        return StringUtil.equalsIgnoreCase(s.subSequence(pos, end), tagName);
+      }
+    }
+    return false;
   }
 
   /**

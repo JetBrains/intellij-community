@@ -32,6 +32,7 @@
           <root url="jar://$MODULE_DIR$/lib/gradle-wrapper-1.8.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/gradle-plugins-1.8.jar!/" />
           <root url="jar://$MODULE_DIR$/lib/gradle-build-setup-1.8.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/gradle-native-1.8.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
@@ -153,8 +154,27 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module-library" exported="">
+      <library name="commons-io">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/commons-io-1.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntry type="module" module-name="external-system-impl" />
     <orderEntry type="module" module-name="external-system-api" />
+    <orderEntry type="module-library" exported="">
+      <library name="GradleJnaPosix">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/jna-3.2.7.jar!/" />
+          <root url="jar://$MODULE_DIR$/lib/jna-posix-1.0.3.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
 

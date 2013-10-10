@@ -87,10 +87,10 @@ class GithubUserRaw implements DataConstructor {
   @NotNull
   @Override
   public <T> T create(@NotNull Class<T> resultClass) {
-    if (resultClass.isAssignableFrom(GithubUser.class)) {
+    if (resultClass == GithubUser.class) {
       return (T)createUser();
     }
-    if (resultClass.isAssignableFrom(GithubUserDetailed.class)) {
+    if (resultClass == GithubUserDetailed.class) {
       return (T)createUserDetailed();
     }
 

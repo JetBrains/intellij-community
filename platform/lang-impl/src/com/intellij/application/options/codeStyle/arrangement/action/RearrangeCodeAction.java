@@ -17,6 +17,7 @@ package com.intellij.application.options.codeStyle.arrangement.action;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.CommandProcessor;
@@ -44,19 +45,19 @@ public class RearrangeCodeAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    PsiFile file = LangDataKeys.PSI_FILE.getData(e.getDataContext());
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     boolean enabled = file != null && Rearranger.EXTENSION.forLanguage(file.getLanguage()) != null;
     e.getPresentation().setEnabled(enabled);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) {
       return;
     }
     
-    final Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
+    final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
     if (editor == null) {
       return;
     }

@@ -29,7 +29,7 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.LafManagerImpl;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
@@ -400,7 +400,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myMainPanel));
+    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myMainPanel));
 
     super.doOKAction();
 

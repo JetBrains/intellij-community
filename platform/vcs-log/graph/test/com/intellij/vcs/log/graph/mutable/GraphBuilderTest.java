@@ -2,14 +2,15 @@ package com.intellij.vcs.log.graph.mutable;
 
 import com.intellij.vcs.log.VcsCommit;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.graph.GraphTestUtils;
 import com.intellij.vcs.log.parser.SimpleCommitListParser;
 import org.junit.Test;
 
 import java.util.Collections;
 import java.util.List;
 
-import static junit.framework.Assert.assertEquals;
 import static com.intellij.vcs.log.graph.GraphStrUtils.toStr;
+import static junit.framework.Assert.assertEquals;
 
 /**
  * @author erokhins
@@ -19,7 +20,7 @@ public class GraphBuilderTest {
 
   public void runTest(String input, String out) {
     List<VcsCommit> vcsCommitParentses = SimpleCommitListParser.parseCommitList(input);
-    MutableGraph graph = GraphBuilder.build(vcsCommitParentses, Collections.<VcsRef>emptyList());
+    MutableGraph graph = GraphTestUtils.buildGraph(vcsCommitParentses, Collections.<VcsRef>emptyList());
     assertEquals(out, toStr(graph));
   }
 

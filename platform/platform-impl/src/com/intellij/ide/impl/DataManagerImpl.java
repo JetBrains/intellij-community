@@ -228,7 +228,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     if (myWindowManager == null) {
       return dataContext;
     }
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     Component focusedComponent = myWindowManager.getFocusedComponent(project);
     if (focusedComponent != null) {
       dataContext = getDataContext(focusedComponent);
@@ -280,7 +280,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
     myDataConstantToRuleMap.put(PlatformDataKeys.PASTE_PROVIDER.getName(), new PasteProviderRule());
     myDataConstantToRuleMap.put(PlatformDataKeys.FILE_TEXT.getName(), new FileTextRule());
     myDataConstantToRuleMap.put(PlatformDataKeys.FILE_EDITOR.getName(), new FileEditorRule());
-    myDataConstantToRuleMap.put(PlatformDataKeys.NAVIGATABLE_ARRAY.getName(), new NavigatableArrayRule());
+    myDataConstantToRuleMap.put(CommonDataKeys.NAVIGATABLE_ARRAY.getName(), new NavigatableArrayRule());
     myDataConstantToRuleMap.put(PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE.getName(), new InactiveEditorRule());
   }
 
@@ -308,8 +308,8 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
   }
   
   private static final Set<String> ourSafeKeys = new HashSet<String>(Arrays.asList(
-    PlatformDataKeys.PROJECT.getName(),
-    PlatformDataKeys.EDITOR.getName(),
+    CommonDataKeys.PROJECT.getName(),
+    CommonDataKeys.EDITOR.getName(),
     PlatformDataKeys.IS_MODAL_CONTEXT.getName(),
     PlatformDataKeys.CONTEXT_COMPONENT.getName(),
     PlatformDataKeys.MODALITY_STATE.getName()
@@ -374,7 +374,7 @@ public class DataManagerImpl extends DataManager implements ApplicationComponent
       if (PlatformDataKeys.MODALITY_STATE.is(dataId)) {
         return component != null ? ModalityState.stateForComponent(component) : ModalityState.NON_MODAL;
       }
-      if (PlatformDataKeys.EDITOR.is(dataId)) {
+      if (CommonDataKeys.EDITOR.is(dataId)) {
         Editor editor = (Editor)((DataManagerImpl)DataManager.getInstance()).getData(dataId, component);
         return validateEditor(editor);
       }

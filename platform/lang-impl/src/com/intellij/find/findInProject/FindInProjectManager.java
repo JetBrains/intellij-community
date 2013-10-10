@@ -23,6 +23,7 @@ import com.intellij.find.FindUtil;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
@@ -80,7 +81,7 @@ public class FindInProjectManager {
     findModel.setOpenInNewTab(toOpenInNewTab[0]);
     FindInProjectUtil.setDirectoryName(findModel, dataContext);
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     FindUtil.initStringToFindWithSelection(findModel, editor);
 
     findManager.showFindDialog(findModel, new Runnable() {

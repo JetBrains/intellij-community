@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class ListTemplatesHandler implements CodeInsightActionHandler {
   @Override
@@ -52,23 +53,27 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
 
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     int offset = editor.getCaretModel().getOffset();
-    String prefix = getPrefix(editor.getDocument(), offset);
+    String prefix = getPrefix(editor.getDocument(), offset, false);
+    String prefixWithoutDots = getPrefix(editor.getDocument(), offset, true);
 
     List<TemplateImpl> matchingTemplates = new ArrayList<TemplateImpl>();
     ArrayList<TemplateImpl> applicableTemplates = SurroundWithTemplateHandler.getApplicableTemplates(editor, file, false);
+    final Pattern prefixSearchPattern = Pattern.compile(".*\\b" + prefixWithoutDots + ".*");
     for (TemplateImpl template : applicableTemplates) {
-      if (template.getKey().startsWith(prefix) || template.getDescription() != null && template.getDescription().contains(prefix)) {
+      final String templateDescription = template.getDescription();
+      if (template.getKey().startsWith(prefix) || 
+          !prefixWithoutDots.isEmpty() && templateDescription != null && prefixSearchPattern.matcher(templateDescription).matches()) {
         matchingTemplates.add(template);
       }
     }
 
     if (matchingTemplates.isEmpty()) {
       matchingTemplates.addAll(applicableTemplates);
-      prefix = "";
+      prefixWithoutDots = "";
     }
 
     if (matchingTemplates.size() == 0) {
-      String text = prefix.length() == 0
+      String text = prefixWithoutDots.length() == 0
                     ? CodeInsightBundle.message("templates.no.defined")
                     : CodeInsightBundle.message("templates.no.defined.with.prefix", prefix);
       HintManager.getInstance().showErrorHint(editor, text);
@@ -76,7 +81,7 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     }
 
     Collections.sort(matchingTemplates, TemplateListPanel.TEMPLATE_COMPARATOR);
-    showTemplatesLookup(project, editor, prefix, matchingTemplates);
+    showTemplatesLookup(project, editor, prefixWithoutDots, matchingTemplates);
   }
 
   public static void showTemplatesLookup(final Project project, final Editor editor,
@@ -139,20 +144,16 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
     return true;
   }
 
-  public static String getPrefix(Document document, int offset) {
+  private static String getPrefix(Document document, int offset, boolean lettersOnly) {
     CharSequence chars = document.getCharsSequence();
     int start = offset;
     while (true) {
       if (start == 0) break;
       char c = chars.charAt(start - 1);
-      if (!isInPrefix(c)) break;
+      if (!(Character.isJavaIdentifierPart(c) || !lettersOnly && c == '.')) break;
       start--;
     }
     return chars.subSequence(start, offset).toString();
-  }
-
-  private static boolean isInPrefix(final char c) {
-    return Character.isJavaIdentifierPart(c) || c == '.';
   }
 
   private static class MyLookupAdapter extends LookupAdapter {

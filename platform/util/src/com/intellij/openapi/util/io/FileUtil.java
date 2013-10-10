@@ -417,7 +417,12 @@ public class FileUtil extends FileUtilRt {
     if (attributes == null) return true;
 
     if (attributes.isDirectory() && !attributes.isSymLink()) {
-      if (!deleteChildren(file)) return false;
+      File[] files = file.listFiles();
+      if (files != null) {
+        for (File child : files) {
+          if (!delete(child)) return false;
+        }
+      }
     }
 
     return deleteFile(file);
@@ -484,11 +489,7 @@ public class FileUtil extends FileUtilRt {
     }
 
     if (SystemInfo.isUnix && fromFile.canExecute()) {
-      final int oldPermissions = FileSystemUtil.getPermissions(fromFile);
-      final int newPermissions = FileSystemUtil.getPermissions(toFile);
-      if (oldPermissions != -1 && newPermissions != -1) {
-        FileSystemUtil.setPermissions(toFile, oldPermissions | newPermissions);
-      }
+      FileSystemUtil.clonePermissions(fromFile.getPath(), toFile.getPath());
     }
   }
 
@@ -1047,9 +1048,9 @@ public class FileUtil extends FileUtilRt {
     writeToFile(file, text, 0, text.length, append);
   }
 
-  private static void writeToFile(@NotNull File file, @NotNull byte[] text, final int off, final int len, boolean append)
-    throws IOException {
+  private static void writeToFile(@NotNull File file, @NotNull byte[] text, int off, int len, boolean append) throws IOException {
     createParentDirs(file);
+
     OutputStream stream = new FileOutputStream(file, append);
     try {
       stream.write(text, off, len);

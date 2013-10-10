@@ -55,6 +55,9 @@ public class XSourcePositionImpl implements XSourcePosition {
     return myFile;
   }
 
+  /**
+   * do not call this method from plugins, use {@link com.intellij.xdebugger.XDebuggerUtil#createPositionByOffset(com.intellij.openapi.vfs.VirtualFile, int)} instead
+   */
   @Nullable
   public static XSourcePositionImpl createByOffset(@Nullable VirtualFile file, final int offset) {
     if (file == null) return null;
@@ -66,6 +69,9 @@ public class XSourcePositionImpl implements XSourcePosition {
     return new XSourcePositionImpl(file, line, offset);
   }
 
+  /**
+   * do not call this method from plugins, use {@link com.intellij.xdebugger.XDebuggerUtil#createPosition(com.intellij.openapi.vfs.VirtualFile, int)} instead
+   */
   @Nullable
   public static XSourcePositionImpl create(@Nullable VirtualFile file, int line) {
     if (file == null) return null;

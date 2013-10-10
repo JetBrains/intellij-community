@@ -66,7 +66,7 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
 
   @Override
   public void update(AnActionEvent e) {
-    VirtualFile myFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    VirtualFile myFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     boolean enabled = myFile != null && checkEnabled(myFile);
     e.getPresentation().setEnabled(enabled);
   }
@@ -83,11 +83,11 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
 
   @Nullable
   public ListPopup createPopup(@NotNull DataContext dataContext) {
-    final VirtualFile virtualFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (virtualFile == null) return null;
     boolean enabled = checkEnabled(virtualFile);
     if (!enabled) return null;
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
     final Document document = documentManager.getDocument(virtualFile);
     if (!allowDirectories && virtualFile.isDirectory() || document == null && !virtualFile.isDirectory()) return null;

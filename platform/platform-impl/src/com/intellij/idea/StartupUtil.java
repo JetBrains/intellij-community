@@ -88,11 +88,7 @@ public class StartupUtil {
 
     if (!Main.isHeadless()) {
       AppUIUtil.updateFrameClass();
-
-      newConfigFolder = PathManager.ensureConfigFolderExists(true);
-      if (newConfigFolder) {
-        ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
-      }
+      newConfigFolder = !new File(PathManager.getConfigPath()).exists();
     }
 
     boolean canStart = checkJdkVersion() && checkSystemFolders() && lockSystemFolders(args);  // note: uses config folder!
@@ -100,11 +96,15 @@ public class StartupUtil {
       System.exit(Main.STARTUP_IMPOSSIBLE);
     }
 
+    if (newConfigFolder) {
+      ConfigImportHelper.importConfigsTo(PathManager.getConfigPath());
+    }
+
     Logger.setFactory(LoggerFactory.class);
     Logger log = Logger.getInstance(Main.class);
     startLogging(log);
-    fixProcessEnvironment(log);
     loadSystemLibraries(log);
+    fixProcessEnvironment(log);
 
     if (!Main.isHeadless()) {
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
@@ -136,18 +136,19 @@ public class StartupUtil {
 
   private synchronized static boolean checkSystemFolders() {
     String configPath = PathManager.getConfigPath();
+    PathManager.ensureConfigFolderExists();
     if (!new File(configPath).isDirectory()) {
       String message = "Config path '" + configPath + "' is invalid.\n" +
-                       "If you have modified the 'idea.config.path' property please make sure it is correct,\n" +
+                       "If you have modified the '" + PathManager.PROPERTY_CONFIG_PATH + "' property please make sure it is correct,\n" +
                        "otherwise please re-install the IDE.";
       Main.showMessage("Invalid Config Path", message, true);
       return false;
     }
 
     String systemPath = PathManager.getSystemPath();
-    if (systemPath == null || !new File(systemPath).isDirectory()) {
+    if (!new File(systemPath).isDirectory()) {
       String message = "System path '" + systemPath + "' is invalid.\n" +
-                       "If you have modified the 'idea.system.path' property please make sure it is correct,\n" +
+                       "If you have modified the '" + PathManager.PROPERTY_SYSTEM_PATH + "' property please make sure it is correct,\n" +
                        "otherwise please re-install the IDE.";
       Main.showMessage("Invalid System Path", message, true);
       return false;
@@ -174,7 +175,7 @@ public class StartupUtil {
 
     if (!tempAccessible) {
       String message = "Temp directory '" + ideTempDir + "' is inaccessible.\n" +
-                       "If you have modified the 'idea.system.path' property please make sure it is correct,\n" +
+                       "If you have modified the '" + PathManager.PROPERTY_SYSTEM_PATH + "' property please make sure it is correct,\n" +
                        "otherwise please re-install the IDE.";
       Main.showMessage("Invalid System Path", message, true);
       return false;
@@ -188,7 +189,7 @@ public class StartupUtil {
       ourLock = new SocketLock();
     }
 
-    SocketLock.ActivateStatus activateStatus = ourLock.lock(PathManager.getConfigPath(false), true, args);
+    SocketLock.ActivateStatus activateStatus = ourLock.lock(PathManager.getConfigPath(), true, args);
     if (activateStatus == SocketLock.ActivateStatus.NO_INSTANCE) {
       activateStatus = ourLock.lock(PathManager.getSystemPath(), false);
     }

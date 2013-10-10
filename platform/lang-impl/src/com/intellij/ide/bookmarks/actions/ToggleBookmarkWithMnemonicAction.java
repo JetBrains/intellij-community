@@ -23,6 +23,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.bookmarks.Bookmark;
 import com.intellij.ide.bookmarks.BookmarkManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
@@ -41,7 +42,7 @@ public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
     super.actionPerformed(e);
 
     DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
     final BookmarkInContextInfo info = new BookmarkInContextInfo(dataContext, project).invoke();
     final Bookmark bookmark = info.getBookmarkAtPlace();

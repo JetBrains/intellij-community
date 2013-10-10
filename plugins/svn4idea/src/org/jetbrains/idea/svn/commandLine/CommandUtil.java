@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.Repository;
 import org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -158,13 +159,7 @@ public class CommandUtil {
   }
 
   public static String escape(@NotNull String path) {
-    String result = path;
-
-    if (path.contains("@")) {
-      result += "@";
-    }
-
-    return result;
+    return path.contains("@") ? path + "@" : path;
   }
 
   public static <T> T parse(@NotNull String data, @NotNull Class<T> type) throws JAXBException {
@@ -215,19 +210,15 @@ public class CommandUtil {
   }
 
   private static SVNURL resolveRepositoryUrl(@NotNull SvnVcs vcs, @NotNull SvnCommandName name, @NotNull SvnTarget target) {
-    RootUrlInfo rootInfo = target.isFile()
-                           ? vcs.getSvnFileUrlMapping().getWcRootForFilePath(target.getFile())
-                           : vcs.getSvnFileUrlMapping().getWcRootForUrl(target.getURL().toDecodedString());
-    SVNURL repositoryUrl = rootInfo != null ? rootInfo.getRepositoryUrlUrl() : null;
+    UrlMappingRepositoryProvider urlMappingProvider = new UrlMappingRepositoryProvider(vcs, target);
+    InfoCommandRepositoryProvider infoCommandProvider = new InfoCommandRepositoryProvider(vcs, target);
 
-    // resolve repository url using "svn info" command except the case when that command is executing right now.
-    if (repositoryUrl == null && !SvnCommandName.info.equals(name)) {
-      SVNInfo info = getInfo(vcs, target);
-
-      repositoryUrl = info != null ? info.getRepositoryRootURL() : null;
+    Repository repository = urlMappingProvider.get();
+    if (repository == null && !SvnCommandName.info.equals(name)) {
+      repository = infoCommandProvider.get();
     }
 
-    return repositoryUrl;
+    return repository != null ? repository.getUrl() : null;
   }
 
   @NotNull
@@ -295,5 +286,68 @@ public class CommandUtil {
       contentsStatus = SVNStatusType.STATUS_NORMAL;
     }
     return contentsStatus;
+  }
+
+  public interface RepositoryProvider {
+
+    @Nullable
+    Repository get();
+  }
+
+  public static abstract class BaseRepositoryProvider implements RepositoryProvider {
+
+    @NotNull protected final SvnVcs myVcs;
+    @NotNull protected final SvnTarget myTarget;
+
+    protected BaseRepositoryProvider(@NotNull SvnVcs vcs, @NotNull SvnTarget target) {
+      myVcs = vcs;
+      myTarget = target;
+    }
+  }
+
+  public static class UrlMappingRepositoryProvider extends BaseRepositoryProvider {
+
+    public UrlMappingRepositoryProvider(@NotNull SvnVcs vcs, @NotNull SvnTarget target) {
+      super(vcs, target);
+    }
+
+    @Nullable
+    @Override
+    public Repository get() {
+      RootUrlInfo rootInfo = null;
+
+      if (!myVcs.getProject().isDefault()) {
+        rootInfo = myTarget.isFile()
+                   ? myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myTarget.getFile())
+                   : myVcs.getSvnFileUrlMapping().getWcRootForUrl(myTarget.getURL().toDecodedString());
+      }
+
+      return rootInfo != null ? new Repository(rootInfo.getRepositoryUrlUrl()) : null;
+    }
+  }
+
+  public static class InfoCommandRepositoryProvider extends BaseRepositoryProvider {
+
+    public InfoCommandRepositoryProvider(@NotNull SvnVcs vcs, @NotNull SvnTarget target) {
+      super(vcs, target);
+    }
+
+    @Nullable
+    @Override
+    public Repository get() {
+      Repository result;
+
+      if (myTarget.isURL()) {
+        // TODO: Also could still execute info when target is url - either to use info for authentication or to just get correct repository
+        // TODO: url in case of "read" operations are allowed anonymously.
+        result = new Repository(myTarget.getURL());
+      }
+      else {
+        SVNInfo info = getInfo(myVcs, myTarget);
+        result = info != null ? new Repository(info.getRepositoryRootURL()) : null;
+      }
+
+      return result;
+    }
   }
 }

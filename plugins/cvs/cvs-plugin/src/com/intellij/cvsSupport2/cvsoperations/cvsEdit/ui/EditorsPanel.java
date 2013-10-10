@@ -17,6 +17,7 @@ package com.intellij.cvsSupport2.cvsoperations.cvsEdit.ui;
 
 import com.intellij.CvsBundle;
 import com.intellij.cvsSupport2.cvsoperations.cvsEdit.EditorInfo;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -133,10 +134,10 @@ public class EditorsPanel extends JPanel implements TypeSafeDataProvider {
   }
 
   public void calcData(DataKey key, DataSink sink) {
-    if (key.equals(PlatformDataKeys.PROJECT)) {
-      sink.put(PlatformDataKeys.PROJECT, myProject);
+    if (key.equals(CommonDataKeys.PROJECT)) {
+      sink.put(CommonDataKeys.PROJECT, myProject);
     }
-    else if (key.equals(PlatformDataKeys.NAVIGATABLE)) {
+    else if (key.equals(CommonDataKeys.NAVIGATABLE)) {
       final EditorInfo editorInfo = myTable.getSelectedObject();
       if (editorInfo == null) {
         return;
@@ -149,7 +150,7 @@ public class EditorsPanel extends JPanel implements TypeSafeDataProvider {
       final File file = new File(editorInfo.getPath(), filePath);
       final VirtualFile vf = LocalFileSystem.getInstance().findFileByIoFile(file);
       if (vf != null) {
-        sink.put(PlatformDataKeys.NAVIGATABLE, new OpenFileDescriptor(myProject, vf));
+        sink.put(CommonDataKeys.NAVIGATABLE, new OpenFileDescriptor(myProject, vf));
       }
     }
   }

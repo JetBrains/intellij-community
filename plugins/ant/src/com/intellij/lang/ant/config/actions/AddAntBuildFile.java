@@ -34,8 +34,8 @@ import com.intellij.psi.xml.XmlTag;
 public class AddAntBuildFile extends AnAction {
   public void actionPerformed(AnActionEvent event) {
     DataContext dataContext = event.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
     try {
       antConfiguration.addBuildFile(file);
@@ -54,13 +54,13 @@ public class AddAntBuildFile extends AnAction {
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Presentation presentation = e.getPresentation();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       disable(presentation);
       return;
     }
 
-    final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+    final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (file == null) {
       disable(presentation);
       return;

@@ -17,6 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.PopupAction;
 import com.intellij.openapi.editor.Editor;
@@ -44,7 +45,7 @@ public class ShowPopupMenuAction extends AnAction implements DumbAware, PopupAct
 
     Point popupMenuPoint = relPoint.getPoint(focusOwner);
 
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
     int coord = editor != null
                 ? Math.max(0, popupMenuPoint.y - 1) //To avoid cursor jump to the line below. http://www.jetbrains.net/jira/browse/IDEADEV-10644
                 : popupMenuPoint.y;

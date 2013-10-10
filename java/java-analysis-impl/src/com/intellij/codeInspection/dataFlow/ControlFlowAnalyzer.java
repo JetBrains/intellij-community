@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,7 +51,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       throw new UnsupportedOperationException("Not implemented");
     }
   };
-  public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = "org.jetbrains.annotations.Contract";
+  public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
   private boolean myIgnoreAssertions;
 
   private static class CannotAnalyzeException extends RuntimeException { }
@@ -300,6 +301,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     PsiStatement exitedStatement = statement.findExitedStatement();
 
     if (exitedStatement != null) {
+      flushVariablesOnControlTransfer(exitedStatement);
       addInstruction(new GotoInstruction(getEndOffset(exitedStatement)));
     }
 
@@ -309,26 +311,12 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitContinueStatement(PsiContinueStatement statement) {
     startElement(statement);
     PsiStatement continuedStatement = statement.findContinuedStatement();
-    if (continuedStatement != null) {
-      ControlFlow.ControlFlowOffset offset = null;
-      if (continuedStatement instanceof PsiForStatement) {
-        PsiStatement body = ((PsiForStatement)continuedStatement).getBody();
-        offset = getEndOffset(body);
-      }
-      else if (continuedStatement instanceof PsiWhileStatement) {
-        PsiStatement body = ((PsiWhileStatement)continuedStatement).getBody();
-        offset = getEndOffset(body);
-      }
-      else if (continuedStatement instanceof PsiDoWhileStatement) {
-        PsiStatement body = ((PsiDoWhileStatement)continuedStatement).getBody();
-        offset = getEndOffset(body);
-      }
-      else if (continuedStatement instanceof PsiForeachStatement) {
-        PsiStatement body = ((PsiForeachStatement)continuedStatement).getBody();
-        offset = getEndOffset(body);
-      }
-      Instruction instruction = offset == null ? new EmptyInstruction(null) : new GotoInstruction(offset);
-      addInstruction(instruction);
+    if (continuedStatement instanceof PsiLoopStatement) {
+      PsiStatement body = ((PsiLoopStatement)continuedStatement).getBody();
+      flushVariablesOnControlTransfer(body);
+      addInstruction(new GotoInstruction(getEndOffset(body)));
+    } else {
+      addInstruction(new EmptyInstruction(null));
     }
     finishElement(statement);
   }
@@ -702,9 +690,13 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void flushVariablesInsideTry(CatchDescriptor cd) {
+    flushVariablesOnControlTransfer(cd.getBlock());
+  }
+
+  private void flushVariablesOnControlTransfer(PsiElement stopWhenAncestorOf) {
     for (int i = myElementStack.size() - 1; i >= 0; i--) {
       PsiElement scope = myElementStack.get(i);
-      if (PsiTreeUtil.isAncestor(scope, cd.getBlock(), false)) {
+      if (PsiTreeUtil.isAncestor(scope, stopWhenAncestorOf, true)) {
         break;
       }
       if (scope instanceof PsiCodeBlock) {
@@ -720,11 +712,13 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     if (exceptionClass == null) return;
     for (int i = myCatchStack.size() - 1; i >= 0; i--) {
       CatchDescriptor cd = myCatchStack.get(i);
-      flushVariablesInsideTry(cd);
       if (cd.isFinally()) {
+        flushVariablesInsideTry(cd);
         addInstruction(new GosubInstruction(cd.getJumpOffset(this)));
+        break;
       }
       else if (cd.getType().isAssignableFrom(exceptionClass)) { // Definite catch.
+        flushVariablesInsideTry(cd);
         addGotoCatch(cd);
         return;
       }
@@ -733,6 +727,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         pushUnknown();
         final ConditionalGotoInstruction branch = new ConditionalGotoInstruction(null, false, null);
         addInstruction(branch);
+        flushVariablesInsideTry(cd);
         addGotoCatch(cd);
         branch.setOffset(myCurrentFlow.getInstructionCount());
       }

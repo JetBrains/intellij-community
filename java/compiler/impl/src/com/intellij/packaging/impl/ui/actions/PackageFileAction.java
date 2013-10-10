@@ -5,6 +5,7 @@ package com.intellij.packaging.impl.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -39,7 +40,7 @@ public class PackageFileAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     boolean visible = false;
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
       final List<VirtualFile> files = getFilesToPackage(e, project);
       if (!files.isEmpty()) {
@@ -53,7 +54,7 @@ public class PackageFileAction extends AnAction {
 
   @NotNull
   private static List<VirtualFile> getFilesToPackage(@NotNull AnActionEvent e, @NotNull Project project) {
-    final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (files == null) return Collections.emptyList();
 
     List<VirtualFile> result = new ArrayList<VirtualFile>();
@@ -77,7 +78,7 @@ public class PackageFileAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent event) {
-    final Project project = event.getData(PlatformDataKeys.PROJECT);
+    final Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
 
     FileDocumentManager.getInstance().saveAllDocuments();

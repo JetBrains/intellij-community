@@ -322,6 +322,7 @@ public class CompositeElement extends TreeElement {
   private String diagnoseTextInconsistency(String text, int startStamp) {
     @NonNls String msg = "";
     msg += ";\n changed=" + (startStamp != myModificationsCount);
+    msg += ";\n nonPhysicalOrInjected=" + isNonPhysicalOrInjected();
     msg += ";\n buffer=" + text;
     try {
       msg += ";\n this=" + this;

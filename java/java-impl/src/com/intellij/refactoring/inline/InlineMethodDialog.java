@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -50,20 +51,25 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
     init();
   }
 
+  @Override
   protected String getNameLabelText() {
     String methodText = PsiFormatUtil.formatMethod(myMethod,
-                                                   PsiSubstitutor.EMPTY, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS, PsiFormatUtil.SHOW_TYPE);
+                                                   PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+                                                   PsiFormatUtilBase.SHOW_TYPE);
     return RefactoringBundle.message("inline.method.method.label", methodText);
   }
 
+  @Override
   protected String getBorderTitle() {
     return RefactoringBundle.message("inline.method.border.title");
   }
 
+  @Override
   protected String getInlineThisText() {
     return RefactoringBundle.message("this.invocation.only.and.keep.the.method");
   }
 
+  @Override
   protected String getInlineAllText() {
     final String occurrencesString = myOccurrencesNumber > -1 ? " (" + myOccurrencesNumber + " occurrence" + (myOccurrencesNumber == 1 ? ")" : "s)") : "";
     return (myMethod.isWritable()
@@ -71,6 +77,7 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
             : RefactoringBundle.message("all.invocations.in.project")) + occurrencesString;
   }
 
+  @Override
   protected void doAction() {
     super.doAction();
     invokeRefactoring(
@@ -82,15 +89,18 @@ public class InlineMethodDialog extends InlineOptionsWithSearchSettingsDialog {
     }
   }
 
+  @Override
   protected void doHelpAction() {
     if (myMethod.isConstructor()) HelpManager.getInstance().invokeHelp(HelpID.INLINE_CONSTRUCTOR);
     else HelpManager.getInstance().invokeHelp(HelpID.INLINE_METHOD);
   }
 
+  @Override
   protected boolean canInlineThisOnly() {
     return InlineMethodHandler.checkRecursive(myMethod) || myAllowInlineThisOnly;
   }
 
+  @Override
   protected boolean isInlineThis() {
     return JavaRefactoringSettings.getInstance().INLINE_METHOD_THIS;
   }

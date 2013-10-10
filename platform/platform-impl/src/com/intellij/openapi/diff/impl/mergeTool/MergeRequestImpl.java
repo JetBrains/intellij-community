@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,14 +89,31 @@ public class MergeRequestImpl extends MergeRequest {
     myDiffContents[2] = right;
   }
 
+  @Override
   @NotNull
-  public DiffContent[] getContents() { return myDiffContents; }
+  public DiffContent[] getContents() {
+    return myDiffContents;
+  }
 
-  public String[] getContentTitles() { return myVersionTitles; }
-  public void setVersionTitles(String[] versionTitles) { myVersionTitles = versionTitles; }
+  @Override
+  public String[] getContentTitles() {
+    return myVersionTitles;
+  }
 
-  public String getWindowTitle() { return myWindowTitle; }
-  public void setWindowTitle(String windowTitle) { myWindowTitle = windowTitle; }
+  @Override
+  public void setVersionTitles(String[] versionTitles) {
+    myVersionTitles = versionTitles;
+  }
+
+  @Override
+  public String getWindowTitle() {
+    return myWindowTitle;
+  }
+
+  @Override
+  public void setWindowTitle(String windowTitle) {
+    myWindowTitle = windowTitle;
+  }
 
   public void setResult(int result) {
     if (result == DialogWrapper.OK_EXIT_CODE) applyChanges();
@@ -110,21 +127,26 @@ public class MergeRequestImpl extends MergeRequest {
     }
   }
 
-  public int getResult() { return myResult; }
+  @Override
+  public int getResult() {
+    return myResult;
+  }
 
   @Nullable
   private MergeContent getMergeContent() {
-    if (myDiffContents [1] instanceof MergeContent) {
+    if (myDiffContents[1] instanceof MergeContent) {
       return (MergeContent)myDiffContents[1];
     }
     return null;
   }
 
+  @Override
   @Nullable
   public DiffContent getResultContent() {
     return getMergeContent();
   }
 
+  @Override
   public void restoreOriginalContent() {
     final MergeContent mergeContent = getMergeContent();
     if (mergeContent == null) return;
@@ -163,6 +185,7 @@ public class MergeRequestImpl extends MergeRequest {
 
       configureAction(builder, builder.getOkAction(), myOkButtonPresentation);
       builder.setOkOperation(new Runnable() {
+        @Override
         public void run() {
           myOkButtonPresentation.run(builder.getDialogWrapper());
         }
@@ -176,6 +199,7 @@ public class MergeRequestImpl extends MergeRequest {
 
       configureAction(builder, builder.getCancelAction(), myCancelButtonPresentation);
       builder.setCancelOperation(new Runnable() {
+        @Override
         public void run() {
           myCancelButtonPresentation.run(builder.getDialogWrapper());
         }
@@ -191,6 +215,7 @@ public class MergeRequestImpl extends MergeRequest {
     return myHelpId;
   }
 
+  @Override
   public void setHelpId(@Nullable @NonNls String helpId) {
     myHelpId = helpId;
   }
@@ -211,23 +236,30 @@ public class MergeRequestImpl extends MergeRequest {
       myTarget.applyText(myWorkingDocument.getText(), myProject);
     }
 
-    public Document getDocument() { return myWorkingDocument; }
+    @Override
+    public Document getDocument() {
+      return myWorkingDocument;
+    }
 
+    @Override
     public OpenFileDescriptor getOpenFileDescriptor(int offset) {
       VirtualFile file = getFile();
       if (file == null) return null;
       return new OpenFileDescriptor(myProject, file, offset);
     }
 
+    @Override
     public VirtualFile getFile() {
       return myTarget.getFile();
     }
 
+    @Override
     @Nullable
     public FileType getContentType() {
       return myTarget.getContentType();
     }
 
+    @Override
     public byte[] getBytes() throws IOException {
       return myTarget.getBytes();
     }
@@ -250,6 +282,7 @@ public class MergeRequestImpl extends MergeRequest {
       changeCounter.addListener(this);
     }
 
+    @Override
     public void run() {
       if (myWasInvoked) return;
       if (!getWholePanel().isDisplayable()) return;
@@ -257,9 +290,9 @@ public class MergeRequestImpl extends MergeRequest {
       ChangeCounter.getOrCreate(myMergePanel.getMergeList()).removeListener(this);
       int doApply = Messages
         .showOkCancelDialog(getWholePanel(), DiffBundle.message("merge.all.changes.have.processed.save.and.finish.confirmation.text"),
-                    DiffBundle.message("all.changes.processed.dialog.title"),
-                    DiffBundle.message("merge.save.and.finish.button"), DiffBundle.message("merge.continue.button"),
-                    Messages.getQuestionIcon());
+                            DiffBundle.message("all.changes.processed.dialog.title"),
+                            DiffBundle.message("merge.save.and.finish.button"), DiffBundle.message("merge.continue.button"),
+                            Messages.getQuestionIcon());
       if (doApply != 0) return;
       myDialogWrapper.close(DialogWrapper.OK_EXIT_CODE);
     }
@@ -268,6 +301,7 @@ public class MergeRequestImpl extends MergeRequest {
       return myMergePanel.getComponent();
     }
 
+    @Override
     public void onCountersChanged(ChangeCounter counter) {
       if (myWasInvoked) return;
       if (counter.getChangeCounter() != 0 || counter.getConflictCounter() != 0) return;

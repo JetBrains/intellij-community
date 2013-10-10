@@ -53,8 +53,8 @@ public class UserDictionary implements EditableDictionary {
     return words.size();
   }
 
+  @NotNull
   @Override
-  @Nullable
   public Set<String> getWords() {
     return words;
   }
@@ -69,7 +69,6 @@ public class UserDictionary implements EditableDictionary {
   public void clear() {
     words.clear();
   }
-
 
   @Override
   public void addToDictionary(String word) {

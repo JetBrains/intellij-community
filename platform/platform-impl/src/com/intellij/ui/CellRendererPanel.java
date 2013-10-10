@@ -25,6 +25,23 @@ import java.awt.*;
  * @author gregsh
  */
 public class CellRendererPanel extends JPanel {
+
+  // property change support ----------------
+  protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+  }
+
+  public void firePropertyChange(String propertyName, boolean oldValue, boolean newValue) {
+  }
+
+  // isOpaque() optimization ----------------
+  public boolean isOpaque() {
+    return false;
+  }
+
+  @Override
+  protected void paintComponent(Graphics g) {
+  }
+
   // BEGIN no validation methods --------------
   @Override
   public void doLayout() {

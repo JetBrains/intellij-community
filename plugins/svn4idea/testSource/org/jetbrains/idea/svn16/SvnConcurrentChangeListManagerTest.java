@@ -36,7 +36,7 @@ public class SvnConcurrentChangeListManagerTest extends Svn16TestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myDefaulListName = VcsBundle.message("changes.default.changlist.name");
+    myDefaulListName = VcsBundle.message("changes.default.changelist.name");
 
     myScheme = new DuringChangeListManagerUpdateTestScheme(myProject, myTempDirFixture.getTempDirPath());
   }

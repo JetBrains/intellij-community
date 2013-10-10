@@ -41,7 +41,7 @@ public abstract class AbstractIntegrateChangesAction<T extends SelectedCommitted
   protected abstract T createChecker();
 
   public final void update(final AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     final CommittedChangesBrowserUseCase useCase = CommittedChangesBrowserUseCase.DATA_KEY.getData(e.getDataContext());
     final Presentation presentation = e.getPresentation();
 
@@ -80,7 +80,7 @@ public abstract class AbstractIntegrateChangesAction<T extends SelectedCommitted
 
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     final T checker = createChecker();
     checker.execute(e);

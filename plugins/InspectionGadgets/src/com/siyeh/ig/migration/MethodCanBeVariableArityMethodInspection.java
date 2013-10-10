@@ -19,13 +19,13 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.LibraryUtil;
+import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,7 +57,7 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message("method.can.be.variable.arity.method.ignore.byte.short.option"),
                       "ignoreByteAndShortArrayParameters");
-    panel.addCheckbox(InspectionGadgetsBundle.message("method.can.be.variable.arity.method.ignore.overriding.methods"),
+    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.methods.overriding.super.method"),
                       "ignoreOverridingMethods");
     return panel;
   }
@@ -149,7 +149,7 @@ public class MethodCanBeVariableArityMethodInspection extends BaseInspection {
       if (LibraryUtil.isOverrideOfLibraryMethod(method)) {
         return;
       }
-      if (ignoreOverridingMethods && SuperMethodsSearch.search(method, null, true, false).findFirst() != null) {
+      if (ignoreOverridingMethods && MethodUtils.hasSuper(method)) {
         return;
       }
       registerMethodError(method);

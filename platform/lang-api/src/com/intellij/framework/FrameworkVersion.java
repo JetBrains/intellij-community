@@ -20,12 +20,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public interface FrameworkVersion {
+public interface FrameworkVersion extends PresentableVersion {
   @NotNull
   String getId();
-
-  @NotNull
-  String getPresentableName();
 
   @NotNull
   FrameworkAvailabilityCondition getAvailabilityCondition();

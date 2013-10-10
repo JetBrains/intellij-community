@@ -35,7 +35,7 @@ import java.util.jar.JarOutputStream;
  * @since 1/15/13 7:26 PM
  */
 public class RefConvertorsTest extends LightCodeInsightTestCase {
-  
+
   private File myExtractedImagesDir;
 
   @Override
@@ -47,7 +47,7 @@ public class RefConvertorsTest extends LightCodeInsightTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    FileUtilRt.delete(myExtractedImagesDir);
+    FileUtil.delete(myExtractedImagesDir);
     super.tearDown();
   }
 
@@ -71,13 +71,13 @@ public class RefConvertorsTest extends LightCodeInsightTestCase {
     finally {
       out.close();
     }
-    
-    String textBefore = 
+
+    String textBefore =
       "<HTML>" +
       "java.lang.Object\n" +
       "  <IMG SRC=\"../../../resources/inherit.gif\" ALT=\"extended by \"><B>org.bouncycastle.asn1.BERSequenceParser</B>\n" +
       "</HTML>";
-    
+
     File f = new File(myExtractedImagesDir, imgJarName);
     f = new File(f, "resources");
     File extractedImgFile = new File(f, "inherit.gif");
@@ -88,7 +88,7 @@ public class RefConvertorsTest extends LightCodeInsightTestCase {
       "</HTML>",
       LocalFileSystem.PROTOCOL_PREFIX,
       extractedImgFile.getAbsolutePath());
-    
+
     JavaDocExternalFilter filter = new JavaDocExternalFilter(getProject());
     String textAfter = filter.correctRefs(
       String.format("%s%s!/org/bouncycastle/asn1/BERSequenceParser.html", JarFileSystem.PROTOCOL_PREFIX, imgJar.getAbsolutePath()),

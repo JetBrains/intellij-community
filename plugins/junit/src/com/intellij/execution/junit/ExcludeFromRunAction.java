@@ -38,7 +38,7 @@ public class ExcludeFromRunAction extends AnAction{
   @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     LOG.assertTrue(project != null);
     final JUnitConfiguration configuration = (JUnitConfiguration)RunConfiguration.DATA_KEY.getData(dataContext);
     LOG.assertTrue(configuration != null);
@@ -54,7 +54,7 @@ public class ExcludeFromRunAction extends AnAction{
     final Presentation presentation = e.getPresentation();
     presentation.setVisible(false);
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
       final RunConfiguration configuration = RunConfiguration.DATA_KEY.getData(dataContext);
       if (configuration instanceof JUnitConfiguration) {

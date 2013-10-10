@@ -53,7 +53,7 @@ public class SwitchTaskAction extends BaseTaskAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     assert project != null;
     ListPopupImpl popup = createPopup(dataContext, null, true);
     popup.showCenteredInCurrentWindow(project);
@@ -62,7 +62,7 @@ public class SwitchTaskAction extends BaseTaskAction {
   public static ListPopupImpl createPopup(final DataContext dataContext,
                                           @Nullable final Runnable onDispose,
                                           boolean withTitle) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Ref<Boolean> shiftPressed = Ref.create(false);
     final Ref<JComponent> componentRef = Ref.create();
     List<TaskListItem> items = project == null ? Collections.<TaskListItem>emptyList() :

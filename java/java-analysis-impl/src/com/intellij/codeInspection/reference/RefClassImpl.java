@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +46,7 @@ import java.util.Set;
 public class RefClassImpl extends RefJavaElementImpl implements RefClass {
   private static final Set<RefElement> EMPTY_SET = Collections.emptySet();
   private static final Set<RefClass> EMPTY_CLASS_SET = Collections.emptySet();
-  private static final List<RefMethod> EMPTY_METHOD_LIST = new ArrayList<RefMethod>(0);
+  private static final List<RefMethod> EMPTY_METHOD_LIST = ContainerUtil.emptyList();
   private static final int IS_ANONYMOUS_MASK = 0x10000;
   private static final int IS_INTERFACE_MASK = 0x20000;
   private static final int IS_UTILITY_MASK   = 0x40000;

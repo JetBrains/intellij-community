@@ -4,10 +4,12 @@ import com.intellij.execution.DelayedDocumentWatcher;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManagerImpl;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.content.Content;
 import com.intellij.util.Alarm;
@@ -20,9 +22,13 @@ import java.util.Collection;
  * @author yole
  */
 public class AutoTestManager {
-  private static final int AUTOTEST_DELAY = 10000;
+  static final Key<Boolean> AUTOTESTABLE = Key.create("auto.test.manager.supported");
+  public static final String AUTO_TEST_MANAGER_DELAY = "auto.test.manager.delay";
 
-  private final DelayedDocumentWatcher myDocumentWatcher;
+  private final Project myProject;
+
+  private int myDelay;
+  private DelayedDocumentWatcher myDocumentWatcher;
   private final Collection<Content> myEnabledDescriptors = new WeakList<Content>();
 
   public static AutoTestManager getInstance(Project project) {
@@ -30,7 +36,13 @@ public class AutoTestManager {
   }
 
   public AutoTestManager(Project project) {
-    myDocumentWatcher = new DelayedDocumentWatcher(project, new Alarm(Alarm.ThreadToUse.SWING_THREAD, project), AUTOTEST_DELAY, new Consumer<VirtualFile[]>() {
+    myProject = project;
+    myDocumentWatcher = createWatcher();
+    myDelay = PropertiesComponent.getInstance(myProject).getOrInitInt(AUTO_TEST_MANAGER_DELAY, 3000);
+  }
+
+  private DelayedDocumentWatcher createWatcher() {
+    return new DelayedDocumentWatcher(myProject, new Alarm(Alarm.ThreadToUse.SWING_THREAD, myProject), myDelay, new Consumer<VirtualFile[]>() {
       @Override
       public void consume(VirtualFile[] files) {
         for (Content content : myEnabledDescriptors) {
@@ -80,5 +92,19 @@ public class AutoTestManager {
       return;
     }
     restarter.run();
+  }
+
+  int getDelay() {
+    return myDelay;
+  }
+
+  void setDelay(int delay) {
+    myDelay = delay;
+    myDocumentWatcher.deactivate();
+    myDocumentWatcher = createWatcher();
+    if (!myEnabledDescriptors.isEmpty()) {
+      myDocumentWatcher.activate();
+    }
+    PropertiesComponent.getInstance(myProject).getOrInitInt(AUTO_TEST_MANAGER_DELAY, myDelay);
   }
 }

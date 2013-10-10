@@ -23,6 +23,7 @@ import com.intellij.lang.Language;
 import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
@@ -34,7 +35,7 @@ public class GotoSymbolAction extends GotoActionBase {
   @Override
   public void gotoActionPerformed(AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.symbol");
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     final GotoSymbolModel2 model = new GotoSymbolModel2(project);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     showNavigationPopup(e, model, new GotoActionCallback<Language>() {

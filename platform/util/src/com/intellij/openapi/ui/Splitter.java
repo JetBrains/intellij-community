@@ -17,6 +17,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.UIBundle;
@@ -33,6 +34,7 @@ import java.awt.event.MouseEvent;
 public class Splitter extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.Splitter");
   @NonNls public static final String PROP_PROPORTION = "proportion";
+  @NonNls public static final String PROP_ORIENTATION = "orientation";
 
   private int myDividerWidth;
   /**
@@ -123,6 +125,10 @@ public class Splitter extends JPanel {
 
   public void setResizeEnabled(final boolean value) {
     myDivider.setResizeEnabled(value);
+  }
+
+  public void setAllowSwitchOrientationByMouseClick(boolean enabled) {
+    myDivider.setSwitchOrientationEnabled(enabled);
   }
 
   public boolean isShowDividerIcon() {
@@ -403,8 +409,10 @@ public class Splitter extends JPanel {
    * @param verticalSplit <code>true</code> means that splitter will have vertical split
    */
   public void setOrientation(boolean verticalSplit) {
+    if (myVerticalSplit == verticalSplit) return;
     myVerticalSplit = verticalSplit;
     myDivider.setOrientation(verticalSplit);
+    firePropertyChange(PROP_ORIENTATION, !myVerticalSplit, myVerticalSplit);
     revalidate();
     repaint();
   }
@@ -470,11 +478,13 @@ public class Splitter extends JPanel {
 
   public class Divider extends JPanel {
     private boolean myResizeEnabled;
+    private boolean mySwitchOrientationEnabled;
     protected Point myPoint;
 
     public Divider() {
       super(new GridBagLayout());
       myResizeEnabled = true;
+      mySwitchOrientationEnabled = false;
       setFocusable(false);
       enableEvents(MouseEvent.MOUSE_EVENT_MASK | MouseEvent.MOUSE_MOTION_EVENT_MASK);
       //setOpaque(false);
@@ -604,13 +614,14 @@ public class Splitter extends JPanel {
 
     protected void processMouseEvent(MouseEvent e) {
       super.processMouseEvent(e);
-      if (!myResizeEnabled) return;
-      switch (e.getID()) {
-        case MouseEvent.MOUSE_CLICKED: {
-          if (e.getClickCount() == 2) {
-            Splitter.this.setProportion(.5f);
-          }
-          break;
+      if (e.getID() == MouseEvent.MOUSE_CLICKED) {
+        if (mySwitchOrientationEnabled
+            && e.getClickCount() == 1
+            && SwingUtilities.isLeftMouseButton(e) && (SystemInfo.isMac ? e.isMetaDown() : e.isControlDown())) {
+          Splitter.this.setOrientation(!Splitter.this.getOrientation());
+        }
+        if (myResizeEnabled && e.getClickCount() == 2) {
+          Splitter.this.setProportion(.5f);
         }
       }
     }
@@ -625,6 +636,10 @@ public class Splitter extends JPanel {
                   Cursor.getPredefinedCursor(Cursor.N_RESIZE_CURSOR) :
                   Cursor.getPredefinedCursor(Cursor.W_RESIZE_CURSOR));
       }
+    }
+
+    public void setSwitchOrientationEnabled(boolean switchOrientationEnabled) {
+      mySwitchOrientationEnabled = switchOrientationEnabled;
     }
   }
 }

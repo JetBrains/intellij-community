@@ -69,14 +69,14 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
 
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;
     }
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     if (editor == null && element == null) {
       presentation.setEnabled(false);
       return;
@@ -119,9 +119,9 @@ public class ShowQuickDocInfoAction extends BaseCodeInsightAction implements Hin
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
 
     if (project != null && editor != null) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CODEASSISTS_QUICKJAVADOC_FEATURE);

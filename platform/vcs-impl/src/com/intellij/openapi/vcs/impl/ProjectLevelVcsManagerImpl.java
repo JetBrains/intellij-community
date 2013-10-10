@@ -49,7 +49,7 @@ import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vcs.update.UpdatedFilesListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -114,7 +114,6 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   private final VcsHistoryCache myVcsHistoryCache;
   private final ContentRevisionCache myContentRevisionCache;
   private MessageBusConnection myConnect;
-  private VcsListener myVcsListener;
   private final FileIndexFacade myExcludedIndex;
   private final VcsFileListenerContextHelper myVcsFileListenerContextHelper;
   private final VcsAnnotationLocalChangesListenerImpl myAnnotationLocalChangesListener;
@@ -141,7 +140,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     myContentRevisionCache = new ContentRevisionCache();
     myConnect = myMessageBus.connect();
     myVcsFileListenerContextHelper = VcsFileListenerContextHelper.getInstance(myProject);
-    myVcsListener = new VcsListener() {
+    VcsListener vcsListener = new VcsListener() {
       @Override
       public void directoryMappingChanged() {
         myVcsHistoryCache.clear();
@@ -149,8 +148,8 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       }
     };
     myExcludedIndex = excludedFileIndex;
-    myConnect.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, myVcsListener);
-    myConnect.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, myVcsListener);
+    myConnect.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, vcsListener);
+    myConnect.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED_IN_PLUGIN, vcsListener);
     myConnect.subscribe(UpdatedFilesListener.UPDATED_FILES, new UpdatedFilesListener() {
       @Override
       public void consume(Set<String> strings) {
@@ -504,7 +503,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   public void setAutoDirectoryMapping(String path, String activeVcsName) {
     final List<VirtualFile> defaultRoots = myMappings.getDefaultRoots();
-    if (defaultRoots.size() == 1 && "".equals(myMappings.haveDefaultMapping())) {
+    if (defaultRoots.size() == 1 && StringUtil.isEmpty(myMappings.haveDefaultMapping())) {
       myMappings.removeDirectoryMapping(new VcsDirectoryMapping("", ""));
     }
     myMappings.setMapping(path, activeVcsName);
@@ -616,7 +615,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
     for (AbstractVcs vcs : vcses) {
       Collections.addAll(vFiles, getRootsUnderVcs(vcs));
     }
-    return VfsUtil.toVirtualFileArray(vFiles);
+    return VfsUtilCore.toVirtualFileArray(vFiles);
   }
 
   @NotNull
@@ -796,7 +795,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
       final VirtualFile baseDir = myProject.getBaseDir();
       if (baseDir == null) return false;
       final VirtualFile ideaDir = baseDir.findChild(Project.DIRECTORY_STORE_FOLDER);
-      return ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory() && VfsUtil.isAncestor(ideaDir, file, false);
+      return ideaDir != null && ideaDir.isValid() && ideaDir.isDirectory() && VfsUtilCore.isAncestor(ideaDir, file, false);
     }
     return false;
   }
@@ -810,7 +809,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
   public static List<VirtualFile> getRootsUnder(final List<VirtualFile> roots, final VirtualFile underWhat) {
     final List<VirtualFile> result = new ArrayList<VirtualFile>(roots.size());
     for (VirtualFile root : roots) {
-      if (VfsUtil.isAncestor(underWhat, root, false)) {
+      if (VfsUtilCore.isAncestor(underWhat, root, false)) {
         result.add(root);
       }
     }

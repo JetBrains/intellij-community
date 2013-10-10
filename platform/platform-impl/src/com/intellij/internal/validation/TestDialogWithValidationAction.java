@@ -17,7 +17,7 @@ package com.intellij.internal.validation;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 
 /**
@@ -26,7 +26,7 @@ import com.intellij.openapi.project.Project;
 public class TestDialogWithValidationAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    final Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project != null) {
       new ValidationTest(project).show();
     }

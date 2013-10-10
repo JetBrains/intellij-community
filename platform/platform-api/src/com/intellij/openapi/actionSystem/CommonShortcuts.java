@@ -142,6 +142,10 @@ public class CommonShortcuts {
     return shortcutsById(IdeActions.ACTION_RECENT_FILES);
   }
 
+  public static ShortcutSet getDelete() {
+    return shortcutsById(IdeActions.ACTION_DELETE);
+  }
+
   private static CustomShortcutSet shortcutsById(String actionId) {
     if (ApplicationManager.getApplication() == null) return new CustomShortcutSet(Shortcut.EMPTY_ARRAY);
 

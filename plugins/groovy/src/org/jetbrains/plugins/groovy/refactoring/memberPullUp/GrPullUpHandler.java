@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.memberPullUp;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,7 +30,6 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
 import com.intellij.refactoring.lang.ElementsHandler;
-import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
@@ -111,7 +111,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
   }
 
   private void invokeImpl(Project project, DataContext dataContext, GrTypeDefinition aClass, PsiElement aMember) {
-    final Editor editor = dataContext != null ? PlatformDataKeys.EDITOR.getData(dataContext) : null;
+    final Editor editor = dataContext != null ? CommonDataKeys.EDITOR.getData(dataContext) : null;
     if (aClass == null) {
       String message =
         RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("is.not.supported.in.the.current.context", REFACTORING_NAME));
@@ -168,8 +168,7 @@ public class GrPullUpHandler implements RefactoringActionHandler, GrPullUpDialog
       public void run() {
         final PsiDirectory targetDirectory = superClass.getContainingFile().getContainingDirectory();
         final PsiPackage targetPackage = targetDirectory != null ? JavaDirectoryService.getInstance().getPackage(targetDirectory) : null;
-        conflicts.putAllValues(PullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, targetPackage, targetDirectory,
-                                                                  dialog.getContainmentVerifier()));
+        conflicts.putAllValues(GrPullUpConflictsUtil.checkConflicts(infos, mySubclass, superClass, targetPackage, targetDirectory, dialog.getContainmentVerifier()));
       }
     }, RefactoringBundle.message("detecting.possible.conflicts"), true, myProject)) {
       return false;

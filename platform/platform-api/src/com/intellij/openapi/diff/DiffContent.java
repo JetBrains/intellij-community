@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -123,8 +123,6 @@ public abstract class DiffContent {
   /**
    * Creates DiffContent associated with given file.
    *
-   * @param project
-   * @param file
    * @return content associated with file
    */
   public static FileContent fromFile(Project project, VirtualFile file) {
@@ -134,8 +132,6 @@ public abstract class DiffContent {
   /**
    * Creates DiffContent associated with given document
    *
-   * @param project
-   * @param document
    * @return content associated with document
    */
   public static DocumentContent fromDocument(Project project, Document document) {

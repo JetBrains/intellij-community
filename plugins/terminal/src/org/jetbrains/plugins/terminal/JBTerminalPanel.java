@@ -20,8 +20,11 @@
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.base.Predicate;
+import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
+import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -40,12 +43,14 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.awt.image.ImageObserver;
 import java.io.IOException;
 
-public class JBTerminalPanel extends TerminalPanel {
+public class JBTerminalPanel extends TerminalPanel implements FocusListener {
   public JBTerminalPanel(@NotNull SettingsProvider settingsProvider,
                          @NotNull BackBuffer backBuffer,
                          @NotNull StyleState styleState) {
@@ -60,6 +65,8 @@ public class JBTerminalPanel extends TerminalPanel {
     });
 
     registerKeymapActions(this);
+
+    addFocusListener(this);
   }
 
   private static void registerKeymapActions(final TerminalPanel terminalPanel) {
@@ -163,6 +170,19 @@ public class JBTerminalPanel extends TerminalPanel {
   @Override
   protected BufferedImage createBufferedImage(int width, int height) {
     return UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
+  }
+
+
+  @Override
+  public void focusGained(FocusEvent event) {
+    if (GeneralSettings.getInstance().isAutoSaveIfInactive()) {
+      FileDocumentManager.getInstance().saveAllDocuments();
+    }
+  }
+
+  @Override
+  public void focusLost(FocusEvent event) {
+    JBTerminalStarter.refreshAfterExecution();
   }
 }
 

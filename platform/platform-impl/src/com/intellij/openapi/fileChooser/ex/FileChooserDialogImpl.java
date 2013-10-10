@@ -536,7 +536,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
 
     public Object getData(String dataId) {
-      if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+      if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
         return myFileSystemTree.getSelectedFiles();
       }
       else if (PATH_FIELD.is(dataId)) {

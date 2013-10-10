@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports methods with a <b>boolean</b> return type
-the usages of which always occur in negated context. Since this inspection
-requires global code analysis, it is only available in batch inspection mode.
+Reports methods with a <b>boolean</b> return type, which are only used in a negated context.
+Because this inspection requires global code analysis it is only available for <em>Analyze|Inspect Code</em> or
+<em>Analyze|Run Inspection by Name</em> and it will not report in the editor.
 <p>
 For example:
 <code><pre>

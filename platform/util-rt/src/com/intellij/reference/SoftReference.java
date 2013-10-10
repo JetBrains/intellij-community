@@ -48,6 +48,6 @@ public class SoftReference<T> extends java.lang.ref.SoftReference<T> {
 
   @Nullable
   public static <T> T dereference(@Nullable Reference<T> ref) {
-    return ref != null ? ref.get() : null;
+    return ref == null ? null : ref.get();
   }
 }

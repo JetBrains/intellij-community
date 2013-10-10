@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffManager;
@@ -69,9 +70,9 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.actions.CompareWithBranchAction");
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     assert project != null;
-    final VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
 
     SelectBranchPopup.show(project, virtualFile, new SelectBranchPopup.BranchSelectedCallback() {
       public void branchSelected(final Project project, final SvnBranchConfigurationNew configuration, final String url, final long revision) {
@@ -82,8 +83,8 @@ public class CompareWithBranchAction extends AnAction implements DumbAware {
 
   @Override
   public void update(final AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
-    VirtualFile virtualFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    Project project = e.getData(CommonDataKeys.PROJECT);
+    VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     e.getPresentation().setEnabled(isEnabled(project, virtualFile));
   }
 

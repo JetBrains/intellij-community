@@ -43,7 +43,7 @@ public class CompileAction extends CompileActionBase {
       CompilerManager.getInstance(project).compile(module, null);
     }
     else {
-      VirtualFile[] files = getCompilableFiles(project, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
+      VirtualFile[] files = getCompilableFiles(project, CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
       if (files.length > 0) {
         CompilerManager.getInstance(project).compile(files, null);
       }
@@ -62,7 +62,7 @@ public class CompileAction extends CompileActionBase {
     presentation.setText(ActionsBundle.actionText(IdeActions.ACTION_COMPILE));
     presentation.setVisible(true);
 
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;
@@ -71,7 +71,7 @@ public class CompileAction extends CompileActionBase {
     CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
     final Module module = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
 
-    final VirtualFile[] files = getCompilableFiles(project, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
+    final VirtualFile[] files = getCompilableFiles(project, CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
     if (module == null && files.length == 0) {
       presentation.setEnabled(false);
       presentation.setVisible(!ActionPlaces.isPopupPlace(event.getPlace()));
@@ -91,7 +91,7 @@ public class CompileAction extends CompileActionBase {
         }
       }
       else {
-        PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+        PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
         if (element instanceof PsiPackage) {
           aPackage = (PsiPackage)element;
         }

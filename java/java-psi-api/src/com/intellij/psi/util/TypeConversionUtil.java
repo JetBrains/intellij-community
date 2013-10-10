@@ -479,14 +479,24 @@ public class TypeConversionUtil {
       }
       else {
         if (isPrimitiveAndNotNull(ltype)) {
-          return rtype instanceof PsiClassType &&
-                 ((PsiClassType)rtype).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_5) &&
-                 areTypesConvertible(ltype, rtype);
+          if (rtype instanceof PsiClassType) {
+            final LanguageLevel languageLevel = ((PsiClassType)rtype).getLanguageLevel();
+            if (languageLevel.isAtLeast(LanguageLevel.JDK_1_5) &&
+                !languageLevel.isAtLeast(LanguageLevel.JDK_1_8) &&
+                areTypesConvertible(ltype, rtype)) {
+              return true;
+            }
+          }
+          return false;
         }
         if (isPrimitiveAndNotNull(rtype)) {
-          return ltype instanceof PsiClassType &&
-                 ((PsiClassType)ltype).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_7) &&
-                 areTypesConvertible(rtype, ltype);
+          if (ltype instanceof PsiClassType) {
+            final LanguageLevel level = ((PsiClassType)ltype).getLanguageLevel();
+            if (level.isAtLeast(LanguageLevel.JDK_1_7) && !level.isAtLeast(LanguageLevel.JDK_1_8) && areTypesConvertible(rtype, ltype)) {
+              return true;
+            }
+          }
+          return false;
         }
         isApplicable = areTypesConvertible(ltype, rtype) || areTypesConvertible(rtype, ltype);
       }
@@ -1047,6 +1057,7 @@ public class TypeConversionUtil {
       for (PsiClass aClass : visited) {
         msg.append("  each: " + classInfo(aClass));
       }
+      msg.append("isInheritor: " + InheritanceUtil.isInheritorOrSelf(derivedClass, superClass, true) + " " + derivedClass.isInheritor(superClass, true));
       msg.append("hierarchy:\n");
       InheritanceUtil.processSupers(derivedClass, true, new Processor<PsiClass>() {
         @Override

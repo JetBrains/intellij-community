@@ -18,9 +18,8 @@ import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntProcedure;
-import org.gradle.tooling.*;
+import org.gradle.tooling.ModelBuilder;
+import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleTask;
 import org.gradle.tooling.model.idea.*;
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
 import org.jetbrains.plugins.gradle.settings.ClassHolder;
-import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -56,7 +54,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   @Override
   public DataNode<ProjectData> resolveProjectInfo(@NotNull final ExternalSystemTaskId id,
                                                   @NotNull final String projectPath,
-                                                  final boolean downloadLibraries,
+                                                  final boolean isPreviewMode,
                                                   @Nullable final GradleExecutionSettings settings,
                                                   @NotNull final ExternalSystemTaskNotificationListener listener)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException
@@ -82,7 +80,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         myCachedExtensions = Pair.create(key, extensions);
       }
       for (GradleProjectResolverExtension extension : myCachedExtensions.second) {
-        DataNode<ProjectData> result = extension.resolveProjectInfo(id, projectPath, downloadLibraries, settings, listener);
+        DataNode<ProjectData> result = extension.resolveProjectInfo(id, projectPath, isPreviewMode, settings, listener);
         if (result != null) {
           return result;
         }
@@ -92,7 +90,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     return myHelper.execute(projectPath, settings, new Function<ProjectConnection, DataNode<ProjectData>>() {
       @Override
       public DataNode<ProjectData> fun(ProjectConnection connection) {
-        return doResolveProjectInfo(id, projectPath, settings, connection, listener, downloadLibraries);
+        return doResolveProjectInfo(id, projectPath, settings, connection, listener, isPreviewMode);
       }
     });
   }
@@ -103,10 +101,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                                      @Nullable GradleExecutionSettings settings,
                                                      @NotNull ProjectConnection connection,
                                                      @NotNull ExternalSystemTaskNotificationListener listener,
-                                                     boolean downloadLibraries)
-    throws IllegalArgumentException, IllegalStateException
-  {
-    ModelBuilder<? extends IdeaProject> modelBuilder = myHelper.getModelBuilder(id, settings, connection, listener, downloadLibraries);
+                                                     boolean isPreviewMode) throws IllegalArgumentException, IllegalStateException {
+    ModelBuilder<? extends IdeaProject> modelBuilder = myHelper.getModelBuilder(
+      isPreviewMode ? BasicIdeaProject.class : IdeaProject.class, id, settings, connection, listener, Collections.<String>emptyList());
     IdeaProject project = modelBuilder.get();
     DataNode<ProjectData> result = populateProject(project, projectPath);
 

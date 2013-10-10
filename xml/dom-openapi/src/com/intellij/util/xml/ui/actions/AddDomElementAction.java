@@ -115,7 +115,7 @@ public abstract class AddDomElementAction extends AnAction {
 
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    Project project = e == null ? null : PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = e == null ? null : CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return AnAction.EMPTY_ARRAY;
 
     DomCollectionChildDescription[] descriptions = getDomCollectionChildDescriptions(e);

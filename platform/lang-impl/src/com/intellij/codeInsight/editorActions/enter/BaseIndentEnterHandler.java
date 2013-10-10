@@ -17,6 +17,7 @@ package com.intellij.codeInsight.editorActions.enter;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
@@ -78,7 +79,7 @@ public class BaseIndentEnterHandler extends EnterHandlerDelegateAdapter {
     @NotNull final DataContext dataContext,
     final EditorActionHandler originalHandler)
   {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return Result.Continue;
     }

@@ -17,6 +17,7 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +51,7 @@ import java.io.IOException;
 import java.util.*;
 
 public abstract class ModuleBuilder extends AbstractModuleBuilder {
-  private static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleBuilder");
+  public static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleBuilder");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ModuleBuilder");
   protected Sdk myJdk;
@@ -379,6 +380,11 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
   /** @deprecated will be removed */
   public void setAvailableFrameworks(Map<String, Boolean> availableFrameworks) {
     myAvailableFrameworks = availableFrameworks;
+  }
+
+  @NotNull
+  public FrameworkRole getDefaultAcceptableRole() {
+    return getModuleType().getDefaultAcceptableRole();
   }
 
   public static abstract class ModuleConfigurationUpdater {

@@ -17,6 +17,7 @@ package com.intellij.lang.ant.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.lang.ant.dom.AntDomFileDescription;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -57,7 +58,7 @@ public final class AntRenameHandler extends PsiElementRenameHandler {
 
   @Nullable 
   private static PsiElement[] getElements(DataContext dataContext) {
-    final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
+    final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     if (!(psiFile instanceof XmlFile && AntDomFileDescription.isAntFile((XmlFile)psiFile))) {
       return null;
     }

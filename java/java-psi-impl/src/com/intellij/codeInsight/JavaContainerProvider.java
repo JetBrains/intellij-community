@@ -27,13 +27,14 @@ import org.jetbrains.annotations.NotNull;
 public class JavaContainerProvider implements ContainerProvider {
   @Override
   public PsiElement getContainer(@NotNull PsiElement item) {
-    if (item instanceof PsiTypeParameter) return item.getParent().getParent();
-    if (item instanceof PsiClass) {
-      final PsiClass containingClass = ((PsiClass)item).getContainingClass();
+    if (item instanceof PsiTypeParameter) {
+      PsiElement parent = item.getParent();
+      return parent == null ? null : parent.getParent();
+    }
+    if (item instanceof PsiMember) {
+      PsiClass containingClass = ((PsiMember)item).getContainingClass();
       return containingClass == null ? item.getContainingFile() : containingClass;
     }
-    if (item instanceof PsiMember) return ((PsiMember)item).getContainingClass();
-
     return null;
   }
 }

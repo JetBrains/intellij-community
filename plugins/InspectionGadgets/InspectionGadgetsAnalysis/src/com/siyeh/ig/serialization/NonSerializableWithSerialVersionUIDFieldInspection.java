@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,18 +21,16 @@ import com.intellij.psi.PsiAnonymousClass;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.MakeSerializableFix;
+import com.siyeh.ig.fixes.DelegatingFixFactory;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class NonSerializableWithSerialVersionUIDFieldInspection
-  extends BaseInspection {
+public class NonSerializableWithSerialVersionUIDFieldInspection extends BaseInspection {
 
   @Override
   @NotNull
@@ -43,8 +41,7 @@ public class NonSerializableWithSerialVersionUIDFieldInspection
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.serializable.with.serialversionuid.display.name");
+    return InspectionGadgetsBundle.message("non.serializable.with.serialversionuid.display.name");
   }
 
   @Override
@@ -73,20 +70,18 @@ public class NonSerializableWithSerialVersionUIDFieldInspection
   @NotNull
   protected InspectionGadgetsFix[] buildFixes(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
-    if (aClass.isAnnotationType() || aClass.isInterface() ||
-        aClass instanceof PsiAnonymousClass) {
+    if (aClass.isAnnotationType() || aClass.isInterface() || aClass instanceof PsiAnonymousClass) {
       return new InspectionGadgetsFix[]{new RemoveSerialVersionUIDFix()};
     }
-    return new InspectionGadgetsFix[]{new MakeSerializableFix(),
-      new RemoveSerialVersionUIDFix()};
+    return new InspectionGadgetsFix[]{DelegatingFixFactory.createMakeSerializableFix(aClass), new RemoveSerialVersionUIDFix()};
   }
 
   private static class RemoveSerialVersionUIDFix extends InspectionGadgetsFix {
-       @Override
-  @NotNull
-  public String getFamilyName() {
-    return getName();
-  }
+    @Override
+    @NotNull
+    public String getFamilyName() {
+      return getName();
+    }
 
     @Override
     @NotNull
@@ -96,12 +91,10 @@ public class NonSerializableWithSerialVersionUIDFieldInspection
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
+    public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement nameElement = descriptor.getPsiElement();
       final PsiClass aClass = (PsiClass)nameElement.getParent();
-      final PsiField field = aClass.findFieldByName(
-        HardcodedMethodConstants.SERIAL_VERSION_UID, false);
+      final PsiField field = aClass.findFieldByName(HardcodedMethodConstants.SERIAL_VERSION_UID, false);
       if (field == null) {
         return;
       }
@@ -114,14 +107,11 @@ public class NonSerializableWithSerialVersionUIDFieldInspection
     return new NonSerializableWithSerialVersionUIDVisitor();
   }
 
-  private static class NonSerializableWithSerialVersionUIDVisitor
-    extends BaseInspectionVisitor {
+  private static class NonSerializableWithSerialVersionUIDVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so it doesn't drill down
-      final PsiField field = aClass.findFieldByName(
-        HardcodedMethodConstants.SERIAL_VERSION_UID, false);
+      final PsiField field = aClass.findFieldByName(HardcodedMethodConstants.SERIAL_VERSION_UID, false);
       if (field == null) {
         return;
       }

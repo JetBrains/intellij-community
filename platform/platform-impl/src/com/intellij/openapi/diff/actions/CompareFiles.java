@@ -42,10 +42,10 @@ public class CompareFiles extends BaseDiffAction {
   }
   
   private static boolean isAvailable(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     DiffRequest diffRequest = e.getData(DIFF_REQUEST);
     if (diffRequest == null) {
-      final VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+      final VirtualFile[] virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
       if (virtualFiles == null || virtualFiles.length != 2) {
         return false;
       }
@@ -58,12 +58,12 @@ public class CompareFiles extends BaseDiffAction {
   }
 
   protected DiffRequest getDiffData(DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final DiffRequest diffRequest = DIFF_REQUEST.getData(dataContext);
     if (diffRequest != null) {
       return diffRequest;
     }
-    final VirtualFile[] data = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    final VirtualFile[] data = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
     if (data == null || data.length != 2) {
       return null;
     }

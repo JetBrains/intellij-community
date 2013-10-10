@@ -154,7 +154,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
           final String[] lines = StringUtil.splitByLines(packageInfoText);
           boolean appended = false;
           for (String line : lines) {
-            if (!appended && line.length() == 0) {
+            if (!appended && line.isEmpty()) {
               // skip empty lines at the beginning
               continue;
             }
@@ -163,7 +163,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
           }
           commentText.append("*/");
           final PsiDocComment comment = elementFactory.createDocCommentFromText(commentText.toString());
-          if (aPackage.length() > 0) {
+          if (!aPackage.isEmpty()) {
             final PsiPackageStatement packageStatement = elementFactory.createPackageStatement(aPackage);
             final PsiElement addedElement = file.add(packageStatement);
             file.addBefore(comment, addedElement);
@@ -211,7 +211,7 @@ public class PackageDotHtmlMayBePackageInfoInspection extends BaseInspection {
         }
         final HtmlTag htmlTag = (HtmlTag)child;
         @NonNls final String name = htmlTag.getName();
-        if ("body".equals(name)) {
+        if ("body".equalsIgnoreCase(name)) {
           final XmlTagValue value = htmlTag.getValue();
           return value.getText();
         }

@@ -18,6 +18,7 @@ package com.intellij.ide.hierarchy.call;
 import com.intellij.ide.hierarchy.HierarchyProvider;
 import com.intellij.ide.hierarchy.HierarchyBrowser;
 import com.intellij.ide.hierarchy.CallHierarchyBrowserBase;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -36,7 +37,7 @@ public class JavaCallHierarchyProvider implements HierarchyProvider {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
 
-    final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     return PsiTreeUtil.getParentOfType(element, PsiMethod.class, false);
   }
 

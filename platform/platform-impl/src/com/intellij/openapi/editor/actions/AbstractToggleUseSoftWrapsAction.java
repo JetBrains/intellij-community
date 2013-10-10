@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
@@ -75,6 +76,6 @@ public abstract class AbstractToggleUseSoftWrapsAction extends ToggleAction {
 
   @Nullable
   protected Editor getEditor(AnActionEvent e) {
-    return e.getData(PlatformDataKeys.EDITOR);
+    return e.getData(CommonDataKeys.EDITOR);
   }
 }

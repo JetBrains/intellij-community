@@ -17,6 +17,7 @@ package com.intellij.uiDesigner;
 
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.psi.PropertiesFile;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.CommandProcessor;
@@ -598,7 +599,7 @@ public final class FormEditingUtil {
 
   @Nullable
   public static GuiEditor getActiveEditor(final DataContext context) {
-    Project project = PlatformDataKeys.PROJECT.getData(context);
+    Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) {
       return null;
     }

@@ -71,7 +71,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
 
   private static boolean isSimplePropertyAccessor(PsiMethod method) {
     PsiCodeBlock body = method.getBody();
-    if (body == null) return false;
+    if (body == null || body.getLBrace() == null || body.getRBrace() == null) return false;
     PsiStatement[] statements = body.getStatements();
     if (statements.length == 0) return false;
     PsiStatement statement = statements[0];
@@ -515,7 +515,10 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
 
       if (child instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)child;
-        addToFold(list, method, document, true);
+        boolean accessor = isSimplePropertyAccessor(method) && addInlineAccessorFolding(list, method);
+        if (!accessor) {
+          addToFold(list, method, document, true);
+        }
         addAnnotationsToFold(method.getModifierList(), list, document);
 
         if (foldJavaDocs) {
@@ -526,7 +529,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
         }
 
         PsiCodeBlock body = method.getBody();
-        if (body != null) {
+        if (body != null && !accessor) {
           addCodeBlockFolds(body, list, processedComments, document, quick);
         }
       }
@@ -560,6 +563,48 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
     }
   }
 
+  private static boolean addInlineAccessorFolding(List<FoldingDescriptor> descriptorList, PsiMethod accessor) {
+    if (!JavaCodeFoldingSettings.getInstance().isCollapseAccessors()) {
+      return false;
+    }
+
+    PsiCodeBlock body = accessor.getBody();
+    assert body != null;
+    if (body.getStatements().length > 1) {
+      return false;
+    }
+
+    PsiStatement statement = body.getStatements()[0];
+    if (statement.textContains('\n')) {
+      return false;
+    }
+
+    FoldingGroup group = FoldingGroup.newGroup("simple property accessor");
+    int paramListEnd = accessor.getParameterList().getTextRange().getEndOffset();
+    int statementStart = statement.getTextRange().getStartOffset();
+    PsiJavaToken lBrace = body.getLBrace();
+    assert lBrace != null;
+    descriptorList.add(new FoldingDescriptor(lBrace.getNode(), new TextRange(paramListEnd, statementStart), group) {
+      @Nullable
+      @Override
+      public String getPlaceholderText() {
+        return " { ";
+      }
+    });
+
+    int statementEnd = statement.getTextRange().getEndOffset();
+    PsiJavaToken rBrace = body.getRBrace();
+    assert rBrace != null;
+    descriptorList.add(new FoldingDescriptor(rBrace.getNode(), new TextRange(statementEnd, body.getTextRange().getEndOffset()), group) {
+      @Nullable
+      @Override
+      public String getPlaceholderText() {
+        return " }";
+      }
+    });
+    return true;
+  }
+
   @Override
   protected String getLanguagePlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
     return getPlaceholderText(SourceTreeToPsiMap.treeElementToPsi(node));
@@ -569,8 +614,14 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   protected boolean isRegionCollapsedByDefault(@NotNull ASTNode node) {
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(node);
     JavaCodeFoldingSettings settings = JavaCodeFoldingSettings.getInstance();
-    if (element instanceof PsiNewExpression || element instanceof PsiJavaToken) {
+    if (element instanceof PsiNewExpression || element instanceof PsiJavaToken && 
+                                               element.getParent() instanceof PsiAnonymousClass) {
       return settings.isCollapseLambdas();
+    }
+    if (element instanceof PsiJavaToken &&
+        element.getParent() instanceof PsiCodeBlock &&
+        element.getParent().getParent() instanceof PsiMethod) {
+      return settings.isCollapseAccessors();
     }
     if (element instanceof PsiReferenceParameterList) {
       return settings.isCollapseConstructorGenericParameters();

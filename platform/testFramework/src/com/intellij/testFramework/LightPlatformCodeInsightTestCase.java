@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -292,7 +292,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param filePath - relative path from %IDEA_INSTALLATION_HOME%/testData/
    * @throws Exception
    */
-  protected void checkResultByFile(@NonNls @NotNull String filePath) {
+  protected void checkResultByFile(@TestDataFile @NonNls @NotNull String filePath) {
     checkResultByFile(null, filePath, false);
   }
 
@@ -304,7 +304,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
    * @param ignoreTrailingSpaces - whether trailing spaces in editor in data file should be stripped prior to comparing.
    * @throws Exception
    */
-  protected void checkResultByFile(@Nullable String message, @NotNull String filePath, final boolean ignoreTrailingSpaces) {
+  protected void checkResultByFile(@Nullable String message, @TestDataFile @NotNull String filePath, final boolean ignoreTrailingSpaces) {
     bringRealEditorBack();
 
     getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
@@ -465,16 +465,16 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
 
   @Override
   public Object getData(String dataId) {
-    if (PlatformDataKeys.EDITOR.is(dataId)) {
+    if (CommonDataKeys.EDITOR.is(dataId)) {
       return myEditor;
     }
-    if (dataId.equals(AnActionEvent.injectedId(PlatformDataKeys.EDITOR.getName()))) {
+    if (dataId.equals(AnActionEvent.injectedId(CommonDataKeys.EDITOR.getName()))) {
       return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(getEditor(), getFile());
     }
-    if (LangDataKeys.PSI_FILE.is(dataId)) {
+    if (CommonDataKeys.PSI_FILE.is(dataId)) {
       return myFile;
     }
-    if (dataId.equals(AnActionEvent.injectedId(LangDataKeys.PSI_FILE.getName()))) {
+    if (dataId.equals(AnActionEvent.injectedId(CommonDataKeys.PSI_FILE.getName()))) {
       Editor editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(getEditor(), getFile());
       return editor instanceof EditorWindow ? ((EditorWindow)editor).getInjectedFile() : getFile();
     }
@@ -618,16 +618,16 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
       @Override
       @Nullable
       public Object getData(@NonNls String dataId) {
-        if (PlatformDataKeys.EDITOR.is(dataId)) {
+        if (CommonDataKeys.EDITOR.is(dataId)) {
           return getEditor();
         }
-        if (PlatformDataKeys.PROJECT.is(dataId)) {
+        if (CommonDataKeys.PROJECT.is(dataId)) {
           return getProject();
         }
-        if (LangDataKeys.PSI_FILE.is(dataId)) {
+        if (CommonDataKeys.PSI_FILE.is(dataId)) {
           return getFile();
         }
-        if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+        if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
           PsiFile file = getFile();
           if (file == null) return null;
           Editor editor = getEditor();

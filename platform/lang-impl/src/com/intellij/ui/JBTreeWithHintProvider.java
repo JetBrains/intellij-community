@@ -17,6 +17,7 @@ package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.psi.PsiElement;
@@ -69,7 +70,7 @@ public class JBTreeWithHintProvider extends DnDAwareTree {
   @Nullable
   protected PsiElement getPsiElementForHint(final Object selectedValue) {
     // default implementation
-    return LangDataKeys.PSI_ELEMENT.getData(DataManager.getInstance().getDataContext(this));
+    return CommonDataKeys.PSI_ELEMENT.getData(DataManager.getInstance().getDataContext(this));
   }
 
   public void registerHint(final JBPopup hint) {

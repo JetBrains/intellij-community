@@ -69,7 +69,7 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
   @Override
   public void update(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     final Presentation presentation = e.getPresentation();
     final Change[] data = VcsDataKeys.CHANGES.getData(dataContext);
@@ -123,7 +123,7 @@ public abstract class AbstractShowPropertiesDiffAction extends AnAction implemen
 
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final Change[] changes = e.getData(getChangesKey());
 
     if (! checkThatChangesAreUnderSvn(changes)) {

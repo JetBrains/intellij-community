@@ -152,8 +152,8 @@ public class NodeDescriptorFactoryImpl implements NodeDescriptorFactory {
     return getDescriptor(parent, new LocalData((LocalVariableProxyImpl)local));
   }
 
-  public ArgumentValueDescriptorImpl getArgumentValueDescriptor(NodeDescriptor parent, int index, Value value) {
-    return getDescriptor(parent, new ArgValueData(index, value));
+  public ArgumentValueDescriptorImpl getArgumentValueDescriptor(NodeDescriptor parent, int index, Value value, final String name) {
+    return getDescriptor(parent, new ArgValueData(index, value, name));
   }
 
   public StackFrameDescriptorImpl getStackFrameDescriptor(NodeDescriptorImpl parent, StackFrameProxyImpl frameProxy) {

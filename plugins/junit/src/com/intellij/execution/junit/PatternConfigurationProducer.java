@@ -19,9 +19,9 @@ package com.intellij.execution.junit;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -66,8 +66,8 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
     });
   }
 
-  static Set<PsiMember> collectTestMembers(PsiElement[] psiElements) {
-    final Set<PsiMember> foundMembers = new LinkedHashSet<PsiMember>();
+  static Set<PsiElement> collectTestMembers(PsiElement[] psiElements) {
+    final Set<PsiElement> foundMembers = new LinkedHashSet<PsiElement>();
     for (PsiElement psiElement : psiElements) {
       if (psiElement instanceof PsiClassOwner) {
         final PsiClass[] classes = ((PsiClassOwner)psiElement).getClasses();
@@ -78,11 +78,16 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
         }
       } else if (psiElement instanceof PsiClass) {
         if (JUnitUtil.isTestClass((PsiClass)psiElement)) {
-          foundMembers.add((PsiClass)psiElement);
+          foundMembers.add(psiElement);
         }
       } else if (psiElement instanceof PsiMethod) {
         if (JUnitUtil.getTestMethod(psiElement) != null) {
-          foundMembers.add((PsiMethod)psiElement);
+          foundMembers.add(psiElement);
+        }
+      } else if (psiElement instanceof PsiDirectory) {
+        final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage((PsiDirectory)psiElement);
+        if (aPackage != null) {
+          foundMembers.add(aPackage);
         }
       }
     }
@@ -102,19 +107,19 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
     final DataContext dataContext = context.getDataContext();
     PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (elements != null) {
-      for (PsiMember psiClass : collectTestMembers(elements)) {
+      for (PsiElement psiClass : collectTestMembers(elements)) {
         classes.add(getQName(psiClass));
       }
       return elements;
     } else {
-      final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+      final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
       if (files != null) {
         final List<PsiFile> psiFiles = new ArrayList<PsiFile>();
         final PsiManager psiManager = PsiManager.getInstance(context.getProject());
         for (VirtualFile file : files) {
           final PsiFile psiFile = psiManager.findFile(file);
           if (psiFile instanceof PsiClassOwner) {
-            for (PsiMember psiMember : collectTestMembers(((PsiClassOwner)psiFile).getClasses())) {
+            for (PsiElement psiMember : collectTestMembers(((PsiClassOwner)psiFile).getClasses())) {
               classes.add(((PsiClass)psiMember).getQualifiedName());
             }
             psiFiles.add(psiFile);
@@ -126,13 +131,17 @@ public class PatternConfigurationProducer extends JUnitConfigurationProducer {
     return null;
   }
 
-  public static String getQName(PsiMember psiMember) {
+  public static String getQName(PsiElement psiMember) {
     if (psiMember instanceof PsiClass) {
       return ((PsiClass)psiMember).getQualifiedName();
     }
-    else {
-      return psiMember.getContainingClass().getQualifiedName() + "," + psiMember.getName();
+    else if (psiMember instanceof PsiMember) {
+      return ((PsiMember)psiMember).getContainingClass().getQualifiedName() + "," + ((PsiMember)psiMember).getName();
+    } else if (psiMember instanceof PsiPackage) {
+      return ((PsiPackage)psiMember).getQualifiedName();
     }
+    assert false;
+    return null;
   }
 
   @Override

@@ -344,7 +344,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
 
   @Override
   public Object getData(String dataId) {
-    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       TreePath path = myTree.getSelectionPath();
       if (path == null) {
         return null;
@@ -368,14 +368,14 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
         return null;
       }
     }
-    else if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
+    else if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
       final PsiFile file = getSelectedFile();
       return file != null ? file.getVirtualFile() : null;
     }
-    else if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+    else if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       return getSelectedElement();
     }
-    else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       PsiFile file = getSelectedFile();
       if (file != null) {
         return new VirtualFile[]{file.getVirtualFile()};

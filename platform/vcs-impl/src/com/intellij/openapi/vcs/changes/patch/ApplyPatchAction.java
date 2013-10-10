@@ -24,6 +24,7 @@ package com.intellij.openapi.vcs.changes.patch;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -69,12 +70,12 @@ public class ApplyPatchAction extends DumbAwareAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.patch.ApplyPatchAction");
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
     if (ChangeListManager.getInstance(project).isFreezedWithNotification("Can not apply patch now")) return;
 
     if (e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP)) {
-      VirtualFile vFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+      VirtualFile vFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
       if (vFile != null && vFile.getFileType() == StdFileTypes.PATCH) {
         showApplyPatch(project, vFile);
         return;
@@ -298,9 +299,9 @@ public class ApplyPatchAction extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (e.getPlace().equals(ActionPlaces.PROJECT_VIEW_POPUP)) {
-      VirtualFile vFile = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+      VirtualFile vFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
       e.getPresentation().setVisible(project != null && vFile != null && vFile.getFileType() == StdFileTypes.PATCH);
     }
     else {

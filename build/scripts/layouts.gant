@@ -139,6 +139,8 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
       }
 
       jar("bootstrap.jar") { module("bootstrap") }
+      
+      jar("jps-launcher.jar") { module("jps-launcher") }
 
       jar("resources.jar") {
         module("colorSchemes")
@@ -658,6 +660,11 @@ def layoutCommunityJps(String home, String target) {
       module("util-rt")
       module("util")
     }
+    
+    jar("jps-launcher.jar") {
+      module("jps-launcher") 
+    }
+    
     jar("jps-model.jar") {
       module("jps-model-api")
       module("jps-model-impl")

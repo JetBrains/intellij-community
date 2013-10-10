@@ -27,6 +27,7 @@ import com.intellij.ide.plugins.PluginManager;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -96,7 +97,7 @@ public class ITNReporter extends ErrorReportSubmitter {
                                final ErrorBean errorBean,
                                final String description) {
     final DataContext dataContext = DataManager.getInstance().getDataContext(parentComponent);
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     final ErrorReportConfigurable errorReportConfigurable = ErrorReportConfigurable.getInstance();
     if (!errorReportConfigurable.KEEP_ITN_PASSWORD &&

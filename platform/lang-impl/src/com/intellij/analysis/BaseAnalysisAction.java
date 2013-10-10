@@ -58,7 +58,7 @@ public abstract class BaseAnalysisAction extends AnAction {
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final boolean dumbMode = project == null || DumbService.getInstance(project).isDumb();
     presentation.setEnabled(!dumbMode && getInspectionScope(dataContext) != null);
   }
@@ -66,7 +66,7 @@ public abstract class BaseAnalysisAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     final Module module = e.getData(LangDataKeys.MODULE);
     if (project == null) {
       return;
@@ -75,7 +75,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     LOG.assertTrue(scope != null);
     final boolean rememberScope = e.getPlace().equals(ActionPlaces.MAIN_MENU);
     final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
-    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     BaseAnalysisActionDialog dlg = new BaseAnalysisActionDialog(AnalysisScopeBundle.message("specify.analysis.scope", myTitle),
                                                                 AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoon),
                                                                 project,
@@ -129,7 +129,7 @@ public abstract class BaseAnalysisAction extends AnAction {
 
   @Nullable
   private AnalysisScope getInspectionScope(@NotNull DataContext dataContext) {
-    if (PlatformDataKeys.PROJECT.getData(dataContext) == null) return null;
+    if (CommonDataKeys.PROJECT.getData(dataContext) == null) return null;
 
     AnalysisScope scope = getInspectionScopeImpl(dataContext);
 
@@ -149,7 +149,7 @@ public abstract class BaseAnalysisAction extends AnAction {
       return analysisScope;
     }
 
-    final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
+    final PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     if (psiFile != null && psiFile.getManager().isInProject(psiFile)) {
       final VirtualFile file = psiFile.getVirtualFile();
       if (file != null && file.isValid() && file.getFileType() instanceof ArchiveFileType && acceptNonProjectDirectories()) {
@@ -164,8 +164,8 @@ public abstract class BaseAnalysisAction extends AnAction {
       return new AnalysisScope(psiFile);
     }
 
-    VirtualFile[] virtualFiles = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    VirtualFile[] virtualFiles = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (virtualFiles != null && project != null) { //analyze on selection
       ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
       if (virtualFiles.length == 1) {

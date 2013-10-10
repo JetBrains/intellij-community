@@ -25,6 +25,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataMan
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -142,7 +143,7 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
                 @Override
                 public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
                 }
-              }, true, true);
+              }, true, ProgressExecutionMode.START_IN_FOREGROUND_ASYNC);
           }
         });
         return panel;
@@ -158,7 +159,7 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
 
   private static void updateDefaultWrapperConfiguration(@NotNull String linkedProjectPath) {
     try {
-      final VirtualFile wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(linkedProjectPath);
+      final File wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(linkedProjectPath);
       if (wrapperPropertiesFile == null) return;
       final WrapperConfiguration wrapperConfiguration = GradleUtil.getWrapperConfiguration(linkedProjectPath);
       if (wrapperConfiguration == null) return;
@@ -176,7 +177,7 @@ public class UseDistributionWithSourcesNotificationProvider extends EditorNotifi
       wrapperProperties.setProperty(WrapperExecutor.ZIP_STORE_BASE_PROPERTY, wrapperConfiguration.getZipBase());
       wrapperProperties.setProperty(WrapperExecutor.ZIP_STORE_PATH_PROPERTY, wrapperConfiguration.getZipPath());
       GUtil.saveProperties(wrapperProperties, new File(wrapperPropertiesFile.getPath()));
-      LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(wrapperPropertiesFile));
+      LocalFileSystem.getInstance().refreshIoFiles(Collections.singletonList(wrapperPropertiesFile));
     }
     catch (Exception e) {
       LOG.error(e);

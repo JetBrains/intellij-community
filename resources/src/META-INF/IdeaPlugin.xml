@@ -96,11 +96,11 @@
     <extensionPoint name="methodImplementor"
                     interface="com.intellij.codeInsight.MethodImplementor"/>
 
-    <extensionPoint name="codeInsight.containerProvider"
-                    interface="com.intellij.codeInsight.ContainerProvider"/>
-
     <extensionPoint name="debugger.codeFragmentFactory"
                     interface="com.intellij.debugger.engine.evaluation.CodeFragmentFactory"/>
+
+    <extensionPoint name="debugger.nodeRenderer"
+                    interface="com.intellij.debugger.ui.tree.render.NodeRenderer"/>
 
     <extensionPoint name="debugger.breakpointFactory"
                     interface="com.intellij.debugger.ui.breakpoints.BreakpointFactory"/>
@@ -542,7 +542,7 @@
                      implementationClass="com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal"/>
     <localInspection language="JAVA" shortName="JavaDoc" bundle="messages.InspectionsBundle" key="inspection.javadoc.display.name"
                      groupKey="group.names.javadoc.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.javaDoc.JavaDocLocalInspection"/>
+                     implementationClass="com.intellij.codeInspection.javaDoc.JavaDocLocalInspection" alternativeId="javadoc"/>
     <localInspection language="JAVA" shortName="JavadocReference" bundle="messages.InspectionsBundle" key="inspection.javadoc.ref.display.name"
                      groupKey="group.names.javadoc.issues" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.javaDoc.JavaDocReferenceInspection"/>
@@ -1441,8 +1441,6 @@
     <psi.referenceContributor language="JAVA" implementation="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceContributor"/>
 
     <writingAccessProvider implementation="com.intellij.refactoring.util.ClsElementWritingAccessProvider"/>
-
-    <welcomeScreen implementation="com.intellij.ide.ui.laf.darcula.DarculaWelcomeScreenProvider"/>
 
     <fileTypeFactory implementation="com.intellij.spi.SPIFileTypeFactory"/>
     <lang.parserDefinition language="SPI" implementationClass="com.intellij.spi.parsing.SPIParserDefinition"/>

@@ -15,11 +15,14 @@
  */
 package com.siyeh.ipp.conditional;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
@@ -28,6 +31,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ReplaceConditionalWithIfIntention extends Intention {
+
+  private static final Logger LOG = Logger.getInstance("#" + ReplaceConditionalWithIfIntention.class.getName());
 
   @Override
   @NotNull
@@ -53,8 +58,8 @@ public class ReplaceConditionalWithIfIntention extends Intention {
     else {
       variable = null;
     }
-    final PsiExpression thenExpression = expression.getThenExpression();
-    final PsiExpression elseExpression = expression.getElseExpression();
+    PsiExpression thenExpression = expression.getThenExpression();
+    PsiExpression elseExpression = expression.getElseExpression();
     final PsiExpression condition = expression.getCondition();
     final PsiExpression strippedCondition = ParenthesesUtils.stripParentheses(condition);
     final StringBuilder newStatement = new StringBuilder();
@@ -67,9 +72,20 @@ public class ReplaceConditionalWithIfIntention extends Intention {
       final String name = variable.getName();
       newStatement.append(name);
       newStatement.append('=');
-      final PsiExpression initializer = variable.getInitializer();
+      PsiExpression initializer = variable.getInitializer();
       if (initializer == null) {
         return;
+      }
+      if (initializer instanceof PsiArrayInitializerExpression) {
+        final int conditionIdx = ArrayUtilRt.find(((PsiArrayInitializerExpression)initializer).getInitializers(), expression);
+        if (conditionIdx >= 0) {
+          initializer = (PsiExpression)initializer.replace(RefactoringUtil.convertInitializerToNormalExpression(initializer, variable.getType()));
+          final PsiArrayInitializerExpression arrayInitializer = ((PsiNewExpression)initializer).getArrayInitializer();
+          LOG.assertTrue(arrayInitializer != null, initializer.getText());
+          expression = (PsiConditionalExpression)arrayInitializer.getInitializers()[conditionIdx];
+          thenExpression = expression.getThenExpression();
+          elseExpression = expression.getElseExpression();
+        }
       }
       appendElementTextWithoutParentheses(initializer, expression, thenExpression, newStatement);
       newStatement.append("; else ");

@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.encapsulateFields;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -98,7 +99,7 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
           else {
             String message = RefactoringBundle.getCannotRefactorMessage(
               RefactoringBundle.message("fields.to.be.refactored.should.belong.to.the.same.class"));
-            Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+            Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
             CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.ENCAPSULATE_FIELDS);
             return;
           }
@@ -109,7 +110,7 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
     LOG.assertTrue(aClass != null);
     final PsiField[] fields = aClass.getFields();
     if (fields.length == 0) {
-      CommonRefactoringUtil.showErrorHint(project, PlatformDataKeys.EDITOR.getData(dataContext), "Class has no fields to encapsulate",
+      CommonRefactoringUtil.showErrorHint(project, CommonDataKeys.EDITOR.getData(dataContext), "Class has no fields to encapsulate",
                                           REFACTORING_NAME, HelpID.ENCAPSULATE_FIELDS);
       return;
     }
@@ -117,7 +118,7 @@ public class EncapsulateFieldsHandler implements RefactoringActionHandler {
     if (aClass.isInterface()) {
       String message = RefactoringBundle.getCannotRefactorMessage(
         RefactoringBundle.message("encapsulate.fields.refactoring.cannot.be.applied.to.interface"));
-      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       CommonRefactoringUtil.showErrorHint(project, editor, message, REFACTORING_NAME, HelpID.ENCAPSULATE_FIELDS);
       return;
     }

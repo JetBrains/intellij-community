@@ -27,6 +27,7 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.PluginPathManager;
@@ -197,7 +198,7 @@ public class ConfigurationsTest {
     
     final MapDataContext dataContext = new MapDataContext();
     
-    dataContext.put(PlatformDataKeys.PROJECT, project);
+    dataContext.put(CommonDataKeys.PROJECT, project);
     dataContext.put(LangDataKeys.MODULE, ModuleUtil.findModuleForPsiElement(psiClass));
     dataContext.put(Location.DATA_KEY, PsiLocation.fromPsiElement(psiClass));
 

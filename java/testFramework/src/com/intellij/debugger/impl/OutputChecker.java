@@ -140,6 +140,17 @@ public class OutputChecker {
         System.out.println("actual:");
         System.out.println(actual);
 
+        final int len = Math.min(expected.length(), actual.length());
+        if (expected.length() != actual.length()) {
+          System.out.println("Text sizes differ: expected " + expected.length() + " but actual: " + actual.length());
+        }
+        if (expected.length() > len) {
+          System.out.println("Rest from expected text is: \"" + expected.substring(len) + "\"");
+        }
+        else if (actual.length() > len) {
+          System.out.println("Rest from actual text is: \"" + actual.substring(len) + "\"");
+        }
+
         Assert.assertEquals(originalText, actual);
       }
     }
@@ -176,6 +187,7 @@ public class OutputChecker {
 
           result = StringUtil.replace(result, "\r\n", "\n");
           result = StringUtil.replace(result, "\r", "\n");
+          result = replaceAdditionalInOutput(result);
           result = StringUtil.replace(result, testJdk.getHomePath(), "!TEST_JDK!", shouldIgnoreCase);
           result = StringUtil.replace(result, myAppPath, "!APP_PATH!", shouldIgnoreCase);
           result = StringUtil.replace(result, myAppPath.replace(File.separatorChar, '/'), "!APP_PATH!", shouldIgnoreCase);
@@ -189,8 +201,6 @@ public class OutputChecker {
           result = StringUtil.replace(result, internalJdkHome, "!JDK_HOME!", shouldIgnoreCase);
           result = StringUtil.replace(result, PathManager.getHomePath(), "!IDEA_HOME!", shouldIgnoreCase);
           result = StringUtil.replace(result, "Process finished with exit code 255", "Process finished with exit code -1");
-
-          result = replaceAdditionalInOutput(result);
 
 //          result = result.replaceAll(" +\n", "\n");
           result = result.replaceAll("!HOST_NAME!:\\d*", "!HOST_NAME!:!HOST_PORT!");

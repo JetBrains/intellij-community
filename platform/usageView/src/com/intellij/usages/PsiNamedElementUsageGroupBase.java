@@ -2,6 +2,7 @@ package com.intellij.usages;
 
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.NavigationItemFileStatus;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -109,8 +110,8 @@ public class PsiNamedElementUsageGroupBase<T extends PsiNamedElement & Navigatio
 
   public void calcData(final DataKey key, final DataSink sink) {
     if (!isValid()) return;
-    if (LangDataKeys.PSI_ELEMENT == key) {
-      sink.put(LangDataKeys.PSI_ELEMENT, getElement());
+    if (CommonDataKeys.PSI_ELEMENT == key) {
+      sink.put(CommonDataKeys.PSI_ELEMENT, getElement());
     }
     if (UsageView.USAGE_INFO_KEY == key) {
       T element = getElement();

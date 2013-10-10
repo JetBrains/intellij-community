@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>MethodCount.java</file>
+    <line>3</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Class with too many methods</problem_class>
+    <description>&lt;code&gt;MethodCount&lt;/code&gt; has too many methods (method count = 6) #loc</description>
+  </problem>
+</problems>

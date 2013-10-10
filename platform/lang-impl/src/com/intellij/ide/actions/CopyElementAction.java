@@ -31,7 +31,7 @@ public class CopyElementAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
@@ -42,7 +42,7 @@ public class CopyElementAction extends AnAction {
         PsiDocumentManager.getInstance(project).commitAllDocuments();
       }}, "", null
     );
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiElement[] elements;
 
     PsiDirectory defaultTargetDirectory;
@@ -71,13 +71,13 @@ public class CopyElementAction extends AnAction {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     presentation.setEnabled(false);
     if (project == null) {
       return;
     }
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor != null) {
       updateForEditor(dataContext, presentation);
     }
@@ -88,13 +88,13 @@ public class CopyElementAction extends AnAction {
   }
 
   protected void updateForEditor(DataContext dataContext, Presentation presentation) {
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) {
       presentation.setVisible(false);
       return;
     }
 
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
 

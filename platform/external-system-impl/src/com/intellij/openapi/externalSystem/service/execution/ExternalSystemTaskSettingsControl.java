@@ -149,9 +149,6 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
       );
     }
     settings.setExternalProjectPath(projectPath);
-    if (!StringUtil.isEmpty(projectPath)) {
-      ExternalSystemApiUtil.storeLastUsedExternalProjectPath(projectPath, myExternalSystemId);
-    }
     settings.setTaskNames(StringUtil.split(myTasksTextField.getText(), " "));
     settings.setVmOptions(myVmOptionsEditor.getText());
     return null;

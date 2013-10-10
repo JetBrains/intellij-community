@@ -70,7 +70,7 @@ public class HgWorkingCopyRevisionsCommand {
    * is the latest parent (i.e. having greater revision number), second one is the earlier parent (having smaller revision number).
    * @param repo     repository to work on.
    * @param file     file which revision's parents we are interested in. If null, the history of the whole repository is considered.
-   * @param revision revision number which parent is wanted. If null, the last revision is taken. 
+   * @param revision revision number which parent is wanted. If null, the last revision is taken.
    * @return One or two (in case of a merge commit) parents of the given revision. Or even zero in case of a fresh repository.
    *         So one should check pair elements for null.
    */
@@ -78,7 +78,7 @@ public class HgWorkingCopyRevisionsCommand {
   public Pair<HgRevisionNumber, HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable VirtualFile file, @Nullable HgRevisionNumber revision) {
     return parents(repo, ObjectsConvertor.VIRTUAL_FILEPATH.convert(file), revision);
   }
-  
+
   /**
    * @see #parents(VirtualFile, FilePath, HgRevisionNumber)
    */
@@ -86,13 +86,13 @@ public class HgWorkingCopyRevisionsCommand {
   public Pair<HgRevisionNumber, HgRevisionNumber> parents(@NotNull VirtualFile repo, @Nullable FilePath file) {
     return parents(repo, file, null);
   }
-  
+
   /**
    * Parent(s) of the given revision of the given file. If there are two of them (in the case of merge) the first element of the pair
    * is the latest parent (i.e. having greater revision number), second one is the earlier parent (having smaller revision number).
    * @param repo     repository to work on.
    * @param file     filepath which revision's parents we are interested in. If null, the history of the whole repository is considered.
-   * @param revision revision number which parent is wanted. If null, the last revision is taken. 
+   * @param revision revision number which parent is wanted. If null, the last revision is taken.
    * @return One or two (in case of a merge commit) parents of the given revision. Or even zero in case of a fresh repository.
    *         So one should check pair elements for null.
    */
@@ -219,8 +219,6 @@ public class HgWorkingCopyRevisionsCommand {
       }
       revisions.add(HgRevisionNumber.getInstance(parts.get(0), parts.get(1)));
     }
-    
     return revisions;
   }
-
 }

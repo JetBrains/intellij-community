@@ -75,8 +75,10 @@ public class ParameterInfoComponent extends JPanel {
   };
 
   @TestOnly
-  public static ParameterInfoUIContextEx createContext(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler) {
-    return new ParameterInfoComponent(objects, editor, handler).new MyParameterContext();
+  public static ParameterInfoUIContextEx createContext(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler, int currentParameterIndex) {
+    final ParameterInfoComponent infoComponent = new ParameterInfoComponent(objects, editor, handler);
+    infoComponent.setCurrentParameterIndex(currentParameterIndex);
+    return infoComponent.new MyParameterContext();
   } 
   
   ParameterInfoComponent(Object[] objects, Editor editor, @NotNull ParameterInfoHandler handler) {

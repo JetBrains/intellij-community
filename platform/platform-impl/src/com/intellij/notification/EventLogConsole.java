@@ -234,7 +234,7 @@ class EventLogConsole {
 
     @Override
     public void update(AnActionEvent e) {
-      Editor editor = e.getData(PlatformDataKeys.EDITOR);
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
       e.getPresentation().setEnabled(editor != null && editor.getDocument().getTextLength() > 0);
     }
 
@@ -245,7 +245,7 @@ class EventLogConsole {
         model.removeNotification(notification);
       }
       model.setStatusMessage(null, 0);
-      final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+      final Editor editor = e.getData(CommonDataKeys.EDITOR);
       if (editor != null) {
         editor.getDocument().deleteString(0, editor.getDocument().getTextLength());
       }

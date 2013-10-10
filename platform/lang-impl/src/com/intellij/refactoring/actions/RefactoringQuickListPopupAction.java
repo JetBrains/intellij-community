@@ -77,7 +77,7 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
 
   @Override
   protected void showPopup(AnActionEvent e, ListPopup popup) {
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (editor != null) {
       popup.showInBestPositionFor(editor);
     } else {

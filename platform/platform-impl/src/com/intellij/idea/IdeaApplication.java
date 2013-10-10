@@ -17,17 +17,12 @@ package com.intellij.idea;
 
 import com.intellij.ExtensionPoints;
 import com.intellij.Patches;
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.CommandLineProcessor;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeRepaintManager;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -37,10 +32,12 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.SystemDock;
@@ -54,12 +51,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
 import java.util.Arrays;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class IdeaApplication {
   @NonNls public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
@@ -135,98 +127,6 @@ public class IdeaApplication {
     IconLoader.activate();
 
     new JFrame().pack(); // this peer will prevent shutting down our application
-
-    final File file = new File(PathManager.getSystemPath());
-    if (!file.canWrite()) {
-      String fullProductName = ApplicationNamesInfo.getInstance().getFullProductName();
-      String message = "System directory of " + fullProductName + " is read only";
-      LOG.info(message);
-      Messages.showErrorDialog(message, "Fatal Configuration Problem");
-    }
-    final AtomicBoolean reported = new AtomicBoolean();
-    final long lowDiskSpaceThreshold = 50 * 1024 * 1024;
-    final ThreadLocal<Future<Long>> ourFreeSpaceCalculation = new ThreadLocal<Future<Long>>();
-
-    JobScheduler.getScheduler().schedule(new Runnable() {
-      public static final long MAX_WRITE_SPEED_IN_BYTES_PER_SECOND = 1024 * 1024 * 500; // 500Mb/sec is near max SSD sequential write speed
-
-      @Override
-      public void run() {
-        if (!reported.get()) {
-          Future<Long> future = ourFreeSpaceCalculation.get();
-          if (future == null) {
-            ourFreeSpaceCalculation.set(future = ApplicationManager.getApplication().executeOnPooledThread(new Callable<Long>() {
-              @Override
-              public Long call() throws Exception {
-                return file.getUsableSpace();
-              }
-            }));
-          }
-          if (!future.isDone()) {
-            JobScheduler.getScheduler().schedule(this, 1, TimeUnit.SECONDS);
-            return;
-          }
-
-          try {
-            final long fileUsableSpace = future.isCancelled() ? 0 : future.get();
-            final long timeout = Math.max(5, (fileUsableSpace - lowDiskSpaceThreshold) / MAX_WRITE_SPEED_IN_BYTES_PER_SECOND);
-            ourFreeSpaceCalculation.set(null);
-
-            if (fileUsableSpace < lowDiskSpaceThreshold) {
-              if(!notificationsComponentIsLoaded()) {
-                ourFreeSpaceCalculation.set(future);
-                JobScheduler.getScheduler().schedule(this, 1, TimeUnit.SECONDS);
-                return;
-              }
-              reported.compareAndSet(false, true);
-
-              //noinspection SSBasedInspection
-              SwingUtilities.invokeLater(new Runnable() {
-                @Override
-                public void run() {
-                  String fullProductName = ApplicationNamesInfo.getInstance().getFullProductName();
-                  String message = "Low disk space on disk where system directory of " + fullProductName + " is located";
-                  if (fileUsableSpace < 100 * 1024) {
-                    LOG.info(message);
-                    Messages.showErrorDialog(message, "Fatal Configuration Problem");
-                    reported.compareAndSet(true, false);
-                    restart(timeout);
-                  }
-                  else {
-                    new NotificationGroup("System", NotificationDisplayType.STICKY_BALLOON, false)
-                      .createNotification(message, file.getPath(), NotificationType.ERROR, null).whenExpired(new Runnable() {
-                      @Override
-                      public void run() {
-                        reported.compareAndSet(true, false);
-                        restart(timeout);
-                      }
-                    }).notify(null);
-                  }
-                }
-              });
-            } else {
-              restart(timeout);
-            }
-          } catch (Exception ex) {
-            LOG.error(ex);
-          }
-        }
-      }
-
-      private boolean notificationsComponentIsLoaded() {
-        return ApplicationManager.getApplication().runReadAction(new Computable<NotificationsConfiguration>() {
-          @Override
-          public NotificationsConfiguration compute() {
-            return NotificationsConfiguration.getNotificationsConfiguration();
-          }
-        }) != null;
-      }
-
-      private void restart(long timeout) {
-        JobScheduler.getScheduler().schedule(this, timeout, TimeUnit.SECONDS);
-      }
-
-    }, 1, TimeUnit.SECONDS);
   }
 
   protected ApplicationStarter getStarter() {

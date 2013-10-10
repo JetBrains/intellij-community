@@ -1,14 +1,14 @@
 package com.intellij.vcs.log.parser;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.TimedVcsCommit;
+import com.intellij.vcs.log.VcsCommit;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -44,7 +44,7 @@ public class CommitParser {
         hashes.add(createHash(aParentsStr));
       }
     }
-    return getFactory().createCommit(commitHash, hashes);
+    return new SimpleCommit(commitHash, hashes, -1);
   }
 
   /**
@@ -69,49 +69,7 @@ public class CommitParser {
     }
     VcsCommit vcsCommit = parseCommitParents(line.substring(firstSeparatorIndex + 2));
 
-    return getFactory().createTimedCommit(vcsCommit.getHash(), vcsCommit.getParents(), timestamp);
-  }
-
-  /**
-   * @param line input format
-   *             hash|-author name|-123124|-commit message
-   */
-  @NotNull
-  public static VcsShortCommitDetails parseCommitData(@NotNull String line) {
-    int prevIndex = 0;
-    int nextIndex = nextSeparatorIndex(line, 0);
-    final String hashStr = line.substring(0, nextIndex);
-
-    prevIndex = nextIndex;
-    nextIndex = nextSeparatorIndex(line, prevIndex + 1);
-    final String authorName = line.substring(prevIndex + 2, nextIndex);
-
-    prevIndex = nextIndex;
-    nextIndex = nextSeparatorIndex(line, prevIndex + 1);
-
-    String timestampStr = line.substring(prevIndex + 2, nextIndex);
-    final long timestamp;
-    try {
-      if (timestampStr.isEmpty()) {
-        timestamp = 0;
-      }
-      else {
-        timestamp = Long.parseLong(timestampStr);
-      }
-    }
-    catch (NumberFormatException e) {
-      throw new IllegalArgumentException("bad timestamp format: " + timestampStr + " in this Str: " + line);
-    }
-
-    final String commitMessage = line.substring(nextIndex + 2);
-
-    VcsLogObjectsFactory factory = getFactory();
-    return factory.createShortDetails(factory.createHash(hashStr), Collections.<Hash>emptyList(), timestamp, commitMessage, authorName);
-  }
-
-  @NotNull
-  private static VcsLogObjectsFactory getFactory() {
-    return ServiceManager.getService(VcsLogObjectsFactory.class);
+    return new SimpleCommit(vcsCommit.getHash(), vcsCommit.getParents(), timestamp);
   }
 
   @NotNull
@@ -126,7 +84,7 @@ public class CommitParser {
 
   @NotNull
   private static Hash createHash(@NotNull String s) {
-    return getFactory().createHash(s);
+    return new SimpleHash(s);
   }
 
 }

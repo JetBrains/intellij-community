@@ -18,7 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
@@ -34,14 +34,14 @@ public class AboutAction extends AnAction implements DumbAware {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    Window window = WindowManager.getInstance().suggestParentWindow(e.getData(PlatformDataKeys.PROJECT));
+    Window window = WindowManager.getInstance().suggestParentWindow(e.getData(CommonDataKeys.PROJECT));
 
     showAboutDialog(window);
   }
 
   public static void showAbout() {
     Window window = WindowManager.getInstance().suggestParentWindow(
-      PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()));
+      CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext()));
 
     showAboutDialog(window);
   }

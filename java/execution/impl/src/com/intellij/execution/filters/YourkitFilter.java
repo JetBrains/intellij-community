@@ -18,6 +18,7 @@ package com.intellij.execution.filters;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.PsiElementListCellRenderer;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -110,7 +111,7 @@ public class YourkitFilter implements Filter{
         }
       };
 
-      final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
+      final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
 
       builder.
         setTitle("Choose file").

@@ -51,7 +51,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
 
   @Override
   public void gotoActionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     final Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.action");

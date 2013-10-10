@@ -512,7 +512,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
 
     @Override
     public Object getData(String dataId) {
-      if (PlatformDataKeys.PROJECT.is(dataId)){
+      if (CommonDataKeys.PROJECT.is(dataId)){
         return myProject;
       }
       if (LangDataKeys.MODULE_CONTEXT.is(dataId)){
@@ -527,7 +527,7 @@ public class ModulesDependenciesPanel extends JPanel implements ModuleRootListen
       if (PlatformDataKeys.HELP_ID.is(dataId)) {
         return ourHelpID;
       }
-      if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
         final TreePath selectionPath = myTree.getLeadSelectionPath();
         if (selectionPath != null && selectionPath.getLastPathComponent() instanceof DefaultMutableTreeNode){
           DefaultMutableTreeNode node = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();

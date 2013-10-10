@@ -50,17 +50,23 @@ public class ClasspathBootstrap {
 
   private static class OptimizedFileManagerClassHolder {
     static final String CLASS_NAME = "org.jetbrains.jps.javac.OptimizedFileManager";
+    @Nullable
     static final Class<StandardJavaFileManager> managerClass;
+    @Nullable
+    static final String initError;
     static {
       Class<StandardJavaFileManager> aClass;
+      String error = null;
       try {
         @SuppressWarnings("unchecked") Class<StandardJavaFileManager> c = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
         aClass = c;
       }
-      catch (Throwable ignored) {
+      catch (Throwable ex) {
         aClass = null;
+        error = ex.getClass().getName() + ": " + ex.getMessage();
       }
       managerClass = aClass;
+      initError = error;
     }
 
     private OptimizedFileManagerClassHolder() {
@@ -69,17 +75,23 @@ public class ClasspathBootstrap {
 
   private static class OptimizedFileManager17ClassHolder {
     static final String CLASS_NAME = "org.jetbrains.jps.javac.OptimizedFileManager17";
+    @Nullable
     static final Class<StandardJavaFileManager> managerClass;
+    @Nullable
+    static final String initError;
     static {
       Class<StandardJavaFileManager> aClass;
+      String error = null;
       try {
         @SuppressWarnings("unchecked") Class<StandardJavaFileManager> c = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
         aClass = c;
       }
-      catch (Throwable ignored) {
+      catch (Throwable ex) {
         aClass = null;
+        error = ex.getClass().getName() + ": " + ex.getMessage();
       }
       managerClass = aClass;
+      initError = error;
     }
 
     private OptimizedFileManager17ClassHolder() {
@@ -89,7 +101,7 @@ public class ClasspathBootstrap {
   private ClasspathBootstrap() {
   }
 
-  public static List<String> getBuildProcessApplicationClasspath() {
+  public static List<String> getBuildProcessApplicationClasspath(boolean isLauncherUsed) {
     final Set<String> cp = ContainerUtil.newHashSet();
 
     cp.add(getResourcePath(BuildMain.class));
@@ -108,9 +120,8 @@ public class ClasspathBootstrap {
     cp.add(getResourcePath(NotNullVerifyingInstrumenter.class));  // not-null
     cp.add(getResourcePath(IXMLBuilder.class));  // nano-xml
 
-    final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();
-    if (optimizedFileManagerClass != null) {
-      cp.add(getResourcePath(optimizedFileManagerClass));  // optimizedFileManager
+    if (!isLauncherUsed) {
+      appendJavaCompilerClasspath(cp);
     }
 
     try {
@@ -120,6 +131,15 @@ public class ClasspathBootstrap {
     catch (Throwable ignored) {
     }
 
+    return ContainerUtil.newArrayList(cp);
+  }
+
+  public static void appendJavaCompilerClasspath(Collection<String> cp) {
+    final Class<StandardJavaFileManager> optimizedFileManagerClass = getOptimizedFileManagerClass();
+    if (optimizedFileManagerClass != null) {
+      cp.add(getResourcePath(optimizedFileManagerClass));  // optimizedFileManager
+    }
+
     for (JavaCompiler javaCompiler : ServiceLoader.load(JavaCompiler.class)) { // Eclipse compiler
       final String compilerResource = getResourcePath(javaCompiler.getClass());
       final String name = PathUtilRt.getFileName(compilerResource);
@@ -127,8 +147,6 @@ public class ClasspathBootstrap {
         cp.add(compilerResource);
       }
     }
-
-    return ContainerUtil.newArrayList(cp);
   }
 
   public static List<File> getJavacServerClasspath(String sdkHome, boolean useEclipseCompiler) {
@@ -217,6 +235,21 @@ public class ClasspathBootstrap {
       return aClass;
     }
     return OptimizedFileManager17ClassHolder.managerClass;
+  }
+
+  @Nullable
+  public static String getOptimizedFileManagerLoadError() {
+    StringBuilder builder = new StringBuilder();
+    if (OptimizedFileManagerClassHolder.initError != null) {
+      builder.append(OptimizedFileManagerClassHolder.initError);
+    }
+    if (OptimizedFileManager17ClassHolder.initError != null) {
+      if (builder.length() > 0) {
+        builder.append("\n");
+      }
+      builder.append(OptimizedFileManager17ClassHolder.initError);
+    }
+    return builder.toString();
   }
 
   public static String getResourcePath(Class aClass) {

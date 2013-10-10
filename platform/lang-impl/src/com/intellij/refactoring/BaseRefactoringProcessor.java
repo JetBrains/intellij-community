@@ -21,6 +21,7 @@ import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -317,7 +318,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   }
 
   protected boolean isGlobalUndoAction() {
-    return PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext()) == null;
+    return CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext()) == null;
   }
 
   @SuppressWarnings("MethodMayBeStatic")

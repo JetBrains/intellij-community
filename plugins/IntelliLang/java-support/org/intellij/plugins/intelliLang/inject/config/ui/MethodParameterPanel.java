@@ -392,11 +392,11 @@ public class MethodParameterPanel extends AbstractInjectionPanel<MethodParameter
     }
 
     public void calcData(final DataKey key, final DataSink sink) {
-      if (LangDataKeys.PSI_ELEMENT.equals(key)) {
+      if (CommonDataKeys.PSI_ELEMENT.equals(key)) {
         final Collection selection = getSelection();
         if (!selection.isEmpty()) {
           final Object o = ((DefaultMutableTreeNode)selection.iterator().next()).getUserObject();
-          if (o instanceof PsiElement) sink.put(LangDataKeys.PSI_ELEMENT, (PsiElement)o);
+          if (o instanceof PsiElement) sink.put(CommonDataKeys.PSI_ELEMENT, (PsiElement)o);
         }
       }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,10 +19,13 @@
  */
 package com.intellij.concurrency;
 
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 public interface Job<T> {
   // the lower the priority the more important the task is
@@ -46,12 +49,18 @@ public interface Job<T> {
 
   boolean isDone();
 
+  void waitForCompletion(int millis) throws InterruptedException, ExecutionException, TimeoutException;
 
   @NotNull
   Job NULL_JOB = new Job() {
     @Override
     public boolean isDone() {
       return true;
+    }
+
+    @Override
+    public void waitForCompletion(int millis) {
+
     }
 
     @Override
@@ -65,32 +74,32 @@ public interface Job<T> {
 
     @Override
     public void addTask(@NotNull Callable task) {
-
+      throw new IncorrectOperationException();
     }
 
     @Override
     public void addTask(@NotNull Runnable task, Object result) {
-
+      throw new IncorrectOperationException();
     }
 
     @Override
     public void addTask(@NotNull Runnable task) {
-
+      throw new IncorrectOperationException();
     }
 
     @Override
     public List scheduleAndWaitForResults() throws Throwable {
-      return null;
+      throw new IncorrectOperationException();
     }
 
     @Override
     public boolean isCanceled() {
-      return false;
+      return true;
     }
 
     @Override
     public void schedule() {
-
+      throw new IncorrectOperationException();
     }
   };
 

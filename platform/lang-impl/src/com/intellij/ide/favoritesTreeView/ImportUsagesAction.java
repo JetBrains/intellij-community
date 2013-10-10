@@ -20,6 +20,7 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
@@ -47,7 +48,7 @@ public class ImportUsagesAction extends AnAction {
   }
 
   private boolean isEnabled(DataContext dc) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dc);
+    final Project project = CommonDataKeys.PROJECT.getData(dc);
     final Usage[] usages = UsageView.USAGES_KEY.getData(dc);
     return project != null && usages != null && usages.length > 0;
   }
@@ -58,7 +59,7 @@ public class ImportUsagesAction extends AnAction {
     final boolean enabled = isEnabled(dc);
     if (!enabled) return;
 
-    final Project project = PlatformDataKeys.PROJECT.getData(dc);
+    final Project project = CommonDataKeys.PROJECT.getData(dc);
 
     final Collection<AbstractTreeNode> nodes = new UsageFavoriteNodeProvider().getFavoriteNodes(dc, ViewSettings.DEFAULT);
     final FavoritesManager favoritesManager = FavoritesManager.getInstance(project);

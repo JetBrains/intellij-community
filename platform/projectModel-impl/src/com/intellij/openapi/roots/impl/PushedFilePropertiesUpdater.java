@@ -115,11 +115,7 @@ public class PushedFilePropertiesUpdater {
     ProjectRootManager.getInstance(project).getFileIndex().iterateContentUnderDirectory(dir, new ContentIterator() {
       @Override
       public boolean processFile(final VirtualFile fileOrDir) {
-        final boolean isDir = fileOrDir.isDirectory();
-        for (FilePropertyPusher<Object> pusher : pushers) {
-          if (!isDir && (pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir))) continue;
-          findAndUpdateValue(project, fileOrDir, pusher, null);
-        }
+        applyPushersToFile(fileOrDir, pushers, null);
         return true;
       }
     });
@@ -147,7 +143,7 @@ public class PushedFilePropertiesUpdater {
   }
 
   public void pushAll(final FilePropertyPusher... pushers) {
-    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+    for (final Module module : ModuleManager.getInstance(myProject).getModules()) {
       final Object[] moduleValues = new Object[pushers.length];
       for (int i = 0; i < moduleValues.length; i++) {
         moduleValues[i] = pushers[i].getImmediateValue(module);
@@ -158,16 +154,21 @@ public class PushedFilePropertiesUpdater {
         index.iterateContentUnderDirectory(root, new ContentIterator() {
           @Override
           public boolean processFile(final VirtualFile fileOrDir) {
-            final boolean isDir = fileOrDir.isDirectory();
-            for (int i = 0, pushersLength = pushers.length; i < pushersLength; i++) {
-              final FilePropertyPusher<Object> pusher = pushers[i];
-              if (!isDir && (pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir))) continue;
-              findAndUpdateValue(myProject, fileOrDir, pusher, moduleValues[i]);
-            }
+            applyPushersToFile(fileOrDir, pushers, moduleValues);
             return true;
           }
         });
       }
+    }
+  }
+
+  private void applyPushersToFile(VirtualFile fileOrDir, FilePropertyPusher[] pushers, Object[] moduleValues) {
+    final boolean isDir = fileOrDir.isDirectory();
+    for (int i = 0, pushersLength = pushers.length; i < pushersLength; i++) {
+      final FilePropertyPusher<Object> pusher = pushers[i];
+      if (!isDir && (pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir))) continue;
+      else if (isDir && !pusher.acceptsDirectory(fileOrDir, myProject)) continue;
+      findAndUpdateValue(myProject, fileOrDir, pusher, moduleValues != null ? moduleValues[i]:null);
     }
   }
 

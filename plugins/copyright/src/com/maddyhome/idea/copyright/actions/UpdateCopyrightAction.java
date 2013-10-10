@@ -49,8 +49,8 @@ public class UpdateCopyrightAction extends AnAction {
     if (!CopyrightManager.getInstance(project).hasAnyCopyrights()) {
       return false;
     }
-    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
-    final Editor editor = PlatformDataKeys.EDITOR.getData(context);
+    final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
+    final Editor editor = CommonDataKeys.EDITOR.getData(context);
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (file == null || !FileTypeUtil.isSupportedFile(file)) {
@@ -102,8 +102,8 @@ public class UpdateCopyrightAction extends AnAction {
     final Module module = LangDataKeys.MODULE.getData(context);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
-    final Editor editor = PlatformDataKeys.EDITOR.getData(context);
+    final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(context);
+    final Editor editor = CommonDataKeys.EDITOR.getData(context);
 
     PsiFile file = null;
     PsiDirectory dir;
@@ -135,7 +135,7 @@ public class UpdateCopyrightAction extends AnAction {
         return;
       }
 
-      final PsiElement psielement = LangDataKeys.PSI_ELEMENT.getData(context);
+      final PsiElement psielement = CommonDataKeys.PSI_ELEMENT.getData(context);
       if (psielement == null) {
         return;
       }

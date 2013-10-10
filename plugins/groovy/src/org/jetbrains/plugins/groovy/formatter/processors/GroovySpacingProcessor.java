@@ -673,8 +673,11 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitAnnotationMethod(GrAnnotationMethod annotationMethod) {
-    if (myType2 == mLPAREN) {
-      createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_PARENTHESES);
+    if (myType2 == DEFAULT_ANNOTATION_VALUE) {
+      createSpaceInCode(true);
+    }
+    else {
+      super.visitAnnotationMethod(annotationMethod);
     }
   }
 

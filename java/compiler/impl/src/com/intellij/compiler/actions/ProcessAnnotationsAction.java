@@ -57,7 +57,7 @@ public class ProcessAnnotationsAction extends CompileActionBase {
       CompilerManager.getInstance(project).make(new ModuleCompileScope(module, false), filter, null);
     }
     else {
-      final FileSetCompileScope scope = getCompilableFiles(project, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
+      final FileSetCompileScope scope = getCompilableFiles(project, CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
       if (scope != null) {
         CompilerManager.getInstance(project).make(scope, filter, null);
       }
@@ -101,7 +101,7 @@ public class ProcessAnnotationsAction extends CompileActionBase {
 
     presentation.setVisible(true);
     presentation.setText(createPresentationText(""), true);
-    final FileSetCompileScope scope = getCompilableFiles(project, PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
+    final FileSetCompileScope scope = getCompilableFiles(project, CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(dataContext));
     if (moduleContext == null && scope == null) {
       presentation.setEnabled(false);
       return;
@@ -121,7 +121,7 @@ public class ProcessAnnotationsAction extends CompileActionBase {
         }
       }
       else {
-        PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+        PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
         if (element instanceof PsiPackage) {
           aPackage = (PsiPackage)element;
         }

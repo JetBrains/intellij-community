@@ -79,7 +79,7 @@ public class SwitchTaskCombo extends ComboBoxAction implements DumbAware {
 
   @Override
   public void update(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     Presentation presentation = e.getPresentation();
     if (project == null || project.isDisposed() || (ActionPlaces.MAIN_MENU.equals(e.getPlace()) && findFrame(e) == null)) {
       presentation.setEnabled(false);

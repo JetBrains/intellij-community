@@ -689,7 +689,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     if (classes.length != 1) throw new IncorrectOperationException("cannot create code reference element for class" + text);
     GrExtendsClause extendsClause = ((GrTypeDefinition)classes[0]).getExtendsClause();
     if (extendsClause == null) throw new IncorrectOperationException("cannot create code reference element for class" + text);
-    GrCodeReferenceElement[] refElements = extendsClause.getReferenceElements();
+    GrCodeReferenceElement[] refElements = extendsClause.getReferenceElementsGroovy();
     if (refElements.length != 1) throw new IncorrectOperationException("cannot create code reference element for class" + text);
     return refElements[0];
   }
@@ -913,7 +913,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   public GrExtendsClause createExtendsClause() {
     final GrTypeDefinition typeDefinition = createTypeDefinition("class A extends B {}");
     final GrExtendsClause clause = typeDefinition.getExtendsClause();
-    clause.getReferenceElements()[0].delete();
+    clause.getReferenceElementsGroovy()[0].delete();
     return clause;
   }
 
@@ -921,7 +921,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   public GrImplementsClause createImplementsClause() {
     final GrTypeDefinition typeDefinition = createTypeDefinition("class A implements B {}");
     final GrImplementsClause clause = typeDefinition.getImplementsClause();
-    clause.getReferenceElements()[0].delete();
+    clause.getReferenceElementsGroovy()[0].delete();
     return clause;
   }
 

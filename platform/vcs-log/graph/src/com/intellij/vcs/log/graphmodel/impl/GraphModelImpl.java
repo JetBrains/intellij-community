@@ -7,7 +7,7 @@ import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
 import com.intellij.vcs.log.graph.Graph;
 import com.intellij.vcs.log.graph.elements.Node;
-import com.intellij.vcs.log.graph.mutable.GraphBuilder;
+import com.intellij.vcs.log.graph.mutable.GraphAppendBuilder;
 import com.intellij.vcs.log.graph.mutable.MutableGraph;
 import com.intellij.vcs.log.graphmodel.FragmentManager;
 import com.intellij.vcs.log.graphmodel.GraphModel;
@@ -92,7 +92,7 @@ public class GraphModelImpl implements GraphModel {
   @Override
   public void appendCommitsToGraph(@NotNull List<? extends VcsCommit> commitParentses) {
     int oldSize = graph.getNodeRows().size();
-    GraphBuilder.addCommitsToGraph(graph, commitParentses, myRefs);
+    new GraphAppendBuilder(graph, myRefs).appendToGraph(commitParentses);
     visibleNodes.setVisibleNodes(visibleNodes.generateVisibleBranchesNodes(isStartedBranchVisibilityNode));
     graph.updateVisibleRows();
 

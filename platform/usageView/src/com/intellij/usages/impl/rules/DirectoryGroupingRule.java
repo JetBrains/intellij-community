@@ -144,11 +144,11 @@ public class DirectoryGroupingRule implements UsageGroupingRule {
     @Override
     public void calcData(final DataKey key, final DataSink sink) {
       if (!isValid()) return;
-      if (PlatformDataKeys.VIRTUAL_FILE == key) {
-        sink.put(PlatformDataKeys.VIRTUAL_FILE, myDir);
+      if (CommonDataKeys.VIRTUAL_FILE == key) {
+        sink.put(CommonDataKeys.VIRTUAL_FILE, myDir);
       }
-      if (LangDataKeys.PSI_ELEMENT == key) {
-        sink.put(LangDataKeys.PSI_ELEMENT, getDirectory());
+      if (CommonDataKeys.PSI_ELEMENT == key) {
+        sink.put(CommonDataKeys.PSI_ELEMENT, getDirectory());
       }
     }
   }

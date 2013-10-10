@@ -278,7 +278,7 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedDocumentList
     region.setExpanded(true);
     final FoldingGroup group = region.getGroup();
     if (group != null) {
-      myGroups.removeValue(group, region);
+      myGroups.remove(group, region);
     }
 
     myFoldTree.removeRegion(region);

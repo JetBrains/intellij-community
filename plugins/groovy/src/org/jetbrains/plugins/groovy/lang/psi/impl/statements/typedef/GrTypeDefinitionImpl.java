@@ -180,7 +180,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   protected String[] getImplementsNames() {
     GrImplementsClause implementsClause = getImplementsClause();
     GrCodeReferenceElement[] implementsRefs =
-      implementsClause != null ? implementsClause.getReferenceElements() : GrCodeReferenceElement.EMPTY_ARRAY;
+      implementsClause != null ? implementsClause.getReferenceElementsGroovy() : GrCodeReferenceElement.EMPTY_ARRAY;
     ArrayList<String> implementsNames = new ArrayList<String>(implementsRefs.length);
     for (GrCodeReferenceElement ref : implementsRefs) {
       String name = ref.getReferenceName();
@@ -193,7 +193,7 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   protected String[] getExtendsNames() {
     GrExtendsClause extendsClause = getExtendsClause();
     GrCodeReferenceElement[] extendsRefs =
-      extendsClause != null ? extendsClause.getReferenceElements() : GrCodeReferenceElement.EMPTY_ARRAY;
+      extendsClause != null ? extendsClause.getReferenceElementsGroovy() : GrCodeReferenceElement.EMPTY_ARRAY;
     ArrayList<String> extendsNames = new ArrayList<String>(extendsRefs.length);
     for (GrCodeReferenceElement ref : extendsRefs) {
       String name = ref.getReferenceName();
@@ -260,12 +260,14 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
 
   @Nullable
   public PsiReferenceList getExtendsList() {
-    return null;
+    //return PsiImplUtil.getOrCreatePsiReferenceList(getExtendsClause(), PsiReferenceList.Role.EXTENDS_LIST);
+    return getExtendsClause();
   }
 
   @Nullable
   public PsiReferenceList getImplementsList() {
-    return null;
+    //return PsiImplUtil.getOrCreatePsiReferenceList(getImplementsClause(), PsiReferenceList.Role.IMPLEMENTS_LIST);
+    return getImplementsClause();
   }
 
   @NotNull

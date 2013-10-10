@@ -38,16 +38,11 @@ public class PrimitiveRenderer extends NodeRendererImpl {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.tree.render.PrimitiveRenderer");
 
   public PrimitiveRenderer() {
-    //noinspection HardCodedStringLiteral
-    myProperties.setName("Primitive");
+    super("Primitive");
   }
 
   public String getUniqueId() {
     return UNIQUE_ID;
-  }
-
-  public @NonNls String getName() {
-    return "Primitive";
   }
 
   public void setName(String text) {

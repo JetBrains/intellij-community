@@ -16,6 +16,7 @@ import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -153,7 +154,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
                   @Override
                   public void run(@NotNull final ProgressIndicator indicator) {
                     ExternalSystemResolveProjectTask task
-                      = new ExternalSystemResolveProjectTask(myExternalSystemId, project, projectSettings.getExternalProjectPath(), true);
+                      = new ExternalSystemResolveProjectTask(myExternalSystemId, project, projectSettings.getExternalProjectPath(), false);
                     task.execute(indicator);
                     DataNode<ProjectData> projectWithResolvedLibraries = task.getExternalProject();
                     if (projectWithResolvedLibraries == null) {
@@ -249,7 +250,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
   }
 
   /**
-   * Asks current builder to ensure that target gradle project is defined.
+   * Asks current builder to ensure that target external project is defined.
    *
    * @param wizardContext             current wizard context
    * @throws ConfigurationException   if gradle project is not defined and can't be constructed
@@ -292,8 +293,8 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
             myExternalSystemId,
             externalProjectPath,
             callback,
-            false,
-            true
+            true,
+            ProgressExecutionMode.MODAL_SYNC
           );
         }
         catch (IllegalArgumentException e) {

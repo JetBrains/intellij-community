@@ -22,6 +22,7 @@ import com.intellij.ide.diff.VirtualFileDiffElement;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diff.DirDiffManager;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -36,7 +37,7 @@ public class CompareJarsAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = getEventProject(e);
-    final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     FeatureUsageTracker.getInstance().triggerFeatureUsed("jar.diff");
     if (project != null && files != null) {
       VirtualFileDiffElement src = null;
@@ -68,7 +69,7 @@ public class CompareJarsAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (files != null && files.length > 0 && files.length < 3) {
       if (isArchive(files[0]) && (files.length == 1 || isArchive(files[1]))) {
         e.getPresentation().setEnabled(true);

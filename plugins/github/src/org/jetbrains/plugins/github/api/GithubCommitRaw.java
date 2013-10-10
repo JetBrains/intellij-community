@@ -113,13 +113,13 @@ class GithubCommitRaw implements DataConstructor {
   @NotNull
   @Override
   public <T> T create(@NotNull Class<T> resultClass) {
-    if (resultClass.isAssignableFrom(GithubCommitSha.class)) {
+    if (resultClass == GithubCommitSha.class) {
       return (T)createCommitSha();
     }
-    if (resultClass.isAssignableFrom(GithubCommit.class)) {
+    if (resultClass == GithubCommit.class) {
       return (T)createCommit();
     }
-    if (resultClass.isAssignableFrom(GithubCommitDetailed.class)) {
+    if (resultClass == GithubCommitDetailed.class) {
       return (T)createCommitDetailed();
     }
 

@@ -19,8 +19,8 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -79,7 +79,7 @@ public class GlassPaneDialogWrapperPeer extends DialogWrapperPeer implements Foc
     if (myWindowManager != null) {
 
       if (project == null) {
-        project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+        project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
       }
 
       myProject = project;

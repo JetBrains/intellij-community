@@ -119,6 +119,8 @@ public class JavaChainLookupElement extends LookupElementDecorator<LookupElement
       LOG.error(LogMessageEx.createEvent("Unexpected character",
                                          "atTail=" + atTail + "\n" +
                                          "offset=" + context.getTailOffset() + "\n" +
+                                         "item=" + this + "\n" +
+                                         "item.class=" + this.getClass() + "\n" +
                                          DebugUtil.currentStackTrace(),
                                          AttachmentFactory.createAttachment(context.getDocument())));
 

@@ -17,6 +17,8 @@ package com.intellij.ui.mac;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -61,6 +63,7 @@ public abstract class MacMessages {
 
   public abstract int showYesNoDialog(String title, String message, String yesButton, String noButton, @Nullable Window window);
 
+  @MagicConstant(intValues = {Messages.YES, Messages.NO})
   public abstract int showYesNoDialog(String title, String message, String yesButton, String noButton, @Nullable Window window,
                                       @Nullable DialogWrapper.DoNotAskOption doNotAskDialogOption);
 

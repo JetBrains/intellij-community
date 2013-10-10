@@ -61,13 +61,13 @@ public class AbstractBaseJavaLocalInspectionTool extends LocalInspectionTool {
   }
 
   /**
-     * Override this to report problems at file level.
-     *
-     * @param file       to check.
-     * @param manager    InspectionManager to ask for ProblemDescriptors from.
-     * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
-     * @return <code>null</code> if no problems found or not applicable at file level.
-     */
+   * Override this to report problems at file level.
+   *
+   * @param file       to check.
+   * @param manager    InspectionManager to ask for ProblemDescriptors from.
+   * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
+   * @return <code>null</code> if no problems found or not applicable at file level.
+   */
   @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
@@ -78,21 +78,26 @@ public class AbstractBaseJavaLocalInspectionTool extends LocalInspectionTool {
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
-      @Override public void visitMethod(PsiMethod method) {
+      @Override
+      public void visitMethod(PsiMethod method) {
         addDescriptors(checkMethod(method, holder.getManager(), isOnTheFly));
       }
 
-      @Override public void visitClass(PsiClass aClass) {
+      @Override
+      public void visitClass(PsiClass aClass) {
         addDescriptors(checkClass(aClass, holder.getManager(), isOnTheFly));
       }
 
-      @Override public void visitField(PsiField field) {
+      @Override
+      public void visitField(PsiField field) {
         addDescriptors(checkField(field, holder.getManager(), isOnTheFly));
       }
 
-      @Override public void visitFile(PsiFile file) {
+      @Override
+      public void visitFile(PsiFile file) {
         addDescriptors(checkFile(file, holder.getManager(), isOnTheFly));
       }
+
       private void addDescriptors(final ProblemDescriptor[] descriptors) {
         if (descriptors != null) {
           for (ProblemDescriptor descriptor : descriptors) {

@@ -32,6 +32,7 @@ import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
@@ -332,7 +333,7 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
 
     for (Map.Entry<ProjectSystemId, Set<String>> entry : copy.entrySet()) {
       for (String path : entry.getValue()) {
-        ExternalSystemUtil.refreshProject(myProject, entry.getKey(), path, myRefreshCallback, true, false, false);
+        ExternalSystemUtil.refreshProject(myProject, entry.getKey(), path, myRefreshCallback, false, ProgressExecutionMode.IN_BACKGROUND_ASYNC, false);
       }
     }
   }

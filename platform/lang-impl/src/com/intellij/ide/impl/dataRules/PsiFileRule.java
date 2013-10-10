@@ -16,6 +16,7 @@
 
 package com.intellij.ide.impl.dataRules;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -27,13 +28,13 @@ import com.intellij.psi.PsiManager;
 public class PsiFileRule implements GetDataRule {
   @Override
   public Object getData(DataProvider dataProvider) {
-    final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataProvider);
+    final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataProvider);
     if (element != null) {
       return element.getContainingFile();
     }
     Project project = PlatformDataKeys.PROJECT.getData(dataProvider);
     if (project != null) {
-      VirtualFile vFile = PlatformDataKeys.VIRTUAL_FILE.getData(dataProvider);
+      VirtualFile vFile = CommonDataKeys.VIRTUAL_FILE.getData(dataProvider);
       if (vFile != null) {
         return PsiManager.getInstance(project).findFile(vFile);
       }

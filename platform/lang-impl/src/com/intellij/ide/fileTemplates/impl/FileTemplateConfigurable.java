@@ -25,6 +25,7 @@ import com.intellij.lexer.CompositeLexer;
 import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
 import com.intellij.lexer.MergingLexerAdapter;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -105,7 +106,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
   private JPanel myDescriptionPanel;
 
   public FileTemplateConfigurable() {
-    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     myProject = project != null ? project : ProjectManager.getInstance().getDefaultProject();
   }
 

@@ -17,7 +17,7 @@ package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -112,7 +112,7 @@ public class UpdateSettingsConfigurable extends BaseConfigurable implements Sear
 
       myBtnCheckNow.addActionListener(new ActionListener() {
         public void actionPerformed(ActionEvent e) {
-          Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myBtnCheckNow));
+          Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(myBtnCheckNow));
           UpdateSettings settings = new UpdateSettings();
           settings.loadState(UpdateSettings.getInstance().getState());
           settings.UPDATE_CHANNEL_TYPE = getSelectedChannelType().getCode();

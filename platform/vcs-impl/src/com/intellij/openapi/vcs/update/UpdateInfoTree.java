@@ -238,11 +238,11 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
     if (myTreeBrowser != null && myTreeBrowser.isVisible()) {
       return null;
     }
-    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       if (mySelectedFile == null || !mySelectedFile.isValid()) return null;
       return new OpenFileDescriptor(myProject, mySelectedFile);
     }
-    else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       return getVirtualFileArray();
     }
     else if (VcsDataKeys.IO_FILE_ARRAY.is(dataId)) {

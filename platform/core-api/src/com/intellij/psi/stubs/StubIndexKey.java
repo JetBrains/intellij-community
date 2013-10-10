@@ -28,7 +28,7 @@ public final class StubIndexKey<K, Psi extends PsiElement> extends ID<K, Psi> {
     super(name);
   }
 
-  public static <K, Psi extends PsiElement> StubIndexKey<K, Psi> createIndexKey(@NonNls String name) {
+  public static synchronized <K, Psi extends PsiElement> StubIndexKey<K, Psi> createIndexKey(@NonNls String name) {
     return new StubIndexKey<K, Psi>(name);
   }
 

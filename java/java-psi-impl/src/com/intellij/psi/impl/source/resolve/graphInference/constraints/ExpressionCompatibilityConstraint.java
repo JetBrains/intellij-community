@@ -41,10 +41,11 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
 
   @Override
   public boolean reduce(InferenceSession session, List<ConstraintFormula> constraints) {
-    if (session.isProperType(myT)) {
-      return TypeConversionUtil.areTypesAssignmentCompatible(myT, myExpression);
-    }
     if (!PsiPolyExpressionUtil.isPolyExpression(myExpression)) {
+      if (session.isProperType(myT)) {
+        return TypeConversionUtil.areTypesAssignmentCompatible(myT, myExpression);
+      }
+    
       final PsiType exprType = myExpression.getType();
       if (exprType != null && !exprType.equals(PsiType.NULL)) {
         constraints.add(new TypeCompatibilityConstraint(myT, exprType));
@@ -75,9 +76,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
     if (myExpression instanceof PsiCallExpression) {
       final PsiExpressionList argumentList = ((PsiCallExpression)myExpression).getArgumentList();
       if (argumentList != null) {
-        final Map<PsiElement,Pair<PsiMethod,PsiSubstitutor>> map = MethodCandidateInfo.CURRENT_CANDIDATE.get();
-        final Pair<PsiMethod,PsiSubstitutor> pair = map != null ? map.get(argumentList) : null;
-        final PsiMethod method = pair != null ? pair.first : ((PsiCallExpression)myExpression).resolveMethod();
+        final Pair<PsiMethod,PsiSubstitutor> pair = MethodCandidateInfo.getCurrentMethod(argumentList);
+        if (pair != null) return true;
+        final PsiMethod method = ((PsiCallExpression)myExpression).resolveMethod();
         PsiType returnType = null;
         InferenceSession callSession = null;
         if (method != null) {
@@ -117,7 +118,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           else {
             returnType = callSubstitutor.substitute(returnType);
           }
-          constraints.add(new TypeCompatibilityConstraint(myT, returnType));  //todo primitive types
+          constraints.add(new TypeCompatibilityConstraint(GenericsUtil.eliminateWildcards(myT, false), returnType));
         }
       }
       return true;

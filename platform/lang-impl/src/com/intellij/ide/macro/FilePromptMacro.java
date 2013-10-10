@@ -16,6 +16,7 @@
 package com.intellij.ide.macro;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.*;
@@ -39,7 +40,7 @@ public class FilePromptMacro extends PromptingMacro implements SecondQueueExpand
 
   @Override
   protected String promptUser(DataContext dataContext) {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
     final VirtualFile[] result = FileChooser.chooseFiles(descriptor, project, null);
     return result.length == 1? FileUtil.toSystemDependentName(result[0].getPath()) : null;

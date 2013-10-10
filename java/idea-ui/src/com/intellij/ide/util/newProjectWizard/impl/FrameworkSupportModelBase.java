@@ -16,16 +16,19 @@
 package com.intellij.ide.util.newProjectWizard.impl;
 
 import com.intellij.facet.impl.ui.libraries.FrameworkLibraryProvider;
-import com.intellij.framework.FrameworkGroup;
-import com.intellij.framework.FrameworkGroupVersion;
 import com.intellij.framework.FrameworkVersion;
+import com.intellij.framework.PresentableVersion;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.framework.addSupport.FrameworkVersionListener;
+import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelListener;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
-import com.intellij.ide.util.newProjectWizard.*;
+import com.intellij.ide.util.newProjectWizard.FrameworkSupportNode;
+import com.intellij.ide.util.newProjectWizard.FrameworkSupportNodeBase;
+import com.intellij.ide.util.newProjectWizard.FrameworkSupportOptionsComponent;
+import com.intellij.ide.util.newProjectWizard.OldFrameworkSupportProviderWrapper;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
@@ -52,6 +55,7 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
   private final Map<String, FrameworkSupportNode> mySettingsMap = new HashMap<String, FrameworkSupportNode>();
   private final Map<String, FrameworkSupportOptionsComponent> myOptionsComponentsMap = new HashMap<String, FrameworkSupportOptionsComponent>();
   private final Map<String, FrameworkVersion> mySelectedVersions = new HashMap<String, FrameworkVersion>();
+  private final Map<String, FrameworkLibraryVersion> myLibraryVersions = new HashMap<String, FrameworkLibraryVersion>();
   private FrameworkLibraryProvider myLibraryProvider;
 
   public FrameworkSupportModelBase(final @Nullable Project project, @Nullable ModuleBuilder builder, @NotNull LibrariesContainer librariesContainer) {
@@ -177,14 +181,9 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
     return (V)mySelectedVersions.get(frameworkOrGroupId);
   }
 
-  @Nullable
-  public <V extends FrameworkGroupVersion> V getSelectedVersion(@NotNull FrameworkGroup<V> group) {
-    return (V)mySelectedVersions.get(group.getId());
-  }
-
   public void onFrameworkSelectionChanged(FrameworkSupportNode node) {
     final FrameworkSupportModelListener multicaster = myDispatcher.getMulticaster();
-    final FrameworkSupportInModuleProvider provider = node.getProvider();
+    final FrameworkSupportInModuleProvider provider = node.getUserObject();
     //todo[nik]
     if (provider instanceof OldFrameworkSupportProviderWrapper) {
       final FrameworkSupportProvider oldProvider = ((OldFrameworkSupportProviderWrapper) provider).getProvider();
@@ -204,5 +203,15 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
   @NotNull
   public LibrariesContainer getLibrariesContainer() {
     return myLibrariesContainer;
+  }
+
+  public void setSelectedLibraryVersion(String id, FrameworkLibraryVersion version) {
+    myLibraryVersions.put(id, version);
+    myVersionEventDispatcher.getMulticaster().versionChanged(getSelectedVersion(id));
+  }
+
+  public PresentableVersion getPresentableVersion(String id) {
+    FrameworkVersion version = mySelectedVersions.get(id);
+    return version == null ? myLibraryVersions.get(id) : version;
   }
 }

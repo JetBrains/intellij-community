@@ -37,7 +37,7 @@ import java.util.LinkedList;
 
 abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;
 
     OccurenceNavigator navigator = getNavigator(e.getDataContext());
@@ -64,7 +64,7 @@ abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAwar
 
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
-    Project project = event.getData(PlatformDataKeys.PROJECT);
+    Project project = event.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       presentation.setEnabled(false);
       // make it invisible only in main menu to avoid initial invisibility in toolbars
@@ -139,7 +139,7 @@ abstract class OccurenceNavigatorActionBase extends AnAction implements DumbAwar
       }
     }
 
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return null;
     }

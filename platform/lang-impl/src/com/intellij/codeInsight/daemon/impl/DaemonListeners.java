@@ -543,7 +543,7 @@ public class DaemonListeners implements Disposable {
 
     @Override
     public void beforeEditorTyping(char c, DataContext dataContext) {
-      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       //no need to stop daemon if something happened in the console
       if (editor != null && !worthBothering(editor.getDocument(), editor.getProject())) {
         return;

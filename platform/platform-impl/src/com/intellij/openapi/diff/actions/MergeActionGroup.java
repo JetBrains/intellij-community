@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class MergeActionGroup extends ActionGroup {
   private final MergeOperations myOperations;
@@ -31,14 +31,16 @@ public class MergeActionGroup extends ActionGroup {
     myOperations = new MergeOperations(diffPanel, side);
   }
 
+  @Override
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    ArrayList<MergeOperations.Operation> operations = myOperations.getOperations();
+    List<MergeOperations.Operation> operations = myOperations.getOperations();
     AnAction[] actions = new AnAction[operations.size() + 2];
     actions[0] = new SelectSuggestionAction(myOperations);
     actions[1] = Separator.getInstance();
-    for (int i = 2; i < actions.length; i++)
+    for (int i = 2; i < actions.length; i++) {
       actions[i] = new OperationAction(operations.get(i - 2));
+    }
     return actions;
   }
 
@@ -51,10 +53,12 @@ public class MergeActionGroup extends ActionGroup {
       myOperations = operations;
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       myOperations.selectSuggestion();
     }
 
+    @Override
     public void update(AnActionEvent e) {
       e.getPresentation().setEnabled(myOperations.getCurrentFragment() != null);
     }
@@ -68,8 +72,9 @@ public class MergeActionGroup extends ActionGroup {
       myOperation = operation;
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
-      myOperation.perform(PlatformDataKeys.PROJECT.getData(e.getDataContext()));
+      myOperation.perform(CommonDataKeys.PROJECT.getData(e.getDataContext()));
     }
   }
 }

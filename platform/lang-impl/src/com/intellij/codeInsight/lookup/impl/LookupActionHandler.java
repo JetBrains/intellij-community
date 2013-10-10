@@ -108,7 +108,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     @Override
     public void actionPerformed(AnActionEvent e) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ARROWS);
-      LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(PlatformDataKeys.EDITOR.getData(e.getDataContext()));
+      LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(CommonDataKeys.EDITOR.getData(e.getDataContext()));
       assert lookup != null;
       lookup.hide();
       ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_UP).actionPerformed(e);
@@ -116,7 +116,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     @Override
     public void update(AnActionEvent e) {
-      Lookup lookup = LookupManager.getActiveLookup(PlatformDataKeys.EDITOR.getData(e.getDataContext()));
+      Lookup lookup = LookupManager.getActiveLookup(CommonDataKeys.EDITOR.getData(e.getDataContext()));
       e.getPresentation().setEnabled(lookup != null);
     }
   }
@@ -126,7 +126,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     @Override
     public void actionPerformed(AnActionEvent e) {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_CONTROL_ARROWS);
-      LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(PlatformDataKeys.EDITOR.getData(e.getDataContext()));
+      LookupImpl lookup = (LookupImpl)LookupManager.getActiveLookup(CommonDataKeys.EDITOR.getData(e.getDataContext()));
       assert lookup != null;
       lookup.hide();
       ActionManager.getInstance().getAction(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN).actionPerformed(e);
@@ -134,7 +134,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     @Override
     public void update(AnActionEvent e) {
-      Lookup lookup = LookupManager.getActiveLookup(PlatformDataKeys.EDITOR.getData(e.getDataContext()));
+      Lookup lookup = LookupManager.getActiveLookup(CommonDataKeys.EDITOR.getData(e.getDataContext()));
       e.getPresentation().setEnabled(lookup != null);
     }
   }

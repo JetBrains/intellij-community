@@ -23,7 +23,7 @@ import com.intellij.ide.actions.OpenFileAction;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.IdeaApplication;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ApplicationComponent;
@@ -161,7 +161,7 @@ public class MacOSApplicationProvider implements ApplicationComponent {
     }
 
     private static Project getProject() {
-      return PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+      return CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
     }
   }
 }

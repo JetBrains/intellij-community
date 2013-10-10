@@ -818,7 +818,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
   @Override
   public Object getData(final String dataId) {
-    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       if (myEditor == null) {
         return null;
       }
@@ -831,7 +831,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       return openFileDescriptor;
     }
 
-    if (PlatformDataKeys.EDITOR.is(dataId)) {
+    if (CommonDataKeys.EDITOR.is(dataId)) {
       return myEditor;
     }
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
@@ -1168,7 +1168,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     @Override
     public void update(AnActionEvent e) {
       boolean enabled = e.getData(LangDataKeys.CONSOLE_VIEW) != null;
-      Editor editor = e.getData(PlatformDataKeys.EDITOR);
+      Editor editor = e.getData(CommonDataKeys.EDITOR);
       if (editor != null && editor.getDocument().getTextLength() == 0) {
         enabled = false;
       }
@@ -1301,7 +1301,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
 
     @Nullable
     private static ConsoleViewImpl getRunningConsole(final DataContext context) {
-      final Editor editor = PlatformDataKeys.EDITOR.getData(context);
+      final Editor editor = CommonDataKeys.EDITOR.getData(context);
       if (editor != null) {
         final ConsoleViewImpl console = editor.getUserData(CONSOLE_VIEW_IN_EDITOR_VIEW);
         if (console != null && console.myState.isRunning()) {

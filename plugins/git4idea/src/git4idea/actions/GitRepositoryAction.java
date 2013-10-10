@@ -17,6 +17,7 @@ package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -63,7 +64,7 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
       }
     });
     DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
@@ -71,7 +72,7 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
     final List<VirtualFile> roots = getGitRoots(project, vcs);
     if (roots == null) return;
     // get default root
-    final VirtualFile[] vFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] vFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     VirtualFile defaultRootVar = null;
     if (vFiles != null) {
       for (VirtualFile file : vFiles) {
@@ -120,9 +121,9 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
   }
 
   protected static boolean isRebasing(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project != null) {
-      final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+      final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
       if (files != null) {
         for (VirtualFile file : files) {
           GitRepositoryManager manager = GitUtil.getRepositoryManager(project);
@@ -212,7 +213,7 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
   }
 
   protected boolean isEnabled(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return false;
     }

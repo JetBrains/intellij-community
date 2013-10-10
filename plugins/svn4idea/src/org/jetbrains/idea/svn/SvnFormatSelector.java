@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNErrorMessage;
@@ -131,18 +132,21 @@ public class SvnFormatSelector implements ISVNAdminAreaFactorySelector {
     return result;
   }
 
+  @NotNull
   public static WorkingCopyFormat findRootAndGetFormat(final File path) {
     File root = SvnUtil.getWorkingCopyRootNew(path);
 
     return root != null ? getWorkingCopyFormat(root) : WorkingCopyFormat.UNKNOWN;
   }
 
+  @NotNull
   public static WorkingCopyFormat getWorkingCopyFormat(final File path) {
     WorkingCopyFormat format = SvnUtil.getFormat(path);
 
     return WorkingCopyFormat.UNKNOWN.equals(format) ? detectWithSvnKit(path) : format;
   }
 
+  @NotNull
   private static WorkingCopyFormat detectWithSvnKit(File path) {
     try {
       final SvnWcGeneration svnWcGeneration = SvnOperationFactory.detectWcGeneration(path, true);

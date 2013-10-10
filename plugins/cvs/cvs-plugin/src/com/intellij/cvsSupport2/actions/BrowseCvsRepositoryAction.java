@@ -26,6 +26,7 @@ import com.intellij.cvsSupport2.cvshandlers.FileSetToBeUpdated;
 import com.intellij.cvsSupport2.cvsoperations.common.LoginPerformer;
 import com.intellij.cvsSupport2.ui.CvsTabbedWindow;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.DumbAware;
@@ -52,7 +53,7 @@ public class BrowseCvsRepositoryAction extends AbstractAction implements DumbAwa
   @Override
   public void update(AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
-    final boolean projectExists = e.getData(PlatformDataKeys.PROJECT) != null;
+    final boolean projectExists = e.getData(CommonDataKeys.PROJECT) != null;
     presentation.setVisible(projectExists);
     presentation.setEnabled(projectExists);
   }

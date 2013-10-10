@@ -450,7 +450,7 @@ public class ClassItemGeneratorImpl implements ClassItemGenerator {
     if (resolved == null) return true;
 
     PsiManager manager = list.getManager();
-    GrCodeReferenceElement[] elements = list.getReferenceElements();
+    GrCodeReferenceElement[] elements = list.getReferenceElementsGroovy();
     for (GrCodeReferenceElement element : elements) {
       if (manager.areElementsEquivalent(resolved, element.resolve())) {
         return true;

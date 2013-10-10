@@ -48,7 +48,7 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     DefaultActionGroup group = new DefaultActionGroup();
     fillActions(project, group, e.getDataContext());
     showPopup(e, group);
@@ -68,7 +68,7 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
   }
 
   protected void showPopup(AnActionEvent e, ListPopup popup) {
-    popup.showCenteredInCurrentWindow(e.getData(PlatformDataKeys.PROJECT));
+    popup.showCenteredInCurrentWindow(e.getData(CommonDataKeys.PROJECT));
   }
 
   protected JBPopupFactory.ActionSelectionAid getAidMethod() {
@@ -82,7 +82,7 @@ public abstract class QuickSwitchSchemeAction extends AnAction implements DumbAw
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    e.getPresentation().setEnabled(e.getData(PlatformDataKeys.PROJECT) != null && isEnabled());
+    e.getPresentation().setEnabled(e.getData(CommonDataKeys.PROJECT) != null && isEnabled());
   }
 
   protected abstract boolean isEnabled();

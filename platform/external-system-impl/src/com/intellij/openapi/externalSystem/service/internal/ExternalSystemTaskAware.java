@@ -27,6 +27,17 @@ public interface ExternalSystemTaskAware {
   boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) throws RemoteException;
 
   /**
+   * Allows to cancel the target task by the current service.
+   *
+   *
+   * @param id  target task's id
+   * @return    <code>true</code> if a task was successfully canceled;
+   *            <code>false</code> otherwise
+   * @throws RemoteException      as required by RMI
+   */
+  void cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException;
+
+  /**
    * Allows to ask current service for all tasks being executed at the moment.  
    *
    * @return      ids of all tasks being executed at the moment grouped by type

@@ -17,6 +17,7 @@ package com.intellij.vcsUtil;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -436,7 +437,7 @@ public class VcsUtil {
    *         Returns empty array if there are no available files.
    */
   public static VirtualFile[] getVirtualFiles(AnActionEvent e) {
-    VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     return (files == null) ? VirtualFile.EMPTY_ARRAY : files;
   }
 

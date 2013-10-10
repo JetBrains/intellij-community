@@ -11,10 +11,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * @author Konstantin Kolosovsky.
  */
 public class CmdVersionClient extends BaseSvnClient implements VersionClient {
+
+  private static final Pattern VERSION = Pattern.compile("^(\\d+)\\.(\\d+)\\.(\\d+)");
 
   @NotNull
   @Override
@@ -53,21 +58,23 @@ public class CmdVersionClient extends BaseSvnClient implements VersionClient {
   }
 
   @NotNull
-  private static Version parseVersion(@NotNull String versionText) throws VcsException {
+  public static Version parseVersion(@NotNull String versionText) throws VcsException {
     Version result = null;
     Exception cause = null;
-    String[] parts = versionText.trim().split("\\.");
 
-    if (parts.length == 3) {
+    Matcher matcher = VERSION.matcher(versionText);
+    boolean found = matcher.find();
+
+    if (found) {
       try {
-        result = new Version(getInt(parts[0]), getInt(parts[1]), getInt(parts[2]));
+        result = new Version(getInt(matcher.group(1)), getInt(matcher.group(2)), getInt(matcher.group(3)));
       }
       catch (NumberFormatException e) {
         cause = e;
       }
     }
 
-    if (cause != null || result == null) {
+    if (!found || cause != null) {
       throw new VcsException(String.format("Could not parse svn version: %s", versionText), cause);
     }
 

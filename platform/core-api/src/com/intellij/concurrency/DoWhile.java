@@ -20,7 +20,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Author: dmitrylomov
  */
-public abstract class DoWhile  {
+public abstract class DoWhile {
   private final AsyncFutureResult<Boolean> myResult = AsyncFutureFactory.getInstance().createAsyncFutureResult();
   private final SameThreadExecutorWithTrampoline myExecutor = new SameThreadExecutorWithTrampoline();
 

@@ -27,6 +27,7 @@ import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.DistinctRootsCollection;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.StringFactory;
@@ -40,6 +41,7 @@ import java.net.URL;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import static com.intellij.openapi.vfs.VirtualFileVisitor.VisitorException;
 
@@ -67,6 +69,26 @@ public class VfsUtilCore {
       if (parent.equals(ancestor)) return true;
       parent = parent.getParent();
     }
+  }
+
+  /**
+   * @return {@code true} if {@code file} is located under one of {@code roots} or equal to one of them
+   */
+  public static boolean isUnder(@NotNull VirtualFile file, @Nullable Set<VirtualFile> roots) {
+    if (roots == null || roots.isEmpty()) return false;
+
+    VirtualFile parent = file;
+    while (parent != null) {
+      if (roots.contains(parent)) {
+        return true;
+      }
+      parent = parent.getParent();
+    }
+    return false;
+  }
+
+  public static boolean isEqualOrAncestor(@NotNull String ancestorUrl, @NotNull String fileUrl) {
+    return ancestorUrl.equals(fileUrl) || StringUtil.startsWithConcatenation(fileUrl, ancestorUrl, "/");
   }
 
   public static boolean isAncestor(@NotNull File ancestor, @NotNull File file, boolean strict) {
@@ -527,6 +549,29 @@ public class VfsUtilCore {
     @Override
     protected boolean isAncestor(@NotNull VirtualFile ancestor, @NotNull VirtualFile virtualFile) {
       return VfsUtilCore.isAncestor(ancestor, virtualFile, false);
+    }
+  }
+
+  public static void processFilesRecursively(@NotNull VirtualFile root,
+                                             @NotNull Processor<VirtualFile> processor,
+                                             @NotNull Convertor<VirtualFile, Boolean> directoryFilter) {
+    if (!processor.process(root)) return;
+
+    if (root.isDirectory() && directoryFilter.convert(root)) {
+      final LinkedList<VirtualFile[]> queue = new LinkedList<VirtualFile[]>();
+
+      queue.add(root.getChildren());
+
+      do {
+        final VirtualFile[] files = queue.removeFirst();
+
+        for (VirtualFile file : files) {
+          if (!processor.process(file)) return;
+          if (file.isDirectory() && directoryFilter.convert(file)) {
+            queue.add(file.getChildren());
+          }
+        }
+      } while (!queue.isEmpty());
     }
   }
 }

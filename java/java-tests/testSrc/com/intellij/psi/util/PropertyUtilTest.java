@@ -17,27 +17,27 @@ public class PropertyUtilTest extends LightCodeInsightTestCase {
   public void testSuggestGetterName() throws Exception {
     assertEquals("isValid", PropertyUtil.suggestGetterName("valid", getType("boolean")));
     assertEquals("getValid", PropertyUtil.suggestGetterName("valid", getType("Object")));
-    assertEquals("isValid", PropertyUtil.suggestGetterName(ourProject, createField("valid", "boolean")));
-    assertEquals("getValid", PropertyUtil.suggestGetterName(ourProject, createField("valid", "Object")));
+    assertEquals("isValid", PropertyUtil.suggestGetterName(createField("valid", "boolean")));
+    assertEquals("getValid", PropertyUtil.suggestGetterName(createField("valid", "Object")));
 
     assertEquals("getURL", PropertyUtil.suggestGetterName("URL", getType("Object")));
-    assertEquals("getURL", PropertyUtil.suggestGetterName(ourProject, createField("URL", "Object")));
+    assertEquals("getURL", PropertyUtil.suggestGetterName(createField("URL", "Object")));
 
-    assertEquals("isaURL", PropertyUtil.suggestGetterName(ourProject, createField("aURL", "boolean")));
-    assertEquals("getaURL", PropertyUtil.suggestGetterName(ourProject, createField("aURL", "Object")));
-    assertEquals("getBool", PropertyUtil.suggestGetterName(ourProject, createField("bool", "java.lang.Boolean")));
+    assertEquals("isaURL", PropertyUtil.suggestGetterName(createField("aURL", "boolean")));
+    assertEquals("getaURL", PropertyUtil.suggestGetterName(createField("aURL", "Object")));
+    assertEquals("getBool", PropertyUtil.suggestGetterName(createField("bool", "java.lang.Boolean")));
   }
 
   public void testSuggestSetterName() throws Exception {
     assertEquals("setValid", PropertyUtil.suggestSetterName("valid"));
-    assertEquals("setValid", PropertyUtil.suggestSetterName(ourProject, createField("valid", "Object")));
+    assertEquals("setValid", PropertyUtil.suggestSetterName(createField("valid", "Object")));
 
     assertEquals("setURL", PropertyUtil.suggestSetterName("URL"));
-    assertEquals("setURL", PropertyUtil.suggestSetterName(ourProject, createField("URL", "Object")));
+    assertEquals("setURL", PropertyUtil.suggestSetterName(createField("URL", "Object")));
 
     assertEquals("setaURL", PropertyUtil.suggestSetterName("aURL"));
-    assertEquals("setaURL", PropertyUtil.suggestSetterName(ourProject, createField("aURL", "Object")));
-    assertEquals("setBool", PropertyUtil.suggestSetterName(ourProject, createField("bool", "java.lang.Boolean")));
+    assertEquals("setaURL", PropertyUtil.suggestSetterName(createField("aURL", "Object")));
+    assertEquals("setBool", PropertyUtil.suggestSetterName(createField("bool", "java.lang.Boolean")));
   }
 
   public void testSuggestPropertyName() throws Exception {

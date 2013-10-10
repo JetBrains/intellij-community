@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.project.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -45,7 +46,7 @@ public class AddManagedFilesAction extends MavenAction {
     };
 
     Project project = MavenActionUtil.getProject(e.getDataContext());
-    VirtualFile fileToSelect = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    VirtualFile fileToSelect = e.getData(CommonDataKeys.VIRTUAL_FILE);
 
     VirtualFile[] files = FileChooser.chooseFiles(singlePomSelection, project, fileToSelect);
     if (files.length == 0) return;

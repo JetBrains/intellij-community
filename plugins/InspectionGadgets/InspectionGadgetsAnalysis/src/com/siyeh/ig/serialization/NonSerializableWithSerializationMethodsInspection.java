@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,18 +15,17 @@
  */
 package com.siyeh.ig.serialization;
 
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiAnonymousClass;
+import com.intellij.psi.PsiClass;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.MakeSerializableFix;
+import com.siyeh.ig.fixes.DelegatingFixFactory;
 import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 
-public class NonSerializableWithSerializationMethodsInspection
-  extends BaseInspection {
+public class NonSerializableWithSerializationMethodsInspection extends BaseInspection {
 
   @Override
   @NotNull
@@ -37,16 +36,16 @@ public class NonSerializableWithSerializationMethodsInspection
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "non.serializable.class.with.readwriteobject.display.name");
+    return InspectionGadgetsBundle.message("non.serializable.class.with.readwriteobject.display.name");
   }
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    if (infos[2] instanceof PsiAnonymousClass) {
+    final PsiClass aClass = (PsiClass)infos[2];
+    if (aClass instanceof PsiAnonymousClass) {
       return null;
     }
-    return new MakeSerializableFix();
+    return DelegatingFixFactory.createMakeSerializableFix(aClass);
   }
 
   @Override
@@ -87,30 +86,25 @@ public class NonSerializableWithSerializationMethodsInspection
 
   @Override
   public BaseInspectionVisitor buildVisitor() {
-    return new NonserializableDefinesSerializationMethodsVisitor();
+    return new NonSerializableWithSerializationMethodsVisitor();
   }
 
-  private static class NonserializableDefinesSerializationMethodsVisitor
-    extends BaseInspectionVisitor {
+  private static class NonSerializableWithSerializationMethodsVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      // no call to super, so it doesn't drill down
       if (aClass.isInterface() || aClass.isAnnotationType()) {
         return;
       }
-      final boolean hasReadObject =
-        SerializationUtils.hasReadObject(aClass);
-      final boolean hasWriteObject =
-        SerializationUtils.hasWriteObject(aClass);
+      final boolean hasReadObject = SerializationUtils.hasReadObject(aClass);
+      final boolean hasWriteObject = SerializationUtils.hasWriteObject(aClass);
       if (!hasWriteObject && !hasReadObject) {
         return;
       }
       if (SerializationUtils.isSerializable(aClass)) {
         return;
       }
-      registerClassError(aClass, Boolean.valueOf(hasReadObject),
-                         Boolean.valueOf(hasWriteObject), aClass);
+      registerClassError(aClass, Boolean.valueOf(hasReadObject), Boolean.valueOf(hasWriteObject), aClass);
     }
   }
 }

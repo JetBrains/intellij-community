@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.fixes.MakeCloneableFix;
+import com.siyeh.ig.fixes.DelegatingFixFactory;
 import com.siyeh.ig.psiutils.CloneUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,8 +30,7 @@ public class CloneInNonCloneableClassInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "clone.method.in.non.cloneable.class.display.name");
+    return InspectionGadgetsBundle.message("clone.method.in.non.cloneable.class.display.name");
   }
 
   @Override
@@ -40,21 +39,16 @@ public class CloneInNonCloneableClassInspection extends BaseInspection {
     final PsiClass aClass = (PsiClass)infos[0];
     final String className = aClass.getName();
     if (aClass.isInterface()) {
-      return InspectionGadgetsBundle.message(
-        "clone.method.in.non.cloneable.interface.problem.descriptor",
-        className);
+      return InspectionGadgetsBundle.message("clone.method.in.non.cloneable.interface.problem.descriptor", className);
     }
     else {
-      return InspectionGadgetsBundle.message(
-        "clone.method.in.non.cloneable.class.problem.descriptor",
-        className);
+      return InspectionGadgetsBundle.message("clone.method.in.non.cloneable.class.problem.descriptor", className);
     }
   }
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final PsiClass aClass = (PsiClass)infos[0];
-    return new MakeCloneableFix(aClass.isInterface());
+    return DelegatingFixFactory.createMakeCloneableFix((PsiClass)infos[0]);
   }
 
   @Override
@@ -62,8 +56,7 @@ public class CloneInNonCloneableClassInspection extends BaseInspection {
     return new CloneInNonCloneableClassVisitor();
   }
 
-  private static class CloneInNonCloneableClassVisitor
-    extends BaseInspectionVisitor {
+  private static class CloneInNonCloneableClassVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {
@@ -71,8 +64,7 @@ public class CloneInNonCloneableClassInspection extends BaseInspection {
         return;
       }
       final PsiClass containingClass = method.getContainingClass();
-      if (containingClass == null ||
-          CloneUtils.isCloneable(containingClass)) {
+      if (CloneUtils.isCloneable(containingClass)) {
         return;
       }
       registerMethodError(method, containingClass);

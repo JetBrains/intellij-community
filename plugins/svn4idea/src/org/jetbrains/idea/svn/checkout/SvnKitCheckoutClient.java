@@ -24,7 +24,7 @@ import java.util.List;
  */
 public class SvnKitCheckoutClient extends BaseSvnClient implements CheckoutClient {
 
-  private static final List<WorkingCopyFormat> SUPPORTED_FORMATS;
+  public static final List<WorkingCopyFormat> SUPPORTED_FORMATS;
 
   static {
     List<WorkingCopyFormat> supportedFormats = new ArrayList<WorkingCopyFormat>();

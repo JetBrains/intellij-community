@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,10 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -40,11 +40,9 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.ChangeFileEncodingAction;
 import com.intellij.openapi.vfs.encoding.EncodingUtil;
-import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.ArrayUtil;
@@ -98,9 +96,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     if (file.getViewProvider().getBaseLanguage() != file.getLanguage()) return null;
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) return null;
-    if (virtualFile.getFileSystem() != LocalFileSystem.getInstance()
-        // tests
-        && virtualFile.getFileSystem() != TempFileSystem.getInstance()) return null;
+    if (!virtualFile.isInLocalFileSystem()) return null;
     String text = file.getText();
     Charset charset = LoadTextUtil.extractCharsetFromFileContent(file.getProject(), virtualFile, text);
 
@@ -156,7 +152,7 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     if (separator == null) {
       separator = documentManager.isDocumentUnsaved(document) ?
                   FileDocumentManagerImpl.getLineSeparator(document, virtualFile) :
-                  CodeStyleFacade.getInstance(project).getLineSeparator();
+                  FileDocumentManager.getInstance().getLineSeparator(null, project);
     }
     String toSave = StringUtil.convertLineSeparators(text, separator);
     byte[] bom = virtualFile.getBOM();
@@ -257,8 +253,8 @@ public class LossyEncodingInspection extends LocalInspectionTool {
     public static DataContext createDataContext(Editor editor, Component component, VirtualFile selectedFile, Project project) {
       DataContext parent = DataManager.getInstance().getDataContext(component);
       DataContext context = SimpleDataContext.getSimpleContext(PlatformDataKeys.CONTEXT_COMPONENT.getName(), editor == null ? null : editor.getComponent(), parent);
-      DataContext projectContext = SimpleDataContext.getSimpleContext(PlatformDataKeys.PROJECT.getName(), project, context);
-      return SimpleDataContext.getSimpleContext(PlatformDataKeys.VIRTUAL_FILE.getName(), selectedFile, projectContext);
+      DataContext projectContext = SimpleDataContext.getSimpleContext(CommonDataKeys.PROJECT.getName(), project, context);
+      return SimpleDataContext.getSimpleContext(CommonDataKeys.VIRTUAL_FILE.getName(), selectedFile, projectContext);
     }
   }
 }

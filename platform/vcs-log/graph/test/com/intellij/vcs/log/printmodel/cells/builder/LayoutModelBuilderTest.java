@@ -2,7 +2,7 @@ package com.intellij.vcs.log.printmodel.cells.builder;
 
 import com.intellij.vcs.log.VcsCommit;
 import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.graph.mutable.GraphBuilder;
+import com.intellij.vcs.log.graph.GraphTestUtils;
 import com.intellij.vcs.log.parser.SimpleCommitListParser;
 import com.intellij.vcs.log.printmodel.layout.LayoutModel;
 import org.junit.Test;
@@ -12,8 +12,8 @@ import java.io.StringReader;
 import java.util.Collections;
 import java.util.List;
 
-import static junit.framework.Assert.assertEquals;
 import static com.intellij.vcs.log.printmodel.LayoutTestUtils.toStr;
+import static junit.framework.Assert.assertEquals;
 
 /**
  * @author erokhins
@@ -22,7 +22,7 @@ public class LayoutModelBuilderTest {
   private void runTest(String input, String out) throws IOException {
     SimpleCommitListParser parser = new SimpleCommitListParser(new StringReader(input));
     List<VcsCommit> vcsCommitParentses = parser.readAllCommits();
-    LayoutModel layoutModel = new LayoutModel(GraphBuilder.build(vcsCommitParentses, Collections.<VcsRef>emptyList()));
+    LayoutModel layoutModel = new LayoutModel(GraphTestUtils.buildGraph(vcsCommitParentses, Collections.<VcsRef>emptyList()));
     assertEquals(out, toStr(layoutModel));
   }
 

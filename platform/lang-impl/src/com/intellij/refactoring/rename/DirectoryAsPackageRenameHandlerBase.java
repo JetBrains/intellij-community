@@ -17,6 +17,7 @@ package com.intellij.refactoring.rename;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.TitledHandler;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -112,7 +113,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
     final PsiElement nameSuggestionContext = element;
     element = adjustForRename(dataContext, element);
     LOG.assertTrue(element != null);
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     doRename(element, project, nameSuggestionContext, editor);
   }
 

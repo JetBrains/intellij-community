@@ -25,6 +25,7 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.junit.RuntimeConfigurationProducer;
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -88,7 +89,7 @@ public class ConfigurationContext {
       myLocation = location;
       return;
     }
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       myLocation = null;
       return;
@@ -206,7 +207,7 @@ public class ConfigurationContext {
   @Nullable
   private static PsiElement getSelectedPsiElement(final DataContext dataContext, final Project project) {
     PsiElement element = null;
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor != null){
       final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
       if (psiFile != null) {
@@ -218,10 +219,11 @@ public class ConfigurationContext {
       }
     }
     if (element == null) {
-      element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      final PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
+      element = elements != null && elements.length >= 1 ? elements[0] : null;
     }
     if (element == null) {
-      final VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
+      final VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
       if (file != null) {
         element = PsiManager.getInstance(project).findFile(file);
       }

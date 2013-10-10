@@ -125,6 +125,10 @@ public class LibraryOptionsPanel implements Disposable {
             public void run() {
               if (!myDisposed) {
                 showSettingsPanel(libraryDescription, baseDirectoryPath, versionFilter, showDoNotCreateOption, versions);
+                LibraryDownloadSettings settings = mySettings.getDownloadSettings();
+                if (settings != null) {
+                  onVersionChanged(settings.getVersion());
+                }
               }
             }
           });
@@ -135,6 +139,9 @@ public class LibraryOptionsPanel implements Disposable {
       showSettingsPanel(libraryDescription, baseDirectoryPath, versionFilter, showDoNotCreateOption,
                         new ArrayList<FrameworkLibraryVersion>());
     }
+  }
+
+  protected void onVersionChanged(FrameworkLibraryVersion version) {
   }
 
   public JPanel getSimplePanel() {

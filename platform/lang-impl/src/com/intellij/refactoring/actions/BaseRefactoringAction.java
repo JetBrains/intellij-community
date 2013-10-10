@@ -73,10 +73,10 @@ public abstract class BaseRefactoringAction extends AnAction {
   @Override
   public final void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
     final PsiElement[] elements = getPsiElementArray(dataContext);
     int eventCount = IdeEventQueue.getInstance().getEventCount();
     RefactoringActionHandler handler;
@@ -136,14 +136,14 @@ public abstract class BaseRefactoringAction extends AnAction {
     presentation.setVisible(true);
     presentation.setEnabled(true);
     DataContext dataContext = e.getDataContext();
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || isHidden()) {
       hideAction(e);
       return;
     }
 
-    Editor editor = e.getData(PlatformDataKeys.EDITOR);
-    PsiFile file = e.getData(LangDataKeys.PSI_FILE);
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     if (file != null) {
       if (file instanceof PsiCompiledElement || !isAvailableForFile(file)) {
         hideAction(e);
@@ -163,7 +163,7 @@ public abstract class BaseRefactoringAction extends AnAction {
       }
     }
     else {
-      PsiElement element = e.getData(LangDataKeys.PSI_ELEMENT);
+      PsiElement element = e.getData(CommonDataKeys.PSI_ELEMENT);
       Language[] languages = e.getData(LangDataKeys.CONTEXT_LANGUAGES);
       if (element == null || !isAvailableForLanguage(element.getLanguage())) {
         if (file == null) {
@@ -240,7 +240,7 @@ public abstract class BaseRefactoringAction extends AnAction {
   public static PsiElement[] getPsiElementArray(DataContext dataContext) {
     PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
     if (psiElements == null || psiElements.length == 0) {
-      PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       if (element != null) {
         psiElements = new PsiElement[]{element};
       }

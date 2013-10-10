@@ -19,6 +19,7 @@ import com.intellij.codeInsight.editorActions.BaseEnterHandler;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -39,7 +40,7 @@ public class EnterHandler extends BaseEnterHandler {
 
   @Override
   public void executeWriteAction(Editor editor, DataContext dataContext) {
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
       TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project);
       if (templateManager != null && templateManager.startTemplate(editor, TemplateSettings.ENTER_CHAR)) {

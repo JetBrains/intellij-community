@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.util.containers.FList;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -46,7 +47,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
     for (String s : element.getAllLookupStrings()) {
       FList<TextRange> ranges = myCaseInsensitiveMatcher.matchingFragments(s);
       if (ranges == null) continue;
-      if (ranges.isEmpty() || isStartMatchModuloUnderscores(s, ranges.get(0).getStartOffset())) {
+      if (ranges.isEmpty() || skipUnderscores(s) >= ranges.get(0).getStartOffset()) {
         return true;
       }
     }
@@ -54,13 +55,8 @@ public class CamelHumpMatcher extends PrefixMatcher {
     return false;
   }
 
-  private static boolean isStartMatchModuloUnderscores(@NotNull String name, int startIndex) {
-    for (int i = 0; i < startIndex; i++) {
-      if (name.charAt(i) != '_') {
-        return false;
-      }
-    }
-    return true;
+  private static int skipUnderscores(@NotNull String name) {
+    return CharArrayUtil.shiftForward(name, 0, "_");
   }
 
   @Override
@@ -142,6 +138,15 @@ public class CamelHumpMatcher extends PrefixMatcher {
 
   @Override
   public int matchingDegree(String string) {
+    FList<TextRange> ranges = myCaseInsensitiveMatcher.matchingFragments(string);
+    if (ranges != null && !ranges.isEmpty()) {
+      int matchStart = ranges.get(0).getStartOffset();
+      int underscoreEnd = skipUnderscores(string);
+      if (matchStart > 0 && matchStart <= underscoreEnd) {
+        return myCaseInsensitiveMatcher.matchingDegree(string.substring(matchStart)) - 1;
+      }
+    }
+
     return myMatcher.matchingDegree(string);
   }
 }

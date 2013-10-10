@@ -223,6 +223,12 @@ public class MethodCandidateInfo extends CandidateInfo{
     return myArgumentList != null && myArgumentList.isValid();
   }
 
+
+  public static Pair<PsiMethod, PsiSubstitutor> getCurrentMethod(PsiElement context) {
+    final Map<PsiElement,Pair<PsiMethod,PsiSubstitutor>> currentMethodCandidates = CURRENT_CANDIDATE.get();
+    return currentMethodCandidates != null ? currentMethodCandidates.get(context) : null;
+  }
+
   public static class ApplicabilityLevel {
     public static final int NOT_APPLICABLE = 1;
     public static final int VARARGS = 2;

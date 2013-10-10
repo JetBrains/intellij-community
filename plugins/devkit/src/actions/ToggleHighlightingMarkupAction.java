@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.impl.IndentsPass;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.AccessToken;
@@ -49,15 +50,15 @@ import java.util.regex.Pattern;
 public class ToggleHighlightingMarkupAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
-    Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
-    PsiFile file = LangDataKeys.PSI_FILE.getData(e.getDataContext());
+    Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     e.getPresentation().setEnabled(editor != null && file != null);
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
-    PsiFile file = LangDataKeys.PSI_FILE.getData(e.getDataContext());
+    final Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(e.getDataContext());
     if (editor == null || file == null) return;
     final Project project = file.getProject();
     CommandProcessorEx commandProcessor = (CommandProcessorEx)CommandProcessorEx.getInstance();

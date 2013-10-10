@@ -18,9 +18,9 @@ package com.intellij.openapi.fileEditor.impl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.CloseAction;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -557,11 +557,11 @@ public class EditorWindow {
 
     @Override
     public Object getData(String dataId) {
-      if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)){
+      if (CommonDataKeys.VIRTUAL_FILE.is(dataId)){
         final VirtualFile virtualFile = myEditor.getFile();
         return virtualFile.isValid() ? virtualFile : null;
       }
-      else if (PlatformDataKeys.PROJECT.is(dataId)) {
+      else if (CommonDataKeys.PROJECT.is(dataId)) {
         return myEditor.getFileEditorManager().getProject();
       }
       return null;
@@ -642,7 +642,9 @@ public class EditorWindow {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            myTabbedPane.setSelectedIndex(index, focusEditor);
+            if (myTabbedPane != null) {
+              myTabbedPane.setSelectedIndex(index, focusEditor);
+            }
           }
         });
       }

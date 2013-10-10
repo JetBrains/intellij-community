@@ -18,6 +18,7 @@ package com.intellij.xdebugger.impl.actions;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 public class MarkObjectAction extends XDebuggerActionBase {
   @Override
   public void update(AnActionEvent event) {
-    Project project = event.getData(PlatformDataKeys.PROJECT);
+    Project project = event.getData(CommonDataKeys.PROJECT);
     boolean enabled = false;
     Presentation presentation = event.getPresentation();
     boolean hidden = true;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,10 @@ package com.intellij.testAssistant;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiElement;
@@ -37,7 +40,7 @@ public class NavigateToTestDataAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     final PsiMethod method = findTargetMethod(e.getDataContext());
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (method == null || editor == null) {
       return;
     }
@@ -55,7 +58,7 @@ public class NavigateToTestDataAction extends AnAction {
   @Nullable
   public static List<String> findTestDataFiles(@NotNull DataContext context) {
     final PsiMethod method = findTargetMethod(context);
-    final Editor editor = PlatformDataKeys.EDITOR.getData(context);
+    final Editor editor = CommonDataKeys.EDITOR.getData(context);
     if (method == null || editor == null) {
       return null;
     }
@@ -77,8 +80,8 @@ public class NavigateToTestDataAction extends AnAction {
 
   @Nullable
   private static PsiMethod findTargetMethod(@NotNull DataContext context) {
-    final Editor editor = PlatformDataKeys.EDITOR.getData(context);
-    final PsiFile file = LangDataKeys.PSI_FILE.getData(context);
+    final Editor editor = CommonDataKeys.EDITOR.getData(context);
+    final PsiFile file = CommonDataKeys.PSI_FILE.getData(context);
     if (file != null && editor != null) {
       PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
       return PsiTreeUtil.getParentOfType(element, PsiMethod.class);

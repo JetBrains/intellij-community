@@ -20,9 +20,9 @@ import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemService;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +44,7 @@ public interface RemoteExternalSystemProjectResolver<S extends ExternalSystemExe
     @Override
     public DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
                                                     @NotNull String projectPath,
-                                                    boolean downloadLibraries,
+                                                    boolean isPreviewMode,
                                                     @Nullable ExternalSystemExecutionSettings settings)
       throws ExternalSystemException, IllegalArgumentException, IllegalStateException
     {
@@ -64,6 +64,10 @@ public interface RemoteExternalSystemProjectResolver<S extends ExternalSystemExe
       return false;
     }
 
+    @Override
+    public void cancelTask(@NotNull ExternalSystemTaskId id) throws RemoteException {
+    }
+
     @NotNull
     @Override
     public Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() throws RemoteException {
@@ -75,7 +79,7 @@ public interface RemoteExternalSystemProjectResolver<S extends ExternalSystemExe
   @Nullable
   DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
                                            @NotNull String projectPath,
-                                           boolean downloadLibraries,
+                                           boolean isPreviewMode,
                                            @Nullable S settings)
     throws RemoteException, ExternalSystemException, IllegalArgumentException, IllegalStateException;
 }

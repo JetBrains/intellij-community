@@ -196,7 +196,8 @@ public abstract class AbstractImportFromExternalSystemControl<
         throw new ConfigurationException(ExternalSystemBundle.message("error.project.already.registered"));
       }
     }
-    ExternalSystemApiUtil.storeLastUsedExternalProjectPath(linkedProjectPath, myExternalSystemId);
+
+    //noinspection ConstantConditions
     myProjectSettings.setExternalProjectPath(ExternalSystemApiUtil.normalizePath(linkedProjectPath));
 
     String errorMessage = myProjectSettingsControl.apply(myProjectSettings);

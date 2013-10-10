@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.macro;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -37,8 +38,8 @@ public class MacroManagerTest extends CodeInsightFixtureTestCase {
   public DataContext getContext(VirtualFile file) {
     Project project = myFixture.getProject();
     Map<String, Object> dataId2data = new THashMap<String, Object>();
-    dataId2data.put(PlatformDataKeys.PROJECT.getName(), project);
-    dataId2data.put(PlatformDataKeys.VIRTUAL_FILE.getName(), file);
+    dataId2data.put(CommonDataKeys.PROJECT.getName(), project);
+    dataId2data.put(CommonDataKeys.VIRTUAL_FILE.getName(), file);
     dataId2data.put(PlatformDataKeys.PROJECT_FILE_DIRECTORY.getName(), project.getBaseDir());
     return SimpleDataContext.getSimpleContext(dataId2data, null);
   }

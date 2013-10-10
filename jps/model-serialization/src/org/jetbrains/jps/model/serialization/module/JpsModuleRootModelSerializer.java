@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.model.serialization.module;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Element;
@@ -32,6 +33,7 @@ import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.*;
 import org.jetbrains.jps.model.serialization.JpsModelSerializerExtension;
+import org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
@@ -45,6 +47,7 @@ import static com.intellij.openapi.util.JDOMUtil.getChildren;
  * @author nik
  */
 public class JpsModuleRootModelSerializer {
+  private static final Logger LOG = Logger.getInstance(JpsModuleRootModelSerializer.class);
   public static final String URL_ATTRIBUTE = "url";
   public static final String CONTENT_TAG = "content";
   public static final String SOURCE_FOLDER_TAG = "sourceFolder";
@@ -166,7 +169,8 @@ public class JpsModuleRootModelSerializer {
         }
       }
     }
-    return null;
+    LOG.warn("Unknown module source root type " + typeAttribute);
+    return JpsJavaModelSerializerExtension.JAVA_SOURCE_ROOT_PROPERTIES_SERIALIZER;
   }
 
   public static void saveRootModel(JpsModule module, Element rootModelElement) {

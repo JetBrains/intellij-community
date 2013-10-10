@@ -1019,7 +1019,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         if (paneSpecificData != null) return paneSpecificData;
       }
 
-      if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
         if (currentProjectViewPane == null) return null;
         final PsiElement[] elements = currentProjectViewPane.getSelectedPSIElements();
         return elements.length == 1 ? elements[0] : null;
@@ -1032,7 +1032,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
         return elements.length == 0 ? null : elements;
       }
       if (LangDataKeys.MODULE.is(dataId)) {
-        VirtualFile[] virtualFiles = (VirtualFile[])getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY.getName());
+        VirtualFile[] virtualFiles = (VirtualFile[])getData(CommonDataKeys.VIRTUAL_FILE_ARRAY.getName());
         if (virtualFiles == null || virtualFiles.length <= 1) return null;
         final Set<Module> modules = new HashSet<Module>();
         for (VirtualFile virtualFile : virtualFiles) {

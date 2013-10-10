@@ -34,7 +34,7 @@ public class InferenceIncorporationPhase {
 
   public void incorporate() {
     for (InferenceVariable inferenceVariable : mySession.getInferenceVariables()) {
-      if (inferenceVariable.getInstantiation() != PsiType.NULL) continue;
+      if (inferenceVariable.getInstantiation() != PsiType.NULL || inferenceVariable.isCaptured()) continue;
       final List<PsiType> eqBounds = inferenceVariable.getBounds(InferenceBound.EQ);
       final List<PsiType> upperBounds = inferenceVariable.getBounds(InferenceBound.UPPER);
       final List<PsiType> lowerBounds = inferenceVariable.getBounds(InferenceBound.LOWER);

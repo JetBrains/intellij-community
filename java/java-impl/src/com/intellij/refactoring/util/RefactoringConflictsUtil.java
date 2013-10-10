@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class RefactoringConflictsUtil {
   public static void checkAccessibilityConflicts(@NotNull PsiMember member,
                                                  @PsiModifier.ModifierConstant @Nullable String newVisibility,
                                                  @Nullable PsiClass targetClass,
-                                                 @NotNull Set<PsiMember> membersToMove,
+                                                 @NotNull Set<? extends PsiMember> membersToMove,
                                                  @NotNull MultiMap<PsiElement, String> conflicts) {
     PsiModifierList modifierListCopy = member.getModifierList();
     if (modifierListCopy != null) {
@@ -97,7 +97,7 @@ public class RefactoringConflictsUtil {
   public static void checkAccessibilityConflicts(@NotNull PsiMember member,
                                                  @Nullable PsiModifierList modifierListCopy,
                                                  @Nullable PsiClass targetClass,
-                                                 @NotNull Set<PsiMember> membersToMove,
+                                                 @NotNull Set<? extends PsiMember> membersToMove,
                                                  @NotNull MultiMap<PsiElement, String> conflicts) {
     for (PsiReference psiReference : ReferencesSearch.search(member)) {
       checkAccessibilityConflicts(psiReference, member, modifierListCopy, targetClass, membersToMove, conflicts);
@@ -108,7 +108,7 @@ public class RefactoringConflictsUtil {
                                                  @NotNull PsiMember member,
                                                  @Nullable PsiModifierList modifierListCopy,
                                                  @Nullable PsiClass targetClass,
-                                                 @NotNull Set<PsiMember> membersToMove,
+                                                 @NotNull Set<? extends PsiMember> membersToMove,
                                                  @NotNull MultiMap<PsiElement, String> conflicts) {
     JavaPsiFacade manager = JavaPsiFacade.getInstance(member.getProject());
     PsiElement ref = reference.getElement();

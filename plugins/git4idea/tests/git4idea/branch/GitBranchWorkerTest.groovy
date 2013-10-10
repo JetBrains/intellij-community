@@ -37,6 +37,7 @@ import git4idea.test.GitLightTest
 import org.jetbrains.annotations.NotNull
 import org.junit.After
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 
 import java.util.regex.Matcher
@@ -51,6 +52,7 @@ import static junit.framework.Assert.*
  *
  * @author Kirill Likhodedov
  */
+@Ignore
 class GitBranchWorkerTest extends GitLightTest {
 
   private GitRepository myUltimate

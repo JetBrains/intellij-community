@@ -58,15 +58,20 @@ public class BuildMain {
     LOG = Logger.getInstance("#org.jetbrains.jps.cmdline.BuildMain");
   }
 
+  private static final int HOST_ARG = 0;
+  private static final int PORT_ARG = HOST_ARG + 1;
+  private static final int SESSION_ID_ARG = PORT_ARG + 1;
+  private static final int SYSTEM_DIR_ARG = SESSION_ID_ARG + 1;
+
   private static NioEventLoopGroup ourEventLoopGroup;
 
   public static void main(String[] args){
     System.out.println("Build process started. Classpath: " + System.getProperty("java.class.path"));
-    final String host = args[0];
-    final int port = Integer.parseInt(args[1]);
-    final UUID sessionId = UUID.fromString(args[2]);
+    final String host = args[HOST_ARG];
+    final int port = Integer.parseInt(args[PORT_ARG]);
+    final UUID sessionId = UUID.fromString(args[SESSION_ID_ARG]);
     @SuppressWarnings("ConstantConditions")
-    final File systemDir = new File(FileUtil.toCanonicalPath(args[3]));
+    final File systemDir = new File(FileUtil.toCanonicalPath(args[SYSTEM_DIR_ARG]));
     Utils.setSystemRoot(systemDir);
 
     ourEventLoopGroup = new NioEventLoopGroup(1, SharedThreadPool.getInstance());

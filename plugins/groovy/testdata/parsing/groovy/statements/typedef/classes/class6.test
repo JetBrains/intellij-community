@@ -15,6 +15,8 @@ Groovy script
       Reference element
         PsiElement(identifier)('b')
     PsiWhiteSpace(' ')
+    Implements clause
+      <empty list>
     Type definition body
       PsiElement({)('{')
       PsiWhiteSpace('\n')

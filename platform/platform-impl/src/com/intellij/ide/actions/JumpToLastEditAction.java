@@ -22,7 +22,7 @@ import com.intellij.openapi.project.DumbAware;
 
 public class JumpToLastEditAction extends AnAction implements DumbAware {
   public void actionPerformed(AnActionEvent e) {
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;
     IdeDocumentHistory.getInstance(project).navigatePreviousChange();
   }
@@ -30,7 +30,7 @@ public class JumpToLastEditAction extends AnAction implements DumbAware {
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       presentation.setEnabled(false);
       return;

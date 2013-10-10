@@ -54,12 +54,12 @@ public abstract class BaseShowRecentFilesAction extends AnAction implements Dumb
   private static final Color BORDER_COLOR = Gray._135;
 
   public void actionPerformed(AnActionEvent e) {
-    show(PlatformDataKeys.PROJECT.getData(e.getDataContext()));
+    show(CommonDataKeys.PROJECT.getData(e.getDataContext()));
   }
 
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
     presentation.setEnabled(project != null);
   }
 

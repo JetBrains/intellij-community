@@ -20,6 +20,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -135,14 +136,14 @@ public class XPathEvalAction extends XPathAction {
 
     @Override
     public void actionPerformed(AnActionEvent event) {
-        final Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
+        final Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
         if (project == null) {
             // no active project
             LOG.debug("No project");
             return;
         }
 
-        Editor editor = PlatformDataKeys.EDITOR.getData(event.getDataContext());
+        Editor editor = CommonDataKeys.EDITOR.getData(event.getDataContext());
         if (editor == null) {
             FileEditorManager fem = FileEditorManager.getInstance(project);
             editor = fem.getSelectedTextEditor();

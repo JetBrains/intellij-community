@@ -152,7 +152,7 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   }
 
 
-  private HttpMethod doREST(String request, boolean post) throws Exception {
+  HttpMethod doREST(String request, boolean post) throws Exception {
     HttpClient client = login(new PostMethod(getUrl() + "/rest/user/login"));
     String uri = getUrl() + request;
     HttpMethod method = post ? new PostMethod(uri) : new GetMethod(uri);

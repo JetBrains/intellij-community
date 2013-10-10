@@ -65,12 +65,12 @@ public class GrMemberInfoStorage extends AbstractMemberInfoStorage<GrMember, Psi
     if (aClass instanceof GrTypeDefinition) {
       final GrExtendsClause extendsList = ((GrTypeDefinition)aClass).getExtendsClause();
       if (extendsList != null) {
-        buildSubClassesMapForList(extendsList.getReferenceTypes(), (GrTypeDefinition)aClass);
+        buildSubClassesMapForList(extendsList.getReferencedTypes(), (GrTypeDefinition)aClass);
       }
 
       final GrImplementsClause implementsList = ((GrTypeDefinition)aClass).getImplementsClause();
       if (implementsList != null) {
-        buildSubClassesMapForList(implementsList.getReferenceTypes(), (GrTypeDefinition)aClass);
+        buildSubClassesMapForList(implementsList.getReferencedTypes(), (GrTypeDefinition)aClass);
       }
     }
   }

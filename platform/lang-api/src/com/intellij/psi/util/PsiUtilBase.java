@@ -19,11 +19,10 @@ package com.intellij.psi.util;
 import com.intellij.ide.DataManager;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
-import com.intellij.lang.PsiBuilder;
-import com.intellij.lang.PsiParser;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -38,7 +37,6 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,13 +44,7 @@ import javax.swing.*;
 import java.util.*;
 
 public class PsiUtilBase extends PsiUtilCore {
-  public static final PsiParser NULL_PARSER = new PsiParser() {
-    @Override
-    @NotNull
-    public ASTNode parse(IElementType root, PsiBuilder builder) {
-      throw new IllegalAccessError();
-    }
-  };
+  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtilBase");
   public static final Comparator<Language> LANGUAGE_COMPARATOR = new Comparator<Language>() {
     @Override
     public int compare(Language o1, Language o2) {
@@ -79,31 +71,6 @@ public class PsiUtilBase extends PsiUtilCore {
       if (provider.getPsi(language) == containingFile) return i;
     }
     throw new RuntimeException("Cannot find root for: "+root);
-  }
-
-  @NotNull
-  public static Language getLanguageAtOffset (@NotNull PsiFile file, int offset) {
-    final PsiElement elt = file.findElementAt(offset);
-    if (elt == null) return file.getLanguage();
-    if (elt instanceof PsiWhiteSpace) {
-      final int decremented = elt.getTextRange().getStartOffset() - 1;
-      if (decremented >= 0) {
-        return getLanguageAtOffset(file, decremented);
-      }
-    }
-    return findLanguageFromElement(elt);
-  }
-
-  @NotNull
-  public static Language findLanguageFromElement(final PsiElement elt) {
-    if (elt.getFirstChild() == null) { //is leaf
-      final PsiElement parent = elt.getParent();
-      if (parent != null) {
-        return parent.getLanguage();
-      }
-    }
-
-    return elt.getLanguage();
   }
 
   public static boolean isUnderPsiRoot(PsiFile root, PsiElement element) {
@@ -190,7 +157,12 @@ public class PsiUtilBase extends PsiUtilCore {
           return null;
         }
       }
-      int endOffset = elt.getTextRange().getEndOffset();
+      TextRange range = elt.getTextRange();
+      if (range == null) {
+        LOG.error("Null range for element " + elt + " of " + elt.getClass() + " in file " + file + " at offset " + curOffset);
+        return file.getLanguage();
+      }
+      int endOffset = range.getEndOffset();
       curOffset = endOffset <= curOffset ? curOffset + 1 : endOffset;
     }
     while (curOffset < end);
@@ -271,7 +243,7 @@ public class PsiUtilBase extends PsiUtilCore {
       // We assume that data context from focus-based retrieval should success if performed from EDT.
       AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
       if (asyncResult.isDone()) {
-        Editor editor = PlatformDataKeys.EDITOR.getData(asyncResult.getResult());
+        Editor editor = CommonDataKeys.EDITOR.getData(asyncResult.getResult());
         if (editor != null) {
           Document cachedDocument = PsiDocumentManager.getInstance(psiFile.getProject()).getCachedDocument(psiFile);
           // Ensure that target editor is found by checking its document against the one from given PSI element.

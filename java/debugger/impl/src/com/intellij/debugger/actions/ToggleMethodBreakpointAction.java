@@ -56,7 +56,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
 
 
   public void actionPerformed(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return;
     }
@@ -83,7 +83,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
 
   @Nullable
   private static PlaceInDocument getPlace(AnActionEvent event) {
-    final Project project = event.getData(PlatformDataKeys.PROJECT);
+    final Project project = event.getData(CommonDataKeys.PROJECT);
     if(project == null) {
       return null;
     }
@@ -95,7 +95,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
         ActionPlaces.STRUCTURE_VIEW_POPUP.equals(event.getPlace()) ||
         ActionPlaces.FAVORITES_VIEW_POPUP.equals(event.getPlace()) ||
         ActionPlaces.NAVIGATION_BAR.equals(event.getPlace())) {
-      final PsiElement psiElement = event.getData(LangDataKeys.PSI_ELEMENT);
+      final PsiElement psiElement = event.getData(CommonDataKeys.PSI_ELEMENT);
       if(psiElement instanceof PsiMethod) {
         final PsiFile containingFile = psiElement.getContainingFile();
         if (containingFile != null) {
@@ -105,7 +105,7 @@ public class ToggleMethodBreakpointAction extends AnAction {
       }
     }
     else {
-      Editor editor = event.getData(PlatformDataKeys.EDITOR);
+      Editor editor = event.getData(CommonDataKeys.EDITOR);
       if(editor == null) {
         editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
       }

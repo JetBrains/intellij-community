@@ -22,6 +22,7 @@
 
   <depends>com.intellij.modules.lang</depends>
   <depends>org.intellij.groovy</depends>
+  <depends optional="true" config-file="gradle-javaee-plugin.xml">com.intellij.javaee</depends>
 
   <extensionPoints>
     <extensionPoint name="projectResolve" interface="org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension"/>
@@ -37,7 +38,7 @@
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleDependenciesContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleArtifactsContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleSourceSetsContributor"/>
-    <resolve.contributor order="" implementation="org.jetbrains.plugins.gradle.service.resolve.GradleImplicitContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleImplicitContributor"/>
   </extensions>
   
   <extensions defaultExtensionNs="com.intellij">

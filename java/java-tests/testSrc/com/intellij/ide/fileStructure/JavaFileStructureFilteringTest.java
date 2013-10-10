@@ -15,10 +15,6 @@
  */
 package com.intellij.ide.fileStructure;
 
-import com.intellij.idea.Bombed;
-
-import java.util.Calendar;
-
 /**
  * @author Konstantin Bulenkov
  */
@@ -42,6 +38,6 @@ public class JavaFileStructureFilteringTest extends JavaFileStructureTestCase {
 
   public void testMatcher1()          throws Exception {checkTree("ico");}
   public void testMatcher2()          throws Exception {checkTree("ico");}
-  @Bombed(user = "peter", month = Calendar.DECEMBER, day = 20)
-  public void testAnonymousMatcher2() throws Exception {checkTree("ico");}
+  
+  public void _testAnonymousMatcher2() throws Exception {checkTree("ico");} //http://youtrack.jetbrains.com/issue/IDEABKL-6906
 }

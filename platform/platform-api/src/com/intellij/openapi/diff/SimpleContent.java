@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,6 +89,7 @@ public class SimpleContent extends DiffContent {
     return myLineSeparators.restoreText(myDocument.getText());
   }
 
+  @Override
   public Document getDocument() {
     return myDocument;
   }
@@ -96,6 +97,7 @@ public class SimpleContent extends DiffContent {
   /**
    * @return null
    */
+  @Override
   public OpenFileDescriptor getOpenFileDescriptor(int offset) {
     return null;
   }
@@ -103,10 +105,12 @@ public class SimpleContent extends DiffContent {
   /**
    * @return null
    */
+  @Override
   public VirtualFile getFile() {
     return null;
   }
 
+  @Override
   @Nullable
   public FileType getContentType() {
     return myType;
@@ -115,6 +119,7 @@ public class SimpleContent extends DiffContent {
   /**
    * @return Encodes using default encoding
    */
+  @Override
   public byte[] getBytes() {
     String currentText = getText();
     if (myOriginalText.equals(myDocument.getText()) && myCharset == null) {
@@ -132,9 +137,7 @@ public class SimpleContent extends DiffContent {
       buffer.get(result, bomLength, encodedLength);
       return result;
     }
-    else {
-      return currentText.getBytes();
-    }
+    return currentText.getBytes();
   }
 
   @NotNull
@@ -154,7 +157,6 @@ public class SimpleContent extends DiffContent {
   /**
    * @param text     text of content
    * @param fileName used to determine content type
-   * @return
    */
   public static SimpleContent forFileContent(String text, String fileName) {
     FileType fileType;
@@ -212,7 +214,7 @@ public class SimpleContent extends DiffContent {
       LineTokenizer lineTokenizer = new LineTokenizer(text);
       String[] lines = lineTokenizer.execute();
       mySeparator = lineTokenizer.getLineSeparator();
-      LOG.assertTrue(mySeparator == null || mySeparator.length() > 0);
+      LOG.assertTrue(mySeparator == null || !mySeparator.isEmpty());
       if (mySeparator == null) mySeparator = SystemProperties.getLineSeparator();
       return LineTokenizer.concatLines(lines);
     }

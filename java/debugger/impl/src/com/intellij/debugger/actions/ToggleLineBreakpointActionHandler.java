@@ -23,6 +23,7 @@ import com.intellij.debugger.ui.breakpoints.Breakpoint;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -71,7 +72,7 @@ public class ToggleLineBreakpointActionHandler extends DebuggerActionHandler {
       return;
     }
 
-    ExpandRegionAction.expandRegionAtCaret(project, event.getData(PlatformDataKeys.EDITOR));
+    ExpandRegionAction.expandRegionAtCaret(project, event.getData(CommonDataKeys.EDITOR));
 
     Document document = place.getDocument();
     int line = document.getLineNumber(place.getOffset());
@@ -100,7 +101,7 @@ public class ToggleLineBreakpointActionHandler extends DebuggerActionHandler {
 
   @Nullable
   private static PlaceInDocument getPlace(@NotNull final Project project, AnActionEvent event) {
-    Editor editor = event.getData(PlatformDataKeys.EDITOR);
+    Editor editor = event.getData(CommonDataKeys.EDITOR);
     if(editor == null) {
       editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     }

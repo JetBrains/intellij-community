@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.varScopeCanBeNarrowed;
 
-import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -99,7 +99,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
   protected PsiElement moveDeclaration(Project project, V variable, final Collection<PsiReference> references, boolean delete) {
     final PsiCodeBlock anchorBlock = findAnchorBlock(references);
     if (anchorBlock == null) return null; //was assert, but need to fix the case when obsolete inspection highlighting is left
-    if (!CodeInsightUtil.preparePsiElementsForWrite(anchorBlock)) return null;
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(anchorBlock)) return null;
 
     final PsiElement firstElement = getLowestOffsetElement(references);
     final String localName = suggestLocalName(project, variable, anchorBlock);

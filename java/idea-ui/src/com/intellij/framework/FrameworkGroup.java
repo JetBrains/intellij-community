@@ -1,5 +1,6 @@
 package com.intellij.framework;
 
+import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -9,20 +10,18 @@ import java.util.List;
 /**
  * @author nik
  */
-public abstract class FrameworkGroup<V extends FrameworkGroupVersion> {
+public abstract class FrameworkGroup<V extends FrameworkVersion> implements FrameworkOrGroup {
   private final String myId;
 
   public FrameworkGroup(String id) {
     myId = id;
   }
 
+  @Override
   @NotNull
   public final String getId() {
     return myId;
   }
-
-  @NotNull
-  public abstract String getPresentableName();
 
   @NotNull
   public abstract Icon getIcon();
@@ -30,5 +29,9 @@ public abstract class FrameworkGroup<V extends FrameworkGroupVersion> {
   @NotNull
   public List<V> getGroupVersions() {
     return Collections.emptyList();
+  }
+
+  public FrameworkRole getRole() {
+    return new FrameworkRole(myId);
   }
 }

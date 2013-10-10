@@ -28,16 +28,16 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
   private final AtomicReference<DataNode<ProjectData>> myExternalProject = new AtomicReference<DataNode<ProjectData>>();
 
   @NotNull private final String  myProjectPath;
-  private final          boolean myResolveLibraries;
+  private final          boolean myIsPreviewMode;
 
   public ExternalSystemResolveProjectTask(@NotNull ProjectSystemId externalSystemId,
                                           @NotNull Project project,
                                           @NotNull String projectPath,
-                                          boolean resolveLibraries)
+                                          boolean isPreviewMode)
   {
     super(externalSystemId, ExternalSystemTaskType.RESOLVE_PROJECT, project, projectPath);
     myProjectPath = projectPath;
-    myResolveLibraries = resolveLibraries;
+    myIsPreviewMode = isPreviewMode;
   }
 
   @SuppressWarnings("unchecked")
@@ -50,7 +50,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     try {
       ExternalSystemExecutionSettings settings = ExternalSystemApiUtil
         .getExecutionSettings(ideProject, myProjectPath, getExternalSystemId());
-      DataNode<ProjectData> project = resolver.resolveProjectInfo(getId(), myProjectPath, myResolveLibraries, settings);
+      DataNode<ProjectData> project = resolver.resolveProjectInfo(getId(), myProjectPath, myIsPreviewMode, settings);
 
       if (project == null) {
         return;
@@ -59,6 +59,20 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     }
     finally {
       setState(ExternalSystemTaskState.FINISHED);
+    }
+  }
+
+  protected void doCancel() throws Exception {
+    final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
+    Project ideProject = getIdeProject();
+    RemoteExternalSystemProjectResolver resolver = manager.getFacade(ideProject, myProjectPath, getExternalSystemId()).getResolver();
+
+    setState(ExternalSystemTaskState.CANCELING);
+    try {
+      resolver.cancelTask(getId());
+    }
+    finally {
+      setState(ExternalSystemTaskState.CANCELED);
     }
   }
 

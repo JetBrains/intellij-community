@@ -37,7 +37,7 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
   @Override
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
+    final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     final Presentation presentation = e.getPresentation();
 
     if (file == null || file.getVirtualFile() == null) {
@@ -99,7 +99,7 @@ public class OpenFileInDefaultBrowserAction extends DumbAwareAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
+    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     LOG.assertTrue(psiFile != null);
     InputEvent event = e.getInputEvent();
     doOpen(psiFile, event != null && event.isShiftDown());

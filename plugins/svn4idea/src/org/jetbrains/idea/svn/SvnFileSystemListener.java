@@ -1015,7 +1015,7 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
       if (isAdded) {
         deleteAnyway.add(filePath);
       } else {
-        deletedFiles.add(Pair.create(filePath, WorkingCopyFormat.getInstance(status.getWorkingCopyFormat())));
+        deletedFiles.add(Pair.create(filePath, vcs.getWorkingCopyFormat(file)));
       }
     }
   }

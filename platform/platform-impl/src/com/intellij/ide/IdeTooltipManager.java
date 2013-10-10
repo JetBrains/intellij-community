@@ -381,7 +381,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   public boolean hideCurrent(@Nullable MouseEvent me, @Nullable AnAction action, @Nullable AnActionEvent event) {
-    return hideCurrent(me, action, event, true);
+    return hideCurrent(me, action, event, myCurrentTipUi != null && myCurrentTipUi.isAnimationEnabled());
   }
 
   public boolean hideCurrent(@Nullable MouseEvent me, @Nullable AnAction action, @Nullable AnActionEvent event, final boolean animationEnabled) {

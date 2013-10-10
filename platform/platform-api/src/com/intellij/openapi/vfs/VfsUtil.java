@@ -567,28 +567,6 @@ public class VfsUtil extends VfsUtilCore {
     });
   }
 
-  public static void processFilesRecursively(@NotNull VirtualFile root, @NotNull Processor<VirtualFile> processor,
-                                             @NotNull Convertor<VirtualFile, Boolean> directoryFilter) {
-    if (!processor.process(root)) return;
-
-    if (root.isDirectory() && directoryFilter.convert(root)) {
-      final LinkedList<VirtualFile[]> queue = new LinkedList<VirtualFile[]>();
-
-      queue.add(root.getChildren());
-
-      do {
-        final VirtualFile[] files = queue.removeFirst();
-
-        for (VirtualFile file : files) {
-          if (!processor.process(file)) return;
-          if (file.isDirectory() && directoryFilter.convert(file)) {
-            queue.add(file.getChildren());
-          }
-        }
-      } while (!queue.isEmpty());
-    }
-  }
-
   @Nullable
   public static <T> T processInputStream(@NotNull final VirtualFile file, @NotNull Function<InputStream, T> function) {
     InputStream stream = null;
@@ -598,7 +576,8 @@ public class VfsUtil extends VfsUtilCore {
     }
     catch (IOException e) {
       LOG.error(e);
-    } finally {
+    }
+    finally {
       try {
         if (stream != null) {
           stream.close();

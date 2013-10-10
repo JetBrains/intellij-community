@@ -16,6 +16,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
@@ -30,7 +31,7 @@ public abstract class BaseToolWindowToggleAction extends ToggleAction implements
 
   @Override
   public final boolean isSelected(AnActionEvent e) {
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null || project.isDisposed()) {
       return false;
     }
@@ -46,7 +47,7 @@ public abstract class BaseToolWindowToggleAction extends ToggleAction implements
 
   @Override
   public final void setSelected(AnActionEvent e, boolean state) {
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) {
       return;
     }
@@ -67,7 +68,7 @@ public abstract class BaseToolWindowToggleAction extends ToggleAction implements
   public final void update(AnActionEvent e) {
     super.update(e);
     Presentation presentation = e.getPresentation();
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) {
       presentation.setEnabled(false);
       return;

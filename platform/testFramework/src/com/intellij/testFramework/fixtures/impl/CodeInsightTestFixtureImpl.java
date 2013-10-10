@@ -834,7 +834,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     configureByFiles(files);
     testAction(new HighlightUsagesAction());
     final Editor editor = getEditor();
-    //final Editor editor = PlatformDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
+    //final Editor editor = com.intellij.openapi.actionSystem.CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
     //assert editor != null;
     //HighlightUsagesHandler.invoke(getProject(), editor, getFile());
     return editor.getMarkupModel().getAllHighlighters();
@@ -1343,10 +1343,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
         assert myEditor != null : "Editor couldn't be created for file: " +
                                   copy.getPath() +
                                   ", use copyFileToProject(..) method for this file instead of configureByFile(..)";
-        if (loader.caretMarker != null) {
-          int offset = loader.caretMarker.getStartOffset();
-          myEditor.getCaretModel().moveToOffset(offset);
-        }
+        int offset = loader.caretMarker != null ? loader.caretMarker.getStartOffset() : 0;
+        myEditor.getCaretModel().moveToOffset(offset);
+
         if (loader.selStartMarker != null && loader.selEndMarker != null) {
           int start = loader.selStartMarker.getStartOffset();
           int end = loader.selEndMarker.getStartOffset();
@@ -1356,6 +1355,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
           else {
             myEditor.getSelectionModel().setSelection(start, end);
           }
+        }
+        else {
+          myEditor.getSelectionModel().removeSelection();
         }
 
         Module module = getModule();
@@ -1850,9 +1852,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
   }
 
-  private String getFoldingDescription(@NotNull String content, @NotNull String initialFileName,
-                                       boolean doCheckCollapseStatus) {
-    configureByText(FileTypeManager.getInstance().getFileTypeByFileName(initialFileName), content);
+  public String getFoldingDescription(boolean withCollapseStatus) {
     CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(myEditor);
 
     final FoldingModel model = myEditor.getFoldingModel();
@@ -1868,7 +1868,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     StringBuilder result = new StringBuilder(myEditor.getDocument().getText());
     for (Border border : borders) {
       result.insert(border.getOffset(), border.isSide() == Border.LEFT ? "<fold text=\'" + border.getText() + "\'" +
-                                                                         (doCheckCollapseStatus ? " expand=\'" +
+                                                                         (withCollapseStatus ? " expand=\'" +
                                                                                                     border.isExpanded() +
                                                                                                     "\'" : "") +
                                                                           ">" : END_FOLD);
@@ -1889,7 +1889,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
     expectedContent = StringUtil.replace(expectedContent, "\r", "");
     final String cleanContent = expectedContent.replaceAll(START_FOLD, "").replaceAll(END_FOLD, "");
-    final String actual = getFoldingDescription(cleanContent, verificationFileName, doCheckCollapseStatus);
+
+    configureByText(FileTypeManager.getInstance().getFileTypeByFileName(verificationFileName), cleanContent);
+    final String actual = getFoldingDescription(doCheckCollapseStatus);
 
     Assert.assertEquals(expectedContent, actual);
   }

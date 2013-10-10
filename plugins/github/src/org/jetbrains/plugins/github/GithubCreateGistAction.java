@@ -17,6 +17,7 @@ package org.jetbrains.plugins.github;
 
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -64,15 +65,15 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
   @Override
   public void update(final AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDefault()) {
       e.getPresentation().setVisible(false);
       e.getPresentation().setEnabled(false);
       return;
     }
-    Editor editor = e.getData(PlatformDataKeys.EDITOR);
-    VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-    VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    Editor editor = e.getData(CommonDataKeys.EDITOR);
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
 
     if ((editor == null && file == null && files == null) || (editor != null && editor.getDocument().getTextLength() == 0)) {
       GithubUtil.setVisibleEnabled(e, false, false);
@@ -83,14 +84,14 @@ public class GithubCreateGistAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDefault()) {
       return;
     }
 
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
-    final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
-    final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
+    final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
+    final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (editor == null && file == null && files == null) {
       return;
     }

@@ -49,8 +49,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
     super(field.getProject());
     this.field = field;
     containingClass = field.getContainingClass();
-    final Project project = field.getProject();
-    final String propertyName = PropertyUtil.suggestPropertyName(project, field);
+    final String propertyName = PropertyUtil.suggestPropertyName(field);
     final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
     getter = PropertyUtil.findPropertyGetter(containingClass, propertyName, isStatic, false);
     myDelegateMethodInfos = memberInfos;
@@ -67,7 +66,7 @@ public class RemoveMiddlemanProcessor extends FixableUsagesRefactoringProcessor 
       if (!memberInfo.isChecked()) continue;
       final PsiMethod method = (PsiMethod)memberInfo.getMember();
       final Project project = method.getProject();
-      final String getterName = PropertyUtil.suggestGetterName(project, field);
+      final String getterName = PropertyUtil.suggestGetterName(field);
       final int[] paramPermutation = DelegationUtils.getParameterPermutation(method);
       final PsiMethod delegatedMethod = DelegationUtils.getDelegatedMethod(method);
       LOG.assertTrue(!DelegationUtils.isAbstract(method));

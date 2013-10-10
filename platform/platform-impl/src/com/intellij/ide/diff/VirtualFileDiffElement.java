@@ -17,6 +17,7 @@ package com.intellij.ide.diff;
 
 import com.intellij.ide.presentation.VirtualFilePresentation;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Result;
@@ -219,7 +220,7 @@ public class VirtualFileDiffElement extends DiffElement<VirtualFile> {
     return new DataProvider() {
       @Override
       public Object getData(@NonNls String dataId) {
-        if (PlatformDataKeys.PROJECT.is(dataId)) {
+        if (CommonDataKeys.PROJECT.is(dataId)) {
           return project;
         }
         if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {

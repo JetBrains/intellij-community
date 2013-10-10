@@ -41,6 +41,10 @@ public abstract class DelegateColorScheme implements EditorColorsScheme {
     return myDelegate;
   }
 
+  public void setDelegate(@NotNull EditorColorsScheme delegate) {
+    myDelegate = delegate;
+  }
+
   @Override
   public void setName(String name) {
     myDelegate.setName(name);

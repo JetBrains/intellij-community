@@ -387,7 +387,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       for (int j = 0; j < numParams; j++) {
         PsiParameter param = parms[j];
 
-        int startOffset = buffer.length();
+        int startOffset = XmlStringUtil.escapeString(buffer.toString()).length();
 
         if (param.isValid()) {
           PsiType paramType = param.getType();

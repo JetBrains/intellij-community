@@ -50,7 +50,7 @@ class GithubIssueRaw implements DataConstructor {
   @NotNull
   @Override
   public <T> T create(@NotNull Class<T> resultClass) {
-    if (resultClass.isAssignableFrom(GithubIssue.class)) {
+    if (resultClass == GithubIssue.class) {
       return (T)createIssue();
     }
 

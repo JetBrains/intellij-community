@@ -20,6 +20,7 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.editorActions.enter.EnterAfterUnmatchedBraceHandler;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.lang.Language;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -44,10 +45,10 @@ public class SmartEnterAction extends EditorAction {
 
   @Override
   protected Editor getEditor(final DataContext dataContext) {
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (editor == null) return null;
     Project project = editor.getProject();
-    if (project == null) project = PlatformDataKeys.PROJECT.getData(dataContext);
+    if (project == null) project = CommonDataKeys.PROJECT.getData(dataContext);
     return project == null ? null : BaseCodeInsightAction.getInjectedEditor(project, editor);
   }
 
@@ -59,7 +60,7 @@ public class SmartEnterAction extends EditorAction {
 
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
-      Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project == null || editor.isOneLineMode()) {
         plainEnter(editor, dataContext);
         return;

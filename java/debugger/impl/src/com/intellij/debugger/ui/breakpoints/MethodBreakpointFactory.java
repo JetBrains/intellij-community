@@ -61,12 +61,6 @@ public class MethodBreakpointFactory extends BreakpointFactory{
   }
 
   @Override
-  protected void configureBreakpointPanel(BreakpointPanel panel) {
-    super.configureBreakpointPanel(panel);
-    panel.getTree().setGroupByMethods(false);
-  }
-
-  @Override
   public Key<MethodBreakpoint> getBreakpointCategory() {
     return MethodBreakpoint.CATEGORY;
   }

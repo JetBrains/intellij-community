@@ -328,8 +328,12 @@ public class Maven3ServerEmbedderImpl extends MavenRemoteObject implements Maven
         try {
           // copied from DefaultMavenProjectBuilder.buildWithDependencies
           ProjectBuilder builder = getComponent(ProjectBuilder.class);
-          ProjectBuildingResult buildingResult = builder.build(new File(file.getPath()), request.getProjectBuildingRequest());
-          //builder.calculateConcreteState(project, config, false);
+
+          // Don't use build(File projectFile, ProjectBuildingRequest request) , because it don't use cache !!!!!!!! (see http://devnet.jetbrains.com/message/5500218)
+          List<ProjectBuildingResult> results =
+            builder.build(Collections.singletonList(new File(file.getPath())), false, request.getProjectBuildingRequest());
+
+          ProjectBuildingResult buildingResult = results.get(0);
 
           MavenProject project = buildingResult.getProject();
 

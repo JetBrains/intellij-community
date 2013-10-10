@@ -325,7 +325,7 @@ public class AnalyzeDependenciesComponent extends MasterDetailsComponent {
      */
     @Override
     public Object getData(@NonNls String dataId) {
-      if (PlatformDataKeys.PROJECT.is(dataId)) {
+      if (CommonDataKeys.PROJECT.is(dataId)) {
         return myModule.getProject();
       }
       if (LangDataKeys.MODULE.is(dataId)) {

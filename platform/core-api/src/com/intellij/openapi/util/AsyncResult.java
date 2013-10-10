@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.PairConsumer;
-import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -129,29 +128,7 @@ public class AsyncResult<T> extends ActionCallback {
 
   @Nullable
   public T getResultSync(long msTimeout) {
-    if (isProcessed()) {
-      return myResult;
-    }
-
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    doWhenProcessed(new Runnable() {
-      @Override
-      public void run() {
-        semaphore.up();
-      }
-    });
-    try {
-      if (msTimeout == -1) {
-        semaphore.waitForUnsafe();
-      }
-      else if (!semaphore.waitForUnsafe(msTimeout)) {
-        reject("Time limit exceeded");
-      }
-    }
-    catch (InterruptedException e) {
-      reject(e.getMessage());
-    }
+    waitFor(msTimeout);
     return myResult;
   }
 

@@ -50,7 +50,7 @@ class GithubCommitCommentRaw implements DataConstructor {
   @NotNull
   @Override
   public <T> T create(@NotNull Class<T> resultClass) {
-    if (resultClass.isAssignableFrom(GithubCommitComment.class)) {
+    if (resultClass == GithubCommitComment.class) {
       return (T)createCommitComment();
     }
 

@@ -15,7 +15,7 @@ abstract class B<S> {
     public abstract <T extends Iterable<String>> void foo();
     <T extends B> void bar(T x){
         B a = null;
-        a.<error descr="Type arguments given on a raw method"><Iterable<String>></error> foo();
+        a.<Iterable<String>> foo();
         x.<Iterable<String>> foo();
     }
 }
@@ -37,7 +37,7 @@ abstract class B1<S> {
     public abstract <T extends Iterable<String>> void foo();
     <T extends B1 & I1> void bar(T x){
         B1 a = null;
-        a.<error descr="Type arguments given on a raw method"><Iterable<String>></error> foo();
+        a.<Iterable<String>> foo();
         x.<Iterable<String>> foo();
     }
 }

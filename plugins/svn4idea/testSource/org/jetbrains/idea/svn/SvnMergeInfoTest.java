@@ -58,8 +58,10 @@ public class SvnMergeInfoTest extends Svn17TestCase {
     myProjectLevelVcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject);
     myProjectLevelVcsManager.setDirectoryMapping(myBranchVcsRoot.getAbsolutePath(), SvnVcs.VCS_NAME);
 
-    myWCInfo = new WCInfo(myBranchVcsRoot.getAbsolutePath(), SVNURL.parseURIEncoded(myRepoUrl + "/branch"), WorkingCopyFormat.ONE_DOT_SIX,
-                                     myRepoUrl, true, null, SVNDepth.INFINITY);
+    VirtualFile vcsRoot = LocalFileSystem.getInstance().findFileByIoFile(myBranchVcsRoot);
+    Node node = new Node(vcsRoot, SVNURL.parseURIEncoded(myRepoUrl + "/branch"), SVNURL.parseURIEncoded(myRepoUrl));
+    RootUrlInfo root = new RootUrlInfo(node, WorkingCopyFormat.ONE_DOT_SIX, vcsRoot, null);
+    myWCInfo = new WCInfo(root, true, SVNDepth.INFINITY);
     myOneShotMergeInfoHelper = new OneShotMergeInfoHelper(myProject, myWCInfo, myRepoUrl + "/trunk");
 
     SvnConfiguration.getInstance(myProject).CHECK_NESTED_FOR_QUICK_MERGE = true;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,9 +15,11 @@
  */
 package com.intellij.psi.search;
 
+import com.intellij.codeInsight.ContainerProvider;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -36,10 +38,11 @@ public class SearchRequestCollector {
   private final List<Processor<Processor<PsiReference>>> myCustomSearchActions = ContainerUtil.newArrayList();
   private final SearchSession mySession;
 
-  public SearchRequestCollector(SearchSession session) {
+  public SearchRequestCollector(@NotNull SearchSession session) {
     mySession = session;
   }
 
+  @NotNull
   public SearchSession getSearchSession() {
     return mySession;
   }
@@ -50,27 +53,62 @@ public class SearchRequestCollector {
     searchWord(word, searchScope, searchContext, caseSensitive, searchTarget);
   }
 
-  public void searchWord(@NotNull String word, @NotNull SearchScope searchScope, short searchContext, boolean caseSensitive, @NotNull PsiElement searchTarget) {
-    searchWord(word, searchScope, searchContext, caseSensitive, new SingleTargetRequestResultProcessor(searchTarget));
+  public void searchWord(@NotNull String word,
+                         @NotNull SearchScope searchScope,
+                         short searchContext,
+                         boolean caseSensitive,
+                         @NotNull PsiElement searchTarget) {
+    searchWord(word, searchScope, searchContext, caseSensitive, getContainerName(searchTarget), new SingleTargetRequestResultProcessor(searchTarget));
   }
 
-  public void searchWord(@NotNull String word, @NotNull SearchScope searchScope, short searchContext, boolean caseSensitive, @NotNull RequestResultProcessor processor) {
+  private void searchWord(@NotNull String word,
+                          @NotNull SearchScope searchScope,
+                          short searchContext,
+                          boolean caseSensitive,
+                          String containerName,
+                          @NotNull RequestResultProcessor processor) {
+    if (!makesSenseToSearch(word, searchScope)) return;
+    synchronized (lock) {
+      PsiSearchRequest request = new PsiSearchRequest(searchScope, word, searchContext, caseSensitive, containerName, processor);
+      myWordRequests.add(request);
+    }
+  }
+
+  private static String getContainerName(PsiElement target) {
+    PsiElement container = getContainer(target);
+    return container instanceof PsiNamedElement ? ((PsiNamedElement)container).getName() : null;
+  }
+
+  private static PsiElement getContainer(PsiElement refElement) {
+    for (ContainerProvider provider : ContainerProvider.EP_NAME.getExtensions()) {
+      final PsiElement container = provider.getContainer(refElement);
+      if (container != null) return container;
+    }
+    return refElement.getParent();
+  }
+
+  public void searchWord(@NotNull String word,
+                         @NotNull SearchScope searchScope,
+                         short searchContext,
+                         boolean caseSensitive,
+                         @NotNull RequestResultProcessor processor) {
+    searchWord(word, searchScope, searchContext, caseSensitive, null, processor);
+  }
+
+  private static boolean makesSenseToSearch(@NotNull String word, @NotNull SearchScope searchScope) {
     if (searchScope instanceof LocalSearchScope && ((LocalSearchScope)searchScope).getScope().length == 0) {
-      return;
+      return false;
     }
     if (searchScope == GlobalSearchScope.EMPTY_SCOPE) {
-      return;
+      return false;
     }
     if (StringUtil.isEmpty(word)) {
-      return;
+      return false;
     }
-
-    synchronized (lock) {
-      myWordRequests.add(new PsiSearchRequest(searchScope, word, searchContext, caseSensitive, processor));
-    }
+    return true;
   }
 
-  public void searchQuery(QuerySearchRequest request) {
+  public void searchQuery(@NotNull QuerySearchRequest request) {
     assert request.collector != this;
     assert request.collector.getSearchSession() == mySession;
     synchronized (lock) {
@@ -78,35 +116,38 @@ public class SearchRequestCollector {
     }
   }
 
-  public void searchCustom(Processor<Processor<PsiReference>> searchAction) {
+  public void searchCustom(@NotNull Processor<Processor<PsiReference>> searchAction) {
     synchronized (lock) {
       myCustomSearchActions.add(searchAction);
     }
   }
 
+  @NotNull
   public List<QuerySearchRequest> takeQueryRequests() {
     return takeRequests(myQueryRequests);
   }
 
-  private <T> List<T> takeRequests(List<T> list) {
+  @NotNull
+  private <T> List<T> takeRequests(@NotNull List<T> list) {
     synchronized (lock) {
       final List<T> requests = new ArrayList<T>(list);
-      requests.addAll(list);
       list.clear();
       return requests;
     }
   }
 
+  @NotNull
   public List<PsiSearchRequest> takeSearchRequests() {
     return takeRequests(myWordRequests);
   }
 
+  @NotNull
   public List<Processor<Processor<PsiReference>>> takeCustomSearchActions() {
     return takeRequests(myCustomSearchActions);
   }
 
   @Override
   public String toString() {
-    return myWordRequests.toString().replace(',', '\n');
+    return myWordRequests.toString().replace(',', '\n') + ";" + myQueryRequests;
   }
 }

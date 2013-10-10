@@ -433,7 +433,7 @@ public class NullityInferrer {
     return myNullableSet.contains(pointer);
   }
 
-  private class NullityInferrerVisitor extends JavaRecursiveElementWalkingVisitor{
+  private class NullityInferrerVisitor extends JavaRecursiveElementVisitor{
 
     @Override
     public void visitMethod(@NotNull PsiMethod method) {

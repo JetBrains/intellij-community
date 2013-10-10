@@ -512,7 +512,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
 
   @Override
   public Object getData(@NonNls String dataId) {
-    if (PlatformDataKeys.PROJECT.is(dataId)) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
       return myModel.getProject();
     }
     if (DIR_DIFF_MODEL.is(dataId)) {

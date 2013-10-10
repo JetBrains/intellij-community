@@ -149,6 +149,9 @@ public class EditorTracker extends AbstractProjectComponent {
         };
         myWindowToWindowFocusListenerMap.put(window, listener);
         window.addWindowFocusListener(listener);
+        if (window.isFocused()) {  // windowGainedFocus is missed; activate by force
+          setActiveWindow(window);
+        }
       }
     }
     list.add(editor);

@@ -299,7 +299,7 @@ public class SurroundWithHandler implements CodeInsightActionHandler {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      ShowSettingsUtil.getInstance().showSettingsDialog(e.getData(PlatformDataKeys.PROJECT), "Live Templates");
+      ShowSettingsUtil.getInstance().showSettingsDialog(e.getData(CommonDataKeys.PROJECT), "Live Templates");
     }
   }
 }

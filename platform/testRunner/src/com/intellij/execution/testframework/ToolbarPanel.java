@@ -22,10 +22,8 @@ package com.intellij.execution.testframework;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.execution.testframework.actions.ScrollToTestSourceAction;
-import com.intellij.execution.testframework.actions.ShowStatisticsAction;
-import com.intellij.execution.testframework.actions.TestFrameworkActions;
-import com.intellij.execution.testframework.actions.TestTreeExpander;
+import com.intellij.execution.testframework.actions.*;
+import com.intellij.execution.testframework.autotest.AdjustAutotestDelayActionGroup;
 import com.intellij.execution.testframework.export.ExportTestResultsAction;
 import com.intellij.execution.testframework.ui.AbstractTestTreeBuilder;
 import com.intellij.icons.AllIcons;
@@ -104,6 +102,7 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
                                                     properties, TestConsoleProperties.OPEN_FAILURE_LINE)).setAsSecondary(true);
 
     actionGroup.addAction(new ShowStatisticsAction(properties)).setAsSecondary(true);
+    actionGroup.addAction(new AdjustAutotestDelayActionGroup(environment)).setAsSecondary(true);
 
     for (ToggleModelActionProvider actionProvider : Extensions.getExtensions(ToggleModelActionProvider.EP_NAME)) {
       final ToggleModelAction toggleModelAction = actionProvider.createToggleModelAction(properties);

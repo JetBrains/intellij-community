@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,60 +16,66 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NullableComputable;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
-
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.ExpectedTypeInfoImpl");
-
+  public static final NullableComputable<String> NULL = new NullableComputable<String>() {
+    @Override
+    public String compute() {
+      return null;
+    }
+  };
+  @NotNull
   private final PsiType type;
+  @NotNull
   private final PsiType defaultType;
+  private final int kind;
+  @NotNull
+  private final TailType myTailType;
+  private final PsiMethod myCalledMethod;
+  @NotNull private final NullableComputable<String> expectedName;
 
   @Override
   public int getKind() {
     return kind;
   }
 
-  public int kind;
-
+  @NotNull
   @Override
   public TailType getTailType() {
     return myTailType;
   }
 
-  public TailType myTailType;
-
-  @NotNull public NullableComputable<String> expectedName = new NullableComputable<String>() {
-    @Override
-    public String compute() {
-      return null;
-    }
-  };
-  private PsiMethod myCalledMethod;
-
-
-  public ExpectedTypeInfoImpl(@NotNull PsiType type, int kind, @NotNull PsiType defaultType, @NotNull TailType myTailType) {
+  public ExpectedTypeInfoImpl(@NotNull PsiType type,
+                              @Type int kind,
+                              @NotNull PsiType defaultType,
+                              @NotNull TailType myTailType,
+                              PsiMethod calledMethod,
+                              @NotNull NullableComputable<String> expectedName) {
     this.type = type;
     this.kind = kind;
 
     this.myTailType = myTailType;
     this.defaultType = defaultType;
+    myCalledMethod = calledMethod;
+    this.expectedName = expectedName;
 
     PsiUtil.ensureValidType(type);
     PsiUtil.ensureValidType(defaultType);
   }
 
+  @NotNull
+  public NullableComputable<String> getExpectedName() {
+    return expectedName;
+  }
+
   @Override
   public PsiMethod getCalledMethod() {
     return myCalledMethod;
-  }
-
-  public void setCalledMethod(final PsiMethod calledMethod) {
-    myCalledMethod = calledMethod;
   }
 
   @Override
@@ -92,18 +98,17 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
     if (kind != that.kind) return false;
     if (!defaultType.equals(that.defaultType)) return false;
-    if (myTailType != null ? !myTailType.equals(that.myTailType) : that.myTailType != null) return false;
+    if (!myTailType.equals(that.myTailType)) return false;
     if (!type.equals(that.type)) return false;
 
     return true;
   }
 
   public int hashCode() {
-    int result;
-    result = (type.hashCode());
-    result = 31 * result + (defaultType.hashCode());
+    int result = type.hashCode();
+    result = 31 * result + defaultType.hashCode();
     result = 31 * result + kind;
-    result = 31 * result + (myTailType != null ? myTailType.hashCode() : 0);
+    result = 31 * result + myTailType.hashCode();
     return result;
   }
 
@@ -117,8 +122,9 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
     return "ExpectedTypeInfo[type='" + type + "' kind='" + kind + "']";
   }
 
+  @NotNull
   @Override
-  public ExpectedTypeInfo[] intersect(ExpectedTypeInfo info) {
+  public ExpectedTypeInfo[] intersect(@NotNull ExpectedTypeInfo info) {
     ExpectedTypeInfoImpl info1 = (ExpectedTypeInfoImpl)info;
 
     if (kind == TYPE_STRICTLY) {

@@ -18,6 +18,7 @@ package com.intellij.refactoring.extractMethod;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -60,8 +61,8 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
 
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     if (dataContext != null) {
-      final PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
-      final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      final PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+      final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       if (file != null && editor != null) {
         invokeOnElements(project, editor, file, elements);
       }

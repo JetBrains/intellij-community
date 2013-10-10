@@ -17,7 +17,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.project.DumbAware;
@@ -45,7 +45,7 @@ public class InvalidateCachesAction extends AnAction implements DumbAware {
       options[3] = "Just Restart";
     }
 
-    int result = Messages.showDialog(e.getData(PlatformDataKeys.PROJECT),
+    int result = Messages.showDialog(e.getData(CommonDataKeys.PROJECT),
                                      "The caches will be invalidated and rebuilt on the next startup.\n" +
                                      "WARNING: Local History will be also cleared.\n\n" +
                                      "Would you like to continue?\n\n",

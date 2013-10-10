@@ -15,7 +15,7 @@ import static com.intellij.vcs.log.graph.elements.Node.NodeType.*;
  * @author erokhins
  */
 //local package
-class GraphAppendBuilder {
+public class GraphAppendBuilder {
 
 
   private final MutableGraph graph;
@@ -98,9 +98,14 @@ class GraphAppendBuilder {
       commitLogIndexes.put(commitParentses.get(i).getHash(), i + startIndex);
     }
 
-    GraphBuilder builder = new GraphBuilder(commitParentses.size() + startIndex - 1, commitLogIndexes, graph, underdoneNodes, nextRow,
-                                            myRefs);
+    GraphBuilder builder = createGraphBuilder(commitParentses, nextRow, underdoneNodes, startIndex, commitLogIndexes);
     builder.runBuild(commitParentses);
+  }
+
+  @NotNull
+  protected GraphBuilder createGraphBuilder(List<? extends VcsCommit> commitParentses, MutableNodeRow nextRow,
+                                            Map<Hash, MutableNode> underdoneNodes, int startIndex, Map<Hash, Integer> commitLogIndexes) {
+    return new GraphBuilder(commitParentses.size() + startIndex - 1, commitLogIndexes, graph, underdoneNodes, nextRow, myRefs);
   }
 
   public void appendToGraph(@NotNull List<? extends VcsCommit> commitParentses) {

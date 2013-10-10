@@ -35,6 +35,8 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrDirectInheritorsIndex
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author ven
@@ -45,9 +47,9 @@ class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectCl
   }
 
   @NotNull
-  private static PsiClass[] getDeriverCandidates(PsiClass clazz, GlobalSearchScope scope) {
+  private static List<PsiClass> getDerivingClassCandidates(PsiClass clazz, GlobalSearchScope scope) {
     final String name = clazz.getName();
-    if (name == null) return GrTypeDefinition.EMPTY_ARRAY;
+    if (name == null) return Collections.emptyList();
     final ArrayList<PsiClass> inheritors = new ArrayList<PsiClass>();
     for (GrReferenceList list : StubIndex.getInstance().safeGet(GrDirectInheritorsIndex.KEY, name, clazz.getProject(), scope,
                                                       GrReferenceList.class)) {
@@ -61,17 +63,17 @@ class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, DirectCl
     for (GrAnonymousClassDefinition aClass : classes) {
       inheritors.add(aClass);
     }
-    return inheritors.toArray(new PsiClass[inheritors.size()]);
+    return inheritors;
   }
 
   public boolean execute(@NotNull DirectClassInheritorsSearch.SearchParameters queryParameters, @NotNull final Processor<PsiClass> consumer) {
     final PsiClass clazz = queryParameters.getClassToProcess();
     final SearchScope scope = queryParameters.getScope();
     if (scope instanceof GlobalSearchScope) {
-      final PsiClass[] candidates = ApplicationManager.getApplication().runReadAction(new Computable<PsiClass[]>() {
-        public PsiClass[] compute() {
-          if (!clazz.isValid()) return PsiClass.EMPTY_ARRAY;
-          return getDeriverCandidates(clazz, (GlobalSearchScope)scope);
+      final List<PsiClass> candidates = ApplicationManager.getApplication().runReadAction(new Computable<List<PsiClass>>() {
+        public List<PsiClass> compute() {
+          if (!clazz.isValid()) return Collections.emptyList();
+          return getDerivingClassCandidates(clazz, (GlobalSearchScope)scope);
         }
       });
       for (final PsiClass candidate : candidates) {

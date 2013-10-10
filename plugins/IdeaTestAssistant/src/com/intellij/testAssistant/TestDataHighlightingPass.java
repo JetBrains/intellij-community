@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,9 @@ public class TestDataHighlightingPass extends TextEditorHighlightingPass {
   public void doApplyInformationToEditor() {
     removeHighlighters();
 
+    if (myDocument == null) {
+      return;
+    }
     final MarkupModel model = DocumentMarkupModel.forDocument(myDocument, myProject, true);
     final String text = myDocument.getText();
 
@@ -72,6 +75,9 @@ public class TestDataHighlightingPass extends TextEditorHighlightingPass {
   }
 
   private void removeHighlighters() {
+    if (myDocument == null) {
+      return;
+    }
     final MarkupModel model = DocumentMarkupModel.forDocument(myDocument, myProject, true);
     for (RangeHighlighter highlighter : model.getAllHighlighters()) {
       if (highlighter.getUserData(KEY) == VALUE) {

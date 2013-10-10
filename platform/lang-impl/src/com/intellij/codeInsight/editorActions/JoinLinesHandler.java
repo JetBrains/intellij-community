@@ -26,6 +26,7 @@ package com.intellij.codeInsight.editorActions;
 
 import com.intellij.ide.DataManager;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -73,7 +74,7 @@ public class JoinLinesHandler extends EditorWriteActionHandler {
       return;
     }
     final DocumentEx doc = (DocumentEx)editor.getDocument();
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
+    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getContentComponent()));
     if (project == null) {
       return;
     }

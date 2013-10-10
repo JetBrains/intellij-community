@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,14 +62,14 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
     return processAsync(consumer, Collections.synchronizedSet(new THashSet<M>(myHashingStrategy)));
   }
 
-  private boolean process(final Processor<T> consumer, final Set<M> processedElements) {
+  private boolean process(@NotNull Processor<T> consumer, @NotNull Set<M> processedElements) {
     return myOriginal.forEach(new MyProcessor(processedElements, consumer));
   }
 
-  private AsyncFuture<Boolean> processAsync(final Processor<T> consumer, final Set<M> processedElements) {
+  @NotNull
+  private AsyncFuture<Boolean> processAsync(@NotNull Processor<T> consumer, @NotNull Set<M> processedElements) {
     return myOriginal.forEachAsync(new MyProcessor(processedElements, consumer));
   }
-
 
   @Override
   @NotNull
@@ -102,7 +102,7 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
     private final Set<M> myProcessedElements;
     private final Processor<T> myConsumer;
 
-    public MyProcessor(Set<M> processedElements, Processor<T> consumer) {
+    public MyProcessor(@NotNull Set<M> processedElements, @NotNull Processor<T> consumer) {
       myProcessedElements = processedElements;
       myConsumer = consumer;
     }
@@ -111,5 +111,11 @@ public class UniqueResultsQuery<T, M> implements Query<T> {
     public boolean process(final T t) {
       return !myProcessedElements.add(myMapper.fun(t)) || myConsumer.process(t);
     }
+  }
+
+  @SuppressWarnings("HardCodedStringLiteral")
+  @Override
+  public String toString() {
+    return "UniqueQuery: "+myOriginal;
   }
 }

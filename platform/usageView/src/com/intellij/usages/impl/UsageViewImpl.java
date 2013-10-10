@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.progress.util.TooManyUsagesStatus;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -140,6 +141,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final UsageViewTreeModelBuilder myModel;
   private final Object lock = new Object();
   private Splitter myPreviewSplitter;
+  private volatile ProgressIndicator associatedProgress; // the progress that current find usages is running under
 
   UsageViewImpl(@NotNull final Project project,
                 @NotNull UsageViewPresentation presentation,
@@ -256,10 +258,16 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   protected boolean searchHasBeenCancelled() {
-    return false;
+    ProgressIndicator progress = associatedProgress;
+    return progress != null && progress.isCanceled();
   }
 
-  protected void setCurrentSearchCancelled(boolean flag){}
+  protected void cancelCurrentSearch() {
+    ProgressIndicator progress = associatedProgress;
+    if (progress != null) {
+      ProgressWrapper.unwrap(progress).cancel();
+    }
+  }
 
   private void setupCentralPanel() {
     myCentralPanel.removeAll();
@@ -696,6 +704,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     return ActionManager.getInstance().getKeyboardShortcut("ShowSettingsAndFindUsages");
   }
 
+  void associateProgress(ProgressIndicator indicator) {
+    associatedProgress = indicator;
+  }
+
   private class CloseAction extends CloseTabToolbarAction {
     @Override
     public void update(AnActionEvent e) {
@@ -758,8 +770,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       public void run(@NotNull final ProgressIndicator indicator) {
         final TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.createFor(indicator);
         setSearchInProgress(true);
-
-        setCurrentSearchCancelled(false);
+        associateProgress(indicator);
 
         myChangesDetected = false;
         UsageSearcher usageSearcher = myUsageSearcherFactory.create();
@@ -1016,6 +1027,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   @Override
   public void close() {
+    cancelCurrentSearch();
     UsageViewManager.getInstance(myProject).closeContent(myContent);
   }
 
@@ -1417,15 +1429,15 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     public void calcData(final DataKey key, final DataSink sink) {
       Node node = getSelectedNode();
 
-      if (key == PlatformDataKeys.PROJECT) {
-        sink.put(PlatformDataKeys.PROJECT, myProject);
+      if (key == CommonDataKeys.PROJECT) {
+        sink.put(CommonDataKeys.PROJECT, myProject);
       }
       else if (key == USAGE_VIEW_KEY) {
         sink.put(USAGE_VIEW_KEY, UsageViewImpl.this);
       }
 
-      else if (key == PlatformDataKeys.NAVIGATABLE_ARRAY) {
-        sink.put(PlatformDataKeys.NAVIGATABLE_ARRAY, getNavigatablesForNodes(getSelectedNodes()));
+      else if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
+        sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, getNavigatablesForNodes(getSelectedNodes()));
       }
 
       else if (key == PlatformDataKeys.EXPORTER_TO_TEXT_FILE) {
@@ -1441,11 +1453,11 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         sink.put(USAGE_TARGETS_KEY, getSelectedUsageTargets());
       }
 
-      else if (key == PlatformDataKeys.VIRTUAL_FILE_ARRAY) {
+      else if (key == CommonDataKeys.VIRTUAL_FILE_ARRAY) {
         final Set<Usage> usages = getSelectedUsages();
         Usage[] ua = usages != null ? usages.toArray(new Usage[usages.size()]) : null;
         VirtualFile[] data = UsageDataUtil.provideVirtualFileArray(ua, getSelectedUsageTargets());
-        sink.put(PlatformDataKeys.VIRTUAL_FILE_ARRAY, data);
+        sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, data);
       }
 
       else if (key == PlatformDataKeys.HELP_ID) {

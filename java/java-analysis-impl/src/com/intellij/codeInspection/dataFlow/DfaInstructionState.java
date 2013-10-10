@@ -99,12 +99,9 @@ class StateQueue {
       StateMerger merger = new StateMerger();
       while (true) {
         List<DfaMemoryStateImpl> nextStates = merger.mergeByEquality(memoryStates);
-        if (nextStates == null) {
-          nextStates = merger.mergeByType(memoryStates);
-        }
-        if (nextStates == null) {
-          nextStates = merger.mergeByUnknowns(memoryStates);
-        }
+        if (nextStates == null) nextStates = merger.mergeByType(memoryStates);
+        if (nextStates == null) nextStates = merger.mergeByNullability(memoryStates);
+        if (nextStates == null) nextStates = merger.mergeByUnknowns(memoryStates);
         if (nextStates == null) break;
         memoryStates = nextStates;
       }

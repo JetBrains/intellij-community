@@ -3,6 +3,7 @@ package com.intellij.execution.console;
 import com.intellij.execution.impl.ConsoleViewImpl;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -50,7 +51,7 @@ public class FoldLinesLikeThis extends DumbAwareAction {
 
   @Override
   public void update(AnActionEvent e) {
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
 
     final boolean enabled = e.getData(LangDataKeys.CONSOLE_VIEW) != null &&  editor != null && getSingleLineSelection(editor) != null;
     e.getPresentation().setEnabled(enabled);
@@ -59,7 +60,7 @@ public class FoldLinesLikeThis extends DumbAwareAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
     assert editor != null;
     final String selection = getSingleLineSelection(editor);
     assert selection != null;

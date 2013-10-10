@@ -1,5 +1,5 @@
 class FooBar {
-  void foo(FooBar _fooBar) {
+  void foo(FooBar _fooBar, FooBar fooBar) {
     fb<caret>
   }
 }

@@ -65,7 +65,7 @@ public class FileProcessingCompilerAdapterTask implements CompileTask{
       final Ref<IOException> ex = new Ref<IOException>(null);
 
 
-      final FileProcessingCompilerStateCache cache = CompilerCacheManager.getInstance(project).getFileProcessingCompilerCache(myCompiler);
+      final FileProcessingCompilerStateCache cache = getCache(context);
       final boolean isMake = context.isMake();
       DumbService.getInstance(project).runReadActionInSmartMode(new Runnable() {
         public void run() {
@@ -129,5 +129,16 @@ public class FileProcessingCompilerAdapterTask implements CompileTask{
       LOG.info(e);
     }
     return true;
+  }
+
+  private FileProcessingCompilerStateCache getCache(CompileContext context) throws IOException {
+    final CompilerCacheManager cacheManager = CompilerCacheManager.getInstance(context.getProject());
+    try {
+      return cacheManager.getFileProcessingCompilerCache(myCompiler);
+    }
+    catch (IOException e) {
+      cacheManager.clearCaches(context);
+    }
+    return cacheManager.getFileProcessingCompilerCache(myCompiler);
   }
 }

@@ -47,12 +47,12 @@ public class ExternalJavaDocAction extends AnAction {
   @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
 
-    PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     if (element == null) {
       Messages.showMessageDialog(
         project,
@@ -64,8 +64,8 @@ public class ExternalJavaDocAction extends AnAction {
     }
 
 
-    PsiFile context = LangDataKeys.PSI_FILE.getData(dataContext);
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    PsiFile context = CommonDataKeys.PSI_FILE.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     PsiElement originalElement = getOriginalElement(context, editor);
     DocumentationManager.storeOriginalElement(project, originalElement, element);
     final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
@@ -111,10 +111,10 @@ public class ExternalJavaDocAction extends AnAction {
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
-    final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
-    final PsiElement originalElement = getOriginalElement(LangDataKeys.PSI_FILE.getData(dataContext), editor);
-    DocumentationManager.storeOriginalElement(PlatformDataKeys.PROJECT.getData(dataContext), originalElement, element);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
+    final PsiElement element = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+    final PsiElement originalElement = getOriginalElement(CommonDataKeys.PSI_FILE.getData(dataContext), editor);
+    DocumentationManager.storeOriginalElement(CommonDataKeys.PROJECT.getData(dataContext), originalElement, element);
     final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
     boolean enabled;
     if (provider instanceof ExternalDocumentationProvider) {

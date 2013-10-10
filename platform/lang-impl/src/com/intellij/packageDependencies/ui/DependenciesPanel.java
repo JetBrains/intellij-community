@@ -455,7 +455,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
   @Nullable
   @NonNls
   public Object getData(@NonNls String dataId) {
-    if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       final PackageDependenciesNode selectedNode = myRightTree.getSelectedNode();
       if (selectedNode != null) {
         final PsiElement element = selectedNode.getPsiElement();
@@ -777,10 +777,10 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
     @Override
     public Object getData(String dataId) {
       PackageDependenciesNode node = getSelectedNode();
-      if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+      if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
         return node;
       }
-      if (LangDataKeys.PSI_ELEMENT.is(dataId) && node != null)  {
+      if (CommonDataKeys.PSI_ELEMENT.is(dataId) && node != null)  {
         final PsiElement element = node.getPsiElement();
         return element != null && element.isValid() ? element : null;
       }

@@ -1183,8 +1183,9 @@ public class HighlightUtil extends HighlightUtilBase {
 
 
   @Nullable
-  static Collection<HighlightInfo> checkWithImprovedCatchAnalysis(@NotNull final PsiParameter parameter,
-                                                                  @NotNull final Collection<PsiClassType> thrownInTryStatement,@NotNull PsiFile containingFile) {
+  static Collection<HighlightInfo> checkWithImprovedCatchAnalysis(@NotNull PsiParameter parameter,
+                                                                  @NotNull Collection<PsiClassType> thrownInTryStatement,
+                                                                  @NotNull PsiFile containingFile) {
     final PsiElement scope = parameter.getDeclarationScope();
     if (!(scope instanceof PsiCatchSection)) return null;
 
@@ -1194,8 +1195,8 @@ public class HighlightUtil extends HighlightUtilBase {
     if (idx <= 0) return null;
 
     final Collection<PsiClassType> thrownTypes = ContainerUtil.newHashSet(thrownInTryStatement);
-    PsiManager manager = containingFile.getManager();
-    GlobalSearchScope parameterResolveScope = parameter.getResolveScope();
+    final PsiManager manager = containingFile.getManager();
+    final GlobalSearchScope parameterResolveScope = parameter.getResolveScope();
     thrownTypes.add(PsiType.getJavaLangError(manager, parameterResolveScope));
     thrownTypes.add(PsiType.getJavaLangRuntimeException(manager, parameterResolveScope));
     final Collection<HighlightInfo> result = ContainerUtil.newArrayList();
@@ -2600,7 +2601,7 @@ public class HighlightUtil extends HighlightUtilBase {
       QuickFixAction.registerQuickFixAction(highlightInfo, action);
     }
   }
-  
+
   @NotNull
   public static List<IntentionAction> getChangeVariableTypeFixes(@NotNull PsiVariable parameter, PsiType itemType) {
     if (itemType instanceof PsiMethodReferenceType) return Collections.emptyList();

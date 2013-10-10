@@ -57,7 +57,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   }
 
   private static boolean isEnabled(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return false;
     if (! ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) return false;
 
@@ -70,7 +70,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
     if (changes != null && changes.length > 0) {
       return true;
     }
-    final VirtualFile[] files = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    final VirtualFile[] files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     return files != null && files.length > 0;
   }
 
@@ -82,7 +82,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
     }
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    VirtualFile[] virtualFiles = e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    VirtualFile[] virtualFiles = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
     if (virtualFiles != null) {
       List<Change> changesInFiles = new ArrayList<Change>();
       for(VirtualFile vFile: virtualFiles) {
@@ -128,7 +128,7 @@ public class MoveChangesToAnotherListAction extends AnAction implements DumbAwar
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) return;
     if (! ProjectLevelVcsManager.getInstance(project).hasActiveVcss()) return;
     Change[] changes = e.getData(VcsDataKeys.CHANGES);

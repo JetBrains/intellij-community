@@ -55,8 +55,8 @@ public class GotoRelatedFileAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
 
     DataContext context = e.getDataContext();
-    Editor editor = PlatformDataKeys.EDITOR.getData(context);
-    PsiFile psiFile = LangDataKeys.PSI_FILE.getData(context);
+    Editor editor = CommonDataKeys.EDITOR.getData(context);
+    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(context);
     if (psiFile == null) return;
 
     List<GotoRelatedItem> items = getItems(psiFile, editor, context);
@@ -310,7 +310,7 @@ public class GotoRelatedFileAction extends AnAction {
 
   @Override
   public void update(AnActionEvent e) {
-    e.getPresentation().setEnabled(LangDataKeys.PSI_FILE.getData(e.getDataContext()) != null);
+    e.getPresentation().setEnabled(CommonDataKeys.PSI_FILE.getData(e.getDataContext()) != null);
   }
 
   private static Action createNumberAction(final int mnemonic,

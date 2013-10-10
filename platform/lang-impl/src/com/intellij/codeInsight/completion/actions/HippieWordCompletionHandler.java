@@ -34,7 +34,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -279,18 +278,28 @@ public class HippieWordCompletionHandler implements CodeInsightActionHandler {
     while (!iterator.atEnd()) {
       int start = iterator.getStart();
       int end = iterator.getEnd();
-      while (start < end) {
-        int nextWs = StringUtil.indexOfAny(chars, WHITESPACE_CHARS, start, end);
-        if (nextWs < 0) {
-          if (isWordLike(chars, start, end) && !processor.processToken(start, end)) {
-            return;
-          }
-          break;
-        }
-        if (isWordLike(chars, start, end) && !processor.processToken(start, nextWs)) {
+      if (StringUtil.indexOfAny(chars, WHITESPACE_CHARS, start, end) < 0) {
+        //a single token without whitespace, consider it one word, even if it's an identifier with '-' inside
+        if (isWordLike(chars, start, end) && !processor.processToken(start, end)) {
           return;
         }
-        start = CharArrayUtil.shiftForward(chars, nextWs, WHITESPACE_CHARS);
+        iterator.advance();
+        continue;
+      }
+
+      // a token with whitespace inside (a string literal or comment)
+      // use the default java-identifier notion of word
+      while (start < end) {
+        int wordStart = start;
+        while (wordStart < end && !Character.isJavaIdentifierPart(chars.charAt(wordStart))) wordStart++;
+
+        int wordEnd = wordStart;
+        while (wordEnd < end && Character.isJavaIdentifierPart(chars.charAt(wordEnd))) wordEnd++;
+
+        if (!processor.processToken(wordStart, wordEnd)) {
+          return;
+        }
+        start = wordEnd + 1;
       }
       iterator.advance();
     }

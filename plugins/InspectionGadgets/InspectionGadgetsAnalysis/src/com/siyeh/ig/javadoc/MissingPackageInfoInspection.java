@@ -19,16 +19,18 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.GlobalInspectionContext;
 import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.reference.RefClass;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefPackage;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiPackage;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
+import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.BaseSharedLocalInspection;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +62,7 @@ public class MissingPackageInfoInspection extends BaseGlobalInspection {
     final String packageName = refPackage.getQualifiedName();
     final Project project = globalContext.getProject();
     final PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
-    if (aPackage == null) {
+    if (hasPackageInfoFile(aPackage)) {
       return null;
     }
     final List<RefEntity> children = refPackage.getChildren();
@@ -74,14 +76,6 @@ public class MissingPackageInfoInspection extends BaseGlobalInspection {
     if (!hasClasses) {
       return null;
     }
-    final PsiDirectory[] directories = aPackage.getDirectories();
-    for (PsiDirectory directory : directories) {
-      final boolean packageInfoFound = directory.findFile(PsiPackage.PACKAGE_INFO_FILE) != null;
-      final boolean packageDotHtmlFound = directory.findFile("package.html") != null;
-      if (packageInfoFound || packageDotHtmlFound) {
-        return null;
-      }
-    }
     if (PsiUtil.isLanguageLevel5OrHigher(aPackage)) {
       return new CommonProblemDescriptor[] {
         manager.createProblemDescriptor(InspectionGadgetsBundle.message("missing.package.info.problem.descriptor", packageName))};
@@ -89,6 +83,70 @@ public class MissingPackageInfoInspection extends BaseGlobalInspection {
     else {
       return new CommonProblemDescriptor[] {
         manager.createProblemDescriptor(InspectionGadgetsBundle.message("missing.package.html.problem.descriptor", packageName))};
+    }
+  }
+
+  @Contract("null -> true")
+  static boolean hasPackageInfoFile(PsiPackage aPackage) {
+    if (aPackage == null) {
+      return true;
+    }
+    final PsiDirectory[] directories = aPackage.getDirectories();
+    for (PsiDirectory directory : directories) {
+      final boolean packageInfoFound = directory.findFile(PsiPackage.PACKAGE_INFO_FILE) != null;
+      final boolean packageDotHtmlFound = directory.findFile("package.html") != null;
+      if (packageInfoFound || packageDotHtmlFound) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  @Override
+  public LocalInspectionTool getSharedLocalInspectionTool() {
+    return new LocalMissingPackageInfoInspection(this);
+  }
+
+  private static class LocalMissingPackageInfoInspection extends BaseSharedLocalInspection<MissingPackageInfoInspection> {
+
+    public LocalMissingPackageInfoInspection(MissingPackageInfoInspection settingsDelegate) {
+      super(settingsDelegate);
+    }
+
+    @NotNull
+    @Override
+    protected String buildErrorString(Object... infos) {
+      final PsiPackageStatement packageStatement = (PsiPackageStatement)infos[0];
+      if (PsiUtil.isLanguageLevel5OrHigher(packageStatement)) {
+        return InspectionGadgetsBundle.message("missing.package.info.problem.descriptor", packageStatement.getPackageName());
+      }
+      else {
+        return InspectionGadgetsBundle.message("missing.package.html.problem.descriptor", packageStatement.getPackageName());
+      }
+    }
+
+    @Override
+    public BaseInspectionVisitor buildVisitor() {
+      return new BaseInspectionVisitor() {
+        @Override
+        public void visitJavaFile(PsiJavaFile file) {
+          final PsiPackageStatement packageStatement = file.getPackageStatement();
+          if (packageStatement == null) {
+            return;
+          }
+          final PsiJavaCodeReferenceElement packageReference = packageStatement.getPackageReference();
+          final PsiElement target = packageReference.resolve();
+          if (!(target instanceof PsiPackage)) {
+            return;
+          }
+          final PsiPackage aPackage = (PsiPackage)target;
+          if (hasPackageInfoFile(aPackage)) {
+            return;
+          }
+          registerError(packageReference, packageStatement);
+        }
+      };
     }
   }
 }

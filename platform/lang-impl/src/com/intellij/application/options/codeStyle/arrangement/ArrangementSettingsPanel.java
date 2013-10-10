@@ -17,6 +17,7 @@ package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction;
+import com.intellij.application.options.codeStyle.arrangement.additional.ForceArrangementPanel;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProviderImpl;
 import com.intellij.application.options.codeStyle.arrangement.group.ArrangementGroupingRulesPanel;
@@ -45,6 +46,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
+
 /**
  * @author Denis Zhdanov
  * @since 10/30/12 5:17 PM
@@ -57,6 +59,7 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
   @NotNull private final ArrangementStandardSettingsAware mySettingsAware;
   @NotNull private final ArrangementGroupingRulesPanel    myGroupingRulesPanel;
   @NotNull private final ArrangementMatchingRulesPanel    myMatchingRulesPanel;
+  @Nullable private final ForceArrangementPanel myForceArrangementPanel;
 
   public ArrangementSettingsPanel(@NotNull CodeStyleSettings settings, @NotNull Language language) {
     super(settings);
@@ -78,9 +81,23 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
 
     myGroupingRulesPanel = new ArrangementGroupingRulesPanel(settingsManager, colorsProvider);
     myMatchingRulesPanel = new ArrangementMatchingRulesPanel(settingsManager, colorsProvider);
-    
+
     myContent.add(myGroupingRulesPanel, new GridBag().coverLine().fillCellHorizontally().weightx(1));
-    myContent.add(myMatchingRulesPanel, new GridBag().fillCell().weightx(1).weighty(1));
+    myContent.add(myMatchingRulesPanel, new GridBag().fillCell().weightx(1).weighty(1).coverLine());
+
+
+
+    if (settings.getCommonSettings(myLanguage).isForceArrangeMenuAvailable()) {
+      myForceArrangementPanel = new ForceArrangementPanel();
+      myForceArrangementPanel.setSelectedMode(settings.getCommonSettings(language).FORCE_REARRANGE_MODE);
+      myContent.add(myForceArrangementPanel.getPanel(), new GridBag().anchor(GridBagConstraints.WEST).coverLine().fillCellHorizontally());
+    }
+    else {
+      myForceArrangementPanel = null;
+    }
+
+    final List<CompositeArrangementSettingsToken> groupingTokens = settingsManager.getSupportedGroupingTokens();
+    myGroupingRulesPanel.setVisible(groupingTokens != null && !groupingTokens.isEmpty());
 
     AnAction removeRuleAction = new RemoveArrangementRuleAction();
     removeRuleAction.copyFrom(ActionManager.getInstance().getAction("Arrangement.Rule.Remove"));
@@ -114,12 +131,16 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
   public void apply(CodeStyleSettings settings) {
     CommonCodeStyleSettings commonSettings = settings.getCommonSettings(myLanguage);
     commonSettings.setArrangementSettings(new StdRulePriorityAwareSettings(myGroupingRulesPanel.getRules(), myMatchingRulesPanel.getRules()));
+    if (myForceArrangementPanel != null) {
+      commonSettings.FORCE_REARRANGE_MODE = myForceArrangementPanel.getRearrangeMode();
+    }
   }
 
   @Override
   public boolean isModified(CodeStyleSettings settings) {
     StdArrangementSettings s = new StdRulePriorityAwareSettings(myGroupingRulesPanel.getRules(), myMatchingRulesPanel.getRules());
-    return !Comparing.equal(getSettings(settings), s);
+    return !Comparing.equal(getSettings(settings), s)
+           || myForceArrangementPanel != null && settings.getCommonSettings(myLanguage).FORCE_REARRANGE_MODE != myForceArrangementPanel.getRearrangeMode();
   }
 
   @Override
@@ -131,11 +152,13 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     }
     else {
       List<ArrangementGroupingRule> groupings = s.getGroupings();
-      myGroupingRulesPanel.setVisible(!groupings.isEmpty());
       if (!groupings.isEmpty()) {
         myGroupingRulesPanel.setRules(ContainerUtilRt.newArrayList(groupings));
       }
       myMatchingRulesPanel.setRules(copy(s.getRules()));
+      if (myForceArrangementPanel != null) {
+        myForceArrangementPanel.setSelectedMode(settings.getCommonSettings(myLanguage).FORCE_REARRANGE_MODE);
+      }
     }
   }
 

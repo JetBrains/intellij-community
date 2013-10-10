@@ -44,8 +44,7 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
     myCreateGetter = createGetter;
     myCreateSetter = createSetter;
     myField = field;
-    Project project = field.getProject();
-    myPropertyName = PropertyUtil.suggestPropertyName(project, field);
+    myPropertyName = PropertyUtil.suggestPropertyName(field);
   }
 
   @Override

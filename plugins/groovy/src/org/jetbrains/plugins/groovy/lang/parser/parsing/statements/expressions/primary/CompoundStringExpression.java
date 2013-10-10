@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.
 import com.intellij.lang.PsiBuilder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
@@ -33,6 +34,128 @@ import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
  */
 public class CompoundStringExpression implements GroovyElementTypes {
   private static final Logger LOG = Logger.getInstance(CompoundStringExpression.class);
+  private final PsiBuilder myBuilder;
+  private final GroovyParser myParser;
+  private final boolean myForRefExpr;
+  private final IElementType myBegin;
+  private final IElementType myContent;
+  private final IElementType myEnd;
+  private final IElementType mySimpleLiteral;
+  private final GroovyElementType myCompoundLiteral;
+  private final String myMessage;
+
+  private CompoundStringExpression(PsiBuilder builder,
+                                  GroovyParser parser,
+                                  boolean forRefExpr,
+                                  IElementType begin,
+                                  IElementType content,
+                                  IElementType end,
+                                  IElementType literal,
+                                  GroovyElementType compoundLiteral,
+                                  String message) {
+
+    myBuilder = builder;
+    myParser = parser;
+    myForRefExpr = forRefExpr;
+    myBegin = begin;
+    myContent = content;
+    myEnd = end;
+    mySimpleLiteral = literal;
+    myCompoundLiteral = compoundLiteral;
+    myMessage = message;
+  }
+
+  private boolean parse() {
+    PsiBuilder.Marker marker = myBuilder.mark();
+    final PsiBuilder.Marker marker2 = myBuilder.mark();
+    LOG.assertTrue(ParserUtils.getToken(myBuilder, myBegin));
+
+
+    if (mySimpleLiteral != null && myBuilder.getTokenType() == myEnd) {
+      myBuilder.advanceLexer();
+      finishSimpleLiteral(marker, marker2);
+      return true;
+    }
+
+    if (myBuilder.getTokenType() == myContent) {
+      final PsiBuilder.Marker contentMarker = myBuilder.mark();
+      myBuilder.advanceLexer();
+      if (myBuilder.getTokenType() == mDOLLAR || mySimpleLiteral == null) {
+        contentMarker.done(GSTRING_CONTENT);
+      }
+      else {
+        contentMarker.drop();
+      }
+    }
+    else {
+      processContent();
+    }
+
+    boolean hasInjection = myBuilder.getTokenType() == mDOLLAR;
+    while (myBuilder.getTokenType() == mDOLLAR) {
+      parseInjection();
+      processContent();
+    }
+
+    if (!ParserUtils.getToken(myBuilder, myEnd)) {
+      myBuilder.error(myMessage);
+    }
+
+    if (hasInjection || mySimpleLiteral == null) {
+      marker2.drop();
+      marker.done(myCompoundLiteral);
+    }
+    else {
+      finishSimpleLiteral(marker, marker2);
+    }
+    return hasInjection;
+  }
+
+  private void processContent() {
+    PsiBuilder.Marker marker = myBuilder.mark();
+    if (myBuilder.getTokenType() == myContent) {
+      myBuilder.advanceLexer();
+    }
+    else {
+      myBuilder.mark().done(myContent);
+    }
+    marker.done(GSTRING_CONTENT);
+  }
+
+  private void finishSimpleLiteral(PsiBuilder.Marker marker, PsiBuilder.Marker marker2) {
+    marker2.done(mySimpleLiteral);
+    if (myForRefExpr) {
+      marker.drop();
+    }
+    else {
+      marker.done(LITERAL);
+    }
+  }
+
+  /**
+   * Parses heredoc's content in GString
+   *
+   * @return nothing
+   */
+  private boolean parseInjection() {
+    if (myBuilder.getTokenType() != mDOLLAR) return false;
+
+    final PsiBuilder.Marker injection = myBuilder.mark();
+    ParserUtils.getToken(myBuilder, mDOLLAR);
+
+    if (mIDENT.equals(myBuilder.getTokenType())) {
+      PathExpression.parse(myBuilder, myParser);
+    }
+    else if (mLCURLY.equals(myBuilder.getTokenType())) {
+      OpenOrClosableBlock.parseClosableBlock(myBuilder, myParser);
+    }
+    else {
+      ParserUtils.wrapError(myBuilder, GroovyBundle.message("identifier.or.block.expected"));
+    }
+
+    injection.done(GSTRING_INJECTION);
+    return true;
+  }
 
   /**
    * Groovy lexer does not smart enough to understand whether a regex contents injections or not. So the parser should do this job.
@@ -48,82 +171,15 @@ public class CompoundStringExpression implements GroovyElementTypes {
    *
    * @return true if there are any injections
    */
-  public static boolean parse(PsiBuilder builder,
-                              GroovyParser parser,
+  public static boolean parse(@NotNull PsiBuilder builder,
+                              @NotNull GroovyParser parser,
                               boolean forRefExpr,
-                              IElementType begin,
-                              IElementType content,
-                              IElementType end,
+                              @NotNull IElementType begin,
+                              @NotNull IElementType content,
+                              @NotNull IElementType end,
                               @Nullable IElementType literal,
-                              GroovyElementType compoundLiteral, String message) {
-    PsiBuilder.Marker marker = builder.mark();
-    final PsiBuilder.Marker marker2 = builder.mark();
-    LOG.assertTrue(ParserUtils.getToken(builder, begin));
-
-    if (builder.getTokenType() == content) {
-      final PsiBuilder.Marker contentMarker = builder.mark();
-      builder.advanceLexer();
-      if (builder.getTokenType() == mDOLLAR || literal == null) {
-        contentMarker.done(GSTRING_CONTENT);
-      }
-      else {
-        contentMarker.drop();
-      }
-    }
-
-    boolean inj = builder.getTokenType() == mDOLLAR;
-    while (builder.getTokenType() == mDOLLAR || builder.getTokenType() == content) {
-      if (builder.getTokenType() == mDOLLAR) {
-        parseInjection(builder, parser);
-      }
-      else {
-        ParserUtils.eatElement(builder, GSTRING_CONTENT);
-      }
-    }
-
-    if (!ParserUtils.getToken(builder, end)) {
-      builder.error(message);
-    }
-
-    if (inj || literal == null) {
-      marker2.drop();
-      marker.done(compoundLiteral);
-    }
-    else {
-      marker2.done(literal);
-      if (forRefExpr) {
-        marker.drop();
-      }
-      else {
-        marker.done(LITERAL);
-      }
-    }
-    return inj;
-  }
-
-  /**
-   * Parses heredoc's content in GString
-   *
-   * @param builder given builder
-   * @return nothing
-   */
-  private static boolean parseInjection(PsiBuilder builder, GroovyParser parser) {
-    if (builder.getTokenType() != mDOLLAR) return false;
-
-    final PsiBuilder.Marker injection = builder.mark();
-    ParserUtils.getToken(builder, mDOLLAR);
-
-    if (mIDENT.equals(builder.getTokenType())) {
-      PathExpression.parse(builder, parser);
-    }
-    else if (mLCURLY.equals(builder.getTokenType())) {
-      OpenOrClosableBlock.parseClosableBlock(builder, parser);
-    }
-    else {
-      ParserUtils.wrapError(builder, GroovyBundle.message("identifier.or.block.expected"));
-    }
-
-    injection.done(GSTRING_INJECTION);
-    return true;
+                              @NotNull GroovyElementType compoundLiteral,
+                              @NotNull String message) {
+    return new CompoundStringExpression(builder, parser, forRefExpr, begin, content, end, literal, compoundLiteral, message).parse();
   }
 }

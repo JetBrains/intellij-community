@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,11 +42,14 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
+import gnu.trove.THashSet;
 import gnu.trove.TIntArrayList;
+import gnu.trove.TIntHashSet;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -114,6 +117,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     myTree.setOpaque(false);
     myTree.setCellRenderer(new MyTreeCellRenderer());
     new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
+      @Override
       public String convert(TreePath o) {
         ChangesBrowserNode node = (ChangesBrowserNode) o.getLastPathComponent();
         return node.getTextPresentation();
@@ -127,6 +131,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     add(myTreeScrollPane = ScrollPaneFactory.createScrollPane(myTree), TREE_CARD);
 
     new ListSpeedSearch(myList) {
+      @Override
       protected String getElementText(Object element) {
         if (element instanceof Change) {
           return ChangesUtil.getFilePath((Change)element).getName();
@@ -140,6 +145,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
     if (myShowCheckboxes) {
       registerKeyboardAction(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           includeSelection();
         }
@@ -147,6 +153,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
       }, KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
       registerKeyboardAction(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           excludeSelection();
         }
@@ -154,6 +161,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     }
 
     registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myDoubleClickHandler.run();
       }
@@ -257,6 +265,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     return myShowFlatten ? myList : myTree;
   }
 
+  @Override
   public Dimension getPreferredSize() {
     return new Dimension(400, 400);
   }
@@ -277,6 +286,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     select(wasSelected);
     if (myList.hasFocus() || myTree.hasFocus()) {
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           requestFocus();
         }
@@ -285,6 +295,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   }
 
 
+  @Override
   public void requestFocus() {
     if (myShowFlatten) {
       myList.requestFocus();
@@ -302,12 +313,15 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     final boolean wasEmpty = myList.isEmpty();
     final List<T> sortedChanges = new ArrayList<T>(changes);
     Collections.sort(sortedChanges, new Comparator<T>() {
+      @Override
       public int compare(final T o1, final T o2) {
         return TreeModelBuilder.getPathForObject(o1).getName().compareToIgnoreCase(TreeModelBuilder.getPathForObject(o2).getName());
       }
     });
 
-    final Set<Object> wasSelected = new HashSet<Object>(Arrays.asList(myList.getSelectedValues()));
+    @SuppressWarnings("deprecation")
+    final Set<Object> wasSelected = new THashSet<Object>(Arrays.asList(myList.getSelectedValues()));
+    //noinspection unchecked
     myList.setModel(new AbstractListModel() {
       @Override
       public int getSize() {
@@ -327,6 +341,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     }
     myTree.setModel(model);
     if (! myAlwaysExpandList && ! wasEmpty) {
+      //noinspection ConstantConditions
       state.applyTo(myTree, (DefaultMutableTreeNode) myTree.getModel().getRoot());
 
       final TIntArrayList indices = new TIntArrayList();
@@ -341,6 +356,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     }
 
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         if (myProject.isDisposed()) return;
         TreeUtil.expandAll(myTree);
@@ -363,6 +379,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
 
             while (enumeration.hasMoreElements()) {
               ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
+              @SuppressWarnings("unchecked")
               final CheckboxTree.NodeState state = getNodeStatus(node);
               if (node != root && state == CheckboxTree.NodeState.CLEAR) {
                 myTree.collapsePath(new TreePath(node.getPath()));
@@ -372,6 +389,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
             enumeration = root.depthFirstEnumeration();
             while (enumeration.hasMoreElements()) {
               ChangesBrowserNode node = (ChangesBrowserNode)enumeration.nextElement();
+              @SuppressWarnings("unchecked")
               final CheckboxTree.NodeState state = getNodeStatus(node);
               if (state == CheckboxTree.NodeState.FULL && node.isLeaf()) {
                 scrollRow = myTree.getRowForPath(new TreePath(node.getPath()));
@@ -471,18 +489,23 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     if (myShowFlatten) {
       ListModel m = myList.getModel();
       int size = m.getSize();
-      List result = new ArrayList(size);
+      List<T> result = new ArrayList<T>(size);
       for (int i = 0; i < size; i++) {
-        result.add(m.getElementAt(i));
+        //noinspection unchecked
+        result.add((T)m.getElementAt(i));
       }
       return result;
     }
     else {
-      final LinkedHashSet result = new LinkedHashSet();
+      final LinkedHashSet<T> result = new LinkedHashSet<T>();
       TreeUtil.traverseDepth((ChangesBrowserNode)myTree.getModel().getRoot(), new TreeUtil.Traverse() {
+        @Override
         public boolean accept(Object node) {
           ChangesBrowserNode changeNode = (ChangesBrowserNode)node;
-          if (changeNode.isLeaf()) result.addAll(changeNode.getAllChangesUnder());
+          if (changeNode.isLeaf()) {
+            //noinspection unchecked
+            result.addAll(changeNode.getAllChangesUnder());
+          }
           return true;
         }
       });
@@ -501,37 +524,33 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   @NotNull
   public List<T> getSelectedChanges() {
     if (myShowFlatten) {
-      final Object[] o = myList.getSelectedValues();
       final List<T> changes = new ArrayList<T>();
-      for (Object anO : o) {
+      //noinspection deprecation
+      for (Object anO : myList.getSelectedValues()) {
+        //noinspection unchecked
         changes.add((T)anO);
       }
-
       return changes;
     }
     else {
-      final List<T> changes = new ArrayList<T>();
-      final Set<Integer> checkSet = new HashSet<Integer>();
       final TreePath[] paths = myTree.getSelectionPaths();
-      if (paths != null) {
+      if (paths == null) {
+        return Collections.emptyList();
+      }
+      else {
+        final List<T> changes = new ArrayList<T>();
+        final TIntHashSet checkSet = new TIntHashSet();
         for (TreePath path : paths) {
-          final ChangesBrowserNode node = (ChangesBrowserNode)path.getLastPathComponent();
-          final List<T> objects = getSelectedObjects(node);
-          for (T object : objects) {
-            final int hash = object.hashCode();
-            if (! checkSet.contains(hash)) {
+          //noinspection unchecked
+          List<T> list = getSelectedObjects((ChangesBrowserNode)path.getLastPathComponent());
+          for (T object : list) {
+            if (!checkSet.add(object.hashCode()) || !changes.contains(object)) {
               changes.add(object);
-              checkSet.add(hash);
-            } else {
-              if (! changes.contains(object)) {
-                changes.add(object);
-              }
             }
           }
         }
+        return changes;
       }
-
-      return changes;
     }
   }
 
@@ -551,7 +570,10 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     }
     else {
       final TreePath path = myTree.getSelectionPath();
-      if (path == null) return null;
+      if (path == null) {
+        return null;
+      }
+      //noinspection unchecked
       return getLeadSelectedObject((ChangesBrowserNode<T>)path.getLastPathComponent());
     }
   }
@@ -561,15 +583,13 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     if (myShowFlatten) {
       final int index = myList.getLeadSelectionIndex();
       ListModel listModel = myList.getModel();
-      if (index < 0 || index >= listModel.getSize()) return null;
       //noinspection unchecked
-      return (T)listModel.getElementAt(index);
+      return index < 0 || index >= listModel.getSize() ? null : (T)listModel.getElementAt(index);
     }
     else {
       final TreePath path = myTree.getSelectionPath();
-      if (path == null) return null;
-      final List<T> changes = getSelectedObjects(((ChangesBrowserNode<T>)path.getLastPathComponent()));
-      return changes.size() > 0 ? changes.get(0) : null;
+      //noinspection unchecked
+      return path == null ? null : ContainerUtil.getFirstItem(getSelectedObjects(((ChangesBrowserNode<T>)path.getLastPathComponent())));
     }
   }
 
@@ -630,18 +650,20 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   public AnAction[] getTreeActions() {
     final ToggleShowDirectoriesAction directoriesAction = new ToggleShowDirectoriesAction();
     final ExpandAllAction expandAllAction = new ExpandAllAction(myTree) {
+      @Override
       public void update(AnActionEvent e) {
         e.getPresentation().setVisible(!myShowFlatten);
       }
     };
     final CollapseAllAction collapseAllAction = new CollapseAllAction(myTree) {
+      @Override
       public void update(AnActionEvent e) {
         e.getPresentation().setVisible(!myShowFlatten);
       }
     };
     final AnAction[] actions = new AnAction[]{directoriesAction, expandAllAction, collapseAllAction};
     directoriesAction.registerCustomShortcutSet(
-      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK)),
+      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK)),
       this);
     expandAllAction.registerCustomShortcutSet(
       new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_EXPAND_ALL)),
@@ -685,6 +707,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
       setOpaque(false);
     }
 
+    @Override
     public Component getTreeCellRendererComponent(JTree tree,
                                                   Object value,
                                                   boolean selected,
@@ -706,9 +729,8 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
       myTextRenderer.setTransparentIconBackground(true);
       myTextRenderer.getTreeCellRendererComponent(tree, value, selected, expanded, leaf, row, hasFocus);
       if (myShowCheckboxes) {
-        ChangesBrowserNode node = (ChangesBrowserNode)value;
-
-        CheckboxTree.NodeState state = getNodeStatus(node);
+        @SuppressWarnings("unchecked")
+        CheckboxTree.NodeState state = getNodeStatus((ChangesBrowserNode)value);
         myCheckBox.setSelected(state != CheckboxTree.NodeState.CLEAR);
         myCheckBox.setEnabled(state != CheckboxTree.NodeState.PARTIAL);
         revalidate();
@@ -808,9 +830,11 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
       add(myTextRenderer, BorderLayout.CENTER);
     }
 
+    @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       myTextRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       if (myShowCheckboxes) {
+        //noinspection SuspiciousMethodCalls
         myCheckbox.setSelected(myIncludedChanges.contains(value));
         return this;
       }
@@ -821,6 +845,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
   }
 
   private class MyToggleSelectionAction extends AnAction {
+    @Override
     public void actionPerformed(AnActionEvent e) {
       toggleSelection();
     }
@@ -833,10 +858,12 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
             AllIcons.Actions.GroupByPackage);
     }
 
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return (! myProject.isDisposed()) && !PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY);
     }
 
+    @Override
     public void setSelected(AnActionEvent e, boolean state) {
       PropertiesComponent.getInstance(myProject).setValue(FLATTEN_OPTION_KEY, String.valueOf(!state));
       setShowFlatten(!state);
@@ -848,6 +875,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
       super("Select All", "Select all items", AllIcons.Actions.Selectall);
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       if (myShowFlatten) {
         final int count = myList.getModel().getSize();
@@ -869,7 +897,9 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     final TreeNode root = (TreeNode) treeModel.getRoot();
     final List<TreePath> treeSelection = new ArrayList<TreePath>(changes.size());
     TreeUtil.traverse(root, new TreeUtil.Traverse() {
+      @Override
       public boolean accept(Object node) {
+        @SuppressWarnings("unchecked")
         final T change = (T) ((DefaultMutableTreeNode) node).getUserObject();
         if (changes.contains(change)) {
           treeSelection.add(new TreePath(((DefaultMutableTreeNode) node).getPath()));
@@ -884,6 +914,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     final int size = model.getSize();
     final List<Integer> listSelection = new ArrayList<Integer>(changes.size());
     for (int i = 0; i < size; i++) {
+      @SuppressWarnings("unchecked")
       final T el = (T) model.getElementAt(i);
       if (changes.contains(el)) {
         listSelection.add(i);
@@ -925,7 +956,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     private final int myCheckboxWidth;
 
     public MyTree(Project project, int checkboxWidth) {
-      super(ChangesBrowserNode.create(ChangesTreeList.this.myProject, ChangesTreeList.ROOT));
+      super(ChangesBrowserNode.create(ChangesTreeList.this.myProject, ROOT));
       myProject = project;
       myCheckboxWidth = checkboxWidth;
     }
@@ -959,12 +990,14 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
       return super.getFileColorFor(object);
     }
 
+    @Override
     public Dimension getPreferredScrollableViewportSize() {
       Dimension size = super.getPreferredScrollableViewportSize();
       size = new Dimension(size.width + 10, size.height);
       return size;
     }
 
+    @Override
     protected void processMouseEvent(MouseEvent e) {
       if (e.getID() == MouseEvent.MOUSE_PRESSED) {
         if (! myTree.isEnabled()) return;
@@ -981,6 +1014,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
       super.processMouseEvent(e);
     }
 
+    @Override
     public int getToggleClickCount() {
       return -1;
     }

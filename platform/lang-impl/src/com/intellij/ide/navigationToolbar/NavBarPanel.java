@@ -613,7 +613,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       }
       return null;
     }
-    if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       final PsiElement element = getSelectedElement(PsiElement.class);
       return element != null && element.isValid() ? element : null;
     }
@@ -629,7 +629,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       return result.isEmpty() ? null : result.toArray(new PsiElement[result.size()]);
     }
 
-    if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       PsiElement[] psiElements = (PsiElement[])getData(LangDataKeys.PSI_ELEMENT_ARRAY.getName());
       if (psiElements == null) return null;
       Set<VirtualFile> files = new LinkedHashSet<VirtualFile>();
@@ -647,7 +647,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
       return !files.isEmpty() ? VfsUtilCore.toVirtualFileArray(files) : null;
     }
     
-    if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       final List<Navigatable> elements = getSelectedElements(Navigatable.class);
       return elements == null || elements.isEmpty() ? null : elements.toArray(new Navigatable[elements.size()]);
     }

@@ -340,7 +340,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
       }
       else if (key == PlatformDataKeys.DELETE_ELEMENT_PROVIDER) {
         sink.put(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, myDeleteProvider);
-      } else if (PlatformDataKeys.NAVIGATABLE_ARRAY.equals(key)) {
+      } else if (CommonDataKeys.NAVIGATABLE_ARRAY.equals(key)) {
         List<ShelvedChange> shelvedChanges = new ArrayList<ShelvedChange>(TreeUtil.collectSelectedObjectsOfType(this, ShelvedChange.class));
         final ArrayDeque<Navigatable> navigatables = new ArrayDeque<Navigatable>();
         final List<ShelvedChangeList> changeLists = TreeUtil.collectSelectedObjectsOfType(this, ShelvedChangeList.class);
@@ -362,7 +362,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
           }
         }
 
-        sink.put(PlatformDataKeys.NAVIGATABLE_ARRAY, navigatables.toArray(new Navigatable[navigatables.size()]));
+        sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, navigatables.toArray(new Navigatable[navigatables.size()]));
       }
     }
 
@@ -524,7 +524,7 @@ public class ShelvedChangesViewManager implements ProjectComponent {
 
   private class MyChangesDeleteProvider implements DeleteProvider {
     public void deleteElement(@NotNull DataContext dataContext) {
-      final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      final Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project == null) return;
       final ShelvedChangeList[] shelved = SHELVED_CHANGELIST_KEY.getData(dataContext);
       if (shelved == null || (shelved.length != 1)) return;

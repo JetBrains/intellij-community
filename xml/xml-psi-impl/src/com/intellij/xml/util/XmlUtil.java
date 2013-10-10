@@ -785,9 +785,8 @@ public class XmlUtil {
       if (docType == null) {
         final String publicId = doctype.getPublicId();
         if (PsiTreeUtil.getParentOfType(doctype, XmlDocument.class) instanceof HtmlDocumentImpl &&
-            publicId != null &&
-            publicId.indexOf("-//W3C//DTD HTML") != -1) {
-          return HTML4_LOOSE_URI;
+            publicId != null && publicId.contains("-//W3C//DTD ")) {
+          return guessDtdByPublicId(publicId);
         }
         else if (HtmlUtil.isHtml5Doctype(doctype)) {
           docType = doctype.getLanguage() instanceof HTMLLanguage
@@ -796,6 +795,34 @@ public class XmlUtil {
         }
       }
       return docType;
+    }
+    return null;
+  }
+
+  private static String guessDtdByPublicId(String id) {
+    if (id.contains("XHTML")) {
+      if (id.contains("1.1")) {
+        if (id.contains("Basic")) {
+          return "http://www.w3.org/TR/xhtml-basic/xhtml-basic11.dtd";
+        }
+        return "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd";
+      } else {
+        if (id.contains("Strict")) {
+          return "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd";
+        } else if (id.contains("Frameset")) {
+          return "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd";
+        } else if (id.contains("Transitional")) {
+          return "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd";
+        }
+      }
+    } else if (id.contains("HTML")) {
+      if (id.contains("Strict")) {
+        return "http://www.w3.org/TR/html4/strict.dtd";
+      }
+      else if (id.contains("Frameset")) {
+        return "http://www.w3.org/TR/html4/frameset.dtd";
+      }
+      return HTML4_LOOSE_URI;
     }
     return null;
   }

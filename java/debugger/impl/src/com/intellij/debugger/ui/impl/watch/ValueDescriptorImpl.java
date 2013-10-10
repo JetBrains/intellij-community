@@ -29,9 +29,7 @@ import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
-import com.intellij.debugger.ui.tree.render.ClassRenderer;
-import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
-import com.intellij.debugger.ui.tree.render.NodeRenderer;
+import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.debugger.ui.tree.render.Renderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -148,9 +146,7 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   public final void setContext(EvaluationContextImpl evaluationContext) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
-      myStoredEvaluationContext = evaluationContext;
-    }
+    myStoredEvaluationContext = evaluationContext;
     Value value;
     try {
       value = calcValue(evaluationContext);
@@ -271,9 +267,12 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
     final StringBuilder buf = StringBuilderSpinAllocator.alloc();
     try {
       final Value value = getValue();
-      if(isShowIdLabel() && value instanceof ObjectReference) {
-        final String idLabel = getIdLabel((ObjectReference)value);
-        if(!label.startsWith(idLabel)) {
+      if(isShowIdLabel()) {
+        Renderer lastRenderer = getLastRenderer();
+        final String idLabel = myStoredEvaluationContext != null && lastRenderer != null ?
+                               ((NodeRendererImpl)lastRenderer).getIdLabel(value, myStoredEvaluationContext.getDebugProcess()) :
+                               null;
+        if(idLabel != null && !label.startsWith(idLabel)) {
           buf.append(idLabel);
         }
       }

@@ -18,6 +18,7 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
 import com.intellij.ide.plugins.*;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.Application;
@@ -54,14 +55,16 @@ public class PluginsAdvertiser implements StartupActivity {
     final String buildNumber = ApplicationInfo.getInstance().getBuild().asString();
     final String pluginRepositoryUrl = "http://plugins.jetbrains.com/feature/getImplementations?" +
                                        "featureType=" + featureType +
-                                       "&implementationName=" + implementationName +
+                                       "&implementationName=" + implementationName.replaceAll("#", "%23") +
                                        "&build=" + buildNumber;
     try {
       HttpURLConnection connection = HttpConfigurable.getInstance().openHttpConnection(pluginRepositoryUrl);
       connection.connect();
       final InputStreamReader streamReader = new InputStreamReader(connection.getInputStream());
       try {
-        final JsonElement jsonRootElement = new JsonParser().parse(streamReader);
+        final JsonReader jsonReader = new JsonReader(streamReader);
+        jsonReader.setLenient(true);
+        final JsonElement jsonRootElement = new JsonParser().parse(jsonReader);
         final List<PluginId> result = new ArrayList<PluginId>();
         for (JsonElement jsonElement : jsonRootElement.getAsJsonArray()) {
           final JsonObject jsonObject = jsonElement.getAsJsonObject();
@@ -98,7 +101,7 @@ public class PluginsAdvertiser implements StartupActivity {
             int idx = 0;
             final Set<PluginId> ids = new HashSet<PluginId>();
             for (UnknownFeature feature : unknownFeatures) {
-              indicator.setText("Searching for: " + feature.getFeatureType());
+              indicator.setText("Searching for plugin supporting \'" + feature.getImplementationName() + "\'");
               final List<PluginId> pluginId = retrieve(feature);
               if (pluginId != null) {
                 //do not suggest to download disabled plugins
@@ -109,7 +112,7 @@ public class PluginsAdvertiser implements StartupActivity {
                   }
                 }
               }
-              indicator.setFraction(idx++ / unknownFeatures.size());
+              indicator.setFraction(((double) idx++) / unknownFeatures.size());
             }
 
             try {
@@ -141,11 +144,12 @@ public class PluginsAdvertiser implements StartupActivity {
                       for (UnknownFeature feature : unknownFeatures) {
                         collectorSuggester.ignoreFeature(feature);
                       }
+                      notification.expire();
                     } else if ("configure".equals(description)) {
                       LOG.assertTrue(myAllPlugins != null);
+                      notification.expire();
                       new PluginsAdvertiserDialog(myProject, myPlugins.toArray(new PluginDownloader[myPlugins.size()]), myAllPlugins).show();
                     }
-                    notification.expire();
                   }
                 }
               }).notify(project);

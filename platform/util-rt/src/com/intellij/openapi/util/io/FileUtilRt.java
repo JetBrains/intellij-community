@@ -444,19 +444,15 @@ public class FileUtilRt {
 
   public static boolean delete(@NotNull File file) {
     if (file.isDirectory()) {
-      if (!deleteChildren(file)) return false;
-    }
-    return deleteFile(file);
-  }
-
-  protected static boolean deleteChildren(@NotNull File file) {
-    File[] files = file.listFiles();
-    if (files != null) {
-      for (File child : files) {
-        if (!delete(child)) return false;
+      File[] files = file.listFiles();
+      if (files != null) {
+        for (File child : files) {
+          if (!delete(child)) return false;
+        }
       }
     }
-    return true;
+
+    return deleteFile(file);
   }
 
   public interface RepeatableIOOperation<T, E extends Throwable> {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseMotionAdapter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
-import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.util.ui.UIUtil;
@@ -208,7 +207,7 @@ public class ContextMenuImpl extends JPanel implements Disposable {
     }
 
     final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    return file != null && file.isValid() && (file.getFileSystem() == LocalFileSystem.getInstance() || file instanceof HttpVirtualFile);
+    return file != null && file.isValid() && (file.isInLocalFileSystem() || file instanceof HttpVirtualFile);
   }
 
   private void scheduleHide() {

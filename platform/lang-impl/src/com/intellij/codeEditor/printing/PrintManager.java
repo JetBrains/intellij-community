@@ -20,6 +20,7 @@ import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -49,16 +50,16 @@ class PrintManager {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeEditor.printing.PrintManager");
 
   public static void executePrint(DataContext dataContext) {
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) return;
 
     PsiDirectory[] psiDirectory = new PsiDirectory[1];
-    PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+    PsiElement psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     if (psiElement instanceof PsiDirectory) {
       psiDirectory[0] = (PsiDirectory)psiElement;
     }
 
-    PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
+    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
     String[] shortFileName = new String[1];
     String[] directoryName = new String[1];
     if (psiFile != null || psiDirectory[0] != null) {
@@ -73,7 +74,7 @@ class PrintManager {
       }
     }
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     String text = null;
     if (editor != null) {
       if (editor.getSelectionModel().hasSelection()) {

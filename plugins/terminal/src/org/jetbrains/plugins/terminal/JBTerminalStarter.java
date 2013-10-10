@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.terminal;
 
+import com.intellij.ide.GeneralSettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.jediterm.terminal.*;
@@ -21,7 +22,7 @@ public class JBTerminalStarter extends TerminalStarter {
       @Override
       protected void unsupported(char... sequenceChars) {
         if (sequenceChars[0] == 7) { //ESC BEL
-          handleCommandExecutedSequence();
+          refreshAfterExecution();
         }
         else {
           super.unsupported();
@@ -30,18 +31,20 @@ public class JBTerminalStarter extends TerminalStarter {
     };
   }
 
-  private static void handleCommandExecutedSequence() {
-    //we need to refresh local file system after a command has been executed in the terminal
-    SwingUtilities.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            LocalFileSystem.getInstance().refresh(false);
-          }
-        });
-      }
-    });
+  public static void refreshAfterExecution() {
+    if (GeneralSettings.getInstance().isSyncOnFrameActivation()) {
+      //we need to refresh local file system after a command has been executed in the terminal
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              LocalFileSystem.getInstance().refresh(false);
+            }
+          });
+        }
+      });
+    }
   }
 }

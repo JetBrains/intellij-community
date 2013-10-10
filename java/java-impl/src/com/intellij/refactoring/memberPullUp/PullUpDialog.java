@@ -173,11 +173,12 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
     return new MyMemberInfoModel();
   }
 
-  private class MyMemberInfoModel extends UsesAndInterfacesDependencyMemberInfoModel {
+  private class MyMemberInfoModel extends UsesAndInterfacesDependencyMemberInfoModel<PsiMember, MemberInfo> {
     public MyMemberInfoModel() {
       super(myClass, getSuperClass(), false, myInterfaceContainmentVerifier);
     }
 
+    @Override
     public boolean isMemberEnabled(MemberInfo member) {
       PsiClass currentSuperClass = getSuperClass();
       if(currentSuperClass == null) return true;
@@ -202,6 +203,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
       return true;
     }
 
+    @Override
     public boolean isAbstractEnabled(MemberInfo member) {
       PsiClass currentSuperClass = getSuperClass();
       if (currentSuperClass == null || !currentSuperClass.isInterface()) return true;
@@ -211,6 +213,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
       return false;
     }
 
+    @Override
     public boolean isAbstractWhenDisabled(MemberInfo member) {
       PsiClass currentSuperClass = getSuperClass();
       if(currentSuperClass == null) return false;
@@ -222,6 +225,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
       return false;
     }
 
+    @Override
     public int checkForProblems(@NotNull MemberInfo member) {
       if (member.isChecked()) return OK;
       PsiClass currentSuperClass = getSuperClass();
@@ -238,6 +242,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
       }
     }
 
+    @Override
     public Boolean isFixedAbstract(MemberInfo member) {
       return Boolean.TRUE;
     }

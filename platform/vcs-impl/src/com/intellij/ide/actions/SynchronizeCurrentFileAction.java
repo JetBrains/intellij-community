@@ -18,6 +18,7 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
@@ -96,6 +97,6 @@ public class SynchronizeCurrentFileAction extends AnAction implements DumbAware 
 
   @Nullable
   private static VirtualFile[] getFiles(AnActionEvent e) {
-    return e.getData(PlatformDataKeys.VIRTUAL_FILE_ARRAY);
+    return e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY);
   }
 }

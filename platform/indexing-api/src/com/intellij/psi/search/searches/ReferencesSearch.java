@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,6 +70,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
       return myIgnoreAccessScope;
     }
 
+    @NotNull
     public SearchRequestCollector getOptimizer() {
       return myOptimizer;
     }
@@ -133,9 +134,7 @@ public class ReferencesSearch extends ExtensibleQueryFactory<PsiReference, Refer
                                      final boolean inReadAction,
                                      @NotNull PairProcessor<PsiReference, SearchRequestCollector> processor) {
     final SearchRequestCollector nested = new SearchRequestCollector(collector.getSearchSession());
-    collector.searchQuery(new QuerySearchRequest(search(new SearchParameters(element, searchScope, ignoreAccessScope, nested)), nested,
-                                                 inReadAction, processor));
+    Query<PsiReference> query = search(new SearchParameters(element, searchScope, ignoreAccessScope, nested));
+    collector.searchQuery(new QuerySearchRequest(query, nested, inReadAction, processor));
   }
-
-
 }

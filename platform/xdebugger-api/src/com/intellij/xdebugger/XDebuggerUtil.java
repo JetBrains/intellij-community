@@ -76,7 +76,7 @@ public abstract class XDebuggerUtil {
    * @return source position
    */
   @Nullable
-  public abstract XSourcePosition createPosition(@NotNull VirtualFile file, int line);
+  public abstract XSourcePosition createPosition(@Nullable VirtualFile file, int line);
 
   /**
    * Create {@link XSourcePosition} instance by line number
@@ -85,7 +85,7 @@ public abstract class XDebuggerUtil {
    * @return source position
    */
   @Nullable
-  public abstract XSourcePosition createPositionByOffset(@NotNull VirtualFile file, int offset);
+  public abstract XSourcePosition createPositionByOffset(@Nullable VirtualFile file, int offset);
 
   public abstract <B extends XLineBreakpoint<?>> XBreakpointGroupingRule<B, ?> getGroupingByFileRule();
 

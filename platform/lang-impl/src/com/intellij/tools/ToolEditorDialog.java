@@ -20,6 +20,7 @@ import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.macro.MacrosDialog;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -190,7 +191,7 @@ public class ToolEditorDialog extends DialogWrapper {
     myOutputFiltersButton = new JButton(ToolsBundle.message("tools.filters.button"));
 
     DataContext dataContext = DataManager.getInstance().getDataContext(parent);
-    myProject = PlatformDataKeys.PROJECT.getData(dataContext);
+    myProject = CommonDataKeys.PROJECT.getData(dataContext);
     MacroManager.getInstance().cacheMacrosPreview(dataContext);
     setTitle(title);
     init();

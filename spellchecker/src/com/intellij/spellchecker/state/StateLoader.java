@@ -24,16 +24,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-
 public class StateLoader implements EditableDictionaryLoader {
-
   private final Project project;
   private EditableDictionary dictionary;
 
   public StateLoader(Project project) {
     this.project = project;
   }
-
 
   public void load(@NotNull Consumer<String> consumer) {
     AggregatedDictionaryState state = ServiceManager.getService(project, AggregatedDictionaryState.class);
@@ -49,7 +46,6 @@ public class StateLoader implements EditableDictionaryLoader {
         consumer.consume(word);
       }
     }
-
   }
 
   public EditableDictionary getDictionary() {

@@ -23,8 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class ConfirmationDialog extends OptionsMessageDialog{
-
+public class ConfirmationDialog extends OptionsMessageDialog {
   private final VcsShowConfirmationOption myOption;
   private String myDoNotShowAgainMessage;
   private final String myOkActionName;
@@ -79,18 +78,22 @@ public class ConfirmationDialog extends OptionsMessageDialog{
     return myDoNotShowAgainMessage == null ? super.getDoNotShowMessage() : myDoNotShowAgainMessage;
   }
 
+  @Override
   protected String getOkActionName() {
     return myOkActionName;
   }
 
+  @Override
   protected String getCancelActionName() {
     return myCancelActionName;
   }
 
+  @Override
   protected boolean isToBeShown() {
     return myOption.getValue() == VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
   }
 
+  @Override
   protected void setToBeShown(boolean value, boolean onOk) {
     final VcsShowConfirmationOption.Value optionValue;
 
@@ -105,9 +108,9 @@ public class ConfirmationDialog extends OptionsMessageDialog{
     }
 
     myOption.setValue(optionValue);
-
   }
 
+  @Override
   protected boolean shouldSaveOptionsOnCancel() {
     return true;
   }

@@ -21,7 +21,6 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.io.URLUtil;
 import com.sun.jna.TypeMapper;
 import com.sun.jna.platform.FileUtils;
@@ -29,15 +28,14 @@ import gnu.trove.THashSet;
 import org.apache.log4j.Appender;
 import org.apache.oro.text.regex.PatternMatcher;
 import org.jdom.Document;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 import org.picocontainer.PicoContainer;
 
 import java.io.*;
 import java.net.URL;
 import java.util.*;
+
+import static com.intellij.util.SystemProperties.getUserHome;
 
 public class PathManager {
   @NonNls public static final String PROPERTIES_FILE = "idea.properties.file";
@@ -48,6 +46,16 @@ public class PathManager {
   @NonNls public static final String PROPERTY_LOG_PATH = "idea.log.path";
   @NonNls public static final String PROPERTY_PATHS_SELECTOR = "idea.paths.selector";
   @NonNls public static final String PROPERTY_ORIGINAL_WORKING_DIR = "original.working.dir";
+  @NonNls public static final String DEFAULT_OPTIONS_FILE_NAME = "other";
+
+  @NonNls private static final String LIB_FOLDER = "lib";
+  @NonNls private static final String PLUGINS_FOLDER = "plugins";
+  @NonNls private static final String BIN_FOLDER = "bin";
+  @NonNls private static final String LOG_DIRECTORY = "log";
+  @NonNls private static final String CONFIG_FOLDER = "config";
+  @NonNls private static final String OPTIONS_FOLDER = "options";
+  @NonNls private static final String SYSTEM_FOLDER = "system";
+  @NonNls private static final String PATHS_SELECTOR = System.getProperty(PROPERTY_PATHS_SELECTOR);
 
   @NonNls private static String ourHomePath;
   @NonNls private static String ourSystemPath;
@@ -55,56 +63,50 @@ public class PathManager {
   @NonNls private static String ourPluginsPath;
   @NonNls private static String ourLogPath;
 
-  @NonNls public static final String DEFAULT_OPTIONS_FILE_NAME = "other";
-  @NonNls private static final String LIB_FOLDER = "lib";
-  @NonNls public static final String PLUGINS_DIRECTORY = "plugins";
-  @NonNls private static final String BIN_FOLDER = "bin";
-  @NonNls private static final String LOG_DIRECTORY = "log";
-  @NonNls private static final String OPTIONS_FOLDER = "options";
+  // IDE installation paths
 
+  @NotNull
   public static String getHomePath() {
     if (ourHomePath != null) return ourHomePath;
 
-    if (System.getProperty(PROPERTY_HOME_PATH) != null) {
-      ourHomePath = getAbsolutePath(System.getProperty(PROPERTY_HOME_PATH));
+    String fromProperty = System.getProperty(PROPERTY_HOME_PATH);
+    if (fromProperty != null) {
+      ourHomePath = getAbsolutePath(fromProperty);
+      if (!new File(ourHomePath).isDirectory()) {
+        throw new RuntimeException("Invalid home path '" + ourHomePath + "'");
+      }
     }
     else {
       ourHomePath = getHomePathFor(PathManager.class);
       if (ourHomePath == null) {
-        if (SystemInfo.isMac) {
-          throw new RuntimeException("Could not find installation home path. Please reinstall the software.");
-        }
-        throw new RuntimeException("Could not find IDEA home path. Please make sure bin/idea.properties is present in the installation directory.");
+        String advice = SystemInfo.isMac ? "reinstall the software." : "make sure bin/idea.properties is present in the installation directory.";
+        throw new RuntimeException("Could not find installation home path. Please " + advice);
       }
     }
-    try {
-      if (!SystemInfo.isFileSystemCaseSensitive) {
+
+    if (SystemInfo.isWindows) {
+      try {
         ourHomePath = new File(ourHomePath).getCanonicalPath();
       }
-    }
-    catch (IOException e) {
-      // ignore
+      catch (IOException ignored) { }
     }
 
     return ourHomePath;
   }
 
   @Nullable
-  public static String getHomePathFor(Class aClass) {
+  public static String getHomePathFor(@NotNull Class aClass) {
     String rootPath = getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
-    if (rootPath != null) {
-      File root = new File(rootPath).getAbsoluteFile();
+    if (rootPath == null) return null;
 
-      do {
-        final String parent = root.getParent();
-        if (parent == null) return null;
-        root = new File(parent).getAbsoluteFile(); // one step back to get folder
-      }
-      while (!isIdeaHome(root));
-
-      return root.getAbsolutePath();
+    File root = new File(rootPath).getAbsoluteFile();
+    do {
+      String parent = root.getParent();
+      if (parent == null) return null;
+      root = new File(parent).getAbsoluteFile();  // one step back to get folder
     }
-    return null;
+    while (!isIdeaHome(root));
+    return root.getAbsolutePath();
   }
 
   private static boolean isIdeaHome(final File root) {
@@ -113,213 +115,158 @@ public class PathManager {
            new File(root, FileUtil.toSystemDependentName("Contents/Info.plist")).exists();  // MacOS bundle doesn't include idea.properties
   }
 
+  @NotNull
+  public static String getBinPath() {
+    return getHomePath() + File.separator + BIN_FOLDER;
+  }
+
+  @NotNull
   public static String getLibPath() {
     return getHomePath() + File.separator + LIB_FOLDER;
   }
 
-  private static String trimPathQuotes(String path){
-    if (!(path != null && !(path.length() < 3))){
-      return path;
-    }
-    if (StringUtil.startsWithChar(path, '\"') && StringUtil.endsWithChar(path, '\"')){
-      return path.substring(1, path.length() - 1);
-    }
-    return path;
+  @SuppressWarnings("MethodNamesDifferingOnlyByCase")
+  @NotNull
+  public static String getPreInstalledPluginsPath() {
+    return getHomePath() + File.separatorChar + PLUGINS_FOLDER;
   }
 
+  // config paths
+
+  @Nullable
+  public static String getPathsSelector() {
+    return PATHS_SELECTOR;
+  }
+
+  @NotNull
+  public static String getConfigPath() {
+    if (ourConfigPath != null) return ourConfigPath;
+
+    if (System.getProperty(PROPERTY_CONFIG_PATH) != null) {
+      ourConfigPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_CONFIG_PATH)));
+    }
+    else if (PATHS_SELECTOR != null) {
+      ourConfigPath = getDefaultConfigPathFor(PATHS_SELECTOR);
+    }
+    else {
+      ourConfigPath = getHomePath() + File.separator + CONFIG_FOLDER;
+    }
+
+    return ourConfigPath;
+  }
+
+  @NotNull
+  public static String getDefaultConfigPathFor(@NotNull String selector) {
+    return platformPath(selector, "Library/Preferences", CONFIG_FOLDER);
+  }
+
+  public static void ensureConfigFolderExists() {
+    checkAndCreate(getConfigPath(), true);
+  }
+
+  @NotNull
+  public static String getOptionsPath() {
+    return getConfigPath() + File.separator + OPTIONS_FOLDER;
+  }
+
+  @NotNull
+  public static File getOptionsFile(@NotNull String fileName) {
+    return new File(getOptionsPath(), fileName + ".xml");
+  }
+
+  @NotNull
+  public static File getOptionsFile(@NotNull NamedJDOMExternalizable externalizable) {
+    return getOptionsFile(externalizable.getExternalFileName());
+  }
+
+  @NotNull
+  public static String getPluginsPath() {
+    if (ourPluginsPath != null) return ourPluginsPath;
+
+    if (System.getProperty(PROPERTY_PLUGINS_PATH) != null) {
+      ourPluginsPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_PLUGINS_PATH)));
+    }
+    else if (PATHS_SELECTOR != null) {
+      ourPluginsPath = platformPath(PATHS_SELECTOR, "Library/Application Support", CONFIG_FOLDER + File.separatorChar + PLUGINS_FOLDER);
+    }
+    else {
+      ourPluginsPath = getConfigPath() + File.separatorChar + PLUGINS_FOLDER;
+    }
+
+    return ourPluginsPath;
+  }
+
+  // runtime paths
+
+  @NotNull
   public static String getSystemPath() {
     if (ourSystemPath != null) return ourSystemPath;
 
     if (System.getProperty(PROPERTY_SYSTEM_PATH) != null) {
       ourSystemPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_SYSTEM_PATH)));
     }
-    else if (getPathsSelector() != null) {
-      final String selector = getPathsSelector();
-      // Mac: ~/Library/Caches/@@selector@@
-      // Others: ~/.@@selector@@/system
-      ourSystemPath = SystemProperties.getUserHome() + (SystemInfo.isMac ? "/Library/Caches/" + selector
-                                                                         : File.separator + "." + selector + File.separator + "system");
+    else if (PATHS_SELECTOR != null) {
+      ourSystemPath = platformPath(PATHS_SELECTOR, "Library/Caches", SYSTEM_FOLDER);
     }
     else {
-      ourSystemPath = getHomePath() + File.separator + "system";
+      ourSystemPath = getHomePath() + File.separator + SYSTEM_FOLDER;
     }
 
-    try {
-      File file = new File(ourSystemPath);
-      file.mkdirs();
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-    }
-
+    checkAndCreate(ourSystemPath, true);
     return ourSystemPath;
   }
 
+  @NotNull
   public static String getTempPath() {
     return getSystemPath() + File.separator + "tmp";
   }
 
-  public static boolean ensureConfigFolderExists(final boolean createIfNotExists) {
-    getConfigPathWithoutDialog();
+  @NotNull
+  public static File getIndexRoot() {
+    String indexRoot = System.getProperty("index_root_path", getSystemPath() + "/index");
+    checkAndCreate(indexRoot, true);
+    return new File(indexRoot);
+  }
 
-    final File file = new File(ourConfigPath);
-    if (createIfNotExists && !file.exists()) {
-      return file.mkdirs();  // shouldn't copy configs if failed to create new directory
+  @NotNull
+  public static String getLogPath() {
+    if (ourLogPath != null) return ourLogPath;
+
+    if (System.getProperty(PROPERTY_LOG_PATH) != null) {
+      ourLogPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_LOG_PATH)));
     }
-
-    return false;
-  }
-
-  @NotNull
-  public static String getConfigPath(boolean createIfNotExists) {
-    ensureConfigFolderExists(createIfNotExists);
-    return ourConfigPath;
-  }
-
-  @NotNull
-  public static String getConfigPath() {
-    return getConfigPath(true);
-  }
-
-  @NotNull
-  private static String getConfigPathWithoutDialog() {
-    if (ourConfigPath != null) return ourConfigPath;
-
-    if (System.getProperty(PROPERTY_CONFIG_PATH) != null) {
-      ourConfigPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_CONFIG_PATH)));
-    }
-    else if (getPathsSelector() != null) {
-      final String selector = getPathsSelector();
-      // Mac: ~/Library/Preferences/@@selector@@
-      // Others: ~/.@@selector@@/config
-      ourConfigPath = getDefaultConfigPathFor(selector);
+    else if (PATHS_SELECTOR != null) {
+      ourLogPath = platformPath(PATHS_SELECTOR, "Library/Logs", SYSTEM_FOLDER + File.separatorChar + LOG_DIRECTORY);
     }
     else {
-      ourConfigPath = getHomePath() + File.separator + "config";
-    }
-    return ourConfigPath;
-  }
-
-  @NotNull
-  public static String getDefaultConfigPathFor(String selector) {
-    return SystemProperties.getUserHome() + (SystemInfo.isMac ? "/Library/Preferences/" + selector
-                                                              : File.separator + "." + selector + File.separator + "config");
-  }
-
-  public static String getPathsSelector() {
-    return System.getProperty(PROPERTY_PATHS_SELECTOR);
-  }
-
-  public static String getBinPath() {
-    return getHomePath() + File.separator + BIN_FOLDER;
-  }
-
-  public static String getOptionsPath() {
-    return getConfigPath() + File.separator + OPTIONS_FOLDER;
-  }
-
-  public static String getOptionsPathWithoutDialog() {
-    return getConfigPathWithoutDialog() + File.separator + OPTIONS_FOLDER;
-  }
-
-  public static File getIndexRoot() {
-    File file = new File(getIndexRootDir());
-    try {
-      file = file.getCanonicalFile();
-    }
-    catch (IOException ignored) {
-    }
-    file.mkdirs();
-    return file;
-  }
-
-  private static String getIndexRootDir() {
-    String dir = System.getProperty("index_root_path");
-    return dir == null ? getSystemPath() + "/index" : dir;
-  }
-
-  private static class StringHolder {
-    private static final String ourPreinstalledPluginsPath = getHomePath() + File.separatorChar + PLUGINS_DIRECTORY;
-  }
-
-  public static String getPreinstalledPluginsPath() {
-
-    return StringHolder.ourPreinstalledPluginsPath;
-  }
-
-  public static String getPluginsPath() {
-    if (ourPluginsPath == null) {
-      if (System.getProperty(PROPERTY_PLUGINS_PATH) != null) {
-        ourPluginsPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_PLUGINS_PATH)));
-      }
-      else if (SystemInfo.isMac && getPathsSelector() != null) {
-        // Mac: ~//Library/Application Support/@@selector@@
-        ourPluginsPath = SystemProperties.getUserHome() + "/Library/Application Support/" + getPathsSelector();
-      }
-      else {
-        // Others: @@config_path@@/plugins
-        ourPluginsPath = getConfigPath() + File.separatorChar + PLUGINS_DIRECTORY;
-      }
-    }
-
-    return ourPluginsPath;
-  }
-
-  public static String getLogPath() {
-    if (ourLogPath == null) {
-      if (System.getProperty(PROPERTY_LOG_PATH) != null) {
-        ourLogPath = getAbsolutePath(trimPathQuotes(System.getProperty(PROPERTY_LOG_PATH)));
-      }
-      else if (SystemInfo.isMac && getPathsSelector() != null) {
-        // Mac: ~/Library/Logs/@@selector@@
-        ourLogPath = SystemProperties.getUserHome() + "/Library/Logs/" + getPathsSelector();
-      }
-      else {
-        // Others: @@system_path@@/log
-        ourLogPath = getSystemPath() + File.separatorChar + LOG_DIRECTORY;
-      }
+      ourLogPath = getSystemPath() + File.separatorChar + LOG_DIRECTORY;
     }
 
     return ourLogPath;
   }
 
   @NotNull
-  private static String getAbsolutePath(String path) {
-    if (path.startsWith("~/") || path.startsWith("~\\")) {
-      path = SystemProperties.getUserHome() + path.substring(1);
-    }
-
-    return new File(path).getAbsolutePath();
+  public static String getPluginTempPath () {
+    return getSystemPath() + File.separator + PLUGINS_FOLDER;
   }
 
-  @NonNls
-  public static File getOptionsFile(NamedJDOMExternalizable externalizable) {
-    return new File(getOptionsPath()+File.separatorChar+externalizable.getExternalFileName()+".xml");
-  }
+  // misc stuff
 
   @Nullable
   public static String getOriginalWorkingDir() {
     return System.getProperty(PROPERTY_ORIGINAL_WORKING_DIR);
   }
 
-  @NonNls
-  public static File getOptionsFile(@NonNls String fileName) {
-    return new File(getOptionsPath()+File.separatorChar+fileName+".xml");
-  }
-
   /**
-   * Attempts to detect classpath entry which contains given resource
+   * Attempts to detect classpath entry which contains given resource.
    */
   @Nullable
-  public static String getResourceRoot(Class context, @NonNls String path) {
+  public static String getResourceRoot(@NotNull Class context, @NonNls String path) {
     URL url = context.getResource(path);
     if (url == null) {
       url = ClassLoader.getSystemResource(path.substring(1));
     }
-    if (url == null) {
-      return null;
-    }
-    return extractRoot(url, path);
+    return url != null ? extractRoot(url, path) : null;
   }
 
   /**
@@ -353,7 +300,7 @@ public class PathManager {
 
     if (resultPath == null) {
       //noinspection HardCodedStringLiteral,UseOfSystemOutOrSystemErr
-      System.err.println("cannot extract: " + resultPath + " from " + resourceURL);
+      System.err.println("cannot extract: " + resourcePath + " from " + resourceURL);
       return null;
     }
 
@@ -363,15 +310,10 @@ public class PathManager {
     return resultPath;
   }
 
-  @NonNls
-  public static File getDefaultOptionsFile() {
-    return new File(getOptionsPath(),DEFAULT_OPTIONS_FILE_NAME+".xml");
-  }
-
   public static void loadProperties() {
     File propFile = FileUtil.findFirstThatExist(
       System.getProperty(PROPERTIES_FILE),
-      SystemProperties.getUserHome() + "/idea.properties",
+      getUserHome() + "/idea.properties",
       getHomePath() + "/bin/idea.properties",
       getHomePath() + "/community/bin/idea.properties");
 
@@ -405,20 +347,14 @@ public class PathManager {
     }
   }
 
-  /** @deprecated use {@linkplain #substituteVars(String)} (to remove in IDEA 13) */
-  @SuppressWarnings({"UnusedDeclaration", "ConstantConditions"})
-  public static String substitueVars(String s) {
-    return substituteVars(s);
-  }
-
-  @Nullable
+  @Contract("null -> null")
   public static String substituteVars(String s) {
     final String ideaHomePath = getHomePath();
     return substituteVars(s, ideaHomePath);
   }
 
-  @Nullable
-  public static String substituteVars(String s, final String ideaHomePath) {
+  @Contract("null, _ -> null")
+  public static String substituteVars(String s, String ideaHomePath) {
     if (s == null) return null;
     if (s.startsWith("..")) {
       s = ideaHomePath + File.separatorChar + BIN_FOLDER + File.separatorChar + s;
@@ -434,34 +370,21 @@ public class PathManager {
     return s;
   }
 
-  public static String getPluginTempPath () {
-    String systemPath = getSystemPath();
-
-    return systemPath + File.separator + PLUGINS_DIRECTORY;
-  }
-
+  @NotNull
   public static File findFileInLibDirectory(@NotNull String relativePath) {
     File file = new File(getLibPath() + File.separator + relativePath);
-    if (file.exists()) {
-      return file;
-    }
-    return new File(getHomePath() + File.separator + "community" + File.separator + "lib" + File.separator + relativePath);
-  }
-
-  @TestOnly
-  public static void cleanup() {
-    ourPluginsPath = null;
+    return file.exists() ? file : new File(getHomePath(), "community" + File.separator + "lib" + File.separator + relativePath);
   }
 
   @Nullable
   public static String getJarPathForClass(@NotNull Class aClass) {
-    final String resourceRoot = getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
+    String resourceRoot = getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
     return resourceRoot != null ? new File(resourceRoot).getAbsolutePath() : null;
   }
 
   @NotNull
   public static Collection<String> getUtilClassPath() {
-    final List<Class<?>> classes = Arrays.asList(
+    final Class<?>[] classes = {
       PathManager.class,            // module 'util'
       NotNull.class,                // module 'annotations'
       SystemInfoRt.class,           // module 'util-rt'
@@ -472,7 +395,7 @@ public class PathManager {
       TypeMapper.class,             // JNA
       FileUtils.class,              // JNA (jna-utils)
       PatternMatcher.class          // OROMatcher
-    );
+    };
 
     final Set<String> classPath = new HashSet<String>();
     for (Class<?> aClass : classes) {
@@ -488,5 +411,80 @@ public class PathManager {
     }
 
     return Collections.unmodifiableCollection(classPath);
+  }
+
+  // helpers
+
+  private static String getAbsolutePath(String path) {
+    if (path.startsWith("~/") || path.startsWith("~\\")) {
+      path = getUserHome() + path.substring(1);
+    }
+    return new File(path).getAbsolutePath();
+  }
+
+  private static String trimPathQuotes(String path){
+    if (!(path != null && !(path.length() < 3))){
+      return path;
+    }
+    if (StringUtil.startsWithChar(path, '\"') && StringUtil.endsWithChar(path, '\"')){
+      return path.substring(1, path.length() - 1);
+    }
+    return path;
+  }
+
+  // todo[r.sh] XDG directories, Windows folders
+  private static String platformPath(String selector, String macDir, String fallback) {
+    if (SystemInfo.isMac) {
+      return getUserHome() + File.separator + macDir + File.separator + selector;
+    }
+    else {
+      return getUserHome() + File.separator + "." + selector + File.separator + fallback;
+    }
+  }
+
+  private static boolean checkAndCreate(String path, boolean createIfNotExists) {
+    if (createIfNotExists) {
+      File file = new File(path);
+      if (!file.exists()) {
+        return file.mkdirs();
+      }
+    }
+    return false;
+  }
+
+  // outdated stuff
+
+  /** @deprecated use {@link #getPluginsPath()} (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration") @NonNls public static final String PLUGINS_DIRECTORY = PLUGINS_FOLDER;
+
+  /** @deprecated use {@link #getPreInstalledPluginsPath()} (to remove in IDEA 14) */
+  @SuppressWarnings({"UnusedDeclaration", "MethodNamesDifferingOnlyByCase", "SpellCheckingInspection"})
+  public static String getPreinstalledPluginsPath() {
+    return getPreInstalledPluginsPath();
+  }
+
+  /** @deprecated use {@link #getConfigPath()} (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static String getConfigPath(boolean createIfNotExists) {
+    ensureConfigFolderExists();
+    return ourConfigPath;
+  }
+
+  /** @deprecated use {@link #ensureConfigFolderExists()} (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static boolean ensureConfigFolderExists(boolean createIfNotExists) {
+    return checkAndCreate(getConfigPath(), createIfNotExists);
+  }
+
+  /** @deprecated use {@link #getOptionsPath()} (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static String getOptionsPathWithoutDialog() {
+    return getOptionsPath();
+  }
+
+  /** @deprecated use {@link #getOptionsFile(String)} (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
+  public static File getDefaultOptionsFile() {
+    return new File(getOptionsPath(), DEFAULT_OPTIONS_FILE_NAME + ".xml");
   }
 }

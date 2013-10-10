@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,11 +43,11 @@ abstract class HgAbstractGlobalAction extends AnAction {
 
   public void actionPerformed(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       return;
     }
-    VirtualFile file = event.getData(PlatformDataKeys.VIRTUAL_FILE);
+    VirtualFile file = event.getData(CommonDataKeys.VIRTUAL_FILE);
     VirtualFile repo = file != null ? HgUtil.getHgRootOrNull(project, file) : null;
     List<VirtualFile> repos = HgUtil.getHgRepositories(project);
     if (!repos.isEmpty()) {
@@ -87,7 +88,7 @@ abstract class HgAbstractGlobalAction extends AnAction {
   }
 
   public static boolean isEnabled(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null) {
       return false;
     }

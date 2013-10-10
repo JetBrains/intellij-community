@@ -384,10 +384,10 @@ public class CommittedChangesTreeBrowser extends JPanel implements TypeSafeDataP
         sink.put(VcsDataKeys.CHANGE_LISTS, lists.toArray(new CommittedChangeList[lists.size()]));
       }
     }
-    else if (key.equals(PlatformDataKeys.NAVIGATABLE_ARRAY)) {
+    else if (key.equals(CommonDataKeys.NAVIGATABLE_ARRAY)) {
       final Collection<Change> changes = collectChanges(getSelectedChangeLists(), false);
       Navigatable[] result = ChangesUtil.getNavigatableArray(myProject, ChangesUtil.getFilesFromChanges(changes));
-      sink.put(PlatformDataKeys.NAVIGATABLE_ARRAY, result);
+      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, result);
     }
     else if (key.equals(PlatformDataKeys.HELP_ID)) {
       sink.put(PlatformDataKeys.HELP_ID, myHelpId);

@@ -17,8 +17,10 @@ package org.jetbrains.plugins.gradle.service.task;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -29,8 +31,8 @@ import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.GradleExecutionHelper;
-import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.io.IOException;
@@ -84,5 +86,16 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       }
     };
     myHelper.execute(projectPath, settings, f);
+  }
+
+  @Override
+  public void cancelTask(@NotNull ExternalSystemTaskId id, @NotNull ExternalSystemTaskNotificationListener listener)
+    throws ExternalSystemException {
+
+    // TODO replace with cancellation gradle API invocation when it will be ready, see http://issues.gradle.org/browse/GRADLE-1539
+    if (!ExternalSystemApiUtil.isInProcessMode(GradleConstants.SYSTEM_ID)) {
+      listener.onStatusChange(new ExternalSystemTaskNotificationEvent(id, "Cancelling the task...\n"));
+      System.exit(-1);
+    }
   }
 }

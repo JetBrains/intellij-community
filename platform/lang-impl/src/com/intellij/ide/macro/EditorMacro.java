@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.macro;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -49,7 +50,7 @@ public abstract class EditorMacro extends Macro {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;
     if (ToolWindowManager.getInstance(project).isEditorComponentActive()) {
-      Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+      Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       if (editor != null){
         return expand(editor);
       }

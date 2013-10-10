@@ -51,13 +51,14 @@ public class GithubSslSupport {
    * @param methodCreator a function to create the HttpMethod. This is required instead of just {@link HttpMethod} instance, because the
    *                      implementation requires the HttpMethod to be recreated in certain circumstances.
    * @return the HttpMethod instance which was actually executed
-   *         and which can be {@link HttpMethod#getResponseBodyAsString() asked for the response}.
+   * and which can be {@link HttpMethod#getResponseBodyAsString() asked for the response}.
    * @throws IOException in case of other errors or if user declines the proposal of non-trusted connection.
    */
   @NotNull
-  public HttpMethod executeSelfSignedCertificateAwareRequest(@NotNull HttpClient client, @NotNull String uri,
+  public HttpMethod executeSelfSignedCertificateAwareRequest(@NotNull HttpClient client,
+                                                             @NotNull String uri,
                                                              @NotNull ThrowableConvertor<String, HttpMethod, IOException> methodCreator)
-                                                             throws IOException {
+    throws IOException {
     HttpMethod method = methodCreator.convert(uri);
     try {
       client.executeMethod(method);
@@ -73,10 +74,12 @@ public class GithubSslSupport {
   }
 
   @Nullable
-  private static HttpMethod handleCertificateExceptionAndRetry(@NotNull IOException e, @NotNull String host,
-                                                               @NotNull HttpClient client, @NotNull URI uri,
+  private static HttpMethod handleCertificateExceptionAndRetry(@NotNull IOException e,
+                                                               @NotNull String host,
+                                                               @NotNull HttpClient client,
+                                                               @NotNull URI uri,
                                                                @NotNull ThrowableConvertor<String, HttpMethod, IOException> methodCreator)
-                                                               throws IOException {
+    throws IOException {
     if (!isCertificateException(e)) {
       throw e;
     }
@@ -118,13 +121,9 @@ public class GithubSslSupport {
       return false;
     }
 
-    final String BACK_TO_SAFETY = "No, I don't trust";
-    final String TRUST = "Proceed anyway";
-    //int choice = Messages.showDialog("The security certificate of " + host + " is not trusted. Do you want to proceed anyway?",
-    //                               "Not Trusted Certificate", new String[] { BACK_TO_SAFETY, TRUST }, 0, Messages.getErrorIcon());
-    int choice = Messages.showIdeaMessageDialog(null, "The security certificate of " + host + " is not trusted. Do you want to proceed anyway?",
-                                     "Not Trusted Certificate", new String[] { BACK_TO_SAFETY, TRUST }, 0, Messages.getErrorIcon(), null);
-    boolean trust = (choice == 1);
+    int choice = Messages.showYesNoDialog("The security certificate of " + host + " is not trusted. Do you want to proceed anyway?",
+                                          "Not Trusted Certificate", "Proceed anyway", "No, I don't trust", Messages.getErrorIcon());
+    boolean trust = (choice == Messages.YES);
     if (trust) {
       saveToTrusted(host);
     }

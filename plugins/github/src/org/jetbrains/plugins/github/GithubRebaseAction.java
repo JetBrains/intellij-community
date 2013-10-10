@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -66,8 +67,8 @@ public class GithubRebaseAction extends DumbAwareAction {
   }
 
   public void update(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
+    final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (project == null || project.isDefault()) {
       setVisibleEnabled(e, false, false);
       return;
@@ -89,8 +90,8 @@ public class GithubRebaseAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
-    final VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
+    final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
 
     if (project == null || project.isDisposed() || !GithubUtil.testGitExecutable(project)) {
       return;

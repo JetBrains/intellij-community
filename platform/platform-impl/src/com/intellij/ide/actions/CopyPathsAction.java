@@ -75,7 +75,7 @@ public class CopyPathsAction extends AnAction implements DumbAware {
 
   @NotNull
   private static Collection<VirtualFile> getFiles(AnActionEvent e) {
-    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
+    final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
     if (files == null || files.length == 0) return Collections.emptyList();
     final ArrayList<VirtualFile> result = new ArrayList<VirtualFile>(files.length);
     for (VirtualFile file : files) {

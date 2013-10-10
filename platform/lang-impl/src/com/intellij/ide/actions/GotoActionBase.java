@@ -87,7 +87,7 @@ public abstract class GotoActionBase extends AnAction {
 
   @Nullable
   public static PsiElement getPsiContext(final AnActionEvent e) {
-    PsiFile file = e.getData(LangDataKeys.PSI_FILE);
+    PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     if (file != null) return file;
     Project project = e.getData(PlatformDataKeys.PROJECT);
     return getPsiContext(project);
@@ -117,7 +117,7 @@ public abstract class GotoActionBase extends AnAction {
       return Pair.create(predefined, 0);
     }
     if (useEditorSelection) {
-      final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+      final Editor editor = e.getData(CommonDataKeys.EDITOR);
       if (editor != null) {
         final String selectedText = editor.getSelectionModel().getSelectedText();
         if (selectedText != null && !selectedText.contains("\n")) {

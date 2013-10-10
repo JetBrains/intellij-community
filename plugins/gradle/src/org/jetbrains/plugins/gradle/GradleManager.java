@@ -32,6 +32,7 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecution
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.project.ExternalProjectPojo;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.service.project.autoimport.CachingExternalSystemAutoImportAware;
@@ -39,6 +40,7 @@ import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataMan
 import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.EmptyModuleType;
@@ -242,6 +244,9 @@ public class GradleManager
     for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
       extension.enhanceRemoteProcessing(parameters);
     }
+
+    parameters.getVMParametersList().addProperty(
+      ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, GradleConstants.SYSTEM_ID.getId());
   }
 
   @Override
@@ -339,7 +344,7 @@ public class GradleManager
               @Override
               public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
               }
-            }, true, true);
+            }, false, ProgressExecutionMode.MODAL_SYNC);
         }
       }
     });

@@ -279,8 +279,8 @@ public abstract class SelectLocationStep extends WizardStep {
     }
 
     public void calcData(final DataKey key, final DataSink sink) {
-      if (key == PlatformDataKeys.VIRTUAL_FILE_ARRAY) {
-        sink.put(PlatformDataKeys.VIRTUAL_FILE_ARRAY, myFileSystemTree.getSelectedFiles());
+      if (key == CommonDataKeys.VIRTUAL_FILE_ARRAY) {
+        sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, myFileSystemTree.getSelectedFiles());
       }
       else if (key == FileSystemTree.DATA_KEY) {
         sink.put(FileSystemTree.DATA_KEY, myFileSystemTree);

@@ -17,6 +17,7 @@ package com.intellij.refactoring.actions;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageRefactoringSupport;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -94,7 +95,7 @@ public class ChangeSignatureAction extends BaseRefactoringAction {
   protected boolean hasAvailableHandler(@NotNull DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return false;
-    final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     final PsiElement targetMember;
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
@@ -112,7 +113,7 @@ public class ChangeSignatureAction extends BaseRefactoringAction {
   public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     Language language = LangDataKeys.LANGUAGE.getData(dataContext);
     if (language == null) {
-      PsiElement psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      PsiElement psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
       if (psiElement != null) {
         language = psiElement.getLanguage();
       }

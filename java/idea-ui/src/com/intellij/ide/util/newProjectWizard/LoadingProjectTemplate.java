@@ -21,6 +21,8 @@ import com.intellij.platform.ProjectTemplate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 /**
 * @author Dmitry Avdeev
 *         Date: 11/28/12
@@ -36,6 +38,11 @@ class LoadingProjectTemplate implements ProjectTemplate {
   @Override
   public String getDescription() {
     return "Loading samples from JetBrains site. Please wait.";
+  }
+
+  @Override
+  public Icon getIcon() {
+    return null;
   }
 
   @NotNull

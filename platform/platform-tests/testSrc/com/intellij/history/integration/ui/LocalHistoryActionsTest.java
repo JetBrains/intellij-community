@@ -22,6 +22,7 @@ import com.intellij.history.integration.ui.actions.ShowHistoryAction;
 import com.intellij.history.integration.ui.actions.ShowSelectionHistoryAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
@@ -128,9 +129,9 @@ public class LocalHistoryActionsTest extends LocalHistoryUITestCase {
       @Override
       @Nullable
       public Object getData(String id) {
-        if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(id)) return files;
-        if (PlatformDataKeys.EDITOR.is(id)) return editor;
-        if (PlatformDataKeys.PROJECT.is(id)) return p;
+        if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(id)) return files;
+        if (CommonDataKeys.EDITOR.is(id)) return editor;
+        if (CommonDataKeys.PROJECT.is(id)) return p;
         return null;
       }
     };

@@ -16,6 +16,7 @@
 package git4idea.ui.branch;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -39,7 +40,7 @@ public class GitBranchesAction extends DumbAwareAction {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     assert project != null;
     GitRepositoryManager repositoryManager = GitUtil.getRepositoryManager(project);
-    VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
+    VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
     GitRepository repository = (file == null ?
                                 GitBranchUtil.getCurrentRepository(project):
                                 repositoryManager.getRepositoryForRoot(GitBranchUtil.getVcsRootOrGuess(project, file)));

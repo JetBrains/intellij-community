@@ -25,6 +25,7 @@ package com.intellij.openapi.vcs.changes.actions;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -119,7 +120,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
   @Nullable
   private static VirtualFile[] getFromSelection(AnActionEvent e) {
-    return PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
+    return CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
   }
 
 }

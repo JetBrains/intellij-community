@@ -118,6 +118,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
       origFile.getName() + ":" + shreds.get(0).getHost().getTextRange().getStartOffset() + ")" + "." + fileType.getDefaultExtension();
     myNewFile = factory.createFileFromText(newFileName, language, text, true, true);
     myNewVirtualFile = (LightVirtualFile)myNewFile.getVirtualFile();
+    myNewVirtualFile.setOriginalFile(origFile.getVirtualFile());
     assert myNewVirtualFile != null;
     // suppress possible errors as in injected mode
     myNewFile.putUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION,
@@ -144,7 +145,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
         new AnAction() {
           @Override
           public void update(AnActionEvent e) {
-            Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
+            Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
             e.getPresentation().setEnabled(
               editor != null && LookupManager.getActiveLookup(editor) == null &&
               TemplateManager.getInstance(myProject).getActiveTemplate(editor) == null &&

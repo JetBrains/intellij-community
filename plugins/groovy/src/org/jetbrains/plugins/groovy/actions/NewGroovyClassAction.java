@@ -88,7 +88,7 @@ public class NewGroovyClassAction extends JavaCreateTemplateInPackageAction<GrTy
 
     IdeView view = LangDataKeys.IDE_VIEW.getData(e.getDataContext());
     if (view == null) return;
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return;
 
     ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();

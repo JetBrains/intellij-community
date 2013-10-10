@@ -248,7 +248,7 @@ public class GrClassImplUtil {
 
   private static PsiClassType[] getReferenceListTypes(@Nullable GrReferenceList list) {
     if (list == null) return PsiClassType.EMPTY_ARRAY;
-    return list.getReferenceTypes();
+    return list.getReferencedTypes();
   }
 
 

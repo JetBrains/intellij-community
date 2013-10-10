@@ -46,7 +46,7 @@ import java.util.List;
 public class FrameworkSupportOptionsComponent {
   private final JPanel myMainPanel;
   private final FrameworkSupportModelBase myModel;
-  private FrameworkVersionComponent myFrameworkVersionComponent;
+  private final FrameworkVersionComponent myFrameworkVersionComponent;
   private LibraryCompositionSettings myLibraryCompositionSettings;
   private LibraryOptionsPanel myLibraryOptionsPanel;
   private final FrameworkSupportInModuleConfigurable myConfigurable;
@@ -55,7 +55,7 @@ public class FrameworkSupportOptionsComponent {
   public FrameworkSupportOptionsComponent(FrameworkSupportModelBase model,
                                           LibrariesContainer container,
                                           Disposable parentDisposable,
-                                          FrameworkSupportInModuleProvider provider,
+                                          final FrameworkSupportInModuleProvider provider,
                                           final FrameworkSupportInModuleConfigurable configurable) {
     myModel = model;
     myConfigurable = configurable;
@@ -67,6 +67,9 @@ public class FrameworkSupportOptionsComponent {
     if (!versions.isEmpty()) {
       myFrameworkVersionComponent = new FrameworkVersionComponent(model, provider.getFrameworkType().getId(), versions, "Versions:");
       myMainPanel.add(myFrameworkVersionComponent.getMainPanel());
+    }
+    else {
+      myFrameworkVersionComponent = null;
     }
 
     final JComponent component = myConfigurable.createComponent();
@@ -95,7 +98,14 @@ public class FrameworkSupportOptionsComponent {
     final CustomLibraryDescription description = myConfigurable.createLibraryDescription();
     if (description != null) {
       myLibraryOptionsPanel = new LibraryOptionsPanel(description, myModel.getBaseDirectoryForLibrariesPath(), createLibraryVersionFilter(),
-                                                      container, !myConfigurable.isOnlyLibraryAdded());
+                                                      container, !myConfigurable.isOnlyLibraryAdded()) {
+        @Override
+        protected void onVersionChanged(FrameworkLibraryVersion version) {
+          if (myFrameworkVersionComponent == null) {
+            myModel.setSelectedLibraryVersion(provider.getId(), version);
+          }
+        }
+      };
       myLibraryOptionsPanel.setLibraryProvider(myModel.getLibraryProvider());
       Disposer.register(myConfigurable, myLibraryOptionsPanel);
       if (addSeparator) {
@@ -128,8 +138,8 @@ public class FrameworkSupportOptionsComponent {
     return new FrameworkLibraryVersionFilter() {
       @Override
       public boolean isAccepted(@NotNull FrameworkLibraryVersion version) {
-        return myConfigurable.getLibraryVersionFilter().isAccepted(version) && ((FrameworkLibraryVersionImpl)version).getAvailabilityCondition().isAvailableFor(
-          myModel);
+        return myConfigurable.getLibraryVersionFilter().isAccepted(version) &&
+               ((FrameworkLibraryVersionImpl)version).getAvailabilityCondition().isAvailableFor(myModel);
       }
     };
   }

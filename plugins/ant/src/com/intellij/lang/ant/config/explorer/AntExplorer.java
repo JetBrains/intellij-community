@@ -421,7 +421,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
 
   @Nullable
   public Object getData(@NonNls String dataId) {
-    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       final AntBuildFile buildFile = getCurrentBuildFile();
       if (buildFile == null) {
         return null;
@@ -459,7 +459,7 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
     else if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
       return myProject != null? myTreeExpander : null;
     }
-    else if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
       final TreePath[] paths = myTree.getSelectionPaths();
       if (paths == null) {
         return null;

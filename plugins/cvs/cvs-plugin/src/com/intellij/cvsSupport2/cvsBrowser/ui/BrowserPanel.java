@@ -102,14 +102,14 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
     }
 
     public void actionPerformed(AnActionEvent e) {
-      final Navigatable[] navigatableArray = e.getData(PlatformDataKeys.NAVIGATABLE_ARRAY);
+      final Navigatable[] navigatableArray = e.getData(CommonDataKeys.NAVIGATABLE_ARRAY);
       if (navigatableArray != null && navigatableArray.length > 0) {
         OpenSourceUtil.navigate(navigatableArray);
       }
     }
 
     public void update(final AnActionEvent e) {
-      final Navigatable[] navigatableArray = e.getData(PlatformDataKeys.NAVIGATABLE_ARRAY);
+      final Navigatable[] navigatableArray = e.getData(CommonDataKeys.NAVIGATABLE_ARRAY);
       e.getPresentation().setEnabled(navigatableArray != null && navigatableArray.length > 0);
     }
   }
@@ -206,12 +206,12 @@ public class BrowserPanel extends JPanel implements DataProvider, CvsTabbedWindo
   }
 
   public Object getData(String dataId) {
-    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       VirtualFile cvsVirtualFile = getCvsVirtualFile();
       if (cvsVirtualFile == null || !cvsVirtualFile.isValid()) return null;
       return new OpenFileDescriptor(myProject, cvsVirtualFile);
     }
-    else if (PlatformDataKeys.PROJECT.is(dataId)) {
+    else if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
     else {

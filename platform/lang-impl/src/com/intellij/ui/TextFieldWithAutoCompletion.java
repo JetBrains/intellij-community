@@ -87,6 +87,10 @@ public class TextFieldWithAutoCompletion<T> extends LanguageTextField {
     myProvider.setItems(variants);
   }
 
+  public <T> void installProvider(@NotNull TextFieldWithAutoCompletionListProvider<T> provider) {
+    TextFieldWithAutoCompletionContributor.installCompletion(getDocument(), getProject(), provider, true);
+  }
+
   @Override
   protected EditorEx createEditor() {
     final EditorEx editor = super.createEditor();

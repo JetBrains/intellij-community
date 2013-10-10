@@ -47,7 +47,7 @@ class GithubIssueCommentRaw implements DataConstructor {
   @NotNull
   @Override
   public <T> T create(@NotNull Class<T> resultClass) {
-    if (resultClass.isAssignableFrom(GithubIssueComment.class)) {
+    if (resultClass == GithubIssueComment.class) {
       return (T)createIssueComment();
     }
 

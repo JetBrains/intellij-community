@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -412,10 +413,10 @@ public abstract class EditorComposite implements Disposable {
       if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
         return getSelectedEditor();
       }
-      else if(PlatformDataKeys.VIRTUAL_FILE.is(dataId)){
+      else if(CommonDataKeys.VIRTUAL_FILE.is(dataId)){
         return myFile.isValid() ? myFile : null;
       }
-      else if(PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)){
+      else if(CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)){
         return myFile.isValid() ? new VirtualFile[] {myFile} : null;
       }
       else{

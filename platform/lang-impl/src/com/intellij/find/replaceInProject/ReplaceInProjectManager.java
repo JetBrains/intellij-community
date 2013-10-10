@@ -20,6 +20,7 @@ import com.intellij.find.*;
 import com.intellij.find.findInProject.FindInProjectManager;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -114,7 +115,7 @@ public class ReplaceInProjectManager {
     findModel.setReplaceState(true);
     FindInProjectUtil.setDirectoryName(findModel, dataContext);
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     FindUtil.initStringToFindWithSelection(findModel, editor);
 
     findManager.showFindDialog(findModel, new Runnable() {

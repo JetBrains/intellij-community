@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,10 +40,11 @@ public class QuerySearchRequest {
       this.processor = new ReadActionProcessor<PsiReference>() {
         @Override
         public boolean processInReadAction(PsiReference psiReference) {
-              return processor.process(psiReference, collector);
+          return processor.process(psiReference, collector);
         }
       };
-    } else {
+    }
+    else {
       this.processor = new Processor<PsiReference>() {
         @Override
         public boolean process(PsiReference psiReference) {
@@ -51,10 +52,14 @@ public class QuerySearchRequest {
         }
       };
     }
-
   }
 
   public void runQuery() {
     query.forEach(processor);
+  }
+
+  @Override
+  public String toString() {
+    return query + " -> " + collector;
   }
 }

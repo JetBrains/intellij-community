@@ -24,6 +24,7 @@ import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -52,7 +53,7 @@ public class FindUsagesAction extends AnAction {
 
     UsageTarget[] usageTargets = e.getData(UsageView.USAGE_TARGETS_KEY);
     if (usageTargets == null) {
-      final Editor editor = e.getData(PlatformDataKeys.EDITOR);
+      final Editor editor = e.getData(CommonDataKeys.EDITOR);
       chooseAmbiguousTargetAndPerform(project, editor, new PsiElementProcessor<PsiElement>() {
         @Override
         public boolean execute(@NotNull final PsiElement element) {

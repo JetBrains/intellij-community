@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
@@ -78,7 +78,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     checkin();
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
-    final FileAnnotation annotation = myVcs.getAnnotationProvider().annotate(tree.myS1File);
+    final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), tree.myS1File);
     annotation.setCloser(new Runnable() {
       @Override
       public void run() {
@@ -117,7 +117,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     runInAndVerifyIgnoreOutput("up", "-r", "2");
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
-    final FileAnnotation annotation = myVcs.getAnnotationProvider().annotate(tree.myS1File);
+    final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), tree.myS1File);
     annotation.setCloser(new Runnable() {
       @Override
       public void run() {
@@ -138,7 +138,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
                                                @Nullable
                                                @Override
                                                public Object getData(@NonNls String dataId) {
-                                                 if (PlatformDataKeys.PROJECT.is(dataId)) {
+                                                 if (CommonDataKeys.PROJECT.is(dataId)) {
                                                    return myProject;
                                                  }
                                                  return null;
@@ -162,7 +162,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     runInAndVerifyIgnoreOutput("up", "-r", "2");  // take #2
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
-    final FileAnnotation annotation = myVcs.getAnnotationProvider().annotate(tree.myS1File);
+    final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), tree.myS1File);
     annotation.setCloser(new Runnable() {
       @Override
       public void run() {
@@ -185,7 +185,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
                                                @Nullable
                                                @Override
                                                public Object getData(@NonNls String dataId) {
-                                                 if (PlatformDataKeys.PROJECT.is(dataId)) {
+                                                 if (CommonDataKeys.PROJECT.is(dataId)) {
                                                    return myProject;
                                                  }
                                                  return null;
@@ -209,7 +209,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     runInAndVerifyIgnoreOutput("up", "-r", "2");  // take #2
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
-    final FileAnnotation annotation = myVcs.getAnnotationProvider().annotate(tree.myS1File);
+    final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), tree.myS1File);
     annotation.setCloser(new Runnable() {
       @Override
       public void run() {
@@ -244,7 +244,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     checkin();
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
-    final FileAnnotation annotation = myVcs.getAnnotationProvider().annotate(tree.myS1File);
+    final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), tree.myS1File);
     annotation.setCloser(new Runnable() {
       @Override
       public void run() {
@@ -276,7 +276,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4++\n");
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
-    final FileAnnotation annotation = myVcs.getAnnotationProvider().annotate(tree.myS1File);
+    final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), tree.myS1File);
     annotation.setCloser(new Runnable() {
       @Override
       public void run() {
@@ -304,7 +304,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     checkin();  //#3
 
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
-    final FileAnnotation annotation = myVcs.getAnnotationProvider().annotate(tree.myS1File);
+    final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), tree.myS1File);
     annotation.setCloser(new Runnable() {
       @Override
       public void run() {
@@ -375,7 +375,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
 
     // then annotate both
     final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
-    final FileAnnotation annotation = myVcs.getAnnotationProvider().annotate(vf1);
+    final FileAnnotation annotation = createTestAnnotation(myVcs.getAnnotationProvider(), vf1);
     annotation.setCloser(new Runnable() {
       @Override
       public void run() {
@@ -385,7 +385,7 @@ public class SvnAnnotationIsClosedTest extends Svn17TestCase {
     });
     listener.registerAnnotation(vf1, annotation);
 
-    final FileAnnotation annotation1 = myVcs.getAnnotationProvider().annotate(vf2);
+    final FileAnnotation annotation1 = createTestAnnotation(myVcs.getAnnotationProvider(), vf2);
     annotation1.setCloser(new Runnable() {
       @Override
       public void run() {

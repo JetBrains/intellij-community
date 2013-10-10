@@ -20,6 +20,7 @@ import com.intellij.BundleBase;
 import com.intellij.find.*;
 import com.intellij.find.ngrams.TrigramIndex;
 import com.intellij.navigation.ItemPresentation;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -85,7 +86,7 @@ public class FindInProjectUtil {
   public static void setDirectoryName(@NotNull FindModel model, @NotNull DataContext dataContext) {
     PsiElement psiElement;
     try {
-      psiElement = LangDataKeys.PSI_ELEMENT.getData(dataContext);
+      psiElement = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
     }
     catch (IndexNotReadyException e) {
       psiElement = null;
@@ -107,7 +108,7 @@ public class FindInProjectUtil {
       model.setModuleName(module.getName());
     }
 
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (model.getModuleName() == null || editor == null) {
       model.setDirectoryName(directoryName);
       model.setProjectScope(directoryName == null && module == null && !model.isCustomScope() || editor != null);

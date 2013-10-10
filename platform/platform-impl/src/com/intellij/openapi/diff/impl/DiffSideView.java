@@ -86,7 +86,7 @@ public class DiffSideView {
       DataManager.registerDataProvider(myPanel, new DataProvider() {
         @Override
         public Object getData(@NonNls String dataId) {
-          if (PlatformDataKeys.PROJECT.is(dataId)) {return project;}
+          if (CommonDataKeys.PROJECT.is(dataId)) {return project;}
           if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {return fileEditor;}
           return null;
         }

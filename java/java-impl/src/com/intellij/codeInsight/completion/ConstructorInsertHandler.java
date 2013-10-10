@@ -223,13 +223,11 @@ public class ConstructorInsertHandler implements InsertHandler<LookupElementDeco
             if (aClass == null) return;
 
             final Collection<CandidateInfo> candidatesToImplement = OverrideImplementUtil.getMethodsToOverrideImplement(aClass, true);
-            if (PsiUtil.isLanguageLevel8OrHigher(aClass)) {
-              for (Iterator<CandidateInfo> iterator = candidatesToImplement.iterator(); iterator.hasNext(); ) {
-                final CandidateInfo candidate = iterator.next();
-                final PsiElement element = candidate.getElement();
-                if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.DEFAULT)) {
-                  iterator.remove();
-                }
+            for (Iterator<CandidateInfo> iterator = candidatesToImplement.iterator(); iterator.hasNext(); ) {
+              final CandidateInfo candidate = iterator.next();
+              final PsiElement element = candidate.getElement();
+              if (element instanceof PsiMethod && ((PsiMethod)element).hasModifierProperty(PsiModifier.DEFAULT)) {
+                iterator.remove();
               }
             }
             boolean invokeOverride = candidatesToImplement.isEmpty();

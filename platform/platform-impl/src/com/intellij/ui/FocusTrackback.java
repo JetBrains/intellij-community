@@ -16,8 +16,8 @@
 package com.intellij.ui;
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -194,7 +194,7 @@ public class FocusTrackback {
     DataContext context =
         myParentWindow == null ? DataManager.getInstance().getDataContext() : DataManager.getInstance().getDataContext(myParentWindow);
     if (context != null) {
-      project = PlatformDataKeys.PROJECT.getData(context);
+      project = CommonDataKeys.PROJECT.getData(context);
     }
 
     mySheduledForRestore = true;

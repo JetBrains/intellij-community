@@ -252,7 +252,7 @@ public class HighlightControlFlowUtil {
                                                                   Map<PsiElement, Collection<PsiReferenceExpression>> uninitializedVarProblems, @NotNull PsiFile containingFile) {
     if (variable instanceof ImplicitVariable) return null;
     if (!PsiUtil.isAccessedForReading(expression)) return null;
-    final int startOffset = expression.getTextRange().getStartOffset();
+    int startOffset = expression.getTextRange().getStartOffset();
     final PsiElement topBlock;
     if (variable.hasInitializer()) {
       topBlock = PsiUtil.getVariableCodeBlock(variable, variable);
@@ -316,6 +316,10 @@ public class HighlightControlFlowUtil {
           aClass = field.getContainingClass();
           if (aClass == null || isFieldInitializedInOtherFieldInitializer(aClass, field, field.hasModifierProperty(PsiModifier.STATIC))) {
             return null;
+          }
+          final PsiField anotherField = PsiTreeUtil.getParentOfType(expression, PsiField.class);
+          if (anotherField != null && anotherField.getContainingClass() == aClass) {
+            startOffset = 0;
           }
           block = null;
           // initializers will be checked later

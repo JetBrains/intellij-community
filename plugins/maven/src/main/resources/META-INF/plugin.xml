@@ -581,7 +581,13 @@
     </group>
 
     <group id="Maven.RunConfigurationMenu" popup="true" class="org.jetbrains.idea.maven.navigator.actions.MavenRunConfigurationMenu">
-
+      <separator/>
+      <action id="Maven.EditRunConfiguration"
+              text="Edit Run Configuration..." icon="AllIcons.Actions.Edit"
+              class="org.jetbrains.idea.maven.navigator.actions.EditMavenRunConfigurationAction" />
+      <action id="Maven.RemoveRunConfiguration"
+              text="Remove Run Configuration" icon="AllIcons.General.Remove"
+              class="org.jetbrains.idea.maven.navigator.actions.RemoveMavenRunConfigurationAction" />
     </group>
 
   </actions>

@@ -207,7 +207,7 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
   @Override
   @Nullable
   public Object getData(@NonNls final String dataId) {
-    if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
       final PsiElement anElement = getSelectedElement();
       return anElement != null && anElement.isValid() ? anElement : super.getData(dataId);
     }
@@ -217,14 +217,14 @@ public abstract class HierarchyBrowserBase extends SimpleToolWindowPanel impleme
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
       return null;
     }
-    if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       final DefaultMutableTreeNode selectedNode = getSelectedNode();
       if (selectedNode == null) return null;
       final HierarchyNodeDescriptor descriptor = getDescriptor(selectedNode);
       if (descriptor == null) return null;
       return getNavigatable(descriptor);
     }
-    if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       return getNavigatables();
     }
     if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {

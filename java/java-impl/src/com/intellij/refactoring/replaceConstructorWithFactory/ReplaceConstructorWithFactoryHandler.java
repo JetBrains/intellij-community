@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.replaceConstructorWithFactory;
 
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
@@ -91,7 +92,7 @@ public class ReplaceConstructorWithFactoryHandler
     if (elements.length != 1) return;
 
     myProject = project;
-    Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
+    Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
     if (elements[0] instanceof PsiMethod) {
       final PsiMethod method = (PsiMethod)elements[0];
       invoke(method, editor);

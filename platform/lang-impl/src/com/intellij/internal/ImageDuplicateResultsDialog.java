@@ -130,10 +130,10 @@ public class ImageDuplicateResultsDialog extends DialogWrapper {
           if (component instanceof MyDuplicatesNode) {
             file = ((MyDuplicatesNode)component).getUserObject().iterator().next();
           }
-          if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
+          if (CommonDataKeys.VIRTUAL_FILE.is(dataId)) {
             return file;
           }
-          if (PlatformDataKeys.VIRTUAL_FILE_ARRAY.is(dataId) && file != null) {
+          if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId) && file != null) {
             return new VirtualFile[]{file};
           }
         }

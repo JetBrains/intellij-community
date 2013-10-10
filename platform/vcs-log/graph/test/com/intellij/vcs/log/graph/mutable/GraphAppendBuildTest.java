@@ -1,15 +1,23 @@
 package com.intellij.vcs.log.graph.mutable;
 
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsCommit;
 import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.graph.GraphTestUtils;
+import com.intellij.vcs.log.graph.elements.Branch;
+import com.intellij.vcs.log.graph.mutable.elements.MutableNode;
+import com.intellij.vcs.log.graph.mutable.elements.MutableNodeRow;
 import com.intellij.vcs.log.parser.SimpleCommitListParser;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
-import static junit.framework.Assert.assertEquals;
 import static com.intellij.vcs.log.graph.GraphStrUtils.toStr;
+import static junit.framework.Assert.assertEquals;
 
 /**
  * @author erokhins
@@ -17,12 +25,32 @@ import static com.intellij.vcs.log.graph.GraphStrUtils.toStr;
 public class GraphAppendBuildTest {
   public void runTest(String firstPart, String firstPartStr, String secondPart, String secondPartStr) {
     List<VcsCommit> vcsCommitParentses = SimpleCommitListParser.parseCommitList(firstPart);
-    MutableGraph graph = GraphBuilder.build(vcsCommitParentses, Collections.<VcsRef>emptyList());
+    final MutableGraph graph = GraphTestUtils.buildGraph(vcsCommitParentses, Collections.<VcsRef>emptyList());
     assertEquals(firstPartStr, toStr(graph));
 
     vcsCommitParentses = SimpleCommitListParser.parseCommitList(secondPart);
-    GraphBuilder.addCommitsToGraph(graph, vcsCommitParentses, Collections.<VcsRef>emptyList());
+    new GraphAppendBuilder(graph, makeRefs(firstPart)) {
+      @NotNull
+      @Override
+      protected GraphBuilder createGraphBuilder(List<? extends VcsCommit> commitParentses, MutableNodeRow nextRow,
+                                                Map<Hash, MutableNode> underdoneNodes, int startIndex,
+                                                Map<Hash, Integer> commitLogIndexes) {
+        return new GraphBuilder(commitParentses.size() + startIndex - 1, commitLogIndexes, graph, underdoneNodes, nextRow,
+                                Collections.<VcsRef>emptyList()) {
+          @NotNull
+          @Override
+          protected Branch createBranch(@NotNull Hash commitHash, @NotNull Collection<VcsRef> refs) {
+            return GraphTestUtils.createBranchWithFakeRoot(commitHash, refs);
+          }
+        };
+
+      }
+    }.appendToGraph(vcsCommitParentses);
     assertEquals(secondPartStr, toStr(graph));
+  }
+
+  private static Collection<VcsRef> makeRefs(String log) {
+    return null;
   }
 
   @Test

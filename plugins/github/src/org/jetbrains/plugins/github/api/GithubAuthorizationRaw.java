@@ -41,7 +41,7 @@ class GithubAuthorizationRaw implements DataConstructor {
   @NotNull
   @Override
   public <T> T create(@NotNull Class<T> resultClass) {
-    if (resultClass.isAssignableFrom(GithubAuthorization.class)) {
+    if (resultClass == GithubAuthorization.class) {
       return (T)createAuthorization();
     }
 

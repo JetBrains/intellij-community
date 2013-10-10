@@ -54,9 +54,6 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
     myGradleHome = gradleHome;
     myServiceDirectory = serviceDirectory;
     myDistributionType = distributionType;
-    if (daemonVmOptions != null && !daemonVmOptions.contains("-Xmx")) {
-      daemonVmOptions += String.format(" -Xmx%dm", SystemInfo.is32Bit ? 512 : 1024);
-    }
     myDaemonVmOptions = daemonVmOptions;
     setVerboseProcessing(USE_VERBOSE_GRADLE_API_BY_DEFAULT);
   }

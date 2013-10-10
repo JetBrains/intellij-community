@@ -18,16 +18,15 @@ package org.jetbrains.plugins.groovy.refactoring.memberPullUp;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiDocCommentOwner;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.statistics.StatisticsInfo;
 import com.intellij.psi.statistics.StatisticsManager;
+import com.intellij.psi.util.MethodSignature;
+import com.intellij.psi.util.MethodSignatureUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.classMembers.AbstractUsesDependencyMemberInfoModel;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.refactoring.memberPullUp.PullUpDialogBase;
 import com.intellij.refactoring.memberPullUp.PullUpHelper;
@@ -37,8 +36,10 @@ import com.intellij.refactoring.ui.DocCommentPanel;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
+import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.refactoring.classMembers.GrMemberInfo;
 import org.jetbrains.plugins.groovy.refactoring.classMembers.GrMemberInfoStorage;
@@ -46,8 +47,6 @@ import org.jetbrains.plugins.groovy.refactoring.classMembers.GrMemberSelectionTa
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.List;
 
 /**
@@ -94,19 +93,19 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
   }
 
   @Override
+  protected void updateMemberInfo() {
+    super.updateMemberInfo();
+    getRefactorAction().setEnabled(GroovyFileType.GROOVY_LANGUAGE.equals(getSuperClass().getLanguage()));
+    if (myMemberSelectionPanel != null) {
+      ((MyMemberInfoModel)myMemberInfoModel).setSuperClass(getSuperClass());
+      myMemberSelectionPanel.getTable().setMemberInfos(myMemberInfos);
+      myMemberSelectionPanel.getTable().fireExternalDataChange();
+    }
+  }
+
+  @Override
   protected void initClassCombo(JComboBox classCombo) {
     classCombo.setRenderer(new ClassCellRenderer(classCombo.getRenderer()));
-    classCombo.addItemListener(new ItemListener() {
-      public void itemStateChanged(ItemEvent e) {
-        if (e.getStateChange() == ItemEvent.SELECTED) {
-          if (myMemberSelectionPanel != null) {
-           // ((MyMemberInfoModel)myMemberInfoModel).setSuperClass(getSuperClass());
-            myMemberSelectionPanel.getTable().setMemberInfos(myMemberInfos);
-            myMemberSelectionPanel.getTable().fireExternalDataChange();
-          }
-        }
-      }
-    });
   }
 
   protected PsiClass getPreselection() {
@@ -140,13 +139,11 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
     final PsiClass superClass = getSuperClass();
     String name = superClass.getQualifiedName();
     if (name != null) {
-      StatisticsManager
-        .getInstance().incUseCount(new StatisticsInfo(PULL_UP_STATISTICS_KEY + myClass.getQualifiedName(), name));
+      StatisticsManager.getInstance().incUseCount(new StatisticsInfo(PULL_UP_STATISTICS_KEY + myClass.getQualifiedName(), name));
     }
 
     List<GrMemberInfo> infos = getSelectedMemberInfos();
-    GrPullUpHelper processor =
-      new GrPullUpHelper(myClass, superClass, infos.toArray(new GrMemberInfo[infos.size()]), new DocCommentPolicy(getJavaDocPolicy()));
+    GrPullUpHelper processor = new GrPullUpHelper(myClass, superClass, infos.toArray(new GrMemberInfo[infos.size()]), new DocCommentPolicy(getJavaDocPolicy()));
     invokeRefactoring(processor);
     close(OK_EXIT_CODE);
   }
@@ -180,17 +177,75 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
     return new MyMemberInfoModel(myClass, getSuperClass(), false);
   }
 
-  private static class MyMemberInfoModel extends AbstractUsesDependencyMemberInfoModel<GrMember, PsiClass, GrMemberInfo> {
+  private class MyMemberInfoModel extends UsesAndInterfacesDependencyMemberInfoModel<GrMember, GrMemberInfo> {
     public MyMemberInfoModel(PsiClass aClass, PsiClass superClass, boolean recursive) {
-      super(aClass, superClass, recursive);
+      super(aClass, superClass, recursive, myInterfaceContainmentVerifier);
     }
 
     @Override
-    protected int doCheck(@NotNull GrMemberInfo memberInfo, int problem) {
-      if (problem == ERROR && memberInfo.isStatic()) {
-        return WARNING;
+    public boolean isMemberEnabled(GrMemberInfo member) {
+      PsiClass currentSuperClass = getSuperClass();
+      if(currentSuperClass == null) return true;
+      if (myMemberInfoStorage.getDuplicatedMemberInfos(currentSuperClass).contains(member)) return false;
+      if (myMemberInfoStorage.getExtending(currentSuperClass).contains(member.getMember())) return false;
+      if (!currentSuperClass.isInterface()) return true;
+
+      PsiElement element = member.getMember();
+      if (element instanceof PsiClass && ((PsiClass) element).isInterface()) return true;
+      if (element instanceof PsiField) {
+        return ((PsiModifierListOwner) element).hasModifierProperty(PsiModifier.STATIC);
       }
-      return problem;
+      if (element instanceof PsiMethod) {
+        if (currentSuperClass.isInterface()) {
+          final PsiSubstitutor superSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(currentSuperClass, myClass, PsiSubstitutor.EMPTY);
+          final MethodSignature signature = ((PsiMethod)element).getSignature(superSubstitutor);
+          final PsiMethod superClassMethod = MethodSignatureUtil.findMethodBySignature(currentSuperClass, signature, false);
+          if (superClassMethod != null) return false;
+        }
+        return !((PsiModifierListOwner) element).hasModifierProperty(PsiModifier.STATIC);
+      }
+      return true;
+    }
+
+    @Override
+    public boolean isAbstractEnabled(GrMemberInfo member) {
+      PsiClass currentSuperClass = getSuperClass();
+      if (currentSuperClass == null || !currentSuperClass.isInterface()) return true;
+      return false;
+    }
+
+    @Override
+    public boolean isAbstractWhenDisabled(GrMemberInfo member) {
+      PsiClass currentSuperClass = getSuperClass();
+      if(currentSuperClass == null) return false;
+      if (currentSuperClass.isInterface()) {
+        if (member.getMember() instanceof PsiMethod) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    @Override
+    public int checkForProblems(@NotNull GrMemberInfo member) {
+      if (member.isChecked()) return OK;
+      PsiClass currentSuperClass = getSuperClass();
+
+      if (currentSuperClass != null && currentSuperClass.isInterface()) {
+        PsiMember element = member.getMember();
+        if (element.hasModifierProperty(PsiModifier.STATIC)) {
+          return super.checkForProblems(member);
+        }
+        return OK;
+      }
+      else {
+        return super.checkForProblems(member);
+      }
+    }
+
+    @Override
+    public Boolean isFixedAbstract(GrMemberInfo member) {
+      return Boolean.TRUE;
     }
   }
 }

@@ -24,8 +24,11 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.LineOutputWriter;
 
 import javax.tools.*;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -70,7 +73,17 @@ public class JavacMain {
     if (compiler == null) {
       compiler = ToolProvider.getSystemJavaCompiler();
       if (compiler == null) {
-        diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, "System Java Compiler was not found in classpath"));
+        String message = "System Java Compiler was not found in classpath";
+        // trying to obtain additional diagnostic for the case when compiler.jar is present, but there were problems with compiler class loading:
+        try {
+          Class.forName("com.sun.tools.javac.api.JavacTool", false, JavacMain.class.getClassLoader());
+        }
+        catch (Throwable ex) {
+          final ByteArrayOutputStream out = new ByteArrayOutputStream();
+          ex.printStackTrace(new PrintStream(out));
+          message = message + ":\n" + out.toString();
+        }
+        diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, message));
         return false;
       }
       nowUsingJavac = true;
@@ -334,13 +347,24 @@ public class JavacMain {
         final Class<StandardJavaFileManager> optimizedManagerClass = ClasspathBootstrap.getOptimizedFileManagerClass();
         if (optimizedManagerClass != null) {
           try {
-            stdManager = optimizedManagerClass.newInstance();
+            final Constructor<StandardJavaFileManager> constructor = optimizedManagerClass.getConstructor();
+            // if optimizedManagerClass is loaded by another classloader, cls.newInstance() will not work
+            // that's why we need to call setAccessible() to ensure access
+            constructor.setAccessible(true); 
+            stdManager = constructor.newInstance();
           }
           catch (Throwable e) {
             if (SystemInfo.isWindows) {
-              System.err.println("Failed to load JPS optimized file manager for javac: " + e.getMessage());
+              outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "JPS build failed to load optimized file manager for javac: " + e.getMessage()));
             }
           }
+        }
+        else {
+          String error = ClasspathBootstrap.getOptimizedFileManagerLoadError();
+          if (error == null) {
+            error = "";
+          }
+          outConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "JPS build failed to load optimized file manager for javac:\n" + error));
         }
       }
       if (stdManager != null) {

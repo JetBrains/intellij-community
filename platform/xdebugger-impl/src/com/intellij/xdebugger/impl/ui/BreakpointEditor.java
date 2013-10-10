@@ -84,7 +84,7 @@ public class BreakpointEditor {
       public void update(AnActionEvent e) {
         super.update(e);
         boolean lookup = LookupManager.getInstance(getEventProject(e)).getActiveLookup() != null;
-        Editor editor = e.getData(PlatformDataKeys.EDITOR);
+        Editor editor = e.getData(CommonDataKeys.EDITOR);
         e.getPresentation().setEnabled(!lookup && (editor == null || StringUtil.isEmpty(editor.getSelectionModel().getSelectedText())) );
       }
 

@@ -138,7 +138,7 @@ public class NetUtils {
     }
     //workaround for linux : calling close() immediately after opening socket
     //may result that socket is not closed
-    synchronized(sockets) {
+    synchronized (sockets) {
       try {
         sockets.wait(1);
       }
@@ -158,7 +158,8 @@ public class NetUtils {
     String localHostString = "localhost";
     try {
       final InetAddress localHost = InetAddress.getByName(localHostString);
-      if (localHost.getAddress().length != 4 && SystemInfo.isWindows){
+      if ((localHost.getAddress().length != 4 && SystemInfo.isWindows) ||
+          (localHost.getAddress().length == 4 && SystemInfo.isMac)) {
         localHostString = "127.0.0.1";
       }
     }
@@ -168,12 +169,12 @@ public class NetUtils {
   }
 
   /**
-   * @param indicator Progress indicator.
-   * @param inputStream source stream
-   * @param outputStream destination stream
+   * @param indicator           Progress indicator.
+   * @param inputStream         source stream
+   * @param outputStream        destination stream
    * @param expectedContentSize expected content size, used in progress indicator. can be -1.
    * @return bytes copied
-   * @throws IOException if IO error occur
+   * @throws IOException                                            if IO error occur
    * @throws com.intellij.openapi.progress.ProcessCanceledException if process was canceled.
    */
   public static int copyStreamContent(@Nullable ProgressIndicator indicator,
@@ -207,5 +208,4 @@ public class NetUtils {
 
     return total;
   }
-
 }
