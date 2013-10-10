@@ -178,13 +178,14 @@ public class JobUtilTest extends PlatformTestCase {
             // generally we know nothing about current thread since FJP can help others task to execute while in current context
           }
           ProgressIndicator actualIndicator = ProgressManager.getInstance().getProgressIndicator();
-          assertTrue(actualIndicator instanceof SensitiveProgressWrapper);
-          actualIndicator = ((SensitiveProgressWrapper)actualIndicator).getOriginalProgressIndicator();
-          if (progress != null) {
-            assertSame(progress, actualIndicator);
+          if (progress == null) {
+            assertNotNull(actualIndicator);
+            assertTrue(actualIndicator instanceof ProgressIndicatorBase);
           }
           else {
-            assertNotNull(actualIndicator);
+            assertTrue(actualIndicator instanceof SensitiveProgressWrapper);
+            ProgressIndicator original = ((SensitiveProgressWrapper)actualIndicator).getOriginalProgressIndicator();
+            assertSame(progress, original);
           }
           // there can be read access even if we didn't ask for it (e.g. when task under read action steals others work)
           assertTrue(!runInReadAction || ApplicationManager.getApplication().isReadAccessAllowed());
