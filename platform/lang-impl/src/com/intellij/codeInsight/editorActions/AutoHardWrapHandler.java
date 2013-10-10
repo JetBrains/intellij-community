@@ -186,12 +186,14 @@ public class AutoHardWrapHandler {
           caretOffsetDiff[0] += event.getNewLength() - event.getOldLength();
         }
 
-        if (event.getNewLength() <= event.getOldLength() && endsWithSpaces) {
-          // There is a possible case that document fragment is removed because of auto-formatting.
-          // We don't want to process such events in case of current string ends with spaces.
+        if (autoFormatted(event)) {
           return;
         }
         wrapIntroducedSymbolsNumber[0] += event.getNewLength() - event.getOldLength();
+      }
+
+      private boolean autoFormatted(DocumentEvent event) {
+        return event.getNewLength() <= event.getOldLength() && endsWithSpaces;
       }
 
       @Override
