@@ -67,6 +67,12 @@ public class FileWatcher {
     public final List<String> dirtyPaths = newArrayList();
     public final List<String> dirtyPathsRecursive = newArrayList();
     public final List<String> dirtyDirectories = newArrayList();
+
+    private static DirtyPaths EMPTY = new DirtyPaths();
+
+    private boolean isEmpty() {
+      return dirtyPaths.isEmpty() && dirtyPathsRecursive.isEmpty() && dirtyDirectories.isEmpty();
+    }
   }
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.FileWatcher");
@@ -148,11 +154,16 @@ public class FileWatcher {
   @NotNull
   public DirtyPaths getDirtyPaths() {
     synchronized (myLock) {
-      DirtyPaths dirtyPaths = myDirtyPaths;
-      myDirtyPaths = new DirtyPaths();
-      myLastChangedPathIndex = 0;
-      for(int i = 0; i < myLastChangedPaths.length; ++i) myLastChangedPaths[i] = null;
-      return dirtyPaths;
+      if (!myDirtyPaths.isEmpty()) {
+        DirtyPaths dirtyPaths = myDirtyPaths;
+        myDirtyPaths = new DirtyPaths();
+        myLastChangedPathIndex = 0;
+        for (int i = 0; i < myLastChangedPaths.length; ++i) myLastChangedPaths[i] = null;
+        return dirtyPaths;
+      }
+      else {
+        return DirtyPaths.EMPTY;
+      }
     }
   }
 
