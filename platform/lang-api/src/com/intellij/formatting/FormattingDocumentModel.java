@@ -54,6 +54,7 @@ public interface FormattingDocumentModel {
    */
   int getTextLength();
 
+  @NotNull
   Document getDocument();
 
   /**
