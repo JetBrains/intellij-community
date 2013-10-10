@@ -16,6 +16,7 @@
 package git4idea.roots
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.roots.VcsRootDetectInfo
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.test.GitGTestUtil
 import org.junit.After

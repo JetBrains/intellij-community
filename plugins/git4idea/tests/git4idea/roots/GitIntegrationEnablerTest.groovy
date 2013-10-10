@@ -18,6 +18,7 @@ package git4idea.roots
 import com.intellij.dvcs.test.MockVirtualFile
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
+import com.intellij.openapi.vcs.roots.VcsRootDetectInfo
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.test.GitLightTest
 import git4idea.test.TestNotificator

@@ -3,6 +3,7 @@ package git4idea.roots;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsRootFinder;
+import com.intellij.openapi.vcs.roots.VcsRootDetectInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtilRt;
 import git4idea.GitPlatformFacade;

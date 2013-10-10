@@ -16,6 +16,7 @@
 package git4idea.roots;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.roots.VcsRootDetectInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
@@ -29,7 +30,7 @@ import java.util.Set;
 /**
  * <p>
  *   Scans the file system looking for Git roots, which contain the Project or its parts,
- *   and returns the information enclosed to the {@link VcsRootDetectInfo}.
+ *   and returns the information enclosed to the {@link com.intellij.openapi.vcs.roots.VcsRootDetectInfo}.
  *   The main part of the information are Git roots which will be proposed to the user to be added as VCS roots.
  * </p>
  * <p>

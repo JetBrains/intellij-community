@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.roots;
+package com.intellij.openapi.vcs.roots;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +38,7 @@ public class VcsRootDetectInfo {
    * @param below Pass true to indicate that the project dir is below Git dir,
    *              i.e. .git is above the project dir, and there is no .git directly under the project dir.
    */
-  VcsRootDetectInfo(@NotNull Collection<VirtualFile> roots, boolean full, boolean below) {
+  public VcsRootDetectInfo(@NotNull Collection<VirtualFile> roots, boolean full, boolean below) {
     myRoots = new ArrayList<VirtualFile>(roots);
     myFull = full;
     myBelow = below;
@@ -48,11 +48,11 @@ public class VcsRootDetectInfo {
    * @return True if the project is fully under Git.
    * It is true if .git is directly inside or above the project dir.
    */
-  boolean totallyUnderGit() {
+  public boolean totallyUnderGit() {
     return myFull;
   }
 
-  boolean empty() {
+  public boolean empty() {
     return myRoots.isEmpty();
   }
 
@@ -66,7 +66,7 @@ public class VcsRootDetectInfo {
    * @return true if the uppermost interesting Git root is above the project dir,
    *         false if all .git directories are immediately under the project dir or deeper.
    */
-  boolean projectIsBelowGit() {
+  public boolean projectIsBelowGit() {
     return myBelow;
   }
 
