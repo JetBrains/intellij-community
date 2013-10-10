@@ -108,15 +108,6 @@ public class GraphCommitCellRender implements TableCellRenderer {
     return false;
   }
 
-  protected GraphCommitCell.Kind getKind(@Nullable Object value) {
-    GraphCommitCell cell = (GraphCommitCell)value;
-    if (cell == null) {
-      return GraphCommitCell.Kind.NORMAL;
-    }
-
-    return cell.getKind();
-  }
-
   @Override
   public Component getTableCellRendererComponent(JTable table, @Nullable Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     return cellRender.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
@@ -137,29 +128,8 @@ public class GraphCommitCellRender implements TableCellRenderer {
       Border paddingBorder = BorderFactory.createEmptyBorder(0, getLeftPadding(table, value), 0, 0);
       this.setBorder(BorderFactory.createCompoundBorder(this.getBorder(), paddingBorder));
 
-      GraphCommitCell.Kind kind = getKind(value);
       Color textColor = isSelected ? table.getSelectionForeground() : JBColor.BLACK;
-      switch (kind) {
-        case APPLIED:
-          setBackground(APPLIED_BACKGROUND);
-          break;
-        case NORMAL:
-          setForeground(textColor);
-          break;
-        case PICK:
-          setFont(getFont().deriveFont(Font.BOLD));
-          setForeground(textColor);
-          break;
-        case FIXUP:
-          setFont(getFont().deriveFont(Font.BOLD));
-          setForeground(JBColor.GRAY);
-          break;
-        case REWORD:
-          setFont(getFont().deriveFont(Font.BOLD));
-          setForeground(JBColor.BLUE);
-          break;
-      }
-
+      setForeground(textColor);
       return this;
     }
 

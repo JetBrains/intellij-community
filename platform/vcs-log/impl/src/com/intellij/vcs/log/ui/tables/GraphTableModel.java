@@ -77,7 +77,7 @@ public class GraphTableModel extends AbstractTableModel {
           message = data.getSubject();
           refs = myDataPack.getRefsModel().refsToCommit(data.getHash());
         }
-        return new GraphCommitCell(graphPrintCell, GraphCommitCell.Kind.NORMAL, message, refs);
+        return new GraphCommitCell(graphPrintCell, message, refs);
       case AUTHOR_COLUMN:
         if (data == null) {
           return "";
