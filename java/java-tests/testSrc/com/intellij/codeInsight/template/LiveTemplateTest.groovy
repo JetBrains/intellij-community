@@ -1,31 +1,32 @@
 /*
  * Copyright (c) 2005 JetBrains s.r.o. All Rights Reserved.
  */
-package com.intellij.codeInsight.template;
-
+package com.intellij.codeInsight.template
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
+import com.intellij.codeInsight.template.impl.*
 import com.intellij.codeInsight.template.macro.ClassNameCompleteMacro
 import com.intellij.codeInsight.template.macro.CompleteMacro
 import com.intellij.codeInsight.template.macro.MethodReturnTypeMacro
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.AccessToken
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NotNull
-import com.intellij.codeInsight.template.impl.*
 
-import static com.intellij.codeInsight.template.Template.Property.*
+import static com.intellij.codeInsight.template.Template.Property.USE_STATIC_IMPORT_IF_POSSIBLE
 
 /**
  * @author spleaner
@@ -65,19 +66,11 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
     final TemplateContextType contextType =
       ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), JavaCodeContextType.class);
     ((TemplateImpl)template).getTemplateContext().setEnabled(contextType, true);
-    TemplateSettings settings = TemplateSettings.getInstance();
-    try {
-      settings.addTemplate(template);
-      final Editor editor = getEditor();
+    addTemplate(template, testRootDisposable)
+    final Editor editor = getEditor();
 
-      manager.startTemplate(editor, settings.getDefaultShortcutChar());
-      checkResultByText(expected);
-    }
-    finally {
-      if (settings.getTemplate(template.getKey(), group) != null) {
-        settings.removeTemplate(template);
-      }
-    }
+    manager.startTemplate(editor, (char)'\t');
+    checkResultByText(expected);
   }
 
   public void testTemplateWithArg1() throws IOException {
@@ -559,15 +552,15 @@ class Foo {
 
     myFixture.configureByText("a.java", "class A { void f() { Stri<selection>ng s = \"tpl</selection><caret>\"; } }")
 
+    addTemplate(template, testRootDisposable)
+    myFixture.type '\t'
+    myFixture.checkResult 'class A { void f() { Stri    "; } }'
+  }
+  
+  static void addTemplate(Template template, Disposable parentDisposable) {
     def settings = TemplateSettings.getInstance()
     settings.addTemplate(template);
-    try {
-      myFixture.type '\t'
-      myFixture.checkResult 'class A { void f() { Stri    "; } }'
-    }
-    finally {
-      settings.removeTemplate(template);
-    }
+    Disposer.register(parentDisposable, { settings.removeTemplate(template) } as Disposable)
   }
 
   public void "test expand current live template on no suggestions in lookup"() {
