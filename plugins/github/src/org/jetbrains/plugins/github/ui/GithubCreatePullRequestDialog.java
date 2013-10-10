@@ -69,29 +69,31 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
       setTarget(defaultForkPath);
     }
     else {
-      showTargetDialog();
+      if (!showTargetDialog()) {
+        close(CANCEL_EXIT_CODE);
+        return;
+      }
     }
     super.show();
   }
 
-  private void showTargetDialog() {
+  private boolean showTargetDialog() {
     GithubFullPath forkPath = myWorker.showTargetDialog();
     if (forkPath == null) {
-      doCancelAction();
-      return;
+      return false;
     }
-    setTarget(forkPath);
+    return setTarget(forkPath);
   }
 
-  private void setTarget(@NotNull GithubFullPath forkPath) {
+  private boolean setTarget(@NotNull GithubFullPath forkPath) {
     GithubCreatePullRequestWorker.GithubTargetInfo forkInfo = myWorker.setTarget(forkPath);
     if (forkInfo == null) {
-      doCancelAction();
-      return;
+      return false;
     }
     myProjectSettings.setCreatePullRequestDefaultRepo(forkPath);
     myGithubCreatePullRequestPanel.setDiffEnabled(forkInfo.isCanShowDiff());
     updateBranches(forkInfo.getBranches(), forkPath);
+    return true;
   }
 
   private void updateBranches(@NotNull Collection<String> branches, @NotNull GithubFullPath forkPath) {
