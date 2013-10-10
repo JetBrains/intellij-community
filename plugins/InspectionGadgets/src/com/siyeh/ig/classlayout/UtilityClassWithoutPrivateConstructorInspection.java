@@ -18,7 +18,9 @@ package com.siyeh.ig.classlayout;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
@@ -67,6 +69,58 @@ public class UtilityClassWithoutPrivateConstructorInspection extends UtilityClas
     }
     AddToIgnoreIfAnnotatedByListQuickFix.build(aClass, ignorableAnnotations, fixes);
     return fixes.toArray(new InspectionGadgetsFix[fixes.size()]);
+  }
+
+  protected static class CreateEmptyPrivateConstructor extends InspectionGadgetsFix {
+
+    @Override
+    @NotNull
+    public String getName() {
+      return InspectionGadgetsBundle.message("utility.class.without.private.constructor.create.quickfix");
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
+    @Override
+    public void doFix(Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
+      final PsiElement classNameIdentifier = descriptor.getPsiElement();
+      final PsiElement parent = classNameIdentifier.getParent();
+      if (!(parent instanceof PsiClass)) {
+        return;
+      }
+      final PsiClass aClass = (PsiClass)parent;
+      final Query<PsiReference> query = ReferencesSearch.search(aClass, aClass.getUseScope());
+      for (PsiReference reference : query) {
+        if (reference == null) {
+          continue;
+        }
+        final PsiElement element = reference.getElement();
+        final PsiElement context = element.getParent();
+        if (context instanceof PsiNewExpression) {
+          SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              Messages.showInfoMessage(aClass.getProject(),
+                                       "Utility class has instantiations, private constructor will not be created",
+                                       "Can't generate constructor");
+            }
+          });
+          return;
+        }
+      }
+      final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+      final PsiElementFactory factory = psiFacade.getElementFactory();
+      final PsiMethod constructor = factory.createConstructor();
+      final PsiModifierList modifierList = constructor.getModifierList();
+      modifierList.setModifierProperty(PsiModifier.PRIVATE, true);
+      aClass.add(constructor);
+      final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
+      styleManager.reformat(constructor);
+    }
   }
 
   private static class MakeConstructorPrivateFix extends InspectionGadgetsFix {
