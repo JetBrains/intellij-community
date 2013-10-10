@@ -7,11 +7,13 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -68,4 +70,20 @@ public class SimpleClasspathElementFactory {
     }
     return list;
   }
+
+  public static List<VirtualFile> convertToFiles(Collection<SimpleClasspathElement> cpeList)
+  {
+    VirtualFileManager fileManager = VirtualFileManager.getInstance();
+    List<VirtualFile> files = new ArrayList<VirtualFile>();
+    for (SimpleClasspathElement cpe : cpeList) {
+      for (String fileUrl : cpe.getClassesRootUrls()) {
+        VirtualFile file = fileManager.findFileByUrl(fileUrl);
+        if (file != null) {
+          files.add(file);
+        }
+      }
+    }
+    return files;
+  }
+
 }
