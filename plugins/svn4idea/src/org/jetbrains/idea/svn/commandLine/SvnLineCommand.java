@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.LineHandlerHelper;
 import com.intellij.openapi.vcs.LineProcessEventListener;
 import com.intellij.util.ArrayUtil;
@@ -31,12 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnUtil;
-import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.auth.SVNPasswordAuthentication;
-import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,8 +41,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Created with IntelliJ IDEA.
@@ -202,268 +194,6 @@ public class SvnLineCommand extends SvnCommand {
         return authCase.canHandle(errText);
       }
     });
-  }
-
-  // Special callback for svn 1.8 credentials request as --non-interactive does not return
-  // authentication realm (just url) - so we could not create temp cache
-  private static class UsernamePasswordCallback extends AuthCallbackCase {
-
-    private static final String UNABLE_TO_CONNECT_MESSAGE = "Unable to connect to a repository";
-    private static final String AUTHENTICATION_FAILED_MESSAGE = "Authentication failed";
-    private static final String INVALID_CREDENTIALS_FOR_SVN_PROTOCOL = "svn: E170001: Can't get";
-    private static final String PASSWORD_STRING = "password";
-    private static final Pattern UNABLE_TO_CONNECT_TO_URL_PATTERN = Pattern.compile("Unable to connect to a repository at URL '(.*)'");
-
-    protected SVNAuthentication myAuthentication;
-
-    protected UsernamePasswordCallback(@NotNull AuthenticationCallback callback, SVNURL url) {
-      super(callback, url);
-    }
-
-    @Override
-    public boolean canHandle(String error) {
-      return
-        // http/https protocol invalid credentials
-        error.contains(AUTHENTICATION_FAILED_MESSAGE) ||
-        // svn protocol invalid credentials - messages could be "Can't get password", "Can't get username or password"
-        error.contains(INVALID_CREDENTIALS_FOR_SVN_PROTOCOL) && error.contains(PASSWORD_STRING) ||
-        // http/https protocol, svn 1.7, non-interactive
-        error.contains(UNABLE_TO_CONNECT_MESSAGE);
-    }
-
-    @Override
-    boolean getCredentials(String errText) throws SvnBindException {
-      myAuthentication = myAuthenticationCallback.requestCredentials(myUrl != null ? myUrl : parseUrlFromError(errText),
-                                                                     getType());
-
-      return myAuthentication != null;
-    }
-
-    public String getType() {
-      return ISVNAuthenticationManager.PASSWORD;
-    }
-
-    @Override
-    public void updateParameters(List<String> parameters) {
-      if (myAuthentication instanceof SVNPasswordAuthentication) {
-        SVNPasswordAuthentication auth = (SVNPasswordAuthentication)myAuthentication;
-
-        parameters.add("--username");
-        parameters.add(auth.getUserName());
-        parameters.add("--password");
-        parameters.add(auth.getPassword());
-        if (!auth.isStorageAllowed()) {
-          parameters.add("--no-auth-cache");
-        }
-      }
-    }
-
-    private SVNURL parseUrlFromError(String errorText) {
-      Matcher matcher = UNABLE_TO_CONNECT_TO_URL_PATTERN.matcher(errorText);
-      String urlValue = null;
-
-      if (matcher.find()) {
-        urlValue = matcher.group(1);
-      }
-
-      return urlValue != null ? parseUrl(urlValue) : null;
-    }
-  }
-
-  private static class ProxyCallback extends AuthCallbackCase {
-
-    private static final String UNABLE_TO_CONNECT_CODE = "svn: E170001:";
-    private static final String CANNOT_AUTHENTICATE_TO_PROXY = "Could not authenticate to proxy server";
-
-    protected ProxyCallback(@NotNull AuthenticationCallback callback, SVNURL url) {
-      super(callback, url);
-    }
-
-    @Override
-    public boolean canHandle(String error) {
-      return error.startsWith(UNABLE_TO_CONNECT_CODE) && error.contains(CANNOT_AUTHENTICATE_TO_PROXY);
-    }
-
-    @Override
-    boolean getCredentials(String errText) throws SvnBindException {
-      return myAuthenticationCallback.askProxyCredentials(myUrl);
-    }
-  }
-
-  private static class CredentialsCallback extends AuthCallbackCase {
-
-    private static final String AUTHENTICATION_REALM = "Authentication realm:";
-
-    private CredentialsCallback(@NotNull AuthenticationCallback callback, SVNURL url) {
-      super(callback, url);
-    }
-
-    @Override
-    public boolean canHandle(String error) {
-      return error.startsWith(AUTHENTICATION_REALM);
-    }
-
-    @Override
-    boolean getCredentials(String errText) throws SvnBindException {
-      final String realm =
-        errText.startsWith(AUTHENTICATION_REALM) ? cutFirstLine(errText).substring(AUTHENTICATION_REALM.length()).trim() : null;
-      final boolean isPassword = StringUtil.containsIgnoreCase(errText, "password");
-      if (myTried) {
-        myAuthenticationCallback.clearPassiveCredentials(realm, myUrl, isPassword);
-      }
-      myTried = true;
-      if (myAuthenticationCallback.authenticateFor(realm, myUrl, myAuthenticationCallback.getSpecialConfigDir() != null, isPassword)) {
-        return true;
-      }
-      throw new SvnBindException("Authentication canceled for realm: " + realm);
-    }
-  }
-
-  private static String cutFirstLine(final String text) {
-    final int idx = text.indexOf('\n');
-    if (idx == -1) return text;
-    return text.substring(0, idx);
-  }
-
-  private static class CertificateCallbackCase extends AuthCallbackCase {
-
-    private static final String CERTIFICATE_ERROR = "Error validating server certificate for";
-    private static final String UNTRUSTED_SERVER_CERTIFICATE = "Server SSL certificate untrusted";
-
-    private boolean accepted;
-
-    protected CertificateCallbackCase(@NotNull AuthenticationCallback callback, SVNURL url) {
-      super(callback, url);
-    }
-
-    @Override
-    public boolean canHandle(String error) {
-      return error.startsWith(CERTIFICATE_ERROR) ||
-             // https one-way protocol untrusted server certificate
-             error.contains(UNTRUSTED_SERVER_CERTIFICATE);
-    }
-
-    @Override
-    public boolean getCredentials(final String errText) throws SvnBindException {
-      String realm = getRealm(errText);
-
-      if (!errText.startsWith(CERTIFICATE_ERROR)) {
-        // if we do not have explicit realm in error message - use server url and not full repository url
-        // as SVNKit lifecycle resolves ssl realm (for saving certificate to runtime storage) as server url
-        SVNURL serverUrl = getServerUrl(realm);
-        realm = serverUrl != null ? serverUrl.toString() : realm;
-      }
-
-      if (! myTried && myAuthenticationCallback.acceptSSLServerCertificate(myUrl, realm)) {
-        accepted = true;
-        myTried = true;
-        return true;
-      }
-      throw new SvnBindException("Server SSL certificate rejected");
-    }
-
-    private static String getRealm(String errText) throws SvnBindException {
-      String realm = errText;
-      final int idx1 = realm.indexOf('\'');
-      if (idx1 == -1) {
-        throw new SvnBindException("Can not detect authentication realm name: " + errText);
-      }
-      final int idx2 = realm.indexOf('\'', idx1 + 1);
-      if (idx2== -1) {
-        throw new SvnBindException("Can not detect authentication realm name: " + errText);
-      }
-      realm = realm.substring(idx1 + 1, idx2);
-      return realm;
-    }
-
-    @Override
-    public void updateParameters(List<String> parameters) {
-      if (accepted) {
-        parameters.add("--trust-server-cert");
-        // force --non-interactive as it is required by --trust-server-cert, but --non-interactive is not default mode for 1.7 or earlier
-        parameters.add("--non-interactive");
-      }
-    }
-
-    private SVNURL getServerUrl(String realm) {
-      SVNURL result = parseUrl(realm);
-
-      while(result != null && !StringUtil.isEmpty(result.getPath())) {
-        try {
-          result = result.removePathTail();
-        }
-        catch (SVNException e) {
-          result = null;
-        }
-      }
-
-      return result;
-    }
-  }
-
-  private static class TwoWaySslCallback extends UsernamePasswordCallback {
-
-    private static final String ACCESS_TO_PREFIX = "Access to ";
-    private static final String FORBIDDEN_STATUS = "forbidden";
-
-    protected TwoWaySslCallback(AuthenticationCallback callback, SVNURL url) {
-      super(callback, url);
-    }
-
-    @Override
-    public boolean canHandle(String error) {
-      // https two-way protocol invalid client certificate
-      return error.contains(ACCESS_TO_PREFIX) && error.contains(FORBIDDEN_STATUS);
-    }
-
-    @Override
-    public String getType() {
-      return ISVNAuthenticationManager.SSL;
-    }
-
-    @Override
-    public void updateParameters(List<String> parameters) {
-      if (myAuthentication instanceof SVNSSLAuthentication) {
-        SVNSSLAuthentication auth = (SVNSSLAuthentication)myAuthentication;
-
-        // TODO: Seems that config option should be specified for concrete server and not for global group.
-        // as in that case it could be overriden by settings in config file
-        parameters.add("--config-option");
-        parameters.add("servers:global:ssl-client-cert-file=" + auth.getCertificatePath());
-        parameters.add("--config-option");
-        parameters.add("servers:global:ssl-client-cert-password=" + auth.getPassword());
-        if (!auth.isStorageAllowed()) {
-          parameters.add("--no-auth-cache");
-        }
-      }
-    }
-  }
-
-  private static abstract class AuthCallbackCase {
-    protected final SVNURL myUrl;
-    protected boolean myTried = false;
-    @NotNull protected final AuthenticationCallback myAuthenticationCallback;
-
-    protected AuthCallbackCase(@NotNull AuthenticationCallback callback, SVNURL url) {
-      myAuthenticationCallback = callback;
-      myUrl = url;
-    }
-
-    public abstract boolean canHandle(final String error);
-
-    abstract boolean getCredentials(final String errText) throws SvnBindException;
-
-    public void updateParameters(List<String> parameters) {
-    }
-
-    protected SVNURL parseUrl(String urlValue) {
-      try {
-        return SVNURL.parseURIEncoded(urlValue);
-      }
-      catch (SVNException e) {
-        return null;
-      }
-    }
   }
 
   private static void cleanup(String exePath, SvnCommand command, @NotNull File workingDirectory) throws SvnBindException {
@@ -620,32 +350,5 @@ public class SvnLineCommand extends SvnCommand {
   public void addLineListener(LineProcessEventListener listener) {
     myLineListeners.addListener(listener);
     super.addListener(listener);
-  }
-
-  private static class PassphraseCallback extends AuthCallbackCase {
-
-    private static final String PASSPHRASE_FOR = "Passphrase for";
-
-    protected PassphraseCallback(@NotNull AuthenticationCallback callback, SVNURL url) {
-      super(callback, url);
-    }
-
-    @Override
-    public boolean canHandle(String error) {
-      return error.startsWith(PASSPHRASE_FOR);
-    }
-
-    @Override
-    boolean getCredentials(String errText) throws SvnBindException {
-      // try to get from file
-      /*if (myTried) {
-        myAuthenticationCallback.clearPassiveCredentials(null, myBase);
-      }*/
-      myTried = true;
-      if (myAuthenticationCallback.authenticateFor(null, myUrl, myAuthenticationCallback.getSpecialConfigDir() != null, false)) {
-        return true;
-      }
-      throw new SvnBindException("Authentication canceled for : " + errText.substring(PASSPHRASE_FOR.length()));
-    }
   }
 }
