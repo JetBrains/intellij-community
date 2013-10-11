@@ -72,7 +72,7 @@ public class ViewStructureAction extends AnAction {
 
     Navigatable navigatable = e.getData(CommonDataKeys.NAVIGATABLE);
     if (Registry.is("file.structure.tree.mode")) {
-      FileStructurePopup popup = createPopup(editor, project, navigatable, fileEditor);
+      FileStructurePopup popup = createPopup(project, fileEditor);
       if (popup == null) return;
 
       popup.setTitle(title);
@@ -96,7 +96,7 @@ public class ViewStructureAction extends AnAction {
   }
 
   @Nullable
-  public static FileStructurePopup createPopup(@Nullable Editor editor, @NotNull Project project, @Nullable Navigatable navigatable, @NotNull FileEditor fileEditor) {
+  public static FileStructurePopup createPopup(@NotNull Project project, @NotNull FileEditor fileEditor) {
     StructureViewBuilder structureViewBuilder = fileEditor.getStructureViewBuilder();
     if (structureViewBuilder == null) return null;
     StructureView structureView = structureViewBuilder.createStructureView(fileEditor, project);
@@ -105,7 +105,7 @@ public class ViewStructureAction extends AnAction {
       //noinspection unchecked
       ((PlaceHolder)model).setPlace(PLACE);
     }
-    return createStructureViewPopup(project, editor, fileEditor, structureView);
+    return createStructureViewPopup(project, fileEditor, structureView);
   }
 
   public static boolean isInStructureViewPopup(@NotNull PlaceHolder<String> model) {
@@ -121,10 +121,9 @@ public class ViewStructureAction extends AnAction {
   }
 
   private static FileStructurePopup createStructureViewPopup(Project project,
-                                                             Editor editor,
                                                              FileEditor fileEditor,
                                                              StructureView structureView) {
-    return new FileStructurePopup(project, editor, fileEditor, structureView, true);
+    return new FileStructurePopup(project, fileEditor, structureView, true);
   }
 
   @Override
