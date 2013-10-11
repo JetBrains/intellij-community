@@ -16,6 +16,7 @@
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
 import com.intellij.ide.plugins.*;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -79,14 +80,13 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   private EditorNotificationPanel createPanel(final String extension, final Set<String> plugins) {
     final EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setText("Plugins supporting *." + extension + " are found");
-    final List<String> disabledPlugins = new ArrayList<String>(PluginManagerCore.getDisabledPlugins());
-    disabledPlugins.retainAll(plugins);
-    if (disabledPlugins.size() == 1) {
-      panel.createActionLabel("Enable disabled plugin", new Runnable() {
+    final IdeaPluginDescriptor disabledPlugin = getDisabledPlugin(plugins);
+    if (disabledPlugin != null) {
+      panel.createActionLabel("Enable " + disabledPlugin.getName() + " plugin", new Runnable() {
         @Override
         public void run() {
           myEnabledExtensions.add(extension);
-          PluginManagerCore.enablePlugin(disabledPlugins.get(0));
+          PluginManagerCore.enablePlugin(disabledPlugin.getPluginId().getIdString());
           myNotifications.updateAllNotifications();
           PluginManagerMain.notifyPluginsWereUpdated("Plugin was successfully enabled");
         }
@@ -135,6 +135,16 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
       }
     });
     return panel;
+  }
+
+  @Nullable
+  private static IdeaPluginDescriptor getDisabledPlugin(Set<String> plugins) {
+    final List<String> disabledPlugins = new ArrayList<String>(PluginManagerCore.getDisabledPlugins());
+    disabledPlugins.retainAll(plugins);
+    if (disabledPlugins.size() == 1) {
+      return PluginManager.getPlugin(PluginId.getId(disabledPlugins.get(0)));
+    }
+    return null;
   }
 
   private static UnknownFeature createExtensionFeature(String extension) {
