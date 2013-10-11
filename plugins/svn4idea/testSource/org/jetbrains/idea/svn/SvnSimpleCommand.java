@@ -13,14 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.commandLine;
+package org.jetbrains.idea.svn;
 
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.ProcessEventListener;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.commandLine.SvnCommand;
+import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 
 import java.io.File;
 
@@ -31,6 +34,9 @@ import java.io.File;
  * Time: 4:04 PM
  */
 public class SvnSimpleCommand extends SvnCommand {
+
+  private static final Logger LOG = Logger.getInstance(SvnSimpleCommand.class);
+
   private final StringBuilder myStderr;
   private final StringBuilder myStdout;
   private VcsException myException;
