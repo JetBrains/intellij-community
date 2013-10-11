@@ -122,15 +122,15 @@ public class ProjectTypeStep extends ModuleWizardStep {
     for (TemplatesGroup group : groups) {
       DefaultMutableTreeNode groupNode = new DefaultMutableTreeNode(group);
       root.add(groupNode);
-      Collection<ProjectCategory> collection = categories.get(group.getName());
-      for (ProjectCategory category : collection) {
-        groupNode.add(new DefaultMutableTreeNode(category));
-        list.add(category);
-      }
       for (ProjectTemplate template : templatesMap.get(group)) {
         TemplateBasedProjectType projectType = new TemplateBasedProjectType(template);
         groupNode.add(new DefaultMutableTreeNode(projectType));
         list.add(projectType);
+      }
+      Collection<ProjectCategory> collection = categories.get(group.getName());
+      for (ProjectCategory category : collection) {
+        groupNode.add(new DefaultMutableTreeNode(category));
+        list.add(category);
       }
     }
 
@@ -187,15 +187,15 @@ public class ProjectTypeStep extends ModuleWizardStep {
   }
 
   @Nullable
-  private Object getSelectedObject() {
+  public Object getSelectedObject() {
     TreePath path = myProjectTypeTree.getSelectionPath();
     return path == null ? null : ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
   }
 
   @Nullable
   private ModuleBuilder getSelectedBuilder() {
-    Object projectCategory = getSelectedObject();
-    return projectCategory instanceof ProjectCategory ? myBuilders.get(projectCategory) : null;
+    Object object = getSelectedObject();
+    return object instanceof ProjectCategory ? myBuilders.get(object) : null;
   }
 
   private void updateOptionsPanel(Object object) {

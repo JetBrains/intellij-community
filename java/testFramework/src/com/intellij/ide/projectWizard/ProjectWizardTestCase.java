@@ -120,11 +120,14 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
   }
 
   protected void runWizard(Consumer<Step> adjuster) {
-    while (!myWizard.isLast()) {
-      myWizard.doNextAction();
+    while(true) {
       if (adjuster != null) {
         adjuster.consume(myWizard.getCurrentStepObject());
       }
+      if (myWizard.isLast()) {
+        break;
+      }
+      myWizard.doNextAction();
     }
     myWizard.doOk();
   }
