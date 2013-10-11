@@ -73,7 +73,7 @@ bool IsUnwatchableFS(const char *path)
 	SetErrorMode(SEM_FAILCRITICALERRORS);
 	if (!GetVolumeInformationA(path, volumeName, MAX_PATH-1, NULL, &maxComponentLength, &fsFlags, fsName, MAX_PATH-1))
 		return false;
-	if (strcmp(fsName, "NTFS") && strcmp(fsName, "FAT") && strcmp(fsName, "FAT32"))
+	if (strcmp(fsName, "NTFS") && strcmp(fsName, "FAT") && strcmp(fsName, "FAT32") && stricmp(fsName, "exFAT"))
 		return true;
 
     if (!strcmp(fsName, "NTFS") && maxComponentLength != 255 && !(fsFlags & FILE_SUPPORTS_REPARSE_POINTS))
