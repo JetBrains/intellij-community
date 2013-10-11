@@ -5,11 +5,11 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.util.SystemProperties;
+import com.jetbrains.python.fixtures.PyTestCase;
 
 import java.io.File;
 
@@ -27,7 +27,7 @@ public class JythonUnitTestUtil {
     parameters.setJdk(ideaJdk);
     parameters.setMainClass("org.python.util.jython");
 
-    File jythonJar = new File(PathManager.getHomePath(), "python/lib/jython.jar");
+    File jythonJar = new File(PyTestCase.getPythonCommunityPath(), "lib/jython.jar");
     parameters.getClassPath().add(jythonJar.getPath());
 
     parameters.getProgramParametersList().add("-Dpython.path=" + pythonPath + File.pathSeparator + workDir);
