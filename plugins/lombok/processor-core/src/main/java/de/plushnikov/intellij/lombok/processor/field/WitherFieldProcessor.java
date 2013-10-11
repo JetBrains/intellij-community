@@ -15,6 +15,7 @@ import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import lombok.experimental.Accessors;
 import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
 
@@ -51,7 +52,8 @@ public class WitherFieldProcessor extends AbstractLombokFieldProcessor {
   protected void processIntern(PsiField psiField, PsiAnnotation psiAnnotation, List<? super PsiElement> target) {
     String methodModifier = getMethodModifier(psiAnnotation);
     if (methodModifier != null) {
-      PsiMethod method = createWitherMethod(psiField, methodModifier);
+      AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
+      PsiMethod method = createWitherMethod(psiField, methodModifier, accessorsInfo);
       if (method != null) {
         target.add(method);
       }
@@ -135,12 +137,12 @@ public class WitherFieldProcessor extends AbstractLombokFieldProcessor {
     return true;
   }
 
-  public PsiMethod createWitherMethod(@NotNull PsiField psiField, @NotNull String methodModifier) {
+  public PsiMethod createWitherMethod(@NotNull PsiField psiField, @NotNull String methodModifier, @NotNull AccessorsInfo accessorsInfo) {
     if (psiField != null && psiField.getManager() != null && psiField.getType() != null && psiField.getContainingClass() != null) {
       PsiType returnType = PsiClassUtil.getTypeWithGenerics(psiField.getContainingClass());
       if (returnType != null) {
         final LombokLightMethodBuilder method =
-            LombokPsiElementFactory.getInstance().createLightMethod(psiField.getManager(), witherName(psiField.getName()))
+            LombokPsiElementFactory.getInstance().createLightMethod(psiField.getManager(), witherName(accessorsInfo.removePrefix(psiField.getName())))
                 .withMethodReturnType(returnType)
                 .withContainingClass(psiField.getContainingClass())
                 .withParameter(psiField.getName(), psiField.getType())

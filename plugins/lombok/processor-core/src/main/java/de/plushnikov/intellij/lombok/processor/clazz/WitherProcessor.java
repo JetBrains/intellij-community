@@ -9,11 +9,15 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiModifierList;
 import de.plushnikov.intellij.lombok.LombokUtils;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
+import de.plushnikov.intellij.lombok.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.lombok.processor.field.WitherFieldProcessor;
 import de.plushnikov.intellij.lombok.util.LombokProcessorUtil;
+import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
+import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import lombok.experimental.Accessors;
 import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,12 +52,13 @@ public class WitherProcessor extends AbstractLombokClassProcessor {
   protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodVisibility != null) {
-      target.addAll(createFieldWithers(psiClass, psiAnnotation, methodVisibility));
+      final AccessorsInfo accessorsInfo = AccessorsInfo.build(psiClass);
+      target.addAll(createFieldWithers(psiClass, psiAnnotation, methodVisibility, accessorsInfo));
     }
   }
 
   @NotNull
-  public Collection<PsiMethod> createFieldWithers(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull String methodModifier) {
+  public Collection<PsiMethod> createFieldWithers(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull String methodModifier, @NotNull AccessorsInfo accessors) {
     Collection<PsiMethod> result = new ArrayList<PsiMethod>();
 
     for (PsiField psiField : psiClass.getFields()) {
@@ -70,7 +75,7 @@ public class WitherProcessor extends AbstractLombokClassProcessor {
         createWither &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
       }
       if (createWither) {
-        PsiMethod method = fieldProcessor.createWitherMethod(psiField, methodModifier);
+        PsiMethod method = fieldProcessor.createWitherMethod(psiField, methodModifier, accessors);
         if (method != null) {
           result.add(method);
         }

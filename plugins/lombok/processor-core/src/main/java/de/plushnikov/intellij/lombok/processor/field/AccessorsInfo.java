@@ -37,14 +37,18 @@ public class AccessorsInfo {
     if (null != accessorsFieldAnnotation) {
       return buildFromAnnotation(accessorsFieldAnnotation);
     } else {
-      PsiClass containingClass = psiField.getContainingClass();
-      while (null != containingClass) {
-        final PsiAnnotation accessorsClassAnnotation = AnnotationUtil.findAnnotation(containingClass, ACCESSORS_ANNOTATION_NAME);
-        if (null != accessorsClassAnnotation) {
-          return buildFromAnnotation(accessorsClassAnnotation);
-        }
-        containingClass = containingClass.getContainingClass();
+      return build(psiField.getContainingClass());
+    }
+  }
+
+  public static AccessorsInfo build(@NotNull PsiClass psiClass) {
+    PsiClass containingClass = psiClass;
+    while (null != containingClass) {
+      final PsiAnnotation accessorsClassAnnotation = AnnotationUtil.findAnnotation(containingClass, ACCESSORS_ANNOTATION_NAME);
+      if (null != accessorsClassAnnotation) {
+        return buildFromAnnotation(accessorsClassAnnotation);
       }
+      containingClass = containingClass.getContainingClass();
     }
     return new AccessorsInfo();
   }
