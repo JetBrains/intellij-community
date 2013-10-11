@@ -20,6 +20,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.util.xml.Required;
 import com.intellij.util.xml.XmlName;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.impl.DomManagerImpl;
@@ -43,7 +44,7 @@ public class DomAttributeXmlDescriptor implements NamespaceAwareXmlAttributeDesc
   }
 
   public boolean isRequired() {
-    return false;
+    return myDescription.getAnnotation(Required.class) != null;
   }
 
   public boolean isFixed() {
