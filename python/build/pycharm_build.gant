@@ -172,8 +172,7 @@ private communityEdition() {
             "$pythonCommunityHome/build/strings.nsi", "$pythonCommunityHome/build/paths.nsi",
             "pycharmPC", false, true, system_selector)
 
-  // todo: get rid of copying
-  //ant.copy(file: "${paths.sandboxCE}/artifacts/ideaIC-${buildNumber}.mac.zip", tofile: "$paths.artifacts/ideaIC-${buildNumber}.sit")
+  ant.copy(file: "${paths.sandboxCE}/artifacts/pycharmPC-${buildNumber}.mac.zip", tofile: "$paths.artifacts/pycharmPC-${buildNumber}.sit")
   def extraArgs = ["build.number": "PC-$buildNumber", "artifacts.path": "${paths.sandboxCE}/artifacts"]
   signMacZip("pycharm", extraArgs)
   notifyArtifactBuilt("$paths.artifacts/pycharmPC-${buildNumber}.sit")
