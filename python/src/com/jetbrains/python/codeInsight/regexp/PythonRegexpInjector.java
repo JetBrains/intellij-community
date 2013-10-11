@@ -51,8 +51,7 @@ public class PythonRegexpInjector implements MultiHostInjector {
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
     final PsiElement contextParent = context.getParent();
-    if (context instanceof PyStringLiteralExpression && contextParent instanceof PyArgumentList) {
-      final PyStringLiteralExpression stringLiteral = (PyStringLiteralExpression)context;
+    if (isStringLiteral(context) && contextParent instanceof PyArgumentList) {
       final PyExpression[] args = ((PyArgumentList)contextParent).getArguments();
       int index = ArrayUtil.indexOf(args, context);
       PyCallExpression call = PsiTreeUtil.getParentOfType(context, PyCallExpression.class);
@@ -63,15 +62,10 @@ public class PythonRegexpInjector implements MultiHostInjector {
           if (ref != null) {
             final PsiElement element = ref.resolve();
             if (element != null && element.getContainingFile().getName().equals("re.py") && isRegexpMethod(element, index)) {
-              List<TextRange> ranges = stringLiteral.getStringValueTextRanges();
-              if (!ranges.isEmpty()) {
-                final Language language = isVerbose(call) ? PythonVerboseRegexpLanguage.INSTANCE : PythonRegexpLanguage.INSTANCE;
-                registrar.startInjecting(language);
-                for (TextRange range : ranges) {
-                  registrar.addPlace("", "", stringLiteral, range);
-                }
-                registrar.doneInjecting();
-              }
+              final Language language = isVerbose(call) ? PythonVerboseRegexpLanguage.INSTANCE : PythonRegexpLanguage.INSTANCE;
+              registrar.startInjecting(language);
+              processStringLiteral(context, registrar);
+              registrar.doneInjecting();
             }
           }
         }
@@ -80,10 +74,37 @@ public class PythonRegexpInjector implements MultiHostInjector {
 
   }
 
+  private static boolean isStringLiteral(@NotNull PsiElement element) {
+    if (element instanceof PyStringLiteralExpression) {
+      return true;
+    }
+    else if (element instanceof PyParenthesizedExpression) {
+      final PyExpression contained = ((PyParenthesizedExpression)element).getContainedExpression();
+      return contained != null && isStringLiteral(contained);
+    }
+    return false;
+  }
+
+  private static void processStringLiteral(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar) {
+    if (element instanceof PyStringLiteralExpression) {
+      final PyStringLiteralExpression expr = (PyStringLiteralExpression)element;
+      final List<TextRange> ranges = expr.getStringValueTextRanges();
+      for (TextRange range : ranges) {
+        registrar.addPlace("", "", expr, range);
+      }
+    }
+    else if (element instanceof PyParenthesizedExpression) {
+      final PyExpression contained = ((PyParenthesizedExpression)element).getContainedExpression();
+      if (contained != null) {
+        processStringLiteral(contained, registrar);
+      }
+    }
+  }
+
   @NotNull
   @Override
   public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
-    return Arrays.asList(PyStringLiteralExpression.class);
+    return Arrays.asList(PyStringLiteralExpression.class, PyParenthesizedExpression.class);
   }
 
   private static boolean isVerbose(@NotNull PyCallExpression call) {

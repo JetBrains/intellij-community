@@ -89,6 +89,13 @@ public class PyRegexpTest extends PyTestCase {
                        ".*()abc");
   }
 
+  public void testParenthesizedStringRegexpAutoInjection() {
+    doTestInjectedText("import re\n" +
+                       "\n" +
+                       "re.search((('<caret>foo')), 'foobar')\n",
+                       "foo");
+  }
+
   private void doTestInjectedText(@NotNull String text, @NotNull String expected) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
