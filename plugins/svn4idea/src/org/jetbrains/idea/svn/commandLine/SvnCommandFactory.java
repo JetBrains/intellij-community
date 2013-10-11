@@ -49,11 +49,4 @@ public class SvnCommandFactory {
       }
     });
   }
-
-  public static SvnLineCommand createLineCommand(Project project, File workingDirectory, @NotNull SvnCommandName commandName) {
-    final SvnLineCommand command =
-      new SvnLineCommand(workingDirectory, commandName, SvnApplicationSettings.getInstance().getCommandLinePath(), null);
-    addStartFailedListener(project, command);
-    return command;
-  }
 }

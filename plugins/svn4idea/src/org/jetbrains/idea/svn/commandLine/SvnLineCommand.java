@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.LineHandlerHelper;
 import com.intellij.openapi.vcs.LineProcessEventListener;
-import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
@@ -90,10 +89,6 @@ public class SvnLineCommand extends SvnCommand {
   private final StringBuffer myErr;
   private final StringBuffer myStdOut;
 
-  public SvnLineCommand(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath) {
-    this(workingDirectory, commandName, exePath, null);
-  }
-
   public SvnLineCommand(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath, File configDir) {
     super(workingDirectory, commandName, exePath, configDir);
     myLineListeners = EventDispatcher.create(LineProcessEventListener.class);
@@ -119,12 +114,10 @@ public class SvnLineCommand extends SvnCommand {
                                                             final LineCommandListener listener,
                                                             @NotNull AuthenticationCallback authenticationCallback,
                                                             String... parameters) throws SvnBindException {
-    File configDir = null;
-
     try {
       // for IDEA proxy case
       writeIdeaConfig2SubversionConfig(authenticationCallback, repositoryUrl);
-      configDir = authenticationCallback.getSpecialConfigDir();
+      File configDir = authenticationCallback.getSpecialConfigDir();
 
       while (true) {
         final String exePath = SvnApplicationSettings.getInstance().getCommandLinePath();
@@ -167,9 +160,7 @@ public class SvnLineCommand extends SvnCommand {
         return command;
       }
     } finally {
-      if (authenticationCallback != null) {
-        authenticationCallback.reset();
-      }
+      authenticationCallback.reset();
     }
   }
 
@@ -466,17 +457,6 @@ public class SvnLineCommand extends SvnCommand {
     }
   }
 
-  /*svn: E170001: Commit failed (details follow):
-  svn: E170001: Unable to connect to a repository at URL 'htt../svn/secondRepo/local2/trunk/mod2/src/com/test/gggGA'
-  svn: E170001: OPTIONS of 'htt.../svn/secondRepo/local2/trunk/mod2/src/com/test/gggGA': authorization failed: Could not authenticate to server: rejected Basic challenge (ht)*/
-  private final static String ourAuthFailed = "authorization failed";
-  private final static String ourAuthFailed2 = "Could not authenticate to server";
-
-  private static boolean isAuthenticationFailed(String s) {
-    return s.trim().startsWith(AUTHENTICATION_REALM);
-    //return s.contains(ourAuthFailed) && s.contains(ourAuthFailed2);
-  }
-
   private static SvnLineCommand runCommand(String exePath,
                                            SvnCommandName commandName,
                                            final LineCommandListener listener,
@@ -498,7 +478,6 @@ public class SvnLineCommand extends SvnCommand {
         // Client certificate filename:
         if (ProcessOutputTypes.STDERR.equals(outputType)) {
           ++ myErrCnt;
-          final String trim = text.trim();
           // should end in 1 second
           errorReceived.set(true);
         }
