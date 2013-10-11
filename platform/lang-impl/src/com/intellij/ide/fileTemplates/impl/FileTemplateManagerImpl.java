@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
   private final FTManager myCodeTemplatesManager;
   private final FTManager myJ2eeTemplatesManager;
   private final FTManager[] myAllManagers;
+  private final URL myDefaultTemplateDescription;
+  private final URL myDefaultIncludeDescription;
 
   public static FileTemplateManagerImpl getInstanceImpl() {
     return (FileTemplateManagerImpl)ServiceManager.getService(FileTemplateManager.class);
@@ -84,6 +86,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
     myCodeTemplatesManager = myTemplateSettings.getCodeTemplatesManager();
     myJ2eeTemplatesManager = myTemplateSettings.getJ2eeTemplatesManager();
     myAllManagers = myTemplateSettings.getAllManagers();
+    myDefaultTemplateDescription = myTemplateSettings.getDefaultTemplateDescription();
+    myDefaultIncludeDescription = myTemplateSettings.getDefaultIncludeDescription();
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       for (String tname : Arrays.asList("Class", "AnnotationType", "Enum", "Interface")) {
@@ -473,11 +477,11 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
   }
 
   public URL getDefaultTemplateDescription() {
-    return null;  // todo
+    return myDefaultTemplateDescription;
   }
 
   public URL getDefaultIncludeDescription() {
-    return null; // todo
+    return myDefaultIncludeDescription;
   }
 
   private Date myTestDate;
