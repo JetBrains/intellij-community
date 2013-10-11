@@ -362,7 +362,7 @@ public class PluginDownloader {
     }
     if (url == null) {
       String uuid = UpdateChecker.getInstallationUID(PropertiesComponent.getInstance());
-      String buildNumber = ApplicationInfo.getInstance().getBuild().asString();
+      String buildNumber = ApplicationInfo.getInstance().getApiVersion();
       url = RepositoryHelper.getDownloadUrl() + URLEncoder.encode(descriptor.getPluginId().getIdString(), "UTF8") +
             "&build=" + buildNumber + "&uuid=" + URLEncoder.encode(uuid, "UTF8");
     }

@@ -32,6 +32,7 @@ public abstract class ApplicationInfo {
   }
 
   public abstract BuildNumber getBuild();
+  public abstract String getApiVersion();
 
   public abstract String getMajorVersion();
   public abstract String getMinorVersion();

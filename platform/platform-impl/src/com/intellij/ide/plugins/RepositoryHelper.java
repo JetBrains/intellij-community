@@ -45,7 +45,7 @@ public class RepositoryHelper {
   public static List<IdeaPluginDescriptor> loadPluginsFromRepository(@Nullable ProgressIndicator indicator) throws Exception {
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
 
-    String url = appInfo.getPluginsListUrl() + "?build=" + appInfo.getBuild().asString();
+    String url = appInfo.getPluginsListUrl() + "?build=" + appInfo.getApiVersion();
 
     if (indicator != null) {
       indicator.setText2(IdeBundle.message("progress.connecting.to.plugin.manager", appInfo.getPluginManagerUrl()));

@@ -19,7 +19,9 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
-import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.notification.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -38,20 +40,18 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.Function;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.xmlb.XmlSerializer;
-import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.*;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
+import com.intellij.util.xmlb.annotations.Tag;
 import org.jdom.Document;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.util.*;
 
@@ -63,7 +63,7 @@ public class PluginsAdvertiser implements StartupActivity {
   public static List<PluginId> retrieve(UnknownFeature unknownFeature) {
     final String featureType = unknownFeature.getFeatureType();
     final String implementationName = unknownFeature.getImplementationName();
-    final String buildNumber = ApplicationInfo.getInstance().getBuild().asString();
+    final String buildNumber = ApplicationInfo.getInstance().getApiVersion();
     final String pluginRepositoryUrl = FEATURE_IMPLEMENTATIONS_URL +
                                        "featureType=" + featureType +
                                        "&implementationName=" + implementationName.replaceAll("#", "%23") +
