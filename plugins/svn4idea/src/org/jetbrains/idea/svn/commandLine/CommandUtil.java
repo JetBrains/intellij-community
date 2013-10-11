@@ -197,11 +197,11 @@ public class CommandUtil {
                                    @NotNull List<String> parameters,
                                    @Nullable LineCommandListener listener) throws VcsException {
     SVNURL repositoryUrl = resolveRepositoryUrl(vcs, name, target);
-    IdeaSvnkitBasedAuthenticationCallback callback = new IdeaSvnkitBasedAuthenticationCallback(vcs);
+    CommandRuntime runtime = new CommandRuntime(new IdeaSvnkitBasedAuthenticationCallback(vcs));
 
-    return CommandRuntime.runWithAuthenticationAttempt(workingDirectory, repositoryUrl, name,
-                                                       listener != null ? listener : new SvnCommitRunner.CommandListener(null), callback,
-                                                       ArrayUtil.toStringArray(parameters));
+    return runtime.runWithAuthenticationAttempt(workingDirectory, repositoryUrl, name,
+                                                listener != null ? listener : new SvnCommitRunner.CommandListener(null),
+                                                ArrayUtil.toStringArray(parameters));
   }
 
   @NotNull

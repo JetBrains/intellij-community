@@ -43,16 +43,21 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class CommandRuntime {
 
-  public static SvnLineCommand runWithAuthenticationAttempt(@NotNull final File workingDirectory,
-                                                            @Nullable final SVNURL repositoryUrl,
-                                                            SvnCommandName commandName,
-                                                            final LineCommandListener listener,
-                                                            @NotNull AuthenticationCallback authenticationCallback,
-                                                            String... parameters) throws SvnBindException {
+  @NotNull private final AuthenticationCallback myAuthCallback;
+
+  public CommandRuntime(@NotNull AuthenticationCallback authCallback) {
+    myAuthCallback = authCallback;
+  }
+
+  public SvnLineCommand runWithAuthenticationAttempt(@NotNull final File workingDirectory,
+                                                     @Nullable final SVNURL repositoryUrl,
+                                                     SvnCommandName commandName,
+                                                     final LineCommandListener listener,
+                                                     String... parameters) throws SvnBindException {
     try {
       // for IDEA proxy case
-      writeIdeaConfig2SubversionConfig(authenticationCallback, repositoryUrl);
-      File configDir = authenticationCallback.getSpecialConfigDir();
+      writeIdeaConfig2SubversionConfig(repositoryUrl);
+      File configDir = myAuthCallback.getSpecialConfigDir();
       String[] originalParameters = Arrays.copyOf(parameters, parameters.length);
 
       while (true) {
@@ -71,12 +76,12 @@ public class CommandRuntime {
           if (command.getError().length() > 0) {
             // handle authentication
             final String errText = command.getError().toString().trim();
-            final AuthCallbackCase callback = createCallback(errText, authenticationCallback, repositoryUrl);
+            final AuthCallbackCase callback = createCallback(errText, repositoryUrl);
             if (callback != null) {
               cleanup(exePath, command, workingDirectory);
               if (callback.getCredentials(errText)) {
-                if (authenticationCallback.getSpecialConfigDir() != null) {
-                  configDir = authenticationCallback.getSpecialConfigDir();
+                if (myAuthCallback.getSpecialConfigDir() != null) {
+                  configDir = myAuthCallback.getSpecialConfigDir();
                 }
                 parameters = updateParameters(callback, parameters);
                 continue;
@@ -97,28 +102,27 @@ public class CommandRuntime {
         return command;
       }
     } finally {
-      authenticationCallback.reset();
+      myAuthCallback.reset();
     }
   }
 
-  private static void logNullExitCode(@NotNull SvnLineCommand command, @Nullable Integer exitCode) {
+  private void logNullExitCode(@NotNull SvnLineCommand command, @Nullable Integer exitCode) {
     if (exitCode == null) {
       SvnCommand.LOG.info("Null exit code returned, but not errors detected " + command.getCommandText());
     }
   }
 
-  private static String[] updateParameters(AuthCallbackCase callback, String[] parameters) {
+  private String[] updateParameters(AuthCallbackCase callback, String[] parameters) {
     List<String> p = new ArrayList<String>(Arrays.asList(parameters));
 
     callback.updateParameters(p);
     return ArrayUtil.toStringArray(p);
   }
 
-  private static void writeIdeaConfig2SubversionConfig(@NotNull AuthenticationCallback authenticationCallback,
-                                                       @Nullable SVNURL repositoryUrl) throws SvnBindException {
-    if (authenticationCallback.haveDataForTmpConfig()) {
+  private void writeIdeaConfig2SubversionConfig(@Nullable SVNURL repositoryUrl) throws SvnBindException {
+    if (myAuthCallback.haveDataForTmpConfig()) {
       try {
-        if (!authenticationCallback.persistDataToTmpConfig(repositoryUrl)) {
+        if (!myAuthCallback.persistDataToTmpConfig(repositoryUrl)) {
           throw new SvnBindException("Can not persist " + ApplicationNamesInfo.getInstance().getProductName() +
                                      " HTTP proxy information into tmp config directory");
         }
@@ -129,21 +133,19 @@ public class CommandRuntime {
       catch (URISyntaxException e) {
         throw new SvnBindException(e);
       }
-      assert authenticationCallback.getSpecialConfigDir() != null;
+      assert myAuthCallback.getSpecialConfigDir() != null;
     }
   }
 
-  private static AuthCallbackCase createCallback(final String errText,
-                                                 @NotNull final AuthenticationCallback callback,
-                                                 final SVNURL url) {
+  private AuthCallbackCase createCallback(final String errText, final SVNURL url) {
     List<AuthCallbackCase> authCases = ContainerUtil.newArrayList();
 
-    authCases.add(new CertificateCallbackCase(callback, url));
-    authCases.add(new CredentialsCallback(callback, url));
-    authCases.add(new PassphraseCallback(callback, url));
-    authCases.add(new ProxyCallback(callback, url));
-    authCases.add(new TwoWaySslCallback(callback, url));
-    authCases.add(new UsernamePasswordCallback(callback, url));
+    authCases.add(new CertificateCallbackCase(myAuthCallback, url));
+    authCases.add(new CredentialsCallback(myAuthCallback, url));
+    authCases.add(new PassphraseCallback(myAuthCallback, url));
+    authCases.add(new ProxyCallback(myAuthCallback, url));
+    authCases.add(new TwoWaySslCallback(myAuthCallback, url));
+    authCases.add(new UsernamePasswordCallback(myAuthCallback, url));
 
     return ContainerUtil.find(authCases, new Condition<AuthCallbackCase>() {
       @Override
@@ -153,7 +155,7 @@ public class CommandRuntime {
     });
   }
 
-  private static void cleanup(String exePath, SvnCommand command, @NotNull File workingDirectory) throws SvnBindException {
+  private void cleanup(String exePath, SvnCommand command, @NotNull File workingDirectory) throws SvnBindException {
     if (command.isManuallyDestroyed() && command.getCommandName().isWriteable()) {
       File wcRoot = SvnUtil.getWorkingCopyRootNew(workingDirectory);
 
@@ -168,11 +170,11 @@ public class CommandRuntime {
     }
   }
 
-  private static SvnLineCommand runCommand(String exePath,
-                                           SvnCommandName commandName,
-                                           final LineCommandListener listener,
-                                           File base, File configDir,
-                                           String[] parameters, String[] originalParameters) throws SvnBindException {
+  private SvnLineCommand runCommand(String exePath,
+                                    SvnCommandName commandName,
+                                    final LineCommandListener listener,
+                                    File base, File configDir,
+                                    String[] parameters, String[] originalParameters) throws SvnBindException {
     final AtomicBoolean errorReceived = new AtomicBoolean(false);
     final SvnLineCommand command = new SvnLineCommand(base, commandName, exePath, configDir) {
       int myErrCnt = 0;
