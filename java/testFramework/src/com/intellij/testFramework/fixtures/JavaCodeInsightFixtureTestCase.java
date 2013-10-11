@@ -47,12 +47,20 @@ public abstract class JavaCodeInsightFixtureTestCase extends UsefulTestCase{
     final TestFixtureBuilder<IdeaProjectTestFixture> projectBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(getName());
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(projectBuilder.getFixture());
     final JavaModuleFixtureBuilder moduleFixtureBuilder = projectBuilder.addModule(JavaModuleFixtureBuilder.class);
-    moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath());
+    if (toAddSourceRoot()) {
+      moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath());
+    } else {
+      moduleFixtureBuilder.addContentRoot(myFixture.getTempDirPath());
+    }
     tuneFixture(moduleFixtureBuilder);    
 
     myFixture.setUp();
     myFixture.setTestDataPath(getTestDataPath());
     myModule = moduleFixtureBuilder.getFixture().getModule();
+  }
+
+  protected boolean toAddSourceRoot() {
+    return true;
   }
 
   @Override

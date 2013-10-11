@@ -333,7 +333,7 @@ public class PsiTestUtil {
                                 final String[] classRoots,
                                 final String[] sourceRoots) {
     final String parentUrl =
-      VirtualFileManager.constructUrl(classRoots[0].endsWith(".jar!/") ? JarFileSystem.PROTOCOL : LocalFileSystem.PROTOCOL, libDir);
+      VirtualFileManager.constructUrl((classRoots.length > 0 ? classRoots[0]:sourceRoots[0]).endsWith(".jar!/") ? JarFileSystem.PROTOCOL : LocalFileSystem.PROTOCOL, libDir);
     List<String> classesUrls = new ArrayList<String>();
     List<String> sourceUrls = new ArrayList<String>();
     for (String classRoot : classRoots) {
