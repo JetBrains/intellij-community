@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,10 +48,6 @@ public class LiveTemplateBuilder {
 
   public static boolean isEndVariable(@NotNull String name) {
     return name.startsWith(END_PREFIX);
-  }
-
-  public void insertVariableSegment(int offset, String name) {
-    myVariableOccurences.add(new VarOccurence(name, offset));
   }
 
   private static class VarOccurence {
@@ -262,7 +258,10 @@ public class LiveTemplateBuilder {
     for (int i = 0; i < template.getSegmentsCount(); i++) {
       String segmentName = template.getSegmentName(i);
       int localOffset = template.getSegmentOffset(i);
-      if (!TemplateImpl.INTERNAL_VARS_SET.contains(segmentName)) {
+      if (TemplateImpl.END.equals(segmentName)) {
+        end = offset + localOffset;
+      } 
+      else {
         if (predefinedVarValues != null && predefinedVarValues.containsKey(segmentName)) {
           String value = predefinedVarValues.get(segmentName);
           insertText(offset + localOffset, value, false);
@@ -273,9 +272,6 @@ public class LiveTemplateBuilder {
           segmentName = newVarNames.get(segmentName);
         }
         myVariableOccurences.add(new VarOccurence(segmentName, offset + localOffset));
-      }
-      else if (TemplateImpl.END.equals(segmentName)) {
-        end = offset + localOffset;
       }
     }
     int endOffset = end >= 0 ? end : offset + text.length();
