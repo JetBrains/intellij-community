@@ -167,7 +167,7 @@ public layoutCommunity(String classesPath, Set usedJars) {
   layoutUnix(args, paths.distUnix)
   layoutMac(args, paths.distMac)
 
-  ant.echo(message: buildName, file: "${paths.distAll}/build.txt")
+  ant.echo(message: "PC-${buildNumber}", file: "${paths.distAll}/build.txt")
 
   def launcher = "${paths.distWin}/bin/pycharm.exe"
   List resourcePaths = ["$home/community/community-resources/src",
