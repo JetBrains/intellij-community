@@ -42,13 +42,18 @@ public class Main {
   public static final int PLUGIN_ERROR = 5;
 
   private static final String AWT_HEADLESS = "java.awt.headless";
+  private static final String[] NO_ARGS = {};
 
   private static boolean isHeadless;
   private static boolean isCommandLine;
 
   private Main() { }
 
-  public static void main(final String[] args) {
+  public static void main(String[] args) {
+    if (args.length == 1 && "%f".equals(args[0])) {
+      args = NO_ARGS;
+    }
+
     setFlags(args);
 
     if (isHeadless()) {

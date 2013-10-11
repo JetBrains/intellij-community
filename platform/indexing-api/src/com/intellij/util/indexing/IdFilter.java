@@ -38,9 +38,9 @@ public abstract class IdFilter {
     ContentIterator iterator = new ContentIterator() {
       @Override
       public boolean processFile(VirtualFile fileOrDir) {
-        idSet.set(
-          ((VirtualFileWithId)fileOrDir).getId()
-        );
+        int id = ((VirtualFileWithId)fileOrDir).getId();
+        if (id < 0) id = -id; // workaround for encountering invalid files, see EA-49915, EA-50599
+        idSet.set(id);
         ProgressManager.checkCanceled();
         return true;
       }

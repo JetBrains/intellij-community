@@ -402,4 +402,40 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     assertTrue(topDir.exists());
     assertEquals(2, topDir.getChildren().length);
   }
+
+  public void testPartialRefresh() throws Exception {
+    File top = createTempDirectory(false);
+    doTestPartialRefresh(top);
+  }
+
+  public static void doTestPartialRefresh(File top) throws IOException {
+    File sub = IoTestUtil.createTestDir(top, "sub");
+    File file = IoTestUtil.createTestFile(top, "sub.txt");
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    NewVirtualFile topDir = (NewVirtualFile)lfs.refreshAndFindFileByIoFile(top);
+    assertNotNull(topDir);
+    NewVirtualFile subDir = (NewVirtualFile)lfs.refreshAndFindFileByIoFile(sub);
+    assertNotNull(subDir);
+    NewVirtualFile subFile = (NewVirtualFile)lfs.refreshAndFindFileByIoFile(file);
+    assertNotNull(subFile);
+    topDir.refresh(false, true);
+    assertFalse(topDir.isDirty());
+    assertFalse(subDir.isDirty());
+    assertFalse(subFile.isDirty());
+
+    subFile.markDirty();
+    subDir.markDirty();
+    assertTrue(topDir.isDirty());
+    assertTrue(subFile.isDirty());
+    assertTrue(subDir.isDirty());
+
+    topDir.refresh(false, false);
+    assertFalse(subFile.isDirty());
+    assertTrue(subDir.isDirty());  // should stay unvisited after non-recursive refresh
+
+    topDir.refresh(false, true);
+    assertFalse(topDir.isDirty());
+    assertFalse(subFile.isDirty());
+    assertFalse(subDir.isDirty());
+  }
 }

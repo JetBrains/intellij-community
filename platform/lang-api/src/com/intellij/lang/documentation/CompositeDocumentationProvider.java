@@ -92,10 +92,10 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
 
   @NotNull
   @Override
-  public String fetchExternalDocumentation(String link, Project project) {
+  public String fetchExternalDocumentation(@NotNull String link, @Nullable PsiElement element) {
     for (DocumentationProvider provider : myProviders) {
       if (provider instanceof ExternalDocumentationHandler && ((ExternalDocumentationHandler)provider).canFetchDocumentationLink(link)) {
-        return ((ExternalDocumentationHandler)provider).fetchExternalDocumentation(link, project);
+        return ((ExternalDocumentationHandler)provider).fetchExternalDocumentation(link, element);
       }
     }
 
