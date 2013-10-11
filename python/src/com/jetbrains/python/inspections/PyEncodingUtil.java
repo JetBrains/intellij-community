@@ -27,11 +27,11 @@ public class PyEncodingUtil {
     final JPanel optionsPanel = new JPanel(new GridBagLayout());
     GridBagConstraints c = new GridBagConstraints();
 
-    c.anchor = GridBagConstraints.BASELINE_LEADING;
+    c.anchor = GridBagConstraints.NORTH;
     c.fill = GridBagConstraints.HORIZONTAL;
     c.gridx = 0;
     c.gridy = 0;
-    c.weightx = 0;
+    c.weightx = 1;
     optionsPanel.add(new JLabel("Select default encoding: "), c);
     
     c.gridx = 1;
@@ -41,15 +41,15 @@ public class PyEncodingUtil {
 
     c.gridx = 0;
     c.gridy = 1;
-    c.weightx = 0;
+    c.weightx = 1;
+    c.weighty = 1;
     optionsPanel.add(new JLabel("Encoding comment format:"), c);
     
     c.gridx = 1;
     c.gridy = 1;
     c.weightx = 1;
-    c.weighty = 1;
     optionsPanel.add(encodingFormat, c);
-    
+
     return optionsPanel;
   }
 }
