@@ -378,6 +378,11 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  // PY-11058
+  public void testResetAfterSemicolon() {
+    doTest();
+  }
+
   public void doTest(LanguageLevel languageLevel) {
     LanguageLevel prev = myLanguageLevel;
     myLanguageLevel = languageLevel;
