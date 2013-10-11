@@ -82,21 +82,48 @@ public class PythonRegexpInjector implements MultiHostInjector {
       final PyExpression contained = ((PyParenthesizedExpression)element).getContainedExpression();
       return contained != null && isStringLiteral(contained);
     }
+    else if (element instanceof PyBinaryExpression) {
+      final PyBinaryExpression expr = (PyBinaryExpression)element;
+      final PyExpression left = expr.getLeftExpression();
+      final PyExpression right = expr.getRightExpression();
+      return expr.isOperator("+") && (isStringLiteral(left) || right != null && isStringLiteral(right));
+    }
     return false;
   }
 
   private static void processStringLiteral(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar) {
+    processStringLiteral(element, registrar, "", "");
+  }
+
+  private static void processStringLiteral(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar, @NotNull String prefix,
+                                           @NotNull String suffix) {
+    final String missingValue = "missing";
     if (element instanceof PyStringLiteralExpression) {
       final PyStringLiteralExpression expr = (PyStringLiteralExpression)element;
       final List<TextRange> ranges = expr.getStringValueTextRanges();
       for (TextRange range : ranges) {
-        registrar.addPlace("", "", expr, range);
+        registrar.addPlace(prefix, suffix, expr, range);
       }
     }
     else if (element instanceof PyParenthesizedExpression) {
       final PyExpression contained = ((PyParenthesizedExpression)element).getContainedExpression();
       if (contained != null) {
-        processStringLiteral(contained, registrar);
+        processStringLiteral(contained, registrar, prefix, suffix);
+      }
+    }
+    else if (element instanceof PyBinaryExpression) {
+      final PyBinaryExpression expr = (PyBinaryExpression)element;
+      if (expr.isOperator("+")) {
+        final PyExpression left = expr.getLeftExpression();
+        final PyExpression right = expr.getRightExpression();
+        final boolean isLeftString = isStringLiteral(left);
+        final boolean isRightString = right != null && isStringLiteral(right);
+        if (isLeftString) {
+          processStringLiteral(left, registrar, prefix, isRightString ? "" : missingValue);
+        }
+        if (isRightString) {
+          processStringLiteral(right, registrar, isLeftString ? "" : missingValue, suffix);
+        }
       }
     }
   }
@@ -104,7 +131,7 @@ public class PythonRegexpInjector implements MultiHostInjector {
   @NotNull
   @Override
   public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
-    return Arrays.asList(PyStringLiteralExpression.class, PyParenthesizedExpression.class);
+    return Arrays.asList(PyStringLiteralExpression.class, PyParenthesizedExpression.class, PyBinaryExpression.class);
   }
 
   private static boolean isVerbose(@NotNull PyCallExpression call) {

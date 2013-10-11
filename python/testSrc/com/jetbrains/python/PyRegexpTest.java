@@ -96,6 +96,21 @@ public class PyRegexpTest extends PyTestCase {
                        "foo");
   }
 
+  public void testConcatStringRegexpAutoInjection() {
+    doTestInjectedText("import re\n" +
+                       "\n" +
+                       "re.search('<caret>(.*' + 'bar)' + 'baz', 'foobar')\n",
+                       "(.*bar)baz");
+  }
+
+  public void testConcatStringWithValuesRegexpAutoInjection() {
+    doTestInjectedText("import re\n" +
+                       "\n" +
+                       "def f(x, y):\n" +
+                       "    re.search('<caret>.*(' + x + ')' + y, 'foo')\n",
+                       ".*(missing)missing");
+  }
+
   private void doTestInjectedText(@NotNull String text, @NotNull String expected) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
