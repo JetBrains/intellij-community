@@ -25,7 +25,6 @@
           <jar name="resources_en.jar">
             <module name="python">  <patternset refid="resources.included"/> </module>
           </jar>
-          <fileset dir="${project.home}/python/lib" includes="*.jar"/>
         </dir>
         <dir name="helpers">
           <fileset dir="${project.home}/python/helpers" includes="**/*.py"/>
