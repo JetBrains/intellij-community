@@ -17,10 +17,7 @@ import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -39,7 +36,7 @@ public abstract class AbstractLombokFieldProcessor extends AbstractLombokProcess
   public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     List<? super PsiElement> result = new ArrayList<PsiElement>();
     for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
-      PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotation(psiField, Collections.singleton(getSupportedAnnotation()), true);
+      PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotation(psiField, Arrays.asList(getSupportedAnnotation(), getSupportedAnnotationSimpleName()), true);
       if (null != psiAnnotation) {
         process(psiField, psiAnnotation, result);
       }

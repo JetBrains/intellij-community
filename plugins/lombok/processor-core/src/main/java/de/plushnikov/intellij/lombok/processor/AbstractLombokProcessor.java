@@ -22,6 +22,10 @@ public abstract class AbstractLombokProcessor implements LombokProcessor {
    */
   private final String supportedAnnotation;
   /**
+   * Annotation simple name this processor supports
+   */
+  private final String supportedAnnotationSimpleName;
+  /**
    * Anntotation class this processor supports
    */
   private final Class<? extends Annotation> supportedAnnotationClass;
@@ -39,6 +43,7 @@ public abstract class AbstractLombokProcessor implements LombokProcessor {
   protected AbstractLombokProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<?> supportedClass) {
     this.supportedAnnotationClass = supportedAnnotationClass;
     this.supportedAnnotation = supportedAnnotationClass.getName();
+    this.supportedAnnotationSimpleName = supportedAnnotationClass.getSimpleName();
     this.supportedClass = supportedClass;
   }
 
@@ -46,6 +51,12 @@ public abstract class AbstractLombokProcessor implements LombokProcessor {
   @Override
   public String getSupportedAnnotation() {
     return supportedAnnotation;
+  }
+
+  @NotNull
+  @Override
+  public String getSupportedAnnotationSimpleName() {
+    return supportedAnnotationSimpleName;
   }
 
   @NotNull

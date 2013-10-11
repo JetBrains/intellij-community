@@ -8,26 +8,14 @@ import com.google.common.collect.Lists;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomNamedTarget;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiJavaFile;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiParameterList;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
@@ -41,6 +29,8 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
 
   private static final String LOMBOK_SRC_PATH = "./lombok-api/target/generated-sources/lombok";
   private static final String LOMBOKPG_SRC_PATH = "./lombok-api/target/generated-sources/lombok-pg";
+
+  private static final Logger LOG = Logger.getLogger(LombokParsingTestCase.class.getSimpleName());
 
   @Override
   protected String getTestDataPath() {
@@ -165,6 +155,9 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
   private void compareMethods(PsiClass intellij, PsiClass theirs) {
     PsiMethod[] intellijMethods = intellij.getMethods();
     PsiMethod[] theirsMethods = theirs.getMethods();
+
+    LOG.log(Level.INFO, "IntelliJ Methods: " + Arrays.toString(intellijMethods));
+    LOG.log(Level.INFO, "Theirs Methods: " + Arrays.toString(theirsMethods));
 
     assertEquals("Methodscounts are different for Class: " + intellij.getName(), theirsMethods.length, intellijMethods.length);
 
