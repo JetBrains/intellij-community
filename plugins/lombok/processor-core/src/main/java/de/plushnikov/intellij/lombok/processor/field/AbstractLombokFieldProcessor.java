@@ -36,7 +36,7 @@ public abstract class AbstractLombokFieldProcessor extends AbstractLombokProcess
   public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     List<? super PsiElement> result = new ArrayList<PsiElement>();
     for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
-      PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotation(psiField, Arrays.asList(getSupportedAnnotation(), getSupportedAnnotationSimpleName()), true);
+      PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotation(psiField, Collections.singleton(getSupportedAnnotation()), true);
       if (null != psiAnnotation) {
         process(psiField, psiAnnotation, result);
       }

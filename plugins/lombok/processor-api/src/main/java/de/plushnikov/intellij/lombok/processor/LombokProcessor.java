@@ -20,9 +20,6 @@ public interface LombokProcessor {
   @NotNull
   String getSupportedAnnotation();
 
-  @NotNull
-  String getSupportedAnnotationSimpleName();
-
   Class<? extends Annotation> getSupportedAnnotationClass();
 
   Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation);
