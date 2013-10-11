@@ -199,7 +199,7 @@ public class CommandUtil {
     SVNURL repositoryUrl = resolveRepositoryUrl(vcs, name, target);
     IdeaSvnkitBasedAuthenticationCallback callback = new IdeaSvnkitBasedAuthenticationCallback(vcs);
 
-    return SvnLineCommand.runWithAuthenticationAttempt(workingDirectory, repositoryUrl, name,
+    return CommandRuntime.runWithAuthenticationAttempt(workingDirectory, repositoryUrl, name,
                                                        listener != null ? listener : new SvnCommitRunner.CommandListener(null), callback,
                                                        ArrayUtil.toStringArray(parameters));
   }
