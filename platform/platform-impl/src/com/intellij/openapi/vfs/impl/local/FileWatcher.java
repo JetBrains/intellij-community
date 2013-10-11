@@ -383,13 +383,13 @@ public class FileWatcher {
       if (fastPath && !changedPaths.isEmpty()) break;
 
       for (String root : flatWatchRoots) {
-        if (FileUtil.namesEqual(path, root)) {
+        if (FileUtil.pathsEqual(path, root)) {
           changedPaths.add(path);
           continue ext;
         }
         if (isExact) {
           String parentPath = new File(path).getParent();
-          if (parentPath != null && FileUtil.namesEqual(parentPath, root)) {
+          if (parentPath != null && FileUtil.pathsEqual(parentPath, root)) {
             changedPaths.add(path);
             continue ext;
           }
@@ -403,7 +403,7 @@ public class FileWatcher {
         }
         if (!isExact) {
           String parentPath = new File(root).getParent();
-          if (parentPath != null && FileUtil.namesEqual(path, parentPath)) {
+          if (parentPath != null && FileUtil.pathsEqual(path, parentPath)) {
             changedPaths.add(root);
             continue ext;
           }
