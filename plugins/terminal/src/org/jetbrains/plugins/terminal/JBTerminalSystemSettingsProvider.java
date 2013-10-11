@@ -152,6 +152,9 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider {
 
   @Override
   public int caretBlinkingMs() {
+    if (!EditorSettingsExternalizable.getInstance().isBlinkCaret()) {
+      return 0;
+    }
     return EditorSettingsExternalizable.getInstance().getBlinkPeriod();
   }
 
