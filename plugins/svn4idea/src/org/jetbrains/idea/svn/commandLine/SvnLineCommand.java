@@ -102,7 +102,7 @@ public class SvnLineCommand extends SvnCommand {
         final String exePath = SvnApplicationSettings.getInstance().getCommandLinePath();
         final SvnLineCommand command =
           runCommand(exePath, commandName, listener, workingDirectory, configDir, parameters, originalParameters);
-        final Integer exitCode = command.myExitCode.get();
+        final Integer exitCode = command.getExitCodeReference();
 
         // could be situations when exit code = 0, but there is info "warning" in error stream for instance, for "svn status"
         // on non-working copy folder
@@ -111,9 +111,9 @@ public class SvnLineCommand extends SvnCommand {
         if (exitCode == null || exitCode != 0) {
           logNullExitCode(command, exitCode);
 
-          if (command.myErr.length() > 0) {
+          if (command.getError().length() > 0) {
             // handle authentication
-            final String errText = command.myErr.toString().trim();
+            final String errText = command.getError().toString().trim();
             final AuthCallbackCase callback = createCallback(errText, authenticationCallback, repositoryUrl);
             if (callback != null) {
               cleanup(exePath, command, workingDirectory);
@@ -133,9 +133,9 @@ public class SvnLineCommand extends SvnCommand {
               throw new SvnBindException("Svn process exited with error code: " + exitCode);
             }
           }
-        } else if (command.myErr.length() > 0) {
+        } else if (command.getError().length() > 0) {
           // here exitCode == 0, but some warnings are in error stream
-          LOG.info("Detected warning - " + command.myErr);
+          LOG.info("Detected warning - " + command.getError());
         }
         return command;
       }
@@ -249,7 +249,7 @@ public class SvnLineCommand extends SvnCommand {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (ProcessOutputTypes.STDOUT.equals(outputType)) {
-          command.myStdOut.append(line);
+          command.getStdOut().append(line);
         }
 
         if (SvnCommand.LOG.isDebugEnabled()) {
@@ -265,17 +265,17 @@ public class SvnLineCommand extends SvnCommand {
           return;
         }
         if (ProcessOutputTypes.STDERR.equals(outputType)) {
-          if (command.myErr.length() > 0) {
-            command.myErr.append('\n');
+          if (command.getError().length() > 0) {
+            command.getError().append('\n');
           }
-          command.myErr.append(line);
+          command.getError().append(line);
         }
       }
 
       @Override
       public void processTerminated(int exitCode) {
         listener.processTerminated(exitCode);
-        command.myExitCode.set(exitCode);
+        command.setExitCodeReference(exitCode);
       }
 
       @Override
@@ -350,5 +350,21 @@ public class SvnLineCommand extends SvnCommand {
   public void addLineListener(LineProcessEventListener listener) {
     myLineListeners.addListener(listener);
     super.addListener(listener);
+  }
+
+  public StringBuffer getError() {
+    return myErr;
+  }
+
+  public StringBuffer getStdOut() {
+    return myStdOut;
+  }
+
+  public Integer getExitCodeReference() {
+    return myExitCode.get();
+  }
+
+  public void setExitCodeReference(int value) {
+    myExitCode.set(value);
   }
 }
