@@ -129,7 +129,10 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
     Map<String/* project dir path */, String/* project file path */> rootProjectPaths = ContainerUtilRt.newHashMap();
     for (ExternalProjectSettings projectSettings : s.getLinkedProjectsSettings()) {
       String path = projectSettings.getExternalProjectPath();
-      rootProjectPaths.put(new File(path).getParentFile().getAbsolutePath(), path);
+      if(path == null) continue;
+      final File rootProjectPathFile = new File(path).getParentFile();
+      if(rootProjectPathFile == null) continue;
+      rootProjectPaths.put(rootProjectPathFile.getAbsolutePath(), path);
     }
     
     String rootProjectPath = null;
