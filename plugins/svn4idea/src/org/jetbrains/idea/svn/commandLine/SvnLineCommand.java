@@ -118,10 +118,12 @@ public class SvnLineCommand extends SvnCommand {
       // for IDEA proxy case
       writeIdeaConfig2SubversionConfig(authenticationCallback, repositoryUrl);
       File configDir = authenticationCallback.getSpecialConfigDir();
+      String[] originalParameters = Arrays.copyOf(parameters, parameters.length);
 
       while (true) {
         final String exePath = SvnApplicationSettings.getInstance().getCommandLinePath();
-        final SvnLineCommand command = runCommand(exePath, commandName, listener, workingDirectory, configDir, parameters);
+        final SvnLineCommand command =
+          runCommand(exePath, commandName, listener, workingDirectory, configDir, parameters, originalParameters);
         final Integer exitCode = command.myExitCode.get();
 
         // could be situations when exit code = 0, but there is info "warning" in error stream for instance, for "svn status"
@@ -450,7 +452,7 @@ public class SvnLineCommand extends SvnCommand {
       // TODO: check if we could "configure" commands (or make command to explicitly ask) if cleanup is required - not to search
       // TODO: working copy root each time
       if (wcRoot != null) {
-        runCommand(exePath, SvnCommandName.cleanup, new SvnCommitRunner.CommandListener(null), wcRoot, null);
+        runCommand(exePath, SvnCommandName.cleanup, new SvnCommitRunner.CommandListener(null), wcRoot, null, null, null);
       } else {
         LOG.info("Could not execute cleanup for command " + command.getCommandText());
       }
@@ -461,7 +463,7 @@ public class SvnLineCommand extends SvnCommand {
                                            SvnCommandName commandName,
                                            final LineCommandListener listener,
                                            File base, File configDir,
-                                           String... parameters) throws SvnBindException {
+                                           String[] parameters, String[] originalParameters) throws SvnBindException {
     final AtomicBoolean errorReceived = new AtomicBoolean(false);
     final SvnLineCommand command = new SvnLineCommand(base, commandName, exePath, configDir) {
       int myErrCnt = 0;
@@ -484,6 +486,8 @@ public class SvnLineCommand extends SvnCommand {
         super.onTextAvailable(text, outputType);
       }
     };
+
+    command.setOriginalParameters(originalParameters);
 
     command.addParameters(parameters);
     command.addParameters("--non-interactive");

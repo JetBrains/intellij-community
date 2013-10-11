@@ -22,6 +22,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProcessEventListener;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
@@ -29,6 +30,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -55,6 +58,7 @@ public abstract class SvnCommand {
 
   private final EventDispatcher<ProcessEventListener> myListeners = EventDispatcher.create(ProcessEventListener.class);
   private final SvnCommandName myCommandName;
+  private String[] myOriginalParameters;
 
   public SvnCommand(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath) {
     this(workingDirectory, commandName, exePath, null);
@@ -236,9 +240,29 @@ public abstract class SvnCommand {
     }
   }
 
+  // TODO: used only to ensure authentication info is not logged to file. Remove when command execution model is refactored
+  // TODO: - so we could determine if parameter should be logged by the parameter itself.
+  public void setOriginalParameters(String... original) {
+    synchronized (myLock) {
+      myOriginalParameters = original;
+    }
+  }
+
   public String getCommandText() {
     synchronized (myLock) {
-      return myCommandLine.getCommandLineString();
+      List<String> data = new ArrayList<String>();
+
+      data.add(myCommandLine.getExePath());
+      if (myConfigDir != null) {
+        data.add("--config-dir");
+        data.add(myConfigDir.getPath());
+      }
+      data.add(myCommandName.getName());
+      if (myOriginalParameters != null) {
+        data.addAll(Arrays.asList(myOriginalParameters));
+      }
+
+      return StringUtil.join(data, " ");
     }
   }
 
