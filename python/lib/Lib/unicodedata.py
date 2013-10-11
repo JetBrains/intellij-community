@@ -223,7 +223,7 @@ def init():
 
     my_path = os.path.dirname(__file__)
     loader = pkgutil.get_loader('unicodedata')
-    init_unicodedata(StringIO.StringIO(loader.get_data(os.path.join(my_path,'UnicodeData.txt'))))
-    init_east_asian_width(StringIO.StringIO(loader.get_data(os.path.join(my_path,'EastAsianWidth.txt'))))
+    init_unicodedata(StringIO.StringIO(loader.get_data(os.path.join(my_path, 'UnicodeData.txt'))))
+    init_east_asian_width(StringIO.StringIO(loader.get_data(os.path.join(my_path, 'EastAsianWidth.txt'))))
 
 init()
