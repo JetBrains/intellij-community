@@ -4,16 +4,7 @@ import com.google.common.base.Function;
 import com.google.common.base.Predicates;
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
@@ -102,7 +93,15 @@ public class PsiClassUtil {
 
   public static boolean hasSuperClass(@NotNull final PsiClass psiClass) {
     final PsiClass superClass = psiClass.getSuperClass();
-    return null != superClass && !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName());
+    return (null != superClass && !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())
+        || !superTypesIsEmptyOrObjectOnly(psiClass));
+  }
+
+  private static boolean superTypesIsEmptyOrObjectOnly(@NotNull final PsiClass psiClass) {
+    // It returns abstract classes, but also Object.
+    final PsiClassType[] superTypes = psiClass.getSuperTypes();
+    return superTypes.length == 0 || superTypes.length > 1 || "java.lang.Object".equals(superTypes[0].getCanonicalText());
+
   }
 
   public static boolean hasMultiArgumentConstructor(@NotNull final PsiClass psiClass) {

@@ -26,7 +26,6 @@ public class DataTestCase extends LombokParsingTestCase {
   }
 
   public void testDataPlain() throws IOException {
-    //TODO known problem, try to fix later
     doTest();
   }
 
