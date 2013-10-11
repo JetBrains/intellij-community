@@ -33,7 +33,7 @@ public abstract class AbstractLombokProcessor implements LombokProcessor {
   /**
    * Constructor for all Lombok-Processors
    *
-   * @param supportedAnnotationClass anntotation this processor supports
+   * @param supportedAnnotationClass annotation this processor supports
    * @param supportedClass           kind of output elements this processor supports
    */
   protected AbstractLombokProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<?> supportedClass) {
