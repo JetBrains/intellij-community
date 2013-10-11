@@ -117,8 +117,6 @@ target('default': "Build artifacts") {
 
   layoutCommunity("${paths.sandbox}/classes/production", usedJars)
 
-
-  buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin])
   /*
   buildNSIS([paths.distAll, paths.distWin],
             "$home/python/build/strings.nsi", "$home/python/build/paths.nsi",
@@ -175,6 +173,8 @@ public layoutCommunity(String classesPath, Set usedJars) {
     "$pythonCommunityHome/resources"]
   buildWinLauncher("$ch", "$ch/bin/WinLauncher/WinLauncher.exe", launcher,
                    appInfo, "$pythonCommunityHome/build/pycharm_community_launcher.properties", system_selector, resourcePaths)
+
+  buildWinZip("${paths.artifacts}/pycharmPC-${buildNumber}.zip", [paths.distAll, paths.distWin])
 
   String tarRoot = isEap() ? "pycharm-community-$buildNumber" : "pycharm-community-${p("component.version.major")}.${p("component.version.minor")}"
   buildTarGz(tarRoot, "$paths.artifacts/pycharmPC-${buildNumber}.tar", [paths.distAll, paths.distUnix])
