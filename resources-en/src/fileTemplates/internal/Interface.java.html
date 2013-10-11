@@ -4,11 +4,17 @@
   <tr>
     <td colspan="3"><font face="verdana" size="-1">This is a built-in template used each time you create a new Java interface, by
       selecting <b>New | Java Class | Interface</b> from the popup menu in one of the project views.<br>
-      The template is editable. Along with Java expressions and comments, you can also use the predefined variables
-      (listed below) that will be then expanded like macros into the corresponding values.<br>
+      The template is editable. Along with Java expressions and comments, you can also use predefined variables
+      (listed below) that will then be expanded like macros into the corresponding values.<br>
+      It is also possible to specify an arbitrary number of custom variables in the format
+      <font color="#7F0000" size="-2"><b><i>${&lt;VARIABLE_NAME&gt;}</i></b></font>. In this case, before the new
+      file is created, you will be prompted with a dialog where you can define particular values for all
+      custom variables.<br>
       Using the <font color="#7F0000"><i><b>#parse</b></i></font> directive, you can include templates from the <b>Includes</b>
-      tab, by specifying the full name of the desired tamplate as a parameter in quotation marks.</font>
-    </td>
+      tab, by specifying the full name of the desired template as a parameter in quotation marks.
+      For example:<br>
+      <font color="#7F0000"><b><i>#parse</i></b></font>(<font color="#008000">"File Header.java"</font>)
+    </font></td>
   </tr>
 </table>
 <table border="0" cellpadding="5" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111">
@@ -23,7 +29,7 @@
   <tr>
     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${NAME}</i></b></font></nobr></td>
     <td width="10">&nbsp;</td>
-    <td valign="top"><font face="verdana" size="-1">name of the new interface specified by you in the <b>New Interface</b> dialog</font></td>
+    <td valign="top"><font face="verdana" size="-1">name of the new interface specified by you in the <b>Create New Class</b> dialog</font></td>
   </tr>
   <tr>
     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${USER}</i></b></font></nobr></td>
@@ -51,6 +57,16 @@
      <td valign="top"><font face="verdana" size="-1">current month</font></td>
    </tr>
    <tr>
+     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${MONTH_NAME_SHORT}</i></b></font></nobr></td>
+     <td width="10">&nbsp;</td>
+     <td valign="top"><font face="verdana" size="-1">first 3 letters of the current month name. Example: Jan, Feb, etc.</font></td>
+   </tr>
+   <tr>
+     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${MONTH_NAME_FULL}</i></b></font></nobr></td>
+     <td width="10">&nbsp;</td>
+     <td valign="top"><font face="verdana" size="-1">full name of the current month. Example: January, February, etc.</font></td>
+   </tr>
+   <tr>
      <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${DAY}</i></b></font></nobr></td>
      <td width="10">&nbsp;</td>
      <td valign="top"><font face="verdana" size="-1">current day of the month</font></td>
@@ -65,11 +81,11 @@
      <td width="10">&nbsp;</td>
      <td valign="top"><font face="verdana" size="-1">current minute</font></td>
    </tr>
-  <tr>
-    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${PROJECT_NAME}</i></b></font></nobr></td>
-    <td width="10">&nbsp;</td>
-    <td valign="top"><font face="verdana" size="-1">the name of the current project</font></td>
-  </tr>
+   <tr>
+     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${PROJECT_NAME}</i></b></font></nobr></td>
+     <td width="10">&nbsp;</td>
+     <td valign="top"><font face="verdana" size="-1">the name of the current project</font></td>
+   </tr>
 </table>
 </body>
 </html>

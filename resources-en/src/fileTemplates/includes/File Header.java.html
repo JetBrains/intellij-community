@@ -4,8 +4,8 @@
   <tr>
     <td colspan="3"><font face="verdana" size="-1">This is a built-in template. It contains a code fragment that can be included into file templates
       (<b>Templates</b> tab) with the help of the <font color="#7F0000"><b><i>#parse</i></b></font> directive.<br>
-      The template is editable. Along with the static text, code and comments, you can also use the predefined variables
-      that will be then expanded like macros into the corresponding values.</font><br>
+      The template is editable. Along with static text, code and comments, you can also use predefined variables
+      that will then be expanded like macros into the corresponding values.</font><br>
     </td>
   </tr>
 </table>
@@ -16,7 +16,7 @@
   <tr>
     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${PACKAGE_NAME}</i></b></font></nobr></td>
     <td width="10">&nbsp;</td>
-    <td valign="top"><font face="verdana" size="-1">name of the package in which the new class/interface is created</font></td>
+    <td valign="top"><font face="verdana" size="-1">name of the package in which the new file is created</font></td>
   </tr>
   <tr>
     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${USER}</i></b></font></nobr></td>
@@ -42,6 +42,16 @@
     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${MONTH}</i></b></font></nobr></td>
     <td width="10">&nbsp;</td>
     <td valign="top"><font face="verdana" size="-1">current month</font></td>
+  </tr>
+  <tr>
+    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${MONTH_NAME_SHORT}</i></b></font></nobr></td>
+    <td width="10">&nbsp;</td>
+    <td valign="top"><font face="verdana" size="-1">first 3 letters of the current month name. Example: Jan, Feb, etc.</font></td>
+  </tr>
+  <tr>
+    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${MONTH_NAME_FULL}</i></b></font></nobr></td>
+    <td width="10">&nbsp;</td>
+    <td valign="top"><font face="verdana" size="-1">full name of the current month. Example: January, February, etc.</font></td>
   </tr>
   <tr>
     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${DAY}</i></b></font></nobr></td>

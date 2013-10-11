@@ -3,7 +3,7 @@
 <table border="0" cellpadding="2" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111">
   <tr>
     <td colspan="3"><font face="verdana" size="-1">This is a built-in template used each time you create
-      a new Java class, by selecting <b>New | Java Class | Class</b> from the popup menu in one of the project views.<br>
+      a new Java annotation, by selecting <b>New | Java Class | Annotation</b> from the popup menu in one of the project views.<br>
       The template is editable. Along with Java expressions and comments, you can also use predefined variables
       (listed below) that will then be expanded like macros into the corresponding values.<br>
       It is also possible to specify an arbitrary number of custom variables in the format
@@ -24,12 +24,12 @@
   <tr>
     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${PACKAGE_NAME}</i></b></font></nobr></td>
     <td width="10">&nbsp;</td>
-    <td valign="top"><font face="verdana" size="-1">name of the package in which the new class is created</font></td>
+    <td valign="top"><font face="verdana" size="-1">name of the package in which the new annotation is created</font></td>
   </tr>
   <tr>
     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${NAME}</i></b></font></nobr></td>
     <td width="10">&nbsp;</td>
-    <td valign="top"><font face="verdana" size="-1">name of the new class specified by you in the <b>Create New Class</b> dialog</font></td>
+    <td valign="top"><font face="verdana" size="-1">name of the new annotation specified by you in the <b>Create New Class</b> dialog</font></td>
   </tr>
   <tr>
     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${USER}</i></b></font></nobr></td>
@@ -47,45 +47,45 @@
     <td valign="top"><font face="verdana" size="-1">current system time</font></td>
   </tr>
   <tr>
-     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${YEAR}</i></b></font></nobr></td>
-     <td width="10">&nbsp;</td>
-     <td valign="top"><font face="verdana" size="-1">current year</font></td>
-   </tr>
-   <tr>
-     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${MONTH}</i></b></font></nobr></td>
-     <td width="10">&nbsp;</td>
-     <td valign="top"><font face="verdana" size="-1">current month</font></td>
-   </tr>
-   <tr>
-     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${MONTH_NAME_SHORT}</i></b></font></nobr></td>
-     <td width="10">&nbsp;</td>
-     <td valign="top"><font face="verdana" size="-1">first 3 letters of the current month name. Example: Jan, Feb, etc.</font></td>
-   </tr>
-   <tr>
-     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${MONTH_NAME_FULL}</i></b></font></nobr></td>
-     <td width="10">&nbsp;</td>
-     <td valign="top"><font face="verdana" size="-1">full name of the current month. Example: January, February, etc.</font></td>
-   </tr>
-   <tr>
-     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${DAY}</i></b></font></nobr></td>
-     <td width="10">&nbsp;</td>
-     <td valign="top"><font face="verdana" size="-1">current day of the month</font></td>
-   </tr>
-   <tr>
-     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${HOUR}</i></b></font></nobr></td>
-     <td width="10">&nbsp;</td>
-     <td valign="top"><font face="verdana" size="-1">current hour</font></td>
-   </tr>
-   <tr>
-     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${MINUTE}</i></b></font></nobr></td>
-     <td width="10">&nbsp;</td>
-     <td valign="top"><font face="verdana" size="-1">current minute</font></td>
-   </tr>
-   <tr>
-     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${PROJECT_NAME}</i></b></font></nobr></td>
-     <td width="10">&nbsp;</td>
-     <td valign="top"><font face="verdana" size="-1">the name of the current project</font></td>
-   </tr>
+    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${YEAR}</i></b></font></nobr></td>
+    <td width="10">&nbsp;</td>
+    <td valign="top"><font face="verdana" size="-1">current year</font></td>
+  </tr>
+  <tr>
+    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${MONTH}</i></b></font></nobr></td>
+    <td width="10">&nbsp;</td>
+    <td valign="top"><font face="verdana" size="-1">current month</font></td>
+  </tr>
+  <tr>
+    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${MONTH_NAME_SHORT}</i></b></font></nobr></td>
+    <td width="10">&nbsp;</td>
+    <td valign="top"><font face="verdana" size="-1">first 3 letters of the current month name. Example: Jan, Feb, etc.</font></td>
+  </tr>
+  <tr>
+    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${MONTH_NAME_FULL}</i></b></font></nobr></td>
+    <td width="10">&nbsp;</td>
+    <td valign="top"><font face="verdana" size="-1">full name of the current month. Example: January, February, etc.</font></td>
+  </tr>
+  <tr>
+    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${DAY}</i></b></font></nobr></td>
+    <td width="10">&nbsp;</td>
+    <td valign="top"><font face="verdana" size="-1">current day of the month</font></td>
+  </tr>
+  <tr>
+    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${HOUR}</i></b></font></nobr></td>
+    <td width="10">&nbsp;</td>
+    <td valign="top"><font face="verdana" size="-1">current hour</font></td>
+  </tr>
+  <tr>
+    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${MINUTE}</i></b></font></nobr></td>
+    <td width="10">&nbsp;</td>
+    <td valign="top"><font face="verdana" size="-1">current minute</font></td>
+  </tr>
+  <tr>
+    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${PROJECT_NAME}</i></b></font></nobr></td>
+    <td width="10">&nbsp;</td>
+    <td valign="top"><font face="verdana" size="-1">the name of the current project</font></td>
+  </tr>
 </table>
 </body>
 </html>

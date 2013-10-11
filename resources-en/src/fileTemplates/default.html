@@ -2,15 +2,17 @@
 <body>
 <table border="0" cellpadding="2" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111">
   <tr>
-    <td colspan="3"><font face="verdana" size="-1">Along with the static text, code and comments, you can also use the
-      predefined variables (listed below) that will be then expanded like macros into the corresponding values.<br>
+    <td colspan="3"><font face="verdana" size="-1">Along with static text, code and comments, you can also use
+      predefined variables (listed below) that will then be expanded like macros into the corresponding values.<br>
+      It is also possible to specify an arbitrary number of custom variables in the format
+      <font color="#7F0000" size="-2"><b><i>${&lt;VARIABLE_NAME&gt;}</i></b></font>. In this case, before the new
+      file is created, you will be prompted with a dialog where you can define particular values for all
+      custom variables.<br>
       Using the <font color="#7F0000"><b><i>#parse</i></b></font> directive, you can include templates from the <b>Includes</b>
-      tab, by specifying the full name of the desired template as a parameter in quotation marks.<br>
-      It is also possible to specify arbitrary number of custom variables in format
-      <font color="#7F0000" size="-2"><b><i>${&lt;VARIABLE_NAME&gt;}</i></b></font>. In this case, before creating a new
-      file/class/interface <b>IDEA</b> will prompt you with the dialog where you can define particular names for all
-      custom variables.</font>
-    </td>
+      tab, by specifying the full name of the desired template as a parameter in quotation marks.
+      For example:<br>
+      <font color="#7F0000"><b><i>#parse</i></b></font>(<font color="#008000">"File Header.java"</font>)
+    </font></td>
   </tr>
 </table>
 <table border="0" cellpadding="5" cellspacing="0" style="border-collapse: collapse" bordercolor="#111111">
@@ -20,7 +22,12 @@
   <tr>
     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${PACKAGE_NAME}</i></b></font></nobr></td>
     <td width="10">&nbsp;</td>
-    <td valign="top"><font face="verdana" size="-1">name of the package in which the new class/interface is created</font></td>
+    <td valign="top"><font face="verdana" size="-1">name of the package in which the new file is created</font></td>
+  </tr>
+  <tr>
+    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${NAME}</i></b></font></nobr></td>
+    <td width="10">&nbsp;</td>
+    <td valign="top"><font face="verdana" size="-1">name of the new file specified by you in the <b>New &lt;TEMPLATE_NAME&gt;</b> dialog</font></td>
   </tr>
   <tr>
     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${USER}</i></b></font></nobr></td>
@@ -46,6 +53,16 @@
     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${MONTH}</i></b></font></nobr></td>
     <td width="10">&nbsp;</td>
     <td valign="top"><font face="verdana" size="-1">current month</font></td>
+  </tr>
+  <tr>
+    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${MONTH_NAME_SHORT}</i></b></font></nobr></td>
+    <td width="10">&nbsp;</td>
+    <td valign="top"><font face="verdana" size="-1">first 3 letters of the current month name. Example: Jan, Feb, etc.</font></td>
+  </tr>
+  <tr>
+    <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${MONTH_NAME_FULL}</i></b></font></nobr></td>
+    <td width="10">&nbsp;</td>
+    <td valign="top"><font face="verdana" size="-1">full name of the current month. Example: January, February, etc.</font></td>
   </tr>
   <tr>
     <td valign="top"><nobr><font face="verdana" size="-2" color="#7F0000"><b><i>${DAY}</i></b></font></nobr></td>
