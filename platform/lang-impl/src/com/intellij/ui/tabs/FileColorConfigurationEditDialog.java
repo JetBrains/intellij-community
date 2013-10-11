@@ -54,7 +54,7 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
   public FileColorConfigurationEditDialog(@NotNull final FileColorManager manager, @Nullable final FileColorConfiguration configuration) {
     super(true);
 
-    setTitle(configuration == null ? "Add color label" : "Edit color label");
+    setTitle(configuration == null ? "Add Color Label" : "Edit Color Label");
     setResizable(false);
 
     myManager = manager;
