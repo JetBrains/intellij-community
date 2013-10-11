@@ -15,8 +15,7 @@
  */
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.RepositoryHelper;
+import com.intellij.ide.plugins.*;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileTypes.FileTypeFactory;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -32,6 +31,7 @@ import com.intellij.ui.EditorNotifications;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -44,6 +44,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   private static final Key<EditorNotificationPanel> KEY = Key.create("file.type.associations.detected");
   private final Project myProject;
   private final EditorNotifications myNotifications;
+  private final Set<String> myEnabledExtensions = new HashSet<String>();
 
   public PluginAdvertiserEditorNotificationProvider(Project project, final EditorNotifications notifications) {
     myProject = project;
@@ -61,55 +62,70 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
     if (file.getFileType() != PlainTextFileType.INSTANCE) return null;
 
     final String extension = file.getExtension();
-    if (UnknownFeaturesCollector.getInstance(myProject).isIgnored(createExtensionFeature(extension))) return null;
+    if (myEnabledExtensions.contains(extension) ||
+        UnknownFeaturesCollector.getInstance(myProject).isIgnored(createExtensionFeature(extension))) return null;
 
     final PluginsAdvertiser.KnownExtensions knownExtensions = PluginsAdvertiser.loadExtensions();
     if (knownExtensions != null) {
       final Set<String> plugins = knownExtensions.find(extension);
       if (plugins != null && !plugins.isEmpty()) {
-        return createPanel(extension, plugins, file); 
+        return createPanel(extension, plugins); 
       }
     }
     return null;
   }
 
   @NotNull
-  private EditorNotificationPanel createPanel(final String extension, final Set<String> plugins, final VirtualFile file) {
+  private EditorNotificationPanel createPanel(final String extension, final Set<String> plugins) {
     final EditorNotificationPanel panel = new EditorNotificationPanel();
-    panel.setText("Repository plugins supporting *." + extension + " are found");
-    panel.createActionLabel("Install plugins", new Runnable() {
-      @Override
-      public void run() {
-        ProgressManager.getInstance().run(new Task.Modal(null, "Search for plugins in repository", true) {
-          private final Set<PluginDownloader> myPlugins = new HashSet<PluginDownloader>();
-          private List<IdeaPluginDescriptor> myAllPlugins;
+    panel.setText("Plugins supporting *." + extension + " are found");
+    final List<String> disabledPlugins = new ArrayList<String>(PluginManagerCore.getDisabledPlugins());
+    disabledPlugins.retainAll(plugins);
+    if (disabledPlugins.size() == 1) {
+      panel.createActionLabel("Enable disabled plugin", new Runnable() {
+        @Override
+        public void run() {
+          myEnabledExtensions.add(extension);
+          PluginManagerCore.enablePlugin(disabledPlugins.get(0));
+          myNotifications.updateAllNotifications();
+          PluginManagerMain.notifyPluginsWereUpdated("Plugin was successfully enabled");
+        }
+      });
+    } else {
+      panel.createActionLabel("Install plugins", new Runnable() {
+        @Override
+        public void run() {
+          ProgressManager.getInstance().run(new Task.Modal(null, "Search for plugins in repository", true) {
+            private final Set<PluginDownloader> myPlugins = new HashSet<PluginDownloader>();
+            private List<IdeaPluginDescriptor> myAllPlugins;
 
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            try {
-              myAllPlugins = RepositoryHelper.loadPluginsFromRepository(indicator);
-              for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
-                if (plugins.contains(loadedPlugin.getPluginId().getIdString())) {
-                  myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              try {
+                myAllPlugins = RepositoryHelper.loadPluginsFromRepository(indicator);
+                for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
+                  if (plugins.contains(loadedPlugin.getPluginId().getIdString())) {
+                    myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));
+                  }
                 }
               }
+              catch (Exception ignore) {
+              }
             }
-            catch (Exception ignore) {
-            }
-          }
 
-          @Override
-          public void onSuccess() {
-            final PluginsAdvertiserDialog advertiserDialog =
-              new PluginsAdvertiserDialog(null, myPlugins.toArray(new PluginDownloader[myPlugins.size()]), myAllPlugins);
-            advertiserDialog.show();
-            if (advertiserDialog.isOK()) {
-              myNotifications.updateAllNotifications();
+            @Override
+            public void onSuccess() {
+              final PluginsAdvertiserDialog advertiserDialog = new PluginsAdvertiserDialog(null, myPlugins.toArray(new PluginDownloader[myPlugins.size()]), myAllPlugins);
+              advertiserDialog.show();
+              if (advertiserDialog.isOK()) {
+                myEnabledExtensions.add(extension);
+                myNotifications.updateAllNotifications();
+              }
             }
-          }
-        });
-      }
-    });
+          });
+        }
+      });
+    }
     panel.createActionLabel("Ignore extension", new Runnable() {
       @Override
       public void run() {
