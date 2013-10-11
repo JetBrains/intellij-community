@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.util.LazyInstance;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -36,6 +37,13 @@ public class MixinEP<T> extends AbstractExtensionPointBean {
   private final NotNullLazyValue<Class> myKey = new NotNullLazyValue<Class>() {
     @NotNull
     protected Class compute() {
+      if (key == null) {
+        String error = "No key specified for mixin with implementation class " + implementationClass;
+        if (myPluginDescriptor != null) {
+          throw new PluginException(error, myPluginDescriptor.getPluginId());
+        }
+        throw new IllegalArgumentException(error);
+      }
       try {
         return findClass(key);
       }
