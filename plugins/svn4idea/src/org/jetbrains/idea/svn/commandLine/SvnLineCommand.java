@@ -18,12 +18,14 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.LineHandlerHelper;
 import com.intellij.openapi.vcs.LineProcessEventListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,22 +59,6 @@ import java.util.regex.Pattern;
  * honestly stolen from GitLineHandler
  */
 public class SvnLineCommand extends SvnCommand {
-
-  public static final String AUTHENTICATION_REALM = "Authentication realm:";
-  public static final String CERTIFICATE_ERROR = "Error validating server certificate for";
-  public static final String PASSPHRASE_FOR = "Passphrase for";
-  public static final String UNABLE_TO_CONNECT_CODE = "svn: E170001:";
-  public static final String UNABLE_TO_CONNECT_MESSAGE = "Unable to connect to a repository";
-  public static final String CANNOT_AUTHENTICATE_TO_PROXY = "Could not authenticate to proxy server";
-  public static final String AUTHENTICATION_FAILED_MESSAGE = "Authentication failed";
-
-  private static final String INVALID_CREDENTIALS_FOR_SVN_PROTOCOL = "svn: E170001: Can't get";
-  private static final String UNTRUSTED_SERVER_CERTIFICATE = "Server SSL certificate untrusted";
-  private static final String ACCESS_TO_PREFIX = "Access to ";
-  private static final String FORBIDDEN_STATUS = "forbidden";
-  private static final String PASSWORD_STRING = "password";
-
-  private static final Pattern UNABLE_TO_CONNECT_TO_URL_PATTERN = Pattern.compile("Unable to connect to a repository at URL '(.*)'");
 
   // kept for exact text
   //public static final String CLIENT_CERTIFICATE_FILENAME = "Client certificate filename:";
@@ -201,49 +187,48 @@ public class SvnLineCommand extends SvnCommand {
   private static AuthCallbackCase createCallback(final String errText,
                                                  @NotNull final AuthenticationCallback callback,
                                                  final SVNURL url) {
-    if (errText.startsWith(CERTIFICATE_ERROR)) {
-      return new CertificateCallbackCase(callback, url);
-    }
-    if (errText.startsWith(AUTHENTICATION_REALM)) {
-      return new CredentialsCallback(callback, url);
-    }
-    if (errText.startsWith(PASSPHRASE_FOR)) {
-      return new PassphraseCallback(callback, url);
-    }
-    if (errText.startsWith(UNABLE_TO_CONNECT_CODE) && errText.contains(CANNOT_AUTHENTICATE_TO_PROXY)) {
-      return new ProxyCallback(callback, url);
-    }
-    // https one-way protocol untrusted server certificate
-    if (errText.contains(UNTRUSTED_SERVER_CERTIFICATE)) {
-      return new CertificateCallbackCase(callback, url);
-    }
-    // https two-way protocol invalid client certificate
-    if (errText.contains(ACCESS_TO_PREFIX) && errText.contains(FORBIDDEN_STATUS)) {
-      return new TwoWaySslCallback(callback, url);
-    }
-    // http/https protocol invalid credentials
-    if (errText.contains(AUTHENTICATION_FAILED_MESSAGE)) {
-      return new UsernamePasswordCallback(callback, url);
-    }
-    // messages could be "Can't get password", "Can't get username or password"
-    if (errText.contains(INVALID_CREDENTIALS_FOR_SVN_PROTOCOL) && errText.contains(PASSWORD_STRING)) {
-      // svn protocol invalid credentials
-      return new UsernamePasswordCallback(callback, url);
-    }
-    // http/https protocol, svn 1.7, non-interactive
-    if (errText.contains(UNABLE_TO_CONNECT_MESSAGE)) {
-      return new UsernamePasswordCallback(callback, url);
-    }
-    return null;
+    List<AuthCallbackCase> authCases = ContainerUtil.newArrayList();
+
+    authCases.add(new CertificateCallbackCase(callback, url));
+    authCases.add(new CredentialsCallback(callback, url));
+    authCases.add(new PassphraseCallback(callback, url));
+    authCases.add(new ProxyCallback(callback, url));
+    authCases.add(new TwoWaySslCallback(callback, url));
+    authCases.add(new UsernamePasswordCallback(callback, url));
+
+    return ContainerUtil.find(authCases, new Condition<AuthCallbackCase>() {
+      @Override
+      public boolean value(AuthCallbackCase authCase) {
+        return authCase.canHandle(errText);
+      }
+    });
   }
 
   // Special callback for svn 1.8 credentials request as --non-interactive does not return
   // authentication realm (just url) - so we could not create temp cache
   private static class UsernamePasswordCallback extends AuthCallbackCase {
+
+    private static final String UNABLE_TO_CONNECT_MESSAGE = "Unable to connect to a repository";
+    private static final String AUTHENTICATION_FAILED_MESSAGE = "Authentication failed";
+    private static final String INVALID_CREDENTIALS_FOR_SVN_PROTOCOL = "svn: E170001: Can't get";
+    private static final String PASSWORD_STRING = "password";
+    private static final Pattern UNABLE_TO_CONNECT_TO_URL_PATTERN = Pattern.compile("Unable to connect to a repository at URL '(.*)'");
+
     protected SVNAuthentication myAuthentication;
 
     protected UsernamePasswordCallback(@NotNull AuthenticationCallback callback, SVNURL url) {
       super(callback, url);
+    }
+
+    @Override
+    public boolean canHandle(String error) {
+      return
+        // http/https protocol invalid credentials
+        error.contains(AUTHENTICATION_FAILED_MESSAGE) ||
+        // svn protocol invalid credentials - messages could be "Can't get password", "Can't get username or password"
+        error.contains(INVALID_CREDENTIALS_FOR_SVN_PROTOCOL) && error.contains(PASSWORD_STRING) ||
+        // http/https protocol, svn 1.7, non-interactive
+        error.contains(UNABLE_TO_CONNECT_MESSAGE);
     }
 
     @Override
@@ -287,8 +272,16 @@ public class SvnLineCommand extends SvnCommand {
 
   private static class ProxyCallback extends AuthCallbackCase {
 
+    private static final String UNABLE_TO_CONNECT_CODE = "svn: E170001:";
+    private static final String CANNOT_AUTHENTICATE_TO_PROXY = "Could not authenticate to proxy server";
+
     protected ProxyCallback(@NotNull AuthenticationCallback callback, SVNURL url) {
       super(callback, url);
+    }
+
+    @Override
+    public boolean canHandle(String error) {
+      return error.startsWith(UNABLE_TO_CONNECT_CODE) && error.contains(CANNOT_AUTHENTICATE_TO_PROXY);
     }
 
     @Override
@@ -299,8 +292,15 @@ public class SvnLineCommand extends SvnCommand {
 
   private static class CredentialsCallback extends AuthCallbackCase {
 
+    private static final String AUTHENTICATION_REALM = "Authentication realm:";
+
     private CredentialsCallback(@NotNull AuthenticationCallback callback, SVNURL url) {
       super(callback, url);
+    }
+
+    @Override
+    public boolean canHandle(String error) {
+      return error.startsWith(AUTHENTICATION_REALM);
     }
 
     @Override
@@ -326,10 +326,21 @@ public class SvnLineCommand extends SvnCommand {
   }
 
   private static class CertificateCallbackCase extends AuthCallbackCase {
+
+    private static final String CERTIFICATE_ERROR = "Error validating server certificate for";
+    private static final String UNTRUSTED_SERVER_CERTIFICATE = "Server SSL certificate untrusted";
+
     private boolean accepted;
 
     protected CertificateCallbackCase(@NotNull AuthenticationCallback callback, SVNURL url) {
       super(callback, url);
+    }
+
+    @Override
+    public boolean canHandle(String error) {
+      return error.startsWith(CERTIFICATE_ERROR) ||
+             // https one-way protocol untrusted server certificate
+             error.contains(UNTRUSTED_SERVER_CERTIFICATE);
     }
 
     @Override
@@ -392,8 +403,17 @@ public class SvnLineCommand extends SvnCommand {
 
   private static class TwoWaySslCallback extends UsernamePasswordCallback {
 
+    private static final String ACCESS_TO_PREFIX = "Access to ";
+    private static final String FORBIDDEN_STATUS = "forbidden";
+
     protected TwoWaySslCallback(AuthenticationCallback callback, SVNURL url) {
       super(callback, url);
+    }
+
+    @Override
+    public boolean canHandle(String error) {
+      // https two-way protocol invalid client certificate
+      return error.contains(ACCESS_TO_PREFIX) && error.contains(FORBIDDEN_STATUS);
     }
 
     @Override
@@ -428,6 +448,8 @@ public class SvnLineCommand extends SvnCommand {
       myAuthenticationCallback = callback;
       myUrl = url;
     }
+
+    public abstract boolean canHandle(final String error);
 
     abstract boolean getCredentials(final String errText) throws SvnBindException;
 
@@ -602,8 +624,15 @@ public class SvnLineCommand extends SvnCommand {
 
   private static class PassphraseCallback extends AuthCallbackCase {
 
+    private static final String PASSPHRASE_FOR = "Passphrase for";
+
     protected PassphraseCallback(@NotNull AuthenticationCallback callback, SVNURL url) {
       super(callback, url);
+    }
+
+    @Override
+    public boolean canHandle(String error) {
+      return error.startsWith(PASSPHRASE_FOR);
     }
 
     @Override
