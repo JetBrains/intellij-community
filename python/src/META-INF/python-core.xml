@@ -352,7 +352,7 @@
     <usageTypeProvider implementation="com.jetbrains.python.findUsages.PyUsageTypeProvider"/>
     <importFilteringRule implementation="com.jetbrains.python.findUsages.PyImportFilteringRule"/>
 
-    <languageInjector implementation="com.jetbrains.python.codeInsight.regexp.PythonRegexpInjector"/>
+    <multiHostInjector implementation="com.jetbrains.python.codeInsight.regexp.PythonRegexpInjector"/>
     <lang.parserDefinition language="PythonRegExp"
                            implementationClass="com.jetbrains.python.codeInsight.regexp.PythonRegexpParserDefinition"/>
     <lang.parserDefinition language="PythonVerboseRegExp"
