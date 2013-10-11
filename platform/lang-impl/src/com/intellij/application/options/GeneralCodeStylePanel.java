@@ -39,7 +39,9 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.FileTypeIndentOptionsProvider;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,6 +75,10 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JTextField myFormatterOnTagField;
   private JTextField myFormatterOffTagField;
   private JCheckBox myAcceptRegularExpressionsCheckBox;
+  private JPanel myMarkersPanel;
+  private JBLabel myFormatterOffLabel;
+  private JBLabel myFormatterOnLabel;
+  private JPanel myMarkerOptionsPanel;
   private final SmartIndentOptionsEditor myIndentOptionsEditor;
 
 
@@ -112,11 +118,14 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
       @Override
       public void actionPerformed(ActionEvent e) {
         boolean tagsEnabled = myEnableFormatterTags.isSelected();
-        myAcceptRegularExpressionsCheckBox.setEnabled(tagsEnabled);
-        myFormatterOnTagField.setEnabled(tagsEnabled);
-        myFormatterOffTagField.setEnabled(tagsEnabled);
+        setFormatterTagControlsEnabled(tagsEnabled);
       }
     });
+
+    myMarkersPanel.setBorder(IdeBorderFactory.createTitledBorder(
+      ApplicationBundle.message("settings.code.style.general.formatter.marker.title"), true));
+    myMarkerOptionsPanel.setBorder(
+      IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.code.style.general.formatter.marker.options.title"), true));
   }
 
   @Nullable
@@ -258,14 +267,22 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myIndentOptionsEditor.setEnabled(true);
 
     myAcceptRegularExpressionsCheckBox.setSelected(settings.FORMATTER_TAGS_ACCEPT_REGEXP);
-    myAcceptRegularExpressionsCheckBox.setEnabled(settings.FORMATTER_TAGS_ENABLED);
     myEnableFormatterTags.setSelected(settings.FORMATTER_TAGS_ENABLED);
 
     myFormatterOnTagField.setText(settings.FORMATTER_ON_TAG);
-    myFormatterOnTagField.setEnabled(settings.FORMATTER_TAGS_ENABLED);
-
     myFormatterOffTagField.setText(settings.FORMATTER_OFF_TAG);
-    myFormatterOffTagField.setEnabled(settings.FORMATTER_TAGS_ENABLED);
+
+    setFormatterTagControlsEnabled(settings.FORMATTER_TAGS_ENABLED);
+  }
+
+  private void setFormatterTagControlsEnabled(boolean isEnabled) {
+    myFormatterOffTagField.setEnabled(isEnabled);
+    myFormatterOnTagField.setEnabled(isEnabled);
+    myMarkersPanel.setEnabled(isEnabled);
+    myAcceptRegularExpressionsCheckBox.setEnabled(isEnabled);
+    myFormatterOffLabel.setEnabled(isEnabled);
+    myFormatterOnLabel.setEnabled(isEnabled);
+    myMarkerOptionsPanel.setEnabled(isEnabled);
   }
 
   @Override
