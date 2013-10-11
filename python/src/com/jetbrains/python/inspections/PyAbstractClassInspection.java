@@ -10,8 +10,10 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.override.PyOverrideImplementUtil;
 import com.jetbrains.python.inspections.quickfix.PyImplementMethodsQuickFix;
 import com.jetbrains.python.psi.PyClass;
+import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.PyDecoratorList;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,8 +53,12 @@ public class PyAbstractClassInspection extends PyInspection {
       for (PyFunction method : functions) {
         final PyDecoratorList list = method.getDecoratorList();
         if (list != null && node.findMethodByName(method.getName(), false) == null) {
-          if (list.findDecorator(PyNames.ABSTRACTMETHOD) != null || list.findDecorator(PyNames.ABSTRACTPROPERTY) != null) {
-            toBeImplemented.add(method);
+          for (PyDecorator decorator : list.getDecorators()) {
+            final PyQualifiedName qualifiedName = decorator.getQualifiedName();
+            if (qualifiedName != null && (PyNames.ABSTRACTMETHOD.equals(qualifiedName.getLastComponent()) || PyNames.ABSTRACTPROPERTY.equals(
+              qualifiedName.getLastComponent()))) {
+              toBeImplemented.add(method);
+            }
           }
         }
       }
