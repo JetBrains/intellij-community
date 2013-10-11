@@ -271,6 +271,7 @@ libraryLicense(name: "json-path", libraryName: "json-path-0.8.0.jar", version: "
 libraryLicense(name: "json-smart", libraryName: "json-smart-1.1.1.jar", version: "1.1.1", license: "Apache 2.0", url: "http://code.google.com/p/json-smart/", licenseUrl: "http://apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "fxg-utils", libraryName: "fxg-utils", version: "4.9.1", license: "Apache 2.0", url: "http://flex.apache.org", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0")
 libraryLicense(name: "jayatana", libraryName: "jayatana", version: "1.2.4", license: "MIT License", url: "https://code.google.com/p/java-swing-ayatana/", licenseUrl: "http://opensource.org/licenses/mit-license.php")
+libraryLicense(name: "ForkJoin", libraryName: "jsr166e.jar", version: "", license: "Creative Commons Public Domain Dedication", url: "http://gee.cs.oswego.edu/dl/concurrency-interest/index.html", licenseUrl: "http://creativecommons.org/publicdomain/zero/1.0/")
 jetbrainsLibrary("JPS")
 jetbrainsLibrary("Maven Embedder")
 jetbrainsLibrary("tcServiceMessages")
