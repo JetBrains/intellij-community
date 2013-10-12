@@ -12,14 +12,12 @@ import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.lombok.processor.field.WitherFieldProcessor;
 import de.plushnikov.intellij.lombok.util.LombokProcessorUtil;
-import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
-import de.plushnikov.intellij.lombok.util.PsiClassUtil;
+import lombok.experimental.Wither;
+import org.jetbrains.annotations.NotNull;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import lombok.experimental.Accessors;
-import lombok.experimental.Wither;
-import org.jetbrains.annotations.NotNull;
 
 public class WitherProcessor extends AbstractLombokClassProcessor {
   private final WitherFieldProcessor fieldProcessor = new WitherFieldProcessor();
@@ -30,12 +28,10 @@ public class WitherProcessor extends AbstractLombokClassProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    final boolean result = validateAnnotationOnRigthType(psiClass, builder) && validateVisibility(psiAnnotation);
-
-    return result;
+    return validateAnnotationOnRightType(psiClass, builder) && validateVisibility(psiAnnotation);
   }
 
-  protected boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface()) {
       builder.addError("'@Wither' is only supported on a class, enum or field type");

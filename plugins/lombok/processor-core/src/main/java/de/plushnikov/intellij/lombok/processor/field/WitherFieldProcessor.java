@@ -1,7 +1,13 @@
 package de.plushnikov.intellij.lombok.processor.field;
 
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.lombok.LombokUtils;
 import de.plushnikov.intellij.lombok.StringUtils;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
@@ -15,15 +21,11 @@ import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.Accessors;
 import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.Class;
-import java.lang.annotation.Annotation;
 import java.util.List;
 
-import static de.plushnikov.intellij.lombok.util.LombokProcessorUtil.getMethodModifier;
 import static de.plushnikov.intellij.lombok.util.PsiAnnotationUtil.isAnnotatedWith;
 import static de.plushnikov.intellij.lombok.util.PsiElementUtil.typesAreEquivalent;
 import static java.lang.String.format;
@@ -34,23 +36,25 @@ public class WitherFieldProcessor extends AbstractLombokFieldProcessor {
     super(Wither.class, PsiMethod.class);
   }
 
-  protected WitherFieldProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<?> supportedClass) {
-    super(supportedAnnotationClass, supportedClass);
-  }
-
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
 
-    boolean valid = validNonStatic(psiField, psiAnnotation, builder);
+    boolean valid = validateVisibility(psiAnnotation);
+    valid &= validNonStatic(psiField, psiAnnotation, builder);
     valid &= validHasConstructor(psiField, builder);
     valid &= validIsWitherUnique(psiField, psiAnnotation, builder);
 
     return valid;
   }
 
+  protected boolean validateVisibility(@NotNull PsiAnnotation psiAnnotation) {
+    final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
+    return null != methodVisibility;
+  }
+
   @Override
   protected void processIntern(PsiField psiField, PsiAnnotation psiAnnotation, List<? super PsiElement> target) {
-    String methodModifier = getMethodModifier(psiAnnotation);
+    String methodModifier = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodModifier != null) {
       AccessorsInfo accessorsInfo = AccessorsInfo.build(psiField);
       PsiMethod method = createWitherMethod(psiField, methodModifier, accessorsInfo);
@@ -101,19 +105,22 @@ public class WitherFieldProcessor extends AbstractLombokFieldProcessor {
     return false;
   }
 
-  private boolean validHasConstructor(final PsiField field, @NotNull final ProblemBuilder builder) {
-
-    if (PsiAnnotationUtil.isAnnotatedWith(field.getContainingClass(), AllArgsConstructor.class)) {
+  private boolean validHasConstructor(@NotNull final PsiField field, @NotNull final ProblemBuilder builder) {
+    final PsiClass fieldContainingClass = field.getContainingClass();
+    if (null == fieldContainingClass) {
+      return false;
+    }
+    if (PsiAnnotationUtil.isAnnotatedWith(fieldContainingClass, AllArgsConstructor.class)) {
       return true;
     }
     if (hasRightConstructor(field)) {
       return true;
     }
-    final boolean hasRequiredArgsConstAnot = PsiAnnotationUtil.isAnnotatedWith(field.getContainingClass(), RequiredArgsConstructor.class);
+    final boolean hasRequiredArgsConstAnnotation = PsiAnnotationUtil.isAnnotatedWith(fieldContainingClass, RequiredArgsConstructor.class);
     final boolean isFinal = field.hasModifierProperty(PsiModifier.FINAL);
-    final boolean hasNonNullAnot = isAnnotatedWith(field, NonNull.class);
+    final boolean hasNonNullAnnotation = isAnnotatedWith(field, NonNull.class);
 
-    if (hasRequiredArgsConstAnot && (isFinal || hasNonNullAnot)) {
+    if (hasRequiredArgsConstAnnotation && (isFinal || hasNonNullAnnotation)) {
       return true;
     } else {
       builder.addWarning(format("Compilation will fail : no constructor with a parameter of type '%s' was found",
@@ -122,11 +129,11 @@ public class WitherFieldProcessor extends AbstractLombokFieldProcessor {
     }
   }
 
-  private boolean validIsWitherUnique(PsiField field, PsiAnnotation annotation, @NotNull final ProblemBuilder builder) {
-
-    if (field.getName() != null && field.getContainingClass() != null) {
-      if (PsiMethodUtil.hasSimilarMethod(PsiClassUtil.collectClassMethodsIntern(field.getContainingClass()), witherName(field.getName()), 1)
-          || PsiMethodUtil.hasSimilarMethod(PsiClassUtil.collectClassMethodsIntern(field.getContainingClass()), secondWitherName(field.getName()), 1)) {
+  private boolean validIsWitherUnique(@NotNull PsiField field, @NotNull PsiAnnotation annotation, @NotNull final ProblemBuilder builder) {
+    final PsiClass fieldContainingClass = field.getContainingClass();
+    if (field.getName() != null && fieldContainingClass != null) {
+      if (PsiMethodUtil.hasSimilarMethod(PsiClassUtil.collectClassMethodsIntern(fieldContainingClass), witherName(field.getName()), 1)
+          || PsiMethodUtil.hasSimilarMethod(PsiClassUtil.collectClassMethodsIntern(fieldContainingClass), secondWitherName(field.getName()), 1)) {
         builder.addWarning(
             format("No '@%s' generated : a method named '%s' taking one parameter already exists",
                 annotation.getQualifiedName(),
@@ -138,21 +145,19 @@ public class WitherFieldProcessor extends AbstractLombokFieldProcessor {
   }
 
   public PsiMethod createWitherMethod(@NotNull PsiField psiField, @NotNull String methodModifier, @NotNull AccessorsInfo accessorsInfo) {
-    if (psiField != null && psiField.getManager() != null && psiField.getType() != null && psiField.getContainingClass() != null) {
-      PsiType returnType = PsiClassUtil.getTypeWithGenerics(psiField.getContainingClass());
-      if (returnType != null) {
-        final LombokLightMethodBuilder method =
-            LombokPsiElementFactory.getInstance().createLightMethod(psiField.getManager(), witherName(accessorsInfo.removePrefix(psiField.getName())))
-                .withMethodReturnType(returnType)
-                .withContainingClass(psiField.getContainingClass())
-                .withParameter(psiField.getName(), psiField.getType())
-                .withNavigationElement(psiField)
-                .withModifier(methodModifier);
-        copyAnnotations(psiField, method.getModifierList(),
-            LombokUtils.NON_NULL_PATTERN, LombokUtils.NULLABLE_PATTERN, LombokUtils.DEPRECATED_PATTERN);
-        return method;
-      }
+    LombokLightMethodBuilder result = null;
+    final PsiClass psiFieldContainingClass = psiField.getContainingClass();
+    if (psiFieldContainingClass != null) {
+      PsiType returnType = PsiClassUtil.getTypeWithGenerics(psiFieldContainingClass);
+      result = LombokPsiElementFactory.getInstance().createLightMethod(psiField.getManager(), witherName(accessorsInfo.removePrefix(psiField.getName())))
+          .withMethodReturnType(returnType)
+          .withContainingClass(psiFieldContainingClass)
+          .withParameter(psiField.getName(), psiField.getType())
+          .withNavigationElement(psiField)
+          .withModifier(methodModifier);
+      copyAnnotations(psiField, result.getModifierList(),
+          LombokUtils.NON_NULL_PATTERN, LombokUtils.NULLABLE_PATTERN, LombokUtils.DEPRECATED_PATTERN);
     }
-    return null;
+    return result;
   }
 }

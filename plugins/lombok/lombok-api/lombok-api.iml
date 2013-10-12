@@ -15,7 +15,7 @@
       <excludeFolder url="file://$MODULE_DIR$/target/maven-status" />
       <excludeFolder url="file://$MODULE_DIR$/target/surefire" />
     </content>
-    <orderEntry type="jdk" jdkName="1.7.0_21(x86)" jdkType="JavaSDK" />
+    <orderEntry type="jdk" jdkName="1.7" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
   <component name="POM File Configuration" pomFile="" />

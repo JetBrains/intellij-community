@@ -1,6 +1,7 @@
 package de.plushnikov.lombok.tests;
 
 import de.plushnikov.lombok.LombokParsingTestCase;
+
 import java.io.IOException;
 
 public class WitherTestCase extends LombokParsingTestCase {
