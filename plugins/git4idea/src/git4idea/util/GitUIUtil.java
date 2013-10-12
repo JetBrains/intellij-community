@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.text.JTextComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.Collection;
@@ -353,7 +354,7 @@ public class GitUIUtil {
    * @param checkedState the state that triggers disabling changed state
    * @param changed      the checkbox to change
    */
-  public static void implyDisabled(final JCheckBox checked, final boolean checkedState, final JTextField changed) {
+  public static void implyDisabled(final JCheckBox checked, final boolean checkedState, final JTextComponent changed) {
     ActionListener l = new ActionListener() {
       String previousState;
 
