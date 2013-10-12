@@ -64,7 +64,7 @@ public class GithubSelectForkDialog extends DialogWrapper {
   protected void doOKAction() {
     GithubFullPath path = myCheckFork.convert(myPanel.getUser());
     if (path == null) {
-      GithubNotifications.showErrorDialog(myProject, "Can't Create Pull Request", "Can't find repository for selected user");
+      GithubNotifications.showErrorDialog(myProject, "Can't Find Repository", "Can't find fork for selected user");
     }
     else {
       myFullPath = path;
