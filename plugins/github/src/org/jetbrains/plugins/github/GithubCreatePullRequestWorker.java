@@ -12,10 +12,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ThrowableConvertor;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
+import com.intellij.util.concurrency.FutureResult;
+import com.intellij.util.containers.*;
+import com.intellij.util.containers.HashMap;
 import git4idea.DialogManager;
 import git4idea.GitCommit;
 import git4idea.GitLocalBranch;
@@ -42,6 +44,9 @@ import org.jetbrains.plugins.github.util.GithubUtil;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -59,6 +64,8 @@ public class GithubCreatePullRequestWorker {
   @NotNull private final String myRemoteUrl;
   @NotNull private final String myCurrentBranch;
   @NotNull private final GithubAuthData myAuth;
+
+  @NotNull private final Map<String, FutureResult<DiffInfo>> myDiffInfos;
 
   private volatile GithubFullPath myForkPath;
   private volatile String myTargetRemote;
@@ -79,6 +86,8 @@ public class GithubCreatePullRequestWorker {
     myRemoteUrl = remoteUrl;
     myCurrentBranch = currentBranch;
     myAuth = auth;
+
+    myDiffInfos = new HashMap<String, FutureResult<DiffInfo>>();
   }
 
   @NotNull
@@ -185,6 +194,7 @@ public class GithubCreatePullRequestWorker {
 
       myForkPath = forkPath;
       myTargetRemote = info.getTargetRemote();
+      myDiffInfos.clear();
       return new GithubTargetInfo(info.getBranches(), myTargetRemote != null);
     }
     catch (GithubAuthenticationCanceledException e) {
@@ -198,7 +208,15 @@ public class GithubCreatePullRequestWorker {
 
   public void showDiffDialog(@NotNull String branch) {
     if (myTargetRemote != null) {
-      showDiffByRef(myProject, branch, myGitRepository, myTargetRemote, myCurrentBranch);
+      DiffInfo info = getDiffInfoWithModal(branch);
+      if (info == null) {
+        GithubNotifications.showErrorDialog(myProject, "Can't Show Diff", "Can't get diff info");
+        return;
+      }
+
+      GitCompareBranchesDialog dialog =
+        new GitCompareBranchesDialog(myProject, info.getTo(), info.getFrom(), info.getInfo(), myGitRepository);
+      dialog.show();
     }
   }
 
@@ -288,44 +306,119 @@ public class GithubCreatePullRequestWorker {
     }
   }
 
-  private static void showDiffByRef(@NotNull final Project project,
-                                    @NotNull final String branch,
-                                    @NotNull final GitRepository gitRepository,
-                                    @NotNull final String targetRemoteName,
-                                    @NotNull final String currentBranch) {
-    DiffInfo info = GithubUtil.computeValueInModal(project, "Collecting diff data...", new Convertor<ProgressIndicator, DiffInfo>() {
+  @Nullable
+  private DiffInfo getDiffInfoWithModal(@NotNull final String branch) {
+    return GithubUtil.computeValueInModal(myProject, "Collecting diff data...", new Convertor<ProgressIndicator, DiffInfo>() {
       @Override
       @Nullable
       public DiffInfo convert(ProgressIndicator indicator) {
-        return getDiffInfo(project, gitRepository, currentBranch, targetRemoteName + "/" + branch);
+        try {
+          FutureResult<DiffInfo> future = myDiffInfos.get(branch);
+          if (future == null) {
+            return null;
+          }
+          return future.get();
+        }
+        catch (InterruptedException e) {
+          LOG.error(e);
+          return null;
+        }
+        catch (ExecutionException e) {
+          LOG.error(e);
+          return null;
+        }
       }
     });
-    if (info == null) {
-      GithubNotifications.showErrorDialog(project, "Can't Show Diff", "Can't get diff info");
+  }
+
+  /*
+    should be called from EDT
+   */
+  public void initLoadDiffInfo(@NotNull final String branch, @Nullable final Consumer<DiffDescription> after) {
+    if (myTargetRemote == null) {
       return;
     }
 
-    GitCompareBranchesDialog dialog = new GitCompareBranchesDialog(project, info.getTo(), info.getFrom(), info.getInfo(), gitRepository);
-    dialog.show();
+    final FutureResult<DiffInfo> oldFuture = myDiffInfos.get(branch);
+    if (oldFuture != null) {
+      if (after != null) {
+        try {
+          DiffInfo info = oldFuture.tryGet();
+          if (info != null) {
+            after.consume(getDefaultDescriptionMessage(branch, info));
+            return;
+          }
+        }
+        catch (ExecutionException e) {
+          LOG.error(e);
+          return;
+        }
+
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            try {
+              DiffInfo info = oldFuture.get();
+              after.consume(getDefaultDescriptionMessage(branch, info));
+            }
+            catch (InterruptedException e) {
+              LOG.error(e);
+            }
+            catch (ExecutionException e) {
+              LOG.error(e);
+            }
+          }
+        });
+      }
+      return;
+    }
+
+    final FutureResult<DiffInfo> future = new FutureResult<DiffInfo>();
+    myDiffInfos.put(branch, future);
+
+    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        DiffInfo info = loadDiffInfo(myProject, myGitRepository, myCurrentBranch, myTargetRemote + "/" + branch);
+        future.set(info);
+        if (after != null) {
+          after.consume(getDefaultDescriptionMessage(branch, info));
+        }
+      }
+    });
   }
 
   @Nullable
-  private static DiffInfo getDiffInfo(@NotNull final Project project,
-                                      @NotNull final GitRepository repository,
-                                      @NotNull final String currentBranch,
-                                      @NotNull final String targetBranch) {
+  private static DiffInfo loadDiffInfo(@NotNull final Project project,
+                                       @NotNull final GitRepository repository,
+                                       @NotNull final String currentBranch,
+                                       @NotNull final String targetBranch) {
     try {
       List<GitCommit> commits = GitHistoryUtils.history(project, repository.getRoot(), targetBranch + "..");
       Collection<Change> diff = GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), targetBranch, currentBranch, null);
       GitCommitCompareInfo info = new GitCommitCompareInfo(GitCommitCompareInfo.InfoType.BRANCH_TO_HEAD);
       info.put(repository, diff);
-      info.put(repository, Pair.<List<GitCommit>, List<GitCommit>>create(new ArrayList<GitCommit>(), commits));
+      info.put(repository, Pair.<List<GitCommit>, List<GitCommit>>create(Collections.<GitCommit>emptyList(), commits));
       return new DiffInfo(info, currentBranch, targetBranch);
     }
     catch (VcsException e) {
       LOG.info(e);
       return null;
     }
+  }
+
+  @NotNull
+  private DiffDescription getDefaultDescriptionMessage(@NotNull String branch, @Nullable DiffInfo info) {
+    if (info == null) {
+      return new DiffDescription(branch, null, null);
+    }
+
+    if (info.getInfo().getBranchToHeadCommits(myGitRepository).size() != 1) {
+      return new DiffDescription(branch, info.getFrom(), null);
+    }
+
+    GitCommit commit = info.getInfo().getBranchToHeadCommits(myGitRepository).get(0);
+    return new DiffDescription(branch, commit.getSubject(), commit.getFullMessage());
   }
 
   @Nullable
@@ -485,8 +578,8 @@ public class GithubCreatePullRequestWorker {
 
     private DiffInfo(@NotNull GitCommitCompareInfo info, @NotNull String from, @NotNull String to) {
       myInfo = info;
-      myFrom = from;
-      myTo = to;
+      myFrom = from; // HEAD
+      myTo = to;     // BASE
     }
 
     @NotNull
@@ -502,6 +595,33 @@ public class GithubCreatePullRequestWorker {
     @NotNull
     public String getTo() {
       return myTo;
+    }
+  }
+
+  public static class DiffDescription {
+    @NotNull private final String myBranch;
+    @Nullable private final String myTitle;
+    @Nullable private final String myDescription;
+
+    public DiffDescription(@NotNull String branch, @Nullable String title, @Nullable String description) {
+      myBranch = branch;
+      myTitle = title;
+      myDescription = description;
+    }
+
+    @NotNull
+    public String getBranch() {
+      return myBranch;
+    }
+
+    @Nullable
+    public String getTitle() {
+      return myTitle;
+    }
+
+    @Nullable
+    public String getDescription() {
+      return myDescription;
     }
   }
 }

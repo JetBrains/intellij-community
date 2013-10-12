@@ -17,12 +17,15 @@ package org.jetbrains.plugins.github.ui;
 
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SortedComboBoxModel;
+import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.ActionListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.util.Collection;
 import java.util.Comparator;
 
@@ -38,8 +41,11 @@ public class GithubCreatePullRequestPanel {
   private JButton myShowDiffButton;
   private JButton mySelectForkButton;
   private JLabel myForkLabel;
+  private AsyncProcessIcon myBusyIcon;
 
-  public GithubCreatePullRequestPanel(@Nullable final ActionListener showDiffAction, @NotNull final ActionListener selectForkAction) {
+  private boolean myTitleDescriptionUserModified = false;
+
+  public GithubCreatePullRequestPanel() {
     myDescriptionTextArea.setBorder(BorderFactory.createEtchedBorder());
     myBranchModel = new SortedComboBoxModel<String>(new Comparator<String>() {
       @Override
@@ -49,8 +55,14 @@ public class GithubCreatePullRequestPanel {
     });
     myBranchComboBox.setModel(myBranchModel);
 
-    myShowDiffButton.addActionListener(showDiffAction);
-    mySelectForkButton.addActionListener(selectForkAction);
+    DocumentListener userModifiedDocumentListener = new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        myTitleDescriptionUserModified = true;
+      }
+    };
+    myTitleTextField.getDocument().addDocumentListener(userModifiedDocumentListener);
+    myDescriptionTextArea.getDocument().addDocumentListener(userModifiedDocumentListener);
   }
 
   @NotNull
@@ -97,19 +109,60 @@ public class GithubCreatePullRequestPanel {
     return myTitleTextField;
   }
 
+  @NotNull
   public JComponent getBranchEditor() {
     return myBranchComboBox;
   }
 
+  @NotNull
   public JComponent getTitleTextField() {
     return myTitleTextField;
   }
 
-  public void setTitle(String title) {
+  @NotNull
+  public JButton getShowDiffButton() {
+    return myShowDiffButton;
+  }
+
+  @NotNull
+  public JButton getSelectForkButton() {
+    return mySelectForkButton;
+  }
+
+  @NotNull
+  public ComboBox getBranchComboBox() {
+    return myBranchComboBox;
+  }
+
+  public void setTitle(@Nullable String title) {
     myTitleTextField.setText(title);
+    myTitleDescriptionUserModified = false;
+  }
+
+  public void setDescription(@Nullable String title) {
+    myDescriptionTextArea.setText(title);
+    myTitleDescriptionUserModified = false;
+  }
+
+  public boolean isTitleDescriptionEmptyOrNotModified() {
+    return !myTitleDescriptionUserModified ||
+           (StringUtil.isEmptyOrSpaces(myTitleTextField.getText()) && StringUtil.isEmptyOrSpaces(myDescriptionTextArea.getText()));
   }
 
   public void setForkName(@NotNull String forkName) {
     myForkLabel.setText(forkName);
+  }
+
+  public void setBusy(boolean enabled) {
+    if (enabled) {
+      myBusyIcon.resume();
+    }
+    else {
+      myBusyIcon.suspend();
+    }
+  }
+
+  private void createUIComponents() {
+    myBusyIcon = new AsyncProcessIcon("Loading diff...");
   }
 }

@@ -18,6 +18,8 @@ package org.jetbrains.plugins.github.ui;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -28,6 +30,8 @@ import org.jetbrains.plugins.github.util.GithubProjectSettings;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -45,18 +49,45 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
 
     myProjectSettings = GithubProjectSettings.getInstance(myWorker.getProject());
 
-    myGithubCreatePullRequestPanel = new GithubCreatePullRequestPanel(new ActionListener() {
+    myGithubCreatePullRequestPanel = new GithubCreatePullRequestPanel();
+
+    myGithubCreatePullRequestPanel.getShowDiffButton().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         myWorker.showDiffDialog(myGithubCreatePullRequestPanel.getBranch());
       }
-    }, new ActionListener() {
+    });
+    myGithubCreatePullRequestPanel.getSelectForkButton().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         showTargetDialog();
       }
-    }
-    );
+    });
+    myGithubCreatePullRequestPanel.getBranchComboBox().addItemListener(new ItemListener() {
+      @Override
+      public void itemStateChanged(ItemEvent e) {
+        if (e.getStateChange() == ItemEvent.SELECTED) {
+          myGithubCreatePullRequestPanel.setBusy(true);
+          myWorker.initLoadDiffInfo(getTargetBranch(), new Consumer<GithubCreatePullRequestWorker.DiffDescription>() {
+            @Override
+            public void consume(@NotNull final GithubCreatePullRequestWorker.DiffDescription info) {
+              UIUtil.invokeLaterIfNeeded(new Runnable() {
+                @Override
+                public void run() {
+                  if (getTargetBranch().equals(info.getBranch())) {
+                    myGithubCreatePullRequestPanel.setBusy(false);
+                    if (myGithubCreatePullRequestPanel.isTitleDescriptionEmptyOrNotModified()) {
+                      myGithubCreatePullRequestPanel.setTitle(info.getTitle());
+                      myGithubCreatePullRequestPanel.setDescription(info.getDescription());
+                    }
+                  }
+                }
+              });
+            }
+          });
+        }
+      }
+    });
 
     setTitle("Create Pull Request");
     init();
