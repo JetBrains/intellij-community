@@ -153,7 +153,7 @@ public class GithubCreatePullRequestWorker {
                 @Override
                 public void run() {
                   responseRef.set(GithubNotifications
-                                    .showYesNoDialog(myProject, "Can't find remote", "Configure remote for '" + forkPath.getUser() + "'?"));
+                                    .showYesNoDialog(myProject, "Can't Find Remote", "Configure remote for '" + forkPath.getUser() + "'?"));
                 }
               }, indicator.getModalityState());
               if (responseRef.get() == Messages.YES) {
@@ -254,7 +254,7 @@ public class GithubCreatePullRequestWorker {
         }
 
         GithubNotifications
-          .showInfoURL(project, "Successfully created pull request", "Pull Request #" + request.getNumber(), request.getHtmlUrl());
+          .showInfoURL(project, "Successfully created pull request", "Pull request #" + request.getNumber(), request.getHtmlUrl());
       }
     }.queue();
   }
@@ -305,7 +305,7 @@ public class GithubCreatePullRequestWorker {
       }
     });
     if (info == null) {
-      GithubNotifications.showErrorDialog(project, "Can't show diff", "Can't get diff info");
+      GithubNotifications.showErrorDialog(project, "Can't Show Diff", "Can't get diff info");
       return;
     }
 
