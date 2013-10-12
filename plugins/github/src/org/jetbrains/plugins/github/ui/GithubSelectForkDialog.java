@@ -25,7 +25,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.plugins.github.api.GithubFullPath;
 import org.jetbrains.plugins.github.util.GithubNotifications;
-import org.jetbrains.plugins.github.util.GithubProjectSettings;
 
 import javax.swing.*;
 import java.util.Set;
