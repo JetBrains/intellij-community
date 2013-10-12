@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.lombok.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -46,6 +47,12 @@ public class LombokLightMethodImpl extends LightMethod implements LombokLightMet
 
   public ASTNode getNode() {
     return myMethod.getNode();
+  }
+
+  @Override
+  public TextRange getTextRange() {
+    TextRange r = super.getTextRange();
+    return r == null ? TextRange.EMPTY_RANGE : r;
   }
 
   @Override

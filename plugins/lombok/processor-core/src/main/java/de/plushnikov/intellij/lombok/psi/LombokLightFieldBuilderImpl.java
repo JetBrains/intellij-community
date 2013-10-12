@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.lombok.psi;
 
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
@@ -62,6 +63,12 @@ public class LombokLightFieldBuilderImpl extends LightFieldBuilder implements Lo
       return containingClass.add(newElement);
     }
     return null;
+  }
+
+  @Override
+  public TextRange getTextRange() {
+    TextRange r = super.getTextRange();
+    return r == null ? TextRange.EMPTY_RANGE : r;
   }
 
   @Override
