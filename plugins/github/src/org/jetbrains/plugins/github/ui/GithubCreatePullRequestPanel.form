@@ -46,7 +46,7 @@
         </constraints>
         <properties>
           <editable value="false"/>
-          <toolTipText value="Target branch in format 'user:branch', where user - owner of the target repository"/>
+          <toolTipText value=""/>
         </properties>
       </component>
       <scrollpane id="61e54" class="com.intellij.ui.components.JBScrollPane">
