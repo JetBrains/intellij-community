@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog;
 import org.jetbrains.plugins.github.util.*;
 
-import static org.jetbrains.plugins.github.GithubCreatePullRequestWorker.createPullRequestWorker;
 import static org.jetbrains.plugins.github.util.GithubUtil.setVisibleEnabled;
 
 /**
@@ -74,7 +73,7 @@ public class GithubCreatePullRequestAction extends DumbAwareAction {
   }
 
   static void createPullRequest(@NotNull Project project, @Nullable VirtualFile file) {
-    GithubCreatePullRequestWorker worker = createPullRequestWorker(project, file);
+    GithubCreatePullRequestWorker worker = GithubCreatePullRequestWorker.createPullRequestWorker(project, file);
     if (worker == null) {
       return;
     }
