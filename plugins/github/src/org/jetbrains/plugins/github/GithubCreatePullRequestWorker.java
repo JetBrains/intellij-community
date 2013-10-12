@@ -289,14 +289,10 @@ public class GithubCreatePullRequestWorker {
   }
 
   private static void showDiffByRef(@NotNull final Project project,
-                                    @Nullable final String branch,
+                                    @NotNull final String branch,
                                     @NotNull final GitRepository gitRepository,
                                     @NotNull final String targetRemoteName,
                                     @NotNull final String currentBranch) {
-    if (branch == null) {
-      return;
-    }
-
     DiffInfo info = GithubUtil.computeValueInModal(project, "Collecting diff data...", new Convertor<ProgressIndicator, DiffInfo>() {
       @Override
       @Nullable
