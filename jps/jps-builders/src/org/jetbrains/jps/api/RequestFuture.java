@@ -37,7 +37,6 @@ public class RequestFuture<T> extends BasicFuture<T> {
     myCancelAction = cancelAction;
     myHandler = handler;
     myRequestID = requestID;
-    mySemaphore.acquireUninterruptibly();
   }
 
   public UUID getRequestID() {
