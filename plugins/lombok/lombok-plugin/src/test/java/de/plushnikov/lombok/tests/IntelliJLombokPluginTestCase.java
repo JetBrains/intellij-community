@@ -32,7 +32,10 @@ public class IntelliJLombokPluginTestCase extends LombokParsingTestCase {
   }
 
   public void testConstructors() throws IOException {
-    //TODO known problem, try to fix later
+    doTest();
+  }
+
+  public void testConflictingStaticConstructorNames() throws IOException {
     doTest();
   }
 }

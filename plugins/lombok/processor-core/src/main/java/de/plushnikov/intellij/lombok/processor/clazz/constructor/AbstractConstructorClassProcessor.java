@@ -13,6 +13,8 @@ import de.plushnikov.intellij.lombok.LombokUtils;
 import de.plushnikov.intellij.lombok.UserMapKeys;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.processor.clazz.AbstractLombokClassProcessor;
+import de.plushnikov.intellij.lombok.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.lombok.psi.LombokPsiElementFactory;
 import de.plushnikov.intellij.lombok.util.LombokProcessorUtil;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
@@ -198,29 +200,18 @@ public abstract class AbstractConstructorClassProcessor extends AbstractLombokCl
   }
 
   private PsiMethod createStaticConstructor(PsiClass psiClass, String staticName, Collection<PsiField> params, PsiAnnotation psiAnnotation) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      builder.append(PsiModifier.PUBLIC);
-      builder.append(' ');
-      builder.append(PsiModifier.STATIC);
-      builder.append(' ');
+    LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().createLightMethod(psiClass.getManager(), staticName)
+        .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(psiClass))
+        .withContainingClass(psiClass)
+        .withNavigationElement(psiAnnotation)
+        .withModifier(PsiModifier.PUBLIC)
+        .withModifier(PsiModifier.STATIC);
 
-      builder.append(psiClass.getName());
-      builder.append(' ');
-
-      builder.append(staticName);
-      appendParamDeclaration(params, builder);
-      builder.append("{ ").
-          append("return new ").append(psiClass.getName()).
-          append("(");
-      appendParamList(params, builder).
-          append(")").
-          append(";}");
-
-      return PsiMethodUtil.createMethod(psiClass, builder.toString(), psiAnnotation);
-    } finally {
-      StringBuilderSpinAllocator.dispose(builder);
+    for (PsiField param : params) {
+      UserMapKeys.addWriteUsageFor(param);
+      method.withParameter(param.getName(), param.getType());
     }
+    return method;
   }
 
   private StringBuilder appendParamDeclaration(Collection<PsiField> params, StringBuilder builder) {
@@ -239,18 +230,6 @@ public abstract class AbstractConstructorClassProcessor extends AbstractLombokCl
     for (PsiField param : params) {
       builder.append("\nthis.").append(param.getName()).append(" = ").append(param.getName()).append(';');
     }
-    return builder;
-  }
-
-  private StringBuilder appendParamList(Collection<PsiField> params, StringBuilder builder) {
-    builder.append('(');
-    if (!params.isEmpty()) {
-      for (PsiField param : params) {
-        builder.append(param.getName()).append(',');
-      }
-      builder.deleteCharAt(builder.length() - 1);
-    }
-    builder.append(')');
     return builder;
   }
 }
