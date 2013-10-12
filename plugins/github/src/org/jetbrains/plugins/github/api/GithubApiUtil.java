@@ -534,9 +534,9 @@ public class GithubApiUtil {
                                                     @NotNull String repo,
                                                     @NotNull String title,
                                                     @NotNull String description,
-                                                    @NotNull String from,
-                                                    @NotNull String onto) throws IOException {
-    String request = gson.toJson(new GithubPullRequestRequest(title, description, from, onto));
+                                                    @NotNull String head,
+                                                    @NotNull String base) throws IOException {
+    String request = gson.toJson(new GithubPullRequestRequest(title, description, head, base));
     return createDataFromRaw(fromJson(postRequest(auth, "/repos/" + user + "/" + repo + "/pulls", request), GithubPullRequestRaw.class),
                              GithubPullRequest.class);
   }

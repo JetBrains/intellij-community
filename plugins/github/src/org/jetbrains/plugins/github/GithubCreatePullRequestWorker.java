@@ -244,11 +244,11 @@ public class GithubCreatePullRequestWorker {
           return;
         }
 
-        String baseBranch = myPath.getUser() + ":" + myCurrentBranch;
+        String headBranch = myPath.getUser() + ":" + myCurrentBranch;
 
         LOG.info("Creating pull request");
         indicator.setText("Creating pull request...");
-        GithubPullRequest request = createPullRequest(project, myAuth, myForkPath, title, description, baseBranch, targetBranch);
+        GithubPullRequest request = createPullRequest(project, myAuth, myForkPath, title, description, headBranch, targetBranch);
         if (request == null) {
           return;
         }
@@ -277,10 +277,10 @@ public class GithubCreatePullRequestWorker {
                                                      @NotNull GithubFullPath targetRepo,
                                                      @NotNull String title,
                                                      @NotNull String description,
-                                                     @NotNull String from,
-                                                     @NotNull String onto) {
+                                                     @NotNull String head,
+                                                     @NotNull String base) {
     try {
-      return GithubApiUtil.createPullRequest(auth, targetRepo.getUser(), targetRepo.getRepository(), title, description, from, onto);
+      return GithubApiUtil.createPullRequest(auth, targetRepo.getUser(), targetRepo.getRepository(), title, description, head, base);
     }
     catch (IOException e) {
       GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, e);
