@@ -114,19 +114,17 @@ public class DataFlowRunner {
           joinInstructions.add(myInstructions[((GotoInstruction)instruction).getOffset()]);
         } else if (instruction instanceof ConditionalGotoInstruction) {
           joinInstructions.add(myInstructions[((ConditionalGotoInstruction)instruction).getOffset()]);
-        } else if (instruction instanceof GosubInstruction) {
-          joinInstructions.add(myInstructions[((GosubInstruction)instruction).getSubprogramOffset()]);
         }
       }
 
       if (LOG.isDebugEnabled()) {
         LOG.debug("Analyzing code block: " + psiBlock.getText());
         for (int i = 0; i < myInstructions.length; i++) {
-          Instruction instruction = myInstructions[i];
-          LOG.debug(i + ": " + instruction.toString());
+          LOG.debug(i + ": " + myInstructions[i].toString());
         }
       }
-
+      //for (int i = 0; i < myInstructions.length; i++) System.out.println(i + ": " + myInstructions[i].toString());
+      
       Integer tooExpensiveHash = psiBlock.getUserData(TOO_EXPENSIVE_HASH);
       if (tooExpensiveHash != null && tooExpensiveHash == psiBlock.getText().hashCode()) {
         LOG.debug("Too complex because hasn't changed since being too complex already");
@@ -196,13 +194,11 @@ public class DataFlowRunner {
       return RunnerResult.OK;
     }
     catch (ArrayIndexOutOfBoundsException e) {
-      LOG.error(psiBlock.getText(), e); // TODO fix in better times
+      LOG.error(psiBlock.getText(), e);
       return RunnerResult.ABORTED;
     }
     catch (EmptyStackException e) {
-      if (LOG.isDebugEnabled()) {
-        LOG.error(e); // TODO fix in better times
-      }
+      LOG.error(psiBlock.getText(), e);
       return RunnerResult.ABORTED;
     }
   }

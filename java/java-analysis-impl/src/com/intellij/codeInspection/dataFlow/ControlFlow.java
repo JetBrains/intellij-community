@@ -31,6 +31,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiVariable;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -77,9 +78,9 @@ public class ControlFlow {
     myInstructions.add(instruction);
   }
 
-  public void removeVariable(PsiVariable variable) {
-    DfaVariableValue var = myFactory.getVarFactory().createVariableValue(variable, false);
-    addInstruction(new FlushVariableInstruction(var));
+  public void removeVariable(@Nullable PsiVariable variable) {
+    if (variable == null) return;
+    addInstruction(new FlushVariableInstruction(myFactory.getVarFactory().createVariableValue(variable, false)));
   }
 
   public ControlFlowOffset getStartOffset(final PsiElement element) {

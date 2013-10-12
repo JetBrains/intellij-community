@@ -36,9 +36,6 @@ public interface DfaMemoryState {
   DfaValue peek();
   void push(@NotNull DfaValue value);
 
-  int popOffset();
-  void pushOffset(int offset);
-
   void emptyStack();
 
   void setVarValue(DfaVariableValue var, DfaValue value);

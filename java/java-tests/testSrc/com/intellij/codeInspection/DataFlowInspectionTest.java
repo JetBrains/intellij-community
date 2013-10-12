@@ -78,6 +78,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testNestedTryInWhileNotComplex() throws Throwable { doTest(); }
   public void testExceptionFromFinally() throws Throwable { doTest(); }
   public void testExceptionFromFinallyNesting() throws Throwable { doTest(); }
+  public void testNestedFinally() { doTest(); }
   public void testFieldChangedBetweenSynchronizedBlocks() throws Throwable { doTest(); }
 
   public void testGeneratedEquals() throws Throwable { doTest(); }
@@ -291,6 +292,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testWhileNotComplex() { doTest(); }
   public void testManyDisjunctiveFieldAssignmentsInLoopNotComplex() { doTest(); }
   public void testManyContinuesNotComplex() { doTest(); }
+  public void testFinallyNotComplex() { doTest(); }
 
   public void testVariablesDiverge() { doTest(); }
   public void testMergeByNullability() { doTest(); }
