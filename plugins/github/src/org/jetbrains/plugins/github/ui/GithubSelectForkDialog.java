@@ -56,7 +56,7 @@ public class GithubSelectForkDialog extends DialogWrapper {
       }
     }));
 
-    setTitle("Select Fork Repository");
+    setTitle("Select Base Fork Repository");
     init();
   }
 
