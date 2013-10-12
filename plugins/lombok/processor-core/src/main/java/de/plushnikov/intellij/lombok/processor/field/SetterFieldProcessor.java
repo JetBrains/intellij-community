@@ -43,6 +43,7 @@ public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
     super(supportedAnnotationClass, supportedClass);
   }
 
+  @Override
   protected void processIntern(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getMethodModifier(psiAnnotation);
     if (methodVisibility != null) {

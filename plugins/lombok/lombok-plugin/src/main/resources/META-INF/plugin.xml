@@ -53,11 +53,13 @@
     <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.GetterProcessor"/>
     <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.SetterProcessor"/>
     <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.ToStringProcessor"/>
+    <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.WitherProcessor"/>
 
     <processor implementation="de.plushnikov.intellij.lombok.processor.field.DelegateFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.lombok.processor.field.GetterFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.lombok.processor.field.LazyGetterFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.lombok.processor.field.SetterFieldProcessor"/>
+    <processor implementation="de.plushnikov.intellij.lombok.processor.field.WitherFieldProcessor"/>
 
     <!-- lombok-pg-->
     <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.FluentSetterProcessor"/>
