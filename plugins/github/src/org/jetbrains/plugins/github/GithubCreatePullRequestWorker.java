@@ -231,6 +231,8 @@ public class GithubCreatePullRequestWorker {
   }
 
   public void performAction(@NotNull final String title, @NotNull final String description, @NotNull final String targetBranch) {
+    @NotNull final Project project = myProject;
+
     new Task.Backgroundable(myProject, "Creating pull request...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -238,7 +240,7 @@ public class GithubCreatePullRequestWorker {
         indicator.setText("Pushing current branch...");
         GitCommandResult result = myGit.push(myGitRepository, myRemoteName, myRemoteUrl, myCurrentBranch, true);
         if (!result.success()) {
-          GithubNotifications.showError(myProject, CANNOT_CREATE_PULL_REQUEST, "Push failed:<br/>" + result.getErrorOutputAsHtmlString());
+          GithubNotifications.showError(project, CANNOT_CREATE_PULL_REQUEST, "Push failed:<br/>" + result.getErrorOutputAsHtmlString());
           return;
         }
 
@@ -246,13 +248,13 @@ public class GithubCreatePullRequestWorker {
 
         LOG.info("Creating pull request");
         indicator.setText("Creating pull request...");
-        GithubPullRequest request = createPullRequest(myProject, myAuth, myForkPath, title, description, baseBranch, targetBranch);
+        GithubPullRequest request = createPullRequest(project, myAuth, myForkPath, title, description, baseBranch, targetBranch);
         if (request == null) {
           return;
         }
 
         GithubNotifications
-          .showInfoURL(myProject, "Successfully created pull request", "Pull Request #" + request.getNumber(), request.getHtmlUrl());
+          .showInfoURL(project, "Successfully created pull request", "Pull Request #" + request.getNumber(), request.getHtmlUrl());
       }
     }.queue();
   }
