@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,6 +147,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
           public void update(AnActionEvent e) {
             Editor editor = CommonDataKeys.EDITOR.getData(e.getDataContext());
             e.getPresentation().setEnabled(
+              !myAction.isShowInBalloon() &&
               editor != null && LookupManager.getActiveLookup(editor) == null &&
               TemplateManager.getInstance(myProject).getActiveTemplate(editor) == null &&
               (editorEscape == null || !editorEscape.isEnabled(editor, e.getDataContext())));
