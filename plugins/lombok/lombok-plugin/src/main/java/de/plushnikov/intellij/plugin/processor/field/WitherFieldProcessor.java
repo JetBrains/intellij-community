@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -16,7 +17,6 @@ import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
-import de.plushnikov.intellij.plugin.util.StringUtils;
 import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -66,11 +66,11 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
     final String suffix = fieldName.startsWith("is") && Character.isUpperCase(fieldName.charAt(2)) ?
         fieldName.substring(2) :
         fieldName;
-    return "with" + StringUtils.capitalize(suffix);
+    return "with" + StringUtil.capitalize(suffix);
   }
 
   private String secondWitherName(String fieldName) {
-    return "with" + StringUtils.capitalize(fieldName);
+    return "with" + StringUtil.capitalize(fieldName);
   }
 
   private boolean validNonStatic(PsiField field, PsiAnnotation annotation, @NotNull final ProblemBuilder builder) {

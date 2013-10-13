@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -11,7 +12,6 @@ import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
-import de.plushnikov.intellij.plugin.util.StringUtils;
 import lombok.EnumId;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,7 +74,7 @@ public class EnumIdFieldProcessor extends AbstractFieldProcessor {
   }
 
   protected String getFindByName(PsiField psiField) {
-    return String.format("findBy%s", StringUtils.capitalize(psiField.getName()));
+    return String.format("findBy%s", StringUtil.capitalize(psiField.getName()));
   }
 
 }
