@@ -4,11 +4,14 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.search.GlobalSearchScope;
 import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -129,42 +132,33 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
 
   @NotNull
   private PsiMethod createEqualsMethod(@NotNull PsiClass psiClass, @NotNull PsiElement psiNavTargetElement) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      builder.append("@java.lang.Override ");
-      builder.append("public boolean ").append(EQUALS_METHOD_NAME).append("(final java.lang.Object other)");
-      builder.append("{ return super.equals(other); }");
-
-      return PsiMethodUtil.createMethod(psiClass, builder.toString(), psiNavTargetElement);
-    } finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
+    final PsiManager psiManager = psiClass.getManager();
+    return new LombokLightMethodBuilder(psiManager, EQUALS_METHOD_NAME)
+        .withModifier(PsiModifier.PUBLIC)
+        .withMethodReturnType(PsiType.BOOLEAN)
+        .withContainingClass(psiClass)
+        .withNavigationElement(psiNavTargetElement)
+        .withParameter("obj", PsiType.getJavaLangObject(psiManager, GlobalSearchScope.allScope(psiClass.getProject())));
   }
 
   @NotNull
   private PsiMethod createHashCodeMethod(@NotNull PsiClass psiClass, @NotNull PsiElement psiNavTargetElement) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      builder.append("@java.lang.Override ");
-      builder.append("public int ").append(HASH_CODE_METHOD_NAME).append("()");
-      builder.append("{ return super.hashCode(); }");
-
-      return PsiMethodUtil.createMethod(psiClass, builder.toString(), psiNavTargetElement);
-    } finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
+    final PsiManager psiManager = psiClass.getManager();
+    return new LombokLightMethodBuilder(psiManager, HASH_CODE_METHOD_NAME)
+        .withModifier(PsiModifier.PUBLIC)
+        .withMethodReturnType(PsiType.INT)
+        .withContainingClass(psiClass)
+        .withNavigationElement(psiNavTargetElement);
   }
 
   @NotNull
   private PsiMethod createCanEqualMethod(@NotNull PsiClass psiClass, @NotNull PsiElement psiNavTargetElement) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      builder.append("public boolean ").append(CAN_EQUAL_METHOD_NAME).append("(final java.lang.Object other)");
-      builder.append("{ return other instanceof ").append(psiClass.getName()).append("; }");
-
-      return PsiMethodUtil.createMethod(psiClass, builder.toString(), psiNavTargetElement);
-    } finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
+    final PsiManager psiManager = psiClass.getManager();
+    return new LombokLightMethodBuilder(psiManager, CAN_EQUAL_METHOD_NAME)
+        .withModifier(PsiModifier.PUBLIC)
+        .withMethodReturnType(PsiType.BOOLEAN)
+        .withContainingClass(psiClass)
+        .withNavigationElement(psiNavTargetElement)
+        .withParameter("obj", PsiType.getJavaLangObject(psiManager, GlobalSearchScope.allScope(psiClass.getProject())));
   }
 }

@@ -4,11 +4,14 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.search.GlobalSearchScope;
 import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -88,19 +91,17 @@ public class ToStringProcessor extends AbstractClassProcessor {
       return Collections.emptyList();
     }
 
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      builder.append("@java.lang.Override ");
-      builder.append("public java.lang.String ").append(METHOD_NAME).append("()");
-      builder.append("{ return super.toString(); }");
+    final PsiManager psiManager = psiClass.getManager();
+    LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiManager, METHOD_NAME)
+        .withMethodReturnType(PsiType.getJavaLangString(psiManager, GlobalSearchScope.allScope(psiClass.getProject())))
+        .withContainingClass(psiClass)
+        .withNavigationElement(psiNavTargetElement)
+        .withModifier(PsiModifier.PUBLIC);
 
-      Collection<PsiField> toStringFields = PsiFieldUtil.filterFieldsByModifiers(psiClass.getFields(), PsiModifier.STATIC);
-      UserMapKeys.addReadUsageFor(toStringFields);
+    Collection<PsiField> toStringFields = PsiFieldUtil.filterFieldsByModifiers(psiClass.getFields(), PsiModifier.STATIC);
+    UserMapKeys.addReadUsageFor(toStringFields);
 
-      return Collections.singletonList(PsiMethodUtil.createMethod(psiClass, builder.toString(), psiNavTargetElement));
-    } finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
+    return Collections.<PsiMethod>singletonList(method);
   }
 
 }

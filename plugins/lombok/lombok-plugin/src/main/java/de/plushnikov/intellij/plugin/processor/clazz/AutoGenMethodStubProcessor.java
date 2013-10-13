@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * Inspect and validate @AutoGenMethodStub lombok-pg annotation on a class
  * Creates methods for all of unimplemented methods of the annotated type and create method stubs for all of them
- *
+ * TODO implement me
  * @author Plushnikov Michail
  */
 public class AutoGenMethodStubProcessor extends AbstractClassProcessor {
