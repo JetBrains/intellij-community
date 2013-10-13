@@ -83,6 +83,8 @@ public class StringUtilTest extends TestCase {
   }
 
   public void testNaturalCompare() {
+    assertEquals(1, StringUtil.naturalCompare("test011", "test10"));
+    assertEquals(1, StringUtil.naturalCompare("test10a", "test010"));
     final List<String> strings = new ArrayList<String>(Arrays.asList("Test99", "tes0", "test0", "testing", "test", "test99", "test011", "test1",
                                                              "test 3", "test2", "test10a", "test10", "1.2.10.5", "1.2.9.1"));
     final Comparator<String> c = new Comparator<String>() {
