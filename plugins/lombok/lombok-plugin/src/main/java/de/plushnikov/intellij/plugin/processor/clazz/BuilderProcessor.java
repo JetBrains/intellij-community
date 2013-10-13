@@ -26,7 +26,7 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public class BuilderProcessor extends AbstractLombokClassProcessor {
+public class BuilderProcessor extends AbstractClassProcessor {
 
   public static final String METHOD_NAME = "getInstance";
 

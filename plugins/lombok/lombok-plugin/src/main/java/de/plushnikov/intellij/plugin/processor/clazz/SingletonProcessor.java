@@ -24,7 +24,7 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public class SingletonProcessor extends AbstractLombokClassProcessor {
+public class SingletonProcessor extends AbstractClassProcessor {
 
   public static final String METHOD_NAME = "getInstance";
 

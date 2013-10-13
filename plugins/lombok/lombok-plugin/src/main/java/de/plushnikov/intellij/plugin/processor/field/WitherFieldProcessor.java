@@ -29,7 +29,7 @@ import java.util.List;
 import static de.plushnikov.intellij.plugin.util.PsiElementUtil.typesAreEquivalent;
 import static java.lang.String.format;
 
-public class WitherFieldProcessor extends AbstractLombokFieldProcessor {
+public class WitherFieldProcessor extends AbstractFieldProcessor {
 
   public WitherFieldProcessor() {
     super(Wither.class, PsiMethod.class);

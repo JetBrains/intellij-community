@@ -27,7 +27,7 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public class ToStringProcessor extends AbstractLombokClassProcessor {
+public class ToStringProcessor extends AbstractClassProcessor {
 
   public static final String METHOD_NAME = "toString";
 

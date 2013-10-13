@@ -33,7 +33,7 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public class SetterFieldProcessor extends AbstractLombokFieldProcessor {
+public class SetterFieldProcessor extends AbstractFieldProcessor {
 
   public SetterFieldProcessor() {
     this(Setter.class, PsiMethod.class);

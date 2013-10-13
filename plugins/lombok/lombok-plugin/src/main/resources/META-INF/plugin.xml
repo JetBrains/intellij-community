@@ -23,7 +23,7 @@
   </application-components>
 
   <extensionPoints>
-    <extensionPoint name="processor" interface="de.plushnikov.intellij.plugin.processor.LombokProcessor"/>
+    <extensionPoint name="processor" interface="de.plushnikov.intellij.plugin.processor.Processor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">

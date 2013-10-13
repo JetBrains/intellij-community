@@ -23,7 +23,7 @@ import java.util.Collection;
  *
  * @author Plushnikov Michail
  */
-public class CleanupProcessor extends AbstractLombokProcessor {
+public class CleanupProcessor extends AbstractProcessor {
 
   public CleanupProcessor() {
     super(Cleanup.class, PsiElement.class);

@@ -9,7 +9,7 @@ import com.intellij.psi.PsiField;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
 import de.plushnikov.intellij.plugin.extension.UserMapKeys;
-import de.plushnikov.intellij.plugin.processor.LombokProcessor;
+import de.plushnikov.intellij.plugin.processor.Processor;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
@@ -58,9 +58,9 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     cleanAttributeUsage(psiClass);
 
     List<Psi> result = new ArrayList<Psi>();
-    for (LombokProcessor lombokProcessor : LombokProcessorExtensionPoint.EP_NAME.getExtensions()) {
-      if (lombokProcessor.canProduce(type) && lombokProcessor.isEnabled(project)) {
-        result.addAll((Collection<Psi>) lombokProcessor.process(psiClass));
+    for (Processor processor : LombokProcessorExtensionPoint.EP_NAME.getExtensions()) {
+      if (processor.canProduce(type) && processor.isEnabled(project)) {
+        result.addAll((Collection<Psi>) processor.process(psiClass));
       }
     }
     return result;

@@ -12,7 +12,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
-import de.plushnikov.intellij.plugin.processor.clazz.AbstractLombokClassProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokPsiElementFactory;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -27,7 +27,7 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public abstract class AbstractLogProcessor extends AbstractLombokClassProcessor {
+public abstract class AbstractLogProcessor extends AbstractClassProcessor {
 
   private final static String loggerName = "log";
   private final String loggerType;

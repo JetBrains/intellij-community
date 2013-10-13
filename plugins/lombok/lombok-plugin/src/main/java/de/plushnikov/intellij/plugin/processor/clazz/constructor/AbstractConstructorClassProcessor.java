@@ -11,7 +11,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.util.StringBuilderSpinAllocator;
 import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
-import de.plushnikov.intellij.plugin.processor.clazz.AbstractLombokClassProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.AbstractClassProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokPsiElementFactory;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
@@ -35,7 +35,7 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public abstract class AbstractConstructorClassProcessor extends AbstractLombokClassProcessor {
+public abstract class AbstractConstructorClassProcessor extends AbstractClassProcessor {
 
   protected AbstractConstructorClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class supportedClass) {
     super(supportedAnnotationClass, supportedClass);

@@ -14,7 +14,7 @@ import java.util.List;
 /**
  * @author Plushnikov Michail
  */
-public interface LombokProcessor {
+public interface Processor {
   boolean acceptAnnotation(@NotNull PsiAnnotation psiAnnotation, @NotNull Class<? extends PsiElement> type);
 
   @NotNull

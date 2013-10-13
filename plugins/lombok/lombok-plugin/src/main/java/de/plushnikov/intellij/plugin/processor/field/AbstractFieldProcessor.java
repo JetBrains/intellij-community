@@ -11,7 +11,7 @@ import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
-import de.plushnikov.intellij.plugin.processor.AbstractLombokProcessor;
+import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
@@ -28,9 +28,9 @@ import java.util.regex.Pattern;
  *
  * @author Plushnikov Michail
  */
-public abstract class AbstractLombokFieldProcessor extends AbstractLombokProcessor implements LombokFieldProcessor {
+public abstract class AbstractFieldProcessor extends AbstractProcessor implements FieldProcessor {
 
-  protected AbstractLombokFieldProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<?> supportedClass) {
+  protected AbstractFieldProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<?> supportedClass) {
     super(supportedAnnotationClass, supportedClass);
   }
 

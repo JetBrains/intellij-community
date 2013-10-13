@@ -43,7 +43,7 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public class DelegateFieldProcessor extends AbstractLombokFieldProcessor {
+public class DelegateFieldProcessor extends AbstractFieldProcessor {
 
   public DelegateFieldProcessor() {
     super(Delegate.class, PsiMethod.class);

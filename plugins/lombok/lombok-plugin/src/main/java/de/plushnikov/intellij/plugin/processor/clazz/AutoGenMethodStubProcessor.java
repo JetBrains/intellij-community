@@ -26,7 +26,7 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public class AutoGenMethodStubProcessor extends AbstractLombokClassProcessor {
+public class AutoGenMethodStubProcessor extends AbstractClassProcessor {
   public AutoGenMethodStubProcessor() {
     super(AutoGenMethodStub.class, PsiMethod.class);
   }

@@ -28,7 +28,7 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public class SetterProcessor extends AbstractLombokClassProcessor {
+public class SetterProcessor extends AbstractClassProcessor {
 
   private final SetterFieldProcessor fieldProcessor = new SetterFieldProcessor();
 

@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class WitherProcessor extends AbstractLombokClassProcessor {
+public class WitherProcessor extends AbstractClassProcessor {
   private final WitherFieldProcessor fieldProcessor = new WitherFieldProcessor();
 
   public WitherProcessor() {

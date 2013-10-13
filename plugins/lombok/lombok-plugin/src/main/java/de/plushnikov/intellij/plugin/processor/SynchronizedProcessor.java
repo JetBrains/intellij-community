@@ -27,7 +27,7 @@ import java.util.Collection;
  *
  * @author Plushnikov Michail
  */
-public class SynchronizedProcessor extends AbstractLombokProcessor {
+public class SynchronizedProcessor extends AbstractProcessor {
 
   public SynchronizedProcessor() {
     super(Synchronized.class, PsiElement.class);

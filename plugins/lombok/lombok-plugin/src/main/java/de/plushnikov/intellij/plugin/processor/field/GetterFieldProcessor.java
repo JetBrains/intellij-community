@@ -31,7 +31,7 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public class GetterFieldProcessor extends AbstractLombokFieldProcessor {
+public class GetterFieldProcessor extends AbstractFieldProcessor {
 
   public GetterFieldProcessor() {
     super(Getter.class, PsiMethod.class);

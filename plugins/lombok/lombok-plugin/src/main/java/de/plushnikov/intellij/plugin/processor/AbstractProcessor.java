@@ -16,7 +16,7 @@ import java.util.List;
  *
  * @author Plushnikov Michail
  */
-public abstract class AbstractLombokProcessor implements LombokProcessor {
+public abstract class AbstractProcessor implements Processor {
   /**
    * Anntotation qualified name this processor supports
    */
@@ -36,7 +36,7 @@ public abstract class AbstractLombokProcessor implements LombokProcessor {
    * @param supportedAnnotationClass annotation this processor supports
    * @param supportedClass           kind of output elements this processor supports
    */
-  protected AbstractLombokProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<?> supportedClass) {
+  protected AbstractProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<?> supportedClass) {
     this.supportedAnnotationClass = supportedAnnotationClass;
     this.supportedAnnotation = supportedAnnotationClass.getName();
     this.supportedClass = supportedClass;
