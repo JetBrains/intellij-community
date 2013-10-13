@@ -7,11 +7,11 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.augment.PsiAugmentProvider;
-import de.plushnikov.intellij.lombok.UserMapKeys;
-import de.plushnikov.intellij.lombok.extension.LombokProcessorExtensionPoint;
-import de.plushnikov.intellij.lombok.processor.LombokProcessor;
-import de.plushnikov.intellij.lombok.util.PsiClassUtil;
+import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
+import de.plushnikov.intellij.plugin.extension.UserMapKeys;
+import de.plushnikov.intellij.plugin.processor.LombokProcessor;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
+import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

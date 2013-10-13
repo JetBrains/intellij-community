@@ -2,7 +2,7 @@ package de.plushnikov.intellij.plugin.provider;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.psi.PsiElement;
-import de.plushnikov.intellij.lombok.UserMapKeys;
+import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 
 /**
  * Provides implicit usages of lombok fields

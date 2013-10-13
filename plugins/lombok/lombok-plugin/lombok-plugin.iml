@@ -11,8 +11,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="processor-api" />
-    <orderEntry type="module" module-name="processor-core" />
+    <orderEntry type="module" module-name="lombok-api" />
   </component>
   <component name="POM File Configuration" pomFile="" />
 </module>

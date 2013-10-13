@@ -8,9 +8,9 @@ import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReferenceExpression;
-import de.plushnikov.intellij.lombok.extension.LombokProcessorExtensionPoint;
-import de.plushnikov.intellij.lombok.problem.LombokProblem;
-import de.plushnikov.intellij.lombok.processor.LombokProcessor;
+import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
+import de.plushnikov.intellij.plugin.problem.LombokProblem;
+import de.plushnikov.intellij.plugin.processor.LombokProcessor;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
