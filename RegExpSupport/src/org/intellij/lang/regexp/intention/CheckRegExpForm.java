@@ -29,12 +29,15 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
 import org.intellij.lang.regexp.RegExpLanguage;
+import org.intellij.lang.regexp.RegExpModifierProvider;
 
 import javax.swing.*;
 import java.awt.*;
@@ -134,7 +137,31 @@ public class CheckRegExpForm {
   private void updateBalloon() {
     boolean correct = false;
     try {
-      correct = Pattern.compile(myRegExp.getText()).matcher(mySampleText.getText()).matches();
+      final PsiFile file = myParams.first;
+      //todo: unfortunately there is no way to access host element representing regexp
+      int offset = -1;
+      try {
+        final String name = file.getName();
+        offset = Integer.parseInt(name.substring(name.lastIndexOf(':') + 1, name.lastIndexOf(')')));
+      } catch (Exception ignore) {}
+
+      int flags = 0;
+      if (offset != -1) {
+        final PsiFile host = FileContextUtil.getContextFile(file);
+        if (host != null) {
+          final PsiElement regexpInHost = host.findElementAt(offset);
+          if (regexpInHost != null) {
+            for (RegExpModifierProvider provider : RegExpModifierProvider.EP.getExtensions()) {
+              final int modifiers = provider.getFlags(regexpInHost, file);
+              if (modifiers > 0) {
+                flags = modifiers;
+                break;
+              }
+            }
+          }
+        }
+      }
+      correct = Pattern.compile(myRegExp.getText(), flags).matcher(mySampleText.getText()).matches();
     } catch (Exception ignore) {}
 
     mySampleText.setBackground(correct ? new JBColor(new Color(231, 250, 219), new Color(68, 85, 66)) : new JBColor(new Color(255, 177, 160), new Color(110, 43, 40)));

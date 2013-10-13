@@ -2,6 +2,7 @@
   <extensionPoints>
     <extensionPoint name="regExpLanguageHost" beanClass="com.intellij.openapi.util.ClassExtensionPoint"/>
     <extensionPoint name="regExpPropertiesProvider" beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+    <extensionPoint name="regExpModifierProvider" interface="org.intellij.lang.regexp.RegExpModifierProvider"/>
   </extensionPoints>
   <extensions defaultExtensionNs="com.intellij">
     <lang.documentationProvider language="RegExp" implementationClass="org.intellij.lang.regexp.RegExpDocumentationProvider"/>
