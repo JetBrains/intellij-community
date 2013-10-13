@@ -16,6 +16,7 @@
 package com.intellij.ui.components;
 
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -78,7 +79,7 @@ public class OnOffButton extends JToggleButton {
       int w = fm.stringWidth(text);
       int h = fm.getHeight();
       h += 2*4;
-      w += 3 * h / 2 + 4;
+      w += 3 * h / 2;
       return new Dimension(w, h);
     }
     @Override
@@ -94,11 +95,11 @@ public class OnOffButton extends JToggleButton {
       GraphicsUtil.setupAAPainting(g);
       g.translate(1,1);
       if (button.isSelected()) {
-        g.setColor(new Color(13, 41, 62));
+        g.setColor(new JBColor(new Color(57, 113, 238), new Color(13, 41, 62)));
         g.fillRoundRect(0, 0, w, h, h, h);
         g.setColor(UIUtil.getBorderColor());
         g.drawRoundRect(0, 0, w, h, h, h);
-        g.setColor(Gray._128);
+        g.setColor(new JBColor(Gray._220, Gray._128));
         g.fillOval(w - h + 1, 1, h - 1, h - 1);
         g.setColor(UIUtil.getListForeground(true));
         g.drawString(button.getOnText(), h/2, h - 4);
