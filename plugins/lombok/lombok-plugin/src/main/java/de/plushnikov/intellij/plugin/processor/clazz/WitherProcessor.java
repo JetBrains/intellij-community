@@ -10,8 +10,8 @@ import com.intellij.psi.PsiModifierList;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor;
+import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
-import de.plushnikov.intellij.plugin.util.LombokUtils;
 import lombok.experimental.Wither;
 import org.jetbrains.annotations.NotNull;
 

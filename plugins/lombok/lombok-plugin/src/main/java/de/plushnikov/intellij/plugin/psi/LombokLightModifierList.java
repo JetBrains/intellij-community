@@ -22,12 +22,12 @@ import java.util.Set;
 /**
  * @author Plushnikov Michail
  */
-public class LombokLightModifierListImpl extends LightModifierList {
+public class LombokLightModifierList extends LightModifierList {
   private static final Set<String> ALL_MODIFIERS = new HashSet<String>(Arrays.asList(PsiModifier.MODIFIERS));
 
   private final Map<String, PsiAnnotation> myAnnotations;
 
-  public LombokLightModifierListImpl(PsiManager manager, final Language language, String... modifiers) {
+  public LombokLightModifierList(PsiManager manager, final Language language, String... modifiers) {
     super(manager, language, modifiers);
     myAnnotations = new HashMap<String, PsiAnnotation>();
   }
@@ -99,6 +99,6 @@ public class LombokLightModifierListImpl extends LightModifierList {
   }
 
   public String toString() {
-    return "LombokLightModifierListImpl";
+    return "LombokLightModifierList";
   }
 }

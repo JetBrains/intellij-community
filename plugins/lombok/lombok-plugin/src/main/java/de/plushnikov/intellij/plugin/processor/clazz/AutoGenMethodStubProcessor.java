@@ -10,10 +10,9 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiSubstitutor;
 import com.intellij.psi.infos.CandidateInfo;
-import de.plushnikov.intellij.plugin.ErrorMessages;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
-import de.plushnikov.intellij.plugin.psi.LombokPsiElementFactory;
+import de.plushnikov.intellij.plugin.thirdparty.ErrorMessages;
 import lombok.AutoGenMethodStub;
 import org.jetbrains.annotations.NotNull;
 
@@ -62,9 +61,8 @@ public class AutoGenMethodStubProcessor extends AbstractClassProcessor {
     final PsiMethod methodToImplement = (PsiMethod) candidateInfo.getElement();
     final PsiSubstitutor substitutor = candidateInfo.getSubstitutor();
     if (null != methodToImplement && null != substitutor) {
-      final LombokPsiElementFactory lombokPsiElementFactory = LombokPsiElementFactory.getInstance();
       final String methodName = methodToImplement.getName();
-      LombokLightMethodBuilder method = lombokPsiElementFactory.createLightMethod(psiClass.getManager(), methodName)
+      LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiClass.getManager(), methodName)
           .withMethodReturnType(substitutor.substitute(methodToImplement.getReturnType()))
           .withContainingClass(psiClass)
           .withNavigationElement(psiAnnotation);

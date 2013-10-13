@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethod;
-import de.plushnikov.intellij.plugin.psi.LombokPsiElementFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -23,8 +22,8 @@ public class PsiMethodUtil {
 
     PsiMethod method = elementFactory.createMethodFromText(methodText, psiClass);
 
-    LombokLightMethod lightMethod = LombokPsiElementFactory.getInstance().createLightMethod(manager, method, psiClass);
-    lightMethod.withNavigationElement(navigationTarget);
+    LombokLightMethod lightMethod = new LombokLightMethod(manager, method, psiClass);
+    lightMethod.setNavigationElement(navigationTarget);
     return lightMethod;
   }
 

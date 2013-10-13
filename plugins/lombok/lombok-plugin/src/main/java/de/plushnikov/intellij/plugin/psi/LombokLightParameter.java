@@ -16,15 +16,15 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Plushnikov Michail
  */
-public class LombokLightParameterImpl extends LightParameter {
+public class LombokLightParameter extends LightParameter {
   private final LightIdentifier myNameIdentifier;
 
-  public LombokLightParameterImpl(@NotNull String name, @NotNull PsiType type, PsiElement declarationScope, Language language) {
+  public LombokLightParameter(@NotNull String name, @NotNull PsiType type, PsiElement declarationScope, Language language) {
     super(name, type, declarationScope, language);
     PsiManager manager = declarationScope.getManager();
     myNameIdentifier = new LightIdentifier(manager, name);
     ReflectionUtil.setFinalFieldPerReflection(LightVariableBuilder.class, this, LightModifierList.class,
-        new LombokLightModifierListImpl(manager, language));
+        new LombokLightModifierList(manager, language));
   }
 
   @Override
@@ -38,8 +38,8 @@ public class LombokLightParameterImpl extends LightParameter {
     return r == null ? TextRange.EMPTY_RANGE : r;
   }
 
-  public LombokLightParameterImpl setModifiers(String... modifiers) {
-    LombokLightModifierListImpl modifierList = new LombokLightModifierListImpl(getManager(), getLanguage(), modifiers);
+  public LombokLightParameter setModifiers(String... modifiers) {
+    LombokLightModifierList modifierList = new LombokLightModifierList(getManager(), getLanguage(), modifiers);
 // TODO Check it
 //    for (PsiAnnotation annotation : getAnnotations()) {
 //      modifierList.addAnnotation(annotation.getQualifiedName());

@@ -10,10 +10,9 @@ import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
-import de.plushnikov.intellij.plugin.psi.LombokPsiElementFactory;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
+import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
-import de.plushnikov.intellij.plugin.util.LombokUtils;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
@@ -148,7 +147,7 @@ public class WitherFieldProcessor extends AbstractFieldProcessor {
     final PsiClass psiFieldContainingClass = psiField.getContainingClass();
     if (psiFieldContainingClass != null) {
       PsiType returnType = PsiClassUtil.getTypeWithGenerics(psiFieldContainingClass);
-      result = LombokPsiElementFactory.getInstance().createLightMethod(psiField.getManager(), witherName(accessorsInfo.removePrefix(psiField.getName())))
+      result = new LombokLightMethodBuilder(psiField.getManager(), witherName(accessorsInfo.removePrefix(psiField.getName())))
           .withMethodReturnType(returnType)
           .withContainingClass(psiFieldContainingClass)
           .withParameter(psiField.getName(), psiField.getType())

@@ -11,7 +11,6 @@ import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
-import de.plushnikov.intellij.plugin.psi.LombokPsiElementFactory;
 import de.plushnikov.intellij.plugin.util.StringUtils;
 import lombok.EnumId;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +62,7 @@ public class EnumIdFieldProcessor extends AbstractFieldProcessor {
 
     UserMapKeys.addWriteUsageFor(psiField);
 
-    LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().createLightMethod(psiField.getManager(), methodName)
+    LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiField.getManager(), methodName)
         .withMethodReturnType(PsiTypesUtil.getClassType(psiClass))
         .withContainingClass(psiClass)
         .withParameter(fieldName, psiFieldType)

@@ -11,10 +11,9 @@ import com.intellij.psi.PsiType;
 import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
-import de.plushnikov.intellij.plugin.psi.LombokPsiElementFactory;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
+import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
-import de.plushnikov.intellij.plugin.util.LombokUtils;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
@@ -127,7 +126,7 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
 
     UserMapKeys.addReadUsageFor(psiField);
 
-    LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().createLightMethod(psiField.getManager(), methodName)
+    LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiField.getManager(), methodName)
         .withMethodReturnType(psiField.getType())
         .withContainingClass(psiClass)
         .withNavigationElement(psiField);

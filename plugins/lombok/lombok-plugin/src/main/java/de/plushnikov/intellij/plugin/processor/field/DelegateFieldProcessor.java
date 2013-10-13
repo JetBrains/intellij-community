@@ -22,7 +22,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
-import de.plushnikov.intellij.plugin.psi.LombokPsiElementFactory;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiElementUtil;
 import lombok.Delegate;
@@ -205,8 +204,7 @@ public class DelegateFieldProcessor extends AbstractFieldProcessor {
   private PsiMethod generateDelegateMethod(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @Nullable PsiSubstitutor psiSubstitutor) {
     final PsiType returnType = null == psiSubstitutor ? psiMethod.getReturnType() : psiSubstitutor.substitute(psiMethod.getReturnType());
 
-    LombokLightMethodBuilder methodBuilder = LombokPsiElementFactory.getInstance().
-        createLightMethod(psiClass.getManager(), psiMethod.getName())
+    LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(psiClass.getManager(), psiMethod.getName())
         .withModifier(PsiModifier.PUBLIC)
         .withMethodReturnType(returnType)
         .withContainingClass(psiClass)

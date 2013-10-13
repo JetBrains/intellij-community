@@ -1,4 +1,4 @@
-package de.plushnikov.intellij.plugin.util;
+package de.plushnikov.intellij.plugin.thirdparty;
 
 import java.util.ArrayList;
 import java.util.Collections;

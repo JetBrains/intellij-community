@@ -20,7 +20,7 @@
 * THE SOFTWARE.
 */
 
-package de.plushnikov.intellij.plugin;
+package de.plushnikov.intellij.plugin.thirdparty;
 
 import java.lang.annotation.Annotation;
 
