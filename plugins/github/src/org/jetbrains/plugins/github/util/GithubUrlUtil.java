@@ -75,14 +75,17 @@ public class GithubUrlUtil {
 
   /**
    * E.g.: https://github.com/suffix/ -> github.com
+   *       github.com:8080/ -> github.com
    */
   @Nullable
   public static String getHostFromUrl(@NotNull String url) {
-    try {
-      return new URI(url, false).getHost();
+    String path = removeProtocolPrefix(url).replace(':', '/');
+    int index = path.indexOf('/');
+    if (index == -1) {
+      return path;
     }
-    catch (URIException e) {
-      return null;
+    else {
+      return path.substring(0, index);
     }
   }
 

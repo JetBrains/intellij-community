@@ -740,13 +740,20 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
           splitter.addPropertyChangeListener(new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {
+              if (!Splitter.PROP_ORIENTATION.equals(evt.getPropertyName())) return;
+              boolean isSplitterHorizontalNow = !splitter.isVertical();
               if (anchor == ToolWindowAnchor.LEFT) {
-                UISettings.getInstance().LEFT_HORIZONTAL_SPLIT = !splitter.isVertical();
+                if (UISettings.getInstance().LEFT_HORIZONTAL_SPLIT != isSplitterHorizontalNow) {
+                  UISettings.getInstance().LEFT_HORIZONTAL_SPLIT = isSplitterHorizontalNow;
+                  UISettings.getInstance().fireUISettingsChanged();
+                }
               }
               if (anchor == ToolWindowAnchor.RIGHT) {
-                UISettings.getInstance().RIGHT_HORIZONTAL_SPLIT = !splitter.isVertical();
+                if (UISettings.getInstance().RIGHT_HORIZONTAL_SPLIT != isSplitterHorizontalNow) {
+                  UISettings.getInstance().RIGHT_HORIZONTAL_SPLIT = isSplitterHorizontalNow;
+                  UISettings.getInstance().fireUISettingsChanged();
+                }
               }
-              UISettings.getInstance().fireUISettingsChanged();
             }
           });
         }

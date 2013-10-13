@@ -384,7 +384,7 @@ public class JavaCompletionUtil {
           }
           mentioned.add((PsiMember)o);
         }
-        set.add(highlightIfNeeded(qualifierType, castQualifier(item, castItem, plainQualifier), o));
+        set.add(highlightIfNeeded(qualifierType, castQualifier(item, castItem, plainQualifier, processor), o));
       }
     }
 
@@ -427,7 +427,7 @@ public class JavaCompletionUtil {
   @NotNull
   private static LookupElement castQualifier(@NotNull LookupElement item,
                                              @Nullable final PsiTypeLookupItem castTypeItem,
-                                             @Nullable PsiType plainQualifier) {
+                                             @Nullable PsiType plainQualifier, JavaCompletionProcessor processor) {
     if (castTypeItem == null) {
       return item;
     }
@@ -449,7 +449,9 @@ public class JavaCompletionUtil {
             PsiSubstitutor plainSub = plainResult.getSubstitutor();
             PsiSubstitutor castSub = TypeConversionUtil.getSuperClassSubstitutor(plainClass, (PsiClassType)castType);
             if (method.getSignature(plainSub).equals(method.getSignature(castSub)) &&
-                plainSub.substitute(method.getReturnType()).equals(castSub.substitute(method.getReturnType()))) {
+                plainSub.substitute(method.getReturnType()).equals(castSub.substitute(method.getReturnType())) &&
+                processor.isAccessible(plainClass.findMethodBySignature(method, true))
+              ) {
               return item;
             }
           }
