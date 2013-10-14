@@ -2,104 +2,27 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="6853c16f-3d10-41de-830b-44e770ae270c" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/getter/FieldStaticGetter.class" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/setter/FieldStaticSetter.class" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok_pg/src/main/java/de/plushnikov/enumid/AAA.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/accessors/AccessorGenericTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/accessors/AccessorsExample.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/constructor/AllArgsConstructorClass.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok_pg/src/main/java/de/plushnikov/enumid/AnotherStatus.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok_pg/src/main/java/de/plushnikov/autogenstub/AutoGenMethodStubExample.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/Bean.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/getter/ClassPrivateGetter.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/setter/ClassPrivateSetter.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/getter/ClassProtectedGetter.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/setter/ClassProtectedSetter.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/getter/ClassPublicGetter.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/setter/ClassPublicSetter.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/tostring/ClassToString.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/log/CommonsLogClass.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/CompletitionTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/delegate/ConnectionWrapper.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/data/Data4.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/constructor/DataAndOtherConstructor.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/data/DataClass.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/data/DataExtendsTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/data/DataGetter.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/data/DataTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/data/DataWithGenerics.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/delegate/DelegateClass.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/delegate/DelegateOnMethodsTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/delegate/DelegateTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/delegate/DelegationExample.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok_pg/src/main/java/de/plushnikov/enumid/EnumIdExample.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok_pg/src/main/java/de/plushnikov/enumid/EnumTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/equalshashcode/EqualsAndHashCodeClass.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/getter/FieldGetter.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/getter/FieldGetterMethodExist.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/getter/FieldGetterWithAnnotations.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/setter/FieldSetter.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/setter/FieldSetterAlreadyExists.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/setter/FieldSetterMethodExist.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/setter/FieldSetterWithAnnotations.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/getter/FieldStaticGetter.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/setter/FieldStaticSetter.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/equalshashcode/FinalClassCanEqualTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok_pg/src/main/java/de/plushnikov/FluentFieldSetter.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/delegate/GenericInterface.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/datax/GenericPairClass.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/delegate/GenericTest.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/getter/GetterLazyInvalid.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/getter/GetterSetterExistWithDifferentParamCount.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/log/Log4j2Class.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/log/Log4jClass.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/log/LogClass.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/manual/LucenedHelper.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/Main.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/constructor/NoArgsConstructorClass.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/constructor/ReqArgsConstructorClass.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/constructor/ReqArgsConstructorsGenerics.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok_pg/src/main/java/de/plushnikov/singleton/SingletonExample.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok_pg/src/main/java/de/plushnikov/singleton/SingletonHolderExample.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/log/Slf4jClass.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/sneakythrows/SneakyThrowsExample.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/getter/SomeInterface.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/sub/SubBeanX.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/synchronised/SynchronizedBean.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/equalshashcode/Test.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok_pg/src/main/java/de/plushnikov/singleton/Test.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/wither/WitherOnClass.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/wither/WitherWithGenerics.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/log/XSlf4jClass.java" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/src/main/resources/log4j.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/pom.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/pom.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok/pom.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test-manual/lombok_pg/pom.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.gitignore" afterPath="$PROJECT_DIR$/.gitignore" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/compiler.xml" afterPath="$PROJECT_DIR$/.idea/compiler.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/encodings.xml" afterPath="$PROJECT_DIR$/.idea/encodings.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/field/AccessorsInfo.java" afterPath="$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/field/AccessorsInfo.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/clazz/constructor/AllArgsConstructorProcessor.java" afterPath="$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/clazz/constructor/AllArgsConstructorProcessor.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/field/WitherFieldProcessor.java" afterPath="$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/field/WitherFieldProcessor.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/clazz/WitherProcessor.java" afterPath="$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/clazz/WitherProcessor.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lombok-plugin/src/test/java/de/plushnikov/lombok/tests/WitherTestCase.java" afterPath="$PROJECT_DIR$/lombok-plugin/src/test/java/de/plushnikov/lombok/tests/WitherTestCase.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lombok-api/lombok-api.iml" afterPath="$PROJECT_DIR$/lombok-api/lombok-api.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lombok-intellij-plugin.iml" afterPath="$PROJECT_DIR$/lombok-intellij-plugin.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lombok-plugin/lombok-plugin.iml" afterPath="$PROJECT_DIR$/lombok-plugin/lombok-plugin.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lombok-api/pom.xml" afterPath="$PROJECT_DIR$/lombok-api/pom.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/lombok-plugin/src/main/resources/META-INF/plugin.xml" afterPath="$PROJECT_DIR$/lombok-plugin/src/main/resources/META-INF/plugin.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/vcs.xml" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="lombok-intellij-plugin.iws" />
     <ignored path=".idea/workspace.xml" />
     <file path="$PROJECT_DIR$/lombok-plugin/META-INF/plugin.xml" changelist="6853c16f-3d10-41de-830b-44e770ae270c" time="1373195604220" ignored="false" />
     <file path="$PROJECT_DIR$/lombok-plugin/src/main/resources/META-INF/META-INF/plugin.xml" changelist="6853c16f-3d10-41de-830b-44e770ae270c" time="1373196117626" ignored="false" />
-    <file path="/pom.xml" changelist="6853c16f-3d10-41de-830b-44e770ae270c" time="1381777835863" ignored="false" />
+    <file path="/pom.xml" changelist="6853c16f-3d10-41de-830b-44e770ae270c" time="1373294474984" ignored="false" />
     <file path="E:/fare-inventory/atlassian-ide-plugin.xml" changelist="6853c16f-3d10-41de-830b-44e770ae270c" time="1373294999830" ignored="false" />
     <file path="/ConnectionService.java" changelist="6853c16f-3d10-41de-830b-44e770ae270c" time="1373275781394" ignored="false" />
     <file path="E:/fare-inventory/booking/api/src/main/java/de/ivu/fare/inventory/interfaces/business/verbindung/boundary/ConnectionService.java" changelist="6853c16f-3d10-41de-830b-44e770ae270c" time="1373275785906" ignored="false" />
     <file path="E:/maven/maven-plugins/xmi-to-liquibase/atlassian-ide-plugin.xml" changelist="6853c16f-3d10-41de-830b-44e770ae270c" time="1373294999830" ignored="false" />
-    <file path="/Dummy.txt" changelist="6853c16f-3d10-41de-830b-44e770ae270c" time="1381774516535" ignored="false" />
+    <file path="/Dummy.txt" changelist="6853c16f-3d10-41de-830b-44e770ae270c" time="1381570209266" ignored="false" />
     <file path="/plugin.xml" changelist="6853c16f-3d10-41de-830b-44e770ae270c" time="1373294879549" ignored="false" />
-    <file path="$PROJECT_DIR$/lombok-plugin/src/main/java/de/plushnikov/intellij/plugin/LombokLoader.java" changelist="6853c16f-3d10-41de-830b-44e770ae270c" time="1381775156817" ignored="false" />
-    <file path="$PROJECT_DIR$/lombok-plugin/src/test/java/de/plushnikov/lombok/tests/IntelliJLombokPluginTestCase.java" changelist="6853c16f-3d10-41de-830b-44e770ae270c" time="1381775156817" ignored="false" />
-    <file path="$PROJECT_DIR$/.idea/uiDesigner.xml" changelist="6853c16f-3d10-41de-830b-44e770ae270c" time="1381775156817" ignored="false" />
     <option name="TRACKING_ENABLED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -159,53 +82,7 @@
     <favorites_list name="lombok-intellij-plugin" />
   </component>
   <component name="FileEditorManager">
-    <leaf>
-      <file leaf-file-name="README.md" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/README.md">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="pom.xml" pinned="false" current="true" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/pom.xml">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="34" column="59" selection-start="1240" selection-end="1240" vertical-scroll-proportion="0.10428101">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="pom.xml" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/test-manual/lombok/pom.xml">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="12" column="21" selection-start="466" selection-end="466" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="pom.xml" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/test-manual/pom.xml">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="20" column="18" selection-start="659" selection-end="659" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="pom.xml" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/test-manual/lombok_pg/pom.xml">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="11" column="30" selection-start="468" selection-end="474" vertical-scroll-proportion="0.0">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
+    <leaf />
   </component>
   <component name="FindManager">
     <FindUsagesManager>
@@ -223,22 +100,8 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/test-lombok-manual/src/main/java/de/plushnikov/setter/FieldSetter.java" />
-        <option value="$PROJECT_DIR$/test-lombok-manual/src/main/java/de/plushnikov/setter/FieldSetterAlreadyExists.java" />
-        <option value="$PROJECT_DIR$/test-lombok-manual/src/main/java/de/plushnikov/setter/FieldSetterMethodExist.java" />
-        <option value="$PROJECT_DIR$/test-lombok-manual/src/main/java/de/plushnikov/setter/FieldSetterWithAnnotations.java" />
-        <option value="$PROJECT_DIR$/test-lombok-manual/src/main/java/de/plushnikov/setter/FieldStaticSetter.java" />
-        <option value="$PROJECT_DIR$/test-lombok-manual/src/main/java/de/plushnikov/tostring/ClassToString.java" />
-        <option value="$PROJECT_DIR$/test-lombok-manual/src/main/java/de/plushnikov/Bean.java" />
-        <option value="$PROJECT_DIR$/test-lombok-manual/src/main/java/de/plushnikov/Test.java" />
-        <option value="$PROJECT_DIR$/test-lombok_pg-manual/src/main/java/de/plushnikov/FluentFieldSetter.java" />
         <option value="$PROJECT_DIR$/lombok-api/pom.xml" />
-        <option value="$PROJECT_DIR$/test-manual/test-lombok_pg-manual/pom.xml" />
-        <option value="$PROJECT_DIR$/test-manual/test-lombok-manual/pom.xml" />
-        <option value="$PROJECT_DIR$/test-manual/lombok_pg/pom.xml" />
-        <option value="$PROJECT_DIR$/test-manual/lombok/pom.xml" />
-        <option value="$PROJECT_DIR$/test-manual/pom.xml" />
-        <option value="$PROJECT_DIR$/pom.xml" />
+        <option value="$PROJECT_DIR$/lombok-plugin/src/main/resources/META-INF/plugin.xml" />
       </list>
     </option>
   </component>
@@ -250,7 +113,7 @@
           <option name="myItemType" value="org.jetbrains.idea.maven.navigator.MavenProjectsStructure$RootNode" />
         </PATH_ELEMENT>
         <PATH_ELEMENT>
-          <option name="myItemId" value="lombok-intellij-plugin-parent" />
+          <option name="myItemId" value="lombok-api" />
           <option name="myItemType" value="org.jetbrains.idea.maven.navigator.MavenProjectsStructure$ProjectNode" />
         </PATH_ELEMENT>
       </PATH>
@@ -260,7 +123,7 @@
           <option name="myItemType" value="org.jetbrains.idea.maven.navigator.MavenProjectsStructure$RootNode" />
         </PATH_ELEMENT>
         <PATH_ELEMENT>
-          <option name="myItemId" value="lombok-intellij-plugin-parent" />
+          <option name="myItemId" value="lombok-api" />
           <option name="myItemType" value="org.jetbrains.idea.maven.navigator.MavenProjectsStructure$ProjectNode" />
         </PATH_ELEMENT>
         <PATH_ELEMENT>
@@ -308,6 +171,7 @@
       <sortByType />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -316,84 +180,9 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
             </PATH_ELEMENT>
           </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-intellij-plugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-intellij-plugin-git" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-intellij-plugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-intellij-plugin-git" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="test-manual" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-intellij-plugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-intellij-plugin-git" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="test-manual" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok_pg" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-intellij-plugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-intellij-plugin-git" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="test-manual" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-intellij-plugin" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-intellij-plugin-git" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="lombok-api" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
         </subPane>
       </pane>
       <pane id="PackagesPane" />
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -403,7 +192,7 @@
     <property name="options.splitter.main.proportions" value="0.3" />
     <property name="jdk.selected.PLUGIN_MODULE" value="IDEA IC-129.713" />
     <property name="recentsLimit" value="5" />
-    <property name="options.lastSelected" value="reference.projectsettings.compiler.annotationProcessors" />
+    <property name="options.lastSelected" value="reference.projectsettings.compiler.javacompiler" />
     <property name="MemberChooser.sorted" value="false" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/processor-core" />
     <property name="project.structure.side.proportion" value="0.2" />
@@ -411,66 +200,14 @@
     <property name="GoToClass.toSaveIncludeLibraries" value="false" />
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="restartRequiresConfirmation" value="true" />
-    <property name="MemberChooser.showClasses" value="true" />
     <property name="FullScreen" value="false" />
+    <property name="MemberChooser.showClasses" value="true" />
     <property name="GoToClass.includeLibraries" value="false" />
-    <property name="dynamic.classpath" value="false" />
-    <property name="options.splitter.details.proportions" value="0.2" />
     <property name="options.searchVisible" value="true" />
-  </component>
-  <component name="RecentsManager">
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="E:\Projekte\lombok\lombok-intellij-plugin-git\test-manual" />
-    </key>
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="E:\Projekte\lombok\lombok-intellij-plugin-git\test-manual" />
-    </key>
+    <property name="options.splitter.details.proportions" value="0.2" />
+    <property name="dynamic.classpath" value="false" />
   </component>
   <component name="RunManager" selected="Plugin.Run Plugin">
-    <configuration default="false" name="Data4" type="Application" factoryName="Application" temporary="true">
-      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
-        <pattern>
-          <option name="PATTERN" value="de.plushnikov.data.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="MAIN_CLASS_NAME" value="de.plushnikov.data.Data4" />
-      <option name="VM_PARAMETERS" />
-      <option name="PROGRAM_PARAMETERS" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-      <option name="ALTERNATIVE_JRE_PATH" />
-      <option name="ENABLE_SWING_INSPECTOR" value="false" />
-      <option name="ENV_VARIABLES" />
-      <option name="PASS_PARENT_ENVS" value="true" />
-      <module name="lombok-test" />
-      <envs />
-      <RunnerSettings RunnerId="Run" />
-      <ConfigurationWrapper RunnerId="Run" />
-      <method />
-    </configuration>
-    <configuration default="false" name="Main" type="Application" factoryName="Application" temporary="true">
-      <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea">
-        <pattern>
-          <option name="PATTERN" value="de.plushnikov.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="MAIN_CLASS_NAME" value="de.plushnikov.Main" />
-      <option name="VM_PARAMETERS" />
-      <option name="PROGRAM_PARAMETERS" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-      <option name="ALTERNATIVE_JRE_PATH" />
-      <option name="ENABLE_SWING_INSPECTOR" value="false" />
-      <option name="ENV_VARIABLES" />
-      <option name="PASS_PARENT_ENVS" value="true" />
-      <module name="lombok-test" />
-      <envs />
-      <RunnerSettings RunnerId="Run" />
-      <ConfigurationWrapper RunnerId="Run" />
-      <method />
-    </configuration>
     <configuration default="true" type="#org.jetbrains.idea.devkit.run.PluginConfigurationType" factoryName="Plugin">
       <module name="lombok-plugin" />
       <option name="VM_PARAMETERS" value="-Xmx512m -Xms256m -XX:MaxPermSize=250m" />
@@ -507,6 +244,19 @@
       <option name="PORT" value="5005" />
       <method />
     </configuration>
+    <configuration default="true" type="Applet" factoryName="Applet">
+      <module name="" />
+      <option name="MAIN_CLASS_NAME" />
+      <option name="HTML_FILE_NAME" />
+      <option name="HTML_USED" value="false" />
+      <option name="WIDTH" value="400" />
+      <option name="HEIGHT" value="300" />
+      <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
+      <option name="VM_PARAMETERS" />
+      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
+      <option name="ALTERNATIVE_JRE_PATH" />
+      <method />
+    </configuration>
     <configuration default="true" type="TestNG" factoryName="TestNG">
       <extension name="coverage" enabled="false" merge="false" sample_coverage="true" runner="idea" />
       <module name="" />
@@ -533,19 +283,6 @@
       <envs />
       <properties />
       <listeners />
-      <method />
-    </configuration>
-    <configuration default="true" type="Applet" factoryName="Applet">
-      <module name="" />
-      <option name="MAIN_CLASS_NAME" />
-      <option name="HTML_FILE_NAME" />
-      <option name="HTML_USED" value="false" />
-      <option name="WIDTH" value="400" />
-      <option name="HEIGHT" value="300" />
-      <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
-      <option name="VM_PARAMETERS" />
-      <option name="ALTERNATIVE_JRE_PATH_ENABLED" value="false" />
-      <option name="ALTERNATIVE_JRE_PATH" />
       <method />
     </configuration>
     <configuration default="true" type="Application" factoryName="Application">
@@ -603,17 +340,9 @@
       <ConfigurationWrapper RunnerId="Run" />
       <method />
     </configuration>
-    <list size="3">
+    <list size="1">
       <item index="0" class="java.lang.String" itemvalue="Plugin.Run Plugin" />
-      <item index="1" class="java.lang.String" itemvalue="Application.Data4" />
-      <item index="2" class="java.lang.String" itemvalue="Application.Main" />
     </list>
-    <recent_temporary>
-      <list size="2">
-        <item index="0" class="java.lang.String" itemvalue="Application.Data4" />
-        <item index="1" class="java.lang.String" itemvalue="Application.Main" />
-      </list>
-    </recent_temporary>
     <configuration name="&lt;template&gt;" type="WebApp" default="true" selected="false">
       <Host>localhost</Host>
       <Port>5050</Port>
@@ -678,18 +407,16 @@
     <layout>
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32977587" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32977587" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="CDI" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32977587" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.19547212" sideWeight="0.67022413" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.1932634" sideWeight="0.67022413" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Application Servers" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="true" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.27332965" sideWeight="0.67022413" order="0" side_tool="false" content_ui="combo" />
@@ -700,8 +427,10 @@
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Atlassian " active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="JRebel Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="JRebel" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32977587" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
     </layout>
   </component>
@@ -791,114 +520,108 @@
     </option>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/wither/WitherWithGenerics.java">
+    <entry file="file://$PROJECT_DIR$/lombok-plugin/src/main/resources/META-INF/plugin.xml">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="16" column="22" selection-start="591" selection-end="591" vertical-scroll-proportion="0.0">
+        <state line="5" column="16" selection-start="317" selection-end="317" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/wither/WitherOnClass.java">
+    <entry file="file://$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/clazz/constructor/AllArgsConstructorProcessor.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="3" column="6" selection-start="65" selection-end="65" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/synchronised/SynchronizedBean.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="4" column="22" selection-start="88" selection-end="88" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/manual/LucenedHelper.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="10" column="19" selection-start="244" selection-end="244" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/delegate/ConnectionWrapper.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="8" column="13" selection-start="165" selection-end="165" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/delegate/DelegateClass.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="7" column="13" selection-start="129" selection-end="129" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/delegate/DelegateOnMethodsTest.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="6" column="13" selection-start="100" selection-end="100" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/data/Data4.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="7" column="19" selection-start="146" selection-end="146" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/test-manual/lombok/src/main/java/de/plushnikov/accessors/AccessorsExample.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="7" column="13" selection-start="156" selection-end="156" vertical-scroll-proportion="0.0">
+        <state line="19" column="19" selection-start="558" selection-end="558" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/lombok-api/pom.xml">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="53" column="36" selection-start="2350" selection-end="2350" vertical-scroll-proportion="0.1481069">
+        <state line="78" column="72" selection-start="3579" selection-end="3579" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/lombok-plugin/src/main/java/de/plushnikov/intellij/plugin/processor/field/WitherFieldProcessor.java">
+    <entry file="file://$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/field/SetterFieldProcessor.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="24" column="14" selection-start="1057" selection-end="1057" vertical-scroll-proportion="0.3051225">
+        <state line="50" column="24" selection-start="1976" selection-end="1976" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/README.md">
+    <entry file="file://$PROJECT_DIR$/lombok-plugin/src/main/java/de/plushnikov/intellij/plugin/inspection/LombokInspection.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/clazz/constructor/AllArgsConstructorProcessor.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="19" column="19" selection-start="558" selection-end="558" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/test-manual/lombok_pg/pom.xml">
+    <entry file="file://$PROJECT_DIR$/lombok-api/pom.xml">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="11" column="30" selection-start="468" selection-end="474" vertical-scroll-proportion="0.0">
+        <state line="78" column="72" selection-start="3579" selection-end="3579" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/test-manual/lombok/pom.xml">
+    <entry file="file://$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/field/SetterFieldProcessor.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="12" column="21" selection-start="466" selection-end="466" vertical-scroll-proportion="0.0">
+        <state line="50" column="24" selection-start="1976" selection-end="1976" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/test-manual/pom.xml">
+    <entry file="file://$PROJECT_DIR$/lombok-plugin/src/main/java/de/plushnikov/intellij/plugin/inspection/LombokInspection.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="20" column="18" selection-start="659" selection-end="659" vertical-scroll-proportion="0.0">
+        <state line="28" column="20" selection-start="1073" selection-end="1073" vertical-scroll-proportion="0.0" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/clazz/constructor/AllArgsConstructorProcessor.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="19" column="19" selection-start="558" selection-end="558" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/pom.xml">
+    <entry file="file://$PROJECT_DIR$/lombok-api/pom.xml">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="34" column="59" selection-start="1240" selection-end="1240" vertical-scroll-proportion="0.10428101">
+        <state line="78" column="72" selection-start="3579" selection-end="3579" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/field/SetterFieldProcessor.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="50" column="24" selection-start="1976" selection-end="1976" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/processor-core/src/main/java/de/plushnikov/intellij/lombok/processor/clazz/constructor/AllArgsConstructorProcessor.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="19" column="19" selection-start="558" selection-end="558" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lombok-plugin/src/main/java/de/plushnikov/intellij/plugin/inspection/LombokInspection.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="28" column="20" selection-start="1073" selection-end="1073" vertical-scroll-proportion="0.0" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lombok-api/pom.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="104" column="125" selection-start="4470" selection-end="4470" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/lombok-plugin/src/main/resources/META-INF/plugin.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="17" column="27" selection-start="667" selection-end="667" vertical-scroll-proportion="0.018888889">
           <folding />
         </state>
       </provider>
@@ -956,11 +679,12 @@
       </state>
       <state key="ModuleStructureConfigurable.UI">
         <settings>
-          <last-edited>lombok-intellij-plugin</last-edited>
+          <last-edited>processor-core</last-edited>
           <splitter-proportions>
             <option name="proportions">
               <list>
                 <option value="0.2" />
+                <option value="0.5" />
               </list>
             </option>
           </splitter-proportions>
@@ -980,7 +704,6 @@
       </state>
       <state key="ProjectLibrariesConfigurable.UI">
         <settings>
-          <last-edited>Maven: ch.qos.cal10n:cal10n-api:0.7.4</last-edited>
           <splitter-proportions>
             <option name="proportions">
               <list>
