@@ -349,7 +349,7 @@ public class FileTemplateUtil{
       }
     }
 
-    //Set escaped references to dummy values to remove leading "\" (if not already explicitely set)
+    //Set escaped references to dummy values to remove leading "\" (if not already explicitly set)
     String[] dummyRefs = calculateAttributes(template.getText(), propsMap, true);
     for (String dummyRef : dummyRefs) {
       propsMap.put(dummyRef, "");
@@ -384,7 +384,7 @@ public class FileTemplateUtil{
           }
         });
       }
-    }, template.isTemplateOfType(StdFileTypes.JAVA)
+    }, template.isTemplateOfType(StdFileTypes.JAVA) && !"package-info".equals(template.getName())
        ? IdeBundle.message("command.create.class.from.template")
        : IdeBundle.message("command.create.file.from.template"), null);
     if(commandException[0] != null){
