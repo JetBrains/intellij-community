@@ -5,8 +5,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
-import org.jetbrains.idea.svn.commandLine.SvnCommand;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.tmatesoft.svn.core.SVNErrorMessage;
 import org.tmatesoft.svn.core.SVNException;
@@ -32,7 +32,7 @@ public class CmdLockClient extends BaseSvnClient implements LockClient {
     parameters.add("--message");
     parameters.add(message);
 
-    SvnCommand command = CommandUtil.execute(myVcs, SvnTarget.fromFile(file), SvnCommandName.lock, parameters, null);
+    CommandExecutor command = CommandUtil.execute(myVcs, SvnTarget.fromFile(file), SvnCommandName.lock, parameters, null);
     handleCommandCompletion(command, file, SVNEventAction.LOCKED, SVNEventAction.LOCK_FAILED, handler);
   }
 
@@ -40,7 +40,7 @@ public class CmdLockClient extends BaseSvnClient implements LockClient {
   public void unlock(@NotNull File file, boolean force, @Nullable ISVNEventHandler handler) throws VcsException {
     List<String> parameters = prepareParameters(file, force);
 
-    SvnCommand command = CommandUtil.execute(myVcs, SvnTarget.fromFile(file), SvnCommandName.unlock, parameters, null);
+    CommandExecutor command = CommandUtil.execute(myVcs, SvnTarget.fromFile(file), SvnCommandName.unlock, parameters, null);
     handleCommandCompletion(command, file, SVNEventAction.UNLOCKED, SVNEventAction.UNLOCK_FAILED, handler);
   }
 
@@ -53,7 +53,7 @@ public class CmdLockClient extends BaseSvnClient implements LockClient {
     return parameters;
   }
 
-  private static void handleCommandCompletion(@NotNull SvnCommand command,
+  private static void handleCommandCompletion(@NotNull CommandExecutor command,
                                               @NotNull File file,
                                               @NotNull SVNEventAction success,
                                               @NotNull SVNEventAction failure,

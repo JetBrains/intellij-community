@@ -6,8 +6,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.FileStatusResultParser;
+import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
-import org.jetbrains.idea.svn.commandLine.SvnCommand;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
@@ -43,7 +43,7 @@ public class CmdAddClient extends BaseSvnClient implements AddClient {
     // TODO: handler should be called in parallel with command execution, but this will be in other thread
     // TODO: check if that is ok for current handler implementation
     // TODO: add possibility to invoke "handler.checkCancelled" - process should be killed
-    SvnCommand command = CommandUtil.execute(myVcs, SvnTarget.fromFile(file), SvnCommandName.add, parameters, null);
+    CommandExecutor command = CommandUtil.execute(myVcs, SvnTarget.fromFile(file), SvnCommandName.add, parameters, null);
     FileStatusResultParser parser = new FileStatusResultParser(CHANGED_PATH, handler, new AddStatusConvertor());
     parser.parse(command.getOutput());
   }

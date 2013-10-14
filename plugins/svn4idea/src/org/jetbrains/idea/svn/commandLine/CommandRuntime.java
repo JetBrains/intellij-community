@@ -48,7 +48,7 @@ public class CommandRuntime {
     exePath = SvnApplicationSettings.getInstance().getCommandLinePath();
   }
 
-  public SvnCommand runWithAuthenticationAttempt(@NotNull final File workingDirectory,
+  public CommandExecutor runWithAuthenticationAttempt(@NotNull final File workingDirectory,
                                                      @Nullable final SVNURL repositoryUrl,
                                                      SvnCommandName commandName,
                                                      final LineCommandListener listener,
@@ -60,7 +60,7 @@ public class CommandRuntime {
       String[] originalParameters = Arrays.copyOf(parameters, parameters.length);
 
       while (true) {
-        final SvnCommand command = newExecutor(commandName, listener, workingDirectory, configDir, parameters, originalParameters);
+        final CommandExecutor command = newExecutor(commandName, listener, workingDirectory, configDir, parameters, originalParameters);
         command.run();
         final Integer exitCode = command.getExitCodeReference();
 
@@ -104,7 +104,7 @@ public class CommandRuntime {
     }
   }
 
-  private void logNullExitCode(@NotNull SvnCommand command, @Nullable Integer exitCode) {
+  private void logNullExitCode(@NotNull CommandExecutor command, @Nullable Integer exitCode) {
     if (exitCode == null) {
       LOG.info("Null exit code returned, but not errors detected " + command.getCommandText());
     }
@@ -153,7 +153,7 @@ public class CommandRuntime {
     });
   }
 
-  private void cleanup(SvnCommand command, @NotNull File workingDirectory) throws SvnBindException {
+  private void cleanup(CommandExecutor command, @NotNull File workingDirectory) throws SvnBindException {
     if (command.isManuallyDestroyed() && command.getCommandName().isWriteable()) {
       File wcRoot = SvnUtil.getWorkingCopyRootNew(workingDirectory);
 
@@ -168,13 +168,13 @@ public class CommandRuntime {
     }
   }
 
-  private SvnCommand newExecutor(SvnCommandName commandName,
+  private CommandExecutor newExecutor(SvnCommandName commandName,
                                  LineCommandListener listener,
                                  File base,
                                  File configDir,
                                  String[] parameters,
                                  String[] originalParameters) {
-    SvnCommand command = new SvnCommand(base, commandName, exePath, configDir, listener);
+    CommandExecutor command = new CommandExecutor(base, commandName, exePath, configDir, listener);
 
     command.setOriginalParameters(originalParameters);
     command.addParameters(parameters);

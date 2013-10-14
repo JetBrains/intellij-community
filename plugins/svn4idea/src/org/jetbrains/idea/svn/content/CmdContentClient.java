@@ -28,7 +28,7 @@ public class CmdContentClient extends BaseSvnClient implements ContentClient {
     CommandUtil.put(parameters, target.getPathOrUrlString(), pegRevision);
     CommandUtil.put(parameters, revision);
 
-    SvnCommand command = CommandUtil.execute(myVcs, target, SvnCommandName.cat, parameters, null);
+    CommandExecutor command = CommandUtil.execute(myVcs, target, SvnCommandName.cat, parameters, null);
 
     byte[] bytes = CharsetToolkit.getUtf8Bytes(command.getOutput());
 

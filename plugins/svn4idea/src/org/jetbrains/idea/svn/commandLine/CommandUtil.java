@@ -180,7 +180,7 @@ public class CommandUtil {
    * @param listener
    * @throws VcsException
    */
-  public static SvnCommand execute(@NotNull SvnVcs vcs,
+  public static CommandExecutor execute(@NotNull SvnVcs vcs,
                                    @NotNull SvnTarget target,
                                    @NotNull SvnCommandName name,
                                    @NotNull List<String> parameters,
@@ -190,7 +190,7 @@ public class CommandUtil {
     return execute(vcs, target, workingDirectory, name, parameters, listener);
   }
 
-  public static SvnCommand execute(@NotNull SvnVcs vcs,
+  public static CommandExecutor execute(@NotNull SvnVcs vcs,
                                    @NotNull SvnTarget target,
                                    @NotNull File workingDirectory,
                                    @NotNull SvnCommandName name,

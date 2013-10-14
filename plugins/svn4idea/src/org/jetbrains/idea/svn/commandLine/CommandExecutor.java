@@ -38,8 +38,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * Date: 1/25/12
  * Time: 12:58 PM
  */
-public class SvnCommand {
-  static final Logger LOG = Logger.getInstance(SvnCommand.class.getName());
+public class CommandExecutor {
+  static final Logger LOG = Logger.getInstance(CommandExecutor.class.getName());
   private final AtomicReference<Integer> myExitCodeReference;
   private final File myConfigDir;
 
@@ -61,8 +61,8 @@ public class SvnCommand {
   @NotNull private final AtomicReference<Throwable> myExceptionRef;
   @Nullable private final LineCommandListener myResultBuilder;
 
-  public SvnCommand(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath,
-                    @Nullable File configDir, @Nullable LineCommandListener resultBuilder) {
+  public CommandExecutor(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath,
+                         @Nullable File configDir, @Nullable LineCommandListener resultBuilder) {
     myResultBuilder = resultBuilder;
     if (resultBuilder != null)
     {

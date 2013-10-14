@@ -108,7 +108,7 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
 
     putParameters(parameters, path, depth, remote, reportAll, includeIgnored, changeLists);
 
-    SvnCommand command;
+    CommandExecutor command;
     try {
       command = CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.st, parameters, null);
     }
@@ -124,7 +124,7 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
                            ISVNStatusHandler handler,
                            File base,
                            SVNInfo infoBase,
-                           SvnCommand command) throws SVNException {
+                           CommandExecutor command) throws SVNException {
     String result = command.getOutput();
 
     if (StringUtil.isEmptyOrSpaces(result)) {

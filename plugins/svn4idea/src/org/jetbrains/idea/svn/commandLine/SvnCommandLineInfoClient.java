@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
@@ -117,7 +116,7 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     };
 
     try {
-      SvnCommand command = CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.info, parameters, listener);
+      CommandExecutor command = CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.info, parameters, listener);
 
       return command.getOutput();
     }
@@ -213,7 +212,7 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     List<String> parameters = new ArrayList<String>();
 
     fillParameters(path, pegRevision, revision, depth, parameters);
-    SvnCommand command;
+    CommandExecutor command;
     try {
       command = CommandUtil.execute(myVcs, SvnTarget.fromURL(url), SvnCommandName.info, parameters, null);
     }
