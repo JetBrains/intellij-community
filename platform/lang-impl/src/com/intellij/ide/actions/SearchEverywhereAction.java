@@ -301,7 +301,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private void initSearchField(final SearchTextField search) {
     final JTextField editor = search.getTextEditor();
-    editor.setOpaque(false);
+//    editor.setOpaque(false);
     editor.putClientProperty("JTextField.Search.noFocusRing", Boolean.TRUE);
     onFocusLost(editor);
     editor.getDocument().addDocumentListener(new DocumentAdapter() {
