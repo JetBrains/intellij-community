@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.LineHandlerHelper;
-import com.intellij.openapi.vcs.ProcessEventListener;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -108,7 +107,7 @@ public class SvnCommand {
         myHandler = new OSProcessHandler(myProcess, myCommandLine.getCommandLineString());
         startHandlingStreams();
       } catch (Throwable t) {
-        myListeners.getMulticaster().startFailed(t);
+        listeners().startFailed(t);
       }
     }
   }
@@ -163,7 +162,7 @@ public class SvnCommand {
     }
   }
 
-  protected ProcessEventListener listeners() {
+  protected LineCommandListener listeners() {
     synchronized (myLock) {
       return myListeners.getMulticaster();
     }
@@ -368,7 +367,7 @@ public class SvnCommand {
 
     private void notifyLine(final String line, final Key outputType) {
       String trimmed = LineHandlerHelper.trimLineSeparator(line);
-      myListeners.getMulticaster().onLineAvailable(trimmed, outputType);
+      listeners().onLineAvailable(trimmed, outputType);
     }
   }
 }
