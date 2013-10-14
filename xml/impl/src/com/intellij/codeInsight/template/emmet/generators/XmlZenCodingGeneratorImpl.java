@@ -119,7 +119,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
         }
       }
     });
-    PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
     for (final SmartPsiElementPointer<XmlTag> pointer : tagToClose) {
       final XmlTag tag = pointer.getElement();
       if (tag != null) {
@@ -133,13 +133,13 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
               public void run() {
                 document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
+                documentManager.commitDocument(document);
               }
             });
           }
         }
       }
     }
-    documentManager.commitAllDocuments();
   }
 
   private static boolean isTagClosed(@NotNull XmlTag tag) {
