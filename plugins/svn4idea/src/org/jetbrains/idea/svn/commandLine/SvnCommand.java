@@ -33,6 +33,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created with IntelliJ IDEA.
@@ -42,6 +43,7 @@ import java.util.List;
  */
 public abstract class SvnCommand {
   static final Logger LOG = Logger.getInstance(SvnCommand.class.getName());
+  private final AtomicReference<Integer> myExitCodeReference;
   private final File myConfigDir;
 
   private boolean myIsDestroyed;
@@ -77,6 +79,7 @@ public abstract class SvnCommand {
       myCommandLine.addParameters("--config-dir", configDir.getPath());
     }
     myCommandLine.addParameter(commandName.getName());
+    myExitCodeReference = new AtomicReference<Integer>();
   }
 
   public String[] getParameters() {
@@ -291,6 +294,14 @@ public abstract class SvnCommand {
 
   public SvnCommandName getCommandName() {
     return myCommandName;
+  }
+
+  public Integer getExitCodeReference() {
+    return myExitCodeReference.get();
+  }
+
+  public void setExitCodeReference(int value) {
+    myExitCodeReference.set(value);
   }
 
   private class ProcessEventTracker implements ProcessListener {
