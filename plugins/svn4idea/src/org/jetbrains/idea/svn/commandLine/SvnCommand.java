@@ -62,10 +62,6 @@ public class SvnCommand {
   private final AtomicBoolean myWasError = new AtomicBoolean(false);
   @NotNull private final AtomicReference<Throwable> myExceptionRef;
 
-  public SvnCommand(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath) {
-    this(workingDirectory, commandName, exePath, null);
-  }
-
   public SvnCommand(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath,
                     @Nullable File configDir) {
     myCommandName = commandName;
