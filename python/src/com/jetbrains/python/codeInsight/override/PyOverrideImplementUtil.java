@@ -76,14 +76,14 @@ public class PyOverrideImplementUtil {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
     final Collection<PyFunction> superFunctions = getAllSuperFunctions(pyClass);
-    chooseAndOverrideOrImplementMethods(project, editor, pyClass, superFunctions, "Select Methods to Override");
+    chooseAndOverrideOrImplementMethods(project, editor, pyClass, superFunctions, "Select Methods to Override", false);
   }
 
   public static void chooseAndOverrideOrImplementMethods(@NotNull final Project project,
                                                          @NotNull final Editor editor,
                                                          @NotNull final PyClass pyClass,
                                                          @NotNull final Collection<PyFunction> superFunctions,
-                                                         String title) {
+                                                         @NotNull final String title, final boolean implement) {
     List<PyMethodMember> elements = new ArrayList<PyMethodMember>();
     for (PyFunction function : superFunctions) {
       final String name = function.getName();
@@ -119,23 +119,24 @@ public class PyOverrideImplementUtil {
       return;
     }
     List<PyMethodMember> membersToOverride = chooser.getSelectedElements();
-    overrideMethods(editor, pyClass, membersToOverride);
+    overrideMethods(editor, pyClass, membersToOverride, implement);
   }
 
-  public static void overrideMethods(final Editor editor, final PyClass pyClass, final List<PyMethodMember> membersToOverride) {
+  public static void overrideMethods(final Editor editor, final PyClass pyClass, final List<PyMethodMember> membersToOverride,
+                                     final boolean implement) {
     if (membersToOverride == null) {
       return;
     }
     new WriteCommandAction(pyClass.getProject(), pyClass.getContainingFile()) {
       protected void run(final Result result) throws Throwable {
-        write(pyClass, membersToOverride, editor);
+        write(pyClass, membersToOverride, editor, implement);
       }
     }.execute();
   }
 
   private static void write(@NotNull final PyClass pyClass,
                             @NotNull final List<PyMethodMember> newMembers,
-                            @NotNull final Editor editor) {
+                            @NotNull final Editor editor, boolean implement) {
     final PyStatementList statementList = pyClass.getStatementList();
     final int offset = editor.getCaretModel().getOffset();
     PsiElement anchor = null;
@@ -148,7 +149,7 @@ public class PyOverrideImplementUtil {
     PyFunction element = null;
     for (PyMethodMember newMember : newMembers) {
       PyFunction baseFunction = (PyFunction) newMember.getPsiElement();
-      final PyFunctionBuilder builder = buildOverriddenFunction(pyClass, baseFunction);
+      final PyFunctionBuilder builder = buildOverriddenFunction(pyClass, baseFunction, implement);
       PyFunction function = builder.addFunctionAfter(statementList, anchor, LanguageLevel.forElement(statementList));
       element = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(function);
     }
@@ -165,7 +166,7 @@ public class PyOverrideImplementUtil {
     }
   }
 
-  private static PyFunctionBuilder buildOverriddenFunction(PyClass pyClass, PyFunction baseFunction) {
+  private static PyFunctionBuilder buildOverriddenFunction(PyClass pyClass, PyFunction baseFunction, boolean implement) {
     PyFunctionBuilder pyFunctionBuilder = new PyFunctionBuilder(baseFunction.getName());
     final PyDecoratorList decorators = baseFunction.getDecoratorList();
     if (decorators != null && decorators.findDecorator(PyNames.CLASSMETHOD) != null) {
@@ -204,7 +205,7 @@ public class PyOverrideImplementUtil {
       }
     }
 
-    if (PyNames.FAKE_OLD_BASE.equals(baseClass.getName())) {
+    if (PyNames.FAKE_OLD_BASE.equals(baseClass.getName()) || implement) {
       statementBody.append(PyNames.PASS);
     }
     else {
