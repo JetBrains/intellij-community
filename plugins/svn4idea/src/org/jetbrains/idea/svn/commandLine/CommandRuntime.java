@@ -76,9 +76,9 @@ public class CommandRuntime {
         if (exitCode == null || exitCode != 0) {
           logNullExitCode(command, exitCode);
 
-          if (command.getError().length() > 0) {
+          if (command.getErrorOutput().length() > 0) {
             // handle authentication
-            final String errText = command.getError().toString().trim();
+            final String errText = command.getErrorOutput().trim();
             final AuthCallbackCase callback = createCallback(errText, repositoryUrl);
             if (callback != null) {
               cleanup(exePath, command, workingDirectory);
@@ -98,9 +98,9 @@ public class CommandRuntime {
               throw new SvnBindException("Svn process exited with error code: " + exitCode);
             }
           }
-        } else if (command.getError().length() > 0) {
+        } else if (command.getErrorOutput().length() > 0) {
           // here exitCode == 0, but some warnings are in error stream
-          LOG.info("Detected warning - " + command.getError());
+          LOG.info("Detected warning - " + command.getErrorOutput());
         }
         return command;
       }
@@ -220,13 +220,6 @@ public class CommandRuntime {
         if (listener.isCanceled()) {
           LOG.info("Cancelling command: " + command.getCommandText());
           command.destroyProcess();
-          return;
-        }
-        if (ProcessOutputTypes.STDERR.equals(outputType)) {
-          if (command.getError().length() > 0) {
-            command.getError().append('\n');
-          }
-          command.getError().append(line);
         }
       }
 
