@@ -1,5 +1,6 @@
 package com.jetbrains.python.testing;
 
+import com.google.common.collect.Sets;
 import com.intellij.execution.Location;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
@@ -9,6 +10,8 @@ import com.intellij.facet.FacetManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -120,7 +123,7 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
   private boolean setupConfigurationFromFolder(@NotNull final PsiDirectory element,
                                                       @NotNull final AbstractPythonTestRunConfiguration configuration) {
     final VirtualFile virtualFile = element.getVirtualFile();
-    if (!isTestFolder(virtualFile)) return false;
+    if (!isTestFolder(virtualFile, element.getProject())) return false;
     final String path = virtualFile.getPath();
 
     configuration.setTestType(AbstractPythonTestRunConfiguration.TestType.TEST_FOLDER);
@@ -182,9 +185,10 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
     return true;
   }
 
-  protected boolean isTestFolder(@NotNull final VirtualFile virtualFile) {
+  protected boolean isTestFolder(@NotNull final VirtualFile virtualFile, @NotNull final Project project) {
     final String name = virtualFile.getName();
-    return name.toLowerCase().contains("test");
+    final VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentSourceRoots();
+    return name.toLowerCase().contains("test") || Sets.newHashSet(roots).contains(virtualFile);
   }
 
   protected boolean isAvailable(@NotNull final Location location) {
