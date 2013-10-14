@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * @author Konstantin Kolosovsky.
  */
-public class BaseUpdateCommandListener extends LineCommandListener {
+public class BaseUpdateCommandListener extends LineCommandAdapter {
 
   @NotNull
   private final UpdateOutputLineConverter converter;

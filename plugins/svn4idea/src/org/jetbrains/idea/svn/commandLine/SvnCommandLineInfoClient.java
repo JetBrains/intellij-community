@@ -107,7 +107,7 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
   private String execute(@NotNull List<String> parameters, @NotNull File path) throws SVNException {
     // workaround: separately capture command output - used in exception handling logic to overcome svn 1.8 issue (see below)
     final ProcessOutput output = new ProcessOutput();
-    LineCommandListener listener = new LineCommandListener() {
+    LineCommandListener listener = new LineCommandAdapter() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (outputType == ProcessOutputTypes.STDOUT) {

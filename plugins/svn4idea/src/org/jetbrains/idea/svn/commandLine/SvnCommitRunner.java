@@ -95,7 +95,7 @@ public class SvnCommitRunner {
     return revision;
   }
 
-  public static class CommandListener extends LineCommandListener {
+  public static class CommandListener extends LineCommandAdapter {
 
     // Status could contain spaces, like "Adding copy of   <path>". But at the end we are not interested in "copy of" part and want to have
     // only "Adding" in match group.
