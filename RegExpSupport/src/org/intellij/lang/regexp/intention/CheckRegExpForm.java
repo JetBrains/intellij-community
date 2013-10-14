@@ -16,8 +16,11 @@
 package org.intellij.lang.regexp.intention;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
@@ -34,15 +37,18 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
 import com.intellij.ui.BalloonImpl;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.lang.regexp.RegExpModifierProvider;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.util.regex.Pattern;
 
 /**
@@ -73,30 +79,46 @@ public class CheckRegExpForm {
     myRegExp = new EditorTextField(document, myProject, RegExpLanguage.INSTANCE.getAssociatedFileType());
     final String sampleText = PropertiesComponent.getInstance(myProject).getValue(LAST_EDITED_REGEXP, "Sample Text");
     mySampleText = new EditorTextField(sampleText, myProject, PlainTextFileType.INSTANCE);
+    mySampleText.setBorder(
+      new CompoundBorder(new EmptyBorder(2, 2, 2, 4), new LineBorder(UIUtil.isUnderDarcula() ? Gray._100 : UIUtil.getBorderColor())));
+    mySampleText.setOneLineMode(false);
+    mySampleText.addDocumentListener(new DocumentAdapter() {
+      @Override
+      public void documentChanged(DocumentEvent e) {
+        //noinspection SSBasedInspection
+        SwingUtilities.invokeLater(new Runnable() {
+          public void run() {
+            myRootPanel.revalidate();
+            final Balloon balloon = myRef.get();
+            if (balloon != null) {
+              balloon.revalidate();
+            }
+          }
+        });
+      }
+    });
+
     myRootPanel = new JPanel(new BorderLayout()) {
       @Override
       public void addNotify() {
         super.addNotify();
         IdeFocusManager.getGlobalInstance().requestFocus(mySampleText, true);
 
-        final KeyAdapter escaper = new KeyAdapter() {
+        new AnAction(){
           @Override
-          public void keyPressed(KeyEvent e) {
-            if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-              if (!myRef.get().isDisposed()) {
-                myRef.get().hide();
-              }
-            }
+          public void actionPerformed(AnActionEvent e) {
+            IdeFocusManager.findInstance().requestFocus(myRegExp.getFocusTarget(), true);
+          }
+        }.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), mySampleText, myRef.get());
+        final AnAction escaper = new AnAction() {
+          @Override
+          public void actionPerformed(AnActionEvent e) {
+            myRef.get().hide();
           }
         };
+        escaper.registerCustomShortcutSet(CommonShortcuts.ESCAPE, myRegExp.getFocusTarget(), myRef.get());
+        escaper.registerCustomShortcutSet(CommonShortcuts.ESCAPE, mySampleText.getFocusTarget(), myRef.get());
 
-        final Editor fieldEditor = myRegExp.getEditor();
-        final Editor textEditor = mySampleText.getEditor();
-
-        assert fieldEditor != null && textEditor != null;
-
-        fieldEditor.getContentComponent().addKeyListener(escaper);
-        textEditor.getContentComponent().addKeyListener(escaper);
 
         myRef.get().addListener(new JBPopupAdapter() {
           @Override
