@@ -112,33 +112,9 @@ public abstract class SvnCommand {
   }
 
   private void startHandlingStreams() {
-    final ProcessListener processListener = new ProcessListener() {
-      public void startNotified(final ProcessEvent event) {
-        // do nothing
-      }
-
-      public void processTerminated(final ProcessEvent event) {
-        final int exitCode = event.getExitCode();
-        try {
-          setExitCode(exitCode);
-          SvnCommand.this.processTerminated(exitCode);
-        } finally {
-          listeners().processTerminated(exitCode);
-        }
-      }
-
-      public void processWillTerminate(final ProcessEvent event, final boolean willBeDestroyed) {
-        // do nothing
-      }
-
-      public void onTextAvailable(final ProcessEvent event, final Key outputType) {
-        SvnCommand.this.onTextAvailable(event.getText(), outputType);
-      }
-    };
-
     outputAdapter = new CapturingProcessAdapter();
     myHandler.addProcessListener(outputAdapter);
-    myHandler.addProcessListener(processListener);
+    myHandler.addProcessListener(new ProcessEventTracker());
     myHandler.startNotify();
   }
 
@@ -315,5 +291,29 @@ public abstract class SvnCommand {
 
   public SvnCommandName getCommandName() {
     return myCommandName;
+  }
+
+  private class ProcessEventTracker implements ProcessListener {
+    public void startNotified(final ProcessEvent event) {
+      // do nothing
+    }
+
+    public void processTerminated(final ProcessEvent event) {
+      final int exitCode = event.getExitCode();
+      try {
+        setExitCode(exitCode);
+        SvnCommand.this.processTerminated(exitCode);
+      } finally {
+        listeners().processTerminated(exitCode);
+      }
+    }
+
+    public void processWillTerminate(final ProcessEvent event, final boolean willBeDestroyed) {
+      // do nothing
+    }
+
+    public void onTextAvailable(final ProcessEvent event, final Key outputType) {
+      SvnCommand.this.onTextAvailable(event.getText(), outputType);
+    }
   }
 }
