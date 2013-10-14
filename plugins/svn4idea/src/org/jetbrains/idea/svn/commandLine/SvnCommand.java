@@ -122,8 +122,8 @@ public class SvnCommand {
   private void startHandlingStreams() {
     outputAdapter = new CapturingProcessAdapter();
     myHandler.addProcessListener(outputAdapter);
-    myHandler.addProcessListener(new ErrorTracker());
-    myHandler.addProcessListener(new ProcessEventTracker());
+    myHandler.addProcessListener(new ProcessTracker());
+    myHandler.addProcessListener(new ResultBuilderNotifier());
     myHandler.addProcessListener(new CommandOutputLogger());
     myHandler.startNotify();
   }
@@ -301,7 +301,7 @@ public class SvnCommand {
     }
   }
 
-  private class ErrorTracker extends ProcessAdapter {
+  private class ProcessTracker extends ProcessAdapter {
 
     @Override
     public void processTerminated(ProcessEvent event) {
@@ -316,7 +316,7 @@ public class SvnCommand {
     }
   }
 
-  private class ProcessEventTracker implements ProcessListener {
+  private class ResultBuilderNotifier implements ProcessListener {
 
     /**
      * the partial line from stdout stream
