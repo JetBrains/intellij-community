@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -49,6 +50,7 @@ public class SvnLineCommand extends SvnCommand {
   private final StringBuilder myStderrLine = new StringBuilder();
   private final EventDispatcher<LineProcessEventListener> myLineListeners;
   private final AtomicReference<Integer> myExitCode;
+  private final AtomicBoolean myWasError = new AtomicBoolean(false);
 
   public SvnLineCommand(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath, File configDir) {
     super(workingDirectory, commandName, exePath, configDir);
@@ -74,6 +76,7 @@ public class SvnLineCommand extends SvnCommand {
       notifyLines(outputType, lines, myStdoutLine);
     }
     else if (ProcessOutputTypes.STDERR == outputType) {
+      myWasError.set(true);
       notifyLines(outputType, lines, myStderrLine);
     }
   }
@@ -123,5 +126,9 @@ public class SvnLineCommand extends SvnCommand {
 
   public void setExitCodeReference(int value) {
     myExitCode.set(value);
+  }
+
+  public Boolean wasError() {
+    return myWasError.get();
   }
 }

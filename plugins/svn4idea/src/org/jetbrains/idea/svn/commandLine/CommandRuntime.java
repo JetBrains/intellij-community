@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
@@ -178,31 +177,9 @@ public class CommandRuntime {
                                     final LineCommandListener listener,
                                     File base, File configDir,
                                     String[] parameters, String[] originalParameters) throws SvnBindException {
-    final AtomicBoolean errorReceived = new AtomicBoolean(false);
-    final SvnLineCommand command = new SvnLineCommand(base, commandName, exePath, configDir) {
-      int myErrCnt = 0;
-
-      @Override
-      protected void onTextAvailable(String text, Key outputType) {
-
-        // we won't stop right now if got "authentication realm" -> since we want to get "password" string (that would mean password is expected
-        // or certificate maybe is expected
-        // but for certificate passphrase we get just "Passphrase for ..." - one line without line feed
-
-        // for client certificate (when no path in servers file) we get
-        // Authentication realm: <text>
-        // Client certificate filename:
-        if (ProcessOutputTypes.STDERR.equals(outputType)) {
-          ++ myErrCnt;
-          // should end in 1 second
-          errorReceived.set(true);
-        }
-        super.onTextAvailable(text, outputType);
-      }
-    };
+    final SvnLineCommand command = new SvnLineCommand(base, commandName, exePath, configDir);
 
     command.setOriginalParameters(originalParameters);
-
     command.addParameters(parameters);
     command.addParameters("--non-interactive");
     final AtomicReference<Throwable> exceptionRef = new AtomicReference<Throwable>();
@@ -239,7 +216,7 @@ public class CommandRuntime {
     boolean finished;
     do {
       finished = command.waitFor(500);
-      if (!finished && (errorReceived.get() || command.needsDestroy())) {
+      if (!finished && (command.wasError() || command.needsDestroy())) {
         command.waitFor(1000);
         command.doDestroyProcess();
         break;
