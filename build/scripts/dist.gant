@@ -125,7 +125,9 @@ def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps =
 
   buildWinZip("$paths.artifacts/idea${args.buildNumber}.win.zip", [paths.distAll, paths.distWin])
 
-  def macAppRoot = isEap() ? "${p("component.version.codename")}-${args.buildNumber}.app" : "IntelliJ IDEA ${p("component.version.major")} CE.app"
+  def macAppRoot = isEap() ?
+                   "IntelliJ IDEA ${p("component.version.major")} CE EAP.app" :
+                   "IntelliJ IDEA ${p("component.version.major")} CE.app"
 
   String macZip = "$paths.artifacts/idea${args.buildNumber}.mac.zip"
   buildMacZip(macAppRoot, macZip, [paths.distAll], paths.distMac)
