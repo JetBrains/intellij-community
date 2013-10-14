@@ -17,7 +17,6 @@
 package com.intellij.util.xmlb;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -25,41 +24,17 @@ public class XmlSerializerUtil {
   private XmlSerializerUtil() {
   }
 
-  @NotNull
-  public static <F, T extends F> T copyBean(@NotNull F from, @NotNull T to) {
-    //noinspection unchecked,RedundantCast
-    return copyBean(from, to, (Class<F>) from.getClass());
-  }
-
-  @NotNull
-  public static <B, F extends B, T extends B> T copyBean(@NotNull F from, @NotNull T to, @NotNull Class<B> asClass) {
-    for (Accessor accessor : BeanBinding.getAccessors(asClass)) {
+  public static <T> void copyBean(@NotNull T from, @NotNull T to) {
+    assert from.getClass().isAssignableFrom(to.getClass()) : "Beans of different classes specified: Cannot assign " +
+                                                             from.getClass() + " to " + to.getClass();
+    for (Accessor accessor : BeanBinding.getAccessors(to.getClass())) {
       accessor.write(to, accessor.read(from));
     }
-
-    return to;
   }
 
-  @Nullable
-  public static <F, T extends F> T mergeBeans(@NotNull F from, @NotNull T to) {
-    //noinspection unchecked,RedundantCast
-    return mergeBeans(from, to, (Class<F>) from.getClass());
-  }
-
-  @Nullable
-  public static <B, F extends B, T extends B> T mergeBeans(@NotNull F from, @NotNull T to, @NotNull Class<B> asClass) {
-    T copy = createCopy(to);
-
-    if (copy == null) return null;
-
-    return copyBean(from, copy, asClass);
-  }
-
-  @Nullable
   public static <T> T createCopy(@NotNull T from) {
     try {
-      @SuppressWarnings("unchecked")
-      T to = (T)from.getClass().newInstance();
+      final T to = (T)from.getClass().newInstance();
       copyBean(from, to);
       return to;
     }
