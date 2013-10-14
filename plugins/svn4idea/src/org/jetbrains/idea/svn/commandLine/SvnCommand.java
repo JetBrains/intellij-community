@@ -62,15 +62,6 @@ public class SvnCommand {
   private final SvnCommandName myCommandName;
   private String[] myOriginalParameters;
 
-  /**
-   * the partial line from stdout stream
-   */
-  private final StringBuilder myStdoutLine = new StringBuilder();
-  /**
-   * the partial line from stderr stream
-   */
-  private final StringBuilder myStderrLine = new StringBuilder();
-
   private final AtomicBoolean myWasError = new AtomicBoolean(false);
 
   public SvnCommand(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath) {
@@ -159,61 +150,6 @@ public class SvnCommand {
     else {
       return handler.waitFor(timeout);
     }
-  }
-
-  protected void processTerminated(int exitCode) {
-    // force newline
-    if (myStdoutLine.length() != 0) {
-      onTextAvailable("\n\r", ProcessOutputTypes.STDOUT);
-    }
-    else if (myStderrLine.length() != 0) {
-      onTextAvailable("\n\r", ProcessOutputTypes.STDERR);
-    }
-  }
-
-  protected void onTextAvailable(final String text, final Key outputType) {
-    Iterator<String> lines = LineHandlerHelper.splitText(text).iterator();
-    if (ProcessOutputTypes.STDOUT == outputType) {
-      notifyLines(outputType, lines, myStdoutLine);
-    }
-    else if (ProcessOutputTypes.STDERR == outputType) {
-      myWasError.set(true);
-      notifyLines(outputType, lines, myStderrLine);
-    }
-  }
-
-  private void notifyLines(final Key outputType, final Iterator<String> lines, final StringBuilder lineBuilder) {
-    if (!lines.hasNext()) return;
-    if (lineBuilder.length() > 0) {
-      lineBuilder.append(lines.next());
-      if (lines.hasNext()) {
-        // line is complete
-        final String line = lineBuilder.toString();
-        notifyLine(line, outputType);
-        lineBuilder.setLength(0);
-      }
-    }
-    while (true) {
-      String line = null;
-      if (lines.hasNext()) {
-        line = lines.next();
-      }
-
-      if (lines.hasNext()) {
-        notifyLine(line, outputType);
-      }
-      else {
-        if (line != null && line.length() > 0) {
-          lineBuilder.append(line);
-        }
-        break;
-      }
-    }
-  }
-
-  private void notifyLine(final String line, final Key outputType) {
-    String trimmed = LineHandlerHelper.trimLineSeparator(line);
-    myListeners.getMulticaster().onLineAvailable(trimmed, outputType);
   }
 
   public void cancel() {
@@ -372,6 +308,16 @@ public class SvnCommand {
   }
 
   private class ProcessEventTracker implements ProcessListener {
+
+    /**
+     * the partial line from stdout stream
+     */
+    private final StringBuilder myStdoutLine = new StringBuilder();
+    /**
+     * the partial line from stderr stream
+     */
+    private final StringBuilder myStderrLine = new StringBuilder();
+
     public void startNotified(final ProcessEvent event) {
       // do nothing
     }
@@ -380,9 +326,18 @@ public class SvnCommand {
       final int exitCode = event.getExitCode();
       try {
         setExitCode(exitCode);
-        SvnCommand.this.processTerminated(exitCode);
+        forceNewLine();
       } finally {
         listeners().processTerminated(exitCode);
+      }
+    }
+
+    private void forceNewLine() {
+      if (myStdoutLine.length() != 0) {
+        onTextAvailable("\n\r", ProcessOutputTypes.STDOUT);
+      }
+      else if (myStderrLine.length() != 0) {
+        onTextAvailable("\n\r", ProcessOutputTypes.STDERR);
       }
     }
 
@@ -391,7 +346,52 @@ public class SvnCommand {
     }
 
     public void onTextAvailable(final ProcessEvent event, final Key outputType) {
-      SvnCommand.this.onTextAvailable(event.getText(), outputType);
+      onTextAvailable(event.getText(), outputType);
+    }
+
+    private void onTextAvailable(final String text, final Key outputType) {
+      Iterator<String> lines = LineHandlerHelper.splitText(text).iterator();
+      if (ProcessOutputTypes.STDOUT == outputType) {
+        notifyLines(outputType, lines, myStdoutLine);
+      }
+      else if (ProcessOutputTypes.STDERR == outputType) {
+        myWasError.set(true);
+        notifyLines(outputType, lines, myStderrLine);
+      }
+    }
+
+    private void notifyLines(final Key outputType, final Iterator<String> lines, final StringBuilder lineBuilder) {
+      if (!lines.hasNext()) return;
+      if (lineBuilder.length() > 0) {
+        lineBuilder.append(lines.next());
+        if (lines.hasNext()) {
+          // line is complete
+          final String line = lineBuilder.toString();
+          notifyLine(line, outputType);
+          lineBuilder.setLength(0);
+        }
+      }
+      while (true) {
+        String line = null;
+        if (lines.hasNext()) {
+          line = lines.next();
+        }
+
+        if (lines.hasNext()) {
+          notifyLine(line, outputType);
+        }
+        else {
+          if (line != null && line.length() > 0) {
+            lineBuilder.append(line);
+          }
+          break;
+        }
+      }
+    }
+
+    private void notifyLine(final String line, final Key outputType) {
+      String trimmed = LineHandlerHelper.trimLineSeparator(line);
+      myListeners.getMulticaster().onLineAvailable(trimmed, outputType);
     }
   }
 }
