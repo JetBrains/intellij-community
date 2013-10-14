@@ -284,11 +284,6 @@ public class PyStringFormatParser {
   }
 
   @NotNull
-  public List<SubstitutionChunk> parseSubstitutions() {
-    return filterSubstitutions(parse());
-  }
-
-  @NotNull
   public static List<SubstitutionChunk> filterSubstitutions(@NotNull List<FormatStringChunk> chunks) {
     final List<SubstitutionChunk> results = new ArrayList<SubstitutionChunk>();
     for (FormatStringChunk chunk : chunks) {
