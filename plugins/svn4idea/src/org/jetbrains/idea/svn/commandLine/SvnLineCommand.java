@@ -50,14 +50,12 @@ public class SvnLineCommand extends SvnCommand {
   private final EventDispatcher<LineProcessEventListener> myLineListeners;
   private final AtomicReference<Integer> myExitCode;
   private final StringBuffer myErr;
-  private final StringBuffer myStdOut;
 
   public SvnLineCommand(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath, File configDir) {
     super(workingDirectory, commandName, exePath, configDir);
     myLineListeners = EventDispatcher.create(LineProcessEventListener.class);
     myExitCode = new AtomicReference<Integer>();
     myErr = new StringBuffer();
-    myStdOut = new StringBuffer();
   }
 
   @Override
@@ -123,10 +121,6 @@ public class SvnLineCommand extends SvnCommand {
 
   public StringBuffer getError() {
     return myErr;
-  }
-
-  public StringBuffer getStdOut() {
-    return myStdOut;
   }
 
   public Integer getExitCodeReference() {

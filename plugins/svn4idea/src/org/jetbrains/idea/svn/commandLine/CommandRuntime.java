@@ -210,10 +210,6 @@ public class CommandRuntime {
     command.addLineListener(new LineProcessEventListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
-        if (ProcessOutputTypes.STDOUT.equals(outputType)) {
-          command.getStdOut().append(line);
-        }
-
         if (LOG.isDebugEnabled()) {
           LOG.debug("==> " + line);
         }
