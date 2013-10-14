@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
@@ -130,7 +131,9 @@ public class InterpreterPathChooser extends BaseListPopupStep<String> {
       remoteInterpreterManager.addRemoteSdk(myProject, myOwnerComponent, Lists.newArrayList(myExistingSdks), myCallback);
     }
     else {
-      Messages.showErrorDialog("The Remote Hosts Access plugin is missing. Please enable the plugin in Settings | Plugins.", "Add Remote Interpreter");
+      Messages.showErrorDialog("The Remote Hosts Access plugin is missing. Please enable the plugin in " +
+                               ShowSettingsUtil.getSettingsMenuName() +
+                               " | Plugins.", "Add Remote Interpreter");
     }
   }
 
