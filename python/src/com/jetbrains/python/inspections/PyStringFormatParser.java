@@ -4,6 +4,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.HashMap;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
@@ -358,7 +359,7 @@ public class PyStringFormatParser {
     if (parent instanceof PyQualifiedExpression) {
       final PyQualifiedExpression qualifiedExpr = (PyQualifiedExpression)parent;
       final String name = qualifiedExpr.getReferencedName();
-      if ("format".equals(name)) {
+      if (PyNames.FORMAT.equals(name)) {
         final PsiElement parent2 = qualifiedExpr.getParent();
         if (parent2 instanceof PyCallExpression) {
           final PyCallExpression callExpr = (PyCallExpression)parent2;
