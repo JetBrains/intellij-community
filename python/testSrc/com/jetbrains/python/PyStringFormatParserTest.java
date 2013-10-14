@@ -1,7 +1,6 @@
 package com.jetbrains.python;
 
 import com.intellij.openapi.util.TextRange;
-import com.jetbrains.python.inspections.PyStringFormatParser;
 import junit.framework.TestCase;
 
 import java.util.List;
@@ -13,7 +12,7 @@ import static com.jetbrains.python.inspections.PyStringFormatParser.*;
  */
 public class PyStringFormatParserTest extends TestCase {
   public void testSimple() {
-    List<PyStringFormatParser.FormatStringChunk> chunks = new PyStringFormatParser("abc").parse();
+    List<FormatStringChunk> chunks = parsePercentFormat("abc");
     assertEquals(1, chunks.size());
     assertConstant(chunks.get(0), 0, 3);
   }
@@ -25,13 +24,13 @@ public class PyStringFormatParserTest extends TestCase {
   }
 
   public void testDoublePercent() {
-    List<PyStringFormatParser.FormatStringChunk> chunks = new PyStringFormatParser("abc%%def").parse();
+    List<FormatStringChunk> chunks = parsePercentFormat("abc%%def");
     assertEquals(1, chunks.size());
     assertConstant(chunks.get(0), 0, 8);
   }
 
   public void testFormat() {
-    List<PyStringFormatParser.FormatStringChunk> chunks = new PyStringFormatParser("%s").parse();
+    List<FormatStringChunk> chunks = parsePercentFormat("%s");
     assertEquals(1, chunks.size());
     SubstitutionChunk chunk = (SubstitutionChunk) chunks.get(0);
     assertEquals(0, chunk.getStartIndex());
@@ -40,13 +39,13 @@ public class PyStringFormatParserTest extends TestCase {
   }
 
   public void testSubstitutionAfterFormat() {
-    List<PyStringFormatParser.FormatStringChunk> chunks = new PyStringFormatParser("Hello, %s").parse();
+    List<FormatStringChunk> chunks = parsePercentFormat("Hello, %s");
     assertEquals(2, chunks.size());
     assertConstant(chunks.get(0), 0, 7);
   }
 
   public void testMappingKey() {
-    List<PyStringFormatParser.FormatStringChunk> chunks = new PyStringFormatParser("%(language)s").parse();
+    List<FormatStringChunk> chunks = parsePercentFormat("%(language)s");
     assertEquals(1, chunks.size());
     SubstitutionChunk chunk = (SubstitutionChunk) chunks.get(0);
     assertEquals("language", chunk.getMappingKey());
@@ -54,35 +53,35 @@ public class PyStringFormatParserTest extends TestCase {
   }
 
   public void testConversionFlags() {
-    List<PyStringFormatParser.FormatStringChunk> chunks = new PyStringFormatParser("%#0d").parse();
+    List<FormatStringChunk> chunks = parsePercentFormat("%#0d");
     assertEquals(1, chunks.size());
     SubstitutionChunk chunk = (SubstitutionChunk) chunks.get(0);
     assertEquals("#0", chunk.getConversionFlags());
   }
 
   public void testWidth() {
-    List<PyStringFormatParser.FormatStringChunk> chunks = new PyStringFormatParser("%345d").parse();
+    List<FormatStringChunk> chunks = parsePercentFormat("%345d");
     assertEquals(1, chunks.size());
     SubstitutionChunk chunk = (SubstitutionChunk) chunks.get(0);
     assertEquals("345", chunk.getWidth());
   }
 
   public void testPrecision() {
-    List<PyStringFormatParser.FormatStringChunk> chunks = new PyStringFormatParser("%.2d").parse();
+    List<FormatStringChunk> chunks = parsePercentFormat("%.2d");
     assertEquals(1, chunks.size());
     SubstitutionChunk chunk = (SubstitutionChunk) chunks.get(0);
     assertEquals("2", chunk.getPrecision());
   }
 
   public void testLengthModifier() {
-    List<PyStringFormatParser.FormatStringChunk> chunks = new PyStringFormatParser("%ld").parse();
+    List<FormatStringChunk> chunks = parsePercentFormat("%ld");
     assertEquals(1, chunks.size());
     SubstitutionChunk chunk = (SubstitutionChunk) chunks.get(0);
     assertEquals('l', chunk.getLengthModifier());
   }
 
   public void testDoubleAsterisk() {
-    List<PyStringFormatParser.FormatStringChunk> chunks = new PyStringFormatParser("%**d").parse();
+    List<FormatStringChunk> chunks = parsePercentFormat("%**d");
     assertEquals(2, chunks.size());
     SubstitutionChunk chunk = (SubstitutionChunk) chunks.get(0);
     assertEquals(2, chunk.getEndIndex());
@@ -90,7 +89,7 @@ public class PyStringFormatParserTest extends TestCase {
   }
 
   public void testUnclosedMapping() {
-    List<PyStringFormatParser.FormatStringChunk> chunks = new PyStringFormatParser("%(name1s").parse();
+    List<FormatStringChunk> chunks = parsePercentFormat("%(name1s");
     SubstitutionChunk chunk = (SubstitutionChunk) chunks.get(0);
     assertEquals("name1s", chunk.getMappingKey());
     assertTrue(chunk.isUnclosedMapping());

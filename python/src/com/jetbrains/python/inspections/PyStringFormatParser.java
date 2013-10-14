@@ -145,8 +145,13 @@ public class PyStringFormatParser {
   private static final String LENGTH_MODIFIERS = "hlL";
   private static final String VALID_CONVERSION_TYPES = "diouxXeEfFgGcrs";
 
-  public PyStringFormatParser(@NotNull String literal) {
+  private PyStringFormatParser(@NotNull String literal) {
     myLiteral = literal;
+  }
+
+  @NotNull
+  public static List<FormatStringChunk> parsePercentFormat(@NotNull String s) {
+    return new PyStringFormatParser(s).parse();
   }
 
   @NotNull
@@ -197,7 +202,7 @@ public class PyStringFormatParser {
   }
 
   @NotNull
-  public List<FormatStringChunk> parse() {
+  private List<FormatStringChunk> parse() {
     myPos = 0;
     while(myPos < myLiteral.length()) {
       int next = myLiteral.indexOf('%', myPos);
