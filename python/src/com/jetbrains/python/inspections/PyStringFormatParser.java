@@ -197,7 +197,7 @@ public class PyStringFormatParser {
       pos = next + 1;
     }
     if (pos < n) {
-      results.add(new ConstantChunk(pos, n + 1));
+      results.add(new ConstantChunk(pos, n));
     }
     return results;
   }

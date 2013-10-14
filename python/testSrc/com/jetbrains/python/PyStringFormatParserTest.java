@@ -125,4 +125,10 @@ public class PyStringFormatParserTest extends TestCase {
     assertEquals(1, chunks.size());
     assertEquals(TextRange.create(1, 4), chunks.get(0).getTextRange());
   }
+
+  public void testNewStyleConstant() {
+    List<FormatStringChunk> chunks = parseNewStyleFormat("a");
+    assertEquals(1, chunks.size());
+    assertConstant(chunks.get(0), 0, 1);
+  }
 }
