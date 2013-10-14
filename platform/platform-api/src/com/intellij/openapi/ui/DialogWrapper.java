@@ -208,7 +208,7 @@ public abstract class DialogWrapper {
         public void componentResized(ComponentEvent e) {
           if (!myResizeInProgress) {
             myActualSize = myPeer.getSize();
-            if (myErrorText.isVisible()) {
+            if (myErrorText != null && myErrorText.isVisible()) {
               myActualSize.height -= myErrorText.getHeight() + 10;
             }
           }
