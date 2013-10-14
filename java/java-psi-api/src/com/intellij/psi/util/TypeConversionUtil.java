@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import gnu.trove.THashMap;
@@ -1006,6 +1007,8 @@ public class TypeConversionUtil {
     return getSuperClassSubstitutor(superClassCandidate, derivedClassCandidate, derivedSubstitutor);
   }
 
+  private static final Set<String> ourReportedSuperClassSubstitutorExceptions = new ConcurrentHashSet<String>();
+
   /**
    * Calculates substitutor that binds type parameters in <code>superClass</code> with
    * values that they have in <code>derivedClass</code>, given that type parameters in
@@ -1051,20 +1054,22 @@ public class TypeConversionUtil {
       substitutor = getSuperClassSubstitutorInner(superClass, derivedClass, derivedSubstitutor, visited, manager);
     }
     if (substitutor == null) {
-      final StringBuilder msg = new StringBuilder("Super: " + classInfo(superClass));
-      msg.append("visited:\n");
-      for (PsiClass aClass : visited) {
-        msg.append("  each: " + classInfo(aClass));
-      }
-      msg.append("hierarchy:\n");
-      InheritanceUtil.processSupers(derivedClass, true, new Processor<PsiClass>() {
-        @Override
-        public boolean process(PsiClass psiClass) {
-          msg.append("each: " + classInfo(psiClass));
-          return true;
+      if (ourReportedSuperClassSubstitutorExceptions.add(derivedClass.getQualifiedName())) {
+        final StringBuilder msg = new StringBuilder("Super: " + classInfo(superClass));
+        msg.append("visited:\n");
+        for (PsiClass aClass : visited) {
+          msg.append("  each: " + classInfo(aClass));
         }
-      });
-      LOG.error(msg.toString());
+        msg.append("hierarchy:\n");
+        InheritanceUtil.processSupers(derivedClass, true, new Processor<PsiClass>() {
+          @Override
+          public boolean process(PsiClass psiClass) {
+            msg.append("each: " + classInfo(psiClass));
+            return true;
+          }
+        });
+        LOG.error(msg.toString());
+      }
       return PsiSubstitutor.EMPTY;
     }
     return substitutor;
