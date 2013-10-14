@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -72,42 +73,71 @@ public class PythonRegexpInjector implements MultiHostInjector {
         }
       }
     }
-
   }
 
   private static boolean isStringLiteral(@NotNull PsiElement element) {
+    final PsiElement parent = element.getParent();
+    return isStringLiteralPart(element) && (parent == null || !isStringLiteralPart(parent));
+  }
+
+  private static boolean isStringLiteralPart(@NotNull PsiElement element) {
     if (element instanceof PyStringLiteralExpression) {
       return true;
     }
     else if (element instanceof PyParenthesizedExpression) {
       final PyExpression contained = ((PyParenthesizedExpression)element).getContainedExpression();
-      return contained != null && isStringLiteral(contained);
+      return contained != null && isStringLiteralPart(contained);
     }
     else if (element instanceof PyBinaryExpression) {
       final PyBinaryExpression expr = (PyBinaryExpression)element;
       final PyExpression left = expr.getLeftExpression();
       final PyExpression right = expr.getRightExpression();
-      return (expr.isOperator("+") && (isStringLiteral(left) || right != null && isStringLiteral(right))) ||
-              expr.isOperator("%") && isStringLiteral(left);
+      return (expr.isOperator("+") && (isStringLiteralPart(left) || right != null && isStringLiteralPart(right))) ||
+              expr.isOperator("%") && isStringLiteralPart(left);
+    }
+    else if (element instanceof PyCallExpression) {
+      final PyExpression qualifier = getFormatCallQualifier((PyCallExpression)element);
+      return qualifier != null && isStringLiteralPart(qualifier);
     }
     return false;
   }
 
+  @Nullable
+  private static PyExpression getFormatCallQualifier(@NotNull PyCallExpression element) {
+    final PyExpression callee = element.getCallee();
+    if (callee instanceof PyQualifiedExpression) {
+      final PyQualifiedExpression qualifiedExpr = (PyQualifiedExpression)callee;
+      final PyExpression qualifier = qualifiedExpr.getQualifier();
+      if (qualifier != null && PyNames.FORMAT.equals(qualifiedExpr.getReferencedName())) {
+        return qualifier;
+      }
+    }
+    return null;
+  }
+
+  private enum Formatting {
+    NONE,
+    PERCENT,
+    NEW_STYLE
+  }
+
   private static void processStringLiteral(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar) {
-    processStringLiteral(element, registrar, "", "", false);
+    processStringLiteral(element, registrar, "", "", Formatting.NONE);
   }
 
   private static void processStringLiteral(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar, @NotNull String prefix,
-                                           @NotNull String suffix, boolean percentFormatting) {
+                                           @NotNull String suffix, @NotNull Formatting formatting) {
     final String missingValue = "missing";
     if (element instanceof PyStringLiteralExpression) {
       final PyStringLiteralExpression expr = (PyStringLiteralExpression)element;
       final List<TextRange> ranges = expr.getStringValueTextRanges();
       final String text = expr.getText();
       for (TextRange range : ranges) {
-        if (percentFormatting) {
+        if (formatting != Formatting.NONE) {
           final String part = range.substring(text);
-          final List<PyStringFormatParser.FormatStringChunk> chunks = PyStringFormatParser.parsePercentFormat(part);
+          final List<PyStringFormatParser.FormatStringChunk> chunks = formatting == Formatting.NEW_STYLE ?
+                                                                      PyStringFormatParser.parseNewStyleFormat(part) :
+                                                                      PyStringFormatParser.parsePercentFormat(part);
           for (int i = 0; i < chunks.size(); i++) {
             final PyStringFormatParser.FormatStringChunk chunk = chunks.get(i);
             if (chunk instanceof PyStringFormatParser.ConstantChunk) {
@@ -118,7 +148,6 @@ public class PythonRegexpInjector implements MultiHostInjector {
               final TextRange chunkRange = chunk.getTextRange().shiftRight(range.getStartOffset());
               registrar.addPlace(chunkPrefix, chunkSuffix, expr, chunkRange);
             }
-
           }
         }
         else {
@@ -129,25 +158,31 @@ public class PythonRegexpInjector implements MultiHostInjector {
     else if (element instanceof PyParenthesizedExpression) {
       final PyExpression contained = ((PyParenthesizedExpression)element).getContainedExpression();
       if (contained != null) {
-        processStringLiteral(contained, registrar, prefix, suffix, percentFormatting);
+        processStringLiteral(contained, registrar, prefix, suffix, formatting);
       }
     }
     else if (element instanceof PyBinaryExpression) {
       final PyBinaryExpression expr = (PyBinaryExpression)element;
       final PyExpression left = expr.getLeftExpression();
       final PyExpression right = expr.getRightExpression();
-      final boolean isLeftString = isStringLiteral(left);
+      final boolean isLeftString = isStringLiteralPart(left);
       if (expr.isOperator("+")) {
-        final boolean isRightString = right != null && isStringLiteral(right);
+        final boolean isRightString = right != null && isStringLiteralPart(right);
         if (isLeftString) {
-          processStringLiteral(left, registrar, prefix, isRightString ? "" : missingValue, percentFormatting);
+          processStringLiteral(left, registrar, prefix, isRightString ? "" : missingValue, formatting);
         }
         if (isRightString) {
-          processStringLiteral(right, registrar, isLeftString ? "" : missingValue, suffix, percentFormatting);
+          processStringLiteral(right, registrar, isLeftString ? "" : missingValue, suffix, formatting);
         }
       }
-      else if (expr.isOperator("%") && isLeftString) {
-        processStringLiteral(left, registrar, prefix, suffix, true);
+      else if (expr.isOperator("%")) {
+        processStringLiteral(left, registrar, prefix, suffix, Formatting.PERCENT);
+      }
+    }
+    else if (element instanceof PyCallExpression) {
+      final PyExpression qualifier = getFormatCallQualifier((PyCallExpression)element);
+      if (qualifier != null) {
+        processStringLiteral(qualifier, registrar, prefix, suffix, Formatting.NEW_STYLE);
       }
     }
   }
@@ -155,7 +190,8 @@ public class PythonRegexpInjector implements MultiHostInjector {
   @NotNull
   @Override
   public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
-    return Arrays.asList(PyStringLiteralExpression.class, PyParenthesizedExpression.class, PyBinaryExpression.class);
+    return Arrays.asList(PyStringLiteralExpression.class, PyParenthesizedExpression.class, PyBinaryExpression.class,
+                         PyCallExpression.class);
   }
 
   private static boolean isVerbose(@NotNull PyCallExpression call) {
