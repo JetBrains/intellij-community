@@ -40,6 +40,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdePanePanel;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
@@ -156,13 +157,17 @@ public class EditorsSplitters extends IdePanePanel {
       g.drawLine(0, 0, getWidth(), 0);
     }
 
+    boolean isDarkBackground = ColorUtil.isDark(getBackground().darker());
+
     if (showEmptyText()) {
       UIUtil.applyRenderingHints(g);
-      g.setColor(new JBColor(Gray._100, Gray._160));
+      g.setColor(new JBColor(isDarkBackground ? Gray._230 : Gray._100, Gray._160));
       g.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.isUnderDarcula() ? 24f : 18f));
 
-      final UIUtil.TextPainter painter = new UIUtil.TextPainter().withShadow(true).withLineSpacing(1.4f);
-      painter.appendLine("No files are open").underlined(new JBColor(Gray._150, Gray._100));
+      final UIUtil.TextPainter painter = new UIUtil.TextPainter().withLineSpacing(1.4f);
+      if (!isDarkBackground)
+        painter.withShadow(true);
+      painter.appendLine("No files are open").underlined(new JBColor(isDarkBackground ? Gray._210 : Gray._150, Gray._100));
 
       if (Registry.is("search.everywhere.enabled")) {
         painter.appendLine("Search Everywhere with Double " + (SystemInfo.isMac ? MacKeymapUtil.SHIFT : "Shift"))
