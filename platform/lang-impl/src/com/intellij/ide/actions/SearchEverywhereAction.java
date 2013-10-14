@@ -499,6 +499,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   @Override
   public void actionPerformed(AnActionEvent e) {
+    if (myBalloon != null && myBalloon.isVisible()) {
+      return;
+    }
     if (e == null && myFocusOwner != null) {
       e = new AnActionEvent(null, DataManager.getInstance().getDataContext(myFocusComponent), ActionPlaces.UNKNOWN, getTemplatePresentation(), ActionManager.getInstance(), 0);
     }
