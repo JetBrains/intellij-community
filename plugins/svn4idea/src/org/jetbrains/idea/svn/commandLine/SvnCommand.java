@@ -20,7 +20,6 @@ import com.intellij.execution.process.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.LineHandlerHelper;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -123,7 +121,7 @@ public class SvnCommand {
     outputAdapter = new CapturingProcessAdapter();
     myHandler.addProcessListener(outputAdapter);
     myHandler.addProcessListener(new ProcessTracker());
-    myHandler.addProcessListener(new ResultBuilderNotifier());
+    myHandler.addProcessListener(new ResultBuilderNotifier(listeners()));
     myHandler.addProcessListener(new CommandOutputLogger());
     myHandler.startNotify();
   }
@@ -313,91 +311,6 @@ public class SvnCommand {
       if (ProcessOutputTypes.STDERR == outputType) {
         myWasError.set(true);
       }
-    }
-  }
-
-  private class ResultBuilderNotifier implements ProcessListener {
-
-    /**
-     * the partial line from stdout stream
-     */
-    private final StringBuilder myStdoutLine = new StringBuilder();
-    /**
-     * the partial line from stderr stream
-     */
-    private final StringBuilder myStderrLine = new StringBuilder();
-
-    public void startNotified(final ProcessEvent event) {
-      // do nothing
-    }
-
-    public void processTerminated(final ProcessEvent event) {
-      try {
-        forceNewLine();
-      } finally {
-        listeners().processTerminated(event.getExitCode());
-      }
-    }
-
-    private void forceNewLine() {
-      if (myStdoutLine.length() != 0) {
-        onTextAvailable("\n\r", ProcessOutputTypes.STDOUT);
-      }
-      else if (myStderrLine.length() != 0) {
-        onTextAvailable("\n\r", ProcessOutputTypes.STDERR);
-      }
-    }
-
-    public void processWillTerminate(final ProcessEvent event, final boolean willBeDestroyed) {
-      // do nothing
-    }
-
-    public void onTextAvailable(final ProcessEvent event, final Key outputType) {
-      onTextAvailable(event.getText(), outputType);
-    }
-
-    private void onTextAvailable(final String text, final Key outputType) {
-      Iterator<String> lines = LineHandlerHelper.splitText(text).iterator();
-      if (ProcessOutputTypes.STDOUT == outputType) {
-        notifyLines(outputType, lines, myStdoutLine);
-      }
-      else if (ProcessOutputTypes.STDERR == outputType) {
-        notifyLines(outputType, lines, myStderrLine);
-      }
-    }
-
-    private void notifyLines(final Key outputType, final Iterator<String> lines, final StringBuilder lineBuilder) {
-      if (!lines.hasNext()) return;
-      if (lineBuilder.length() > 0) {
-        lineBuilder.append(lines.next());
-        if (lines.hasNext()) {
-          // line is complete
-          final String line = lineBuilder.toString();
-          notifyLine(line, outputType);
-          lineBuilder.setLength(0);
-        }
-      }
-      while (true) {
-        String line = null;
-        if (lines.hasNext()) {
-          line = lines.next();
-        }
-
-        if (lines.hasNext()) {
-          notifyLine(line, outputType);
-        }
-        else {
-          if (line != null && line.length() > 0) {
-            lineBuilder.append(line);
-          }
-          break;
-        }
-      }
-    }
-
-    private void notifyLine(final String line, final Key outputType) {
-      String trimmed = LineHandlerHelper.trimLineSeparator(line);
-      listeners().onLineAvailable(trimmed, outputType);
     }
   }
 }
