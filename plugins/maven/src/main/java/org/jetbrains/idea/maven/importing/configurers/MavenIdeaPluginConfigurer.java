@@ -28,6 +28,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 /**
  * @author Sergey Evdokimov
@@ -40,9 +41,19 @@ public class MavenIdeaPluginConfigurer extends MavenModuleConfigurer {
     Element cfg = mavenProject.getPluginConfiguration("com.googlecode", "maven-idea-plugin");
     if (cfg == null) return;
 
-
-    // Configure SDK name
     configureJdk(cfg, module);
+
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+
+    String downloadSources = cfg.getChildTextTrim("downloadSources");
+    if (!StringUtil.isEmptyOrSpaces(downloadSources)) {
+      projectsManager.getImportingSettings().setDownloadSourcesAutomatically(Boolean.parseBoolean(downloadSources));
+    }
+
+    String downloadJavadocs = cfg.getChildTextTrim("downloadJavadocs");
+    if (!StringUtil.isEmptyOrSpaces(downloadJavadocs)) {
+      projectsManager.getImportingSettings().setDownloadDocsAutomatically(Boolean.parseBoolean(downloadJavadocs));
+    }
   }
 
   private static void configureJdk(Element cfg, @NotNull Module module) {
