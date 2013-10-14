@@ -5,7 +5,6 @@ package com.jetbrains.python.testing.doctest;
 
 import com.intellij.execution.Location;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiRecursiveElementVisitor;
@@ -41,11 +40,6 @@ public class PythonDocTestConfigurationProducer extends PythonTestConfigurationP
   protected boolean isTestFile(@NotNull PyFile file) {
     final List<PyElement> testCases = PythonDocTestUtil.getDocTestCasesFromFile(file);
     return !testCases.isEmpty();
-  }
-
-  @Override
-  protected boolean isTestFolder(@NotNull final VirtualFile virtualFile) {
-    return true;
   }
 
   protected boolean isAvailable(@NotNull final Location location) {
