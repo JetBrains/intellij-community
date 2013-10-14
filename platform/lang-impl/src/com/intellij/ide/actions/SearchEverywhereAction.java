@@ -512,13 +512,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     final JPanel panel = new JPanel(new BorderLayout()) {
       @Override
       protected void paintComponent(Graphics g) {
-        ((Graphics2D)g).setPaint(new GradientPaint(0,0, new JBColor(new Color(0x6688f2), new Color(16, 91, 180)), 0, getHeight(),
-                                                   new JBColor(new Color(0x2d60ee), new Color(16, 80, 147))));
+        ((Graphics2D)g).setPaint(new GradientPaint(0,0, new JBColor(new Color(0x6688f2), new Color(59, 81, 162)), 0, getHeight(),
+                                                   new JBColor(new Color(0x2d60ee), new Color(53, 67, 134))));
         g.fillRect(0,0, getWidth(), getHeight());
       }
    };
     final JLabel title = new JLabel(" Search Everywhere:");
-    title.setForeground(new JBColor(Gray._255, Gray._200));
+    title.setForeground(new JBColor(Gray._255, Gray._160));
     if (SystemInfo.isMac) {
       title.setFont(title.getFont().deriveFont(Font.BOLD, title.getFont().getSize() - 1f));
     } else {
