@@ -289,7 +289,10 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       }
     }
 
-    checkRequiredAttributes(tag, name, elementDescriptor);
+    if (!(elementDescriptor instanceof XmlHighlightingAwareElementDescriptor) ||
+        ((XmlHighlightingAwareElementDescriptor)elementDescriptor).shouldCheckRequiredAttributes()) {
+      checkRequiredAttributes(tag, name, elementDescriptor);
+    }
 
     if (elementDescriptor instanceof Validator) {
       //noinspection unchecked

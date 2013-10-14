@@ -44,7 +44,8 @@ public class DomAttributeXmlDescriptor implements NamespaceAwareXmlAttributeDesc
   }
 
   public boolean isRequired() {
-    return myDescription.getAnnotation(Required.class) != null;
+    final Required required = myDescription.getAnnotation(Required.class);
+    return required != null && required.value();
   }
 
   public boolean isFixed() {
