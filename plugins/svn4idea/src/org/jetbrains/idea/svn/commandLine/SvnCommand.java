@@ -120,6 +120,7 @@ public class SvnCommand {
     myHandler.addProcessListener(outputAdapter);
     myHandler.addProcessListener(new ProcessEventTracker());
     myHandler.addProcessListener(new ErrorTracker());
+    myHandler.addProcessListener(new CommandOutputLogger());
     myHandler.startNotify();
   }
 

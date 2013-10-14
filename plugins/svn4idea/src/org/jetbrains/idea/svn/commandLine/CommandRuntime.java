@@ -219,12 +219,6 @@ public class CommandRuntime {
       return new LineCommandAdapter() {
         @Override
         public void onLineAvailable(String line, Key outputType) {
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("==> " + line);
-          }
-          if (ApplicationManager.getApplication().isUnitTestMode()) {
-            System.out.println("==> " + line);
-          }
           myListener.onLineAvailable(line, outputType);
           if (myListener.isCanceled()) {
             LOG.info("Cancelling command: " + myCommand.getCommandText());
