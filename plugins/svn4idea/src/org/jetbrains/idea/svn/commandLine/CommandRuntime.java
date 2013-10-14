@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.LineProcessEventListener;
@@ -42,6 +43,8 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Konstantin Kolosovsky.
  */
 public class CommandRuntime {
+
+  private static final Logger LOG = Logger.getInstance(CommandRuntime.class);
 
   @NotNull private final AuthenticationCallback myAuthCallback;
 
@@ -97,7 +100,7 @@ public class CommandRuntime {
           }
         } else if (command.getError().length() > 0) {
           // here exitCode == 0, but some warnings are in error stream
-          SvnCommand.LOG.info("Detected warning - " + command.getError());
+          LOG.info("Detected warning - " + command.getError());
         }
         return command;
       }
@@ -108,7 +111,7 @@ public class CommandRuntime {
 
   private void logNullExitCode(@NotNull SvnLineCommand command, @Nullable Integer exitCode) {
     if (exitCode == null) {
-      SvnCommand.LOG.info("Null exit code returned, but not errors detected " + command.getCommandText());
+      LOG.info("Null exit code returned, but not errors detected " + command.getCommandText());
     }
   }
 
@@ -165,7 +168,7 @@ public class CommandRuntime {
       if (wcRoot != null) {
         runCommand(exePath, SvnCommandName.cleanup, new SvnCommitRunner.CommandListener(null), wcRoot, null, null, null);
       } else {
-        SvnCommand.LOG.info("Could not execute cleanup for command " + command.getCommandText());
+        LOG.info("Could not execute cleanup for command " + command.getCommandText());
       }
     }
   }
@@ -211,15 +214,15 @@ public class CommandRuntime {
           command.getStdOut().append(line);
         }
 
-        if (SvnCommand.LOG.isDebugEnabled()) {
-          SvnCommand.LOG.debug("==> " + line);
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("==> " + line);
         }
         if (ApplicationManager.getApplication().isUnitTestMode()) {
           System.out.println("==> " + line);
         }
         listener.onLineAvailable(line, outputType);
         if (listener.isCanceled()) {
-          SvnCommand.LOG.info("Cancelling command: " + command.getCommandText());
+          LOG.info("Cancelling command: " + command.getCommandText());
           command.destroyProcess();
           return;
         }
