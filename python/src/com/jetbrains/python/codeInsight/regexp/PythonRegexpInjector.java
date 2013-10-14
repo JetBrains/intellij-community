@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
@@ -86,44 +87,67 @@ public class PythonRegexpInjector implements MultiHostInjector {
       final PyBinaryExpression expr = (PyBinaryExpression)element;
       final PyExpression left = expr.getLeftExpression();
       final PyExpression right = expr.getRightExpression();
-      return expr.isOperator("+") && (isStringLiteral(left) || right != null && isStringLiteral(right));
+      return (expr.isOperator("+") && (isStringLiteral(left) || right != null && isStringLiteral(right))) ||
+              expr.isOperator("%") && isStringLiteral(left);
     }
     return false;
   }
 
   private static void processStringLiteral(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar) {
-    processStringLiteral(element, registrar, "", "");
+    processStringLiteral(element, registrar, "", "", false);
   }
 
   private static void processStringLiteral(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar, @NotNull String prefix,
-                                           @NotNull String suffix) {
+                                           @NotNull String suffix, boolean percentFormatting) {
     final String missingValue = "missing";
     if (element instanceof PyStringLiteralExpression) {
       final PyStringLiteralExpression expr = (PyStringLiteralExpression)element;
       final List<TextRange> ranges = expr.getStringValueTextRanges();
+      final String text = expr.getText();
       for (TextRange range : ranges) {
-        registrar.addPlace(prefix, suffix, expr, range);
+        if (percentFormatting) {
+          final String part = range.substring(text);
+          final List<PyStringFormatParser.FormatStringChunk> chunks = PyStringFormatParser.parsePercentFormat(part);
+          for (int i = 0; i < chunks.size(); i++) {
+            final PyStringFormatParser.FormatStringChunk chunk = chunks.get(i);
+            if (chunk instanceof PyStringFormatParser.ConstantChunk) {
+              final int nextIndex = i + 1;
+              final String chunkPrefix = i == 1 && chunks.get(0) instanceof PyStringFormatParser.SubstitutionChunk ? missingValue : "";
+              final String chunkSuffix = nextIndex < chunks.size() &&
+                                         chunks.get(nextIndex) instanceof PyStringFormatParser.SubstitutionChunk ? missingValue : "";
+              final TextRange chunkRange = chunk.getTextRange().shiftRight(range.getStartOffset());
+              registrar.addPlace(chunkPrefix, chunkSuffix, expr, chunkRange);
+            }
+
+          }
+        }
+        else {
+          registrar.addPlace(prefix, suffix, expr, range);
+        }
       }
     }
     else if (element instanceof PyParenthesizedExpression) {
       final PyExpression contained = ((PyParenthesizedExpression)element).getContainedExpression();
       if (contained != null) {
-        processStringLiteral(contained, registrar, prefix, suffix);
+        processStringLiteral(contained, registrar, prefix, suffix, percentFormatting);
       }
     }
     else if (element instanceof PyBinaryExpression) {
       final PyBinaryExpression expr = (PyBinaryExpression)element;
+      final PyExpression left = expr.getLeftExpression();
+      final PyExpression right = expr.getRightExpression();
+      final boolean isLeftString = isStringLiteral(left);
       if (expr.isOperator("+")) {
-        final PyExpression left = expr.getLeftExpression();
-        final PyExpression right = expr.getRightExpression();
-        final boolean isLeftString = isStringLiteral(left);
         final boolean isRightString = right != null && isStringLiteral(right);
         if (isLeftString) {
-          processStringLiteral(left, registrar, prefix, isRightString ? "" : missingValue);
+          processStringLiteral(left, registrar, prefix, isRightString ? "" : missingValue, percentFormatting);
         }
         if (isRightString) {
-          processStringLiteral(right, registrar, isLeftString ? "" : missingValue, suffix);
+          processStringLiteral(right, registrar, isLeftString ? "" : missingValue, suffix, percentFormatting);
         }
+      }
+      else if (expr.isOperator("%") && isLeftString) {
+        processStringLiteral(left, registrar, prefix, suffix, true);
       }
     }
   }
