@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,30 +15,21 @@
  */
 package com.intellij.openapi.editor.actions;
 
-import com.intellij.codeInsight.completion.NextPrevParameterAction;
-import com.intellij.codeInsight.lookup.LookupManager;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiFile;
 
 /**
- * @author peter
+ * @author yole
  */
-public class LangIndentSelectionAction extends IndentSelectionAction {
-
+public class IndentLineOrSelectionAction extends LangIndentSelectionAction {
   @Override
-  protected boolean isEnabled(Editor editor, DataContext dataContext) {
-    if (!originalIsEnabled(editor, wantSelection())) return false;
-    if (LookupManager.getActiveLookup(editor) != null) return false;
-
-    PsiFile psiFile = CommonDataKeys.PSI_FILE.getData(dataContext);
-    if (psiFile != null && NextPrevParameterAction.hasSutablePolicy(editor, psiFile)) return false;
-
-    return true;
+  public void update(Editor editor, Presentation presentation, DataContext dataContext) {
+    presentation.setEnabled(originalIsEnabled(editor, false));
   }
 
+  @Override
   protected boolean wantSelection() {
-    return true;
+    return false;
   }
 }
