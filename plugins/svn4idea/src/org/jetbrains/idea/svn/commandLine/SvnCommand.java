@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Date: 1/25/12
  * Time: 12:58 PM
  */
-public abstract class SvnCommand {
+public class SvnCommand {
   static final Logger LOG = Logger.getInstance(SvnCommand.class.getName());
   private final AtomicReference<Integer> myExitCodeReference;
   private final File myConfigDir;

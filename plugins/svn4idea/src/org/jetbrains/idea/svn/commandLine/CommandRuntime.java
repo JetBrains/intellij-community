@@ -49,7 +49,7 @@ public class CommandRuntime {
     myAuthCallback = authCallback;
   }
 
-  public SvnLineCommand runWithAuthenticationAttempt(@NotNull final File workingDirectory,
+  public SvnCommand runWithAuthenticationAttempt(@NotNull final File workingDirectory,
                                                      @Nullable final SVNURL repositoryUrl,
                                                      SvnCommandName commandName,
                                                      final LineCommandListener listener,
@@ -62,7 +62,7 @@ public class CommandRuntime {
 
       while (true) {
         final String exePath = SvnApplicationSettings.getInstance().getCommandLinePath();
-        final SvnLineCommand command =
+        final SvnCommand command =
           runCommand(exePath, commandName, listener, workingDirectory, configDir, parameters, originalParameters);
         final Integer exitCode = command.getExitCodeReference();
 
@@ -106,7 +106,7 @@ public class CommandRuntime {
     }
   }
 
-  private void logNullExitCode(@NotNull SvnLineCommand command, @Nullable Integer exitCode) {
+  private void logNullExitCode(@NotNull SvnCommand command, @Nullable Integer exitCode) {
     if (exitCode == null) {
       LOG.info("Null exit code returned, but not errors detected " + command.getCommandText());
     }
@@ -170,12 +170,12 @@ public class CommandRuntime {
     }
   }
 
-  private SvnLineCommand runCommand(String exePath,
+  private SvnCommand runCommand(String exePath,
                                     SvnCommandName commandName,
                                     final LineCommandListener listener,
                                     File base, File configDir,
                                     String[] parameters, String[] originalParameters) throws SvnBindException {
-    final SvnLineCommand command = new SvnLineCommand(base, commandName, exePath, configDir);
+    final SvnCommand command = new SvnCommand(base, commandName, exePath, configDir);
 
     command.setOriginalParameters(originalParameters);
     command.addParameters(parameters);
