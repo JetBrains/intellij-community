@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.MultiMap;
@@ -39,10 +39,8 @@ import java.util.*;
  * Time: 11:31 AM
  */
 public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnnotationLocalChangesListener {
-  private final Project myProject;
   private final ZipperUpdater myUpdater;
   private final MessageBusConnection myConnection;
-  private final VcsAnnotationRefresher myHandler;
 
   private final Runnable myUpdateStuff;
 
@@ -57,13 +55,12 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
   private final MultiMap<VirtualFile, FileAnnotation> myFileAnnotationMap;
 
   public VcsAnnotationLocalChangesListenerImpl(Project project, final ProjectLevelVcsManager vcsManager) {
-    myProject = project;
     myLock = new Object();
     myUpdateStuff = createUpdateStuff();
     myUpdater = new ZipperUpdater(ApplicationManager.getApplication().isUnitTestMode() ? 10 : 300, Alarm.ThreadToUse.POOLED_THREAD, project);
-    myConnection = myProject.getMessageBus().connect();
+    myConnection = project.getMessageBus().connect();
     myLocalFileSystem = LocalFileSystem.getInstance();
-    myHandler = createHandler();
+    VcsAnnotationRefresher handler = createHandler();
     myDirtyPaths = new HashSet<String>();
     myDirtyChanges = new HashMap<String, VcsRevisionNumber>();
     myDirtyFiles = new HashSet<VirtualFile>();
@@ -76,7 +73,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     myVcsManager = vcsManager;
     myVcsKeySet = new HashSet<VcsKey>();
 
-    myConnection.subscribe(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED, myHandler);
+    myConnection.subscribe(VcsAnnotationRefresher.LOCAL_CHANGES_CHANGED, handler);
   }
 
   private Runnable createUpdateStuff() {
@@ -121,7 +118,7 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
     final MultiMap<VirtualFile, FileAnnotation> annotations = new MultiMap<VirtualFile, FileAnnotation>();
     synchronized (myLock) {
       for (VirtualFile virtualFile : myFileAnnotationMap.keySet()) {
-        if (VfsUtil.isAncestor(file, virtualFile, true)) {
+        if (VfsUtilCore.isAncestor(file, virtualFile, true)) {
           final Collection<FileAnnotation> values = myFileAnnotationMap.get(virtualFile);
           for (FileAnnotation value : values) {
             annotations.putValue(virtualFile, value);
@@ -210,10 +207,10 @@ public class VcsAnnotationLocalChangesListenerImpl implements Disposable, VcsAnn
   public void unregisterAnnotation(final VirtualFile file, final FileAnnotation annotation) {
     synchronized (myLock) {
       final Collection<FileAnnotation> annotations = myFileAnnotationMap.get(file);
-      if (annotations != null && ! annotations.isEmpty()) {
+      if (!annotations.isEmpty()) {
         annotations.remove(annotation);
       }
-      if (annotations != null && annotations.isEmpty()) {
+      if (annotations.isEmpty()) {
         myFileAnnotationMap.remove(file);
       }
     }
