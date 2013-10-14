@@ -165,8 +165,9 @@ public class EditorsSplitters extends IdePanePanel {
       g.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.isUnderDarcula() ? 24f : 18f));
 
       final UIUtil.TextPainter painter = new UIUtil.TextPainter().withLineSpacing(1.4f);
-      if (!isDarkBackground)
+      if (!isDarkBackground) {
         painter.withShadow(true);
+      }
       painter.appendLine("No files are open").underlined(new JBColor(isDarkBackground ? Gray._210 : Gray._150, Gray._100));
 
       if (Registry.is("search.everywhere.enabled")) {
