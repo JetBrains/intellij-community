@@ -55,7 +55,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.MouseChecker;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
@@ -93,6 +92,7 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * @author Konstantin Bulenkov
@@ -125,7 +125,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private AnActionEvent myActionEvent;
   private Component myContextComponent;
   private CalcThread myCalcThread;
-  private static AtomicBoolean ourShiftCanBeUsed = new AtomicBoolean(false);
+  private static AtomicBoolean ourPressed = new AtomicBoolean(false);
+  private static AtomicBoolean ourReleased = new AtomicBoolean(false);
+  private static AtomicBoolean ourOtherKeyWasPressed = new AtomicBoolean(false);
+  private static AtomicLong ourLastTimePressed = new AtomicLong(0);
   private ArrayList<VirtualFile> myAlreadyAddedFiles = new ArrayList<VirtualFile>();
 
   static {
@@ -135,27 +138,51 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         if (event instanceof KeyEvent) {
           final KeyEvent keyEvent = (KeyEvent)event;
           final int keyCode = keyEvent.getKeyCode();
-          if (keyCode == KeyEvent.VK_SHIFT) {
-            if (event.getID() == KeyEvent.KEY_PRESSED) {
-              if (!ourShiftCanBeUsed.get()) {
-                ourShiftCanBeUsed.set(true);
-              } else {
-                ourShiftCanBeUsed.set(false);
-                final ActionManager actionManager = ActionManager.getInstance();
-                final AnAction action = actionManager.getAction("SearchEverywhere");
 
-                final AnActionEvent anActionEvent = new AnActionEvent(keyEvent,
-                                                                      DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner()),
-                                                                      ActionPlaces.UNKNOWN,
-                                                                      action.getTemplatePresentation(),
-                                                                      actionManager,
-                                                                      0);
-                action.actionPerformed(anActionEvent);
+          if (keyCode == KeyEvent.VK_SHIFT) {
+            if (ourOtherKeyWasPressed.get() && System.currentTimeMillis() - ourLastTimePressed.get() < 300) {
+              ourPressed.set(false);
+              ourReleased.set(false);
+              return false;
+            }
+            ourOtherKeyWasPressed.set(false);
+            if (System.currentTimeMillis() - ourLastTimePressed.get() > 400) {
+              ourPressed.set(false);
+              ourReleased.set(false);
+            }
+            if (event.getID() == KeyEvent.KEY_PRESSED) {
+              if (!ourPressed.get()) {
+                ourPressed.set(true);
+                ourLastTimePressed.set(System.currentTimeMillis());
+              } else {
+                if (ourPressed.get() && ourReleased.get()) {
+                    ourPressed.set(false);
+                    ourReleased.set(false);
+                    ourLastTimePressed.set(System.currentTimeMillis());
+                    final ActionManager actionManager = ActionManager.getInstance();
+                    final AnAction action = actionManager.getAction("SearchEverywhere");
+
+                    final AnActionEvent anActionEvent = new AnActionEvent(keyEvent,
+                                                                          DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner()),
+                                                                          ActionPlaces.UNKNOWN,
+                                                                          action.getTemplatePresentation(),
+                                                                          actionManager,
+                                                                          0);
+                    action.actionPerformed(anActionEvent);
+                }
+              }
+            } else if (event.getID() == KeyEvent.KEY_RELEASED) {
+              if (ourPressed.get()) {
+                ourReleased.set(true);
               }
             }
             return false;
+          } else {
+            ourLastTimePressed.set(System.currentTimeMillis());
+            ourOtherKeyWasPressed.set(true);
           }
-          ourShiftCanBeUsed.set(false);
+          ourPressed.set(false);
+          ourReleased.set(false);
         }
         return false;
       }
@@ -266,17 +293,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                                  "</b> to access<br/> - Classes<br/> - Files<br/> - Tool Windows<br/> - Actions<br/> - Settings</body></html>");
 
   }
-
-  @Override
-  public void update(AnActionEvent e) {
-    final InputEvent event = e.getInputEvent();
-    if (event instanceof KeyEvent && event.isShiftDown() && ((KeyEvent)event).getKeyCode() == KeyEvent.VK_SPACE) {
-      e.getPresentation().setEnabledAndVisible(!ourShiftCanBeUsed.get() && Registry.is("search.everywhere.enabled"));
-    } else {
-      e.getPresentation().setEnabled(true);
-    }
-  }
-
 
   private void createSearchField() {
     field = new MySearchTextField();
