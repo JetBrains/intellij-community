@@ -117,6 +117,7 @@ public class SvnCommand {
     outputAdapter = new CapturingProcessAdapter();
     myHandler.addProcessListener(outputAdapter);
     myHandler.addProcessListener(new ProcessEventTracker());
+    myHandler.addProcessListener(new ErrorTracker());
     myHandler.startNotify();
   }
 
@@ -275,6 +276,16 @@ public class SvnCommand {
     return myWasError.get();
   }
 
+  private class ErrorTracker extends ProcessAdapter {
+
+    @Override
+    public void onTextAvailable(ProcessEvent event, Key outputType) {
+      if (ProcessOutputTypes.STDERR == outputType) {
+        myWasError.set(true);
+      }
+    }
+  }
+
   private class ProcessEventTracker implements ProcessListener {
 
     /**
@@ -322,7 +333,6 @@ public class SvnCommand {
         notifyLines(outputType, lines, myStdoutLine);
       }
       else if (ProcessOutputTypes.STDERR == outputType) {
-        myWasError.set(true);
         notifyLines(outputType, lines, myStderrLine);
       }
     }
