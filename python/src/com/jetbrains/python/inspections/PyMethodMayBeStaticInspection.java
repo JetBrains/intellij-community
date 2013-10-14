@@ -55,17 +55,9 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
       if (!supers.isEmpty()) return;
       final Collection<PyFunction> overrides = PyOverridingMethodsSearch.search(node, true).findAll();
       if (!overrides.isEmpty()) return;
-      final PyDecoratorList decoratorList = node.getDecoratorList();
-      if (decoratorList != null) {
-        for (PyDecorator decorator : decoratorList.getDecorators()) {
-          final String decoratorName = decorator.getName();
-          if (hasSpecificDecorator(decoratorName)) {
-            return;
-          }
-          final Property property = containingClass.findPropertyByCallable(node);
-          if (property != null) return;
-        }
-      }
+      if (PyUtil.isDecoratedAsAbstract(node) || node.getModifier() != null) return;
+      final Property property = containingClass.findPropertyByCallable(node);
+      if (property != null) return;
 
       final PyStatementList statementList = node.getStatementList();
       if (statementList == null) return;
@@ -120,11 +112,6 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
         registerProblem(identifier, PyBundle.message("INSP.method.may.be.static"), ProblemHighlightType.WEAK_WARNING,
                         null, new PyMakeMethodStaticQuickFix(), new PyMakeFunctionFromMethodQuickFix());
       }
-    }
-
-    private static boolean hasSpecificDecorator(String decoratorName) {
-      return PyNames.STATICMETHOD.equals(decoratorName) || PyNames.CLASSMETHOD.equals(decoratorName) ||
-          PyNames.ABSTRACTMETHOD.equals(decoratorName) || PyNames.ABSTRACTPROPERTY.equals(decoratorName);
     }
   }
 }
