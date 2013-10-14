@@ -29,6 +29,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.ui.Messages;
@@ -114,7 +115,7 @@ public class ImportSettingsAction extends AnAction implements DumbAware {
                                                                     ApplicationNamesInfo.getInstance().getFullProductName()),
                                                   IdeBundle.message("title.restart.needed"), Messages.getQuestionIcon());
       if (ret == 0) {
-        ApplicationManager.getApplication().restart();
+        ((ApplicationEx) ApplicationManager.getApplication()).restart(true);
       }
     }
     catch (ZipException e1) {
