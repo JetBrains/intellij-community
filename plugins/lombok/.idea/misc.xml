@@ -8,10 +8,20 @@
     <option name="originalFiles">
       <list>
         <option value="$PROJECT_DIR$/lombok-api/pom.xml" />
+        <option value="$PROJECT_DIR$/test-lombok_pg-manual/pom.xml" />
+        <option value="$PROJECT_DIR$/test-lombok-manual/pom.xml" />
+        <option value="$PROJECT_DIR$/pom.xml" />
       </list>
     </option>
+    <option name="ignoredFiles">
+      <set>
+        <option value="$PROJECT_DIR$/test-manual/lombok/pom.xml" />
+        <option value="$PROJECT_DIR$/test-manual/lombok_pg/pom.xml" />
+        <option value="$PROJECT_DIR$/test-manual/pom.xml" />
+      </set>
+    </option>
   </component>
-  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" assert-keyword="true" jdk-15="true" project-jdk-name="IDEA IC-129.713" project-jdk-type="IDEA JDK">
+  <component name="ProjectRootManager" version="2" languageLevel="JDK_1_6" assert-keyword="true" jdk-15="true" project-jdk-name="1.7" project-jdk-type="JavaSDK">
     <output url="file://$PROJECT_DIR$/out" />
   </component>
   <component name="SvnBranchConfigurationManager">
