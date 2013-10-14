@@ -16,13 +16,11 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.CapturingProcessAdapter;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.LineHandlerHelper;
 import com.intellij.openapi.vcs.ProcessEventListener;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
@@ -32,7 +30,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -58,9 +58,20 @@ public abstract class SvnCommand {
   private CapturingProcessAdapter outputAdapter;
   private final Object myLock;
 
-  private final EventDispatcher<ProcessEventListener> myListeners = EventDispatcher.create(ProcessEventListener.class);
+  private final EventDispatcher<LineCommandListener> myListeners = EventDispatcher.create(LineCommandListener.class);
   private final SvnCommandName myCommandName;
   private String[] myOriginalParameters;
+
+  /**
+   * the partial line from stdout stream
+   */
+  private final StringBuilder myStdoutLine = new StringBuilder();
+  /**
+   * the partial line from stderr stream
+   */
+  private final StringBuilder myStderrLine = new StringBuilder();
+
+  private final AtomicBoolean myWasError = new AtomicBoolean(false);
 
   public SvnCommand(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath) {
     this(workingDirectory, commandName, exePath, null);
@@ -150,8 +161,60 @@ public abstract class SvnCommand {
     }
   }
 
-  protected abstract void processTerminated(int exitCode);
-  protected abstract void onTextAvailable(final String text, final Key outputType);
+  protected void processTerminated(int exitCode) {
+    // force newline
+    if (myStdoutLine.length() != 0) {
+      onTextAvailable("\n\r", ProcessOutputTypes.STDOUT);
+    }
+    else if (myStderrLine.length() != 0) {
+      onTextAvailable("\n\r", ProcessOutputTypes.STDERR);
+    }
+  }
+
+  protected void onTextAvailable(final String text, final Key outputType) {
+    Iterator<String> lines = LineHandlerHelper.splitText(text).iterator();
+    if (ProcessOutputTypes.STDOUT == outputType) {
+      notifyLines(outputType, lines, myStdoutLine);
+    }
+    else if (ProcessOutputTypes.STDERR == outputType) {
+      myWasError.set(true);
+      notifyLines(outputType, lines, myStderrLine);
+    }
+  }
+
+  private void notifyLines(final Key outputType, final Iterator<String> lines, final StringBuilder lineBuilder) {
+    if (!lines.hasNext()) return;
+    if (lineBuilder.length() > 0) {
+      lineBuilder.append(lines.next());
+      if (lines.hasNext()) {
+        // line is complete
+        final String line = lineBuilder.toString();
+        notifyLine(line, outputType);
+        lineBuilder.setLength(0);
+      }
+    }
+    while (true) {
+      String line = null;
+      if (lines.hasNext()) {
+        line = lines.next();
+      }
+
+      if (lines.hasNext()) {
+        notifyLine(line, outputType);
+      }
+      else {
+        if (line != null && line.length() > 0) {
+          lineBuilder.append(line);
+        }
+        break;
+      }
+    }
+  }
+
+  private void notifyLine(final String line, final Key outputType) {
+    String trimmed = LineHandlerHelper.trimLineSeparator(line);
+    myListeners.getMulticaster().onLineAvailable(trimmed, outputType);
+  }
 
   public void cancel() {
     synchronized (myLock) {
@@ -166,7 +229,7 @@ public abstract class SvnCommand {
     }
   }
 
-  public void addListener(final ProcessEventListener listener) {
+  public void addListener(final LineCommandListener listener) {
     synchronized (myLock) {
       myListeners.addListener(listener);
     }
@@ -302,6 +365,10 @@ public abstract class SvnCommand {
 
   public void setExitCodeReference(int value) {
     myExitCodeReference.set(value);
+  }
+
+  public Boolean wasError() {
+    return myWasError.get();
   }
 
   private class ProcessEventTracker implements ProcessListener {

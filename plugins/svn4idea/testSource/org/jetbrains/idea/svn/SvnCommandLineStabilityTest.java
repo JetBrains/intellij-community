@@ -1,10 +1,10 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.ProcessEventListener;
 import com.intellij.openapi.vcs.VcsException;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.commandLine.LineCommandAdapter;
 import org.jetbrains.idea.svn.commandLine.SvnCommand;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.junit.Test;
@@ -28,7 +28,7 @@ public class SvnCommandLineStabilityTest extends Svn17TestCase {
   }
 
   private static void addStartFailedListener(final Project project, SvnCommand command) {
-    command.addListener(new ProcessEventListener() {
+    command.addListener(new LineCommandAdapter() {
       @Override
       public void processTerminated(int exitCode) {
       }

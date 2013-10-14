@@ -18,10 +18,10 @@ package org.jetbrains.idea.svn;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vcs.ProcessEventListener;
 import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.commandLine.LineCommandAdapter;
 import org.jetbrains.idea.svn.commandLine.SvnCommand;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 
@@ -79,7 +79,7 @@ public class SvnSimpleCommand extends SvnCommand {
   }
 
   public String run() throws VcsException {
-    addListener(new ProcessEventListener() {
+    addListener(new LineCommandAdapter() {
       @Override
       public void processTerminated(int exitCode) {
       }

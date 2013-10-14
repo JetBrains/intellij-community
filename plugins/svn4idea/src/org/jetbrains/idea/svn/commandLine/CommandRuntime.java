@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vcs.LineProcessEventListener;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +34,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -184,7 +182,7 @@ public class CommandRuntime {
     command.addParameters("--non-interactive");
     final AtomicReference<Throwable> exceptionRef = new AtomicReference<Throwable>();
     // several threads
-    command.addLineListener(new LineProcessEventListener() {
+    command.addListener(new LineCommandAdapter() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (LOG.isDebugEnabled()) {
