@@ -140,10 +140,11 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
     Graphics2D g = (Graphics2D)graphics;
     final JTextComponent c = getComponent();
     final Container parent = c.getParent();
-//    if (parent != null) {
-//      g.setColor(parent.getBackground());
-//      g.fillRect(0, 0, c.getWidth(), c.getHeight());
-//    }
+    final Rectangle r = getDrawingRect();
+    if (!isSearchField(c) && parent != null) {
+      g.setColor(c.getBackground());
+      g.fillRect(0, 0, c.getWidth(), c.getHeight());
+    }
     final GraphicsConfig config = new GraphicsConfig(g);
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
@@ -151,7 +152,7 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
     final Border border = c.getBorder();
     if (isSearchField(c)) {
       g.setColor(c.getBackground());
-      final Rectangle r = getDrawingRect();
+
       int radius = r.height-1;
       g.fillRoundRect(r.x, r.y, r.width, r.height-1, radius, radius);
       g.setColor(c.isEnabled() ? Gray._100 : new Color(0x535353));
