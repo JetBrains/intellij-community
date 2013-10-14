@@ -122,8 +122,8 @@ public class SvnCommand {
   private void startHandlingStreams() {
     outputAdapter = new CapturingProcessAdapter();
     myHandler.addProcessListener(outputAdapter);
-    myHandler.addProcessListener(new ProcessEventTracker());
     myHandler.addProcessListener(new ErrorTracker());
+    myHandler.addProcessListener(new ProcessEventTracker());
     myHandler.addProcessListener(new CommandOutputLogger());
     myHandler.startNotify();
   }
@@ -304,6 +304,11 @@ public class SvnCommand {
   private class ErrorTracker extends ProcessAdapter {
 
     @Override
+    public void processTerminated(ProcessEvent event) {
+      setExitCodeReference(event.getExitCode());
+    }
+
+    @Override
     public void onTextAvailable(ProcessEvent event, Key outputType) {
       if (ProcessOutputTypes.STDERR == outputType) {
         myWasError.set(true);
@@ -327,12 +332,10 @@ public class SvnCommand {
     }
 
     public void processTerminated(final ProcessEvent event) {
-      final int exitCode = event.getExitCode();
       try {
         forceNewLine();
       } finally {
-        listeners().processTerminated(exitCode);
-        setExitCodeReference(exitCode);
+        listeners().processTerminated(event.getExitCode());
       }
     }
 
