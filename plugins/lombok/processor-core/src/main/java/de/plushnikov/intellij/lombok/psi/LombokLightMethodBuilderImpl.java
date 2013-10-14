@@ -2,7 +2,20 @@ package de.plushnikov.intellij.lombok.psi;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.psi.*;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementFactory;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.light.LightIdentifier;
 import com.intellij.psi.impl.light.LightMethodBuilder;
@@ -24,7 +37,7 @@ public class LombokLightMethodBuilderImpl extends LightMethodBuilder implements 
   public LombokLightMethodBuilderImpl(@NotNull PsiManager manager, @NotNull String name) {
     super(manager, JavaLanguage.INSTANCE, name,
         new LightParameterListBuilder(manager, JavaLanguage.INSTANCE), new LombokLightModifierListImpl(manager, JavaLanguage.INSTANCE));
-    myNameIdentifier = new LightIdentifier(manager, name);
+    myNameIdentifier = new LombokLightIdentifier(manager, name);
   }
 
   @Override
@@ -76,6 +89,12 @@ public class LombokLightMethodBuilderImpl extends LightMethodBuilder implements 
   }
 
   @Override
+  public LombokLightMethodBuilder withConstructor(boolean isConstructor) {
+    setConstructor(isConstructor);
+    return this;
+  }
+
+    @Override
   public PsiIdentifier getNameIdentifier() {
     return myNameIdentifier;
   }
@@ -109,6 +128,12 @@ public class LombokLightMethodBuilderImpl extends LightMethodBuilder implements 
       myASTNode = rebuildMethodFromString().getNode();
     }
     return myASTNode;
+  }
+
+  @Override
+  public TextRange getTextRange() {
+    TextRange r = super.getTextRange();
+    return r == null ? TextRange.EMPTY_RANGE : r;
   }
 
   private PsiMethod rebuildMethodFromString() {

@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.lombok.psi;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElementFactory;
@@ -89,6 +90,12 @@ public class LombokLightModifierListImpl extends LightModifierList {
       result = annotations.toArray(new PsiAnnotation[annotations.size()]);
     }
     return result;
+  }
+
+  @Override
+  public TextRange getTextRange() {
+    TextRange r = super.getTextRange();
+    return r == null ? TextRange.EMPTY_RANGE : r;
   }
 
   public String toString() {

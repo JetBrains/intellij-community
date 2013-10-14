@@ -7,6 +7,7 @@ import com.intellij.psi.PsiField;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import lombok.experimental.Accessors;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
@@ -37,14 +38,18 @@ public class AccessorsInfo {
     if (null != accessorsFieldAnnotation) {
       return buildFromAnnotation(accessorsFieldAnnotation);
     } else {
-      PsiClass containingClass = psiField.getContainingClass();
-      while (null != containingClass) {
-        final PsiAnnotation accessorsClassAnnotation = AnnotationUtil.findAnnotation(containingClass, ACCESSORS_ANNOTATION_NAME);
-        if (null != accessorsClassAnnotation) {
-          return buildFromAnnotation(accessorsClassAnnotation);
-        }
-        containingClass = containingClass.getContainingClass();
+      return build(psiField.getContainingClass());
+    }
+  }
+
+  public static AccessorsInfo build(@Nullable PsiClass psiClass) {
+    PsiClass containingClass = psiClass;
+    while (null != containingClass) {
+      final PsiAnnotation accessorsClassAnnotation = AnnotationUtil.findAnnotation(containingClass, ACCESSORS_ANNOTATION_NAME);
+      if (null != accessorsClassAnnotation) {
+        return buildFromAnnotation(accessorsClassAnnotation);
       }
+      containingClass = containingClass.getContainingClass();
     }
     return new AccessorsInfo();
   }

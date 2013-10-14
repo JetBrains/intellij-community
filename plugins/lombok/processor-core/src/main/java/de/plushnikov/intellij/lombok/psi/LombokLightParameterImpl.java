@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.lombok.psi;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiManager;
@@ -29,6 +30,12 @@ public class LombokLightParameterImpl extends LightParameter {
   @Override
   public PsiIdentifier getNameIdentifier() {
     return myNameIdentifier;
+  }
+
+  @Override
+  public TextRange getTextRange() {
+    TextRange r = super.getTextRange();
+    return r == null ? TextRange.EMPTY_RANGE : r;
   }
 
   public LombokLightParameterImpl setModifiers(String... modifiers) {
