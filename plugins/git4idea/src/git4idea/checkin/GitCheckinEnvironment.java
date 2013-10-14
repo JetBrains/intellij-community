@@ -112,20 +112,27 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     for (VirtualFile root : GitUtil.gitRoots(Arrays.asList(filesToCheckin))) {
       VirtualFile mergeMsg = root.findFileByRelativePath(GitRepositoryFiles.GIT_MERGE_MSG);
       VirtualFile squashMsg = root.findFileByRelativePath(GitRepositoryFiles.GIT_SQUASH_MSG);
-      if (mergeMsg != null || squashMsg != null) {
-        try {
-          String encoding = GitConfigUtil.getCommitEncoding(myProject, root);
-          if (mergeMsg != null) {
-            rc.append(FileUtil.loadFileText(new File(mergeMsg.getPath()), encoding));
-          }
-          if (squashMsg != null) {
-            rc.append(FileUtil.loadFileText(new File(squashMsg.getPath()), encoding));
-          }
+      VirtualFile normalMsg = root.findFileByRelativePath(GitRepositoryFiles.GIT_COMMIT_EDITMSG);
+      try {
+        if (mergeMsg == null && squashMsg == null && normalMsg == null) {
+          continue;
         }
-        catch (IOException e) {
-          if (log.isDebugEnabled()) {
-            log.debug("Unable to load merge message", e);
-          }
+
+        String encoding = GitConfigUtil.getCommitEncoding(myProject, root);
+
+        if (mergeMsg != null) {
+          rc.append(loadMessage(mergeMsg, encoding));
+        }
+        else if (squashMsg != null) {
+          rc.append(loadMessage(squashMsg, encoding));
+        }
+        else {
+          rc.append(loadMessage(normalMsg, encoding));
+        }
+      }
+      catch (IOException e) {
+        if (log.isDebugEnabled()) {
+          log.debug("Unable to load merge message", e);
         }
       }
     }
@@ -133,6 +140,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       return rc.toString();
     }
     return null;
+  }
+
+  private static char[] loadMessage(@NotNull VirtualFile messageFile, @NotNull String encoding) throws IOException {
+    return FileUtil.loadFileText(new File(messageFile.getPath()), encoding);
   }
 
   public String getHelpId() {
@@ -219,7 +230,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
     return exceptions;
   }
-  
+
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
     return commit(changes, preparedComment, FunctionUtil.<Object, Object>nullConstant(), null);
   }
