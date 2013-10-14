@@ -245,9 +245,9 @@ public class JavaDocLocalInspectionBase extends AbstractBaseJavaLocalInspectionT
     }
 
     final PsiDocTag[] tags = docComment.getTags();
-    final java.util.List<ProblemDescriptor> problems =
+    final List<ProblemDescriptor> problems =
       getRequiredTagProblems(aPackage, docComment.getFirstChild(), tags, manager, isOnTheFly, required);
-    final java.util.List<ProblemDescriptor> tagProblems = getTagValuesProblems(aPackage, tags, manager, isOnTheFly);
+    final List<ProblemDescriptor> tagProblems = getTagValuesProblems(aPackage, tags, manager, isOnTheFly);
     if (tagProblems != null) {
       problems.addAll(tagProblems);
     }
@@ -280,9 +280,9 @@ public class JavaDocLocalInspectionBase extends AbstractBaseJavaLocalInspectionT
     }
 
     PsiDocTag[] tags = docComment.getTags();
-    final java.util.List<ProblemDescriptor> problems = getRequiredTagProblems(psiClass, docComment.getFirstChild(), tags, manager, isOnTheFly, required);
+    final List<ProblemDescriptor> problems = getRequiredTagProblems(psiClass, docComment.getFirstChild(), tags, manager, isOnTheFly, required);
 
-    java.util.List<ProblemDescriptor> tagProblems = getTagValuesProblems(psiClass, tags, manager, isOnTheFly);
+    List<ProblemDescriptor> tagProblems = getTagValuesProblems(psiClass, tags, manager, isOnTheFly);
     if (tagProblems != null) {
       problems.addAll(tagProblems);
     }
@@ -313,7 +313,7 @@ public class JavaDocLocalInspectionBase extends AbstractBaseJavaLocalInspectionT
            : problems.toArray(new ProblemDescriptor[problems.size()]);
   }
 
-  private java.util.List<ProblemDescriptor> getRequiredTagProblems(PsiElement context,
+  private List<ProblemDescriptor> getRequiredTagProblems(PsiElement context,
                                                          PsiElement elementToHighlight,
                                                          PsiDocTag[] tags,
                                                          InspectionManager manager, boolean isOnTheFly, boolean required) {
@@ -442,10 +442,9 @@ public class JavaDocLocalInspectionBase extends AbstractBaseJavaLocalInspectionT
       }
     }
 
-    final ArrayList<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>(2);
+    List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>(2);
 
-    checkInlineTags(manager, problems, descriptionElements,
-                    JavadocManager.SERVICE.getInstance(docComment.getProject()), isOnTheFly);
+    checkInlineTags(manager, problems, descriptionElements, JavadocManager.SERVICE.getInstance(docComment.getProject()), isOnTheFly);
 
     final PsiDocTag tagByName = docComment.findTagByName("inheritDoc");
     if (tagByName != null) {
@@ -596,10 +595,11 @@ public class JavaDocLocalInspectionBase extends AbstractBaseJavaLocalInspectionT
     return false;
   }
 
-  private void processThrowsTags(final PsiDocTag[] tags,
-                                 final Map<PsiClassType, PsiClass> declaredExceptions,
-                                 final InspectionManager mananger,
-                                 @NotNull final ArrayList<ProblemDescriptor> problems, boolean isOnTheFly) {
+  private void processThrowsTags(@NotNull PsiDocTag[] tags,
+                                 @NotNull Map<PsiClassType, PsiClass> declaredExceptions,
+                                 @NotNull InspectionManager manager,
+                                 @NotNull final List<ProblemDescriptor> problems,
+                                 boolean isOnTheFly) {
     for (PsiDocTag tag : tags) {
       if ("throws".equals(tag.getName()) || "exception".equals(tag.getName())) {
         final PsiDocTagValue value = tag.getValueElement();
@@ -617,7 +617,7 @@ public class JavaDocLocalInspectionBase extends AbstractBaseJavaLocalInspectionT
             final PsiClass psiClass = declaredExceptions.get(classType);
             if (InheritanceUtil.isInheritorOrSelf(exceptionClass, psiClass, true)) {
               if (!myIgnoreEmptyDescriptions && extractThrowsTagDescription(tag).isEmpty()) {
-                problems.add(createDescriptor(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", "<code>" + tag.getName() + "</code>"), mananger,
+                problems.add(createDescriptor(tag.getNameElement(), InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", "<code>" + tag.getName() + "</code>"), manager,
                                               isOnTheFly));
               }
               it.remove();
@@ -758,7 +758,7 @@ public class JavaDocLocalInspectionBase extends AbstractBaseJavaLocalInspectionT
   }
 
   private static void checkForBadCharacters(PsiDocComment docComment,
-                                            final java.util.List<ProblemDescriptor> problems,
+                                            final List<ProblemDescriptor> problems,
                                             final InspectionManager manager, final boolean onTheFly) {
     docComment.accept(new PsiRecursiveElementVisitor(){
       @Override
@@ -776,7 +776,7 @@ public class JavaDocLocalInspectionBase extends AbstractBaseJavaLocalInspectionT
 
   private void checkForPeriodInDoc(PsiElement context,
                                    PsiDocComment docComment,
-                                   java.util.List<ProblemDescriptor> problems,
+                                   List<ProblemDescriptor> problems,
                                    InspectionManager manager, boolean onTheFly) {
     if (IGNORE_JAVADOC_PERIOD) return;
     PsiDocTag[] tags = docComment.getTags();
@@ -851,7 +851,7 @@ public class JavaDocLocalInspectionBase extends AbstractBaseJavaLocalInspectionT
                                JavadocTagInfo tagInfo,
                                PsiDocTag tag,
                                boolean isOnTheFly,
-                               java.util.List<ProblemDescriptor> problems) {
+                               List<ProblemDescriptor> problems) {
     final String tagName = tag.getName();
     final StringTokenizer tokenizer = new StringTokenizer(myAdditionalJavadocTags, ", ");
     while (tokenizer.hasMoreTokens()) {
@@ -874,10 +874,11 @@ public class JavaDocLocalInspectionBase extends AbstractBaseJavaLocalInspectionT
     return false;
   }
 
-  private void checkInlineTags(final InspectionManager inspectionManager,
-                               final java.util.List<ProblemDescriptor> problems,
-                               final PsiElement[] dataElements,
-                               final JavadocManager manager, boolean isOnTheFly) {
+  private void checkInlineTags(@NotNull InspectionManager inspectionManager,
+                               @NotNull List<ProblemDescriptor> problems,
+                               @NotNull PsiElement[] dataElements,
+                               @NotNull JavadocManager manager,
+                               boolean isOnTheFly) {
     for (PsiElement dataElement : dataElements) {
       if (dataElement instanceof PsiInlineDocTag) {
         final PsiInlineDocTag inlineDocTag = (PsiInlineDocTag)dataElement;
@@ -975,7 +976,7 @@ public class JavaDocLocalInspectionBase extends AbstractBaseJavaLocalInspectionT
   }
 
   private void checkDuplicateTags(final PsiDocTag[] tags,
-                                  java.util.List<ProblemDescriptor> problems,
+                                  List<ProblemDescriptor> problems,
                                   final InspectionManager manager, boolean isOnTheFly) {
     Set<String> documentedParamNames = null;
     Set<String> documentedExceptions = null;
