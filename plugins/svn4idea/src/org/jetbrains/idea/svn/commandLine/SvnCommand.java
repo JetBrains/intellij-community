@@ -48,9 +48,7 @@ public class SvnCommand {
 
   private boolean myIsDestroyed;
   private boolean myNeedsDestroy;
-  private int myExitCode;
   protected final GeneralCommandLine myCommandLine;
-  private final File myWorkingDirectory;
   private Process myProcess;
   private OSProcessHandler myHandler;
   // TODO: Try to implement commands in a way that they manually indicate if they need full output - to prevent situations
@@ -73,7 +71,6 @@ public class SvnCommand {
     myCommandName = commandName;
     myLock = new Object();
     myCommandLine = new GeneralCommandLine();
-    myWorkingDirectory = workingDirectory;
     myCommandLine.setExePath(exePath);
     myCommandLine.setWorkDirectory(workingDirectory);
     myConfigDir = configDir;
@@ -158,12 +155,6 @@ public class SvnCommand {
       destroyProcess();
     }
   }
-  
-  protected void setExitCode(final int code) {
-    synchronized (myLock) {
-      myExitCode = code;
-    }
-  }
 
   public void addListener(final LineCommandListener listener) {
     synchronized (myLock) {
@@ -178,13 +169,6 @@ public class SvnCommand {
   }
 
   public void addParameters(@NonNls @NotNull String... parameters) {
-    synchronized (myLock) {
-      checkNotStarted();
-      myCommandLine.addParameters(parameters);
-    }
-  }
-
-  public void addParameters(List<String> parameters) {
     synchronized (myLock) {
       checkNotStarted();
       myCommandLine.addParameters(parameters);
@@ -244,12 +228,6 @@ public class SvnCommand {
     }
   }
 
-  public String getExePath() {
-    synchronized (myLock) {
-      return myCommandLine.getExePath();
-    }
-  }
-
   /**
    * check that process is not started yet
    *
@@ -279,16 +257,6 @@ public class SvnCommand {
     synchronized (myLock) {
       return myProcess != null;
     }
-  }
-
-  protected int getExitCode() {
-    synchronized (myLock) {
-      return myExitCode;
-    }
-  }
-
-  protected File getWorkingDirectory() {
-    return myWorkingDirectory;
   }
 
   public SvnCommandName getCommandName() {
@@ -325,7 +293,6 @@ public class SvnCommand {
     public void processTerminated(final ProcessEvent event) {
       final int exitCode = event.getExitCode();
       try {
-        setExitCode(exitCode);
         forceNewLine();
       } finally {
         listeners().processTerminated(exitCode);
