@@ -1,7 +1,7 @@
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessListener;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.LineHandlerHelper;
@@ -12,7 +12,7 @@ import java.util.Iterator;
 /**
 * @author Konstantin Kolosovsky.
 */
-public class ResultBuilderNotifier implements ProcessListener {
+public class ResultBuilderNotifier extends ProcessAdapter {
 
   /**
    * the partial line from stdout stream
@@ -27,10 +27,6 @@ public class ResultBuilderNotifier implements ProcessListener {
 
   public ResultBuilderNotifier(@NotNull LineCommandListener resultBuilder) {
     myResultBuilder = resultBuilder;
-  }
-
-  public void startNotified(final ProcessEvent event) {
-    // do nothing
   }
 
   public void processTerminated(final ProcessEvent event) {
@@ -48,10 +44,6 @@ public class ResultBuilderNotifier implements ProcessListener {
     else if (myStderrLine.length() != 0) {
       onTextAvailable("\n\r", ProcessOutputTypes.STDERR);
     }
-  }
-
-  public void processWillTerminate(final ProcessEvent event, final boolean willBeDestroyed) {
-    // do nothing
   }
 
   public void onTextAvailable(final ProcessEvent event, final Key outputType) {
@@ -98,7 +90,6 @@ public class ResultBuilderNotifier implements ProcessListener {
   }
 
   private void notifyLine(final String line, final Key outputType) {
-    String trimmed = LineHandlerHelper.trimLineSeparator(line);
-    myResultBuilder.onLineAvailable(trimmed, outputType);
+    myResultBuilder.onLineAvailable(LineHandlerHelper.trimLineSeparator(line), outputType);
   }
 }
