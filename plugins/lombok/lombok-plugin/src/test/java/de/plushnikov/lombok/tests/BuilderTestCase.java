@@ -10,6 +10,11 @@ import java.io.IOException;
  */
 public class BuilderTestCase extends LombokParsingTestCase {
 
+  // This test is lombok's homepage example.
+  public void testBuilderExample() throws IOException {
+    doTest();
+  }
+
   public void testBuilderSimple() throws IOException {
     doTest();
   }
