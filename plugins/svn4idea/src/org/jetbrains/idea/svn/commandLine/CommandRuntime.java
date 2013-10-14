@@ -188,15 +188,13 @@ public class CommandRuntime {
       myListener = listener;
       myParameters = parameters;
       myOriginalParameters = originalParameters;
-      myCommand = new SvnCommand(base, commandName, exePath, configDir);
+      myCommand = new SvnCommand(base, commandName, exePath, configDir, myListener);
     }
 
     public SvnCommand run() throws SvnBindException {
       myCommand.setOriginalParameters(myOriginalParameters);
       myCommand.addParameters(myParameters);
       myCommand.addParameters("--non-interactive");
-      // several threads
-      myCommand.addListener(createListener());
 
       myCommand.start();
       boolean finished;
@@ -213,29 +211,6 @@ public class CommandRuntime {
       myCommand.throwIfError();
 
       return myCommand;
-    }
-
-    private LineCommandAdapter createListener() {
-      return new LineCommandAdapter() {
-        @Override
-        public void onLineAvailable(String line, Key outputType) {
-          myListener.onLineAvailable(line, outputType);
-          if (myListener.isCanceled()) {
-            LOG.info("Cancelling command: " + myCommand.getCommandText());
-            myCommand.destroyProcess();
-          }
-        }
-
-        @Override
-        public void processTerminated(int exitCode) {
-          myListener.processTerminated(exitCode);
-        }
-
-        @Override
-        public void startFailed(Throwable exception) {
-          myListener.startFailed(exception);
-        }
-      };
     }
   }
 }

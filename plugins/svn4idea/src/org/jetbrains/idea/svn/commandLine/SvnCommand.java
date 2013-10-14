@@ -61,9 +61,17 @@ public class SvnCommand {
 
   private final AtomicBoolean myWasError = new AtomicBoolean(false);
   @NotNull private final AtomicReference<Throwable> myExceptionRef;
+  @Nullable private final LineCommandListener myResultBuilder;
 
   public SvnCommand(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath,
-                    @Nullable File configDir) {
+                    @Nullable File configDir, @Nullable LineCommandListener resultBuilder) {
+    myResultBuilder = resultBuilder;
+    if (resultBuilder != null)
+    {
+      myListeners.addListener(resultBuilder);
+      // cancel tracker should be executed after result builder
+      myListeners.addListener(new CommandCancelTracker());
+    }
     myCommandName = commandName;
     myLock = new Object();
     myCommandLine = new GeneralCommandLine();
@@ -280,6 +288,16 @@ public class SvnCommand {
 
     if (error != null) {
       throw new SvnBindException(error);
+    }
+  }
+
+  private class CommandCancelTracker extends LineCommandAdapter {
+    @Override
+    public void onLineAvailable(String line, Key outputType) {
+      if (myResultBuilder != null && myResultBuilder.isCanceled()) {
+        LOG.info("Cancelling command: " + getCommandText());
+        destroyProcess();
+      }
     }
   }
 
