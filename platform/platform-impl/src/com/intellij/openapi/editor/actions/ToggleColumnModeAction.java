@@ -26,7 +26,6 @@ package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -89,7 +88,8 @@ public class ToggleColumnModeAction extends ToggleAction implements DumbAware {
 
   @Override
   public void update(AnActionEvent e){
-    if (getEditor(e) == null) {
+    EditorEx editor = getEditor(e);
+    if (editor == null || editor.isOneLineMode()) {
       e.getPresentation().setEnabled(false);
       e.getPresentation().setVisible(false);
     } else {
