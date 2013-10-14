@@ -90,6 +90,10 @@ public class FrameworkSupportUtil {
     return builder.comparator();
   }
 
+  public static FrameworkSupportInModuleProvider findProvider(@NotNull String id) {
+    return findProvider(id, getAllProviders());
+  }
+
   @Nullable
   public static FrameworkSupportInModuleProvider findProvider(@NotNull String id, final List<FrameworkSupportInModuleProvider> providers) {
     for (FrameworkSupportInModuleProvider provider : providers) {

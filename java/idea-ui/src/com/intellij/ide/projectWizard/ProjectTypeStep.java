@@ -47,6 +47,7 @@ import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -244,7 +245,8 @@ public class ProjectTypeStep extends ModuleWizardStep {
 
     if (!framework.isEnabledForModuleBuilder(myBuilders.get(projectCategory))) return false;
 
-    if (framework.getRoles().length == 0) return true;
+    FrameworkRole[] roles = framework.getRoles();
+    if (roles.length == 0) return true;
 
     /*
     String[] ids = framework.getProjectCategories();
@@ -273,9 +275,8 @@ public class ProjectTypeStep extends ModuleWizardStep {
     return framework.isEnabledForModuleBuilder(projectCategory.createModuleBuilder());
     */
 
-    List<FrameworkRole> frameworkRoles = Arrays.asList(framework.getRoles());
     List<FrameworkRole> acceptable = Arrays.asList(projectCategory.getAcceptableFrameworkRoles());
-    return ContainerUtil.intersects(frameworkRoles, acceptable);
+    return ContainerUtil.intersects(Arrays.asList(roles), acceptable);
   }
 
   @Override
@@ -293,5 +294,10 @@ public class ProjectTypeStep extends ModuleWizardStep {
   @Override
   public JComponent getPreferredFocusedComponent() {
     return myProjectTypeTree;
+  }
+
+  @TestOnly
+  public AddSupportForFrameworksPanel getFrameworksPanel() {
+    return myFrameworksPanel;
   }
 }
