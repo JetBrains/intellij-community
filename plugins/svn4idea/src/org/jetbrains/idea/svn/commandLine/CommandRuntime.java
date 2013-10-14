@@ -44,9 +44,11 @@ public class CommandRuntime {
   private static final Logger LOG = Logger.getInstance(CommandRuntime.class);
 
   @NotNull private final AuthenticationCallback myAuthCallback;
+  private final String exePath;
 
   public CommandRuntime(@NotNull AuthenticationCallback authCallback) {
     myAuthCallback = authCallback;
+    exePath = SvnApplicationSettings.getInstance().getCommandLinePath();
   }
 
   public SvnCommand runWithAuthenticationAttempt(@NotNull final File workingDirectory,
@@ -61,9 +63,7 @@ public class CommandRuntime {
       String[] originalParameters = Arrays.copyOf(parameters, parameters.length);
 
       while (true) {
-        final String exePath = SvnApplicationSettings.getInstance().getCommandLinePath();
-        final SvnCommand command =
-          runCommand(exePath, commandName, listener, workingDirectory, configDir, parameters, originalParameters);
+        final SvnCommand command = runCommand(commandName, listener, workingDirectory, configDir, parameters, originalParameters);
         final Integer exitCode = command.getExitCodeReference();
 
         // could be situations when exit code = 0, but there is info "warning" in error stream for instance, for "svn status"
@@ -78,7 +78,7 @@ public class CommandRuntime {
             final String errText = command.getErrorOutput().trim();
             final AuthCallbackCase callback = createCallback(errText, repositoryUrl);
             if (callback != null) {
-              cleanup(exePath, command, workingDirectory);
+              cleanup(command, workingDirectory);
               if (callback.getCredentials(errText)) {
                 if (myAuthCallback.getSpecialConfigDir() != null) {
                   configDir = myAuthCallback.getSpecialConfigDir();
@@ -155,7 +155,7 @@ public class CommandRuntime {
     });
   }
 
-  private void cleanup(String exePath, SvnCommand command, @NotNull File workingDirectory) throws SvnBindException {
+  private void cleanup(SvnCommand command, @NotNull File workingDirectory) throws SvnBindException {
     if (command.isManuallyDestroyed() && command.getCommandName().isWriteable()) {
       File wcRoot = SvnUtil.getWorkingCopyRootNew(workingDirectory);
 
@@ -163,18 +163,19 @@ public class CommandRuntime {
       // TODO: check if we could "configure" commands (or make command to explicitly ask) if cleanup is required - not to search
       // TODO: working copy root each time
       if (wcRoot != null) {
-        runCommand(exePath, SvnCommandName.cleanup, new SvnCommitRunner.CommandListener(null), wcRoot, null, null, null);
+        runCommand(SvnCommandName.cleanup, new SvnCommitRunner.CommandListener(null), wcRoot, null, null, null);
       } else {
         LOG.info("Could not execute cleanup for command " + command.getCommandText());
       }
     }
   }
 
-  private SvnCommand runCommand(String exePath,
-                                    SvnCommandName commandName,
-                                    final LineCommandListener listener,
-                                    File base, File configDir,
-                                    String[] parameters, String[] originalParameters) throws SvnBindException {
+  private SvnCommand runCommand(SvnCommandName commandName,
+                                final LineCommandListener listener,
+                                File base,
+                                File configDir,
+                                String[] parameters,
+                                String[] originalParameters) throws SvnBindException {
     final SvnCommand command = new SvnCommand(base, commandName, exePath, configDir);
 
     command.setOriginalParameters(originalParameters);
