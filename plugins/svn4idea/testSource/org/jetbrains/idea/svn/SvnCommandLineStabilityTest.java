@@ -4,12 +4,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.commandLine.CommandUtil;
 import org.jetbrains.idea.svn.commandLine.LineCommandAdapter;
 import org.jetbrains.idea.svn.commandLine.SvnCommand;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.junit.Test;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -20,26 +24,6 @@ import java.io.File;
 // TODO: Rather strange test - probably it should be removed
 public class SvnCommandLineStabilityTest extends Svn17TestCase {
 
-  private static SvnSimpleCommand createSimpleCommand(final Project project, File workingDirectory, @NotNull SvnCommandName commandName) {
-    final SvnSimpleCommand command =
-      new SvnSimpleCommand(workingDirectory, commandName, SvnApplicationSettings.getInstance().getCommandLinePath());
-    addStartFailedListener(project, command);
-    return command;
-  }
-
-  private static void addStartFailedListener(final Project project, SvnCommand command) {
-    command.addListener(new LineCommandAdapter() {
-      @Override
-      public void processTerminated(int exitCode) {
-      }
-
-      @Override
-      public void startFailed(Throwable exception) {
-        SvnVcs.getInstance(project).checkCommandLineVersion();
-      }
-    });
-  }
-
   @Test
   public void testCallInfoManyTimes() throws Exception {
     for (int i = 0; i < 200; i++) {
@@ -49,9 +33,14 @@ public class SvnCommandLineStabilityTest extends Svn17TestCase {
   }
 
   private void call() throws VcsException {
-    final SvnSimpleCommand command = createSimpleCommand(myProject, new File(myWorkingCopyDir.getPath()), SvnCommandName.info);
-    command.addParameters("--xml");
-    final String result = command.run();
+    List<String> parameters = new ArrayList<String>();
+    parameters.add("--xml");
+
+    SvnVcs vcs = SvnVcs.getInstance(myProject);
+    File workingDirectory = new File(myWorkingCopyDir.getPath());
+    SvnCommand command =
+      CommandUtil.execute(vcs, SvnTarget.fromFile(workingDirectory), workingDirectory, SvnCommandName.info, parameters, null);
+    final String result = command.getOutput();
     System.out.println(result);
     Assert.assertNotNull(result);
   }
