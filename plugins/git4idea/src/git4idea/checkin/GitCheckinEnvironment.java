@@ -18,14 +18,12 @@ package git4idea.checkin;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.CheckinProjectPanel;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ObjectsConvertor;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.ui.SelectFilePathsDialog;
 import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent;
@@ -34,10 +32,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.NonFocusableCheckBox;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.FunctionUtil;
-import com.intellij.util.NullableFunction;
-import com.intellij.util.PairConsumer;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
@@ -62,6 +57,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -103,7 +100,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   @Nullable
   public RefreshableOnComponent createAdditionalOptionsPanel(CheckinProjectPanel panel,
                                                              PairConsumer<Object, Object> additionalDataConsumer) {
-    return new GitCheckinOptions(myProject, panel.getRoots());
+    return new GitCheckinOptions(myProject, panel);
   }
 
   @Nullable
@@ -606,14 +603,18 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
      */
     private final JCheckBox myAmend;
     private Date myAuthorDate;
+    @Nullable private String myPreviousMessage;
+
+    @NotNull private final CheckinProjectPanel myCheckinPanel;
 
     /**
      * A constructor
      *
      * @param project
-     * @param roots
+     * @param panel
      */
-    GitCheckinOptions(Project project, Collection<VirtualFile> roots) {
+    GitCheckinOptions(@NotNull final Project project, @NotNull CheckinProjectPanel panel) {
+      myCheckinPanel = panel;
       myPanel = new JPanel(new GridBagLayout());
       final Insets insets = new Insets(2, 2, 2, 2);
       // add authors drop down
@@ -632,7 +633,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       c.gridy = 0;
       c.weightx = 1;
       c.fill = GridBagConstraints.HORIZONTAL;
-      final List<String> usersList = getUsersList(project, roots);
+      final List<String> usersList = getUsersList(project, myCheckinPanel.getRoots());
       final Set<String> authors = usersList == null ? new HashSet<String>() : new HashSet<String>(usersList);
       ContainerUtil.addAll(authors, mySettings.getCommitAuthors());
       List<String> list = new ArrayList<String>(authors);
@@ -664,6 +665,42 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       myAmend.setSelected(false);
       myAmend.setToolTipText(GitBundle.getString("commit.amend.tooltip"));
       myPanel.add(myAmend, c);
+
+      myAmend.addActionListener(new ActionListener() {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+          if (myAmend.isSelected()) {
+            ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+              public void run() {
+                final String messageFromGit = getDefaultMessageFor(getSelectedFilePaths());
+                if (!StringUtil.isEmptyOrSpaces(messageFromGit)) {
+                  UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+                    @Override
+                    public void run() {
+                      myPreviousMessage = myCheckinPanel.getCommitMessage();
+                      myCheckinPanel.setCommitMessage(messageFromGit);
+                    }
+                  });
+                }
+              }
+            }, "Reading commit message...", false, project);
+          }
+          else if (myPreviousMessage != null) {
+            myCheckinPanel.setCommitMessage(myPreviousMessage);
+          }
+        }
+      });
+    }
+
+    @NotNull
+    private FilePath[] getSelectedFilePaths() {
+      List<FilePath> selectedPaths = ContainerUtil.map(myCheckinPanel.getFiles(), new Function<File, FilePath>() {
+        @Override
+        public FilePath fun(File file) {
+          return new FilePathImpl(file, file.isDirectory());
+        }
+      });
+      return ArrayUtil.toObjectArray(selectedPaths, FilePath.class);
     }
 
     private List<String> getUsersList(final Project project, final Collection<VirtualFile> roots) {
