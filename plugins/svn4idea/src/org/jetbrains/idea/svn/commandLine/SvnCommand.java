@@ -60,6 +60,7 @@ public class SvnCommand {
   private String[] myOriginalParameters;
 
   private final AtomicBoolean myWasError = new AtomicBoolean(false);
+  @NotNull private final AtomicReference<Throwable> myExceptionRef;
 
   public SvnCommand(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath) {
     this(workingDirectory, commandName, exePath, null);
@@ -78,6 +79,7 @@ public class SvnCommand {
     }
     myCommandLine.addParameter(commandName.getName());
     myExitCodeReference = new AtomicReference<Integer>();
+    myExceptionRef = new AtomicReference<Throwable>();
   }
 
   public String[] getParameters() {
@@ -108,6 +110,7 @@ public class SvnCommand {
         startHandlingStreams();
       } catch (Throwable t) {
         listeners().startFailed(t);
+        myExceptionRef.set(t);
       }
     }
   }
@@ -275,6 +278,14 @@ public class SvnCommand {
     return myWasError.get();
   }
 
+  public void throwIfError() throws SvnBindException {
+    Throwable error = myExceptionRef.get();
+
+    if (error != null) {
+      throw new SvnBindException(error);
+    }
+  }
+
   private class ErrorTracker extends ProcessAdapter {
 
     @Override
@@ -306,6 +317,7 @@ public class SvnCommand {
         forceNewLine();
       } finally {
         listeners().processTerminated(exitCode);
+        setExitCodeReference(exitCode);
       }
     }
 

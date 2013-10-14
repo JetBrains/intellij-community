@@ -173,7 +173,6 @@ public class CommandRuntime {
   private class Executor {
 
     @NotNull private final SvnCommand myCommand;
-    @NotNull private final AtomicReference<Throwable> myExceptionRef;
 
     private LineCommandListener myListener;
     private String[] myParameters;
@@ -190,7 +189,6 @@ public class CommandRuntime {
       myParameters = parameters;
       myOriginalParameters = originalParameters;
       myCommand = new SvnCommand(base, commandName, exePath, configDir);
-      myExceptionRef = new AtomicReference<Throwable>();
     }
 
     public SvnCommand run() throws SvnBindException {
@@ -212,7 +210,7 @@ public class CommandRuntime {
       }
       while (!finished);
 
-      throwIfError();
+      myCommand.throwIfError();
 
       return myCommand;
     }
@@ -237,23 +235,13 @@ public class CommandRuntime {
         @Override
         public void processTerminated(int exitCode) {
           myListener.processTerminated(exitCode);
-          myCommand.setExitCodeReference(exitCode);
         }
 
         @Override
         public void startFailed(Throwable exception) {
           myListener.startFailed(exception);
-          myExceptionRef.set(exception);
         }
       };
-    }
-
-    private void throwIfError() throws SvnBindException {
-      Throwable error = myExceptionRef.get();
-
-      if (error != null) {
-        throw new SvnBindException(error);
-      }
     }
   }
 }
