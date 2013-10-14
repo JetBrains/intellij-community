@@ -3,11 +3,11 @@ package com.jetbrains.python.codeInsight.regexp;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.jetbrains.python.codeInsight.PyInjectionUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +51,7 @@ public class PythonRegexpInjector implements MultiHostInjector {
   @Override
   public void getLanguagesToInject(@NotNull MultiHostRegistrar registrar, @NotNull PsiElement context) {
     final PsiElement contextParent = context.getParent();
-    if (isStringLiteral(context) && contextParent instanceof PyArgumentList) {
+    if (PyInjectionUtil.isLargestStringLiteral(context) && contextParent instanceof PyArgumentList) {
       final PyExpression[] args = ((PyArgumentList)contextParent).getArguments();
       int index = ArrayUtil.indexOf(args, context);
       PyCallExpression call = PsiTreeUtil.getParentOfType(context, PyCallExpression.class);
@@ -64,65 +64,10 @@ public class PythonRegexpInjector implements MultiHostInjector {
             if (element != null && element.getContainingFile().getName().equals("re.py") && isRegexpMethod(element, index)) {
               final Language language = isVerbose(call) ? PythonVerboseRegexpLanguage.INSTANCE : PythonRegexpLanguage.INSTANCE;
               registrar.startInjecting(language);
-              processStringLiteral(context, registrar);
+              PyInjectionUtil.registerStringLiteralInjection(context, registrar);
               registrar.doneInjecting();
             }
           }
-        }
-      }
-    }
-
-  }
-
-  private static boolean isStringLiteral(@NotNull PsiElement element) {
-    if (element instanceof PyStringLiteralExpression) {
-      return true;
-    }
-    else if (element instanceof PyParenthesizedExpression) {
-      final PyExpression contained = ((PyParenthesizedExpression)element).getContainedExpression();
-      return contained != null && isStringLiteral(contained);
-    }
-    else if (element instanceof PyBinaryExpression) {
-      final PyBinaryExpression expr = (PyBinaryExpression)element;
-      final PyExpression left = expr.getLeftExpression();
-      final PyExpression right = expr.getRightExpression();
-      return expr.isOperator("+") && (isStringLiteral(left) || right != null && isStringLiteral(right));
-    }
-    return false;
-  }
-
-  private static void processStringLiteral(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar) {
-    processStringLiteral(element, registrar, "", "");
-  }
-
-  private static void processStringLiteral(@NotNull PsiElement element, @NotNull MultiHostRegistrar registrar, @NotNull String prefix,
-                                           @NotNull String suffix) {
-    final String missingValue = "missing";
-    if (element instanceof PyStringLiteralExpression) {
-      final PyStringLiteralExpression expr = (PyStringLiteralExpression)element;
-      final List<TextRange> ranges = expr.getStringValueTextRanges();
-      for (TextRange range : ranges) {
-        registrar.addPlace(prefix, suffix, expr, range);
-      }
-    }
-    else if (element instanceof PyParenthesizedExpression) {
-      final PyExpression contained = ((PyParenthesizedExpression)element).getContainedExpression();
-      if (contained != null) {
-        processStringLiteral(contained, registrar, prefix, suffix);
-      }
-    }
-    else if (element instanceof PyBinaryExpression) {
-      final PyBinaryExpression expr = (PyBinaryExpression)element;
-      if (expr.isOperator("+")) {
-        final PyExpression left = expr.getLeftExpression();
-        final PyExpression right = expr.getRightExpression();
-        final boolean isLeftString = isStringLiteral(left);
-        final boolean isRightString = right != null && isStringLiteral(right);
-        if (isLeftString) {
-          processStringLiteral(left, registrar, prefix, isRightString ? "" : missingValue);
-        }
-        if (isRightString) {
-          processStringLiteral(right, registrar, isLeftString ? "" : missingValue, suffix);
         }
       }
     }
@@ -131,7 +76,8 @@ public class PythonRegexpInjector implements MultiHostInjector {
   @NotNull
   @Override
   public List<? extends Class<? extends PsiElement>> elementsToInjectIn() {
-    return Arrays.asList(PyStringLiteralExpression.class, PyParenthesizedExpression.class, PyBinaryExpression.class);
+    return Arrays.asList(PyStringLiteralExpression.class, PyParenthesizedExpression.class, PyBinaryExpression.class,
+                         PyCallExpression.class);
   }
 
   private static boolean isVerbose(@NotNull PyCallExpression call) {

@@ -24,6 +24,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 import static com.jetbrains.python.PyTokenTypes.*;
+import static com.jetbrains.python.inspections.PyStringFormatParser.filterSubstitutions;
+import static com.jetbrains.python.inspections.PyStringFormatParser.parseNewStyleFormat;
+import static com.jetbrains.python.inspections.PyStringFormatParser.parsePercentFormat;
 
 /**
  * @author Dennis.Ushakov
@@ -94,10 +97,10 @@ public class PyReplaceExpressionUtil implements PyElementTypes {
 
     final List<PyStringFormatParser.SubstitutionChunk> substitutions;
     if (newStyleFormatValue != null) {
-      substitutions = PyStringFormatParser.filterSubstitutions(PyStringFormatParser.parseNewStyleFormat(fullText));
+      substitutions = filterSubstitutions(parseNewStyleFormat(fullText));
     }
     else {
-      substitutions = new PyStringFormatParser(fullText).parseSubstitutions();
+      substitutions = filterSubstitutions(parsePercentFormat(fullText));
     }
     final boolean hasSubstitutions = substitutions.size() > 0;
 
