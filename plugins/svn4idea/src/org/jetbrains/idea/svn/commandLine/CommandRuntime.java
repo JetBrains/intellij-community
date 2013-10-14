@@ -63,7 +63,7 @@ public class CommandRuntime {
       String[] originalParameters = Arrays.copyOf(parameters, parameters.length);
 
       while (true) {
-        final SvnCommand command = runCommand(commandName, listener, workingDirectory, configDir, parameters, originalParameters);
+        final SvnCommand command = new Executor(commandName, listener, workingDirectory, configDir, parameters, originalParameters).run();
         final Integer exitCode = command.getExitCodeReference();
 
         // could be situations when exit code = 0, but there is info "warning" in error stream for instance, for "svn status"
@@ -163,69 +163,97 @@ public class CommandRuntime {
       // TODO: check if we could "configure" commands (or make command to explicitly ask) if cleanup is required - not to search
       // TODO: working copy root each time
       if (wcRoot != null) {
-        runCommand(SvnCommandName.cleanup, new SvnCommitRunner.CommandListener(null), wcRoot, null, null, null);
+        new Executor(SvnCommandName.cleanup, new SvnCommitRunner.CommandListener(null), wcRoot, null, null, null).run();
       } else {
         LOG.info("Could not execute cleanup for command " + command.getCommandText());
       }
     }
   }
 
-  private SvnCommand runCommand(SvnCommandName commandName,
-                                final LineCommandListener listener,
-                                File base,
-                                File configDir,
-                                String[] parameters,
-                                String[] originalParameters) throws SvnBindException {
-    final SvnCommand command = new SvnCommand(base, commandName, exePath, configDir);
+  private class Executor {
 
-    command.setOriginalParameters(originalParameters);
-    command.addParameters(parameters);
-    command.addParameters("--non-interactive");
-    final AtomicReference<Throwable> exceptionRef = new AtomicReference<Throwable>();
-    // several threads
-    command.addListener(new LineCommandAdapter() {
-      @Override
-      public void onLineAvailable(String line, Key outputType) {
-        if (LOG.isDebugEnabled()) {
-          LOG.debug("==> " + line);
-        }
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          System.out.println("==> " + line);
-        }
-        listener.onLineAvailable(line, outputType);
-        if (listener.isCanceled()) {
-          LOG.info("Cancelling command: " + command.getCommandText());
-          command.destroyProcess();
+    @NotNull private final SvnCommand myCommand;
+    @NotNull private final AtomicReference<Throwable> myExceptionRef;
+
+    private LineCommandListener myListener;
+    private String[] myParameters;
+    private String[] myOriginalParameters;
+
+    private Executor(SvnCommandName commandName,
+                     LineCommandListener listener,
+                     File base,
+                     File configDir,
+                     String[] parameters,
+                     String[] originalParameters) {
+
+      myListener = listener;
+      myParameters = parameters;
+      myOriginalParameters = originalParameters;
+      myCommand = new SvnCommand(base, commandName, exePath, configDir);
+      myExceptionRef = new AtomicReference<Throwable>();
+    }
+
+    public SvnCommand run() throws SvnBindException {
+      myCommand.setOriginalParameters(myOriginalParameters);
+      myCommand.addParameters(myParameters);
+      myCommand.addParameters("--non-interactive");
+      // several threads
+      myCommand.addListener(createListener());
+
+      myCommand.start();
+      boolean finished;
+      do {
+        finished = myCommand.waitFor(500);
+        if (!finished && (myCommand.wasError() || myCommand.needsDestroy())) {
+          myCommand.waitFor(1000);
+          myCommand.doDestroyProcess();
+          break;
         }
       }
+      while (!finished);
 
-      @Override
-      public void processTerminated(int exitCode) {
-        listener.processTerminated(exitCode);
-        command.setExitCodeReference(exitCode);
-      }
+      throwIfError();
 
-      @Override
-      public void startFailed(Throwable exception) {
-        listener.startFailed(exception);
-        exceptionRef.set(exception);
-      }
-    });
-    command.start();
-    boolean finished;
-    do {
-      finished = command.waitFor(500);
-      if (!finished && (command.wasError() || command.needsDestroy())) {
-        command.waitFor(1000);
-        command.doDestroyProcess();
-        break;
+      return myCommand;
+    }
+
+    private LineCommandAdapter createListener() {
+      return new LineCommandAdapter() {
+        @Override
+        public void onLineAvailable(String line, Key outputType) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("==> " + line);
+          }
+          if (ApplicationManager.getApplication().isUnitTestMode()) {
+            System.out.println("==> " + line);
+          }
+          myListener.onLineAvailable(line, outputType);
+          if (myListener.isCanceled()) {
+            LOG.info("Cancelling command: " + myCommand.getCommandText());
+            myCommand.destroyProcess();
+          }
+        }
+
+        @Override
+        public void processTerminated(int exitCode) {
+          myListener.processTerminated(exitCode);
+          myCommand.setExitCodeReference(exitCode);
+        }
+
+        @Override
+        public void startFailed(Throwable exception) {
+          myListener.startFailed(exception);
+          myExceptionRef.set(exception);
+        }
+      };
+    }
+
+    private void throwIfError() throws SvnBindException {
+      Throwable error = myExceptionRef.get();
+
+      if (error != null) {
+        throw new SvnBindException(error);
       }
     }
-    while (!finished);
-
-    if (exceptionRef.get() != null) {
-      throw new SvnBindException(exceptionRef.get());
-    }
-    return command;
   }
 }
