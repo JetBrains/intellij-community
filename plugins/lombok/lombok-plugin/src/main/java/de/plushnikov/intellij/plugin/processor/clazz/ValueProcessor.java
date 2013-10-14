@@ -20,6 +20,7 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.Value;
+import lombok.experimental.NonFinal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -67,7 +68,7 @@ public class ValueProcessor extends AbstractClassProcessor {
 
   protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     //@Value class are final
-    if(!PsiClassUtil.isFinalClass(psiClass)) {
+    if (!PsiClassUtil.isFinalClass(psiClass) && !PsiAnnotationUtil.isAnnotatedWith(psiClass, NonFinal.class)) {
 //      PsiUtil.setModifierProperty(psiClass, PsiModifier.FINAL, true);
     }
 
@@ -91,8 +92,7 @@ public class ValueProcessor extends AbstractClassProcessor {
         final Collection<PsiField> requiredFields = allArgsConstructorProcessor.getAllFields(psiClass);
 
         if (allArgsConstructorProcessor.validateIsConstructorDefined(psiClass, staticName, requiredFields, ProblemEmptyBuilder.getInstance())) {
-          target.addAll(allArgsConstructorProcessor.createAllArgsConstructor(
-              psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName));
+          target.addAll(allArgsConstructorProcessor.createAllArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName));
         }
       }
     }

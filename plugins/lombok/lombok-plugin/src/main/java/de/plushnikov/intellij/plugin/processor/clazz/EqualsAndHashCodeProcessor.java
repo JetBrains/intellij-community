@@ -101,7 +101,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   }
 
   protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    target.addAll(createEqualAndHashCode(psiClass, psiAnnotation));
+    target.addAll(createEqualAndHashCode(psiClass, psiAnnotation, true));
   }
 
   protected Collection<PsiMethod> createEqualAndHashCode(PsiClass psiClass, PsiElement psiNavTargetElement, boolean tryGenerateCanEqual) {

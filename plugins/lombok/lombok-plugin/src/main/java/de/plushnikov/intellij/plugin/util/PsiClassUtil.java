@@ -1,4 +1,3 @@
-<<<<<<< HEAD:lombok-plugin/src/main/java/de/plushnikov/intellij/plugin/util/PsiClassUtil.java
 package de.plushnikov.intellij.plugin.util;
 
 import com.google.common.base.Function;
@@ -14,6 +13,7 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
