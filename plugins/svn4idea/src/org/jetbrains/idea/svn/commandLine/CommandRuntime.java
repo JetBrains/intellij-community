@@ -15,11 +15,9 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Key;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +32,6 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -63,7 +60,8 @@ public class CommandRuntime {
       String[] originalParameters = Arrays.copyOf(parameters, parameters.length);
 
       while (true) {
-        final SvnCommand command = new Executor(commandName, listener, workingDirectory, configDir, parameters, originalParameters).run();
+        final SvnCommand command = newExecutor(commandName, listener, workingDirectory, configDir, parameters, originalParameters);
+        command.run();
         final Integer exitCode = command.getExitCodeReference();
 
         // could be situations when exit code = 0, but there is info "warning" in error stream for instance, for "svn status"
@@ -163,54 +161,25 @@ public class CommandRuntime {
       // TODO: check if we could "configure" commands (or make command to explicitly ask) if cleanup is required - not to search
       // TODO: working copy root each time
       if (wcRoot != null) {
-        new Executor(SvnCommandName.cleanup, new SvnCommitRunner.CommandListener(null), wcRoot, null, null, null).run();
+        newExecutor(SvnCommandName.cleanup, new SvnCommitRunner.CommandListener(null), wcRoot, null, null, null).run();
       } else {
         LOG.info("Could not execute cleanup for command " + command.getCommandText());
       }
     }
   }
 
-  private class Executor {
+  private SvnCommand newExecutor(SvnCommandName commandName,
+                                 LineCommandListener listener,
+                                 File base,
+                                 File configDir,
+                                 String[] parameters,
+                                 String[] originalParameters) {
+    SvnCommand command = new SvnCommand(base, commandName, exePath, configDir, listener);
 
-    @NotNull private final SvnCommand myCommand;
+    command.setOriginalParameters(originalParameters);
+    command.addParameters(parameters);
+    command.addParameters("--non-interactive");
 
-    private LineCommandListener myListener;
-    private String[] myParameters;
-    private String[] myOriginalParameters;
-
-    private Executor(SvnCommandName commandName,
-                     LineCommandListener listener,
-                     File base,
-                     File configDir,
-                     String[] parameters,
-                     String[] originalParameters) {
-
-      myListener = listener;
-      myParameters = parameters;
-      myOriginalParameters = originalParameters;
-      myCommand = new SvnCommand(base, commandName, exePath, configDir, myListener);
-    }
-
-    public SvnCommand run() throws SvnBindException {
-      myCommand.setOriginalParameters(myOriginalParameters);
-      myCommand.addParameters(myParameters);
-      myCommand.addParameters("--non-interactive");
-
-      myCommand.start();
-      boolean finished;
-      do {
-        finished = myCommand.waitFor(500);
-        if (!finished && (myCommand.wasError() || myCommand.needsDestroy())) {
-          myCommand.waitFor(1000);
-          myCommand.doDestroyProcess();
-          break;
-        }
-      }
-      while (!finished);
-
-      myCommand.throwIfError();
-
-      return myCommand;
-    }
+    return command;
   }
 }

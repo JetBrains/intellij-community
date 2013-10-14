@@ -162,6 +162,22 @@ public class SvnCommand {
     }
   }
 
+  public void run() throws SvnBindException {
+    start();
+    boolean finished;
+    do {
+      finished = waitFor(500);
+      if (!finished && (wasError() || needsDestroy())) {
+        waitFor(1000);
+        doDestroyProcess();
+        break;
+      }
+    }
+    while (!finished);
+
+    throwIfError();
+  }
+
   public void addListener(final LineCommandListener listener) {
     synchronized (myLock) {
       myListeners.addListener(listener);
