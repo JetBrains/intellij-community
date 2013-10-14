@@ -1147,6 +1147,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               Graphics2D g2d = myImage.createGraphics();
               final AffineTransform transform = g2d.getTransform();
               UISettings.setupAntialiasing(g2d);
+              GraphicsUtil.setupAAPainting(g2d);
               g2d.setColor(myEditor.getBackgroundColor());
               g2d.fillRect(0, 0, getWidth(), getHeight());
               AffineTransform translateInstance = AffineTransform.getTranslateInstance(-LEFT_INDENT + gutterWidth, myEditor.getLineHeight() * (myCacheStartLine - myStartLine));
@@ -1168,6 +1169,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 Point placeToShow = myEditor.logicalPositionToXY(logicalPosition);
                 logicalPosition = myEditor.xyToLogicalPosition(placeToShow);//wraps&foldings workaround
                 placeToShow.x += R * 3 / 2;
+                placeToShow.y -= myCacheStartLine * myEditor.getLineHeight();
 
                 int w = g2d.getFontMetrics().stringWidth(s);
                 int a = g2d.getFontMetrics().getAscent();
@@ -1177,7 +1179,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 rightEdge  = Math.max(rightEdge, placeToShow.x + w + 3 * R);
                 rightEdges.put(logicalPosition.line, rightEdge);
 
-                GraphicsUtil.setupAAPainting(g2d);
                 g2d.setColor(MessageType.WARNING.getPopupBackground());
                 g2d.fillRoundRect(placeToShow.x, placeToShow.y, w + 2 * R, h, R, R);
                 g2d.setColor(new JBColor(JBColor.GRAY, Gray._200));
