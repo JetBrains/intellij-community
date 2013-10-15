@@ -81,13 +81,15 @@ public class BuilderInnerClassProcessor extends AbstractLombokClassProcessor {
   }
 
   protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    final String innerClassName = psiClass.getName() + "Builder";
-    LombokLightClassBuilder innerClass = LombokPsiElementFactory.getInstance().createLightClass(psiClass.getManager(), innerClassName)
+    final String innerClassSimpleName = psiClass.getName() + "Builder";
+    final String innerClassCanonicalName = psiClass.getName() + "." + innerClassSimpleName;
+    LombokLightClassBuilder innerClass = LombokPsiElementFactory.getInstance().createLightClass(psiClass.getManager(), innerClassCanonicalName, innerClassSimpleName)
        .withContainingClass(psiClass)
        .withModifier(PsiModifier.PUBLIC)
        .withModifier(PsiModifier.STATIC);
     innerClass.withConstructors(createConstructors(innerClass, psiAnnotation))
-     .withFields(createFields(psiClass));
+     .withFields(createFields(psiClass))
+     .withMethods(createMethods(psiClass, innerClass));
 
     target.add(innerClass);
   }
@@ -114,5 +116,29 @@ public class BuilderInnerClassProcessor extends AbstractLombokClassProcessor {
       }
     }
     return fields;
+  }
+
+  private Collection<PsiMethod> createMethods(@NotNull PsiClass parentClass, @NotNull PsiClass innerClass) {
+    List<PsiMethod> methods = new ArrayList<PsiMethod>();
+    for (PsiField psiField : parentClass.getFields()) {
+      boolean createMethod = true;
+      PsiModifierList modifierList = psiField.getModifierList();
+      if (null != modifierList) {
+        //Skip static fields.
+        createMethod = !modifierList.hasModifierProperty(PsiModifier.STATIC);
+        //Skip fields that start with $
+        createMethod &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
+      }
+      if (createMethod) {
+        methods.add(LombokPsiElementFactory.getInstance().createLightMethod(psiField.getManager(), psiField.getName())
+          .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(innerClass))
+          .withContainingClass(parentClass)
+          .withParameter(psiField.getName(), psiField.getType())
+          .withNavigationElement(parentClass)
+          .withModifier(PsiModifier.PUBLIC));
+      }
+    }
+    return methods;
+
   }
 }

@@ -37,7 +37,7 @@ public class LombokPsiElementFactory {
     return new LombokLightMethodImpl(manager, valuesMethod, psiClass);
   }
 
-  public LombokLightClassBuilder createLightClass(@NotNull PsiManager manager, @NotNull String className) {
-      return new LombokLightClassBuilderImpl(manager,className);
+  public LombokLightClassBuilder createLightClass(@NotNull PsiManager manager, @NotNull String canonicalName, @NotNull String simpleName) {
+      return new LombokLightClassBuilderImpl(manager, canonicalName, simpleName);
   }
 }

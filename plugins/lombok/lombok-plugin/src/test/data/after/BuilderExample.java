@@ -17,16 +17,16 @@ public class BuilderExample {
 
     BuilderExampleBuilder() {
     }
-//
-//    public BuilderExampleBuilder name(String name) {
-//      this.name = name;
-//      return this;
-//    }
-//
-//    public BuilderExampleBuilder age(int age) {
-//      this.age = age;
-//      return this;
-//    }
+
+    public BuilderExampleBuilder name(String name) {
+      this.name = name;
+      return this;
+    }
+
+    public BuilderExampleBuilder age(int age) {
+      this.age = age;
+      return this;
+    }
 //
 //    public BuilderExample build() {
 //      return new BuilderExample(name, age);

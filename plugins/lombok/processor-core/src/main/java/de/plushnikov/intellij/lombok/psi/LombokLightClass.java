@@ -4,21 +4,26 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.source.PsiModifierListImpl;
 import com.intellij.psi.impl.source.tree.java.PsiCompositeModifierList;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
+import org.apache.commons.lang.ArrayUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
 public class LombokLightClass extends LightElement implements PsiClass {
   private String myQualifiedName;
+  private String myCanonicalName;
+  private String mySimpleName;
   private PsiReferenceList myExtendsList;
   private PsiReferenceList myImplementsList;
   private PsiClassType[] myExtendsListTypes = new PsiClassType[0];
@@ -54,6 +59,24 @@ public class LombokLightClass extends LightElement implements PsiClass {
   @Override
   public String getQualifiedName() {
     return myQualifiedName;
+  }
+
+  public void setCanonicalName(@NotNull String canonicalName) {
+    myCanonicalName = canonicalName;
+  }
+
+  @NotNull
+  public String getCanonicalName() {
+    return myCanonicalName;
+  }
+
+  public void setSimpleName(@NotNull String simpleName) {
+    mySimpleName = simpleName;
+  }
+
+  @NotNull
+  public String getSimpleName() {
+    return mySimpleName;
   }
 
   @Override
@@ -131,7 +154,10 @@ public class LombokLightClass extends LightElement implements PsiClass {
   @NotNull
   @Override
   public PsiMethod[] getMethods() {
-    return myMethods;
+    // http://stackoverflow.com/a/784842/411905
+    PsiMethod[] result = Arrays.copyOf(myMethods, myMethods.length + myConstructors.length);
+    System.arraycopy(myConstructors, 0, result, myMethods.length, myConstructors.length);
+    return result;
   }
 
   public void setMethods(@NotNull PsiMethod[] methods) {
@@ -169,7 +195,7 @@ public class LombokLightClass extends LightElement implements PsiClass {
   @NotNull
   @Override
   public PsiMethod[] getAllMethods() {
-    return myMethods;
+    return PsiClassImplUtil.getAllMethods(this);
   }
 
   @NotNull
@@ -298,7 +324,7 @@ public class LombokLightClass extends LightElement implements PsiClass {
 
   @Override
   public String getName() {
-    return myQualifiedName;
+    return mySimpleName;
   }
 
   @Nullable

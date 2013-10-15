@@ -15,9 +15,11 @@ import java.util.List;
 
 public class LombokLightClassBuilderImpl extends LombokLightClass implements LombokLightClassBuilder {
 
-  public LombokLightClassBuilderImpl(@NotNull PsiManager manager, @NotNull String name) {
+  public LombokLightClassBuilderImpl(@NotNull PsiManager manager, @NotNull String canonicalName, @NotNull String simpleName) {
     super(manager, JavaLanguage.INSTANCE);
-    setName(name);
+    setCanonicalName(canonicalName);
+    setName(canonicalName);
+    setSimpleName(simpleName);
   }
 
   @Override
@@ -46,7 +48,7 @@ public class LombokLightClassBuilderImpl extends LombokLightClass implements Lom
 
   @Override
   public LombokLightClassBuilder withConstructors(@NotNull Collection<PsiMethod> constructors) {
-    setMethods(constructors.toArray(new PsiMethod[constructors.size()]));
+    setConstructors(constructors.toArray(new PsiMethod[constructors.size()]));
     return this;
   }
 }
