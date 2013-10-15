@@ -61,6 +61,10 @@ public class ClsBuilderTest extends LightIdeaTestCase {
     doTestFromTestData();
   }
 
+  public void testSameBuckSuffixInInnerClasses() throws Exception {
+    doTestFromTestData();
+  }
+
   public void testModifiers() throws Exception {
     final String clsFilePath = JavaTestUtil.getJavaTestDataPath() + "/psi/repositoryUse/cls/pack/" + getTestName(false) + ".class";
     final VirtualFile clsFile = LocalFileSystem.getInstance().findFileByPath(clsFilePath);
