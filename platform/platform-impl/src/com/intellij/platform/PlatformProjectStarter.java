@@ -20,6 +20,7 @@
 package com.intellij.platform;
 
 import com.intellij.ide.AppLifecycleListener;
+import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.messages.MessageBus;
@@ -30,8 +31,11 @@ public class PlatformProjectStarter implements ApplicationComponent {
   public PlatformProjectStarter(MessageBus bus) {
     bus.connect().subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
       public void appFrameCreated(final String[] commandLineArgs, @NotNull final Ref<Boolean> willOpenProject) {
-        if (commandLineArgs.length > 0) {
-          willOpenProject.set(true);
+        for (String arg : commandLineArgs) {
+          if (!arg.equals(StartupUtil.NO_SPLASH)) {
+            willOpenProject.set(true);
+            break;
+          }
         }
       }
     });
