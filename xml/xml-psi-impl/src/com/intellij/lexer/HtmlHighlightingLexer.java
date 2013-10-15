@@ -84,6 +84,10 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
     }
   }
 
+  public HtmlHighlightingLexer() {
+    this(null);
+  }
+
   public HtmlHighlightingLexer(FileType styleFileType) {
     this(new MergingLexerAdapter(new FlexAdapter(new _HtmlLexer()), TOKENS_TO_MERGE), true, styleFileType);
   }
