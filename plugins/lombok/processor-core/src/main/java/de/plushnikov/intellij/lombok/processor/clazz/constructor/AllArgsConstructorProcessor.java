@@ -9,6 +9,7 @@ import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.util.LombokProcessorUtil;
 import lombok.AllArgsConstructor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -34,6 +35,12 @@ public class AllArgsConstructorProcessor extends AbstractConstructorClassProcess
       result = false;
     }
     return result;
+  }
+
+  @NotNull
+  public Collection<PsiMethod> createRequiredArgsConstructor(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation) {
+    final Collection<PsiField> allNotInitializedNotStaticFields = getAllNotInitializedAndNotStaticFields(psiClass);
+    return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, allNotInitializedNotStaticFields);
   }
 
   protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
