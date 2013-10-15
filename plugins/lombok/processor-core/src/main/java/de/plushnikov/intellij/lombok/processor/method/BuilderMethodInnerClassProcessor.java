@@ -8,6 +8,7 @@ import de.plushnikov.intellij.lombok.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.lombok.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.lombok.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.lombok.psi.LombokPsiElementFactory;
+import de.plushnikov.intellij.lombok.util.BuilderUtil;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import lombok.experimental.Builder;
@@ -43,8 +44,7 @@ public class BuilderMethodInnerClassProcessor extends AbstractLombokMethodProces
   protected void processIntern(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     PsiClass parentClass = psiMethod.getContainingClass();
     assert parentClass != null;
-    String returnTypeName = StringUtils.capitalize(psiMethod.getReturnType() != null ? psiMethod.getReturnType().getPresentableText() : "Void");
-    final String innerClassSimpleName = returnTypeName + "Builder";
+    final String innerClassSimpleName = BuilderUtil.createBuilderClassName(psiAnnotation, psiMethod.getReturnType());
     final String innerClassCanonicalName = parentClass.getName() + "." + innerClassSimpleName;
     LombokLightClassBuilder innerClass = LombokPsiElementFactory.getInstance().createLightClass(psiMethod.getManager(), innerClassCanonicalName, innerClassSimpleName)
        .withContainingClass(parentClass)
@@ -74,18 +74,18 @@ public class BuilderMethodInnerClassProcessor extends AbstractLombokMethodProces
 
   private Collection<PsiMethod> createMethods(@NotNull PsiClass parentClass, @NotNull PsiClass innerClass, @NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation) {
     List<PsiMethod> methods = new ArrayList<PsiMethod>();
-    methods.addAll(createSetterMethods(psiMethod, innerClass));
+    methods.addAll(createSetterMethods(innerClass, psiMethod, psiAnnotation));
     methods.add(createBuildMethod(parentClass, innerClass, psiMethod, psiAnnotation));
     methods.addAll(new ToStringProcessor().createToStringMethod(innerClass, parentClass));
     return methods;
   }
 
-  private Collection<PsiMethod> createSetterMethods(@NotNull PsiMethod psiMethod, @NotNull PsiClass innerClass) {
+  private Collection<PsiMethod> createSetterMethods(@NotNull PsiClass innerClass, @NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation) {
     List<PsiMethod> methods = new ArrayList<PsiMethod>();
     for (PsiParameter psiParameter : psiMethod.getParameterList().getParameters()) {
       assert psiParameter.getName() != null;
-      methods.add(LombokPsiElementFactory.getInstance().createLightMethod(psiMethod.getManager(), psiParameter.getName())
-        .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(innerClass))
+      methods.add(LombokPsiElementFactory.getInstance().createLightMethod(psiMethod.getManager(), BuilderUtil.createSetterName(psiAnnotation, psiParameter.getName()))
+        .withMethodReturnType(BuilderUtil.createSetterReturnType(psiAnnotation, PsiClassUtil.getTypeWithGenerics(innerClass)))
         .withContainingClass(innerClass)
         .withParameter(psiParameter.getName(), psiParameter.getType())
         .withNavigationElement(innerClass)
@@ -95,8 +95,7 @@ public class BuilderMethodInnerClassProcessor extends AbstractLombokMethodProces
   }
 
   private PsiMethod createBuildMethod(@NotNull PsiClass parentClass, @NotNull PsiClass innerClass, @NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation) {
-    final String builderName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "buildMethodName", String.class);
-    return LombokPsiElementFactory.getInstance().createLightMethod(parentClass.getManager(), builderName != null ? builderName : "build")
+    return LombokPsiElementFactory.getInstance().createLightMethod(parentClass.getManager(), BuilderUtil.createBuildMethodName(psiAnnotation))
        .withMethodReturnType(psiMethod.getReturnType())
        .withContainingClass(innerClass)
        .withNavigationElement(parentClass)

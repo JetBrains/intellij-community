@@ -7,6 +7,7 @@ import de.plushnikov.intellij.lombok.processor.clazz.AbstractLombokClassProcesso
 import de.plushnikov.intellij.lombok.processor.clazz.constructor.AllArgsConstructorProcessor;
 import de.plushnikov.intellij.lombok.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.lombok.psi.LombokPsiElementFactory;
+import de.plushnikov.intellij.lombok.util.BuilderUtil;
 import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
@@ -52,8 +53,7 @@ public class BuilderMethodProcessor extends AbstractLombokMethodProcessor {
   }
 
   protected void processIntern(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    final String builderName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, "builder", String.class);
-    LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().createLightMethod(psiMethod.getManager(), builderName != null ? builderName : "builder")
+    LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().createLightMethod(psiMethod.getManager(), BuilderUtil.createBuilderMethodName(psiAnnotation))
         .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(psiMethod.getContainingClass().getInnerClasses()[0])) // TODO: It's not good!!
         .withContainingClass(psiMethod.getContainingClass())
         .withNavigationElement(psiAnnotation);
