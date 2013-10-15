@@ -29,7 +29,6 @@ import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.history.LocalHistory;
 import com.intellij.ide.macro.Macro;
 import com.intellij.lang.ant.AntBundle;
-import com.intellij.lang.ant.config.AntBuildFile;
 import com.intellij.lang.ant.config.AntBuildFileBase;
 import com.intellij.lang.ant.config.AntBuildListener;
 import com.intellij.lang.ant.config.impl.BuildFileProperty;
@@ -129,7 +128,7 @@ public final class ExecutionHandler {
 
   private static void runBuild(final ProgressIndicator progress,
                                @NotNull final AntBuildMessageView errorView,
-                               @NotNull final AntBuildFile buildFile,
+                               @NotNull final AntBuildFileBase buildFile,
                                @NotNull final AntBuildListener antBuildListener,
                                @NotNull GeneralCommandLine commandLine) {
     final Project project = buildFile.getProject();
@@ -157,7 +156,7 @@ public final class ExecutionHandler {
   private static void processRunningAnt(final ProgressIndicator progress,
                                         final JUnitProcessHandler handler,
                                         final AntBuildMessageView errorView,
-                                        final AntBuildFile buildFile,
+                                        final AntBuildFileBase buildFile,
                                         final long startTime,
                                         final AntBuildListener antBuildListener) {
     final Project project = buildFile.getProject();
@@ -170,6 +169,8 @@ public final class ExecutionHandler {
     checkCancelTask.start(0);
 
     final OutputParser parser = OutputParser2.attachParser(project, handler, errorView, progress, buildFile);
+
+    final boolean isBackground = buildFile.isRunInBackground();
 
     handler.addProcessListener(new ProcessAdapter() {
       public void processTerminated(ProcessEvent event) {
@@ -184,9 +185,12 @@ public final class ExecutionHandler {
               return;
             }
             errorView.removeProgressPanel();
-            ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
-            if (toolWindow != null) { // can be null if project is closed
-              toolWindow.activate(null, false);
+            final boolean shouldActivate = !isBackground || errorView.hasMessagesOfType(AntBuildMessageView.MessageType.ERROR);
+            if (shouldActivate) {
+              ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.MESSAGES_WINDOW);
+              if (toolWindow != null) { // can be null if project is closed
+                toolWindow.activate(null, false);
+              }
             }
           }
         }, ModalityState.NON_MODAL);
