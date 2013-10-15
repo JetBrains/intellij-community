@@ -16,11 +16,13 @@ public class DeploymentConfigurationBase<Self extends DeploymentConfigurationBas
   @Nullable
   @Override
   public Self getState() {
-    return (Self)this;
+    //noinspection unchecked
+    return (Self) this;
   }
 
   @Override
   public void loadState(Self state) {
-    XmlSerializerUtil.copyBean(state, this);
+    //noinspection unchecked
+    XmlSerializerUtil.copyBean(state, (Self) this);
   }
 }

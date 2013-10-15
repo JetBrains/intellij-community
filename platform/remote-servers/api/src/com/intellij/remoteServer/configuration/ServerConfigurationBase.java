@@ -16,11 +16,13 @@ public abstract class ServerConfigurationBase<Self extends ServerConfigurationBa
   @Nullable
   @Override
   public Self getState() {
-    return (Self)this;
+    //noinspection unchecked
+    return (Self) this;
   }
 
   @Override
   public void loadState(Self state) {
-    XmlSerializerUtil.copyBean(state, this);
+    //noinspection unchecked
+    XmlSerializerUtil.copyBean(state, (Self) this);
   }
 }
