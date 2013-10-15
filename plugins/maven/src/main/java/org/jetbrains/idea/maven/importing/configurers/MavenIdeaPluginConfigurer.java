@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.importing.configurers;
 
+import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -53,6 +54,11 @@ public class MavenIdeaPluginConfigurer extends MavenModuleConfigurer {
     String downloadJavadocs = cfg.getChildTextTrim("downloadJavadocs");
     if (!StringUtil.isEmptyOrSpaces(downloadJavadocs)) {
       projectsManager.getImportingSettings().setDownloadDocsAutomatically(Boolean.parseBoolean(downloadJavadocs));
+    }
+
+    String assertNotNull = cfg.getChildTextTrim("assertNotNull");
+    if (!StringUtil.isEmptyOrSpaces(assertNotNull)) {
+      CompilerConfiguration.getInstance(project).setAddNotNullAssertions(Boolean.parseBoolean(assertNotNull));
     }
   }
 
