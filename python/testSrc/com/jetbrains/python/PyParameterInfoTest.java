@@ -432,16 +432,18 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     }
 
     @Override
-    public void setupUIComponentPresentation(String[] texts, EnumSet<Flag>[] flags, Color background) {
+    public String setupUIComponentPresentation(String[] texts, EnumSet<Flag>[] flags, Color background) {
       assert texts.length == flags.length;
       myTexts = texts;
       myFlags = flags;
+      return null; // nothing, we don't use it in 131 branch but added for trunk compatibility
     }
 
     @Override
-    public void setupUIComponentPresentation(String text, int highlightStartOffset, int highlightEndOffset, boolean isDisabled,
-                                             boolean strikeout, boolean isDisabledBeforeHighlight, Color background) {
-      // nothing, we don't use it
+    public String setupUIComponentPresentation(String text, int highlightStartOffset, int highlightEndOffset, boolean isDisabled,
+                                               boolean strikeout, boolean isDisabledBeforeHighlight, Color background) {
+      // nothing, we don't use it in 131 branch but added for trunk compatibility
+      return null;
     }
 
     @Override
