@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,8 +28,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -48,25 +45,16 @@ public class CommandRuntime {
     exePath = SvnApplicationSettings.getInstance().getCommandLinePath();
   }
 
-  public CommandExecutor runWithAuthenticationAttempt(@NotNull final File workingDirectory,
-                                                     @Nullable final SVNURL repositoryUrl,
-                                                     SvnCommandName commandName,
-                                                     final LineCommandListener listener,
-                                                     String... parameters) throws SvnBindException {
+  public CommandExecutor runWithAuthenticationAttempt(@NotNull Command command) throws SvnBindException {
     try {
       // for IDEA proxy case
-      writeIdeaConfig2SubversionConfig(repositoryUrl);
-
-      Command command = new Command(commandName);
+      writeIdeaConfig2SubversionConfig(command.getRepositoryUrl());
 
       command.setConfigDir(myAuthCallback.getSpecialConfigDir());
-      command.setWorkingDirectory(workingDirectory);
-      command.setResultBuilder(listener);
-      command.addParameters(parameters);
+      command.addParameters("--non-interactive");
       command.saveOriginalParameters();
 
       while (true) {
-        command.addParameters("--non-interactive");
         final CommandExecutor executor = newExecutor(command);
         executor.run();
         final Integer exitCode = executor.getExitCodeReference();
@@ -81,14 +69,16 @@ public class CommandRuntime {
           if (executor.getErrorOutput().length() > 0) {
             // handle authentication
             final String errText = executor.getErrorOutput().trim();
-            final AuthCallbackCase callback = createCallback(errText, repositoryUrl);
+            final AuthCallbackCase callback = createCallback(errText, command.getRepositoryUrl());
             if (callback != null) {
-              cleanup(executor, workingDirectory);
+              cleanup(executor, command.getWorkingDirectory());
               if (callback.getCredentials(errText)) {
                 if (myAuthCallback.getSpecialConfigDir() != null) {
                   command.setConfigDir(myAuthCallback.getSpecialConfigDir());
                 }
-                command.setParameters(updateParameters(callback, parameters));
+                List<String> newParameters = command.getParameters();
+                callback.updateParameters(newParameters);
+                command.setParameters(newParameters);
                 continue;
               }
             }
@@ -115,13 +105,6 @@ public class CommandRuntime {
     if (exitCode == null) {
       LOG.info("Null exit code returned, but not errors detected " + command.getCommandText());
     }
-  }
-
-  private String[] updateParameters(AuthCallbackCase callback, String[] parameters) {
-    List<String> p = new ArrayList<String>(Arrays.asList(parameters));
-
-    callback.updateParameters(p);
-    return ArrayUtil.toStringArray(p);
   }
 
   private void writeIdeaConfig2SubversionConfig(@Nullable SVNURL repositoryUrl) throws SvnBindException {

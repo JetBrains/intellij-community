@@ -5,6 +5,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.tmatesoft.svn.core.SVNURL;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -24,16 +25,21 @@ public class Command {
   private File workingDirectory;
   @Nullable private File myConfigDir;
   @Nullable private LineCommandListener myResultBuilder;
+  @Nullable private SVNURL myRepositoryUrl;
 
   public Command(@NotNull SvnCommandName name) {
     myName = name;
   }
 
   public void addParameters(@NonNls @NotNull String... parameters) {
-    myParameters.addAll(Arrays.asList(parameters));
+    addParameters(Arrays.asList(parameters));
   }
 
-  public void setParameters(@NotNull String... parameters) {
+  public void addParameters(@NotNull List<String> parameters) {
+    myParameters.addAll(parameters);
+  }
+
+  public void setParameters(@NotNull List<String> parameters) {
     myParameters.clear();
     addParameters(parameters);
   }
@@ -50,6 +56,11 @@ public class Command {
   @Nullable
   public LineCommandListener getResultBuilder() {
     return myResultBuilder;
+  }
+
+  @Nullable
+  public SVNURL getRepositoryUrl() {
+    return myRepositoryUrl;
   }
 
   @NotNull
@@ -69,6 +80,10 @@ public class Command {
     myResultBuilder = resultBuilder;
   }
 
+  public void setRepositoryUrl(@Nullable SVNURL repositoryUrl) {
+    myRepositoryUrl = repositoryUrl;
+  }
+
   // TODO: used only to ensure authentication info is not logged to file. Remove when command execution model is refactored
   // TODO: - so we could determine if parameter should be logged by the parameter itself.
   public void saveOriginalParameters() {
@@ -76,6 +91,7 @@ public class Command {
     myOriginalParameters.addAll(myParameters);
   }
 
+  @NotNull
   public List<String> getParameters() {
     return ContainerUtil.newArrayList(myParameters);
   }

@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.RootUrlInfo;
@@ -196,12 +195,15 @@ public class CommandUtil {
                                    @NotNull SvnCommandName name,
                                    @NotNull List<String> parameters,
                                    @Nullable LineCommandListener listener) throws VcsException {
-    SVNURL repositoryUrl = resolveRepositoryUrl(vcs, name, target);
-    CommandRuntime runtime = new CommandRuntime(new IdeaSvnkitBasedAuthenticationCallback(vcs));
+    Command command = new Command(name);
 
-    return runtime.runWithAuthenticationAttempt(workingDirectory, repositoryUrl, name,
-                                                listener != null ? listener : new SvnCommitRunner.CommandListener(null),
-                                                ArrayUtil.toStringArray(parameters));
+    command.setRepositoryUrl(resolveRepositoryUrl(vcs, name, target));
+    command.setWorkingDirectory(workingDirectory);
+    command.setResultBuilder(listener);
+    command.addParameters(parameters);
+
+    CommandRuntime runtime = new CommandRuntime(new IdeaSvnkitBasedAuthenticationCallback(vcs));
+    return runtime.runWithAuthenticationAttempt(command);
   }
 
   @NotNull
