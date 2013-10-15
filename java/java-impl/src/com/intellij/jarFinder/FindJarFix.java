@@ -242,6 +242,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
 
   private static void runUncanceledRunnableWithProgress(Runnable run, ProgressIndicator indicator) {
     Thread t = new Thread(run, "FindJar download thread");
+    t.setDaemon(true);
     t.start();
 
     try {
