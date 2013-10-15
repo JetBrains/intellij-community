@@ -561,6 +561,7 @@ public class JBTabsImpl extends JComponent
     for (final TabInfo each : myVisibleInfos) {
       if (!mySingleRowLayout.isTabHidden(each)) continue;
       final JBMenuItem item = new JBMenuItem(each.getText(), each.getIcon());
+      item.setForeground(each.getDefaultForeground());
       mySingleRowLayout.myMorePopup.add(item);
       item.addActionListener(new ActionListener() {
         @Override
