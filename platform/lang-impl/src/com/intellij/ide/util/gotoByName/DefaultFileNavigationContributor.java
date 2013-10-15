@@ -16,10 +16,11 @@
 package com.intellij.ide.util.gotoByName;
 
 import com.intellij.navigation.ChooseByNameContributorEx;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.search.FilenameIndex;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -44,7 +45,7 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
           names.add(s);
           return true;
         }
-      }, getScope(project, includeNonProjectItems), filter);
+      }, FindSymbolParameters.searchScopeFor(project, includeNonProjectItems), filter);
       if (IdFilter.LOG.isDebugEnabled()) {
         IdFilter.LOG.debug("All names retrieved2:" + names.size());
       }
@@ -54,28 +55,17 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
     }
   }
 
-  public static GlobalSearchScope getScope(Project project, boolean includeNonProjectItems) {
-    return includeNonProjectItems ? GlobalSearchScope.projectScope(project) : GlobalSearchScope.allScope(project);
-  }
-
   @Override
   @NotNull
   public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
-    final boolean includeDirs = pattern.endsWith("/") || pattern.endsWith("\\");
-    GlobalSearchScope scope = includeNonProjectItems
-                              ? ProjectScope.getAllScope(project)
-                              : ProjectScope.getProjectScope(project);
-    PsiFileSystemItem[] items = FilenameIndex.getFilesByName(project, name,
-                                                             scope,
-                                                             includeDirs);
-    if(items.length == 0 && includeNonProjectItems && !includeDirs) {
-      items = FilenameIndex.getFilesByName(project, name, scope, true);
-    }
-    return items;
+    CommonProcessors.CollectProcessor<NavigationItem> processor = new CommonProcessors.CollectProcessor<NavigationItem>();
+    processElementsWithName(name, processor, FindSymbolParameters.wrap(pattern, project, includeNonProjectItems));
+
+    return processor.toArray(new NavigationItem[processor.getResults().size()]);
   }
 
   @Override
-  public void processNames(final Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+  public void processNames(@NotNull final Processor<String> processor, @NotNull GlobalSearchScope scope, IdFilter filter) {
     long started = System.currentTimeMillis();
     FileBasedIndex.getInstance().processAllKeys(FilenameIndex.NAME, new Processor<String>() {
       @Override
@@ -85,6 +75,19 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
     }, scope, filter);
     if (IdFilter.LOG.isDebugEnabled()) {
       IdFilter.LOG.debug("All names retrieved:" + (System.currentTimeMillis() - started));
+    }
+  }
+
+  @Override
+  public void processElementsWithName(@NotNull String name,
+                                      @NotNull Processor<NavigationItem> processor,
+                                      @NotNull FindSymbolParameters parameters) {
+    String completePattern = parameters.getCompletePattern();
+    final boolean includeDirs = completePattern.endsWith("/") || completePattern.endsWith("\\") ||
+                                completePattern.startsWith("/") || completePattern.startsWith("\\");
+    boolean result = FilenameIndex.processFilesByName(name, includeDirs, processor, parameters.getSearchScope(), parameters.getIdFilter());
+    if (!result && includeDirs) {
+      FilenameIndex.processFilesByName(name, false, processor, parameters.getSearchScope(), parameters.getIdFilter());
     }
   }
 }

@@ -27,6 +27,7 @@ import com.intellij.util.containers.HashSet;
 import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Allows to retrieve files and Java classes, methods and fields in a project by
@@ -120,6 +121,9 @@ public abstract class PsiShortNamesCache {
 
   public abstract boolean processMethodsWithName(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiMethod> processor);
 
+  public abstract boolean processMethodsWithName(@NonNls @NotNull String name, @NotNull Processor<? super PsiMethod> processor,
+                                                 @NotNull GlobalSearchScope scope, @Nullable IdFilter filter);
+
   public boolean processAllMethodNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
     return ContainerUtil.process(getAllFieldNames(), processor);
   }
@@ -171,4 +175,10 @@ public abstract class PsiShortNamesCache {
    * @param set the set to add the names to.
    */
   public abstract void getAllFieldNames(@NotNull HashSet<String> set);
+
+  public abstract boolean processFieldsWithName(@NotNull String name, @NotNull Processor<? super PsiField> processor,
+                                                @NotNull GlobalSearchScope scope, @Nullable IdFilter filter);
+
+  public abstract boolean processClassesWithName(@NotNull String name, @NotNull Processor<? super PsiClass> processor,
+                                                 @NotNull GlobalSearchScope scope, @Nullable IdFilter filter);
 }

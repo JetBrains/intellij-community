@@ -27,8 +27,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -87,7 +89,14 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
   }
 
   @Override
-  public void processNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+  public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     PsiShortNamesCache.getInstance(scope.getProject()).processAllClassNames(processor, scope, filter);
+  }
+
+  @Override
+  public void processElementsWithName(@NotNull String name,
+                                      @NotNull Processor<NavigationItem> processor,
+                                      @NotNull FindSymbolParameters parameters) {
+    PsiShortNamesCache.getInstance(parameters.getProject()).processClassesWithName(name, processor, parameters.getSearchScope(), parameters.getIdFilter());
   }
 }

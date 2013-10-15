@@ -89,6 +89,18 @@ public abstract class FileBasedIndex implements BaseComponent {
                                                @NotNull FileBasedIndex.ValueProcessor<V> processor,
                                                @NotNull GlobalSearchScope filter);
 
+  /**
+   * @return false if ValueProcessor.process() returned false; true otherwise or if ValueProcessor was not called at all
+   */
+  public <K, V> boolean processValues(@NotNull ID<K, V> indexId,
+                                               @NotNull K dataKey,
+                                               @Nullable VirtualFile inFile,
+                                               @NotNull FileBasedIndex.ValueProcessor<V> processor,
+                                               @NotNull GlobalSearchScope filter,
+                                               @Nullable IdFilter idFilter) {
+    return processValues(indexId, dataKey, inFile, processor, filter);
+  }
+
   public abstract <K, V> boolean processFilesContainingAllKeys(@NotNull ID<K, V> indexId,
                                                                @NotNull Collection<K> dataKeys,
                                                                @NotNull GlobalSearchScope filter,

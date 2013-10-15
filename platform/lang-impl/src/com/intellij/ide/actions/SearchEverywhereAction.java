@@ -78,6 +78,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
+import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -899,11 +900,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       int filesCounter = 0;
       List<MatchResult> matches = collectResults(pattern, myFiles, myFileModel);
       final List<VirtualFile> files = new ArrayList<VirtualFile>();
-
+      FindSymbolParameters parameters = FindSymbolParameters.wrap(pattern, project, false);
       final int maxFiles = 8;
       for (MatchResult o : matches) {
         if (filesCounter > maxFiles) break;
-        Object[] objects = myFileModel.getElementsByName(o.elementName, false, pattern, myProgressIndicator);
+
+        Object[] objects = myFileModel.getElementsByName(o.elementName, parameters, myProgressIndicator);
         for (Object object : objects) {
           if (!myListModel.contains(object)) {
             if (object instanceof PsiFile) {
@@ -943,11 +945,13 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       int clsCounter = 0;
       final int maxCount = includeLibraries ? 5 : 8;
       List<MatchResult> matches = collectResults(pattern, includeLibraries ? myClassModel.getNames(true) : myClasses, myClassModel);
+      FindSymbolParameters parameters = FindSymbolParameters.wrap(pattern, project, includeLibraries);
       final List<Object> classes = new ArrayList<Object>();
+
       for (MatchResult matchResult : matches) {
         if (clsCounter > maxCount) break;
 
-        Object[] objects = myClassModel.getElementsByName(matchResult.elementName, includeLibraries, pattern, myProgressIndicator);
+        Object[] objects = myClassModel.getElementsByName(matchResult.elementName, parameters, myProgressIndicator);
         for (Object object : objects) {
           if (!myListModel.contains(object)) {
             if (object instanceof PsiElement) {

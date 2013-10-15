@@ -50,11 +50,28 @@ public abstract class StubIndex {
                                                                     @NotNull Project project,
                                                                     final GlobalSearchScope scope);
 
+  public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                                    @NotNull Key key,
+                                                                    @NotNull Project project,
+                                                                    final GlobalSearchScope scope,
+                                                                    IdFilter filter) {
+    return get(indexKey, key, project, scope);
+  }
+
   public abstract <Key, Psi extends PsiElement> boolean process(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                                 @NotNull Key key,
                                                                 @NotNull Project project,
                                                                 GlobalSearchScope scope,
                                                                 @NotNull Processor<? super Psi> processor);
+
+  public <Key, Psi extends PsiElement> boolean process(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                                @NotNull Key key,
+                                                                @NotNull Project project,
+                                                                GlobalSearchScope scope,
+                                                                IdFilter idFilter,
+                                                                @NotNull Processor<? super Psi> processor) {
+    return process(indexKey, key, project, scope, processor);
+  }
 
   @NotNull
   public abstract <Key> Collection<Key> getAllKeys(@NotNull StubIndexKey<Key, ?> indexKey, @NotNull Project project);

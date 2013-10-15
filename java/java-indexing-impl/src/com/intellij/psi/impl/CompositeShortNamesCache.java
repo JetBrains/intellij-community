@@ -31,6 +31,7 @@ import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -194,8 +195,16 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
   public boolean processMethodsWithName(@NonNls @NotNull String name,
                                         @NotNull GlobalSearchScope scope,
                                         @NotNull Processor<PsiMethod> processor) {
+    return processMethodsWithName(name, processor, scope, null);
+  }
+
+  @Override
+  public boolean processMethodsWithName(@NonNls @NotNull String name,
+                                        @NotNull Processor<? super PsiMethod> processor,
+                                        @NotNull GlobalSearchScope scope,
+                                        @Nullable IdFilter idFilter) {
     for (PsiShortNamesCache cache : myCaches) {
-      if (!cache.processMethodsWithName(name, scope, processor)) return false;
+      if (!cache.processMethodsWithName(name, processor, scope, idFilter)) return false;
     }
     return true;
   }
@@ -253,6 +262,28 @@ public class CompositeShortNamesCache extends PsiShortNamesCache {
     for (PsiShortNamesCache cache : myCaches) {
       cache.getAllFieldNames(set);
     }
+  }
+
+  @Override
+  public boolean processFieldsWithName(@NotNull String key,
+                                       @NotNull Processor<? super PsiField> processor,
+                                       @NotNull GlobalSearchScope scope,
+                                       @Nullable IdFilter filter) {
+    for (PsiShortNamesCache cache : myCaches) {
+      if (!cache.processFieldsWithName(key, processor, scope, filter)) return false;
+    }
+    return true;
+  }
+
+  @Override
+  public boolean processClassesWithName(@NotNull String key,
+                                        @NotNull Processor<? super PsiClass> processor,
+                                        @NotNull GlobalSearchScope scope,
+                                        @Nullable IdFilter filter) {
+    for (PsiShortNamesCache cache : myCaches) {
+      if (!cache.processClassesWithName(key, processor, scope, filter)) return false;
+    }
+    return true;
   }
 
   private static class Merger<T> {
