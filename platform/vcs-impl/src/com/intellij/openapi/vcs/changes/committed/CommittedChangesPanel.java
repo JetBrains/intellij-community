@@ -56,6 +56,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.CommittedChangesPanel");
@@ -67,6 +69,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   private final RepositoryLocation myLocation;
   private int myMaxCount = 0;
   private final MyFilterComponent myFilterComponent = new MyFilterComponent();
+  private final JCheckBox myRegexCheckbox;
   private final List<Runnable> myShouldBeCalledOnDispose;
   private volatile boolean myDisposed;
   private volatile boolean myInLoad;
@@ -95,7 +98,16 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
                                                                auxiliary != null ? auxiliary.getToolbarActions() : Collections.<AnAction>emptyList());
     toolbarPanel.add(toolBar.getComponent());
     toolbarPanel.add(Box.createHorizontalGlue());
+    myRegexCheckbox = new JCheckBox(VcsBundle.message("committed.changes.regex.title"));
+    myRegexCheckbox.setSelected(false);
+    myRegexCheckbox.getModel().addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        myFilterComponent.filter();
+      }
+    });
     toolbarPanel.add(myFilterComponent);
+    toolbarPanel.add(myRegexCheckbox);
     myFilterComponent.setMinimumSize(myFilterComponent.getPreferredSize());
     myFilterComponent.setMaximumSize(myFilterComponent.getPreferredSize());
     myBrowser.setToolBar(toolbarPanel);
@@ -234,10 +246,41 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     });
   }
 
-  private static class FilterHelper {
+  private interface FilterHelper {
+    boolean filter(@NotNull final CommittedChangeList cl);
+  }
+
+  private static class RegexFilterHelper implements FilterHelper {
+    private final Pattern pattern;
+
+    RegexFilterHelper(@NotNull final String regex) {
+      Pattern pattern;
+      try {
+        pattern = Pattern.compile(regex);
+      } catch (PatternSyntaxException e) {
+        // if there is a syntax error, show everything
+        pattern = Pattern.compile("");
+      }
+      this.pattern = pattern;
+    }
+
+    @Override
+    public boolean filter(@NotNull CommittedChangeList cl) {
+      return changeListMatches(cl);
+    }
+
+    private boolean changeListMatches(@NotNull CommittedChangeList cl) {
+      boolean commentMatches = pattern.matcher(cl.getComment()).find();
+      boolean committerMatches = pattern.matcher(cl.getCommitterName()).find();
+      boolean revisionMatches = pattern.matcher(Long.toString(cl.getNumber())).find();
+      return commentMatches || committerMatches || revisionMatches;
+    }
+  }
+
+  private static class WordMatchFilterHelper implements FilterHelper {
     private final String[] myParts;
 
-    FilterHelper(final String filterString) {
+    WordMatchFilterHelper(final String filterString) {
       myParts = filterString.split(" ");
       for(int i = 0; i < myParts.length; ++ i) {
         myParts [i] = myParts [i].toLowerCase();
@@ -337,7 +380,11 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     }
     @NotNull
     public List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists) {
-      final FilterHelper filterHelper = new FilterHelper(myFilterComponent.getFilter());
+      final FilterHelper filterHelper;
+      if (myRegexCheckbox.isSelected())
+        filterHelper = new RegexFilterHelper(myFilterComponent.getFilter());
+      else
+        filterHelper = new WordMatchFilterHelper(myFilterComponent.getFilter());
       final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
       for (CommittedChangeList list : changeLists) {
         if (filterHelper.filter(list)) {
