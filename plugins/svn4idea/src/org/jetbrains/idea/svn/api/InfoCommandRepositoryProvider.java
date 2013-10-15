@@ -45,7 +45,7 @@ public class InfoCommandRepositoryProvider extends BaseRepositoryProvider {
       result = new Repository(myTarget.getURL());
     }
     else {
-      SVNInfo info = getInfo(myVcs, myTarget);
+      SVNInfo info = getInfo();
       result = info != null ? new Repository(info.getRepositoryRootURL()) : null;
     }
 
@@ -53,11 +53,11 @@ public class InfoCommandRepositoryProvider extends BaseRepositoryProvider {
   }
 
   @Nullable
-  private static SVNInfo getInfo(@NotNull SvnVcs vcs, @NotNull SvnTarget target) {
+  private SVNInfo getInfo() {
     SVNInfo result = null;
 
     try {
-      result = target.isFile() ? vcs.getInfo(target.getFile()) : vcs.getInfo(target.getURL(), null);
+      result = myTarget.isFile() ? myVcs.getInfo(myTarget.getFile()) : myVcs.getInfo(myTarget.getURL(), null);
     }
     catch (SVNException e) {
       // TODO: Update this to more precise handling of exception codes
