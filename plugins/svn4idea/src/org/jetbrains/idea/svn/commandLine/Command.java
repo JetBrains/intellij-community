@@ -14,6 +14,7 @@ import java.util.List;
 /**
  * @author Konstantin Kolosovsky.
  */
+// TODO: Probably make command immutable and use CommandBuilder for updates.
 public class Command {
 
   @NotNull private final List<String> myParameters = ContainerUtil.newArrayList();
@@ -29,6 +30,11 @@ public class Command {
 
   public void addParameters(@NonNls @NotNull String... parameters) {
     myParameters.addAll(Arrays.asList(parameters));
+  }
+
+  public void setParameters(@NotNull String... parameters) {
+    myParameters.clear();
+    addParameters(parameters);
   }
 
   @Nullable
@@ -55,9 +61,9 @@ public class Command {
 
   // TODO: used only to ensure authentication info is not logged to file. Remove when command execution model is refactored
   // TODO: - so we could determine if parameter should be logged by the parameter itself.
-  public void saveOriginalParameters(String[] originalParameters) {
+  public void saveOriginalParameters() {
     myOriginalParameters.clear();
-    myOriginalParameters.addAll(Arrays.asList(originalParameters));
+    myOriginalParameters.addAll(myParameters);
   }
 
   public List<String> getParameters() {

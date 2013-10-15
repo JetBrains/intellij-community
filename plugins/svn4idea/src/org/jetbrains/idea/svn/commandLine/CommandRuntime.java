@@ -56,11 +56,17 @@ public class CommandRuntime {
     try {
       // for IDEA proxy case
       writeIdeaConfig2SubversionConfig(repositoryUrl);
-      File configDir = myAuthCallback.getSpecialConfigDir();
-      String[] originalParameters = Arrays.copyOf(parameters, parameters.length);
+
+      Command command = new Command(commandName);
+
+      command.setConfigDir(myAuthCallback.getSpecialConfigDir());
+      command.setWorkingDirectory(workingDirectory);
+      command.addParameters(parameters);
+      command.saveOriginalParameters();
 
       while (true) {
-        final CommandExecutor executor = newExecutor(commandName, listener, workingDirectory, configDir, parameters, originalParameters);
+        command.addParameters("--non-interactive");
+        final CommandExecutor executor = newExecutor(command, listener);
         executor.run();
         final Integer exitCode = executor.getExitCodeReference();
 
@@ -79,9 +85,9 @@ public class CommandRuntime {
               cleanup(executor, workingDirectory);
               if (callback.getCredentials(errText)) {
                 if (myAuthCallback.getSpecialConfigDir() != null) {
-                  configDir = myAuthCallback.getSpecialConfigDir();
+                  command.setConfigDir(myAuthCallback.getSpecialConfigDir());
                 }
-                parameters = updateParameters(callback, parameters);
+                command.setParameters(updateParameters(callback, parameters));
                 continue;
               }
             }
@@ -161,27 +167,18 @@ public class CommandRuntime {
       // TODO: check if we could "configure" commands (or make command to explicitly ask) if cleanup is required - not to search
       // TODO: working copy root each time
       if (wcRoot != null) {
-        newExecutor(SvnCommandName.cleanup, new SvnCommitRunner.CommandListener(null), wcRoot, null, null, null).run();
+        Command cleanupCommand = new Command(SvnCommandName.cleanup);
+        cleanupCommand.setWorkingDirectory(wcRoot);
+
+        newExecutor(cleanupCommand, null).run();
       } else {
         LOG.info("Could not execute cleanup for command " + command.getCommandText());
       }
     }
   }
 
-  private CommandExecutor newExecutor(SvnCommandName commandName,
-                                 LineCommandListener listener,
-                                 File base,
-                                 File configDir,
-                                 String[] parameters,
-                                 String[] originalParameters) {
-    Command command = new Command(commandName);
-
-    command.setConfigDir(configDir);
-    command.setWorkingDirectory(base);
-    command.addParameters(parameters);
-    command.addParameters("--non-interactive");
-    command.saveOriginalParameters(originalParameters);
-
+  // TODO: Probably specify listener/result builder as command parameter
+  private CommandExecutor newExecutor(@NotNull Command command, @Nullable LineCommandListener listener) {
     return new CommandExecutor(exePath, command, listener);
   }
 }
