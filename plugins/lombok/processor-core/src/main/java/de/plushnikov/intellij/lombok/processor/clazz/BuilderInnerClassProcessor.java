@@ -120,6 +120,14 @@ public class BuilderInnerClassProcessor extends AbstractLombokClassProcessor {
 
   private Collection<PsiMethod> createMethods(@NotNull PsiClass parentClass, @NotNull PsiClass innerClass) {
     List<PsiMethod> methods = new ArrayList<PsiMethod>();
+    methods.addAll(createFieldMethods(parentClass, innerClass));
+    methods.add(createBuildMethod(parentClass, innerClass));
+    methods.addAll(new ToStringProcessor().createToStringMethod(innerClass, parentClass));
+    return methods;
+  }
+
+  private Collection<PsiMethod> createFieldMethods(@NotNull PsiClass parentClass, @NotNull PsiClass innerClass) {
+    List<PsiMethod> methods = new ArrayList<PsiMethod>();
     for (PsiField psiField : parentClass.getFields()) {
       boolean createMethod = true;
       PsiModifierList modifierList = psiField.getModifierList();
@@ -139,6 +147,14 @@ public class BuilderInnerClassProcessor extends AbstractLombokClassProcessor {
       }
     }
     return methods;
-
   }
+
+  private PsiMethod createBuildMethod(@NotNull PsiClass parentClass, @NotNull PsiClass innerClass) {
+    return LombokPsiElementFactory.getInstance().createLightMethod(parentClass.getManager(), "build")
+       .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(parentClass))
+       .withContainingClass(innerClass)
+       .withNavigationElement(parentClass)
+       .withModifier(PsiModifier.PUBLIC);
+  }
+
 }

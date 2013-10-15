@@ -10,7 +10,7 @@ public class BuilderExample {
 //  public static BuilderExampleBuilder builder() {
 //    return new BuilderExampleBuilder();
 //  }
-//
+
   public static class BuilderExampleBuilder {
     private String name;
     private int age;
@@ -27,14 +27,14 @@ public class BuilderExample {
       this.age = age;
       return this;
     }
-//
-//    public BuilderExample build() {
-//      return new BuilderExample(name, age);
-//    }
-//
-//    @java.lang.Override
-//    public String toString() {
-//      return "BuilderExample.BuilderExampleBuilder(name = " + this.name + ", age = " + this.age + ")";
-//    }
+
+    public BuilderExample build() {
+      return new BuilderExample(name, age);
+    }
+
+    @java.lang.Override
+    public String toString() {
+      return "BuilderExample.BuilderExampleBuilder(name = " + this.name + ", age = " + this.age + ")";
+    }
   }
 }

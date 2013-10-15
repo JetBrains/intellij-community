@@ -88,16 +88,12 @@ public class BuilderProcessor extends AbstractLombokClassProcessor {
       target.addAll(allArgsConstructorProcessor.createRequiredArgsConstructor(psiClass, PsiModifier.PACKAGE_LOCAL, psiAnnotation));
     }
 
-//    LombokLightClassBuilder innerClass = LombokPsiElementFactory.getInstance().createLightClass(psiClass.getManager(), "de.plushnikov.Something");
-//    target.add(innerClass);
-
-//    LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().createLightMethod(psiClass.getManager(), METHOD_NAME)
+//    LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().createLightMethod(psiClass.getManager(), "builder")
 //        .withMethodReturnType(PsiTypesUtil.getClassType(psiClass))
 //        .withContainingClass(psiClass)
 //        .withNavigationElement(psiAnnotation);
 //    method.withModifier(PsiModifier.STATIC);
 //    method.withModifier(PsiModifier.PUBLIC);
-//
 //    target.add(method);
   }
 }
