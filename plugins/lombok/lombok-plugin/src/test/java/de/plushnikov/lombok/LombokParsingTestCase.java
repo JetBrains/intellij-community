@@ -86,6 +86,7 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
         if (theirsClass.getName().equals(intellijClass.getName())) {
           compareFields(intellijClass, theirsClass);
           compareMethods(intellijClass, theirsClass);
+          compareInnerClasses(intellijClass, theirsClass);
           compared = true;
         }
       }
@@ -177,6 +178,31 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
         }
       }
       assertTrue("Methodnames are not equal, Method: (" + theirsMethod.getName() + ") not found in class : " + intellij.getName(), compared);
+    }
+  }
+
+  private void compareInnerClasses(PsiClass intellij, PsiClass theirs) {
+    PsiClass[] intellijInnerClasses = intellij.getInnerClasses();
+    PsiClass[] theirsInnerClasses = theirs.getInnerClasses();
+
+    LOG.log(Level.INFO, "IntelliJ inner classes for class " + intellij.getName() + ": " + Arrays.toString(intellijInnerClasses));
+    LOG.log(Level.INFO, "Theirs inner classes for class " + theirs.getName() + ": " + Arrays.toString(theirsInnerClasses));
+
+    assertEquals("Inner classes are different for Class: " + intellij.getName(), theirsInnerClasses.length, intellijInnerClasses.length);
+
+    for (PsiClass theirsClass : theirsInnerClasses) {
+      boolean compared = false;
+      final PsiModifierList theirsFieldModifierList = theirsClass.getModifierList();
+      for (PsiClass intellijClass : intellijInnerClasses) {
+        if (theirsClass.getName().equals(intellijClass.getName())) {
+          PsiModifierList intellijFieldModifierList = intellijClass.getModifierList();
+
+          compareModifiers(intellijFieldModifierList, theirsFieldModifierList);
+          compareMethods(intellijClass, theirsClass);
+          compared = true;
+        }
+      }
+      assertTrue("Inner classes are not equal, Inner class: (" + theirsClass.getName() + ") not found in class : " + intellij.getName(), compared);
     }
   }
 

@@ -5,8 +5,10 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.light.LightClass;
 import com.intellij.psi.impl.light.LightMethod;
+import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.lombok.ErrorMessages;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
@@ -86,7 +88,7 @@ public class BuilderProcessor extends AbstractLombokClassProcessor {
       target.addAll(allArgsConstructorProcessor.createRequiredArgsConstructor(psiClass, PsiModifier.PACKAGE_LOCAL, psiAnnotation));
     }
 
-//    LombokLightClassBuilder innerClass = LombokPsiElementFactory.getInstance().createLightClass(psiClass.getManager(), "de.plishnikov.Something");
+//    LombokLightClassBuilder innerClass = LombokPsiElementFactory.getInstance().createLightClass(psiClass.getManager(), "de.plushnikov.Something");
 //    target.add(innerClass);
 
 //    LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().createLightMethod(psiClass.getManager(), METHOD_NAME)

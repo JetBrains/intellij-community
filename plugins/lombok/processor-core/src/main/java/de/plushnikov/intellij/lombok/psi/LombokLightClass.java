@@ -43,7 +43,7 @@ public class LombokLightClass extends LightElement implements PsiClass {
 
   @Override
   public String toString() {
-    return "LombokLightClass";
+    return "LombokLightClass:" + getName();
   }
 
   @Nullable
@@ -267,6 +267,11 @@ public class LombokLightClass extends LightElement implements PsiClass {
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     myQualifiedName = name;
     return this;
+  }
+
+  @Override
+  public String getName() {
+    return myQualifiedName;
   }
 
   @Nullable
