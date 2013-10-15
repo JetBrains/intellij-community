@@ -1,19 +1,18 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.light.LightClass;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.impl.source.PsiClassImpl;
 import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.lombok.ErrorMessages;
+import de.plushnikov.intellij.lombok.LombokUtils;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.processor.clazz.constructor.AllArgsConstructorProcessor;
+import de.plushnikov.intellij.lombok.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.lombok.psi.LombokLightClassBuilder;
+import de.plushnikov.intellij.lombok.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.lombok.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.lombok.psi.LombokPsiElementFactory;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
@@ -22,6 +21,7 @@ import lombok.experimental.Builder;
 import lombok.Singleton;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -83,8 +83,36 @@ public class BuilderInnerClassProcessor extends AbstractLombokClassProcessor {
   protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String innerClassName = psiClass.getName() + "Builder";
     LombokLightClassBuilder innerClass = LombokPsiElementFactory.getInstance().createLightClass(psiClass.getManager(), innerClassName)
+       .withContainingClass(psiClass)
        .withModifier(PsiModifier.PUBLIC)
        .withModifier(PsiModifier.STATIC);
+    innerClass.withConstructors(createConstructors(innerClass, psiAnnotation))
+     .withFields(createFields(psiClass));
+
     target.add(innerClass);
+  }
+
+  private Collection<PsiMethod> createConstructors(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+    NoArgsConstructorProcessor noArgsConstructorProcessor = new NoArgsConstructorProcessor();
+    return noArgsConstructorProcessor.createNoArgsConstructor(psiClass, PsiModifier.PACKAGE_LOCAL, psiAnnotation);
+  }
+
+  private Collection<PsiField> createFields(@NotNull PsiClass psiClass) {
+    List<PsiField> fields = new ArrayList<PsiField>();
+    for (PsiField psiField : psiClass.getFields()) {
+      boolean createField = true;
+      PsiModifierList modifierList = psiField.getModifierList();
+      if (null != modifierList) {
+        //Skip static fields.
+        createField = !modifierList.hasModifierProperty(PsiModifier.STATIC);
+        //Skip fields that start with $
+        createField &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
+      }
+      if (createField) {
+        fields.add(LombokPsiElementFactory.getInstance().createLightField(psiClass.getManager(), psiField.getName(), psiField.getType())
+          .withModifier(PsiModifier.PRIVATE));
+      }
+    }
+    return fields;
   }
 }

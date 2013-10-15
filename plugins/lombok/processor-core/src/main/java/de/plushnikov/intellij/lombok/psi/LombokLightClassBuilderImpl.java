@@ -17,15 +17,36 @@ public class LombokLightClassBuilderImpl extends LombokLightClass implements Lom
 
   public LombokLightClassBuilderImpl(@NotNull PsiManager manager, @NotNull String name) {
     super(manager, JavaLanguage.INSTANCE);
-//    setMyContainingClass(containingClass);
     setName(name);
   }
 
   @Override
   public LombokLightClassBuilder withModifier(@PsiModifier.ModifierConstant @NotNull @NonNls String modifier) {
-      ((LightModifierList) getModifierList()).addModifier(modifier);
-      return this;
+    ((LightModifierList) getModifierList()).addModifier(modifier);
+    return this;
   }
 
+  @Override
+  public LombokLightClassBuilder withContainingClass(@NotNull PsiClass containingClass) {
+    setContainingClass(containingClass);
+    return this;
+  }
 
+  @Override
+  public LombokLightClassBuilder withFields(@NotNull Collection<PsiField> fields) {
+    setFields(fields.toArray(new PsiField[fields.size()]));
+    return this;
+  }
+
+  @Override
+  public LombokLightClassBuilder withMethods(@NotNull Collection<PsiMethod> methods) {
+    setMethods(methods.toArray(new PsiMethod[methods.size()]));
+    return this;
+  }
+
+  @Override
+  public LombokLightClassBuilder withConstructors(@NotNull Collection<PsiMethod> constructors) {
+    setMethods(constructors.toArray(new PsiMethod[constructors.size()]));
+    return this;
+  }
 }

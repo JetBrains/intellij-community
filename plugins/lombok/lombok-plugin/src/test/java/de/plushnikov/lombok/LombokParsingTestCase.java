@@ -104,6 +104,9 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
     PsiField[] intellijFields = intellij.getFields();
     PsiField[] theirsFields = theirs.getFields();
 
+    LOG.info("IntelliJ fields for class " + intellij.getName() + ": " + Arrays.toString(intellijFields));
+    LOG.info("Theirs fields for class " + theirs.getName() + ": " + Arrays.toString(theirsFields));
+
     assertEquals("Field counts are different for Class " + intellij.getName(), theirsFields.length, intellijFields.length);
 
     for (PsiField theirsField : theirsFields) {
@@ -198,6 +201,7 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
           PsiModifierList intellijFieldModifierList = intellijClass.getModifierList();
 
           compareModifiers(intellijFieldModifierList, theirsFieldModifierList);
+          compareFields(intellijClass, theirsClass);
           compareMethods(intellijClass, theirsClass);
           compared = true;
         }

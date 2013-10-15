@@ -124,16 +124,28 @@ public class LombokLightClass extends LightElement implements PsiClass {
     return myFields;
   }
 
+  public void setFields(@NotNull PsiField[] fields) {
+    myFields = fields;
+  }
+
   @NotNull
   @Override
   public PsiMethod[] getMethods() {
     return myMethods;
   }
 
+  public void setMethods(@NotNull PsiMethod[] methods) {
+    myMethods = methods;
+  }
+
   @NotNull
   @Override
   public PsiMethod[] getConstructors() {
     return myConstructors;
+  }
+
+  public void setConstructors(@NotNull PsiMethod[] constructors) {
+    myConstructors = constructors;
   }
 
   @NotNull
@@ -259,6 +271,17 @@ public class LombokLightClass extends LightElement implements PsiClass {
   @Override
   public PsiClass getContainingClass() {
     return myContainingClass;
+  }
+
+  public void setContainingClass(@NotNull PsiClass psiClass) {
+    myContainingClass = psiClass;
+  }
+
+  @Nullable
+  @Override
+  public PsiFile getContainingFile() {
+    PsiClass containingClass = getContainingClass();
+    return containingClass != null ? containingClass.getContainingFile() : null;
   }
 
   @NotNull

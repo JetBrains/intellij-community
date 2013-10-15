@@ -10,6 +10,7 @@ import de.plushnikov.intellij.lombok.util.LombokProcessorUtil;
 import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -33,6 +34,11 @@ public class NoArgsConstructorProcessor extends AbstractConstructorClassProcesso
       result = false;
     }
     return result;
+  }
+
+  @NotNull
+  public Collection<PsiMethod> createNoArgsConstructor(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation) {
+    return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, Collections.<PsiField>emptyList());
   }
 
   protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {

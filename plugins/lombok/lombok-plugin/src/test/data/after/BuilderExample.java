@@ -14,9 +14,9 @@ public class BuilderExample {
   public static class BuilderExampleBuilder {
     private String name;
     private int age;
-//
-//    BuilderExampleBuilder() {
-//    }
+
+    BuilderExampleBuilder() {
+    }
 //
 //    public BuilderExampleBuilder name(String name) {
 //      this.name = name;
