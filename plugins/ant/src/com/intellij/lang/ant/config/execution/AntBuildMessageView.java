@@ -84,6 +84,8 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private OutputParser myParsingThread;
   private final Project myProject;
   private final JPanel myMessagePanel;
+  private final JPanel myContentPanel;
+  private final CardLayout myCardLayout;
   private AntBuildFileBase myBuildFile;
   private final String[] myTargets;
   private int myPriorityThreshold = PRIORITY_BRIEF;
@@ -92,7 +94,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private volatile boolean myIsOutputPaused = false;
 
   @NotNull
-  private AntOutputView myCurrentView;
+  private volatile AntOutputView myCurrentView;
 
   private final PlainTextView myPlainTextView;
   private final TreeView myTreeView;
@@ -142,20 +144,26 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private AntBuildMessageView(Project project, AntBuildFileBase buildFile, String[] targets) {
     super(new BorderLayout(2, 0));
     myProject = project;
+    myBuildFile = buildFile;
+    myTargets = targets;
     setBorder(BorderFactory.createEmptyBorder(2, 2, 2, 2));
 
     myPlainTextView = new PlainTextView(project);
     myTreeView = new TreeView(project, buildFile);
 
     myMessagePanel = new JPanel(new BorderLayout());
-    myBuildFile = buildFile;
-    myTargets = targets;
+    myCardLayout = new CardLayout();
+    myContentPanel = new JPanel(myCardLayout);
+    myContentPanel.add(myTreeView.getComponent(), myTreeView.getId());
+    myContentPanel.add(myPlainTextView.getComponent(), myPlainTextView.getId());
+    myMessagePanel.add(myContentPanel, BorderLayout.CENTER);
 
-    showAntView(AntBuildFileImpl.TREE_VIEW.value(buildFile.getAllOptions()));
     setVerboseMode(AntBuildFileImpl.VERBOSE.value(buildFile.getAllOptions()));
 
     add(createToolbarPanel(), BorderLayout.WEST);
     add(myMessagePanel, BorderLayout.CENTER);
+
+    showAntView(AntBuildFileImpl.TREE_VIEW.value(buildFile.getAllOptions()));
   }
 
   public boolean hasMessagesOfType(MessageType type) {
@@ -218,12 +226,9 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   private void showAntView(boolean treeView) {
-    AntOutputView oldView = getOutputView(treeView);
-    AntOutputView newView = getOutputView(!treeView);
+    final AntOutputView newView = getOutputView(!treeView);
     myCurrentView = newView;
-    myMessagePanel.remove(oldView.getComponent());
-    myMessagePanel.add(newView.getComponent(), BorderLayout.CENTER);
-    myMessagePanel.validate();
+    myCardLayout.show(myContentPanel, newView.getId());
 
     JComponent component = IdeFocusTraversalPolicy.getPreferredFocusedComponent(myMessagePanel);
     component.requestFocus();
@@ -476,7 +481,9 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
 
   public Object getData(String dataId) {
     Object data = myCurrentView.getData(dataId);
-    if (data != null) return data;
+    if (data != null) {
+      return data;
+    }
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HelpID.ANT;
     }
@@ -913,14 +920,16 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
       }
       else {
         flushDelayedMessages(); // message type changed -> flush
-        command.execute(myTreeView);
-        command.execute(myPlainTextView);
+        final AntOutputView firstView = myCurrentView;
+        final AntOutputView secondView = firstView == myTreeView? myPlainTextView : myTreeView;
+        command.execute(firstView);
+        command.execute(secondView);
       }
     }
 
     protected final void flushDelayedMessages() {
       if (!myDelayedMessages.isEmpty()) {
-        AntMessage[] messages = myDelayedMessages.toArray(new AntMessage[myDelayedMessages.size()]);
+        final AntMessage[] messages = myDelayedMessages.toArray(new AntMessage[myDelayedMessages.size()]);
         myDelayedMessages.clear();
         myTreeView.addMessages(messages);
         myPlainTextView.addMessages(messages);

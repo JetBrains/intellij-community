@@ -18,6 +18,8 @@ package com.intellij.lang.ant.config.execution;
 import javax.swing.*;
 
 public interface AntOutputView {
+  String getId();
+
   Object addMessage(AntMessage message);
   void addJavacMessage(AntMessage message, String url);
   void addException(AntMessage exception, boolean showFullTrace);
