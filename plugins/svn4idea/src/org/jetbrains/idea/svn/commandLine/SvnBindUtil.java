@@ -59,15 +59,6 @@ public class SvnBindUtil {
     return new Date(0);
   }
 
-  public static void changelistsToCommand(String[] changeLists, final List<String> list) {
-    if (changeLists != null) {
-      for (String name : changeLists) {
-        list.add("--cl");
-        list.add(name);
-      }
-    }
-  }
-
   public static File correctUpToExistingParent(File base) {
     while (base != null) {
       if (base.exists() && base.isDirectory()) return base;
