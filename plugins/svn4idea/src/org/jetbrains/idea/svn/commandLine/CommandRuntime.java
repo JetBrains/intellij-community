@@ -60,23 +60,23 @@ public class CommandRuntime {
       String[] originalParameters = Arrays.copyOf(parameters, parameters.length);
 
       while (true) {
-        final CommandExecutor command = newExecutor(commandName, listener, workingDirectory, configDir, parameters, originalParameters);
-        command.run();
-        final Integer exitCode = command.getExitCodeReference();
+        final CommandExecutor executor = newExecutor(commandName, listener, workingDirectory, configDir, parameters, originalParameters);
+        executor.run();
+        final Integer exitCode = executor.getExitCodeReference();
 
         // could be situations when exit code = 0, but there is info "warning" in error stream for instance, for "svn status"
         // on non-working copy folder
         // TODO: synchronization does not work well in all cases - sometimes exit code is not yet set and null returned - fix synchronization
         // here we treat null exit code as some non-zero exit code
         if (exitCode == null || exitCode != 0) {
-          logNullExitCode(command, exitCode);
+          logNullExitCode(executor, exitCode);
 
-          if (command.getErrorOutput().length() > 0) {
+          if (executor.getErrorOutput().length() > 0) {
             // handle authentication
-            final String errText = command.getErrorOutput().trim();
+            final String errText = executor.getErrorOutput().trim();
             final AuthCallbackCase callback = createCallback(errText, repositoryUrl);
             if (callback != null) {
-              cleanup(command, workingDirectory);
+              cleanup(executor, workingDirectory);
               if (callback.getCredentials(errText)) {
                 if (myAuthCallback.getSpecialConfigDir() != null) {
                   configDir = myAuthCallback.getSpecialConfigDir();
@@ -93,11 +93,11 @@ public class CommandRuntime {
               throw new SvnBindException("Svn process exited with error code: " + exitCode);
             }
           }
-        } else if (command.getErrorOutput().length() > 0) {
+        } else if (executor.getErrorOutput().length() > 0) {
           // here exitCode == 0, but some warnings are in error stream
-          LOG.info("Detected warning - " + command.getErrorOutput());
+          LOG.info("Detected warning - " + executor.getErrorOutput());
         }
-        return command;
+        return executor;
       }
     } finally {
       myAuthCallback.reset();
