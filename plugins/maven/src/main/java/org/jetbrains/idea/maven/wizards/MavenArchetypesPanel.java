@@ -124,8 +124,8 @@ public class MavenArchetypesPanel implements Disposable {
     myArchetypeDescriptionField.setEditable(false);
     myArchetypeDescriptionField.setBackground(UIUtil.getPanelBackground());
 
-    updateComponents();
     requestUpdate();
+    updateComponents();
   }
 
   public JPanel getMainPanel() {
