@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsConfiguration;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,6 +73,29 @@ public class MavenIdeaPluginConfigurer extends MavenModuleConfigurer {
     String autoscrollFromSource = cfg.getChildTextTrim("autoscrollFromSource");
     if (!StringUtil.isEmptyOrSpaces(autoscrollFromSource)) {
       ((ProjectViewImpl)ProjectView.getInstance(project)).setAutoscrollFromSource(Boolean.parseBoolean(autoscrollFromSource), ProjectViewPane.ID);
+    }
+
+    String hideEmptyPackages = cfg.getChildTextTrim("hideEmptyPackages");
+    if (!StringUtil.isEmptyOrSpaces(hideEmptyPackages)) {
+      ProjectView.getInstance(project).setHideEmptyPackages(Boolean.parseBoolean(hideEmptyPackages), ProjectViewPane.ID);
+    }
+
+    String optimizeImportsBeforeCommit = cfg.getChildTextTrim("optimizeImportsBeforeCommit");
+    if (!StringUtil.isEmptyOrSpaces(optimizeImportsBeforeCommit)) {
+      VcsConfiguration.getInstance(module.getProject()).OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT = Boolean.parseBoolean(optimizeImportsBeforeCommit);
+    }
+
+    String performCodeAnalisisBeforeCommit = cfg.getChildTextTrim("performCodeAnalisisBeforeCommit");
+    if (!StringUtil.isEmptyOrSpaces(performCodeAnalisisBeforeCommit)) {
+      VcsConfiguration.getInstance(module.getProject()).CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT = Boolean.parseBoolean(performCodeAnalisisBeforeCommit);
+    }
+
+    String reformatCodeBeforeCommit = cfg.getChildTextTrim("reformatCodeBeforeCommit");
+    if (!StringUtil.isEmptyOrSpaces(reformatCodeBeforeCommit)) {
+      VcsConfiguration vcsConfiguration = VcsConfiguration.getInstance(module.getProject());
+      boolean value = Boolean.parseBoolean(reformatCodeBeforeCommit);
+      vcsConfiguration.REFORMAT_BEFORE_FILE_COMMIT = value;
+      vcsConfiguration.REFORMAT_BEFORE_PROJECT_COMMIT = value;
     }
   }
 
