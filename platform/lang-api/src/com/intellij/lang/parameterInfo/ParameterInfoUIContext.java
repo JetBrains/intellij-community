@@ -21,8 +21,11 @@ import com.intellij.psi.PsiElement;
 import java.awt.*;
 
 public interface ParameterInfoUIContext {
-  void setupUIComponentPresentation(String text, int highlightStartOffset, int highlightEndOffset, boolean isDisabled, boolean strikeout,
-                                    boolean isDisabledBeforeHighlight, Color background);
+  /**
+   * @return null - we don't use it in 131 branch but added for trunk compatibility
+   */
+  String setupUIComponentPresentation(String text, int highlightStartOffset, int highlightEndOffset, boolean isDisabled, boolean strikeout,
+                                      boolean isDisabledBeforeHighlight, Color background);
   boolean isUIComponentEnabled();
   void setUIComponentEnabled(boolean enabled);
 

@@ -35,11 +35,12 @@ public class MockParameterInfoUIContext<T extends PsiElement> implements Paramet
   }
 
   @Override
-  public void setupUIComponentPresentation(final String _text, final int highlightStartOffset, final int highlightEndOffset,
-                                           final boolean isDisabled, final boolean strikeout, final boolean isDisabledBeforeHighlight,
-                                           final Color background) {
+  public String setupUIComponentPresentation(final String _text, final int highlightStartOffset, final int highlightEndOffset,
+                                             final boolean isDisabled, final boolean strikeout, final boolean isDisabledBeforeHighlight,
+                                             final Color background) {
     text = _text;
     highlightStart = highlightStartOffset;
+    return null;
   }
 
   @Override

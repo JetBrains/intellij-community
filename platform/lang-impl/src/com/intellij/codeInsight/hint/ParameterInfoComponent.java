@@ -123,21 +123,23 @@ class ParameterInfoComponent extends JPanel {
     private int i;
 
     @Override
-    public void setupUIComponentPresentation(String text,
-                                             int highlightStartOffset,
-                                             int highlightEndOffset,
-                                             boolean isDisabled,
-                                             boolean strikeout,
-                                             boolean isDisabledBeforeHighlight,
-                                             Color background) {
+    public String setupUIComponentPresentation(String text,
+                                               int highlightStartOffset,
+                                               int highlightEndOffset,
+                                               boolean isDisabled,
+                                               boolean strikeout,
+                                               boolean isDisabledBeforeHighlight,
+                                               Color background) {
       myPanels[i].setup(text, highlightStartOffset, highlightEndOffset, isDisabled, strikeout, isDisabledBeforeHighlight, background);
       myPanels[i].setBorder(isLastParameterOwner() ? BACKGROUND_BORDER : new SideBorder(new JBColor(JBColor.LIGHT_GRAY, Gray._90), SideBorder.BOTTOM));
+      return null; // nothing, we don't use it in 131 branch but added for trunk API compatibility
     }
 
     @Override
-    public void setupUIComponentPresentation(final String[] texts, final EnumSet<Flag>[] flags, final Color background) {
+    public String setupUIComponentPresentation(final String[] texts, final EnumSet<Flag>[] flags, final Color background) {
       myPanels[i].setup(texts, flags, background);
       myPanels[i].setBorder(isLastParameterOwner() ? BACKGROUND_BORDER : new SideBorder(new JBColor(JBColor.LIGHT_GRAY, Gray._90), SideBorder.BOTTOM));
+      return null; // nothing, we don't use it in 131 branch but added for trunk API compatibility
     }
 
     @Override
