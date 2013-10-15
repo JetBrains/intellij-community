@@ -174,12 +174,14 @@ public class CommandRuntime {
                                  File configDir,
                                  String[] parameters,
                                  String[] originalParameters) {
-    CommandExecutor command = new CommandExecutor(base, commandName, exePath, configDir, listener);
+    Command command = new Command(commandName);
 
-    command.setOriginalParameters(originalParameters);
+    command.setConfigDir(configDir);
+    command.setWorkingDirectory(base);
     command.addParameters(parameters);
     command.addParameters("--non-interactive");
+    command.saveOriginalParameters(originalParameters);
 
-    return command;
+    return new CommandExecutor(exePath, command, listener);
   }
 }

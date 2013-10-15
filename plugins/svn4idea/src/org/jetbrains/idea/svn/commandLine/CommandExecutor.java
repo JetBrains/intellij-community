@@ -25,10 +25,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -41,7 +37,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public class CommandExecutor {
   static final Logger LOG = Logger.getInstance(CommandExecutor.class.getName());
   private final AtomicReference<Integer> myExitCodeReference;
-  private final File myConfigDir;
 
   private boolean myIsDestroyed;
   private boolean myNeedsDestroy;
@@ -54,15 +49,14 @@ public class CommandExecutor {
   private final Object myLock;
 
   private final EventDispatcher<LineCommandListener> myListeners = EventDispatcher.create(LineCommandListener.class);
-  private final SvnCommandName myCommandName;
-  private String[] myOriginalParameters;
 
   private final AtomicBoolean myWasError = new AtomicBoolean(false);
   @NotNull private final AtomicReference<Throwable> myExceptionRef;
   @Nullable private final LineCommandListener myResultBuilder;
+  @NotNull private final Command myCommand;
 
-  public CommandExecutor(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath,
-                         @Nullable File configDir, @Nullable LineCommandListener resultBuilder) {
+  public CommandExecutor(@NotNull @NonNls String exePath, @NotNull Command command, @Nullable LineCommandListener resultBuilder) {
+    myCommand = command;
     myResultBuilder = resultBuilder;
     if (resultBuilder != null)
     {
@@ -70,24 +64,17 @@ public class CommandExecutor {
       // cancel tracker should be executed after result builder
       myListeners.addListener(new CommandCancelTracker());
     }
-    myCommandName = commandName;
     myLock = new Object();
     myCommandLine = new GeneralCommandLine();
     myCommandLine.setExePath(exePath);
-    myCommandLine.setWorkDirectory(workingDirectory);
-    myConfigDir = configDir;
-    if (configDir != null) {
-      myCommandLine.addParameters("--config-dir", configDir.getPath());
+    myCommandLine.setWorkDirectory(command.getWorkingDirectory());
+    if (command.getConfigDir() != null) {
+      myCommandLine.addParameters("--config-dir", command.getConfigDir().getPath());
     }
-    myCommandLine.addParameter(commandName.getName());
+    myCommandLine.addParameter(command.getName().getName());
+    myCommandLine.addParameters(command.getParameters());
     myExitCodeReference = new AtomicReference<Integer>();
     myExceptionRef = new AtomicReference<Throwable>();
-  }
-
-  public String[] getParameters() {
-    synchronized (myLock) {
-      return myCommandLine.getParametersList().getArray();
-    }
   }
 
   /**
@@ -190,13 +177,6 @@ public class CommandExecutor {
     }
   }
 
-  public void addParameters(@NonNls @NotNull String... parameters) {
-    synchronized (myLock) {
-      checkNotStarted();
-      myCommandLine.addParameters(parameters);
-    }
-  }
-
   public void destroyProcess() {
     synchronized (myLock) {
       myNeedsDestroy = true;
@@ -224,29 +204,9 @@ public class CommandExecutor {
     }
   }
 
-  // TODO: used only to ensure authentication info is not logged to file. Remove when command execution model is refactored
-  // TODO: - so we could determine if parameter should be logged by the parameter itself.
-  public void setOriginalParameters(String... original) {
-    synchronized (myLock) {
-      myOriginalParameters = original;
-    }
-  }
-
   public String getCommandText() {
     synchronized (myLock) {
-      List<String> data = new ArrayList<String>();
-
-      data.add(myCommandLine.getExePath());
-      if (myConfigDir != null) {
-        data.add("--config-dir");
-        data.add(myConfigDir.getPath());
-      }
-      data.add(myCommandName.getName());
-      if (myOriginalParameters != null) {
-        data.addAll(Arrays.asList(myOriginalParameters));
-      }
-
-      return StringUtil.join(data, " ");
+      return StringUtil.join(myCommandLine.getExePath(), " ", myCommand.getText());
     }
   }
 
@@ -282,7 +242,7 @@ public class CommandExecutor {
   }
 
   public SvnCommandName getCommandName() {
-    return myCommandName;
+    return myCommand.getName();
   }
 
   public Integer getExitCodeReference() {
