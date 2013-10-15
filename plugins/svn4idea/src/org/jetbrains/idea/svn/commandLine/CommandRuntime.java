@@ -61,12 +61,13 @@ public class CommandRuntime {
 
       command.setConfigDir(myAuthCallback.getSpecialConfigDir());
       command.setWorkingDirectory(workingDirectory);
+      command.setResultBuilder(listener);
       command.addParameters(parameters);
       command.saveOriginalParameters();
 
       while (true) {
         command.addParameters("--non-interactive");
-        final CommandExecutor executor = newExecutor(command, listener);
+        final CommandExecutor executor = newExecutor(command);
         executor.run();
         final Integer exitCode = executor.getExitCodeReference();
 
@@ -170,15 +171,14 @@ public class CommandRuntime {
         Command cleanupCommand = new Command(SvnCommandName.cleanup);
         cleanupCommand.setWorkingDirectory(wcRoot);
 
-        newExecutor(cleanupCommand, null).run();
+        newExecutor(cleanupCommand).run();
       } else {
         LOG.info("Could not execute cleanup for command " + command.getCommandText());
       }
     }
   }
 
-  // TODO: Probably specify listener/result builder as command parameter
-  private CommandExecutor newExecutor(@NotNull Command command, @Nullable LineCommandListener listener) {
-    return new CommandExecutor(exePath, command, listener);
+  private CommandExecutor newExecutor(@NotNull Command command) {
+    return new CommandExecutor(exePath, command);
   }
 }

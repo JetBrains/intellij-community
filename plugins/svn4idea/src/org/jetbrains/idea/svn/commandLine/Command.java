@@ -23,6 +23,7 @@ public class Command {
 
   private File workingDirectory;
   @Nullable private File myConfigDir;
+  @Nullable private LineCommandListener myResultBuilder;
 
   public Command(@NotNull SvnCommandName name) {
     myName = name;
@@ -46,6 +47,11 @@ public class Command {
     return workingDirectory;
   }
 
+  @Nullable
+  public LineCommandListener getResultBuilder() {
+    return myResultBuilder;
+  }
+
   @NotNull
   public SvnCommandName getName() {
     return myName;
@@ -57,6 +63,10 @@ public class Command {
 
   public void setConfigDir(@Nullable File configDir) {
     this.myConfigDir = configDir;
+  }
+
+  public void setResultBuilder(@Nullable LineCommandListener resultBuilder) {
+    myResultBuilder = resultBuilder;
   }
 
   // TODO: used only to ensure authentication info is not logged to file. Remove when command execution model is refactored

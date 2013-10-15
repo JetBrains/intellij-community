@@ -55,12 +55,12 @@ public class CommandExecutor {
   @Nullable private final LineCommandListener myResultBuilder;
   @NotNull private final Command myCommand;
 
-  public CommandExecutor(@NotNull @NonNls String exePath, @NotNull Command command, @Nullable LineCommandListener resultBuilder) {
+  public CommandExecutor(@NotNull @NonNls String exePath, @NotNull Command command) {
     myCommand = command;
-    myResultBuilder = resultBuilder;
-    if (resultBuilder != null)
+    myResultBuilder = command.getResultBuilder();
+    if (myResultBuilder != null)
     {
-      myListeners.addListener(resultBuilder);
+      myListeners.addListener(myResultBuilder);
       // cancel tracker should be executed after result builder
       myListeners.addListener(new CommandCancelTracker());
     }
