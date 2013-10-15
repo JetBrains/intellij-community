@@ -67,6 +67,10 @@ public final class ErrorMessages {
     return errorMessage("@%s can be used on methods only", annotationType);
   }
 
+  public static String canBeUsedOnStaticMethodOnly(final Class<? extends Annotation> annotationType) {
+    return errorMessage("@%s can be used on static methods only", annotationType);
+  }
+
   public static String canBeUsedOnConcreteMethodOnly(final Class<? extends Annotation> annotationType) {
     return errorMessage("@%s can be used on concrete methods only", annotationType);
   }

@@ -63,6 +63,8 @@
     <processor implementation="de.plushnikov.intellij.lombok.processor.field.SetterFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.lombok.processor.field.WitherFieldProcessor"/>
 
+    <processor implementation="de.plushnikov.intellij.lombok.processor.method.BuilderMethodProcessor"/>
+    <processor implementation="de.plushnikov.intellij.lombok.processor.method.BuilderMethodInnerClassProcessor"/>
     <!-- lombok-pg-->
     <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.FluentSetterProcessor"/>
     <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.SingletonProcessor"/>
