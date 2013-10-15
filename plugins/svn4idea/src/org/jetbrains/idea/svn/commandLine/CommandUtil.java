@@ -225,7 +225,7 @@ public class CommandUtil {
   private static File resolveWorkingDirectory(@NotNull SvnVcs vcs, @NotNull SvnTarget target) {
     File workingDirectory = target.isFile() ? target.getFile() : null;
     // TODO: Do we really need search existing parent - or just take parent directory if target is file???
-    workingDirectory = SvnBindUtil.correctUpToExistingParent(workingDirectory);
+    workingDirectory = correctUpToExistingParent(workingDirectory);
 
     if (workingDirectory == null) {
       workingDirectory =
@@ -286,6 +286,14 @@ public class CommandUtil {
       contentsStatus = SVNStatusType.STATUS_NORMAL;
     }
     return contentsStatus;
+  }
+
+  public static File correctUpToExistingParent(File base) {
+    while (base != null) {
+      if (base.exists() && base.isDirectory()) return base;
+      base = base.getParentFile();
+    }
+    return null;
   }
 
   public interface RepositoryProvider {

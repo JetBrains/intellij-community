@@ -101,7 +101,7 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
                        final ISVNStatusHandler handler,
                        final Collection changeLists) throws SVNException {
     File base = path.isDirectory() ? path : path.getParentFile();
-    base = SvnBindUtil.correctUpToExistingParent(base);
+    base = CommandUtil.correctUpToExistingParent(base);
 
     final SVNInfo infoBase = myInfoClient.doInfo(base, revision);
     List<String> parameters = new ArrayList<String>();

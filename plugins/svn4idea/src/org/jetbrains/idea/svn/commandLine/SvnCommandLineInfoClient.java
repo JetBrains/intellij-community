@@ -81,7 +81,7 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
                      Collection changeLists,
                      final ISVNInfoHandler handler) throws SVNException {
     File base = path.isDirectory() ? path : path.getParentFile();
-    base = SvnBindUtil.correctUpToExistingParent(base);
+    base = CommandUtil.correctUpToExistingParent(base);
     if (base == null) {
       // very unrealistic
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not find existing parent file"));

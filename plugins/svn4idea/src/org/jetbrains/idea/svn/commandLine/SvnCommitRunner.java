@@ -78,7 +78,7 @@ public class SvnCommitRunner {
     Arrays.sort(paths);
     CommandUtil.put(parameters, paths);
 
-    myCommandListener.setBaseDirectory(SvnBindUtil.correctUpToExistingParent(paths[0]));
+    myCommandListener.setBaseDirectory(CommandUtil.correctUpToExistingParent(paths[0]));
     CommandUtil.execute(myVcs, SvnTarget.fromFile(paths[0]), SvnCommandName.ci, parameters, myCommandListener);
     myCommandListener.throwExceptionIfOccurred();
 
