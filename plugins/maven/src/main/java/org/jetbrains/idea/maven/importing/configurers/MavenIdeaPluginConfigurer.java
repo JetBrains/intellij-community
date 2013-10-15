@@ -16,6 +16,9 @@
 package org.jetbrains.idea.maven.importing.configurers;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.ide.projectView.ProjectView;
+import com.intellij.ide.projectView.impl.ProjectViewImpl;
+import com.intellij.ide.projectView.impl.ProjectViewPane;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
@@ -59,6 +62,16 @@ public class MavenIdeaPluginConfigurer extends MavenModuleConfigurer {
     String assertNotNull = cfg.getChildTextTrim("assertNotNull");
     if (!StringUtil.isEmptyOrSpaces(assertNotNull)) {
       CompilerConfiguration.getInstance(project).setAddNotNullAssertions(Boolean.parseBoolean(assertNotNull));
+    }
+
+    String autoscrollToSource = cfg.getChildTextTrim("autoscrollToSource");
+    if (!StringUtil.isEmptyOrSpaces(autoscrollToSource)) {
+      ((ProjectViewImpl)ProjectView.getInstance(project)).setAutoscrollToSource(Boolean.parseBoolean(autoscrollToSource), ProjectViewPane.ID);
+    }
+
+    String autoscrollFromSource = cfg.getChildTextTrim("autoscrollFromSource");
+    if (!StringUtil.isEmptyOrSpaces(autoscrollFromSource)) {
+      ((ProjectViewImpl)ProjectView.getInstance(project)).setAutoscrollFromSource(Boolean.parseBoolean(autoscrollFromSource), ProjectViewPane.ID);
     }
   }
 
