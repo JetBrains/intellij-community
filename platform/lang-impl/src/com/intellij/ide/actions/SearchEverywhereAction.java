@@ -576,6 +576,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static class MySearchTextField extends SearchTextField implements DataProvider {
     public MySearchTextField() {
       super(false);
+      if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+        getTextEditor().setOpaque(false);
+      }
     }
 
     @Override

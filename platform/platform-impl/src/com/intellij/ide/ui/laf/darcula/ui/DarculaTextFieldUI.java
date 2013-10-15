@@ -141,7 +141,7 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
     final JTextComponent c = getComponent();
     final Container parent = c.getParent();
     final Rectangle r = getDrawingRect();
-    if (!isSearchField(c) && parent != null) {
+    if (c.isOpaque() && parent != null) {
       g.setColor(c.getBackground());
       g.fillRect(0, 0, c.getWidth(), c.getHeight());
     }
