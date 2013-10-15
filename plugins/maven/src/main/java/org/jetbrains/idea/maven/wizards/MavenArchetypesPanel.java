@@ -87,11 +87,6 @@ public class MavenArchetypesPanel implements Disposable {
       @Override
       public void actionPerformed(ActionEvent e) {
         updateComponents();
-      }
-    });
-    myUseArchetypeCheckBox.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
         archetypeMayBeChanged();
       }
     });
