@@ -7,9 +7,9 @@ public class BuilderExample {
     this.age = age;
   }
 
-//  public static BuilderExampleBuilder builder() {
-//    return new BuilderExampleBuilder();
-//  }
+  public static BuilderExampleBuilder builder() {
+    return new BuilderExampleBuilder();
+  }
 
   public static class BuilderExampleBuilder {
     private String name;
