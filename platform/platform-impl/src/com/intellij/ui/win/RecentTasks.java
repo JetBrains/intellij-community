@@ -47,6 +47,7 @@ public class RecentTasks {
    */
   native private static void initialize (String applicationId);
   native private static void addTasksNativeForCategory (String category, Task [] tasks);
+  native static String getShortenPath(String paths);
   native private static void clearNative();
 
   public synchronized static void clear() {
