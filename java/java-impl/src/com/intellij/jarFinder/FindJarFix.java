@@ -154,7 +154,7 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
-        runnable.run();
+        runUncanceledRunnableWithProgress(runnable, indicator);
       }
 
       @Override
@@ -237,6 +237,21 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
     catch (SAXException e) {//
     }
     catch (IOException e) {//
+    }
+  }
+
+  private static void runUncanceledRunnableWithProgress(Runnable run, ProgressIndicator indicator) {
+    Thread t = new Thread(run, "FindJar download thread");
+    t.start();
+
+    try {
+      while (t.isAlive()) {
+        t.join(500);
+        indicator.checkCanceled();
+      }
+    }
+    catch (InterruptedException e) {
+      indicator.checkCanceled();
     }
   }
 
