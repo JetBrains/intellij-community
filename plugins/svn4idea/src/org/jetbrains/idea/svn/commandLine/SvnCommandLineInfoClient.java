@@ -18,7 +18,6 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
@@ -82,7 +81,7 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
                      Collection changeLists,
                      final ISVNInfoHandler handler) throws SVNException {
     File base = path.isDirectory() ? path : path.getParentFile();
-    base = SvnBindUtil.correctUpToExistingParent(base);
+    base = CommandUtil.correctUpToExistingParent(base);
     if (base == null) {
       // very unrealistic
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not find existing parent file"));
@@ -107,7 +106,7 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
   private String execute(@NotNull List<String> parameters, @NotNull File path) throws SVNException {
     // workaround: separately capture command output - used in exception handling logic to overcome svn 1.8 issue (see below)
     final ProcessOutput output = new ProcessOutput();
-    LineCommandListener listener = new LineCommandListener() {
+    LineCommandListener listener = new LineCommandAdapter() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (outputType == ProcessOutputTypes.STDOUT) {
@@ -117,7 +116,7 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     };
 
     try {
-      SvnCommand command = CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.info, parameters, listener);
+      CommandExecutor command = CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.info, parameters, listener);
 
       return command.getOutput();
     }
@@ -213,7 +212,7 @@ public class SvnCommandLineInfoClient extends SvnkitSvnWcClient {
     List<String> parameters = new ArrayList<String>();
 
     fillParameters(path, pegRevision, revision, depth, parameters);
-    SvnCommand command;
+    CommandExecutor command;
     try {
       command = CommandUtil.execute(myVcs, SvnTarget.fromURL(url), SvnCommandName.info, parameters, null);
     }

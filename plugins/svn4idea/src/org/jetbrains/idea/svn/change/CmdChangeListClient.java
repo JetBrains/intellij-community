@@ -5,13 +5,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
-import org.jetbrains.idea.svn.commandLine.SvnBindUtil;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -26,7 +26,9 @@ public class CmdChangeListClient extends BaseSvnClient implements ChangeListClie
     parameters.add(changeList);
     CommandUtil.put(parameters, path);
     CommandUtil.put(parameters, SVNDepth.EMPTY);
-    SvnBindUtil.changelistsToCommand(changeListsToOperate, parameters);
+    if (changeListsToOperate != null) {
+      CommandUtil.putChangeLists(parameters, Arrays.asList(changeListsToOperate));
+    }
 
     // for now parsing of the output is not required as command is executed only for one file
     // and will be either successful or exception will be thrown

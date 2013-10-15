@@ -101,14 +101,14 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
                        final ISVNStatusHandler handler,
                        final Collection changeLists) throws SVNException {
     File base = path.isDirectory() ? path : path.getParentFile();
-    base = SvnBindUtil.correctUpToExistingParent(base);
+    base = CommandUtil.correctUpToExistingParent(base);
 
     final SVNInfo infoBase = myInfoClient.doInfo(base, revision);
     List<String> parameters = new ArrayList<String>();
 
     putParameters(parameters, path, depth, remote, reportAll, includeIgnored, changeLists);
 
-    SvnCommand command;
+    CommandExecutor command;
     try {
       command = CommandUtil.execute(myVcs, SvnTarget.fromFile(path), SvnCommandName.st, parameters, null);
     }
@@ -124,7 +124,7 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
                            ISVNStatusHandler handler,
                            File base,
                            SVNInfo infoBase,
-                           SvnCommand command) throws SVNException {
+                           CommandExecutor command) throws SVNException {
     String result = command.getOutput();
 
     if (StringUtil.isEmptyOrSpaces(result)) {

@@ -10,7 +10,7 @@ import org.jetbrains.idea.svn.WorkingCopyFormat;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
 import org.jetbrains.idea.svn.api.FileStatusResultParser;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
-import org.jetbrains.idea.svn.commandLine.LineCommandListener;
+import org.jetbrains.idea.svn.commandLine.LineCommandAdapter;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.tmatesoft.svn.core.wc.ISVNEventHandler;
 import org.tmatesoft.svn.core.wc.SVNEvent;
@@ -85,7 +85,7 @@ public class CmdUpgradeClient extends BaseSvnClient implements UpgradeClient {
     }
   }
 
-  private static class UpgradeLineCommandListener extends LineCommandListener {
+  private static class UpgradeLineCommandListener extends LineCommandAdapter {
 
     @NotNull private final FileStatusResultParser parser;
     @NotNull private final AtomicReference<VcsException> exception;

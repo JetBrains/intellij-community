@@ -16,20 +16,17 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
-import com.intellij.execution.process.CapturingProcessAdapter;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessEvent;
-import com.intellij.execution.process.ProcessListener;
+import com.intellij.execution.process.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vcs.ProcessEventListener;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created with IntelliJ IDEA.
@@ -37,15 +34,13 @@ import java.util.List;
  * Date: 1/25/12
  * Time: 12:58 PM
  */
-public abstract class SvnCommand {
-  static final Logger LOG = Logger.getInstance(SvnCommand.class.getName());
-  private final File myConfigDir;
+public class CommandExecutor {
+  static final Logger LOG = Logger.getInstance(CommandExecutor.class.getName());
+  private final AtomicReference<Integer> myExitCodeReference;
 
   private boolean myIsDestroyed;
   private boolean myNeedsDestroy;
-  private int myExitCode;
   protected final GeneralCommandLine myCommandLine;
-  private final File myWorkingDirectory;
   private Process myProcess;
   private OSProcessHandler myHandler;
   // TODO: Try to implement commands in a way that they manually indicate if they need full output - to prevent situations
@@ -53,32 +48,33 @@ public abstract class SvnCommand {
   private CapturingProcessAdapter outputAdapter;
   private final Object myLock;
 
-  private final EventDispatcher<ProcessEventListener> myListeners = EventDispatcher.create(ProcessEventListener.class);
-  private final SvnCommandName myCommandName;
+  private final EventDispatcher<LineCommandListener> myListeners = EventDispatcher.create(LineCommandListener.class);
 
-  public SvnCommand(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath) {
-    this(workingDirectory, commandName, exePath, null);
-  }
+  private final AtomicBoolean myWasError = new AtomicBoolean(false);
+  @NotNull private final AtomicReference<Throwable> myExceptionRef;
+  @Nullable private final LineCommandListener myResultBuilder;
+  @NotNull private final Command myCommand;
 
-  public SvnCommand(File workingDirectory, @NotNull SvnCommandName commandName, @NotNull @NonNls String exePath,
-                    @Nullable File configDir) {
-    myCommandName = commandName;
+  public CommandExecutor(@NotNull @NonNls String exePath, @NotNull Command command) {
+    myCommand = command;
+    myResultBuilder = command.getResultBuilder();
+    if (myResultBuilder != null)
+    {
+      myListeners.addListener(myResultBuilder);
+      // cancel tracker should be executed after result builder
+      myListeners.addListener(new CommandCancelTracker());
+    }
     myLock = new Object();
     myCommandLine = new GeneralCommandLine();
-    myWorkingDirectory = workingDirectory;
     myCommandLine.setExePath(exePath);
-    myCommandLine.setWorkDirectory(workingDirectory);
-    myConfigDir = configDir;
-    if (configDir != null) {
-      myCommandLine.addParameters("--config-dir", configDir.getPath());
+    myCommandLine.setWorkDirectory(command.getWorkingDirectory());
+    if (command.getConfigDir() != null) {
+      myCommandLine.addParameters("--config-dir", command.getConfigDir().getPath());
     }
-    myCommandLine.addParameter(commandName.getName());
-  }
-
-  public String[] getParameters() {
-    synchronized (myLock) {
-      return myCommandLine.getParametersList().getArray();
-    }
+    myCommandLine.addParameter(command.getName().getName());
+    myCommandLine.addParameters(command.getParameters());
+    myExitCodeReference = new AtomicReference<Integer>();
+    myExceptionRef = new AtomicReference<Throwable>();
   }
 
   /**
@@ -102,39 +98,18 @@ public abstract class SvnCommand {
         myHandler = new OSProcessHandler(myProcess, myCommandLine.getCommandLineString());
         startHandlingStreams();
       } catch (Throwable t) {
-        myListeners.getMulticaster().startFailed(t);
+        listeners().startFailed(t);
+        myExceptionRef.set(t);
       }
     }
   }
 
   private void startHandlingStreams() {
-    final ProcessListener processListener = new ProcessListener() {
-      public void startNotified(final ProcessEvent event) {
-        // do nothing
-      }
-
-      public void processTerminated(final ProcessEvent event) {
-        final int exitCode = event.getExitCode();
-        try {
-          setExitCode(exitCode);
-          SvnCommand.this.processTerminated(exitCode);
-        } finally {
-          listeners().processTerminated(exitCode);
-        }
-      }
-
-      public void processWillTerminate(final ProcessEvent event, final boolean willBeDestroyed) {
-        // do nothing
-      }
-
-      public void onTextAvailable(final ProcessEvent event, final Key outputType) {
-        SvnCommand.this.onTextAvailable(event.getText(), outputType);
-      }
-    };
-
     outputAdapter = new CapturingProcessAdapter();
     myHandler.addProcessListener(outputAdapter);
-    myHandler.addProcessListener(processListener);
+    myHandler.addProcessListener(new ProcessTracker());
+    myHandler.addProcessListener(new ResultBuilderNotifier(listeners()));
+    myHandler.addProcessListener(new CommandOutputLogger());
     myHandler.startNotify();
   }
 
@@ -167,45 +142,38 @@ public abstract class SvnCommand {
     }
   }
 
-  protected abstract void processTerminated(int exitCode);
-  protected abstract void onTextAvailable(final String text, final Key outputType);
-
   public void cancel() {
     synchronized (myLock) {
       checkStarted();
       destroyProcess();
     }
   }
-  
-  protected void setExitCode(final int code) {
-    synchronized (myLock) {
-      myExitCode = code;
+
+  public void run() throws SvnBindException {
+    start();
+    boolean finished;
+    do {
+      finished = waitFor(500);
+      if (!finished && (wasError() || needsDestroy())) {
+        waitFor(1000);
+        doDestroyProcess();
+        break;
+      }
     }
+    while (!finished);
+
+    throwIfError();
   }
 
-  public void addListener(final ProcessEventListener listener) {
+  public void addListener(final LineCommandListener listener) {
     synchronized (myLock) {
       myListeners.addListener(listener);
     }
   }
 
-  protected ProcessEventListener listeners() {
+  protected LineCommandListener listeners() {
     synchronized (myLock) {
       return myListeners.getMulticaster();
-    }
-  }
-
-  public void addParameters(@NonNls @NotNull String... parameters) {
-    synchronized (myLock) {
-      checkNotStarted();
-      myCommandLine.addParameters(parameters);
-    }
-  }
-
-  public void addParameters(List<String> parameters) {
-    synchronized (myLock) {
-      checkNotStarted();
-      myCommandLine.addParameters(parameters);
     }
   }
 
@@ -238,13 +206,7 @@ public abstract class SvnCommand {
 
   public String getCommandText() {
     synchronized (myLock) {
-      return myCommandLine.getCommandLineString();
-    }
-  }
-
-  public String getExePath() {
-    synchronized (myLock) {
-      return myCommandLine.getExePath();
+      return StringUtil.join(myCommandLine.getExePath(), " ", myCommand.getText());
     }
   }
 
@@ -279,17 +241,52 @@ public abstract class SvnCommand {
     }
   }
 
-  protected int getExitCode() {
-    synchronized (myLock) {
-      return myExitCode;
+  public SvnCommandName getCommandName() {
+    return myCommand.getName();
+  }
+
+  public Integer getExitCodeReference() {
+    return myExitCodeReference.get();
+  }
+
+  public void setExitCodeReference(int value) {
+    myExitCodeReference.set(value);
+  }
+
+  public Boolean wasError() {
+    return myWasError.get();
+  }
+
+  public void throwIfError() throws SvnBindException {
+    Throwable error = myExceptionRef.get();
+
+    if (error != null) {
+      throw new SvnBindException(error);
     }
   }
 
-  protected File getWorkingDirectory() {
-    return myWorkingDirectory;
+  private class CommandCancelTracker extends LineCommandAdapter {
+    @Override
+    public void onLineAvailable(String line, Key outputType) {
+      if (myResultBuilder != null && myResultBuilder.isCanceled()) {
+        LOG.info("Cancelling command: " + getCommandText());
+        destroyProcess();
+      }
+    }
   }
 
-  public SvnCommandName getCommandName() {
-    return myCommandName;
+  private class ProcessTracker extends ProcessAdapter {
+
+    @Override
+    public void processTerminated(ProcessEvent event) {
+      setExitCodeReference(event.getExitCode());
+    }
+
+    @Override
+    public void onTextAvailable(ProcessEvent event, Key outputType) {
+      if (ProcessOutputTypes.STDERR == outputType) {
+        myWasError.set(true);
+      }
+    }
   }
 }

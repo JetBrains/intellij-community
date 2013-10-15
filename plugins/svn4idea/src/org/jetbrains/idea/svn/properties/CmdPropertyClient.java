@@ -5,8 +5,8 @@ import com.intellij.openapi.vcs.VcsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.api.BaseSvnClient;
+import org.jetbrains.idea.svn.commandLine.CommandExecutor;
 import org.jetbrains.idea.svn.commandLine.CommandUtil;
-import org.jetbrains.idea.svn.commandLine.SvnCommand;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
 import org.tmatesoft.svn.core.SVNDepth;
 import org.tmatesoft.svn.core.SVNException;
@@ -58,7 +58,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     // is critical for some parts of merge logic
     parameters.add("--xml");
 
-    SvnCommand command = CommandUtil.execute(myVcs, target, SvnCommandName.propget, parameters, null);
+    CommandExecutor command = CommandUtil.execute(myVcs, target, SvnCommandName.propget, parameters, null);
     return parseSingleProperty(target, command.getOutput());
   }
 
@@ -73,7 +73,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     parameters.add(property);
     fillListParameters(target, revision, depth, parameters, false);
 
-    SvnCommand command = CommandUtil.execute(myVcs, target, SvnCommandName.propget, parameters, null);
+    CommandExecutor command = CommandUtil.execute(myVcs, target, SvnCommandName.propget, parameters, null);
     parseOutput(target, command.getOutput(), handler);
   }
 
@@ -85,7 +85,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     List<String> parameters = new ArrayList<String>();
     fillListParameters(target, revision, depth, parameters, true);
 
-    SvnCommand command = CommandUtil.execute(myVcs, target, SvnCommandName.proplist, parameters, null);
+    CommandExecutor command = CommandUtil.execute(myVcs, target, SvnCommandName.proplist, parameters, null);
     parseOutput(target, command.getOutput(), handler);
   }
 

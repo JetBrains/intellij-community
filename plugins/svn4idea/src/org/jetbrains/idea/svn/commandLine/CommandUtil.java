@@ -1,22 +1,14 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.RootUrlInfo;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.api.Repository;
 import org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNException;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
@@ -32,8 +24,6 @@ import java.util.List;
  * @author Konstantin Kolosovsky.
  */
 public class CommandUtil {
-
-  private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.commandLine.CommandUtil");
 
   /**
    * Puts given value to parameters if condition is satisfied
@@ -180,74 +170,34 @@ public class CommandUtil {
    * @param listener
    * @throws VcsException
    */
-  public static SvnCommand execute(@NotNull SvnVcs vcs,
+  public static CommandExecutor execute(@NotNull SvnVcs vcs,
                                    @NotNull SvnTarget target,
                                    @NotNull SvnCommandName name,
                                    @NotNull List<String> parameters,
                                    @Nullable LineCommandListener listener) throws VcsException {
-    File workingDirectory = resolveWorkingDirectory(vcs, target);
-
-    return execute(vcs, target, workingDirectory, name, parameters, listener);
+    return execute(vcs, target, null, name, parameters, listener);
   }
 
-  public static SvnCommand execute(@NotNull SvnVcs vcs,
+  public static CommandExecutor execute(@NotNull SvnVcs vcs,
                                    @NotNull SvnTarget target,
-                                   @NotNull File workingDirectory,
+                                   @Nullable File workingDirectory,
                                    @NotNull SvnCommandName name,
                                    @NotNull List<String> parameters,
                                    @Nullable LineCommandListener listener) throws VcsException {
-    SVNURL repositoryUrl = resolveRepositoryUrl(vcs, name, target);
-    IdeaSvnkitBasedAuthenticationCallback callback = new IdeaSvnkitBasedAuthenticationCallback(vcs);
+    Command command = new Command(name);
 
-    return SvnLineCommand.runWithAuthenticationAttempt(workingDirectory, repositoryUrl, name,
-                                                       listener != null ? listener : new SvnCommitRunner.CommandListener(null), callback,
-                                                       ArrayUtil.toStringArray(parameters));
+    command.setTarget(target);
+    command.setWorkingDirectory(workingDirectory);
+    command.setResultBuilder(listener);
+    command.addParameters(parameters);
+
+    CommandRuntime runtime = new CommandRuntime(vcs, new IdeaSvnkitBasedAuthenticationCallback(vcs));
+    return runtime.runWithAuthenticationAttempt(command);
   }
 
   @NotNull
   public static File getHomeDirectory() {
     return new File(PathManager.getHomePath());
-  }
-
-  private static SVNURL resolveRepositoryUrl(@NotNull SvnVcs vcs, @NotNull SvnCommandName name, @NotNull SvnTarget target) {
-    UrlMappingRepositoryProvider urlMappingProvider = new UrlMappingRepositoryProvider(vcs, target);
-    InfoCommandRepositoryProvider infoCommandProvider = new InfoCommandRepositoryProvider(vcs, target);
-
-    Repository repository = urlMappingProvider.get();
-    if (repository == null && !SvnCommandName.info.equals(name)) {
-      repository = infoCommandProvider.get();
-    }
-
-    return repository != null ? repository.getUrl() : null;
-  }
-
-  @NotNull
-  private static File resolveWorkingDirectory(@NotNull SvnVcs vcs, @NotNull SvnTarget target) {
-    File workingDirectory = target.isFile() ? target.getFile() : null;
-    // TODO: Do we really need search existing parent - or just take parent directory if target is file???
-    workingDirectory = SvnBindUtil.correctUpToExistingParent(workingDirectory);
-
-    if (workingDirectory == null) {
-      workingDirectory =
-        !vcs.getProject().isDefault() ? VfsUtilCore.virtualToIoFile(vcs.getProject().getBaseDir()) : getHomeDirectory();
-    }
-
-    return workingDirectory;
-  }
-
-  @Nullable
-  private static SVNInfo getInfo(@NotNull SvnVcs vcs, @NotNull SvnTarget target) {
-    SVNInfo result = null;
-
-    try {
-      result = target.isFile() ? vcs.getInfo(target.getFile()) : vcs.getInfo(target.getURL(), null);
-    }
-    catch (SVNException e) {
-      // TODO: Update this to more precise handling of exception codes
-      LOG.debug(e);
-    }
-
-    return result;
   }
 
   /**
@@ -288,66 +238,11 @@ public class CommandUtil {
     return contentsStatus;
   }
 
-  public interface RepositoryProvider {
-
-    @Nullable
-    Repository get();
-  }
-
-  public static abstract class BaseRepositoryProvider implements RepositoryProvider {
-
-    @NotNull protected final SvnVcs myVcs;
-    @NotNull protected final SvnTarget myTarget;
-
-    protected BaseRepositoryProvider(@NotNull SvnVcs vcs, @NotNull SvnTarget target) {
-      myVcs = vcs;
-      myTarget = target;
+  public static File correctUpToExistingParent(File base) {
+    while (base != null) {
+      if (base.exists() && base.isDirectory()) return base;
+      base = base.getParentFile();
     }
-  }
-
-  public static class UrlMappingRepositoryProvider extends BaseRepositoryProvider {
-
-    public UrlMappingRepositoryProvider(@NotNull SvnVcs vcs, @NotNull SvnTarget target) {
-      super(vcs, target);
-    }
-
-    @Nullable
-    @Override
-    public Repository get() {
-      RootUrlInfo rootInfo = null;
-
-      if (!myVcs.getProject().isDefault()) {
-        rootInfo = myTarget.isFile()
-                   ? myVcs.getSvnFileUrlMapping().getWcRootForFilePath(myTarget.getFile())
-                   : myVcs.getSvnFileUrlMapping().getWcRootForUrl(myTarget.getURL().toDecodedString());
-      }
-
-      return rootInfo != null ? new Repository(rootInfo.getRepositoryUrlUrl()) : null;
-    }
-  }
-
-  public static class InfoCommandRepositoryProvider extends BaseRepositoryProvider {
-
-    public InfoCommandRepositoryProvider(@NotNull SvnVcs vcs, @NotNull SvnTarget target) {
-      super(vcs, target);
-    }
-
-    @Nullable
-    @Override
-    public Repository get() {
-      Repository result;
-
-      if (myTarget.isURL()) {
-        // TODO: Also could still execute info when target is url - either to use info for authentication or to just get correct repository
-        // TODO: url in case of "read" operations are allowed anonymously.
-        result = new Repository(myTarget.getURL());
-      }
-      else {
-        SVNInfo info = getInfo(myVcs, myTarget);
-        result = info != null ? new Repository(info.getRepositoryRootURL()) : null;
-      }
-
-      return result;
-    }
+    return null;
   }
 }

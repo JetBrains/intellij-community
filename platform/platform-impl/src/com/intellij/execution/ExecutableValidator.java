@@ -111,7 +111,7 @@ public abstract class ExecutableValidator {
       return;
     }
 
-    LOG.info("Git executable is not valid: " + getCurrentExecutable());
+    LOG.info("Executable is not valid: " + getCurrentExecutable());
     if (myNotificationManager.getNotificationsOfType(ExecutableNotValidNotification.class, myProject).length == 0) { // show only once
       new ExecutableNotValidNotification().notify(myProject.isDefault() ? null : myProject);
     }

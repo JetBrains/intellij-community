@@ -13,26 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.commandLine;
+package org.jetbrains.idea.svn.api;
 
-import org.tmatesoft.svn.core.wc.SVNEvent;
-
-import java.io.File;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/4/13
- * Time: 3:49 PM
- */
-public class AddLineConverter {
-  private final File myBase;
+* @author Konstantin Kolosovsky.
+*/
+public abstract class BaseRepositoryProvider implements RepositoryProvider {
 
-  public AddLineConverter(File base) {
-    myBase = base;
-  }
+  @NotNull protected final SvnVcs myVcs;
+  @NotNull protected final SvnTarget myTarget;
 
-  public SVNEvent convert(final String line) {
-    return null;
+  public BaseRepositoryProvider(@NotNull SvnVcs vcs, @NotNull SvnTarget target) {
+    myVcs = vcs;
+    myTarget = target;
   }
 }

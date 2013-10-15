@@ -13,19 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.commandLine;
+package org.jetbrains.idea.svn.api;
 
-import com.intellij.openapi.vcs.LineProcessEventListener;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/26/13
- * Time: 10:38 AM
- */
-public interface LineCommandListener extends LineProcessEventListener {
+* @author Konstantin Kolosovsky.
+*/
+public interface RepositoryProvider {
 
-  void cancel();
-
-  boolean isCanceled();
+  @Nullable
+  Repository get();
 }
