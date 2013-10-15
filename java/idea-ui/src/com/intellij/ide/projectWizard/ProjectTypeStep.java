@@ -36,11 +36,9 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
-import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
@@ -226,13 +224,8 @@ public class ProjectTypeStep extends ModuleWizardStep {
               return matchFramework(projectCategory, provider);
             }
           });
-        myFrameworksPanel.setProviders(matched);
-        for (FrameworkSupportInModuleProvider provider : matched) {
-          if (ArrayUtil.contains(provider.getFrameworkType().getId(), projectCategory.getAssociatedFrameworkIds())) {
-            CheckedTreeNode treeNode = myFrameworksPanel.findNodeFor(provider);
-            treeNode.setChecked(true);
-          }
-        }
+
+        myFrameworksPanel.setProviders(matched, new HashSet<String>(Arrays.asList(projectCategory.getAssociatedFrameworkIds())));
       }
     }
     else if (object instanceof TemplatesGroup) {

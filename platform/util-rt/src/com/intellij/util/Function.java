@@ -15,6 +15,8 @@
  */
 package com.intellij.util;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Collection;
 
 /**
@@ -45,6 +47,21 @@ public interface Function<Param, Result> {
     @Override
     public R fun(P p) {
       return (R)p;
+    }
+  }
+
+  final class InstanceOf<P, R extends P> implements NullableFunction<P, R> {
+
+    private final Class<R> myResultClass;
+
+    public InstanceOf(Class<R> resultClass) {
+      myResultClass = resultClass;
+    }
+
+    @Nullable
+    @Override
+    public R fun(P p) {
+      return p.getClass().isAssignableFrom(myResultClass) ? (R)p : null;
     }
   }
 
