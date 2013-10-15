@@ -82,7 +82,9 @@ public class BuilderInnerClassProcessor extends AbstractLombokClassProcessor {
 
   protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String innerClassName = psiClass.getName() + "Builder";
-    LombokLightClassBuilder innerClass = LombokPsiElementFactory.getInstance().createLightClass(psiClass.getManager(), innerClassName);
+    LombokLightClassBuilder innerClass = LombokPsiElementFactory.getInstance().createLightClass(psiClass.getManager(), innerClassName)
+       .withModifier(PsiModifier.PUBLIC)
+       .withModifier(PsiModifier.STATIC);
     target.add(innerClass);
   }
 }

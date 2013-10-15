@@ -10,12 +10,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomNamedTarget;
 import com.intellij.psi.*;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
@@ -30,7 +30,7 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
   private static final String LOMBOK_SRC_PATH = "./lombok-api/target/generated-sources/lombok";
   private static final String LOMBOKPG_SRC_PATH = "./lombok-api/target/generated-sources/lombok-pg";
 
-  private static final Logger LOG = Logger.getLogger(LombokParsingTestCase.class.getSimpleName());
+  private static final Logger LOG = Logger.getLogger(LombokParsingTestCase.class);
 
   @Override
   protected String getTestDataPath() {
@@ -157,8 +157,8 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
     PsiMethod[] intellijMethods = intellij.getMethods();
     PsiMethod[] theirsMethods = theirs.getMethods();
 
-    LOG.log(Level.INFO, "IntelliJ Methods for class " + intellij.getName() + ": " + Arrays.toString(intellijMethods));
-    LOG.log(Level.INFO, "Theirs Methods for class " + theirs.getName() + ": " + Arrays.toString(theirsMethods));
+    LOG.info("IntelliJ Methods for class " + intellij.getName() + ": " + Arrays.toString(intellijMethods));
+    LOG.info("Theirs Methods for class " + theirs.getName() + ": " + Arrays.toString(theirsMethods));
 
     assertEquals("Methodscounts are different for Class: " + intellij.getName(), theirsMethods.length, intellijMethods.length);
 
@@ -185,8 +185,8 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
     PsiClass[] intellijInnerClasses = intellij.getInnerClasses();
     PsiClass[] theirsInnerClasses = theirs.getInnerClasses();
 
-    LOG.log(Level.INFO, "IntelliJ inner classes for class " + intellij.getName() + ": " + Arrays.toString(intellijInnerClasses));
-    LOG.log(Level.INFO, "Theirs inner classes for class " + theirs.getName() + ": " + Arrays.toString(theirsInnerClasses));
+    LOG.info("IntelliJ inner classes for class " + intellij.getName() + ": " + Arrays.toString(intellijInnerClasses));
+    LOG.info("Theirs inner classes for class " + theirs.getName() + ": " + Arrays.toString(theirsInnerClasses));
 
     assertEquals("Inner classes are different for Class: " + intellij.getName(), theirsInnerClasses.length, intellijInnerClasses.length);
 

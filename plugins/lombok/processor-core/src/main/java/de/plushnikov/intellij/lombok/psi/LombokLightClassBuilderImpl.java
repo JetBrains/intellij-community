@@ -23,7 +23,7 @@ public class LombokLightClassBuilderImpl extends LombokLightClass implements Lom
 
   @Override
   public LombokLightClassBuilder withModifier(@PsiModifier.ModifierConstant @NotNull @NonNls String modifier) {
-//      ((LightModifierList) getModifierList()).addModifier(modifier);
+      ((LightModifierList) getModifierList()).addModifier(modifier);
       return this;
   }
 

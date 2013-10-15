@@ -1,9 +1,12 @@
 package de.plushnikov.intellij.lombok.psi;
 
 import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.impl.source.PsiModifierListImpl;
+import com.intellij.psi.impl.source.tree.java.PsiCompositeModifierList;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -39,6 +42,7 @@ public class LombokLightClass extends LightElement implements PsiClass {
 
   public LombokLightClass(PsiManager manager, Language language) {
     super(manager, language);
+    myModifierList = new LombokLightModifierListImpl(manager, JavaLanguage.INSTANCE);
   }
 
   @Override
@@ -302,7 +306,7 @@ public class LombokLightClass extends LightElement implements PsiClass {
     return myTypeParameters;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public PsiModifierList getModifierList() {
     return myModifierList;
