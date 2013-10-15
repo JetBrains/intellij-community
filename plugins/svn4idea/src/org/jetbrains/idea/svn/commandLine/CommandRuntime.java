@@ -53,72 +53,92 @@ public class CommandRuntime {
     exePath = SvnApplicationSettings.getInstance().getCommandLinePath();
   }
 
+  @NotNull
   public CommandExecutor runWithAuthenticationAttempt(@NotNull Command command) throws SvnBindException {
     try {
-      // for IDEA proxy case
-      writeIdeaConfig2SubversionConfig(command.getRepositoryUrl());
+      onStart(command);
 
-      if (command.getRepositoryUrl() == null) {
-        command.setRepositoryUrl(resolveRepositoryUrl(command));
-      }
-      if (command.getWorkingDirectory() == null) {
-        command.setWorkingDirectory(resolveWorkingDirectory(command));
-      }
-
-      command.setConfigDir(myAuthCallback.getSpecialConfigDir());
-      command.addParameters("--non-interactive");
-      command.saveOriginalParameters();
-
-      while (true) {
-        final CommandExecutor executor = newExecutor(command);
+      boolean repeat = true;
+      CommandExecutor executor = null;
+      while (repeat) {
+        executor = newExecutor(command);
         executor.run();
-        final Integer exitCode = executor.getExitCodeReference();
-
-        // could be situations when exit code = 0, but there is info "warning" in error stream for instance, for "svn status"
-        // on non-working copy folder
-        // TODO: synchronization does not work well in all cases - sometimes exit code is not yet set and null returned - fix synchronization
-        // here we treat null exit code as some non-zero exit code
-        if (exitCode == null || exitCode != 0) {
-          logNullExitCode(executor, exitCode);
-
-          if (executor.getErrorOutput().length() > 0) {
-            // handle authentication
-            final String errText = executor.getErrorOutput().trim();
-            final AuthCallbackCase callback = createCallback(errText, command.getRepositoryUrl());
-            if (callback != null) {
-              cleanup(executor, command.getWorkingDirectory());
-              if (callback.getCredentials(errText)) {
-                if (myAuthCallback.getSpecialConfigDir() != null) {
-                  command.setConfigDir(myAuthCallback.getSpecialConfigDir());
-                }
-                List<String> newParameters = command.getParameters();
-                callback.updateParameters(newParameters);
-                command.setParameters(newParameters);
-                continue;
-              }
-            }
-            throw new SvnBindException(errText);
-          } else {
-            // no errors found in error stream => we treat null exitCode as successful, otherwise exception is thrown
-            if (exitCode != null) {
-              // here exitCode != null && exitCode != 0
-              throw new SvnBindException("Svn process exited with error code: " + exitCode);
-            }
-          }
-        } else if (executor.getErrorOutput().length() > 0) {
-          // here exitCode == 0, but some warnings are in error stream
-          LOG.info("Detected warning - " + executor.getErrorOutput());
-        }
-        return executor;
+        repeat = onAfterCommand(executor, command);
       }
+      return executor;
     } finally {
-      myAuthCallback.reset();
+      onFinish();
     }
   }
 
-  private void logNullExitCode(@NotNull CommandExecutor command, @Nullable Integer exitCode) {
+  private void onStart(@NotNull Command command) throws SvnBindException {
+    // for IDEA proxy case
+    writeIdeaConfig2SubversionConfig(command.getRepositoryUrl());
+
+    if (command.getRepositoryUrl() == null) {
+      command.setRepositoryUrl(resolveRepositoryUrl(command));
+    }
+    if (command.getWorkingDirectory() == null) {
+      command.setWorkingDirectory(resolveWorkingDirectory(command));
+    }
+    command.setConfigDir(myAuthCallback.getSpecialConfigDir());
+    command.addParameters("--non-interactive");
+    command.saveOriginalParameters();
+  }
+
+  private boolean onAfterCommand(@NotNull CommandExecutor executor, @NotNull Command command) throws SvnBindException {
+    boolean repeat = false;
+
+    // could be situations when exit code = 0, but there is info "warning" in error stream for instance, for "svn status"
+    // on non-working copy folder
+    // TODO: synchronization does not work well in all cases - sometimes exit code is not yet set and null returned - fix synchronization
+    // here we treat null exit code as some non-zero exit code
+    final Integer exitCode = executor.getExitCodeReference();
+    if (exitCode == null || exitCode != 0) {
+      logNullExitCode(executor, exitCode);
+
+      if (executor.getErrorOutput().length() > 0) {
+        // handle authentication
+        final String errText = executor.getErrorOutput().trim();
+        final AuthCallbackCase callback = createCallback(errText, command.getRepositoryUrl());
+        if (callback != null) {
+          cleanup(executor, command.getWorkingDirectory());
+          if (callback.getCredentials(errText)) {
+            if (myAuthCallback.getSpecialConfigDir() != null) {
+              command.setConfigDir(myAuthCallback.getSpecialConfigDir());
+            }
+            List<String> newParameters = command.getParameters();
+            callback.updateParameters(newParameters);
+            command.setParameters(newParameters);
+            repeat = true;
+          } else {
+            throw new SvnBindException(errText);
+          }
+        } else {
+          throw new SvnBindException(errText);
+        }
+      } else {
+        // no errors found in error stream => we treat null exitCode as successful, otherwise exception is thrown
+        if (exitCode != null) {
+          // here exitCode != null && exitCode != 0
+          throw new SvnBindException("Svn process exited with error code: " + exitCode);
+        }
+      }
+    } else if (executor.getErrorOutput().length() > 0) {
+      // here exitCode == 0, but some warnings are in error stream
+      LOG.info("Detected warning - " + executor.getErrorOutput());
+    }
+
+    return repeat;
+  }
+
+  private void onFinish() {
+    myAuthCallback.reset();
+  }
+
+  private static void logNullExitCode(@NotNull CommandExecutor executor, @Nullable Integer exitCode) {
     if (exitCode == null) {
-      LOG.info("Null exit code returned, but not errors detected " + command.getCommandText());
+      LOG.info("Null exit code returned, but not errors detected " + executor.getCommandText());
     }
   }
 
@@ -140,7 +160,8 @@ public class CommandRuntime {
     }
   }
 
-  private AuthCallbackCase createCallback(final String errText, final SVNURL url) {
+  @Nullable
+  private AuthCallbackCase createCallback(@NotNull final String errText, @Nullable final SVNURL url) {
     List<AuthCallbackCase> authCases = ContainerUtil.newArrayList();
 
     authCases.add(new CertificateCallbackCase(myAuthCallback, url));
@@ -158,8 +179,8 @@ public class CommandRuntime {
     });
   }
 
-  private void cleanup(CommandExecutor command, @NotNull File workingDirectory) throws SvnBindException {
-    if (command.isManuallyDestroyed() && command.getCommandName().isWriteable()) {
+  private void cleanup(@NotNull CommandExecutor executor, @NotNull File workingDirectory) throws SvnBindException {
+    if (executor.isManuallyDestroyed() && executor.getCommandName().isWriteable()) {
       File wcRoot = SvnUtil.getWorkingCopyRootNew(workingDirectory);
 
       // not all commands require cleanup - for instance, some commands operate only with repository - like "svn info <url>"
@@ -171,15 +192,17 @@ public class CommandRuntime {
 
         newExecutor(cleanupCommand).run();
       } else {
-        LOG.info("Could not execute cleanup for command " + command.getCommandText());
+        LOG.info("Could not execute cleanup for command " + executor.getCommandText());
       }
     }
   }
 
+  @NotNull
   private CommandExecutor newExecutor(@NotNull Command command) {
     return new CommandExecutor(exePath, command);
   }
 
+  @Nullable
   private SVNURL resolveRepositoryUrl(@NotNull Command command) {
     UrlMappingRepositoryProvider urlMappingProvider = new UrlMappingRepositoryProvider(myVcs, command.getTarget());
     InfoCommandRepositoryProvider infoCommandProvider = new InfoCommandRepositoryProvider(myVcs, command.getTarget());
