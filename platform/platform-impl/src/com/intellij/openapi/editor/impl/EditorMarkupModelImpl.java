@@ -188,7 +188,6 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
       return false;
     } else {
-      if (e.getX() > e.getComponent().getWidth() - 2) return false;//The most right edge is not active for lens
       me = new MouseEvent(me.getComponent(), me.getID(), me.getWhen(), me.getModifiers(), me.getX(), me.getY() + myRowAdjuster, me.getClickCount(), me.isPopupTrigger());
       final List<RangeHighlighterEx> highlighters = new ArrayList<RangeHighlighterEx>();
       collectRangeHighlighters(this, line, highlighters);
