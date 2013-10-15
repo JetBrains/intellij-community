@@ -51,4 +51,10 @@ public class LombokLightClassBuilderImpl extends LombokLightClass implements Lom
     setConstructors(constructors.toArray(new PsiMethod[constructors.size()]));
     return this;
   }
+
+  @Override
+  public LombokLightClassBuilder withParameterTypes(@NotNull PsiTypeParameterList parameterList) {
+    setTypeParameterList(parameterList);
+    return this;
+  }
 }

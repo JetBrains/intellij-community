@@ -38,6 +38,7 @@ public class LombokLightClass extends LightElement implements PsiClass {
   private PsiClass[] myInnerClasses = new PsiClass[0];
   private PsiClass myContainingClass;
   private PsiClassInitializer[] myClassInitializers = new PsiClassInitializer[0];
+  private PsiTypeParameterList myTypeParameterList = null;
   private PsiTypeParameter[] myTypeParameters = new PsiTypeParameter[0];
   private PsiModifierList myModifierList;
   private boolean myIsInterface = false;
@@ -347,6 +348,11 @@ public class LombokLightClass extends LightElement implements PsiClass {
   @Override
   public PsiTypeParameterList getTypeParameterList() {
     return null;
+  }
+
+  public void setTypeParameterList(@NotNull PsiTypeParameterList list) {
+    myTypeParameterList = list;
+    myTypeParameters = list.getTypeParameters();
   }
 
   @NotNull

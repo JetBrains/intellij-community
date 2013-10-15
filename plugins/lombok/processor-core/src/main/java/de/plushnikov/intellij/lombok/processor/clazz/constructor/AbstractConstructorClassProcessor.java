@@ -112,6 +112,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractLombokCl
     return false;
   }
 
+  // TODO: Move this to PsiClassUtil
   @NotNull
   protected Collection<PsiField> getAllNotInitializedAndNotStaticFields(@NotNull PsiClass psiClass) {
     Collection<PsiField> allNotInitializedNotStaticFields = new ArrayList<PsiField>();

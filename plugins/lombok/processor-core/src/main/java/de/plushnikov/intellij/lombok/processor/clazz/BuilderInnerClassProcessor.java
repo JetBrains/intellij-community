@@ -85,6 +85,7 @@ public class BuilderInnerClassProcessor extends AbstractLombokClassProcessor {
     final String innerClassCanonicalName = psiClass.getName() + "." + innerClassSimpleName;
     LombokLightClassBuilder innerClass = LombokPsiElementFactory.getInstance().createLightClass(psiClass.getManager(), innerClassCanonicalName, innerClassSimpleName)
        .withContainingClass(psiClass)
+       .withParameterTypes(psiClass.getTypeParameterList()) // TODO
        .withModifier(PsiModifier.PUBLIC)
        .withModifier(PsiModifier.STATIC);
     innerClass.withConstructors(createConstructors(innerClass, psiAnnotation))
@@ -109,6 +110,8 @@ public class BuilderInnerClassProcessor extends AbstractLombokClassProcessor {
         createField = !modifierList.hasModifierProperty(PsiModifier.STATIC);
         //Skip fields that start with $
         createField &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
+        // skip initialized final fields
+        createField &= !(null != psiField.getInitializer() && modifierList.hasModifierProperty(PsiModifier.FINAL));
       }
       if (createField) {
         fields.add(LombokPsiElementFactory.getInstance().createLightField(psiClass.getManager(), psiField.getName(), psiField.getType())
@@ -136,6 +139,8 @@ public class BuilderInnerClassProcessor extends AbstractLombokClassProcessor {
         createMethod = !modifierList.hasModifierProperty(PsiModifier.STATIC);
         //Skip fields that start with $
         createMethod &= !psiField.getName().startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER);
+        // skip initialized final fields
+        createMethod &= !(null != psiField.getInitializer() && modifierList.hasModifierProperty(PsiModifier.FINAL));
       }
       if (createMethod) {
         methods.add(LombokPsiElementFactory.getInstance().createLightMethod(psiField.getManager(), psiField.getName())

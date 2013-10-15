@@ -89,7 +89,7 @@ public class BuilderProcessor extends AbstractLombokClassProcessor {
     }
 
     LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().createLightMethod(psiClass.getManager(), "builder")
-        .withMethodReturnType(PsiTypesUtil.getClassType(psiClass.getInnerClasses()[0])) // TODO: It's not good!!
+        .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(psiClass.getInnerClasses()[0])) // TODO: It's not good!!
         .withContainingClass(psiClass)
         .withNavigationElement(psiAnnotation);
     method.withModifier(PsiModifier.STATIC);
