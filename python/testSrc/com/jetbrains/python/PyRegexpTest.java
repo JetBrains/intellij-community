@@ -111,6 +111,30 @@ public class PyRegexpTest extends PyTestCase {
                        ".*(missing)missing");
   }
 
+  public void testPercentFormattingRegexpAutoInjection() {
+    doTestInjectedText("import re \n" +
+                       "\n" +
+                       "def f(x, y):\n" +
+                       "    re.search('<caret>.*%s-%d' % (x, y), 'foo')\n",
+                       ".*missing-missing");
+  }
+
+  public void testNewStyleFormattingRegexpAutoInjection() {
+    doTestInjectedText("import re\n" +
+                       "\n" +
+                       "def f(x, y):\n" +
+                       "    re.search('<caret>.*{foo}-{}'.format(x, foo=y), 'foo')\n",
+                       ".*missing-missing");
+  }
+
+  public void testNewStyleFormattingEndsWithConstant() {
+    doTestInjectedText("import re\n" +
+                       "\n" +
+                       "def f(**kwargs):" +
+                       "    re.search('<caret>(foo{bar}baz$)'.format(**kwargs), 'foo')\n",
+                       "(foomissingbaz$)");
+  }
+
   private void doTestInjectedText(@NotNull String text, @NotNull String expected) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());

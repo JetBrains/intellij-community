@@ -82,7 +82,7 @@ public class PythonSpellcheckerStrategy extends SpellcheckingStrategy {
     @Override
     public void tokenize(@NotNull PyStringLiteralExpression element, TokenConsumer consumer) {
       String stringValue = element.getStringValue();
-      List<PyStringFormatParser.FormatStringChunk> chunks = new PyStringFormatParser(stringValue).parse();
+      List<PyStringFormatParser.FormatStringChunk> chunks = PyStringFormatParser.parsePercentFormat(stringValue);
       Splitter splitter = PlainTextSplitter.getInstance();
       for (PyStringFormatParser.FormatStringChunk chunk : chunks) {
         if (chunk instanceof PyStringFormatParser.ConstantChunk) {

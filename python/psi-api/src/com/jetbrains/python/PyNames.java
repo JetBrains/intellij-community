@@ -119,6 +119,8 @@ public class PyNames {
   public static final String COLLECTIONS = "collections";
   public static final String COLLECTIONS_NAMEDTUPLE = COLLECTIONS + "." + NAMEDTUPLE;
 
+  public static final String FORMAT = "format";
+  
   public static final String ABSTRACTMETHOD = "abc.abstractmethod";
   public static final String ABSTRACTPROPERTY = "abc.abstractproperty";
 
