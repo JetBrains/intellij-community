@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ public class Command {
   @Nullable private File myConfigDir;
   @Nullable private LineCommandListener myResultBuilder;
   @Nullable private SVNURL myRepositoryUrl;
+  @NotNull private SvnTarget myTarget;
 
   public Command(@NotNull SvnCommandName name) {
     myName = name;
@@ -64,6 +66,11 @@ public class Command {
   }
 
   @NotNull
+  public SvnTarget getTarget() {
+    return myTarget;
+  }
+
+  @NotNull
   public SvnCommandName getName() {
     return myName;
   }
@@ -82,6 +89,10 @@ public class Command {
 
   public void setRepositoryUrl(@Nullable SVNURL repositoryUrl) {
     myRepositoryUrl = repositoryUrl;
+  }
+
+  public void setTarget(@NotNull SvnTarget target) {
+    myTarget = target;
   }
 
   // TODO: used only to ensure authentication info is not logged to file. Remove when command execution model is refactored

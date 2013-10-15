@@ -18,12 +18,18 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.api.InfoCommandRepositoryProvider;
+import org.jetbrains.idea.svn.api.Repository;
+import org.jetbrains.idea.svn.api.UrlMappingRepositoryProvider;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.io.IOException;
@@ -38,9 +44,11 @@ public class CommandRuntime {
   private static final Logger LOG = Logger.getInstance(CommandRuntime.class);
 
   @NotNull private final AuthenticationCallback myAuthCallback;
+  @NotNull private final SvnVcs myVcs;
   private final String exePath;
 
-  public CommandRuntime(@NotNull AuthenticationCallback authCallback) {
+  public CommandRuntime(@NotNull SvnVcs vcs, @NotNull AuthenticationCallback authCallback) {
+    myVcs = vcs;
     myAuthCallback = authCallback;
     exePath = SvnApplicationSettings.getInstance().getCommandLinePath();
   }
@@ -49,6 +57,13 @@ public class CommandRuntime {
     try {
       // for IDEA proxy case
       writeIdeaConfig2SubversionConfig(command.getRepositoryUrl());
+
+      if (command.getRepositoryUrl() == null) {
+        command.setRepositoryUrl(resolveRepositoryUrl(command));
+      }
+      if (command.getWorkingDirectory() == null) {
+        command.setWorkingDirectory(resolveWorkingDirectory(command));
+      }
 
       command.setConfigDir(myAuthCallback.getSpecialConfigDir());
       command.addParameters("--non-interactive");
@@ -163,5 +178,32 @@ public class CommandRuntime {
 
   private CommandExecutor newExecutor(@NotNull Command command) {
     return new CommandExecutor(exePath, command);
+  }
+
+  private SVNURL resolveRepositoryUrl(@NotNull Command command) {
+    UrlMappingRepositoryProvider urlMappingProvider = new UrlMappingRepositoryProvider(myVcs, command.getTarget());
+    InfoCommandRepositoryProvider infoCommandProvider = new InfoCommandRepositoryProvider(myVcs, command.getTarget());
+
+    Repository repository = urlMappingProvider.get();
+    if (repository == null && !SvnCommandName.info.equals(command.getName())) {
+      repository = infoCommandProvider.get();
+    }
+
+    return repository != null ? repository.getUrl() : null;
+  }
+
+  @NotNull
+  private File resolveWorkingDirectory(@NotNull Command command) {
+    SvnTarget target = command.getTarget();
+    File workingDirectory = target.isFile() ? target.getFile() : null;
+    // TODO: Do we really need search existing parent - or just take parent directory if target is file???
+    workingDirectory = CommandUtil.correctUpToExistingParent(workingDirectory);
+
+    if (workingDirectory == null) {
+      workingDirectory =
+        !myVcs.getProject().isDefault() ? VfsUtilCore.virtualToIoFile(myVcs.getProject().getBaseDir()) : CommandUtil.getHomeDirectory();
+    }
+
+    return workingDirectory;
   }
 }

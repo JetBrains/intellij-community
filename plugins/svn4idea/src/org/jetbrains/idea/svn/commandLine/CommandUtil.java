@@ -3,16 +3,11 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.api.InfoCommandRepositoryProvider;
-import org.jetbrains.idea.svn.api.Repository;
-import org.jetbrains.idea.svn.api.UrlMappingRepositoryProvider;
 import org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback;
 import org.tmatesoft.svn.core.SVNDepth;
-import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc.SVNDiffOptions;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 import org.tmatesoft.svn.core.wc.SVNStatusType;
@@ -180,57 +175,29 @@ public class CommandUtil {
                                    @NotNull SvnCommandName name,
                                    @NotNull List<String> parameters,
                                    @Nullable LineCommandListener listener) throws VcsException {
-    File workingDirectory = resolveWorkingDirectory(vcs, target);
-
-    return execute(vcs, target, workingDirectory, name, parameters, listener);
+    return execute(vcs, target, null, name, parameters, listener);
   }
 
   public static CommandExecutor execute(@NotNull SvnVcs vcs,
                                    @NotNull SvnTarget target,
-                                   @NotNull File workingDirectory,
+                                   @Nullable File workingDirectory,
                                    @NotNull SvnCommandName name,
                                    @NotNull List<String> parameters,
                                    @Nullable LineCommandListener listener) throws VcsException {
     Command command = new Command(name);
 
-    command.setRepositoryUrl(resolveRepositoryUrl(vcs, name, target));
+    command.setTarget(target);
     command.setWorkingDirectory(workingDirectory);
     command.setResultBuilder(listener);
     command.addParameters(parameters);
 
-    CommandRuntime runtime = new CommandRuntime(new IdeaSvnkitBasedAuthenticationCallback(vcs));
+    CommandRuntime runtime = new CommandRuntime(vcs, new IdeaSvnkitBasedAuthenticationCallback(vcs));
     return runtime.runWithAuthenticationAttempt(command);
   }
 
   @NotNull
   public static File getHomeDirectory() {
     return new File(PathManager.getHomePath());
-  }
-
-  private static SVNURL resolveRepositoryUrl(@NotNull SvnVcs vcs, @NotNull SvnCommandName name, @NotNull SvnTarget target) {
-    UrlMappingRepositoryProvider urlMappingProvider = new UrlMappingRepositoryProvider(vcs, target);
-    InfoCommandRepositoryProvider infoCommandProvider = new InfoCommandRepositoryProvider(vcs, target);
-
-    Repository repository = urlMappingProvider.get();
-    if (repository == null && !SvnCommandName.info.equals(name)) {
-      repository = infoCommandProvider.get();
-    }
-
-    return repository != null ? repository.getUrl() : null;
-  }
-
-  @NotNull
-  private static File resolveWorkingDirectory(@NotNull SvnVcs vcs, @NotNull SvnTarget target) {
-    File workingDirectory = target.isFile() ? target.getFile() : null;
-    // TODO: Do we really need search existing parent - or just take parent directory if target is file???
-    workingDirectory = correctUpToExistingParent(workingDirectory);
-
-    if (workingDirectory == null) {
-      workingDirectory =
-        !vcs.getProject().isDefault() ? VfsUtilCore.virtualToIoFile(vcs.getProject().getBaseDir()) : getHomeDirectory();
-    }
-
-    return workingDirectory;
   }
 
   /**
