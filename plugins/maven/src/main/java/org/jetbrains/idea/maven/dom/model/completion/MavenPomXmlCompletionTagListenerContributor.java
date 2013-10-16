@@ -70,6 +70,13 @@ public class MavenPomXmlCompletionTagListenerContributor extends CompletionContr
                       context.commitDocument();
 
                       new ReformatCodeProcessor(context.getProject(), context.getFile(), xmlTag.getTextRange(), true).run();
+
+                      context.setLaterRunnable(new Runnable() {
+                        @Override
+                        public void run() {
+                          new CodeCompletionHandlerBase(CompletionType.BASIC).invokeCompletion(context.getProject(), context.getEditor());
+                        }
+                      });
                     }
                   }
                 }
