@@ -47,6 +47,7 @@ public class CommandRuntime {
 
     myModules = ContainerUtil.newArrayList();
     myModules.add(new CommandParametersResolutionModule(this));
+    myModules.add(new ProxyModule(this));
   }
 
   @NotNull

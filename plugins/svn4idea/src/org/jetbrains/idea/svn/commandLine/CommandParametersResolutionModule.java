@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +25,6 @@ import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
-import java.io.IOException;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -39,10 +37,6 @@ public class CommandParametersResolutionModule extends BaseCommandRuntimeModule 
 
   @Override
   public void onStart(@NotNull Command command) throws SvnBindException {
-    // TODO: move this to proxy module
-    // for IDEA proxy case
-    writeIdeaConfig2SubversionConfig(command.getRepositoryUrl());
-
     if (command.getRepositoryUrl() == null) {
       command.setRepositoryUrl(resolveRepositoryUrl(command));
     }
@@ -52,21 +46,6 @@ public class CommandParametersResolutionModule extends BaseCommandRuntimeModule 
     command.setConfigDir(myAuthCallback.getSpecialConfigDir());
     command.addParameters("--non-interactive");
     command.saveOriginalParameters();
-  }
-
-  private void writeIdeaConfig2SubversionConfig(@Nullable SVNURL repositoryUrl) throws SvnBindException {
-    if (myAuthCallback.haveDataForTmpConfig()) {
-      try {
-        if (!myAuthCallback.persistDataToTmpConfig(repositoryUrl)) {
-          throw new SvnBindException("Can not persist " + ApplicationNamesInfo.getInstance().getProductName() +
-                                     " HTTP proxy information into tmp config directory");
-        }
-      }
-      catch (IOException e) {
-        throw new SvnBindException(e);
-      }
-      assert myAuthCallback.getSpecialConfigDir() != null;
-    }
   }
 
   @Nullable
