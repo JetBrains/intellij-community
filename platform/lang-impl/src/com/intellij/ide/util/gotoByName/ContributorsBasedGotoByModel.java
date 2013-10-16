@@ -37,6 +37,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
@@ -84,6 +85,8 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   }
 
   private final ConcurrentHashMap<ChooseByNameContributor, TIntHashSet> myContributorToItsSymbolsMap = new ConcurrentHashMap<ChooseByNameContributor, TIntHashSet>();
+  private volatile IdFilter myIdFilter;
+  private volatile boolean myIdFilterForLibraries;
 
   @Override
   public void processNames(final Processor<String> nameProcessor, final boolean checkBoxState) {
@@ -107,7 +110,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
                   }
                   return true;
                 }
-              }, DefaultFileNavigationContributor.getScope(myProject, checkBoxState), IdFilter.getProjectIdFilter(myProject, checkBoxState));
+              }, FindSymbolParameters.searchScopeFor(myProject, checkBoxState), getIdFilter(checkBoxState));
             } else {
               String[] names = contributor.getNames(myProject, checkBoxState);
               for (String element : names) {
@@ -146,6 +149,17 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
     }
   }
 
+  IdFilter getIdFilter(boolean withLibraries) {
+    IdFilter idFilter = myIdFilter;
+
+    if (idFilter == null || myIdFilterForLibraries != withLibraries) {
+      idFilter = IdFilter.getProjectIdFilter(myProject, withLibraries);
+      myIdFilter = idFilter;
+      myIdFilterForLibraries = withLibraries;
+    }
+    return idFilter;
+  }
+
   @NotNull
   @Override
   public String[] getNames(final boolean checkBoxState) {
@@ -171,7 +185,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   }
 
   @NotNull
-  public Object[] getElementsByName(final String name, final boolean checkBoxState, final String pattern, @NotNull final ProgressIndicator canceled) {
+  public Object[] getElementsByName(final String name, final FindSymbolParameters parameters, @NotNull final ProgressIndicator canceled) {
     long elementByNameStarted = System.currentTimeMillis();
     final List<NavigationItem> items = Collections.synchronizedList(new ArrayList<NavigationItem>());
 
@@ -184,28 +198,48 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
         TIntHashSet filter = myContributorToItsSymbolsMap.get(contributor);
         if (filter != null && !filter.contains(name.hashCode())) return true;
         try {
+          boolean searchInLibraries = parameters.getSearchScope().isSearchInLibraries();
           long contributorStarted = System.currentTimeMillis();
-          NavigationItem[] itemsByName = contributor.getItemsByName(name, pattern, myProject, checkBoxState);
-          for (NavigationItem item : itemsByName) {
-            canceled.checkCanceled();
-            if (item == null) {
-              PluginId pluginId = PluginManager.getPluginByClassName(contributor.getClass().getName());
-              if (pluginId != null) {
-                LOG.error(new PluginException("null item from contributor " + contributor + " for name " + name, pluginId));
+
+          if (contributor instanceof ChooseByNameContributorEx) {
+            if (parameters.getIdFilter() == null) {
+              parameters.setIdFilter(getIdFilter(searchInLibraries));
+            }
+            ((ChooseByNameContributorEx)contributor).processElementsWithName(name, new Processor<NavigationItem>() {
+              @Override
+              public boolean process(NavigationItem item) {
+                canceled.checkCanceled();
+                if (acceptItem(item)) items.add(item);
+                return true;
               }
-              else {
-                LOG.error("null item from contributor " + contributor + " for name " + name);
+            }, parameters);
+
+            if (LOG.isDebugEnabled()) {
+              LOG.debug(System.currentTimeMillis() - contributorStarted + "," + contributor + ",");
+            }
+          } else {
+            NavigationItem[] itemsByName = contributor.getItemsByName(name, parameters.getLocalPatternName(), myProject, searchInLibraries);
+            for (NavigationItem item : itemsByName) {
+              canceled.checkCanceled();
+              if (item == null) {
+                PluginId pluginId = PluginManager.getPluginByClassName(contributor.getClass().getName());
+                if (pluginId != null) {
+                  LOG.error(new PluginException("null item from contributor " + contributor + " for name " + name, pluginId));
+                }
+                else {
+                  LOG.error("null item from contributor " + contributor + " for name " + name);
+                }
+                continue;
               }
-              continue;
+
+              if (acceptItem(item)) {
+                items.add(item);
+              }
             }
 
-            if (acceptItem(item)) {
-              items.add(item);
+            if (LOG.isDebugEnabled()) {
+              LOG.debug(System.currentTimeMillis() - contributorStarted + "," + contributor + "," + itemsByName.length);
             }
-          }
-
-          if (LOG.isDebugEnabled()) {
-            LOG.debug(System.currentTimeMillis() - contributorStarted + "," + contributor + "," + itemsByName.length);
           }
         }
         catch (ProcessCanceledException ex) {
@@ -240,7 +274,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
   @NotNull
   @Override
   public Object[] getElementsByName(final String name, final boolean checkBoxState, final String pattern) {
-    return getElementsByName(name, checkBoxState, pattern, new ProgressIndicatorBase());
+    return getElementsByName(name, FindSymbolParameters.wrap(pattern, myProject, checkBoxState), new ProgressIndicatorBase());
   }
 
   @Override

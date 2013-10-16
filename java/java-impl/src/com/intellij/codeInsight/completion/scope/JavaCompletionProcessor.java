@@ -265,7 +265,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
     return myQualifierType;
   }
 
-  private boolean isAccessible(final PsiElement element) {
+  public boolean isAccessible(@Nullable final PsiElement element) {
     if (!myOptions.checkAccess) return true;
     if (!(element instanceof PsiMember)) return true;
 

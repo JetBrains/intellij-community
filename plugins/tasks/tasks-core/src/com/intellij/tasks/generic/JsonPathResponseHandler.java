@@ -114,6 +114,7 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
     return extractValueAndCheckType(selector, (String)context, Boolean.class);
   }
 
+  @SuppressWarnings("UnusedDeclaration")
   @Nullable
   private Long selectLong(@NotNull Selector selector, @NotNull String source) throws Exception {
     return extractValueAndCheckType(selector, source, Long.class);
@@ -121,16 +122,17 @@ public final class JsonPathResponseHandler extends SelectorBasedResponseHandler 
 
   @NotNull
   private JsonPath lazyCompile(@NotNull String path) throws Exception {
-    if (!myCompiledCache.containsKey(path)) {
+    JsonPath jsonPath = myCompiledCache.get(path);
+    if (jsonPath == null) {
       try {
-        final JsonPath jsonPath = JsonPath.compile(path);
+        jsonPath = JsonPath.compile(path);
         myCompiledCache.put(path, jsonPath);
       }
       catch (InvalidPathException e) {
         throw new Exception(String.format("Malformed JsonPath expression '%s'", path));
       }
     }
-    return myCompiledCache.get(path);
+    return jsonPath;
   }
 
   @NotNull

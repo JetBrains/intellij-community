@@ -49,6 +49,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   private String myMajorVersion = null;
   private String myMinorVersion = null;
   private String myBuildNumber = null;
+  private String myApiVersion = null;
   private String myCompanyName = "JetBrains s.r.o.";
   private String myCompanyUrl = "http://www.jetbrains.com/";
   private Color myProgressColor = null;
@@ -110,6 +111,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
   @NonNls private static final String ELEMENT_BUILD = "build";
   @NonNls private static final String ELEMENT_COMPANY = "company";
   @NonNls private static final String ATTRIBUTE_NUMBER = "number";
+  @NonNls private static final String ATTRIBUTE_API_VERSION = "apiVersion";
   @NonNls private static final String ATTRIBUTE_DATE = "date";
   @NonNls private static final String ATTRIBUTE_MAJOR_RELEASE_DATE = "majorReleaseDate";
   @NonNls private static final String ELEMENT_LOGO = "logo";
@@ -184,6 +186,10 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   @Override
   public BuildNumber getBuild() {
+    return BuildNumber.fromString(myBuildNumber, getProductPrefix());
+  }
+
+  private static String getProductPrefix() {
     String prefix = null;
     if (PlatformUtils.isCommunity()) {
       prefix = "IC";
@@ -191,7 +197,15 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     else if (PlatformUtils.isIdea()) {
       prefix = "IU";
     }
-    return BuildNumber.fromString(myBuildNumber, prefix);
+    return prefix;
+  }
+
+  @Override
+  public String getApiVersion() {
+    if (myApiVersion != null) {
+      return BuildNumber.fromString(myApiVersion, getProductPrefix()).asString();
+    }
+    return getBuild().asString();
   }
 
   public String getMajorVersion() {
@@ -465,7 +479,8 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
     Element buildElement = parentNode.getChild(ELEMENT_BUILD);
     if (buildElement != null) {
       myBuildNumber = buildElement.getAttributeValue(ATTRIBUTE_NUMBER);
-      PluginManagerCore.BUILD_NUMBER = myBuildNumber;
+      myApiVersion = buildElement.getAttributeValue(ATTRIBUTE_API_VERSION);
+      PluginManagerCore.BUILD_NUMBER = myApiVersion != null ? myApiVersion : myBuildNumber;
       String dateString = buildElement.getAttributeValue(ATTRIBUTE_DATE);
       if (dateString.equals("__BUILD_DATE__")) {
         myBuildDate = new GregorianCalendar();

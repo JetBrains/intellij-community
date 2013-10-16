@@ -150,6 +150,18 @@ public class PluginManagerCore {
     return true;
   }
 
+  public static boolean enablePlugin(String id) {
+    if (!getDisabledPlugins().contains(id)) return false;
+    getDisabledPlugins().remove(id);
+    try {
+      saveDisabledPlugins(getDisabledPlugins(), false);
+    }
+    catch (IOException e) {
+      return false;
+    }
+    return true;
+  }
+
   public static void saveDisabledPlugins(Collection<String> ids, boolean append) throws IOException {
     File plugins = new File(PathManager.getConfigPath(), DISABLED_PLUGINS_FILENAME);
     savePluginsList(ids, append, plugins);

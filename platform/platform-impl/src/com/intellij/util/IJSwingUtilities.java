@@ -179,6 +179,11 @@ public class IJSwingUtilities {
   @Nullable
   public static <T extends Component> T findParentOfType(Component focusOwner, Class<T> aClass) {
     return (T)ContainerUtil.find(getParents(focusOwner), (FilteringIterator.InstanceOf<T>)FilteringIterator.instanceOf(aClass));
+
+  }
+  @Nullable
+  public static Component findParentByInterface(Component focusOwner, Class aClass) {
+    return ContainerUtil.find(getParents(focusOwner), FilteringIterator.instanceOf(aClass));
   }
 
   public static void adjustComponentsOnMac(@Nullable JComponent component) {

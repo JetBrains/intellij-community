@@ -67,6 +67,12 @@ public class FileWatcher {
     public final List<String> dirtyPaths = newArrayList();
     public final List<String> dirtyPathsRecursive = newArrayList();
     public final List<String> dirtyDirectories = newArrayList();
+
+    private static DirtyPaths EMPTY = new DirtyPaths();
+
+    private boolean isEmpty() {
+      return dirtyPaths.isEmpty() && dirtyPathsRecursive.isEmpty() && dirtyDirectories.isEmpty();
+    }
   }
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.local.FileWatcher");
@@ -91,13 +97,8 @@ public class FileWatcher {
 
   private final Object myLock = new Object();
   private DirtyPaths myDirtyPaths = new DirtyPaths();
-  private final String[] myLastChangedPathes = new String[2];
+  private final String[] myLastChangedPaths = new String[2];
   private int myLastChangedPathIndex;
-
-  /** @deprecated use {@linkplain com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl#getFileWatcher()} (to remove in IDEA 13) */
-  public static FileWatcher getInstance() {
-    return ((LocalFileSystemImpl)LocalFileSystem.getInstance()).getFileWatcher();
-  }
 
   FileWatcher(@NotNull ManagingFS managingFS) {
     myManagingFS = managingFS;
@@ -153,11 +154,16 @@ public class FileWatcher {
   @NotNull
   public DirtyPaths getDirtyPaths() {
     synchronized (myLock) {
-      DirtyPaths dirtyPaths = myDirtyPaths;
-      myDirtyPaths = new DirtyPaths();
-      myLastChangedPathIndex = 0;
-      for(int i = 0; i < myLastChangedPathes.length; ++i) myLastChangedPathes[i] = null;
-      return dirtyPaths;
+      if (!myDirtyPaths.isEmpty()) {
+        DirtyPaths dirtyPaths = myDirtyPaths;
+        myDirtyPaths = new DirtyPaths();
+        myLastChangedPathIndex = 0;
+        for (int i = 0; i < myLastChangedPaths.length; ++i) myLastChangedPaths[i] = null;
+        return dirtyPaths;
+      }
+      else {
+        return DirtyPaths.EMPTY;
+      }
     }
   }
 
@@ -213,7 +219,7 @@ public class FileWatcher {
   }
 
   private static boolean isUpToDate(File executable) {
-    long length = SystemInfo.isWindows ? 70216 :
+    long length = SystemInfo.isWindows ? 71208 :
                   SystemInfo.isMac ? 13924 :
                   SystemInfo.isLinux ? SystemInfo.isAMD64 ? 29155 : 22791 :
                   -1;
@@ -377,13 +383,13 @@ public class FileWatcher {
       if (fastPath && !changedPaths.isEmpty()) break;
 
       for (String root : flatWatchRoots) {
-        if (FileUtil.pathsEqual(path, root)) {
+        if (FileUtil.namesEqual(path, root)) {
           changedPaths.add(path);
           continue ext;
         }
         if (isExact) {
           String parentPath = new File(path).getParent();
-          if (parentPath != null && FileUtil.pathsEqual(parentPath, root)) {
+          if (parentPath != null && FileUtil.namesEqual(parentPath, root)) {
             changedPaths.add(path);
             continue ext;
           }
@@ -397,7 +403,7 @@ public class FileWatcher {
         }
         if (!isExact) {
           String parentPath = new File(root).getParent();
-          if (parentPath != null && FileUtil.pathsEqual(path, parentPath)) {
+          if (parentPath != null && FileUtil.namesEqual(path, parentPath)) {
             changedPaths.add(root);
             continue ext;
           }
@@ -551,20 +557,22 @@ public class FileWatcher {
             LOG.info("Change requests:" + myChangeRequests + ", filtered:" + myFilteredRequests);
           }
 
-          for(int i = 0; i < myLastChangedPathes.length; ++i) {
+          for(int i = 0; i < myLastChangedPaths.length; ++i) {
             int last = myLastChangedPathIndex - i - 1;
-            if (last < 0) last += myLastChangedPathes.length;
-            String lastChangedPath = myLastChangedPathes[last];
+            if (last < 0) last += myLastChangedPaths.length;
+            String lastChangedPath = myLastChangedPaths[last];
             if (lastChangedPath != null && lastChangedPath.equals(path)) {
               ++myFilteredRequests;
               return;
             }
           }
-          myLastChangedPathes[myLastChangedPathIndex ++] = path;
-          if (myLastChangedPathIndex == myLastChangedPathes.length) myLastChangedPathIndex = 0;
+          myLastChangedPaths[myLastChangedPathIndex ++] = path;
+          if (myLastChangedPathIndex == myLastChangedPaths.length) myLastChangedPathIndex = 0;
         }
       }
 
+      int length = path.length();
+      if (length > 1 && path.charAt(length - 1) == '/') path = path.substring(0, length - 1);
       boolean exactPath = op != WatcherOp.DIRTY && op != WatcherOp.RECDIRTY;
       Collection<String> paths = checkWatchable(path, exactPath, false);
 

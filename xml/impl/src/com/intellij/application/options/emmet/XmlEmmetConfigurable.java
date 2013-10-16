@@ -34,6 +34,7 @@ public class XmlEmmetConfigurable implements UnnamedConfigurable, Disposable, Co
   private JBCheckBox myEnableBEMFilterJBCheckBox;
   private JPanel myPanel;
   private JBCheckBox myEnableEmmetJBCheckBox;
+  private JBCheckBox myEnablePreviewJBCheckBox;
 
   public XmlEmmetConfigurable() {
     myEnableEmmetJBCheckBox.addActionListener(new ActionListener() {
@@ -41,6 +42,7 @@ public class XmlEmmetConfigurable implements UnnamedConfigurable, Disposable, Co
       public void actionPerformed(ActionEvent e) {
         boolean selected = myEnableEmmetJBCheckBox.isSelected();
         myEnableBEMFilterJBCheckBox.setEnabled(selected);
+        myEnablePreviewJBCheckBox.setEnabled(selected);
       }
     });
   }
@@ -59,6 +61,7 @@ public class XmlEmmetConfigurable implements UnnamedConfigurable, Disposable, Co
   public boolean isModified() {
     EmmetOptions emmetOptions = EmmetOptions.getInstance();
     return emmetOptions.isEmmetEnabled() != myEnableEmmetJBCheckBox.isSelected() ||
+           emmetOptions.isPreviewEnabled() != myEnablePreviewJBCheckBox.isSelected() ||
            emmetOptions.isBemFilterEnabledByDefault() != myEnableBEMFilterJBCheckBox.isSelected();
   }
 
@@ -68,6 +71,7 @@ public class XmlEmmetConfigurable implements UnnamedConfigurable, Disposable, Co
     EmmetOptions emmetOptions = EmmetOptions.getInstance();
     emmetOptions.setEmmetEnabled(myEnableEmmetJBCheckBox.isSelected());
     emmetOptions.setBemFilterEnabledByDefault(myEnableBEMFilterJBCheckBox.isSelected());
+    emmetOptions.setPreviewEnabled(myEnablePreviewJBCheckBox.isSelected());
   }
 
   @Override
@@ -76,6 +80,8 @@ public class XmlEmmetConfigurable implements UnnamedConfigurable, Disposable, Co
     myEnableEmmetJBCheckBox.setSelected(emmetOptions.isEmmetEnabled());
     myEnableBEMFilterJBCheckBox.setEnabled(emmetOptions.isEmmetEnabled());
     myEnableBEMFilterJBCheckBox.setSelected(emmetOptions.isBemFilterEnabledByDefault());
+    myEnablePreviewJBCheckBox.setEnabled(emmetOptions.isEmmetEnabled());
+    myEnablePreviewJBCheckBox.setSelected(emmetOptions.isPreviewEnabled());
   }
 
   @Override

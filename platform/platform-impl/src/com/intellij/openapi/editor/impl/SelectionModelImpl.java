@@ -778,23 +778,27 @@ public class SelectionModelImpl implements SelectionModel, PrioritizedDocumentLi
   @Override
   public void selectLineAtCaret() {
     validateContext(true);
-    int lineNumber = myEditor.getCaretModel().getLogicalPosition().line;
-    Document document = myEditor.getDocument();
+    doSelectLineAtCaret(myEditor);
+  }
+
+  public static void doSelectLineAtCaret(Editor editor) {
+    int lineNumber = editor.getCaretModel().getLogicalPosition().line;
+    Document document = editor.getDocument();
     if (lineNumber >= document.getLineCount()) {
       return;
     }
 
-    Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcCaretLineRange(myEditor);
+    Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcCaretLineRange(editor);
     LogicalPosition lineStart = lines.first;
     LogicalPosition nextLineStart = lines.second;
 
-    int start = myEditor.logicalPositionToOffset(lineStart);
-    int end = myEditor.logicalPositionToOffset(nextLineStart);
+    int start = editor.logicalPositionToOffset(lineStart);
+    int end = editor.logicalPositionToOffset(nextLineStart);
 
     //myEditor.getCaretModel().moveToOffset(start);
-    myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-    myEditor.getSelectionModel().removeSelection();
-    myEditor.getSelectionModel().setSelection(start, end);
+    editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    editor.getSelectionModel().removeSelection();
+    editor.getSelectionModel().setSelection(start, end);
   }
 
   @Override

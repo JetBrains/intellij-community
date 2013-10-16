@@ -276,7 +276,9 @@ public class GenericsHighlightUtil {
         return checkExtendsWildcardCaptureFailure((PsiWildcardType)type, bound);
       }
       else if (((PsiWildcardType)type).isSuper()) {
-        return checkNotAssignable(bound, ((PsiWildcardType)type).getSuperBound(), false);
+        final PsiType superBound = ((PsiWildcardType)type).getSuperBound();
+        if (PsiUtil.resolveClassInType(superBound) instanceof PsiTypeParameter) return TypesDistinctProver.provablyDistinct(type, bound);
+        return checkNotAssignable(bound, superBound, false);
       }
     }
     else if (type instanceof PsiArrayType) {
@@ -454,6 +456,10 @@ public class GenericsHighlightUtil {
     for (HierarchicalMethodSignature signature : signaturesWithSupers) {
       HighlightInfo info = checkSameErasureNotSubSignatureInner(signature, manager, aClass, sameErasureMethods);
       if (info != null) return info;
+      if (aClass instanceof PsiTypeParameter) {
+        info = HighlightMethodUtil.checkMethodIncompatibleReturnType(signature, signature.getSuperSignatures(), true, HighlightNamesUtil.getClassDeclarationTextRange(aClass));
+        if (info != null) return info;
+      }
     }
 
     final PsiIdentifier classIdentifier = aClass.getNameIdentifier();

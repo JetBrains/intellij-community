@@ -76,7 +76,7 @@
       <keyboard-shortcut first-keystroke="control INSERT"/>
     </action>
     <action id="GotoClass">
-      <keyboard-shortcut first-keystroke="control G"/>
+      <keyboard-shortcut first-keystroke="control COMMA"/>
     </action>
     <action id="$Redo">
       <keyboard-shortcut first-keystroke="control Y"/>
@@ -124,7 +124,9 @@
     <action id="CompileDirty">
       <keyboard-shortcut first-keystroke="F7"/>
     </action>
-    <action id="GotoLine"/>
+    <action id="GotoLine">
+      <keyboard-shortcut first-keystroke="control G"/>
+    </action>
     <action id="JumpToLastChange">
       <keyboard-shortcut first-keystroke="shift control F2"/>
     </action>

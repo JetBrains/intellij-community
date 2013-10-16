@@ -18,6 +18,7 @@ import com.intellij.codeInsight.TargetElementUtilBase
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection
+import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PluginPathManager
@@ -250,7 +251,8 @@ public class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
       ComponentNotRegisteredInspection.class,
       InspectionDescriptionNotFoundInspection.class,
       IntentionDescriptionNotFoundInspection.class,
-      InspectionMappingConsistencyInspection.class
+      InspectionMappingConsistencyInspection.class,
+      RequiredAttributesInspection.class
     );
   }
 }

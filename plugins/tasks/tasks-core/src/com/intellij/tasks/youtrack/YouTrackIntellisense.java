@@ -1,19 +1,17 @@
 package com.intellij.tasks.youtrack;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
-import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
-import org.jdom.output.Format;
-import org.jdom.output.XMLOutputter;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.InputStream;
@@ -21,6 +19,10 @@ import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static com.intellij.openapi.editor.DefaultLanguageHighlighterColors.*;
+import static com.intellij.openapi.editor.HighlighterColors.BAD_CHARACTER;
+import static com.intellij.openapi.editor.HighlighterColors.TEXT;
 
 /**
  * Auxiliary class for extracting data from YouTrack intellisense responses.
@@ -43,10 +45,10 @@ public class YouTrackIntellisense {
 
   public static final String INTELLISENSE_RESOURCE = "/rest/issue/intellisense";
   private static final Map<String, TextAttributes> TEXT_ATTRIBUTES = ContainerUtil.newHashMap(
-    Pair.create("field", DefaultLanguageHighlighterColors.CONSTANT.getDefaultAttributes()),
-    Pair.create("keyword", DefaultLanguageHighlighterColors.KEYWORD.getDefaultAttributes()),
-    Pair.create("string", DefaultLanguageHighlighterColors.STRING.getDefaultAttributes()),
-    Pair.create("error", HighlighterColors.BAD_CHARACTER.getDefaultAttributes())
+    Pair.create("field", CONSTANT.getDefaultAttributes()),
+    Pair.create("keyword", KEYWORD.getDefaultAttributes()),
+    Pair.create("string", STRING.getDefaultAttributes()),
+    Pair.create("error", BAD_CHARACTER.getDefaultAttributes())
   );
   private static final int CACHE_SIZE = 30;
 
@@ -70,7 +72,7 @@ public class YouTrackIntellisense {
   @NotNull
   private static TextAttributes getAttributeByStyleClass(@NotNull String styleClass) {
     final TextAttributes attr = TEXT_ATTRIBUTES.get(styleClass);
-    return attr == null ? HighlighterColors.TEXT.getDefaultAttributes() : attr;
+    return attr == null ? TEXT.getDefaultAttributes() : attr;
   }
 
   @NotNull
@@ -134,9 +136,7 @@ public class YouTrackIntellisense {
 
     public Response(@NotNull InputStream stream) throws Exception {
       final Element root = new SAXBuilder().build(stream).getRootElement();
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Response content: \n" + new XMLOutputter(Format.getPrettyFormat()).outputString(root));
-      }
+      TaskUtil.prettyFormatXmlToLog(LOG, root);
       @NotNull final Element highlight = root.getChild("highlight");
       //assert highlight != null : "no '/IntelliSense/highlight' element in YouTrack response";
       myHighlightRanges = ContainerUtil.map(highlight.getChildren("range"), new Function<Element, HighlightRange>() {
@@ -191,7 +191,7 @@ public class YouTrackIntellisense {
 
     @NotNull
     public String getStyleClass() {
-      return myStyleClass;
+      return StringUtil.notNullize(myStyleClass);
     }
 
     @NotNull
@@ -259,12 +259,12 @@ public class YouTrackIntellisense {
 
     @NotNull
     public String getSuffix() {
-      return mySuffix == null ? "" : mySuffix;
+      return StringUtil.notNullize(mySuffix);
     }
 
     @NotNull
     public String getPrefix() {
-      return myPrefix == null? "" : myPrefix;
+      return StringUtil.notNullize(myPrefix);
     }
 
     @NotNull
@@ -274,7 +274,7 @@ public class YouTrackIntellisense {
 
     @NotNull
     public String getStyleClass() {
-      return myStyleClass;
+      return StringUtil.notNullize(myStyleClass);
     }
 
     @NotNull

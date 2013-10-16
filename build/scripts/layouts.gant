@@ -629,6 +629,7 @@ def layoutAndroid(String androidHome) {
         module("lint-checks")
         module("ninepatch")
         module("sdk-common")
+        module("perflib")
       }
       jar("androidAnnotations.jar") {
         fileset(dir: "$androidHome/android/annotations")

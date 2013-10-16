@@ -885,7 +885,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         values.add(value);
         return true;
       }
-    }, filter);
+    }, filter, null);
     return values;
   }
 
@@ -901,7 +901,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         files.add(file);
         return true;
       }
-    }, filter);
+    }, filter, null);
     return files;
   }
 
@@ -909,9 +909,18 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   @Override
   public <K, V> boolean processValues(@NotNull final ID<K, V> indexId, @NotNull final K dataKey, @Nullable final VirtualFile inFile,
                                       @NotNull ValueProcessor<V> processor, @NotNull final GlobalSearchScope filter) {
-    return processValuesImpl(indexId, dataKey, false, inFile, processor, filter);
+    return processValues(indexId, dataKey, inFile, processor, filter, null);
   }
 
+  @Override
+  public <K, V> boolean processValues(@NotNull ID<K, V> indexId,
+                                      @NotNull K dataKey,
+                                      @Nullable VirtualFile inFile,
+                                      @NotNull ValueProcessor<V> processor,
+                                      @NotNull GlobalSearchScope filter,
+                                      @Nullable IdFilter idFilter) {
+    return processValuesImpl(indexId, dataKey, false, inFile, processor, filter, idFilter);
+  }
 
   @Nullable
   private <K, V, R> R processExceptions(@NotNull final ID<K, V> indexId,
@@ -952,7 +961,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   private <K, V> boolean processValuesImpl(@NotNull final ID<K, V> indexId, final K dataKey, final boolean ensureValueProcessedOnce,
                                            @Nullable final VirtualFile restrictToFile, @NotNull final ValueProcessor<V> processor,
-                                           @NotNull final GlobalSearchScope filter) {
+                                           @NotNull final GlobalSearchScope scope, @Nullable final IdFilter idFilter) {
     ThrowableConvertor<UpdatableIndex<K, V, FileContent>, Boolean, StorageException> keyProcessor =
       new ThrowableConvertor<UpdatableIndex<K, V, FileContent>, Boolean, StorageException>() {
         @Override
@@ -977,15 +986,15 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           }
           else {
             final PersistentFS fs = (PersistentFS)ManagingFS.getInstance();
-            ProjectIndexableFilesFilter projectFilesSet = projectIndexableFiles(filter.getProject());
+            final IdFilter filter = idFilter != null ? idFilter : projectIndexableFiles(scope.getProject());
             VALUES_LOOP:
             for (final Iterator<V> valueIt = container.getValueIterator(); valueIt.hasNext(); ) {
               final V value = valueIt.next();
               for (final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value); inputIdsIterator.hasNext(); ) {
                 final int id = inputIdsIterator.next();
-                if (projectFilesSet != null && !projectFilesSet.contains(id)) continue;
+                if (filter != null && !filter.contains(id)) continue;
                 VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
-                if (file != null && filter.accept(file)) {
+                if (file != null && scope.accept(file)) {
                   shouldContinue = processor.process(file, value);
                   if (!shouldContinue) {
                     break VALUES_LOOP;
@@ -1000,7 +1009,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
           return shouldContinue;
         }
       };
-    final Boolean result = processExceptions(indexId, restrictToFile, filter, keyProcessor);
+    final Boolean result = processExceptions(indexId, restrictToFile, scope, keyProcessor);
     return result == null || result.booleanValue();
   }
 
@@ -1039,6 +1048,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       set.forEach(new TIntProcedure() {
         @Override
         public boolean execute(int value) {
+          if (value < 0) value = -value;
           minMax[0] = Math.min(minMax[0], value);
           minMax[1] = Math.max(minMax[1], value);
           return true;
@@ -1050,6 +1060,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       set.forEach(new TIntProcedure() {
         @Override
         public boolean execute(int value) {
+          if (value < 0) value = -value;
           value -= myMinId;
           myBitMask[value >> SHIFT] |= (1L << (value & MASK));
           return true;

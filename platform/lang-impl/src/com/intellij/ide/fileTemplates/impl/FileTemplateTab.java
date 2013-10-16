@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.intellij.ide.fileTemplates.impl;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
+import com.intellij.ui.JBColor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ import java.util.List;
 abstract class FileTemplateTab {
   protected final List<FileTemplateBase> myTemplates = new ArrayList<FileTemplateBase>();
   private final String myTitle;
-  protected static final Color MODIFIED_FOREGROUND = new Color(0, 0, 210);
+  protected static final Color MODIFIED_FOREGROUND = JBColor.BLUE;
 
   protected FileTemplateTab(String title) {
     myTitle = title;

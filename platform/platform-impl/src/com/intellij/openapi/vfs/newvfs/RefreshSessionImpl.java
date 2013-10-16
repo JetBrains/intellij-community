@@ -103,6 +103,7 @@ public class RefreshSessionImpl extends RefreshSession {
 
   @Override
   public void launch() {
+    if (!myIsRecursive) LOG.info("[CR-IC-2706] " + myWorkQueue);
     mySemaphore.down();
     ((RefreshQueueImpl)RefreshQueue.getInstance()).execute(this);
   }

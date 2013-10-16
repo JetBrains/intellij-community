@@ -28,8 +28,10 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -93,11 +95,43 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
     return false;
   }
 
-  public void processNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+  public void processNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(scope.getProject());
     cache.processAllClassNames(processor, scope, filter);
     cache.processAllFieldNames(processor, scope, filter);
     cache.processAllMethodNames(processor, scope, filter);
+  }
+
+  @Override
+  public void processElementsWithName(@NotNull String name,
+                                      @NotNull final Processor<NavigationItem> processor,
+                                      @NotNull FindSymbolParameters parameters) {
+
+    GlobalSearchScope scope = parameters.getSearchScope();
+    IdFilter filter = parameters.getIdFilter();
+    PsiShortNamesCache cache = PsiShortNamesCache.getInstance(scope.getProject());
+    //noinspection UnusedDeclaration
+    boolean dummy = cache.processFieldsWithName(name, new Processor<PsiField>() {
+      @Override
+      public boolean process(PsiField field) {
+        if (isOpenable(field)) return processor.process(field);
+        return true;
+      }
+    }, scope, filter) &&
+                    cache.processMethodsWithName(name, new Processor<PsiMethod>() {
+                      @Override
+                      public boolean process(PsiMethod method) {
+                        if(!method.isConstructor() && isOpenable(method) && !hasSuperMethod(method)) return processor.process(method);
+                        return true;
+                      }
+                    }, scope, filter) &&
+                    cache.processClassesWithName(name, new Processor<PsiClass>() {
+                      @Override
+                      public boolean process(PsiClass aClass) {
+                        if (isOpenable(aClass)) return processor.process(aClass);
+                        return true;
+                      }
+                    }, scope, filter);
   }
 
   private static class MyComparator implements Comparator<PsiModifierListOwner>{

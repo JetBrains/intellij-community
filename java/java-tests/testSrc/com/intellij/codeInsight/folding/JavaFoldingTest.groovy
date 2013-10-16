@@ -434,6 +434,7 @@ class Test {
   public void "test simple property accessors in one line"() {
     configure """class Foo {
  int field;
+ int field2;
  
  int getField()
  {
@@ -443,11 +444,13 @@ class Test {
  void setField(int f) {
    field = f;
  }
+ 
+ void setField2(int f){field2=f;}
 
 }"""
     PsiClass fooClass = JavaPsiFacade.getInstance(project).findClass('Foo', GlobalSearchScope.allScope(project))
     def regions = myFixture.editor.foldingModel.allFoldRegions.sort { it.startOffset }
-    assert regions.size() == 4
+    assert regions.size() == 5
     
     Closure checkAccessorFolding = { FoldRegion region1, FoldRegion region2, PsiMethod method ->
       assert region1.startOffset == method.parameterList.textRange.endOffset
@@ -463,6 +466,7 @@ class Test {
     checkAccessorFolding(regions[0], regions[1], fooClass.methods[0])
     checkAccessorFolding(regions[2], regions[3], fooClass.methods[1])
     
+    assert regions[4].placeholderText == '{...}'
   }
 
   private def changeFoldRegions(Closure op) {

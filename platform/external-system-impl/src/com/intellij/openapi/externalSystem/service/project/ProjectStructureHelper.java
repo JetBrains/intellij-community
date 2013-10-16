@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ProjectStructureHelper {
 
-  @NotNull private final PlatformFacade                myFacade;
+  @NotNull private final PlatformFacade myFacade;
   @NotNull private final ExternalLibraryPathTypeMapper myLibraryPathTypeMapper;
 
   public ProjectStructureHelper(@NotNull PlatformFacade facade, @NotNull ExternalLibraryPathTypeMapper mapper) {
@@ -56,10 +56,10 @@ public class ProjectStructureHelper {
    * <p/>
    * This methods serves as an utility which tries to find a library by it's given base name.
    *
-   * @param baseName    base name of the target library
-   * @param ideProject  target ide project
-   * @return            target library for the given base name if there is one and only one library for it;
-   *                    <code>null</code> otherwise (if there are no libraries or more than one library for the given base name) 
+   * @param baseName   base name of the target library
+   * @param ideProject target ide project
+   * @return target library for the given base name if there is one and only one library for it;
+   * <code>null</code> otherwise (if there are no libraries or more than one library for the given base name)
    */
   @Nullable
   public Library findIdeLibraryByBaseName(@NotNull String baseName, @NotNull Project ideProject) {
@@ -93,8 +93,7 @@ public class ProjectStructureHelper {
   public Library findIdeLibrary(@NotNull String libraryName,
                                 @NotNull OrderRootType jarType,
                                 @NotNull String jarPath,
-                                @NotNull Project ideProject)
-  {
+                                @NotNull Project ideProject) {
     Library library = findIdeLibrary(libraryName, ideProject);
     if (library == null) {
       return null;
@@ -110,8 +109,7 @@ public class ProjectStructureHelper {
   @Nullable
   public LibraryOrderEntry findIdeLibraryDependency(@NotNull final String moduleName,
                                                     @NotNull final String libraryName,
-                                                    @NotNull Project ideProject)
-  {
+                                                    @NotNull Project ideProject) {
     final Module ideModule = findIdeModule(moduleName, ideProject);
     if (ideModule == null) {
       return null;
@@ -137,8 +135,7 @@ public class ProjectStructureHelper {
   @Nullable
   public ModuleLibraryOrderEntryImpl findIdeModuleLocalLibraryDependency(@NotNull final String moduleName,
                                                                          @NotNull final String libraryName,
-                                                                         @NotNull Project ideProject)
-  {
+                                                                         @NotNull Project ideProject) {
     final Module ideModule = findIdeModule(moduleName, ideProject);
     if (ideModule == null) {
       return null;
@@ -168,8 +165,7 @@ public class ProjectStructureHelper {
   @SuppressWarnings("MethodMayBeStatic")
   @Nullable
   public LibraryOrderEntry findIdeLibraryDependency(@NotNull final String libraryName,
-                                                    @NotNull ModifiableRootModel model)
-  {
+                                                    @NotNull ModifiableRootModel model) {
     for (OrderEntry entry : model.getOrderEntries()) {
       if (entry instanceof LibraryOrderEntry) {
         LibraryOrderEntry candidate = (LibraryOrderEntry)entry;
@@ -181,46 +177,14 @@ public class ProjectStructureHelper {
     return null;
   }
 
-  @Nullable
-  public ModuleOrderEntry findIdeModuleDependency(@NotNull final ModuleDependencyData gradleDependency, @NotNull Project ideProject) {
-    return findIdeModuleDependency(gradleDependency.getOwnerModule().getName(), gradleDependency.getTarget().getName(), ideProject);
-  }
-
-  @Nullable
-  public ModuleOrderEntry findIdeModuleDependency(@NotNull final String ownerModuleName,
-                                                  @NotNull final String dependencyModuleName,
-                                                  @NotNull Project ideProject)
-  {
-    final Module ideOwnerModule = findIdeModule(ownerModuleName, ideProject);
-    if (ideOwnerModule == null) {
-      return null;
-    }
-
-    RootPolicy<ModuleOrderEntry> visitor = new RootPolicy<ModuleOrderEntry>() {
-      @Override
-      public ModuleOrderEntry visitModuleOrderEntry(ModuleOrderEntry ideDependency, ModuleOrderEntry value) {
-        if (dependencyModuleName.equals(ideDependency.getModuleName())) {
-          return ideDependency;
-        }
-        return value;
-      }
-    };
-    for (OrderEntry orderEntry : myFacade.getOrderEntries(ideOwnerModule)) {
-      final ModuleOrderEntry result = orderEntry.accept(visitor, null);
-      if (result != null) {
-        return result;
-      }
-    }
-    return null;
-  }
-
   @SuppressWarnings("MethodMayBeStatic")
   @Nullable
   public ModuleOrderEntry findIdeModuleDependency(@NotNull ModuleDependencyData dependency, @NotNull ModifiableRootModel model) {
     for (OrderEntry entry : model.getOrderEntries()) {
       if (entry instanceof ModuleOrderEntry) {
         ModuleOrderEntry candidate = (ModuleOrderEntry)entry;
-        if (dependency.getName().equals(candidate.getModuleName())) {
+        if (dependency.getName().equals(candidate.getModuleName()) &&
+            dependency.getScope().equals(candidate.getScope())) {
           return candidate;
         }
       }

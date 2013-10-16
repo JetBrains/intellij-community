@@ -579,12 +579,18 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       return false;
     }
 
+    int leftStart = accessor.getParameterList().getTextRange().getEndOffset();
+    int leftEnd = statement.getTextRange().getStartOffset();
+    int rightStart = statement.getTextRange().getEndOffset();
+    int rightEnd = body.getTextRange().getEndOffset();
+    if (leftEnd <= leftStart + 1 || rightEnd <= rightStart + 1) {
+      return false;
+    }
+
     FoldingGroup group = FoldingGroup.newGroup("simple property accessor");
-    int paramListEnd = accessor.getParameterList().getTextRange().getEndOffset();
-    int statementStart = statement.getTextRange().getStartOffset();
     PsiJavaToken lBrace = body.getLBrace();
     assert lBrace != null;
-    descriptorList.add(new FoldingDescriptor(lBrace.getNode(), new TextRange(paramListEnd, statementStart), group) {
+    descriptorList.add(new FoldingDescriptor(lBrace.getNode(), new TextRange(leftStart, leftEnd), group) {
       @Nullable
       @Override
       public String getPlaceholderText() {
@@ -592,10 +598,9 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
       }
     });
 
-    int statementEnd = statement.getTextRange().getEndOffset();
     PsiJavaToken rBrace = body.getRBrace();
     assert rBrace != null;
-    descriptorList.add(new FoldingDescriptor(rBrace.getNode(), new TextRange(statementEnd, body.getTextRange().getEndOffset()), group) {
+    descriptorList.add(new FoldingDescriptor(rBrace.getNode(), new TextRange(rightStart, rightEnd), group) {
       @Nullable
       @Override
       public String getPlaceholderText() {

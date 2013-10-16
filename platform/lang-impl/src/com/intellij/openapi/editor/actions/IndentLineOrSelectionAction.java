@@ -13,26 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.commandLine;
+package com.intellij.openapi.editor.actions;
 
-import org.tmatesoft.svn.core.wc.SVNEvent;
-
-import java.io.File;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.editor.Editor;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 2/4/13
- * Time: 3:49 PM
+ * @author yole
  */
-public class AddLineConverter {
-  private final File myBase;
-
-  public AddLineConverter(File base) {
-    myBase = base;
+public class IndentLineOrSelectionAction extends LangIndentSelectionAction {
+  @Override
+  public void update(Editor editor, Presentation presentation, DataContext dataContext) {
+    presentation.setEnabled(originalIsEnabled(editor, false));
   }
 
-  public SVNEvent convert(final String line) {
-    return null;
+  @Override
+  protected boolean wantSelection() {
+    return false;
   }
 }

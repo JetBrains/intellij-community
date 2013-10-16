@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
 
   public boolean handlesTemplate(final FileTemplate template) {
     FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
-    return fileType.equals(StdFileTypes.JAVA);
+    return fileType.equals(StdFileTypes.JAVA) && !JavaTemplateUtil.INTERNAL_PACKAGE_INFO_TEMPLATE_NAME.equals(template.getName());
   }
 
   public PsiElement createFromTemplate(final Project project, final PsiDirectory directory, final String fileName, FileTemplate template,

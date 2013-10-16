@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
-import com.intellij.openapi.vcs.LineProcessEventListenerAdapter;
+import com.intellij.openapi.vcs.LineProcessEventListener;
 
 /**
  * Created with IntelliJ IDEA.
@@ -23,14 +23,9 @@ import com.intellij.openapi.vcs.LineProcessEventListenerAdapter;
  * Date: 2/26/13
  * Time: 10:38 AM
  */
-public abstract class LineCommandListener extends LineProcessEventListenerAdapter {
-  private boolean myCanceled;
+public interface LineCommandListener extends LineProcessEventListener {
 
-  public void cancel() {
-    myCanceled = true;
-  }
+  void cancel();
 
-  protected boolean isCanceled() {
-    return myCanceled;
-  }
+  boolean isCanceled();
 }

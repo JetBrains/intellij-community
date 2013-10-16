@@ -121,8 +121,15 @@ public class HighlightMethodUtil {
 
 
   static HighlightInfo checkMethodIncompatibleReturnType(MethodSignatureBackedByPsiMethod methodSignature,
-                                                                List<HierarchicalMethodSignature> superMethodSignatures,
-                                                                boolean includeRealPositionInfo) {
+                                                         List<HierarchicalMethodSignature> superMethodSignatures,
+                                                         boolean includeRealPositionInfo) {
+    return checkMethodIncompatibleReturnType(methodSignature, superMethodSignatures, includeRealPositionInfo, null);
+  }
+
+  static HighlightInfo checkMethodIncompatibleReturnType(MethodSignatureBackedByPsiMethod methodSignature,
+                                                         List<HierarchicalMethodSignature> superMethodSignatures,
+                                                         boolean includeRealPositionInfo,
+                                                         TextRange textRange) {
     PsiMethod method = methodSignature.getMethod();
     PsiType returnType = methodSignature.getSubstitutor().substitute(method.getReturnType());
     PsiClass aClass = method.getContainingClass();
@@ -136,7 +143,9 @@ public class HighlightMethodUtil {
       PsiClass superClass = superMethod.getContainingClass();
       if (superClass == null) continue;
       HighlightInfo highlightInfo = checkSuperMethodSignature(superMethod, superMethodSignature, superReturnType, method, methodSignature,
-                                                              returnType, includeRealPositionInfo, JavaErrorMessages.message("incompatible.return.type"), method);
+                                                              returnType, JavaErrorMessages.message("incompatible.return.type"),
+                                                              textRange != null ? textRange 
+                                                                                : includeRealPositionInfo ? method.getReturnTypeElement().getTextRange() : TextRange.EMPTY_RANGE);
       if (highlightInfo != null) return highlightInfo;
     }
 
@@ -149,9 +158,7 @@ public class HighlightMethodUtil {
                                                          PsiMethod method,
                                                          MethodSignatureBackedByPsiMethod methodSignature,
                                                          PsiType returnType,
-                                                         boolean includeRealPositionInfo,
-                                                         String detailMessage,
-                                                         PsiMethod methodToHighlight) {
+                                                         String detailMessage, final TextRange range) {
     if (superReturnType == null) return null;
     if ("clone".equals(method.getName())) {
       final PsiClass containingClass = method.getContainingClass();
@@ -181,19 +188,17 @@ public class HighlightMethodUtil {
       }
     }
 
-    return createIncompatibleReturnTypeMessage(methodToHighlight, method, superMethod, includeRealPositionInfo,
-                                               substitutedSuperReturnType, returnType, detailMessage);
+    return createIncompatibleReturnTypeMessage(method, superMethod,
+                                               substitutedSuperReturnType, returnType, detailMessage,
+                                               range);
   }
 
-  private static HighlightInfo createIncompatibleReturnTypeMessage(PsiMethod methodToHighlight,
-                                                                   PsiMethod method,
+  private static HighlightInfo createIncompatibleReturnTypeMessage(PsiMethod method,
                                                                    @NotNull PsiMethod superMethod,
-                                                                   boolean includeRealPositionInfo,
                                                                    PsiType substitutedSuperReturnType,
                                                                    @NotNull PsiType returnType,
-                                                                   String detailMessage) {
+                                                                   String detailMessage, final TextRange textRange) {
     String description = MessageFormat.format("{0}; {1}", createClashMethodMessage(method, superMethod, true), detailMessage);
-    TextRange textRange = includeRealPositionInfo ? methodToHighlight.getReturnTypeElement().getTextRange() : TextRange.EMPTY_RANGE;
     HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodReturnFix(method, substitutedSuperReturnType, false));
     QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createSuperMethodReturnFix(superMethod, returnType));
@@ -1101,8 +1106,9 @@ public class HighlightMethodUtil {
           }
         }
       }
-      return createIncompatibleReturnTypeMessage(currentMethod, currentMethod, otherSuperMethod, false, otherSuperReturnType,
-                                                 currentType, JavaErrorMessages.message("unrelated.overriding.methods.return.types"));
+      return createIncompatibleReturnTypeMessage(currentMethod, otherSuperMethod, otherSuperReturnType,
+                                                 currentType, JavaErrorMessages.message("unrelated.overriding.methods.return.types"),
+                                                 false ? currentMethod.getReturnTypeElement().getTextRange() : TextRange.EMPTY_RANGE);
     }
     return null;
   }

@@ -72,8 +72,8 @@ public class CreateFromTemplateMode extends WizardMode {
     // put single leafs under "Other"
     for (Map.Entry<TemplatesGroup, Collection<ProjectTemplate>> entry : groups.entrySet()) {
       Collection<ProjectTemplate> templates = entry.getValue();
-      if (templates.size() == 1 &&
-          !ProjectTemplatesFactory.CUSTOM_GROUP.equals(entry.getKey().getName())) {
+      String name = entry.getKey().getName();
+      if (templates.size() == 1 && !ProjectTemplatesFactory.CUSTOM_GROUP.equals(name) && !"Java".equals(name)) {
 
         if (!(templates.iterator().next() instanceof LocalArchivedTemplate)) {
           sorted.putValues(new TemplatesGroup(ProjectTemplatesFactory.OTHER_GROUP, null, null, -1), templates);

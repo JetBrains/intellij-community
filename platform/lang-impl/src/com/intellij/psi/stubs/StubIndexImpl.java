@@ -206,9 +206,27 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                                                            @NotNull final Key key,
                                                            @NotNull final Project project,
                                                            final GlobalSearchScope scope) {
+    return get(indexKey, key, project, scope, null);
+  }
+
+  @Override
+  public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                           @NotNull Key key,
+                                                           @NotNull Project project,
+                                                           GlobalSearchScope scope,
+                                                           IdFilter filter) {
     final List<Psi> result = new SmartList<Psi>();
-    process(indexKey, key, project, scope, new CommonProcessors.CollectProcessor<Psi>(result));
+    process(indexKey, key, project, scope, filter, new CommonProcessors.CollectProcessor<Psi>(result));
     return result;
+  }
+
+  @Override
+  public <Key, Psi extends PsiElement> boolean process(@NotNull StubIndexKey<Key, Psi> indexKey,
+                                                       @NotNull Key key,
+                                                       @NotNull Project project,
+                                                       GlobalSearchScope scope,
+                                                       @NotNull Processor<? super Psi> processor) {
+    return process(indexKey, key, project, scope, null, processor);
   }
 
   @Override
@@ -216,6 +234,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
                                                        @NotNull final Key key,
                                                        @NotNull final Project project,
                                                        @Nullable final GlobalSearchScope scope,
+                                                       @Nullable IdFilter idFilter,
                                                        @NotNull final Processor<? super Psi> processor) {
     final FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
     fileBasedIndex.ensureUpToDate(StubUpdatingIndex.INDEX_ID, project, scope);
@@ -231,13 +250,13 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         index.getReadLock().lock();
         final ValueContainer<StubIdList> container = index.getData(key);
 
-        final FileBasedIndexImpl.ProjectIndexableFilesFilter projectFilesFilter = fileBasedIndex.projectIndexableFiles(project);
+        final IdFilter finalIdFilter = idFilter != null ? idFilter : fileBasedIndex.projectIndexableFiles(project);
 
         return container.forEach(new ValueContainer.ContainerAction<StubIdList>() {
           @Override
           public boolean perform(final int id, @NotNull final StubIdList value) {
             ProgressManager.checkCanceled();
-            if (projectFilesFilter != null && !projectFilesFilter.contains(id)) return true;
+            if (finalIdFilter != null && !finalIdFilter.contains(id)) return true;
             final VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
             if (file == null || scope != null && !scope.contains(file)) {
               return true;

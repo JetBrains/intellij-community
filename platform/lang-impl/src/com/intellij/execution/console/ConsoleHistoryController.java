@@ -19,9 +19,7 @@ import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.execution.process.ConsoleHistoryModel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -127,8 +125,16 @@ public class ConsoleHistoryController {
     EmptyAction.setupAction(myHistoryPrev, "Console.History.Previous", null);
     EmptyAction.setupAction(myBrowseHistory, "Console.History.Browse", null);
     if (!myMultiline) {
-      myHistoryNext.registerCustomShortcutSet(KeyEvent.VK_UP, 0, null);
-      myHistoryPrev.registerCustomShortcutSet(KeyEvent.VK_DOWN, 0, null);
+      AnAction up = ActionManager.getInstance().getActionOrStub(IdeActions.ACTION_EDITOR_MOVE_CARET_UP);
+      AnAction down = ActionManager.getInstance().getActionOrStub(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
+      if (up != null && down != null) {
+        myHistoryNext.registerCustomShortcutSet(up.getShortcutSet(), null);
+        myHistoryPrev.registerCustomShortcutSet(down.getShortcutSet(), null);
+      }
+      else {
+        myHistoryNext.registerCustomShortcutSet(KeyEvent.VK_UP, 0, null);
+        myHistoryPrev.registerCustomShortcutSet(KeyEvent.VK_DOWN, 0, null);
+      }
     }
     myHistoryNext.registerCustomShortcutSet(myHistoryNext.getShortcutSet(), myConsole.getCurrentEditor().getComponent());
     myHistoryPrev.registerCustomShortcutSet(myHistoryPrev.getShortcutSet(), myConsole.getCurrentEditor().getComponent());

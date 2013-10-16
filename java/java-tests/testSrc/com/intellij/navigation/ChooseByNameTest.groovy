@@ -141,10 +141,18 @@ class Intf {
     def popup = createPopup(new GotoFileModel(project), fooIndex)
     assert getPopupElements(popup, "foo/") == [fooIndex.containingDirectory]
     assert getPopupElements(popup, "foo\\") == [fooIndex.containingDirectory]
-    assert getPopupElements(popup, "foo") == [fooIndex.containingDirectory]
+    assert getPopupElements(popup, "/foo") == [fooIndex.containingDirectory]
+    assert getPopupElements(popup, "\\foo") == [fooIndex.containingDirectory]
+    assert getPopupElements(popup, "foo") == []
+    assert getPopupElements(popup, "/index.html") == [fooIndex]
+    assert getPopupElements(popup, "\\index.html") == [fooIndex]
+    assert getPopupElements(popup, "index.html/") == [fooIndex]
+    assert getPopupElements(popup, "index.html\\") == [fooIndex]
 
     assert getPopupElements(popup, "bar.txt/") == [barIndex.containingDirectory]
     assert getPopupElements(popup, "bar.txt\\") == [barIndex.containingDirectory]
+    assert getPopupElements(popup, "/bar.txt") == [barIndex.containingDirectory]
+    assert getPopupElements(popup, "\\bar.txt") == [barIndex.containingDirectory]
     assert getPopupElements(popup, "bar.txt") == [barIndex]
     popup.close(false)
   }

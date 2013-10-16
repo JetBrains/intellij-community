@@ -51,11 +51,15 @@ public class UnknownFeaturesCollector implements PersistentStateComponent<Elemen
   
   public void registerUnknownFeature(String featureType, String implementationName) {
     final UnknownFeature feature = new UnknownFeature(featureType, implementationName);
-    if (!myIgnoredUnknownFeatures.contains(feature)) {
+    if (!isIgnored(feature)) {
       myUnknownFeatures.add(feature);
     }
   }
-  
+
+  public boolean isIgnored(UnknownFeature feature) {
+    return myIgnoredUnknownFeatures.contains(feature);
+  }
+
   public void ignoreFeature(UnknownFeature feature) {
     myIgnoredUnknownFeatures.add(feature);
   }

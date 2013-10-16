@@ -521,6 +521,12 @@ public abstract class PluginManagerMain implements Disposable {
 
 
   public static void notifyPluginsWereInstalled(@Nullable String pluginName) {
+    notifyPluginsWereUpdated(pluginName != null
+                             ? "Plugin \'" + pluginName + "\' was successfully installed"
+                             : "Plugins were installed");
+  }
+
+  public static void notifyPluginsWereUpdated(final String title) {
     final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     final boolean restartCapable = app.isRestartCapable();
     String message =
@@ -530,9 +536,7 @@ public abstract class PluginManagerMain implements Disposable {
     message += restartCapable ? "\"restart\">Restart now" : "\"shutdown\">Shutdown";
     message += "</a>";
     new NotificationGroup("Plugins Lifecycle Group", NotificationDisplayType.STICKY_BALLOON, true)
-      .createNotification(pluginName != null
-                          ? "Plugin \'" + pluginName + "\' was successfully installed"
-                          : "Plugins were installed",
+      .createNotification(title,
                           XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION,
                           new NotificationListener() {
                             @Override

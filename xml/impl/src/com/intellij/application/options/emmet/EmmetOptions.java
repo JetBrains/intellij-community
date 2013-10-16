@@ -18,6 +18,7 @@ package com.intellij.application.options.emmet;
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
@@ -43,8 +44,9 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
   private int myEmmetExpandShortcut = WebEditorOptions.getInstance().getZenCodingExpandShortcut();
   private boolean myFuzzySearchEnabled = true;
   private boolean myAutoInsertCssPrefixedEnabled = true;
-  @Nullable
-  private Map<String, Integer> prefixes = null;
+  private boolean myPreviewEnabled = false;
+  @NotNull
+  private Map<String, Integer> prefixes = ContainerUtil.newHashMap();
 
 
   public boolean isBemFilterEnabledByDefault() {
@@ -63,6 +65,14 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
     return myEmmetExpandShortcut;
   }
 
+  public boolean isPreviewEnabled() {
+    return myPreviewEnabled;
+  }
+
+  public void setPreviewEnabled(boolean previewEnabled) {
+    myPreviewEnabled = previewEnabled;
+  }
+  
   public boolean isEmmetEnabled() {
     return myEmmetEnabled;
   }
@@ -121,7 +131,7 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
     return ServiceManager.getService(EmmetOptions.class);
   }
 
-  @Nullable
+  @NotNull
   @Deprecated
   //use {@link CssEmmetOptions}
   public Map<String, Integer> getPrefixes() {
@@ -131,7 +141,7 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
   @SuppressWarnings("UnusedDeclaration")
   @Deprecated
   //use {@link CssEmmetOptions}
-  public void setPrefixes(@Nullable Map<String, Integer> prefixes) {
+  public void setPrefixes(@NotNull Map<String, Integer> prefixes) {
     this.prefixes = prefixes;
   }
 }

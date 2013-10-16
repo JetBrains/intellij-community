@@ -42,10 +42,9 @@ public abstract class FileStructureTestBase extends CodeInsightFixtureTestCase {
   public void setUp() throws Exception {
     super.setUp();
     myFixture.configureByFile(getFileName(getFileExtension()));
-    myPopup = ViewStructureAction.createPopup(myFixture.getEditor(),
-                                              myFixture.getProject(),
-                                              null,
-                                              TextEditorProvider.getInstance().getTextEditor(myFixture.getEditor()));
+    myPopup = ViewStructureAction.createPopup(
+      myFixture.getProject(),
+      TextEditorProvider.getInstance().getTextEditor(myFixture.getEditor()));
     assert myPopup != null;
     myPopup.createCenterPanel();
     getBuilder().getUi().getUpdater().setPassThroughMode(true);

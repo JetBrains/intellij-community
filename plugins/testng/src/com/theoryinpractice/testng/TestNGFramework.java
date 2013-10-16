@@ -184,6 +184,12 @@ public class TestNGFramework extends JavaTestFramework {
     return new FileTemplateDescriptor("TestNG Test Method.java");
   }
 
+  @Nullable
+  @Override
+  public FileTemplateDescriptor getParametersMethodFileTemplateDescriptor() {
+    return new FileTemplateDescriptor("TestNG Parameters Method.java");
+  }
+
   @Override
   public boolean isTestMethod(PsiElement element) {
     return element instanceof PsiMethod && TestNGUtil.hasTest((PsiModifierListOwner)element);

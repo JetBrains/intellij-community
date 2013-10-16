@@ -265,7 +265,7 @@ public class Messages {
   }
 
   /**
-   * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
+   * @return <code>Messages.YES</code> if user pressed "Yes" and returns <code>Messages.NO</code> if user pressed "No" button.
    */
   public static int showYesNoDialog(@Nullable Project project, String message, String title, String yesText, String noText, @Nullable Icon icon) {
     if (canShowMacSheetPanel()) {
@@ -276,7 +276,7 @@ public class Messages {
   }
 
   /**
-   * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
+   * @return <code>Messages.YES</code> if user pressed "Yes" and returns <code>Messages.NO</code> if user pressed "No" button.
    */
   public static int showYesNoDialog(@Nullable Project project, String message, String title, @Nullable Icon icon) {
     if (canShowMacSheetPanel()) {
@@ -287,7 +287,7 @@ public class Messages {
   }
 
   /**
-   * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
+   * @return <code>Messages.YES</code> if user pressed "Yes" and returns <code>Messages.NO</code> if user pressed "No" button.
    */
   public static int showYesNoDialog(Component parent, String message, String title, @Nullable Icon icon) {
     if (canShowMacSheetPanel()) {
@@ -316,7 +316,7 @@ public class Messages {
   /**
    * Use this method only if you do not know project or component
    *
-   * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
+   * @return <code>Messages.YES</code> if user pressed "Yes" and returns <code>Messages.NO</code> if user pressed "No" button.
    * @see #showYesNoDialog(Project, String, String, String, String, Icon)
    * @see #showYesNoDialog(java.awt.Component, String, String, javax.swing.Icon)
    */
@@ -327,7 +327,7 @@ public class Messages {
   /**
    * Use this method only if you do not know project or component
    *
-   * @return <code>0</code> if user pressed "Yes" and returns <code>1</code> if user pressed "No" button.
+   * @return <code>Messages.YES</code> if user pressed "Yes" and returns <code>Messages.NO</code> if user pressed "No" button.
    * @see #showYesNoDialog(Project, String, String, Icon)
    * @see #showYesNoDialog(Component, String, String, Icon)
    */

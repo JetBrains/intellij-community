@@ -106,20 +106,16 @@ public class GithubSslSupport {
   }
 
   private static boolean isTrusted(@NotNull String host) {
-    return GithubSettings.getInstance().getTrustedHosts().contains(host);
+    return GithubSettings.getInstance().getTrustedHosts().contains(host.toLowerCase());
   }
 
   private static void saveToTrusted(@NotNull String host) {
-    GithubSettings.getInstance().addTrustedHost(host);
+    GithubSettings.getInstance().addTrustedHost(host.toLowerCase());
   }
 
   @CalledInAwt
   public boolean askIfShouldProceed(final String url) {
     String host = GithubUrlUtil.getHostFromUrl(url);
-    if (host == null) {
-      GithubUtil.LOG.warn("Bad SSL host: " + url);
-      return false;
-    }
 
     int choice = Messages.showYesNoDialog("The security certificate of " + host + " is not trusted. Do you want to proceed anyway?",
                                           "Not Trusted Certificate", "Proceed anyway", "No, I don't trust", Messages.getErrorIcon());

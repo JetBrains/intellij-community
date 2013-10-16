@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,7 @@ public class FileTemplatesLoader {
   private static final String TEMPLATES_DIR = "fileTemplates";
   private static final String DEFAULT_TEMPLATES_ROOT = TEMPLATES_DIR;
   public static final String DESCRIPTION_FILE_EXTENSION = "html";
-  static final String DESCRIPTION_EXTENSION_SUFFIX = "." + DESCRIPTION_FILE_EXTENSION;
+  private static final String DESCRIPTION_EXTENSION_SUFFIX = "." + DESCRIPTION_FILE_EXTENSION;
   //static final String DESCRIPTION_FILE_NAME = "default." + DESCRIPTION_FILE_EXTENSION;
 
   private final FTManager myDefaultTemplatesManager;
@@ -62,6 +62,9 @@ public class FileTemplatesLoader {
   private static final String J2EE_TEMPLATES_DIR = "j2ee";
   private static final String ROOT_DIR = ".";
   private final FileTypeManagerEx myTypeManager;
+
+  private URL myDefaultTemplateDescription;
+  private URL myDefaultIncludeDescription;
 
   public FileTemplatesLoader(@NotNull FileTypeManagerEx typeManager) {
     myTypeManager = typeManager;
@@ -116,6 +119,14 @@ public class FileTemplatesLoader {
     return myJ2eeTemplatesManager;
   }
 
+  public URL getDefaultTemplateDescription() {
+    return myDefaultTemplateDescription;
+  }
+
+  public URL getDefaultIncludeDescription() {
+    return myDefaultIncludeDescription;
+  }
+
   private void loadDefaultTemplates() {
     final Set<URL> processedUrls = new HashSet<URL>();
     for (PluginDescriptor plugin : PluginManager.getPlugins()) {
@@ -151,7 +162,13 @@ public class FileTemplatesLoader {
     }
     final Set<String> descriptionPaths = new HashSet<String>();
     for (String path : children) {
-      if (path.endsWith(DESCRIPTION_EXTENSION_SUFFIX)) {
+      if (path.equals("default.html")) {
+        myDefaultTemplateDescription = UrlClassLoader.internProtocol(new URL(root.toExternalForm() + "/" + path));
+      }
+      else if (path.equals("includes/default.html")) {
+        myDefaultIncludeDescription = UrlClassLoader.internProtocol(new URL(root.toExternalForm() + "/" + path));
+      }
+      else if (path.endsWith(DESCRIPTION_EXTENSION_SUFFIX)) {
         descriptionPaths.add(path);
       }
     }
@@ -176,7 +193,7 @@ public class FileTemplatesLoader {
 
   private void loadCustomizedContent(FTManager manager) {
     final File configRoot = manager.getConfigRoot(false);
-    File[] configFiles = configRoot.listFiles();
+    final File[] configFiles = configRoot.listFiles();
     if (configFiles == null) {
       return;
     }

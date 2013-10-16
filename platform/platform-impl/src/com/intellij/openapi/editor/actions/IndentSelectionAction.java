@@ -54,13 +54,15 @@ public class IndentSelectionAction extends EditorAction {
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      indentSelection(editor, project);
+      if (isEnabled(editor, dataContext)) {
+        indentSelection(editor, project);
+      }
     }
   }
 
   @Override
   public void update(Editor editor, Presentation presentation, DataContext dataContext) {
-    presentation.setEnabled(originalIsEnabled(editor));
+    presentation.setEnabled(originalIsEnabled(editor, true));
   }
 
   @Override
@@ -69,19 +71,20 @@ public class IndentSelectionAction extends EditorAction {
   }
 
   protected boolean isEnabled(Editor editor, DataContext dataContext) {
-    return originalIsEnabled(editor);
+    return originalIsEnabled(editor, true);
   }
 
-  private static boolean originalIsEnabled(Editor editor) {
-    return editor.getSelectionModel().hasSelection() && !editor.isOneLineMode();
+  protected static boolean originalIsEnabled(Editor editor, boolean wantSelection) {
+    return (!wantSelection || editor.getSelectionModel().hasSelection()) && !editor.isOneLineMode();
   }
 
   private static void indentSelection(Editor editor, Project project) {
-    if(!editor.getSelectionModel().hasSelection())
-      return;
-
     int oldSelectionStart = editor.getSelectionModel().getSelectionStart();
     int oldSelectionEnd = editor.getSelectionModel().getSelectionEnd();
+    if(!editor.getSelectionModel().hasSelection()) {
+      oldSelectionStart = editor.getCaretModel().getOffset();
+      oldSelectionEnd = oldSelectionStart;
+    }
 
     Document document = editor.getDocument();
     int startIndex = document.getLineNumber(oldSelectionStart);
@@ -89,7 +92,7 @@ public class IndentSelectionAction extends EditorAction {
       startIndex = document.getLineCount() - 1;
     }
     int endIndex = document.getLineNumber(oldSelectionEnd);
-    if(endIndex > 0 && document.getLineStartOffset(endIndex) == oldSelectionEnd) {
+    if(endIndex > 0 && document.getLineStartOffset(endIndex) == oldSelectionEnd && editor.getSelectionModel().hasSelection()) {
       endIndex --;
     }
     if(endIndex == -1) {

@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
+import org.jetbrains.annotations.NotNull;
+
 import javax.swing.*;
 
 /**
@@ -70,7 +72,7 @@ public class TemplatesGroup implements Comparable<TemplatesGroup> {
   }
 
   @Override
-  public int compareTo(TemplatesGroup o) {
+  public int compareTo(@NotNull TemplatesGroup o) {
     int i = o.myWeight - myWeight;
     return i == 0 ? o.getName().compareTo(getName()) : i;
   }

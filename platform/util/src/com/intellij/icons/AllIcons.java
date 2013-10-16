@@ -69,6 +69,7 @@ public class AllIcons {
     public static final Icon Filter_small = IconLoader.getIcon("/actions/filter_small.png"); // 16x16
     public static final Icon Find = IconLoader.getIcon("/actions/find.png"); // 16x16
     public static final Icon FindPlain = IconLoader.getIcon("/actions/findPlain.png"); // 16x16
+    public static final Icon FindWhite = IconLoader.getIcon("/actions/findWhite.png"); // 16x16
     public static final Icon ForceRefresh = IconLoader.getIcon("/actions/forceRefresh.png"); // 16x16
     public static final Icon Forward = IconLoader.getIcon("/actions/forward.png"); // 16x16
     public static final Icon GC = IconLoader.getIcon("/actions/gc.png"); // 16x16
@@ -331,6 +332,7 @@ public class AllIcons {
     public static final Icon JavaClass = IconLoader.getIcon("/fileTypes/javaClass.png"); // 16x16
     public static final Icon JavaOutsideSource = IconLoader.getIcon("/fileTypes/javaOutsideSource.png"); // 16x16
     public static final Icon JavaScript = IconLoader.getIcon("/fileTypes/javaScript.png"); // 16x16
+    public static final Icon Json = IconLoader.getIcon("/fileTypes/json.png"); // 16x16
     public static final Icon Jsp = IconLoader.getIcon("/fileTypes/jsp.png"); // 16x16
     public static final Icon Jspx = IconLoader.getIcon("/fileTypes/jspx.png"); // 16x16
     public static final Icon Manifest = IconLoader.getIcon("/fileTypes/manifest.png"); // 16x16

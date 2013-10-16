@@ -51,7 +51,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
-import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.util.IncorrectOperationException;
@@ -339,11 +338,11 @@ public class TemplateState implements Disposable {
           mySegments.addSegment(segmentOffset, segmentOffset);
         }
 
-        LOG.assertTrue(myTemplateRange.isValid());
+        LOG.assertTrue(myTemplateRange.isValid(), myTemplateRange.toString());
         calcResults(false);
-        LOG.assertTrue(myTemplateRange.isValid());
+        LOG.assertTrue(myTemplateRange.isValid(), myTemplateRange.toString());
         calcResults(false);  //Fixed SCR #[vk500] : all variables should be recalced twice on start.
-        LOG.assertTrue(myTemplateRange.isValid());
+        LOG.assertTrue(myTemplateRange.isValid(), myTemplateRange.toString());
         doReformat(null);
 
         int nextVariableNumber = getNextVariableNumber(-1);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.codeInsight.lookup.InsertHandlerDecorator;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
+import com.intellij.codeInsight.template.emmet.completion.XmlEmmetAbbreviationCompletionProvider;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -79,6 +80,7 @@ public class XmlCompletionContributor extends CompletionContributor {
   };
 
   public XmlCompletionContributor() {
+    extend(CompletionType.BASIC, psiElement().inside(XmlPatterns.xmlFile()), new XmlEmmetAbbreviationCompletionProvider());
     extend(CompletionType.BASIC,
            psiElement().inside(XmlPatterns.xmlAttributeValue()),
            new CompletionProvider<CompletionParameters>() {

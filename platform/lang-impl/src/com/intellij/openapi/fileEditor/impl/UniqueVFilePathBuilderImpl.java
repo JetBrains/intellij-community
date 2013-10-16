@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -43,8 +44,12 @@ public class UniqueVFilePathBuilderImpl extends UniqueVFilePathBuilder {
       for (VirtualFile virtualFile: filesWithSameName) {
         builder.addPath(virtualFile, virtualFile.getPath());
       }
-      return builder.getShortPath(file);
+      String result = builder.getShortPath(file);
+      if (UISettings.getInstance().HIDE_KNOWN_EXTENSION_IN_TABS) {
+        return FileUtil.getNameWithoutExtension(result);
+      }
+      return result;
     }
-    return file.getName();
+    return file.getPresentableName();
   }
 }

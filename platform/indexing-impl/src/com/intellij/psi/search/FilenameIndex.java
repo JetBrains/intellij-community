@@ -20,11 +20,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.CommonProcessors;
+import com.intellij.util.Processor;
+import com.intellij.util.SmartList;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -87,25 +92,51 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     return (PsiFile[])getFilesByName(project, name, scope, false);
   }
 
-  public static PsiFileSystemItem[] getFilesByName(final Project project,
-                                         final String name,
-                                         final GlobalSearchScope scope,
-                                         boolean includeDirs) {
-    final Collection<VirtualFile> files = FileBasedIndex.getInstance().getContainingFiles(NAME, name, scope);
-    if (files.isEmpty()) return PsiFile.EMPTY_ARRAY;
-    List<PsiFileSystemItem> result = new ArrayList<PsiFileSystemItem>();
-    PsiManager psiManager = PsiManager.getInstance(project);
+  public static boolean processFilesByName(final @NotNull String name,
+                                           boolean includeDirs,
+                                           @NotNull Processor<? super PsiFileSystemItem> processor,
+                                           @NotNull GlobalSearchScope scope,
+                                           @Nullable IdFilter idFilter
+                                       ) {
+    final Set<VirtualFile> files = new THashSet<VirtualFile>();
+
+    FileBasedIndex.getInstance().processValues(NAME, name, null, new FileBasedIndex.ValueProcessor<Void>() {
+      @Override
+      public boolean process(final VirtualFile file, final Void value) {
+        files.add(file);
+        return true;
+      }
+    }, scope, idFilter);
+
+    if (files.isEmpty()) return false;
+    PsiManager psiManager = PsiManager.getInstance(scope.getProject());
+    int processedFiles = 0;
 
     for(VirtualFile file: files) {
       if (!file.isValid()) continue;
       if (!includeDirs && !file.isDirectory()) {
         PsiFile psiFile = psiManager.findFile(file);
-        if (psiFile != null) result.add(psiFile);
+        if (psiFile != null) {
+          if(!processor.process(psiFile)) return true;
+          ++processedFiles;
+        }
       } else if (includeDirs && file.isDirectory()) {
         PsiDirectory dir = psiManager.findDirectory(file);
-        if (dir != null) result.add(dir);
+        if (dir != null) {
+          if(!processor.process(dir)) return true;
+          ++processedFiles;
+        }
       }
     }
+    return processedFiles > 0;
+  }
+
+  public static PsiFileSystemItem[] getFilesByName(final Project project,
+                                         final String name,
+                                         final @NotNull GlobalSearchScope scope,
+                                         boolean includeDirs) {
+    SmartList<PsiFileSystemItem> result = new SmartList<PsiFileSystemItem>();
+    processFilesByName(name, includeDirs, new CommonProcessors.CollectProcessor<PsiFileSystemItem>(result), scope, null);
 
     if (includeDirs) {
       return ArrayUtil.toObjectArray(result, PsiFileSystemItem.class);

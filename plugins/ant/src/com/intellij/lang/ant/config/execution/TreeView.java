@@ -88,6 +88,11 @@ public final class TreeView implements AntOutputView, OccurenceNavigator {
     myPanel = createPanel();
   }
 
+  @Override
+  public String getId() {
+    return "_tree_view_";
+  }
+
   public JComponent getComponent() {
     return myPanel;
   }

@@ -28,11 +28,16 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.UnorderedPair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.JavaTokenType;
+import com.intellij.psi.PsiPrimitiveType;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import gnu.trove.*;
+import gnu.trove.THashMap;
+import gnu.trove.THashSet;
+import gnu.trove.TLongArrayList;
+import gnu.trove.TLongHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +49,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   private final List<EqClass> myEqClasses;
   private final Stack<DfaValue> myStack;
-  private TIntStack myOffsetStack;
   private final TLongHashSet myDistinctClasses;
   private final Map<DfaVariableValue,DfaVariableState> myVariableStates;
   private final Map<DfaVariableValue,DfaVariableState> myDefaultVariableStates; 
@@ -58,7 +62,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myUnknownVariables = ContainerUtil.newTroveSet();
     myVariableStates = ContainerUtil.newTroveMap();
     myDistinctClasses = new TLongHashSet();
-    myOffsetStack = new TIntStack();
     myStack = new Stack<DfaValue>();
   }
 
@@ -70,7 +73,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myStack = new Stack<DfaValue>(toCopy.myStack);
     myDistinctClasses = new TLongHashSet(toCopy.myDistinctClasses.toArray());
     myUnknownVariables = new THashSet<DfaVariableValue>(toCopy.myUnknownVariables);
-    myOffsetStack = toCopy.myOffsetStack;
 
     myEqClasses = ContainerUtil.newArrayList(toCopy.myEqClasses);
     myVariableStates = new THashMap<DfaVariableValue, DfaVariableState>(toCopy.myVariableStates);
@@ -100,7 +102,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   boolean equalsSuperficially(DfaMemoryStateImpl other) {
-    return myEphemeral == other.myEphemeral && myStack.equals(other.myStack) && myOffsetStack.equals(other.myOffsetStack);
+    return myEphemeral == other.myEphemeral && myStack.equals(other.myStack);
   }
 
   boolean equalsByRelations(DfaMemoryStateImpl that) {
@@ -203,18 +205,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   @Override
   public void push(@NotNull DfaValue value) {
     myStack.push(value);
-  }
-
-  @Override
-  public int popOffset() {
-    myOffsetStack = new TIntStack(myOffsetStack);
-    return myOffsetStack.pop();
-  }
-
-  @Override
-  public void pushOffset(int offset) {
-    myOffsetStack = new TIntStack(myOffsetStack);
-    myOffsetStack.push(offset);
   }
 
   @Override

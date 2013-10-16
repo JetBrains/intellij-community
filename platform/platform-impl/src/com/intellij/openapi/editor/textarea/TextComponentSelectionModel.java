@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.event.SelectionListener;
+import com.intellij.openapi.editor.impl.SelectionModelImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -129,7 +130,7 @@ public class TextComponentSelectionModel implements SelectionModel {
 
   @Override
   public void selectLineAtCaret() {
-    throw new UnsupportedOperationException("Not implemented");
+    SelectionModelImpl.doSelectLineAtCaret(myEditor);
   }
 
   @Override

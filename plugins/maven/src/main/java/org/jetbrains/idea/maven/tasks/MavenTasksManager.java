@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.tasks;
 
+import com.google.common.collect.Sets;
 import com.intellij.execution.RunManagerEx;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompileTask;
@@ -66,6 +67,7 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
     MavenTasksManagerState result = new MavenTasksManagerState();
     result.afterCompileTasks = new THashSet<MavenCompilerTask>(myState.afterCompileTasks);
     result.beforeCompileTasks = new THashSet<MavenCompilerTask>(myState.beforeCompileTasks);
+    result.afterRebuildTask = new THashSet<MavenCompilerTask>(myState.afterRebuildTask);
     return result;
   }
 
@@ -101,7 +103,18 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
     List<MavenRunnerParameters> parametersList;
     synchronized (this) {
       parametersList = new ArrayList<MavenRunnerParameters>();
-      Set<MavenCompilerTask> tasks = before ? myState.beforeCompileTasks : myState.afterCompileTasks;
+      Set<MavenCompilerTask> tasks;
+
+      if (before) {
+        tasks = myState.beforeCompileTasks;
+      }
+      else {
+        tasks = myState.afterCompileTasks;
+        if (context.isRebuild()) {
+          tasks = Sets.union(myState.afterRebuildTask, tasks);
+        }
+      }
+
       for (MavenCompilerTask each : tasks) {
         VirtualFile file = LocalFileSystem.getInstance().findFileByPath(each.getProjectPath());
         if (file == null) continue;
@@ -150,6 +163,24 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
     fireTasksChanged();
   }
 
+  public synchronized boolean isAfterRebuildTask(MavenCompilerTask task) {
+    return myState.afterRebuildTask.contains(task);
+  }
+
+  public void addAfterRebuildTasks(List<MavenCompilerTask> tasks) {
+    synchronized (this) {
+      myState.afterRebuildTask.addAll(tasks);
+    }
+    fireTasksChanged();
+  }
+
+  public void removeAfterRebuildTasks(List<MavenCompilerTask> tasks) {
+    synchronized (this) {
+      myState.afterRebuildTask.removeAll(tasks);
+    }
+    fireTasksChanged();
+  }
+
   public String getDescription(MavenProject project, String goal) {
     List<String> result = new ArrayList<String>();
     MavenCompilerTask compilerTask = new MavenCompilerTask(project.getPath(), goal);
@@ -159,6 +190,9 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
       }
       if (myState.afterCompileTasks.contains(compilerTask)) {
         result.add(TasksBundle.message("maven.tasks.goal.after.compile"));
+      }
+      if (myState.afterRebuildTask.contains(compilerTask)) {
+        result.add(TasksBundle.message("maven.tasks.goal.after.rebuild"));
       }
     }
     RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);

@@ -39,6 +39,7 @@ public class Javac2 extends Javac {
   public static final String PROPERTY_INSTRUMENTATION_INCLUDE_JAVA_RUNTIME = "javac2.instrumentation.includeJavaRuntime";
   private ArrayList myFormFiles;
   private List myNestedFormPathList;
+  private boolean instrumentNotNull = true;
 
   public Javac2() {
   }
@@ -64,6 +65,14 @@ public class Javac2 extends Javac {
     if (!areJavaClassesCompiled()) {
       log("The option " + optionName + " is not supported by InstrumentIdeaExtensions task", Project.MSG_ERR);
     }
+  }
+
+  public boolean getInstrumentNotNull() {
+    return instrumentNotNull;
+  }
+
+  public void setInstrumentNotNull(boolean instrumentNotNull) {
+    this.instrumentNotNull = instrumentNotNull;
   }
 
   /**
@@ -197,6 +206,8 @@ public class Javac2 extends Javac {
     return p;
   }
 
+
+
   /**
    * The overridden compile method that does not actually compiles java sources but only instruments
    * class files.
@@ -214,10 +225,12 @@ public class Javac2 extends Javac {
     try {
       instrumentForms(finder);
 
-      //NotNull instrumentation
-      final int instrumented = instrumentNotNull(getDestdir(), finder);
+      if (getInstrumentNotNull()) {
+        //NotNull instrumentation
+        final int instrumented = instrumentNotNull(getDestdir(), finder);
+        log("Added @NotNull assertions to " + instrumented + " files", Project.MSG_INFO);
+      }
 
-      log("Added @NotNull assertions to " + instrumented + " files", Project.MSG_INFO);
     }
     finally {
       finder.releaseResources();

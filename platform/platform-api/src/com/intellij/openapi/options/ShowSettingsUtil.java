@@ -17,9 +17,10 @@ package com.intellij.openapi.options;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -57,4 +58,8 @@ public abstract class ShowSettingsUtil {
    * @deprecated create a new instance of configurable instead
    */
   public abstract <T extends Configurable> T findApplicationConfigurable(Class<T> confClass);
+
+  public static String getSettingsMenuName() {
+    return SystemInfo.isMac ? "Preferences" : "Settings";
+  }
 }

@@ -304,7 +304,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       final AnAction searchEverywhereAction = ActionManager.getInstance().getAction("SearchEverywhere");
       if (searchEverywhereAction != null) {
         try {
-          final JComponent searchEverywhere = getCustomComponent(searchEverywhereAction.getClass().newInstance());
+          final CustomComponentAction searchEveryWhereAction = (CustomComponentAction)searchEverywhereAction.getClass().newInstance();
+          final JComponent searchEverywhere = searchEveryWhereAction.createCustomComponent(searchEverywhereAction.getTemplatePresentation());
           searchEverywhere.putClientProperty("SEARCH_EVERYWHERE", Boolean.TRUE);
           add(searchEverywhere);
         }
@@ -724,7 +725,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       final Component component = getComponent(getComponentCount() - 1);
       if (component instanceof JComponent && ((JComponent)component).getClientProperty("SEARCH_EVERYWHERE") == Boolean.TRUE) {
         final Rectangle rect = bounds.get(bounds.size() - 1);
-        bounds.set(bounds.size() - 1, new Rectangle(size2Fit.width - rect.width - 5, rect.y, rect.width, rect.height));
+        int max = 0;
+        for (int i = 0; i < bounds.size() - 2; i++) {
+          max = Math.max(max, bounds.get(i).height);
+        }
+        bounds.set(bounds.size() - 1, new Rectangle(size2Fit.width - 25, 0, 25, max));
       }
     }
   }

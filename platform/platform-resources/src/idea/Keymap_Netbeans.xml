@@ -101,8 +101,10 @@
       <keyboard-shortcut first-keystroke="shift control UP" />
     </action>
     <action id="EditorIndentSelection">
-      <keyboard-shortcut first-keystroke="shift alt RIGHT" />
       <keyboard-shortcut first-keystroke="TAB"/>
+    </action>
+    <action id="EditorIndentLineOrSelection">
+      <keyboard-shortcut first-keystroke="shift alt RIGHT" />
     </action>
     <action id="EditorMoveToPageBottom">
       <keyboard-shortcut first-keystroke="shift alt PAGE_DOWN" />

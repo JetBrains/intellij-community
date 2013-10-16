@@ -75,7 +75,7 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
   @Override
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, @Nullable final MoveCallback callback) {
     if (!LOG.assertTrue(targetContainer == null || targetContainer instanceof PsiDirectory || targetContainer instanceof PsiDirectoryContainer,
-                        "container: " + targetContainer + "; elements: " + Arrays.toString(elements))) {
+                        "container: " + targetContainer + "; elements: " + Arrays.toString(elements) + "; working handler: " + toString())) {
       return;
     }
     MoveFilesOrDirectoriesUtil.doMove(project, adjustForMove(project, elements, targetContainer), new PsiElement[] {targetContainer}, callback);

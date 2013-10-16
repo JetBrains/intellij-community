@@ -85,7 +85,7 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
   @Override
   public void uiSettingsChanged(UISettings source) {
-    myTree.setRowHeight(-1);
+//    myTree.setRowHeight(-1);
     myTree.setFont(UIUtil.getTreeFont());
     myTree.invalidate();
     myTree.repaint();

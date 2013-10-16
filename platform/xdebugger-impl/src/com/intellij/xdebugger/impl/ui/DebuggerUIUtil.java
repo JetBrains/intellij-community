@@ -18,15 +18,21 @@ package com.intellij.xdebugger.impl.ui;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -102,12 +108,11 @@ public class DebuggerUIUtil {
   }
 
   public static void showValuePopup(@NotNull XFullValueEvaluator text, @NotNull MouseEvent event, @NotNull Project project) {
-    final JTextArea textArea = new JTextArea("Evaluating...");
+    EditorTextField textArea = new EditorTextField(EditorFactory.getInstance().createDocument("Evaluating..."), project, FileTypes.PLAIN_TEXT, true);
+    textArea.setBackground(HintUtil.INFORMATION_COLOR);
+
     final FullValueEvaluationCallbackImpl callback = new FullValueEvaluationCallbackImpl(textArea);
     text.startEvaluation(callback);
-    textArea.setEditable(false);
-    textArea.setBackground(HintUtil.INFORMATION_COLOR);
-    textArea.setLineWrap(false);
 
     final JScrollPane component = ScrollPaneFactory.createScrollPane(textArea);
     final Dimension frameSize = WindowManager.getInstance().getFrame(project).getSize();
@@ -119,7 +124,7 @@ public class DebuggerUIUtil {
     component.setPreferredSize(size);
     component.setBorder(null);
 
-    final JBPopup popup = JBPopupFactory.getInstance().createComponentPopupBuilder(component, null)
+    JBPopupFactory.getInstance().createComponentPopupBuilder(component, null)
       .setResizable(true)
       .setMovable(true)
       .setDimensionServiceKey(project, FULL_VALUE_POPUP_DIMENSION_KEY, false)
@@ -131,10 +136,7 @@ public class DebuggerUIUtil {
           return true;
         }
       })
-      .createPopup();
-    final Component parentComponent = event.getComponent();
-    RelativePoint point = new RelativePoint(parentComponent, new Point(event.getX()-size.width, event.getY()-size.height));
-    popup.show(point);
+      .createPopup().show(new RelativePoint(event.getComponent(), new Point(event.getX() - size.width, event.getY() - size.height)));
   }
 
   public static void showXBreakpointEditorBalloon(final Project project,
@@ -265,9 +267,9 @@ public class DebuggerUIUtil {
 
   private static class FullValueEvaluationCallbackImpl implements XFullValueEvaluator.XFullValueEvaluationCallback {
     private final AtomicBoolean myObsolete = new AtomicBoolean(false);
-    private final JTextArea myTextArea;
+    private final EditorTextField myTextArea;
 
-    public FullValueEvaluationCallbackImpl(final JTextArea textArea) {
+    public FullValueEvaluationCallbackImpl(final EditorTextField textArea) {
       myTextArea = textArea;
     }
 
@@ -285,7 +287,7 @@ public class DebuggerUIUtil {
           if (font != null) {
             myTextArea.setFont(font);
           }
-          myTextArea.setCaretPosition(0);
+          myTextArea.getCaretModel().moveToOffset(0);
         }
       });
     }

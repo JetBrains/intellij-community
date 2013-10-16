@@ -92,6 +92,8 @@
     </action>
     <action id="EditorIndentSelection">
       <keyboard-shortcut first-keystroke="TAB" />
+    </action>
+    <action id="EditorIndentLineOrSelection">
       <keyboard-shortcut first-keystroke="meta CLOSE_BRACKET" />
     </action>
     <action id="EditorLineEnd">

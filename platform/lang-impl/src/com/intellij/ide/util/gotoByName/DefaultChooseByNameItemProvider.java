@@ -27,9 +27,12 @@ import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.indexing.FindSymbolParameters;
+import com.intellij.util.indexing.IdFilter;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -120,6 +123,14 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     List<Pair<String, MinusculeMatcher>> patternsAndMatchers = getPatternsAndMatchers(qualifierPattern, base);
 
     boolean sortedByMatchingDegree = !(base.getModel() instanceof CustomMatcherModel);
+    IdFilter idFilter = null;
+
+    if (model instanceof ContributorsBasedGotoByModel) {
+      idFilter = ((ContributorsBasedGotoByModel)model).getIdFilter(everywhere);
+    }
+
+    GlobalSearchScope searchScope = FindSymbolParameters.searchScopeFor(base.myProject, everywhere);
+    FindSymbolParameters parameters = new FindSymbolParameters(pattern, namePattern, searchScope, idFilter);
     boolean afterStartMatch = false;
 
     for (MatchResult result : namesList) {
@@ -130,7 +141,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
       // use interruptible call if possible
       Object[] elements = model instanceof ContributorsBasedGotoByModel ?
-                                ((ContributorsBasedGotoByModel)model).getElementsByName(name, everywhere, namePattern, indicator)
+                                ((ContributorsBasedGotoByModel)model).getElementsByName(name, parameters, indicator)
                                 : model.getElementsByName(name, everywhere, namePattern);
       if (elements.length > 1) {
         sameNameElements.clear();

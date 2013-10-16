@@ -26,8 +26,10 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.*;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -52,10 +54,7 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
-import com.intellij.openapi.roots.ModuleRootAdapter;
-import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
@@ -70,6 +69,7 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -101,11 +101,13 @@ import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.model.serialization.JpsGlobalLoader;
 
 import javax.tools.*;
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -116,8 +118,7 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
  * @author Eugene Zhuravlev
  *         Date: 9/6/11
  */
-public class
-  BuildManager implements ApplicationComponent{
+public class BuildManager implements ApplicationComponent{
   public static final Key<Boolean> ALLOW_AUTOMAKE = Key.create("_allow_automake_when_process_is_active_");
   private static final Key<String> FORCE_MODEL_LOADING_PARAMETER = Key.create(BuildParametersKeys.FORCE_MODEL_LOADING);
 
@@ -149,7 +150,7 @@ public class
   private final File mySystemDirectory;
   private final ProjectManager myProjectManager;
 
-  private final Map<RequestFuture, Project> myAutomakeFutures = new HashMap<RequestFuture, Project>();
+  private final Map<RequestFuture, Project> myAutomakeFutures = Collections.synchronizedMap(new HashMap<RequestFuture, Project>());
   private final Map<String, RequestFuture> myBuildsInProgress = Collections.synchronizedMap(new HashMap<String, RequestFuture>());
   private final BuildProcessClasspathManager myClasspathManager = new BuildProcessClasspathManager();
   private final SequentialTaskExecutor myRequestsProcessor = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
@@ -196,12 +197,8 @@ public class
     }
 
     private boolean shouldSaveDocuments() {
-      for (final Project project : getActiveProjects()) {
-        if (canStartAutoMake(project)) {
-          return true;
-        }
-      }
-      return false;
+      final Project contextProject = getCurrentContextProject();
+      return contextProject != null && canStartAutoMake(contextProject);
     }
   };
 
@@ -242,24 +239,27 @@ public class
         if (PowerSaveMode.isEnabled()) {
           return false;
         }
-        List<Project> activeProjects = null;
+
+        Project project = null;
+        ProjectFileIndex fileIndex = null;
+
         for (VFileEvent event : events) {
           final VirtualFile eventFile = event.getFile();
           if (eventFile == null || ProjectCoreUtil.isProjectOrWorkspaceFile(eventFile)) {
             continue;
           }
 
-          if (activeProjects == null) {
-            activeProjects = getActiveProjects();
-            if (activeProjects.isEmpty()) {
+          if (project == null) {
+            // lazy init
+            project = getCurrentContextProject();
+            if (project == null) {
               return false;
             }
+            fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
           }
 
-          for (Project project : activeProjects) {
-            if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(eventFile)) {
-              return true;
-            }
+          if (fileIndex.isInContent(eventFile)) {
+            return true;
           }
         }
         return false;
@@ -282,19 +282,22 @@ public class
     });
   }
 
-  private List<Project> getActiveProjects() {
+  private List<Project> getOpenProjects() {
     final Project[] projects = myProjectManager.getOpenProjects();
     if (projects.length == 0) {
       return Collections.emptyList();
     }
     final List<Project> projectList = new SmartList<Project>();
     for (Project project : projects) {
-      if (project.isDefault() || project.isDisposed() || !project.isInitialized()) {
-        continue;
+      if (isValidProject(project)) {
+        projectList.add(project);
       }
-      projectList.add(project);
     }
     return projectList;
+  }
+
+  private static boolean isValidProject(@Nullable Project project) {
+    return project != null && !project.isDisposed() && !project.isDefault() && project.isInitialized();
   }
 
   public static BuildManager getInstance() {
@@ -428,35 +431,27 @@ public class
   }
 
   private void runAutoMake() {
-    final List<RequestFuture> futures = new SmartList<RequestFuture>();
-    for (final Project project : getActiveProjects()) {
-      if (!canStartAutoMake(project)) {
-        continue;
-      }
-      final List<String> emptyList = Collections.emptyList();
-      final RequestFuture future = scheduleBuild(
-        project, false, true, false, CmdlineProtoUtil.createAllModulesScopes(false), emptyList, Collections.<String, String>emptyMap(), new AutoMakeMessageHandler(project)
-      );
-      if (future != null) {
-        futures.add(future);
-        synchronized (myAutomakeFutures) {
-          myAutomakeFutures.put(future, project);
-        }
-      }
+    final Project project = getCurrentContextProject();
+    if (project == null || !canStartAutoMake(project)) {
+      return;
     }
-    try {
-      for (RequestFuture future : futures) {
+    final List<TargetTypeBuildScope> scopes = CmdlineProtoUtil.createAllModulesScopes(false);
+    final AutoMakeMessageHandler handler = new AutoMakeMessageHandler(project);
+    final RequestFuture future = scheduleBuild(
+      project, false, true, false, scopes, Collections.<String>emptyList(), Collections.<String, String>emptyMap(), handler
+    );
+    if (future != null) {
+      myAutomakeFutures.put(future, project);
+      try {
         future.waitFor();
       }
-    }
-    finally {
-      synchronized (myAutomakeFutures) {
-        myAutomakeFutures.keySet().removeAll(futures);
+      finally {
+        myAutomakeFutures.remove(future);
       }
     }
   }
 
-  private static boolean canStartAutoMake(Project project) {
+  private static boolean canStartAutoMake(@NotNull Project project) {
     if (project.isDisposed()) {
       return false;
     }
@@ -468,6 +463,48 @@ public class
       return false;
     }
     return true;
+  }
+
+  @Nullable
+  private Project getCurrentContextProject() {
+    return getContextProject(null);
+  }
+
+  @Nullable
+  private Project getContextProject(@Nullable Window window) {
+    final List<Project> openProjects = getOpenProjects();
+    if (openProjects.isEmpty()) {
+      return null;
+    }
+    if (openProjects.size() == 1) {
+      return openProjects.get(0);
+    }
+
+    if (window == null) {
+      window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+      if (window == null) {
+        return null;
+      }
+    }
+
+    Component comp = window;
+    while (true) {
+      final Container _parent = comp.getParent();
+      if (_parent == null) {
+        break;
+      }
+      comp = _parent;
+    }
+
+    Project project = null;
+    if (comp instanceof IdeFrame) {
+      project = ((IdeFrame)comp).getProject();
+    }
+    if (project == null) {
+      project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(comp));
+    }
+
+    return isValidProject(project)? project : null;
   }
 
   private static boolean hasRunningProcess(Project project) {

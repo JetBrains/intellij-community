@@ -21,6 +21,8 @@ import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiJavaCodeReferenceElement;
@@ -30,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.indices.MavenArtifactSearchDialog;
 import org.jetbrains.idea.maven.model.MavenId;
@@ -83,8 +86,18 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
     new WriteCommandAction(project, "Add Maven Dependency", DomUtil.getFile(model)) {
       @Override
       protected void run(Result result) throws Throwable {
+        boolean isTestSource = false;
+
+        VirtualFile virtualFile = file.getOriginalFile().getVirtualFile();
+        if (virtualFile != null) {
+          isTestSource = ProjectRootManager.getInstance(project).getFileIndex().isInSourceContent(virtualFile);
+        }
+
         for (MavenId each : ids) {
-          MavenDomUtil.createDomDependency(model, null, each);
+          MavenDomDependency dependency = MavenDomUtil.createDomDependency(model, null, each);
+          if (isTestSource) {
+            dependency.getScope().setStringValue("test");
+          }
         }
       }
     }.execute();

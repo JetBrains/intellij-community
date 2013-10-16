@@ -40,8 +40,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -50,12 +50,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupUpdateProcessor;
@@ -95,7 +93,6 @@ import java.util.List;
  */
 public class FileStructurePopup implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.FileStructurePopup");
-  private final Editor myEditor;
   private final Project myProject;
   private final StructureViewModel myTreeModel;
   private final StructureViewModel myBaseTreeModel;
@@ -125,12 +122,10 @@ public class FileStructurePopup implements Disposable {
 
 
   public FileStructurePopup(@NotNull Project project,
-                            @Nullable Editor editor,
                             @NotNull FileEditor fileEditor,
                             @NotNull StructureView structureView,
                             final boolean applySortAndFilter) {
     myProject = project;
-    myEditor = editor;
     myFileEditor = fileEditor;
     myStructureViewDelegate = structureView;
 
@@ -140,9 +135,9 @@ public class FileStructurePopup implements Disposable {
     Disposer.register(this, myStructureViewDelegate);
 
     //long l = System.currentTimeMillis();
-    if (editor instanceof EditorImpl) {
-      VirtualFile file = ((EditorImpl)editor).getVirtualFile();
-      myPsiFile = PsiManager.getInstance(project).findFile(file);
+    if (myFileEditor instanceof TextEditor) {
+      Editor e = ((TextEditor)myFileEditor).getEditor();
+      myPsiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(e.getDocument());
     }
 
     //System.out.println(System.currentTimeMillis() - l);
@@ -261,7 +256,7 @@ public class FileStructurePopup implements Disposable {
 
     //myAbstractTreeBuilder.getUi().setPassthroughMode(true);
     myAbstractTreeBuilder.getUi().getUpdater().setDelay(1);
-    myInitialPsiElement = getCurrentElement(getPsiFile(myProject));
+    myInitialPsiElement = getCurrentElement(myPsiFile);
     //myAbstractTreeBuilder.setCanYieldUpdate(true);
     Disposer.register(this, myAbstractTreeBuilder);
     TreeUtil.installActions(myTree);
@@ -315,8 +310,8 @@ public class FileStructurePopup implements Disposable {
     });
     myTree.getEmptyText().setText("Loading...");
     final Point location = DimensionService.getInstance().getLocation(getDimensionServiceKey(), myProject);
-    if (location != null && myEditor != null) {
-      myPopup.showInScreenCoordinates(myEditor.getContentComponent(), location);
+    if (location != null) {
+      myPopup.showInScreenCoordinates(myFileEditor.getComponent(), location);
     }
     else {
       myPopup.showCenteredInCurrentWindow(myProject);
@@ -519,11 +514,6 @@ public class FileStructurePopup implements Disposable {
     return null;
   }
 
-  @Nullable
-  protected PsiFile getPsiFile(final Project project) {
-    return myEditor == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
-  }
-
   @Override
   public void dispose() {
 
@@ -543,8 +533,8 @@ public class FileStructurePopup implements Disposable {
       return (PsiElement)elementAtCursor;
     }
 
-    if (myEditor != null && psiFile != null) {
-      return psiFile.getViewProvider().findElementAt(myEditor.getCaretModel().getOffset());
+    if (psiFile != null && myFileEditor instanceof TextEditor) {
+      return psiFile.getViewProvider().findElementAt(((TextEditor)myFileEditor).getEditor().getCaretModel().getOffset());
     }
 
     return null;

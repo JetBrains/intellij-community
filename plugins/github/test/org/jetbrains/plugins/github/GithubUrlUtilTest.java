@@ -213,4 +213,36 @@ public class GithubUrlUtilTest extends UsefulTestCase {
       }
     });
   }
+
+  public void testGetHostFromUrl() throws Throwable {
+    TestCase<String> tests = new TestCase<String>();
+
+    tests.add("github.com", "github.com");
+    tests.add("api.github.com", "api.github.com");
+    tests.add("github.com/", "github.com");
+    tests.add("api.github.com/", "api.github.com");
+
+    tests.add("github.com/user/repo/", "github.com");
+    tests.add("api.github.com/user/repo/", "api.github.com");
+
+    tests.add("http://github.com/user/repo/", "github.com");
+    tests.add("https://github.com/user/repo/", "github.com");
+    tests.add("git://github.com/user/repo/", "github.com");
+    tests.add("git@github.com:user/repo/", "github.com");
+
+    tests.add("git@github.com:username/repo/", "github.com");
+    tests.add("https://username:password@github.com/user/repo/", "github.com");
+    tests.add("https://username@github.com/user/repo/", "github.com");
+    tests.add("https://github.com:2233/user/repo/", "github.com");
+
+    tests.add("HTTP://GITHUB.com/user/repo/", "GITHUB.com");
+    tests.add("HttP://GitHub.com/user/repo/", "GitHub.com");
+
+    runTestCase(tests, new Convertor<String, String>() {
+      @Override
+      public String convert(String in) {
+        return getHostFromUrl(in);
+      }
+    });
+  }
 }
