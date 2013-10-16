@@ -1,29 +1,27 @@
-package de.plushnikov.intellij.lombok.processor.method;
+package de.plushnikov.intellij.plugin.processor.method;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
-import de.plushnikov.intellij.lombok.problem.LombokProblem;
-import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
-import de.plushnikov.intellij.lombok.problem.ProblemEmptyBuilder;
-import de.plushnikov.intellij.lombok.problem.ProblemNewBuilder;
-import de.plushnikov.intellij.lombok.processor.AbstractLombokProcessor;
-import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
-import de.plushnikov.intellij.lombok.util.PsiClassUtil;
+import de.plushnikov.intellij.plugin.problem.LombokProblem;
+import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
+import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
+import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
+import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.annotation.Annotation;
 import java.util.*;
-import java.util.regex.Pattern;
 
 /**
  * Base lombok processor class for method annotations
  *
- * @author Plushnikov Michail
+ * @author Tomasz Kalkosiński
  */
-public abstract class AbstractLombokMethodProcessor extends AbstractLombokProcessor implements LombokMethodProcessor {
+public abstract class AbstractMethodProcessor extends AbstractProcessor implements MethodProcessor {
 
-  protected AbstractLombokMethodProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<?> supportedClass) {
+  protected AbstractMethodProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<?> supportedClass) {
     super(supportedAnnotationClass, supportedClass);
   }
 

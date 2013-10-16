@@ -1,24 +1,19 @@
-package de.plushnikov.intellij.lombok.processor.method;
+package de.plushnikov.intellij.plugin.processor.method;
 
 import com.intellij.psi.*;
-import de.plushnikov.intellij.lombok.ErrorMessages;
-import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
-import de.plushnikov.intellij.lombok.processor.clazz.AbstractLombokClassProcessor;
-import de.plushnikov.intellij.lombok.processor.clazz.constructor.AllArgsConstructorProcessor;
-import de.plushnikov.intellij.lombok.psi.LombokLightMethodBuilder;
-import de.plushnikov.intellij.lombok.psi.LombokPsiElementFactory;
-import de.plushnikov.intellij.lombok.util.BuilderUtil;
-import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
-import de.plushnikov.intellij.lombok.util.PsiClassUtil;
-import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
-import lombok.Singleton;
+import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.thirdparty.ErrorMessages;
+import de.plushnikov.intellij.plugin.util.BuilderUtil;
+import de.plushnikov.intellij.plugin.util.PsiClassUtil;
+import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import lombok.experimental.Builder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.List;
 
-public class BuilderMethodProcessor extends AbstractLombokMethodProcessor {
+public class BuilderMethodProcessor extends AbstractMethodProcessor {
 
   public static final String METHOD_NAME = "getInstance";
 
@@ -53,7 +48,7 @@ public class BuilderMethodProcessor extends AbstractLombokMethodProcessor {
   }
 
   protected void processIntern(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    LombokLightMethodBuilder method = LombokPsiElementFactory.getInstance().createLightMethod(psiMethod.getManager(), BuilderUtil.createBuilderMethodName(psiAnnotation))
+    LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiMethod.getManager(), BuilderUtil.createBuilderMethodName(psiAnnotation))
         .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(psiMethod.getContainingClass().getInnerClasses()[0])) // TODO: It's not good!!
         .withContainingClass(psiMethod.getContainingClass())
         .withNavigationElement(psiAnnotation);

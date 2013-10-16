@@ -1,4 +1,4 @@
-package de.plushnikov.intellij.lombok.psi;
+package de.plushnikov.intellij.plugin.psi;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
@@ -48,7 +48,7 @@ public class LombokLightClass extends LightElement implements PsiClass {
 
   public LombokLightClass(PsiManager manager, Language language) {
     super(manager, language);
-    myModifierList = new LombokLightModifierListImpl(manager, JavaLanguage.INSTANCE);
+    myModifierList = new LombokLightModifierList(manager, JavaLanguage.INSTANCE);
   }
 
   @Override

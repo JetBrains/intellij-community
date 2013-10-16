@@ -54,12 +54,17 @@
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.SetterProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.WitherProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.BuilderProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.BuilderInnerClassProcessor"/>
 
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.DelegateFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.LazyGetterFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor"/>
+
+    <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderMethodProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderMethodInnerClassProcessor"/>
 
     <!-- lombok-pg-->
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.FluentSetterProcessor"/>

@@ -1,4 +1,4 @@
-package de.plushnikov.intellij.lombok.util;
+package de.plushnikov.intellij.plugin.util;
 
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;

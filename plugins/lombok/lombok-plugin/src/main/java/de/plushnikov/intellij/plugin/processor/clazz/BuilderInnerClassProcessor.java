@@ -1,15 +1,16 @@
-package de.plushnikov.intellij.lombok.processor.clazz;
+package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.psi.*;
-import de.plushnikov.intellij.lombok.ErrorMessages;
-import de.plushnikov.intellij.lombok.LombokUtils;
-import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
-import de.plushnikov.intellij.lombok.processor.clazz.constructor.NoArgsConstructorProcessor;
-import de.plushnikov.intellij.lombok.psi.LombokLightClassBuilder;
-import de.plushnikov.intellij.lombok.psi.LombokPsiElementFactory;
-import de.plushnikov.intellij.lombok.util.BuilderUtil;
-import de.plushnikov.intellij.lombok.util.PsiClassUtil;
-import de.plushnikov.intellij.lombok.util.PsiMethodUtil;
+import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
+import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
+import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
+import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
+import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.thirdparty.ErrorMessages;
+import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
+import de.plushnikov.intellij.plugin.util.BuilderUtil;
+import de.plushnikov.intellij.plugin.util.PsiClassUtil;
+import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import lombok.experimental.Builder;
 import lombok.Singleton;
 import org.jetbrains.annotations.NotNull;
@@ -22,11 +23,10 @@ import java.util.List;
 /**
  * Inspect and validate @Builder lombok-pg annotation on a class
  * Creates methods for a builder pattern for initializing a class
- * TODO implement me
  *
  * @author Plushnikov Michail
  */
-public class BuilderInnerClassProcessor extends AbstractLombokClassProcessor {
+public class BuilderInnerClassProcessor extends AbstractClassProcessor {
 
   public static final String METHOD_NAME = "getInstance";
 
@@ -85,7 +85,7 @@ public class BuilderInnerClassProcessor extends AbstractLombokClassProcessor {
     // Create inner class only if it doesn't exist.
     final PsiClass innerClassByName = PsiClassUtil.getInnerClassInternByName(psiClass, innerClassSimpleName);
     if (innerClassByName == null) {
-      LombokLightClassBuilder innerClass = LombokPsiElementFactory.getInstance().createLightClass(psiClass.getManager(), innerClassCanonicalName, innerClassSimpleName)
+      LombokLightClassBuilder innerClass = new LombokLightClassBuilder(psiClass.getManager(), innerClassCanonicalName, innerClassSimpleName)
          .withContainingClass(psiClass)
          .withParameterTypes(psiClass.getTypeParameterList())
          .withModifier(PsiModifier.PUBLIC)
@@ -116,7 +116,7 @@ public class BuilderInnerClassProcessor extends AbstractLombokClassProcessor {
         createField &= !(null != psiField.getInitializer() && modifierList.hasModifierProperty(PsiModifier.FINAL));
       }
       if (createField) {
-        fields.add(LombokPsiElementFactory.getInstance().createLightField(psiClass.getManager(), psiField.getName(), psiField.getType())
+        fields.add(new LombokLightFieldBuilder(psiClass.getManager(), psiField.getName(), psiField.getType())
           .withModifier(PsiModifier.PRIVATE));
       }
     }
@@ -145,7 +145,7 @@ public class BuilderInnerClassProcessor extends AbstractLombokClassProcessor {
         createMethod &= !(null != psiField.getInitializer() && modifierList.hasModifierProperty(PsiModifier.FINAL));
       }
       if (createMethod) {
-        methods.add(LombokPsiElementFactory.getInstance().createLightMethod(psiField.getManager(), BuilderUtil.createSetterName(psiAnnotation, psiField.getName()))
+        methods.add(new LombokLightMethodBuilder(psiField.getManager(), BuilderUtil.createSetterName(psiAnnotation, psiField.getName()))
           .withMethodReturnType(BuilderUtil.createSetterReturnType(psiAnnotation, PsiClassUtil.getTypeWithGenerics(innerClass)))
           .withContainingClass(parentClass)
           .withParameter(psiField.getName(), psiField.getType())
@@ -157,7 +157,7 @@ public class BuilderInnerClassProcessor extends AbstractLombokClassProcessor {
   }
 
   protected PsiMethod createBuildMethod(@NotNull PsiClass parentClass, @NotNull PsiClass innerClass, @NotNull PsiAnnotation psiAnnotation) {
-    return LombokPsiElementFactory.getInstance().createLightMethod(parentClass.getManager(), BuilderUtil.createBuildMethodName(psiAnnotation))
+    return new LombokLightMethodBuilder(parentClass.getManager(), BuilderUtil.createBuildMethodName(psiAnnotation))
        .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(parentClass))
        .withContainingClass(innerClass)
        .withNavigationElement(parentClass)
