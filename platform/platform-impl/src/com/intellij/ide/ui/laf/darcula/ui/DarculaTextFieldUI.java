@@ -142,7 +142,7 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
     final Container parent = c.getParent();
     final Rectangle r = getDrawingRect();
     if (c.isOpaque() && parent != null) {
-      g.setColor(c.getBackground());
+      g.setColor(parent.getBackground());
       g.fillRect(0, 0, c.getWidth(), c.getHeight());
     }
     final GraphicsConfig config = new GraphicsConfig(g);
