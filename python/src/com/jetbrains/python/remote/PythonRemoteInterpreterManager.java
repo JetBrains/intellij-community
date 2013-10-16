@@ -74,7 +74,7 @@ public abstract class PythonRemoteInterpreterManager {
                                                                     @NotNull Sdk sdk,
                                                                     String path);
 
-  public abstract boolean ensureCanWrite(@Nullable Object projectOrComponent, RemoteSdkData data, String path);
+  public abstract boolean ensureCanWrite(RemoteSdkData data, String path);
 
   @Nullable
   public abstract RemoteProjectSettings showRemoteProjectSettingsDialog(VirtualFile baseDir, RemoteSdkData data);
