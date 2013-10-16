@@ -57,6 +57,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   private DfaValue myError;
   private DfaValue myString;
   private PsiType myNpe;
+  private PsiType myAssertionError;
   private Stack<PsiElement> myElementStack = new Stack<PsiElement>();
 
   /**
@@ -75,6 +76,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     myRuntimeException = myFactory.createTypeValue(createClassType(manager, scope, JAVA_LANG_RUNTIME_EXCEPTION), Nullness.NOT_NULL);
     myError = myFactory.createTypeValue(createClassType(manager, scope, JAVA_LANG_ERROR), Nullness.NOT_NULL);
     myNpe = createClassType(manager, scope, JAVA_LANG_NULL_POINTER_EXCEPTION);
+    myAssertionError = createClassType(manager, scope, JAVA_LANG_ASSERTION_ERROR);
     myString = myFactory.createTypeValue(createClassType(manager, scope, JAVA_LANG_STRING), Nullness.NOT_NULL);
     
     PsiParameter mockVar = JavaPsiFacade.getElementFactory(manager.getProject()).createParameter("$exception$", createClassType(manager, scope, JAVA_LANG_OBJECT));
@@ -93,7 +95,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     myCurrentFlow.setFields(myFields.toArray(new DfaVariableValue[myFields.size()]));
 
-    addInstruction(new ReturnInstruction());
+    addInstruction(new ReturnInstruction(false));
 
     return myCurrentFlow;
   }
@@ -215,7 +217,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       if (description != null) {
         description.accept(this);
       }
-      addInstruction(new ReturnInstruction());
+      
+      initException(myAssertionError);
+      addThrowCode(false);
     }
     finishElement(statement);
   }
@@ -542,7 +546,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       
       addInstruction(new GotoInstruction(finallyOffset));
     } else {
-      addInstruction(new ReturnInstruction());
+      addInstruction(new ReturnInstruction(false));
     }
   }
 
@@ -657,7 +661,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     if (exception != null) {
       exception.accept(this);
       if (myCatchStack.isEmpty()) {
-        addInstruction(new ReturnInstruction());
+        addInstruction(new ReturnInstruction(true));
         finishElement(statement);
         return;
       }
@@ -670,10 +674,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       addInstruction(gotoInstruction);
       
       addInstruction(new PopInstruction());
-      addInstruction(new PushInstruction(myExceptionHolder, null));
-      addInstruction(new PushInstruction(myFactory.createTypeValue(myNpe, Nullness.NOT_NULL), null));
-      addInstruction(new AssignInstruction(null));
-      addInstruction(new PopInstruction());
+      initException(myNpe);
       addThrowCode(false);
 
       gotoInstruction.setOffset(myCurrentFlow.getInstructionCount());
@@ -729,7 +730,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   // the exception object should be in $exception$ variable
   private void addThrowCode(boolean catchRethrow) {
     if (myCatchStack.isEmpty()) {
-      addInstruction(new ReturnInstruction());
+      addInstruction(new ReturnInstruction(true));
       return;
     }
     
@@ -742,7 +743,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         i--;
       }
       if (i < 0) {
-        addInstruction(new ReturnInstruction());
+        addInstruction(new ReturnInstruction(true));
         return;
       }
       cd = myCatchStack.get(i);
@@ -877,7 +878,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       myCatchStack.pop();
       finallyBlock.accept(this);
       
-      //if $exception$==null => continue normal exectuion
+      //if $exception$==null => continue normal execution
       addInstruction(new PushInstruction(myExceptionHolder, null));
       addInstruction(new PushInstruction(myFactory.getConstFactory().getNull(), null));
       addInstruction(new BinopInstruction(JavaTokenType.EQEQ, null, statement.getProject()));
@@ -1301,14 +1302,18 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         ConditionalGotoInstruction cond = new ConditionalGotoInstruction(null, false, null);
         addInstruction(cond);
         addInstruction(new EmptyStackInstruction());
-        addInstruction(new PushInstruction(myExceptionHolder, null));
-        addInstruction(new PushInstruction(myFactory.createTypeValue(ref, Nullness.NOT_NULL), null));
-        addInstruction(new AssignInstruction(null));
-        addInstruction(new PopInstruction());
+        initException(ref);
         addThrowCode(false);
         cond.setOffset(myCurrentFlow.getInstructionCount());
       }
     }
+  }
+
+  private void initException(PsiType ref) {
+    addInstruction(new PushInstruction(myExceptionHolder, null));
+    addInstruction(new PushInstruction(myFactory.createTypeValue(ref, Nullness.NOT_NULL), null));
+    addInstruction(new AssignInstruction(null));
+    addInstruction(new PopInstruction());
   }
 
   @Override public void visitMethodCallExpression(PsiMethodCallExpression expression) {
@@ -1448,7 +1453,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         returnCheckingFinally();
         break;
       case SYSTEM_EXIT:
-        addInstruction(new ReturnInstruction());
+        addInstruction(new ReturnInstruction(true));
         break;
     }
 
