@@ -2,17 +2,14 @@ package de.plushnikov.intellij.lombok.processor.method;
 
 import com.intellij.psi.*;
 import de.plushnikov.intellij.lombok.ErrorMessages;
-import de.plushnikov.intellij.lombok.LombokUtils;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
 import de.plushnikov.intellij.lombok.processor.clazz.ToStringProcessor;
 import de.plushnikov.intellij.lombok.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.lombok.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.lombok.psi.LombokPsiElementFactory;
 import de.plushnikov.intellij.lombok.util.BuilderUtil;
-import de.plushnikov.intellij.lombok.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
 import lombok.experimental.Builder;
-import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -44,7 +41,7 @@ public class BuilderMethodInnerClassProcessor extends AbstractLombokMethodProces
   protected void processIntern(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     PsiClass parentClass = psiMethod.getContainingClass();
     assert parentClass != null;
-    final String innerClassSimpleName = BuilderUtil.createBuilderClassName(psiAnnotation, psiMethod.getReturnType());
+    final String innerClassSimpleName = BuilderUtil.createBuilderClassNameWithGenerics(psiAnnotation, psiMethod.getReturnType());
     final String innerClassCanonicalName = parentClass.getName() + "." + innerClassSimpleName;
     LombokLightClassBuilder innerClass = LombokPsiElementFactory.getInstance().createLightClass(psiMethod.getManager(), innerClassCanonicalName, innerClassSimpleName)
        .withContainingClass(parentClass)

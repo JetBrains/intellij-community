@@ -1,19 +1,11 @@
 package de.plushnikov.intellij.lombok.processor.clazz;
 
 import com.intellij.psi.*;
-import com.intellij.psi.impl.java.stubs.PsiClassStub;
-import com.intellij.psi.impl.light.LightClass;
-import com.intellij.psi.impl.light.LightMethod;
-import com.intellij.psi.impl.source.PsiClassImpl;
-import com.intellij.psi.util.PsiTypesUtil;
 import de.plushnikov.intellij.lombok.ErrorMessages;
 import de.plushnikov.intellij.lombok.LombokUtils;
 import de.plushnikov.intellij.lombok.problem.ProblemBuilder;
-import de.plushnikov.intellij.lombok.processor.clazz.constructor.AllArgsConstructorProcessor;
 import de.plushnikov.intellij.lombok.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.lombok.psi.LombokLightClassBuilder;
-import de.plushnikov.intellij.lombok.psi.LombokLightFieldBuilder;
-import de.plushnikov.intellij.lombok.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.lombok.psi.LombokPsiElementFactory;
 import de.plushnikov.intellij.lombok.util.BuilderUtil;
 import de.plushnikov.intellij.lombok.util.PsiClassUtil;
@@ -22,6 +14,7 @@ import lombok.experimental.Builder;
 import lombok.Singleton;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -39,6 +32,10 @@ public class BuilderInnerClassProcessor extends AbstractLombokClassProcessor {
 
   public BuilderInnerClassProcessor() {
     super(Builder.class, PsiClass.class);
+  }
+
+  protected BuilderInnerClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class supportedClass) {
+    super(supportedAnnotationClass, supportedClass);
   }
 
   @Override
@@ -82,26 +79,30 @@ public class BuilderInnerClassProcessor extends AbstractLombokClassProcessor {
   }
 
   protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    final String innerClassSimpleName = BuilderUtil.createBuilderClassName(psiAnnotation, psiClass.getName());
-    final String innerClassCanonicalName = psiClass.getName() + "." + innerClassSimpleName;
-    LombokLightClassBuilder innerClass = LombokPsiElementFactory.getInstance().createLightClass(psiClass.getManager(), innerClassCanonicalName, innerClassSimpleName)
-       .withContainingClass(psiClass)
-       .withParameterTypes(psiClass.getTypeParameterList())
-       .withModifier(PsiModifier.PUBLIC)
-       .withModifier(PsiModifier.STATIC);
-    innerClass.withConstructors(createConstructors(innerClass, psiAnnotation))
-       .withFields(createFields(psiClass))
-       .withMethods(createMethods(psiClass, innerClass, psiAnnotation));
+    final String innerClassSimpleName = BuilderUtil.createBuilderClassName(psiAnnotation, psiClass);
+    final String innerClassCanonicalName = psiClass.getName() + "." + BuilderUtil.createBuilderClassName(psiAnnotation, psiClass);
 
-    target.add(innerClass);
+    // Create inner class only if it doesn't exist.
+    final PsiClass innerClassByName = PsiClassUtil.getInnerClassInternByName(psiClass, innerClassSimpleName);
+    if (innerClassByName == null) {
+      LombokLightClassBuilder innerClass = LombokPsiElementFactory.getInstance().createLightClass(psiClass.getManager(), innerClassCanonicalName, innerClassSimpleName)
+         .withContainingClass(psiClass)
+         .withParameterTypes(psiClass.getTypeParameterList())
+         .withModifier(PsiModifier.PUBLIC)
+         .withModifier(PsiModifier.STATIC);
+      innerClass.withConstructors(createConstructors(innerClass, psiAnnotation))
+         .withFields(createFields(psiClass))
+         .withMethods(createMethods(psiClass, innerClass, psiAnnotation));
+      target.add(innerClass);
+    }
   }
 
-  private Collection<PsiMethod> createConstructors(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+  protected Collection<PsiMethod> createConstructors(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     NoArgsConstructorProcessor noArgsConstructorProcessor = new NoArgsConstructorProcessor();
     return noArgsConstructorProcessor.createNoArgsConstructor(psiClass, PsiModifier.PACKAGE_LOCAL, psiAnnotation);
   }
 
-  private Collection<PsiField> createFields(@NotNull PsiClass psiClass) {
+  protected Collection<PsiField> createFields(@NotNull PsiClass psiClass) {
     List<PsiField> fields = new ArrayList<PsiField>();
     for (PsiField psiField : psiClass.getFields()) {
       boolean createField = true;
@@ -122,7 +123,7 @@ public class BuilderInnerClassProcessor extends AbstractLombokClassProcessor {
     return fields;
   }
 
-  private Collection<PsiMethod> createMethods(@NotNull PsiClass parentClass, @NotNull PsiClass innerClass, @NotNull PsiAnnotation psiAnnotation) {
+  protected Collection<PsiMethod> createMethods(@NotNull PsiClass parentClass, @NotNull PsiClass innerClass, @NotNull PsiAnnotation psiAnnotation) {
     List<PsiMethod> methods = new ArrayList<PsiMethod>();
     methods.addAll(createFieldMethods(parentClass, innerClass, psiAnnotation));
     methods.add(createBuildMethod(parentClass, innerClass, psiAnnotation));
@@ -130,7 +131,7 @@ public class BuilderInnerClassProcessor extends AbstractLombokClassProcessor {
     return methods;
   }
 
-  private Collection<PsiMethod> createFieldMethods(@NotNull PsiClass parentClass, @NotNull PsiClass innerClass, @NotNull PsiAnnotation psiAnnotation) {
+  protected Collection<PsiMethod> createFieldMethods(@NotNull PsiClass parentClass, @NotNull PsiClass innerClass, @NotNull PsiAnnotation psiAnnotation) {
     List<PsiMethod> methods = new ArrayList<PsiMethod>();
     for (PsiField psiField : parentClass.getFields()) {
       boolean createMethod = true;
@@ -155,7 +156,7 @@ public class BuilderInnerClassProcessor extends AbstractLombokClassProcessor {
     return methods;
   }
 
-  private PsiMethod createBuildMethod(@NotNull PsiClass parentClass, @NotNull PsiClass innerClass, @NotNull PsiAnnotation psiAnnotation) {
+  protected PsiMethod createBuildMethod(@NotNull PsiClass parentClass, @NotNull PsiClass innerClass, @NotNull PsiAnnotation psiAnnotation) {
     return LombokPsiElementFactory.getInstance().createLightMethod(parentClass.getManager(), BuilderUtil.createBuildMethodName(psiAnnotation))
        .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(parentClass))
        .withContainingClass(innerClass)

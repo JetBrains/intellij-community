@@ -20,6 +20,11 @@ public class BuilderTestCase extends LombokParsingTestCase {
     doTest();
   }
 
+  // This test is lombok's homepage example with predefined elements and another inner class.
+  public void testBuilderPredefined() throws IOException {
+    doTest();
+  }
+
   public void testBuilderSimple() throws IOException {
     doTest();
   }

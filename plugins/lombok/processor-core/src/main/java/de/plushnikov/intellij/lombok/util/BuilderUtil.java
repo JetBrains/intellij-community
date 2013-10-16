@@ -1,6 +1,8 @@
 package de.plushnikov.intellij.lombok.util;
 
 import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
@@ -18,13 +20,30 @@ public class BuilderUtil {
   public final static String BUILDER_METHOD_NAME = "builder";
   public final static String SETTER_PREFIX = "set";
 
-  public static String createBuilderClassName(@NotNull PsiAnnotation psiAnnotation, @Nullable PsiType psiType) {
-    return createBuilderClassName(psiAnnotation, psiType != null ? psiType.getPresentableText() : "Void");
+  public static String createBuilderClassName(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass) {
+    return createBuilderClassNameWithGenerics(psiAnnotation, psiClass.getName());
   }
 
-  public static String createBuilderClassName(@NotNull PsiAnnotation psiAnnotation, @NotNull String type) {
+  public static String createBuilderClassNameWithGenerics(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass) {
+    final PsiType psiType = PsiClassUtil.getTypeWithGenerics(psiClass);
+    return createBuilderClassNameWithGenerics(psiAnnotation, psiType.getPresentableText());
+  }
+
+  public static String createBuilderClassNameWithGenerics(@NotNull PsiAnnotation psiAnnotation, @Nullable PsiType psiType) {
+    return createBuilderClassNameWithGenerics(psiAnnotation, psiType != null ?  psiType.getPresentableText() : PsiType.VOID.getBoxedTypeName());
+  }
+
+  public static String createBuilderClassNameWithGenerics(@NotNull PsiAnnotation psiAnnotation, @NotNull String type) {
     final String builderClassName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, ANNOTATION_BUILDER_CLASS_NAME, String.class);
-    return StringUtils.isNotBlank(builderClassName) ? builderClassName : StringUtils.capitalize(type) + BUILDER_CLASS_NAME;
+    if (StringUtils.isNotBlank(builderClassName)) {
+      return builderClassName;
+    }
+    // Add suffix before generics declaration
+    int indexForSuffix = type.indexOf("<");
+    if (indexForSuffix > -1) {
+      return StringUtils.capitalize(type.substring(0, indexForSuffix) + BUILDER_CLASS_NAME + type.substring(indexForSuffix, type.length()));
+    }
+    return StringUtils.capitalize(type) + BUILDER_CLASS_NAME;
   }
 
   @NotNull

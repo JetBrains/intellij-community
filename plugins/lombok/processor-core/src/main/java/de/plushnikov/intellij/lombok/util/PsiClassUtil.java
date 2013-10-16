@@ -17,6 +17,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -38,6 +39,12 @@ public class PsiClassUtil {
     @Override
     public PsiField apply(PsiElement psiElement) {
       return (PsiField) psiElement;
+    }
+  };
+  private static final Function<PsiElement, PsiClass> PSI_ELEMENT_TO_CLASS_FUNCTION = new Function<PsiElement, PsiClass>() {
+    @Override
+    public PsiClass apply(PsiElement psiElement) {
+      return (PsiClass) psiElement;
     }
   };
 
@@ -72,6 +79,23 @@ public class PsiClassUtil {
       return Collections2.transform(
           Collections2.filter(Lists.newArrayList(psiClass.getChildren()), Predicates.instanceOf(PsiField.class)),
           PSI_ELEMENT_TO_FIELD_FUNCTION);
+    }
+  }
+
+  /**
+   * Workaround to get all of original inner classes of the psiClass, without calling PsiAugmentProvider infinitely
+   *
+   * @param psiClass psiClass to collect all inner classes from
+   * @return all inner classes of the class
+   */
+  @NotNull
+  public static Collection<PsiClass> collectInnerClassesIntern(@NotNull PsiClass psiClass) {
+    if (psiClass instanceof PsiExtensibleClass) {
+      return ((PsiExtensibleClass) psiClass).getOwnInnerClasses();
+    } else {
+      return Collections2.transform(
+          Collections2.filter(Lists.newArrayList(psiClass.getChildren()), Predicates.instanceOf(PsiClass.class)),
+          PSI_ELEMENT_TO_CLASS_FUNCTION);
     }
   }
 
@@ -143,5 +167,31 @@ public class PsiClassUtil {
       result = factory.createType(psiClass);
     }
     return result;
+  }
+
+  /**
+   * Workaround to get inner class of the psiClass, without calling PsiAugmentProvider infinitely
+   *
+   * @param psiClass psiClass to search for inner class
+   * @return inner class if found
+   */
+  @Nullable
+  public static PsiClass getInnerClassInternByName(@NotNull PsiClass psiClass, @NotNull String className) {
+    Collection<PsiClass> innerClasses = collectInnerClassesIntern(psiClass);
+    for (PsiClass innerClass : innerClasses) {
+      if (className.equals(innerClass.getName()))
+        return innerClass;
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiClass getInnerClassByName(@NotNull PsiClass psiClass, @NotNull String className) {
+    PsiClass[] innerClasses = psiClass.getInnerClasses();
+    for (PsiClass innerClass : innerClasses) {
+      if (className.equals(innerClass.getName()))
+        return innerClass;
+    }
+    return null;
   }
 }
