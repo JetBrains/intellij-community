@@ -43,9 +43,9 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
     String artifactId = MavenArtifactCoordinatesHelper.getId(convertContext).getArtifactId();
     if (!StringUtil.isEmptyOrSpaces(artifactId)) {
       MavenProjectIndicesManager manager = MavenProjectIndicesManager.getInstance(convertContext.getFile().getProject());
-      for (String grouipId : manager.getGroupIds()) {
-        if (manager.getArtifactIds(grouipId).contains(artifactId)) {
-          groupIds.add(grouipId);
+      for (String groupId : manager.getGroupIds()) {
+        if (manager.getArtifactIds(groupId).contains(artifactId)) {
+          groupIds.add(groupId);
         }
       }
     }
