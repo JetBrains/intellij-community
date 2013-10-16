@@ -41,4 +41,6 @@ public interface ServerConnection<D extends DeploymentConfiguration> {
 
   @Nullable
   DeploymentLogManager getLogManager(@NotNull Deployment deployment);
+
+  void connectIfNeeded(ServerConnector.ConnectionCallback<D> callback);
 }

@@ -34,10 +34,15 @@ import java.util.List;
  * @author nik
  */
 public class DeployToServerConfigurationType extends ConfigurationTypeBase {
+
+  public static String getId(ServerType<?> serverType) {
+    return serverType.getId() + "-deploy";
+  }
+
   private final ServerType<?> myServerType;
 
   public DeployToServerConfigurationType(ServerType<?> serverType) {
-    super(serverType.getId() + "-deploy", serverType.getPresentableName() + " Deployment",
+    super(getId(serverType), serverType.getPresentableName() + " Deployment",
           "Deploy to " + serverType.getPresentableName() + " run configuration", serverType.getIcon());
     addFactory(new DeployToServerConfigurationFactory());
     myServerType = serverType;
