@@ -15,6 +15,11 @@ public class BuilderTestCase extends LombokParsingTestCase {
     doTest();
   }
 
+  // This test is lombok's homepage customized example.
+  public void testBuilderExampleCustomized() throws IOException {
+    doTest();
+  }
+
   public void testBuilderSimple() throws IOException {
     doTest();
   }

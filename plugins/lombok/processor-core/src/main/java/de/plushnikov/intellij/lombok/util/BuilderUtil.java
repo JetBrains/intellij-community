@@ -19,14 +19,12 @@ public class BuilderUtil {
   public final static String SETTER_PREFIX = "set";
 
   public static String createBuilderClassName(@NotNull PsiAnnotation psiAnnotation, @Nullable PsiType psiType) {
-    final String builderClassName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, ANNOTATION_BUILDER_CLASS_NAME, String.class);
     return createBuilderClassName(psiAnnotation, psiType != null ? psiType.getPresentableText() : "Void");
   }
 
   public static String createBuilderClassName(@NotNull PsiAnnotation psiAnnotation, @NotNull String type) {
     final String builderClassName = PsiAnnotationUtil.getAnnotationValue(psiAnnotation, ANNOTATION_BUILDER_CLASS_NAME, String.class);
-    return (StringUtils.capitalize(type) +
-       (StringUtils.isNotBlank(builderClassName) ? builderClassName : BUILDER_CLASS_NAME));
+    return StringUtils.isNotBlank(builderClassName) ? builderClassName : StringUtils.capitalize(type) + BUILDER_CLASS_NAME;
   }
 
   @NotNull
