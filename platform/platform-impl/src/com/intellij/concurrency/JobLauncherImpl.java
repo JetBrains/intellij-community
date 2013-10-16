@@ -90,15 +90,12 @@ public class JobLauncherImpl extends JobLauncher {
       return false;
     }
     catch (RuntimeException e) {
-      assert wrapper.isCanceled();
       throw e;
     }
     catch (Error e) {
-      assert wrapper.isCanceled();
       throw e;
     }
     catch (Throwable e) {
-      assert wrapper.isCanceled();
       throw new RuntimeException(e);
     }
     assert applier.isDone();
