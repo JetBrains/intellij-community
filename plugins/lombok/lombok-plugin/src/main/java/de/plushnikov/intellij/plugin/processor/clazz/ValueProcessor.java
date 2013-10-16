@@ -12,7 +12,6 @@ import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstruc
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import java.lang.annotation.Annotation;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -20,9 +19,9 @@ import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.Value;
-import lombok.experimental.NonFinal;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.List;
 
@@ -67,10 +66,12 @@ public class ValueProcessor extends AbstractClassProcessor {
   }
 
   protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    //@Value class are final
+    //TODO add support for final Modifier on class
+    /*//@Value class are final
     if (!PsiClassUtil.isFinalClass(psiClass) && !PsiAnnotationUtil.isAnnotatedWith(psiClass, NonFinal.class)) {
-//      PsiUtil.setModifierProperty(psiClass, PsiModifier.FINAL, true);
+      PsiUtil.setModifierProperty(psiClass, PsiModifier.FINAL, true);
     }
+    */
 
     if (PsiAnnotationUtil.isNotAnnotatedWith(psiClass, Getter.class)) {
       target.addAll(new GetterProcessor().createFieldGetters(psiClass, PsiModifier.PUBLIC));
