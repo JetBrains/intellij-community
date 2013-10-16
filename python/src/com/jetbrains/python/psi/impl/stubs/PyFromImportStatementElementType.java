@@ -10,7 +10,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyFromImportStatement;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.impl.PyFromImportStatementImpl;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,15 +45,15 @@ public class PyFromImportStatementElementType extends PyStubElementType<PyFromIm
   }
 
   public void serialize(@NotNull PyFromImportStatementStub stub, @NotNull StubOutputStream dataStream) throws IOException {
-    final PyQualifiedName qName = stub.getImportSourceQName();
-    PyQualifiedName.serialize(qName, dataStream);
+    final QualifiedName qName = stub.getImportSourceQName();
+    QualifiedName.serialize(qName, dataStream);
     dataStream.writeBoolean(stub.isStarImport());
     dataStream.writeVarInt(stub.getRelativeLevel());
   }
 
   @NotNull
   public PyFromImportStatementStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-    PyQualifiedName qName = PyQualifiedName.deserialize(dataStream);
+    QualifiedName qName = QualifiedName.deserialize(dataStream);
     boolean isStarImport = dataStream.readBoolean();
     int relativeLevel = dataStream.readVarInt();
     return new PyFromImportStatementStubImpl(qName, isStarImport, relativeLevel, parentStub, getStubElementType());

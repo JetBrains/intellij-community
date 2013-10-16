@@ -23,6 +23,9 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
+import static com.jetbrains.python.inspections.PyStringFormatParser.filterSubstitutions;
+import static com.jetbrains.python.inspections.PyStringFormatParser.parsePercentFormat;
+
 /**
  * @author Alexey.Ivanov
  */
@@ -332,8 +335,8 @@ public class PyStringFormatInspection extends PyInspection {
       }
 
       private void inspectFormat(@NotNull final PyStringLiteralExpression formatExpression) {
-        PyStringFormatParser parser = new PyStringFormatParser(formatExpression.getStringValue());
-        final List<PyStringFormatParser.SubstitutionChunk> chunks = parser.parseSubstitutions();
+        final String value = formatExpression.getStringValue();
+        final List<PyStringFormatParser.SubstitutionChunk> chunks = filterSubstitutions(parsePercentFormat(value));
 
         // 1. The '%' character
         //  Skip the first item in the sections, it's always empty

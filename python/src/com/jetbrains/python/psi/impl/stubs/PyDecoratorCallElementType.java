@@ -8,7 +8,7 @@ import com.intellij.psi.stubs.StubOutputStream;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyDecorator;
 import com.jetbrains.python.psi.impl.PyDecoratorImpl;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,12 +37,12 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
   }
 
   public void serialize(@NotNull PyDecoratorStub stub, @NotNull StubOutputStream dataStream) throws IOException {
-    PyQualifiedName.serialize(stub.getQualifiedName(), dataStream);
+    QualifiedName.serialize(stub.getQualifiedName(), dataStream);
   }
 
   @NotNull
   public PyDecoratorStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-    PyQualifiedName q_name = PyQualifiedName.deserialize(dataStream);
+    QualifiedName q_name = QualifiedName.deserialize(dataStream);
     return new PyDecoratorStubImpl(q_name, parentStub);
   }
 

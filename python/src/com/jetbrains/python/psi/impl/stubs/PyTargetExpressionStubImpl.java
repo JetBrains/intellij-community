@@ -4,7 +4,7 @@ import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> implements PyTargetExpressionStub {
   private final String myName;
   private final InitializerType myInitializerType;
-  private final PyQualifiedName myInitializer;
+  private final QualifiedName myInitializer;
   private final boolean myQualified;
   @Nullable private final String myDocString;
 
@@ -34,7 +34,7 @@ public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> imp
   }
   
   public PyTargetExpressionStubImpl(final String name, @Nullable String docString, final InitializerType initializerType,
-                                    final PyQualifiedName initializer,
+                                    final QualifiedName initializer,
                                     final boolean qualified,
                                     final StubElement parentStub) {
     super(parentStub, PyElementTypes.TARGET_EXPRESSION);
@@ -55,7 +55,7 @@ public class PyTargetExpressionStubImpl extends StubBase<PyTargetExpression> imp
     return myInitializerType;
   }
 
-  public PyQualifiedName getInitializer() {
+  public QualifiedName getInitializer() {
     return myInitializer;
   }
 

@@ -2,7 +2,7 @@ package com.jetbrains.python.psi.resolve;
 
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 
 import java.util.HashMap;
 import java.util.List;
@@ -12,27 +12,27 @@ import java.util.Map;
  * @author yole
  */
 public abstract class PythonPathCache {
-  private final Map<PyQualifiedName, List<PsiElement>> myCache = new HashMap<PyQualifiedName, List<PsiElement>>();
-  private final Map<VirtualFile, List<PyQualifiedName>> myQNameCache = new HashMap<VirtualFile, List<PyQualifiedName>>();
+  private final Map<QualifiedName, List<PsiElement>> myCache = new HashMap<QualifiedName, List<PsiElement>>();
+  private final Map<VirtualFile, List<QualifiedName>> myQNameCache = new HashMap<VirtualFile, List<QualifiedName>>();
 
   protected void clearCache() {
     myCache.clear();
     myQNameCache.clear();
   }
 
-  public synchronized List<PsiElement> get(PyQualifiedName qualifiedName) {
+  public synchronized List<PsiElement> get(QualifiedName qualifiedName) {
     return myCache.get(qualifiedName);
   }
 
-  public synchronized void put(PyQualifiedName qualifiedName, List<PsiElement> results) {
+  public synchronized void put(QualifiedName qualifiedName, List<PsiElement> results) {
     myCache.put(qualifiedName, results);
   }
 
-  public synchronized List<PyQualifiedName> getNames(VirtualFile vFile) {
+  public synchronized List<QualifiedName> getNames(VirtualFile vFile) {
     return myQNameCache.get(vFile);
   }
   
-  public synchronized void putNames(VirtualFile vFile, List<PyQualifiedName> qNames) {
+  public synchronized void putNames(VirtualFile vFile, List<QualifiedName> qNames) {
     myQNameCache.put(vFile, qNames);
   }
 

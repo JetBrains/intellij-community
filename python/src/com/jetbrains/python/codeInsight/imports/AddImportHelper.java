@@ -12,7 +12,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +84,7 @@ public class AddImportHelper {
   }
 
   private static boolean shouldInsertBefore(PsiFile file, PyImportStatementBase relativeTo, String nameToImport, ImportPriority priority) {
-    PyQualifiedName relativeToName;
+    QualifiedName relativeToName;
     PsiElement source;
     if (relativeTo instanceof PyFromImportStatement) {
       final PyFromImportStatement fromImportStatement = (PyFromImportStatement)relativeTo;
@@ -145,7 +145,7 @@ public class AddImportHelper {
     }
     List<PyImportElement> existingImports = ((PyFile)file).getImportTargets();
     for (PyImportElement element : existingImports) {
-      final PyQualifiedName qName = element.getImportedQName();
+      final QualifiedName qName = element.getImportedQName();
       if (qName != null && name.equals(qName.toString())) {
         if ((asName != null && asName.equals(element.getAsName())) || asName == null) {
           return false;
@@ -205,7 +205,7 @@ public class AddImportHelper {
       if (existingImport.isStarImport()) {
         continue;
       }
-      final PyQualifiedName qName = existingImport.getImportSourceQName();
+      final QualifiedName qName = existingImport.getImportSourceQName();
       if (qName != null && qName.toString().equals(path)) {
         for (PyImportElement el : existingImport.getImportElements()) {
           if (name.equals(el.getVisibleName())) {
@@ -226,14 +226,14 @@ public class AddImportHelper {
     final boolean useQualified = !PyCodeInsightSettings.getInstance().PREFER_FROM_IMPORT;
     final PsiFileSystemItem toImport = target instanceof PsiFileSystemItem ? ((PsiFileSystemItem)target).getParent() : target.getContainingFile();
     final ImportPriority priority = getImportPriority(file, toImport);
-    final PyQualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(target, element);
+    final QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(target, element);
     if (qName == null) return;
     String path = qName.toString();
     if (target instanceof PsiFileSystemItem && qName.getComponentCount() == 1) {
       addImportStatement(file, path, null, priority);
     }
     else {
-      final PyQualifiedName toImportQName = QualifiedNameFinder.findCanonicalImportPath(toImport, element);
+      final QualifiedName toImportQName = QualifiedNameFinder.findCanonicalImportPath(toImport, element);
       if (useQualified) {
         addImportStatement(file, path, null, priority);
         final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(file.getProject());

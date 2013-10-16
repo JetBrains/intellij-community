@@ -10,6 +10,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
@@ -477,7 +478,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     return null;
   }
 
-  public PyQualifiedName getAssignedQName() {
+  public QualifiedName getAssignedQName() {
     final PyTargetExpressionStub stub = getStub();
     if (stub != null) {
       if (stub.getInitializerType() == PyTargetExpressionStub.InitializerType.ReferenceExpression) {
@@ -485,14 +486,14 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       }
       return null;
     }
-    return PyQualifiedName.fromExpression(findAssignedValue());
+    return PyQualifiedNameFactory.fromExpression(findAssignedValue());
   }
 
   @Nullable
   public PsiElement findAssignedValueByStub(@NotNull TypeEvalContext context) {
     final PyTargetExpressionStub stub = getStub();
     if (stub != null && stub.getInitializerType() == PyTargetExpressionStub.InitializerType.ReferenceExpression) {
-      final PyQualifiedName initializer = stub.getInitializer();
+      final QualifiedName initializer = stub.getInitializer();
       // TODO: Support qualified stub initializers
       if (initializer != null && initializer.getComponentCount() == 1) {
         final String name = initializer.getLastComponent();
@@ -518,7 +519,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   }
 
   @Override
-  public PyQualifiedName getCalleeName() {
+  public QualifiedName getCalleeName() {
     final PyTargetExpressionStub stub = getStub();
     if (stub != null) {
       final PyTargetExpressionStub.InitializerType initializerType = stub.getInitializerType();
@@ -536,7 +537,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
     final PyExpression value = findAssignedValue();
     if (value instanceof PyCallExpression) {
       final PyExpression callee = ((PyCallExpression)value).getCallee();
-      return PyQualifiedName.fromExpression(callee);
+      return PyQualifiedNameFactory.fromExpression(callee);
     }
     return null;
   }

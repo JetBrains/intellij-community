@@ -12,6 +12,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -457,7 +458,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
     // http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
     if (PyNames.INIT_DOT_PY.equals(getName())) {
-      final PyQualifiedName qName = statement.getImportSourceQName();
+      final QualifiedName qName = statement.getImportSourceQName();
       if (qName != null && qName.endsWith(name)) {
         final PsiElement element = PyUtil.turnInitIntoDir(statement.resolveImportSource());
         if (element != null && element.getParent() == getContainingDirectory()) {
@@ -474,7 +475,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     if (result != null) {
       return result;
     }
-    final PyQualifiedName qName = importElement.getImportedQName();
+    final QualifiedName qName = importElement.getImportedQName();
     // http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
     if (qName != null && qName.getComponentCount() > 1 && name.equals(qName.getLastComponent()) && PyNames.INIT_DOT_PY.equals(getName())) {
       final List<? extends RatedResolveResult> elements = ResolveImportUtil.resolveNameInImportStatement(importElement, qName.removeLastComponent());
@@ -692,7 +693,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
       if (fromImport.isFromFuture()) {
         final PyImportElement[] pyImportElements = fromImport.getImportElements();
         for (PyImportElement element : pyImportElements) {
-          final PyQualifiedName qName = element.getImportedQName();
+          final QualifiedName qName = element.getImportedQName();
           if (qName != null && qName.matches(feature.toString())) {
             return true;
           }

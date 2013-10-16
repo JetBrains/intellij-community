@@ -20,7 +20,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
 import com.jetbrains.python.documentation.DocStringTypeReference;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
@@ -228,7 +228,7 @@ public class PyMoveClassOrFunctionProcessor extends BaseRefactoringProcessor {
   }
 
   private static void checkValidImportableFile(PsiElement anchor, VirtualFile file) {
-    final PyQualifiedName qName = QualifiedNameFinder.findShortestImportableQName(anchor, file);
+    final QualifiedName qName = QualifiedNameFinder.findShortestImportableQName(anchor, file);
     if (!PyClassRefactoringUtil.isValidQualifiedName(qName)) {
       throw new IncorrectOperationException(PyBundle.message("refactoring.move.class.or.function.error.cannot.use.module.name.$0", qName));
     }

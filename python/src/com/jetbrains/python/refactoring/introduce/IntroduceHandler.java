@@ -31,7 +31,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.inspections.PyStringFormatParser;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.PyNoneType;
@@ -306,7 +305,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
   }
 
   private boolean breaksStringFormatting(@NotNull String s, @NotNull TextRange range) {
-    return breaksRanges(substitutionsToRanges(new PyStringFormatParser(s).parseSubstitutions()), range);
+    return breaksRanges(substitutionsToRanges(filterSubstitutions(parsePercentFormat(s))), range);
   }
 
   private boolean breaksNewStyleStringFormatting(@NotNull String s, @NotNull TextRange range) {

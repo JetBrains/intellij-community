@@ -5,7 +5,7 @@ import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.util.io.StringRef;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.impl.PropertyBunch;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStubType;
 import com.jetbrains.python.psi.impl.stubs.PropertyStubType;
@@ -53,7 +53,7 @@ public class PropertyStubStorage extends PropertyBunch<String> implements Custom
   }
 
   @Override
-  public PyQualifiedName getCalleeName() {
+  public QualifiedName getCalleeName() {
     return null;  // ??
   }
 

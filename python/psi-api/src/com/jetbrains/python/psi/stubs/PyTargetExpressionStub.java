@@ -2,7 +2,7 @@ package com.jetbrains.python.psi.stubs;
 
 import com.intellij.psi.stubs.NamedStub;
 import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.impl.stubs.CustomTargetExpressionStub;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +39,7 @@ public interface PyTargetExpressionStub extends NamedStub<PyTargetExpression> {
   InitializerType getInitializerType();
 
   @Nullable
-  PyQualifiedName getInitializer();
+  QualifiedName getInitializer();
 
   boolean isQualified();
 

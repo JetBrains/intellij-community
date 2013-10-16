@@ -2,7 +2,7 @@ package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.StubBasedPsiElement;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,7 +22,7 @@ public interface PyFromImportStatement extends PyImportStatementBase, StubBasedP
   @Nullable PyReferenceExpression getImportSource();
 
   @Nullable
-  PyQualifiedName getImportSourceQName();
+  QualifiedName getImportSourceQName();
 
   /**
    * @return the star in "from ... import *"

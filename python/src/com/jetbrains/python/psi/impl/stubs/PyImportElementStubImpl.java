@@ -4,7 +4,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyImportElement;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,10 +12,10 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class PyImportElementStubImpl extends StubBase<PyImportElement> implements PyImportElementStub {
-  private final PyQualifiedName myImportedQName;
+  private final QualifiedName myImportedQName;
   private final String myAsName;
 
-  public PyImportElementStubImpl(@Nullable PyQualifiedName importedQName, String asName, final StubElement parent,
+  public PyImportElementStubImpl(@Nullable QualifiedName importedQName, String asName, final StubElement parent,
                                  IStubElementType elementType) {
     super(parent, elementType);
     myImportedQName = importedQName;
@@ -23,7 +23,7 @@ public class PyImportElementStubImpl extends StubBase<PyImportElement> implement
   }
 
   @Nullable
-  public PyQualifiedName getImportedQName() {
+  public QualifiedName getImportedQName() {
     return myImportedQName;
   }
 

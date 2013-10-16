@@ -18,7 +18,7 @@ import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportResolver;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +36,7 @@ import java.util.Set;
 public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameResolver {
   boolean myCheckForPackage = true;
   private final QualifiedNameResolveContext myContext = new QualifiedNameResolveContext();
-  private final @NotNull PyQualifiedName myQualifiedName;
+  private final @NotNull QualifiedName myQualifiedName;
   final Set<PsiElement> mySourceResults = Sets.newLinkedHashSet();
   final Set<PsiElement> myLibResults = Sets.newLinkedHashSet();
   final Set<PsiElement> myForeignResults = Sets.newLinkedHashSet();
@@ -47,10 +47,10 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   private boolean myWithMembers;
 
   public QualifiedNameResolverImpl(@NotNull String qNameString) {
-    myQualifiedName = PyQualifiedName.fromDottedString(qNameString);
+    myQualifiedName = QualifiedName.fromDottedString(qNameString);
   }
 
-  public QualifiedNameResolverImpl(@NotNull PyQualifiedName qName) {
+  public QualifiedNameResolverImpl(@NotNull QualifiedName qName) {
     myQualifiedName = qName;
   }
 
@@ -175,7 +175,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
       addRoot(resolveResult, isModuleSource);
     }
 
-    if (isAcceptRootAsTopLevelPackage() && myQualifiedName.matchesPrefix(PyQualifiedName.fromDottedString(root.getName()))) {
+    if (isAcceptRootAsTopLevelPackage() && myQualifiedName.matchesPrefix(QualifiedName.fromDottedString(root.getName()))) {
       resolveResult = resolveInRoot(root.getParent());
       if (resolveResult != null) {
         addRoot(resolveResult, isModuleSource);

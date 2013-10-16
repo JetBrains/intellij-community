@@ -7,7 +7,7 @@ import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -45,7 +45,7 @@ public class DocStringTypeReference extends PsiPolyVariantReferenceBase<PsiEleme
     if (myElement instanceof PyStringLiteralExpression && element instanceof PyClass) {
       final PyStringLiteralExpression e = (PyStringLiteralExpression)myElement;
       final PyClass cls = (PyClass)element;
-      PyQualifiedName qname = QualifiedNameFinder.findCanonicalImportPath(cls, element);
+      QualifiedName qname = QualifiedNameFinder.findCanonicalImportPath(cls, element);
       if (qname != null) {
         qname = qname.append(cls.getName());
         ElementManipulator<PyStringLiteralExpression> manipulator = ElementManipulators.getManipulator(e);

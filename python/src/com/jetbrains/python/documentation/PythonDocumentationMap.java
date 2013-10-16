@@ -7,7 +7,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -141,9 +141,9 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   }
 
   @Nullable
-  public String urlFor(PyQualifiedName moduleQName, @Nullable PsiNamedElement element, String pyVersion) {
+  public String urlFor(QualifiedName moduleQName, @Nullable PsiNamedElement element, String pyVersion) {
     for (Entry entry : myState.myEntries) {
-      if (moduleQName.matchesPrefix(PyQualifiedName.fromDottedString(entry.myPrefix))) {
+      if (moduleQName.matchesPrefix(QualifiedName.fromDottedString(entry.myPrefix))) {
         return transformPattern(entry.myUrlPattern, moduleQName, element, pyVersion);
       }
     }
@@ -151,9 +151,9 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   }
 
   @Nullable
-  public String rootUrlFor(PyQualifiedName moduleQName) {
+  public String rootUrlFor(QualifiedName moduleQName) {
     for (Entry entry : myState.myEntries) {
-      if (moduleQName.matchesPrefix(PyQualifiedName.fromDottedString(entry.myPrefix))) {
+      if (moduleQName.matchesPrefix(QualifiedName.fromDottedString(entry.myPrefix))) {
         return rootForPattern(entry.myUrlPattern);
       }
     }
@@ -166,7 +166,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   }
 
   @Nullable
-  private static String transformPattern(@NotNull String urlPattern, PyQualifiedName moduleQName, @Nullable PsiNamedElement element,
+  private static String transformPattern(@NotNull String urlPattern, QualifiedName moduleQName, @Nullable PsiNamedElement element,
                                          String pyVersion) {
     Map<String, String> macros = new HashMap<String, String>();
     macros.put("element.name", element == null ? null : element.getName());

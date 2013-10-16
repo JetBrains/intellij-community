@@ -84,18 +84,20 @@ public class PySdkUtil {
                                                @NonNls String[] command,
                                                @Nullable @NonNls String[] addEnv,
                                                final int timeout) {
-    return getProcessOutput(homePath, command, addEnv, timeout, null);
+    return getProcessOutput(homePath, command, addEnv, timeout, null, true);
   }
 
   /**
    * Executes a process and returns its stdout and stderr outputs as lists of lines.
    * Waits for process for possibly limited duration.
    *
+   *
    * @param homePath process run directory
    * @param command  command to execute and its arguments
    * @param addEnv   items are prepended to same-named values of inherited process environment.
    * @param timeout  how many milliseconds to wait until the process terminates; non-positive means infinity.
    * @param stdin    the data to write to the process standard input stream
+   * @param needEOFMarker
    * @return a tuple of (stdout lines, stderr lines, exit_code), lines in them have line terminators stripped, or may be null.
    */
   @NotNull
@@ -103,10 +105,11 @@ public class PySdkUtil {
                                                @NonNls String[] command,
                                                @Nullable @NonNls String[] addEnv,
                                                final int timeout,
-                                               @Nullable byte[] stdin) {
-    final ProcessOutput failure_output = new ProcessOutput();
+                                               @Nullable byte[] stdin,
+                                               boolean needEOFMarker) {
+    final ProcessOutput failureOutput = new ProcessOutput();
     if (homePath == null || !new File(homePath).exists()) {
-      return failure_output;
+      return failureOutput;
     }
     try {
       List<String> commands = new ArrayList<String>();
@@ -122,7 +125,7 @@ public class PySdkUtil {
         final OutputStream processInput = processHandler.getProcessInput();
         assert processInput != null;
         processInput.write(stdin);
-        if (SystemInfo.isWindows) {
+        if (SystemInfo.isWindows && needEOFMarker) {
           processInput.write(SUBSTITUTE);
           processInput.flush();
         }

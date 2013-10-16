@@ -12,7 +12,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +31,7 @@ public class SetupTaskIntrospector {
   private static boolean usesSetuptools(PyFile file) {
     final List<PyFromImportStatement> imports = file.getFromImports();
     for (PyFromImportStatement anImport : imports) {
-      final PyQualifiedName qName = anImport.getImportSourceQName();
+      final QualifiedName qName = anImport.getImportSourceQName();
       if (qName != null && qName.matches("setuptools")) {
         return true;
       }
@@ -39,7 +39,7 @@ public class SetupTaskIntrospector {
 
     final List<PyImportElement> importElements = file.getImportTargets();
     for (PyImportElement element : importElements) {
-      final PyQualifiedName qName = element.getImportedQName();
+      final QualifiedName qName = element.getImportedQName();
       if (qName != null && qName.matches("setuptools")) {
         return true;
       }

@@ -44,7 +44,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.*;
@@ -670,9 +670,29 @@ public class PyUtil {
       return false;
     }
     for (PyDecorator decorator : decoratorList.getDecorators()) {
-      PyQualifiedName name = decorator.getQualifiedName();
+      QualifiedName name = decorator.getQualifiedName();
       if (name == null || (!PyNames.CLASSMETHOD.equals(name.toString()) && !PyNames.STATICMETHOD.equals(name.toString()))) {
         return true;
+      }
+    }
+    return false;
+  }
+
+  public static boolean isDecoratedAsAbstract(@NotNull final PyDecoratable decoratable) {
+    final PyDecoratorList decoratorList = decoratable.getDecoratorList();
+    if (decoratorList == null) {
+      return false;
+    }
+    for (PyDecorator decorator : decoratorList.getDecorators()) {
+      final PyExpression callee = decorator.getCallee();
+      if (callee instanceof PyReferenceExpression) {
+        final PsiReference reference = callee.getReference();
+        if (reference == null) continue;
+        final PsiElement resolved = reference.resolve();
+        if (resolved instanceof PyQualifiedNameOwner) {
+          final String name = ((PyQualifiedNameOwner)resolved).getQualifiedName();
+          return PyNames.ABSTRACTMETHOD.equals(name) || PyNames.ABSTRACTPROPERTY.equals(name);
+        }
       }
     }
     return false;

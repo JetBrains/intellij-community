@@ -6,12 +6,11 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.override.PyOverrideImplementUtil;
 import com.jetbrains.python.inspections.quickfix.PyImplementMethodsQuickFix;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyDecoratorList;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,11 +48,8 @@ public class PyAbstractClassInspection extends PyInspection {
       Set<PyFunction> toBeImplemented = new HashSet<PyFunction>();
       final Collection<PyFunction> functions = PyOverrideImplementUtil.getAllSuperFunctions(node);
       for (PyFunction method : functions) {
-        final PyDecoratorList list = method.getDecoratorList();
-        if (list != null && node.findMethodByName(method.getName(), false) == null) {
-          if (list.findDecorator(PyNames.ABSTRACTMETHOD) != null || list.findDecorator(PyNames.ABSTRACTPROPERTY) != null) {
-            toBeImplemented.add(method);
-          }
+        if (node.findMethodByName(method.getName(), false) == null && PyUtil.isDecoratedAsAbstract(method)) {
+          toBeImplemented.add(method);
         }
       }
       final ASTNode nameNode = node.getNameNode();

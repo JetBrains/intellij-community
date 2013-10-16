@@ -9,6 +9,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.imports.AutoImportQuickFix;
 import com.jetbrains.python.codeInsight.imports.PyImportCandidateProvider;
 
@@ -25,7 +26,7 @@ public class PyJavaImportCandidateProvider implements PyImportCandidateProvider 
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     final PsiClass[] classesByName = cache.getClassesByName(name, scope);
     for (PsiClass psiClass : classesByName) {
-      final PyQualifiedName packageQName = PyQualifiedName.fromDottedString(psiClass.getQualifiedName()).removeLastComponent();
+      final QualifiedName packageQName = QualifiedName.fromDottedString(psiClass.getQualifiedName()).removeLastComponent();
       quickFix.addImport(psiClass, psiClass.getContainingFile(), packageQName);
     }
   }

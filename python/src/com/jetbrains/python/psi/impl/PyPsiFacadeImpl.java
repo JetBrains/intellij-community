@@ -3,6 +3,7 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyPsiFacade;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -31,7 +32,7 @@ public class PyPsiFacadeImpl extends PyPsiFacade {
   }
 
   @Override
-  public QualifiedNameResolver qualifiedNameResolver(PyQualifiedName qualifiedName) {
+  public QualifiedNameResolver qualifiedNameResolver(QualifiedName qualifiedName) {
     return new QualifiedNameResolverImpl(qualifiedName);
   }
 

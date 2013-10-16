@@ -1,10 +1,18 @@
 package com.jetbrains.python;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.lexer.Lexer;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiLanguageInjectionHost;
 import com.jetbrains.python.codeInsight.regexp.PythonRegexpParserDefinition;
 import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpParserDefinition;
 import com.jetbrains.python.fixtures.PyLexerTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author yole
@@ -61,6 +69,82 @@ public class PyRegexpTest extends PyTestCase {
 
   public void _testDoubleOpenCurly() {  // PY-8252
     doTestHighlighting();
+  }
+
+  public void testSingleStringRegexpAutoInjection() {
+    doTestInjectedText("import re\n" +
+                        "\n" +
+                        "re.search('<caret>.*bar',\n" +
+                        "          'foobar')\n",
+                       ".*bar");
+  }
+
+  // PY-11057
+  public void testAdjacentStringRegexpAutoInjection() {
+    doTestInjectedText("import re\n" +
+                        "\n" +
+                        "re.search('<caret>.*()'\n" +
+                        "          'abc',\n" +
+                        "          'foo')\n",
+                       ".*()abc");
+  }
+
+  public void testParenthesizedStringRegexpAutoInjection() {
+    doTestInjectedText("import re\n" +
+                       "\n" +
+                       "re.search((('<caret>foo')), 'foobar')\n",
+                       "foo");
+  }
+
+  public void testConcatStringRegexpAutoInjection() {
+    doTestInjectedText("import re\n" +
+                       "\n" +
+                       "re.search('<caret>(.*' + 'bar)' + 'baz', 'foobar')\n",
+                       "(.*bar)baz");
+  }
+
+  public void testConcatStringWithValuesRegexpAutoInjection() {
+    doTestInjectedText("import re\n" +
+                       "\n" +
+                       "def f(x, y):\n" +
+                       "    re.search('<caret>.*(' + x + ')' + y, 'foo')\n",
+                       ".*(missing)missing");
+  }
+
+  public void testPercentFormattingRegexpAutoInjection() {
+    doTestInjectedText("import re \n" +
+                       "\n" +
+                       "def f(x, y):\n" +
+                       "    re.search('<caret>.*%s-%d' % (x, y), 'foo')\n",
+                       ".*missing-missing");
+  }
+
+  public void testNewStyleFormattingRegexpAutoInjection() {
+    doTestInjectedText("import re\n" +
+                       "\n" +
+                       "def f(x, y):\n" +
+                       "    re.search('<caret>.*{foo}-{}'.format(x, foo=y), 'foo')\n",
+                       ".*missing-missing");
+  }
+
+  public void testNewStyleFormattingEndsWithConstant() {
+    doTestInjectedText("import re\n" +
+                       "\n" +
+                       "def f(**kwargs):" +
+                       "    re.search('<caret>(foo{bar}baz$)'.format(**kwargs), 'foo')\n",
+                       "(foomissingbaz$)");
+  }
+
+  private void doTestInjectedText(@NotNull String text, @NotNull String expected) {
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    final InjectedLanguageManager languageManager = InjectedLanguageManager.getInstance(myFixture.getProject());
+    final PsiLanguageInjectionHost host = languageManager.getInjectionHost(myFixture.getElementAtCaret());
+    assertNotNull(host);
+    final List<Pair<PsiElement, TextRange>> files = languageManager.getInjectedPsiFiles(host);
+    assertNotNull(files);
+    assertFalse(files.isEmpty());
+    final PsiElement injected = files.get(0).getFirst();
+    assertEquals(expected, injected.getText());
   }
 
   private void doTestHighlighting() {

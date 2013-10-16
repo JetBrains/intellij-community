@@ -498,7 +498,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
         final PyDecoratorList decoratorList = method.getDecoratorList();
         if (decoratorList != null) {
           for (PyDecorator deco : decoratorList.getDecorators()) {
-            final PyQualifiedName qname = deco.getQualifiedName();
+            final QualifiedName qname = deco.getQualifiedName();
             if (qname != null) {
               String decoName = qname.toString();
               for (PyKnownDecoratorProvider provider : PyUtil.KnownDecoratorProviderHolder.KNOWN_DECORATOR_PROVIDERS) {
@@ -982,7 +982,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (containingFile instanceof PyFile) {
       final PsiElement element = ((PyFile)containingFile).getElementNamed(PyNames.DUNDER_METACLASS);
       if (element instanceof PyTargetExpression) {
-        final PyQualifiedName qName = ((PyTargetExpression)element).getAssignedQName();
+        final QualifiedName qName = ((PyTargetExpression)element).getAssignedQName();
         if (qName != null && qName.matches("type")) {
           return true;
         }
@@ -1105,7 +1105,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       final PsiElement parent = stub.getParentStub().getPsi();
       if (parent instanceof PyFile) {
         final PyFile file = (PyFile)parent;
-        for (PyQualifiedName name : stub.getSuperClasses()) {
+        for (QualifiedName name : stub.getSuperClasses()) {
           result.add(name != null ? classTypeFromQName(name, file, context) : null);
         }
       }
@@ -1182,7 +1182,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   @Nullable
-  private static PsiElement getElementQNamed(@NotNull NameDefiner nameDefiner, @NotNull PyQualifiedName qualifiedName) {
+  private static PsiElement getElementQNamed(@NotNull NameDefiner nameDefiner, @NotNull QualifiedName qualifiedName) {
     final int componentCount = qualifiedName.getComponentCount();
     final String fullName = qualifiedName.toString();
     if (componentCount == 0) {
@@ -1197,7 +1197,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     }
     else {
       final String name = qualifiedName.getLastComponent();
-      final PyQualifiedName containingQName = qualifiedName.removeLastComponent();
+      final QualifiedName containingQName = qualifiedName.removeLastComponent();
       NameDefiner definer = nameDefiner;
       for (String component : containingQName.getComponents()) {
         PsiElement element = PyUtil.turnDirIntoInit(definer.getElementNamed(component));
@@ -1220,7 +1220,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   @Nullable
-  private static PyClassLikeType classTypeFromQName(@NotNull PyQualifiedName qualifiedName, @NotNull PyFile containingFile,
+  private static PyClassLikeType classTypeFromQName(@NotNull QualifiedName qualifiedName, @NotNull PyFile containingFile,
                                                     @NotNull TypeEvalContext context) {
     final PsiElement element = getElementQNamed(containingFile, qualifiedName);
     if (element instanceof PyTypedElement) {

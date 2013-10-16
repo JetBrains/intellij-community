@@ -347,6 +347,9 @@
     <completion.contributor language="Python"
                             implementationClass="com.jetbrains.web2py.templates.completion.Web2PyKeywordCompletionContributor"/>
 
+    <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.web2py.templates.completion.Web2PyLoopVariableCompletionContributor"/>
+
     <quoteHandler fileType="Web2Py" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
     <typedHandler implementation="com.jetbrains.web2py.templates.editor.Web2PyBracesHandler" id="Web2PyBracesHandler"/>
     <lang.braceMatcher language="Web2Py" implementationClass="com.jetbrains.web2py.templates.editor.Web2PyBraceMatcher"/>

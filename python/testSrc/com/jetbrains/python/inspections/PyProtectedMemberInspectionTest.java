@@ -31,9 +31,20 @@ public class PyProtectedMemberInspectionTest extends PyTestCase {
     doTest();
   }
 
-  private void doTest() {
-    myFixture.configureByFile("inspections/PyProtectedMemberInspection/" + getTestName(true) + ".py");
+  public void testModule() {
+    myFixture.configureByFiles(getTestName(true) + ".py", "tmp.py");
     myFixture.enableInspections(PyProtectedMemberInspection.class);
     myFixture.checkHighlighting(false, false, true);
+  }
+
+  private void doTest() {
+    myFixture.configureByFile(getTestName(true) + ".py");
+    myFixture.enableInspections(PyProtectedMemberInspection.class);
+    myFixture.checkHighlighting(false, false, true);
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/inspections/PyProtectedMemberInspection/";
   }
 }

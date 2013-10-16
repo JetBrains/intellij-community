@@ -1,6 +1,9 @@
 package com.jetbrains.python.inspections;
 
+import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
+
+import java.util.Arrays;
 
 /**
  * User: ktisha
@@ -56,12 +59,29 @@ public class PyMethodMayBeStaticInspectionTest extends PyTestCase {
   }
 
   public void testAbstractProperty() {
-    doTest();
+    doMultiFileTest("abc.py");
+  }
+
+  public void testPropertyWithAlias() {
+    doMultiFileTest("abc.py");
   }
 
   private void doTest() {
-    myFixture.configureByFile("inspections/PyMethodMayBeStaticInspection/" + getTestName(true) + ".py");
+    myFixture.configureByFile(getTestName(true) + ".py");
     myFixture.enableInspections(PyMethodMayBeStaticInspection.class);
     myFixture.checkHighlighting(false, false, true);
+  }
+
+  private void doMultiFileTest(String ... files) {
+    String [] filenames = Arrays.copyOf(files, files.length + 1);
+    filenames[files.length] = getTestName(true) + ".py";
+    myFixture.configureByFiles(filenames);
+    myFixture.enableInspections(PyMethodMayBeStaticInspection.class);
+    myFixture.checkHighlighting(false, false, true);
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return PythonTestUtil.getTestDataPath() + "/inspections/PyMethodMayBeStaticInspection/";
   }
 }

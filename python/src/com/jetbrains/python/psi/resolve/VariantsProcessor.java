@@ -9,7 +9,7 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +88,7 @@ public abstract class VariantsProcessor implements PsiScopeProcessor {
   }
 
   protected boolean handleImportElement(PyImportElement importElement) {
-    final PyQualifiedName qName = importElement.getImportedQName();
+    final QualifiedName qName = importElement.getImportedQName();
     if (qName != null && qName.getComponentCount() == 1) {
       String name = importElement.getAsName() != null ? importElement.getAsName() : qName.getLastComponent();
       if (name != null && nameIsAcceptable(name)) {

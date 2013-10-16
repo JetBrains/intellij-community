@@ -4,6 +4,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.HashMap;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
@@ -145,8 +146,13 @@ public class PyStringFormatParser {
   private static final String LENGTH_MODIFIERS = "hlL";
   private static final String VALID_CONVERSION_TYPES = "diouxXeEfFgGcrs";
 
-  public PyStringFormatParser(@NotNull String literal) {
+  private PyStringFormatParser(@NotNull String literal) {
     myLiteral = literal;
+  }
+
+  @NotNull
+  public static List<FormatStringChunk> parsePercentFormat(@NotNull String s) {
+    return new PyStringFormatParser(s).parse();
   }
 
   @NotNull
@@ -191,13 +197,13 @@ public class PyStringFormatParser {
       pos = next + 1;
     }
     if (pos < n) {
-      results.add(new ConstantChunk(pos, n + 1));
+      results.add(new ConstantChunk(pos, n));
     }
     return results;
   }
 
   @NotNull
-  public List<FormatStringChunk> parse() {
+  private List<FormatStringChunk> parse() {
     myPos = 0;
     while(myPos < myLiteral.length()) {
       int next = myLiteral.indexOf('%', myPos);
@@ -278,11 +284,6 @@ public class PyStringFormatParser {
   }
 
   @NotNull
-  public List<SubstitutionChunk> parseSubstitutions() {
-    return filterSubstitutions(parse());
-  }
-
-  @NotNull
   public static List<SubstitutionChunk> filterSubstitutions(@NotNull List<FormatStringChunk> chunks) {
     final List<SubstitutionChunk> results = new ArrayList<SubstitutionChunk>();
     for (FormatStringChunk chunk : chunks) {
@@ -353,7 +354,7 @@ public class PyStringFormatParser {
     if (parent instanceof PyQualifiedExpression) {
       final PyQualifiedExpression qualifiedExpr = (PyQualifiedExpression)parent;
       final String name = qualifiedExpr.getReferencedName();
-      if ("format".equals(name)) {
+      if (PyNames.FORMAT.equals(name)) {
         final PsiElement parent2 = qualifiedExpr.getParent();
         if (parent2 instanceof PyCallExpression) {
           final PyCallExpression callExpr = (PyCallExpression)parent2;
