@@ -16,10 +16,8 @@
 
 package com.intellij.codeInsight.template.impl;
 
-import com.intellij.codeInsight.template.Expression;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.hash.LinkedHashMap;
-import org.jetbrains.annotations.NonNls;
 
 /**
  * @author Maxim.Mossienko
@@ -46,9 +44,5 @@ public class TemplateImplUtil {
       lexer.advance();
     }
     return variables;
-  }
-
-  public static Expression parseTemplate(@NonNls String text) {
-    return MacroParser.parse(text);
   }
 }
