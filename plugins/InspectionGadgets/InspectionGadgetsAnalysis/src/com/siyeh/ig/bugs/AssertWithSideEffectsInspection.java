@@ -1,5 +1,5 @@
 /*
- * Copyright 2009 Bas Leijdekkers
+ * Copyright 2009-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,27 +17,33 @@ package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Set;
+
 public class AssertWithSideEffectsInspection extends BaseInspection {
+
+  @NonNls
+  private static final Set<String> resultSetSideEffectMethods =
+    ContainerUtil.newHashSet("next", "first", "last", "absolute", "relative", "previous");
 
   @Override
   @Nls
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "assert.with.side.effects.display.name");
+    return InspectionGadgetsBundle.message("assert.with.side.effects.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "assert.with.side.effects.problem.descriptor");
+    return InspectionGadgetsBundle.message("assert.with.side.effects.problem.descriptor");
   }
 
   @Override
@@ -50,8 +56,7 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
     return new AssertWithSideEffectsVisitor();
   }
 
-  private static class AssertWithSideEffectsVisitor
-    extends BaseInspectionVisitor {
+  private static class AssertWithSideEffectsVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitAssertStatement(PsiAssertStatement statement) {
@@ -60,7 +65,7 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
       if (condition == null) {
         return;
       }
-      final SideEffectVistor visitor = new SideEffectVistor();
+      final SideEffectVisitor visitor = new SideEffectVisitor();
       condition.accept(visitor);
       if (!visitor.hasSideEffects()) {
         return;
@@ -69,7 +74,7 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
     }
   }
 
-  private static class SideEffectVistor extends JavaRecursiveElementVisitor {
+  private static class SideEffectVisitor extends JavaRecursiveElementVisitor {
 
     private boolean hasSideEffects = false;
 
@@ -78,8 +83,7 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
     }
 
     @Override
-    public void visitAssignmentExpression(
-      PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
       hasSideEffects = true;
     }
 
@@ -92,28 +96,33 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
     }
 
     @Override
-    public void visitMethodCallExpression(
-      PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       if (hasSideEffects) {
         return;
       }
+      super.visitMethodCallExpression(expression);
       final PsiMethod method = expression.resolveMethod();
       if (method == null) {
         return;
       }
       if (methodHasSideEffects(method)) {
         hasSideEffects = true;
+        return;
       }
-      else {
-        super.visitMethodCallExpression(expression);
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null || !"java.sql.ResultSet".equals(containingClass.getQualifiedName())) {
+        return;
+      }
+      final String methodName = method.getName();
+      if (resultSetSideEffectMethods.contains(methodName)) {
+        hasSideEffects = true;
       }
     }
 
     @Override
     public void visitPrefixExpression(PsiPrefixExpression expression) {
       final IElementType tokenType = expression.getOperationTokenType();
-      if (JavaTokenType.PLUSPLUS.equals(tokenType) ||
-          JavaTokenType.MINUSMINUS.equals(tokenType)) {
+      if (JavaTokenType.PLUSPLUS.equals(tokenType) || JavaTokenType.MINUSMINUS.equals(tokenType)) {
         hasSideEffects = true;
       }
     }
@@ -121,8 +130,7 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
     @Override
     public void visitPostfixExpression(PsiPostfixExpression expression) {
       final IElementType tokenType = expression.getOperationTokenType();
-      if (JavaTokenType.PLUSPLUS.equals(tokenType) ||
-          JavaTokenType.MINUSMINUS.equals(tokenType)) {
+      if (JavaTokenType.PLUSPLUS.equals(tokenType) || JavaTokenType.MINUSMINUS.equals(tokenType)) {
         hasSideEffects = true;
       }
     }
@@ -138,14 +146,12 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
     return visitor.hasSideEffects();
   }
 
-  private static class MethodSideEffectVisitor
-    extends JavaRecursiveElementVisitor {
+  private static class MethodSideEffectVisitor extends JavaRecursiveElementVisitor {
 
     private boolean hasSideEffects = false;
 
     @Override
-    public void visitAssignmentExpression(
-      PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
       if (hasSideEffects) {
         return;
       }
@@ -159,8 +165,7 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
         return;
       }
       final IElementType tokenType = expression.getOperationTokenType();
-      if (JavaTokenType.PLUSPLUS.equals(tokenType) ||
-          JavaTokenType.MINUSMINUS.equals(tokenType)) {
+      if (JavaTokenType.PLUSPLUS.equals(tokenType) || JavaTokenType.MINUSMINUS.equals(tokenType)) {
         checkExpression(expression.getOperand());
       }
       super.visitPrefixExpression(expression);
@@ -172,8 +177,7 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
         return;
       }
       final IElementType tokenType = expression.getOperationTokenType();
-      if (JavaTokenType.PLUSPLUS.equals(tokenType) ||
-          JavaTokenType.MINUSMINUS.equals(tokenType)) {
+      if (JavaTokenType.PLUSPLUS.equals(tokenType) || JavaTokenType.MINUSMINUS.equals(tokenType)) {
         checkExpression(expression.getOperand());
       }
       super.visitPostfixExpression(expression);
@@ -183,8 +187,7 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
       if (!(operand instanceof PsiReferenceExpression)) {
         return;
       }
-      final PsiReferenceExpression referenceExpression =
-        (PsiReferenceExpression)operand;
+      final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)operand;
       final PsiElement target = referenceExpression.resolve();
       if (target instanceof PsiField) {
         hasSideEffects = true;
