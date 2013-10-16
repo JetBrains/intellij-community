@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.DependencyConflictId;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
-import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
@@ -128,29 +127,28 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
   }
 
   private ConverterStrategy selectStrategy(ConvertContext context) {
-    if (MavenDomUtil.getImmediateParent(context, MavenDomProjectModel.class) != null) {
+    DomElement parent = context.getInvocationElement().getParent();
+    if (parent instanceof MavenDomProjectModel) {
       return new ProjectStrategy();
     }
 
-    MavenDomParent parent = MavenDomUtil.getImmediateParent(context, MavenDomParent.class);
-    if (parent != null) {
-      return new ParentStrategy(parent);
+    if (parent instanceof MavenDomParent) {
+      return new ParentStrategy((MavenDomParent)parent);
     }
 
-    MavenDomDependency dependency = MavenDomUtil.getImmediateParent(context, MavenDomDependency.class);
-    if (dependency != null) {
-      return new DependencyStrategy(dependency);
+    if (parent instanceof MavenDomDependency) {
+      return new DependencyStrategy((MavenDomDependency)parent);
     }
 
-    if (MavenDomUtil.getImmediateParent(context, MavenDomExclusion.class) != null) {
+    if (parent instanceof MavenDomExclusion) {
       return new ExclusionStrategy();
     }
 
-    if (MavenDomUtil.getImmediateParent(context, MavenDomPlugin.class) != null) {
+    if (parent instanceof MavenDomPlugin) {
       return new PluginOrExtensionStrategy(true);
     }
 
-    if (MavenDomUtil.getImmediateParent(context, MavenDomExtension.class) != null) {
+    if (parent instanceof MavenDomExtension) {
       return new PluginOrExtensionStrategy(false);
     }
 
