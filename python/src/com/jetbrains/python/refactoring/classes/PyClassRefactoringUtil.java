@@ -19,7 +19,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -216,7 +216,7 @@ public class PyClassRefactoringUtil {
     }
   }
 
-  public static boolean isValidQualifiedName(PyQualifiedName name) {
+  public static boolean isValidQualifiedName(QualifiedName name) {
     if (name == null) {
       return false;
     }
@@ -245,11 +245,11 @@ public class PyClassRefactoringUtil {
     final PsiFile newFile = element.getContainingFile();
     final PsiFile file = anchor.getContainingFile();
     if (newFile == file) return false;
-    final PyQualifiedName qname = QualifiedNameFinder.findCanonicalImportPath(element, anchor);
+    final QualifiedName qname = QualifiedNameFinder.findCanonicalImportPath(element, anchor);
     if (qname == null || !isValidQualifiedName(qname)) {
       return false;
     }
-    final PyQualifiedName containingQName;
+    final QualifiedName containingQName;
     final String importedName;
     if (element instanceof PyFile) {
       containingQName = qname.removeLastComponent();
@@ -384,7 +384,7 @@ public class PyClassRefactoringUtil {
 
   @Nullable
   private static String getOriginalName(PyImportElement element) {
-    final PyQualifiedName qname = element.getImportedQName();
+    final QualifiedName qname = element.getImportedQName();
     if (qname != null && qname.getComponentCount() > 0) {
       return qname.getComponents().get(0);
     }

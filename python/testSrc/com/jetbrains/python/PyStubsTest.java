@@ -19,7 +19,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.stubs.PyClassStub;
@@ -225,13 +225,13 @@ public class PyStubsTest extends PyTestCase {
     assertEquals("argv", importElements [0].getVisibleName());
     assertFalse(fromImport.isStarImport());
     assertEquals(0, fromImport.getRelativeLevel());
-    final PyQualifiedName qName = fromImport.getImportSourceQName();
+    final QualifiedName qName = fromImport.getImportSourceQName();
     assertSameElements(qName.getComponents(), "sys");
 
     final List<PyImportElement> importTargets = file.getImportTargets();
     assertEquals(1, importTargets.size());
     final PyImportElement importElement = importTargets.get(0);
-    final PyQualifiedName importQName = importElement.getImportedQName();
+    final QualifiedName importQName = importElement.getImportedQName();
     assertSameElements(importQName.getComponents(), "os", "path");
 
     assertNotParsed(file);

@@ -36,7 +36,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.impl.PyImportedModule;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
@@ -402,7 +402,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         return;
       }
 
-      final PyQualifiedName canonicalQName = getCanonicalName(reference, myTypeEvalContext);
+      final QualifiedName canonicalQName = getCanonicalName(reference, myTypeEvalContext);
       final String canonicalName = canonicalQName != null ? canonicalQName.toString() : null;
       if (canonicalName != null) {
         for (String ignored : myIgnoredIdentifiers) {
@@ -557,7 +557,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       }
       if (reference instanceof PyImportReference && refname != null) {
         // TODO: Ignore references in the second part of the 'from ... import ...' expression
-        final PyQualifiedName qname = PyQualifiedName.fromDottedString(refname);
+        final QualifiedName qname = QualifiedName.fromDottedString(refname);
         final List<String> components = qname.getComponents();
         if (!components.isEmpty()) {
           final String packageName = components.get(0);
@@ -581,7 +581,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
      * Return the canonical qualified name for a reference (even for an unresolved one).
      */
     @Nullable
-    private static PyQualifiedName getCanonicalName(@NotNull PsiReference reference, @NotNull TypeEvalContext context) {
+    private static QualifiedName getCanonicalName(@NotNull PsiReference reference, @NotNull TypeEvalContext context) {
       final PsiElement element = reference.getElement();
       if (reference instanceof PyOperatorReference && element instanceof PyQualifiedExpression) {
         final PyExpression receiver = ((PyOperatorReference)reference).getReceiver();
@@ -590,7 +590,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           if (type instanceof PyClassType) {
             final String name = ((PyClassType)type).getClassQName();
             if (name != null) {
-              return PyQualifiedName.fromDottedString(name).append(((PyQualifiedExpression)element).getReferencedName());
+              return QualifiedName.fromDottedString(name).append(((PyQualifiedExpression)element).getReferencedName());
             }
           }
         }
@@ -605,12 +605,12 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             if (type instanceof PyClassType) {
               final String name = ((PyClassType)type).getClassQName();
               if (name != null) {
-                return PyQualifiedName.fromDottedString(name).append(exprName);
+                return QualifiedName.fromDottedString(name).append(exprName);
               }
             }
             else if (type instanceof PyModuleType) {
               final PyFile file = ((PyModuleType)type).getModule();
-              final PyQualifiedName name = QualifiedNameFinder.findCanonicalImportPath(file, element);
+              final QualifiedName name = QualifiedNameFinder.findCanonicalImportPath(file, element);
               if (name != null) {
                 return name.append(exprName);
               }
@@ -621,12 +621,12 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             if (parent instanceof PyImportElement) {
               final PyImportStatementBase importStmt = PsiTreeUtil.getParentOfType(parent, PyImportStatementBase.class);
               if (importStmt instanceof PyImportStatement) {
-                return PyQualifiedName.fromComponents(exprName);
+                return QualifiedName.fromComponents(exprName);
               }
               else if (importStmt instanceof PyFromImportStatement) {
                 final PsiElement resolved = ((PyFromImportStatement)importStmt).resolveImportSource();
                 if (resolved != null) {
-                  final PyQualifiedName path = QualifiedNameFinder.findCanonicalImportPath(resolved, element);
+                  final QualifiedName path = QualifiedNameFinder.findCanonicalImportPath(resolved, element);
                   if (path != null) {
                     return path.append(exprName);
                   }
@@ -634,7 +634,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
               }
             }
             else {
-              final PyQualifiedName path = QualifiedNameFinder.findCanonicalImportPath(element, element);
+              final QualifiedName path = QualifiedNameFinder.findCanonicalImportPath(element, element);
               if (path != null) {
                 return path.append(exprName);
               }
@@ -643,7 +643,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
       }
       else if (reference instanceof DocStringParameterReference) {
-        return PyQualifiedName.fromDottedString(reference.getCanonicalText());
+        return QualifiedName.fromDottedString(reference.getCanonicalText());
       }
       return null;
     }
@@ -914,7 +914,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
 
       Set<PyImportStatementBase> unusedStatements = new HashSet<PyImportStatementBase>();
       final PyUnresolvedReferencesInspection suppressableInspection = new PyUnresolvedReferencesInspection();
-      PyQualifiedName packageQName = null;
+      QualifiedName packageQName = null;
       List<String> dunderAll = null;
 
           for (NameDefiner unusedImport : unusedImports) {
@@ -968,7 +968,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             }
           }
           if (packageQName != null && importedElement instanceof PsiFileSystemItem) {
-            final PyQualifiedName importedQName = QualifiedNameFinder.findShortestImportableQName((PsiFileSystemItem)importedElement);
+            final QualifiedName importedQName = QualifiedNameFinder.findShortestImportableQName((PsiFileSystemItem)importedElement);
             if (importedQName != null && importedQName.matchesPrefix(packageQName)) {
               continue;
             }

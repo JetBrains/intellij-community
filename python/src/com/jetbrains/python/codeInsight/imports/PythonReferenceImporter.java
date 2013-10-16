@@ -25,7 +25,7 @@ import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -204,7 +204,7 @@ public class PythonReferenceImporter implements ReferenceImporter {
         if (isIndexableTopLevel(symbol)) { // we only want top-level symbols
           PsiFileSystemItem srcfile = symbol instanceof PsiFileSystemItem ? ((PsiFileSystemItem)symbol).getParent() : symbol.getContainingFile();
           if (srcfile != null && isAcceptableForImport(node, existingImportFile, srcfile)) {
-            PyQualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(symbol, node);
+            QualifiedName importPath = QualifiedNameFinder.findCanonicalImportPath(symbol, node);
             if (symbol instanceof PsiFileSystemItem && importPath != null) {
               importPath = importPath.removeTail(1);
             }

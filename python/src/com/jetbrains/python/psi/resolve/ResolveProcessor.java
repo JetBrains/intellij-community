@@ -10,7 +10,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportedModule;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,7 +106,7 @@ public class ResolveProcessor implements PsiScopeProcessor {
       }
       else if (element instanceof PyImportElement) {
         final PyImportElement importElement = (PyImportElement) element;
-        final PyQualifiedName qName = importElement.getImportedQName();
+        final QualifiedName qName = importElement.getImportedQName();
         // http://stackoverflow.com/questions/6048786/from-module-import-in-init-py-makes-module-name-visible
         if (qName != null && qName.getComponentCount() > 1 && myName.equals(qName.getLastComponent()) &&
             PyNames.INIT_DOT_PY.equals(importElement.getContainingFile().getName())) {
@@ -132,7 +132,7 @@ public class ResolveProcessor implements PsiScopeProcessor {
     }
     if (element instanceof PyFromImportStatement && PyNames.INIT_DOT_PY.equals(element.getContainingFile().getName())) {
       final PyFromImportStatement fromImportStatement = (PyFromImportStatement)element;
-      final PyQualifiedName qName = fromImportStatement.getImportSourceQName();
+      final QualifiedName qName = fromImportStatement.getImportSourceQName();
       if (qName != null && qName.endsWith(myName)) {
         final PsiElement source = PyUtil.turnInitIntoDir(fromImportStatement.resolveImportSource());
         if (source != null && source.getParent() == element.getContainingFile().getContainingDirectory()) {

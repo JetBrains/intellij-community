@@ -1,7 +1,7 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.psi.StubBasedPsiElement;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.stubs.PyDecoratorStub;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +38,6 @@ public interface PyDecorator extends PyCallExpression, StubBasedPsiElement<PyDec
    * @return dot-separated qualified name, or just {@link #getName()}'s value if no qualifiers are present.
    */
   @Nullable
-  PyQualifiedName getQualifiedName();
+  QualifiedName getQualifiedName();
 
 }

@@ -7,7 +7,8 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyTargetExpression;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.psi.impl.PyQualifiedNameFactory;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -17,7 +18,7 @@ public class AssignmentCollectProcessor implements PsiScopeProcessor {
    * Collects all assignments in context above given element, if they match given naming pattern.
    * Used to track creation of attributes by assignment (e.g in constructor).
    */
-  private final PyQualifiedName myQualifier;
+  private final QualifiedName myQualifier;
   private final List<PyExpression> myResult;
   private final Set<String> mySeenNames;
 
@@ -27,7 +28,7 @@ public class AssignmentCollectProcessor implements PsiScopeProcessor {
    *
    * @param qualifier qualifying names, outermost first; must not be empty.
    */
-  public AssignmentCollectProcessor(@NotNull PyQualifiedName qualifier) {
+  public AssignmentCollectProcessor(@NotNull QualifiedName qualifier) {
     assert qualifier.getComponentCount() > 0;
     myQualifier = qualifier;
     myResult = new ArrayList<PyExpression>();
@@ -41,7 +42,7 @@ public class AssignmentCollectProcessor implements PsiScopeProcessor {
         if (ex instanceof PyTargetExpression) {
           final PyTargetExpression target = (PyTargetExpression)ex;
           List<PyExpression> qualsExpr = PyResolveUtil.unwindQualifiers(target);
-          PyQualifiedName qualifiedName = PyQualifiedName.fromReferenceChain(qualsExpr);
+          QualifiedName qualifiedName = PyQualifiedNameFactory.fromReferenceChain(qualsExpr);
           if (qualifiedName != null) {
             if (qualifiedName.getComponentCount() == myQualifier.getComponentCount() + 1 && qualifiedName.matchesPrefix(myQualifier)) {
               // a new attribute follows last qualifier; collect it.

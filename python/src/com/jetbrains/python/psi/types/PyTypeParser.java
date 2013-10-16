@@ -11,7 +11,7 @@ import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameResolverImpl;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
@@ -424,11 +424,11 @@ public class PyTypeParser {
       }
       else {
         // Implicitly available in the type string
-        PyQualifiedName qName = null;
+        QualifiedName qName = null;
         while (!tokens.isEmpty()) {
           final Token<PyElementType> token = tokens.get(0);
           final String name = token.getText().toString();
-          qName = qName != null ? qName.append(name) : PyQualifiedName.fromComponents(name);
+          qName = qName != null ? qName.append(name) : QualifiedName.fromComponents(name);
           PsiElement module = new QualifiedNameResolverImpl(qName).fromElement(myAnchor).firstResult();
           if (module == null) {
             break;

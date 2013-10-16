@@ -11,7 +11,7 @@ import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -50,7 +50,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   public PyType getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PyTargetExpression) {
       final PyTargetExpression target = (PyTargetExpression)referenceTarget;
-      final PyQualifiedName calleeName = target.getCalleeName();
+      final QualifiedName calleeName = target.getCalleeName();
       if (calleeName != null && PyNames.NAMEDTUPLE.equals(calleeName.toString())) {
         // TODO: Create stubs for namedtuple for preventing switch from stub to AST
         final PyExpression value = target.findAssignedValue();
@@ -98,9 +98,10 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
   public PyType getConstructorType(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
     final String classQName = cls.getQualifiedName();
     if (classQName != null) {
-      final PyQualifiedName canonicalQName = PyStdlibCanonicalPathProvider.restoreStdlibCanonicalPath(PyQualifiedName.fromDottedString(classQName));
+      final QualifiedName
+        canonicalQName = PyStdlibCanonicalPathProvider.restoreStdlibCanonicalPath(QualifiedName.fromDottedString(classQName));
       if (canonicalQName != null) {
-        final PyQualifiedName qname = canonicalQName.append(PyNames.INIT);
+        final QualifiedName qname = canonicalQName.append(PyNames.INIT);
         return getReturnTypeByQName(qname.toString(), cls, context);
       }
     }
@@ -248,7 +249,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
                              module,
                              c != null ? c.getName() + "." : "",
                              result);
-      final PyQualifiedName qname = PyStdlibCanonicalPathProvider.restoreStdlibCanonicalPath(PyQualifiedName.fromDottedString(result));
+      final QualifiedName qname = PyStdlibCanonicalPathProvider.restoreStdlibCanonicalPath(QualifiedName.fromDottedString(result));
       if (qname != null) {
         return qname.toString();
       }

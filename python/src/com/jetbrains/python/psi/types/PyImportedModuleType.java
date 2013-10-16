@@ -12,7 +12,7 @@ import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.impl.PyImportedModule;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
@@ -58,7 +58,7 @@ public class PyImportedModuleType implements PyType {
     final List<PyImportElement> importTargets = PyModuleType.getVisibleImports(scopeOwner);
     final int imported = myImportedModule.getImportedPrefix().getComponentCount();
     for (PyImportElement importTarget : importTargets) {
-      final PyQualifiedName qName = importTarget.getImportedQName();
+      final QualifiedName qName = importTarget.getImportedQName();
       if (qName != null && qName.matchesPrefix(myImportedModule.getImportedPrefix())) {
         final List<String> components = qName.getComponents();
         if (components.size() > imported) {

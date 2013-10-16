@@ -5,7 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.PyModuleMembersProvider;
 
@@ -29,7 +29,7 @@ public class PyStdlibModuleMembersProvider extends PyModuleMembersProvider {
         osError = builtinCache.getByName("OSError");
 
         final String pathModuleName = SystemInfo.isWindows ? "ntpath" : "posixpath";
-        path = ResolveImportUtil.resolveModuleInRoots(PyQualifiedName.fromDottedString(pathModuleName), module);
+        path = ResolveImportUtil.resolveModuleInRoots(QualifiedName.fromDottedString(pathModuleName), module);
       }
       results.add(new PyDynamicMember("error", osError));
       results.add(new PyDynamicMember("path", path));

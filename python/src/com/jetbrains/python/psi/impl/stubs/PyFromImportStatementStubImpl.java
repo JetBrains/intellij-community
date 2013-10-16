@@ -4,18 +4,18 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyFromImportStatement;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.stubs.PyFromImportStatementStub;
 
 /**
  * @author yole
  */
 public class PyFromImportStatementStubImpl extends StubBase<PyFromImportStatement> implements PyFromImportStatementStub {
-  private final PyQualifiedName myImportSourceQName;
+  private final QualifiedName myImportSourceQName;
   private final boolean myStarImport;
   private final int myRelativeLevel;
 
-  public PyFromImportStatementStubImpl(PyQualifiedName importSourceQName, boolean isStarImport, int relativeLevel,
+  public PyFromImportStatementStubImpl(QualifiedName importSourceQName, boolean isStarImport, int relativeLevel,
                                        final StubElement parent, IStubElementType elementType) {
     super(parent, elementType);
     myImportSourceQName = importSourceQName;
@@ -23,7 +23,7 @@ public class PyFromImportStatementStubImpl extends StubBase<PyFromImportStatemen
     myRelativeLevel = relativeLevel;
   }
 
-  public PyQualifiedName getImportSourceQName() {
+  public QualifiedName getImportSourceQName() {
     return myImportSourceQName;
   }
 

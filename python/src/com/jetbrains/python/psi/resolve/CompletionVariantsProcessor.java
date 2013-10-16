@@ -15,7 +15,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,7 +90,7 @@ public class CompletionVariantsProcessor extends VariantsProcessor {
         source = cls.getName();
       }
       else if (myContext == null || !PyUtil.inSameFile(myContext, element)) {
-        PyQualifiedName path = QualifiedNameFinder.findCanonicalImportPath(element, null);
+        QualifiedName path = QualifiedNameFinder.findCanonicalImportPath(element, null);
         if (path != null) {
           if (element instanceof PyFile) {
             path = path.removeLastComponent();

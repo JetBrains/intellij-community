@@ -4,7 +4,7 @@ import com.intellij.psi.PsiNameIdentifierOwner;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.StubBasedPsiElement;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +26,7 @@ public interface PyTargetExpression extends PyQualifiedExpression, PsiNamedEleme
   PyExpression findAssignedValue();
 
   @Nullable
-  PyQualifiedName getAssignedQName();
+  QualifiedName getAssignedQName();
 
   /**
    * If the value assigned to the target expression is a call, returns the (unqualified and unresolved) name of the
@@ -35,7 +35,7 @@ public interface PyTargetExpression extends PyQualifiedExpression, PsiNamedEleme
    * @return the name of the callee or null if the assigned value is not a call.
    */
   @Nullable
-  PyQualifiedName getCalleeName();
+  QualifiedName getCalleeName();
 
   @NotNull
   PsiReference getReference();

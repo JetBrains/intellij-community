@@ -15,6 +15,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
 import com.jetbrains.python.PyElementTypes;
@@ -604,11 +605,11 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       if (nextStub instanceof PyTargetExpressionStub) {
         final PyTargetExpressionStub targetExpressionStub = (PyTargetExpressionStub)nextStub;
         if (targetExpressionStub.getInitializerType() == PyTargetExpressionStub.InitializerType.CallExpression) {
-          final PyQualifiedName qualifiedName = targetExpressionStub.getInitializer();
-          if (PyQualifiedName.fromComponents(PyNames.CLASSMETHOD).equals(qualifiedName)) {
+          final QualifiedName qualifiedName = targetExpressionStub.getInitializer();
+          if (QualifiedName.fromComponents(PyNames.CLASSMETHOD).equals(qualifiedName)) {
             return CLASSMETHOD;
           }
-          if (PyQualifiedName.fromComponents(PyNames.STATICMETHOD).equals(qualifiedName)) {
+          if (QualifiedName.fromComponents(PyNames.STATICMETHOD).equals(qualifiedName)) {
             return STATICMETHOD;
           }
         }

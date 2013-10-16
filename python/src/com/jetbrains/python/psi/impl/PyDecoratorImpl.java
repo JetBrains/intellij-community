@@ -4,6 +4,7 @@ import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
@@ -38,7 +39,7 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
    */
   @Override
   public String getName() {
-    final PyQualifiedName qname = getQualifiedName();
+    final QualifiedName qname = getQualifiedName();
     return qname != null ? qname.getLastComponent() : null;
   }
 
@@ -62,7 +63,7 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
     return (arglist_node != null) && (arglist_node.findChildByType(PyTokenTypes.LPAR) != null);
   }
 
-  public PyQualifiedName getQualifiedName() {
+  public QualifiedName getQualifiedName() {
     final PyDecoratorStub stub = getStub();
     if (stub != null) {
       return stub.getQualifiedName();
@@ -73,7 +74,7 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
         List<PyExpression> parts = PyResolveUtil.unwindQualifiers(node);
         if (parts != null) {
           //Collections.reverse(parts);
-          return PyQualifiedName.fromReferenceChain(parts);
+          return PyQualifiedNameFactory.fromReferenceChain(parts);
         }
       }
       return null;

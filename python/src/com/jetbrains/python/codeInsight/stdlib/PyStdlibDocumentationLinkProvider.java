@@ -14,7 +14,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.sdk.PythonSdkType;
 
@@ -537,7 +537,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     Sdk sdk = PyBuiltinCache.findSdkForFile(file);
     VirtualFile vFile = file.getVirtualFile();
     if (vFile != null && sdk != null && PythonSdkType.isStdLib(vFile, sdk)) {
-      PyQualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, originalElement);
+      QualifiedName qName = QualifiedNameFinder.findCanonicalImportPath(element, originalElement);
       return getStdlibUrlFor(element, qName, sdk);
     }
     return null;
@@ -563,7 +563,7 @@ public class PyStdlibDocumentationLinkProvider implements PythonDocumentationLin
     return urlBuilder.toString();
   }
 
-  private String getStdlibUrlFor(PsiElement element, PyQualifiedName moduleName, Sdk sdk) {
+  private String getStdlibUrlFor(PsiElement element, QualifiedName moduleName, Sdk sdk) {
     StringBuilder urlBuilder = new StringBuilder(getExternalDocumentationRoot(sdk));
     String qnameString = moduleName.toString();
     if (qnameString.equals("ntpath") || qnameString.equals("posixpath")) {
