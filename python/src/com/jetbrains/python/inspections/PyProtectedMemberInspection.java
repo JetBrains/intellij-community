@@ -11,6 +11,8 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyReferenceExpression;
+import com.jetbrains.python.psi.types.PyModuleType;
+import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,7 +68,11 @@ public class PyProtectedMemberInspection extends PyInspection {
             outerClass = PsiTreeUtil.getParentOfType(outerClass, PyClass.class);
           }
         }
-        registerProblem(node, PyBundle.message("INSP.protected.member.$0.access", name));
+        final PyType type = myTypeEvalContext.getType(qualifier);
+        if (type instanceof PyModuleType)
+          registerProblem(node, PyBundle.message("INSP.protected.member.$0.access.module", name));
+        else
+          registerProblem(node, PyBundle.message("INSP.protected.member.$0.access", name));
       }
     }
 
