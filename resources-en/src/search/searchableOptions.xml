@@ -12331,10 +12331,9 @@
     <option name="navigation" path="ActionManager" hit="Tag to Documentation Navigation" />
     <option name="tag" path="ActionManager" hit="Tag to Documentation Navigation" />
     <option name="to" path="ActionManager" hit="Tag to Documentation Navigation" />
-    <option name="a" path="ActionManager" hit="Take a thread dump" />
-    <option name="dump" path="ActionManager" hit="Take a thread dump" />
-    <option name="take" path="ActionManager" hit="Take a thread dump" />
-    <option name="thread" path="ActionManager" hit="Take a thread dump" />
+    <option name="get" path="ActionManager" hit="Get thread dump" />
+    <option name="dump" path="ActionManager" hit="Get thread dump" />
+    <option name="thread" path="ActionManager" hit="Get thread dump" />
     <option name="tapestry" path="ActionManager" hit="Tapestry" />
     <option name="class" path="ActionManager" hit="Tapestry Class" />
     <option name="tapestry" path="ActionManager" hit="Tapestry Class" />
