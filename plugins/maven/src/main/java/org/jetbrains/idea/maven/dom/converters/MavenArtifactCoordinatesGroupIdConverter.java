@@ -16,8 +16,7 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
   protected boolean doIsValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
     if (StringUtil.isEmpty(id.getGroupId())) return false;
 
-    boolean res = manager.hasGroupId(id.getGroupId());
-    if (res) return true;
+    if (manager.hasGroupId(id.getGroupId())) return true;
 
         // Check if artifact was found on importing.
     MavenProject mavenProject = findMavenProject(context);
@@ -29,7 +28,7 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
       }
     }
 
-    return res;
+    return false;
   }
 
   @Override
