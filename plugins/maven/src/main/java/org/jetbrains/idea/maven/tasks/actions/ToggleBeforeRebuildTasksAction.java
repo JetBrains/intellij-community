@@ -17,9 +17,9 @@ package org.jetbrains.idea.maven.tasks.actions;
 
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 
-public class ToggleAfterRebuildTasksAction extends ToggleCompilerTasksAction {
+public class ToggleBeforeRebuildTasksAction extends ToggleCompilerTasksAction {
 
-  public ToggleAfterRebuildTasksAction() {
-    super(MavenTasksManager.Phase.AFTER_REBUILD);
+  public ToggleBeforeRebuildTasksAction() {
+    super(MavenTasksManager.Phase.BEFORE_REBUILD);
   }
 }

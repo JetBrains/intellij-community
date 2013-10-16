@@ -482,6 +482,10 @@
               class="org.jetbrains.idea.maven.tasks.actions.ToggleAfterCompileTasksAction" text="Execute After Make"
               description="Execute selected phase/goal after Make">
       </action>
+      <action id="Maven.BeforeRebuild"
+              class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeRebuildTasksAction" text="Execute Before Rebuild"
+              description="Execute selected phase/goal before full rebuild">
+      </action>
       <action id="Maven.AfterRebuild"
               class="org.jetbrains.idea.maven.tasks.actions.ToggleAfterRebuildTasksAction" text="Execute After Rebuild"
               description="Execute selected phase/goal after full rebuild">
