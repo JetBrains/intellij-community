@@ -15,6 +15,20 @@ public class HighlightUsagesHandlerTest extends LightCodeInsightFixtureTestCase 
     HighlightUsagesHandler.invoke(myFixture.getProject(), myFixture.getEditor(), myFixture.getFile());
   }
 
+  public void testHighlightImport() throws Exception {
+    configureFile();
+    ctrlShiftF7();
+    assertRangeText("import", "List", "List", "List", "List", "List");
+    checkUnselect();
+  }
+
+  public void testHighlightStaticImport() throws Exception {
+    configureFile();
+    ctrlShiftF7();
+    assertRangeText("import", "abs", "abs", "pow");
+    checkUnselect();
+  }
+
   public void testSimpleThrows() throws Exception {
     configureFile();
     ctrlShiftF7();

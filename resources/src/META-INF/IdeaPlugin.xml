@@ -1143,6 +1143,7 @@
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightSuppressedWarningsFactory"/>
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightExitPointsHandlerFactory"/>
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightOverridingMethodsHandlerFactory"/>
+    <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightImportedElementsHandlerFactory"/>
 
     <directoryIndexExcludePolicy implementation="com.intellij.openapi.roots.impl.ExcludeCompilerOutputPolicy"/>
 
