@@ -672,7 +672,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
           if (myAmend.isSelected()) {
             ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
               public void run() {
-                final String messageFromGit = getDefaultMessageFor(getSelectedFilePaths());
+                final String messageFromGit = getLastCommitMessage();
                 if (!StringUtil.isEmptyOrSpaces(messageFromGit)) {
                   UIUtil.invokeAndWaitIfNeeded(new Runnable() {
                     @Override
@@ -692,15 +692,40 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       });
     }
 
+    @Nullable
+    private String getLastCommitMessage() {
+      Set<VirtualFile> roots = GitUtil.gitRoots(getSelectedFilePaths());
+      return StringUtil.join(roots, new Function<VirtualFile, String>() {
+        @Override
+        public String fun(VirtualFile root) {
+          return getLastCommitMessage(root);
+        }
+      }, "\n");
+    }
+
+    @Nullable
+    private String getLastCommitMessage(@NotNull VirtualFile root) {
+      GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LOG);
+      h.addParameters("--max-count=1");
+      // only message: subject + body; "%-b" means that preceding line-feeds will be deleted if the body is empty
+      h.addParameters("--pretty=%s%n%n%-b");
+      try {
+        return h.run();
+      }
+      catch (VcsException e) {
+        log.info(e);
+        return null;
+      }
+    }
+
     @NotNull
-    private FilePath[] getSelectedFilePaths() {
-      List<FilePath> selectedPaths = ContainerUtil.map(myCheckinPanel.getFiles(), new Function<File, FilePath>() {
+    private List<FilePath> getSelectedFilePaths() {
+      return ContainerUtil.map(myCheckinPanel.getFiles(), new Function<File, FilePath>() {
         @Override
         public FilePath fun(File file) {
           return new FilePathImpl(file, file.isDirectory());
         }
       });
-      return ArrayUtil.toObjectArray(selectedPaths, FilePath.class);
     }
 
     private List<String> getUsersList(final Project project, final Collection<VirtualFile> roots) {
