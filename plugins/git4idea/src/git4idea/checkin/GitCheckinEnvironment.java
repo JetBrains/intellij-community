@@ -604,6 +604,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     private final JCheckBox myAmend;
     private Date myAuthorDate;
     @Nullable private String myPreviousMessage;
+    @Nullable private String myAmendedMessage;
 
     @NotNull private final CheckinProjectPanel myCheckinPanel;
 
@@ -670,26 +671,40 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         @Override
         public void actionPerformed(ActionEvent e) {
           if (myAmend.isSelected()) {
-            ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-              public void run() {
-                final String messageFromGit = getLastCommitMessage();
-                if (!StringUtil.isEmptyOrSpaces(messageFromGit)) {
-                  UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-                    @Override
-                    public void run() {
-                      myPreviousMessage = myCheckinPanel.getCommitMessage();
-                      myCheckinPanel.setCommitMessage(messageFromGit);
-                    }
-                  });
-                }
-              }
-            }, "Reading commit message...", false, project);
+            if (myAmendedMessage != null) { // checkbox is selected not the first time
+              substituteCommitMessage(myAmendedMessage);
+            }
+            else {
+              loadMessageInModalTask(project);
+            }
           }
-          else if (myPreviousMessage != null) {
+          else {
+            myAmendedMessage = myCheckinPanel.getCommitMessage(); // save if user accidentally deselected amended message
             myCheckinPanel.setCommitMessage(myPreviousMessage);
           }
         }
       });
+    }
+
+    private void loadMessageInModalTask(@NotNull Project project) {
+      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        public void run() {
+          final String messageFromGit = getLastCommitMessage();
+          if (!StringUtil.isEmptyOrSpaces(messageFromGit)) {
+            UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+              @Override
+              public void run() {
+                substituteCommitMessage(messageFromGit);
+              }
+            });
+          }
+        }
+      }, "Reading commit message...", false, project);
+    }
+
+    private void substituteCommitMessage(@NotNull String newMessage) {
+      myPreviousMessage = myCheckinPanel.getCommitMessage();
+      myCheckinPanel.setCommitMessage(newMessage);
     }
 
     @Nullable
