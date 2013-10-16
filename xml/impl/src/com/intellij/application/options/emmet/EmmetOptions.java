@@ -44,6 +44,7 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
   private int myEmmetExpandShortcut = WebEditorOptions.getInstance().getZenCodingExpandShortcut();
   private boolean myFuzzySearchEnabled = true;
   private boolean myAutoInsertCssPrefixedEnabled = true;
+  private boolean myPreviewEnabled = false;
   @NotNull
   private Map<String, Integer> prefixes = ContainerUtil.newHashMap();
 
@@ -64,6 +65,14 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
     return myEmmetExpandShortcut;
   }
 
+  public boolean isPreviewEnabled() {
+    return myPreviewEnabled;
+  }
+
+  public void setPreviewEnabled(boolean previewEnabled) {
+    myPreviewEnabled = previewEnabled;
+  }
+  
   public boolean isEmmetEnabled() {
     return myEmmetEnabled;
   }
