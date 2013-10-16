@@ -251,7 +251,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   }
 
   private static class RegexFilterHelper implements FilterHelper {
-    private final Pattern pattern;
+    private final Pattern myPattern;
 
     RegexFilterHelper(@NotNull final String regex) {
       Pattern pattern;
@@ -261,7 +261,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
         // if there is a syntax error, show everything
         pattern = Pattern.compile("");
       }
-      this.pattern = pattern;
+      this.myPattern = pattern;
     }
 
     @Override
@@ -270,9 +270,9 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     }
 
     private boolean changeListMatches(@NotNull CommittedChangeList cl) {
-      boolean commentMatches = pattern.matcher(cl.getComment()).find();
-      boolean committerMatches = pattern.matcher(cl.getCommitterName()).find();
-      boolean revisionMatches = pattern.matcher(Long.toString(cl.getNumber())).find();
+      boolean commentMatches = myPattern.matcher(cl.getComment()).find();
+      boolean committerMatches = myPattern.matcher(cl.getCommitterName()).find();
+      boolean revisionMatches = myPattern.matcher(Long.toString(cl.getNumber())).find();
       return commentMatches || committerMatches || revisionMatches;
     }
   }
@@ -381,10 +381,11 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     @NotNull
     public List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists) {
       final FilterHelper filterHelper;
-      if (myRegexCheckbox.isSelected())
+      if (myRegexCheckbox.isSelected()) {
         filterHelper = new RegexFilterHelper(myFilterComponent.getFilter());
-      else
+      } else {
         filterHelper = new WordMatchFilterHelper(myFilterComponent.getFilter());
+      }
       final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
       for (CommittedChangeList list : changeLists) {
         if (filterHelper.filter(list)) {
