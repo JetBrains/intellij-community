@@ -8,9 +8,9 @@ import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReferenceExpression;
-import de.plushnikov.intellij.lombok.extension.LombokProcessorExtensionPoint;
-import de.plushnikov.intellij.lombok.problem.LombokProblem;
-import de.plushnikov.intellij.lombok.processor.LombokProcessor;
+import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
+import de.plushnikov.intellij.plugin.problem.LombokProblem;
+import de.plushnikov.intellij.plugin.processor.Processor;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,14 +24,14 @@ import java.util.Map;
 public class LombokInspection extends BaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(LombokInspection.class.getName());
 
-  private final Map<String, Collection<LombokProcessor>> allProblemHandlers;
+  private final Map<String, Collection<Processor>> allProblemHandlers;
 
   public LombokInspection() {
-    allProblemHandlers = new THashMap<String, Collection<LombokProcessor>>();
-    for (LombokProcessor lombokInspector : LombokProcessorExtensionPoint.EP_NAME.getExtensions()) {
-      Collection<LombokProcessor> inspectorCollection = allProblemHandlers.get(lombokInspector.getSupportedAnnotation());
+    allProblemHandlers = new THashMap<String, Collection<Processor>>();
+    for (Processor lombokInspector : LombokProcessorExtensionPoint.EP_NAME.getExtensions()) {
+      Collection<Processor> inspectorCollection = allProblemHandlers.get(lombokInspector.getSupportedAnnotation());
       if (null == inspectorCollection) {
-        inspectorCollection = new ArrayList<LombokProcessor>(2);
+        inspectorCollection = new ArrayList<Processor>(2);
         allProblemHandlers.put(lombokInspector.getSupportedAnnotation(), inspectorCollection);
       }
       inspectorCollection.add(lombokInspector);
@@ -78,7 +78,7 @@ public class LombokInspection extends BaseJavaLocalInspectionTool {
 
         final String qualifiedName = annotation.getQualifiedName();
         if (null != qualifiedName && allProblemHandlers.containsKey(qualifiedName)) {
-          for (LombokProcessor inspector : allProblemHandlers.get(qualifiedName)) {
+          for (Processor inspector : allProblemHandlers.get(qualifiedName)) {
             Collection<LombokProblem> problems = inspector.verifyAnnotation(annotation);
             for (LombokProblem problem : problems) {
               holder.registerProblem(annotation, problem.getMessage(), problem.getHighlightType(), problem.getQuickFixes());

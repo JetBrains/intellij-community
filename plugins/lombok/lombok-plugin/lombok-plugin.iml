@@ -9,10 +9,9 @@
       <sourceFolder url="file://$MODULE_DIR$/src/test/java" isTestSource="true" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/resources" isTestSource="true" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="IDEA IC-129.713" jdkType="IDEA JDK" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="processor-api" />
-    <orderEntry type="module" module-name="processor-core" />
+    <orderEntry type="module" module-name="lombok-api" />
   </component>
   <component name="POM File Configuration" pomFile="" />
 </module>

@@ -23,7 +23,7 @@
   </application-components>
 
   <extensionPoints>
-    <extensionPoint name="processor" interface="de.plushnikov.intellij.lombok.processor.LombokProcessor"/>
+    <extensionPoint name="processor" interface="de.plushnikov.intellij.plugin.processor.Processor"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -32,46 +32,42 @@
     <inspectionToolProvider implementation="de.plushnikov.intellij.plugin.provider.LombokInspectionProvider"/>
     <projectConfigurable implementation="de.plushnikov.intellij.plugin.settings.ProjectSettingsPage"/>
 
-    <renameHandler implementation="de.plushnikov.intellij.lombok.extension.LombokElementRenameHandler" order="FIRST"/>
-    <treeGenerator implementation="de.plushnikov.intellij.lombok.extension.LombokLightMethodTreeGenerator"/>
+    <renameHandler implementation="de.plushnikov.intellij.plugin.extension.LombokElementRenameHandler" order="FIRST"/>
+    <treeGenerator implementation="de.plushnikov.intellij.plugin.extension.LombokLightMethodTreeGenerator"/>
   </extensions>
 
   <extensions defaultExtensionNs="Lombook Plugin">
-    <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.constructor.AllArgsConstructorProcessor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.constructor.NoArgsConstructorProcessor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.constructor.RequiredArgsConstructorProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor"/>
 
-    <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.log.LogProcessor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.log.Log4jProcessor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.log.Log4j2Processor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.log.Slf4jProcessor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.log.XSlf4jProcessor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.log.CommonsLogProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.LogProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.Log4jProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.Log4j2Processor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.Slf4jProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.XSlf4jProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.CommonsLogProcessor"/>
 
-    <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.DataProcessor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.BuilderProcessor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.BuilderInnerClassProcessor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.EqualsAndHashCodeProcessor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.GetterProcessor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.SetterProcessor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.ToStringProcessor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.WitherProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.DataProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.EqualsAndHashCodeProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.GetterProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.SetterProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.WitherProcessor"/>
 
-    <processor implementation="de.plushnikov.intellij.lombok.processor.field.DelegateFieldProcessor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.field.GetterFieldProcessor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.field.LazyGetterFieldProcessor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.field.SetterFieldProcessor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.field.WitherFieldProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.field.DelegateFieldProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.field.LazyGetterFieldProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor"/>
 
-    <processor implementation="de.plushnikov.intellij.lombok.processor.method.BuilderMethodProcessor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.method.BuilderMethodInnerClassProcessor"/>
     <!-- lombok-pg-->
-    <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.FluentSetterProcessor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.SingletonProcessor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.clazz.SingletonProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.FluentSetterProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.SingletonProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.SingletonProcessor"/>
 
-    <processor implementation="de.plushnikov.intellij.lombok.processor.field.EnumIdFieldProcessor"/>
-    <processor implementation="de.plushnikov.intellij.lombok.processor.field.FluentSetterFieldProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.field.EnumIdFieldProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.field.FluentSetterFieldProcessor"/>
   </extensions>
 
   <change-notes><![CDATA[

@@ -89,4 +89,16 @@ public class GetterTestCase extends LombokParsingTestCase {
   public void testMultiFieldGetter() throws IOException {
     doTest();
   }
+
+  public void testTrickyTypeResolution() throws IOException {
+    doTest();
+  }
+
+  public void testClassNamedAfterGetter() throws IOException {
+    doTest();
+  }
+
+  public void testCommentsInterspersed() throws IOException {
+    doTest();
+  }
 }
