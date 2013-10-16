@@ -158,7 +158,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
                                                       ArrayUtil.toStringArray(options),
                                                       new String[] { "PYTHONUNBUFFERED=1" },
                                                       10000,
-                                                      collectedInfo.fileText.getBytes());
+                                                      collectedInfo.fileText.getBytes(), false);
 
     Results results = new Results(collectedInfo.level);
     if (output.isTimeout()) {
