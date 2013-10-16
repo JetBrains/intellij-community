@@ -32,8 +32,6 @@ import com.intellij.util.indexing.IdFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-
 public class DefaultClassNavigationContributor implements ChooseByNameContributorEx, GotoClassContributor {
   @Override
   @NotNull
@@ -52,19 +50,10 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
   @Override
   @NotNull
   public NavigationItem[] getItemsByName(String name, final String pattern, Project project, boolean includeNonProjectItems) {
-    final GlobalSearchScope scope = includeNonProjectItems ? GlobalSearchScope.allScope(project) : GlobalSearchScope.projectScope(project);
-    return filterUnshowable(PsiShortNamesCache.getInstance(project).getClassesByName(name, scope), pattern);
-  }
+    CommonProcessors.CollectProcessor<NavigationItem> processor = new CommonProcessors.CollectProcessor<NavigationItem>();
+    processElementsWithName(name, processor, FindSymbolParameters.wrap(pattern, project, includeNonProjectItems));
 
-  private static NavigationItem[] filterUnshowable(PsiClass[] items, final String pattern) {
-    boolean isAnnotation = pattern.startsWith("@");
-    ArrayList<NavigationItem> list = new ArrayList<NavigationItem>(items.length);
-    for (PsiClass item : items) {
-      if (item.getContainingFile().getVirtualFile() == null) continue;
-      if (isAnnotation && !item.isAnnotationType()) continue;
-      list.add(item);
-    }
-    return list.toArray(new NavigationItem[list.size()]);
+    return processor.toArray(new NavigationItem[processor.getResults().size()]);
   }
 
   @Override
@@ -95,8 +84,16 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
 
   @Override
   public void processElementsWithName(@NotNull String name,
-                                      @NotNull Processor<NavigationItem> processor,
-                                      @NotNull FindSymbolParameters parameters) {
-    PsiShortNamesCache.getInstance(parameters.getProject()).processClassesWithName(name, processor, parameters.getSearchScope(), parameters.getIdFilter());
+                                      @NotNull final Processor<NavigationItem> processor,
+                                      @NotNull final FindSymbolParameters parameters) {
+    PsiShortNamesCache.getInstance(parameters.getProject()).processClassesWithName(name, new Processor<PsiClass>() {
+      final boolean isAnnotation = parameters.getLocalPatternName().startsWith("@");
+      @Override
+      public boolean process(PsiClass aClass) {
+        if (aClass.getContainingFile().getVirtualFile() == null) return true;
+        if (isAnnotation && !aClass.isAnnotationType()) return true;
+        return processor.process(aClass);
+      }
+    }, parameters.getSearchScope(), parameters.getIdFilter());
   }
 }
