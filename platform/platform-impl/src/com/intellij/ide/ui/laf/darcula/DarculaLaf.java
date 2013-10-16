@@ -142,15 +142,17 @@ public class DarculaLaf extends BasicLookAndFeel {
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private void patchStyledEditorKit() {
     try {
-      StyleSheet defaultStyles = new StyleSheet();
-	InputStream is = getClass().getResourceAsStream(getPrefix() + ".css");
-	Reader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-	defaultStyles.loadRules(r, null);
-	r.close();
-      final Field keyField = HTMLEditorKit.class.getDeclaredField("DEFAULT_STYLES_KEY");
-      keyField.setAccessible(true);
-      final Object key = keyField.get(null);
-      AppContext.getAppContext().put(key, defaultStyles);
+      InputStream is = getClass().getResourceAsStream(getPrefix() + ".css");
+      if (is != null) {
+        StyleSheet defaultStyles = new StyleSheet();
+        Reader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+        defaultStyles.loadRules(r, null);
+        r.close();
+        final Field keyField = HTMLEditorKit.class.getDeclaredField("DEFAULT_STYLES_KEY");
+        keyField.setAccessible(true);
+        final Object key = keyField.get(null);
+        AppContext.getAppContext().put(key, defaultStyles);
+      }
     } catch (Exception e) {
       log(e);
     }
