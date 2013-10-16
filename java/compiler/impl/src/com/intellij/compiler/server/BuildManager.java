@@ -809,7 +809,10 @@ public class BuildManager implements ApplicationComponent{
       }
 
       // validate tools.jar presence
+      final JavaSdkType projectJdkType = (JavaSdkType)projectJdk.getSdkType();
       if (projectJdk.equals(internalJdk)) {
+        // important: because internal JDK can be either JDK or JRE,
+        // this is the most universal way to obtain tools.jar path in this particular case
         final JavaCompiler systemCompiler = ToolProvider.getSystemJavaCompiler();
         if (systemCompiler == null) {
           throw new ExecutionException("No system java compiler is provided by the JRE. Make sure tools.jar is present in IntelliJ IDEA classpath.");
@@ -817,13 +820,13 @@ public class BuildManager implements ApplicationComponent{
         compilerPath = ClasspathBootstrap.getResourcePath(systemCompiler.getClass());
       }
       else {
-        compilerPath = javaSdkType.getToolsPath(projectJdk);
+        compilerPath = projectJdkType.getToolsPath(projectJdk);
         if (compilerPath == null) {
           throw new ExecutionException("Cannot determine path to 'tools.jar' library for " + projectJdk.getName() + " (" + projectJdk.getHomePath() + ")");
         }
       }
 
-      vmExecutablePath = ((JavaSdkType)projectJdk.getSdkType()).getVMExecutablePath(projectJdk);
+      vmExecutablePath = projectJdkType.getVMExecutablePath(projectJdk);
     }
     else {
       compilerPath = new File(forcedCompiledJdkHome, "lib/tools.jar").getAbsolutePath();
