@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.plugin.ui;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.template.impl.TemplateImplUtil;
 import com.intellij.codeInsight.template.impl.Variable;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.*;
@@ -83,20 +84,12 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   }
 
   private void checkModelValidity() {
-    if (modificationTimeStamp != editor.getDocument().getModificationStamp()) {
-      reparse(editor);
-      modificationTimeStamp = editor.getDocument().getModificationStamp();
+    Document document = editor.getDocument();
+    if (modificationTimeStamp != document.getModificationStamp()) {
+      variables.clear();
+      variables.addAll(TemplateImplUtil.parseVariables(document.getCharsSequence()).values());
+      modificationTimeStamp = document.getModificationStamp();
     }
-  }
-
-  private void reparse(Editor editor) {
-    if (variables.size() > 0) variables.clear();
-
-    TemplateImplUtil.parseVariables(
-      editor.getDocument().getCharsSequence(),
-      variables,
-      null
-    );
   }
 
   public void mouseDragged(EditorMouseEvent e) {
