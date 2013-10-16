@@ -13,6 +13,7 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.impl.source.PsiExtensibleClass;
@@ -141,6 +142,21 @@ public class PsiClassUtil {
       result = factory.createType(psiClass, factory.createSubstitutor(substitutionMap));
     } else {
       result = factory.createType(psiClass);
+    }
+    return result;
+  }
+  
+  /**
+   * Return true if class is final.
+   *
+   * @param psiClass
+   * @return
+   */
+  public static boolean isFinalClass(@NotNull PsiClass psiClass) {
+    boolean result = false;
+    final PsiModifierList modifierList = psiClass.getModifierList();
+    if (null != modifierList) {
+      result = modifierList.hasModifierProperty(PsiModifier.FINAL);
     }
     return result;
   }
