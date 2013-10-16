@@ -76,12 +76,13 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
       g.fillRect(0,0, size.width, size.height);
     }
 
+    int rad = 5;
 
     // Paint the radio button
-    final int x = iconRect.x + 2;
-    final int y = iconRect.y + 2;
-    final int w = iconRect.width - 4;
-    final int h = iconRect.height - 4;
+    final int x = iconRect.x + (rad-1)/2;
+    final int y = iconRect.y + (rad-1)/2;
+    final int w = iconRect.width - (rad + 5) / 2;
+    final int h = iconRect.height - (rad + 5) / 2;
 
     g.translate(x, y);
 
@@ -94,7 +95,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
     if (b.hasFocus()) {
       int sysOffX = SystemInfo.isMac ? 0 : 1;
       int sysOffY = SystemInfo.isMac ? 0 : -1;
-      DarculaUIUtil.paintFocusOval(g, x-6  + sysOffX, y-3 + sysOffY, w-2, h-2);
+      DarculaUIUtil.paintFocusOval(g, x-rad - 1  + sysOffX, y- (rad + 1)/2 + sysOffY, w-2, h-2);
     } else {
       g.setPaint(UIUtil.getGradientPaint(w / 2, 1, Gray._160.withAlpha(90), w / 2, h, Gray._100.withAlpha(90)));
       g.drawOval(0, 2, w - 1, h - 1);
@@ -104,10 +105,11 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
     }
 
     if (b.isSelected()) {
-      g.setColor(b.isEnabled() ? Gray._30 : Gray._60);
-      g.fillOval(w/2 - 3, h/2 - 1, 5, 5);
-      g.setColor(b.isEnabled() ? Gray._170 : Gray._120);
-      g.fillOval(w/2 - 3, h/2 - 2, 5, 5);
+      final boolean enabled = b.isEnabled();
+      g.setColor(UIManager.getColor(enabled ? "RadioButton.darcula.selectionEnabledShadowColor" : "RadioButton.darcula.selectionDisabledShadowColor"));// ? Gray._30 : Gray._60);
+      g.fillOval(w/2 - rad/2, h/2 , rad, rad);
+      g.setColor(UIManager.getColor(enabled ? "RadioButton.darcula.selectionEnabledColor" : "RadioButton.darcula.selectionDisabledColor")); //Gray._170 : Gray._120);
+      g.fillOval(w/2 - rad/2, h/2 - 1, rad, rad);
     }
     config.restore();
     g.translate(-x, -y);
