@@ -248,9 +248,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     });
   }
 
-  public void wrap(final String selection,
-                   @NotNull final CustomTemplateCallback callback
-  ) {
+  public void wrap(final String selection, @NotNull final CustomTemplateCallback callback) {
     InputValidatorEx validator = new InputValidatorEx() {
       public String getErrorText(String inputString) {
         if (!checkTemplateKey(inputString, callback)) {
@@ -267,9 +265,9 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
         return checkInput(inputString);
       }
     };
-    final String abbreviation = Messages
-      .showInputDialog(callback.getProject(), XmlBundle.message("zen.coding.enter.abbreviation.dialog.label"),
-                       XmlBundle.message("zen.coding.title"), Messages.getQuestionIcon(), "", validator);
+    final String abbreviation = Messages.showInputDialog(callback.getProject(),
+                                                         XmlBundle.message("zen.coding.enter.abbreviation.dialog.label"),
+                                                         XmlBundle.message("zen.coding.title"), Messages.getQuestionIcon(), "", validator);
     if (abbreviation != null) {
       doWrap(selection, abbreviation, callback);
     }
