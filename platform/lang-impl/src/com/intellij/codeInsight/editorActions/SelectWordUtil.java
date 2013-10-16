@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,6 @@ import java.util.List;
  * @author Mike
  */
 public class SelectWordUtil {
-    
   private static ExtendWordSelectionHandler[] SELECTIONERS = new ExtendWordSelectionHandler[]{
   };
 
@@ -66,38 +65,53 @@ public class SelectWordUtil {
     return SELECTIONERS;
   }
 
+  private static final CharCondition JAVA_IDENTIFIER_PART_CONDITION = new CharCondition() {
+    @Override
+    public boolean value(char ch) {
+      return Character.isJavaIdentifierPart(ch);
+    }
+  };
+
   public static void addWordSelection(boolean camel, CharSequence editorText, int cursorOffset, @NotNull List<TextRange> ranges) {
-    TextRange camelRange = camel ? getCamelSelectionRange(editorText, cursorOffset) : null;
+    addWordSelection(camel, editorText, cursorOffset, ranges, JAVA_IDENTIFIER_PART_CONDITION);
+  }
+
+  public static void addWordSelection(boolean camel,
+                                      CharSequence editorText,
+                                      int cursorOffset,
+                                      @NotNull List<TextRange> ranges,
+                                      CharCondition isWordPartCondition) {
+    TextRange camelRange = camel ? getCamelSelectionRange(editorText, cursorOffset, isWordPartCondition) : null;
     if (camelRange != null) {
       ranges.add(camelRange);
     }
 
-    TextRange range = getWordSelectionRange(editorText, cursorOffset);
+    TextRange range = getWordSelectionRange(editorText, cursorOffset, isWordPartCondition);
     if (range != null && !range.equals(camelRange)) {
       ranges.add(range);
     }
   }
 
   @Nullable
-  private static TextRange getCamelSelectionRange(CharSequence editorText, int cursorOffset) {
+  private static TextRange getCamelSelectionRange(CharSequence editorText, int cursorOffset, CharCondition isWordPartCondition) {
     if (cursorOffset < 0 || cursorOffset >= editorText.length()) {
       return null;
     }
-    if (cursorOffset > 0 && !Character.isJavaIdentifierPart(editorText.charAt(cursorOffset)) &&
-        Character.isJavaIdentifierPart(editorText.charAt(cursorOffset - 1))) {
+    if (cursorOffset > 0 && !isWordPartCondition.value(editorText.charAt(cursorOffset)) &&
+        isWordPartCondition.value(editorText.charAt(cursorOffset - 1))) {
       cursorOffset--;
     }
 
-    if (Character.isJavaIdentifierPart(editorText.charAt(cursorOffset))) {
+    if (isWordPartCondition.value(editorText.charAt(cursorOffset))) {
       int start = cursorOffset;
       int end = cursorOffset + 1;
       final int textLen = editorText.length();
 
-      while (start > 0 && Character.isJavaIdentifierPart(editorText.charAt(start - 1)) && !EditorActionUtil.isHumpBound(editorText, start, true)) {
+      while (start > 0 && isWordPartCondition.value(editorText.charAt(start - 1)) && !EditorActionUtil.isHumpBound(editorText, start, true)) {
         start--;
       }
 
-      while (end < textLen && Character.isJavaIdentifierPart(editorText.charAt(end)) && !EditorActionUtil.isHumpBound(editorText, end, false)) {
+      while (end < textLen && isWordPartCondition.value(editorText.charAt(end)) && !EditorActionUtil.isHumpBound(editorText, end, false)) {
         end++;
       }
 
@@ -110,24 +124,24 @@ public class SelectWordUtil {
   }
 
   @Nullable
-  public static TextRange getWordSelectionRange(@NotNull CharSequence editorText, int cursorOffset) {
+  public static TextRange getWordSelectionRange(@NotNull CharSequence editorText, int cursorOffset, @NotNull CharCondition isWordPartCondition) {
     int length = editorText.length();
     if (length == 0) return null;
     if (cursorOffset == length ||
-        cursorOffset > 0 && !Character.isJavaIdentifierPart(editorText.charAt(cursorOffset)) &&
-        Character.isJavaIdentifierPart(editorText.charAt(cursorOffset - 1))) {
+        cursorOffset > 0 && !isWordPartCondition.value(editorText.charAt(cursorOffset)) &&
+        isWordPartCondition.value(editorText.charAt(cursorOffset - 1))) {
       cursorOffset--;
     }
 
-    if (Character.isJavaIdentifierPart(editorText.charAt(cursorOffset))) {
+    if (isWordPartCondition.value(editorText.charAt(cursorOffset))) {
       int start = cursorOffset;
       int end = cursorOffset;
 
-      while (start > 0 && Character.isJavaIdentifierPart(editorText.charAt(start - 1))) {
+      while (start > 0 && isWordPartCondition.value(editorText.charAt(start - 1))) {
         start--;
       }
 
-      while (end < length && Character.isJavaIdentifierPart(editorText.charAt(end))) {
+      while (end < length && isWordPartCondition.value(editorText.charAt(end))) {
         end++;
       }
 
@@ -229,7 +243,7 @@ public class SelectWordUtil {
           result.add(new TextRange(lexer.getTokenStart(), lexer.getTokenEnd()));
         }
         else {
-          TextRange word = getWordSelectionRange(editorText, cursorOffset);
+          TextRange word = getWordSelectionRange(editorText, cursorOffset, JAVA_IDENTIFIER_PART_CONDITION);
           if (word != null) {
             result.add(new TextRange(Math.max(word.getStartOffset(), lexer.getTokenStart()),
                                      Math.min(word.getEndOffset(), lexer.getTokenEnd())));
@@ -240,4 +254,6 @@ public class SelectWordUtil {
       lexer.advance();
     }
   }
+  
+  public interface CharCondition { boolean value(char ch); }
 }
