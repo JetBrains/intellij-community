@@ -415,15 +415,19 @@ public class ClsFileImpl extends ClsRepositoryPsiElement<PsiClassHolderFileStub>
     StubTree stubTree = dereference(myStub);
     if (stubTree != null) return stubTree;
 
+    // build newStub out of lock to avoid deadlock
+    StubTree newStubTree = (StubTree)StubTreeLoader.getInstance().readOrBuild(getProject(), getVirtualFile(), this);
+    if (newStubTree == null) {
+      LOG.warn("No stub for class file in index: " + getVirtualFile().getPresentableUrl());
+      newStubTree = new StubTree(new PsiJavaFileStubImpl("corrupted.classfiles", true));
+    }
+
     synchronized (myStubLock) {
       stubTree = dereference(myStub);
       if (stubTree != null) return stubTree;
 
-      stubTree = (StubTree)StubTreeLoader.getInstance().readOrBuild(getProject(), getVirtualFile(), this);
-      if (stubTree == null) {
-        LOG.warn("No stub for class file in index: " + getVirtualFile().getPresentableUrl());
-        stubTree = new StubTree(new PsiJavaFileStubImpl("corrupted.classfiles", true));
-      }
+      stubTree = newStubTree;
+
       //noinspection unchecked
       ((PsiFileStubImpl)stubTree.getRoot()).setPsi(this);
 
