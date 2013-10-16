@@ -15,6 +15,8 @@
  */
 package org.jetbrains.idea.maven.tasks;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -22,4 +24,21 @@ public class MavenTasksManagerState {
   public Set<MavenCompilerTask> beforeCompileTasks = new TreeSet<MavenCompilerTask>();
   public Set<MavenCompilerTask> afterCompileTasks = new TreeSet<MavenCompilerTask>();
   public Set<MavenCompilerTask> afterRebuildTask = new TreeSet<MavenCompilerTask>();
+  public Set<MavenCompilerTask> beforeRebuildTask = new TreeSet<MavenCompilerTask>();
+
+  @NotNull
+  public Set<MavenCompilerTask> getTasks(@NotNull MavenTasksManager.Phase phase) {
+    switch (phase) {
+      case AFTER_COMPILE:
+        return afterCompileTasks;
+      case BEFORE_COMPILE:
+        return beforeCompileTasks;
+      case AFTER_REBUILD:
+        return afterRebuildTask;
+      case BEFORE_REBUILD:
+        return beforeRebuildTask;
+      default:
+        throw new RuntimeException();
+    }
+  }
 }

@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.project.MavenProject;
@@ -53,6 +54,19 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
 
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
+  public enum Phase {
+    BEFORE_COMPILE("maven.tasks.goal.before.compile"),
+    AFTER_COMPILE("maven.tasks.goal.after.compile"),
+    BEFORE_REBUILD("maven.tasks.goal.before.rebuild"),
+    AFTER_REBUILD("maven.tasks.goal.after.rebuild");
+
+    public final String myMessageKey;
+
+    Phase(String messageKey) {
+      myMessageKey = messageKey;
+    }
+  }
+
   public static MavenTasksManager getInstance(Project project) {
     return project.getComponent(MavenTasksManager.class);
   }
@@ -68,6 +82,7 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
     result.afterCompileTasks = new THashSet<MavenCompilerTask>(myState.afterCompileTasks);
     result.beforeCompileTasks = new THashSet<MavenCompilerTask>(myState.beforeCompileTasks);
     result.afterRebuildTask = new THashSet<MavenCompilerTask>(myState.afterRebuildTask);
+    result.beforeRebuildTask = new THashSet<MavenCompilerTask>(myState.beforeRebuildTask);
     return result;
   }
 
@@ -87,32 +102,32 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
 
     CompilerManager compilerManager = CompilerManager.getInstance(myProject);
 
-    compilerManager.addBeforeTask(new CompileTask() {
-      public boolean execute(CompileContext context) {
-        return doExecute(true, context);
+    class MyCompileTask implements CompileTask {
+
+      private final boolean myBefore;
+
+      MyCompileTask(boolean before) {
+        myBefore = before;
       }
-    });
-    compilerManager.addAfterTask(new CompileTask() {
+
+      @Override
       public boolean execute(CompileContext context) {
-        return doExecute(false, context);
+        return doExecute(myBefore, context);
       }
-    });
+    }
+
+    compilerManager.addBeforeTask(new MyCompileTask(true));
+    compilerManager.addAfterTask(new MyCompileTask(false));
   }
 
   private boolean doExecute(boolean before, CompileContext context) {
     List<MavenRunnerParameters> parametersList;
     synchronized (this) {
       parametersList = new ArrayList<MavenRunnerParameters>();
-      Set<MavenCompilerTask> tasks;
+      Set<MavenCompilerTask> tasks = before ? myState.beforeCompileTasks : myState.afterCompileTasks;
 
-      if (before) {
-        tasks = myState.beforeCompileTasks;
-      }
-      else {
-        tasks = myState.afterCompileTasks;
-        if (context.isRebuild()) {
-          tasks = Sets.union(myState.afterRebuildTask, tasks);
-        }
+      if (context.isRebuild()) {
+        tasks = Sets.union(before ? myState.beforeRebuildTask : myState.afterRebuildTask, tasks);
       }
 
       for (MavenCompilerTask each : tasks) {
@@ -127,56 +142,20 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
     return myRunner.runBatch(parametersList, null, null, TasksBundle.message("maven.tasks.executing"), context.getProgressIndicator());
   }
 
-  public synchronized boolean isBeforeCompileTask(MavenCompilerTask task) {
-    return myState.beforeCompileTasks.contains(task);
+  public synchronized boolean isCompileTaskOfPhase(@NotNull MavenCompilerTask task, @NotNull Phase phase) {
+    return myState.getTasks(phase).contains(task);
   }
 
-  public void addBeforeCompileTasks(List<MavenCompilerTask> tasks) {
+  public void addCompileTasks(List<MavenCompilerTask> tasks, @NotNull Phase phase) {
     synchronized (this) {
-      myState.beforeCompileTasks.addAll(tasks);
+      myState.getTasks(phase).addAll(tasks);
     }
     fireTasksChanged();
   }
 
-  public void removeBeforeCompileTasks(List<MavenCompilerTask> tasks) {
+  public void removeCompileTasks(List<MavenCompilerTask> tasks, @NotNull Phase phase) {
     synchronized (this) {
-      myState.beforeCompileTasks.removeAll(tasks);
-    }
-    fireTasksChanged();
-  }
-
-  public synchronized boolean isAfterCompileTask(MavenCompilerTask task) {
-    return myState.afterCompileTasks.contains(task);
-  }
-
-  public void addAfterCompileTasks(List<MavenCompilerTask> tasks) {
-    synchronized (this) {
-      myState.afterCompileTasks.addAll(tasks);
-    }
-    fireTasksChanged();
-  }
-
-  public void removeAfterCompileTasks(List<MavenCompilerTask> tasks) {
-    synchronized (this) {
-      myState.afterCompileTasks.removeAll(tasks);
-    }
-    fireTasksChanged();
-  }
-
-  public synchronized boolean isAfterRebuildTask(MavenCompilerTask task) {
-    return myState.afterRebuildTask.contains(task);
-  }
-
-  public void addAfterRebuildTasks(List<MavenCompilerTask> tasks) {
-    synchronized (this) {
-      myState.afterRebuildTask.addAll(tasks);
-    }
-    fireTasksChanged();
-  }
-
-  public void removeAfterRebuildTasks(List<MavenCompilerTask> tasks) {
-    synchronized (this) {
-      myState.afterRebuildTask.removeAll(tasks);
+      myState.getTasks(phase).removeAll(tasks);
     }
     fireTasksChanged();
   }
@@ -185,14 +164,10 @@ public class MavenTasksManager extends MavenSimpleProjectComponent implements Pe
     List<String> result = new ArrayList<String>();
     MavenCompilerTask compilerTask = new MavenCompilerTask(project.getPath(), goal);
     synchronized (this) {
-      if (myState.beforeCompileTasks.contains(compilerTask)) {
-        result.add(TasksBundle.message("maven.tasks.goal.before.compile"));
-      }
-      if (myState.afterCompileTasks.contains(compilerTask)) {
-        result.add(TasksBundle.message("maven.tasks.goal.after.compile"));
-      }
-      if (myState.afterRebuildTask.contains(compilerTask)) {
-        result.add(TasksBundle.message("maven.tasks.goal.after.rebuild"));
+      for (Phase phase : Phase.values()) {
+        if (myState.getTasks(phase).contains(compilerTask)) {
+          result.add(TasksBundle.message(phase.myMessageKey));
+        }
       }
     }
     RunManagerEx runManager = RunManagerEx.getInstanceEx(myProject);
