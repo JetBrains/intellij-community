@@ -74,6 +74,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   private volatile boolean myDisposed;
   private volatile boolean myInLoad;
   private Consumer<String> myIfNotCachedReloader;
+  private boolean myChangesLoaded;
 
   public CommittedChangesPanel(Project project, final CommittedChangesProvider provider, final ChangeBrowserSettings settings,
                                @Nullable final RepositoryLocation location, @Nullable ActionGroup extraActions) {
@@ -250,7 +251,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     boolean filter(@NotNull final CommittedChangeList cl);
   }
 
-  private static class RegexFilterHelper implements FilterHelper {
+  private class RegexFilterHelper implements FilterHelper {
     private final Pattern myPattern;
 
     RegexFilterHelper(@NotNull final String regex) {
@@ -258,8 +259,8 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       try {
         pattern = Pattern.compile(regex);
       } catch (PatternSyntaxException e) {
-        // if there is a syntax error, show everything
-        pattern = Pattern.compile("");
+        pattern = null;
+        myBrowser.getEmptyText().setText(VcsBundle.message("committed.changes.incorrect.regex.message"));
       }
       this.myPattern = pattern;
     }
@@ -270,6 +271,9 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     }
 
     private boolean changeListMatches(@NotNull CommittedChangeList cl) {
+      if (myPattern == null) {
+        return false;
+      }
       boolean commentMatches = myPattern.matcher(cl.getComment()).find();
       boolean committerMatches = myPattern.matcher(cl.getCommitterName()).find();
       boolean revisionMatches = myPattern.matcher(Long.toString(cl.getNumber())).find();
@@ -309,14 +313,19 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     if (committedChangeLists == null) {
       return;
     }
-    final String emptyText;
-    if (reset) {
+    myChangesLoaded = !reset;
+    setEmptyMessage(myChangesLoaded);
+    myBrowser.setItems(committedChangeLists, CommittedChangesBrowserUseCase.COMMITTED);
+  }
+
+  private void setEmptyMessage(boolean changesLoaded) {
+    String emptyText;
+    if (!changesLoaded) {
       emptyText = VcsBundle.message("committed.changes.not.loaded.message");
     } else {
       emptyText = VcsBundle.message("committed.changes.empty.message");
     }
     myBrowser.getEmptyText().setText(emptyText);
-    myBrowser.setItems(committedChangeLists, CommittedChangesBrowserUseCase.COMMITTED);
   }
 
   public void setChangesFilter() {
@@ -381,6 +390,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     @NotNull
     public List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists) {
       final FilterHelper filterHelper;
+      setEmptyMessage(myChangesLoaded);
       if (myRegexCheckbox.isSelected()) {
         filterHelper = new RegexFilterHelper(myFilterComponent.getFilter());
       } else {
