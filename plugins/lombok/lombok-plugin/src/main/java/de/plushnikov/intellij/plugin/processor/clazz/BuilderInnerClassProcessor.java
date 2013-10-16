@@ -10,7 +10,6 @@ import de.plushnikov.intellij.plugin.thirdparty.ErrorMessages;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.BuilderUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import lombok.experimental.Builder;
 import lombok.Singleton;
 import org.jetbrains.annotations.NotNull;
@@ -21,10 +20,10 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Inspect and validate @Builder lombok-pg annotation on a class
+ * Inspect and validate @Builder lombok annotation on a class
  * Creates methods for a builder pattern for initializing a class
  *
- * @author Plushnikov Michail
+ * @author Tomasz Kalkosiński
  */
 public class BuilderInnerClassProcessor extends AbstractClassProcessor {
 
@@ -40,24 +39,20 @@ public class BuilderInnerClassProcessor extends AbstractClassProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    boolean result = validateAnnotationOnRigthType(psiClass, builder);
+    boolean result = validateAnnotationOnRightType(psiClass, builder);
     if (result) {
-      result = validateExistingMethods(psiClass, builder);
+      result = validateExistingInnerClass(psiClass, psiAnnotation, builder);
     }
 
     if (PsiClassUtil.hasSuperClass(psiClass)) {
       builder.addError(ErrorMessages.canBeUsedOnConcreteClassOnly(Singleton.class));
       result = false;
     }
-    if (PsiClassUtil.hasMultiArgumentConstructor(psiClass)) {
-      builder.addError(ErrorMessages.requiresDefaultOrNoArgumentConstructor(Singleton.class));
-      result = false;
-    }
 
     return result;
   }
 
-  protected boolean validateAnnotationOnRigthType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
       builder.addError(ErrorMessages.canBeUsedOnClassOnly(Singleton.class));
@@ -66,12 +61,13 @@ public class BuilderInnerClassProcessor extends AbstractClassProcessor {
     return result;
   }
 
-  protected boolean validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+  protected boolean validateExistingInnerClass(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder builder) {
     boolean result = true;
 
-    final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
-    if (PsiMethodUtil.hasMethodByName(classMethods, METHOD_NAME)) {
-      builder.addWarning(String.format("Not generated '%s'(): A method with same name already exists", METHOD_NAME));
+    final String innerClassSimpleName = BuilderUtil.createBuilderClassName(psiAnnotation, psiClass);
+    final PsiClass innerClassByName = PsiClassUtil.getInnerClassInternByName(psiClass, innerClassSimpleName);
+    if (innerClassByName != null) {
+      builder.addWarning(String.format("Not generated '%s' class: A class with same name already exists", innerClassSimpleName));
       result = false;
     }
 

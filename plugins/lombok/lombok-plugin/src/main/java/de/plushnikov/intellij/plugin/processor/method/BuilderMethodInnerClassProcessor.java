@@ -10,27 +10,55 @@ import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.ErrorMessages;
 import de.plushnikov.intellij.plugin.util.BuilderUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
+import lombok.Singleton;
 import lombok.experimental.Builder;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Inspect and validate @Builder lombok annotation on a static method
+ * Creates methods for a builder pattern for initializing a class
+ *
+ * @author Tomasz Kalkosiński
+ */
 public class BuilderMethodInnerClassProcessor extends AbstractMethodProcessor {
-
-  public static final String METHOD_NAME = "getInstance";
 
   public BuilderMethodInnerClassProcessor() {
     super(Builder.class, PsiClass.class);
   }
 
-    @Override
-  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder) {
-    return validateAnnotationOnRigthType(psiMethod, builder);
+  protected BuilderMethodInnerClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class supportedClass) {
+    super(supportedAnnotationClass, supportedClass);
   }
 
-  protected boolean validateAnnotationOnRigthType(@NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder) {
+  @Override
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder) {
+    boolean result = validateAnnotationOnRightType(psiMethod, builder);
+    if (result) {
+      final PsiClass containingClass = psiMethod.getContainingClass();
+      assert containingClass != null;
+      result = validateExistingInnerClass(containingClass, psiAnnotation, builder);
+    }
+    return result;
+  }
+
+  protected boolean validateExistingInnerClass(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder builder) {
+    boolean result = true;
+    final String innerClassSimpleName = BuilderUtil.createBuilderClassName(psiAnnotation, psiClass);
+    final PsiClass innerClassByName = PsiClassUtil.getInnerClassInternByName(psiClass, innerClassSimpleName);
+    if (innerClassByName != null) {
+      builder.addWarning(String.format("Not generated '%s' class: A class with same name already exists", innerClassSimpleName));
+      result = false;
+    }
+
+    return result;
+  }
+
+  protected boolean validateAnnotationOnRightType(@NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (!psiMethod.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
       builder.addError(ErrorMessages.canBeUsedOnStaticMethodOnly(Builder.class));
@@ -46,7 +74,7 @@ public class BuilderMethodInnerClassProcessor extends AbstractMethodProcessor {
     final String innerClassCanonicalName = parentClass.getName() + "." + innerClassSimpleName;
     LombokLightClassBuilder innerClass = new LombokLightClassBuilder(psiMethod.getManager(), innerClassCanonicalName, innerClassSimpleName)
        .withContainingClass(parentClass)
-       .withParameterTypes(psiMethod.getTypeParameterList()) // TODO
+       .withParameterTypes(psiMethod.getTypeParameterList())
        .withModifier(PsiModifier.PUBLIC)
        .withModifier(PsiModifier.STATIC);
     innerClass.withConstructors(createConstructors(innerClass, psiAnnotation))
@@ -64,7 +92,9 @@ public class BuilderMethodInnerClassProcessor extends AbstractMethodProcessor {
   private Collection<PsiField> createFields(@NotNull PsiMethod psiMethod) {
     List<PsiField> fields = new ArrayList<PsiField>();
     for (PsiParameter psiParameter : psiMethod.getParameterList().getParameters()) {
-      fields.add(new LombokLightFieldBuilder(psiMethod.getManager(), psiParameter.getName(), psiParameter.getType())
+      String psiParameterName = psiParameter.getName();
+      assert psiParameterName != null;
+      fields.add(new LombokLightFieldBuilder(psiMethod.getManager(), psiParameterName, psiParameter.getType())
         .withModifier(PsiModifier.PRIVATE));
     }
     return fields;
@@ -81,11 +111,12 @@ public class BuilderMethodInnerClassProcessor extends AbstractMethodProcessor {
   private Collection<PsiMethod> createSetterMethods(@NotNull PsiClass innerClass, @NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation) {
     List<PsiMethod> methods = new ArrayList<PsiMethod>();
     for (PsiParameter psiParameter : psiMethod.getParameterList().getParameters()) {
-      assert psiParameter.getName() != null;
-      methods.add(new LombokLightMethodBuilder(psiMethod.getManager(), BuilderUtil.createSetterName(psiAnnotation, psiParameter.getName()))
+      String psiParameterName = psiParameter.getName();
+      assert psiParameterName != null;
+      methods.add(new LombokLightMethodBuilder(psiMethod.getManager(), BuilderUtil.createSetterName(psiAnnotation, psiParameterName))
         .withMethodReturnType(BuilderUtil.createSetterReturnType(psiAnnotation, PsiClassUtil.getTypeWithGenerics(innerClass)))
         .withContainingClass(innerClass)
-        .withParameter(psiParameter.getName(), psiParameter.getType())
+        .withParameter(psiParameterName, psiParameter.getType())
         .withNavigationElement(innerClass)
         .withModifier(PsiModifier.PUBLIC));
     }

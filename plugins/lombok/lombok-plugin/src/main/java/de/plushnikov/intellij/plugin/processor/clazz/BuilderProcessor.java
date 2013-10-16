@@ -19,14 +19,12 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Inspect and validate @Builder lombok-pg annotation on a class
+ * Inspect and validate @Builder lombok annotation on a class
  * Creates methods for a builder pattern for initializing a class
  *
- * @author Plushnikov Michail
+ * @author Tomasz Kalkosiński
  */
 public class BuilderProcessor extends BuilderInnerClassProcessor {
-
-  public static final String METHOD_NAME = "getInstance";
 
   public BuilderProcessor() {
     super(Builder.class, PsiMethod.class);

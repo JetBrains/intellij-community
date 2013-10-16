@@ -13,47 +13,36 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collection;
 import java.util.List;
 
-public class BuilderMethodProcessor extends AbstractMethodProcessor {
-
-  public static final String METHOD_NAME = "getInstance";
+/**
+ * Inspect and validate @Builder lombok annotation on a static method
+ * Creates methods for a builder pattern for initializing a class
+ *
+ * @author Tomasz Kalkosiński
+ */
+public class BuilderMethodProcessor extends BuilderMethodInnerClassProcessor {
 
   public BuilderMethodProcessor() {
     super(Builder.class, PsiMethod.class);
   }
 
-  @Override
-  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder) {
-    return validateAnnotationOnRigthType(psiMethod, builder);
-  }
-
-  protected boolean validateAnnotationOnRigthType(@NotNull PsiMethod psiMethod, @NotNull ProblemBuilder builder) {
-    boolean result = true;
-    if (!psiMethod.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
-      builder.addError(ErrorMessages.canBeUsedOnStaticMethodOnly(Builder.class));
-      result = false;
-    }
-    return result;
-  }
-
-  protected boolean validateExistingMethods(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    boolean result = true;
-
-    final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
-    if (PsiMethodUtil.hasMethodByName(classMethods, METHOD_NAME)) {
-      builder.addWarning(String.format("Not generated '%s'(): A method with same name already exists", METHOD_NAME));
-      result = false;
-    }
-
-    return result;
-  }
-
   protected void processIntern(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiMethod.getManager(), BuilderUtil.createBuilderMethodName(psiAnnotation))
-        .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(psiMethod.getContainingClass().getInnerClasses()[0])) // TODO: It's not good!!
-        .withContainingClass(psiMethod.getContainingClass())
-        .withNavigationElement(psiAnnotation);
-    method.withModifier(PsiModifier.STATIC);
-    method.withModifier(PsiModifier.PUBLIC);
-    target.add(method);
+    final PsiClass containingClass = psiMethod.getContainingClass();
+    assert containingClass != null;
+
+    String innerClassName = BuilderUtil.createBuilderClassNameWithGenerics(psiAnnotation, psiMethod.getReturnType());
+    PsiClass innerClassByName = PsiClassUtil.getInnerClassByName(containingClass, innerClassName);
+    assert innerClassByName != null;
+
+    final String builderMethodName = BuilderUtil.createBuilderMethodName(psiAnnotation);
+    if (!PsiMethodUtil.hasMethodByName(PsiClassUtil.collectClassMethodsIntern(containingClass), builderMethodName)) {
+      LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiMethod.getManager(), builderMethodName)
+          .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(innerClassByName))
+          .withContainingClass(containingClass)
+          .withNavigationElement(psiAnnotation);
+      method.withModifier(PsiModifier.STATIC);
+      method.withModifier(PsiModifier.PUBLIC);
+      target.add(method);
+    }
+
   }
 }
