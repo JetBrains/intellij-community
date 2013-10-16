@@ -159,7 +159,7 @@ public class DfaVariableValue extends DfaValue {
       return nullability;
     }
 
-    if (var instanceof PsiField && DfaPsiUtil.isFinalField((PsiVariable)var)) {
+    if (var instanceof PsiField && DfaPsiUtil.isFinalField((PsiVariable)var) && myFactory.isHonorFieldInitializers()) {
       List<PsiExpression> initializers = DfaPsiUtil.findAllConstructorInitializers((PsiField)var);
       if (initializers.isEmpty()) {
         return Nullness.UNKNOWN;
@@ -168,11 +168,13 @@ public class DfaVariableValue extends DfaValue {
       boolean hasUnknowns = false;
       for (PsiExpression expression : initializers) {
         if (!(expression instanceof PsiReferenceExpression)) {
-          return Nullness.UNKNOWN;
+          hasUnknowns = true;
+          continue;
         }
         PsiElement target = ((PsiReferenceExpression)expression).resolve();
         if (!(target instanceof PsiParameter)) {
-          return Nullness.UNKNOWN;
+          hasUnknowns = true;
+          continue;
         }
         if (NullableNotNullManager.isNullable((PsiParameter)target)) {
           return Nullness.NULLABLE;
@@ -181,7 +183,15 @@ public class DfaVariableValue extends DfaValue {
           hasUnknowns = true;
         }
       }
-      return hasUnknowns ? Nullness.UNKNOWN : Nullness.NOT_NULL;
+      
+      if (hasUnknowns) {
+        if (DfaPsiUtil.isInitializedNotNull((PsiField)var)) {
+          return Nullness.NOT_NULL;
+        }
+        return Nullness.UNKNOWN;
+      }
+      
+      return Nullness.NOT_NULL;
     }
 
     return Nullness.UNKNOWN;

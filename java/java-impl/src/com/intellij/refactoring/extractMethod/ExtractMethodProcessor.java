@@ -40,14 +40,16 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -327,7 +329,6 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   private boolean isNotNull(PsiVariable outputVariable) {
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner();
     final PsiCodeBlock block = myElementFactory.createCodeBlock();
     for (PsiElement element : myElements) {
       block.add(element);
@@ -335,18 +336,15 @@ public class ExtractMethodProcessor implements MatchProvider {
     final PsiIfStatement statementFromText = (PsiIfStatement)myElementFactory.createStatementFromText("if (" + outputVariable.getName() + " == null);", null);
     block.add(statementFromText);
 
+    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(block);
     final StandardInstructionVisitor visitor = new StandardInstructionVisitor();
     final RunnerResult rc = dfaRunner.analyzeMethod(block, visitor);
     if (rc == RunnerResult.OK) {
-      if (dfaRunner.problemsDetected(visitor)) {
-        final Pair<Set<Instruction>,Set<Instruction>>
-          conditionalExpressions = dfaRunner.getConstConditionalExpressions();
-        final Set<Instruction> falseSet = conditionalExpressions.getSecond();
-        for (Instruction instruction : falseSet) {
-          if (instruction instanceof BranchingInstruction) {
-            if (((BranchingInstruction)instruction).getPsiAnchor().getText().equals(statementFromText.getCondition().getText())) {
-              return true;
-            }
+      final Set<Instruction> falseSet = dfaRunner.getConstConditionalExpressions().getSecond();
+      for (Instruction instruction : falseSet) {
+        if (instruction instanceof BranchingInstruction) {
+          if (((BranchingInstruction)instruction).getPsiAnchor().getText().equals(statementFromText.getCondition().getText())) {
+            return true;
           }
         }
       }
