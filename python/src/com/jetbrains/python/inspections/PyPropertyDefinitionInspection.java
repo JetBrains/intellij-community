@@ -18,7 +18,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.RenameParameterQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
@@ -190,7 +190,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
           if (decos != null) {
             String name = node.getName();
             for (PyDecorator deco : decos.getDecorators()) {
-              final PyQualifiedName q_name = deco.getQualifiedName();
+              final QualifiedName q_name = deco.getQualifiedName();
               if (q_name != null) {
                 List<String> name_parts = q_name.getComponents();
                 if (name_parts.size() == 2) {

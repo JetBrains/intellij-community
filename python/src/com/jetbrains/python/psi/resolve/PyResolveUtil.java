@@ -20,7 +20,8 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
+import com.jetbrains.python.psi.impl.PyQualifiedNameFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -259,7 +260,7 @@ public class PyResolveUtil {
   public static String toPath(PyQualifiedExpression expr) {
     if (expr == null) return "";
     List<PyExpression> path = unwindQualifiers(expr);
-    final PyQualifiedName qName = PyQualifiedName.fromReferenceChain(path);
+    final QualifiedName qName = PyQualifiedNameFactory.fromReferenceChain(path);
     if (qName != null) {
       return qName.toString();
     }

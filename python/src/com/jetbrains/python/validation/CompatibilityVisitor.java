@@ -12,7 +12,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,7 +130,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     for (int i = 0; i != myVersionsToProcess.size(); ++i) {
       LanguageLevel languageLevel = myVersionsToProcess.get(i);
       for (PyImportElement importElement : importElements) {
-        final PyQualifiedName qName = importElement.getImportedQName();
+        final QualifiedName qName = importElement.getImportedQName();
         if (qName != null) {
           if (!languageLevel.isPy3K()) {
             if (qName.matches("builtins")) {

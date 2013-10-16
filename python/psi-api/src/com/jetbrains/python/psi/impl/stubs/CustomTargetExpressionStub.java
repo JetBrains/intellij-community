@@ -1,7 +1,7 @@
 package com.jetbrains.python.psi.impl.stubs;
 
 import com.intellij.psi.stubs.StubOutputStream;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,5 +16,5 @@ public interface CustomTargetExpressionStub {
   void serialize(StubOutputStream stream) throws IOException;
 
   @Nullable
-  PyQualifiedName getCalleeName();
+  QualifiedName getCalleeName();
 }

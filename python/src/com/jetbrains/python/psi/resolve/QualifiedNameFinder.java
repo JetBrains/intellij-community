@@ -12,7 +12,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,31 +33,31 @@ public class QualifiedNameFinder {
    */
   @Nullable
   public static String findShortestImportableName(@NotNull PsiElement foothold, @NotNull VirtualFile vfile) {
-    final PyQualifiedName qName = findShortestImportableQName(foothold, vfile);
+    final QualifiedName qName = findShortestImportableQName(foothold, vfile);
     return qName == null ? null : qName.toString();
   }
 
   @Nullable
-  public static PyQualifiedName findShortestImportableQName(@Nullable PsiFileSystemItem fsItem) {
+  public static QualifiedName findShortestImportableQName(@Nullable PsiFileSystemItem fsItem) {
     VirtualFile vFile = fsItem != null ? fsItem.getVirtualFile() : null;
     return vFile != null ? findShortestImportableQName(fsItem, vFile) : null;
   }
 
   @Nullable
-  public static PyQualifiedName findShortestImportableQName(@NotNull PsiElement foothold, @NotNull VirtualFile vfile) {
+  public static QualifiedName findShortestImportableQName(@NotNull PsiElement foothold, @NotNull VirtualFile vfile) {
     return shortestQName(findImportableQNames(foothold, vfile));
   }
 
   @NotNull
-  public static List<PyQualifiedName> findImportableQNames(@NotNull PsiElement foothold, @NotNull VirtualFile vfile) {
+  public static List<QualifiedName> findImportableQNames(@NotNull PsiElement foothold, @NotNull VirtualFile vfile) {
     final PythonPathCache cache = ResolveImportUtil.getPathCache(foothold);
-    final List<PyQualifiedName> names = cache != null ? cache.getNames(vfile) : null;
+    final List<QualifiedName> names = cache != null ? cache.getNames(vfile) : null;
     if (names != null) {
       return names;
     }
     PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
     RootVisitorHost.visitRoots(foothold, visitor);
-    final List<PyQualifiedName> results = visitor.getResults();
+    final List<QualifiedName> results = visitor.getResults();
     if (cache != null) {
       cache.putNames(vfile, results);
     }
@@ -65,9 +65,9 @@ public class QualifiedNameFinder {
   }
 
   @Nullable
-  private static PyQualifiedName shortestQName(@NotNull List<PyQualifiedName> qNames) {
-    PyQualifiedName result = null;
-    for (PyQualifiedName name : qNames) {
+  private static QualifiedName shortestQName(@NotNull List<QualifiedName> qNames) {
+    QualifiedName result = null;
+    for (QualifiedName name : qNames) {
       if (result == null || name.getComponentCount() < result.getComponentCount()) {
         result = name;
       }
@@ -78,15 +78,15 @@ public class QualifiedNameFinder {
   @Nullable
   public static String findShortestImportableName(Module module, @NotNull VirtualFile vfile) {
     final PythonPathCache cache = PythonModulePathCache.getInstance(module);
-    final List<PyQualifiedName> names = cache.getNames(vfile);
+    final List<QualifiedName> names = cache.getNames(vfile);
     if (names != null) {
       return names.toString();
     }
     PathChoosingVisitor visitor = new PathChoosingVisitor(vfile);
     RootVisitorHost.visitRoots(module, false, visitor);
-    final List<PyQualifiedName> results = visitor.getResults();
+    final List<QualifiedName> results = visitor.getResults();
     cache.putNames(vfile, results);
-    final PyQualifiedName qName = shortestQName(results);
+    final QualifiedName qName = shortestQName(results);
     return qName == null ? null : qName.toString();
   }
 
@@ -100,7 +100,7 @@ public class QualifiedNameFinder {
    * @return the qualified name, or null if it wasn't possible to calculate one
    */
   @Nullable
-  public static PyQualifiedName findCanonicalImportPath(@NotNull PsiElement symbol, @Nullable PsiElement foothold) {
+  public static QualifiedName findCanonicalImportPath(@NotNull PsiElement symbol, @Nullable PsiElement foothold) {
     PsiFileSystemItem srcfile = symbol instanceof PsiFileSystemItem ? (PsiFileSystemItem)symbol : symbol.getContainingFile();
     if (srcfile == null) {
       return null;
@@ -129,10 +129,10 @@ public class QualifiedNameFinder {
         dir = dir.getParentDirectory();
       }
     }
-    final PyQualifiedName qname = findShortestImportableQName(foothold != null ? foothold : symbol, virtualFile);
+    final QualifiedName qname = findShortestImportableQName(foothold != null ? foothold : symbol, virtualFile);
     if (qname != null) {
       for (PyCanonicalPathProvider provider : Extensions.getExtensions(PyCanonicalPathProvider.EP_NAME)) {
-        final PyQualifiedName restored = provider.getCanonicalPath(qname, foothold);
+        final QualifiedName restored = provider.getCanonicalPath(qname, foothold);
         if (restored != null) {
           return restored;
         }
@@ -147,7 +147,7 @@ public class QualifiedNameFinder {
    */
   private static class PathChoosingVisitor implements RootVisitor {
     @Nullable private final VirtualFile myVFile;
-    @NotNull private final List<PyQualifiedName> myResults = new ArrayList<PyQualifiedName>();
+    @NotNull private final List<QualifiedName> myResults = new ArrayList<QualifiedName>();
 
     private PathChoosingVisitor(@NotNull VirtualFile file) {
       if (!file.isDirectory() && file.getName().equals(PyNames.INIT_DOT_PY)) {
@@ -171,14 +171,14 @@ public class QualifiedNameFinder {
               return true;
             }
           }
-          myResults.add(PyQualifiedName.fromComponents(result));
+          myResults.add(QualifiedName.fromComponents(result));
         }
       }
       return true;
     }
 
     @NotNull
-    public List<PyQualifiedName> getResults() {
+    public List<QualifiedName> getResults() {
       return myResults;
     }
   }

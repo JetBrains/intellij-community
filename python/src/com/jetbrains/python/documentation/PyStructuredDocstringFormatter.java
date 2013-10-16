@@ -88,7 +88,7 @@ public class PyStructuredDocstringFormatter {
 
 
     final ProcessOutput output = PySdkUtil.getProcessOutput(new File(sdkHome).getParent(), new String[]{sdkHome, formatter},
-                                                            null, 5000, data);
+                                                            null, 5000, data, true);
     if (output.isTimeout()) {
       LOG.info("timeout when calculating docstring");
       return null;

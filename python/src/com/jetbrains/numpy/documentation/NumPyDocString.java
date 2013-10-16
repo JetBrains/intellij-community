@@ -22,7 +22,7 @@ import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyPsiFacade;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,7 +94,7 @@ public class NumPyDocString {
    */
   @Nullable
   private static PyFunction resolveRedirectToFunction(@NotNull String redirect, @NotNull PsiElement reference) {
-    final PyQualifiedName qualifiedName = PyQualifiedName.fromDottedString(redirect);
+    final QualifiedName qualifiedName = QualifiedName.fromDottedString(redirect);
     final String functionName = qualifiedName.getLastComponent();
     final PyPsiFacade facade = PyPsiFacade.getInstance(reference.getProject());
     final List<PsiElement> items = facade.qualifiedNameResolver(qualifiedName.removeLastComponent()).fromElement(reference).resultsAsList();

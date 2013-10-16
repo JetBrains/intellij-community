@@ -4,7 +4,7 @@ import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 
 import java.util.List;
@@ -14,11 +14,11 @@ import java.util.List;
  */
 public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
   private final String myName;
-  private final PyQualifiedName[] mySuperClasses;
+  private final QualifiedName[] mySuperClasses;
   private final List<String> mySlots;
   private final String myDocString;
 
-  public PyClassStubImpl(final String name, StubElement parentStub, final PyQualifiedName[] superClasses, final List<String> slots,
+  public PyClassStubImpl(final String name, StubElement parentStub, final QualifiedName[] superClasses, final List<String> slots,
                          String docString, IStubElementType stubElementType) {
     super(parentStub, stubElementType);
     myName = name;
@@ -31,7 +31,7 @@ public class PyClassStubImpl extends StubBase<PyClass> implements PyClassStub {
     return myName;
   }
 
-  public PyQualifiedName[] getSuperClasses() {
+  public QualifiedName[] getSuperClasses() {
     return mySuperClasses;
   }
 

@@ -2,7 +2,7 @@ package com.jetbrains.python.psi.resolve;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,5 +22,5 @@ public interface PyCanonicalPathProvider {
    * @return the qualified name to use in the import statement, or null if no replacement is necessary.
    */
   @Nullable
-  PyQualifiedName getCanonicalPath(@NotNull PyQualifiedName qName, @Nullable PsiElement foothold);
+  QualifiedName getCanonicalPath(@NotNull QualifiedName qName, @Nullable PsiElement foothold);
 }

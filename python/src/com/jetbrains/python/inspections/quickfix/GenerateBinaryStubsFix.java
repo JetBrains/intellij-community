@@ -22,7 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.impl.references.PyImportReference;
 import com.jetbrains.python.sdk.InvalidSdkException;
 import com.jetbrains.python.sdk.PySdkUtil;
@@ -60,7 +60,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
 
     final PyFromImportStatement importStatementBase = PsiTreeUtil.getParentOfType(element, PyFromImportStatement.class);
     if (importStatementBase != null) {
-      final PyQualifiedName qName = importStatementBase.getImportSourceQName();
+      final QualifiedName qName = importStatementBase.getImportSourceQName();
       if (qName != null) {
         return qName.append(elementText).toString();
       }
@@ -185,7 +185,7 @@ public class GenerateBinaryStubsFix implements LocalQuickFix {
   private static boolean isGtk(@NotNull final PsiReference ref) {
     final PyFromImportStatement importStatementBase = PsiTreeUtil.getParentOfType(ref.getElement(), PyFromImportStatement.class);
     if (importStatementBase != null) {
-      final PyQualifiedName qName = importStatementBase.getImportSourceQName();
+      final QualifiedName qName = importStatementBase.getImportSourceQName();
       if (qName != null && qName.matches("gi", "repository"))
         return true;
     }

@@ -5,7 +5,7 @@ import com.jetbrains.python.psi.Callable;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
 import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import com.jetbrains.python.psi.types.PyType;
@@ -28,7 +28,7 @@ public class PyQtTypeProvider extends PyTypeProviderBase {
       if (containingClass != null && ourQt4Signal.equals(containingClass.getName())) {
         final String classQName = containingClass.getQualifiedName();
         if (classQName != null) {
-          final PyQualifiedName name = PyQualifiedName.fromDottedString(classQName);
+          final QualifiedName name = QualifiedName.fromDottedString(classQName);
           final String qtVersion = name.getComponents().get(0);
           final PyClass aClass = PyClassNameIndex.findClass(qtVersion + "." + ourQtBoundSignal, function.getProject());
           if (aClass != null)
@@ -45,7 +45,7 @@ public class PyQtTypeProvider extends PyTypeProviderBase {
     if (callable instanceof PyFunction) {
       final String qualifiedName = callable.getQualifiedName();
       if (qualifiedName != null && qualifiedName.startsWith("PyQt")){
-        final PyQualifiedName name = PyQualifiedName.fromDottedString(qualifiedName);
+        final QualifiedName name = QualifiedName.fromDottedString(qualifiedName);
         final String qtVersion = name.getComponents().get(0);
         final String docstring = ((PyFunction)callable).getDocStringValue();
         if (docstring != null && docstring.contains("[signal]")) {

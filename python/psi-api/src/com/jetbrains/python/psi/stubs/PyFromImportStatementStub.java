@@ -2,7 +2,7 @@ package com.jetbrains.python.psi.stubs;
 
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyFromImportStatement;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -10,7 +10,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface PyFromImportStatementStub extends StubElement<PyFromImportStatement> {
   @Nullable
-  PyQualifiedName getImportSourceQName();
+  QualifiedName getImportSourceQName();
   boolean isStarImport();
   int getRelativeLevel();
 }

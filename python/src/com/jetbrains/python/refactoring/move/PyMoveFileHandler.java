@@ -16,7 +16,7 @@ import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.actions.CreatePackageAction;
 import com.jetbrains.python.codeInsight.imports.PyImportOptimizer;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
 import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
@@ -89,16 +89,16 @@ public class PyMoveFileHandler extends MoveFileHandler {
             if (importStmt instanceof PyFromImportStatement && PsiTreeUtil.getParentOfType(element, PyImportElement.class) != null) {
               continue;
             }
-            final PyQualifiedName newElementName = QualifiedNameFinder.findCanonicalImportPath(newElement, element);
+            final QualifiedName newElementName = QualifiedNameFinder.findCanonicalImportPath(newElement, element);
             replaceWithQualifiedExpression(element, newElementName);
           }
           else if (element instanceof PyReferenceExpression) {
             updatedFiles.add(file);
             if (((PyReferenceExpression)element).getQualifier() != null) {
-              final PyQualifiedName newQualifiedName = QualifiedNameFinder.findCanonicalImportPath(newElement, element);
+              final QualifiedName newQualifiedName = QualifiedNameFinder.findCanonicalImportPath(newElement, element);
               replaceWithQualifiedExpression(element, newQualifiedName);
             } else {
-              final PyQualifiedName newName = PyQualifiedName.fromComponents(PyClassRefactoringUtil.getOriginalName(newElement));
+              final QualifiedName newName = QualifiedName.fromComponents(PyClassRefactoringUtil.getOriginalName(newElement));
               replaceWithQualifiedExpression(element, newName);
               PyClassRefactoringUtil.insertImport(element, newElement, null);
             }
@@ -117,7 +117,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
   }
 
   private static void replaceWithQualifiedExpression(@NotNull PsiElement oldElement,
-                                                     @Nullable PyQualifiedName newElementName) {
+                                                     @Nullable QualifiedName newElementName) {
     if (newElementName != null && PyClassRefactoringUtil.isValidQualifiedName(newElementName)) {
       final PyElementGenerator generator = PyElementGenerator.getInstance(oldElement.getProject());
       final PsiElement newElement = generator.createExpressionFromText(LanguageLevel.forElement(oldElement), newElementName.toString());

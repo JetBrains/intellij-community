@@ -4,7 +4,7 @@ import com.google.common.collect.Lists;
 import com.intellij.codeInsight.controlflow.ControlFlowBuilder;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 
 import java.util.List;
 
@@ -19,7 +19,7 @@ public class InstructionBuilder {
     List<Instruction> result = Lists.newArrayList();
     for (PyTypeAssertionEvaluator.Assertion def: assertions) {
       final PyReferenceExpression e = def.getElement();
-      final PyQualifiedName qname = e.asQualifiedName();
+      final QualifiedName qname = e.asQualifiedName();
       final String name = qname != null ? qname.toString() : e.getName();
       result.add(ReadWriteInstruction.assertType(builder, e, name, def.getTypeEvalFunction()));
     }

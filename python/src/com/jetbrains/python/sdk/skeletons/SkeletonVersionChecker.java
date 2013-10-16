@@ -2,7 +2,7 @@ package com.jetbrains.python.sdk.skeletons;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.jetbrains.python.PythonHelpersLocator;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.*;
@@ -29,7 +29,7 @@ public class SkeletonVersionChecker {
   @NonNls static final String REQUIRED_VERSION_FNAME = "required_gen_version";
   @NonNls static final String DEFAULT_NAME = "(default)"; // version required if a package is not explicitly mentioned
   @NonNls public static final String BUILTIN_NAME = "(built-in)"; // version required for built-ins
-  private TreeMap<PyQualifiedName, Integer> myExplicitVersion; // versions of regularly named packages
+  private TreeMap<QualifiedName, Integer> myExplicitVersion; // versions of regularly named packages
   private Integer myDefaultVersion; // version of (default)
   private Integer myBuiltinsVersion; // version of (built-it)
 
@@ -42,10 +42,10 @@ public class SkeletonVersionChecker {
     load();
   }
 
-  private static TreeMap<PyQualifiedName, Integer> createTreeMap() {
-    return new TreeMap<PyQualifiedName, Integer>(new Comparator<PyQualifiedName>() {
+  private static TreeMap<QualifiedName, Integer> createTreeMap() {
+    return new TreeMap<QualifiedName, Integer>(new Comparator<QualifiedName>() {
       @Override
-      public int compare(PyQualifiedName left, PyQualifiedName right) {
+      public int compare(QualifiedName left, QualifiedName right) {
         Iterator<String> lefts = left.getComponents().iterator();
         Iterator<String> rights = right.getComponents().iterator();
         while (lefts.hasNext() && rights.hasNext()) {
@@ -59,7 +59,7 @@ public class SkeletonVersionChecker {
     });
   }
 
-  SkeletonVersionChecker(TreeMap<PyQualifiedName, Integer> explicit, Integer builtins) {
+  SkeletonVersionChecker(TreeMap<QualifiedName, Integer> explicit, Integer builtins) {
     myExplicitVersion = explicit;
     myBuiltinsVersion = builtins;
   }
@@ -99,7 +99,7 @@ public class SkeletonVersionChecker {
                     myBuiltinsVersion = version;
                   }
                   else {
-                    myExplicitVersion.put(PyQualifiedName.fromDottedString(package_name), version);
+                    myExplicitVersion.put(QualifiedName.fromDottedString(package_name), version);
                   }
                 } // else the whole line is a valid comment, and both catch groups are null
               }
@@ -123,8 +123,8 @@ public class SkeletonVersionChecker {
   }
 
   public int getRequiredVersion(String package_name) {
-    PyQualifiedName qname = PyQualifiedName.fromDottedString(package_name);
-    Map.Entry<PyQualifiedName,Integer> found = myExplicitVersion.floorEntry(qname);
+    QualifiedName qname = QualifiedName.fromDottedString(package_name);
+    Map.Entry<QualifiedName,Integer> found = myExplicitVersion.floorEntry(qname);
     if (found != null && qname.matchesPrefix(found.getKey())) {
       return found.getValue();
     }

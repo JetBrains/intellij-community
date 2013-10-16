@@ -2,7 +2,7 @@ package com.jetbrains.python.psi.stubs;
 
 import com.intellij.psi.stubs.StubElement;
 import com.jetbrains.python.psi.PyDecorator;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 
 /**
  * Created by IntelliJ IDEA.
@@ -14,7 +14,7 @@ public interface PyDecoratorStub extends StubElement<PyDecorator> {
   /**
    * @return name of the decorator after the "@".
    */
-  PyQualifiedName getQualifiedName();
+  QualifiedName getQualifiedName();
 
   //PyFunction getTarget();
 }

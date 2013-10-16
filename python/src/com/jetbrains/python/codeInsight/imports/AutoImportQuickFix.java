@@ -21,7 +21,7 @@ import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,7 +76,7 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
    * @param file the file which is the source of the importable
    * @param path import path for the file, as a qualified name (a.b.c)
    */
-  public void addImport(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file, @Nullable PyQualifiedName path) {
+  public void addImport(@NotNull PsiElement importable, @NotNull PsiFileSystemItem file, @Nullable QualifiedName path) {
     myImports.add(new ImportCandidateHolder(importable, file, null, path));
   }
 

@@ -16,7 +16,7 @@ import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.impl.PyReferenceExpressionImpl;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyModuleType;
@@ -65,7 +65,7 @@ public class PyImportReference extends PyReferenceImpl {
   @Override
   protected List<RatedResolveResult> resolveInner() {
     final PyImportElement parent = PsiTreeUtil.getParentOfType(myElement, PyImportElement.class); //importRef.getParent();
-    final PyQualifiedName qname = myElement.asQualifiedName();
+    final QualifiedName qname = myElement.asQualifiedName();
     return qname == null ? Collections.<RatedResolveResult>emptyList() : ResolveImportUtil.resolveNameInImportStatement(parent, qname);
   }
 
@@ -228,7 +228,7 @@ public class PyImportReference extends PyReferenceImpl {
         if (myCurrentFile != null && (relativeLevel >= 0 || !ResolveImportUtil.isAbsoluteImportEnabledFor(myCurrentFile))) {
           final PsiDirectory containingDirectory = myCurrentFile.getContainingDirectory();
           if (containingDirectory != null) {
-            PyQualifiedName thisQName = QualifiedNameFinder.findShortestImportableQName(containingDirectory);
+            QualifiedName thisQName = QualifiedNameFinder.findShortestImportableQName(containingDirectory);
             if (thisQName == null || thisQName.getComponentCount() == relativeLevel) {
               fillFromDir(ResolveImportUtil.stepBackFrom(myCurrentFile, relativeLevel), insertHandler);
             }
@@ -240,13 +240,13 @@ public class PyImportReference extends PyReferenceImpl {
         }
       }
       if (relativeLevel == -1) {
-        fillFromQName(PyQualifiedName.fromComponents(), insertHandler);
+        fillFromQName(QualifiedName.fromComponents(), insertHandler);
       }
 
       return ArrayUtil.toObjectArray(myObjects);
     }
 
-    private void fillFromQName(PyQualifiedName thisQName, InsertHandler<LookupElement> insertHandler) {
+    private void fillFromQName(QualifiedName thisQName, InsertHandler<LookupElement> insertHandler) {
       QualifiedNameResolver visitor = new QualifiedNameResolverImpl(thisQName).fromElement(myCurrentFile);
       for (PsiDirectory dir : visitor.resultsOfType(PsiDirectory.class)) {
         fillFromDir(dir, insertHandler);
