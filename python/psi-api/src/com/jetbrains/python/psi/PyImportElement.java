@@ -2,7 +2,7 @@ package com.jetbrains.python.psi;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.StubBasedPsiElement;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +14,7 @@ public interface PyImportElement extends PyElement, PyImportedNameDefiner, StubB
   PyReferenceExpression getImportReferenceExpression();
 
   @Nullable
-  PyQualifiedName getImportedQName();
+  QualifiedName getImportedQName();
 
   @Nullable
   PyTargetExpression getAsNameElement();

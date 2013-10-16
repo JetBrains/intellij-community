@@ -14,6 +14,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.stubs.StubUpdatingIndex;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ProcessingContext;
@@ -21,10 +22,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyImportedModule;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
-import com.jetbrains.python.psi.impl.ResolveResultList;
+import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.search.PyProjectScopeBuilder;
 import com.jetbrains.python.psi.stubs.PyClassNameIndexInsensitive;
@@ -114,7 +112,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     final GlobalSearchScope scope = PyProjectScopeBuilder.excludeSdkTestsScope(project);
     final Collection functions = PyFunctionNameIndex.find(referencedName, project, scope);
     final PsiFile containingFile = myElement.getContainingFile();
-    final List<PyQualifiedName> imports;
+    final List<QualifiedName> imports;
     if (containingFile instanceof PyFile) {
       imports = collectImports((PyFile)containingFile);
     }
@@ -145,16 +143,16 @@ public class PyQualifiedReference extends PyReferenceImpl {
     }
   }
 
-  private static List<PyQualifiedName> collectImports(PyFile containingFile) {
-    List<PyQualifiedName> imports = new ArrayList<PyQualifiedName>();
+  private static List<QualifiedName> collectImports(PyFile containingFile) {
+    List<QualifiedName> imports = new ArrayList<QualifiedName>();
     for (PyFromImportStatement anImport : containingFile.getFromImports()) {
-      final PyQualifiedName source = anImport.getImportSourceQName();
+      final QualifiedName source = anImport.getImportSourceQName();
       if (source != null) {
         imports.add(source);
       }
     }
     for (PyImportElement importElement : containingFile.getImportTargets()) {
-      final PyQualifiedName qName = importElement.getImportedQName();
+      final QualifiedName qName = importElement.getImportedQName();
       if (qName != null) {
         imports.add(qName.removeLastComponent());
       }
@@ -162,7 +160,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     return imports;
   }
 
-  private int getImplicitResultRate(PyElement target, List<PyQualifiedName> imports) {
+  private int getImplicitResultRate(PyElement target, List<QualifiedName> imports) {
     int rate = RatedResolveResult.RATE_LOW;
     if (target.getContainingFile() == myElement.getContainingFile()) {
       rate += 200;
@@ -173,7 +171,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
         if (ProjectScope.getProjectScope(myElement.getProject()).contains(vFile)) {
           rate += 80;
         }
-        final PyQualifiedName qName = QualifiedNameFinder.findShortestImportableQName(myElement, vFile);
+        final QualifiedName qName = QualifiedNameFinder.findShortestImportableQName(myElement, vFile);
         if (qName != null && imports.contains(qName)) {
           rate += 70;
         }
@@ -359,7 +357,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
   }
 
   private static Collection<PyExpression> collectAssignedAttributes(PyQualifiedExpression qualifier) {
-    PyQualifiedName qualifierPath = PyQualifiedName.fromReferenceChain(PyResolveUtil.unwindQualifiers(qualifier));
+    QualifiedName qualifierPath = PyQualifiedNameFactory.fromReferenceChain(PyResolveUtil.unwindQualifiers(qualifier));
     if (qualifierPath != null) {
       AssignmentCollectProcessor proc = new AssignmentCollectProcessor(qualifierPath);
       PyResolveUtil.treeCrawlUp(proc, qualifier);

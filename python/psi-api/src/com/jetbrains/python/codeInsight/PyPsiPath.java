@@ -2,7 +2,7 @@ package com.jetbrains.python.codeInsight;
 
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,10 +14,10 @@ public abstract class PyPsiPath {
   public abstract PsiElement resolve(PsiElement module);
 
   public static class ToFile extends PyPsiPath {
-    private final PyQualifiedName myQualifiedName;
+    private final QualifiedName myQualifiedName;
 
     public ToFile(String qualifiedName) {
-      myQualifiedName = PyQualifiedName.fromDottedString(qualifiedName);
+      myQualifiedName = QualifiedName.fromDottedString(qualifiedName);
     }
 
     @Nullable
@@ -30,10 +30,10 @@ public abstract class PyPsiPath {
   }
 
   public static class ToClassQName extends PyPsiPath {
-    private final PyQualifiedName myQualifiedName;
+    private final QualifiedName myQualifiedName;
 
     public ToClassQName(String qualifiedName) {
-      myQualifiedName = PyQualifiedName.fromDottedString(qualifiedName);
+      myQualifiedName = QualifiedName.fromDottedString(qualifiedName);
     }
 
     @Nullable

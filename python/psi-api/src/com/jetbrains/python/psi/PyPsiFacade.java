@@ -4,7 +4,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameResolver;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
@@ -22,7 +22,7 @@ public abstract class PyPsiFacade {
   }
 
   public abstract QualifiedNameResolver qualifiedNameResolver(String qNameString);
-  public abstract QualifiedNameResolver qualifiedNameResolver(PyQualifiedName qualifiedName);
+  public abstract QualifiedNameResolver qualifiedNameResolver(QualifiedName qualifiedName);
 
   @Nullable
   public abstract PyClass findClass(String qName);

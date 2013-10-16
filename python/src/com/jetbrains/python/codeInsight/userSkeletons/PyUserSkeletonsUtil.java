@@ -18,7 +18,7 @@ import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
@@ -84,7 +84,7 @@ public class PyUserSkeletonsUtil {
     if (sdk != null) {
       final Project project = foothold.getProject();
       final PythonSdkPathCache cache = PythonSdkPathCache.getInstance(project, sdk);
-      final PyQualifiedName cacheQName = PyQualifiedName.fromDottedString(USER_SKELETONS_DIR + "." + qName);
+      final QualifiedName cacheQName = QualifiedName.fromDottedString(USER_SKELETONS_DIR + "." + qName);
       final List<PsiElement> results = cache.get(cacheQName);
       if (results != null) {
         final PsiElement element = results.isEmpty() ? null : results.get(0);
@@ -151,9 +151,9 @@ public class PyUserSkeletonsUtil {
     if (moduleVirtualFile != null) {
       String moduleName = QualifiedNameFinder.findShortestImportableName(file, moduleVirtualFile);
       if (moduleName != null) {
-        final PyQualifiedName qName = PyQualifiedName.fromDottedString(moduleName);
+        final QualifiedName qName = QualifiedName.fromDottedString(moduleName);
         for (PyCanonicalPathProvider provider : Extensions.getExtensions(PyCanonicalPathProvider.EP_NAME)) {
-          final PyQualifiedName restored = provider.getCanonicalPath(qName, null);
+          final QualifiedName restored = provider.getCanonicalPath(qName, null);
           if (restored != null) {
             moduleName = restored.toString();
           }

@@ -12,7 +12,7 @@ import com.jetbrains.python.psi.PyImportElement;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.impl.PyImportElementImpl;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.stubs.PyImportElementStub;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,13 +47,13 @@ public class PyImportElementElementType extends PyStubElementType<PyImportElemen
   }
 
   public void serialize(@NotNull PyImportElementStub stub, @NotNull StubOutputStream dataStream) throws IOException {
-    PyQualifiedName.serialize(stub.getImportedQName(), dataStream);
+    QualifiedName.serialize(stub.getImportedQName(), dataStream);
     dataStream.writeName(stub.getAsName());
   }
 
   @NotNull
   public PyImportElementStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-    PyQualifiedName qName = PyQualifiedName.deserialize(dataStream);
+    QualifiedName qName = QualifiedName.deserialize(dataStream);
     StringRef asName = dataStream.readName();
     return new PyImportElementStubImpl(qName, asName.getString(), parentStub, getStubElementType());
   }

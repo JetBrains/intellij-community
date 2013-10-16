@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
@@ -19,9 +20,9 @@ import java.util.List;
 public class PyImportedModule extends LightElement implements NameDefiner {
   @Nullable private PyImportElement myImportElement;
   @NotNull private final PyFile myContainingFile;
-  @NotNull private final PyQualifiedName myImportedPrefix;
+  @NotNull private final QualifiedName myImportedPrefix;
 
-  public PyImportedModule(@Nullable PyImportElement importElement, @NotNull PyFile containingFile, @NotNull PyQualifiedName importedPrefix) {
+  public PyImportedModule(@Nullable PyImportElement importElement, @NotNull PyFile containingFile, @NotNull QualifiedName importedPrefix) {
     super(containingFile.getManager(), PythonLanguage.getInstance());
     myImportElement = importElement;
     myContainingFile = containingFile;
@@ -35,7 +36,7 @@ public class PyImportedModule extends LightElement implements NameDefiner {
   }
 
   @NotNull
-  public PyQualifiedName getImportedPrefix() {
+  public QualifiedName getImportedPrefix() {
     return myImportedPrefix;
   }
 
@@ -45,9 +46,9 @@ public class PyImportedModule extends LightElement implements NameDefiner {
   }
 
   public PsiElement getElementNamed(String the_name) {
-    PyQualifiedName prefix = myImportedPrefix.append(the_name);
+    QualifiedName prefix = myImportedPrefix.append(the_name);
     if (myImportElement != null) {
-      final PyQualifiedName qName = myImportElement.getImportedQName();
+      final QualifiedName qName = myImportElement.getImportedQName();
       if (qName != null && qName.getComponentCount() == prefix.getComponentCount()) {
         return resolve(myImportElement, prefix);
       }
@@ -62,14 +63,14 @@ public class PyImportedModule extends LightElement implements NameDefiner {
   }
 
   @Nullable
-  private PyImportElement findMatchingFromImport(PyQualifiedName prefix, String name) {
+  private PyImportElement findMatchingFromImport(QualifiedName prefix, String name) {
     final List<PyFromImportStatement> fromImports = getContainingFile().getFromImports();
     for (PyFromImportStatement fromImport : fromImports) {
-      final PyQualifiedName qName = fromImport.getImportSourceQName();
+      final QualifiedName qName = fromImport.getImportSourceQName();
       if (prefix.equals(qName)) {
         final PyImportElement[] importElements = fromImport.getImportElements();
         for (PyImportElement importElement : importElements) {
-          final PyQualifiedName importedName = importElement.getImportedQName();
+          final QualifiedName importedName = importElement.getImportedQName();
           if (importedName != null && importedName.matches(name)) {
             return importElement;
           }
@@ -133,7 +134,7 @@ public class PyImportedModule extends LightElement implements NameDefiner {
   }
 
   @Nullable
-  private static PsiElement resolve(PyImportElement importElement, @NotNull final PyQualifiedName prefix) {
+  private static PsiElement resolve(PyImportElement importElement, @NotNull final QualifiedName prefix) {
     final PsiElement resolved = ResolveImportUtil.resolveImportElement(importElement, prefix);
     final PsiElement packageInit = PyUtil.turnDirIntoInit(resolved);
     return packageInit != null ? packageInit : resolved;

@@ -8,7 +8,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.PyModuleType;
 import com.jetbrains.python.psi.types.PyType;
@@ -106,7 +106,7 @@ public class PyPep8NamingInspection extends PyInspection {
     @Override
     public void visitPyImportElement(PyImportElement node) {
       final String asName = node.getAsName();
-      final PyQualifiedName importedQName = node.getImportedQName();
+      final QualifiedName importedQName = node.getImportedQName();
       if (importedQName == null) return;
       final String name = importedQName.toString();
 

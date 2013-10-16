@@ -10,7 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,7 +24,7 @@ class ImportCandidateHolder implements Comparable {
   private final PsiElement myImportable;
   private final PyImportElement myImportElement;
   private final PsiFileSystemItem myFile;
-  private final PyQualifiedName myPath;
+  private final QualifiedName myPath;
 
   /**
    * Creates new instance.
@@ -35,7 +35,7 @@ class ImportCandidateHolder implements Comparable {
    */
   public ImportCandidateHolder(
     @NotNull PsiElement importable, @NotNull PsiFileSystemItem file,
-    @Nullable PyImportElement importElement, @Nullable PyQualifiedName path
+    @Nullable PyImportElement importElement, @Nullable QualifiedName path
   ) {
     myFile = file;
     myImportable = importable;
@@ -56,7 +56,7 @@ class ImportCandidateHolder implements Comparable {
     return myFile;
   }
 
-  public PyQualifiedName getPath() {
+  public QualifiedName getPath() {
     return myPath;
   }
 
@@ -68,7 +68,7 @@ class ImportCandidateHolder implements Comparable {
    * @param source known ImportElement to import the name; its 'as' clause is used if present.
    * @return a properly qualified name.
    */
-  public static String getQualifiedName(String name, PyQualifiedName importPath, PyImportElement source) {
+  public static String getQualifiedName(String name, QualifiedName importPath, PyImportElement source) {
     StringBuilder sb = new StringBuilder();
     if (source != null) {
       PsiElement parent = source.getParent();

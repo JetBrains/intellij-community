@@ -7,7 +7,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -16,10 +16,10 @@ import org.jetbrains.annotations.NotNull;
 public class AddIgnoredIdentifierQuickFix implements LocalQuickFix, LowPriorityAction {
   public static final String END_WILDCARD = ".*";
 
-  @NotNull private final PyQualifiedName myIdentifier;
+  @NotNull private final QualifiedName myIdentifier;
   private final boolean myIgnoreAllAttributes;
 
-  public AddIgnoredIdentifierQuickFix(@NotNull PyQualifiedName identifier, boolean ignoreAllAttributes) {
+  public AddIgnoredIdentifierQuickFix(@NotNull QualifiedName identifier, boolean ignoreAllAttributes) {
     myIdentifier = identifier;
     myIgnoreAllAttributes = ignoreAllAttributes;
   }

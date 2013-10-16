@@ -20,7 +20,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportedModule;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -132,10 +132,10 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                                                           @NotNull List<PyImportElement> importElements) {
     final VirtualFile moduleFile = myModule.getVirtualFile();
     if (moduleFile != null) {
-      for (PyQualifiedName packageQName : QualifiedNameFinder.findImportableQNames(myModule, myModule.getVirtualFile())) {
-        final PyQualifiedName resolvingQName = packageQName.append(name);
+      for (QualifiedName packageQName : QualifiedNameFinder.findImportableQNames(myModule, myModule.getVirtualFile())) {
+        final QualifiedName resolvingQName = packageQName.append(name);
         for (PyImportElement importElement : importElements) {
-          for (PyQualifiedName qName : getImportedQNames(importElement)) {
+          for (QualifiedName qName : getImportedQNames(importElement)) {
             if (qName.matchesPrefix(resolvingQName)) {
               final PsiElement subModule = ResolveImportUtil.resolveChild(myModule, name, myModule, false, true);
               if (subModule != null) {
@@ -153,23 +153,23 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
   @NotNull
-  private static List<PyQualifiedName> getImportedQNames(@NotNull PyImportElement element) {
-    final List<PyQualifiedName> importedQNames = new ArrayList<PyQualifiedName>();
+  private static List<QualifiedName> getImportedQNames(@NotNull PyImportElement element) {
+    final List<QualifiedName> importedQNames = new ArrayList<QualifiedName>();
     final PyStatement stmt = element.getContainingImportStatement();
     if (stmt instanceof PyFromImportStatement) {
       final PyFromImportStatement fromImportStatement = (PyFromImportStatement)stmt;
-      final PyQualifiedName importedQName = fromImportStatement.getImportSourceQName();
+      final QualifiedName importedQName = fromImportStatement.getImportSourceQName();
       final String visibleName = element.getVisibleName();
       if (importedQName != null) {
         importedQNames.add(importedQName);
-        final PyQualifiedName implicitSubModuleQName = importedQName.append(visibleName);
+        final QualifiedName implicitSubModuleQName = importedQName.append(visibleName);
         if (implicitSubModuleQName != null) {
           importedQNames.add(implicitSubModuleQName);
         }
       }
     }
     else if (stmt instanceof PyImportStatement) {
-      final PyQualifiedName importedQName = element.getImportedQName();
+      final QualifiedName importedQName = element.getImportedQName();
       if (importedQName != null) {
         importedQNames.add(importedQName);
       }
@@ -179,17 +179,17 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
       if (file != null) {
         file = file.getOriginalFile();
       }
-      final PyQualifiedName absoluteQName = QualifiedNameFinder.findShortestImportableQName(file);
+      final QualifiedName absoluteQName = QualifiedNameFinder.findShortestImportableQName(file);
       if (file != null && absoluteQName != null) {
-        final PyQualifiedName prefixQName = PyUtil.isPackage(file) ? absoluteQName : absoluteQName.removeLastComponent();
+        final QualifiedName prefixQName = PyUtil.isPackage(file) ? absoluteQName : absoluteQName.removeLastComponent();
         if (prefixQName.getComponentCount() > 0) {
-          final List<PyQualifiedName> results = new ArrayList<PyQualifiedName>();
+          final List<QualifiedName> results = new ArrayList<QualifiedName>();
           results.addAll(importedQNames);
-          for (PyQualifiedName qName : importedQNames) {
+          for (QualifiedName qName : importedQNames) {
             final List<String> components = new ArrayList<String>();
             components.addAll(prefixQName.getComponents());
             components.addAll(qName.getComponents());
-            results.add(PyQualifiedName.fromComponents(components));
+            results.add(QualifiedName.fromComponents(components));
           }
           return results;
         }

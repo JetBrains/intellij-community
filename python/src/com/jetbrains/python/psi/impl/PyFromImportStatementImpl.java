@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.IStubElementType;
+import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayFactory;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyNames;
@@ -53,10 +54,10 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getReferenceExpressionTokens(), 0);
   }
 
-  public PyQualifiedName getImportSourceQName() {
+  public QualifiedName getImportSourceQName() {
     final PyFromImportStatementStub stub = getStub();
     if (stub != null) {
-      final PyQualifiedName qName = stub.getImportSourceQName();
+      final QualifiedName qName = stub.getImportSourceQName();
       if (qName != null && qName.getComponentCount() == 0) {  // relative import only: from .. import the_name
         return null;
       }
@@ -116,7 +117,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   }
 
   public boolean isFromFuture() {
-    final PyQualifiedName qName = getImportSourceQName();
+    final QualifiedName qName = getImportSourceQName();
     return qName != null && qName.matches(PyNames.FUTURE_MODULE);
   }
 
@@ -202,7 +203,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
   @NotNull
   @Override
   public List<PsiElement> resolveImportSourceCandidates() {
-    final PyQualifiedName qName = getImportSourceQName();
+    final QualifiedName qName = getImportSourceQName();
     if (qName == null) {
       final int level = getRelativeLevel();
       if (level > 0) {

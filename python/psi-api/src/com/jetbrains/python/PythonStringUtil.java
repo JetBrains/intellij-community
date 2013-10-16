@@ -11,7 +11,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.PathUtil;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -223,8 +223,8 @@ public class PythonStringUtil {
 
   @Nullable
   public static String intersect(String fullName, String elementStringValue) {
-    PyQualifiedName fullQName = PyQualifiedName.fromDottedString(fullName);
-    PyQualifiedName stringQName = PyQualifiedName.fromDottedString(elementStringValue);
+    QualifiedName fullQName = QualifiedName.fromDottedString(fullName);
+    QualifiedName stringQName = QualifiedName.fromDottedString(elementStringValue);
     String[] s1 = stringQName.getComponents().toArray(new String[stringQName.getComponentCount()]);
     String[] s2 = fullQName.getComponents().toArray(new String[fullQName.getComponentCount()]);
 

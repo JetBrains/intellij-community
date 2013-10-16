@@ -15,7 +15,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.documentation.DocStringUtil;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl;
 import com.jetbrains.python.psi.stubs.*;
 import org.jetbrains.annotations.NotNull;
@@ -58,7 +58,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
       }
     }
     PyTargetExpressionStub.InitializerType initializerType = PyTargetExpressionStub.InitializerType.Other;
-    PyQualifiedName initializer = null;
+    QualifiedName initializer = null;
     if (assignedValue instanceof PyReferenceExpression) {
       initializerType = PyTargetExpressionStub.InitializerType.ReferenceExpression;
       initializer = ((PyReferenceExpression) assignedValue).asQualifiedName();
@@ -85,7 +85,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
       customStub.serialize(stream);
     }
     else {
-      PyQualifiedName.serialize(stub.getInitializer(), stream);
+      QualifiedName.serialize(stub.getInitializer(), stream);
       stream.writeBoolean(stub.isQualified());
     }
   }
@@ -109,7 +109,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
       }
       throw new IOException("Unknown custom stub type " + typeName);
     }
-    PyQualifiedName initializer = PyQualifiedName.deserialize(stream);
+    QualifiedName initializer = QualifiedName.deserialize(stream);
     boolean isQualified = stream.readBoolean();
     return new PyTargetExpressionStubImpl(name, docString, initializerType, initializer, isQualified, parentStub);
   }

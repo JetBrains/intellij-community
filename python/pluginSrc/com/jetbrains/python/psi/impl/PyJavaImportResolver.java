@@ -5,6 +5,7 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameResolveContext;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PyJavaImportResolver implements PyImportResolver {
   @Nullable
-  public PsiElement resolveImportReference(PyQualifiedName name, QualifiedNameResolveContext context) {
+  public PsiElement resolveImportReference(QualifiedName name, QualifiedNameResolveContext context) {
     String fqn = name.toString();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(context.getProject());
     if (psiFacade == null) return null;

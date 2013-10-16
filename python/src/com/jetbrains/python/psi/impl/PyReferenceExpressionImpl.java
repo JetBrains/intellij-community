@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -156,8 +157,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
   }
 
   @Nullable
-  public PyQualifiedName asQualifiedName() {
-    return PyQualifiedName.fromReferenceChain(PyResolveUtil.unwindQualifiers(this));
+  public QualifiedName asQualifiedName() {
+    return PyQualifiedNameFactory.fromReferenceChain(PyResolveUtil.unwindQualifiers(this));
   }
 
   @Override
@@ -224,7 +225,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         next = qualifier instanceof PyQualifiedExpression ? ((PyQualifiedExpression)qualifier).getQualifier() : null;
       }
       final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(this);
-      final PyQualifiedName qname = asQualifiedName();
+      final QualifiedName qname = asQualifiedName();
       if (qname != null && scopeOwner != null) {
         return getTypeByControlFlow(qname.toString(), context, qualifier, scopeOwner);
       }
@@ -335,7 +336,7 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
           return PyBuiltinCache.getInstance(target).getObjectType(PyNames.PROPERTY);
         }
         for (PyDecorator decorator : decoratorList.getDecorators()) {
-          final PyQualifiedName qName = decorator.getQualifiedName();
+          final QualifiedName qName = decorator.getQualifiedName();
           if (qName != null && (qName.endsWith(PyNames.SETTER) || qName.endsWith(PyNames.DELETER) ||
                                 qName.endsWith(PyNames.GETTER))) {
             return PyBuiltinCache.getInstance(target).getObjectType(PyNames.PROPERTY);

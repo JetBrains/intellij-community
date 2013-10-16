@@ -20,7 +20,7 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeChecker;
@@ -225,7 +225,7 @@ public class PyCompatibilityInspection extends PyInspection {
 
       for (int i = 0; i != myVersionsToProcess.size(); ++i) {
         LanguageLevel languageLevel = myVersionsToProcess.get(i);
-        final PyQualifiedName qName = importElement.getImportedQName();
+        final QualifiedName qName = importElement.getImportedQName();
         if (qName != null && !qName.matches("builtins") && !qName.matches("__builtin__")) {
           moduleName = qName.toString();
           if (UnsupportedFeaturesUtil.MODULES.get(languageLevel).contains(moduleName)) {
@@ -241,7 +241,7 @@ public class PyCompatibilityInspection extends PyInspection {
       super.visitPyFromImportStatement(node);
       int len = 0;
       StringBuilder message = new StringBuilder("Python version ");
-      PyQualifiedName name = node.getImportSourceQName();
+      QualifiedName name = node.getImportSourceQName();
       PyReferenceExpression source = node.getImportSource();
       if (name != null) {
         for (int i = 0; i != myVersionsToProcess.size(); ++i) {
