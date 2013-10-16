@@ -537,51 +537,6 @@
         <option name="BACKGROUND" value="5e5339" />
       </value>
     </option>
-    <option name="EL.BOUNDS">
-      <value>
-        <option name="FOREGROUND" value="e8bf6a" />
-      </value>
-    </option>
-    <option name="EL.COMMA">
-      <value>
-        <option name="FOREGROUND" value="808080" />
-      </value>
-    </option>
-    <option name="EL.DOT">
-      <value>
-        <option name="FOREGROUND" value="808080" />
-      </value>
-    </option>
-    <option name="EL.IDENT">
-      <value>
-        <option name="FOREGROUND" value="bbbbbb" />
-      </value>
-    </option>
-    <option name="EL.KEYWORD">
-      <value>
-        <option name="FOREGROUND" value="cc7832" />
-      </value>
-    </option>
-    <option name="EL.NUMBER">
-      <value>
-        <option name="FOREGROUND" value="6897bb" />
-      </value>
-    </option>
-    <option name="EL.PARENTHS">
-      <value>
-        <option name="FOREGROUND" value="808080" />
-      </value>
-    </option>
-    <option name="EL.STRING">
-      <value>
-        <option name="FOREGROUND" value="9fad5e" />
-      </value>
-    </option>
-    <option name="EL_BACKGROUND">
-      <value>
-        <option name="BACKGROUND" value="303030" />
-      </value>
-    </option>
     <option name="ENUM_CONST">
       <value>
         <option name="FOREGROUND" value="9373a5" />
