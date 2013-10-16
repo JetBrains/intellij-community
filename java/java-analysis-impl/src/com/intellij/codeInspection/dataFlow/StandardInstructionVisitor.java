@@ -350,9 +350,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
     final DfaMemoryState trueCopy = memState.createCopy();
     if (trueCopy.applyCondition(dfaRelation)) {
-      if (!dfaRelation.isNegated()) {
-        checkOneOperandNotNull(dfaRight, dfaLeft, factory, trueCopy);
-      }
       if (specialContractTreatment && !dfaRelation.isNegated()) {
         trueCopy.markEphemeral();
       }
@@ -364,9 +361,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     //noinspection UnnecessaryLocalVariable
     DfaMemoryState falseCopy = memState;
     if (falseCopy.applyCondition(dfaRelation.createNegated())) {
-      if (dfaRelation.isNegated()) {
-        checkOneOperandNotNull(dfaRight, dfaLeft, factory, falseCopy);
-      }
       if (specialContractTreatment && dfaRelation.isNegated()) {
         falseCopy.markEphemeral();
       }
@@ -437,26 +431,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       instruction.setFalseReachable();
     }
     return nextInstruction(instruction, runner, memState);
-  }
-
-  private static void checkOneOperandNotNull(DfaValue var1, DfaValue var2, DfaValueFactory factory, DfaMemoryState state) {
-    DfaValue nowNotNull = isNotNullExpression(var2, state) ? var1 : isNotNullExpression(var1, state) ? var2 : null;
-    if (nowNotNull != null) {
-      state.applyCondition(factory.getRelationFactory().createRelation(nowNotNull, factory.getConstFactory().getNull(), JavaTokenType.EQEQ, true));
-    }
-  }
-
-  private static boolean isNotNullExpression(DfaValue dfa, DfaMemoryState state) {
-    if (dfa instanceof DfaVariableValue) {
-      return state.isNotNull((DfaVariableValue)dfa);
-    }
-    if (dfa instanceof DfaConstValue) {
-      Object val = ((DfaConstValue)dfa).getValue();
-      if (val instanceof PsiEnumConstant) {
-        return true;
-      }
-    }
-    return false;
   }
 
   public boolean isInstanceofRedundant(InstanceofInstruction instruction) {
