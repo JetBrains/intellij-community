@@ -15,12 +15,16 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
-import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.IdeaSVNConfigFile;
+import org.jetbrains.idea.svn.SvnAuthenticationManager;
+import org.jetbrains.idea.svn.SvnConfiguration;
+import org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback;
 import org.tmatesoft.svn.core.SVNURL;
 
-import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.Proxy;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -33,22 +37,43 @@ public class ProxyModule extends BaseCommandRuntimeModule {
 
   @Override
   public void onStart(@NotNull Command command) throws SvnBindException {
-    // for IDEA proxy case
-    writeIdeaConfig2SubversionConfig(command.getRepositoryUrl());
+    if (myAuthCallback.haveDataForTmpConfig()) {
+      setupProxy(command);
+    }
   }
 
-  private void writeIdeaConfig2SubversionConfig(@Nullable SVNURL repositoryUrl) throws SvnBindException {
-    if (myAuthCallback.haveDataForTmpConfig()) {
-      try {
-        if (!myAuthCallback.persistDataToTmpConfig(repositoryUrl)) {
-          throw new SvnBindException("Can not persist " + ApplicationNamesInfo.getInstance().getProductName() +
-                                     " HTTP proxy information into tmp config directory");
-        }
+  private void setupProxy(@NotNull Command command) {
+    // TODO: We assume that if repository url is null - command is local and do not require repository access
+    // TODO: Check if this is correct for all cases
+    SVNURL repositoryUrl = command.getRepositoryUrl();
+
+    if (repositoryUrl != null) {
+      Proxy proxy = IdeaSvnkitBasedAuthenticationCallback.getIdeaDefinedProxy(repositoryUrl);
+
+      if (proxy != null) {
+        String hostGroup = ensureGroupForHost(command, repositoryUrl.getHost());
+        InetSocketAddress address = (InetSocketAddress)proxy.address();
+
+        command.addParameters("--config-option");
+        command.addParameters(String.format("servers:%s:http-proxy-host=%s", hostGroup, address.getHostName()));
+        command.addParameters("--config-option");
+        command.addParameters(String.format("servers:%s:http-proxy-port=%s", hostGroup, address.getPort()));
       }
-      catch (IOException e) {
-        throw new SvnBindException(e);
-      }
-      assert myAuthCallback.getSpecialConfigDir() != null;
     }
+  }
+
+  @NotNull
+  private String ensureGroupForHost(@NotNull Command command, @NotNull String host) {
+    IdeaSVNConfigFile configFile = new IdeaSVNConfigFile(myAuthCallback.getSpecialConfigDir());
+    String groupName = SvnAuthenticationManager.getGroupForHost(host, configFile);
+
+    if (StringUtil.isEmptyOrSpaces(groupName)) {
+      groupName = SvnConfiguration.getNewGroupName(host, configFile);
+
+      command.addParameters("--config-option");
+      command.addParameters(String.format("servers:groups:%s=%s*", groupName, host));
+    }
+
+    return groupName;
   }
 }
