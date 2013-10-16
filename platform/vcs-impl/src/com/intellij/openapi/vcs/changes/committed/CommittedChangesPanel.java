@@ -40,6 +40,7 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FilterComponent;
+import com.intellij.ui.LightColors;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
@@ -74,6 +75,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   private volatile boolean myDisposed;
   private volatile boolean myInLoad;
   private Consumer<String> myIfNotCachedReloader;
+  private final Color myDefaultBackground;
   private boolean myChangesLoaded;
 
   public CommittedChangesPanel(Project project, final CommittedChangesProvider provider, final ChangeBrowserSettings settings,
@@ -89,6 +91,8 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     add(myBrowser, BorderLayout.CENTER);
 
     final VcsCommittedViewAuxiliary auxiliary = provider.createActions(myBrowser, location);
+
+    myDefaultBackground = new JTextField().getBackground();
 
     JPanel toolbarPanel = new JPanel();
     toolbarPanel.setLayout(new BoxLayout(toolbarPanel, BoxLayout.X_AXIS));
@@ -355,6 +359,14 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     myDisposed = true;
   }
 
+  private void setRegularFilterBackground() {
+    myFilterComponent.getTextEditor().setBackground(myDefaultBackground);
+  }
+
+  private void setNotFoundFilterBackground() {
+    myFilterComponent.getTextEditor().setBackground(LightColors.RED);
+  }
+
   private class MyFilterComponent extends FilterComponent implements ChangeListFilteringStrategy {
     private final List<ChangeListener> myList = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -401,6 +413,11 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
         if (filterHelper.filter(list)) {
           result.add(list);
         }
+      }
+      if (result.size() == 0 && !myFilterComponent.getFilter().isEmpty()) {
+        setNotFoundFilterBackground();
+      } else {
+        setRegularFilterBackground();
       }
       return result;
     }
