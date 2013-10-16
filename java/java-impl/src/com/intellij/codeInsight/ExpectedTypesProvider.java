@@ -1122,6 +1122,8 @@ public class ExpectedTypesProvider {
         });
         if (type != null) return type;
       }
+
+      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(containingClass.getProject());
       if ("equals".equals(name)) {
         final PsiType type = checkMethod(method, CommonClassNames.JAVA_LANG_OBJECT, new NullableFunction<PsiClass, PsiType>() {
           @Override
@@ -1135,7 +1137,7 @@ public class ExpectedTypesProvider {
               }
               final PsiClass aClass = PsiTreeUtil.getContextOfType(parent, PsiClass.class, true);
               if (aClass != null) {
-                return JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createType(aClass);
+                return factory.createType(aClass);
               }
             }
             return null;
@@ -1153,6 +1155,16 @@ public class ExpectedTypesProvider {
             if (info != null && parameterType.isAssignableFrom(info.getDefaultType())) {
               return info.getDefaultType();
             }
+          }
+        }
+      }
+      if ("Logger".equals(containingClass.getName()) || "Log".equals(containingClass.getName())) {
+        if (parameterType instanceof PsiClassType && 
+            parameterType.equalsToText(CommonClassNames.JAVA_LANG_CLASS)) {
+          PsiClass placeClass = PsiTreeUtil.getContextOfType(argument, PsiClass.class);
+          PsiClass classClass = ((PsiClassType)parameterType).resolve();
+          if (placeClass != null && classClass != null) {
+            return factory.createType(classClass, factory.createType(placeClass));
           }
         }
       }
