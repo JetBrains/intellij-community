@@ -96,6 +96,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
                                            boolean includeDirs,
                                            @NotNull Processor<? super PsiFileSystemItem> processor,
                                            @NotNull GlobalSearchScope scope,
+                                           @NotNull Project project,
                                            @Nullable IdFilter idFilter
                                        ) {
     final Set<VirtualFile> files = new THashSet<VirtualFile>();
@@ -109,7 +110,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
     }, scope, idFilter);
 
     if (files.isEmpty()) return false;
-    PsiManager psiManager = PsiManager.getInstance(scope.getProject());
+    PsiManager psiManager = PsiManager.getInstance(project);
     int processedFiles = 0;
 
     for(VirtualFile file: files) {
@@ -136,7 +137,7 @@ public class FilenameIndex extends ScalarIndexExtension<String> {
                                          final @NotNull GlobalSearchScope scope,
                                          boolean includeDirs) {
     SmartList<PsiFileSystemItem> result = new SmartList<PsiFileSystemItem>();
-    processFilesByName(name, includeDirs, new CommonProcessors.CollectProcessor<PsiFileSystemItem>(result), scope, null);
+    processFilesByName(name, includeDirs, new CommonProcessors.CollectProcessor<PsiFileSystemItem>(result), scope, project, null);
 
     if (includeDirs) {
       return ArrayUtil.toObjectArray(result, PsiFileSystemItem.class);
