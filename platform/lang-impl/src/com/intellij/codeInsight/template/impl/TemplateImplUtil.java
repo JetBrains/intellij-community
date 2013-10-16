@@ -18,20 +18,16 @@ package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.template.Expression;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.containers.hash.LinkedHashMap;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.Set;
 
 /**
  * @author Maxim.Mossienko
  */
 public class TemplateImplUtil {
-  private TemplateImplUtil() {
-  }
 
-  public static void parseVariables(CharSequence text, ArrayList<Variable> variables, @Nullable Set<String> predefinedVars) {
+  public static LinkedHashMap<String, Variable> parseVariables(CharSequence text) {
+    LinkedHashMap<String, Variable> variables = new LinkedHashMap<String, Variable>();
     TemplateTextLexer lexer = new TemplateTextLexer();
     lexer.start(text);
 
@@ -43,26 +39,13 @@ public class TemplateImplUtil {
       String token = text.subSequence(start, end).toString();
       if (tokenType == TemplateTokenType.VARIABLE){
         String name = token.substring(1, token.length() - 1);
-        boolean isFound = false;
-
-        if (predefinedVars!=null && predefinedVars.contains(name) && !name.equals(TemplateImpl.SELECTION)){
-          isFound = true;
-        }
-        else{
-          for (Variable variable : variables) {
-            if (variable.getName().equals(name)) {
-              isFound = true;
-              break;
-            }
-          }
-        }
-
-        if (!isFound){
-          variables.add(new Variable(name, "", "", true));
+        if (!variables.containsKey(name)){
+          variables.put(name, new Variable(name, "", "", true));
         }
       }
       lexer.advance();
     }
+    return variables;
   }
 
   public static Expression parseTemplate(@NonNls String text) {
