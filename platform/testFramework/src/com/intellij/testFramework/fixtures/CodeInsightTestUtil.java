@@ -107,13 +107,14 @@ public class CodeInsightTestUtil {
   }
   
   public static void doWordSelectionTestOnDirectory(@NotNull final CodeInsightTestFixture fixture,
-                                                    @TestDataFile @NotNull final String directoryName, @NotNull final String filesExtension) {
-    SelectWordHandler action = new SelectWordHandler(null);
+                                                    @TestDataFile @NotNull final String directoryName,
+                                                    @NotNull final String filesExtension) {
+    final SelectWordHandler action = new SelectWordHandler(null);
     fixture.copyDirectoryToProject(directoryName, directoryName);
     fixture.configureByFile(directoryName + "/before." + filesExtension);
     int i = 1;
     while (true) {
-      final String fileName = directoryName + "/after_" + i + "." + filesExtension;
+      final String fileName = directoryName + "/after" + i + "." + filesExtension;
       if (new File(fixture.getTestDataPath() + "/" + fileName).exists()) {
         action.execute(fixture.getEditor(), DataManager.getInstance().getDataContext(fixture.getEditor().getComponent()));
         fixture.checkResultByFile(fileName);
