@@ -27,7 +27,6 @@ import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -64,9 +63,6 @@ public class CommandParametersResolutionModule extends BaseCommandRuntimeModule 
         }
       }
       catch (IOException e) {
-        throw new SvnBindException(e);
-      }
-      catch (URISyntaxException e) {
         throw new SvnBindException(e);
       }
       assert myAuthCallback.getSpecialConfigDir() != null;

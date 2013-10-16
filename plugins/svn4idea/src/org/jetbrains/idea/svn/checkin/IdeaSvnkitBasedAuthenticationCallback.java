@@ -141,7 +141,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   }
 
   @Override
-  public boolean persistDataToTmpConfig(final SVNURL repositoryUrl) throws IOException, URISyntaxException {
+  public boolean persistDataToTmpConfig(final SVNURL repositoryUrl) throws IOException {
     // TODO: Make repositoryUrl @NotNull after SvnLineCommand.runWithAuthenticationAttempt refactored
     if (repositoryUrl == null) {
       return false;
@@ -158,8 +158,8 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   }
 
   @Nullable
-  private static Proxy getIdeaDefinedProxy(@NotNull final SVNURL url) throws URISyntaxException {
-    final List<Proxy> proxies = CommonProxy.getInstance().select(new URI(url.toString()));
+  public static Proxy getIdeaDefinedProxy(@NotNull final SVNURL url) {
+    final List<Proxy> proxies = CommonProxy.getInstance().select(URI.create(url.toString()));
     if (proxies != null && ! proxies.isEmpty()) {
       for (Proxy proxy : proxies) {
         if (HttpConfigurable.isRealProxy(proxy) && Proxy.Type.HTTP.equals(proxy.type())) {
@@ -176,14 +176,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
       return false;
     }
 
-    final Proxy proxy;
-    try {
-      proxy = getIdeaDefinedProxy(repositoryUrl);
-    }
-    catch (URISyntaxException e) {
-      LOG.info(e);
-      return false;
-    }
+    final Proxy proxy = getIdeaDefinedProxy(repositoryUrl);
     if (proxy == null) return false;
     if (myProxyCredentialsWereReturned){
       // ask loud

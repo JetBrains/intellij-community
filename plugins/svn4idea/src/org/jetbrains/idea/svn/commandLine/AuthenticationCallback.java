@@ -21,7 +21,6 @@ import org.tmatesoft.svn.core.auth.SVNAuthentication;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 
 /**
  * Passed for authentication purpose to SvnLineCommand
@@ -101,9 +100,8 @@ public interface AuthenticationCallback {
    * @param repositoryUrl
    * @return true if have written data, false if wasn't able to determine parameters etc
    * @throws IOException
-   * @throws URISyntaxException
    */
-  boolean persistDataToTmpConfig(SVNURL repositoryUrl) throws IOException, URISyntaxException;
+  boolean persistDataToTmpConfig(SVNURL repositoryUrl) throws IOException;
 
   /**
    * Ask for IDEA-defined proxy credentials, using standard authenticator
