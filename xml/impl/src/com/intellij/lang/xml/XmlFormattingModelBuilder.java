@@ -35,14 +35,16 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class XmlFormattingModelBuilder implements FormattingModelBuilder {
-  
+
   @NotNull
   public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
     final ASTNode root = TreeUtil.getFileElement((TreeElement)SourceTreeToPsiMap.psiElementToTree(element));
     final FormattingDocumentModelImpl documentModel = FormattingDocumentModelImpl.createOn(element.getContainingFile());
-    return new XmlFormattingModel(element.getContainingFile(),
-                                                           new XmlBlock(root, null, null, new XmlPolicy(settings, documentModel), null, null, false),
-                                                           documentModel);
+    return new XmlFormattingModel(element.getContainingFile(), createBlock(settings, root, documentModel), documentModel);
+  }
+
+  protected XmlBlock createBlock(CodeStyleSettings settings, ASTNode root, FormattingDocumentModelImpl documentModel) {
+    return new XmlBlock(root, null, null, new XmlPolicy(settings, documentModel), null, null, false);
   }
 
   public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
