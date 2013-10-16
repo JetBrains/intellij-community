@@ -15,25 +15,17 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.api.InfoCommandRepositoryProvider;
-import org.jetbrains.idea.svn.api.Repository;
-import org.jetbrains.idea.svn.api.UrlMappingRepositoryProvider;
 import org.tmatesoft.svn.core.SVNURL;
-import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.List;
 
 /**
@@ -45,12 +37,16 @@ public class CommandRuntime {
 
   @NotNull private final AuthenticationCallback myAuthCallback;
   @NotNull private final SvnVcs myVcs;
+  @NotNull private final List<CommandRuntimeModule> myModules;
   private final String exePath;
 
   public CommandRuntime(@NotNull SvnVcs vcs, @NotNull AuthenticationCallback authCallback) {
     myVcs = vcs;
     myAuthCallback = authCallback;
     exePath = SvnApplicationSettings.getInstance().getCommandLinePath();
+
+    myModules = ContainerUtil.newArrayList();
+    myModules.add(new CommandParametersResolutionModule(this));
   }
 
   @NotNull
@@ -72,18 +68,9 @@ public class CommandRuntime {
   }
 
   private void onStart(@NotNull Command command) throws SvnBindException {
-    // for IDEA proxy case
-    writeIdeaConfig2SubversionConfig(command.getRepositoryUrl());
-
-    if (command.getRepositoryUrl() == null) {
-      command.setRepositoryUrl(resolveRepositoryUrl(command));
+    for (CommandRuntimeModule module : myModules) {
+      module.onStart(command);
     }
-    if (command.getWorkingDirectory() == null) {
-      command.setWorkingDirectory(resolveWorkingDirectory(command));
-    }
-    command.setConfigDir(myAuthCallback.getSpecialConfigDir());
-    command.addParameters("--non-interactive");
-    command.saveOriginalParameters();
   }
 
   private boolean onAfterCommand(@NotNull CommandExecutor executor, @NotNull Command command) throws SvnBindException {
@@ -142,24 +129,6 @@ public class CommandRuntime {
     }
   }
 
-  private void writeIdeaConfig2SubversionConfig(@Nullable SVNURL repositoryUrl) throws SvnBindException {
-    if (myAuthCallback.haveDataForTmpConfig()) {
-      try {
-        if (!myAuthCallback.persistDataToTmpConfig(repositoryUrl)) {
-          throw new SvnBindException("Can not persist " + ApplicationNamesInfo.getInstance().getProductName() +
-                                     " HTTP proxy information into tmp config directory");
-        }
-      }
-      catch (IOException e) {
-        throw new SvnBindException(e);
-      }
-      catch (URISyntaxException e) {
-        throw new SvnBindException(e);
-      }
-      assert myAuthCallback.getSpecialConfigDir() != null;
-    }
-  }
-
   @Nullable
   private AuthCallbackCase createCallback(@NotNull final String errText, @Nullable final SVNURL url) {
     List<AuthCallbackCase> authCases = ContainerUtil.newArrayList();
@@ -202,31 +171,13 @@ public class CommandRuntime {
     return new CommandExecutor(exePath, command);
   }
 
-  @Nullable
-  private SVNURL resolveRepositoryUrl(@NotNull Command command) {
-    UrlMappingRepositoryProvider urlMappingProvider = new UrlMappingRepositoryProvider(myVcs, command.getTarget());
-    InfoCommandRepositoryProvider infoCommandProvider = new InfoCommandRepositoryProvider(myVcs, command.getTarget());
-
-    Repository repository = urlMappingProvider.get();
-    if (repository == null && !SvnCommandName.info.equals(command.getName())) {
-      repository = infoCommandProvider.get();
-    }
-
-    return repository != null ? repository.getUrl() : null;
+  @NotNull
+  public AuthenticationCallback getAuthCallback() {
+    return myAuthCallback;
   }
 
   @NotNull
-  private File resolveWorkingDirectory(@NotNull Command command) {
-    SvnTarget target = command.getTarget();
-    File workingDirectory = target.isFile() ? target.getFile() : null;
-    // TODO: Do we really need search existing parent - or just take parent directory if target is file???
-    workingDirectory = CommandUtil.correctUpToExistingParent(workingDirectory);
-
-    if (workingDirectory == null) {
-      workingDirectory =
-        !myVcs.getProject().isDefault() ? VfsUtilCore.virtualToIoFile(myVcs.getProject().getBaseDir()) : CommandUtil.getHomeDirectory();
-    }
-
-    return workingDirectory;
+  public SvnVcs getVcs() {
+    return myVcs;
   }
 }
