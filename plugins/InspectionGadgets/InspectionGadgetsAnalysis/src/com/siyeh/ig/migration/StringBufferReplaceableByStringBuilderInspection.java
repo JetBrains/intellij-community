@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -31,8 +32,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 public class StringBufferReplaceableByStringBuilderInspection extends BaseInspection {
@@ -151,8 +150,8 @@ public class StringBufferReplaceableByStringBuilderInspection extends BaseInspec
 
   private static class StringBufferReplaceableByStringBuilderVisitor extends BaseInspectionVisitor {
 
-    private static final Set<String> excludes = new HashSet(Arrays.asList(CommonClassNames.JAVA_LANG_STRING_BUILDER,
-                                                                          CommonClassNames.JAVA_LANG_STRING_BUFFER));
+    private static final Set<String> excludes = ContainerUtil.newHashSet(CommonClassNames.JAVA_LANG_STRING_BUILDER,
+                                                                         CommonClassNames.JAVA_LANG_STRING_BUFFER);
 
     @Override
     public void visitDeclarationStatement(PsiDeclarationStatement statement) {
