@@ -124,7 +124,7 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
     public void visitLocalVariable(PsiLocalVariable variable) {
       if (myCurrentSlotIndex == myIndex) {
         if (myNameBuilder.length() != 0) {
-          myNameBuilder.append("|");
+          myNameBuilder.append(" | ");
         }
         myNameBuilder.append(variable.getName());
       }
