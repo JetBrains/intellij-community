@@ -778,7 +778,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
         }));
         try {
           if (askForSudo) {
-            askForSudo = !manager.ensureCanWrite(remoteSdkData, remoteSdkData.getInterpreterPath());
+            askForSudo = !manager.ensureCanWrite(null, remoteSdkData, remoteSdkData.getInterpreterPath());
           }
           ProcessOutput processOutput;
           do {
