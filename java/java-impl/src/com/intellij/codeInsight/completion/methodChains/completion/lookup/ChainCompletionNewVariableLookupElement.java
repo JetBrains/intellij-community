@@ -1,10 +1,12 @@
 package com.intellij.codeInsight.completion.methodChains.completion.lookup;
 
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInsight.lookup.LookupItem;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -12,59 +14,87 @@ import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 /**
  * @author Dmitry Batkovich <dmitry.batkovich@jetbrains.com>
  */
-public class ChainCompletionNewVariableLookupElement extends LookupItem<PsiClass> {
+public class ChainCompletionNewVariableLookupElement extends LookupElementDecorator<LookupElement> {
 
-  private final PsiClass psiClass;
-  private final String newVarName;
+  private final PsiClass myPsiClass;
+  private final String myNewVarName;
 
-  public ChainCompletionNewVariableLookupElement(final PsiClass psiClass, final String newVarName) {
-    super(psiClass, newVarName);
-    this.newVarName = newVarName;
-    this.psiClass = psiClass;
+  public ChainCompletionNewVariableLookupElement(final PsiClass psiClass, final String newVarName, final LookupElement calledMethods) {
+    super(calledMethods);
+    myNewVarName = newVarName;
+    myPsiClass = psiClass;
   }
 
-  public static ChainCompletionNewVariableLookupElement create(final PsiClass psiClass) {
+  public static ChainCompletionNewVariableLookupElement create(final PsiClass psiClass, final LookupElement calledMethods) {
     final Project project = psiClass.getProject();
-    final SuggestedNameInfo suggestedNameInfo = JavaCodeStyleManager.getInstance(project).suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, JavaPsiFacade .getElementFactory( project).createType(psiClass));
-    return new ChainCompletionNewVariableLookupElement(psiClass, chooseLongest(suggestedNameInfo.names));
+    final String newVarName = chooseLongestName(JavaCodeStyleManager.getInstance(project).
+        suggestVariableName(VariableKind.LOCAL_VARIABLE, null, null, JavaPsiFacade.getElementFactory(project).createType(psiClass)));
+    return new ChainCompletionNewVariableLookupElement(psiClass, newVarName, calledMethods);
   }
 
   @Override
   public void handleInsert(final InsertionContext context) {
     final PsiFile file = context.getFile();
-    ((PsiJavaFile) file).importClass(psiClass);
-    final PsiStatement statement = PsiTreeUtil.getParentOfType(file.findElementAt(context.getEditor().getCaretModel().getOffset()), PsiStatement.class);
+    ((PsiJavaFile)file).importClass(myPsiClass);
+    final PsiElement caretElement = file.findElementAt(context.getEditor().getCaretModel().getOffset());
+    if (caretElement == null) {
+      throw new NullPointerException();
+    }
+    final PsiStatement statement = (PsiStatement) caretElement.getPrevSibling();
     final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(statement, PsiCodeBlock.class);
-    assert codeBlock != null;
+    if (codeBlock == null) {
+      throw new NullPointerException();
+    }
     final Project project = context.getProject();
+    final Ref<PsiElement> insertedStatementRef = Ref.create();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
     new WriteCommandAction.Simple(project, file) {
       @Override
       protected void run() throws Throwable {
-        codeBlock.addBefore(
-            JavaPsiFacade.getElementFactory(
-                project).
-                createStatementFromText(String.format("%s %s = null;", psiClass.getName(), newVarName), null), statement);
+        final PsiStatement statementFromText = elementFactory.createStatementFromText(String.format("%s %s = null;", myPsiClass.getName(), myNewVarName), null);
+        insertedStatementRef.set(codeBlock.addBefore(statementFromText, statement));
       }
     }.execute();
+    final PsiLiteralExpression nullKeyword = findNull(insertedStatementRef.get());
+
+    context.commitDocument();
     PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getDocument());
+    getDelegate().handleInsert(context);
+    final int offset = nullKeyword.getTextOffset();
+    final int endOffset = offset + nullKeyword.getTextLength();
+    context.getEditor().getSelectionModel().setSelection(offset, endOffset);
+    context.getEditor().getCaretModel().moveToOffset(offset);
   }
 
   @NotNull
   @Override
   public String getLookupString() {
-    return newVarName;
+    return myNewVarName + "." + getDelegate().getLookupString();
   }
 
   @Override
   public void renderElement(final LookupElementPresentation presentation) {
     super.renderElement(presentation);
-    presentation.setItemText(newVarName);
+    presentation.setItemText(myNewVarName + "." + presentation.getItemText());
   }
 
-  private static String chooseLongest(final String[] names) {
+  private static PsiLiteralExpression findNull(final PsiElement psiElement) {
+    final Collection<PsiLiteralExpression> literalExpressions = PsiTreeUtil.findChildrenOfType(psiElement, PsiLiteralExpression.class);
+    for (final PsiLiteralExpression literalExpression : literalExpressions) {
+      if (PsiKeyword.NULL.equals(literalExpression.getText())) {
+        return literalExpression;
+      }
+    }
+    throw new IllegalArgumentException();
+  }
+
+  private static String chooseLongestName(final SuggestedNameInfo suggestedNameInfo) {
+    final String[] names = suggestedNameInfo.names;
     String longestWord = names[0];
     int maxLength = longestWord.length();
     for (int i = 1; i < names.length; i++) {
