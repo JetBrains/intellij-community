@@ -1,8 +1,8 @@
 package com.intellij.tasks;
 
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.Notifications;
+import com.intellij.notification.NotificationsAdapter;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.tasks.impl.LocalTaskImpl;
@@ -58,22 +58,10 @@ public class TaskManagerTest extends TaskManagerTestCase {
   public void testNotifications() throws Exception {
 
     final Ref<Notification> notificationRef = new Ref<Notification>();
-    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(Notifications.TOPIC, new Notifications() {
+    getProject().getMessageBus().connect(getTestRootDisposable()).subscribe(Notifications.TOPIC, new NotificationsAdapter() {
       @Override
       public void notify(@NotNull Notification notification) {
         notificationRef.set(notification);
-      }
-
-      @Override
-      public void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType) {
-
-      }
-
-      @Override
-      public void register(@NotNull String groupDisplayName,
-                           @NotNull NotificationDisplayType defaultDisplayType,
-                           boolean shouldLog) {
-
       }
     });
 

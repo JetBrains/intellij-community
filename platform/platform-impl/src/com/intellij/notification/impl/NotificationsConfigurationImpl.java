@@ -114,7 +114,7 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
   @NotNull
   public static NotificationSettings getSettings(@NotNull final String groupId) {
     final NotificationSettings settings = getNotificationsConfigurationImpl()._getSettings(groupId);
-    return settings == null ? new NotificationSettings(groupId, NotificationDisplayType.BALLOON, true) : settings;
+    return settings == null ? new NotificationSettings(groupId, NotificationDisplayType.BALLOON, true, false) : settings;
   }
 
   @Override
@@ -142,26 +142,31 @@ public class NotificationsConfigurationImpl extends NotificationsConfiguration i
   public void register(@NotNull String groupDisplayName,
                        @NotNull NotificationDisplayType displayType,
                        boolean shouldLog) {
+    register(groupDisplayName, displayType, shouldLog, false);
+  }
+
+  @Override
+  public void register(@NotNull String groupDisplayName,
+                       @NotNull NotificationDisplayType displayType,
+                       boolean shouldLog,
+                       boolean shouldReadAloud) {
     if (!isRegistered(groupDisplayName)) {
-      changeSettings(groupDisplayName, displayType, shouldLog);
+      changeSettings(groupDisplayName, displayType, shouldLog, shouldReadAloud);
     } else if (displayType == NotificationDisplayType.TOOL_WINDOW && !hasToolWindowCapability(groupDisplayName)) {
       // the first time with tool window capability
       ObjectUtils.assertNotNull(_getSettings(groupDisplayName)).setDisplayType(NotificationDisplayType.TOOL_WINDOW);
       myToolWindowCapable.put(groupDisplayName, null);
     }
+
   }
 
   @Override
-  public void changeSettings(String groupDisplayName, NotificationDisplayType displayType, boolean shouldLog) {
-    myIdToSettingsMap.put(groupDisplayName, new NotificationSettings(groupDisplayName, displayType, shouldLog));
+  public void changeSettings(String groupDisplayName, NotificationDisplayType displayType, boolean shouldLog, boolean shouldReadAloud) {
+    myIdToSettingsMap.put(groupDisplayName, new NotificationSettings(groupDisplayName, displayType, shouldLog, shouldReadAloud));
   }
 
   public synchronized boolean isRegistered(@NotNull final String id) {
     return myIdToSettingsMap.containsKey(id);
-  }
-
-  @Override
-  public void notify(@NotNull Notification notification) {
   }
 
   @Override

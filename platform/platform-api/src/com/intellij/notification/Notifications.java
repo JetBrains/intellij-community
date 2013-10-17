@@ -36,6 +36,7 @@ public interface Notifications {
   void notify(@NotNull Notification notification);
   void register(@NotNull final String groupDisplayName, @NotNull final NotificationDisplayType defaultDisplayType);
   void register(@NotNull final String groupDisplayName, @NotNull final NotificationDisplayType defaultDisplayType, boolean shouldLog);
+  void register(@NotNull final String groupDisplayName, @NotNull final NotificationDisplayType defaultDisplayType, boolean shouldLog, boolean shouldReadAloud);
 
   @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
   class Bus {

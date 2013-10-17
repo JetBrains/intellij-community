@@ -333,7 +333,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
   }
 
-  private static class MyNotificationListener implements Notifications {
+  private static class MyNotificationListener extends NotificationsAdapter {
     private final Project myProject;
 
     public MyNotificationListener(@Nullable Project project) {
@@ -343,16 +343,6 @@ public class NotificationsManagerImpl extends NotificationsManager {
     @Override
     public void notify(@NotNull Notification notification) {
       doNotify(notification, null, myProject);
-    }
-
-    @Override
-    public void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType) {
-    }
-
-    @Override
-    public void register(@NotNull String groupDisplayName,
-                         @NotNull NotificationDisplayType defaultDisplayType,
-                         boolean shouldLog) {
     }
   }
 
