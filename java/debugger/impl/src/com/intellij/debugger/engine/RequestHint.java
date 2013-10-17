@@ -45,11 +45,12 @@ public class RequestHint {
   public static final int STOP = 0;
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.engine.RequestHint");
   private final int myDepth;
-  private SourcePosition myPosition;
-  private int myFrameCount;
+  private final SourcePosition myPosition;
+  private final int myFrameCount;
   private VirtualMachineProxyImpl myVirtualMachineProxy;
 
-  private final @Nullable SmartStepFilter myTargetMethodSignature;
+  @Nullable
+  private final SmartStepFilter mySmartStepFilter;
   private boolean myIgnoreFilters = false;
   private boolean myRestoreBreakpoints = false;
   private final boolean mySkipThisMethod = false;
@@ -129,18 +130,20 @@ public class RequestHint {
     this(stepThread, suspendContext, depth, null);
   }
 
-  private RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, int depth, SmartStepFilter smartStepFilter) {
+  private RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, int depth, @Nullable SmartStepFilter smartStepFilter) {
     final DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
     myDepth = depth;
-    myTargetMethodSignature = smartStepFilter;
+    mySmartStepFilter = smartStepFilter;
     myVirtualMachineProxy = debugProcess.getVirtualMachineProxy();
 
+    int frameCount = 0;
+    SourcePosition position = null;
     try {
-      myFrameCount = stepThread.frameCount();
+      frameCount = stepThread.frameCount();
 
-      ApplicationManager.getApplication().runReadAction(new Runnable() {
-        public void run() {
-          myPosition = ContextUtil.getSourcePosition(new StackFrameContext() {
+      position = ApplicationManager.getApplication().runReadAction(new Computable<SourcePosition>() {
+        public SourcePosition compute() {
+          return ContextUtil.getSourcePosition(new StackFrameContext() {
             public StackFrameProxy getFrameProxy() {
               try {
                 return stepThread.frame(0);
@@ -161,7 +164,11 @@ public class RequestHint {
       });
     }
     catch (Exception e) {
-      myPosition = null;
+      LOG.info(e);
+    }
+    finally {
+      myFrameCount = frameCount;
+      myPosition = position;
     }
   }
 
@@ -187,7 +194,7 @@ public class RequestHint {
 
   @Nullable
   public SmartStepFilter getSmartStepFilter() {
-    return myTargetMethodSignature;
+    return mySmartStepFilter;
   }
 
   public int getNextStepDepth(final SuspendContextImpl context) {
@@ -279,8 +286,8 @@ public class RequestHint {
           }
         }
         // smart step feature
-        if (myTargetMethodSignature != null) {
-          if (!myTargetMethodSignature.shouldStopAtLocation(context)) {
+        if (mySmartStepFilter != null) {
+          if (!mySmartStepFilter.shouldStopAtLocation(context)) {
             return StepRequest.STEP_OUT;
           }
         }
