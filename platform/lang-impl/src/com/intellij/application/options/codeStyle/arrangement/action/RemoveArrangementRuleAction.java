@@ -38,7 +38,7 @@ public class RemoveArrangementRuleAction extends AnAction {
   @Override
   public void update(AnActionEvent e) {
    ArrangementMatchingRulesControl control = ArrangementMatchingRulesControl.KEY.getData(e.getDataContext());
-    e.getPresentation().setEnabled(control != null && !control.isEditing() && !control.getSelectedModelRows().isEmpty());
+    e.getPresentation().setEnabled(control != null && !control.getSelectedModelRows().isEmpty());
     e.getPresentation().setIcon(SystemInfoRt.isMac ? AllIcons.ToolbarDecorator.Mac.Remove : AllIcons.ToolbarDecorator.Remove);
   }
 
