@@ -67,16 +67,27 @@ public class MavenDependencyCompletionUtil {
     return parent.getParent() instanceof MavenDomDependencyManagement;
   }
 
-  public static void completeVersion(@NotNull InsertionContext context,
-                                     @NotNull MavenDomArtifactCoordinates dependency,
-                                     @NotNull String groupId, @NotNull String artifactId) {
+  public static void addTypeAndClassifierAndVersion(@NotNull InsertionContext context,
+                                                    @NotNull MavenDomDependency dependency,
+                                                    @NotNull String groupId, @NotNull String artifactId) {
     if (!StringUtil.isEmpty(dependency.getVersion().getStringValue())) return;
 
     Project project = context.getProject();
 
     if (!isInsideManagedDependency(dependency)) {
       MavenDomProjectModel model = DomUtil.<MavenDomProjectModel>getFileElement(dependency).getRootElement();
-      if (findManagedDependency(model, project, groupId, artifactId) != null) {
+      MavenDomDependency managedDependency = findManagedDependency(model, project, groupId, artifactId);
+      if (managedDependency != null) {
+        if (dependency.getClassifier().getXmlTag() == null && dependency.getType().getXmlTag() == null) {
+          String classifier = managedDependency.getClassifier().getRawText();
+          if (StringUtil.isNotEmpty(classifier)) {
+            dependency.getClassifier().setStringValue(classifier);
+          }
+          String type = managedDependency.getType().getRawText();
+          if (StringUtil.isNotEmpty(type)) {
+            dependency.getType().setStringValue(type);
+          }
+        }
         return;
       }
     }

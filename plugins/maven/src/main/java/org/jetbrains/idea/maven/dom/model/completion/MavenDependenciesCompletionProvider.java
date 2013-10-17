@@ -103,12 +103,12 @@ public class MavenDependenciesCompletionProvider extends CompletionContributor {
         sb.append("<groupId>").append(groupId).append("</groupId>\n")
           .append("<artifactId>").append(artifactId).append("</artifactId>\n");
 
-        String type = managedDependency.getType().getStringValue();
+        String type = managedDependency.getType().getRawText();
         if (type != null && !type.equals("jar")) {
           sb.append("<type>").append(type).append("</type>\n");
         }
 
-        String classifier = managedDependency.getClassifier().getStringValue();
+        String classifier = managedDependency.getClassifier().getRawText();
         if (StringUtil.isNotEmpty(classifier)) {
           sb.append("<classifier>").append(classifier).append("</classifier>\n");
         }

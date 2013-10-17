@@ -31,7 +31,6 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
@@ -95,7 +94,7 @@ public class MavenArtifactCoordinatesArtifactIdConverter extends MavenArtifactCo
       DomElement domElement = DomManager.getDomManager(context.getProject()).getDomElement(dependencyTag);
       if (!(domElement instanceof MavenDomDependency)) return;
 
-      MavenDomArtifactCoordinates dependency = (MavenDomArtifactCoordinates)domElement;
+      MavenDomDependency dependency = (MavenDomDependency)domElement;
 
       String artifactId = item.getLookupString();
 
@@ -120,7 +119,7 @@ public class MavenArtifactCoordinatesArtifactIdConverter extends MavenArtifactCo
         }
       }
 
-      MavenDependencyCompletionUtil.completeVersion(context, dependency, groupId, artifactId);
+      MavenDependencyCompletionUtil.addTypeAndClassifierAndVersion(context, dependency, groupId, artifactId);
     }
 
     private static String getUniqueGroupIdOrNull(@NotNull Project project, @NotNull String artifactId) {

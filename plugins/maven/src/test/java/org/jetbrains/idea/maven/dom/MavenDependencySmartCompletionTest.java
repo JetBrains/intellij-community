@@ -97,6 +97,10 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>project</artifactId>\n" +
                      "<version>1</version>\n" +
+                     "<properties>\n" +
+                     "  <junitClassifier>sources</junitClassifier>\n" +
+                     "  <junitType>test-jar</junitType>\n" +
+                     "</properties>\n" +
 
                      "<dependencyManagement>\n" +
                      "  <dependencies>\n" +
@@ -104,8 +108,8 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                      "      <groupId>junit</groupId>\n" +
                      "      <artifactId>junit</artifactId>\n" +
                      "      <version>4.0</version>\n" +
-                     "      <type>test-jar</type>\n" +
-                     "      <classifier>sources</classifier>\n" +
+                     "      <type>${junitType}</type>\n" +
+                     "      <classifier>${junitClassifier}</classifier>\n" +
                      "    </dependency>\n" +
                      "  </dependencies>\n" +
                      "</dependencyManagement>\n" +
@@ -120,6 +124,10 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
     myFixture.checkResult(createPomXml("<groupId>test</groupId>\n" +
                                        "<artifactId>project</artifactId>\n" +
                                        "<version>1</version>\n" +
+                                       "<properties>\n" +
+                                       "  <junitClassifier>sources</junitClassifier>\n" +
+                                       "  <junitType>test-jar</junitType>\n" +
+                                       "</properties>\n" +
 
                                        "<dependencyManagement>\n" +
                                        "  <dependencies>\n" +
@@ -127,8 +135,8 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                        "      <groupId>junit</groupId>\n" +
                                        "      <artifactId>junit</artifactId>\n" +
                                        "      <version>4.0</version>\n" +
-                                       "      <type>test-jar</type>\n" +
-                                       "      <classifier>sources</classifier>\n" +
+                                       "      <type>${junitType}</type>\n" +
+                                       "      <classifier>${junitClassifier}</classifier>\n" +
                                        "    </dependency>\n" +
                                        "  </dependencies>\n" +
                                        "</dependencyManagement>\n" +
@@ -137,8 +145,8 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                        "    <dependency>\n" +
                                        "        <groupId>junit</groupId>\n" +
                                        "        <artifactId>junit</artifactId>\n" +
-                                       "        <type>test-jar</type>\n" +
-                                       "        <classifier>sources</classifier>\n" +
+                                       "        <type>${junitType}</type>\n" +
+                                       "        <classifier>${junitClassifier}</classifier>\n" +
                                        "    </dependency>\n" +
                                        "</dependencies>\n"));
   }
@@ -396,16 +404,22 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
     ));
   }
 
-  public void testCompletionGroupIdWithManagedDependency() throws IOException {
+  public void testCompletionGroupIdWithManagedDependencyWithTypeAndClassifier() throws IOException {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>\n" +
+                  "<properties>\n" +
+                  "  <ioClassifier>ccc</ioClassifier>" +
+                  "  <ioType>ttt</ioType>" +
+                  "</properties>\n" +
                   "" +
                   "<dependencyManagement>\n" +
                   "  <dependencies>\n" +
                   "    <dependency>\n" +
                   "      <groupId>commons-io</groupId>\n" +
                   "      <artifactId>commons-io</artifactId>\n" +
+                  "      <classifier>${ioClassifier}</classifier>\n" +
+                  "      <type>${ioType}</type>\n" +
                   "      <version>2.4</version>\n" +
                   "    </dependency>\n" +
                   "  </dependencies>\n" +
@@ -419,6 +433,8 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                      "    <dependency>\n" +
                      "      <groupId>commons-io</groupId>\n" +
                      "      <artifactId>commons-io</artifactId>\n" +
+                     "      <classifier>${ioClassifier}</classifier>\n" +
+                     "      <type>${ioType}</type>\n" +
                      "      <version>2.4</version>\n" +
                      "    </dependency>\n" +
                      "  </dependencies>\n" +
@@ -426,8 +442,8 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
 
                      "<dependencies>\n" +
                      "  <dependency>\n" +
-                     "    <groupId>commons-i<caret></groupId>\n" +
-                     "    <artifactId>commons-io</artifactId>\n" +
+                     "      <groupId>commons-i<caret></groupId>\n" +
+                     "      <artifactId>commons-io</artifactId>\n" +
                      "  </dependency>\n" +
                      "</dependencies>\n");
 
@@ -447,6 +463,8 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                        "    <dependency>\n" +
                                        "      <groupId>commons-io</groupId>\n" +
                                        "      <artifactId>commons-io</artifactId>\n" +
+                                       "      <classifier>${ioClassifier}</classifier>\n" +
+                                       "      <type>${ioType}</type>\n" +
                                        "      <version>2.4</version>\n" +
                                        "    </dependency>\n" +
                                        "  </dependencies>\n" +
@@ -454,8 +472,10 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
 
                                        "<dependencies>\n" +
                                        "  <dependency>\n" +
-                                       "    <groupId>commons-io</groupId>\n" +
-                                       "    <artifactId>commons-io</artifactId>\n" +
+                                       "      <groupId>commons-io</groupId>\n" +
+                                       "      <artifactId>commons-io</artifactId>\n" +
+                                       "      <type>${ioType}</type>\n" +
+                                       "      <classifier>${ioClassifier}</classifier>\n" +
                                        "  </dependency>\n" +
                                        "</dependencies>\n"
     ));

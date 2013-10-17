@@ -14,7 +14,6 @@ import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.dom.model.MavenDomArtifactCoordinates;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifact;
@@ -91,12 +90,12 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
       DomElement domElement = DomManager.getDomManager(context.getProject()).getDomElement(dependencyTag);
       if (!(domElement instanceof MavenDomDependency)) return;
 
-      MavenDomArtifactCoordinates dependency = (MavenDomArtifactCoordinates)domElement;
+      MavenDomDependency dependency = (MavenDomDependency)domElement;
 
       String artifactId = dependency.getArtifactId().getStringValue();
       if (StringUtil.isEmpty(artifactId)) return;
 
-      MavenDependencyCompletionUtil.completeVersion(context, dependency, item.getLookupString(), artifactId);
+      MavenDependencyCompletionUtil.addTypeAndClassifierAndVersion(context, dependency, item.getLookupString(), artifactId);
     }
   }
 
