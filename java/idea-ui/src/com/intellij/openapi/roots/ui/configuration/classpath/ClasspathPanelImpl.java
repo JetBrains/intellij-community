@@ -123,7 +123,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         OrderEntry entry = getSelectedEntry();
         if (entry == null) return null;
         String text = entry.getPresentableName();
-        return new TextTransferrable(text, text);
+        return new TextTransferrable(text);
       }
 
       @Override

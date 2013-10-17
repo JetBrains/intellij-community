@@ -206,7 +206,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       @Override
       public void actionPerformed(AnActionEvent e) {
         try {
-          CopyPasteManager.getInstance().setContents(new TextTransferrable(myAllocation.getText(), myAllocation.getText()));
+          CopyPasteManager.getInstance().setContents(new TextTransferrable(myAllocation.getText()));
         }
         catch (HeadlessException e1) {
           LOG.error(e1);

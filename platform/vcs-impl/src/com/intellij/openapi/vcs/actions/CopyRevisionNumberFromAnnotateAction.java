@@ -45,7 +45,7 @@ public class CopyRevisionNumberFromAnnotateAction extends AnAction implements Li
     final VcsRevisionNumber revisionNumber = myAnnotation.getLineRevisionNumber(corrected);
     if (revisionNumber != null) {
       final String revision = revisionNumber.asString();
-      CopyPasteManager.getInstance().setContents(new TextTransferrable(revision, revision));
+      CopyPasteManager.getInstance().setContents(new TextTransferrable(revision));
     }
   }
 

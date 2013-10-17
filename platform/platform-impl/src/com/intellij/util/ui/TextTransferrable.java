@@ -48,6 +48,10 @@ public class TextTransferrable implements Transferable {
     return flavors;
   }
 
+  public TextTransferrable(String data) {
+    this(data, data);
+  }
+
   public TextTransferrable(final String htmlContent, final String plainContent) {
     myHtmlContent = htmlContent;
     myPlainContent = plainContent;
