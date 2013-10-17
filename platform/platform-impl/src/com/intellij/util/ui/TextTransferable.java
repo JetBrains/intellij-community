@@ -23,8 +23,8 @@ import java.awt.datatransfer.UnsupportedFlavorException;
 import java.io.IOException;
 import java.io.StringReader;
 
-public class TextTransferrable implements Transferable {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.history.TextTransferrable");
+public class TextTransferable implements Transferable {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.util.ui.TextTransferable");
 
   private final String myHtmlContent;
   private final String myPlainContent;
@@ -48,11 +48,11 @@ public class TextTransferrable implements Transferable {
     return flavors;
   }
 
-  public TextTransferrable(String data) {
+  public TextTransferable(String data) {
     this(data, data);
   }
 
-  public TextTransferrable(String htmlContent, String plainContent) {
+  public TextTransferable(String htmlContent, String plainContent) {
     myHtmlContent = htmlContent;
     myPlainContent = plainContent;
   }

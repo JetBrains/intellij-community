@@ -457,10 +457,10 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton {
           String selectedText = myComments.getSelectedText();
           final Transferable t;
           if (selectedText == null) {
-            t = new TextTransferrable(myComments.getText(), myOriginalComment);
+            t = new TextTransferable(myComments.getText(), myOriginalComment);
           }
           else {
-            t = new TextTransferrable(selectedText);
+            t = new TextTransferable(selectedText);
           }
           try {
             clip.setContents(t, null);

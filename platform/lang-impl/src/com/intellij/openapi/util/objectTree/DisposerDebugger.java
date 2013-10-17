@@ -30,7 +30,7 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.TextTransferrable;
+import com.intellij.util.ui.TextTransferable;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.debugger.UiDebuggerExtension;
 import com.intellij.ui.speedSearch.ElementFilter;
@@ -206,7 +206,7 @@ public class DisposerDebugger implements UiDebuggerExtension, Disposable  {
       @Override
       public void actionPerformed(AnActionEvent e) {
         try {
-          CopyPasteManager.getInstance().setContents(new TextTransferrable(myAllocation.getText()));
+          CopyPasteManager.getInstance().setContents(new TextTransferable(myAllocation.getText()));
         }
         catch (HeadlessException e1) {
           LOG.error(e1);

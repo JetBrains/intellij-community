@@ -64,7 +64,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
-import com.intellij.util.ui.TextTransferrable;
+import com.intellij.util.ui.TextTransferable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,7 +123,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
         OrderEntry entry = getSelectedEntry();
         if (entry == null) return null;
         String text = entry.getPresentableName();
-        return new TextTransferrable(text);
+        return new TextTransferable(text);
       }
 
       @Override

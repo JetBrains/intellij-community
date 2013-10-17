@@ -16,13 +16,12 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.TextTransferrable;
+import com.intellij.util.ui.TextTransferable;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +78,7 @@ public class PluginTable extends JBTable {
             return descriptor.getName();
           }
         }, "</li>\n<li>") + "</ul>\n</body>\n";
-        return new TextTransferrable(XmlStringUtil.wrapInHtml(htmlText), text);
+        return new TextTransferable(XmlStringUtil.wrapInHtml(htmlText), text);
       }
 
       @Override
