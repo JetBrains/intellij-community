@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
@@ -92,7 +93,7 @@ public class DarculaButtonUI extends BasicButtonUI {
   @Override
   public void update(Graphics g, JComponent c) {
     super.update(g, c);
-    if (((JButton)c).isDefaultButton()) {
+    if (((JButton)c).isDefaultButton() && !SystemInfo.isMac) {
       c.setFont(c.getFont().deriveFont(Font.BOLD));
     }
   }
