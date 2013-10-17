@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,6 +73,7 @@ public class DumbServiceImpl extends DumbService {
     return myProject;
   }
 
+  @Override
   public boolean isDumb() {
     return myDumb;
   }
@@ -171,6 +172,7 @@ public class DumbServiceImpl extends DumbService {
     final IndexUpdateRunnable updateRunnable = new IndexUpdateRunnable(runner);
 
     UIUtil.invokeLaterIfNeeded(new DumbAwareRunnable() {
+      @Override
       public void run() {
         if (myProject.isDisposed()) {
           return;
@@ -245,6 +247,7 @@ public class DumbServiceImpl extends DumbService {
   @Override
   public void showDumbModeNotification(final String message) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
         final IdeFrame ideFrame = WindowManager.getInstance().getIdeFrame(myProject);
         if (ideFrame != null) {
@@ -257,6 +260,7 @@ public class DumbServiceImpl extends DumbService {
 
   private static final CacheUpdateRunner NULL_ACTION = new CacheUpdateRunner(null,null);
 
+  @Override
   public void waitForSmartMode() {
     final Application application = ApplicationManager.getApplication();
     if (!application.isUnitTestMode()) {
@@ -267,6 +271,7 @@ public class DumbServiceImpl extends DumbService {
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     runWhenSmart(new Runnable() {
+      @Override
       public void run() {
         semaphore.up();
       }
@@ -274,15 +279,18 @@ public class DumbServiceImpl extends DumbService {
     semaphore.waitFor();
   }
 
+  @Override
   public JComponent wrapGently(@NotNull JComponent dumbUnawareContent, @NotNull Disposable parentDisposable) {
     final DumbUnawareHider wrapper = new DumbUnawareHider(dumbUnawareContent);
     wrapper.setContentVisible(!isDumb());
     getProject().getMessageBus().connect(parentDisposable).subscribe(DUMB_MODE, new DumbModeListener() {
 
+      @Override
       public void enteredDumbMode() {
         wrapper.setContentVisible(false);
       }
 
+      @Override
       public void exitDumbMode() {
         wrapper.setContentVisible(true);
       }
@@ -303,6 +311,7 @@ public class DumbServiceImpl extends DumbService {
       myCurrentBaseTotal = 0;
     }
 
+    @Override
     public void run() {
       ProgressManager.getInstance().run(new Task.Backgroundable(myProject, IdeBundle.message("progress.indexing"), false) {
 
@@ -317,6 +326,7 @@ public class DumbServiceImpl extends DumbService {
                 if (fraction - lastFraction < 0.01d) return;
                 lastFraction = fraction;
                 UIUtil.invokeLaterIfNeeded(new Runnable() {
+                  @Override
                   public void run() {
                     AppIcon.getInstance().setProgress(myProject, "indexUpdate", AppIconScheme.Progress.INDEXING, fraction, true);
                   }
@@ -326,6 +336,7 @@ public class DumbServiceImpl extends DumbService {
               @Override
               public void finish(@NotNull TaskInfo task) {
                 UIUtil.invokeLaterIfNeeded(new Runnable() {
+                  @Override
                   public void run() {
                     AppIcon appIcon = AppIcon.getInstance();
                     if (appIcon.hideProgress(myProject, "indexUpdate")) {
@@ -394,6 +405,7 @@ public class DumbServiceImpl extends DumbService {
         private CacheUpdateRunner getNextUpdateRunner() {
           final BlockingQueue<CacheUpdateRunner> actionQueue = new LinkedBlockingQueue<CacheUpdateRunner>();
           UIUtil.invokeLaterIfNeeded(new DumbAwareRunnable() {
+            @Override
             public void run() {
               IndexUpdateRunnable nextRunnable = getNextUpdateFromQueue();
               try {

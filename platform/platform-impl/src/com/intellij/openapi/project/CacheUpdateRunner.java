@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.openapi.project;
 
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.caches.FileContent;
-import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,15 +27,16 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressWrapper;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Set;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 class CacheUpdateRunner {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.CacheUpdateRunner");
@@ -65,7 +65,7 @@ class CacheUpdateRunner {
     return mySession.getNumberOfPendingUpdateJobs();
   }
 
-  public void processFiles(final ProgressIndicator indicator, boolean processInReadAction) {
+  public void processFiles(@NotNull final ProgressIndicator indicator, boolean processInReadAction) {
     try {
       indicator.checkCanceled();
       final FileContentQueue queue = new FileContentQueue();
@@ -78,6 +78,7 @@ class CacheUpdateRunner {
         // not to count the same file several times
         final Set<VirtualFile> processed = new THashSet<VirtualFile>();
 
+        @Override
         public void consume(VirtualFile virtualFile) {
           indicator.checkCanceled();
           synchronized (processed) {
@@ -122,8 +123,8 @@ class CacheUpdateRunner {
     }
   }
 
-  private boolean processSomeFilesWhileUserIsInactive(final FileContentQueue queue,
-                                                      final Consumer<VirtualFile> progressUpdater,
+  private boolean processSomeFilesWhileUserIsInactive(@NotNull FileContentQueue queue,
+                                                      @NotNull Consumer<VirtualFile> progressUpdater,
                                                       final boolean processInReadAction) {
     final ProgressIndicatorBase innerIndicator = new ProgressIndicatorBase() {
       @Override
@@ -140,23 +141,23 @@ class CacheUpdateRunner {
     final Application application = ApplicationManager.getApplication();
     application.addApplicationListener(canceller);
 
-    final Ref<Boolean> isFinished = new Ref<Boolean>(Boolean.FALSE);
+    final AtomicBoolean isFinished = new AtomicBoolean();
     try {
       int threadsCount = Registry.intValue("caches.indexerThreadsCount");
       if (threadsCount <= 0) {
         threadsCount = Math.min(PROC_COUNT, 4);
       }
       if (threadsCount == 1) {
-        Runnable process = new MyRunnable(innerIndicator, queue, isFinished, progressUpdater, processInReadAction, application);
+        Runnable process = new MyRunnable(innerIndicator, queue, isFinished, progressUpdater, processInReadAction);
         ProgressManager.getInstance().runProcess(process, innerIndicator);
       }
       else {
-        final Ref[] finishedRefs = new Ref[threadsCount];
+        AtomicBoolean[] finishedRefs = new AtomicBoolean[threadsCount];
         Future<?>[] futures = new Future<?>[threadsCount];
         for (int i = 0; i < threadsCount; i++) {
-          final Ref<Boolean> ref = new Ref<Boolean>(Boolean.FALSE);
+          AtomicBoolean ref = new AtomicBoolean();
           finishedRefs[i] = ref;
-          Runnable process = new MyRunnable(innerIndicator, queue, ref, progressUpdater, processInReadAction, application);
+          Runnable process = new MyRunnable(innerIndicator, queue, ref, progressUpdater, processInReadAction);
           futures[i] = ApplicationManager.getApplication().executeOnPooledThread(getProcessWrapper(process));
         }
         isFinished.set(waitForAll(finishedRefs, futures));
@@ -169,15 +170,15 @@ class CacheUpdateRunner {
     return isFinished.get();
   }
 
-  private static boolean waitForAll(Ref[] finishedRefs, Future<?>[] futures) {
+  private static boolean waitForAll(@NotNull AtomicBoolean[] finishedRefs, @NotNull Future<?>[] futures) {
     try {
       for (Future<?> future : futures) {
         future.get();
       }
 
       boolean allFinished = true;
-      for (Ref ref : finishedRefs) {
-        if (!(Boolean)ref.get()) {
+      for (AtomicBoolean ref : finishedRefs) {
+        if (!ref.get()) {
           allFinished = false;
           break;
         }
@@ -194,24 +195,23 @@ class CacheUpdateRunner {
   private class MyRunnable implements Runnable {
     private final ProgressIndicatorBase myInnerIndicator;
     private final FileContentQueue myQueue;
-    private final Ref<Boolean> myFinished;
+    private final AtomicBoolean myFinished;
     private final Consumer<VirtualFile> myProgressUpdater;
     private final boolean myProcessInReadAction;
-    private final Application myApplication;
 
-    public MyRunnable(ProgressIndicatorBase innerIndicator,
-                      FileContentQueue queue,
-                      Ref<Boolean> finished,
-                      Consumer<VirtualFile> progressUpdater,
-                      boolean processInReadAction, Application application) {
+    public MyRunnable(@NotNull ProgressIndicatorBase innerIndicator,
+                      @NotNull FileContentQueue queue,
+                      @NotNull AtomicBoolean finished,
+                      @NotNull Consumer<VirtualFile> progressUpdater,
+                      boolean processInReadAction) {
       myInnerIndicator = innerIndicator;
       myQueue = queue;
       myFinished = finished;
       myProgressUpdater = progressUpdater;
       myProcessInReadAction = processInReadAction;
-      myApplication = application;
     }
 
+    @Override
     public void run() {
       while (true) {
         if (myProject.isDisposed() || myInnerIndicator.isCanceled()) {
@@ -225,6 +225,7 @@ class CacheUpdateRunner {
           }
 
           final Runnable action = new Runnable() {
+            @Override
             public void run() {
               myInnerIndicator.checkCanceled();
               if (!myProject.isDisposed()) {
@@ -240,7 +241,7 @@ class CacheUpdateRunner {
                 @Override
                 public void run() {
                   if (myProcessInReadAction) {
-                    myApplication.runReadAction(action);
+                    ApplicationManager.getApplication().runReadAction(action);
                   }
                   else {
                     action.run();
