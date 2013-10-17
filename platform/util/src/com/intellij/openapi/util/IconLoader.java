@@ -324,15 +324,21 @@ public final class IconLoader {
     private Object myRealIcon;
     @NotNull
     private final URL myUrl;
+    private boolean dark;
 
     public CachedImageIcon(@NotNull URL url) {
       myUrl = url;
+      dark = USE_DARK_ICONS;
     }
 
     @NotNull
     private synchronized Icon getRealIcon() {
       if (isLoaderDisabled()) return EMPTY_ICON;
 
+      if (dark != USE_DARK_ICONS) {
+        myRealIcon = null;
+        dark = USE_DARK_ICONS;
+      }
       Object realIcon = myRealIcon;
       if (realIcon instanceof Icon) return (Icon)realIcon;
 
