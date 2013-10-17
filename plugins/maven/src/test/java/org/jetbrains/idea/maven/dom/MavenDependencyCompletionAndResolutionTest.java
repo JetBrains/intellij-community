@@ -56,7 +56,7 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "  </dependency>" +
                      "</dependencies>");
 
-    assertCompletionVariants(myProjectPom, "junit", "jmock", "test");
+    assertCompletionVariantsInclude(myProjectPom, "junit", "jmock", "test");
   }
 
   public void testArtifactIdCompletion() throws Exception {
@@ -87,20 +87,6 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "</dependencies>");
 
     assertCompletionVariants(myProjectPom);
-  }
-
-  public void testDoNotCompleteArtifactIdIfNoGroupId() throws Exception {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
-
-                     "<dependencies>" +
-                     "  <dependency>" +
-                     "    <artifactId><caret></artifactId>" +
-                     "  </dependency>" +
-                     "</dependencies>");
-
-    assertCompletionVariants(myProjectPom); // should not throw
   }
 
   public void testVersionCompletion() throws Exception {

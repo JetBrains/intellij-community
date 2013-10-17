@@ -1460,12 +1460,16 @@ public class TypeConversionUtil {
     return null;
   }
 
-  // true if floating point literal consists of zeros only
+  /**
+   * See JLS 3.10.2. Floating-Point Literals
+   * @return true  if floating point literal consists of zeros only
+   */
   public static boolean isFPZero(@NotNull final String text) {
     for (int i = 0; i < text.length(); i++) {
       final char c = text.charAt(i);
       if (Character.isDigit(c) && c != '0') return false;
-      if (Character.toUpperCase(c) == 'E') break;
+      final char d = Character.toUpperCase(c);
+      if (d == 'E' || d == 'P') break;
     }
     return true;
   }

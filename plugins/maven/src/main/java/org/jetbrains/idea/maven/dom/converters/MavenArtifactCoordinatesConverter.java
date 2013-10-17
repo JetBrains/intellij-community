@@ -315,12 +315,12 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     public Set<String> getVariants(MavenId id, MavenProjectIndicesManager manager, MavenDomShortArtifactCoordinates coordinates) {
       if (StringUtil.isEmpty(id.getGroupId())) {
         Set<String> result = new THashSet<String>();
-        if (DomUtil.hasXml(coordinates.getGroupId())) {
-          for (String each : manager.getGroupIds()) {
-            id = new MavenId(each, id.getArtifactId(), id.getVersion());
-            result.addAll(super.getVariants(id, manager, coordinates));
-          }
+
+        for (String each : manager.getGroupIds()) {
+          id = new MavenId(each, id.getArtifactId(), id.getVersion());
+          result.addAll(super.getVariants(id, manager, coordinates));
         }
+
         return result;
       }
       return super.getVariants(id, manager, coordinates);
