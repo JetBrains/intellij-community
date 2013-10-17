@@ -1452,9 +1452,6 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       case THROW_EXCEPTION:
         returnCheckingFinally();
         break;
-      case SYSTEM_EXIT:
-        addInstruction(new ReturnInstruction(true));
-        break;
     }
 
     // if contract is false
@@ -1493,7 +1490,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         final String className = owner.getQualifiedName();
         if ("java.lang.System".equals(className)) {
           if ("exit".equals(methodName)) {
-            return Collections.singletonList(new MethodContract(getAnyArgConstraints(params), ValueConstraint.SYSTEM_EXIT));
+            return Collections.singletonList(new MethodContract(getAnyArgConstraints(params), ValueConstraint.THROW_EXCEPTION));
           }
         }
         else if ("junit.framework.Assert".equals(className) || "org.junit.Assert".equals(className) ||
@@ -1579,10 +1576,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     if ("!null".equals(name)) return ValueConstraint.NOT_NULL_VALUE;
     if ("true".equals(name)) return ValueConstraint.TRUE_VALUE;
     if ("false".equals(name)) return ValueConstraint.FALSE_VALUE;
-    if ("exit".equals(name)) return ValueConstraint.SYSTEM_EXIT;
     if ("fail".equals(name)) return ValueConstraint.THROW_EXCEPTION;
     if ("_".equals(name)) return ValueConstraint.ANY_VALUE;
-    throw new ParseException("Constraint should be one of: null, !null, true, false, exit, fail, _. Found: " + name);
+    throw new ParseException("Constraint should be one of: null, !null, true, false, fail, _. Found: " + name);
   }
   
   public static class ParseException extends Exception {
@@ -1890,7 +1886,7 @@ class MethodContract {
   }
 
   public enum ValueConstraint {
-    ANY_VALUE, NULL_VALUE, NOT_NULL_VALUE, TRUE_VALUE, FALSE_VALUE, THROW_EXCEPTION, SYSTEM_EXIT
+    ANY_VALUE, NULL_VALUE, NOT_NULL_VALUE, TRUE_VALUE, FALSE_VALUE, THROW_EXCEPTION
   }
 }
 

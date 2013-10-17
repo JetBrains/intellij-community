@@ -27,7 +27,7 @@ import java.lang.annotation.*;
  *  args ::= ((arg ',')* arg )?<br/>
  *  arg ::= value-constraint<br/>
  *  value-constraint ::= 'any' | 'null' | '!null' | 'false' | 'true'<br/>
- *  effect ::= value-constraint | 'fail' | 'exit'<p/>
+ *  effect ::= value-constraint | 'fail' <p/>
  *  
  * The constraints denote the following:<br/>
  * <ul>
@@ -36,8 +36,7 @@ import java.lang.annotation.*;
  * <li> !null - a value statically proved to be not-null
  * <li> true - true boolean value
  * <li> false - false boolean value
- * <li> fail - the method throws exception, if the arguments satisfy argument constraints
- * <li> exit - the method terminates the current process, if the arguments satisfy argument constraints
+ * <li> fail - the method throws an exception, if the arguments satisfy argument constraints
  * </ul>
  * Examples:<p/>
  * <code>@Contract("_, null -> null")</code> - method returns null if its second argument is null<br/>
