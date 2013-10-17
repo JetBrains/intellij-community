@@ -98,6 +98,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private LightweightHint myEditorPreviewHint = null;
   private final EditorFragmentRenderer myEditorFragmentRenderer;
   private int myRowAdjuster = 0;
+  private int myWheelAccumulator = 0;
 
   EditorMarkupModelImpl(@NotNull EditorImpl editor) {
     super(editor.getDocument());
@@ -796,8 +797,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     @Override
     public void mouseWheelMoved(MouseWheelEvent e) {
       if (myEditorPreviewHint == null) return;
-      myRowAdjuster += (e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL ? e.getUnitsToScroll() * e.getScrollAmount() :
-                         e.getWheelRotation() < 0 ? -e.getScrollAmount() : e.getScrollAmount()) / myEditor.getLineHeight();
+      myWheelAccumulator += (e.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL ? e.getUnitsToScroll() * e.getScrollAmount() :
+                         e.getWheelRotation() < 0 ? -e.getScrollAmount() : e.getScrollAmount());
+      myRowAdjuster = myWheelAccumulator / myEditor.getLineHeight();
       showToolTipByMouseMove(e);
     }
 
@@ -835,6 +837,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
         myEditorPreviewHint.hide();
         myEditorPreviewHint = null;
         myRowAdjuster = 0;
+        myWheelAccumulator = 0;
       }
     }
 
