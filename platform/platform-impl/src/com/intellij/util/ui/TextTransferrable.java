@@ -42,8 +42,8 @@ public class TextTransferrable implements Transferable {
         html = null;
       }
 
-      flavors = (html == null) ? new DataFlavor[] {DataFlavor.stringFlavor, DataFlavor.plainTextFlavor} :
-                new DataFlavor[] {DataFlavor.stringFlavor, DataFlavor.plainTextFlavor, html};
+      flavors = (html == null) ? new DataFlavor[]{DataFlavor.stringFlavor, DataFlavor.plainTextFlavor} :
+                new DataFlavor[]{DataFlavor.stringFlavor, DataFlavor.plainTextFlavor, html};
     }
     return flavors;
   }
@@ -52,7 +52,7 @@ public class TextTransferrable implements Transferable {
     this(data, data);
   }
 
-  public TextTransferrable(final String htmlContent, final String plainContent) {
+  public TextTransferrable(String htmlContent, String plainContent) {
     myHtmlContent = htmlContent;
     myPlainContent = plainContent;
   }
@@ -61,9 +61,9 @@ public class TextTransferrable implements Transferable {
     return getFlavours().clone();
   }
 
-  public boolean isDataFlavorSupported(final DataFlavor flavor) {
-    for (DataFlavor flavor1 : getFlavours()) {
-      if (flavor.equals(flavor1)) {
+  public boolean isDataFlavorSupported(DataFlavor flavor) {
+    for (DataFlavor f : getFlavours()) {
+      if (flavor.equals(f)) {
         return true;
       }
     }
@@ -73,9 +73,11 @@ public class TextTransferrable implements Transferable {
   public Object getTransferData(final DataFlavor flavor) throws UnsupportedFlavorException, IOException {
     if (flavor.equals(html)) {
       return myHtmlContent;
-    } else if (flavor.equals(DataFlavor.plainTextFlavor)) {
+    }
+    else if (flavor.equals(DataFlavor.plainTextFlavor)) {
       return new StringReader(myPlainContent == null ? "" : myPlainContent);
-    } else if (flavor.equals(DataFlavor.stringFlavor)) {
+    }
+    else if (flavor.equals(DataFlavor.stringFlavor)) {
       return myPlainContent;
     }
     throw new UnsupportedFlavorException(flavor);
