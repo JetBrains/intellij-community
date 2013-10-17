@@ -694,12 +694,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       return;
     }
 
-    if (isExceptionalThreadWithReadAccess()) { //OK if we're in exceptional thread.
-      LaterInvocator.invokeAndWait(runnable, modalityState);
-      return;
-    }
-
-    if (holdsReadLock()) {
+    if (!isExceptionalThreadWithReadAccess() && holdsReadLock()) {
       LOG.error("Calling invokeAndWait from read-action leads to possible deadlock.");
     }
 
