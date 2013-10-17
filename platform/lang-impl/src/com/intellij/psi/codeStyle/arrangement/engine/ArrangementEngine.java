@@ -600,7 +600,8 @@ public class ArrangementEngine {
           if (w.getStartOffset() >= oldWrapper.getStartOffset() && w.getStartOffset() < newWrapper.getStartOffset()) {
             w.applyShift(newWrapper.getEndOffset() - newWrapper.getStartOffset());
           }
-          else if (w.getStartOffset() < oldWrapper.getStartOffset() && w.getStartOffset() > newWrapper.getStartOffset()) {
+          else if (oldWrapper != w && w.getStartOffset() <= oldWrapper.getStartOffset() &&
+                   w.getStartOffset() > newWrapper.getStartOffset()) {
             w.applyShift(newWrapper.getStartOffset() - newWrapper.getEndOffset());
           }
         }
