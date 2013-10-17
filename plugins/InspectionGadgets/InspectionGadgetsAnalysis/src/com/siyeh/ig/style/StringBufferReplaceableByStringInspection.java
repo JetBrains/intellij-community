@@ -21,6 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -31,7 +32,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class StringBufferReplaceableByStringInspection extends BaseInspection {
@@ -257,7 +257,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
 
       private final PsiVariable myVariable;
       private final StringBuilder myBuilder;
-      private final List<PsiMethodCallExpression> expressions = new ArrayList();
+      private final List<PsiMethodCallExpression> expressions = ContainerUtil.newArrayList();
       private boolean myProblem = false;
 
       public StringBuildingVisitor(@NotNull PsiVariable variable, StringBuilder builder) {
@@ -425,8 +425,9 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
   private static class ReplaceableByStringVisitor extends JavaRecursiveElementVisitor {
 
     private final PsiElement myParent;
-    private PsiVariable myVariable;
+    private final PsiVariable myVariable;
     private boolean myReplaceable = true;
+    private boolean myPossibleSideEffect = false;
     private boolean myToStringFound = false;
 
     public ReplaceableByStringVisitor(@NotNull PsiVariable variable) {
@@ -450,7 +451,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
     public void visitAssignmentExpression(PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
       if (expression.getTextOffset() > myVariable.getTextOffset() && !myToStringFound) {
-        myReplaceable = false;
+        myPossibleSideEffect = true;
       }
     }
 
@@ -458,7 +459,7 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
     public void visitPostfixExpression(PsiPostfixExpression expression) {
       super.visitPostfixExpression(expression);
       if (expression.getTextOffset() > myVariable.getTextOffset() && !myToStringFound) {
-        myReplaceable = false;
+        myPossibleSideEffect = true;
       }
     }
 
@@ -466,8 +467,75 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
     public void visitPrefixExpression(PsiPrefixExpression expression) {
       super.visitPrefixExpression(expression);
       if (expression.getTextOffset() > myVariable.getTextOffset() && !myToStringFound) {
-        myReplaceable = false;
+        myPossibleSideEffect = true;
       }
+    }
+
+    @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      super.visitMethodCallExpression(expression);
+      if (expression.getTextOffset() < myVariable.getTextOffset() || myToStringFound) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        myPossibleSideEffect = true;
+        return;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        myPossibleSideEffect = true;
+        return;
+      }
+      final String name = aClass.getQualifiedName();
+      if (CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(name) ||
+        CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(name)) {
+        return;
+      }
+      if (isArgumentOfStringBuilderMethod(expression)) {
+        return;
+      }
+      myPossibleSideEffect = true;
+    }
+
+    private boolean isArgumentOfStringBuilderMethod(PsiMethodCallExpression expression) {
+      final PsiElement parent = expression.getParent();
+      if (!(parent instanceof PsiExpressionList)) {
+        return false;
+      }
+      final PsiElement grandParent = parent.getParent();
+      if (!(grandParent instanceof PsiMethodCallExpression)) {
+        return false;
+      }
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)grandParent;
+      final PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
+      PsiExpression qualifier = methodExpression.getQualifierExpression();
+      while (qualifier instanceof PsiMethodCallExpression) {
+        final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)qualifier;
+        final PsiReferenceExpression methodExpression1 = callExpression.getMethodExpression();
+        qualifier = methodExpression1.getQualifierExpression();
+      }
+      if (qualifier instanceof PsiReferenceExpression) {
+        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)qualifier;
+        final PsiElement target = referenceExpression.resolve();
+        if (!myVariable.equals(target)) {
+          return false;
+        }
+      }
+      final PsiMethod method = methodCallExpression.resolveMethod();
+      if (method == null) {
+        return false;
+      }
+      final PsiClass aClass = method.getContainingClass();
+      if (aClass == null) {
+        return false;
+      }
+      final String name1 = aClass.getQualifiedName();
+      if (CommonClassNames.JAVA_LANG_STRING_BUFFER.equals(name1) ||
+          CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(name1)) {
+        return true;
+      }
+      return false;
     }
 
     @Override
@@ -506,6 +574,10 @@ public class StringBufferReplaceableByStringInspection extends BaseInspection {
             return;
           }
           myToStringFound = true;
+          return;
+        }
+        if (myPossibleSideEffect) {
+          myReplaceable = false;
           return;
         }
         parent = grandParent.getParent();
