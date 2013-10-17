@@ -25,7 +25,8 @@ public class PySuperTypesHierarchyTreeStructure extends HierarchyTreeStructure {
     super(cl.getProject(), new PyTypeHierarchyNodeDescriptor(null, cl, true));
   }
 
-  protected Object[] buildChildren(HierarchyNodeDescriptor descriptor) {
+  @NotNull
+  protected Object[] buildChildren(@NotNull HierarchyNodeDescriptor descriptor) {
     final PyClass[] superClasses = ((PyTypeHierarchyNodeDescriptor)descriptor).getClassElement().getSuperClasses();
     List<PyTypeHierarchyNodeDescriptor> res = new ArrayList<PyTypeHierarchyNodeDescriptor>();
     for (PyClass superClass : superClasses) {
