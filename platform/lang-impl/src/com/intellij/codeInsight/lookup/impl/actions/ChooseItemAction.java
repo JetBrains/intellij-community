@@ -113,7 +113,7 @@ public abstract class ChooseItemAction extends EditorAction {
       return false;
     }
 
-    return liveTemplateLookup.getTemplate().getShortcutChar() == shortcutChar;
+    return TemplateSettings.getInstance().getShortcutChar(liveTemplateLookup.getTemplate()) == shortcutChar;
   }
 
   public static class Always extends ChooseItemAction {
