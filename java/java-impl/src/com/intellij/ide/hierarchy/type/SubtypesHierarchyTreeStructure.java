@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +43,8 @@ public class SubtypesHierarchyTreeStructure extends HierarchyTreeStructure {
     myCurrentScopeType = currentScopeType;
   }
 
-  protected final Object[] buildChildren(final HierarchyNodeDescriptor descriptor) {
+  @NotNull
+  protected final Object[] buildChildren(@NotNull final HierarchyNodeDescriptor descriptor) {
     final PsiClass psiClass = ((TypeHierarchyNodeDescriptor)descriptor).getPsiClass();
     if (CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass.getQualifiedName())) {
       return new Object[]{IdeBundle.message("node.hierarchy.java.lang.object")};
