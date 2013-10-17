@@ -394,11 +394,15 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
           });
           return;
         } else {
-          indicator.checkCanceled();
-          if (nodeWasCollapsed[0] && virtualSelectTarget == null) {
-            collapseChildren(eachKid, null);
+          if (result.isRejected()) {
+            indicator.checkCanceled();
+            if (nodeWasCollapsed[0] && virtualSelectTarget == null) {
+              collapseChildren(eachKid, null);
+            }
+            i++;
+          } else {
+            return;
           }
-          i++;
         }
       } else {
         async.setRejected();
