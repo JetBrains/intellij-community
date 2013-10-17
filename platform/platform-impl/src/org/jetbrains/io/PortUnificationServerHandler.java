@@ -21,7 +21,7 @@ import io.netty.channel.*;
 import io.netty.handler.codec.compression.JZlibEncoder;
 import io.netty.handler.codec.compression.JdkZlibDecoder;
 import io.netty.handler.codec.compression.ZlibWrapper;
-import io.netty.handler.codec.http.HttpMessage;
+import io.netty.handler.codec.http.HttpResponse;
 import io.netty.handler.ssl.SslHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import org.jetbrains.annotations.NotNull;
@@ -110,8 +110,10 @@ class PortUnificationServerHandler extends Decoder {
           pipeline.addLast(new ChannelOutboundHandlerAdapter() {
             @Override
             public void write(ChannelHandlerContext context, Object message, ChannelPromise promise) throws Exception {
-              if (message instanceof HttpMessage) {
-                BuiltInServer.LOG.debug("OUT HTTP:\n" + message);
+              if (message instanceof HttpResponse) {
+//                BuiltInServer.LOG.debug("OUT HTTP:\n" + message);
+                HttpResponse response = (HttpResponse)message;
+                BuiltInServer.LOG.debug("OUT HTTP: " + response.getStatus().code() + " " + response.headers().get("Content-type"));
               }
               super.write(context, message, promise);
             }
