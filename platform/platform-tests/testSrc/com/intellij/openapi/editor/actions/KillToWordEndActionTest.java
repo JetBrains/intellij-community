@@ -36,7 +36,7 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
       "this is a <caret>"
     );
   }
-  
+
   public void testInTheMiddle() throws IOException {
     doTest(
       "th<caret>is is a string",
@@ -107,5 +107,18 @@ public class KillToWordEndActionTest extends LightPlatformCodeInsightTestCase {
     assertTrue(contents instanceof KillRingTransferable);
     Object string = contents.getTransferData(DataFlavor.stringFlavor);
     assertEquals(" second", string);
+  }
+
+  public void testDoubleAction() throws Exception {
+    String text = "<caret>first\n" +
+                  "second\n" +
+                  "third";
+    configureFromFileText(getTestName(false) + ".txt", text);
+    killToWordEnd();
+    killToWordEnd();
+    Transferable contents = CopyPasteManager.getInstance().getContents();
+    assertTrue(contents instanceof KillRingTransferable);
+    Object string = contents.getTransferData(DataFlavor.stringFlavor);
+    assertEquals("first\nsecond\n", string);
   }
 }
