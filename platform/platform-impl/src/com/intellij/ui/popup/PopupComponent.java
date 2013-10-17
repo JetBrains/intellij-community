@@ -201,18 +201,22 @@ public interface PopupComponent {
 
     public void show() {
       Window wnd = getWindow();
-      if (UIUtil.isUnderDarcula() && wnd != null) {
-        AWTUtilities.setWindowOpaque(wnd, false);
-      }
-
+      
+      fixFlickering(wnd, false);
       myPopup.show();
-
-      if (UIUtil.isUnderDarcula() && wnd != null) {
-        AWTUtilities.setWindowOpaque(wnd, true);
-      }
+      fixFlickering(wnd, true);
+      
       if (wnd instanceof JWindow) {
         ((JWindow)wnd).getRootPane().putClientProperty(JBPopup.KEY, myJBPopup);
       }
+    }
+
+    private static void fixFlickering(Window wnd, boolean opaque) {
+      try {
+        if (UIUtil.isUnderDarcula() && !SystemInfo.isLinux && wnd != null) {
+          AWTUtilities.setWindowOpaque(wnd, opaque);
+        }
+      } catch (Exception ignore) {}
     }
 
     public Window getWindow() {
