@@ -287,6 +287,9 @@ public class DarculaLaf extends BasicLookAndFeel {
       final Integer invVal = getInteger(value);
       final Boolean boolVal = "true".equals(value) ? Boolean.TRUE : "false".equals(value) ? Boolean.FALSE : null;
       Icon icon = value.startsWith("AllIcons.") ? IconLoader.getIcon(value) : null;
+      if (icon == null && value.endsWith(".png")) {
+        icon = IconLoader.findIcon(value, getClass(), true);
+      }
       if (color != null) {
         return  new ColorUIResource(color);
       } else if (invVal != null) {
