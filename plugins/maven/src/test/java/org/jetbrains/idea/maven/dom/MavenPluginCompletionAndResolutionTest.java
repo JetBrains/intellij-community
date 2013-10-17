@@ -823,7 +823,7 @@ public class MavenPluginCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom);
   }
 
-  @Bombed(year = 2013, month = Calendar.MARCH, day = 25, user = "sergey.evdokimov")
+  @Bombed(year = 2014, month = Calendar.MARCH, day = 25, user = "sergey.evdokimov")
   public void testDocumentationForParameter() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

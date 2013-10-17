@@ -1,8 +1,10 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.lookup.LookupElement;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 /**
  * @author Sergey Evdokimov
@@ -139,6 +141,324 @@ public class MavenDependencySmartCompletionTest extends MavenDomWithIndicesTestC
                                        "        <classifier>sources</classifier>\n" +
                                        "    </dependency>\n" +
                                        "</dependencies>\n"));
+  }
+
+  public void testCompletionArtifactIdThenVersion() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>\n" +
+
+                     "<dependencies>\n" +
+                     "  <dependency>\n" +
+                     "    <artifactId>juni<caret></artifactId>\n" +
+                     "  </dependency>\n" +
+                     "</dependencies>\n");
+
+    myFixture.configureFromExistingVirtualFile(myProjectPom);
+
+    LookupElement[] elements = myFixture.completeBasic();
+    assertSize(1, elements);
+
+    myFixture.type('\n');
+
+    myFixture.checkResult(createPomXml("<groupId>test</groupId>" +
+                                       "<artifactId>project</artifactId>" +
+                                       "<version>1</version>\n" +
+
+                                       "<dependencies>\n" +
+                                       "  <dependency>\n" +
+                                       "      <groupId>junit</groupId>\n" +
+                                       "      <artifactId>junit</artifactId>\n" +
+                                       "      <version><caret></version>\n" +
+                                       "  </dependency>\n" +
+                                       "</dependencies>\n"));
+
+    myFixture.getLookupElementStrings().containsAll(Arrays.asList("3.8.1", "4.0"));
+  }
+
+  public void testCompletionArtifactIdThenGroupIdThenInsertVersion() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>\n" +
+
+                     "<dependencies>\n" +
+                     "  <dependency>\n" +
+                     "    <artifactId>as<caret></artifactId>\n" +
+                     "  </dependency>\n" +
+                     "</dependencies>\n");
+
+    myFixture.configureFromExistingVirtualFile(myProjectPom);
+
+    LookupElement[] elements = myFixture.completeBasic();
+    assertSize(1, elements);
+
+    myFixture.type('\n');
+
+    assertUnorderedElementsAreEqual(myFixture.getLookupElementStrings(), "asm", "org.ow2.asm");
+
+    myFixture.type("org\n");
+
+    myFixture.checkResult(createPomXml("<groupId>test</groupId>" +
+                                       "<artifactId>project</artifactId>" +
+                                       "<version>1</version>\n" +
+
+                                       "<dependencies>\n" +
+                                       "  <dependency>\n" +
+                                       "      <groupId>org.ow2.asm</groupId>\n" +
+                                       "      <artifactId>asm</artifactId>\n" +
+                                       "      <version>4.1</version>\n" +
+                                       "  </dependency>\n" +
+                                       "</dependencies>\n"));
+  }
+
+  public void testCompletionArtifactIdThenGroupIdThenCompleteVersion() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>\n" +
+
+                     "<dependencies>\n" +
+                     "  <dependency>\n" +
+                     "    <artifactId>as<caret></artifactId>\n" +
+                     "  </dependency>\n" +
+                     "</dependencies>\n");
+
+    myFixture.configureFromExistingVirtualFile(myProjectPom);
+
+    LookupElement[] elements = myFixture.completeBasic();
+    assertSize(1, elements);
+
+    myFixture.type('\n');
+
+    assertUnorderedElementsAreEqual(myFixture.getLookupElementStrings(), "asm", "org.ow2.asm");
+
+    myFixture.type("asm\n");
+
+    myFixture.checkResult(createPomXml("<groupId>test</groupId>" +
+                                       "<artifactId>project</artifactId>" +
+                                       "<version>1</version>\n" +
+
+                                       "<dependencies>\n" +
+                                       "  <dependency>\n" +
+                                       "      <groupId>asm</groupId>\n" +
+                                       "      <artifactId>asm</artifactId>\n" +
+                                       "      <version><caret></version>\n" +
+                                       "  </dependency>\n" +
+                                       "</dependencies>\n"));
+
+    myFixture.getLookupElementStrings().equals(Arrays.asList("3.3", "3.3.1"));
+  }
+
+  public void testCompletionArtifactIdWithFullInsert() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>\n" +
+
+                     "<dependencies>\n" +
+                     "  <dependency>\n" +
+                     "    <artifactId>common-i<caret></artifactId>\n" +
+                     "  </dependency>\n" +
+                     "</dependencies>\n");
+
+    myFixture.configureFromExistingVirtualFile(myProjectPom);
+
+    LookupElement[] elements = myFixture.completeBasic();
+    assertSize(1, elements);
+
+    myFixture.type('\n');
+
+    myFixture.checkResult(createPomXml("<groupId>test</groupId>" +
+                                       "<artifactId>project</artifactId>" +
+                                       "<version>1</version>\n" +
+
+                                       "<dependencies>\n" +
+                                       "  <dependency>\n" +
+                                       "      <groupId>commons-io</groupId>\n" +
+                                       "      <artifactId>commons-io</artifactId>\n" +
+                                       "      <version>2.4</version>\n" +
+                                       "  </dependency>\n" +
+                                       "</dependencies>\n"));
+  }
+
+  public void testCompletionArtifactIdInsideManagedDependency() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>\n" +
+
+                     "<dependencyManagement>\n" +
+                     "    <dependencies>\n" +
+                     "        <dependency>\n" +
+                     "            <artifactId>commons-i<caret></artifactId>\n" +
+                     "        </dependency>\n" +
+                     "    </dependencies>\n" +
+                     "</dependencyManagement>\n");
+
+    myFixture.configureFromExistingVirtualFile(myProjectPom);
+
+    LookupElement[] elements = myFixture.completeBasic();
+    assertSize(1, elements);
+    myFixture.type('\n');
+
+    myFixture.checkResult(createPomXml("<groupId>test</groupId>" +
+                                       "<artifactId>project</artifactId>" +
+                                       "<version>1</version>\n" +
+
+                                       "<dependencyManagement>\n" +
+                                       "    <dependencies>\n" +
+                                       "        <dependency>\n" +
+                                       "            <groupId>commons-io</groupId>\n" +
+                                       "            <artifactId>commons-io</artifactId>\n" +
+                                       "            <version>2.4</version>\n" +
+                                       "        </dependency>\n" +
+                                       "    </dependencies>\n" +
+                                       "</dependencyManagement>\n"));
+  }
+
+  public void testCompletionArtifactIdWithManagedDependency() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>\n" +
+                  "" +
+                  "  <dependencyManagement>\n" +
+                  "    <dependencies>\n" +
+                  "      <dependency>\n" +
+                  "        <groupId>commons-io</groupId>\n" +
+                  "        <artifactId>commons-io</artifactId>\n" +
+                  "        <version>2.4</version>\n" +
+                  "      </dependency>\n" +
+                  "    </dependencies>\n" +
+                  "  </dependencyManagement>\n");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>\n" +
+                     "  <dependencyManagement>\n" +
+                     "    <dependencies>\n" +
+                     "      <dependency>\n" +
+                     "        <groupId>commons-io</groupId>\n" +
+                     "        <artifactId>commons-io</artifactId>\n" +
+                     "        <version>2.4</version>\n" +
+                     "      </dependency>\n" +
+                     "    </dependencies>\n" +
+                     "  </dependencyManagement>\n" +
+
+                     "<dependencies>\n" +
+                     "  <dependency>\n" +
+                     "    <artifactId>common-i<caret></artifactId>\n" +
+                     "  </dependency>\n" +
+                     "</dependencies>\n");
+
+    myFixture.configureFromExistingVirtualFile(myProjectPom);
+
+    LookupElement[] elements = myFixture.completeBasic();
+    assertSize(1, elements);
+    myFixture.type('\n');
+
+    myFixture.checkResult(createPomXml("<groupId>test</groupId>" +
+                                       "<artifactId>project</artifactId>" +
+                                       "<version>1</version>\n" +
+
+                                       "  <dependencyManagement>\n" +
+                                       "    <dependencies>\n" +
+                                       "      <dependency>\n" +
+                                       "        <groupId>commons-io</groupId>\n" +
+                                       "        <artifactId>commons-io</artifactId>\n" +
+                                       "        <version>2.4</version>\n" +
+                                       "      </dependency>\n" +
+                                       "    </dependencies>\n" +
+                                       "  </dependencyManagement>\n" +
+
+                                       "<dependencies>\n" +
+                                       "  <dependency>\n" +
+                                       "      <groupId>commons-io</groupId>\n" +
+                                       "      <artifactId>commons-io</artifactId>\n" +
+                                       "  </dependency>\n" +
+                                       "</dependencies>\n"
+    ));
+  }
+
+  public void testCompletionGroupIdWithManagedDependency() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>\n" +
+                  "" +
+                  "<dependencyManagement>\n" +
+                  "  <dependencies>\n" +
+                  "    <dependency>\n" +
+                  "      <groupId>commons-io</groupId>\n" +
+                  "      <artifactId>commons-io</artifactId>\n" +
+                  "      <version>2.4</version>\n" +
+                  "    </dependency>\n" +
+                  "  </dependencies>\n" +
+                  "</dependencyManagement>\n");
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>\n" +
+                     "<dependencyManagement>\n" +
+                     "  <dependencies>\n" +
+                     "    <dependency>\n" +
+                     "      <groupId>commons-io</groupId>\n" +
+                     "      <artifactId>commons-io</artifactId>\n" +
+                     "      <version>2.4</version>\n" +
+                     "    </dependency>\n" +
+                     "  </dependencies>\n" +
+                     "</dependencyManagement>\n" +
+
+                     "<dependencies>\n" +
+                     "  <dependency>\n" +
+                     "    <groupId>commons-i<caret></groupId>\n" +
+                     "    <artifactId>commons-io</artifactId>\n" +
+                     "  </dependency>\n" +
+                     "</dependencies>\n");
+
+    myFixture.configureFromExistingVirtualFile(myProjectPom);
+
+    LookupElement[] elements = myFixture.complete(CompletionType.SMART);
+    assertNull(elements);
+//    assertSize(1, elements);
+//    myFixture.type('\n');
+
+    myFixture.checkResult(createPomXml("<groupId>test</groupId>" +
+                                       "<artifactId>project</artifactId>" +
+                                       "<version>1</version>\n" +
+
+                                       "<dependencyManagement>\n" +
+                                       "  <dependencies>\n" +
+                                       "    <dependency>\n" +
+                                       "      <groupId>commons-io</groupId>\n" +
+                                       "      <artifactId>commons-io</artifactId>\n" +
+                                       "      <version>2.4</version>\n" +
+                                       "    </dependency>\n" +
+                                       "  </dependencies>\n" +
+                                       "</dependencyManagement>\n" +
+
+                                       "<dependencies>\n" +
+                                       "  <dependency>\n" +
+                                       "    <groupId>commons-io</groupId>\n" +
+                                       "    <artifactId>commons-io</artifactId>\n" +
+                                       "  </dependency>\n" +
+                                       "</dependencies>\n"
+    ));
   }
 
 }
