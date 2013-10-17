@@ -18,7 +18,8 @@ package org.jetbrains.annotations;
 import java.lang.annotation.*;
 
 /**
- * Specifies some aspects of the method behavior depending on the arguments. Can be used by tools for advanced data flow analysis.<p>
+ * Specifies some aspects of the method behavior depending on the arguments. Can be used by tools for advanced data flow analysis.
+ * Note that this annotation just describes how the code works and doesn't add any functionality by means of code generation.<p>
  * 
  * Method contract has the following syntax:<br/>
  *  contract ::= (clause ';')* clause<br/>
