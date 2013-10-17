@@ -36,7 +36,6 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -84,7 +83,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTrackerListener {
   @NonNls public static final String SHOW_RECENT_FIND_USAGES_ACTION_ID = "UsageView.ShowRecentFindUsages";
-  private static final boolean EXPAND_ALL = Registry.is("find.usage.expand.all");
 
   private final UsageNodeTreeBuilder myBuilder;
   private final MyPanel myRootPanel;
@@ -518,6 +516,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       @Override
       public void expandAll() {
         UsageViewImpl.this.expandAll();
+        UsageViewSettings.getInstance().setExpanded(true);
       }
 
       @Override
@@ -528,6 +527,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       @Override
       public void collapseAll() {
         UsageViewImpl.this.collapseAll();
+        UsageViewSettings.getInstance().setExpanded(false);
       }
 
       @Override
@@ -1080,7 +1080,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
             return;
           }
           showNode(firstUsageNode);
-          if (EXPAND_ALL) {
+          if (UsageViewSettings.getInstance().isExpanded()) {
             expandAll();
           }
         }
