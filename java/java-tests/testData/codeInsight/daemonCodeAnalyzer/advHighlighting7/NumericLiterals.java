@@ -33,6 +33,7 @@ public class NumericLiterals {
     float f10 = 0xa_bc.d_efP0F;
     float f11= <error descr="Floating point number too small">1e-4__6f</error>;
     float f12 = <error descr="Floating point number too large">1e3_9f</error>;
+    float f13 = 0x0.0p1f;
 
     double d1 = 0_0d;
     double d2 = 1e1_1;
@@ -48,5 +49,6 @@ public class NumericLiterals {
     double d12 = <error descr="Floating point number too large">0xa_bc.de_fP1_234D</error>;
     double d13 = <error descr="Illegal underscore">0x1.0_p-1</error>;
     double d14 = <error descr="Illegal underscore">1.0e_1022</error>;
+    double d15 = 0x.0P2d;
   }
 }
