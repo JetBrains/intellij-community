@@ -31,16 +31,16 @@ import java.awt.event.KeyEvent;
  */
 public class LiveTemplateLookupElement extends LookupElement {
   private final String myPrefix;
-  private final TemplateImpl myTemplate;
+  @NotNull private final TemplateImpl myTemplate;
   private final String myLookupString;
   public final boolean sudden;
   private final boolean myWorthShowingInAutoPopup;
 
-  public LiveTemplateLookupElement(TemplateImpl template, boolean sudden) {
+  public LiveTemplateLookupElement(@NotNull TemplateImpl template, boolean sudden) {
     this(template, null, sudden, false);
   }
   
-  public LiveTemplateLookupElement(TemplateImpl template, @Nullable String lookupString, boolean sudden, boolean worthShowingInAutoPopup) {
+  public LiveTemplateLookupElement(@NotNull TemplateImpl template, @Nullable String lookupString, boolean sudden, boolean worthShowingInAutoPopup) {
     this.sudden = sudden;
     myLookupString = lookupString;
     myPrefix = template.getKey();
@@ -53,6 +53,7 @@ public class LiveTemplateLookupElement extends LookupElement {
     return myPrefix;
   }
 
+  @NotNull
   public TemplateImpl getTemplate() {
     return myTemplate;
   }
