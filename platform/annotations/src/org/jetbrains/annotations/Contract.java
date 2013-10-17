@@ -47,7 +47,7 @@ import java.lang.annotation.*;
  * @author peter
  */
 @Documented
-@Retention(RetentionPolicy.SOURCE)
+@Retention(RetentionPolicy.CLASS)
 @Target(ElementType.METHOD)
 public @interface Contract {
   String value();
