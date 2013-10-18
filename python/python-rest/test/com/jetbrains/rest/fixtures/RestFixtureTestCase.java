@@ -8,6 +8,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.fixtures.PyTestCase;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +34,7 @@ public abstract class RestFixtureTestCase extends UsefulTestCase {
   }
 
   protected String getTestDataPath() {
-    return PyTestCase.getPythonCommunityPath() + "/python-rest/testData";
+    return PythonHelpersLocator.getPythonCommunityPath() + "/python-rest/testData";
   }
 
   @Override

@@ -22,6 +22,7 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.PythonMockSdk;
 import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -149,15 +150,7 @@ public abstract class PyTestCase extends UsefulTestCase {
     PlatformTestCase.autodetectPlatformPrefix();
   }
 
-  public static String getPythonCommunityPath() {
-    File pathFromUltimate = new File(PathManager.getHomePath(), "community/python");
-    if (pathFromUltimate.exists()) {
-      return pathFromUltimate.getPath();
-    }
-    return new File(PathManager.getHomePath(), "python").getPath();
-  }
-
   public static String getHelpersPath() {
-    return new File(getPythonCommunityPath(), "helpers").getPath();
+    return new File(PythonHelpersLocator.getPythonCommunityPath(), "helpers").getPath();
   }
 }
