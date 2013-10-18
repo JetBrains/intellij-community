@@ -15,7 +15,6 @@
  */
 package com.intellij.tasks;
 
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
@@ -114,5 +113,4 @@ public abstract class TaskManager {
 
   public abstract boolean testConnection(TaskRepository repository);
 
-  public final static TaskRepositoryType[] ourRepositoryTypes = Extensions.getExtensions(TaskRepositoryType.EP_NAME);
 }
