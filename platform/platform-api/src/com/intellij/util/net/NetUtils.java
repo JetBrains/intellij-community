@@ -112,8 +112,10 @@ public class NetUtils {
       int port = serverSocket.getLocalPort();
       // workaround for linux : calling close() immediately after opening socket
       // may result that socket is not closed
+      //noinspection SynchronizationOnLocalVariableOrMethodParameter
       synchronized (serverSocket) {
         try {
+          //noinspection WaitNotInLoop
           serverSocket.wait(1);
         }
         catch (InterruptedException e) {
@@ -132,14 +134,17 @@ public class NetUtils {
     final ServerSocket[] sockets = new ServerSocket[capacity];
 
     for (int i = 0; i < capacity; i++) {
+      //noinspection SocketOpenedButNotSafelyClosed
       final ServerSocket serverSocket = new ServerSocket(0);
       sockets[i] = serverSocket;
       ports[i] = serverSocket.getLocalPort();
     }
     //workaround for linux : calling close() immediately after opening socket
     //may result that socket is not closed
+    //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (sockets) {
       try {
+        //noinspection WaitNotInLoop
         sockets.wait(1);
       }
       catch (InterruptedException e) {
