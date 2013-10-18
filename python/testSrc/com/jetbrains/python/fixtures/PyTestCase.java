@@ -150,7 +150,11 @@ public abstract class PyTestCase extends UsefulTestCase {
   }
 
   public static String getPythonCommunityPath() {
-    return new File(PathManager.getHomePath(), "python/community").getPath();
+    File pathFromUltimate = new File(PathManager.getHomePath(), "community/python");
+    if (pathFromUltimate.exists()) {
+      return pathFromUltimate.getPath();
+    }
+    return new File(PathManager.getHomePath(), "python").getPath();
   }
 
   public static String getHelpersPath() {
