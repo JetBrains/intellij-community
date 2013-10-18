@@ -108,17 +108,6 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     });
   }
 
-  public void expandChildren() {
-    DebuggerUIUtil.invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        for (XValueNodeImpl child : myValueChildren) {
-          myTree.expandPath(child.getPath());
-        }
-      }
-    });
-  }
-
   @Nullable
   private List<XValueGroupNodeImpl> createGroupNodes(List<XValueGroup> groups,
                                                      @Nullable List<XValueGroupNodeImpl> prevNodes,

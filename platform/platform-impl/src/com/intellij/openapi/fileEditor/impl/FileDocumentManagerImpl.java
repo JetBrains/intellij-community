@@ -81,8 +81,6 @@ import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.reference.SoftReference.dereference;
-
 public class FileDocumentManagerImpl extends FileDocumentManager implements ApplicationComponent, VirtualFileListener,
                                                                             ProjectManagerListener, SafeWriteRequestor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl");
@@ -169,8 +167,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   public Document getDocument(@NotNull final VirtualFile file) {
     DocumentEx document = (DocumentEx)getCachedDocument(file);
     if (document == null) {
-      if (file.isDirectory() || isBinaryWithoutDecompiler(file) || SingleRootFileViewProvider.isTooLargeForContentLoading(file)) {
+      if (file.isDirectory() || SingleRootFileViewProvider.isTooLargeForContentLoading(file)) {
         return null;
+      }
+      if (isBinaryWithoutDecompiler(file)) {
+        FileType fileType = file.getFileType();
+        if (fileType == UnknownFileType.INSTANCE) fileType = FileTypeManager.getInstance().detectFileTypeFromContent(file);
+        if (fileType.isBinary()) return null;
       }
       final CharSequence text = LoadTextUtil.loadText(file);
 
@@ -230,7 +233,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   @Override
   @Nullable
   public Document getCachedDocument(@NotNull VirtualFile file) {
-    return dereference(file.getUserData(DOCUMENT_KEY));
+    return com.intellij.reference.SoftReference.dereference(file.getUserData(DOCUMENT_KEY));
   }
 
   public static void registerDocument(@NotNull final Document document, @NotNull VirtualFile virtualFile) {
@@ -570,8 +573,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
   }
 
   private static boolean isBinaryWithoutDecompiler(VirtualFile file) {
-    final FileType ft = file.getFileType();
-    return ft.isBinary() && BinaryFileTypeDecompilers.INSTANCE.forFileType(ft) == null;
+    final FileType fileType = file.getFileType();
+    return fileType.isBinary() && BinaryFileTypeDecompilers.INSTANCE.forFileType(fileType) == null;
   }
 
   @Override
