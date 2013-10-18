@@ -736,15 +736,17 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     ContainerUtil.quickSort(deletionEvents, DEPTH_COMPARATOR);
 
     final TIntHashSet invalidIDs = new TIntHashSet(deletionEvents.size());
-    final List<VirtualFile> dirsToBeDeleted = new ArrayList<VirtualFile>();
+    final Set<VirtualFile> dirsToBeDeleted = new THashSet<VirtualFile>(deletionEvents.size());
     nextEvent:
     for (EventWrapper wrapper : deletionEvents) {
       final VirtualFile candidate = wrapper.event.getFile();
-      for (VirtualFile file : dirsToBeDeleted) {
-        if (VfsUtilCore.isAncestor(file, candidate, false)) {
+      VirtualFile parent = candidate;
+      while (parent != null) {
+        if (dirsToBeDeleted.contains(parent)) {
           invalidIDs.add(wrapper.id);
           continue nextEvent;
         }
+        parent = parent.getParent();
       }
 
       if (candidate.isDirectory()) {
