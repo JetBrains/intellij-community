@@ -76,6 +76,7 @@ public class ImportSchemeChooserDialog extends DialogWrapper {
     });
     mySchemeList.getSelectionModel().setSelectionInterval(0,0);
     init();
+    setTitle(ApplicationBundle.message("title.import.scheme.chooser"));
   }
 
   public String getSelectedName() {

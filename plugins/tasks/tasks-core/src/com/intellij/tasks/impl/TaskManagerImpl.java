@@ -559,7 +559,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
 
   public static ArrayList<TaskRepository> loadRepositories(Element element) {
     ArrayList<TaskRepository> repositories = new ArrayList<TaskRepository>();
-    for (TaskRepositoryType repositoryType : ourRepositoryTypes) {
+    for (TaskRepositoryType repositoryType : TaskRepositoryType.getRepositoryTypes()) {
       for (Object o : element.getChildren()) {
         if (((Element)o).getName().equals(repositoryType.getName())) {
           try {
@@ -589,7 +589,7 @@ public class TaskManagerImpl extends TaskManager implements ProjectComponent, Pe
       if (server.type == null || server.url == null) {
         continue;
       }
-      for (TaskRepositoryType<?> repositoryType : ourRepositoryTypes) {
+      for (TaskRepositoryType<?> repositoryType : TaskRepositoryType.getRepositoryTypes()) {
         if (repositoryType.getName().equals(server.type)) {
           for (TaskRepository repository : myRepositories) {
             if (!repositoryType.equals(repository.getRepositoryType())) {

@@ -701,7 +701,11 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
 
     if (defaultSizeInfo) {
-      myEnumerator.myStorage.putLong(keyId + myParentValueRefOffset, value | USED_LONG_VALUE_MASK);
+      value |= USED_LONG_VALUE_MASK;
+
+      myEnumerator.myStorage.putInt(keyId + myParentValueRefOffset, (int)(value >>> 32) );
+      myEnumerator.myStorage.putInt(keyId + myParentValueRefOffset + 4, (int)value);
+
       if (newKey) ++largeKeys;
     }
 

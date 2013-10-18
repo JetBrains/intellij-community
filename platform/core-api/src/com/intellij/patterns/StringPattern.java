@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,7 +127,7 @@ public class StringPattern extends ObjectPattern<String, StringPattern> {
     for (int i = 0; i < s.length(); i++) {
       final char c = s.charAt(i);
       if(c == ' ') {
-        sb.append("<whitespace>");
+        sb.append("<whitespacechar>");
       }
       else
       //This is really stupid and inconvenient builder - it breaks any normal pattern with uppercase
