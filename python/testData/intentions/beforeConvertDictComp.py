@@ -1,0 +1,1 @@
+{k: chr(k + 65)<caret> for k in range(10)}

@@ -1,0 +1,45 @@
+package com.jetbrains.python.validation;
+
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.annotation.Annotation;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.highlighting.PyHighlighter;
+import com.jetbrains.python.psi.*;
+
+/**
+ * @author yole
+ */
+public class HighlightingAnnotator extends PyAnnotator {
+  @Override
+  public void visitPyParameter(PyParameter node) {
+    PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
+    if (function != null) {
+      Annotation annotation = getHolder().createInfoAnnotation(node, null);
+      annotation.setTextAttributes(node.isSelf() ? PyHighlighter.PY_SELF_PARAMETER : PyHighlighter.PY_PARAMETER);
+    }
+  }
+
+  @Override
+  public void visitPyReferenceExpression(PyReferenceExpression node) {
+    final String referencedName = node.getReferencedName();
+    if (node.getQualifier() == null && referencedName != null) {
+      PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
+      if (function != null) {
+        final PyNamedParameter element = function.getParameterList().findParameterByName(referencedName);
+        if (element != null) {
+          Annotation annotation = getHolder().createInfoAnnotation(node, null);
+          annotation.setTextAttributes(element.isSelf() ? PyHighlighter.PY_SELF_PARAMETER : PyHighlighter.PY_PARAMETER);
+        }
+      }
+    }
+  }
+
+  @Override
+  public void visitPyKeywordArgument(PyKeywordArgument node) {
+    ASTNode keywordNode = node.getKeywordNode();
+    if (keywordNode != null) {
+      Annotation annotation = getHolder().createInfoAnnotation(keywordNode, null);
+      annotation.setTextAttributes(PyHighlighter.PY_KEYWORD_ARGUMENT);
+    }
+  }
+}

@@ -1,0 +1,38 @@
+<project name="Layout Python plugin distribution" default="layout">
+  <target name="layout">
+    <patternset id="resources.included">
+      <include name="**/*.properties"/>
+    </patternset>
+    <patternset id="resources.excluded">
+      <exclude name="**/*.properties"/>
+    </patternset>
+    <patternset id="classes.excluded">
+      <exclude name="*$py.class"/>
+    </patternset>
+
+    <layout todir="${deploy}/plugins" xmlns="antlib:jetbrains.antlayout">
+      <dir name="python">
+        <dir name="lib">
+          <jar name="python.jar">
+            <module name="python"> <patternset refid="resources.excluded"/> </module>
+            <module name="python-community"/>
+            <module name="python-plugin"/>
+            <module name="python-pydev"/>
+            <module name="python-openapi"/>
+            <module name="python-psi-api"/>
+            <module name="python-community-plugin"/>
+            <module name="colorSchemes"/>
+          </jar>
+          <jar name="resources_en.jar">
+            <module name="python">  <patternset refid="resources.included"/> </module>
+          </jar>
+        </dir>
+        <dir name="helpers">
+          <fileset dir="${project.home}/python/community/helpers" includes="**/*.py"/>
+          <fileset dir="${project.home}/python/community/helpers" includes="**/versions.xml"/>
+          <fileset dir="${project.home}/python/community/helpers" includes="**/class_method_versions.xml"/>
+        </dir>
+      </dir>
+    </layout>
+  </target>
+</project>

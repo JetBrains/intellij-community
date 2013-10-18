@@ -1,0 +1,32 @@
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude" url="http://confluence.jetbrains.com/display/PYH/">
+  <!-- Components and extensions declared in this file work ONLY in Python plugin for IntelliJ IDEA Ultimate, not in standalone PyCharm.
+       Anything related to Django and App Engine in IntelliJ IDEA context must go in this file. -->
+
+  <id>Pythonid</id>
+  <name>Python</name>
+  <idea-version since-build="130.0" until-build="133.0"/>
+  <description>Smart editing for Python scripts</description>
+  <version>3.0.1</version>
+  <depends>com.intellij.modules.ultimate</depends>
+  <depends>com.intellij.modules.java</depends>
+  <depends>Coverage</depends>
+  <depends>org.jetbrains.plugins.yaml</depends>
+
+
+  <vendor url="http://www.jetbrains.com/pycharm/" logo="/com/jetbrains/python/python.png">JetBrains, Keith Lea</vendor>
+  <helpset file="pythonpluginhelp.jar" path="/pycharm/Help.hs"/>
+
+  <xi:include href="/META-INF/python-plugin-common.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/python-plugin-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <!-- Two different versions of this file exist: one is used when building from sources (when auxiliary
+       plugins are loaded as separate plugins) and another is used for the real release build (when auxiliary
+       plugins are packed inside the Python plugin jar) -->
+  <xi:include href="/META-INF/python-plugin-dependencies.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <framework.detector implementation="com.jetbrains.django.facet.DjangoFrameworkDetector"/>
+    <frameworkSupport implementation="com.jetbrains.django.facet.DjangoFacetSupportProvider"/>
+    <frameworkSupport implementation="com.jetbrains.appengine.facet.AppEngineFacetSupportProvider"/>
+  </extensions>
+</idea-plugin>
