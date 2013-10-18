@@ -409,6 +409,7 @@ public class TemplateImpl extends Template implements SchemeElement {
   }
 
   public boolean isSelectionTemplate() {
+    parseSegments();
     for (Segment v : mySegments) {
       if (v.name.equals(SELECTION)) return true;
     }
