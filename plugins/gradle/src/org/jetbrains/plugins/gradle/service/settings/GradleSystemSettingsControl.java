@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
@@ -148,14 +149,16 @@ public class GradleSystemSettingsControl implements ExternalSystemSettingsContro
   }
 
   @Override
-  @Nullable
-  public String apply(@NotNull GradleSettings settings) {
+  public void apply(@NotNull GradleSettings settings) {
     if (myServiceDirectoryPathModifiedByUser) {
       settings.setServiceDirectoryPath(ExternalSystemApiUtil.normalizePath(myServiceDirectoryPathField.getText()));
     }
-    
     settings.setGradleVmOptions(trimIfPossible(myGradleVmOptionsField.getText()));
-    return null;
+  }
+
+  @Override
+  public boolean validate(@NotNull GradleSettings settings) throws ConfigurationException {
+    return true;
   }
 
   @Override

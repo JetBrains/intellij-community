@@ -376,9 +376,7 @@ public class GradleInstallationManager {
    */
   @Nullable
   public List<VirtualFile> getClassRoots(@Nullable Project project) {
-    if (project == null) {
-      project = ProjectManager.getInstance().getDefaultProject();
-    }
+    if (project == null) return null;
 
     for (Module module : myPlatformFacade.getModules(project)) {
       String rootProjectPath = module.getOptionValue(ExternalSystemConstants.ROOT_PROJECT_PATH_KEY);

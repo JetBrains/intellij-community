@@ -16,10 +16,11 @@
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectSettingsControl;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
-import com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
+import com.intellij.openapi.options.ConfigurationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,12 +31,14 @@ import javax.swing.*;
  * @since 6/26/13 1:38 PM
  */
 public class ExternalModuleSettingsStep<S extends ExternalProjectSettings> extends ModuleWizardStep {
-  
-  @NotNull private final ExternalSystemSettingsControl<S> myControl;
+
+  @NotNull private final AbstractExternalModuleBuilder<S> myExternalModuleBuilder;
+  @NotNull private final AbstractExternalProjectSettingsControl<S> myControl;
   
   @Nullable private PaintAwarePanel myComponent;
 
-  public ExternalModuleSettingsStep(@NotNull ExternalSystemSettingsControl<S> control) {
+  public ExternalModuleSettingsStep(@NotNull AbstractExternalModuleBuilder<S> externalModuleBuilder, @NotNull AbstractExternalProjectSettingsControl<S> control) {
+    myExternalModuleBuilder = externalModuleBuilder;
     myControl = control;
   }
 
@@ -45,6 +48,7 @@ public class ExternalModuleSettingsStep<S extends ExternalProjectSettings> exten
     if (result == null) {
       result = new PaintAwarePanel();
       myControl.fillUi(result, 0);
+      myControl.reset(true);
       ExternalSystemUiUtil.fillBottom(result);
       myComponent = result;
     }
@@ -53,6 +57,30 @@ public class ExternalModuleSettingsStep<S extends ExternalProjectSettings> exten
   }
 
   @Override
+  public boolean validate() throws ConfigurationException {
+    if (!super.validate()) {
+      return false;
+    }
+    return myControl.validate(myExternalModuleBuilder.getExternalProjectSettings());
+  }
+
+  @Override
   public void updateDataModel() {
+    myControl.apply(myExternalModuleBuilder.getExternalProjectSettings());
+
+  }
+
+  @Override
+  public void updateStep() {
+    String contentPath = myExternalModuleBuilder.getContentEntryPath();
+    if (contentPath != null) {
+      myControl.getInitialSettings().setExternalProjectPath(contentPath);
+    }
+  }
+
+  @Override
+  public void disposeUIResources() {
+    super.disposeUIResources();
+    myControl.disposeUIResources();
   }
 }
