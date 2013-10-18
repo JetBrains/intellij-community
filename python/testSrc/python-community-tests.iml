@@ -14,6 +14,7 @@
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="spellchecker" scope="TEST" />
     <orderEntry type="module" module-name="python-ide-community" />
+    <orderEntry type="module" module-name="python-helpers" scope="RUNTIME" />
   </component>
 </module>
 
