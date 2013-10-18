@@ -1,0 +1,432 @@
+import org.jetbrains.jps.LayoutInfo
+
+import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
+
+includeTargets << new File("${guessHome(this as Script)}/community/build/scripts/utils.gant")
+includeTargets << new File("${guessHome(this)}/build/scripts/ultimate_utils.gant")
+includeTargets << new File("${guessHome(this)}/build/scripts/libLicenses.gant")
+includeTargets << new File("${guessHome(this)}/python/build/python_common.gant")
+
+requireProperty("buildNumber", requireProperty("build.number", snapshot))
+
+// load ApplicationInfo.xml properties
+ant.xmlproperty(file: "$home/python/resources/idea/PythonApplicationInfo.xml", collapseAttributes: "true")
+
+setProperty("system_selector", "PyCharm${p("component.version.major")}0")
+setProperty("ch", "$home/community")
+setProperty("pythonCommunityHome", "$home/python/community")
+setProperty("dryRun", false)
+setProperty("jdk16", guessJdk())
+
+//modules to compile
+setProperty("pluginFilter", new File("$home/python/build/plugin-list.txt").readLines())
+
+private List<String> pycharmPlatformApiModules() {
+  return [platformUltimateApiModules, "graph-openapi"].flatten()
+}
+
+
+private List pycharmImplementationModules() {   //modules to put into pycharm.jar
+  return ["yaml", "graph", "coverage-common", "python-community", "python", "python-ide", "python-ide-community",
+    "python-openapi", "python-psi-api", "duplicates", "duplicates-xml"]
+}
+
+class Paths {
+  final sandbox
+  final sandboxCE
+  final distAll
+  final distWin
+  final distMac
+  final distUnix
+  final artifacts
+  final ideaSystem
+  final ideaConfig
+
+  def Paths(String home) {
+    sandbox = "$home/out/pycharm"
+    sandboxCE = "$home/out/pycharmCE"
+
+    distAll = "$sandbox/layout"
+    distWin = "$sandbox/win"
+    distMac = "$sandbox/mac"
+    distUnix = "$sandbox/unix"
+    artifacts = "$home/out/pycharm/artifacts"
+
+    ideaSystem = "$sandbox/system"
+    ideaConfig = "$sandbox/config"
+  }
+}
+
+setProperty("paths", new Paths(home))
+setProperty("buildName", "PY-$buildNumber")
+
+target('default': "Build artifacts") {
+  def modules = [
+    "python-pydev", "colorSchemes", pycharmPlatformApiModules(), platformUltimateImplementationModules,
+    pycharmImplementationModules(), pluginFilter, "platform-main"].flatten()
+
+  loadProject()
+
+  projectBuilder.stage("Cleaning up sandbox folder")
+
+  projectBuilder.targetFolder = "${paths.sandbox}/classes"
+  projectBuilder.dryRun = dryRun
+
+  if (!dryRun) {
+    forceDelete(paths.sandbox)
+    ant.mkdir(dir: paths.sandbox)
+  }
+
+  ant.tstamp() {
+    format(property: "todayYear", pattern: "yyyy")
+  }
+
+  ant.patternset(id: "resources.included") {
+    include(name: "**/*.properties")
+    include(name: "fileTemplates/**/*")
+    include(name: "inspectionDescriptions/**/*")
+    include(name: "intentionDescriptions/**/*")
+    include(name: "tips/**/*")
+    include(name: "search/**/*")
+  }
+
+  ant.patternset(id: "resources.excluded") {
+    exclude(name: "**/*.properties")
+    exclude(name: "fileTemplates/**/*")
+    exclude(name: "fileTemplates")
+    exclude(name: "inspectionDescriptions/**/*")
+    exclude(name: "inspectionDescriptions")
+    exclude(name: "intentionDescriptions/**/*")
+    exclude(name: "intentionDescriptions")
+    exclude(name: "tips/**/*")
+    exclude(name: "tips")
+  }
+
+  zipSources(home, paths.artifacts)
+
+  def usedJars = buildModules(modules, ["python/lib", "plugins/coverage-common/lib"])
+
+  buildSearchableOptions("${projectBuilder.moduleOutput(findModule("platform-resources"))}/search", ["$home/build/idea.license", "$home/build/pycharm.license"], {
+    projectBuilder.moduleRuntimeClasspath(findModule("main_pycharm"), false).each {
+      ant.pathelement(location: it)
+    }
+  }, "-Didea.platform.prefix=Python -Didea.no.jre.check=true")
+
+  if (!dryRun) {
+    wireBuildDate(buildName, appInfoFile())
+  }
+
+  Map args = [
+          buildNumber: buildName,
+          system_selector: system_selector,
+          ide_jvm_args: "-Didea.platform.prefix=Python -Didea.no.jre.check=true"]
+
+  LayoutInfo layoutInfo = layoutFull(args, paths.distAll, usedJars)
+  generateLicensesTable("$paths.artifacts/third-party-libraries.txt", layoutInfo.usedModules);
+
+  def egg = buildDebuggerEgg(paths.sandbox, "$home/python", buildName)
+  ant.copy(file: egg, todir: paths.distAll)
+  def eggPy3k = buildDebuggerEggPy3K(paths.sandbox, "$home/python", buildName)
+  ant.copy(file: eggPy3k, todir: paths.distAll)
+
+  scramble()
+
+  layoutWin(args, paths.distWin)
+  layoutUnix(args, paths.distUnix)
+  layoutMac(args, paths.distMac)
+
+  ant.echo(message: buildName, file: "${paths.sandbox}/layout/build.txt")
+
+  def launcher = "${paths.distWin}/bin/pycharm.exe"
+  List resourcePaths = ["$home/community/community-resources/src",
+                        "$home/community/platform/icons/src",
+                        "$home/python/resources",
+                        "$pythonCommunityHome/resources"]
+  buildWinLauncher("$home/community", "$home/community/bin/WinLauncher/WinLauncher.exe", launcher,
+                   appInfoFile(), "$home/python/build/pycharm_launcher.properties", system_selector, resourcePaths)
+  signExe(launcher)
+
+  buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin])
+  buildNSIS([paths.distAll, paths.distWin],
+            "$home/python/build/strings.nsi", "$home/python/build/paths.nsi",
+            "pycharm", false, true, system_selector)
+
+  String tarRoot = isEap() ? "pycharm-$buildNumber" : "pycharm-${p("component.version.major")}.${p("component.version.minor")}"
+  buildTarGz(tarRoot, "$paths.artifacts/pycharm${buildName}.tar", [paths.distAll, paths.distUnix])
+
+  String macAppRoot = isEap() ? "PyCharm ${p("component.version.major")}.${p("component.version.minor")} EAP.app" : "PyCharm.app"
+  buildMacZip(macAppRoot, "${paths.artifacts}/pycharm${buildName}.sit", [paths.distAll], paths.distMac)
+  signMacZip("pycharm")
+  buildDmg("pycharm", "${home}/python/build/DMG_background.png")
+
+  communityEdition()
+}
+
+private communityEdition() {
+  Script s = groovyShell.parse(new File("$pythonCommunityHome/build/pycharm_community_build.gant"))
+  s.setBinding(binding)
+
+  s.layoutCommunity("${paths.sandbox}/classes/production", null)
+  signExe("${paths.sandboxCE}/win/bin/pycharm.exe")
+  buildNSIS(["${paths.sandboxCE}/layout", "${paths.sandboxCE}/win"],
+            "$pythonCommunityHome/build/strings.nsi", "$pythonCommunityHome/build/paths.nsi",
+            "pycharmPC", false, true, system_selector)
+
+  ant.copy(file: "${paths.sandboxCE}/artifacts/pycharmPC-${buildNumber}.sit", tofile: "$paths.artifacts/pycharmPC-${buildNumber}.sit")
+  def extraArgs = ["build.number": "PC-$buildNumber", "artifacts.path": "${paths.sandboxCE}/artifacts"]
+  signMacZip("pycharm", extraArgs)
+  notifyArtifactBuilt("$paths.artifacts/pycharmPC-${buildNumber}.sit")
+  buildDmg("pycharm", "${home}/python/community/build/DMG_background.png", extraArgs)
+  //ant.delete(file: "$paths.artifacts/ideaIC-${buildNumber}.sit")
+}
+
+
+private layoutPlugins(layouts) {
+  dir("plugins") {
+    layouts.layoutPlugin("django-db-config")
+    layouts.layoutPlugin("python-javascript-debugger")
+    layouts.layoutPlugin("remote-run") {
+      fileset(dir: "$home/plugins/remote-run/lib") {
+        include(name: "jediterm-0.2.jar")
+      }
+    }
+    layouts.layoutPlugin("python-remote-interpreter")
+    layouts.layoutPlugin("vagrant") {
+      fileset(dir: "$home/plugins/vagrant/lib") {
+        include(name: "jrubyparser-0.2.jar")
+      }
+    }
+    layouts.layoutPlugin("python-uml")
+    layouts.layoutPlugin("localization")
+    layouts.layoutPlugin("python-localization")
+    layouts.layoutPlugin("rest")
+    layouts.layoutPlugin("python-rest")
+    layouts.layoutPlugin("pycharm-flask")
+    layouts.layoutPlugin("pycharm-numpy")
+    layouts.layoutPlugin("textmate") {
+      dir("themes") {
+        fileset(dir: "${home}/plugins/textmate/lib/themes/", includes: "*.tmTheme")
+      }
+      fileset(dir: "${home}/plugins/textmate/lib") {
+        include(name: "jcodings.jar")
+        include(name: "joni.jar")
+      }
+    }
+    layouts.layoutPlugin("puppet")
+    layouts.layoutPlugin("fileWatcher")
+    layouts.layoutPlugin("ini4idea")
+  }
+
+  layouts.layoutPlugins()
+}
+
+private scramble() {
+  copyAndPatchFile("$home/build/conf/script.zkm.stub", "${paths.sandbox}/script.zkm",
+                   ["CLASSES": "\"${paths.distAll}/lib/pycharm.jar\"", "SCRAMBLED_CLASSES": paths.distAll, "INCREMENTAL": ""])
+  ant.mkdir(dir: "$paths.artifacts/pycharm.unscrambled")
+  ant.copy(file: "$paths.distAll/lib/pycharm.jar", todir: "$paths.artifacts/pycharm.unscrambled")
+
+  zkmScramble("$paths.sandbox/script.zkm", "$paths.distAll/lib", "pycharm.jar")
+
+  ant.move(file: "$paths.distAll/pycharm.jar", todir: "$paths.distAll/lib")
+  ant.zip(destfile: "$paths.artifacts/logs.zip") {
+    fileset(file: "ChangeLog.txt")
+    fileset(file: "ZKM_log.txt")
+    fileset(file: "$paths.sandbox/script.zkm")
+  }
+  ant.delete(file: "ChangeLog.txt")
+  ant.delete(file: "ZKM_log.txt")
+}
+
+private String appInfoFile() {
+  return "$home/out/pycharm/classes/production/python-ide-community/idea/PythonApplicationInfo.xml"
+}
+
+private layoutFull(Map args, String target, Set usedJars) {
+  def openapiModules = pycharmPlatformApiModules()
+  def implementationModules = [platformUltimateImplementationModules, pycharmImplementationModules()].flatten()
+  def superLayouts = includeFile("$home/build/scripts/layouts.gant")
+  def result = layout(target) {
+    dir("lib") {
+      jar("util.jar") {
+        module("util")
+        module("util-rt")
+      }
+
+      jar("openapi.jar") {
+        openapiModules.each { module it }
+      }
+
+      jar("annotations.jar") { module("annotations") }
+      jar("extensions.jar") { module("extensions") }
+
+      jar("pycharm.jar") {
+        implementationModules.each {
+          module(it) {
+            exclude(name: "**/tips/**")
+          }
+        }
+        zipfileset(src: "${home}/lib/client-api.jar")
+        zipfileset(src: "${home}/lib/ideaLicenseDecoder.jar")
+        zipfileset(src: "${home}/lib/y.jar")
+        zipfileset(src: "${home}/lib/ysvg.jar")
+      }
+
+      jar("pycharm-pydev.jar") {
+        module("python-pydev")
+      }
+
+      jar("bootstrap.jar") { module("bootstrap") }
+      jar("resources.jar") {
+        module("platform-resources")
+        module("colorSchemes")
+      }
+
+      jar("forms_rt.jar") {
+        module("forms_rt")
+      }
+
+      //noinspection GroovyAssignabilityCheck
+      jar([name: "resources_en.jar", duplicate: "preserve"]) {
+        // custom resources should go first
+        fileset(dir: "$home/python/resources") {
+          include(name: "**/tips/**")
+        }
+        fileset(dir: "$pythonCommunityHome/resources") {
+          include(name: "**/tips/**")
+        }
+        module("platform-resources-en") {
+          ant.patternset {
+            exclude(name: "tips/images/switcher.png")
+            exclude(name: "tips/images/navigateToFilePath.gif")
+          }
+        }
+      }
+
+      jar("icons.jar") { module("icons") }
+      jar("boot.jar") { module("boot") }
+
+      usedJars.each {
+        fileset(file: it)
+      }
+
+      dir("ext") {
+        fileset(dir: "$home/community/lib") {
+          include(name: "cglib*.jar")
+        }
+      }
+
+      dir("src") {
+        fileset(dir: "$home/community/lib/src") {
+          include(name: "trove4j_changes.txt")
+          include(name: "trove4j_src.jar")
+        }
+
+        jar("pycharm-pydev-src.zip") {
+          fileset(dir: "$pythonCommunityHome/pydevSrc")
+        }
+        jar("pycharm-openapi-src.zip") {
+          fileset(dir: "$pythonCommunityHome/openapi/src")
+          fileset(dir: "$pythonCommunityHome/psi-api/src")
+        }
+      }
+    }
+
+    dir("help") {
+      fileset(dir: "$home/python/help") {
+        include(name: "*.pdf")
+      }
+    }
+
+    dir("helpers") {
+      fileset(dir: "$pythonCommunityHome/helpers")
+    }
+
+    dir("license") {
+      fileset(dir: "$home/python/license")
+      fileset(dir: "$home/community/license")
+    }
+
+    layoutPlugins(superLayouts)
+
+    dir("bin") {
+      fileset(dir: "$home/community/bin") {
+        exclude(name: "appletviewer.policy")
+        include(name: "*.*")
+      }
+    }
+  }
+  patchPropertiesFile(target, args + [appendices: ["$home/build/conf/ideaJNC.properties"]])
+  return result
+}
+
+private layoutWin(Map args, String target) {
+  layout(target) {
+    dir("bin") {
+      fileset(dir: "$home/community/bin/win") {
+        exclude(name: "breakgen*")
+      }
+      fileset(dir: "$home/bin") {
+        include(name: "yjpagent*.dll")
+      }
+    }
+
+    dir("skeletons") {
+      fileset(dir: "$pythonCommunityHome/skeletons") {
+        include(name: "skeletons-win*.zip")
+      }
+    }
+  }
+
+  winScripts(target, "$home/community", "pycharm.bat", args)
+  winVMOptions(target, args.system_selector, "pycharm.exe")
+
+  ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help", failonerror: false)
+}
+
+private layoutUnix(Map args, String target) {
+  layout(target) {
+    dir("bin") {
+      fileset(dir: "$home/community/bin/linux") {
+        exclude(name: "libbreakgen*")
+      }
+      fileset(dir: "$home/bin") {
+        include(name: "*.so")
+      }
+    }
+  }
+
+  ant.copy(file: "$home/python/resources/PyCharm_128.png", tofile: "$target/bin/pycharm.png")
+
+  unixScripts(target, "$home/community", "pycharm.sh", args)
+  unixVMOptions(target, "pycharm")
+
+  ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help", failonerror: false)
+}
+
+private layoutMac(Map _args, String target) {
+  layout(target) {
+    dir("bin") {
+      fileset(dir: "$home/bin") {
+        include(name: "*.jnilib")
+      }
+    }
+
+    dir("skeletons") {
+      fileset(dir: "$pythonCommunityHome/skeletons") {
+        include(name: "skeletons-mac*.zip")
+      }
+    }
+  }
+
+  Map args = new HashMap(_args)
+  args.icns = "$home/python/resources/PyCharm.icns"
+  args.bundleIdentifier = "com.jetbrains.pycharm"
+  args.platform_prefix = "Python"
+  args.help_id = "PY"
+  args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
+  args."idea.properties" = ["idea.no.jre.check": true, "ide.mac.useNativeClipboard": "false"];
+  layoutMacApp(target, "$home/community", args)
+
+  ant.unzip(src: "$home/python/help/JetBrains.PY.help.zip", dest: "$target/Contents/Resources")
+}

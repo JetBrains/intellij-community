@@ -1,0 +1,1 @@
+print("Hel<selection>lo %</selection>s!" % "World")

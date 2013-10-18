@@ -1,0 +1,516 @@
+<idea-plugin version="2"  xmlns:xi="http://www.w3.org/2001/XInclude">
+  <!-- Components and extensions declared in this file work both in PyCharm and Python plugin. -->
+
+  <xi:include href="/META-INF/python-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.jetbrains.python.duplocator.PyDuplocatorSettings"
+                        serviceImplementation="com.jetbrains.python.duplocator.PyDuplocatorSettings"/>
+
+    <programRunner implementation="com.jetbrains.python.coverage.PythonCoverageRunner"/>
+    <programRunner implementation="com.jetbrains.python.debugger.remote.PyRemoteDebugRunner"/>
+
+    <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.django.DjangoTemplateLineBreakpointType"/>
+    <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.django.DjangoExceptionBreakpointType"/>
+
+    <configurationType implementation="com.jetbrains.python.debugger.remote.PyRemoteDebugConfigurationType"/>
+    <fileEditorProvider implementation="com.jetbrains.python.debugger.remote.vfs.PyRemoteDebugEditorProvider"/>
+
+    <projectConfigurable instance="com.jetbrains.python.templateLanguages.TemplateLanguageModulesConfigurable"
+                         id="com.jetbrains.python.templateLanguages.TemplateLanguageModulesConfigurable"
+                         displayName="Python Template Languages"/>
+    <!-- Cython -->
+    <fileTypeFactory implementation="com.jetbrains.cython.CythonFileTypeFactory"/>
+    <stubElementTypeHolder class="com.jetbrains.cython.psi.elementTypes.CythonElementTypes"/>
+    <lang.parserDefinition language="Cython" implementationClass="com.jetbrains.cython.parser.CythonParserDefinition"/>
+    <lang.syntaxHighlighterFactory key="Cython" implementationClass="com.jetbrains.cython.CythonSyntaxHighlighterFactory"/>
+    <annotator language="Cython" implementationClass="com.jetbrains.cython.CythonBuiltinAnnotator"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.cython.CythonKeywordCompletionContributor"/>
+    <lang.psiStructureViewFactory language="Cython" implementationClass="com.jetbrains.cython.structureView.CythonStructureViewFactory"/>
+    <lang.formatter language="Cython" implementationClass="com.jetbrains.cython.CythonFormattingModelBuilder"/>
+
+    <coverageEngine implementation="com.jetbrains.python.coverage.PyCoverageEngine"/>
+    <coverageRunner implementation="com.jetbrains.python.coverage.PyCoverageRunner"/>
+    <coverageOptions implementation="com.jetbrains.python.coverage.PyCoverageOptions"/>
+    <projectService serviceImplementation="com.jetbrains.python.coverage.PyCoverageOptionsProvider"/>
+
+    <projectService serviceInterface="com.jetbrains.python.coverage.PyCoverageAnnotator"
+                    serviceImplementation="com.jetbrains.python.coverage.PyCoverageAnnotator"/>
+
+    <!-- Django -->
+    <lang.foldingBuilder language="DjangoTemplate"
+                         implementationClass="com.jetbrains.django.lang.template.editor.DjangoTemplateFoldingBuilder"/>
+    <typedHandler implementation="com.jetbrains.django.lang.template.editor.DjangoBracesInterpolationTypedHandler"
+                  id="pyDjangoBraceInterpolation"/>
+
+    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.django.annotator.DjangoTemplateReferenceLineMarkerProvider"/>
+    <configurationType implementation="com.jetbrains.django.run.DjangoServerRunConfigurationType"/>
+    <configurationType implementation="com.jetbrains.django.testRunner.DjangoTestsConfigurationType"/>
+    <runConfigurationProducer implementation="com.jetbrains.django.testRunner.DjangoTestsConfigurationProducer"/>
+
+    <highlightErrorFilter implementation="com.jetbrains.django.lang.template.inspection.DjangoErrorFilter"/>
+    <highlightErrorFilter implementation="com.jetbrains.django.lang.template.inspection.DjangoStructureXmlFilter"/>
+
+    <lang.parserDefinition language="DjangoTemplate"
+                           implementationClass="com.jetbrains.django.lang.template.parsing.DjangoTemplateParserDefinition"/>
+    <lang.fileViewProviderFactory language="DjangoTemplate"
+                                  implementationClass="com.jetbrains.django.lang.template.DjangoTemplateFileProviderFactory"/>
+    <lang.ast.factory language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.psi.impl.DjangoASTFactory"/>
+
+    <lang.syntaxHighlighterFactory key="DjangoTemplate"
+                                   implementationClass="com.jetbrains.django.lang.template.highlighting.DjangoTemplateHighlighterFactory"/>
+
+    <psi.referenceContributor implementation="com.jetbrains.django.ref.DjangoReferenceContributor"/>
+
+    <localInspection language="DjangoTemplate" shortName="DjangoCloseTagInspection" bundle="com.jetbrains.django.ui.Django" key="inspection.close.tag.name"
+                     groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.TemplateCloseTagInspection"/>
+    <localInspection language="DjangoTemplate" shortName="DuplicatedBlockNamesInspection" bundle="com.jetbrains.django.ui.Django"
+                     key="INSP.NAME.duplicated.block.names" groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.DuplicatedBlockNamesInspection"/>
+    <localInspection language="DjangoTemplate" shortName="ExtendsTagPositionInspection" bundle="com.jetbrains.django.ui.Django" key="INSP.NAME.extends.tag.position"
+                     groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.ExtendsTagPositionInspection"/>
+    <localInspection language="DjangoTemplate" shortName="DjangoUnresolvedTemplateReferenceInspection" bundle="com.jetbrains.django.ui.Django"
+                     key="inspection.unresolved-template-reference.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.DjangoTemplateUnresolvedReferenceInspection"/>
+    <localInspection language="DjangoTemplate" shortName="DjangoUnresolvedStaticReferenceInspection" bundle="com.jetbrains.django.ui.Django"
+                     key="inspection.unresolved-static-reference.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.UnresolvedStaticReferenceInspection"/>
+    <localInspection language="DjangoTemplate" shortName="DjangoBrokenLineCommentInspection" bundle="com.jetbrains.django.ui.Django"
+                     key="broken.line.comment.inspection.name" groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.DjangoBrokenLineCommentInspection"/>
+    <localInspection language="DjangoTemplate" shortName="DjangoUnresolvedTagInspection" bundle="com.jetbrains.django.ui.Django"
+                     key="inspection.unresolved-tag.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.UnresolvedTagInspection"/>
+    <localInspection language="DjangoTemplate" shortName="DjangoUnresolvedFilterInspection" bundle="com.jetbrains.django.ui.Django"
+                     key="inspection.unresolved-filter.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.UnresolvedFilterInspection"/>
+    <localInspection language="DjangoTemplate" shortName="DjangoUnresolvedLoadInspection" bundle="com.jetbrains.django.ui.Django"
+                     key="inspection.unresolved-load.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.UnresolvedLoadReferenceInspection"/>
+    <localInspection language="DjangoTemplate" shortName="EndBlockNamesInspection" bundle="com.jetbrains.django.ui.Django"
+                     key="inspection.end-block-name.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.EndBlockNamesInspection"/>
+    <localInspection language="DjangoTemplate" shortName="DjangoRelationInspection" bundle="com.jetbrains.django.ui.Django"
+                     key="inspection.relation.display-name" groupKey="django" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.django.lang.template.inspection.DjangoRelationInspection"/>
+
+    <moduleService serviceInterface="com.jetbrains.django.model.DjangoTemplateManager"
+                   serviceImplementation="com.jetbrains.django.model.DjangoTemplateManager"/>
+
+    <projectService serviceInterface="com.jetbrains.django.model.TagLibrary"
+                    serviceImplementation="com.jetbrains.django.model.TagLibrary"/>
+
+    <facetType implementation="com.jetbrains.django.facet.DjangoFacetType"/>
+
+    <codeInsight.lineMarkerProvider language="DjangoTemplate" implementationClass="com.jetbrains.django.annotator.ViewLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.jetbrains.django.annotator.ViewLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="XML" implementationClass="com.jetbrains.django.annotator.ViewLineMarkerProvider"/>
+
+
+    <codeInsight.lineMarkerProvider language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.DjangoBlockInheritorsLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.jetbrains.django.lang.template.DjangoBlockInheritorsLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="XML" implementationClass="com.jetbrains.django.lang.template.DjangoBlockInheritorsLineMarkerProvider"/>
+
+    <languageInjector implementation="com.jetbrains.django.codeInsight.DjangoRegexpInjector"/>
+
+    <liveTemplateContext implementation="com.jetbrains.django.lang.template.DjangoTemplateContextType"/>
+    <liveTemplateMacro implementation="com.jetbrains.django.lang.template.macros.DjangoVariableMacro"/>
+    <liveTemplateMacro implementation="com.jetbrains.django.lang.template.macros.DjangoBlockMacro"/>
+    <liveTemplateMacro implementation="com.jetbrains.django.lang.template.macros.DjangoTemplateTagsMacro"/>
+    <liveTemplateMacro implementation="com.jetbrains.django.lang.template.macros.DjangoFilterMacro"/>
+
+    <colorSettingsPage implementation="com.jetbrains.django.lang.template.highlighting.DjangoTemplateColorsPage"/>
+
+    <lang.commenter language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.editor.DjangoTemplateCommenter"/>
+
+    <basicWordSelectionFilter implementation="com.jetbrains.django.lang.template.editor.DjangoTemplateWordSelectionFilter"/>
+    <extendWordSelectionHandler implementation="com.jetbrains.django.lang.template.editor.DjangoTemplateTagSelectionHandler"/>
+    <extendWordSelectionHandler implementation="com.jetbrains.django.lang.template.editor.DjangoTemplateTagNameSelectionHandler"/>
+
+    <lang.namesValidator language="DjangoTemplate"
+                         implementationClass="com.jetbrains.django.lang.template.inspection.DjangoTemplateNamesValidator"/>
+
+    <renamePsiElementProcessor implementation="com.jetbrains.django.refactoring.RenameDjangoNamedExpressionProcessor" order="last"/>
+
+    <projectService serviceInterface="com.jetbrains.django.lang.template.DjangoTemplateElementGenerator"
+                    serviceImplementation="com.jetbrains.django.lang.template.DjangoTemplateElementGenerator"/>
+
+    <lang.refactoringSupport language="DjangoTemplate" implementationClass="com.jetbrains.django.refactoring.DjangoRefactoringProvider"/>
+
+    <lang.surroundDescriptor language="DjangoTemplate"
+                             implementationClass="com.jetbrains.django.lang.template.surround.DjangoTemplateTagSurroundDescriptor"
+                             order="first"/>
+    <lang.surroundDescriptor language="HTML" implementationClass="com.jetbrains.django.lang.template.surround.DjangoXmlSurroundDescriptor"
+                             order="after djangoHtmlSurround"/>
+    <lang.surroundDescriptor language="XML" implementationClass="com.jetbrains.django.lang.template.surround.DjangoXmlSurroundDescriptor"
+                             order="after djangoXmlSurround"/>
+    <lang.surroundDescriptor language="HTML"
+                             implementationClass="com.jetbrains.django.lang.template.surround.DjangoTemplateVariableSurroundDescriptor"
+                             order="first" id="djangoHtmlSurround"/>
+    <lang.surroundDescriptor language="XML"
+                             implementationClass="com.jetbrains.django.lang.template.surround.DjangoTemplateVariableSurroundDescriptor"
+                             order="first" id="djangoXmlSurround"/>
+
+    <lang.elementManipulator forClass="com.jetbrains.django.lang.template.psi.impl.DjangoStringLiteralImpl"
+                             implementationClass="com.jetbrains.django.lang.template.ref.DjangoStringLiteralManipulator"/>
+
+    <lang.findUsagesProvider language="DjangoTemplate"
+                             implementationClass="com.jetbrains.django.lang.template.ref.DjangoTemplateFindUsagesProvider"/>
+
+    <referencesSearch implementation="com.jetbrains.django.lang.template.ref.DjangoTemplateStringReferenceSearch"/>
+
+    <quoteHandler fileType="DjangoTemplate" className="com.jetbrains.django.lang.template.editor.DjangoTemplateQuoteHandler"/>
+
+    <lang.formatter language="DjangoTemplate"
+                    implementationClass="com.jetbrains.django.lang.template.formatter.DjangoTemplateFormattingModelBuilder"/>
+
+    <xml.zenCodingGenerator implementation="com.jetbrains.django.lang.template.DjangoTemplateZenCodingGenerator"/>
+
+    <xml.elementDescriptorProvider implementation="com.jetbrains.django.lang.template.DjangoTemplateDescriptorProvider"/>
+    <xml.util.htmlDoctypeProvider implementation="com.jetbrains.django.lang.template.DjangoHtmlDoctypeProvider"/>
+
+    <completion.contributor language="DjangoTemplate"
+                            implementationClass="com.jetbrains.django.lang.template.editor.DjangoTemplateCompletionContributor"/>
+
+    <lang.psiStructureViewFactory language="DjangoTemplate"
+                                  implementationClass="com.jetbrains.django.lang.template.structureView.DjangoStructureViewBuilderFactory"/>
+
+    <editorSmartKeysConfigurable instance="com.jetbrains.django.lang.template.editor.DjangoEditorSmartKeysConfigurable"/>
+
+    <enterHandlerDelegate implementation="com.jetbrains.django.lang.template.editor.EnterBetweenDjangoTagsHandler"/>
+
+    <stubIndex implementation="com.jetbrains.django.model.stubs.DjangoForeignKeyIndex"/>
+
+    <renamePsiElementProcessor implementation="com.jetbrains.django.refactoring.RenameDjangoParameterProcessor"/>
+    <elementDescriptionProvider implementation="com.jetbrains.django.refactoring.DjangoElementDescriptionProvider"/>
+
+    <liveTemplatePreprocessor implementation="com.jetbrains.django.lang.template.DjangoTemplatePreprocessor"/>
+
+    <completion.contributor language="Python" implementationClass="com.jetbrains.django.completion.DjangoSettingsPyCompletionContributor"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.django.completion.DjangoAsViewArgsCompletionContributor"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.django.completion.DjangoMetaAttributesCompletionContributor"/>
+
+    <intentionAction>
+      <className>com.jetbrains.django.ref.DjangoClassViewMigrationIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
+    <lang.braceMatcher language="DjangoTemplate"
+                       implementationClass="com.jetbrains.django.lang.template.highlighting.DjangoTemplateBraceMatcher"/>
+
+
+    <webBrowserUrlProvider implementation="com.jetbrains.django.lang.template.DjangoWebBrowserUrlProvider"/>
+
+    <xml.xmlExtension implementation="com.jetbrains.django.lang.template.DjangoXmlExtension" order="first"/>
+
+    <lang.lineWrapStrategy language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.editor.DjangoTemplateLineWrapPositionStrategy"/>
+
+    <fileBasedIndex implementation="com.jetbrains.django.lang.template.DjangoBlockInheritanceIndex"/>
+    <definitionsSearch implementation="com.jetbrains.django.lang.template.DjangoBlockInheritorsSearchExecutor"/>
+
+    <annotator language="DjangoTemplate" implementationClass="com.jetbrains.django.lang.template.highlighting.DjangoTemplateAnnotator"/>
+
+    <projectService serviceInterface="com.jetbrains.django.lang.template.DjangoWebUrlEvaluator"
+                    serviceImplementation="com.jetbrains.django.lang.template.DjangoWebUrlEvaluator"/>
+
+    <renamePsiElementProcessor implementation="com.jetbrains.django.refactoring.DjangoStaticPrefixRenameProcessor"/>
+
+    <usageTargetProvider implementation="com.jetbrains.django.refactoring.DjangoUsageTargetProvider"/>
+    <findUsagesHandlerFactory implementation="com.jetbrains.django.refactoring.DjangoFindUsagesHandlerFactory"/>
+    <referencesSearch implementation="com.jetbrains.django.refactoring.DjangoParameterReferenceSearcher"/>
+    <referencesSearch implementation="com.jetbrains.django.refactoring.DjangoVariableReferenceSearcher"/>
+
+    <defaultLiveTemplatesProvider implementation="com.jetbrains.django.DjangoDefaultLiveTemplatesProvider"/>
+    <projectService serviceImplementation="com.jetbrains.django.console.DjangoConsoleOptions"/>
+
+    <psi.treeChangePreprocessor implementation="com.jetbrains.django.lang.template.DjangoTemplateTreeChangePreprocessor"/>
+
+    <!-- App Engine -->
+    <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
+    <framework.detector implementation="com.jetbrains.appengine.facet.AppEngineFrameworkDetector"/>
+
+    <configurationType implementation="com.jetbrains.appengine.run.AppEngineServerRunConfigurationType"/>
+
+    <lang.parserDefinition language="GQL" implementationClass="com.jetbrains.appengine.lang.gql.parsing.GqlParserDefinition"/>
+    <multiHostInjector implementation="com.jetbrains.appengine.lang.gql.GqlLanguageInjector"/>
+    <lang.syntaxHighlighterFactory key="GQL"
+                                   implementationClass="com.jetbrains.appengine.lang.gql.highlighting.GqlHighlighterFactory"/>
+
+    <completion.contributor language="Python" implementationClass="com.jetbrains.appengine.model.ModelAttributeCompletionContributor"/>
+    <completion.contributor language="yaml" implementationClass="com.jetbrains.appengine.completion.AppYamlKeyCompletionContributor"/>
+    <completion.contributor language="GQL" implementationClass="com.jetbrains.appengine.completion.GqlKeywordCompletionContributor"/>
+
+    <psi.referenceContributor implementation="com.jetbrains.appengine.ref.AppEngineReferenceContributor"/>
+
+    <localInspection language="GQL" shortName="Query_index_required" bundle="com.jetbrains.appengine.ui.Messages" key="query-inspection-name"
+                     groupKey="app-engine-python" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.appengine.inspection.IndexRequiredQueryInspection"/>
+    <localInspection language="GQL" shortName="Query_restricted" bundle="com.jetbrains.appengine.ui.Messages" key="restricted-query-inspection-name"
+                     groupKey="app-engine-python" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.appengine.inspection.RestrictedQueryInspection"/>
+    <localInspection language="GQL" shortName="Query_bound_parameters" bundle="com.jetbrains.appengine.ui.Messages" key="query-bound-param-inspection-name"
+                     groupKey="app-engine-python" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.appengine.inspection.QueryBoundParametersInspection"/>
+    <localInspection language="Python" shortName="Restricted_Python_calls" bundle="com.jetbrains.appengine.ui.Messages" key="sandbox-inspection-name"
+                     groupKey="app-engine-python" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.appengine.inspection.SandboxInspection"/>
+
+    <colorSettingsPage implementation="com.jetbrains.appengine.lang.gql.highlighting.GqlColorsPage"/>
+
+    <projectService serviceInterface="org.jetbrains.yaml.YAMLElementGenerator"
+                    serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
+
+    <!-- Mako files -->
+    <multiLangCommenter implementation="com.jetbrains.python.templateLanguages.TemplatesCommentProvider"/>
+    <highlightErrorFilter implementation="com.jetbrains.mako.inspection.MakoErrorFilter"/>
+    <highlightRangeExtension implementation="com.jetbrains.mako.validation.MakoAnnotatingVisitor"/>
+
+    <lang.substitutor language="HTML" implementationClass="com.jetbrains.python.templateLanguages.TemplateLanguageSubstitutor"/>
+    <lang.substitutor language="XHTML" implementationClass="com.jetbrains.python.templateLanguages.TemplateLanguageSubstitutor"/>
+    <lang.substitutor language="XML" implementationClass="com.jetbrains.python.templateLanguages.TemplateLanguageSubstitutor"/>
+
+    <colorSettingsPage implementation="com.jetbrains.mako.highlighting.MakoColorsPage"/>
+    <lang.syntaxHighlighterFactory key="Mako"
+                                   implementationClass="com.jetbrains.mako.highlighting.MakoHighlighterFactory"/>
+    <lang.parserDefinition language="Mako" implementationClass="com.jetbrains.mako.parser.MakoParserDefinition"/>
+    <lang.fileViewProviderFactory language="Mako"
+                                  implementationClass="com.jetbrains.mako.MakoFileProviderFactory"/>
+
+    <lang.commenter language="Mako" implementationClass="com.jetbrains.mako.editor.MakoCommenter"/>
+    <lang.braceMatcher language="Mako" implementationClass="com.jetbrains.mako.highlighting.MakoBraceMatcher"/>
+    <quoteHandler fileType="Mako" className="com.jetbrains.mako.editor.MakoQuoteHandler"/>
+    <completion.contributor language="Mako"
+                            implementationClass="com.jetbrains.mako.editor.MakoCompletionContributor"/>
+    <completion.contributor language="Mako"
+                            implementationClass="com.jetbrains.mako.editor.MakoTagAttributesContributor"/>
+    <completion.contributor language="HTML"
+                            implementationClass="com.jetbrains.mako.editor.MakoControlCompletionContributor"/>
+    <completion.contributor language="XML"
+                            implementationClass="com.jetbrains.mako.editor.MakoControlCompletionContributor"/>
+
+    <fileTypeFactory implementation="com.jetbrains.mako.MakoFileTypeFactory"/>
+
+    <typedHandler implementation="com.jetbrains.mako.editor.MakoBracesHandler"
+                  id="MakoBracesHandler"/>
+    <annotator language="Mako" implementationClass="com.jetbrains.mako.validation.MakoAnnotatingVisitor"/>
+    <editorHighlighterProvider filetype="Mako" implementationClass="com.jetbrains.mako.highlighting.MakoEditorHighlighterProvider"/>
+    <lang.findUsagesProvider language="Mako" implementationClass="com.jetbrains.python.findUsages.PythonFindUsagesProvider"/>
+    <lang.formatter language="Mako"
+                    implementationClass="com.jetbrains.mako.formatter.MakoFormattingModelBuilder"/>
+    <lang.whiteSpaceFormattingStrategy language="Mako"
+                                       implementationClass="com.jetbrains.mako.formatter.MakoWhiteSpaceFormattingStrategy"/>
+    <lang.psiStructureViewFactory language="Mako" implementationClass="com.jetbrains.mako.structureView.MakoStructureViewFactory"/>
+
+    <lang.elementManipulator forClass="com.jetbrains.mako.psi.impl.MakoTagAttribute"
+                             implementationClass="com.jetbrains.mako.psi.MakoTagAttributeManipulator"/>
+
+    <localInspection language="Python" shortName="MakoArgumentListInspection" displayName="Incorrect call arguments"
+                     groupKey="INSP.GROUP.mako" enabledByDefault="true"  level="WARNING"
+                     implementationClass="com.jetbrains.mako.inspection.MakoArgumentListInspection"/>
+
+    <moduleService serviceInterface="com.jetbrains.python.templateLanguages.TemplatesService"
+                    serviceImplementation="com.jetbrains.python.templateLanguages.TemplatesServiceImpl"/>
+
+    <!-- Jinja2 -->
+    <fileTypeFactory implementation="com.jetbrains.jinja2.Jinja2FileTypeFactory"/>
+    <editorHighlighterProvider filetype="Jinja2" implementationClass="com.jetbrains.jinja2.highlighting.Jinja2EditorHighlighterProvider"/>
+    <lang.syntaxHighlighterFactory key="Jinja2" implementationClass="com.jetbrains.jinja2.highlighting.Jinja2HighlighterFactory"/>
+    <lang.parserDefinition language="Jinja2"
+                           implementationClass="com.jetbrains.jinja2.parsing.Jinja2ParserDefinition"/>
+    <lang.fileViewProviderFactory language="Jinja2"
+                                  implementationClass="com.jetbrains.jinja2.Jinja2FileViewProviderFactory"/>
+    <annotator language="Jinja2" implementationClass="com.jetbrains.jinja2.highlighting.Jinja2Annotator"/>
+    <useScopeEnlarger implementation="com.jetbrains.jinja2.findUsages.Jinja2UseScopeEnlarger"/>
+    <usageTypeProvider implementation="com.jetbrains.jinja2.findUsages.Jinja2UsageTypeProvider"/>
+    <lang.commenter language="Jinja2" implementationClass="com.jetbrains.jinja2.Jinja2Commenter"/>
+    <xml.zenCodingGenerator implementation="com.jetbrains.jinja2.Jinja2ZenCodingGenerator"/>
+
+    <!-- Web2Py -->
+    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.web2py.annotator.Web2PyViewLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.jetbrains.web2py.annotator.Web2PyControllerLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="XML" implementationClass="com.jetbrains.web2py.annotator.Web2PyControllerLineMarkerProvider"/>
+
+    <fileTypeFactory implementation="com.jetbrains.web2py.templates.file.Web2PyFileTypeFactory"/>
+    <lang.fileViewProviderFactory language="Web2Py"
+                                  implementationClass="com.jetbrains.web2py.templates.file.Web2PyFileProviderFactory"/>
+    <lang.parserDefinition language="Web2Py"
+                           implementationClass="com.jetbrains.web2py.templates.parser.Web2PyParserDefinition"/>
+    <lang.syntaxHighlighterFactory key="Web2Py"
+                                   implementationClass="com.jetbrains.web2py.templates.highlighting.Web2PyHighlighterFactory"/>
+    <editorHighlighterProvider filetype="Web2Py" implementationClass="com.jetbrains.web2py.templates.highlighting.Web2PyEditorHighlighterProvider"/>
+
+    <treeStructureProvider implementation="com.jetbrains.web2py.projectView.Web2PyTreeStructureProvider"/>
+    <refactoring.elementListenerProvider implementation="com.jetbrains.web2py.refactoring.Web2PyRefactoringListenerProvider"/>
+    <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.web2py.templates.completion.Web2PyKeywordCompletionContributor"/>
+
+    <quoteHandler fileType="Web2Py" className="com.jetbrains.python.editor.PythonQuoteHandler"/>
+    <typedHandler implementation="com.jetbrains.web2py.templates.editor.Web2PyBracesHandler" id="Web2PyBracesHandler"/>
+    <lang.braceMatcher language="Web2Py" implementationClass="com.jetbrains.web2py.templates.editor.Web2PyBraceMatcher"/>
+
+    <lang.elementManipulator forClass="com.jetbrains.web2py.templates.psi.Web2PyExtendIncludeTag"
+                             implementationClass="com.jetbrains.web2py.templates.ref.Web2PyStringLiteralManipulator"/>
+    <annotator language="Web2Py" implementationClass="com.jetbrains.web2py.templates.highlighting.Web2PyAnnotator"/>
+    <completion.contributor language="Python"
+                            implementationClass="com.jetbrains.web2py.completion.Web2PyBuiltinCompletionContributor"/>
+    <lang.formatter language="Web2Py"
+                    implementationClass="com.jetbrains.web2py.templates.formatter.Web2PyFormattingModelBuilder"/>
+    <lang.whiteSpaceFormattingStrategy language="Web2Py"
+                                       implementationClass="com.jetbrains.web2py.templates.formatter.Web2PyWhiteSpaceFormattingStrategy"/>
+
+    <!-- Pyramid && Chameleon -->
+    <configurationType implementation="com.jetbrains.pyramid.run.PyramidRunConfigurationType"/>
+
+    <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.pyramid.annotator.PyramidViewLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="HTML" implementationClass="com.jetbrains.pyramid.annotator.PyramidTemplateLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="XML" implementationClass="com.jetbrains.pyramid.annotator.PyramidTemplateLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Chameleon" implementationClass="com.jetbrains.pyramid.annotator.PyramidTemplateLineMarkerProvider"/>
+
+    <fileTypeFactory implementation="com.jetbrains.pyramid.templates.file.ChameleonFileTypeFactory"/>
+    <lang.fileViewProviderFactory language="Chameleon"
+                                  implementationClass="com.jetbrains.pyramid.templates.file.ChameleonFileProviderFactory"/>
+    <lang.parserDefinition language="Chameleon"
+                           implementationClass="com.jetbrains.pyramid.templates.parser.ChameleonParserDefinition"/>
+    <editorHighlighterProvider filetype="Chameleon" implementationClass="com.jetbrains.pyramid.templates.highlighting.ChameleonEditorHighlighterProvider"/>
+    <lang.syntaxHighlighterFactory key="Chameleon"
+                                   implementationClass="com.jetbrains.pyramid.templates.highlighting.ChameleonHighlighterFactory"/>
+    <completion.contributor language="XML" implementationClass="com.jetbrains.pyramid.templates.completion.ChameleonNamespaceCompletionContributor"/>
+    <completion.contributor language="HTML" implementationClass="com.jetbrains.pyramid.templates.completion.ChameleonNamespaceCompletionContributor"/>
+    <completion.contributor language="Chameleon" implementationClass="com.jetbrains.pyramid.templates.completion.ChameleonNamespaceCompletionContributor"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.pyramid.templates.completion.ChameleonPrefixTypesCompletionContributor"/>
+    <completion.contributor language="Python" implementationClass="com.jetbrains.pyramid.templates.completion.ChameleonGlobalsCompletionContributor"/>
+
+    <lang.formatter language="Chameleon"
+                    implementationClass="com.jetbrains.pyramid.templates.formatter.ChameleonFormattingModelBuilder"/>
+    <lang.whiteSpaceFormattingStrategy language="Chameleon"
+                                       implementationClass="com.jetbrains.pyramid.templates.formatter.ChameleonWhiteSpaceFormattingStrategy"/>
+    <typedHandler implementation="com.jetbrains.pyramid.templates.completion.ChameleonSubstitutionHandler" id="ChameleonBracesHandler"/>
+    <highlightRangeExtension implementation="com.jetbrains.pyramid.templates.highlighting.ChameleonAnnotatingVisitor"/>
+    <annotator language="Chameleon" implementationClass="com.jetbrains.pyramid.templates.highlighting.ChameleonAnnotatingVisitor"/>
+    <xml.xmlExtension implementation="com.jetbrains.pyramid.templates.highlighting.ChameleonXmlExtension" order="first"/>
+    <highlightErrorFilter implementation="com.jetbrains.pyramid.templates.highlighting.ChameleonErrorFilter"/>
+    <psi.fileReferenceHelper implementation="com.jetbrains.pyramid.templates.ref.PyramidStaticFileReferenceHelper"/>
+    <lang.commenter language="Chameleon" implementationClass="com.jetbrains.pyramid.templates.editor.ChameleonCommenter"/>
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.templateLanguageCoreTags"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint"/>
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="Pythonid">
+    <runConfigurationExtension implementation="com.jetbrains.python.coverage.PythonCoverageRunConfigurationExtension"/>
+
+    <!-- Django -->
+    <pyClassMembersProvider implementation="com.jetbrains.django.codeInsight.DjangoClassMembersProvider"/>
+    <pyClassMembersProvider implementation="com.jetbrains.django.codeInsight.DjangoOverridingClassMembersProvider"/>
+    <typeProvider implementation="com.jetbrains.django.codeInsight.DjangoTypeProvider"/>
+    <unresolvedReferenceQuickFixProvider implementation="com.jetbrains.django.ref.DjangoReferenceQuickFixProvider"/>
+    <runnableUnitTestFilter implementation="com.jetbrains.django.testRunner.DjangoUnitTestFilter"/>
+    <inspectionExtension implementation="com.jetbrains.django.codeInsight.DjangoInspectionExtension"/>
+    <customTargetExpressionStubType implementation="com.jetbrains.django.model.stubs.DjangoForeignKeyStubType"/>
+    <knownDecoratorProvider implementation="com.jetbrains.django.codeInsight.DjangoKnownDecoratorProvider"/>
+    <documentationLinkProvider implementation="com.jetbrains.django.codeInsight.DjangoDocumentationLinkProvider"/>
+    <templateLanguageCoreTags language="DjangoTemplate" implementationClass="com.jetbrains.django.model.DjangoTagLibrary"/>
+    <templateContextProvider implementation="com.jetbrains.django.model.DjangoTemplateContextProvider"/>
+    <breakpointHandler implementation="com.jetbrains.python.debugger.django.DjangoExceptionBreakpointHandlerFactory"/>
+    <breakpointHandler implementation="com.jetbrains.python.debugger.django.DjangoLineBreakpointHandlerFactory"/>
+    <consoleOptionsProvider implementation="com.jetbrains.django.console.DjangoConsoleOptionsProvider"/>
+
+    <!-- App Engine -->
+    <typeProvider implementation="com.jetbrains.appengine.model.AppEngineTypeProvider"/>
+    <pyModuleMembersProvider implementation="com.jetbrains.appengine.model.AppEngineModuleMembersProvider"/>
+    <documentationLinkProvider implementation="com.jetbrains.appengine.AppEngineDocumentationLinkProvider"/>
+
+    <!-- Jinja2 -->
+    <templateLanguageCoreTags language="Jinja2" implementationClass="com.jetbrains.jinja2.tags.Jinja2TagLibrary"/>
+
+    <!-- Cython -->
+    <dialectsTokenSetContributor implementation="com.jetbrains.cython.CythonTokenSetContributor"/>
+    <typeProvider implementation="com.jetbrains.cython.types.CythonTypeProvider"/>
+    <importResolver implementation="com.jetbrains.cython.CythonImportResolver"/>
+    <visitorFilter language="Cython" implementationClass="com.jetbrains.cython.CythonVisitorFilter"/>
+    <pyModuleMembersProvider implementation="com.jetbrains.cython.CythonModuleMembersProvider"/>
+    <pyReferenceResolveProvider implementation="com.jetbrains.cython.CythonReferenceResolveProvider"/>
+    <inspectionExtension implementation="com.jetbrains.cython.CythonInspectionExtension"/>
+
+    <!-- Mako -->
+    <dialectsTokenSetContributor implementation="com.jetbrains.mako.MakoTokenSetContributor"/>
+    <visitorFilter language="Mako" implementationClass="com.jetbrains.mako.highlighting.MakoVisitorFilter"/>
+
+    <!-- SQLAlchemy -->
+    <typeProvider implementation="com.jetbrains.sqlalchemy.SQLAlchemyTypeProvider"/>
+    <knownDecoratorProvider implementation="com.jetbrains.sqlalchemy.SQLAlchemyKnownDecoratorProvider"/>
+    <pyClassMembersProvider implementation="com.jetbrains.sqlalchemy.SQLAlchemyClassMembersProvider"/>
+
+    <!-- Web2Py -->
+    <pyReferenceResolveProvider implementation="com.jetbrains.web2py.psi.Web2PyReferenceResolveProvider"/>
+    <dialectsTokenSetContributor implementation="com.jetbrains.web2py.templates.ref.Web2PyTokenSetContributor"/>
+    <visitorFilter language="Web2Py" implementationClass="com.jetbrains.web2py.templates.highlighting.Web2PyTemplateVisitorFilter"/>
+    <visitorFilter language="Python" implementationClass="com.jetbrains.web2py.annotator.Web2PyVisitorFilter"/>
+    <importResolver implementation="com.jetbrains.web2py.psi.Web2PyImportResolver"/>
+
+    <!-- Pyramid && Chameleon -->
+    <typeProvider implementation="com.jetbrains.pyramid.codeInsight.PyramidTypeProvider"/>
+    <dialectsTokenSetContributor implementation="com.jetbrains.pyramid.templates.ref.ChameleonTokenSetContributor"/>
+    <visitorFilter language="Chameleon" implementationClass="com.jetbrains.pyramid.templates.highlighting.ChameleonTemplateVisitorFilter"/>
+    <pyClassMembersProvider implementation="com.jetbrains.pyramid.codeInsight.PyramidRequestClassMembersProvider"/>
+  </extensions>
+
+  <actions>
+    <group id="PyProjectViewGroup" internal="true" class="com.intellij.ide.actions.NonEmptyActionGroup" popup="true" text="Python">
+      <action id="Devmode.AnalyzeReturns" class="com.jetbrains.python.devmode.AnalyzeReturnsAction" text="Analyze return types"
+              internal="true"/>
+
+      <action id="Devmode.AnalyzeTypeParser" class="com.jetbrains.python.devmode.AnalyzeTypeParserAction" text="Analyze type parser"
+              internal="true"/>
+
+      <action id="Devmode.AnalyzeParameterTypes" class="com.jetbrains.python.devmode.AnalyzeParameterTypesAction" text="Analyze parameter types" internal="true"/>
+
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="last"/>
+
+    </group>
+
+    <group text="Google App Engine" popup="true">
+      <action id="PythonAppEngine.UploadAppAction" class="com.jetbrains.appengine.action.UpdateAppAction"
+              text="Upload App Engine app..."
+              description="Uploads App Engine application to google server">
+
+      </action>
+
+      <action id="PythonAppEngine.GetLogsAction" class="com.jetbrains.appengine.action.GetLogsAction"
+              text="Get App Engine logs..."
+              description="Downloads App Engine logs">
+      </action>
+      <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="Django.RunManageTaskAction"/>
+    </group>
+
+    <group text="Django">
+      <action id="com.jetbrains.django.console.RunDjangoConsoleAction"
+              class="com.jetbrains.django.console.RunDjangoConsoleAction"
+              text="Run Django Console..." description="Allows to quickly run Django console">
+      </action>
+
+      <action id="Django.RunManageTaskAction" class="com.jetbrains.django.actions.RunManageTaskAction"
+              text="Run manage.py Task..."
+              description="Runs manage.py Task">
+
+        <keyboard-shortcut keymap="Mac OS X" first-keystroke="alt R"/>
+        <keyboard-shortcut keymap="$default" first-keystroke="ctrl alt R"/>
+        <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="alt R" replace-all="true"/>
+        <keyboard-shortcut keymap="Visual Studio" first-keystroke="ctrl alt R" remove="true"/>
+        <keyboard-shortcut keymap="Eclipse" first-keystroke="ctrl alt R" remove="true"/>
+      </action>
+
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </group>
+
+    <action id="MarkTemplateDirectory" class="com.jetbrains.python.templateLanguages.MarkTemplateDirectoryAction" text="Template Directory">
+      <add-to-group group-id="MarkRootGroup" anchor="after" relative-to-action="MarkSourceRoot"/>
+    </action>
+
+
+  </actions>
+</idea-plugin>

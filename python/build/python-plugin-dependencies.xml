@@ -1,0 +1,14 @@
+<idea-plugin xmlns:xi="http://www.w3.org/2001/XInclude">
+  <!-- This version of python-plugin-dependencies.xml is used in release versions of the
+       Python plugin and contains the real list of optional dependencies for the Python plugin.
+  -->
+  <depends optional="true" config-file="python-uml-plugin.xml">com.intellij.diagram</depends>
+  <depends optional="true" config-file="python-javascript-debugger-plugin.xml">JavaScriptDebugger</depends>
+  <depends optional="true" config-file="python-rest-plugin.xml">org.jetbrains.plugins.rest</depends>
+  <depends optional="true" config-file="python-localization-plugin.xml">org.jetbrains.plugins.localization</depends>
+  <depends optional="true" config-file="django-db-config-plugin.xml">com.intellij.persistence.database</depends>
+  <depends optional="true" config-file="python-remote-interpreter-plugin.xml">com.jetbrains.plugins.webDeployment</depends>
+  <depends>org.jetbrains.plugins.remote-run</depends>
+
+  <xi:include href="/META-INF/pycharm-flask-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
+</idea-plugin>

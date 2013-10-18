@@ -1,0 +1,1 @@
+lambda aa: a<ref>a[1]

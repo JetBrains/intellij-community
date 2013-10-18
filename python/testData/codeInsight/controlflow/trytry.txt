@@ -1,0 +1,64 @@
+0(1) element: null
+1(2) element: PyAssignmentStatement
+2(3) WRITE ACCESS: a
+3(4) element: PyTryExceptStatement
+4(5,55) element: PyTryPart
+5(6,55) element: PyAssignmentStatement
+6(7,55) WRITE ACCESS: b
+7(8,53,55) element: PyForStatement
+8(9,55) element: PyTargetExpression: x
+9(10,55) WRITE ACCESS: x
+10(11,55) element: PyTryExceptStatement
+11(12,45) element: PyTryPart
+12(13,45) element: PyAssignmentStatement
+13(14,45) WRITE ACCESS: c
+14(15,45) element: PyTryExceptStatement
+15(16,37) element: PyTryPart
+16(17,37) element: PyAssignmentStatement
+17(18,37) WRITE ACCESS: d
+18(19,37) element: PyIfStatement
+19(20,22,37) READ ACCESS: x
+20(21) element: PyStatementList. Condition: x == 0:true
+21(37,40) element: PyBreakStatement
+22(23,26,37) element: PyIfPartElif. Condition: x == 0:false
+23(24,37) READ ACCESS: x
+24(25,37) element: PyIfPartElif. Condition: x == 1:true
+25(7,37) element: PyContinueStatement
+26(27,31,37) element: PyIfPartElif. Condition: x == 1:false
+27(28,37) READ ACCESS: x
+28(29,37) element: PyIfPartElif. Condition: x == 2:true
+29(30,37) element: PyRaiseStatement
+30(37) READ ACCESS: Exception
+31(32,35,37) element: PyIfPartElif. Condition: x == 2:false
+32(33,37) READ ACCESS: x
+33(34,37) element: PyIfPartElif. Condition: x == 3:true
+34(37) element: PyReturnStatement
+35(36,37) element: PyAssignmentStatement
+36(37,40) WRITE ACCESS: e
+37(38,45) element: PyFinallyPart
+38(39,45) element: PyAssignmentStatement
+39(45) WRITE ACCESS: f
+40(41,45) element: PyFinallyPart
+41(42,45) element: PyAssignmentStatement
+42(43,45) WRITE ACCESS: f
+43(44,45) element: PyAssignmentStatement
+44(45,48) WRITE ACCESS: g
+45(46,55) element: PyFinallyPart
+46(47,55) element: PyAssignmentStatement
+47(55) WRITE ACCESS: h
+48(49,55) element: PyFinallyPart
+49(50,55) element: PyAssignmentStatement
+50(51,55) WRITE ACCESS: h
+51(52,55) element: PyAssignmentStatement
+52(8,53,55) WRITE ACCESS: i
+53(54,55) element: PyAssignmentStatement
+54(55,58) WRITE ACCESS: j
+55(56) element: PyFinallyPart
+56(57) element: PyAssignmentStatement
+57(63) WRITE ACCESS: k
+58(59) element: PyFinallyPart
+59(60) element: PyAssignmentStatement
+60(61) WRITE ACCESS: k
+61(62) element: PyAssignmentStatement
+62(63) WRITE ACCESS: l
+63() element: null
