@@ -28,11 +28,11 @@ import java.io.IOException;
  * @author Alexander Lobas
  */
 public final class TreeTransfer extends TransferHandler implements Transferable {
-  private static final DataFlavor DATA_FLAVOR = FileCopyPasteUtil.createDataFlavor(DataFlavor.javaJVMLocalObjectMimeType);
+  private static final DataFlavor DATA_FLAVOR = FileCopyPasteUtil.createDataFlavor(DataFlavor.javaJVMLocalObjectMimeType, Class.class);
 
   private Object myData;
 
-  public TreeTransfer(Object data) {
+  public TreeTransfer(Class data) {
     myData = data;
   }
 
