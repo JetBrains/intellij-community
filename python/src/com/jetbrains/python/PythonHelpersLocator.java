@@ -1,5 +1,6 @@
 package com.jetbrains.python;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
@@ -52,4 +53,11 @@ public class PythonHelpersLocator {
     return new File(getHelpersRoot(), resourceName);
   }
 
+  public static String getPythonCommunityPath() {
+    File pathFromUltimate = new File(PathManager.getHomePath(), "community/python");
+    if (pathFromUltimate.exists()) {
+      return pathFromUltimate.getPath();
+    }
+    return new File(PathManager.getHomePath(), "python").getPath();
+  }
 }

@@ -9,7 +9,7 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType;
 import com.intellij.util.SystemProperties;
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.PythonHelpersLocator;
 
 import java.io.File;
 
@@ -27,7 +27,7 @@ public class JythonUnitTestUtil {
     parameters.setJdk(ideaJdk);
     parameters.setMainClass("org.python.util.jython");
 
-    File jythonJar = new File(PyTestCase.getPythonCommunityPath(), "lib/jython.jar");
+    File jythonJar = new File(PythonHelpersLocator.getPythonCommunityPath(), "lib/jython.jar");
     parameters.getClassPath().add(jythonJar.getPath());
 
     parameters.getProgramParametersList().add("-Dpython.path=" + pythonPath + File.pathSeparator + workDir);
