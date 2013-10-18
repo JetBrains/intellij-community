@@ -83,7 +83,9 @@ class EventLogConsole {
     myProjectModel.getProject().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerAdapter() {
       @Override
       public void projectClosed(Project project) {
-        EditorFactory.getInstance().releaseEditor(editor);
+        if (project == myProjectModel.getProject()) {
+          EditorFactory.getInstance().releaseEditor(editor);
+        }
       }
     });
 
