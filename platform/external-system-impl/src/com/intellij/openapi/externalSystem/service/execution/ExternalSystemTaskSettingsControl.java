@@ -23,6 +23,7 @@ import com.intellij.openapi.externalSystem.service.ui.ExternalProjectPathField;
 import com.intellij.openapi.externalSystem.util.*;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -138,20 +139,24 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
                                normalizePath(myOriginalSettings.getVmOptions()));
   }
 
-  @Nullable
   @Override
-  public String apply(@NotNull ExternalSystemTaskExecutionSettings settings) {
+  public void apply(@NotNull ExternalSystemTaskExecutionSettings settings) {
     String projectPath = myProjectPathField.getText();
-    if (myOriginalSettings == null) {
-      return String.format(
-        "Can't store external task settings into run configuration. Reason: target run configuration is undefined. Tasks: '%s', " +
-        "external project: '%s', vm options: '%s'", myTasksTextField.getText(), projectPath, myVmOptionsEditor.getText()
-      );
-    }
     settings.setExternalProjectPath(projectPath);
     settings.setTaskNames(StringUtil.split(myTasksTextField.getText(), " "));
     settings.setVmOptions(myVmOptionsEditor.getText());
-    return null;
+  }
+
+  @Override
+  public boolean validate(@NotNull ExternalSystemTaskExecutionSettings settings) throws ConfigurationException {
+    String projectPath = myProjectPathField.getText();
+    if (myOriginalSettings == null) {
+      throw  new ConfigurationException(String.format(
+        "Can't store external task settings into run configuration. Reason: target run configuration is undefined. Tasks: '%s', " +
+        "external project: '%s', vm options: '%s'", myTasksTextField.getText(), projectPath, myVmOptionsEditor.getText()
+      ));
+    }
+    return true;
   }
 
   @Override

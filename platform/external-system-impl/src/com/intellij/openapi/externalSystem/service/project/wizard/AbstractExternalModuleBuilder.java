@@ -18,11 +18,8 @@ package com.intellij.openapi.externalSystem.service.project.wizard;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
-import com.intellij.ide.util.projectWizard.ModuleWizardStep;
-import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectSettingsControl;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -30,13 +27,11 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,14 +49,13 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
 
   @NotNull private final Icon                          myIcon;
   @NotNull private final ProjectSystemId               myExternalSystemId;
+  @NotNull private final S                             myExternalProjectSettings;
 
-  @Nullable private final AbstractExternalProjectSettingsControl<S> myExternalProjectSettingsControl;
-
-  protected AbstractExternalModuleBuilder(@NotNull ProjectSystemId externalSystemId,
-                                          @Nullable AbstractExternalProjectSettingsControl<S> externalProjectSettingsControl)
+  protected AbstractExternalModuleBuilder(@NotNull final ProjectSystemId externalSystemId,
+                                          @NotNull final S externalProjectSettings)
   {
     myExternalSystemId = externalSystemId;
-    myExternalProjectSettingsControl = externalProjectSettingsControl;
+    myExternalProjectSettings = externalProjectSettings;
     Icon icon = ExternalSystemUiUtil.getUiAware(externalSystemId).getProjectIcon();
     myIcon = icon == null ? super.getNodeIcon() : icon;
   }
@@ -87,23 +81,6 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
   }
 
   @Override
-  public void setModuleFilePath(@NonNls String path) {
-    super.setModuleFilePath(path);
-    String contentPath = getContentEntryPath();
-    if (myExternalProjectSettingsControl != null && contentPath != null) {
-      myExternalProjectSettingsControl.getInitialSettings().setExternalProjectPath(contentPath);
-      myExternalProjectSettingsControl.reset(true);
-    }
-  }
-
-  @Override
-  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
-    return myExternalProjectSettingsControl == null
-           ? ModuleWizardStep.EMPTY_ARRAY
-           : new ModuleWizardStep[]{new ExternalModuleSettingsStep<S>(myExternalProjectSettingsControl)};
-  }
-
-  @Override
   public void setupRootModel(ModifiableRootModel model) throws ConfigurationException {
     String contentPath = getContentEntryPath();
     if (StringUtil.isEmpty(contentPath)) {
@@ -120,18 +97,8 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
     model.addContentEntry(vContentRootDir);
     model.inheritSdk();
 
-    AbstractExternalSystemSettings settings = ExternalSystemApiUtil.getSettings(model.getProject(), myExternalSystemId);
-    S externalProjectSettings = createSettings();
-    if (myExternalProjectSettingsControl != null) {
-      String errorMessage = myExternalProjectSettingsControl.apply(externalProjectSettings);
-      myExternalProjectSettingsControl.disposeUIResources();
-      if (errorMessage != null) {
-        throw new ConfigurationException(errorMessage);
-      }
-    }
-
     VirtualFile configFile = getExternalProjectConfigFile(vContentRootDir);
-    final String templateConfigName = getTemplateConfigName(externalProjectSettings);
+    final String templateConfigName = getTemplateConfigName(myExternalProjectSettings);
     if (configFile != null && templateConfigName != null) {
       FileTemplateManager manager = FileTemplateManager.getInstance();
       FileTemplate template = manager.getInternalTemplate(templateConfigName);
@@ -147,12 +114,15 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
       }
     }
 
+    AbstractExternalSystemSettings settings = ExternalSystemApiUtil.getSettings(model.getProject(), myExternalSystemId);
     //noinspection unchecked
-    settings.linkProject(externalProjectSettings);
+    settings.linkProject(myExternalProjectSettings);
   }
 
   @NotNull
-  protected abstract S createSettings();
+  public S getExternalProjectSettings() {
+    return myExternalProjectSettings;
+  }
 
   /**
    * Asks external system-specific module builder to prepare external system config file if necessary.
