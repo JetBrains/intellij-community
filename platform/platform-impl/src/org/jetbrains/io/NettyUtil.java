@@ -18,6 +18,7 @@ package org.jetbrains.io;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ActionCallback;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.bootstrap.BootstrapUtil;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
@@ -32,7 +33,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.IOException;
-import java.net.SocketAddress;
+import java.net.InetSocketAddress;
+import java.net.Socket;
 
 public final class NettyUtil {
   public static final int DEFAULT_CONNECT_ATTEMPT_COUNT = 8;
@@ -47,35 +49,40 @@ public final class NettyUtil {
     }
   }
 
-  public static Channel connectClient(Bootstrap bootstrap, SocketAddress remoteAddress, ActionCallback asyncResult) {
+  public static Channel connectClient(Bootstrap bootstrap, InetSocketAddress remoteAddress, ActionCallback asyncResult) {
     return connect(bootstrap, remoteAddress, asyncResult, DEFAULT_CONNECT_ATTEMPT_COUNT);
   }
 
   @Nullable
-  public static Channel connect(Bootstrap bootstrap, SocketAddress remoteAddress, ActionCallback asyncResult, int maxAttemptCount) {
-    int attemptCount = 0;
-    while (true) {
-      try {
-        ChannelFuture future = bootstrap.connect(remoteAddress).await();
-        if (future.isSuccess()) {
-          return future.channel();
+  public static Channel connect(Bootstrap bootstrap, InetSocketAddress remoteAddress, ActionCallback asyncResult, int maxAttemptCount) {
+    try {
+      int attemptCount = 0;
+      Socket socket;
+      while (true) {
+        try {
+          //noinspection SocketOpenedButNotSafelyClosed
+          socket = new Socket(remoteAddress.getAddress(), remoteAddress.getPort());
+          break;
         }
-        else if (asyncResult.isRejected()) {
-          return null;
-        }
-        else if (++attemptCount < maxAttemptCount) {
-          //noinspection BusyWait
-          Thread.sleep(attemptCount * 100);
-        }
-        else {
-          asyncResult.reject("cannot connect");
-          return null;
+        catch (IOException e) {
+          if (++attemptCount < maxAttemptCount) {
+            //noinspection BusyWait
+            Thread.sleep(attemptCount * 100);
+          }
+          else {
+            asyncResult.reject("cannot connect");
+            return null;
+          }
         }
       }
-      catch (Throwable e) {
-        asyncResult.reject(e.getMessage());
-        return null;
-      }
+
+      OioSocketChannel channel = new OioSocketChannel(bootstrap.group().next(), socket);
+      BootstrapUtil.initAndRegister(channel, bootstrap).awaitUninterruptibly();
+      return channel;
+    }
+    catch (Throwable e) {
+      asyncResult.reject("cannot connect: " + e.getMessage());
+      return null;
     }
   }
 
