@@ -33,16 +33,25 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.ui.InputValidatorEx;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.JBPopupListener;
+import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.LightColors;
+import com.intellij.ui.TextFieldWithHistory;
+import com.intellij.ui.TextFieldWithStoredHistory;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.DocumentEvent;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -54,6 +63,7 @@ import java.util.List;
  */
 public class ZenCodingTemplate implements CustomLiveTemplate {
   public static final char MARKER = '\0';
+  private static final String EMMET_RECENT_WRAP_ABBREVIATIONS_KEY = "emmet.recent.wrap.abbreviations";
 
   @Nullable
   public static ZenCodingGenerator findApplicableDefaultGenerator(@NotNull PsiElement context, boolean wrapping) {
@@ -156,7 +166,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
   }
 
 
-  public static void expand(@NotNull String key, @NotNull CustomTemplateCallback callback, @Nullable String surroundedText, 
+  public static void expand(@NotNull String key, @NotNull CustomTemplateCallback callback, @Nullable String surroundedText,
                             @NotNull ZenCodingGenerator defaultGenerator,
                             @NotNull Collection<? extends ZenCodingFilter> extraFilters,
                             boolean expandPrimitiveAbbreviations) {
@@ -266,32 +276,66 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     return false;
   }
 
-  public void wrap(final String selection, @NotNull final CustomTemplateCallback callback) {
-    InputValidatorEx validator = new InputValidatorEx() {
-      public String getErrorText(String inputString) {
-        if (!checkTemplateKey(inputString, callback)) {
-          return XmlBundle.message("zen.coding.incorrect.abbreviation.error");
+  public void wrap(@NotNull final String selection, @NotNull final CustomTemplateCallback callback) {
+    final TextFieldWithStoredHistory field = new TextFieldWithStoredHistory(EMMET_RECENT_WRAP_ABBREVIATIONS_KEY);
+    field.setHistorySize(10);
+    final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
+    final Balloon balloon = popupFactory.createDialogBalloonBuilder(field, XmlBundle.message("zen.coding.title"))
+      .setCloseButtonEnabled(false)
+      .setAnimationCycle(0)
+      .setHideOnClickOutside(true)
+      .setHideOnKeyOutside(true)
+      .createBalloon();
+    
+    field.addDocumentListener(new DocumentAdapter() {
+      @Override
+      protected void textChanged(DocumentEvent e) {
+        validateTemplateKey(field, balloon, field.getText(), callback);
+      }
+    });
+    field.addKeyboardListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (!field.isPopupVisible()) {
+          switch (e.getKeyCode()) {
+            case KeyEvent.VK_ENTER:
+              final String abbreviation = field.getText();
+              if (validateTemplateKey(field, balloon, abbreviation, callback)) {
+                doWrap(selection, abbreviation, callback);
+                field.addCurrentTextToHistory();
+                balloon.hide(true);
+              }
+              break;
+            case KeyEvent.VK_ESCAPE:
+              balloon.hide(false);
+              break;
+          }
         }
-        return null;
       }
+    });
 
-      public boolean checkInput(String inputString) {
-        return getErrorText(inputString) == null;
+    balloon.addListener(new JBPopupListener.Adapter() {
+      @Override
+      public void beforeShown(LightweightWindowEvent event) {
+        field.requestFocus();
       }
-
-      public boolean canClose(String inputString) {
-        return checkInput(inputString);
-      }
-    };
-    final String abbreviation = Messages.showInputDialog(callback.getProject(),
-                                                         XmlBundle.message("zen.coding.enter.abbreviation.dialog.label"),
-                                                         XmlBundle.message("zen.coding.title"), Messages.getQuestionIcon(), "", validator);
-    if (abbreviation != null) {
-      doWrap(selection, abbreviation, callback);
-    }
+    });
+    balloon.show(popupFactory.guessBestPopupLocation(callback.getEditor()), Balloon.Position.below);
   }
 
-  public static boolean checkTemplateKey(String inputString, CustomTemplateCallback callback) {
+  private static boolean validateTemplateKey(@NotNull TextFieldWithHistory field,
+                                             @Nullable Balloon balloon,
+                                             @NotNull String abbreviation,
+                                             @NotNull CustomTemplateCallback callback) {
+    final boolean correct = checkTemplateKey(abbreviation, callback);
+    field.getTextEditor().setBackground(correct ? LightColors.SLIGHTLY_GREEN : LightColors.RED);
+    if (balloon != null && balloon.isDisposed()) {
+      balloon.revalidate();
+    }
+    return correct;
+  }
+
+  static boolean checkTemplateKey(String inputString, CustomTemplateCallback callback) {
     ZenCodingGenerator generator = findApplicableDefaultGenerator(callback.getContext(), true);
     assert generator != null;
     return checkTemplateKey(inputString, callback, generator);
