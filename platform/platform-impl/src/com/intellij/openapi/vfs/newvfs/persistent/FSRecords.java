@@ -56,7 +56,7 @@ public class FSRecords implements Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
   public static final boolean weHaveContentHashes = SystemProperties.getBooleanProperty("idea.share.contents", true);
-  private static final int VERSION = 19 + (weHaveContentHashes ? 2:0);
+  private static final int VERSION = 20 + (weHaveContentHashes ? 0x10:0) + (IOUtil.ourByteBuffersUseNativeByteOrder ? 0x37:0);
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
@@ -144,7 +144,7 @@ public class FSRecords implements Forceable {
     }
 
     private static void scanFreeRecords() {
-      final int filelength = (int)getRecords().length();
+      final int filelength = (int)myRecords.length();
       LOG.assertTrue(filelength % RECORD_SIZE == 0, "invalid file size: " + filelength);
 
       int count = filelength / RECORD_SIZE;
@@ -219,34 +219,8 @@ public class FSRecords implements Forceable {
         myNames = new PersistentStringEnumerator(namesFile, storageLockContext);
         myAttributes = new Storage(attributesFile.getCanonicalPath(), REASONABLY_SMALL);
         myContents = new RefCountingStorage(contentsFile.getCanonicalPath(), CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH); // sources usually zipped with 4x ratio
-        KeyDescriptor<byte[]> descriptor = new KeyDescriptor<byte[]>() {
-          @Override
-          public void save(DataOutput out, byte[] value) throws IOException {
-            out.write(value);
-          }
-
-          @Override
-          public byte[] read(DataInput in) throws IOException {
-            byte[] b = new byte[SIGNATURE_LENGTH];
-            in.readFully(b);
-            return b;
-          }
-
-          @Override
-          public int getHashCode(byte[] value) {
-            int hash = 0; // take first 4 bytes, this should be good enough hash given we reference git revisions with 7-8 hex digits
-            for (int i = 0; i < 4; ++i) {
-              hash = (hash << 8) + (value[i] & 0xFF);
-            }
-            return hash;
-          }
-
-          @Override
-          public boolean isEqual(byte[] val1, byte[] val2) {
-            return Arrays.equals(val1, val2);
-          }
-        };
-        myContentHashesEnumerator = weHaveContentHashes ? new PersistentBTreeEnumerator<byte[]>(contentsHashesFile, descriptor, 4096, storageLockContext) {
+        myContentHashesEnumerator = weHaveContentHashes ? new PersistentBTreeEnumerator<byte[]>(contentsHashesFile,
+                                                                                                new ContentHashesDescriptor(), 4096, storageLockContext) {
           @Override
           protected int doWriteData(byte[] value) throws IOException {
             int record = getContentStorage().createNewRecord();
@@ -283,7 +257,7 @@ public class FSRecords implements Forceable {
         boolean aligned = PagedFileStorage.BUFFER_SIZE % RECORD_SIZE == 0;
         assert aligned; // for performance
         myRecords = new ResizeableMappedFile(recordsFile, 20 * 1024, storageLockContext,
-                                             PagedFileStorage.BUFFER_SIZE, aligned);
+                                             PagedFileStorage.BUFFER_SIZE, aligned, IOUtil.ourByteBuffersUseNativeByteOrder);
 
         if (myRecords.length() == 0) {
           cleanRecord(0); // Clean header
@@ -473,10 +447,6 @@ public class FSRecords implements Forceable {
       return myNames;
     }
 
-    public static ResizeableMappedFile getRecords() {
-      return myRecords;
-    }
-
     private static void closeFiles() throws IOException {
       if (myFlushingFuture != null) {
         myFlushingFuture.cancel(false);
@@ -547,6 +517,34 @@ public class FSRecords implements Forceable {
         return Math.max(myAttrPageRequested ? 8:32, Math.min((int)(requiredLength * 1.2), (requiredLength / 1024 + 1) * 1024));
       }
     }
+
+    private static class ContentHashesDescriptor implements KeyDescriptor<byte[]>, DifferentSerializableBytesImplyNonEqualityPolicy {
+      @Override
+      public void save(DataOutput out, byte[] value) throws IOException {
+        out.write(value);
+      }
+
+      @Override
+      public byte[] read(DataInput in) throws IOException {
+        byte[] b = new byte[SIGNATURE_LENGTH];
+        in.readFully(b);
+        return b;
+      }
+
+      @Override
+      public int getHashCode(byte[] value) {
+        int hash = 0; // take first 4 bytes, this should be good enough hash given we reference git revisions with 7-8 hex digits
+        for (int i = 0; i < 4; ++i) {
+          hash = (hash << 8) + (value[i] & 0xFF);
+        }
+        return hash;
+      }
+
+      @Override
+      public boolean isEqual(byte[] val1, byte[] val2) {
+        return Arrays.equals(val1, val2);
+      }
+    }
   }
 
   public FSRecords() {
@@ -567,7 +565,7 @@ public class FSRecords implements Forceable {
   }
 
   private static ResizeableMappedFile getRecords() {
-    return DbConnection.getRecords();
+    return DbConnection.myRecords;
   }
 
   private static PersistentBTreeEnumerator<byte[]> getContentHashesEnumerator() {
