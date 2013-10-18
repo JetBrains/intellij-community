@@ -97,7 +97,7 @@ public class JavaCreateFromTemplateHandler implements CreateFromTemplateHandler 
 
   public boolean handlesTemplate(final FileTemplate template) {
     FileType fileType = FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(template.getExtension());
-    return fileType.equals(StdFileTypes.JAVA) && !JavaTemplateUtil.INTERNAL_PACKAGE_INFO_TEMPLATE_NAME.equals(template.getName());
+    return fileType.equals(StdFileTypes.JAVA) && !FileTemplateUtil.INTERNAL_PACKAGE_INFO_TEMPLATE_NAME.equals(template.getName());
   }
 
   public PsiElement createFromTemplate(final Project project, final PsiDirectory directory, final String fileName, FileTemplate template,

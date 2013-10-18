@@ -36,7 +36,6 @@ public class JavaTemplateUtil {
   @NonNls public static final String INTERNAL_INTERFACE_TEMPLATE_NAME = "Interface";
   @NonNls public static final String INTERNAL_ANNOTATION_TYPE_TEMPLATE_NAME = "AnnotationType";
   @NonNls public static final String INTERNAL_ENUM_TEMPLATE_NAME = "Enum";
-  @NonNls public static final String INTERNAL_PACKAGE_INFO_TEMPLATE_NAME = "package-info";
 
   private JavaTemplateUtil() {
   }
