@@ -66,7 +66,7 @@ public class ViewStructureAction extends AnAction {
     else {
       virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     }
-    String title = virtualFile == null? "" : virtualFile.getName();
+    String title = virtualFile == null? fileEditor.getName() : virtualFile.getName();
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.file.structure");
 
