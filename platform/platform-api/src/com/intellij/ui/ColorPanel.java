@@ -29,6 +29,7 @@ public class ColorPanel extends JPanel {
   public static final Color DISABLED_COLOR = UIUtil.getPanelBackground();
   private boolean isFiringEvent = false;
   private ColorBox myFgSelectedColorBox;
+  private boolean isEditable = true;
 
   public ColorPanel() {
     this(10);
@@ -60,6 +61,7 @@ public class ColorPanel extends JPanel {
   }
 
   private void fireActionEvent() {
+    if (!isEditable) return;
     if (!isFiringEvent){
       isFiringEvent = true;
       ActionEvent actionevent = null;
@@ -91,10 +93,14 @@ public class ColorPanel extends JPanel {
     myFgSelectedColorBox.setColor(color);
   }
 
+  public void setEditable(boolean isEditable) {
+    this.isEditable = isEditable;
+    myFgSelectedColorBox.setSelectable(isEditable);
+  }
 
   private class ColorBox extends JComponent {
     private final Dimension mySize;
-    private final boolean isSelectable;
+    private boolean isSelectable;
     private Runnable mySelectColorAction = null;
     private Color myColor;
     @NonNls public static final String RGB = "RGB";
@@ -201,6 +207,10 @@ public class ColorPanel extends JPanel {
 
     public Color getColor() {
       return myColor;
+    }
+
+    private void setSelectable(boolean selectable) {
+      isSelectable = selectable;
     }
   }
 }

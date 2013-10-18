@@ -39,6 +39,12 @@ public class ClassLiteralGetter {
     }
 
     PsiType classParameter = PsiUtil.substituteTypeParameter(expectedType, CommonClassNames.JAVA_LANG_CLASS, 0, false);
+    if (classParameter == null) {
+      PsiType defaultType = parameters.getDefaultType();
+      if (InheritanceUtil.isInheritor(defaultType, CommonClassNames.JAVA_LANG_CLASS)) {
+        classParameter = PsiUtil.substituteTypeParameter(defaultType, CommonClassNames.JAVA_LANG_CLASS, 0, false);
+      }
+    }
 
     boolean addInheritors = false;
     PsiElement position = parameters.getPosition();

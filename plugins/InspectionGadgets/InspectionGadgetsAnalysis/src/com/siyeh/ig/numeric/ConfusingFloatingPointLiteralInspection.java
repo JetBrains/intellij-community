@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2009 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,32 +17,30 @@ package com.siyeh.ig.numeric;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ConfusingFloatingPointLiteralInspection
-  extends BaseInspection {
+public class ConfusingFloatingPointLiteralInspection extends BaseInspection {
 
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "confusing.floating.point.literal.display.name");
+    return InspectionGadgetsBundle.message("confusing.floating.point.literal.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "confusing.floating.point.literal.problem.descriptor");
+    return InspectionGadgetsBundle.message("confusing.floating.point.literal.problem.descriptor");
   }
 
   @Override
@@ -50,8 +48,8 @@ public class ConfusingFloatingPointLiteralInspection
     return new ConfusingFloatingPointLiteralFix();
   }
 
-  private static class ConfusingFloatingPointLiteralFix
-    extends InspectionGadgetsFix {
+  private static class ConfusingFloatingPointLiteralFix extends InspectionGadgetsFix {
+
     @Override
     @NotNull
     public String getFamilyName() {
@@ -61,23 +59,19 @@ public class ConfusingFloatingPointLiteralInspection
     @Override
     @NotNull
     public String getName() {
-      return InspectionGadgetsBundle.message(
-        "confusing.floating.point.literal.change.quickfix");
+      return InspectionGadgetsBundle.message("confusing.floating.point.literal.change.quickfix");
     }
 
     @Override
-    public void doFix(Project project, ProblemDescriptor descriptor)
-      throws IncorrectOperationException {
-      final PsiExpression literalExpression =
-        (PsiExpression)descriptor.getPsiElement();
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiExpression literalExpression = (PsiExpression)descriptor.getPsiElement();
       final String text = literalExpression.getText();
       final String newText = getCanonicalForm(text);
       replaceExpression(literalExpression, newText);
     }
 
-    private static String getCanonicalForm(String text) {
-      final boolean isHexadecimal =
-        text.startsWith("0x") || text.startsWith("0X");
+    private static String getCanonicalForm(@NonNls String text) {
+      final boolean isHexadecimal = text.startsWith("0x") || text.startsWith("0X");
       int breakPoint = text.indexOf((int)'e');
       if (breakPoint < 0) {
         breakPoint = text.indexOf((int)'E');
@@ -131,30 +125,16 @@ public class ConfusingFloatingPointLiteralInspection
     return new ConfusingFloatingPointLiteralVisitor();
   }
 
-  private static class ConfusingFloatingPointLiteralVisitor
-    extends BaseInspectionVisitor {
+  private static class ConfusingFloatingPointLiteralVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitLiteralExpression(
-      @NotNull PsiLiteralExpression literal) {
+    public void visitLiteralExpression(@NotNull PsiLiteralExpression literal) {
       super.visitLiteralExpression(literal);
       final PsiType type = literal.getType();
-      if (type == null) {
-        return;
+      if ((PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type)) && isConfusing(literal.getText())) {
+        registerError(literal);
       }
-      if (!(type.equals(PsiType.FLOAT) || type.equals(PsiType.DOUBLE))) {
-        return;
-      }
-      final String text = literal.getText();
-      if (text == null) {
-        return;
-      }
-      if (!isConfusing(text)) {
-        return;
-      }
-      registerError(literal);
     }
-
 
     private static boolean isConfusing(@Nullable CharSequence text) {
       if (text == null) {
@@ -164,26 +144,26 @@ public class ConfusingFloatingPointLiteralInspection
       if (length < 3) {
         return true;
       }
-      boolean hexadecimal = true;
+      boolean hex = true;
       final char firstChar = text.charAt(0);
       if (firstChar != '0') {
-        hexadecimal = false;
-      }
-      else if (firstChar < '0' && firstChar > '9') {
-        return true;
+        if (!StringUtil.isDecimalDigit(firstChar)) {
+          return true;
+        }
+        hex = false;
       }
       final char secondChar = text.charAt(1);
-      if (hexadecimal) {
-        if (secondChar != 'x' && secondChar != 'X') {
-          hexadecimal = false;
+      if (hex && secondChar != 'x' && secondChar != 'X') {
+        hex = false;
+      }
+      int index = hex ? 2 : 1;
+      char nextChar = text.charAt(index);
+      if (hex) {
+        if (!StringUtil.isHexDigit(nextChar)) {
+          return true;
         }
       }
-      int index = hexadecimal ? 2 : 1;
-      char nextChar = text.charAt(index);
-      if (hexadecimal && (nextChar < '0' || nextChar > '9')) {
-        return true;
-      }
-      while (nextChar >= '0' && nextChar <= '9') {
+      while (hex && StringUtil.isHexDigit(nextChar) || StringUtil.isDecimalDigit(nextChar) || nextChar == '_') {
         index++;
         if (index >= length) {
           return true;
@@ -198,52 +178,14 @@ public class ConfusingFloatingPointLiteralInspection
         return true;
       }
       nextChar = text.charAt(index);
-      if (nextChar < '0' || nextChar > '9') {
+      if (hex) {
+        if (!StringUtil.isHexDigit(nextChar)) {
+          return true;
+        }
+      } else if (!StringUtil.isDecimalDigit(nextChar)) {
         return true;
       }
-      while (nextChar >= '0' && nextChar <= '9') {
-        index++;
-        if (index >= length) {
-          return hexadecimal;
-        }
-        nextChar = text.charAt(index);
-      }
-      if (hexadecimal) {
-        if (nextChar != 'p' && nextChar != 'P') {
-          return true;
-        }
-      }
-      else {
-        if (nextChar != 'e' && nextChar != 'E') {
-          if (nextChar == 'f' || nextChar == 'F' ||
-              nextChar == 'd' || nextChar == 'D') {
-            if (index == length - 1) {
-              return false;
-            }
-          }
-          return true;
-        }
-      }
-      index++;
-      if (index >= length) {
-        return true;
-      }
-      nextChar = text.charAt(index);
-      if (nextChar == '-') {
-        index++;
-        if (index >= length) {
-          return true;
-        }
-        nextChar = text.charAt(index);
-      }
-      while (nextChar >= '0' && nextChar <= '9') {
-        index++;
-        if (index >= length) {
-          return false;
-        }
-        nextChar = text.charAt(index);
-      }
-      // ignore trailing f, F, d or D
+      // <digit(s)><point><digit> seen, skip the rest.
       return false;
     }
   }

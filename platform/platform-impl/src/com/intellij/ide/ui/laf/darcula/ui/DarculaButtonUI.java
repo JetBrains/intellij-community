@@ -16,6 +16,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.openapi.ui.GraphicsConfig;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import sun.swing.SwingUtilities2;
@@ -58,25 +59,42 @@ public class DarculaButtonUI extends BasicButtonUI {
   protected void paintText(Graphics g, JComponent c, Rectangle textRect, String text) {
     AbstractButton button = (AbstractButton)c;
     ButtonModel model = button.getModel();
-
-    if (model.isEnabled()) {
-      FontMetrics metrics = SwingUtilities2.getFontMetrics(c, g);
-      int mnemonicIndex = button.getDisplayedMnemonicIndex();
-
-      Color fg = button.getForeground();
-      if (fg instanceof UIResource && button instanceof JButton && ((JButton)button).isDefaultButton()) {
-        final Color selectedFg = UIManager.getColor("Button.selectedButtonForeground");
-        if (selectedFg != null) {
-          fg = selectedFg;
-        }
+    Color fg = button.getForeground();
+    if (fg instanceof UIResource && button instanceof JButton && ((JButton)button).isDefaultButton()) {
+      final Color selectedFg = UIManager.getColor("Button.darcula.selectedButtonForeground");
+      if (selectedFg != null) {
+        fg = selectedFg;
       }
-      g.setColor(fg);
+    }
+    g.setColor(fg);
+
+    FontMetrics metrics = SwingUtilities2.getFontMetrics(c, g);
+    int mnemonicIndex = button.getDisplayedMnemonicIndex();
+    if (model.isEnabled()) {
+
       SwingUtilities2.drawStringUnderlineCharAt(c, g, text, mnemonicIndex,
                                                 textRect.x + getTextShiftOffset(),
                                                 textRect.y + metrics.getAscent() + getTextShiftOffset());
     }
     else {
-      super.paintText(g, c, textRect, text);
+      g.setColor(UIManager.getColor("Button.darcula.disabledText.shadow"));
+      SwingUtilities2.drawStringUnderlineCharAt(c, g, text, -1,
+                                                textRect.x + getTextShiftOffset()+1,
+                                                textRect.y + metrics.getAscent() + getTextShiftOffset()+1);
+      g.setColor(UIManager.getColor("Button.disabledText"));
+      SwingUtilities2.drawStringUnderlineCharAt(c, g, text, -1,
+                                                textRect.x + getTextShiftOffset(),
+                                                textRect.y + metrics.getAscent() + getTextShiftOffset());
+
+
+    }
+  }
+
+  @Override
+  public void update(Graphics g, JComponent c) {
+    super.update(g, c);
+    if (((JButton)c).isDefaultButton() && !SystemInfo.isMac) {
+      c.setFont(c.getFont().deriveFont(Font.BOLD));
     }
   }
 

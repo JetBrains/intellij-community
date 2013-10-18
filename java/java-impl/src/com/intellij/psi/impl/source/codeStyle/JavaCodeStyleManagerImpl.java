@@ -455,31 +455,24 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
   }
 
   private NamesByExprInfo suggestVariableNameByExpression(PsiExpression expr, VariableKind variableKind, boolean correctKeywords) {
-    final NamesByExprInfo names1 = suggestVariableNameByExpressionOnly(expr, variableKind, correctKeywords);
-    final NamesByExprInfo names2 = suggestVariableNameByExpressionPlace(expr, variableKind, correctKeywords);
-
-    PsiType type = expr.getType();
-    final String[] names3;
-    if (type != null) {
-      names3 = suggestVariableNameByType(type, variableKind, correctKeywords);
-    }
-    else {
-      names3 = null;
-    }
 
     final LinkedHashSet<String> names = new LinkedHashSet<String>();
     final String[] fromLiterals = suggestVariableNameFromLiterals(expr, variableKind, correctKeywords);
     if (fromLiterals != null) {
       ContainerUtil.addAll(names, fromLiterals);
     }
-    ContainerUtil.addAll(names, names1.names);
-    ContainerUtil.addAll(names, names2.names);
-    if (names3 != null) {
-      ContainerUtil.addAll(names, names3);
+    
+    ContainerUtil.addAll(names, suggestVariableNameByExpressionOnly(expr, variableKind, correctKeywords, false).names);
+    ContainerUtil.addAll(names, suggestVariableNameByExpressionPlace(expr, variableKind, correctKeywords).names);
+
+    PsiType type = expr.getType();
+    if (type != null) {
+      ContainerUtil.addAll(names, suggestVariableNameByType(type, variableKind, correctKeywords));
     }
+    ContainerUtil.addAll(names, suggestVariableNameByExpressionOnly(expr, variableKind, correctKeywords, true).names);
 
     String[] namesArray = ArrayUtil.toStringArray(names);
-    String propertyName = names1.propertyName != null ? names1.propertyName : names2.propertyName;
+    String propertyName = suggestVariableNameByExpressionOnly(expr, variableKind, correctKeywords, false).propertyName != null ? suggestVariableNameByExpressionOnly(expr, variableKind, correctKeywords, false).propertyName : suggestVariableNameByExpressionPlace(expr, variableKind, correctKeywords).propertyName;
     return new NamesByExprInfo(propertyName, namesArray);
   }
 
@@ -511,7 +504,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
     return null;
   }
 
-  private NamesByExprInfo suggestVariableNameByExpressionOnly(PsiExpression expr, final VariableKind variableKind, boolean correctKeywords) {
+  private NamesByExprInfo suggestVariableNameByExpressionOnly(PsiExpression expr, final VariableKind variableKind, boolean correctKeywords, boolean useAllMethodNames) {
     if (expr instanceof PsiMethodCallExpression) {
       PsiReferenceExpression methodExpr = ((PsiMethodCallExpression)expr).getMethodExpression();
       String methodName = methodExpr.getReferenceName();
@@ -533,7 +526,7 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
               return new NamesByExprInfo(propertyName, names);
             }
           }
-          else if (words.length == 1) {
+          else if (words.length == 1 || useAllMethodNames) {
             return new NamesByExprInfo(methodName, getSuggestionsByName(methodName, variableKind, false, correctKeywords));
           }
         }
@@ -581,9 +574,9 @@ public class JavaCodeStyleManagerImpl extends JavaCodeStyleManager {
         }
       }
     } else if (expr instanceof PsiParenthesizedExpression) {
-      return suggestVariableNameByExpressionOnly(((PsiParenthesizedExpression)expr).getExpression(), variableKind, correctKeywords);
+      return suggestVariableNameByExpressionOnly(((PsiParenthesizedExpression)expr).getExpression(), variableKind, correctKeywords, useAllMethodNames);
     } else if (expr instanceof PsiTypeCastExpression) {
-      return suggestVariableNameByExpressionOnly(((PsiTypeCastExpression)expr).getOperand(), variableKind, correctKeywords);
+      return suggestVariableNameByExpressionOnly(((PsiTypeCastExpression)expr).getOperand(), variableKind, correctKeywords, useAllMethodNames);
     } else if (expr instanceof PsiLiteralExpression) {
       final String text = StringUtil.stripQuotesAroundValue(expr.getText());
       if (isIdentifier(text)) {

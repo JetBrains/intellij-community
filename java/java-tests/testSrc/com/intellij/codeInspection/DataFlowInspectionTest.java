@@ -91,6 +91,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testNotNullPrimitive() throws Throwable { doTest(); }
   public void testBoxing128() throws Throwable { doTest(); }
   public void testFinalFieldsInitializedByAnnotatedParameters() throws Throwable { doTest(); }
+  public void testFinalFieldsInitializedNotNull() throws Throwable { doTest(); }
   public void testMultiCatch() throws Throwable { doTest(); }
   public void testContinueFlushesLoopVariable() throws Throwable { doTest(); }
 
@@ -110,6 +111,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testAccessorPlusMutator() throws Throwable { doTest(); }
   public void testClosureVariableField() throws Throwable { doTest(); }
 
+  public void testAssigningNullableToNotNull() throws Throwable { doTest(); }
   public void testAssigningUnknownToNullable() throws Throwable { doTest(); }
   public void testAssigningClassLiteralToNullable() throws Throwable { doTest(); }
 

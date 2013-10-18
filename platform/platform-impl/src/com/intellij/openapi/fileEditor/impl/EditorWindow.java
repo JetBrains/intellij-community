@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,7 @@ public class EditorWindow {
 
   private boolean myIsDisposed = false;
   public static final Key<Integer> INITIAL_INDEX_KEY = Key.create("initial editor index");
-  private Stack<Pair<String, Integer>> myRemovedTabs = new Stack<Pair<String, Integer>>() {
+  private final Stack<Pair<String, Integer>> myRemovedTabs = new Stack<Pair<String, Integer>>() {
     @Override
     public void push(Pair<String, Integer> pair) {
       if (size() >= UISettings.getInstance().EDITOR_TAB_LIMIT) {
@@ -307,15 +307,8 @@ public class EditorWindow {
             if (componentIndex >= 0) { // editor could close itself on decomposition
               final int indexToSelect = calcIndexToSelect(file, componentIndex);
               myRemovedTabs.push(Pair.create(file.getUrl(), componentIndex));
-              final ActionCallback removeTab = myTabbedPane.removeTabAt(componentIndex, indexToSelect, transferFocus);
-              final Runnable disposer = new Runnable() {
-                @Override
-                public void run() {
-                  editorManager.disposeComposite(editor);
-                }
-              };
-              disposer.run();
-              //removeTab.doWhenDone(disposer);
+              myTabbedPane.removeTabAt(componentIndex, indexToSelect, transferFocus);
+              editorManager.disposeComposite(editor);
             }
           }
           else {

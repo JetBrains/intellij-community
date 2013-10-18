@@ -39,7 +39,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
 
   @Override
   public void setAttributes(TextAttributesKey key, TextAttributes attributes) {
-    if (!Comparing.equal(attributes, getAttributes(key))) {
+    if (attributes != getAttributes(key)) {
       myAttributesMap.put(key, attributes);
     }
   }

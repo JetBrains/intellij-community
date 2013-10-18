@@ -759,6 +759,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     @NotNull private final TextAttributesKey key;
     private TextAttributes myFallbackAttributes;
     private Pair<ColorSettingsPage,AttributesDescriptor> myBaseAttributeDescriptor;
+    private boolean myIsInheritedInitial = false;
 
     private SchemeTextAttributesDescription(String name, String group, @NotNull TextAttributesKey key, @NotNull MyColorScheme  scheme, Icon icon,
                                            String toolTip) {
@@ -776,6 +777,8 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
             new Pair<ColorSettingsPage, AttributesDescriptor>(null, new AttributesDescriptor(fallbackKey.getExternalName(), fallbackKey));
         }
       }
+      myIsInheritedInitial = isInherited(scheme);
+      setInherited(myIsInheritedInitial);
       initCheckedStatus();
     }
 
@@ -783,25 +786,30 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
     @NotNull
     private static TextAttributes getInitialAttributes(@NotNull MyColorScheme scheme, @NotNull TextAttributesKey key) {
       TextAttributes attributes = scheme.getAttributes(key);
+      return attributes != null ? attributes : new TextAttributes();
+    }
+
+    private boolean isInherited(@NotNull MyColorScheme scheme) {
+      TextAttributes attributes = scheme.getAttributes(key);
       TextAttributesKey fallbackKey = key.getFallbackAttributeKey();
       if (fallbackKey != null && !scheme.containsKey(key)) {
         TextAttributes fallbackAttributes = scheme.getAttributes(fallbackKey);
         if (attributes != null && attributes == fallbackAttributes) {
-          return new TextAttributes();
+          return true;
         }
       }
-      return attributes != null ? attributes : new TextAttributes();
+      return false;
     }
 
     @Override
     public void apply(EditorColorsScheme scheme) {
       if (scheme == null) scheme = getScheme();
-      scheme.setAttributes(key, getTextAttributes());
+      scheme.setAttributes(key, isInherited() ? new TextAttributes() : getTextAttributes());
     }
 
     @Override
     public boolean isModified() {
-      return !Comparing.equal(myAttributesToApply, getTextAttributes());
+      return !Comparing.equal(myAttributesToApply, getTextAttributes()) || myIsInheritedInitial != isInherited();
     }
 
     @Override
@@ -809,15 +817,21 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract 
       return true;
     }
 
+    @Nullable
     @Override
-    public boolean isInherited() {
-      return myFallbackAttributes != null && getTextAttributes().isFallbackEnabled();
+    public TextAttributes getBaseAttributes() {
+      return myFallbackAttributes;
     }
 
     @Nullable
     @Override
     public Pair<ColorSettingsPage,AttributesDescriptor> getBaseAttributeDescriptor() {
       return myBaseAttributeDescriptor;
+    }
+
+    @Override
+    public void setInherited(boolean isInherited) {
+      super.setInherited(isInherited);
     }
   }
 

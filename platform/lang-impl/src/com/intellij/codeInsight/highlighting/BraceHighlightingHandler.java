@@ -31,6 +31,7 @@ import com.intellij.concurrency.JobLauncher;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -48,7 +49,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -103,7 +103,10 @@ public class BraceHighlightingHandler {
     // myFileType = myPsiFile == null ? null : myPsiFile.getFileType();
   }
 
-  static void lookForInjectedAndMatchBracesInOtherThread(@NotNull final Editor editor, @NotNull final Alarm alarm, @NotNull final Processor<BraceHighlightingHandler> processor) {
+  static void lookForInjectedAndMatchBracesInOtherThread(@NotNull final Editor editor,
+                                                         @NotNull final Alarm alarm,
+                                                         @NotNull final Processor<BraceHighlightingHandler> processor) {
+    ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
     if (!PROCESSED_EDITORS.add(editor)) {
       // Skip processing if that is not really necessary.
       // Assuming to be in EDT here.
@@ -115,43 +118,52 @@ public class BraceHighlightingHandler {
     JobLauncher.getInstance().submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
       @Override
       public void run() {
-        final PsiFile injected;
-        try {
-          injected = ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
-            @Override
-            public PsiFile compute() {
-              if (isReallyDisposed(editor, project)) return null;
+        if (!ApplicationManagerEx.getApplicationEx().tryRunReadAction(new Runnable() {
+          @Override
+          public void run() {
+            final PsiFile injected;
+            try {
+              if (isReallyDisposed(editor, project)) return;
               PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
-              return psiFile == null || psiFile instanceof PsiCompiledElement
+              injected = psiFile == null || psiFile instanceof PsiCompiledElement
                      ? null : getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
             }
-          });
-        }
-        catch (RuntimeException e) {
-          // Reset processing flag in case of unexpected exception.
-          ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
+            catch (RuntimeException e) {
+              // Reset processing flag in case of unexpected exception.
+              ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
+                @Override
+                public void run() {
+                  PROCESSED_EDITORS.remove(editor);
+                }
+              });
+              throw e;
+            }
+            ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
+              @Override
+              public void run() {
+                try {
+                  if (!isReallyDisposed(editor, project)) {
+                    Editor newEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injected);
+                    BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, alarm, injected);
+                    processor.process(handler);
+                  }
+                }
+                finally {
+                  PROCESSED_EDITORS.remove(editor);
+                }
+              }
+            }, ModalityState.stateForComponent(editor.getComponent()));
+          }
+        })) {
+          // write action is queued in AWT. restart after it's finished
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
             @Override
             public void run() {
               PROCESSED_EDITORS.remove(editor);
+              lookForInjectedAndMatchBracesInOtherThread(editor, alarm, processor);
             }
-          });
-          throw e;
+          }, ModalityState.stateForComponent(editor.getComponent()));
         }
-        ApplicationManager.getApplication().invokeLater(new DumbAwareRunnable() {
-          @Override
-          public void run() {
-            try {
-              if (!isReallyDisposed(editor, project)) {
-                Editor newEditor = InjectedLanguageUtil.getInjectedEditorForInjectedFile(editor, injected);
-                BraceHighlightingHandler handler = new BraceHighlightingHandler(project, newEditor, alarm, injected);
-                processor.process(handler);
-              }
-            }
-            finally {
-              PROCESSED_EDITORS.remove(editor);
-            }
-          }
-        }, ModalityState.stateForComponent(editor.getComponent()));
       }
     });
   }
@@ -163,10 +175,14 @@ public class BraceHighlightingHandler {
   }
 
   @NotNull
-  private static PsiFile getInjectedFileIfAny(@NotNull final Editor editor, @NotNull final Project project, int offset, @NotNull PsiFile psiFile, @NotNull final Alarm alarm) {
+  private static PsiFile getInjectedFileIfAny(@NotNull final Editor editor,
+                                              @NotNull final Project project,
+                                              int offset,
+                                              @NotNull PsiFile psiFile,
+                                              @NotNull final Alarm alarm) {
     Document document = editor.getDocument();
     // when document is committed, try to highlight braces in injected lang - it's fast
-    if (!PsiDocumentManager.getInstance(project).isUncommited(document)) {
+    if (PsiDocumentManager.getInstance(project).isCommitted(document)) {
       final PsiElement injectedElement = InjectedLanguageUtil.findInjectedElementNoCommit(psiFile, offset);
       if (injectedElement != null /*&& !(injectedElement instanceof PsiWhiteSpace)*/) {
         final PsiFile injected = injectedElement.getContainingFile();
@@ -188,7 +204,7 @@ public class BraceHighlightingHandler {
     return psiFile;
   }
 
-  public void updateBraces() {
+  void updateBraces() {
     if (myPsiFile == null || !myPsiFile.isValid()) return;
 
     clearBraceHighlighters();
@@ -509,7 +525,7 @@ public class BraceHighlightingHandler {
         300, ModalityState.stateForComponent(myEditor.getComponent()));
   }
 
-  public void clearBraceHighlighters() {
+  void clearBraceHighlighters() {
     List<RangeHighlighter> highlighters = getHighlightersList();
     for (final RangeHighlighter highlighter : highlighters) {
       highlighter.dispose();

@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Kirill Likhodedov
  */
-class SimpleHash implements Hash {
+public class SimpleHash implements Hash {
 
   private final String myHash;
 

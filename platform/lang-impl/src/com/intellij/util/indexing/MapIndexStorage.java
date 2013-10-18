@@ -340,7 +340,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
     }
   }
 
-  private static class IntPairInArrayKeyDescriptor implements KeyDescriptor<int[]> {
+  private static class IntPairInArrayKeyDescriptor implements KeyDescriptor<int[]>, DifferentSerializableBytesImplyNonEqualityPolicy {
     @Override
     public void save(DataOutput out, int[] value) throws IOException {
       DataInputOutputUtil.writeINT(out, value[0]);
@@ -366,10 +366,6 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   private static class KeyHash2VirtualFileEnumerator extends PersistentBTreeEnumerator<int[]> {
     public KeyHash2VirtualFileEnumerator(File projectFile) throws IOException {
       super(projectFile, new IntPairInArrayKeyDescriptor(), 4096);
-    }
-
-    protected boolean serializationEquivalenceIsExhausting() {
-      return true;
     }
   }
 }

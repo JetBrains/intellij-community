@@ -52,7 +52,7 @@ public interface DfaMemoryState {
 
   boolean checkNotNullable(DfaValue value);
 
-  boolean isNotNull(DfaVariableValue dfaVar);
+  boolean isNotNull(DfaValue dfaVar);
 
   @Nullable
   DfaConstValue getConstantValue(DfaVariableValue value);

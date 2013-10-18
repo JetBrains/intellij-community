@@ -18,8 +18,8 @@ package com.intellij.notification;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class NotificationsConfiguration implements Notifications {
-  public abstract void changeSettings(String groupDisplayName, NotificationDisplayType displayType, boolean shouldLog);
+public abstract class NotificationsConfiguration extends NotificationsAdapter {
+  public abstract void changeSettings(String groupDisplayName, NotificationDisplayType displayType, boolean shouldLog, boolean shouldReadAloud);
 
   public static NotificationsConfiguration getNotificationsConfiguration() {
     return ApplicationManager.getApplication().getComponent(NotificationsConfiguration.class);

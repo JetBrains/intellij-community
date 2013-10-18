@@ -114,7 +114,7 @@
     <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="AllIcons.Actions.Export">
       <add-to-group group-id="RunMenu" anchor="last"/>
     </action>
-    <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" text="Take a thread dump" icon="AllIcons.Actions.Dump">
+    <action id="DumpThreads" class="com.intellij.debugger.actions.ThreadDumpAction" text="Get thread dump" icon="AllIcons.Actions.Dump">
       <add-to-group group-id="RunMenu" anchor="last"/>
     </action>
 

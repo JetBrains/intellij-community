@@ -16,6 +16,8 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -23,6 +25,7 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,10 +34,7 @@ import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class DfaPsiUtil {
 
@@ -91,6 +91,70 @@ public class DfaPsiUtil {
     }
 
     return Nullness.UNKNOWN;
+  }
+
+  public static boolean isInitializedNotNull(PsiField field) {
+    PsiClass containingClass = field.getContainingClass();
+    if (containingClass == null) return false;
+
+    PsiMethod[] constructors = containingClass.getConstructors();
+    if (constructors.length == 0) return false;
+    
+    for (PsiMethod method : constructors) {
+      if (!getNotNullInitializedFields(method, containingClass).contains(field)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private static Set<PsiField> getNotNullInitializedFields(final PsiMethod constructor, PsiClass containingClass) {
+    final PsiCodeBlock body = constructor.getBody();
+    if (body == null) return Collections.emptySet();
+    final PsiField[] fields = containingClass.getFields();
+    return CachedValuesManager.getCachedValue(constructor, new CachedValueProvider<Set<PsiField>>() {
+      @Nullable
+      @Override
+      public Result<Set<PsiField>> compute() {
+        final Map<PsiField, Boolean> map = ContainerUtil.newHashMap();
+        final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(body) {
+          boolean shouldCheck;
+
+          @Override
+          protected void prepareAnalysis(@NotNull PsiElement psiBlock, Iterable<DfaMemoryState> initialStates) {
+            super.prepareAnalysis(psiBlock, initialStates);
+            shouldCheck = psiBlock == body;
+          }
+
+          @Override
+          protected DfaInstructionState[] acceptInstruction(InstructionVisitor visitor, DfaInstructionState instructionState) {
+            if (shouldCheck) {
+              Instruction instruction = instructionState.getInstruction();
+              if (instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException()) {
+                for (PsiField field : fields) {
+                  if (!instructionState.getMemoryState().isNotNull(getFactory().getVarFactory().createVariableValue(field, false))) {
+                    map.put(field, false);
+                  } else if (!map.containsKey(field)) {
+                    map.put(field, true);
+                  }
+                }
+              }
+            }
+            return super.acceptInstruction(visitor, instructionState);
+          }
+        };
+        final RunnerResult rc = dfaRunner.analyzeMethod(body, new StandardInstructionVisitor());
+        Set<PsiField> notNullFields = ContainerUtil.newHashSet();
+        if (rc == RunnerResult.OK) {
+          for (PsiField field : map.keySet()) {
+            if (map.get(field)) {
+              notNullFields.add(field);
+            }
+          }
+        }
+        return Result.create(notNullFields, constructor, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+      }
+    });
   }
 
   public static List<PsiExpression> findAllConstructorInitializers(PsiField field) {

@@ -187,6 +187,10 @@ public class ActionCallback implements Disposable {
 
     @NotNull
     public ActionCallback create() {
+      if (myCallbacks.isEmpty()) {
+        return new Done();
+      }
+
       ActionCallback result = new ActionCallback(myCallbacks.size());
       Runnable doneRunnable = result.createSetDoneRunnable();
       for (ActionCallback each : myCallbacks) {

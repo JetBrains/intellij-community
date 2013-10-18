@@ -354,7 +354,11 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           }
         } else if(event instanceof VFileCreateEvent) {
           VirtualFile file = event.getFile();
-          if (file != null && file.isDirectory()) directoriesCreated += 1 + countDirectories(file, MAX_DEPTH_TO_COUNT);
+          if (file != null && file.isDirectory() ||
+              file == null && ((VFileCreateEvent)event).isDirectory()
+             ) {
+            directoriesCreated += 1 + countDirectories(file, MAX_DEPTH_TO_COUNT);
+          }
         }
       }
 

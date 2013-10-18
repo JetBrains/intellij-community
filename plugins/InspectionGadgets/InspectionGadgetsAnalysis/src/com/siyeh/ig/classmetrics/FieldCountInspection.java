@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,9 @@
 package com.siyeh.ig.classmetrics;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
 import com.intellij.util.ui.CheckBox;
 import com.intellij.util.ui.UIUtil;
 import com.siyeh.InspectionGadgetsBundle;
@@ -27,21 +27,20 @@ import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.border.LineBorder;
 import java.awt.*;
 
 public class FieldCountInspection extends ClassMetricInspection {
 
   private static final int FIELD_COUNT_LIMIT = 10;
-  /**
-   * @noinspection PublicField
-   */
+
+  @SuppressWarnings("PublicField")
   public boolean m_countConstantFields = false;
 
-  /**
-   * @noinspection PublicField
-   */
+  @SuppressWarnings("PublicField")
   public boolean m_considerStaticFinalFieldsConstant = false;
+
+  @SuppressWarnings("PublicField")
+  public boolean myCountEnumConstants = false;
 
   @Override
   @NotNull
@@ -58,8 +57,7 @@ public class FieldCountInspection extends ClassMetricInspection {
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "too.many.fields.problem.descriptor", infos[0]);
+    return InspectionGadgetsBundle.message("too.many.fields.problem.descriptor", infos[0]);
   }
 
   @Override
@@ -69,8 +67,7 @@ public class FieldCountInspection extends ClassMetricInspection {
 
   @Override
   protected String getConfigurationLabel() {
-    return InspectionGadgetsBundle.message(
-      "too.many.fields.count.limit.option");
+    return InspectionGadgetsBundle.message("too.many.fields.count.limit.option");
   }
 
   @Override
@@ -80,13 +77,14 @@ public class FieldCountInspection extends ClassMetricInspection {
     final JFormattedTextField valueField = prepareNumberEditor("m_limit");
 
     final CheckBox includeCheckBox =
-      new CheckBox(InspectionGadgetsBundle.message(
-        "field.count.inspection.include.constant.fields.in.count.checkbox"),
+      new CheckBox(InspectionGadgetsBundle.message("field.count.inspection.include.constant.fields.in.count.checkbox"),
                    this, "m_countConstantFields");
     final CheckBox considerCheckBox =
-      new CheckBox(InspectionGadgetsBundle.message(
-        "field.count.inspection.static.final.fields.count.as.constant.checkbox"),
+      new CheckBox(InspectionGadgetsBundle.message("field.count.inspection.static.final.fields.count.as.constant.checkbox"),
                    this, "m_considerStaticFinalFieldsConstant");
+    final CheckBox enumConstantCheckBox =
+      new CheckBox(InspectionGadgetsBundle.message("field.count.inspection.include.enum.constants.in.count"),
+                   this, "myCountEnumConstants");
 
     final GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridx = 0;
@@ -104,18 +102,16 @@ public class FieldCountInspection extends ClassMetricInspection {
     constraints.weightx = 1.0;
     constraints.insets.right = 0;
     constraints.anchor = GridBagConstraints.NORTHWEST;
-    constraints.fill = GridBagConstraints.NONE;
     panel.add(valueField, constraints);
     constraints.gridx = 0;
     constraints.gridy = 1;
     constraints.gridwidth = 2;
-    constraints.weightx = 1.0;
-    constraints.anchor = GridBagConstraints.NORTHWEST;
-    constraints.fill = GridBagConstraints.NONE;
     panel.add(includeCheckBox, constraints);
     constraints.gridy = 2;
-    constraints.weighty = 1;
     panel.add(considerCheckBox, constraints);
+    constraints.gridy = 3;
+    constraints.weighty = 1;
+    panel.add(enumConstantCheckBox, constraints);
     return panel;
   }
 
@@ -128,7 +124,6 @@ public class FieldCountInspection extends ClassMetricInspection {
 
     @Override
     public void visitClass(@NotNull PsiClass aClass) {
-      // note: no call to super
       final int totalFields = countFields(aClass);
       if (totalFields <= getLimit()) {
         return;
@@ -140,30 +135,26 @@ public class FieldCountInspection extends ClassMetricInspection {
       int totalFields = 0;
       final PsiField[] fields = aClass.getFields();
       for (final PsiField field : fields) {
-        if (m_countConstantFields) {
-          totalFields++;
-        }
-        else {
-          if (!fieldIsConstant(field)) {
+        if (field instanceof PsiEnumConstant) {
+          if (myCountEnumConstants) {
             totalFields++;
           }
+        }
+        else if (m_countConstantFields || !fieldIsConstant(field)) {
+          totalFields++;
         }
       }
       return totalFields;
     }
 
     private boolean fieldIsConstant(PsiField field) {
-      if (!field.hasModifierProperty(PsiModifier.STATIC)) {
-        return false;
-      }
-      if (!field.hasModifierProperty(PsiModifier.FINAL)) {
+      if (!field.hasModifierProperty(PsiModifier.STATIC) || !field.hasModifierProperty(PsiModifier.FINAL)) {
         return false;
       }
       if (m_considerStaticFinalFieldsConstant) {
         return true;
       }
-      final PsiType type = field.getType();
-      return ClassUtils.isImmutable(type);
+      return ClassUtils.isImmutable(field.getType());
     }
   }
 }

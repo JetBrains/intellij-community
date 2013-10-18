@@ -94,19 +94,11 @@ public abstract class EditorComposite implements Disposable {
    * @param editors <code>edittors</code> that should be placed into the composite
    *
    * @exception java.lang.IllegalArgumentException if <code>editors</code>
-   * is <code>null</code>
-   *
-   * @exception java.lang.IllegalArgumentException if <code>providers</code>
-   * is <code>null</code>
-   *
-   * @exception java.lang.IllegalArgumentException if <code>myEditor</code>
-   * arrays is empty
+   * is <code>null</code> or <code>providers</code> is <code>null</code> or <code>myEditor</code> arrays is empty
    */
-  EditorComposite(
-    @NotNull final VirtualFile file,
-    @NotNull final FileEditor[] editors,
-    @NotNull final FileEditorManagerEx fileEditorManager
-  ){
+  EditorComposite(@NotNull final VirtualFile file,
+                  @NotNull final FileEditor[] editors,
+                  @NotNull final FileEditorManagerEx fileEditorManager) {
     myFile = file;
     myEditors = editors;
     myFileEditorManager = fileEditorManager;

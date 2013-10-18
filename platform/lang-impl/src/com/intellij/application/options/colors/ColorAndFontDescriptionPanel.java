@@ -15,7 +15,7 @@
  */
 package com.intellij.application.options.colors;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.util.Pair;
@@ -65,7 +65,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
   private JLabel myLabelFont;
 
   private final JLabel myInheritanceLabel = new JLabel("X");
-  private final static Icon INHERITED_ICON = AllIcons.Ide.Link;
+  private final JCheckBox myInheritAttributesBox = new JCheckBox(ApplicationBundle.message("label.inherit.attributes"));
 
 
   public ColorAndFontDescriptionPanel() {
@@ -97,8 +97,31 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     settingsPanel.add(createColorSettingsPanel(), gbConstraints);
     gbConstraints.weighty = 1;
     settingsPanel.add(new TailPanel(), gbConstraints);
-    settingsPanel.add(myInheritanceLabel, gbConstraints);
+    settingsPanel.add(createInheritancePanel(), gbConstraints);
     return settingsPanel;
+  }
+
+  private JPanel createInheritancePanel() {
+    JPanel inheritancePanel = new JPanel(new GridBagLayout());
+    GridBagConstraints gbConstraints = new GridBagConstraints();
+    gbConstraints.fill = GridBagConstraints.HORIZONTAL;
+    gbConstraints.gridx = 0;
+    gbConstraints.gridy = 0;
+    gbConstraints.weightx = 1;
+    gbConstraints.gridwidth = 2;
+    inheritancePanel.add(myInheritAttributesBox, gbConstraints);
+    gbConstraints.gridy = 1;
+    gbConstraints.insets = new Insets(0, 20, 0,0);
+    inheritancePanel.add(myInheritanceLabel, gbConstraints);
+    myInheritAttributesBox.addActionListener(new ActionListener(){
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (myActionListener != null) {
+          myActionListener.actionPerformed(e);
+        }
+      }
+    });
+    return inheritancePanel;
   }
 
   private JPanel createFontSettingsPanel() {
@@ -395,11 +418,11 @@ public class ColorAndFontDescriptionPanel extends JPanel {
     else {
       myEffectsCombo.setEnabled(false);
     }
-    setInheritanceLabel(description);
+    setInheritanceInfo(description);
   }
 
 
-  private void setInheritanceLabel(ColorAndFontDescription description) {
+  private void setInheritanceInfo(ColorAndFontDescription description) {
     Pair<ColorSettingsPage, AttributesDescriptor> baseDescriptor = description.getBaseAttributeDescriptor();
     if (baseDescriptor != null && baseDescriptor.second.getDisplayName() != null) {
       String attrName = baseDescriptor.second.getDisplayName();
@@ -413,16 +436,23 @@ public class ColorAndFontDescriptionPanel extends JPanel {
       if (labelText.length() > 30 && pageName.length() >= 4) {
         labelText = attrName + " (" + pageName.substring(0, 4) + "...)";
       }
-      if (description.isInherited()) {
-        myInheritanceLabel.setIcon(INHERITED_ICON);
-      }
-      else {
-        myInheritanceLabel.setDisabledIcon(INHERITED_ICON);
-      }
       myInheritanceLabel.setText(labelText);
       myInheritanceLabel.setToolTipText(tooltipText);
       myInheritanceLabel.setForeground(myLabelFont.getForeground());
       myInheritanceLabel.setEnabled(description.isInherited());
+      myInheritAttributesBox.setEnabled(true);
+      myInheritAttributesBox.setSelected(description.isInherited());
+      boolean editingAllowed = !description.isInherited();
+      myCbBackground.setEnabled(editingAllowed);
+      myCbForeground.setEnabled(editingAllowed);
+      myCbBold.setEnabled(editingAllowed);
+      myCbItalic.setEnabled(editingAllowed);
+      myCbEffects.setEnabled(editingAllowed);
+      myCbErrorStripe.setEnabled(editingAllowed);
+      myErrorStripeColorChooser.setEditable(editingAllowed);
+      myEffectsColorChooser.setEditable(editingAllowed);
+      myForegroundChooser.setEditable(editingAllowed);
+      myBackgroundChooser.setEditable(editingAllowed);
     }
     else {
       myInheritanceLabel.setText("X");
@@ -430,47 +460,72 @@ public class ColorAndFontDescriptionPanel extends JPanel {
       myInheritanceLabel.setDisabledIcon(null);
       myInheritanceLabel.setEnabled(true);
       myInheritanceLabel.setForeground(myLabelFont.getBackground());
+      myInheritAttributesBox.setEnabled(false);
+      myInheritAttributesBox.setSelected(false);
     }
   }
 
   public void apply(ColorAndFontDescription description, EditorColorsScheme scheme) {
     if (description != null) {
-      int fontType = Font.PLAIN;
-      if (myCbBold.isSelected()) fontType |= Font.BOLD;
-      if (myCbItalic.isSelected()) fontType |= Font.ITALIC;
-      description.setFontType(fontType);
-      description.setForegroundChecked(myCbForeground.isSelected());
-      description.setForegroundColor(myForegroundChooser.getSelectedColor());
-      description.setBackgroundChecked(myCbBackground.isSelected());
-      description.setBackgroundColor(myBackgroundChooser.getSelectedColor());
-      description.setErrorStripeChecked(myCbErrorStripe.isSelected());
-      description.setErrorStripeColor(myErrorStripeColorChooser.getSelectedColor());
-      description.setEffectsColorChecked(myCbEffects.isSelected());
-      description.setEffectColor(myEffectsColorChooser.getSelectedColor());
-
-      if (myEffectsCombo.isEnabled()) {
-        Object effectType = myEffectsCombo.getModel().getSelectedItem();
-
-        if (BORDERED_EFFECT.equals(effectType)) {
-          description.setEffectType(EffectType.BOXED);
-        }
-        else if (UNDERWAVED_EFFECT.equals(effectType)) {
-          description.setEffectType(EffectType.WAVE_UNDERSCORE);
-        }
-        else if (UNDERSCORED_EFFECT.equals(effectType)) {
-          description.setEffectType(EffectType.LINE_UNDERSCORE);
-        }
-        else if (BOLD_UNDERSCORED_EFFECT.equals(effectType)) {
-          description.setEffectType(EffectType.BOLD_LINE_UNDERSCORE);
-        }
-        else if (STRIKEOUT_EFFECT.equals(effectType)) {
-          description.setEffectType(EffectType.STRIKEOUT);
-        }
-        else if (BOLD_DOTTED_LINE_EFFECT.equals(effectType)) {
-          description.setEffectType(EffectType.BOLD_DOTTED_LINE);
+      description.setInherited(myInheritAttributesBox.isSelected());
+      if (description.isInherited()) {
+        TextAttributes baseAttributes = description.getBaseAttributes();
+        if (baseAttributes != null) {
+          description.setFontType(baseAttributes.getFontType());
+          description.setForegroundChecked(baseAttributes.getForegroundColor() != null);
+          description.setForegroundColor(baseAttributes.getForegroundColor());
+          description.setBackgroundChecked(baseAttributes.getBackgroundColor() != null);
+          description.setBackgroundColor(baseAttributes.getBackgroundColor());
+          description.setErrorStripeChecked(baseAttributes.getErrorStripeColor() != null);
+          description.setErrorStripeColor(baseAttributes.getErrorStripeColor());
+          description.setEffectColor(baseAttributes.getEffectColor());
+          description.setEffectType(baseAttributes.getEffectType());
+          description.setEffectsColorChecked(baseAttributes.getEffectColor() != null);
         }
         else {
-          LOG.assertTrue(false);
+          description.setInherited(false);
+        }
+        reset(description);
+      }
+      else {
+        setInheritanceInfo(description);
+        int fontType = Font.PLAIN;
+        if (myCbBold.isSelected()) fontType |= Font.BOLD;
+        if (myCbItalic.isSelected()) fontType |= Font.ITALIC;
+        description.setFontType(fontType);
+        description.setForegroundChecked(myCbForeground.isSelected());
+        description.setForegroundColor(myForegroundChooser.getSelectedColor());
+        description.setBackgroundChecked(myCbBackground.isSelected());
+        description.setBackgroundColor(myBackgroundChooser.getSelectedColor());
+        description.setErrorStripeChecked(myCbErrorStripe.isSelected());
+        description.setErrorStripeColor(myErrorStripeColorChooser.getSelectedColor());
+        description.setEffectsColorChecked(myCbEffects.isSelected());
+        description.setEffectColor(myEffectsColorChooser.getSelectedColor());
+
+        if (myEffectsCombo.isEnabled()) {
+          Object effectType = myEffectsCombo.getModel().getSelectedItem();
+
+          if (BORDERED_EFFECT.equals(effectType)) {
+            description.setEffectType(EffectType.BOXED);
+          }
+          else if (UNDERWAVED_EFFECT.equals(effectType)) {
+            description.setEffectType(EffectType.WAVE_UNDERSCORE);
+          }
+          else if (UNDERSCORED_EFFECT.equals(effectType)) {
+            description.setEffectType(EffectType.LINE_UNDERSCORE);
+          }
+          else if (BOLD_UNDERSCORED_EFFECT.equals(effectType)) {
+            description.setEffectType(EffectType.BOLD_LINE_UNDERSCORE);
+          }
+          else if (STRIKEOUT_EFFECT.equals(effectType)) {
+            description.setEffectType(EffectType.STRIKEOUT);
+          }
+          else if (BOLD_DOTTED_LINE_EFFECT.equals(effectType)) {
+            description.setEffectType(EffectType.BOLD_DOTTED_LINE);
+          }
+          else {
+            LOG.assertTrue(false);
+          }
         }
       }
       description.apply(scheme);

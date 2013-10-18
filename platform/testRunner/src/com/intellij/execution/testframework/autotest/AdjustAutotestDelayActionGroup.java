@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,27 +46,29 @@ public class AdjustAutotestDelayActionGroup extends ActionGroup {
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     final AnAction[] actions = new AnAction[MAX_DELAY];
     for (int i = 0; i < MAX_DELAY; i++) {
-      actions[i] = new SetAutoTestDelayAction(i + 1);
+      actions[i] = new SetAutoTestDelayAction(myEnvironment.getProject(), i + 1);
     }
     return actions;
   }
 
   private static class SetAutoTestDelayAction extends ToggleAction {
     private final int myDelay;
+    @NotNull private final Project myProject;
 
-    public SetAutoTestDelayAction(int delay) {
+    public SetAutoTestDelayAction(@NotNull Project project, int delay) {
       super(delay + "s");
+      myProject = project;
       myDelay = delay * 1000;
     }
 
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return AutoTestManager.getInstance(e.getProject()).getDelay() == myDelay;
+      return AutoTestManager.getInstance(myProject).getDelay() == myDelay;
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
-      AutoTestManager.getInstance(e.getProject()).setDelay(myDelay);
+      AutoTestManager.getInstance(myProject).setDelay(myDelay);
     }
   }
 }

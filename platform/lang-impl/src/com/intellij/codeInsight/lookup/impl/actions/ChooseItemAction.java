@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,16 @@ import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
+import com.intellij.codeInsight.template.impl.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ChooseItemAction extends EditorAction {
@@ -107,8 +107,30 @@ public abstract class ChooseItemAction extends EditorAction {
 
     final Editor editor = lookup.getEditor();
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
-    
-    return ((TemplateManagerImpl)TemplateManager.getInstance(file.getProject())).prepareTemplate(editor, shortcutChar, null) != null;
+
+    final LiveTemplateLookupElement liveTemplateLookup = ContainerUtil.findInstance(lookup.getItems(), LiveTemplateLookupElement.class);
+    if (liveTemplateLookup == null) {
+      // Lookup doesn't contain live templates. It means that there are no any live template or completion provider worked too long.
+      // Anyway in this case we should find live template with appropriate prefix (custom live templates should not participate in this action).
+      final int end = editor.getCaretModel().getOffset();
+      final int start = lookup.getLookupStart();
+      final String prefix = !lookup.getItems().isEmpty()
+                            ? editor.getDocument().getText(TextRange.create(start, end))
+                            : ListTemplatesHandler.getPrefix(editor.getDocument(), end, false);
+
+      if (TemplateSettings.getInstance().getTemplates(prefix).isEmpty()) {
+        return false;
+      }
+
+      for (TemplateImpl template : SurroundWithTemplateHandler.getApplicableTemplates(editor, file, false)) {
+        if (prefix.equals(template.getKey()) && shortcutChar == TemplateSettings.getInstance().getShortcutChar(template)) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    return TemplateSettings.getInstance().getShortcutChar(liveTemplateLookup.getTemplate()) == shortcutChar;
   }
 
   public static class Always extends ChooseItemAction {

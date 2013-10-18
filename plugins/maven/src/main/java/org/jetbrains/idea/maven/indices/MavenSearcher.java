@@ -16,15 +16,14 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import org.apache.lucene.search.Query;
+import org.jetbrains.idea.maven.dom.MavenVersionComparable;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 
 import java.util.*;
 
 public abstract class MavenSearcher<RESULT_TYPE extends MavenArtifactSearchResult> {
-  public static final VersionComparator COMPARATOR = new VersionComparator();
 
   public List<RESULT_TYPE> search(Project project, String pattern, int maxResult) {
     Pair<String, Query> patternAndQuery = preparePatternAndQuery(pattern);
@@ -43,7 +42,16 @@ public abstract class MavenSearcher<RESULT_TYPE extends MavenArtifactSearchResul
 
   private void sort(List<RESULT_TYPE> result) {
     for (RESULT_TYPE each : result) {
-      Collections.sort(each.versions, COMPARATOR);
+      if (each.versions.size() > 1) {
+        TreeMap<MavenVersionComparable, MavenArtifactInfo> tree = new TreeMap<MavenVersionComparable, MavenArtifactInfo>(Collections.reverseOrder());
+
+        for (MavenArtifactInfo artifactInfo : each.versions) {
+          tree.put(new MavenVersionComparable(artifactInfo.getVersion()), artifactInfo);
+        }
+
+        each.versions.clear();
+        each.versions.addAll(tree.values());
+      }
     }
 
     Collections.sort(result, new Comparator<RESULT_TYPE>() {
@@ -59,26 +67,5 @@ public abstract class MavenSearcher<RESULT_TYPE extends MavenArtifactSearchResul
 
   protected String makeKey(MavenArtifactInfo result) {
     return result.getGroupId() + ":" + result.getArtifactId();
-  }
-
-  private static class VersionComparator implements Comparator<MavenArtifactInfo> {
-    public int compare(MavenArtifactInfo f1, MavenArtifactInfo f2) {
-      int result = Comparing.compare(f1.getGroupId(), f2.getGroupId());
-      if (result != 0) return result;
-
-      result = Comparing.compare(f1.getArtifactId(), f2.getArtifactId());
-      if (result != 0) return result;
-
-      result = Comparing.compare(f2.getVersion(), f1.getVersion());
-      if (result != 0) return result;
-
-      result = Comparing.compare(f1.getPackaging(), f2.getPackaging());
-      if (result != 0) return result;
-
-      result = Comparing.compare(f1.getClassifier(), f2.getClassifier());
-      if (result != 0) return result;
-
-      return Comparing.compare(f1.getRepositoryId(), f2.getRepositoryId());
-    }
   }
 }

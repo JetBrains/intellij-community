@@ -206,7 +206,8 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     return result.values();
   }
 
-  private void connectIfNeeded(final ServerConnector.ConnectionCallback<D> callback) {
+  @Override
+  public void connectIfNeeded(final ServerConnector.ConnectionCallback<D> callback) {
     final ServerRuntimeInstance<D> instance = myRuntimeInstance;
     if (instance != null) {
       callback.connected(instance);

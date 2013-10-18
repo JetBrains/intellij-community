@@ -42,14 +42,20 @@ public class DfaValueFactory {
   private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myAssignableCache = ContainerUtil.newHashMap();
   private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myConvertibleCache = ContainerUtil.newHashMap();
   private final Map<PsiType, DfaPsiType> myDfaTypes = ContainerUtil.newHashMap();
+  private final boolean myHonorFieldInitializers;
 
-  public DfaValueFactory() {
+  public DfaValueFactory(boolean honorFieldInitializers) {
+    myHonorFieldInitializers = honorFieldInitializers;
     myValues.add(null);
     myVarFactory = new DfaVariableValue.Factory(this);
     myConstFactory = new DfaConstValue.Factory(this);
     myBoxedFactory = new DfaBoxedValue.Factory(this);
     myTypeFactory = new DfaTypeValue.Factory(this);
     myRelationFactory = new DfaRelationValue.Factory(this);
+  }
+
+  public boolean isHonorFieldInitializers() {
+    return myHonorFieldInitializers;
   }
 
   public DfaValue createTypeValue(@Nullable PsiType type, Nullness nullability) {

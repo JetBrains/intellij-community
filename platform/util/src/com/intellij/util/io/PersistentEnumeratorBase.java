@@ -47,6 +47,7 @@ abstract public class PersistentEnumeratorBase<Data> implements Forceable, Close
   protected static final int DATA_START = META_DATA_OFFSET + 16;
 
   protected final ResizeableMappedFile myStorage;
+  private final boolean myAssumeDifferentSerializedBytesMeansObjectsInequality;
   private byte[] myKeyStoreFileBuffer;
   private volatile int myKeyStoreFileLength;
   private volatile int myKeyStoreBufferPosition;
@@ -222,6 +223,7 @@ abstract public class PersistentEnumeratorBase<Data> implements Forceable, Close
       myKeyReadStream = new MyDataIS(myKeyStorage);
       myKeyStoreFileLength = (int)myKeyStorage.length();
     }
+    myAssumeDifferentSerializedBytesMeansObjectsInequality = myDataDescriptor instanceof DifferentSerializableBytesImplyNonEqualityPolicy;
   }
 
   public void lockStorage() {
@@ -427,12 +429,8 @@ abstract public class PersistentEnumeratorBase<Data> implements Forceable, Close
     comparer.close();
 
     if (sameValue[0]) return true;
-    if (serializationEquivalenceIsExhausting()) return false;
+    if (myAssumeDifferentSerializedBytesMeansObjectsInequality) return false;
     return myDataDescriptor.isEqual(valueOf(idx), value);
-  }
-
-  protected boolean serializationEquivalenceIsExhausting() {
-    return false;
   }
 
   protected int writeData(final Data value, int hashCode) {

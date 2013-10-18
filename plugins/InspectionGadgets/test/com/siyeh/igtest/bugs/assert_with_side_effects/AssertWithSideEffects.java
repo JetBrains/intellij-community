@@ -1,5 +1,5 @@
 package com.siyeh.igtest.bugs.assert_with_side_effects;
-
+import java.sql.*;
 public class AssertWithSideEffects {
 
     private int sideEffect = 0;
@@ -27,4 +27,7 @@ public class AssertWithSideEffects {
         return noEffect;
     }
 
+    void jdbc(ResultSet rs) throws SQLException {
+      assert rs.last();
+    }
 }

@@ -23,7 +23,7 @@ import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.ColoredTextContainer;
 import com.intellij.ui.FileColorManager;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.util.ui.TextTransferrable;
+import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
@@ -178,7 +178,7 @@ public class XDebuggerFramesList extends DebuggerFramesList {
       // remove the last newline
       plainBuf.setLength(plainBuf.length() - 1);
       htmlBuf.append("</ul>\n</body>\n</html>");
-      return new TextTransferrable(htmlBuf.toString(), plainBuf.toString());
+      return new TextTransferable(htmlBuf.toString(), plainBuf.toString());
     }
 
     @Override

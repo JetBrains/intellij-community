@@ -142,15 +142,17 @@ public class DarculaLaf extends BasicLookAndFeel {
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   private void patchStyledEditorKit() {
     try {
-      StyleSheet defaultStyles = new StyleSheet();
-	InputStream is = getClass().getResourceAsStream(getPrefix() + ".css");
-	Reader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-	defaultStyles.loadRules(r, null);
-	r.close();
-      final Field keyField = HTMLEditorKit.class.getDeclaredField("DEFAULT_STYLES_KEY");
-      keyField.setAccessible(true);
-      final Object key = keyField.get(null);
-      AppContext.getAppContext().put(key, defaultStyles);
+      InputStream is = getClass().getResourceAsStream(getPrefix() + ".css");
+      if (is != null) {
+        StyleSheet defaultStyles = new StyleSheet();
+        Reader r = new BufferedReader(new InputStreamReader(is, "UTF-8"));
+        defaultStyles.loadRules(r, null);
+        r.close();
+        final Field keyField = HTMLEditorKit.class.getDeclaredField("DEFAULT_STYLES_KEY");
+        keyField.setAccessible(true);
+        final Object key = keyField.get(null);
+        AppContext.getAppContext().put(key, defaultStyles);
+      }
     } catch (Exception e) {
       log(e);
     }
@@ -285,6 +287,9 @@ public class DarculaLaf extends BasicLookAndFeel {
       final Integer invVal = getInteger(value);
       final Boolean boolVal = "true".equals(value) ? Boolean.TRUE : "false".equals(value) ? Boolean.FALSE : null;
       Icon icon = value.startsWith("AllIcons.") ? IconLoader.getIcon(value) : null;
+      if (icon == null && value.endsWith(".png")) {
+        icon = IconLoader.findIcon(value, getClass(), true);
+      }
       if (color != null) {
         return  new ColorUIResource(color);
       } else if (invVal != null) {

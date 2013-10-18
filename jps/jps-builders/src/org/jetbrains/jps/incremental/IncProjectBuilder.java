@@ -83,7 +83,7 @@ public class IncProjectBuilder {
   private static final GlobalContextKey<Set<BuildTarget<?>>> TARGET_WITH_CLEARED_OUTPUT = GlobalContextKey.create("_targets_with_cleared_output_");
   public static final int MAX_BUILDER_THREADS;
   static {
-    int maxThreads = 6;
+    int maxThreads = Math.min(6, Runtime.getRuntime().availableProcessors() - 1);
     try {
       maxThreads = Math.max(2, Integer.parseInt(System.getProperty(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, Integer.toString(maxThreads))));
     }

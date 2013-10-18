@@ -18,7 +18,9 @@ package com.intellij.compiler.notNullVerification;
 import org.jetbrains.asm4.*;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author ven
@@ -37,16 +39,55 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
   private static final String ANNOTATION_DEFAULT_METHOD = "value";
 
-  private static final String NULL_ARG_MESSAGE = "Argument %s for @NotNull parameter of %s.%s must not be null";
+  private static final String NULL_ARG_MESSAGE_INDEXED = "Argument %s for @NotNull parameter of %s.%s must not be null";
+  private static final String NULL_ARG_MESSAGE_NAMED = "Argument for @NotNull parameter '%s' of %s.%s must not be null";
   private static final String NULL_RESULT_MESSAGE = "@NotNull method %s.%s must not return null";
   @SuppressWarnings("SSBasedInspection") private static final String[] EMPTY_STRING_ARRAY = new String[0];
+  private final Map<String, Map<Integer, String>> myMethodParamNames;
 
   private String myClassName;
   private boolean myIsModification = false;
   private RuntimeException myPostponedError;
 
-  public NotNullVerifyingInstrumenter(final ClassVisitor classVisitor) {
+  private NotNullVerifyingInstrumenter(final ClassVisitor classVisitor, ClassReader reader) {
     super(Opcodes.ASM4, classVisitor);
+    myMethodParamNames = getAllParameterNames(reader);
+  }
+
+  public static boolean processClassFile(final ClassReader reader, final ClassVisitor writer) {
+    final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer, reader);
+    reader.accept(instrumenter, 0);
+    return instrumenter.isModification();
+  }
+
+  private static Map<String, Map<Integer, String>> getAllParameterNames(ClassReader reader) {
+    final Map<String, Map<Integer, String>> methodParamNames = new LinkedHashMap<String, Map<Integer, String>>();
+
+    reader.accept(new ClassVisitor(Opcodes.ASM4) {
+      private String myClassName = null;
+
+      public void visit(final int version, final int access, final String name, final String signature, final String superName, final String[] interfaces) {
+        myClassName = name;
+      }
+
+      public MethodVisitor visitMethod(final int access, final String name, final String desc, final String signature, final String[] exceptions) {
+        final String methodName = myClassName + '.' + name + desc;
+        final Map<Integer, String> names = new LinkedHashMap<Integer, String>();
+        final Type[] args = Type.getArgumentTypes(desc);
+        methodParamNames.put(methodName, names);
+    
+        return new MethodVisitor(api) {
+          @Override
+          public void visitLocalVariable(String name2, String desc, String signature, Label start, Label end, int index) {
+            int parameterIndex = getParameterIndex(index, access, args);
+            if (parameterIndex >= 0) {
+              names.put(parameterIndex, name2);
+            }
+          }
+        };
+      }
+    }, 0);
+    return methodParamNames;
   }
 
   public boolean isModification() {
@@ -64,6 +105,7 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     final Type[] args = Type.getArgumentTypes(desc);
     final Type returnType = Type.getReturnType(desc);
     final MethodVisitor v = cv.visitMethod(access, name, desc, signature, exceptions);
+    final Map<Integer, String> paramNames = myMethodParamNames.get(myClassName + '.' + name + desc);
     return new MethodVisitor(Opcodes.ASM4, v) {
 
       private final List<Integer> myNotNullParams = new ArrayList<Integer>();
@@ -135,16 +177,20 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
           Label end = new Label();
           mv.visitJumpInsn(IFNONNULL, end);
 
-          String descrPattern = myMessage != null ? myMessage : NULL_ARG_MESSAGE;
-          String[] args = myMessage != null ? EMPTY_STRING_ARRAY : new String[]{String.valueOf(param - mySyntheticCount), myClassName, name};
+          String paramName = paramNames == null ? null : paramNames.get(param);
+          String descrPattern = myMessage != null 
+                                ? myMessage 
+                                : paramName != null ? NULL_ARG_MESSAGE_NAMED : NULL_ARG_MESSAGE_INDEXED;
+          String[] args = myMessage != null 
+                          ? EMPTY_STRING_ARRAY 
+                          : new String[]{paramName != null ? paramName : String.valueOf(param - mySyntheticCount), myClassName, name};
           generateThrow(IAE_CLASS_NAME, end, descrPattern, args);
         }
       }
 
       @Override
       public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
-        final boolean isStatic = (access & ACC_STATIC) != 0;
-        final boolean isParameter = isStatic ? index < args.length : index <= args.length;
+        final boolean isParameter = getParameterIndex(index, access, args) >= 0;
         final Label label = (isParameter && myStartGeneratedCodeLabel != null) ? myStartGeneratedCodeLabel : start;
         mv.visitLocalVariable(name, desc, signature, label, end, index);
       }
@@ -205,6 +251,15 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     };
   }
 
+  private static int getParameterIndex(int localVarIndex, int methodAccess, Type[] paramTypes) {
+    final boolean isStatic = (methodAccess & ACC_STATIC) != 0;
+    int parameterIndex = isStatic ? localVarIndex : localVarIndex - 1;
+    if (parameterIndex >= paramTypes.length) {
+      parameterIndex = -1;
+    }
+    return parameterIndex;
+  }
+
   private static boolean isReferenceType(final Type type) {
     return type.getSort() == Type.OBJECT || type.getSort() == Type.ARRAY;
   }
@@ -230,3 +285,4 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
     }
   }
 }
+

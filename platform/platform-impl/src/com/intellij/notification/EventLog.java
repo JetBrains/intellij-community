@@ -60,7 +60,7 @@ public class EventLog {
   private static final Set<String> NEW_LINES = ContainerUtil.newHashSet("<br>", "</br>", "<br/>", "<p>", "</p>", "<p/>");
 
   public EventLog() {
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, new Notifications() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(Notifications.TOPIC, new NotificationsAdapter() {
       @Override
       public void notify(@NotNull Notification notification) {
         final Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
@@ -70,16 +70,6 @@ public class EventLog {
         for (Project p : openProjects) {
           getProjectComponent(p).printNotification(notification);
         }
-      }
-
-      @Override
-      public void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType) {
-      }
-
-      @Override
-      public void register(@NotNull String groupDisplayName,
-                           @NotNull NotificationDisplayType defaultDisplayType,
-                           boolean shouldLog) {
       }
     });
   }
@@ -340,20 +330,10 @@ public class EventLog {
         printNotification(notification);
       }
 
-      project.getMessageBus().connect(project).subscribe(Notifications.TOPIC, new Notifications() {
+      project.getMessageBus().connect(project).subscribe(Notifications.TOPIC, new NotificationsAdapter() {
         @Override
         public void notify(@NotNull Notification notification) {
           printNotification(notification);
-        }
-
-        @Override
-        public void register(@NotNull String groupDisplayName, @NotNull NotificationDisplayType defaultDisplayType) {
-        }
-
-        @Override
-        public void register(@NotNull String groupDisplayName,
-                             @NotNull NotificationDisplayType defaultDisplayType,
-                             boolean shouldLog) {
         }
       });
     }

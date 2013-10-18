@@ -20,10 +20,11 @@
 package org.jetbrains.plugins.terminal;
 
 import com.google.common.base.Predicate;
-import com.intellij.codeInsight.documentation.DocumentationManagerUtil;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
+import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.Keymap;
@@ -32,10 +33,11 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.RetinaImage;
 import com.intellij.util.ui.UIUtil;
+import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.display.BackBuffer;
 import com.jediterm.terminal.display.StyleState;
 import com.jediterm.terminal.ui.TerminalPanel;
-import com.jediterm.terminal.ui.settings.SettingsProvider;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -51,10 +53,14 @@ import java.awt.image.ImageObserver;
 import java.io.IOException;
 
 public class JBTerminalPanel extends TerminalPanel implements FocusListener {
-  public JBTerminalPanel(@NotNull SettingsProvider settingsProvider,
+  private final JBTerminalSystemSettingsProvider mySettingsProvider;
+
+  public JBTerminalPanel(@NotNull JBTerminalSystemSettingsProvider settingsProvider,
                          @NotNull BackBuffer backBuffer,
                          @NotNull StyleState styleState) {
     super(settingsProvider, backBuffer, styleState);
+
+    mySettingsProvider = settingsProvider;
 
     JBTabbedTerminalWidget.convertActions(this, getActions(), new Predicate<KeyEvent>() {
       @Override
@@ -183,6 +189,16 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener {
   @Override
   public void focusLost(FocusEvent event) {
     JBTerminalStarter.refreshAfterExecution();
+  }
+
+  @Override
+  protected Font getFontToDisplay(char c, TextStyle style) {
+    FontInfo fontInfo = fontForChar(c, style.hasOption(TextStyle.Option.BOLD) ? Font.BOLD : Font.PLAIN);
+    return fontInfo.getFont();
+  }
+
+  public FontInfo fontForChar(final char c, @JdkConstants.FontStyle int style) {
+    return ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, mySettingsProvider.getColorScheme().getConsoleFontPreferences());
   }
 }
 

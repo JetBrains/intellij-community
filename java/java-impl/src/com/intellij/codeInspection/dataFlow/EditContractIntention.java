@@ -17,6 +17,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.application.AccessToken;
@@ -114,6 +115,7 @@ public class EditContractIntention extends BaseIntentionAction {
     finally {
       token.finish();
     }
+    DaemonCodeAnalyzer.getInstance(project).restart();
   }
 
   @Override

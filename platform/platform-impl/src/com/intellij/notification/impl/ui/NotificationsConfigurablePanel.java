@@ -16,13 +16,19 @@
 package com.intellij.notification.impl.ui;
 
 import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationSettings;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
+import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.StripeTable;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -117,6 +123,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     private static final int ID_COLUMN = 0;
     private static final int DISPLAY_TYPE_COLUMN = 1;
     private static final int LOG_COLUMN = 2;
+    private static final int READ_ALOUD_COLUMN = 3;
 
     public NotificationsTable() {
       super(new NotificationsTableModel());
@@ -174,6 +181,10 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
 
       final TableColumn logColumn = getColumnModel().getColumn(LOG_COLUMN);
       logColumn.setMaxWidth(logColumn.getPreferredWidth());
+      if (SystemInfo.isMac) {
+        final TableColumn readAloudColumn = getColumnModel().getColumn(READ_ALOUD_COLUMN);
+        readAloudColumn.setMaxWidth(readAloudColumn.getPreferredWidth());
+      }
 
       getEmptyText().setText("No notifications configured");
     }
@@ -234,12 +245,15 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     private boolean myRemoved = false;
 
     private SettingsWrapper(@NotNull final NotificationSettings original) {
-      super(original.getGroupId(), original.getDisplayType(), original.isShouldLog());
+      super(original.getGroupId(), original.getDisplayType(), original.isShouldLog(), original.isShouldReadAloud());
       myOriginal = original;
     }
 
     public boolean hasChanged() {
-      return !getDisplayType().equals(myOriginal.getDisplayType()) || isShouldLog() != myOriginal.isShouldLog() || myRemoved;
+      return !getDisplayType().equals(myOriginal.getDisplayType())
+             || isShouldLog() != myOriginal.isShouldLog()
+             || isShouldReadAloud() != myOriginal.isShouldReadAloud()
+             || myRemoved;
     }
 
     public void remove() {
@@ -258,6 +272,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
         if (hasChanged()) {
           myOriginal.setDisplayType(getDisplayType());
           myOriginal.setShouldLog(isShouldLog());
+          myOriginal.setShouldReadAloud(isShouldReadAloud());
         }
       }
     }
@@ -298,6 +313,9 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
         case NotificationsTable.LOG_COLUMN:
           settings.setShouldLog((Boolean)value);
           break;
+        case NotificationsTable.READ_ALOUD_COLUMN:
+          settings.setShouldReadAloud((Boolean)value);
+          break;
       }
     }
 
@@ -310,7 +328,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
     }
 
     public int getColumnCount() {
-      return 3;
+      return SystemInfo.isMac ? 4 : 3;
     }
 
     @Override
@@ -319,6 +337,9 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
         return NotificationDisplayType.class;
       }
       if (NotificationsTable.LOG_COLUMN == columnIndex) {
+        return Boolean.class;
+      }
+      if (NotificationsTable.READ_ALOUD_COLUMN == columnIndex) {
         return Boolean.class;
       }
 
@@ -332,6 +353,8 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
           return "Group";
         case NotificationsTable.LOG_COLUMN:
           return "Log";
+        case NotificationsTable.READ_ALOUD_COLUMN:
+          return "Read aloud";
         default:
           return "Popup";
       }
@@ -348,6 +371,8 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
           return getSettings().get(rowIndex).getGroupId();
         case NotificationsTable.LOG_COLUMN:
           return getSettings().get(rowIndex).isShouldLog();
+        case NotificationsTable.READ_ALOUD_COLUMN:
+          return getSettings().get(rowIndex).isShouldReadAloud();
         case NotificationsTable.DISPLAY_TYPE_COLUMN:
         default:
           return getSettings().get(rowIndex).getDisplayType();

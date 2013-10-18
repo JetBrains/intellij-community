@@ -85,9 +85,13 @@ public class DefaultFileNavigationContributor implements ChooseByNameContributor
     String completePattern = parameters.getCompletePattern();
     final boolean includeDirs = completePattern.endsWith("/") || completePattern.endsWith("\\") ||
                                 completePattern.startsWith("/") || completePattern.startsWith("\\");
-    boolean result = FilenameIndex.processFilesByName(name, includeDirs, processor, parameters.getSearchScope(), parameters.getIdFilter());
+    boolean result = FilenameIndex.processFilesByName(
+      name, includeDirs, processor, parameters.getSearchScope(), parameters.getProject(), parameters.getIdFilter()
+    );
     if (!result && includeDirs) {
-      FilenameIndex.processFilesByName(name, false, processor, parameters.getSearchScope(), parameters.getIdFilter());
+      FilenameIndex.processFilesByName(
+        name, false, processor, parameters.getSearchScope(), parameters.getProject(), parameters.getIdFilter()
+      );
     }
   }
 }

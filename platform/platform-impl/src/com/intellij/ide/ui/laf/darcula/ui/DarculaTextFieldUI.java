@@ -142,7 +142,7 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
     final Container parent = c.getParent();
     final Rectangle r = getDrawingRect();
     if (c.isOpaque() && parent != null) {
-      g.setColor(c.getBackground());
+      g.setColor(parent.getBackground());
       g.fillRect(0, 0, c.getWidth(), c.getHeight());
     }
     final GraphicsConfig config = new GraphicsConfig(g);
@@ -162,11 +162,11 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
         g.drawRoundRect(r.x, r.y, r.width, r.height-1, radius, radius);
       }
       Point p = getSearchIconCoord();
-      Icon searchIcon = getComponent().getClientProperty("JTextField.Search.FindPopup") instanceof JPopupMenu ? SEARCH_WITH_HISTORY_ICON : SEARCH_ICON;
+      Icon searchIcon = getComponent().getClientProperty("JTextField.Search.FindPopup") instanceof JPopupMenu ? UIManager.getIcon("TextField.darcula.searchWithHistory.icon") : UIManager.getIcon("TextField.darcula.search.icon");
       searchIcon.paintIcon(null, g, p.x, p.y);
       if (getComponent().hasFocus() && getComponent().getText().length() > 0) {
         p = getClearIconCoord();
-        CLEAR_ICON.paintIcon(null, g, p.x, p.y);
+        UIManager.getIcon("TextField.darcula.clear.icon").paintIcon(null, g, p.x, p.y);
       }
     } else if (border instanceof DarculaTextBorder) {
       if (c.isEnabled() && c.isEditable()) {

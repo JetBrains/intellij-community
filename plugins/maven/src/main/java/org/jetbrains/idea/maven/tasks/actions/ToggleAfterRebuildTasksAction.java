@@ -15,21 +15,11 @@
  */
 package org.jetbrains.idea.maven.tasks.actions;
 
-import org.jetbrains.idea.maven.tasks.MavenCompilerTask;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 
-import java.util.List;
-
 public class ToggleAfterRebuildTasksAction extends ToggleCompilerTasksAction {
-  protected boolean hasTask(MavenTasksManager manager, MavenCompilerTask task) {
-    return manager.isAfterRebuildTask(task);
-  }
 
-  protected void addTasks(MavenTasksManager manager, List<MavenCompilerTask> tasks) {
-    manager.addAfterRebuildTasks(tasks);
-  }
-
-  protected void removeTasks(MavenTasksManager manager, List<MavenCompilerTask> tasks) {
-    manager.removeAfterRebuildTasks(tasks);
+  public ToggleAfterRebuildTasksAction() {
+    super(MavenTasksManager.Phase.AFTER_REBUILD);
   }
 }

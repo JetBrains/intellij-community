@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ public class DarculaButtonPainter implements Border, UIResource {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return new InsetsUIResource(6, 12, 6, 12);
+    return new InsetsUIResource(8, 16, 8, 14);
   }
 
   protected int getOffset() {

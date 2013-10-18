@@ -1,7 +1,7 @@
-package com.siyeh.igtest.classmetrics;
+package com.siyeh.igtest.classmetrics.field_count;
 
-public class FieldCountInspection
-{
+public class FieldCount {
+
     public static final int CONSTANT = 3;
     public static final int CONSTANT1 = 3;
     public static final int CONSTANT2 = 3;
@@ -22,4 +22,7 @@ public class FieldCountInspection
     private int m_lll;
     private int m_mmm;
     private int m_nnn;
+}
+enum E {
+  A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X, Y, Z
 }

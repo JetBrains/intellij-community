@@ -27,11 +27,13 @@ public class NotificationSettings {
   private final String myGroupId;
   private NotificationDisplayType myDisplayType;
   private boolean myShouldLog;
+  private boolean myShouldReadAloud;
 
-  public NotificationSettings(String groupId, NotificationDisplayType displayType, boolean shouldLog) {
+  public NotificationSettings(String groupId, NotificationDisplayType displayType, boolean shouldLog, boolean shouldReadAloud) {
     myGroupId = groupId;
     myDisplayType = displayType;
     myShouldLog = shouldLog;
+    myShouldReadAloud = shouldReadAloud;
   }
 
  @NotNull
@@ -52,11 +54,21 @@ public class NotificationSettings {
     myShouldLog = shouldLog;
   }
 
+  public boolean isShouldReadAloud() {
+    return myShouldReadAloud;
+  }
+
+  public void setShouldReadAloud(boolean shouldReadAloud) {
+    myShouldReadAloud = shouldReadAloud;
+  }
+
+
   @Nullable
   public static NotificationSettings load(@NotNull final Element element) {
     final String displayTypeString = element.getAttributeValue("displayType");
     NotificationDisplayType displayType = NotificationDisplayType.BALLOON;
     boolean shouldLog = !"false".equals(element.getAttributeValue("shouldLog"));
+    boolean shouldReadAloud = "true".equals(element.getAttributeValue("shouldReadAloud"));
     if ("BALLOON_ONLY".equals(displayTypeString)) {
       shouldLog = false;
       displayType = NotificationDisplayType.BALLOON;
@@ -70,7 +82,7 @@ public class NotificationSettings {
     }
 
     final String groupId = element.getAttributeValue("groupId");
-    return groupId != null ? new NotificationSettings(groupId, displayType, shouldLog) : null;
+    return groupId != null ? new NotificationSettings(groupId, displayType, shouldLog, shouldReadAloud) : null;
   }
 
   @NotNull
@@ -84,6 +96,9 @@ public class NotificationSettings {
     }
     if (!myShouldLog) {
       result.setAttribute("shouldLog", "false");
+    }
+    if (myShouldReadAloud) {
+      result.setAttribute("shouldReadAloud", "true");
     }
 
     return result;

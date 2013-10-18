@@ -217,4 +217,14 @@ class FooFoo {
 '''
   }
 
+  public void "test suggest variable names by non-getter initializer call"() {
+    myFixture.configureByText 'a.java', '''
+class FooFoo {
+  { long <caret>x = System.nanoTime(); }
+}
+'''
+    myFixture.completeBasic()
+    myFixture.assertPreferredCompletionItems 0, 'l', 'nanoTime', 'time'
+  }
+
 }

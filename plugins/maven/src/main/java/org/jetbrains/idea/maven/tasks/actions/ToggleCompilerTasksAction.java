@@ -29,6 +29,13 @@ import java.util.Collections;
 import java.util.List;
 
 public abstract class ToggleCompilerTasksAction extends MavenToggleAction {
+
+  private final MavenTasksManager.Phase myPhase;
+
+  protected ToggleCompilerTasksAction(MavenTasksManager.Phase phase) {
+    myPhase = phase;
+  }
+
   @Override
   protected boolean isAvailable(AnActionEvent e) {
     return super.isAvailable(e) && !getTasks(e.getDataContext()).isEmpty();
@@ -66,11 +73,17 @@ public abstract class ToggleCompilerTasksAction extends MavenToggleAction {
     return result;
   }
 
-  protected abstract boolean hasTask(MavenTasksManager manager, MavenCompilerTask task);
+  protected boolean hasTask(MavenTasksManager manager, MavenCompilerTask task) {
+    return manager.isCompileTaskOfPhase(task, myPhase);
+  }
 
-  protected abstract void addTasks(MavenTasksManager manager, List<MavenCompilerTask> tasks);
+  protected void addTasks(MavenTasksManager manager, List<MavenCompilerTask> tasks) {
+    manager.addCompileTasks(tasks, myPhase);
+  }
 
-  protected abstract void removeTasks(MavenTasksManager manager, List<MavenCompilerTask> tasks);
+  protected void removeTasks(MavenTasksManager manager, List<MavenCompilerTask> tasks) {
+    manager.removeCompileTasks(tasks, myPhase);
+  }
 
   private static MavenTasksManager getTasksManager(DataContext context) {
     return MavenTasksManager.getInstance(MavenActionUtil.getProject(context));

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -354,47 +354,61 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
   }
 
   private void expandChild(@NotNull final List<AbstractTreeNode> kids,
-                           final int i,
+                           int i,
                            @NotNull final Condition<AbstractTreeNode> nonStopCondition,
                            final VirtualFile file,
                            final Object element,
                            @NotNull final AsyncResult<AbstractTreeNode> async,
                            @NotNull final ProgressIndicator indicator,
                            final Ref<Object> virtualSelectTarget) {
-    if (i >= kids.size()) {
-      async.setRejected();
-      return;
-    }
+    while (i < kids.size()) {
+      final AbstractTreeNode eachKid = kids.get(i);
+      final boolean[] nodeWasCollapsed = {true};
+      final DefaultMutableTreeNode nodeForElement = getNodeForElement(eachKid);
+      if (nodeForElement != null) {
+        nodeWasCollapsed[0] = getTree().isCollapsed(new TreePath(nodeForElement.getPath()));
+      }
 
-    final AbstractTreeNode eachKid = kids.get(i);
-    final boolean[] nodeWasCollapsed = {true};
-    final DefaultMutableTreeNode nodeForElement = getNodeForElement(eachKid);
-    if (nodeForElement != null) {
-      nodeWasCollapsed[0] = getTree().isCollapsed(new TreePath(nodeForElement.getPath()));
-    }
-
-    if (nonStopCondition.value(eachKid)) {
-      expandPathTo(file, eachKid, element, nonStopCondition, indicator, virtualSelectTarget).doWhenDone(new AsyncResult.Handler<AbstractTreeNode>() {
-        @Override
-        public void run(AbstractTreeNode abstractTreeNode) {
-          indicator.checkCanceled();
-
-          async.setDone(abstractTreeNode);
-        }
-      }).doWhenRejected(new Runnable() {
-        @Override
-        public void run() {
-          indicator.checkCanceled();
-
-          if (nodeWasCollapsed[0] && virtualSelectTarget == null) {
-            collapseChildren(eachKid, null);
+      if (nonStopCondition.value(eachKid)) {
+        final AsyncResult<AbstractTreeNode> result = expandPathTo(file, eachKid, element, nonStopCondition, indicator, virtualSelectTarget);
+        result.doWhenDone(new AsyncResult.Handler<AbstractTreeNode>() {
+          @Override
+          public void run(AbstractTreeNode abstractTreeNode) {
+            indicator.checkCanceled();
+            async.setDone(abstractTreeNode);
           }
-          expandChild(kids, i + 1, nonStopCondition, file, element, async, indicator, virtualSelectTarget);
+        });
+
+        if (!result.isProcessed()) {
+          final int next = i + 1;
+          result.doWhenRejected(new Runnable() {
+            @Override
+            public void run() {
+              indicator.checkCanceled();
+
+              if (nodeWasCollapsed[0] && virtualSelectTarget == null) {
+                collapseChildren(eachKid, null);
+              }
+              expandChild(kids, next, nonStopCondition, file, element, async, indicator, virtualSelectTarget);
+            }
+          });
+          return;
+        } else {
+          if (result.isRejected()) {
+            indicator.checkCanceled();
+            if (nodeWasCollapsed[0] && virtualSelectTarget == null) {
+              collapseChildren(eachKid, null);
+            }
+            i++;
+          } else {
+            return;
+          }
         }
-      });
-    } else {
-      async.setRejected();
+      } else {
+        async.setRejected();
+      }
     }
+    async.setRejected();
   }
 
   @Override

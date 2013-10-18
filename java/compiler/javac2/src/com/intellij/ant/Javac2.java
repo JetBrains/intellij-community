@@ -429,9 +429,7 @@ public class Javac2 extends Javac {
             if (version >= Opcodes.V1_5) {
               ClassWriter writer = new InstrumenterClassWriter(getAsmClassWriterFlags(version), finder);
 
-              final NotNullVerifyingInstrumenter instrumenter = new NotNullVerifyingInstrumenter(writer);
-              reader.accept(instrumenter, 0);
-              if (instrumenter.isModification()) {
+              if (NotNullVerifyingInstrumenter.processClassFile(reader, writer)) {
                 final FileOutputStream fileOutputStream = new FileOutputStream(path);
                 try {
                   fileOutputStream.write(writer.toByteArray());

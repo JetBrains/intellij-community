@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.*;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -69,6 +70,7 @@ public class PagedFileStorage implements Forceable {
   private static final StorageLock ourLock = new StorageLock();
 
   private final StorageLockContext myStorageLockContext;
+  private final boolean myNativeBytesOrder;
   private int myLastPage = UNKNOWN_PAGE;
   private int myLastPage2 = UNKNOWN_PAGE;
   private int myLastPage3 = UNKNOWN_PAGE;
@@ -82,6 +84,7 @@ public class PagedFileStorage implements Forceable {
 
   private static final int MAX_PAGES_COUNT = 0xFFFF;
   private static final int MAX_LIVE_STORAGES_COUNT = 0xFFFF;
+  private static final ByteOrder ourNativeByteOrder = ByteOrder.nativeOrder();
 
   public void lock() {
     myStorageLockContext.myLock.lock();
@@ -108,12 +111,21 @@ public class PagedFileStorage implements Forceable {
   }
 
   public PagedFileStorage(File file, @Nullable StorageLockContext storageLockContext, int pageSize, boolean valuesAreBufferAligned) throws IOException {
+    this(file, storageLockContext, pageSize, valuesAreBufferAligned, false);
+  }
+
+  public PagedFileStorage(File file,
+                          @Nullable StorageLockContext storageLockContext,
+                          int pageSize,
+                          boolean valuesAreBufferAligned,
+                          boolean nativeBytesOrder) throws IOException {
     myFile = file;
     myStorageLockContext = storageLockContext != null ? storageLockContext:ourLock.myDefaultStorageLockContext;
     myPageSize = Math.max(pageSize > 0 ? pageSize : BUFFER_SIZE, Page.PAGE_SIZE);
     myValuesAreBufferAligned = valuesAreBufferAligned;
     myStorageIndex = myStorageLockContext.myStorageLock.registerPagedFileStorage(this);
     myTypedIOBuffer = valuesAreBufferAligned ? null:new byte[8];
+    myNativeBytesOrder = nativeBytesOrder;
   }
   public PagedFileStorage(File file, StorageLock lock) throws IOException {
     this(file, lock, BUFFER_SIZE, false);
@@ -387,6 +399,9 @@ public class PagedFileStorage implements Forceable {
       ByteBufferWrapper byteBufferWrapper = myStorageLockContext.myStorageLock.get(myStorageIndex | page);
       if (modify) markDirty(byteBufferWrapper);
       ByteBuffer buf = byteBufferWrapper.getBuffer();
+      if (myNativeBytesOrder && buf.order() != ourNativeByteOrder) {
+        buf.order(ourNativeByteOrder);
+      }
 
       if (myLastPage != page) {
         myLastPage3 = myLastPage2;

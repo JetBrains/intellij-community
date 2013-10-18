@@ -17,6 +17,7 @@ import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.DomManager;
 import org.jetbrains.idea.maven.dom.MavenDomProjectModelDescription;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
+import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 
 import java.util.Set;
@@ -70,6 +71,8 @@ public class MavenPomXmlCompletionTagListenerContributor extends CompletionContr
                       context.commitDocument();
 
                       new ReformatCodeProcessor(context.getProject(), context.getFile(), xmlTag.getTextRange(), true).run();
+
+                      MavenDependencyCompletionUtil.invokeCompletion(context, CompletionType.BASIC);
                     }
                   }
                 }

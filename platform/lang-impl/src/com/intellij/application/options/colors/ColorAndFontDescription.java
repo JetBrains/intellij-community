@@ -38,6 +38,7 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
   private boolean isBackgroundChecked;
   private boolean isEffectsColorChecked;
   private boolean isErrorStripeChecked;
+  private boolean isInherited;
 
   public ColorAndFontDescription(String name, String group, String type, EditorColorsScheme scheme, final Icon icon, final String toolTip) {
     myName = name;
@@ -223,7 +224,16 @@ public abstract class ColorAndFontDescription extends TextAttributes implements 
   }
 
   public boolean isInherited() {
-    return false;
+    return isInherited;
+  }
+
+  public void setInherited(boolean isInherited) {
+    this.isInherited = isInherited;
+  }
+
+  @Nullable
+  public TextAttributes getBaseAttributes() {
+    return null;
   }
 
   @Nullable

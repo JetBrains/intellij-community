@@ -227,6 +227,9 @@ public class MavenPropertyResolver {
       if (unprefixed.equals("artifactId")) {
         return parentId.getArtifactId();
       }
+      if (unprefixed.equals("version")) {
+        return parentId.getVersion();
+      }
 
       selectedProject = projectsManager.findProject(parentId);
       if (selectedProject == null) return null;

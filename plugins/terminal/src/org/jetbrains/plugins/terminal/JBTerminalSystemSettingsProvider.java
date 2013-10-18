@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.containers.HashMap;
 import com.jediterm.pty.PtyProcessTtyConnector;
@@ -19,7 +18,6 @@ import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.emulator.ColorPalette;
-import com.jediterm.terminal.ui.settings.DefaultSettingsProvider;
 import com.jediterm.terminal.ui.settings.DefaultTabbedSettingsProvider;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +38,7 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider {
   private final EditorColorsScheme myColorScheme;
 
   JBTerminalSystemSettingsProvider() {
-    myColorScheme = getColorScheme();
+    myColorScheme = createBoundColorSchemeDelegate(null);
   }
 
   @Override
@@ -152,11 +150,14 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider {
 
   @Override
   public int caretBlinkingMs() {
+    if (!EditorSettingsExternalizable.getInstance().isBlinkCaret()) {
+      return 0;
+    }
     return EditorSettingsExternalizable.getInstance().getBlinkPeriod();
   }
 
   public EditorColorsScheme getColorScheme() {
-    return createBoundColorSchemeDelegate(null);
+    return myColorScheme;
   }
 
   @Override

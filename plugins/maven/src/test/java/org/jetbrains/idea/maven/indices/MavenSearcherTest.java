@@ -89,8 +89,11 @@ public class MavenSearcherTest extends MavenIndicesTestCase {
 
   public void testArtifactSearch() throws Exception {
     assertArtifactSearchResults("",
+                                "asm:asm:3.3.1 asm:asm:3.3",
+                                "commons-io:commons-io:2.4",
                                 "jmock:jmock:1.2.0 jmock:jmock:1.1.0 jmock:jmock:1.0.0",
-                                "junit:junit:4.0 junit:junit:3.8.2 junit:junit:3.8.1");
+                                "junit:junit:4.0 junit:junit:3.8.2 junit:junit:3.8.1",
+                                "org.ow2.asm:asm:4.1");
     assertArtifactSearchResults("j *1*",
                                 "jmock:jmock:1.2.0 jmock:jmock:1.1.0 jmock:jmock:1.0.0",
                                 "junit:junit:3.8.1");
