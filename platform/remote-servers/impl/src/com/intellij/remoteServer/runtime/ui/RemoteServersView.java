@@ -23,14 +23,12 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author nik
  */
-public class RemoteServersView {
+public abstract class RemoteServersView {
   public static RemoteServersView getInstance(@NotNull Project project) {
     return ServiceManager.getService(project, RemoteServersView.class);
   }
 
-  public void showServerConnection(@NotNull ServerConnection<?> connection) {
-  }
+  public abstract void showServerConnection(@NotNull ServerConnection<?> connection);
 
-  public void showDeployment(@NotNull ServerConnection<?> connection, @NotNull String deploymentName) {
-  }
+  public abstract void showDeployment(@NotNull ServerConnection<?> connection, @NotNull String deploymentName);
 }
