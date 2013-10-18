@@ -95,14 +95,15 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
                                new Insets(2, 0, 2, 2), 0, 0));
 
     myActions = actionGroup.getChildren(null);
-    for (int i = 0; i < myActions.length; i++) {
-      AnAction action = myActions[i];
-      if (!(action instanceof Separator)) {
-        Presentation presentation = action.getTemplatePresentation();
-        ActionButton button = new ActionButton(action, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
-        myActionPanel.add(button);
-        presentation.putClientProperty(BUTTON_KEY, button);
+    for (AnAction action : myActions) {
+      if (action instanceof Separator) {
+        continue;
       }
+
+      Presentation presentation = action.getTemplatePresentation();
+      ActionButton button = new ActionButton(action, presentation, ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);
+      myActionPanel.add(button);
+      presentation.putClientProperty(BUTTON_KEY, button);
     }
 
     actionGroup.add(new ShowColumns(myPropertyTable));
@@ -157,6 +158,10 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
       myActionPolicy = policy;
 
       for (AnAction action : myActions) {
+        if (action instanceof Separator) {
+          continue;
+        }
+
         boolean visible = policy.showAction(action);
 
         Presentation presentation = action.getTemplatePresentation();
