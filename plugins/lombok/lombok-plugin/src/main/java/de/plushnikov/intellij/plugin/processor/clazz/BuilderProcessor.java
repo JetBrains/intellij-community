@@ -35,7 +35,7 @@ public class BuilderProcessor extends BuilderInnerClassProcessor {
     // Create all args constructor only if there is no declared constructor
     if (definedConstructors.isEmpty()) {
       final AllArgsConstructorProcessor allArgsConstructorProcessor = new AllArgsConstructorProcessor();
-      target.addAll(allArgsConstructorProcessor.createAllArgsConstructor(psiClass, PsiModifier.PACKAGE_LOCAL, psiAnnotation));
+      target.addAll(allArgsConstructorProcessor.createAllArgsConstructor(psiClass, PsiModifier.DEFAULT, psiAnnotation));
     }
 
     String innerClassName = BuilderUtil.createBuilderClassName(psiAnnotation, psiClass);
