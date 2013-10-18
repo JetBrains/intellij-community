@@ -163,6 +163,8 @@ java.lang.AssertionError#AssertionError(java.lang.String;java.lang.Throwable;)
 java.lang.Short#compare(short;short;)
 java.lang.ClassValue
 java.lang.RuntimeException#RuntimeException(java.lang.String;java.lang.Throwable;boolean;boolean;)
+java.lang.System#lineSeparator()
+java.lang.SafeVarargs
 java.lang.reflect.Modifier#classModifiers()
 java.lang.reflect.Modifier#interfaceModifiers()
 java.lang.reflect.Modifier#constructorModifiers()

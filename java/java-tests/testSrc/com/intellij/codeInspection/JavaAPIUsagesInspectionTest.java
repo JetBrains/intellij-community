@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,6 +59,15 @@ public class JavaAPIUsagesInspectionTest extends InspectionTestCase {
 
   public void testIgnored() throws Exception {
     doTest();
+  }
+
+  public void testAnnotation() throws Exception {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_1_6, new Runnable() {
+      @Override
+      public void run() {
+        doTest();
+      }
+    });
   }
 
   @SuppressWarnings("UnusedDeclaration")
