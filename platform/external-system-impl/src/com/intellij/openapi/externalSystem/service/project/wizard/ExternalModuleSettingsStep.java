@@ -48,6 +48,7 @@ public class ExternalModuleSettingsStep<S extends ExternalProjectSettings> exten
     if (result == null) {
       result = new PaintAwarePanel();
       myControl.fillUi(result, 0);
+      myControl.reset(true);
       ExternalSystemUiUtil.fillBottom(result);
       myComponent = result;
     }
@@ -74,7 +75,6 @@ public class ExternalModuleSettingsStep<S extends ExternalProjectSettings> exten
     String contentPath = myExternalModuleBuilder.getContentEntryPath();
     if (contentPath != null) {
       myControl.getInitialSettings().setExternalProjectPath(contentPath);
-      myControl.reset(true);
     }
   }
 

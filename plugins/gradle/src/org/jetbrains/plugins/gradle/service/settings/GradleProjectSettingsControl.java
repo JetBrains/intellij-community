@@ -212,7 +212,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     if (myUseLocalDistributionButton.isSelected()) {
       if (StringUtil.isEmpty(gradleHomePath)) {
         myGradleHomeSettingType = LocationSettingType.UNKNOWN;
-        return false;
+        throw new ConfigurationException(GradleBundle.message("gradle.home.setting.type.explicit.empty", gradleHomePath));
       }
       else if (!myInstallationManager.isGradleSdkHome(new File(gradleHomePath))) {
         myGradleHomeSettingType = LocationSettingType.EXPLICIT_INCORRECT;
@@ -308,7 +308,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
   }
 
   public void updateWrapperControls(@Nullable String linkedProjectPath, boolean isDefaultModuleCreation) {
-    if(StringUtil.isEmpty(linkedProjectPath)) {
+    if(StringUtil.isEmpty(linkedProjectPath) && !isDefaultModuleCreation) {
         myUseLocalDistributionButton.setSelected(true);
         myGradleHomePathField.setEnabled(true);
         return;
