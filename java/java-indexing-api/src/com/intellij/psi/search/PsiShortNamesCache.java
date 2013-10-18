@@ -121,8 +121,15 @@ public abstract class PsiShortNamesCache {
 
   public abstract boolean processMethodsWithName(@NonNls @NotNull String name, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiMethod> processor);
 
-  public abstract boolean processMethodsWithName(@NonNls @NotNull String name, @NotNull Processor<? super PsiMethod> processor,
-                                                 @NotNull GlobalSearchScope scope, @Nullable IdFilter filter);
+  public boolean processMethodsWithName(@NonNls @NotNull String name, @NotNull final Processor<? super PsiMethod> processor,
+                                                 @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+    return processMethodsWithName(name, scope, new Processor<PsiMethod>() {
+      @Override
+      public boolean process(PsiMethod method) {
+        return processor.process(method);
+      }
+    });
+  }
 
   public boolean processAllMethodNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
     return ContainerUtil.process(getAllFieldNames(), processor);
@@ -176,9 +183,13 @@ public abstract class PsiShortNamesCache {
    */
   public abstract void getAllFieldNames(@NotNull HashSet<String> set);
 
-  public abstract boolean processFieldsWithName(@NotNull String name, @NotNull Processor<? super PsiField> processor,
-                                                @NotNull GlobalSearchScope scope, @Nullable IdFilter filter);
+  public boolean processFieldsWithName(@NotNull String name, @NotNull Processor<? super PsiField> processor,
+                                                @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+    return ContainerUtil.process(getFieldsByName(name, scope), processor);
+  }
 
-  public abstract boolean processClassesWithName(@NotNull String name, @NotNull Processor<? super PsiClass> processor,
-                                                 @NotNull GlobalSearchScope scope, @Nullable IdFilter filter);
+  public boolean processClassesWithName(@NotNull String name, @NotNull Processor<? super PsiClass> processor,
+                                                 @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
+    return ContainerUtil.process(getClassesByName(name, scope), processor);
+  }
 }
