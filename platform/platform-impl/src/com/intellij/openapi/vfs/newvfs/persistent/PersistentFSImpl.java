@@ -305,17 +305,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       if (areChildrenLoaded(id)) return false; // TODO: hack
     }
 
-    FSRecords.setParent(id, parentId);
-    FSRecords.setName(id, name);
-
-    FSRecords.setTimestamp(id, attributes.lastModified);
-    FSRecords.setLength(id, attributes.isDirectory() ? -1L : attributes.length);
-
-    FSRecords.setFlags(id, (attributes.isDirectory() ? IS_DIRECTORY_FLAG : 0) |
-                           (attributes.isWritable() ? 0 : IS_READ_ONLY) |
-                           (attributes.isSymLink() ? IS_SYMLINK : 0) |
-                           (attributes.isSpecial() ? IS_SPECIAL : 0) |
-                           (attributes.isHidden() ? IS_HIDDEN : 0), true);
+    FSRecords.writeAttributesToRecord(id, parentId, attributes, name);
 
     return true;
   }
@@ -1115,7 +1105,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     clearIdCache();
 
     int id = getFileId(file);
-    FSRecords.deleteRecordRecursively(id);
 
     final VirtualFile parent = file.getParent();
     final int parentId = parent == null ? 0 : getFileId(parent);
@@ -1138,6 +1127,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       assert directory != null : file;
       directory.removeChild(file);
     }
+
+    FSRecords.deleteRecordRecursively(id);
 
     invalidateSubtree(file);
   }
@@ -1164,9 +1155,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   private static void executeRename(@NotNull VirtualFile file, @NotNull final String newName) {
-    ((VirtualFileSystemEntry)file).setNewName(newName);
     final int id = getFileId(file);
     FSRecords.setName(id, newName);
+    ((VirtualFileSystemEntry)file).setNewName(newName);
   }
 
   private static void executeSetWritable(@NotNull VirtualFile file, boolean writableFlag) {
@@ -1221,10 +1212,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     final int oldParentId = getFileId(file.getParent());
 
     removeIdFromParentList(oldParentId, fileId, file.getParent(), file);
-    appendIdToParentList(newParentId, fileId);
-
-    ((VirtualFileSystemEntry)file).setParent(newParent);
     FSRecords.setParent(fileId, newParentId);
+    appendIdToParentList(newParentId, fileId);
+    ((VirtualFileSystemEntry)file).setParent(newParent);
   }
 
   @Override

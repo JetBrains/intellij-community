@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SystemProperties;
@@ -108,6 +109,27 @@ public class FSRecords implements Forceable {
     ReentrantReadWriteLock lock = new ReentrantReadWriteLock();
     r = lock.readLock();
     w = lock.writeLock();
+  }
+
+  static void writeAttributesToRecord(int id, int parentId, FileAttributes attributes, String name) {
+    try {
+      w.lock();
+      setName(id, name);
+
+      setTimestamp(id, attributes.lastModified);
+      setLength(id, attributes.isDirectory() ? -1L : attributes.length);
+
+      setFlags(id, (attributes.isDirectory() ? PersistentFS.IS_DIRECTORY_FLAG : 0) |
+                             (attributes.isWritable() ? 0 : PersistentFS.IS_READ_ONLY) |
+                             (attributes.isSymLink() ? PersistentFS.IS_SYMLINK : 0) |
+                             (attributes.isSpecial() ? PersistentFS.IS_SPECIAL : 0) |
+                             (attributes.isHidden() ? PersistentFS.IS_HIDDEN : 0), true);
+      setParent(id, parentId);
+    } catch (Throwable e) {
+      throw DbConnection.handleError(e);
+    } finally {
+      w.unlock();
+    }
   }
 
   static class DbConnection {
