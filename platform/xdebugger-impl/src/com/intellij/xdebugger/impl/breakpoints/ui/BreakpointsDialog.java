@@ -31,7 +31,6 @@ import com.intellij.ui.popup.util.MasterController;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
@@ -45,8 +44,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.List;
 
@@ -228,7 +225,7 @@ public class BreakpointsDialog extends DialogWrapper {
     new AnAction("BreakpointDialog.GoToSource") {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        navigate();
+        navigate(true);
         close(OK_EXIT_CODE);
       }
     }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)), tree);
@@ -236,7 +233,7 @@ public class BreakpointsDialog extends DialogWrapper {
     new AnAction("BreakpointDialog.ShowSource") {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        navigate();
+        navigate(false);
       }
     }.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE).getShortcutSet(), tree);
 
@@ -301,10 +298,10 @@ public class BreakpointsDialog extends DialogWrapper {
     return decoratedTree;
   }
 
-  private void navigate() {
+  private void navigate(final boolean requestFocus) {
     List<BreakpointItem> breakpoints = myTreeController.getSelectedBreakpoints();
     if (!breakpoints.isEmpty()) {
-      breakpoints.get(0).navigate(true);
+      breakpoints.get(0).navigate(requestFocus);
     }
   }
 
