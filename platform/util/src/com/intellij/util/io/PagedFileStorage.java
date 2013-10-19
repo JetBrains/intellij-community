@@ -81,6 +81,7 @@ public class PagedFileStorage implements Forceable {
   private int myLastChangeCount2;
   private int myLastChangeCount3;
   private int myStorageIndex;
+  private final Object myLastAccessedBufferCacheLock = new Object();
 
   private static final int MAX_PAGES_COUNT = 0xFFFF;
   private static final int MAX_LIVE_STORAGES_COUNT = 0xFFFF;
@@ -300,12 +301,14 @@ public class PagedFileStorage implements Forceable {
   private void unmapAll() {
     myStorageLockContext.myStorageLock.unmapBuffersForOwner(myStorageIndex, myStorageLockContext);
 
-    myLastPage = UNKNOWN_PAGE;
-    myLastPage2 = UNKNOWN_PAGE;
-    myLastPage3 = UNKNOWN_PAGE;
-    myLastBuffer = null;
-    myLastBuffer2 = null;
-    myLastBuffer3 = null;
+    synchronized (myLastAccessedBufferCacheLock) {
+      myLastPage = UNKNOWN_PAGE;
+      myLastPage2 = UNKNOWN_PAGE;
+      myLastPage3 = UNKNOWN_PAGE;
+      myLastBuffer = null;
+      myLastBuffer2 = null;
+      myLastBuffer3 = null;
+    }
   }
 
   public void resize(int newSize) throws IOException {
@@ -370,23 +373,25 @@ public class PagedFileStorage implements Forceable {
   }
 
   private ByteBuffer getBuffer(int page, boolean modify) {
-    if (myLastPage == page) {
-      ByteBuffer buf = myLastBuffer.getCachedBuffer();
-      if (buf != null && myLastChangeCount == myStorageLockContext.myStorageLock.myMappingChangeCount) {
-        if (modify) markDirty(myLastBuffer);
-        return buf;
-      }
-    } else if (myLastPage2 == page) {
-      ByteBuffer buf = myLastBuffer2.getCachedBuffer();
-      if (buf != null && myLastChangeCount2 == myStorageLockContext.myStorageLock.myMappingChangeCount) {
-        if (modify) markDirty(myLastBuffer2);
-        return buf;
-      }
-    } else if (myLastPage3 == page) {
-      ByteBuffer buf = myLastBuffer3.getCachedBuffer();
-      if (buf != null && myLastChangeCount3 == myStorageLockContext.myStorageLock.myMappingChangeCount) {
-        if (modify) markDirty(myLastBuffer3);
-        return buf;
+    synchronized (myLastAccessedBufferCacheLock) {
+      if (myLastPage == page) {
+        ByteBuffer buf = myLastBuffer.getCachedBuffer();
+        if (buf != null && myLastChangeCount == myStorageLockContext.myStorageLock.myMappingChangeCount) {
+          if (modify) markDirty(myLastBuffer);
+          return buf;
+        }
+      } else if (myLastPage2 == page) {
+        ByteBuffer buf = myLastBuffer2.getCachedBuffer();
+        if (buf != null && myLastChangeCount2 == myStorageLockContext.myStorageLock.myMappingChangeCount) {
+          if (modify) markDirty(myLastBuffer2);
+          return buf;
+        }
+      } else if (myLastPage3 == page) {
+        ByteBuffer buf = myLastBuffer3.getCachedBuffer();
+        if (buf != null && myLastChangeCount3 == myStorageLockContext.myStorageLock.myMappingChangeCount) {
+          if (modify) markDirty(myLastBuffer3);
+          return buf;
+        }
       }
     }
 
@@ -403,22 +408,24 @@ public class PagedFileStorage implements Forceable {
         buf.order(ourNativeByteOrder);
       }
 
-      if (myLastPage != page) {
-        myLastPage3 = myLastPage2;
-        myLastBuffer3 = myLastBuffer2;
-        myLastChangeCount3 = myLastChangeCount2;
+      synchronized (myLastAccessedBufferCacheLock) {
+        if (myLastPage != page) {
+          myLastPage3 = myLastPage2;
+          myLastBuffer3 = myLastBuffer2;
+          myLastChangeCount3 = myLastChangeCount2;
 
-        myLastPage2 = myLastPage;
-        myLastBuffer2 = myLastBuffer;
-        myLastChangeCount2 = myLastChangeCount;
+          myLastPage2 = myLastPage;
+          myLastBuffer2 = myLastBuffer;
+          myLastChangeCount2 = myLastChangeCount;
 
-        myLastBuffer = byteBufferWrapper;
-        myLastPage = page;
-      } else {
-        myLastBuffer = byteBufferWrapper;
+          myLastBuffer = byteBufferWrapper;
+          myLastPage = page;
+        } else {
+          myLastBuffer = byteBufferWrapper;
+        }
+
+        myLastChangeCount = myStorageLockContext.myStorageLock.myMappingChangeCount;
       }
-
-      myLastChangeCount = myStorageLockContext.myStorageLock.myMappingChangeCount;
 
       return buf;
     }
