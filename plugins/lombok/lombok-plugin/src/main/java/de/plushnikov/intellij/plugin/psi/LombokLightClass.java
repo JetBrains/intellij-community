@@ -2,15 +2,32 @@ package de.plushnikov.intellij.plugin.psi;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.HierarchicalMethodSignature;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassInitializer;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiIdentifier;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiReferenceList;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.impl.source.PsiModifierListImpl;
-import com.intellij.psi.impl.source.tree.java.PsiCompositeModifierList;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.IncorrectOperationException;
-import org.apache.commons.lang.ArrayUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,6 +66,18 @@ public class LombokLightClass extends LightElement implements PsiClass {
   public LombokLightClass(PsiManager manager, Language language) {
     super(manager, language);
     myModifierList = new LombokLightModifierList(manager, JavaLanguage.INSTANCE);
+
+    final Project project = manager.getProject();
+    final GlobalSearchScope resolveScope = GlobalSearchScope.allScope(project);
+    mySuperTypes = new PsiClassType[]{PsiType.getJavaLangObject(manager, resolveScope)};
+    mySuperClass = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope);
+    mySupers = new PsiClass[]{mySuperClass};
+    myInterfaces = PsiClass.EMPTY_ARRAY;
+  }
+
+  @Override
+  public PsiElement getParent() {
+    return getContainingClass();
   }
 
   @Override
