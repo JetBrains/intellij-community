@@ -143,7 +143,7 @@ public class BuilderInnerClassProcessor extends AbstractClassProcessor {
       if (createMethod) {
         methods.add(new LombokLightMethodBuilder(psiField.getManager(), BuilderUtil.createSetterName(psiAnnotation, psiField.getName()))
           .withMethodReturnType(BuilderUtil.createSetterReturnType(psiAnnotation, PsiClassUtil.getTypeWithGenerics(innerClass)))
-          .withContainingClass(parentClass)
+          .withContainingClass(innerClass)
           .withParameter(psiField.getName(), psiField.getType())
           .withNavigationElement(psiAnnotation)
           .withModifier(PsiModifier.PUBLIC));
