@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.psi.PsiMethod;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -60,7 +59,7 @@ public abstract class JvmSmartStepIntoHandler {
           }
         });
         final ListPopup popup = JBPopupFactory.getInstance().createListPopup(popupStep);
-        final RelativePoint point = DebuggerUIUtil.calcPopupLocation(((TextEditor)fileEditor).getEditor(), position.getLine());
+        final RelativePoint point = DebuggerUIUtil.calcPopupLocation(fileEditor.getEditor(), position.getLine());
         popup.show(point);
       }
       return true;
