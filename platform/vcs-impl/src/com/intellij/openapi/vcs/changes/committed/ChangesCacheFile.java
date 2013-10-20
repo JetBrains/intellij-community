@@ -767,7 +767,12 @@ public class ChangesCacheFile {
   }
 
   public boolean refreshIncomingChanges() throws IOException, VcsException {
-    return !myProject.isDisposed() && new RefreshIncomingChangesOperation(this, myProject).invoke();
+    if (myProject.isDisposed()) return false;
+    
+    DiffProvider diffProvider = myVcs.getDiffProvider();
+    if (diffProvider == null) return false;
+    
+    return new RefreshIncomingChangesOperation(this, myProject, diffProvider).invoke();
   }
 
   public AbstractVcs getVcs() {
@@ -779,7 +784,7 @@ public class ChangesCacheFile {
   }
 
   private static class RefreshIncomingChangesOperation {
-    private FactoryMap<VirtualFile, VcsRevisionNumber> myCurrentRevisions;
+    private final FactoryMap<VirtualFile, VcsRevisionNumber> myCurrentRevisions;
     private Set<FilePath> myDeletedFiles;
     private Set<FilePath> myCreatedFiles;
     private Set<FilePath> myReplacedFiles;
@@ -790,27 +795,24 @@ public class ChangesCacheFile {
     private final ChangesCacheFile myChangesCacheFile;
     private final Project myProject;
 
-    RefreshIncomingChangesOperation(ChangesCacheFile changesCacheFile, Project project) {
+    RefreshIncomingChangesOperation(ChangesCacheFile changesCacheFile, Project project, final DiffProvider diffProvider) {
       myChangesCacheFile = changesCacheFile;
       myProject = project;
       myClManager = ChangeListManagerImpl.getInstanceImpl(project);
+      myCurrentRevisions = new FactoryMap<VirtualFile, VcsRevisionNumber>() {
+        protected VcsRevisionNumber create(final VirtualFile key) {
+          return diffProvider.getCurrentRevision(key);
+        }
+      };
     }
 
     public boolean invoke() throws VcsException, IOException {
-      final DiffProvider diffProvider = myChangesCacheFile.myVcs.getDiffProvider();
-      if (diffProvider == null) return false;
-
       myChangesCacheFile.myLocation.onBeforeBatch();
       final Collection<FilePath> incomingFiles = myChangesCacheFile.myChangesProvider.getIncomingFiles(myChangesCacheFile.myLocation);
 
       myAnyChanges = false;
       myChangesCacheFile.openStreams();
       myChangesCacheFile.loadHeader();
-      myCurrentRevisions = new FactoryMap<VirtualFile, VcsRevisionNumber>() {
-        protected VcsRevisionNumber create(final VirtualFile key) {
-          return diffProvider.getCurrentRevision(key);
-        }
-      };
       try {
         IncomingChangeState.header(myChangesCacheFile.myLocation.toPresentableString());
 
