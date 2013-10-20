@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -399,5 +400,10 @@ public class LombokLightClass extends LightElement implements PsiClass, PsiQuali
 
   public void setMyContainingClass(PsiClass myContainingClass) {
     this.myContainingClass = myContainingClass;
+  }
+
+  @Override
+  public Icon getElementIcon(final int flags) {
+    return PsiClassImplUtil.getClassIcon(flags, this);
   }
 }
