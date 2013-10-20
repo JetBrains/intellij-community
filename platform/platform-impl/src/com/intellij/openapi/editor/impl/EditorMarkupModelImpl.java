@@ -189,7 +189,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
       return false;
     } else {
-      me = new MouseEvent(me.getComponent(), me.getID(), me.getWhen(), me.getModifiers(), me.getX(), me.getY() + myRowAdjuster, me.getClickCount(), me.isPopupTrigger());
+      float rowRatio = (float)Math.min(myEditor.getDocument().getLineCount() - 1, Math.max(0, line + myRowAdjuster)) /
+              (myEditor.getDocument().getLineCount() - 1);
+      int y = myRowAdjuster != 0 ? (int)(rowRatio * myEditor.getVerticalScrollBar().getHeight()) : me.getY();
+      me = new MouseEvent(me.getComponent(), me.getID(), me.getWhen(), me.getModifiers(), me.getX(), y, me.getClickCount(), me.isPopupTrigger());
       final List<RangeHighlighterEx> highlighters = new ArrayList<RangeHighlighterEx>();
       collectRangeHighlighters(this, line, highlighters);
       collectRangeHighlighters((MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), getEditor().getProject(), true), line,
