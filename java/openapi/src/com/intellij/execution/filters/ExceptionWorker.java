@@ -46,7 +46,17 @@ public class ExceptionWorker {
   private static final String AT_PREFIX = AT + " ";
   private static final String STANDALONE_AT = " " + AT + " ";
 
-  private static final TextAttributes HYPERLINK_ATTRIBUTES = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
+  private static final TextAttributes HYPERLINK_ATTRIBUTES;
+  private static final TextAttributes LIBRARY_HYPERLINK_ATTRIBUTES;
+  
+  static {
+    HYPERLINK_ATTRIBUTES = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.HYPERLINK_ATTRIBUTES);
+    
+    LIBRARY_HYPERLINK_ATTRIBUTES = HYPERLINK_ATTRIBUTES.clone();
+    Color libTextColor = UIUtil.getInactiveTextColor();
+    LIBRARY_HYPERLINK_ATTRIBUTES.setForegroundColor(libTextColor);
+    LIBRARY_HYPERLINK_ATTRIBUTES.setEffectColor(libTextColor);
+  }
 
   private final Project myProject;
   private final GlobalSearchScope mySearchScope;
@@ -107,12 +117,8 @@ public class ExceptionWorker {
 
       HyperlinkInfo linkInfo = new MyHyperlinkInfo(myProject, virtualFile, lineNumber);
 
-      TextAttributes attributes = HYPERLINK_ATTRIBUTES.clone();
-      if (!ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(virtualFile)) {
-        Color color = UIUtil.getInactiveTextColor();
-        attributes.setForegroundColor(color);
-        attributes.setEffectColor(color);
-      }
+      boolean inContent = ProjectRootManager.getInstance(myProject).getFileIndex().isInContent(virtualFile);
+      TextAttributes attributes = inContent ? HYPERLINK_ATTRIBUTES : LIBRARY_HYPERLINK_ATTRIBUTES;
       myResult = new Filter.Result(highlightStartOffset, highlightEndOffset, linkInfo, attributes);
     }
     catch (NumberFormatException e) {
