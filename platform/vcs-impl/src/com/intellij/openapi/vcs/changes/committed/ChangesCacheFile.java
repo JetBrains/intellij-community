@@ -767,7 +767,7 @@ public class ChangesCacheFile {
   }
 
   public boolean refreshIncomingChanges() throws IOException, VcsException {
-    return new RefreshIncomingChangesOperation(this).invoke();
+    return !myProject.isDisposed() && new RefreshIncomingChangesOperation(this, myProject).invoke();
   }
 
   public AbstractVcs getVcs() {
@@ -785,19 +785,18 @@ public class ChangesCacheFile {
     private Set<FilePath> myReplacedFiles;
     private final Map<Long, IndexEntry> myIndexEntryCache = new HashMap<Long, IndexEntry>();
     private final Map<Long, CommittedChangeList> myPreviousChangeListsCache = new HashMap<Long, CommittedChangeList>();
-    private ChangeListManagerImpl myClManager;
+    private final ChangeListManagerImpl myClManager;
     private boolean myAnyChanges;
-    private ChangesCacheFile myChangesCacheFile;
+    private final ChangesCacheFile myChangesCacheFile;
+    private final Project myProject;
 
-    public RefreshIncomingChangesOperation(ChangesCacheFile changesCacheFile) {
+    RefreshIncomingChangesOperation(ChangesCacheFile changesCacheFile, Project project) {
       myChangesCacheFile = changesCacheFile;
+      myProject = project;
+      myClManager = ChangeListManagerImpl.getInstanceImpl(project);
     }
 
     public boolean invoke() throws VcsException, IOException {
-      if (myChangesCacheFile.myProject.isDisposed()) {
-        return false;
-      }
-      myClManager = ChangeListManagerImpl.getInstanceImpl(myChangesCacheFile.myProject);
       final DiffProvider diffProvider = myChangesCacheFile.myVcs.getDiffProvider();
       if (diffProvider == null) return false;
 
@@ -896,7 +895,7 @@ public class ChangesCacheFile {
           return true;
         }
         debug("Checking file " + afterRevision.getFile().getPath());
-        FilePath localPath = ChangesUtil.getLocalPath(myChangesCacheFile.myProject, afterRevision.getFile());
+        FilePath localPath = ChangesUtil.getLocalPath(myProject, afterRevision.getFile());
 
         if (! FileUtil.isAncestor(myChangesCacheFile.myRootPath.getIOFile(), localPath.getIOFile(), false)) {
           // alien change in list; skip
