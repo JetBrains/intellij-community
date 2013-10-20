@@ -2,9 +2,12 @@ package de.plushnikov.intellij.plugin.psi;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -302,13 +305,18 @@ public class LombokLightClass extends LightElement implements PsiClass, PsiQuali
   }
 
   @Override
+  public ItemPresentation getPresentation() {
+    return ItemPresentationProviders.getItemPresentation(this);
+  }
+
+  @Override
   public boolean isInheritor(@NotNull PsiClass baseClass, boolean checkDeep) {
-    return baseClass.equals(getSuperClass());
+    return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
   }
 
   @Override
   public boolean isInheritorDeep(PsiClass baseClass, @Nullable PsiClass classToByPass) {
-    return false;
+    return InheritanceImplUtil.isInheritorDeep(this, baseClass, classToByPass);
   }
 
   @Nullable
