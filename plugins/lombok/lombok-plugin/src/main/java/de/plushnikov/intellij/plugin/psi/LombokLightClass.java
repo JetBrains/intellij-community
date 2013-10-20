@@ -4,25 +4,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.HierarchicalMethodSignature;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassInitializer;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiReferenceList;
-import com.intellij.psi.PsiSubstitutor;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.PsiTypeParameterList;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -37,10 +19,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class LombokLightClass extends LightElement implements PsiClass {
+public class LombokLightClass extends LightElement implements PsiClass, PsiQualifiedNamedElement {
   private String myQualifiedName;
   private String myCanonicalName;
-  private String mySimpleName;
+  private String myName;
   private PsiReferenceList myExtendsList;
   private PsiReferenceList myImplementsList;
   private PsiClassType[] myExtendsListTypes = new PsiClassType[0];
@@ -88,7 +70,21 @@ public class LombokLightClass extends LightElement implements PsiClass {
   @Nullable
   @Override
   public String getQualifiedName() {
-    return myQualifiedName;
+    PsiElement parent = getParent();
+    if (parent instanceof PsiJavaFile) {
+      String packageName = ((PsiJavaFile)parent).getPackageName();
+      if (packageName.isEmpty()) {
+        return getName();
+      }
+      return packageName + "." + getName();
+    }
+    if (parent instanceof PsiClass) {
+      String parentQName = ((PsiClass)parent).getQualifiedName();
+      if (parentQName == null) return null;
+      return parentQName + "." + getName();
+    }
+
+    return null;
   }
 
   public void setCanonicalName(@NotNull String canonicalName) {
@@ -98,15 +94,6 @@ public class LombokLightClass extends LightElement implements PsiClass {
   @NotNull
   public String getCanonicalName() {
     return myCanonicalName;
-  }
-
-  public void setSimpleName(@NotNull String simpleName) {
-    mySimpleName = simpleName;
-  }
-
-  @NotNull
-  public String getSimpleName() {
-    return mySimpleName;
   }
 
   @Override
@@ -333,6 +320,15 @@ public class LombokLightClass extends LightElement implements PsiClass {
     myContainingClass = psiClass;
   }
 
+  @Override
+  @Nullable
+  public PsiQualifiedNamedElement getContainer() {
+    final PsiFile file = getContainingFile();
+    final PsiDirectory dir;
+    return file == null ? null : (dir = file.getContainingDirectory()) == null
+                                 ? null : JavaDirectoryService.getInstance().getPackage(dir);
+  }
+
   @Nullable
   @Override
   public PsiFile getContainingFile() {
@@ -348,13 +344,13 @@ public class LombokLightClass extends LightElement implements PsiClass {
 
   @Override
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
-    myQualifiedName = name;
+    myName = name;
     return this;
   }
 
   @Override
   public String getName() {
-    return mySimpleName;
+    return myName;
   }
 
   @Nullable

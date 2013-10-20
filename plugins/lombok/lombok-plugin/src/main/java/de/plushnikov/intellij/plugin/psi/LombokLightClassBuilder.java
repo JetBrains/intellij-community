@@ -13,8 +13,7 @@ public class LombokLightClassBuilder extends LombokLightClass {
   public LombokLightClassBuilder(@NotNull PsiManager manager, @NotNull String canonicalName, @NotNull String simpleName) {
     super(manager, JavaLanguage.INSTANCE);
     setCanonicalName(canonicalName);
-    setName(canonicalName);
-    setSimpleName(simpleName);
+    setName(simpleName);
   }
 
   public LombokLightClassBuilder withModifier(@PsiModifier.ModifierConstant @NotNull @NonNls String modifier) {
