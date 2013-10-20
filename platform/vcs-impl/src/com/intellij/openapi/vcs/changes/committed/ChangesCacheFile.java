@@ -785,15 +785,15 @@ public class ChangesCacheFile {
 
   private static class RefreshIncomingChangesOperation {
     private final FactoryMap<VirtualFile, VcsRevisionNumber> myCurrentRevisions;
-    private Set<FilePath> myDeletedFiles;
-    private Set<FilePath> myCreatedFiles;
-    private Set<FilePath> myReplacedFiles;
+    private final Set<FilePath> myDeletedFiles = new HashSet<FilePath>();
+    private final Set<FilePath> myCreatedFiles = new HashSet<FilePath>();
+    private final Set<FilePath> myReplacedFiles = new HashSet<FilePath>();
     private final Map<Long, IndexEntry> myIndexEntryCache = new HashMap<Long, IndexEntry>();
     private final Map<Long, CommittedChangeList> myPreviousChangeListsCache = new HashMap<Long, CommittedChangeList>();
     private final ChangeListManagerImpl myClManager;
-    private boolean myAnyChanges;
     private final ChangesCacheFile myChangesCacheFile;
     private final Project myProject;
+    private boolean myAnyChanges;
 
     RefreshIncomingChangesOperation(ChangesCacheFile changesCacheFile, Project project, final DiffProvider diffProvider) {
       myChangesCacheFile = changesCacheFile;
@@ -843,9 +843,6 @@ public class ChangesCacheFile {
     private boolean refreshIncomingInFile(Collection<FilePath> incomingFiles, List<IncomingChangeListData> list) throws IOException {
       // the incoming changelist pointers are actually sorted in reverse chronological order,
       // so we process file delete changes before changes made to deleted files before they were deleted
-      myDeletedFiles = new HashSet<FilePath>();
-      myCreatedFiles = new HashSet<FilePath>();
-      myReplacedFiles = new HashSet<FilePath>();
       boolean hadChanges = ! list.isEmpty();
       for(IncomingChangeListData data: list) {
         debug("Checking incoming changelist " + data.changeList.getNumber());
