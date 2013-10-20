@@ -23,13 +23,15 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.diff.DiffProvider;
+import com.intellij.openapi.vcs.diff.DiffProviderEx;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.update.FileGroup;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.FactoryMap;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -786,7 +788,7 @@ public class ChangesCacheFile {
   }
 
   private static class RefreshIncomingChangesOperation {
-    private final FactoryMap<VirtualFile, VcsRevisionNumber> myCurrentRevisions;
+    private final Map<VirtualFile, VcsRevisionNumber> myCurrentRevisions = ContainerUtil.newHashMap();
     private final Set<FilePath> myDeletedFiles = new HashSet<FilePath>();
     private final Set<FilePath> myCreatedFiles = new HashSet<FilePath>();
     private final Set<FilePath> myReplacedFiles = new HashSet<FilePath>();
@@ -795,17 +797,14 @@ public class ChangesCacheFile {
     private final ChangeListManagerImpl myClManager;
     private final ChangesCacheFile myChangesCacheFile;
     private final Project myProject;
+    private final DiffProvider myDiffProvider;
     private boolean myAnyChanges;
 
     RefreshIncomingChangesOperation(ChangesCacheFile changesCacheFile, Project project, final DiffProvider diffProvider) {
       myChangesCacheFile = changesCacheFile;
       myProject = project;
+      myDiffProvider = diffProvider;
       myClManager = ChangeListManagerImpl.getInstanceImpl(project);
-      myCurrentRevisions = new FactoryMap<VirtualFile, VcsRevisionNumber>() {
-        protected VcsRevisionNumber create(final VirtualFile key) {
-          return diffProvider.getCurrentRevision(key);
-        }
-      };
     }
 
     public boolean invoke() throws VcsException, IOException {
@@ -848,12 +847,43 @@ public class ChangesCacheFile {
       boolean hadChanges = ! list.isEmpty();
       for(IncomingChangeListData data: list) {
         debug("Checking incoming changelist " + data.changeList.getNumber());
+
+        Collection<Change> changes = data.changeList.getChanges();
+        
+        Map<Change, VirtualFile> revisionDependentFiles = ContainerUtil.newHashMap();
+        Map<Change, ProcessingResult> results = ContainerUtil.newIdentityHashMap();
+        
+        for(Change change: changes) {
+          if (data.accountedChanges.contains(change)) continue;
+          final ProcessingResult result = processIncomingChange(change, data, incomingFiles);
+          results.put(change, result);
+          if (result.revisionDependentProcessing != null && !myCurrentRevisions.containsKey(result.file)) {
+            revisionDependentFiles.put(change, result.file);
+          }
+        }
+
+        if (!revisionDependentFiles.isEmpty()) {
+          Map<VirtualFile, VcsRevisionNumber> newRevisions = myDiffProvider instanceof DiffProviderEx
+                                                             ? ((DiffProviderEx)myDiffProvider).getCurrentRevisions(revisionDependentFiles.values())
+                                                             : DiffProviderEx.getCurrentRevisions(revisionDependentFiles.values(), myDiffProvider);
+          for (VirtualFile file : revisionDependentFiles.values()) {
+            myCurrentRevisions.put(file, newRevisions.get(file));
+          }
+        }
+        
+        for (Change change : changes) {
+          Function<VcsRevisionNumber, ProcessingResult> revisionHandler = results.get(change).revisionDependentProcessing;
+          if (revisionHandler != null) {
+            results.put(change, revisionHandler.fun(myCurrentRevisions.get(revisionDependentFiles.get(change))));
+          }
+        }
+
         boolean updated = false;
         boolean anyChangeFound = false;
-        for(Change change: data.changeList.getChanges()) {
+        for (Change change : changes) {
           if (data.accountedChanges.contains(change)) continue;
           final ContentRevision revision = (change.getAfterRevision() == null) ? change.getBeforeRevision() : change.getAfterRevision();
-          final ProcessingResult result = processIncomingChange(change, data, incomingFiles);
+          ProcessingResult result = results.get(change);
           new IncomingChangeState(change, revision.getRevisionNumber().asString(), result.state).logSelf();
           if (result.changeFound) {
             updated = true;
@@ -873,18 +903,29 @@ public class ChangesCacheFile {
     private static class ProcessingResult {
       final boolean changeFound; 
       final IncomingChangeState.State state;
+      final VirtualFile file;
+      final Function<VcsRevisionNumber, ProcessingResult> revisionDependentProcessing;
 
       private ProcessingResult(boolean changeFound, IncomingChangeState.State state) {
         this.changeFound = changeFound;
         this.state = state;
+        this.file = null;
+        this.revisionDependentProcessing = null;
+      }
+
+      private ProcessingResult(VirtualFile file, Function<VcsRevisionNumber, ProcessingResult> revisionDependentProcessing) {
+        this.file = file;
+        this.revisionDependentProcessing = revisionDependentProcessing;
+        this.changeFound = false;
+        this.state = null;
       }
     }
 
     private ProcessingResult processIncomingChange(final Change change,
                                           final IncomingChangeListData changeListData,
                                           @Nullable final Collection<FilePath> incomingFiles) {
-      CommittedChangeList changeList = changeListData.changeList;
-      ContentRevision afterRevision = change.getAfterRevision();
+      final CommittedChangeList changeList = changeListData.changeList;
+      final ContentRevision afterRevision = change.getAfterRevision();
       if (afterRevision != null) {
         if (afterRevision.getFile().isNonLocal()) {
           // don't bother to search for non-local paths on local disk
@@ -916,24 +957,28 @@ public class ChangesCacheFile {
         }
 
         localPath.refresh();
-        VirtualFile file = localPath.getVirtualFile();
+        final VirtualFile file = localPath.getVirtualFile();
         if (isDeletedFile(myDeletedFiles, afterRevision, myReplacedFiles)) {
           debug("Found deleted file");
           return new ProcessingResult(true, AFTER_DOES_NOT_MATTER_DELETED_FOUND_IN_INCOMING_LIST);
         }
         else if (file != null) {
-          VcsRevisionNumber revision = myCurrentRevisions.get(file);
-          if (revision != null) {
-            debug("Current revision is " + revision + ", changelist revision is " + afterRevision.getRevisionNumber());
-            //noinspection unchecked
-            if (myChangesCacheFile.myChangesProvider
-              .isChangeLocallyAvailable(afterRevision.getFile(), revision, afterRevision.getRevisionNumber(), changeList)) {
-              return new ProcessingResult(true, AFTER_EXISTS_LOCALLY_AVAILABLE);
+          return new ProcessingResult(file, new Function<VcsRevisionNumber, ProcessingResult>() {
+            @Override
+            public ProcessingResult fun(VcsRevisionNumber revision) {
+              if (revision != null) {
+                debug("Current revision is " + revision + ", changelist revision is " + afterRevision.getRevisionNumber());
+                //noinspection unchecked
+                if (myChangesCacheFile.myChangesProvider
+                  .isChangeLocallyAvailable(afterRevision.getFile(), revision, afterRevision.getRevisionNumber(), changeList)) {
+                  return new ProcessingResult(true, AFTER_EXISTS_LOCALLY_AVAILABLE);
+                }
+                return new ProcessingResult(false, AFTER_EXISTS_NOT_LOCALLY_AVAILABLE);
+              }
+              debug("Failed to fetch revision");
+              return new ProcessingResult(false, AFTER_EXISTS_REVISION_NOT_LOADED);
             }
-            return new ProcessingResult(false, AFTER_EXISTS_NOT_LOCALLY_AVAILABLE);
-          }
-          debug("Failed to fetch revision");
-          return new ProcessingResult(false, AFTER_EXISTS_REVISION_NOT_LOADED);
+          });
         }
         else {
           //noinspection unchecked
@@ -952,7 +997,7 @@ public class ChangesCacheFile {
         }
       }
       else {
-        ContentRevision beforeRevision = change.getBeforeRevision();
+        final ContentRevision beforeRevision = change.getBeforeRevision();
         assert beforeRevision != null;
         debug("Checking deleted file " + beforeRevision.getFile());
         myDeletedFiles.add(beforeRevision.getFile());
@@ -973,14 +1018,18 @@ public class ChangesCacheFile {
         }
         else {
           final VirtualFile file = beforeRevision.getFile().getVirtualFile();
-          final VcsRevisionNumber currentRevision = myCurrentRevisions.get(file);
-          if ((currentRevision != null) && (currentRevision.compareTo(beforeRevision.getRevisionNumber()) > 0)) {
-            // revived in newer revision - possibly was added file with same name
-            debug("File with same name was added after file deletion");
-            return new ProcessingResult(true, BEFORE_SAME_NAME_ADDED_AFTER_DELETION);
-          }
-          debug("File exists locally and no 'create' change found for it");
-          return new ProcessingResult(false, BEFORE_EXISTS_BUT_SHOULD_NOT);
+          return new ProcessingResult(file, new Function<VcsRevisionNumber, ProcessingResult>() {
+            @Override
+            public ProcessingResult fun(VcsRevisionNumber currentRevision) {
+              if ((currentRevision != null) && (currentRevision.compareTo(beforeRevision.getRevisionNumber()) > 0)) {
+                // revived in newer revision - possibly was added file with same name
+                debug("File with same name was added after file deletion");
+                return new ProcessingResult(true, BEFORE_SAME_NAME_ADDED_AFTER_DELETION);
+              }
+              debug("File exists locally and no 'create' change found for it");
+              return new ProcessingResult(false, BEFORE_EXISTS_BUT_SHOULD_NOT);
+            }
+          });
         }
       }
     }
