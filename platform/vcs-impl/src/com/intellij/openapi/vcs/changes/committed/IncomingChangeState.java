@@ -27,15 +27,12 @@ public class IncomingChangeState {
   private final FileStatus myStatus;
   private final FilePath myPath;
   private final String myRevision;
-  private State myState;
+  private final State myState;
 
-  public IncomingChangeState(final Change change, final String revision) {
+  public IncomingChangeState(final Change change, final String revision, State state) {
     myRevision = revision;
     myStatus = change.getFileStatus();
     myPath = ChangesUtil.getFilePath(change);
-  }
-
-  public void setState(final State state) {
     myState = state;
   }
 
