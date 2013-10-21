@@ -16,6 +16,8 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -84,6 +86,8 @@ import java.util.Map;
 public class VcsLogDataHolder implements Disposable {
 
   public static final Topic<Runnable> REFRESH_COMPLETED = Topic.create("Vcs.Log.Completed", Runnable.class);
+
+  private static final Logger LOG = Logger.getInstance(VcsLogDataHolder.class);
 
   @NotNull private final Project myProject;
   @NotNull private final VcsLogObjectsFactory myFactory;
@@ -384,6 +388,39 @@ public class VcsLogDataHolder implements Disposable {
   @NotNull
   public VcsLogProvider getLogProvider(@NotNull VirtualFile root) {
     return myLogProviders.get(root);
+  }
+
+  /**
+   * Returns the ordered part of the recent commits, details of which are always stored in the cache.
+   */
+  @NotNull
+  public Collection<TimedVcsCommit> getTopCommits() {
+    return myLogData.getTopCommits();
+  }
+
+  /**
+   * Returns details of recent commits ordered in the "right way" (as in the log).
+   */
+  @NotNull
+  public Collection<VcsFullCommitDetails> getTopCommitDetails() {
+    final Collection<TimedVcsCommit> topCommits = getTopCommits();
+    return ContainerUtil.mapNotNull(topCommits, new Function<TimedVcsCommit, VcsFullCommitDetails>() {
+      @Nullable
+      @Override
+      public VcsFullCommitDetails fun(TimedVcsCommit commit) {
+        Hash hash = commit.getHash();
+        VcsFullCommitDetails details = myTopCommitsDetailsCache.get(hash);
+        if (details != null) {
+          return details;
+        }
+
+        // shouldn't happen
+        LOG.error("No details were stored for commit " + hash,
+                  new Attachment("details_cache.txt", myTopCommitsDetailsCache.toString()),
+                  new Attachment("top_commits.txt", topCommits.toString()));
+        return null;
+      }
+    });
   }
 
   /**
