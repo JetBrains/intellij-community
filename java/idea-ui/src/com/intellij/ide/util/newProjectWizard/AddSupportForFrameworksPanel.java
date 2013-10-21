@@ -221,7 +221,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
   }
 
   @Nullable
-  private FrameworkSupportNodeBase getSelectedNode() {
+  public FrameworkSupportNodeBase getSelectedNode() {
     final FrameworkSupportNodeBase[] nodes = myFrameworksTree.getSelectedNodes(FrameworkSupportNodeBase.class, null);
     return nodes.length == 1 ? nodes[0] : null;
   }
