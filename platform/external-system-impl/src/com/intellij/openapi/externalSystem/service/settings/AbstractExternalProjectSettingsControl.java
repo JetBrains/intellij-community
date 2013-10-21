@@ -76,6 +76,7 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   @Override
   public void apply(@NotNull S settings) {
     settings.setUseAutoImport(myUseAutoImportBox.isSelected());
+    myInitialSettings.setUseAutoImport(myUseAutoImportBox.isSelected());
     if (myInitialSettings.getExternalProjectPath() != null) {
       settings.setExternalProjectPath(myInitialSettings.getExternalProjectPath());
     }
