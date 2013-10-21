@@ -58,7 +58,7 @@ public class IDEACoverageRunner extends JavaCoverageRunner {
 
 
   public String getPresentableName() {
-    return "IDEA";
+    return "IntelliJ IDEA";
   }
 
   public String getId() {
