@@ -28,14 +28,14 @@ import com.intellij.psi.PsiManager;
 public class GoToLinkTargetAction extends DumbAwareAction {
   @Override
   public void update(AnActionEvent e) {
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = getEventProject(e);
     VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
     e.getPresentation().setEnabledAndVisible(project != null && file != null && file.is(VFileProperty.SYMLINK));
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = getEventProject(e);
     VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
     if (project != null && file != null && file.is(VFileProperty.SYMLINK)) {
       VirtualFile target = file.getCanonicalFile();
