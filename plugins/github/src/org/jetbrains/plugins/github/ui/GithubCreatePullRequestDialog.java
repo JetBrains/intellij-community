@@ -67,24 +67,26 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
       @Override
       public void itemStateChanged(ItemEvent e) {
         if (e.getStateChange() == ItemEvent.SELECTED) {
-          myGithubCreatePullRequestPanel.setBusy(true);
-          myWorker.initLoadDiffInfo(getTargetBranch(), new Consumer<GithubCreatePullRequestWorker.DiffDescription>() {
-            @Override
-            public void consume(@NotNull final GithubCreatePullRequestWorker.DiffDescription info) {
-              UIUtil.invokeLaterIfNeeded(new Runnable() {
-                @Override
-                public void run() {
-                  if (getTargetBranch().equals(info.getBranch())) {
-                    myGithubCreatePullRequestPanel.setBusy(false);
-                    if (myGithubCreatePullRequestPanel.isTitleDescriptionEmptyOrNotModified()) {
-                      myGithubCreatePullRequestPanel.setTitle(info.getTitle());
-                      myGithubCreatePullRequestPanel.setDescription(info.getDescription());
+          if (myWorker.canShowDiff()) {
+            myGithubCreatePullRequestPanel.setBusy(true);
+            myWorker.initLoadDiffInfo(getTargetBranch(), new Consumer<GithubCreatePullRequestWorker.DiffDescription>() {
+              @Override
+              public void consume(@NotNull final GithubCreatePullRequestWorker.DiffDescription info) {
+                UIUtil.invokeLaterIfNeeded(new Runnable() {
+                  @Override
+                  public void run() {
+                    if (getTargetBranch().equals(info.getBranch())) {
+                      myGithubCreatePullRequestPanel.setBusy(false);
+                      if (myGithubCreatePullRequestPanel.isTitleDescriptionEmptyOrNotModified()) {
+                        myGithubCreatePullRequestPanel.setTitle(info.getTitle());
+                        myGithubCreatePullRequestPanel.setDescription(info.getDescription());
+                      }
                     }
                   }
-                }
-              });
-            }
-          });
+                });
+              }
+            });
+          }
         }
       }
     });
@@ -122,7 +124,7 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
       return false;
     }
     myProjectSettings.setCreatePullRequestDefaultRepo(forkPath);
-    myGithubCreatePullRequestPanel.setDiffEnabled(forkInfo.isCanShowDiff());
+    myGithubCreatePullRequestPanel.setDiffEnabled(myWorker.canShowDiff());
     updateBranches(forkInfo.getBranches(), forkPath);
     return true;
   }
@@ -211,6 +213,6 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
       doCancelAction();
       return;
     }
-    myGithubCreatePullRequestPanel.setDiffEnabled(forkInfo.isCanShowDiff());
+    myGithubCreatePullRequestPanel.setDiffEnabled(myWorker.canShowDiff());
   }
 }

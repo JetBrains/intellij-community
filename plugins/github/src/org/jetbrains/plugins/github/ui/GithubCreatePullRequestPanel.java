@@ -164,5 +164,6 @@ public class GithubCreatePullRequestPanel {
 
   private void createUIComponents() {
     myBusyIcon = new AsyncProcessIcon("Loading diff...");
+    myBusyIcon.suspend();
   }
 }

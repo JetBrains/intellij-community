@@ -100,6 +100,10 @@ public class GithubCreatePullRequestWorker {
     return myCurrentBranch;
   }
 
+  public boolean canShowDiff() {
+    return myTargetRemote != null;
+  }
+
   @Nullable
   public static GithubCreatePullRequestWorker createPullRequestWorker(@NotNull final Project project, @Nullable final VirtualFile file) {
     Git git = ServiceManager.getService(Git.class);
@@ -200,7 +204,7 @@ public class GithubCreatePullRequestWorker {
       myForkPath = forkPath;
       myTargetRemote = info.getTargetRemote();
       myDiffInfos.clear();
-      return new GithubTargetInfo(info.getBranches(), myTargetRemote != null);
+      return new GithubTargetInfo(info.getBranches());
     }
     catch (GithubAuthenticationCanceledException e) {
       return null;
@@ -559,20 +563,14 @@ public class GithubCreatePullRequestWorker {
 
   public static class GithubTargetInfo {
     @NotNull private final List<String> myBranches;
-    private final boolean myCanShowDiff;
 
-    private GithubTargetInfo(@NotNull List<String> branches, boolean canShowDiff) {
+    private GithubTargetInfo(@NotNull List<String> branches) {
       myBranches = branches;
-      myCanShowDiff = canShowDiff;
     }
 
     @NotNull
     public List<String> getBranches() {
       return myBranches;
-    }
-
-    public boolean isCanShowDiff() {
-      return myCanShowDiff;
     }
   }
 
