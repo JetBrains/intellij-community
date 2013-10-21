@@ -16,13 +16,12 @@
 package com.intellij.openapi.externalSystem.service.settings;
 
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
-import com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemSettingsControl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * Templates class for managing single external project settings (single ide project might contain multiple bindings to external
@@ -75,15 +74,16 @@ public abstract class AbstractExternalProjectSettingsControl<S extends ExternalP
   protected abstract void resetExtraSettings(boolean isDefaultModuleCreation);
 
   @Override
-  @Nullable
-  public String apply(@NotNull S settings) {
+  public void apply(@NotNull S settings) {
     settings.setUseAutoImport(myUseAutoImportBox.isSelected());
-    settings.setExternalProjectPath(myInitialSettings.getExternalProjectPath());
-    return applyExtraSettings(settings);
+    myInitialSettings.setUseAutoImport(myUseAutoImportBox.isSelected());
+    if (myInitialSettings.getExternalProjectPath() != null) {
+      settings.setExternalProjectPath(myInitialSettings.getExternalProjectPath());
+    }
+    applyExtraSettings(settings);
   }
-  
-  @Nullable
-  protected abstract String applyExtraSettings(@NotNull S settings);
+
+  protected abstract void applyExtraSettings(@NotNull S settings);
 
   public void disposeUIResources() {
     ExternalSystemUiUtil.disposeUi(this);

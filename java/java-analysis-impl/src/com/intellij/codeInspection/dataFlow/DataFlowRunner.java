@@ -30,6 +30,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -51,13 +52,20 @@ public class DataFlowRunner {
   private Instruction[] myInstructions;
   private final MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<PsiElement, DfaMemoryState>();
   private DfaVariableValue[] myFields;
-  private final DfaValueFactory myValueFactory = new DfaValueFactory();
+  private final DfaValueFactory myValueFactory;
 
   // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
   // is executed more than this limit times.
   public static final int MAX_STATES_PER_BRANCH = 300;
 
-  protected DataFlowRunner() {
+  protected DataFlowRunner(PsiElement block) {
+    PsiElement parentConstructor = PsiTreeUtil.findFirstParent(block, new Condition<PsiElement>() {
+      @Override
+      public boolean value(PsiElement psiElement) {
+        return psiElement instanceof PsiMethod && ((PsiMethod)psiElement).isConstructor();
+      }
+    });
+    myValueFactory = new DfaValueFactory(parentConstructor == null);
   }
 
   public DfaValueFactory getFactory() {
@@ -207,7 +215,7 @@ public class DataFlowRunner {
     return !ApplicationManager.getApplication().isUnitTestMode();
   }
 
-  private DfaInstructionState[] acceptInstruction(InstructionVisitor visitor, DfaInstructionState instructionState) {
+  protected DfaInstructionState[] acceptInstruction(InstructionVisitor visitor, DfaInstructionState instructionState) {
     Instruction instruction = instructionState.getInstruction();
     if (instruction instanceof MethodCallInstruction) {
       PsiCallExpression anchor = ((MethodCallInstruction)instruction).getCallExpression();

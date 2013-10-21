@@ -148,7 +148,7 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
     PsiClass containingClass = PsiTreeUtil.getParentOfType(scope, PsiClass.class);
     if (containingClass != null && PsiUtil.isLocalOrAnonymousClass(containingClass)) return;
 
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner() {
+    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(scope) {
       @Override
       protected boolean shouldCheckTimeLimit() {
         if (!onTheFly) return false;

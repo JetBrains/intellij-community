@@ -26,6 +26,7 @@ import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
@@ -72,25 +73,30 @@ public class VcsLogManager extends AbstractProjectComponent {
         changesView.executeWhenInitialized(new DumbAwareRunnable() {
           @Override
           public void run() {
-            final Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders();
-            if (logProviders.isEmpty()) {
-              return;
-            }
-
-            final VcsLogContainer mainPanel = new VcsLogContainer(myProject);
-            final Content content = new ContentImpl(mainPanel, "Log", true);
-            ChangesViewContentI changesView = ChangesViewContentManager.getInstance(myProject);
-            changesView.addContent(content);
-            content.setCloseable(false);
-
-            VcsLogDataHolder.init(myProject, myLogObjectsFactory, logProviders, new Consumer<VcsLogDataHolder>() {
+            UIUtil.invokeAndWaitIfNeeded(new Runnable() {
               @Override
-              public void consume(VcsLogDataHolder vcsLogDataHolder) {
-                Disposer.register(myProject, vcsLogDataHolder);
-                VcsLogUI logUI = new VcsLogUI(vcsLogDataHolder, myProject, new VcsLogColorManagerImpl(logProviders.keySet()));
-                mainPanel.init(logUI.getMainFrame().getMainComponent());
-                myLogRefresher = new PostponeableLogRefresher(myProject, vcsLogDataHolder, content);
-                refreshLogOnVcsEvents(logProviders);
+              public void run() {
+                final Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders();
+                if (logProviders.isEmpty()) {
+                  return;
+                }
+
+                final VcsLogContainer mainPanel = new VcsLogContainer(myProject);
+                final Content content = new ContentImpl(mainPanel, "Log", true);
+                ChangesViewContentI changesView = ChangesViewContentManager.getInstance(myProject);
+                changesView.addContent(content);
+                content.setCloseable(false);
+
+                VcsLogDataHolder.init(myProject, myLogObjectsFactory, logProviders, new Consumer<VcsLogDataHolder>() {
+                  @Override
+                  public void consume(VcsLogDataHolder vcsLogDataHolder) {
+                    Disposer.register(myProject, vcsLogDataHolder);
+                    VcsLogUI logUI = new VcsLogUI(vcsLogDataHolder, myProject, new VcsLogColorManagerImpl(logProviders.keySet()));
+                    mainPanel.init(logUI.getMainFrame().getMainComponent());
+                    myLogRefresher = new PostponeableLogRefresher(myProject, vcsLogDataHolder, content);
+                    refreshLogOnVcsEvents(logProviders);
+                  }
+                });
               }
             });
           }

@@ -16,36 +16,23 @@
 
 package com.intellij.openapi.vfs;
 
-import com.intellij.CommonBundle;
+import com.intellij.AbstractBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
-
-import java.lang.ref.Reference;
-import java.lang.ref.SoftReference;
-import java.util.ResourceBundle;
 
 /**
  * @author yole
  */
-public class VfsBundle {
-  private static Reference<ResourceBundle> ourBundle;
-
+public class VfsBundle extends AbstractBundle {
   @NonNls private static final String BUNDLE = "messages.VfsBundle";
+  private static final VfsBundle ourInstance = new VfsBundle();
 
   private VfsBundle() {
+    super(BUNDLE);
   }
 
   public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
-    return CommonBundle.message(getBundle(), key, params);
+    return ourInstance.getMessage(key, params);
   }
 
-  private static ResourceBundle getBundle() {
-    ResourceBundle bundle = null;
-    if (ourBundle != null) bundle = ourBundle.get();
-    if (bundle == null) {
-      bundle = ResourceBundle.getBundle(BUNDLE);
-      ourBundle = new SoftReference<ResourceBundle>(bundle);
-    }
-    return bundle;
-  }
 }

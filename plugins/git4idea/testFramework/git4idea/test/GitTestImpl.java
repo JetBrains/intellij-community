@@ -226,6 +226,12 @@ public class GitTestImpl implements Git {
 
   @NotNull
   @Override
+  public GitCommandResult fetch(@NotNull GitRepository repository, @NotNull String url, @NotNull String remote, String... params) {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
   public GitCommandResult getUnmergedFiles(@NotNull GitRepository repository) {
     return execute(repository, "ls-files --unmerged");
   }

@@ -17,7 +17,7 @@ package com.intellij.codeInspection.suspiciousNameCombination;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.util.InvalidDataException;
@@ -36,7 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class SuspiciousNameCombinationInspectionBase extends AbstractBaseJavaLocalInspectionTool {
+public class SuspiciousNameCombinationInspectionBase extends BaseJavaBatchLocalInspectionTool {
   @NonNls private static final String ELEMENT_GROUPS = "group";
   @NonNls private static final String ATTRIBUTE_NAMES = "names";
   protected final List<String> myNameGroups = new ArrayList<String>();

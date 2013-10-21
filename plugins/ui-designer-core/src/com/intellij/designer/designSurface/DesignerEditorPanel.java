@@ -578,7 +578,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   private int[][] getSelectionState() {
-    List<RadComponent> selection = mySurfaceArea.getSelection();
+    return getSelectionState(mySurfaceArea.getSelection());
+  }
+
+  protected static int[][] getSelectionState(List<RadComponent> selection) {
     int[][] selectionState = new int[selection.size()][];
 
     for (int i = 0; i < selectionState.length; i++) {
@@ -639,7 +642,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     mySelectionState = null;
   }
 
-  private static void pathToComponent(List<RadComponent> components, RadComponent component, int[] path, int index) {
+  protected static void pathToComponent(List<RadComponent> components, RadComponent component, int[] path, int index) {
     if (index == path.length) {
       components.add(component);
     }

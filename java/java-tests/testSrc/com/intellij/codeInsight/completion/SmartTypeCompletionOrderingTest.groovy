@@ -311,6 +311,13 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
     checkPreferredItems 0, 'e', 'createEvent'
   }
 
+  public void testGetLogger() {
+    checkPreferredItems 0, 'Foo.class', 'forName'
+  }
+  public void testGetWildcardLogger() {
+    checkPreferredItems 0, 'Foo.class', 'forName'
+  }
+
   @Override
   protected String getBasePath() {
     return JavaTestUtil.getRelativeJavaTestDataPath() + BASE_PATH;

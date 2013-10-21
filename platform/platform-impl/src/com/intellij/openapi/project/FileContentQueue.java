@@ -35,13 +35,13 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
-* @author peter
-*/
+ * @author peter
+ */
 @SuppressWarnings({"SynchronizeOnThis"})
 public class FileContentQueue {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.startup.FileContentQueue");
-  private static final long MAX_SIZE_OF_BYTES_IN_QUEUE = 1024*1024;
-  private static final long PROCESSED_FILE_BYTES_THRESHOLD = 1024*1024*3;
+  private static final long MAX_SIZE_OF_BYTES_IN_QUEUE = 1024 * 1024;
+  private static final long PROCESSED_FILE_BYTES_THRESHOLD = 1024 * 1024 * 3;
   private static final long LARGE_SIZE_REQUEST_THRESHOLD = PROCESSED_FILE_BYTES_THRESHOLD - 1024 * 300; // 300k for other threads
 
   // Unbounded (!)
@@ -60,10 +60,11 @@ public class FileContentQueue {
   public void queue(final Collection<VirtualFile> files, @NotNull final ProgressIndicator indicator) {
     myFilesToLoadQueue.addAll(files);
     final Runnable contentLoadingRunnable = new Runnable() {
+      @Override
       public void run() {
         try {
           VirtualFile file = myFilesToLoadQueue.poll();
-          while( file != null) {
+          while (file != null) {
             indicator.checkCanceled();
             addLast(file, indicator);
             file = myFilesToLoadQueue.poll();
@@ -159,42 +160,43 @@ public class FileContentQueue {
   }
 
   @Nullable
-  public FileContent take(@NotNull ProgressIndicator indicator) throws ProcessCanceledException{
+  public FileContent take(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
     final FileContent content = doTake();
-    if (content != null) {
-      final long length = content.getLength();
-      while (true) {
-        try {
-          indicator.checkCanceled();
-        }
-        catch (ProcessCanceledException e) {
-          pushback(content);
-          throw e;
-        }
+    if (content == null) {
+      return null;
+    }
+    final long length = content.getLength();
+    while (true) {
+      try {
+        indicator.checkCanceled();
+      }
+      catch (ProcessCanceledException e) {
+        pushback(content);
+        throw e;
+      }
 
-        synchronized (myProceedWithProcessingLock) {
-          final boolean requestingLargeSize = length > LARGE_SIZE_REQUEST_THRESHOLD;
-          if (requestingLargeSize) {
-            myLargeSizeRequested = true;
+      synchronized (myProceedWithProcessingLock) {
+        final boolean requestingLargeSize = length > LARGE_SIZE_REQUEST_THRESHOLD;
+        if (requestingLargeSize) {
+          myLargeSizeRequested = true;
+        }
+        try {
+          if (myLargeSizeRequested && !requestingLargeSize ||
+              myBytesBeingProcessed + length > Math.max(PROCESSED_FILE_BYTES_THRESHOLD, length)) {
+            myProceedWithProcessingLock.wait(300);
           }
-          try {
-            if (myLargeSizeRequested && !requestingLargeSize || myBytesBeingProcessed + length > Math.max(PROCESSED_FILE_BYTES_THRESHOLD, length)) {
-              myProceedWithProcessingLock.wait(300);
+          else {
+            myBytesBeingProcessed += length;
+            if (requestingLargeSize) {
+              myLargeSizeRequested = false;
             }
-            else {
-              myBytesBeingProcessed += length;
-              if (requestingLargeSize) {
-                myLargeSizeRequested = false;
-              }
-              return content;
-            }
+            return content;
           }
-          catch (InterruptedException ignore) {
-          }
+        }
+        catch (InterruptedException ignore) {
         }
       }
     }
-    return content;
   }
 
   @Nullable
@@ -211,15 +213,18 @@ public class FileContentQueue {
             if (isValidFile(virtualFileToLoad)) {
               try {
                 content.getBytes();
-              } catch (Throwable t) {
+              }
+              catch (Throwable t) {
                 if (t instanceof IOException || t instanceof InvalidVirtualFileAccessException) {
                   LOG.info(t);
-                } else {
+                }
+                else {
                   LOG.error(t);
                 }
                 content.setEmptyContent();
               }
-            } else {
+            }
+            else {
               content.setEmptyContent();
             }
             return content;
@@ -230,15 +235,19 @@ public class FileContentQueue {
             try {
               result = myLoadedContentsQueue.poll(10, TimeUnit.MILLISECONDS);
               if (result != null) break;
-            } catch (InterruptedException ex) {
+            }
+            catch (InterruptedException ex) {
               throw new RuntimeException(ex);
             }
-          } while (!myContentLoadingThreadTerminated);
+          }
+          while (!myContentLoadingThreadTerminated);
         }
-      } else {
+      }
+      else {
         try {
           result = myLoadedContentsQueue.poll(300, TimeUnit.MILLISECONDS);
-        } catch (InterruptedException ex) {
+        }
+        catch (InterruptedException ex) {
           throw new RuntimeException(ex);
         }
       }
@@ -260,7 +269,10 @@ public class FileContentQueue {
 
     synchronized (myProceedWithLoadingLock) {
       myLoadedBytesInQueue -= result.getLength();
-      if (myLoadedBytesInQueue < MAX_SIZE_OF_BYTES_IN_QUEUE) myProceedWithLoadingLock.notifyAll(); // we actually ask only content loading thread to proceed, so there should not be much difference with plain notify
+      if (myLoadedBytesInQueue < MAX_SIZE_OF_BYTES_IN_QUEUE) {
+        myProceedWithLoadingLock
+          .notifyAll(); // we actually ask only content loading thread to proceed, so there should not be much difference with plain notify
+      }
     }
 
     return result;

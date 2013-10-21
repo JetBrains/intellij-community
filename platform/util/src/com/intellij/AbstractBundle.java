@@ -15,6 +15,7 @@
  */
 package com.intellij;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentWeakFactoryMap;
 import com.intellij.util.containers.FactoryMap;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.Locale;
+import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
 /**
@@ -44,6 +46,7 @@ import java.util.ResourceBundle;
  * @since 8/1/11 2:37 PM
  */
 public abstract class AbstractBundle {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.AbstractBundle");
   private Reference<ResourceBundle> myBundle;
   @NonNls private final String myPathToBundle;
 
@@ -79,7 +82,16 @@ public abstract class AbstractBundle {
     SoftReference<ResourceBundle> reference = map.get(pathToBundle);
     ResourceBundle result = reference == null ? null : reference.get();
     if (result == null) {
-      map.put(pathToBundle, new SoftReference<ResourceBundle>(result = ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader)));
+      try {
+        ResourceBundle.Control control = ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_PROPERTIES);
+        result = ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, control);
+      }
+      catch (MissingResourceException e) {
+        LOG.info("Cannot load resource bundle from *.properties file, falling back to slow class loading: " + pathToBundle);
+        ResourceBundle.clearCache(loader);
+        result = ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader);
+      }
+      map.put(pathToBundle, new SoftReference<ResourceBundle>(result));
     }
     return result;
   }

@@ -57,7 +57,7 @@ public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscap
 
   @Override
   public void coloredTextAvailable(String text, Key attributes) {
-    super.notifyTextAvailable(text, attributes);
+    textAvailable(text, attributes);
   }
 
   /**

@@ -209,6 +209,12 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
 
   @NotNull
   @Override
+  public <P extends JpsElement> SourceFolder addSourceFolder(@NotNull VirtualFile file, @NotNull JpsModuleSourceRootType<P> type) {
+    return addSourceFolder(file, type, type.createDefaultProperties());
+  }
+
+  @NotNull
+  @Override
   public SourceFolder addSourceFolder(@NotNull String url, boolean isTestSource) {
     return addSourceFolder(url, isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE);
   }

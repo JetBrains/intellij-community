@@ -24,6 +24,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -37,6 +38,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
+import javax.swing.*;
 import java.util.UUID;
 
 /**
@@ -48,6 +50,8 @@ public class ProblemsViewImpl extends ProblemsView{
   
   private final ProblemsViewPanel myPanel;
   private final SequentialTaskExecutor myViewUpdater = new SequentialTaskExecutor(PooledThreadExecutor.INSTANCE);
+  private final Icon myActiveIcon = AllIcons.Toolwindows.Problems;
+  private final Icon myPassiveIcon = IconLoader.getDisabledIcon(myActiveIcon);
 
   public ProblemsViewImpl(final Project project, final ToolWindowManager wm) {
     super(project);
@@ -65,7 +69,7 @@ public class ProblemsViewImpl extends ProblemsView{
           return;
         }
         final ToolWindow tw = wm.registerToolWindow(PROBLEMS_TOOLWINDOW_ID, false, ToolWindowAnchor.BOTTOM, project, true);
-        tw.setIcon(AllIcons.Toolwindows.Problems);
+        updateIcon(false);
         final Content content = ContentFactory.SERVICE.getInstance().createContent(myPanel, "", false);
         // todo: setup content?
         tw.getContentManager().addContent(content);
@@ -84,15 +88,19 @@ public class ProblemsViewImpl extends ProblemsView{
     myViewUpdater.execute(new Runnable() {
       @Override
       public void run() {
-        cleanupChildrenRecursively(myPanel.getErrorViewStructure().getRootElement(), scope, currentSessionId);
+        updateIcon(!cleanupChildrenRecursively(myPanel.getErrorViewStructure().getRootElement(), scope, currentSessionId));
         myPanel.reload();
       }
     });
   }
 
-  private void cleanupChildrenRecursively(@NotNull final Object fromElement, final @Nullable CompileScope scope, @NotNull UUID currentSessionId) {
+  private boolean cleanupChildrenRecursively(@NotNull final Object fromElement, final @Nullable CompileScope scope, @NotNull UUID currentSessionId) {
     final ErrorViewStructure structure = myPanel.getErrorViewStructure();
-    for (ErrorTreeElement element : structure.getChildElements(fromElement)) {
+    ErrorTreeElement[] elements = structure.getChildElements(fromElement);
+    if (elements.length ==0) return true;
+
+    boolean result = false;
+    for (ErrorTreeElement element : elements) {
       if (element instanceof GroupingElement) {
         if (scope != null) {
           final VirtualFile file = ((GroupingElement)element).getFile();
@@ -102,17 +110,20 @@ public class ProblemsViewImpl extends ProblemsView{
         }
         if (!currentSessionId.equals(element.getData())) {
           structure.removeElement(element);
+          result = true;
         }
         else {
-          cleanupChildrenRecursively(element, scope, currentSessionId);
+          result |= cleanupChildrenRecursively(element, scope, currentSessionId);
         }
       }
       else {
         if (!currentSessionId.equals(element.getData())) {
           structure.removeElement(element);
+          result = true;
         }
       }
     }
+    return result;
   }
 
   @Override
@@ -136,6 +147,16 @@ public class ProblemsViewImpl extends ProblemsView{
         else {
           myPanel.addMessage(type, text, null, -1, -1, sessionId);
         }
+        updateIcon(true);
+      }
+    });
+  }
+
+  private void updateIcon(final boolean active) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        ToolWindowManager.getInstance(myProject).getToolWindow(PROBLEMS_TOOLWINDOW_ID).setIcon(active ? myActiveIcon : myPassiveIcon);
       }
     });
   }

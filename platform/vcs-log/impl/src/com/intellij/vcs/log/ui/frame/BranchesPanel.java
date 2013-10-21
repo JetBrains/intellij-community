@@ -2,7 +2,6 @@ package com.intellij.vcs.log.ui.frame;
 
 import com.google.common.collect.Ordering;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.RefGroup;
 import com.intellij.vcs.log.VcsLogProvider;
@@ -10,6 +9,7 @@ import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.render.PrintParameters;
+import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import com.intellij.vcs.log.ui.render.RefPainter;
 import org.jetbrains.annotations.NotNull;
@@ -82,10 +82,10 @@ public class BranchesPanel extends JPanel {
 
   @NotNull
   private List<VcsRef> getRefsToDisplayOnPanel() {
-    Collection<VcsRef> allRefs = myDataHolder.getDataPack().getRefsModel().getAllRefs();
+    Collection<VcsRef> allRefs = myDataHolder.getDataPack().getRefsModel().getBranches();
 
     List<VcsRef> refsToShow = new ArrayList<VcsRef>();
-    for (Map.Entry<VirtualFile, Collection<VcsRef>> entry : groupByRoot(allRefs).entrySet()) {
+    for (Map.Entry<VirtualFile, Collection<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
       VirtualFile root = entry.getKey();
       Collection<VcsRef> refs = entry.getValue();
       VcsLogProvider provider = myDataHolder.getLogProvider(root);
@@ -101,25 +101,6 @@ public class BranchesPanel extends JPanel {
     }
     // TODO improve UI for multiple roots case
     return refsToShow;
-  }
-
-  @NotNull
-  private static MultiMap<VirtualFile, VcsRef> groupByRoot(@NotNull Collection<VcsRef> refs) {
-    MultiMap<VirtualFile, VcsRef> map = new MultiMap<VirtualFile, VcsRef>() {
-      @Override
-      protected Map<VirtualFile, Collection<VcsRef>> createMap() {
-        return new TreeMap<VirtualFile, Collection<VcsRef>>(new Comparator<VirtualFile>() { // TODO common to VCS root sorting method
-          @Override
-          public int compare(VirtualFile o1, VirtualFile o2) {
-            return o1.getPresentableUrl().compareTo(o2.getPresentableUrl());
-          }
-        });
-      }
-    };
-    for (VcsRef ref : refs) {
-      map.putValue(ref.getRoot(), ref);
-    }
-    return map;
   }
 
 }

@@ -202,9 +202,6 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
           long contributorStarted = System.currentTimeMillis();
 
           if (contributor instanceof ChooseByNameContributorEx) {
-            if (parameters.getIdFilter() == null) {
-              parameters.setIdFilter(getIdFilter(searchInLibraries));
-            }
             ((ChooseByNameContributorEx)contributor).processElementsWithName(name, new Processor<NavigationItem>() {
               @Override
               public boolean process(NavigationItem item) {

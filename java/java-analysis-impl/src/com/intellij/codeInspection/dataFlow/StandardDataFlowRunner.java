@@ -27,7 +27,6 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.instructions.InstanceofInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -43,6 +42,10 @@ public class StandardDataFlowRunner extends DataFlowRunner {
   private boolean myInNullableMethod = false;
   private boolean myInNotNullMethod = false;
   private boolean myIsInMethod = false;
+
+  public StandardDataFlowRunner(PsiElement block) {
+    super(block);
+  }
 
   @Override
   protected void prepareAnalysis(@NotNull PsiElement psiBlock, Iterable<DfaMemoryState> initialStates) {
@@ -76,14 +79,6 @@ public class StandardDataFlowRunner extends DataFlowRunner {
 
   public boolean isInMethod() {
     return myIsInMethod;
-  }
-
-  public boolean problemsDetected(StandardInstructionVisitor visitor) {
-    final Pair<Set<Instruction>, Set<Instruction>> constConditions = getConstConditionalExpressions();
-    return !constConditions.getFirst().isEmpty()
-           || !constConditions.getSecond().isEmpty()
-           || !myCCEInstructions.isEmpty()
-           || !getRedundantInstanceofs(this, visitor).isEmpty();
   }
 
   @NotNull public static Set<Instruction> getRedundantInstanceofs(final DataFlowRunner runner, StandardInstructionVisitor visitor) {

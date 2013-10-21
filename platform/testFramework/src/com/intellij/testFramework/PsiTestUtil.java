@@ -43,8 +43,6 @@ import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.JpsElementTypeWithDefaultProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -157,7 +155,7 @@ public class PsiTestUtil {
       public void consume(ModifiableRootModel model) {
         ContentEntry entry = findContentEntry(model, vDir);
         if (entry == null) entry = model.addContentEntry(vDir);
-        entry.addSourceFolder(vDir, rootType, ((JpsElementTypeWithDefaultProperties<JpsElement>)rootType).createDefaultProperties());
+        entry.addSourceFolder(vDir, rootType);
       }
     });
   }

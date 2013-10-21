@@ -27,6 +27,15 @@ package com.intellij.codeInspection.dataFlow.instructions;
 import com.intellij.codeInspection.dataFlow.*;
 
 public class ReturnInstruction extends Instruction {
+  private final boolean isViaException;
+
+  public ReturnInstruction(boolean isViaException) {
+    this.isViaException = isViaException;
+  }
+
+  public boolean isViaException() {
+    return isViaException;
+  }
 
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {

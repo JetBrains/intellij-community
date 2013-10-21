@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,10 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopes;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.*;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -92,11 +89,11 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
       final HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)element;
       final Object[] cachedChildren = descriptor.getCachedChildren();
       if (cachedChildren == null) {
-        if (!descriptor.isValid()){ //invalid
-          descriptor.setCachedChildren(ArrayUtil.EMPTY_OBJECT_ARRAY);
-        }
-        else{
+        if (descriptor.isValid()) {
           descriptor.setCachedChildren(buildChildren(descriptor));
+        }
+        else {
+          descriptor.setCachedChildren(ArrayUtil.EMPTY_OBJECT_ARRAY);
         }
       }
       return descriptor.getCachedChildren();
@@ -128,7 +125,8 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
     return asyncCommitDocuments(myProject);
   }
 
-  protected abstract Object[] buildChildren(HierarchyNodeDescriptor descriptor);
+  @NotNull
+  protected abstract Object[] buildChildren(@NotNull HierarchyNodeDescriptor descriptor);
 
   @Override
   public final Object getRootElement() {
@@ -141,14 +139,14 @@ public abstract class HierarchyTreeStructure extends AbstractTreeStructure {
       searchScope = new LocalSearchScope(thisClass);
     }
     else if (HierarchyBrowserBaseEx.SCOPE_PROJECT.equals(scopeType)) {
-      searchScope = GlobalSearchScopes.projectProductionScope(myProject);
+      searchScope = GlobalSearchScopesCore.projectProductionScope(myProject);
     }
     else if (HierarchyBrowserBaseEx.SCOPE_TEST.equals(scopeType)) {
-      searchScope = GlobalSearchScopes.projectTestScope(myProject);
+      searchScope = GlobalSearchScopesCore.projectTestScope(myProject);
     } else {
       final NamedScope namedScope = NamedScopesHolder.getScope(myProject, scopeType);
       if (namedScope != null) {
-        searchScope = GlobalSearchScopes.filterScope(myProject, namedScope);
+        searchScope = GlobalSearchScopesCore.filterScope(myProject, namedScope);
       }
     }
     return searchScope;

@@ -182,16 +182,6 @@ public class DataPack {
     return new ArrayList<Node>(all);
   }
 
-  @Nullable
-  public VcsRef findRefOfNode(Node node) {
-    for (VcsRef ref : getRefsModel().getAllRefs()) {
-      if (ref.getCommitHash().equals(node.getCommitHash())) {
-        return ref;
-      }
-    }
-    return null;
-  }
-
   public List<Node> getCommitsInBranchAboveBase(Node base, Node branchHead) {
     List<Node> result = new ArrayList<Node>();
     Node node = branchHead;

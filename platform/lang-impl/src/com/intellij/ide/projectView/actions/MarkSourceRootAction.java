@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 /**
@@ -41,7 +40,7 @@ public class MarkSourceRootAction extends MarkRootActionBase {
   }
 
   protected void modifyRoots(VirtualFile vFile, ContentEntry entry) {
-    addSourceFolder(vFile, entry, myRootType);
+    entry.addSourceFolder(vFile, myRootType);
   }
 
   @Override
@@ -60,10 +59,5 @@ public class MarkSourceRootAction extends MarkRootActionBase {
       }
     }
     return false;
-  }
-
-  private static <P extends JpsElement> void addSourceFolder(VirtualFile vFile, ContentEntry entry,
-                                                             JpsModuleSourceRootType<P> markAsRootType) {
-    entry.addSourceFolder(vFile, markAsRootType, markAsRootType.createDefaultProperties());
   }
 }

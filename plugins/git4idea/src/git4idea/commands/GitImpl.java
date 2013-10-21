@@ -421,6 +421,22 @@ public class GitImpl implements Git {
     return run(h);
   }
 
+  /**
+   * Fetch remote branch
+   * {@code git fetch <remote> <params>}
+   */
+  @Override
+  @NotNull
+  public GitCommandResult fetch(@NotNull GitRepository repository, @NotNull String url, @NotNull String remote, String... params) {
+    final GitLineHandlerPasswordRequestAware h =
+      new GitLineHandlerPasswordRequestAware(repository.getProject(), repository.getRoot(), GitCommand.FETCH);
+    h.setUrl(url);
+    h.addParameters(remote);
+    h.addParameters(params);
+    h.addProgressParameter();
+    return run(h);
+  }
+
   private static void addListeners(@NotNull GitLineHandler handler, @NotNull GitLineHandlerListener... listeners) {
     for (GitLineHandlerListener listener : listeners) {
       handler.addLineListener(listener);

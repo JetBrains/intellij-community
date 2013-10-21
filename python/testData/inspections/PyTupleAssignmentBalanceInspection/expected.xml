@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>test.py</file>
+    <line>1</line>
+    <description>Too many values to unpack</description>
+  </problem>
+  <problem>
+    <file>test.py</file>
+    <line>2</line>
+    <description>Need more values to unpack</description>
+  </problem>
+  <problem>
+    <file>test.py</file>
+    <line>5</line>
+    <description>Need more values to unpack</description>
+  </problem>
+</problems>

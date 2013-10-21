@@ -1,12 +1,16 @@
 package com.intellij.vcs.log.graphmodel.impl;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.graph.elements.Edge;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.mutable.MutableGraph;
 import com.intellij.vcs.log.graph.mutable.elements.MutableNode;
 import com.intellij.vcs.log.graph.mutable.elements.MutableNodeRow;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -50,6 +54,16 @@ public class BranchVisibleNodes {
 
   public boolean isVisibleNode(@NotNull Node node) {
     return visibleNodes.contains(node);
+  }
+
+  @Nullable
+  public Node getNodeIfVisible(@NotNull final Hash hash) {
+    return ContainerUtil.find(visibleNodes, new Condition<Node>() {
+      @Override
+      public boolean value(Node node) {
+        return node.getCommitHash().equals(hash);
+      }
+    });
   }
 
 }

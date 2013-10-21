@@ -85,7 +85,6 @@ public class DataFlowInspectionAncientTest extends InspectionTestCase {
   public void testNullableProblemThroughCast() { doTest15(); }
   public void testNullableThroughVariable() { doTest15(); }
   public void testNullableThroughVariableShouldNotBeReported() { doTest15(); }
-  public void testNullableAssignment() { doTest15(); }
   public void testNullableLocalVariable() { doTest15(); }
   public void testNotNullLocalVariable() { doTest15(); }
   public void testNullableReturn() { doTest15(); }

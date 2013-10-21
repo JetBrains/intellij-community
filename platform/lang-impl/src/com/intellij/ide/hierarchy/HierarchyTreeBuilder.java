@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import com.intellij.ide.util.treeView.TreeBuilderUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.StatusBarProgress;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -36,9 +35,10 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 public class HierarchyTreeBuilder extends AbstractTreeBuilder {
-  public HierarchyTreeBuilder(@NotNull Project project,
+  HierarchyTreeBuilder(@NotNull Project project,
                               final JTree tree,
                               final DefaultTreeModel treeModel,
                               final HierarchyTreeStructure treeStructure,
@@ -48,19 +48,17 @@ public class HierarchyTreeBuilder extends AbstractTreeBuilder {
     initRootNode();
     PsiManager.getInstance(project).addPsiTreeChangeListener(new MyPsiTreeChangeListener(), this);
     FileStatusManager.getInstance(project).addFileStatusListener(new MyFileStatusListener(), this);
-
-    Disposer.register(project, this);
   }
 
   @NotNull
-  public Pair<ArrayList<Object>, ArrayList<Object>> storeExpandedAndSelectedInfo() {
-    final ArrayList<Object> pathsToExpand = new ArrayList<Object>();
-    final ArrayList<Object> selectionPaths = new ArrayList<Object>();
+  public Pair<List<Object>, List<Object>> storeExpandedAndSelectedInfo() {
+    List<Object> pathsToExpand = new ArrayList<Object>();
+    List<Object> selectionPaths = new ArrayList<Object>();
     TreeBuilderUtil.storePaths(this, getRootNode(), pathsToExpand, selectionPaths, true);
-    return new Pair<ArrayList<Object>, ArrayList<Object>>(pathsToExpand, selectionPaths);
+    return Pair.create(pathsToExpand, selectionPaths);
   }
 
-  public final void restoreExpandedAndSelectedInfo(@NotNull Pair<ArrayList<Object>, ArrayList<Object>> pair) {
+  public final void restoreExpandedAndSelectedInfo(@NotNull Pair<List<Object>, List<Object>> pair) {
     TreeBuilderUtil.restorePaths(this, pair.first, pair.second, true);
   }
 

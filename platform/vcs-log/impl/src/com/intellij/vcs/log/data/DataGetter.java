@@ -68,6 +68,10 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
     if (details != null) {
       return details;
     }
+    details = (T)myDataHolder.getTopCommitDetails(hash);
+    if (details != null) {
+      return details;
+    }
 
     T loadingDetails = (T)new LoadingDetails(hash);
     runLoadAroundCommitData(node);

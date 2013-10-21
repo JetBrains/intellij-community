@@ -7,8 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.geom.RoundRectangle2D;
+import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static com.intellij.vcs.log.graph.render.PrintParameters.HEIGHT_CELL;
@@ -95,7 +95,7 @@ public class RefPainter {
     g2.drawPolygon(polygon);
   }
 
-  public int padding(@NotNull List<VcsRef> refs, @NotNull FontRenderContext renderContext) {
+  public int padding(@NotNull Collection<VcsRef> refs, @NotNull FontRenderContext renderContext) {
     float p = 0;
     for (VcsRef ref : refs) {
       p += paddingStr(ref.getName(), renderContext);
@@ -103,7 +103,7 @@ public class RefPainter {
     return Math.round(p);
   }
 
-  public Map<Integer, VcsRef> draw(@NotNull Graphics2D g2, @NotNull List<VcsRef> refs, int startPadding, int maxWidth) {
+  public Map<Integer, VcsRef> draw(@NotNull Graphics2D g2, @NotNull Collection<VcsRef> refs, int startPadding, int maxWidth) {
     float currentPadding = startPadding;
     g2.setFont(DEFAULT_FONT);
     g2.setStroke(new BasicStroke(1.5f));

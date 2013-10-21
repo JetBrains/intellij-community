@@ -42,7 +42,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UncheckedWarningLocalInspectionBase extends AbstractBaseJavaLocalInspectionTool {
+public class UncheckedWarningLocalInspectionBase extends BaseJavaBatchLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "UNCHECKED_WARNING";
   public static final String DISPLAY_NAME = InspectionsBundle.message("unchecked.warning");
   @NonNls private static final String ID = "unchecked";

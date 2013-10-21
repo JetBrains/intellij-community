@@ -61,7 +61,7 @@ public class GithubLoginDialog extends DialogWrapper {
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myGithubLoginPanel.getPreferrableFocusComponent();
+    return myGithubLoginPanel.getPreferableFocusComponent();
   }
 
   @Override

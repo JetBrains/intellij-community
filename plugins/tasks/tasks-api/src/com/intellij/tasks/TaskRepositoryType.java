@@ -35,6 +35,10 @@ import java.util.List;
 public abstract class TaskRepositoryType<T extends TaskRepository> implements TaskRepositorySubtype {
 
   public static final ExtensionPointName<TaskRepositoryType> EP_NAME = new ExtensionPointName<TaskRepositoryType>("com.intellij.tasks.repositoryType");
+  
+  public static TaskRepositoryType[] getRepositoryTypes() {
+    return EP_NAME.getExtensions();
+  }
 
   @NotNull
   public abstract String getName();

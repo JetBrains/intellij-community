@@ -366,7 +366,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
 
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public Color getBorderColor(boolean awtTooltip) {
-    return new JBColor(Color.darkGray, new Color(154, 154, 102));
+    return new JBColor(Gray._160, new Color(154, 154, 102));
   }
 
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})

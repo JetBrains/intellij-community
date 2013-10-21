@@ -19,13 +19,14 @@ import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.project.DumbAware;
 
 import javax.swing.*;
 
 /**
  * @author Konstantin Bulenkov
  */
-public abstract class TabsPlacementAction extends ToggleAction {
+public abstract class TabsPlacementAction extends ToggleAction implements DumbAware {
   abstract int getPlace();
 
   @Override

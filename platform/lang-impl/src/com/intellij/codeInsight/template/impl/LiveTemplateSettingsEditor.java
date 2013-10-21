@@ -481,7 +481,7 @@ public class LiveTemplateSettingsEditor extends JPanel {
   }
 
   private void validateEditVariablesButton() {
-    myEditVariablesButton.setEnabled(!parseVariables(myTemplateEditor.getDocument().getCharsSequence()).isEmpty());
+    myEditVariablesButton.setEnabled(!parseVariables().isEmpty());
   }
 
   void resetUi() {
@@ -552,20 +552,11 @@ public class LiveTemplateSettingsEditor extends JPanel {
       }
     });
     
-
-    ArrayList<Variable> parsedVariables = parseVariables(myTemplateEditor.getDocument().getCharsSequence());
-
-    Map<String,String> newVariableNames = new HashMap<String, String>();
-    for (Object parsedVariable : parsedVariables) {
-      Variable newVariable = (Variable)parsedVariable;
-      String name = newVariable.getName();
-      newVariableNames.put(name, name);
-    }
+    Map<String,Variable> newVariableNames = parseVariables();
 
     int oldVariableNumber = 0;
-    for(int i = 0; i < parsedVariables.size(); i++){
-      Variable variable = parsedVariables.get(i);
-      if(oldVariableNames.contains(variable.getName())) {
+    for (Map.Entry<String, Variable> entry : newVariableNames.entrySet()) {
+      if(oldVariableNames.contains(entry.getKey())) {
         Variable oldVariable = null;
         for(;oldVariableNumber<oldVariables.size(); oldVariableNumber++) {
           oldVariable = oldVariables.get(oldVariableNumber);
@@ -576,12 +567,12 @@ public class LiveTemplateSettingsEditor extends JPanel {
         }
         oldVariableNumber++;
         if(oldVariable != null) {
-          parsedVariables.set(i, oldVariable);
+          entry.setValue(oldVariable);
         }
       }
     }
 
-    return parsedVariables;
+    return new ArrayList<Variable>(newVariableNames.values());
   }
 
   private List<Variable> getCurrentVariables() {
@@ -623,10 +614,10 @@ public class LiveTemplateSettingsEditor extends JPanel {
     }, modalityState);
   }
 
-  private static ArrayList<Variable> parseVariables(CharSequence text) {
-    ArrayList<Variable> variables = new ArrayList<Variable>();
-    TemplateImplUtil.parseVariables(text, variables, TemplateImpl.INTERNAL_VARS_SET);
-    return variables;
+  private Map<String, Variable> parseVariables() {
+    Map<String,Variable> map = TemplateImplUtil.parseVariables(myTemplateEditor.getDocument().getCharsSequence());
+    map.keySet().removeAll(TemplateImpl.INTERNAL_VARS_SET);
+    return map;
   }
 
 }

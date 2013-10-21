@@ -62,7 +62,7 @@ public class DfaUtil {
           }
           else {
             final ValuableInstructionVisitor visitor = new ValuableInstructionVisitor(context);
-            RunnerResult runnerResult = new ValuableDataFlowRunner().analyzeMethod(codeBlock, visitor);
+            RunnerResult runnerResult = new ValuableDataFlowRunner(codeBlock).analyzeMethod(codeBlock, visitor);
             if (runnerResult == RunnerResult.OK) {
               result = visitor.myValues;
             }
@@ -90,7 +90,7 @@ public class DfaUtil {
       return Nullness.UNKNOWN;
     }
     final ValuableInstructionVisitor visitor = new ValuableInstructionVisitor(context);
-    RunnerResult result = new ValuableDataFlowRunner().analyzeMethod(codeBlock, visitor);
+    RunnerResult result = new ValuableDataFlowRunner(codeBlock).analyzeMethod(codeBlock, visitor);
     if (result != RunnerResult.OK) {
       return Nullness.UNKNOWN;
     }

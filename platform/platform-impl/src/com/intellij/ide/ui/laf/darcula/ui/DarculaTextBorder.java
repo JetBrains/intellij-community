@@ -19,6 +19,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
 
+import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.UIResource;
@@ -31,12 +32,16 @@ import java.awt.*;
 public class DarculaTextBorder implements Border, UIResource {
   @Override
   public Insets getBorderInsets(Component c) {
+    int vOffset = c instanceof JPasswordField ? 3 : 4;
+    if (DarculaTextFieldUI.isSearchField(c)) {
+      vOffset++;
+    }
     if (DarculaTextFieldUI.isSearchFieldWithHistoryPopup(c)) {
-      return new InsetsUIResource(5, 7 + 16 + 3, 5, 7 + 16);
+      return new InsetsUIResource(vOffset, 7 + 16 + 3, vOffset, 7 + 16);
     } else if (DarculaTextFieldUI.isSearchField(c)) {
-      return new InsetsUIResource(5, 4 + 16 + 3, 5, 7 + 16);
+      return new InsetsUIResource(vOffset, 4 + 16 + 3, vOffset, 7 + 16);
     } else {
-      return new InsetsUIResource(5, 7, 5, 7);
+      return new InsetsUIResource(vOffset, 7, vOffset, 7);
     }
   }
 

@@ -458,8 +458,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   @Override
-  public boolean isNotNull(DfaVariableValue dfaVar) {
-    if (getVariableState(dfaVar).isNotNull()) {
+  public boolean isNotNull(DfaValue dfaVar) {
+    if (dfaVar instanceof DfaVariableValue && getVariableState((DfaVariableValue)dfaVar).isNotNull()) {
+      return true;
+    }
+    if (dfaVar instanceof DfaConstValue && ((DfaConstValue)dfaVar).getValue() != null) {
       return true;
     }
 
@@ -575,15 +578,11 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
             setVariableState(dfaVar, newState);
             return true;
           }
-          return applyCondition(compareToNull(dfaVar, false));
+          return applyRelation(dfaVar, myFactory.getConstFactory().getNull(), false);
         }
-        boolean wasUnknown = getVariableState(dfaVar).getNullability() == Nullness.UNKNOWN;
-        if (applyCondition(compareToNull(dfaVar, true))) {
+        if (applyRelation(dfaVar, myFactory.getConstFactory().getNull(), true)) {
           DfaVariableState newState = getVariableState(dfaVar).withInstanceofValue((DfaTypeValue)dfaRight);
           if (newState != null) {
-            if (wasUnknown) {
-              newState = newState.withNullability(Nullness.UNKNOWN);
-            }
             setVariableState(dfaVar, newState);
             return true;
           }
@@ -591,10 +590,6 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
         return false;
       }
       return true;
-    }
-
-    if (isNull(dfaRight) && compareVariableWithNull(dfaLeft) || isNull(dfaLeft) && compareVariableWithNull(dfaRight)) {
-      return isNegated;
     }
 
     if (isEffectivelyNaN(dfaLeft) || isEffectivelyNaN(dfaRight)) {
@@ -609,17 +604,15 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return applyEquivalenceRelation(dfaRelation, dfaLeft, dfaRight);
   }
 
-  private boolean compareVariableWithNull(DfaValue val) {
-    if (val instanceof DfaVariableValue) {
-      DfaVariableValue dfaVar = (DfaVariableValue)val;
-      if (isNotNull(dfaVar)) {
-        return true;
-      }
-      if (!isUnknownState(dfaVar)) {
+  private void updateVarStateOnComparison(DfaVariableValue dfaVar, DfaValue value) {
+    if (!isUnknownState(dfaVar)) {
+      if (isNull(value)) {
         setVariableState(dfaVar, getVariableState(dfaVar).withNullability(Nullness.NULLABLE));
+      } else if (isNotNull(value) && !isNotNull(dfaVar)) {
+        setVariableState(dfaVar, getVariableState(dfaVar).withNullability(Nullness.UNKNOWN));
+        applyRelation(dfaVar, myFactory.getConstFactory().getNull(), true);
       }
     }
-    return false;
   }
 
   private boolean applyEquivalenceRelation(DfaRelationValue dfaRelation, DfaValue dfaLeft, DfaValue dfaRight) {
@@ -627,6 +620,20 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (!isNegated && !dfaRelation.isEquality()) {
       return true;
     }
+
+    if (isNull(dfaLeft) && isNotNull(dfaRight) || isNull(dfaRight) && isNotNull(dfaLeft)) {
+      return isNegated;
+    }
+
+    if (!isNegated) {
+      if (dfaLeft instanceof DfaVariableValue) {
+        updateVarStateOnComparison((DfaVariableValue)dfaLeft, dfaRight);
+      }
+      if (dfaRight instanceof DfaVariableValue) {
+        updateVarStateOnComparison((DfaVariableValue)dfaRight, dfaLeft);
+      }
+    }
+
     if (!applyRelation(dfaLeft, dfaRight, isNegated)) {
       return false;
     }

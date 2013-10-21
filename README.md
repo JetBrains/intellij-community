@@ -1,6 +1,7 @@
 # IntelliJ IDEA Community Edition
 
-This is the official GitHub mirror of the [IntelliJ IDEA Community Edition](http://www.jetbrains.com/idea/) source code.
+This is the official GitHub mirror of the [IntelliJ IDEA Community Edition](http://www.jetbrains.com/idea/) and
+[PyCharm Community Edition](http://www.jetbrains.com/pycharm/) source code.
 
 ## Building
 
@@ -13,6 +14,9 @@ To develop IntelliJ IDEA, you can use either IntelliJ IDEA Community Edition or 
 * On Windows or Linux, add lib\tools.jar from the JDK installation directory to the classpath of IDEA jdk
 * Use Build | Make Project to build the code
 * To run the code, use the provided shared run configuration "IDEA".
+
+To build the distribution archive of IntelliJ IDEA Community Edition, execute build.xml Ant build script in the root directory of the
+source code. The results of the build execution can be found at out/artifacts.
 
 ## Contributing
 

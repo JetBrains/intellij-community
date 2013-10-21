@@ -125,6 +125,10 @@ public interface ContentEntry extends Synthetic {
   <P extends JpsElement>
   SourceFolder addSourceFolder(@NotNull VirtualFile file, @NotNull JpsModuleSourceRootType<P> type, @NotNull P properties);
 
+  @NotNull
+  <P extends JpsElement>
+  SourceFolder addSourceFolder(@NotNull VirtualFile file, @NotNull JpsModuleSourceRootType<P> type);
+
   /**
    * Adds a source or test source root under the content root.
    *

@@ -81,7 +81,7 @@ public class TaskRepositoriesConfigurable extends BaseConfigurable implements Co
 
     myServersLabel.setLabelFor(myRepositoriesList);
 
-    TaskRepositoryType[] groups = TaskManager.ourRepositoryTypes;
+    TaskRepositoryType[] groups = TaskRepositoryType.getRepositoryTypes();
 
     final List<AnAction> createActions = new ArrayList<AnAction>();
     for (final TaskRepositoryType repositoryType : groups) {

@@ -359,6 +359,8 @@
 
     <!-- Global Code Style -->
     <projectConfigurable instance="com.intellij.application.options.CodeStyleSchemesConfigurable" order="after colors"/>
+    <applicationService serviceInterface="com.intellij.application.options.codeStyle.CodeStyleSchemesUIConfiguration"
+                        serviceImplementation="com.intellij.application.options.codeStyle.CodeStyleSchemesUIConfiguration"/>
 
     <!-- File Types -->
     <applicationConfigurable instance="com.intellij.openapi.fileTypes.impl.FileTypeConfigurable" id="preferences.fileTypes"
@@ -419,6 +421,7 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentDateMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentTimeMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CurrentUserMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ClipboardMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CapitalizeMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.DecapitalizeMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FirstWordMacro"/>
@@ -852,6 +855,8 @@
     <projectStructure.sourceRootEditHandler implementation="com.intellij.openapi.roots.ui.configuration.JavaTestSourceRootEditHandler"/>
 
     <elementPreviewProvider implementation="com.intellij.codeInsight.preview.ElementPreviewHintProvider"/>
+
+    <actionPromoter implementation="com.intellij.ui.EditorTextFieldActionPromoter"/>
   </extensions>
 </idea-plugin>
 

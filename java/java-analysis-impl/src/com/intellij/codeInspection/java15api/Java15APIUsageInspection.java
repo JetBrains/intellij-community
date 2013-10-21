@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -355,9 +355,6 @@ public class Java15APIUsageInspection extends BaseJavaBatchLocalInspectionTool {
   }
 
   public static boolean isForbiddenApiUsage(@NotNull PsiMember member, @NotNull LanguageLevel languageLevel) {
-    // Annotations caught by special inspection if necessary
-    if (member instanceof PsiClass && ((PsiClass)member).isAnnotationType()) return false;
-
     if (member instanceof PsiAnonymousClass) return false;
     PsiClass containingClass = member.getContainingClass();
     if (containingClass instanceof PsiAnonymousClass) return false;

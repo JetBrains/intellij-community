@@ -43,4 +43,10 @@
     <description>&lt;code&gt;StringBuilder builder&lt;/code&gt; can be replaced with 'String' #loc</description>
   </problem>
 
+  <problem>
+    <file>StringBufferReplaceableByString.java</file>
+    <line>118</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'StringBuffer' can be replaced with 'String'</problem_class>
+    <description>&lt;code&gt;StringBuilder builder&lt;/code&gt; can be replaced with 'String' #loc</description>
+  </problem>
 </problems>

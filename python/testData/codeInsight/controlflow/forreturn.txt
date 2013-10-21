@@ -1,0 +1,16 @@
+0(1) element: null
+1(2) element: PyForStatement
+2(3,15) READ ACCESS: self
+3(4) element: PyTupleExpression
+4(5) WRITE ACCESS: start
+5(6) WRITE ACCESS: end
+6(7) WRITE ACCESS: name
+7(8) element: PyIfStatement
+8(9) READ ACCESS: hour
+9(10) READ ACCESS: start
+10(11) READ ACCESS: hour
+11(12,3,15) READ ACCESS: end
+12(13) element: PyStatementList. Condition: hour >= start and hour < end:true
+13(14) element: PyReturnStatement
+14(15) READ ACCESS: name
+15() element: null

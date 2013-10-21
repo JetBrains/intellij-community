@@ -1,0 +1,11 @@
+0(1) element: null
+1(2) element: PyAssignmentStatement
+2(3) WRITE ACCESS: sibling
+3(4) element: PyIfStatement
+4(5,10) READ ACCESS: sibling
+5(6) element: PyStatementList. Condition: sibling:true
+6(7) ASSERTTYPE ACCESS: sibling
+7(8) element: PyAssignmentStatement
+8(9) element: PySubscriptionExpression
+9(10) READ ACCESS: sibling
+10() element: null

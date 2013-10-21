@@ -76,29 +76,29 @@ public class RemoteServerConfigurable extends NamedConfigurable<RemoteServer<?>>
   private void testConnection() {
     final ServerConnection connection = ServerConnectionManager.getInstance().getOrCreateConnection(myServer);
     final AtomicReference<Runnable> showResultRef = new AtomicReference<Runnable>(null);
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    connection.connect(new Runnable() {
+      @Override
+      public void run() {
+        showResultRef.set(new Runnable() {
+          @Override
+          public void run() {
+            if (connection.getStatus() == ConnectionStatus.CONNECTED) {
+              Messages.showInfoMessage(myMainPanel, "Connection successful", "Test Connection");
+            }
+            else if (connection.getStatus() == ConnectionStatus.DISCONNECTED) {
+              Messages.showErrorDialog(myMainPanel, "Cannot connect: " + connection.getStatusText(), "Test Connection");
+            }
+          }
+        });
+        semaphore.up();
+      }
+    });
     new Task.Modal(null, "Connecting...", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
-        final Semaphore semaphore = new Semaphore();
-        semaphore.down();
-        connection.connect(new Runnable() {
-          @Override
-          public void run() {
-            showResultRef.set(new Runnable() {
-              @Override
-              public void run() {
-                if (connection.getStatus() == ConnectionStatus.CONNECTED) {
-                  Messages.showInfoMessage(myMainPanel, "Connection successful", "Test Connection");
-                }
-                else if (connection.getStatus() == ConnectionStatus.DISCONNECTED) {
-                  Messages.showErrorDialog(myMainPanel, "Cannot connect: " + connection.getStatusText(), "Test Connection");
-                }
-              }
-            });
-            semaphore.up();
-          }
-        });
         while (!indicator.isCanceled()) {
           if (semaphore.waitFor(500)) {
             break;
