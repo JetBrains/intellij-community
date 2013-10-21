@@ -3,7 +3,6 @@ package com.intellij.vcs.log.ui.frame;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.RefreshAction;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
@@ -12,8 +11,8 @@ import com.intellij.ui.SeparatorOrientation;
 import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.ui.GitLogIcons;
-import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import com.intellij.vcs.log.ui.VcsLogUI;
+import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUi;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,11 +32,12 @@ public class MainFrame {
   @NotNull private final VcsLogSettings mySettings;
   @NotNull private final VcsLogFilterUi myFilterUi;
 
-  public MainFrame(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI vcsLogUI, @NotNull Project project) {
+  public MainFrame(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI vcsLogUI, @NotNull Project project,
+                   @NotNull VcsLogSettings settings) {
     myLogDataHolder = logDataHolder;
     myUI = vcsLogUI;
     myProject = project;
-    mySettings = ServiceManager.getService(myProject, VcsLogSettings.class);
+    mySettings = settings;
 
     myActiveSurface = new ActiveSurface(logDataHolder, vcsLogUI, project);
     myActiveSurface.setupDetailsSplitter(mySettings.isShowDetails());

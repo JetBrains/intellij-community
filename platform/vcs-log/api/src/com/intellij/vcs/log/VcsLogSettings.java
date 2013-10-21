@@ -24,4 +24,17 @@ public interface VcsLogSettings {
    * Sets if the details pane (which shows commit meta-data) should be shown or hidden by default.
    */
   void setShowDetails(boolean showDetails);
+
+  /**
+   * Returns the number of recent commits which are loaded initially by default, and are always stored in memory.
+   */
+  int getRecentCommitsCount();
+
+  /**
+   * Sets the number of recent commits which are loaded initially by default, and always stay in memory.
+   * The more this number is, the more memory is occupied, but the faster filtering works, and more commits can be viewed back in history
+   * without need to load additional details from the VCS.
+   */
+  void setRecentCommitsBlockSize(int commitCount);
+
 }

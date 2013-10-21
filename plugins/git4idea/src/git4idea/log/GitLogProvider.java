@@ -58,9 +58,10 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsFullCommitDetails> readFirstBlock(@NotNull VirtualFile root, boolean ordered) throws VcsException {
+  public List<? extends VcsFullCommitDetails> readFirstBlock(@NotNull VirtualFile root,
+                                                             boolean ordered, int commitCount) throws VcsException {
     String[] params = { "HEAD", "--branches", "--remotes", "--tags", "--encoding=UTF-8", "--full-history", "--sparse",
-                        "--max-count=" + VcsLogProvider.COMMIT_BLOCK_SIZE};
+                        "--max-count=" + commitCount};
     if (ordered) {
       params = ArrayUtil.append(params, "--date-order");
     }
