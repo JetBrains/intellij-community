@@ -4,7 +4,11 @@ This is the official GitHub mirror of the [IntelliJ IDEA Community Edition](http
 
 ## Building
 
-To develop IntelliJ IDEA, you can use either IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate. To build and run the code:
+To develop IntelliJ IDEA, you can use either IntelliJ IDEA Community Edition or IntelliJ IDEA Ultimate (or any other IDE).
+
+### From IDEA
+
+To build and run the code:
 
 * Make sure you have the Groovy plugin enabled. Parts of IntelliJ IDEA are written in Groovy, and you will get compilation errors if you don't have the plugin enabled.
 * Make sure you have the UI Designer plugin enabled. Most of IntelliJ IDEA's UI is built using the UI Designer, and the version you build will not run correctly if you don't have the plugin enabled.
@@ -13,6 +17,14 @@ To develop IntelliJ IDEA, you can use either IntelliJ IDEA Community Edition or 
 * On Windows or Linux, add lib\tools.jar from the JDK installation directory to the classpath of IDEA jdk
 * Use Build | Make Project to build the code
 * To run the code, use the provided shared run configuration "IDEA".
+
+### Ant build
+
+If you don't have IDEA yet:
+
+* Install ant
+* Run `ant` command from the root (you probably have to set JAVA_HOME explicitly).
+* Installation archive is located at `./out/artifacts`
 
 ## Contributing
 
