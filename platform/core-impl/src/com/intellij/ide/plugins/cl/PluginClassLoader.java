@@ -61,10 +61,19 @@ public class PluginClassLoader extends UrlClassLoader {
     }
   }
 
-  // Changed sequence in which classes are searched, this is essential if plugin uses library,
-  // a different version of which is used in IDEA.
   @Override
   public Class loadClass(@NotNull String name, final boolean resolve) throws ClassNotFoundException {
+    Class c = tryLoadingClass(name, resolve);
+    if (c == null) {
+      throw new ClassNotFoundException(name + " " + this);
+    }
+    return c;
+  }
+
+  // Changed sequence in which classes are searched, this is essential if plugin uses library,
+  // a different version of which is used in IDEA.
+  @Nullable
+  private Class tryLoadingClass(@NotNull String name, final boolean resolve) {
     Class c = loadClassInsideSelf(name);
 
     if (c == null) {
@@ -79,12 +88,20 @@ public class PluginClassLoader extends UrlClassLoader {
     }
 
     PluginManagerCore.addPluginClass(name, myPluginId, false);
-    throw new ClassNotFoundException(name + " " + this);
+    return null;
   }
 
   @Nullable
   private Class loadClassFromParents(final String name) {
     for (ClassLoader parent : myParents) {
+      if (parent instanceof PluginClassLoader) {
+        Class c = ((PluginClassLoader)parent).tryLoadingClass(name, false);
+        if (c != null) {
+          return c;
+        }
+        continue;
+      }
+
       try {
         return parent.loadClass(name);
       }
