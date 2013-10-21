@@ -69,12 +69,16 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
         if (e.getStateChange() == ItemEvent.SELECTED) {
           if (myWorker.canShowDiff()) {
             myGithubCreatePullRequestPanel.setBusy(true);
-            myWorker.initLoadDiffInfo(getTargetBranch(), new Consumer<GithubCreatePullRequestWorker.DiffDescription>() {
+            myWorker.getDiffDescriptionInPooledThread(getTargetBranch(), new Consumer<GithubCreatePullRequestWorker.DiffDescription>() {
               @Override
-              public void consume(@NotNull final GithubCreatePullRequestWorker.DiffDescription info) {
+              public void consume(final GithubCreatePullRequestWorker.DiffDescription info) {
                 UIUtil.invokeLaterIfNeeded(new Runnable() {
                   @Override
                   public void run() {
+                    if (info == null) {
+                      myGithubCreatePullRequestPanel.setBusy(false);
+                      return;
+                    }
                     if (getTargetBranch().equals(info.getBranch())) {
                       myGithubCreatePullRequestPanel.setBusy(false);
                       if (myGithubCreatePullRequestPanel.isTitleDescriptionEmptyOrNotModified()) {

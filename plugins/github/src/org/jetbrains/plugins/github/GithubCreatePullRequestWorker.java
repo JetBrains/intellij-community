@@ -46,7 +46,9 @@ import java.io.IOException;
 import java.util.*;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -65,7 +67,7 @@ public class GithubCreatePullRequestWorker {
   @NotNull private final String myCurrentBranch;
   @NotNull private final GithubAuthData myAuth;
 
-  @NotNull private final Map<String, FutureResult<DiffInfo>> myDiffInfos;
+  @NotNull private final Map<String, FutureTask<DiffInfo>> myDiffInfos;
 
   private volatile GithubFullPath myForkPath;
   private volatile String myTargetRemote;
@@ -87,7 +89,7 @@ public class GithubCreatePullRequestWorker {
     myCurrentBranch = currentBranch;
     myAuth = auth;
 
-    myDiffInfos = new HashMap<String, FutureResult<DiffInfo>>();
+    myDiffInfos = new HashMap<String, FutureTask<DiffInfo>>();
   }
 
   @NotNull
@@ -203,7 +205,19 @@ public class GithubCreatePullRequestWorker {
 
       myForkPath = forkPath;
       myTargetRemote = info.getTargetRemote();
+
       myDiffInfos.clear();
+      if (canShowDiff()) {
+        for (final String branch : info.getBranches()) {
+          myDiffInfos.put(branch, new FutureTask<DiffInfo>(new Callable<DiffInfo>() {
+            @Override
+            public DiffInfo call() throws Exception {
+              return loadDiffInfo(myProject, myGitRepository, myCurrentBranch, myTargetRemote + "/" + branch);
+            }
+          }));
+        }
+      }
+
       return new GithubTargetInfo(info.getBranches());
     }
     catch (GithubAuthenticationCanceledException e) {
@@ -316,83 +330,41 @@ public class GithubCreatePullRequestWorker {
   }
 
   @Nullable
+  private DiffInfo getDiffInfo(@NotNull String branch) {
+    try {
+      FutureTask<DiffInfo> future = myDiffInfos.get(branch);
+      if (future == null) {
+        return null;
+      }
+      future.run();
+      return future.get();
+    }
+    catch (InterruptedException e) {
+      LOG.error(e);
+      return null;
+    }
+    catch (ExecutionException e) {
+      LOG.error(e);
+      return null;
+    }
+  }
+
+  @Nullable
   private DiffInfo getDiffInfoWithModal(@NotNull final String branch) {
     return GithubUtil.computeValueInModal(myProject, "Collecting diff data...", new Convertor<ProgressIndicator, DiffInfo>() {
       @Override
       @Nullable
       public DiffInfo convert(ProgressIndicator indicator) {
-        try {
-          FutureResult<DiffInfo> future = myDiffInfos.get(branch);
-          if (future == null) {
-            return null;
-          }
-          return future.get();
-        }
-        catch (InterruptedException e) {
-          LOG.error(e);
-          return null;
-        }
-        catch (ExecutionException e) {
-          LOG.error(e);
-          return null;
-        }
+        return getDiffInfo(branch);
       }
     });
   }
 
-  /*
-    should be called from EDT
-   */
-  public void initLoadDiffInfo(@NotNull final String branch, @Nullable final Consumer<DiffDescription> after) {
-    if (!canShowDiff()) {
-      return;
-    }
-
-    final FutureResult<DiffInfo> oldFuture = myDiffInfos.get(branch);
-    if (oldFuture != null) {
-      if (after != null) {
-        try {
-          DiffInfo info = oldFuture.tryGet();
-          if (info != null) {
-            after.consume(getDefaultDescriptionMessage(branch, info));
-            return;
-          }
-        }
-        catch (ExecutionException e) {
-          LOG.error(e);
-          return;
-        }
-
-        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-          @Override
-          public void run() {
-            try {
-              DiffInfo info = oldFuture.get();
-              after.consume(getDefaultDescriptionMessage(branch, info));
-            }
-            catch (InterruptedException e) {
-              LOG.error(e);
-            }
-            catch (ExecutionException e) {
-              LOG.error(e);
-            }
-          }
-        });
-      }
-      return;
-    }
-
-    final FutureResult<DiffInfo> future = new FutureResult<DiffInfo>();
-    myDiffInfos.put(branch, future);
-
+  public void getDiffDescriptionInPooledThread(@NotNull final String branch, @NotNull final Consumer<DiffDescription> after) {
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        DiffInfo info = loadDiffInfo(myProject, myGitRepository, myCurrentBranch, myTargetRemote + "/" + branch);
-        future.set(info);
-        if (after != null) {
-          after.consume(getDefaultDescriptionMessage(branch, info));
-        }
+        after.consume(getDefaultDescriptionMessage(branch, getDiffInfo(branch), myGitRepository));
       }
     });
   }
@@ -417,16 +389,18 @@ public class GithubCreatePullRequestWorker {
   }
 
   @NotNull
-  private DiffDescription getDefaultDescriptionMessage(@NotNull String branch, @Nullable DiffInfo info) {
+  private static DiffDescription getDefaultDescriptionMessage(@NotNull String branch,
+                                                              @Nullable DiffInfo info,
+                                                              @NotNull GitRepository gitRepository) {
     if (info == null) {
       return new DiffDescription(branch, null, null);
     }
 
-    if (info.getInfo().getBranchToHeadCommits(myGitRepository).size() != 1) {
+    if (info.getInfo().getBranchToHeadCommits(gitRepository).size() != 1) {
       return new DiffDescription(branch, info.getFrom(), null);
     }
 
-    GitCommit commit = info.getInfo().getBranchToHeadCommits(myGitRepository).get(0);
+    GitCommit commit = info.getInfo().getBranchToHeadCommits(gitRepository).get(0);
     return new DiffDescription(branch, commit.getSubject(), commit.getFullMessage());
   }
 
@@ -435,38 +409,38 @@ public class GithubCreatePullRequestWorker {
                                                       @NotNull final GitRepository gitRepository,
                                                       @NotNull final GithubAuthData auth,
                                                       @NotNull final GithubFullPath path) {
-    return GithubUtil.computeValueInModal(project, "Access to GitHub", new Convertor<ProgressIndicator, GithubInfo2>() {
-      @Nullable
-      @Override
-      public GithubInfo2 convert(ProgressIndicator indicator) {
-        try {
-          final Set<GithubFullPath> forks = new HashSet<GithubFullPath>();
+    try {
+      return GithubUtil
+        .computeValueInModal(project, "Access to GitHub", new ThrowableConvertor<ProgressIndicator, GithubInfo2, IOException>() {
+          @Override
+          public GithubInfo2 convert(ProgressIndicator indicator) throws IOException {
+            final Set<GithubFullPath> forks = new HashSet<GithubFullPath>();
 
-          // GitHub
-          GithubRepoDetailed repo = GithubApiUtil.getDetailedRepoInfo(auth, path.getUser(), path.getRepository());
-          forks.add(path);
-          if (repo.getParent() != null) {
-            forks.add(repo.getParent().getFullPath());
+            // GitHub
+            GithubRepoDetailed repo = GithubApiUtil.getDetailedRepoInfo(auth, path.getUser(), path.getRepository());
+            forks.add(path);
+            if (repo.getParent() != null) {
+              forks.add(repo.getParent().getFullPath());
+            }
+            if (repo.getSource() != null) {
+              forks.add(repo.getSource().getFullPath());
+            }
+
+            // Git
+            forks.addAll(getAvailableForksFromGit(gitRepository));
+
+            GithubRepo forkTreeRoot = repo.getSource() == null ? repo : repo.getSource();
+            return new GithubInfo2(forks, forkTreeRoot);
           }
-          if (repo.getSource() != null) {
-            forks.add(repo.getSource().getFullPath());
-          }
-
-          // Git
-          forks.addAll(getAvailableForksFromGit(gitRepository));
-
-          GithubRepo forkTreeRoot = repo.getSource() == null ? repo : repo.getSource();
-          return new GithubInfo2(forks, forkTreeRoot);
-        }
-        catch (GithubAuthenticationCanceledException e) {
-          return null;
-        }
-        catch (IOException e) {
-          GithubNotifications.showErrorDialog(project, CANNOT_CREATE_PULL_REQUEST, e);
-          return null;
-        }
-      }
-    });
+        });
+    }
+    catch (GithubAuthenticationCanceledException e) {
+      return null;
+    }
+    catch (IOException e) {
+      GithubNotifications.showErrorDialog(project, CANNOT_CREATE_PULL_REQUEST, e);
+      return null;
+    }
   }
 
   @NotNull
