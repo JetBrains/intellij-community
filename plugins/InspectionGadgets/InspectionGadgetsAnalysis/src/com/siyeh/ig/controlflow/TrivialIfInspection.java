@@ -32,6 +32,8 @@ import com.siyeh.ig.psiutils.EquivalenceChecker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 public class TrivialIfInspection extends BaseInspection {
 
   @Override
@@ -131,6 +133,11 @@ public class TrivialIfInspection extends BaseInspection {
       }
       final String conditionText = condition.getText();
       @NonNls final String newStatement = "return " + conditionText + ';';
+      final Collection<PsiComment> comments = PsiTreeUtil.findChildrenOfType(statement, PsiComment.class);
+      final PsiElement parent = statement.getParent();
+      for (PsiComment comment : comments) {
+        parent.addBefore(comment.copy(), statement);
+      }
       replaceStatement(statement, newStatement);
     }
 

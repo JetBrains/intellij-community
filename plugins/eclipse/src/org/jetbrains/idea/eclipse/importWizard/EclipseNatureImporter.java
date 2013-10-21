@@ -44,6 +44,7 @@ public abstract class EclipseNatureImporter {
     allCons.add(EclipseXml.GROOVY_SUPPORT);
     allCons.add(EclipseXml.GROOVY_DSL_CONTAINER);
     allCons.add(EclipseXml.JREBEL_NATURE);
+    allCons.add(EclipseXml.SONAR_NATURE);
 
     for (EclipseNatureImporter provider : Extensions.getExtensions(EP_NAME)) {
       allCons.addAll(provider.getProvidedCons());
