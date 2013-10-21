@@ -97,6 +97,7 @@ public class VcsLogDataHolder implements Disposable {
   @NotNull private final CommitDetailsGetter myDetailsGetter;
   @NotNull private final VcsLogJoiner myLogJoiner;
   @NotNull private final VcsLogMultiRepoJoiner myMultiRepoJoiner;
+  @NotNull private final VcsLogSettings mySettings;
 
   /**
    * Encapsulates all information about the log, which can be accessed by external clients.
@@ -124,7 +125,7 @@ public class VcsLogDataHolder implements Disposable {
   @NotNull private final Map<Hash, VcsFullCommitDetails> myTopCommitsDetailsCache = ContainerUtil.newConcurrentMap();
 
   public VcsLogDataHolder(@NotNull Project project, @NotNull VcsLogObjectsFactory logObjectsFactory,
-                          @NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
+                          @NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull VcsLogSettings settings) {
     myProject = project;
     myLogProviders = logProviders;
     myDataLoaderQueue = new BackgroundTaskQueue(project, "Loading history...");
@@ -133,6 +134,7 @@ public class VcsLogDataHolder implements Disposable {
     myLogJoiner = new VcsLogJoiner();
     myMultiRepoJoiner = new VcsLogMultiRepoJoiner();
     myFactory = logObjectsFactory;
+    mySettings = settings;
   }
 
   /**
@@ -143,13 +145,13 @@ public class VcsLogDataHolder implements Disposable {
    * <li>Loads the whole log in background. When completed, substitutes the data and tells the UI to refresh itself.</li>
    * </ul>
    *
+   * @param settings
    * @param onInitialized This is called when the holder is initialized with the initial data received from the VCS.
-   *                      The consumer is called on the EDT.
    */
   public static void init(@NotNull final Project project, @NotNull VcsLogObjectsFactory logObjectsFactory,
                           @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
-                          @NotNull final Consumer<VcsLogDataHolder> onInitialized) {
-    final VcsLogDataHolder dataHolder = new VcsLogDataHolder(project, logObjectsFactory, logProviders);
+                          @NotNull VcsLogSettings settings, @NotNull final Consumer<VcsLogDataHolder> onInitialized) {
+    final VcsLogDataHolder dataHolder = new VcsLogDataHolder(project, logObjectsFactory, logProviders, settings);
     dataHolder.initialize(onInitialized);
   }
 
@@ -231,7 +233,8 @@ public class VcsLogDataHolder implements Disposable {
           VcsLogProvider logProvider = entry.getValue();
 
           // read info from VCS
-          List<? extends VcsFullCommitDetails> firstBlockDetails = logProvider.readFirstBlock(root, fairRefresh);
+          List<? extends VcsFullCommitDetails> firstBlockDetails = logProvider.readFirstBlock(root, fairRefresh,
+                                                                                              mySettings.getRecentCommitsCount());
           Collection<VcsRef> newRefs = logProvider.readAllRefs(root);
 
           // some commits may be no longer available (e.g. rewritten after rebase), but let them stay in the cache:

@@ -30,6 +30,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
+import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUI;
@@ -50,13 +51,16 @@ public class VcsLogManager extends AbstractProjectComponent {
 
   @NotNull private final ProjectLevelVcsManager myVcsManager;
   @NotNull private final VcsLogObjectsFactory myLogObjectsFactory;
+  @NotNull private final VcsLogSettings mySettings;
+
   private PostponeableLogRefresher myLogRefresher;
 
   protected VcsLogManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManagerInitializedFirst,
-                          @NotNull VcsLogObjectsFactory logObjectsFactory) {
+                          @NotNull VcsLogObjectsFactory logObjectsFactory, @NotNull VcsLogSettings settings) {
     super(project);
     myVcsManager = vcsManagerInitializedFirst;
     myLogObjectsFactory = logObjectsFactory;
+    mySettings = settings;
   }
 
   @Override
@@ -87,11 +91,12 @@ public class VcsLogManager extends AbstractProjectComponent {
                 changesView.addContent(content);
                 content.setCloseable(false);
 
-                VcsLogDataHolder.init(myProject, myLogObjectsFactory, logProviders, new Consumer<VcsLogDataHolder>() {
+                VcsLogDataHolder.init(myProject, myLogObjectsFactory, logProviders, mySettings, new Consumer<VcsLogDataHolder>() {
                   @Override
                   public void consume(VcsLogDataHolder vcsLogDataHolder) {
                     Disposer.register(myProject, vcsLogDataHolder);
-                    VcsLogUI logUI = new VcsLogUI(vcsLogDataHolder, myProject, new VcsLogColorManagerImpl(logProviders.keySet()));
+                    VcsLogUI logUI = new VcsLogUI(vcsLogDataHolder, myProject, mySettings,
+                                                  new VcsLogColorManagerImpl(logProviders.keySet()));
                     mainPanel.init(logUI.getMainFrame().getMainComponent());
                     myLogRefresher = new PostponeableLogRefresher(myProject, vcsLogDataHolder, content);
                     refreshLogOnVcsEvents(logProviders);
