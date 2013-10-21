@@ -2,6 +2,7 @@ package com.intellij.vcs.log.graphmodel.impl;
 
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsCommit;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
@@ -13,6 +14,7 @@ import com.intellij.vcs.log.graphmodel.FragmentManager;
 import com.intellij.vcs.log.graphmodel.GraphModel;
 import com.intellij.vcs.log.graphmodel.fragment.FragmentManagerImpl;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -112,6 +114,12 @@ public class GraphModelImpl implements GraphModel {
     branchShowFixer.fixCrashBranches(prevVisibleNodes, newVisibleNodes);
     visibleNodes.setVisibleNodes(newVisibleNodes);
     fullUpdate();
+  }
+
+  @Nullable
+  @Override
+  public Node getNodeIfVisible(@NotNull Hash hash) {
+    return visibleNodes.getNodeIfVisible(hash);
   }
 
   @NotNull
