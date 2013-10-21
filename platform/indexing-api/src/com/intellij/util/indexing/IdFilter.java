@@ -57,11 +57,11 @@ public abstract class IdFilter {
     }
     return new IdFilter() {
       @Override
-      public boolean contains(int id) {
+      public boolean containsFileId(int id) {
         return idSet.get(id);
       }
     };
   }
 
-  public abstract boolean contains(int id);
+  public abstract boolean containsFileId(int id);
 }
