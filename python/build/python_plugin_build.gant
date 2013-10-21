@@ -8,12 +8,13 @@ includeTargets << new File("${projectHome}/build/scripts/utils.gant")
 setProperty("outDir", "${projectHome}/out/python")
 setProperty("ideaDir", "${outDir}/ideaCE")
 
-setProperty("ideaHome", "${ideaDir}/jdk16") //compiled idea
-
 setProperty("pluginHelp", "${outDir}/help")
 
 setProperty("buildNumber", requireProperty("build.number", snapshot))
 setProperty("ideaBuildNumber", requireProperty("idea.build.number"))
+
+setProperty("ideaHomePacked", "${ideaDir}/jdk16") //compiled idea
+setProperty("ideaHome", "${ideaDir}/jdk16/idea-IC-${ideaBuildNumber}") //compiled idea
 
 setProperty("pluginHome", "${projectHome}/python")
 setProperty("pluginRevision", "${buildNumber}")
@@ -69,9 +70,9 @@ target(name: "clean", description: "Cleanup output") {
 }
 
 target(name: "unzip") {
-  ant.mkdir(dir: "${ideaHome}")
+  ant.mkdir(dir: "${ideaHomePacked}")
   ant.gunzip(src: "${ideaDir}/ideaIC-${ideaBuildNumber}.tar.gz")
-  ant.untar(src: "${ideaDir}/ideaIC-${ideaBuildNumber}.tar", dest: "${ideaHome}")
+  ant.untar(src: "${ideaDir}/ideaIC-${ideaBuildNumber}.tar", dest: "${ideaHomePacked}")
 }
 
 target(name: "compile", description: "Compile module python") {
