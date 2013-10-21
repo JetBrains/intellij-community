@@ -162,8 +162,8 @@ public layoutCommunity(String classesPath, Set usedJars) {
   ant.echo(message: "PC-${buildNumber}", file: "${paths.distAll}/build.txt")
 
   def launcher = "${paths.distWin}/bin/pycharm.exe"
-  List resourcePaths = ["$home/community/community-resources/src",
-    "$home/community/platform/icons/src",
+  List resourcePaths = ["$ch/community-resources/src",
+    "$ch/platform/icons/src",
     "$pythonCommunityHome/resources"]
   buildWinLauncher("$ch", "$ch/bin/WinLauncher/WinLauncher.exe", launcher,
                    appInfo, "$pythonCommunityHome/build/pycharm_community_launcher.properties", system_selector, resourcePaths)
@@ -248,10 +248,7 @@ private layoutFull(Map args, String target, Set usedJars) {
       //noinspection GroovyAssignabilityCheck
       jar([name: "resources_en.jar", duplicate: "preserve"]) {
         // custom resources should go first
-        fileset(dir: "$home/python/resources") {
-          include(name: "**/tips/**")
-        }
-        fileset(dir: "$home/python/community/resources") {
+        fileset(dir: "$pythonCommunityHome/resources") {
           include(name: "**/tips/**")
         }
         module("platform-resources-en") {
@@ -270,13 +267,13 @@ private layoutFull(Map args, String target, Set usedJars) {
       }
 
       dir("ext") {
-        fileset(dir: "$home/community/lib") {
+        fileset(dir: "$ch/lib") {
           include(name: "cglib*.jar")
         }
       }
 
       dir("src") {
-        fileset(dir: "$home/community/lib/src") {
+        fileset(dir: "$ch/lib/src") {
           include(name: "trove4j_changes.txt")
           include(name: "trove4j_src.jar")
         }
@@ -312,7 +309,7 @@ private layoutFull(Map args, String target, Set usedJars) {
     layoutPlugins(superLayouts)
 
     dir("bin") {
-      fileset(dir: "$home/community/bin") {
+      fileset(dir: "$ch/bin") {
         exclude(name: "appletviewer.policy")
         include(name: "*.*")
       }
@@ -325,7 +322,7 @@ private layoutFull(Map args, String target, Set usedJars) {
 private layoutWin(Map args, String target) {
   layout(target) {
     dir("bin") {
-      fileset(dir: "$home/community/bin/win") {
+      fileset(dir: "$ch/bin/win") {
         exclude(name: "breakgen*")
       }
     }
@@ -337,7 +334,7 @@ private layoutWin(Map args, String target) {
     }
   }
 
-  winScripts(target, "$home/community", "pycharm.bat", args)
+  winScripts(target, ch, "pycharm.bat", args)
   winVMOptions(target, null, "pycharm.exe")
 
   ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help", failonerror: false)
@@ -346,7 +343,7 @@ private layoutWin(Map args, String target) {
 private layoutUnix(Map args, String target) {
   layout(target) {
     dir("bin") {
-      fileset(dir: "$home/community/bin/linux") {
+      fileset(dir: "$ch/bin/linux") {
         exclude(name: "libbreakgen*")
       }
     }
@@ -354,7 +351,7 @@ private layoutUnix(Map args, String target) {
 
   ant.copy(file: "$pythonCommunityHome/resources/PyCharmCore128.png", tofile: "$target/bin/pycharm.png")
 
-  unixScripts(target, "$home/community", "pycharm.sh", args)
+  unixScripts(target, ch, "pycharm.sh", args)
   unixVMOptions(target, "pycharm")
 
   ant.copy(file: "$home/python/help/pycharmhelp.jar", todir: "$target/help", failonerror: false)
@@ -382,5 +379,5 @@ private layoutMac(Map _args, String target) {
   args.help_id = "PY"
   args."idea.properties.path" = "${paths.distAll}/bin/idea.properties"
   args."idea.properties" = ["idea.no.jre.check": true, "ide.mac.useNativeClipboard": "false"];
-  layoutMacApp(target, "$home/community", args)
+  layoutMacApp(target, ch, args)
 }
