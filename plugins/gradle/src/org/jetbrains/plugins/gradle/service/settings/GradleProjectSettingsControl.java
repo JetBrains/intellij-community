@@ -77,7 +77,6 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
   private JBRadioButton             myUseBundledDistributionButton;
 
   private boolean myShowBalloonIfNecessary;
-  private boolean myGradleHomeModifiedByUser;
 
   public GradleProjectSettingsControl(@NotNull GradleProjectSettings initialSettings) {
     super(initialSettings);
@@ -191,13 +190,11 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
       @Override
       public void insertUpdate(DocumentEvent e) {
         myGradleHomePathField.getTextField().setForeground(LocationSettingType.EXPLICIT_CORRECT.getColor());
-        myGradleHomeModifiedByUser = true;
       }
 
       @Override
       public void removeUpdate(DocumentEvent e) {
         myGradleHomePathField.getTextField().setForeground(LocationSettingType.EXPLICIT_CORRECT.getColor());
-        myGradleHomeModifiedByUser = true;
       }
 
       @Override
@@ -226,27 +223,28 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
   @Override
   protected void applyExtraSettings(@NotNull GradleProjectSettings settings) {
     String gradleHomePath = FileUtil.toCanonicalPath(myGradleHomePathField.getText());
-    if (myGradleHomeModifiedByUser) {
-      if (StringUtil.isEmpty(gradleHomePath)) {
-        settings.setGradleHome(null);
-      }
-      else {
-        settings.setGradleHome(gradleHomePath);
-        GradleUtil.storeLastUsedGradleHome(gradleHomePath);
-      }
+    if (StringUtil.isEmpty(gradleHomePath)) {
+      settings.setGradleHome(null);
+      getInitialSettings().setGradleHome(null);
     }
     else {
-      settings.setGradleHome(getInitialSettings().getGradleHome());
+      settings.setGradleHome(gradleHomePath);
+      getInitialSettings().setGradleHome(gradleHomePath);
+      GradleUtil.storeLastUsedGradleHome(gradleHomePath);
     }
 
     if (myUseLocalDistributionButton.isSelected()) {
       settings.setDistributionType(DistributionType.LOCAL);
+      getInitialSettings().setDistributionType(DistributionType.LOCAL);
     } else if(myUseWrapperButton.isSelected()) {
       settings.setDistributionType(DistributionType.DEFAULT_WRAPPED);
+      getInitialSettings().setDistributionType(DistributionType.DEFAULT_WRAPPED);
     } else if(myUseWrapperWithVerificationButton.isSelected()) {
       settings.setDistributionType(DistributionType.WRAPPED);
+      getInitialSettings().setDistributionType(DistributionType.WRAPPED);
     } else if (myUseBundledDistributionButton.isSelected()) {
-      settings.setDistributionType(DistributionType.BUNDLED);
+      settings.setDistributionType(DistributionType.WRAPPED);
+      getInitialSettings().setDistributionType(DistributionType.WRAPPED);
     }
   }
   
@@ -269,7 +267,7 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
       return true;
     }
 
-    String gradleHome = myGradleHomePathField.getText();
+    String gradleHome = FileUtil.toCanonicalPath(myGradleHomePathField.getText());
     if (StringUtil.isEmpty(gradleHome)) {
       return !StringUtil.isEmpty(getInitialSettings().getGradleHome());
     }
@@ -280,7 +278,6 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
 
   @Override
   protected void resetExtraSettings(boolean isDefaultModuleCreation) {
-    myGradleHomeModifiedByUser = false;
     String gradleHome = getInitialSettings().getGradleHome();
     myGradleHomePathField.setText(gradleHome == null ? "" : gradleHome);
     myGradleHomePathField.getTextField().setForeground(LocationSettingType.EXPLICIT_CORRECT.getColor());
@@ -365,7 +362,6 @@ public class GradleProjectSettingsControl extends AbstractExternalProjectSetting
     new DelayedBalloonInfo(MessageType.INFO, LocationSettingType.DEDUCED, BALLOON_DELAY_MILLIS).run();
     myGradleHomePathField.setText(gradleHome.getPath());
     myGradleHomePathField.getTextField().setForeground(LocationSettingType.DEDUCED.getColor());
-    myGradleHomeModifiedByUser = false;
   }
   
   void showBalloonIfNecessary() {
