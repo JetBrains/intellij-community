@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import java.util.Map;
 public class ConcurrentSoftArrayHashMap<T,V> implements Cloneable {
   private ConcurrentSoftHashMap<T, ConcurrentSoftArrayHashMap<T,V>> myContinuationMap;
   private ConcurrentSoftHashMap<T, SoftReference<V>> myValuesMap;
-  private SoftReference<V> myEmptyValue;
+  private SoftReference<V> myValueForEmptyArray;
   private final TObjectHashingStrategy<T> myStrategy;
 
   public ConcurrentSoftArrayHashMap() {
@@ -67,7 +67,7 @@ public class ConcurrentSoftArrayHashMap<T,V> implements Cloneable {
   @Nullable
   public final V get(T[] key) {
     if (key.length == 0) {
-      final SoftReference<V> emptyValue = myEmptyValue;
+      final SoftReference<V> emptyValue = myValueForEmptyArray;
       return emptyValue == null ? null : emptyValue.get();
     }
     return get(key, 0);
@@ -94,7 +94,7 @@ public class ConcurrentSoftArrayHashMap<T,V> implements Cloneable {
 
   public final synchronized void put(T[] key, V value) {
     if (key.length == 0) {
-      myEmptyValue = new SoftReference<V>(value);
+      myValueForEmptyArray = new SoftReference<V>(value);
     }
     else {
       put(key, 0, value);
@@ -104,7 +104,7 @@ public class ConcurrentSoftArrayHashMap<T,V> implements Cloneable {
   public final synchronized void clear() {
     myContinuationMap = null;
     myValuesMap = null;
-    myEmptyValue = null;
+    myValueForEmptyArray = null;
   }
 
   public final boolean containsKey(final T[] path) {
@@ -116,7 +116,7 @@ public class ConcurrentSoftArrayHashMap<T,V> implements Cloneable {
     final ConcurrentSoftArrayHashMap<T, V> copy = new ConcurrentSoftArrayHashMap<T, V>(myStrategy);
     copy.myContinuationMap = copyMap(myContinuationMap);
     copy.myValuesMap = copyMap(myValuesMap);
-    copy.myEmptyValue = myEmptyValue;
+    copy.myValueForEmptyArray = myValueForEmptyArray;
     return copy;
   }
 
