@@ -51,9 +51,9 @@ public class CleanPycAction extends AnAction {
         }
         FileUtil.asyncDelete(pycFiles);
       }
-    }, "Cleaning up .py files...", false, e.getProject());
+    }, "Cleaning up .pyc files...", false, e.getProject());
     final StatusBar statusBar = WindowManager.getInstance().getIdeFrame(e.getProject()).getStatusBar();
-    statusBar.setInfo("Deleted " + pycFiles.size() + " bytecode file" + (pycFiles.size() > 1 ? "s" : ""));
+    statusBar.setInfo("Deleted " + pycFiles.size() + " bytecode file" + (pycFiles.size() != 1 ? "s" : ""));
   }
 
   private static void collectPycFiles(File directory, final List<File> pycFiles) {
