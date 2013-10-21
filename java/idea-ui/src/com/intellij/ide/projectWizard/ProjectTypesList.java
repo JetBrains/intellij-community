@@ -16,7 +16,6 @@
 package com.intellij.ide.projectWizard;
 
 import com.intellij.ide.util.newProjectWizard.SelectTemplateSettings;
-import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -48,8 +47,10 @@ public class ProjectTypesList implements Disposable {
   private final CollectionListModel<TemplateItem> myModel;
   private Pair<TemplateItem, Integer> myBestMatch;
 
-  public ProjectTypesList(JBList list, MultiMap<String, ProjectCategory> map, final WizardContext context) {
+  public ProjectTypesList(JBList list, MultiMap<String, ProjectCategory> map) {
+
     myList = list;
+    myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
     new ListSpeedSearch(myList) {
       @Override

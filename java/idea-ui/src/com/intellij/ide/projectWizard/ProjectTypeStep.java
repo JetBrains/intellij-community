@@ -124,7 +124,7 @@ public class ProjectTypeStep extends ModuleWizardStep {
       }
     }
 
-    myList = new ProjectTypesList(myProjectTypeList, map, context);
+    myList = new ProjectTypesList(myProjectTypeList, map);
 
     myProjectTypeList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
