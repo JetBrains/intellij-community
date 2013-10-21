@@ -18,15 +18,17 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.FileEditorProvider;
 import com.intellij.ide.SelectInContext;
+import com.intellij.ide.structureView.StructureView;
+import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocumentManager;
@@ -35,6 +37,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -139,7 +142,11 @@ public abstract class SelectInContextImpl implements SelectInContext {
       return new TextEditorContext((TextEditor)editor, psiFile);
     }
     else {
-      return new SimpleSelectInContext(psiFile);
+      StructureViewBuilder builder = editor.getStructureViewBuilder();
+      StructureView structureView = builder != null ? builder.createStructureView(editor, project) : null;
+      Object selectorInFile = structureView != null ? structureView.getTreeModel().getCurrentEditorElement() : null;
+      if (structureView != null) Disposer.dispose(structureView);
+      return new SimpleSelectInContext(psiFile, ObjectUtils.chooseNotNull(selectorInFile, psiFile));
     }
   }
 
@@ -235,10 +242,16 @@ public abstract class SelectInContextImpl implements SelectInContext {
   }
 
   private static class SimpleSelectInContext extends SelectInContextImpl {
-    private final PsiElement myElementToSelect;
+    private final Object mySelector;
 
-    public SimpleSelectInContext(PsiFile psiFile) {
-      this(psiFile, psiFile);
+    public SimpleSelectInContext(PsiFile psiFile, Object selector) {
+      super(psiFile);
+      mySelector = selector;
+    }
+
+    @Override
+    public Object getSelectorInFile() {
+      return mySelector;
     }
 
     @Override
@@ -246,18 +259,13 @@ public abstract class SelectInContextImpl implements SelectInContext {
       return new FileEditorProvider() {
         @Override
         public FileEditor openFileEditor() {
-          final VirtualFile file = myElementToSelect.getContainingFile().getVirtualFile();
+          final VirtualFile file = myPsiFile.getVirtualFile();
           if (file == null) {
             return null;
           }
           return ArrayUtil.getFirstElement(FileEditorManager.getInstance(getProject()).openFile(file, false));
         }
       };
-    }
-
-    public SimpleSelectInContext(PsiFile psiFile, PsiElement elementToSelect) {
-      super(psiFile);
-      myElementToSelect = elementToSelect;
     }
    }
 
