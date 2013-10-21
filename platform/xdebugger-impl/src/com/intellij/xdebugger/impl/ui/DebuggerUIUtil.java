@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,11 @@ package com.intellij.xdebugger.impl.ui;
 
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -54,11 +56,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * User: lex
- * Date: Sep 20, 2003
- * Time: 11:26:44 PM
- */
 public class DebuggerUIUtil {
   @NonNls public static final String FULL_VALUE_POPUP_DIMENSION_KEY = "XDebugger.FullValuePopup";
 
@@ -108,7 +105,12 @@ public class DebuggerUIUtil {
   }
 
   public static void showValuePopup(@NotNull XFullValueEvaluator text, @NotNull MouseEvent event, @NotNull Project project) {
-    EditorTextField textArea = new EditorTextField(EditorFactory.getInstance().createDocument("Evaluating..."), project, FileTypes.PLAIN_TEXT, true);
+    Document document = EditorFactory.getInstance().createDocument("Evaluating...");
+    if (document instanceof DocumentImpl) {
+      ((DocumentImpl)document).setAcceptSlashR(true);
+    }
+
+    EditorTextField textArea = new EditorTextField(document, project, FileTypes.PLAIN_TEXT, true);
     textArea.setBackground(HintUtil.INFORMATION_COLOR);
 
     final FullValueEvaluationCallbackImpl callback = new FullValueEvaluationCallbackImpl(textArea);
@@ -287,7 +289,6 @@ public class DebuggerUIUtil {
           if (font != null) {
             myTextArea.setFont(font);
           }
-          myTextArea.getCaretModel().moveToOffset(0);
         }
       });
     }
