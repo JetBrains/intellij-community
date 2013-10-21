@@ -10,14 +10,14 @@ import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.elements.Edge;
 import com.intellij.vcs.log.graph.elements.GraphElement;
 import com.intellij.vcs.log.graph.elements.Node;
-import com.intellij.vcs.log.graph.render.GraphCellPainter;
-import com.intellij.vcs.log.graph.render.GraphCommitCell;
-import com.intellij.vcs.log.graph.render.PositionUtil;
-import com.intellij.vcs.log.graph.render.SimpleGraphCellPainter;
+import com.intellij.vcs.log.graph.render.*;
 import com.intellij.vcs.log.printmodel.GraphPrintCell;
 import com.intellij.vcs.log.printmodel.SpecialPrintElement;
 import com.intellij.vcs.log.ui.VcsLogUI;
+import com.intellij.vcs.log.ui.render.AbstractPaddingCellRender;
+import com.intellij.vcs.log.ui.render.CommitCellRender;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
+import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,8 +52,9 @@ public class VcsLogGraphTable extends JBTable {
     myUI = UI;
 
     setTableHeader(null);
-    setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI, logDataHolder));
+    setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI));
     setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(myGraphPainter, logDataHolder, myUI.getColorManager()));
+    setDefaultRenderer(CommitCell.class, new CommitCellRender(myUI.getColorManager()));
     setDefaultRenderer(String.class, new StringCellRenderer());
 
     setRowHeight(HEIGHT_CELL);
@@ -76,16 +77,16 @@ public class VcsLogGraphTable extends JBTable {
   }
 
   public void setPreferredColumnWidths() {
-    TableColumn rootColumn = getColumnModel().getColumn(GraphTableModel.ROOT_COLUMN);
+    TableColumn rootColumn = getColumnModel().getColumn(AbstractVcsLogTableModel.ROOT_COLUMN);
     int rootWidth = myUI.getColorManager().isMultipleRoots() ? ROOT_INDICATOR_WIDTH : 0;
     // NB: all further instructions and their order are important, otherwise the minimum size which is less than 15 won't be applied
     rootColumn.setMinWidth(rootWidth);
     rootColumn.setMaxWidth(rootWidth);
     rootColumn.setPreferredWidth(rootWidth);
 
-    getColumnModel().getColumn(GraphTableModel.COMMIT_COLUMN).setPreferredWidth(700);
-    getColumnModel().getColumn(GraphTableModel.AUTHOR_COLUMN).setMinWidth(90);
-    getColumnModel().getColumn(GraphTableModel.DATE_COLUMN).setMinWidth(90);
+    getColumnModel().getColumn(AbstractVcsLogTableModel.COMMIT_COLUMN).setPreferredWidth(700);
+    getColumnModel().getColumn(AbstractVcsLogTableModel.AUTHOR_COLUMN).setMinWidth(90);
+    getColumnModel().getColumn(AbstractVcsLogTableModel.DATE_COLUMN).setMinWidth(90);
   }
 
   public void jumpToRow(int rowIndex) {
@@ -99,14 +100,18 @@ public class VcsLogGraphTable extends JBTable {
     if (rowIndex >= model.getRowCount()) {
       return null;
     }
-    GraphCommitCell commitCell = (GraphCommitCell)model.getValueAt(rowIndex, GraphTableModel.COMMIT_COLUMN);
-    return commitCell.getPrintCell();
+    Object commitValue = model.getValueAt(rowIndex, AbstractVcsLogTableModel.COMMIT_COLUMN);
+    if (commitValue instanceof GraphCommitCell) {
+      GraphCommitCell commitCell = (GraphCommitCell)commitValue;
+      return commitCell.getPrintCell();
+    }
+    return null;
   }
 
   @Nullable
   public List<Change> getSelectedChanges() {
     TableModel model = getModel();
-    if (!(model instanceof GraphTableModel)) {
+    if (!(model instanceof AbstractVcsLogTableModel)) {
       LOG.error("Unexpected table model passed to the VcsLogGraphTable: " + model);
       return null;
     }
@@ -193,13 +198,11 @@ public class VcsLogGraphTable extends JBTable {
     private static final Logger LOG = Logger.getInstance(RootCellRenderer.class);
 
     @NotNull private final VcsLogUI myUi;
-    @NotNull private final VcsLogDataHolder myDataHolder;
 
     @NotNull private Color myColor = UIUtil.getTableBackground();
 
-    RootCellRenderer(@NotNull VcsLogUI ui, @NotNull VcsLogDataHolder dataHolder) {
+    RootCellRenderer(@NotNull VcsLogUI ui) {
       myUi = ui;
-      myDataHolder = dataHolder;
     }
 
     @Override
@@ -212,12 +215,12 @@ public class VcsLogGraphTable extends JBTable {
 
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      Node commitNode = myDataHolder.getDataPack().getGraphModel().getGraph().getCommitNodeInRow(row);
-      if (commitNode == null) {
-        LOG.warn("Commit node not found for row " + row);
+      if (value instanceof VirtualFile) {
+        myColor = myUi.getColorManager().getRootColor((VirtualFile)value);
       }
       else {
-        myColor = myUi.getColorManager().getRootColor(commitNode.getBranch().getRepositoryRoot());
+        LOG.error("Incorrect value " + value + " specified in row #" + row + ", column #");
+        myColor = UIUtil.getTableBackground(isSelected);
       }
       return this;
     }
@@ -227,10 +230,10 @@ public class VcsLogGraphTable extends JBTable {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Component rendererComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-      Object commit = getValueAt(row, GraphTableModel.COMMIT_COLUMN);
+      Object commit = getValueAt(row, AbstractVcsLogTableModel.COMMIT_COLUMN);
       if (commit instanceof GraphCommitCell) {
-        if (GraphCommitCellRender.isMarked(commit) && !isSelected) {
-          rendererComponent.setBackground(GraphCommitCellRender.MARKED_BACKGROUND);
+        if (AbstractPaddingCellRender.isMarked(commit) && !isSelected) {
+          rendererComponent.setBackground(AbstractPaddingCellRender.MARKED_BACKGROUND);
         }
         else {
           setBackground(isSelected ? table.getSelectionBackground() : JBColor.WHITE);
