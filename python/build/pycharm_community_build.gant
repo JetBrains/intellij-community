@@ -4,14 +4,13 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 setProperty("home", guessHome(this as Script))
 
-includeTargets << new File("${guessHome(this as Script)}/community/build/scripts/utils.gant")
+includeTargets << new File("${guessHome(this as Script)}/build/scripts/utils.gant")
 includeTargets << new File("${guessHome(this)}/build/scripts/libLicenses.gant")
-includeTargets << new File("${guessHome(this)}/python/build/python_common.gant")
 
 requireProperty("buildNumber", requireProperty("build.number", snapshot))
 
-setProperty("ch", "$home/community")
-setProperty("pythonCommunityHome", "$home/python/community")
+setProperty("ch", home)
+setProperty("pythonCommunityHome", "$home/python")
 
 // load ApplicationInfo.xml properties
 ant.xmlproperty(file: "$pythonCommunityHome/resources/idea/PyCharmCoreApplicationInfo.xml", collapseAttributes: "true")
@@ -155,11 +154,6 @@ public layoutCommunity(String classesPath, Set usedJars) {
 
   LayoutInfo layoutInfo = layoutFull(args, paths.distAll, usedJars)
   generateLicensesTable("$paths.artifacts/third-party-libraries.txt", layoutInfo.usedModules);
-
-  def egg = buildDebuggerEgg(paths.sandbox, "$home/python", buildName)
-  ant.copy(file: egg, todir: target)
-  def eggPy3k = buildDebuggerEggPy3K(paths.sandbox, "$home/python", buildName)
-  ant.copy(file: eggPy3k, todir: target)
 
   layoutWin(args, paths.distWin)
   layoutUnix(args, paths.distUnix)
