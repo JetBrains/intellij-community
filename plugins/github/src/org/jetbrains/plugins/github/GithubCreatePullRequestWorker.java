@@ -95,6 +95,11 @@ public class GithubCreatePullRequestWorker {
     return myProject;
   }
 
+  @NotNull
+  public String getCurrentBranch() {
+    return myCurrentBranch;
+  }
+
   @Nullable
   public static GithubCreatePullRequestWorker createPullRequestWorker(@NotNull final Project project, @Nullable final VirtualFile file) {
     Git git = ServiceManager.getService(Git.class);

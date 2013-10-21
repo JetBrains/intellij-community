@@ -89,7 +89,7 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
       }
     });
 
-    setTitle("Create Pull Request");
+    setTitle("Create Pull Request - " + myWorker.getCurrentBranch());
     init();
   }
 
