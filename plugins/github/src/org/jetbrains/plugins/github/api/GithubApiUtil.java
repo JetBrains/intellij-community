@@ -26,10 +26,7 @@ import org.apache.commons.httpclient.methods.*;
 import org.apache.commons.httpclient.params.HttpConnectionManagerParams;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.exceptions.GithubAuthenticationException;
-import org.jetbrains.plugins.github.exceptions.GithubJsonException;
-import org.jetbrains.plugins.github.exceptions.GithubRateLimitExceededException;
-import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
+import org.jetbrains.plugins.github.exceptions.*;
 import org.jetbrains.plugins.github.util.*;
 
 import java.io.IOException;
@@ -408,13 +405,19 @@ public class GithubApiUtil {
   @NotNull
   public static String getScopedToken(@NotNull GithubAuthData auth, @NotNull Collection<String> scopes, @Nullable String note)
     throws IOException {
-    String path = "/authorizations";
+    try {
+      String path = "/authorizations";
 
-    GithubAuthorizationRequest request = new GithubAuthorizationRequest(new ArrayList<String>(scopes), note, null);
-    GithubAuthorization response =
-      createDataFromRaw(fromJson(postRequest(auth, path, gson.toJson(request)), GithubAuthorizationRaw.class), GithubAuthorization.class);
+      GithubAuthorizationRequest request = new GithubAuthorizationRequest(new ArrayList<String>(scopes), note, null);
+      GithubAuthorization response =
+        createDataFromRaw(fromJson(postRequest(auth, path, gson.toJson(request)), GithubAuthorizationRaw.class), GithubAuthorization.class);
 
-    return response.getToken();
+      return response.getToken();
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't get token: scopes - " + scopes);
+      throw e;
+    }
   }
 
   @NotNull
@@ -429,43 +432,73 @@ public class GithubApiUtil {
 
   @NotNull
   public static GithubUser getCurrentUser(@NotNull GithubAuthData auth) throws IOException {
-    JsonElement result = getRequest(auth, "/user");
-    return createDataFromRaw(fromJson(result, GithubUserRaw.class), GithubUser.class);
+    try {
+      JsonElement result = getRequest(auth, "/user");
+      return createDataFromRaw(fromJson(result, GithubUserRaw.class), GithubUser.class);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't get user info");
+      throw e;
+    }
   }
 
   @NotNull
   public static GithubUserDetailed getCurrentUserDetailed(@NotNull GithubAuthData auth) throws IOException {
-    JsonElement result = getRequest(auth, "/user");
-    return createDataFromRaw(fromJson(result, GithubUserRaw.class), GithubUserDetailed.class);
+    try {
+      JsonElement result = getRequest(auth, "/user");
+      return createDataFromRaw(fromJson(result, GithubUserRaw.class), GithubUserDetailed.class);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't get user info");
+      throw e;
+    }
   }
 
   @NotNull
   public static List<GithubRepo> getUserRepos(@NotNull GithubAuthData auth) throws IOException {
-    String path = "/user/repos?" + PER_PAGE;
+    try {
+      String path = "/user/repos?" + PER_PAGE;
 
-    PagedRequest<GithubRepo> request = new PagedRequest<GithubRepo>(path, GithubRepo.class, GithubRepoRaw[].class);
+      PagedRequest<GithubRepo> request = new PagedRequest<GithubRepo>(path, GithubRepo.class, GithubRepoRaw[].class);
 
-    return request.getAll(auth);
+      return request.getAll(auth);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't get user repositories");
+      throw e;
+    }
   }
 
   @NotNull
   public static List<GithubRepo> getUserRepos(@NotNull GithubAuthData auth, @NotNull String user) throws IOException {
-    String path = "/users/" + user + "/repos?" + PER_PAGE;
+    try {
+      String path = "/users/" + user + "/repos?" + PER_PAGE;
 
-    PagedRequest<GithubRepo> request = new PagedRequest<GithubRepo>(path, GithubRepo.class, GithubRepoRaw[].class);
+      PagedRequest<GithubRepo> request = new PagedRequest<GithubRepo>(path, GithubRepo.class, GithubRepoRaw[].class);
 
-    return request.getAll(auth);
+      return request.getAll(auth);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't get user repositories: " + user);
+      throw e;
+    }
   }
 
   @NotNull
   public static List<GithubRepo> getAvailableRepos(@NotNull GithubAuthData auth) throws IOException {
-    List<GithubRepo> repos = new ArrayList<GithubRepo>();
+    try {
+      List<GithubRepo> repos = new ArrayList<GithubRepo>();
 
-    repos.addAll(getUserRepos(auth));
-    repos.addAll(getMembershipRepos(auth));
-    repos.addAll(getWatchedRepos(auth));
+      repos.addAll(getUserRepos(auth));
+      repos.addAll(getMembershipRepos(auth));
+      repos.addAll(getWatchedRepos(auth));
 
-    return repos;
+      return repos;
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't get available repositories");
+      throw e;
+    }
   }
 
   @NotNull
@@ -493,30 +526,54 @@ public class GithubApiUtil {
   @NotNull
   public static GithubRepoDetailed getDetailedRepoInfo(@NotNull GithubAuthData auth, @NotNull String owner, @NotNull String name)
     throws IOException {
-    final String request = "/repos/" + owner + "/" + name;
+    try {
+      final String request = "/repos/" + owner + "/" + name;
 
-    JsonElement jsonObject = getRequest(auth, request);
+      JsonElement jsonObject = getRequest(auth, request);
 
-    return createDataFromRaw(fromJson(jsonObject, GithubRepoRaw.class), GithubRepoDetailed.class);
+      return createDataFromRaw(fromJson(jsonObject, GithubRepoRaw.class), GithubRepoDetailed.class);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't get repository info: " + owner + "/" + name);
+      throw e;
+    }
   }
 
   public static void deleteGithubRepository(@NotNull GithubAuthData auth, @NotNull String username, @NotNull String repo)
     throws IOException {
-    String path = "/repos/" + username + "/" + repo;
-    deleteRequest(auth, path);
+    try {
+      String path = "/repos/" + username + "/" + repo;
+      deleteRequest(auth, path);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't delete repository: " + username + "/" + repo);
+      throw e;
+    }
   }
 
   public static void deleteGist(@NotNull GithubAuthData auth, @NotNull String id) throws IOException {
-    String path = "/gists/" + id;
-    deleteRequest(auth, path);
+    try {
+      String path = "/gists/" + id;
+      deleteRequest(auth, path);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't delete gist: id - " + id);
+      throw e;
+    }
   }
 
   @NotNull
   public static GithubGist getGist(@NotNull GithubAuthData auth, @NotNull String id) throws IOException {
-    String path = "/gists/" + id;
-    JsonElement result = getRequest(auth, path);
+    try {
+      String path = "/gists/" + id;
+      JsonElement result = getRequest(auth, path);
 
-    return createDataFromRaw(fromJson(result, GithubGistRaw.class), GithubGist.class);
+      return createDataFromRaw(fromJson(result, GithubGistRaw.class), GithubGist.class);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't get gist info: id " + id);
+      throw e;
+    }
   }
 
   @NotNull
@@ -524,8 +581,14 @@ public class GithubApiUtil {
                                       @NotNull List<GithubGist.FileContent> contents,
                                       @NotNull String description,
                                       boolean isPrivate) throws IOException {
-    String request = gson.toJson(new GithubGistRequest(contents, description, !isPrivate));
-    return createDataFromRaw(fromJson(postRequest(auth, "/gists", request), GithubGistRaw.class), GithubGist.class);
+    try {
+      String request = gson.toJson(new GithubGistRequest(contents, description, !isPrivate));
+      return createDataFromRaw(fromJson(postRequest(auth, "/gists", request), GithubGistRaw.class), GithubGist.class);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't create gist");
+      throw e;
+    }
   }
 
   @NotNull
@@ -536,19 +599,31 @@ public class GithubApiUtil {
                                                     @NotNull String description,
                                                     @NotNull String from,
                                                     @NotNull String onto) throws IOException {
-    String request = gson.toJson(new GithubPullRequestRequest(title, description, from, onto));
-    return createDataFromRaw(fromJson(postRequest(auth, "/repos/" + user + "/" + repo + "/pulls", request), GithubPullRequestRaw.class),
-                             GithubPullRequest.class);
+    try {
+      String request = gson.toJson(new GithubPullRequestRequest(title, description, from, onto));
+      return createDataFromRaw(fromJson(postRequest(auth, "/repos/" + user + "/" + repo + "/pulls", request), GithubPullRequestRaw.class),
+                               GithubPullRequest.class);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't create pull request");
+      throw e;
+    }
   }
 
   @NotNull
   public static GithubRepo createRepo(@NotNull GithubAuthData auth, @NotNull String name, @NotNull String description, boolean isPrivate)
     throws IOException {
-    String path = "/user/repos";
+    try {
+      String path = "/user/repos";
 
-    GithubRepoRequest request = new GithubRepoRequest(name, description, isPrivate);
+      GithubRepoRequest request = new GithubRepoRequest(name, description, isPrivate);
 
-    return createDataFromRaw(fromJson(postRequest(auth, path, gson.toJson(request)), GithubRepoRaw.class), GithubRepo.class);
+      return createDataFromRaw(fromJson(postRequest(auth, path, gson.toJson(request)), GithubRepoRaw.class), GithubRepo.class);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't create repository: " + name);
+      throw e;
+    }
   }
 
   /*
@@ -560,21 +635,27 @@ public class GithubApiUtil {
                                                     @NotNull String repo,
                                                     @Nullable String assigned,
                                                     int max) throws IOException {
-    String path;
-    if (StringUtil.isEmptyOrSpaces(assigned)) {
-      path = "/repos/" + user + "/" + repo + "/issues?" + PER_PAGE;
-    }
-    else {
-      path = "/repos/" + user + "/" + repo + "/issues?assignee=" + assigned + "&" + PER_PAGE;
-    }
+    try {
+      String path;
+      if (StringUtil.isEmptyOrSpaces(assigned)) {
+        path = "/repos/" + user + "/" + repo + "/issues?" + PER_PAGE;
+      }
+      else {
+        path = "/repos/" + user + "/" + repo + "/issues?assignee=" + assigned + "&" + PER_PAGE;
+      }
 
-    PagedRequest<GithubIssue> request = new PagedRequest<GithubIssue>(path, GithubIssue.class, GithubIssueRaw[].class);
+      PagedRequest<GithubIssue> request = new PagedRequest<GithubIssue>(path, GithubIssue.class, GithubIssueRaw[].class);
 
-    List<GithubIssue> result = new ArrayList<GithubIssue>();
-    while (request.hasNext() && max > result.size()) {
-      result.addAll(request.next(auth));
+      List<GithubIssue> result = new ArrayList<GithubIssue>();
+      while (request.hasNext() && max > result.size()) {
+        result.addAll(request.next(auth));
+      }
+      return result;
     }
-    return result;
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't get assigned issues: " + user + "/" + repo + " - " + assigned);
+      throw e;
+    }
   }
 
   @NotNull
@@ -585,35 +666,53 @@ public class GithubApiUtil {
                                                    @NotNull String user,
                                                    @NotNull String repo,
                                                    @Nullable String query) throws IOException {
-    query = URLEncoder.encode("@" + user + "/" + repo + " " + query, "UTF-8");
-    String path = "/search/issues?q=" + query;
+    try {
+      query = URLEncoder.encode("@" + user + "/" + repo + " " + query, "UTF-8");
+      String path = "/search/issues?q=" + query;
 
-    //TODO: remove header after end of preview period. ~ october 2013
-    //TODO: Use bodyHtml for issues - preview does not support this feature
-    JsonElement result = getRequest(auth, path, ACCEPT_NEW_SEARCH_API);
+      //TODO: remove header after end of preview period. ~ october 2013
+      //TODO: Use bodyHtml for issues - preview does not support this feature
+      JsonElement result = getRequest(auth, path, ACCEPT_NEW_SEARCH_API);
 
-    return createDataFromRaw(fromJson(result, GithubIssuesSearchResultRaw.class), GithubIssuesSearchResult.class).getIssues();
+      return createDataFromRaw(fromJson(result, GithubIssuesSearchResultRaw.class), GithubIssuesSearchResult.class).getIssues();
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't get queried issues: " + user + "/" + repo + " - " + query);
+      throw e;
+    }
   }
 
   @NotNull
   public static GithubIssue getIssue(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, @NotNull String id)
     throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/issues/" + id;
+    try {
+      String path = "/repos/" + user + "/" + repo + "/issues/" + id;
 
-    JsonElement result = getRequest(auth, path);
+      JsonElement result = getRequest(auth, path);
 
-    return createDataFromRaw(fromJson(result, GithubIssueRaw.class), GithubIssue.class);
+      return createDataFromRaw(fromJson(result, GithubIssueRaw.class), GithubIssue.class);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't get issue info: " + user + "/" + repo + " - " + id);
+      throw e;
+    }
   }
 
   @NotNull
   public static List<GithubIssueComment> getIssueComments(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, long id)
     throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/issues/" + id + "/comments?" + PER_PAGE;
+    try {
+      String path = "/repos/" + user + "/" + repo + "/issues/" + id + "/comments?" + PER_PAGE;
 
-    PagedRequest<GithubIssueComment> request =
-      new PagedRequest<GithubIssueComment>(path, GithubIssueComment.class, GithubIssueCommentRaw[].class, ACCEPT_HTML_BODY_MARKUP);
+      PagedRequest<GithubIssueComment> request =
+        new PagedRequest<GithubIssueComment>(path, GithubIssueComment.class, GithubIssueCommentRaw[].class, ACCEPT_HTML_BODY_MARKUP);
 
-    return request.getAll(auth);
+      return request.getAll(auth);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't get issue comments: " + user + "/" + repo + " - " + id);
+      throw e;
+    }
   }
 
   @NotNull
@@ -621,10 +720,16 @@ public class GithubApiUtil {
                                                @NotNull String user,
                                                @NotNull String repo,
                                                @NotNull String sha) throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/commits/" + sha;
+    try {
+      String path = "/repos/" + user + "/" + repo + "/commits/" + sha;
 
-    JsonElement result = getRequest(auth, path);
-    return createDataFromRaw(fromJson(result, GithubCommitRaw.class), GithubCommitDetailed.class);
+      JsonElement result = getRequest(auth, path);
+      return createDataFromRaw(fromJson(result, GithubCommitRaw.class), GithubCommitDetailed.class);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't get commit info: " + user + "/" + repo + " - " + sha);
+      throw e;
+    }
   }
 
   @NotNull
@@ -632,44 +737,68 @@ public class GithubApiUtil {
                                                             @NotNull String user,
                                                             @NotNull String repo,
                                                             @NotNull String sha) throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/commits/" + sha + "/comments";
+    try {
+      String path = "/repos/" + user + "/" + repo + "/commits/" + sha + "/comments";
 
-    PagedRequest<GithubCommitComment> request =
-      new PagedRequest<GithubCommitComment>(path, GithubCommitComment.class, GithubCommitCommentRaw[].class, ACCEPT_HTML_BODY_MARKUP);
+      PagedRequest<GithubCommitComment> request =
+        new PagedRequest<GithubCommitComment>(path, GithubCommitComment.class, GithubCommitCommentRaw[].class, ACCEPT_HTML_BODY_MARKUP);
 
-    return request.getAll(auth);
+      return request.getAll(auth);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't get commit comments: " + user + "/" + repo + " - " + sha);
+      throw e;
+    }
   }
 
   @NotNull
   public static List<GithubCommitComment> getPullRequestComments(@NotNull GithubAuthData auth,
-                                                            @NotNull String user,
-                                                            @NotNull String repo,
-                                                            long id) throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/comments";
+                                                                 @NotNull String user,
+                                                                 @NotNull String repo,
+                                                                 long id) throws IOException {
+    try {
+      String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/comments";
 
-    PagedRequest<GithubCommitComment> request =
-      new PagedRequest<GithubCommitComment>(path, GithubCommitComment.class, GithubCommitCommentRaw[].class, ACCEPT_HTML_BODY_MARKUP);
+      PagedRequest<GithubCommitComment> request =
+        new PagedRequest<GithubCommitComment>(path, GithubCommitComment.class, GithubCommitCommentRaw[].class, ACCEPT_HTML_BODY_MARKUP);
 
-    return request.getAll(auth);
+      return request.getAll(auth);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't get pull request comments: " + user + "/" + repo + " - " + id);
+      throw e;
+    }
   }
 
   @NotNull
   public static GithubPullRequest getPullRequest(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, int id)
     throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/pulls/" + id;
-    return createDataFromRaw(fromJson(getRequest(auth, path, ACCEPT_HTML_BODY_MARKUP), GithubPullRequestRaw.class),
-                             GithubPullRequest.class);
+    try {
+      String path = "/repos/" + user + "/" + repo + "/pulls/" + id;
+      return createDataFromRaw(fromJson(getRequest(auth, path, ACCEPT_HTML_BODY_MARKUP), GithubPullRequestRaw.class),
+                               GithubPullRequest.class);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't get pull request info: " + user + "/" + repo + " - " + id);
+      throw e;
+    }
   }
 
   @NotNull
   public static List<GithubPullRequest> getPullRequests(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo)
     throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/pulls?" + PER_PAGE;
+    try {
+      String path = "/repos/" + user + "/" + repo + "/pulls?" + PER_PAGE;
 
-    PagedRequest<GithubPullRequest> request =
-      new PagedRequest<GithubPullRequest>(path, GithubPullRequest.class, GithubPullRequestRaw[].class, ACCEPT_HTML_BODY_MARKUP);
+      PagedRequest<GithubPullRequest> request =
+        new PagedRequest<GithubPullRequest>(path, GithubPullRequest.class, GithubPullRequestRaw[].class, ACCEPT_HTML_BODY_MARKUP);
 
-    return request.getAll(auth);
+      return request.getAll(auth);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't get pull requests" + user + "/" + repo);
+      throw e;
+    }
   }
 
   @NotNull
@@ -682,31 +811,49 @@ public class GithubApiUtil {
   @NotNull
   public static List<GithubCommit> getPullRequestCommits(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, long id)
     throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/commits?" + PER_PAGE;
+    try {
+      String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/commits?" + PER_PAGE;
 
-    PagedRequest<GithubCommit> request = new PagedRequest<GithubCommit>(path, GithubCommit.class, GithubCommitRaw[].class);
+      PagedRequest<GithubCommit> request = new PagedRequest<GithubCommit>(path, GithubCommit.class, GithubCommitRaw[].class);
 
-    return request.getAll(auth);
+      return request.getAll(auth);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't get pull request commits: " + user + "/" + repo + " - " + id);
+      throw e;
+    }
   }
 
   @NotNull
   public static List<GithubFile> getPullRequestFiles(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo, long id)
     throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/files?" + PER_PAGE;
+    try {
+      String path = "/repos/" + user + "/" + repo + "/pulls/" + id + "/files?" + PER_PAGE;
 
-    PagedRequest<GithubFile> request = new PagedRequest<GithubFile>(path, GithubFile.class, GithubFileRaw[].class);
+      PagedRequest<GithubFile> request = new PagedRequest<GithubFile>(path, GithubFile.class, GithubFileRaw[].class);
 
-    return request.getAll(auth);
+      return request.getAll(auth);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't get pull request files: " + user + "/" + repo + " - " + id);
+      throw e;
+    }
   }
 
   @NotNull
   public static List<GithubBranch> getRepoBranches(@NotNull GithubAuthData auth, @NotNull String user, @NotNull String repo)
     throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/branches?" + PER_PAGE;
+    try {
+      String path = "/repos/" + user + "/" + repo + "/branches?" + PER_PAGE;
 
-    PagedRequest<GithubBranch> request = new PagedRequest<GithubBranch>(path, GithubBranch.class, GithubBranchRaw[].class);
+      PagedRequest<GithubBranch> request = new PagedRequest<GithubBranch>(path, GithubBranch.class, GithubBranchRaw[].class);
 
-    return request.getAll(auth);
+      return request.getAll(auth);
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't get repository branches: " + user + "/" + repo);
+      throw e;
+    }
   }
 
   @Nullable
@@ -714,18 +861,24 @@ public class GithubApiUtil {
                                           @NotNull String user,
                                           @NotNull String repo,
                                           @NotNull String forkUser) throws IOException {
-    String path = "/repos/" + user + "/" + repo + "/forks?" + PER_PAGE;
+    try {
+      String path = "/repos/" + user + "/" + repo + "/forks?" + PER_PAGE;
 
-    PagedRequest<GithubRepo> request = new PagedRequest<GithubRepo>(path, GithubRepo.class, GithubRepoRaw[].class);
+      PagedRequest<GithubRepo> request = new PagedRequest<GithubRepo>(path, GithubRepo.class, GithubRepoRaw[].class);
 
-    while (request.hasNext()) {
-      for (GithubRepo fork : request.next(auth)) {
-        if (StringUtil.equalsIgnoreCase(fork.getUserName(), forkUser)) {
-          return fork;
+      while (request.hasNext()) {
+        for (GithubRepo fork : request.next(auth)) {
+          if (StringUtil.equalsIgnoreCase(fork.getUserName(), forkUser)) {
+            return fork;
+          }
         }
       }
-    }
 
-    return null;
+      return null;
+    }
+    catch (GithubConfusingException e) {
+      e.setDetails("Can't find fork by user: " + user + "/" + repo + " - " + forkUser);
+      throw e;
+    }
   }
 }

@@ -15,18 +15,42 @@
  */
 package org.jetbrains.plugins.github.exceptions;
 
+import org.jetbrains.annotations.Nullable;
+
+import java.io.IOException;
+
 /**
  * @author Aleksey Pivovarov
  */
-public class GithubStatusCodeException extends GithubConfusingException {
-  private final int myStatusCode;
+public class GithubConfusingException extends IOException {
+  private String myDetails;
 
-  public GithubStatusCodeException(String message, int statusCode) {
-    super(message);
-    myStatusCode = statusCode;
+  public GithubConfusingException() {
   }
 
-  public int getStatusCode() {
-    return myStatusCode;
+  public GithubConfusingException(String message) {
+    super(message);
+  }
+
+  public GithubConfusingException(String message, Throwable cause) {
+    super(message, cause);
+  }
+
+  public GithubConfusingException(Throwable cause) {
+    super(cause);
+  }
+
+  public void setDetails(@Nullable String details) {
+    myDetails = details;
+  }
+
+  @Override
+  public String getMessage() {
+    if (myDetails == null) {
+      return super.getMessage();
+    }
+    else {
+      return myDetails + "\n\n" + super.getMessage();
+    }
   }
 }
