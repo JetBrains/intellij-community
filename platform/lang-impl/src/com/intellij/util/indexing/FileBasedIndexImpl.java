@@ -1765,7 +1765,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     fc.putUserData(IndexingDataKeys.PROJECT, project);
   }
 
-  private void updateSingleIndex(final ID<?, ?> indexId, @NotNull final VirtualFile file, @Nullable final FileContent currentFC)
+  private void updateSingleIndex(final ID<?, ?> indexId, @NotNull final VirtualFile file, @Nullable FileContent currentFC)
     throws StorageException {
     if (ourRebuildStatus.get(indexId).get() == REQUIRES_REBUILD) {
       return; // the index is scheduled for rebuild, no need to update
@@ -1776,40 +1776,53 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
     assert index != null;
 
+    // important: no hard referencing currentFC to avoid OOME, the methods introduced for this purpose!
     final Computable<Boolean> update = index.update(inputId, currentFC);
     final FileType fileType = file.getFileType();
+
     scheduleUpdate(indexId,
-                   new Computable<Boolean>() {
-                     @Override
-                     public Boolean compute() {
-                       Boolean result;
-                       final StorageGuard.Holder lock = setDataBufferingEnabled(false);
-                       try {
-                         result = update.compute();
-                       }
-                       finally {
-                         lock.leave();
-                       }
-                       return result;
-                     }
-                   },
-                   new Runnable() {
-                     @Override
-                     public void run() {
-                       if (file.isValid()) {
-                         ID stubId = IndexInfrastructure.getStubId(indexId, fileType);
-                         if (currentFC != null) {
-                           IndexingStamp.update(file, stubId, getIndexCreationStamp(stubId, fileType));
-                         }
-                         else {
-                           // mark the file as unindexed
-                           IndexingStamp.update(file, stubId, IndexInfrastructure.INVALID_STAMP);
-                         }
-                         if (myNotRequiringContentIndices.contains(indexId)) IndexingStamp.flushCache(file);
-                       }
-                     }
-                   }
+                   createUpdateComputableWithBufferingDisabled(update),
+                   createIndexedStampUpdateRunnable(indexId, file, fileType, currentFC != null)
     );
+  }
+
+  private Runnable createIndexedStampUpdateRunnable(final ID<?, ?> indexId,
+                                                    final VirtualFile file,
+                                                    final FileType fileType,
+                                                    final boolean hasContent) {
+    return new Runnable() {
+      @Override
+      public void run() {
+        if (file.isValid()) {
+          ID stubId = IndexInfrastructure.getStubId(indexId, fileType);
+          if (hasContent) {
+            IndexingStamp.update(file, stubId, getIndexCreationStamp(stubId, fileType));
+          }
+          else {
+            // mark the file as unindexed
+            IndexingStamp.update(file, stubId, IndexInfrastructure.INVALID_STAMP);
+          }
+          if (myNotRequiringContentIndices.contains(indexId)) IndexingStamp.flushCache(file);
+        }
+      }
+    };
+  }
+
+  private Computable<Boolean> createUpdateComputableWithBufferingDisabled(final Computable<Boolean> update) {
+    return new Computable<Boolean>() {
+      @Override
+      public Boolean compute() {
+        Boolean result;
+        final StorageGuard.Holder lock = setDataBufferingEnabled(false);
+        try {
+          result = update.compute();
+        }
+        finally {
+          lock.leave();
+        }
+        return result;
+      }
+    };
   }
 
   private void scheduleUpdate(ID<?, ?> indexId, final Computable<Boolean> update, final Runnable successRunnable) {
