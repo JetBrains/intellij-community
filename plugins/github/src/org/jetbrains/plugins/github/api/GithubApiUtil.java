@@ -542,11 +542,11 @@ public class GithubApiUtil {
   }
 
   @NotNull
-  public static GithubRepo createRepo(@NotNull GithubAuthData auth, @NotNull String name, @NotNull String description, boolean isPublic)
+  public static GithubRepo createRepo(@NotNull GithubAuthData auth, @NotNull String name, @NotNull String description, boolean isPrivate)
     throws IOException {
     String path = "/user/repos";
 
-    GithubRepoRequest request = new GithubRepoRequest(name, description, isPublic);
+    GithubRepoRequest request = new GithubRepoRequest(name, description, isPrivate);
 
     return createDataFromRaw(fromJson(postRequest(auth, path, gson.toJson(request)), GithubRepoRaw.class), GithubRepo.class);
   }

@@ -243,7 +243,7 @@ public class GithubShareAction extends DumbAwareAction {
                                                boolean isPrivate) {
 
     try {
-      GithubRepo response = GithubApiUtil.createRepo(auth, name, description, !isPrivate);
+      GithubRepo response = GithubApiUtil.createRepo(auth, name, description, isPrivate);
       return response.getHtmlUrl();
     }
     catch (IOException e) {

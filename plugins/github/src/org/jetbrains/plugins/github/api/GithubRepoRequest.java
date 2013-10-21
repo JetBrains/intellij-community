@@ -26,11 +26,11 @@ class GithubRepoRequest {
   @NotNull private final String name;
   @NotNull private final String description;
 
-  @SerializedName("public") private final boolean isPublic;
+  @SerializedName("private") private final boolean isPrivate;
 
-  GithubRepoRequest(@NotNull String name, @NotNull String description, boolean aPublic) {
+  GithubRepoRequest(@NotNull String name, @NotNull String description, boolean aPrivate) {
     this.name = name;
     this.description = description;
-    isPublic = aPublic;
+    isPrivate = aPrivate;
   }
 }
