@@ -3,12 +3,12 @@ package com.jetbrains.env.python;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.env.ut.PyUnitTestTask;
+import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebuggerException;
 import com.jetbrains.python.debugger.PyExceptionBreakpointProperties;
@@ -56,7 +56,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
     runPythonTest(new PyUnitTestTask("", "test_debug.py") {
       @Override
       protected String getTestDataPath() {
-        return PathManager.getHomePath() + "/python/community/helpers/pydev";
+        return PythonHelpersLocator.getPythonCommunityPath() + "/helpers/pydev";
       }
 
       @Override

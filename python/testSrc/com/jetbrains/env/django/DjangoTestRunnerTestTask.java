@@ -1,6 +1,6 @@
 package com.jetbrains.env.django;
 
-import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.fixtures.PyProfessionalTestCase;
 
 /**
  * User : ktisha
@@ -9,7 +9,7 @@ public abstract class DjangoTestRunnerTestTask extends DjangoManageTestTask {
 
   @Override
   protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/django/testRunner/" + getTestName();
+    return PyProfessionalTestCase.getProfessionalTestDataPath() + "/django/testRunner/" + getTestName();
   }
 
   abstract String getTestName();

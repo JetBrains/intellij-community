@@ -1,8 +1,8 @@
 package com.jetbrains.env.python;
 
-import com.intellij.openapi.application.PathManager;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.env.ut.PyUnitTestTask;
+import com.jetbrains.python.PythonHelpersLocator;
 
 /**
  * @author traff
@@ -12,7 +12,7 @@ public class PythonGeneratorTest extends PyEnvTestCase{
     runPythonTest(new PyUnitTestTask("", "test_generator.py") {
       @Override
       protected String getTestDataPath() {
-        return PathManager.getHomePath() + "/python/community/helpers";
+        return PythonHelpersLocator.getPythonCommunityPath() + "/helpers";
       }
 
       @Override

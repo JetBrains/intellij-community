@@ -10,7 +10,7 @@ import com.intellij.util.ui.UIUtil;
 import com.jetbrains.django.facet.DjangoFacet;
 import com.jetbrains.django.fixtures.DjangoTestCase;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
-import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.fixtures.PyProfessionalTestCase;
 import com.jetbrains.python.templateLanguages.TemplatesService;
 import org.junit.Assert;
 
@@ -27,7 +27,7 @@ public class DjangoEnvTestTask extends PyDebuggerTask {
   protected final int myPort;
 
   protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath() + "/django/debug";
+    return PyProfessionalTestCase.getProfessionalTestDataPath() + "/django/debug";
   }
 
   public DjangoEnvTestTask(String workingFolder, String scriptName, String scriptParameters, int port) {
