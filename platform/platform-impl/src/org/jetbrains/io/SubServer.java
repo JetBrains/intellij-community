@@ -47,8 +47,12 @@ final class SubServer implements CustomPortServerManager.CustomPortService, Disp
       return true;
     }
     catch (Exception e) {
-      NettyUtil.log(e, BuiltInServer.LOG);
-      user.cannotBind(e, port);
+      try {
+        NettyUtil.log(e, BuiltInServer.LOG);
+      }
+      finally {
+        user.cannotBind(e, port);
+      }
       return false;
     }
   }
