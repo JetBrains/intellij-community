@@ -1163,8 +1163,6 @@
       <value>
         <option name="FOREGROUND" value="9396c0" />
         <option name="FONT_TYPE" value="1" />
-        <option name="EFFECT_COLOR" value="ffff00" />
-        <option name="EFFECT_TYPE" value="2" />
       </value>
     </option>
     <option name="REQUIRE_GEM_CALL">
