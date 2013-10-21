@@ -62,7 +62,7 @@
         <display_name>CC</display_name>
       </class>
     </method>
-    <description>Parameter annotated @NonNull must not override @Nullable parameter</description>
+    <description>Parameter annotated @NotNull must not override @Nullable parameter</description>
   </problem>
 
 

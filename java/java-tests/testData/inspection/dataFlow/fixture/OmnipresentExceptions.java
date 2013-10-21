@@ -1,7 +1,7 @@
 class Test {
   Object m1(String[] args) throws Exception {
     try {
-      return <warning descr="'null' is returned by the method which isn't declared as @Nullable">null</warning>;
+      return <warning descr="'null' is returned by the method which is not declared as @Nullable">null</warning>;
     }
     catch (Throwable t) {
       if (t instanceof Error) {

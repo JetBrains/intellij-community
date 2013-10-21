@@ -22,6 +22,7 @@ import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiModifierListOwner;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -87,6 +88,10 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
     return myDefaultNullable;
   }
   
+  public String getPresentableDefaultNullable() {
+    return StringUtil.getShortName(myDefaultNullable);
+  }
+  
   @Nullable
   public String getNullable(PsiModifierListOwner owner) {
     for (String nullable : getNullables()) {
@@ -102,6 +107,9 @@ public class NullableNotNullManager implements PersistentStateComponent<Element>
 
   public String getDefaultNotNull() {
     return myDefaultNotNull;
+  }
+  public String getPresentableDefaultNotNull() {
+    return StringUtil.getShortName(myDefaultNotNull);
   }
   
   @Nullable
