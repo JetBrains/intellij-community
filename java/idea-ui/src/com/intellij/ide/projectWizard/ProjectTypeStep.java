@@ -36,23 +36,18 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.ProjectTemplate;
-import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.treeStructure.Tree;
+import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreePath;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -70,8 +65,9 @@ public class ProjectTypeStep extends ModuleWizardStep {
   private final ModulesProvider myModulesProvider;
   private JPanel myPanel;
   private JPanel myOptionsPanel;
-  private Tree myProjectTypeTree;
   private JBLabel myGroupDescriptionLabel;
+  private JBList myProjectTypeList;
+  private final ProjectTypesList myList;
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
   private final FactoryMap<ProjectCategory, ModuleBuilder> myBuilders = new FactoryMap<ProjectCategory, ModuleBuilder>() {
@@ -113,55 +109,27 @@ public class ProjectTypeStep extends ModuleWizardStep {
       categories.putValue(category.getGroupName(), category);
     }
 
-    List<ProjectCategory> list = new ArrayList<ProjectCategory>();
-    DefaultMutableTreeNode root = new DefaultMutableTreeNode();
     MultiMap<TemplatesGroup,ProjectTemplate> templatesMap = CreateFromTemplateMode.getTemplatesMap(context, false);
     List<TemplatesGroup> groups = new ArrayList<TemplatesGroup>(templatesMap.keySet());
     Collections.sort(groups);
+    MultiMap<String, ProjectCategory> map = new MultiMap<String, ProjectCategory>();
     for (TemplatesGroup group : groups) {
-      DefaultMutableTreeNode groupNode = new DefaultMutableTreeNode(group);
-      root.add(groupNode);
+      String name = group.getName();
       for (ProjectTemplate template : templatesMap.get(group)) {
         TemplateBasedProjectType projectType = new TemplateBasedProjectType(template);
-        groupNode.add(new DefaultMutableTreeNode(projectType));
-        list.add(projectType);
+        map.putValue(name, projectType);
       }
-      Collection<ProjectCategory> collection = categories.get(group.getName());
-      for (ProjectCategory category : collection) {
-        groupNode.add(new DefaultMutableTreeNode(category));
-        list.add(category);
+      for (ProjectCategory category : categories.get(name)) {
+        map.putValue(name, category);
       }
     }
 
-    myProjectTypeTree.setModel(new DefaultTreeModel(root));
-    TreeUtil.expandAll(myProjectTypeTree);
+    myList = new ProjectTypesList(myProjectTypeList, map, context);
 
-    myProjectTypeTree.setCellRenderer(new ColoredTreeCellRenderer() {
-      @Override
-      public void customizeCellRenderer(JTree tree,
-                                        Object value,
-                                        boolean selected,
-                                        boolean expanded,
-                                        boolean leaf,
-                                        int row,
-                                        boolean hasFocus) {
-        Object object = ((DefaultMutableTreeNode)value).getUserObject();
-        if (object instanceof ProjectCategory) {
-          ProjectCategory category = (ProjectCategory)object;
-          append(category.getDisplayName());
-          setIcon(category.getIcon());
-        }
-        else {
-          TemplatesGroup group = (TemplatesGroup)object;
-          append(group.getName());
-          setIcon(group.getIcon());
-        }
-      }
-    });
+    myProjectTypeList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
 
-    myProjectTypeTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       @Override
-      public void valueChanged(TreeSelectionEvent e) {
+      public void valueChanged(ListSelectionEvent e) {
         ModuleBuilder builder = getSelectedBuilder();
         if (builder != null) {
           myContext.setProjectBuilder(builder);
@@ -172,29 +140,25 @@ public class ProjectTypeStep extends ModuleWizardStep {
       }
     });
 
-    for (ProjectCategory category : list) {
-      myWizard.getSequence().addStepsForBuilder(myBuilders.get(category), context, modulesProvider, true);
+    for (ProjectCategory category : map.values()) {
+      myWizard.getSequence().addStepsForBuilder(myBuilders.get(category), context, modulesProvider, false);
     }
 
     myFrameworksPanel = new AddSupportForFrameworksPanel(Collections.<FrameworkSupportInModuleProvider>emptyList(), model, true);
     Disposer.register(wizard.getDisposable(), myFrameworksPanel);
 
     myOptionsPanel.add(myFrameworksPanel.getMainPanel(), FRAMEWORKS_CARD);
-
-    // todo save selection
-    myProjectTypeTree.addSelectionRow(1);
   }
 
   @Nullable
-  public Object getSelectedObject() {
-    TreePath path = myProjectTypeTree.getSelectionPath();
-    return path == null ? null : ((DefaultMutableTreeNode)path.getLastPathComponent()).getUserObject();
+  public ProjectCategory getSelectedObject() {
+    return myList.getSelectedTemplate();
   }
 
   @Nullable
   private ModuleBuilder getSelectedBuilder() {
-    Object object = getSelectedObject();
-    return object instanceof ProjectCategory ? myBuilders.get(object) : null;
+    ProjectCategory object = getSelectedObject();
+    return object == null ? null : myBuilders.get(object);
   }
 
   private void updateOptionsPanel(Object object) {
@@ -285,12 +249,27 @@ public class ProjectTypeStep extends ModuleWizardStep {
   }
 
   @Override
+  public void updateStep() {
+    myList.resetSelection();
+  }
+
+  @Override
+  public void onStepLeaving() {
+    myList.saveSelection();
+  }
+
+  @Override
   public JComponent getPreferredFocusedComponent() {
-    return myProjectTypeTree;
+    return myProjectTypeList;
   }
 
   @TestOnly
   public AddSupportForFrameworksPanel getFrameworksPanel() {
     return myFrameworksPanel;
+  }
+
+  @TestOnly
+  public boolean setSelectedProjectType(String group, String name) {
+    return myList.setSelectedTemplate(group, name);
   }
 }

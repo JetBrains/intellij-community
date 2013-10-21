@@ -175,6 +175,7 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
   </component>
 </module>
 

@@ -22,7 +22,7 @@ import com.intellij.openapi.externalSystem.service.project.wizard.ExternalModule
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -76,7 +76,7 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
 
   @Override
   public boolean isSuitableSdkType(SdkTypeId sdk) {
-    return sdk == JavaSdk.getInstance();
+    return sdk instanceof JavaSdkType;
   }
 
   @Override
