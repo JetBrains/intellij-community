@@ -199,7 +199,7 @@ private layoutPlugins(layouts) {
     */
   }
 
-  layouts.layoutPlugins()
+  layouts.layoutCommunityPlugins(ch)
 }
 
 private String appInfoFile(String classesPath) {
