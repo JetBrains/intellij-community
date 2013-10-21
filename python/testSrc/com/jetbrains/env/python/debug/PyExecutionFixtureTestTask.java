@@ -13,7 +13,7 @@ import com.intellij.testFramework.fixtures.impl.ModuleFixtureBuilderImpl;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureImpl;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.python.PythonModuleTypeBase;
-import com.jetbrains.python.PythonTestUtil;
+import com.jetbrains.python.fixtures.PyProfessionalTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +72,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   protected List<String> getContentRoots() { return Lists.newArrayList();}
 
   protected String getTestDataPath() {
-    return PythonTestUtil.getTestDataPath();
+    return PyProfessionalTestCase.getProfessionalTestDataPath();
   }
 
   protected void initFixtureBuilder() {
