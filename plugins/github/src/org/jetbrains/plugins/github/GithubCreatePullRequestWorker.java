@@ -216,7 +216,7 @@ public class GithubCreatePullRequestWorker {
   }
 
   public void showDiffDialog(@NotNull String branch) {
-    if (myTargetRemote != null) {
+    if (canShowDiff()) {
       DiffInfo info = getDiffInfoWithModal(branch);
       if (info == null) {
         GithubNotifications.showErrorDialog(myProject, "Can't Show Diff", "Can't get diff info");
@@ -344,7 +344,7 @@ public class GithubCreatePullRequestWorker {
     should be called from EDT
    */
   public void initLoadDiffInfo(@NotNull final String branch, @Nullable final Consumer<DiffDescription> after) {
-    if (myTargetRemote == null) {
+    if (!canShowDiff()) {
       return;
     }
 
