@@ -9,7 +9,7 @@
   <names product="PyCharm" fullname="PyCharm Community Edition" script="charm"/>
   <install-over minbuild="131.1" maxbuild="131.9999" version="3.x"/>
 
-  <welcome-screen logo-url="/PyCharmCoreWelcomeScreen.png" caption-url="/welcomeCaption.png" slogan-url="/developSlogan.png"/>
+  <welcome-screen logo-url="/PyCharmCoreWelcomeScreen.png" caption-url="PyCharmCoreWelcomeCaption.png" slogan-url="/developSlogan.png"/>
 
   <third-party url="http://confluence.jetbrains.com/display/PYH/Third-Party+Software+Used+by+PyCharm"/>
 
