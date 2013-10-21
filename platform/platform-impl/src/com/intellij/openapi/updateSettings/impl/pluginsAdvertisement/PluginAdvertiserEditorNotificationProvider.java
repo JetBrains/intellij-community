@@ -63,6 +63,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
     if (file.getFileType() != PlainTextFileType.INSTANCE) return null;
 
     final String extension = file.getExtension();
+    if (extension == null) return null;
     if (myEnabledExtensions.contains(extension) ||
         UnknownFeaturesCollector.getInstance(myProject).isIgnored(createExtensionFeature(extension))) return null;
 
