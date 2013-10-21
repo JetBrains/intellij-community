@@ -9,7 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="core-api" />
     <orderEntry type="module" module-name="IntelliLang" />
-    <orderEntry type="module" module-name="python" />
+    <orderEntry type="module" module-name="python-community" />
   </component>
 </module>
 
