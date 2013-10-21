@@ -17,9 +17,12 @@ package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.ActionPromoter;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
+import com.intellij.util.ui.UIUtil;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -64,7 +67,12 @@ public class EditorTextFieldActionPromoter implements ActionPromoter {
 
   @Override
   public List<AnAction> promote(List<AnAction> actions, DataContext context) {
-    Collections.sort(actions, ACTIONS_COMPARATOR);
+    final Editor editor = CommonDataKeys.EDITOR.getData(context);
+    if (editor != null) {
+      if (UIUtil.getParentOfType(EditorTextField.class, editor.getComponent()) != null) {
+        Collections.sort(actions, ACTIONS_COMPARATOR);
+      }
+    }
     return actions;
   }
 }
