@@ -226,7 +226,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
         myKeyHashToVirtualFileMapping.iterateData(new Processor<int[]>() {
           @Override
           public boolean process(int[] key) {
-            if (!idFilter.contains(key[1])) return true;
+            if (!idFilter.containsFileId(key[1])) return true;
             hashMaskSet.add(key[0]);
             ProgressManager.checkCanceled();
             return true;

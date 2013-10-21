@@ -992,7 +992,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               final V value = valueIt.next();
               for (final ValueContainer.IntIterator inputIdsIterator = container.getInputIdsIterator(value); inputIdsIterator.hasNext(); ) {
                 final int id = inputIdsIterator.next();
-                if (filter != null && !filter.contains(id)) continue;
+                if (filter != null && !filter.containsFileId(id)) continue;
                 VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
                 if (file != null && scope.accept(file)) {
                   shouldContinue = processor.process(file, value);
@@ -1068,7 +1068,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       });
     }
 
-    public boolean contains(int id) {
+    public boolean containsFileId(int id) {
       if (id < myMinId) return false;
       if (id > myMaxId) return false;
       id -= myMinId;
@@ -1160,7 +1160,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               if (mainIntersection == null || iterator.size() < mainIntersection.size()) {
                 while (iterator.hasNext()) {
                   final int id = iterator.next();
-                  if (mainIntersection == null && (projectFilesFilter == null || projectFilesFilter.contains(id)) ||
+                  if (mainIntersection == null && (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) ||
                       mainIntersection != null && mainIntersection.contains(id)
                     ) {
                     copy.add(id);
@@ -1266,7 +1266,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         ProjectIndexableFilesFilter projectIndexableFilesFilter = projectIndexableFiles(project);
         while (ids.hasNext()) {
           int id = ids.next();
-          if (projectIndexableFilesFilter != null && !projectIndexableFilesFilter.contains(id)) continue;
+          if (projectIndexableFilesFilter != null && !projectIndexableFilesFilter.containsFileId(id)) continue;
           //VirtualFile file = IndexInfrastructure.findFileById(fs, id);
           VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
           if (file != null && filter.accept(file)) {
@@ -2222,7 +2222,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         updateSemaphore = obtainForceUpdateSemaphore();
         try {
           for (VirtualFile file : getAllFilesToUpdate()) {
-            if (indexableFilesFilter != null && file instanceof VirtualFileWithId && !indexableFilesFilter.contains(((VirtualFileWithId)file).getId())) {
+            if (indexableFilesFilter != null && file instanceof VirtualFileWithId && !indexableFilesFilter.containsFileId(((VirtualFileWithId)file).getId())) {
               continue;
             }
 

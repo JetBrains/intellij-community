@@ -256,7 +256,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
           @Override
           public boolean perform(final int id, @NotNull final StubIdList value) {
             ProgressManager.checkCanceled();
-            if (finalIdFilter != null && !finalIdFilter.contains(id)) return true;
+            if (finalIdFilter != null && !finalIdFilter.containsFileId(id)) return true;
             final VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);
             if (file == null || scope != null && !scope.contains(file)) {
               return true;
