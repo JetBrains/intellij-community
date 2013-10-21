@@ -46,6 +46,7 @@ import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -75,7 +76,6 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   private volatile boolean myDisposed;
   private volatile boolean myInLoad;
   private Consumer<String> myIfNotCachedReloader;
-  private final Color myDefaultBackground;
   private boolean myChangesLoaded;
 
   public CommittedChangesPanel(Project project, final CommittedChangesProvider provider, final ChangeBrowserSettings settings,
@@ -91,8 +91,6 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     add(myBrowser, BorderLayout.CENTER);
 
     final VcsCommittedViewAuxiliary auxiliary = provider.createActions(myBrowser, location);
-
-    myDefaultBackground = new JTextField().getBackground();
 
     JPanel toolbarPanel = new JPanel();
     toolbarPanel.setLayout(new BoxLayout(toolbarPanel, BoxLayout.X_AXIS));
@@ -360,7 +358,7 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   }
 
   private void setRegularFilterBackground() {
-    myFilterComponent.getTextEditor().setBackground(myDefaultBackground);
+    myFilterComponent.getTextEditor().setBackground(UIUtil.getTextFieldBackground());
   }
 
   private void setNotFoundFilterBackground() {
