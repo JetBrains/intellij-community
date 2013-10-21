@@ -113,8 +113,21 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
   @Override
   public void reset() {
-    reloadTree();
+    myRoot.removeAllChildren();
+    loadScopes(mySharedScopesManager);
+    loadScopes(myLocalScopesManager);
+
     super.reset();
+
+    final List<String> order = getScopesState().myOrder;
+    TreeUtil.sort(myRoot, new Comparator<DefaultMutableTreeNode>() {
+      @Override
+      public int compare(final DefaultMutableTreeNode o1, final DefaultMutableTreeNode o2) {
+        final int idx1 = order.indexOf(((MyNode)o1).getDisplayName());
+        final int idx2 = order.indexOf(((MyNode)o2).getDisplayName());
+        return idx1 - idx2;
+      }
+    });
   }
 
 
@@ -192,27 +205,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     }
     myLocalScopesManager.setScopes(localScopes.toArray(new NamedScope[localScopes.size()]));
     mySharedScopesManager.setScopes(sharedScopes.toArray(new NamedScope[sharedScopes.size()]));
-  }
-
-  private void reloadTree() {
-    myRoot.removeAllChildren();
-    loadScopes(mySharedScopesManager);
-    loadScopes(myLocalScopesManager);
-
-    if (isModified()) {
-      loadStateOrder();
-    }
-
-
-    final List<String> order = getScopesState().myOrder;
-    TreeUtil.sort(myRoot, new Comparator<DefaultMutableTreeNode>() {
-      @Override
-      public int compare(final DefaultMutableTreeNode o1, final DefaultMutableTreeNode o2) {
-        final int idx1 = order.indexOf(((MyNode)o1).getDisplayName());
-        final int idx2 = order.indexOf(((MyNode)o2).getDisplayName());
-        return idx1 - idx2;
-      }
-    });
   }
 
   private void loadStateOrder() {
