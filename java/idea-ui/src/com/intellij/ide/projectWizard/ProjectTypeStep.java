@@ -141,7 +141,7 @@ public class ProjectTypeStep extends ModuleWizardStep {
     });
 
     for (ProjectCategory category : map.values()) {
-      myWizard.getSequence().addStepsForBuilder(myBuilders.get(category), context, modulesProvider, false);
+      myWizard.getSequence().addStepsForBuilder(myBuilders.get(category), context, modulesProvider, true);
     }
 
     myFrameworksPanel = new AddSupportForFrameworksPanel(Collections.<FrameworkSupportInModuleProvider>emptyList(), model, true);

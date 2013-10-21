@@ -61,6 +61,10 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     return ModuleWizardStep.EMPTY_ARRAY;
   }
 
+  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull T moduleBuilder, @NotNull ModulesProvider modulesProvider, boolean forNewWizard) {
+    return createWizardSteps(wizardContext, moduleBuilder, modulesProvider);
+  }
+
   @Nullable
   public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder) {
     return null;
