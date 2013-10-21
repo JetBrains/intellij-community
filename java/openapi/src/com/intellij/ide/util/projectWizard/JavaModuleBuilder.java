@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -87,6 +88,11 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
   @Override
   public ModuleWizardStep modifySettingsStep(@NotNull SettingsStep settingsStep) {
     return StdModuleTypes.JAVA.modifySettingsStep(settingsStep, this);
+  }
+
+  @Override
+  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider, boolean forNewWizard) {
+    return forNewWizard ? ModuleWizardStep.EMPTY_ARRAY : super.createWizardSteps(wizardContext, modulesProvider);
   }
 
   public void setupRootModel(ModifiableRootModel rootModel) throws ConfigurationException {
