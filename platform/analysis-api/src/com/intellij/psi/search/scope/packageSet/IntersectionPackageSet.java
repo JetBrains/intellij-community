@@ -24,6 +24,8 @@ public class IntersectionPackageSet extends PackageSetBase {
   private final PackageSet myFirstSet;
   private final PackageSet mySecondSet;
 
+  private String myText;
+
   public IntersectionPackageSet(PackageSet firstSet, PackageSet secondSet) {
     myFirstSet = firstSet;
     mySecondSet = secondSet;
@@ -58,18 +60,21 @@ public class IntersectionPackageSet extends PackageSetBase {
   @Override
   @NotNull
   public String getText() {
-    StringBuffer buf = new StringBuffer();
-    boolean needParen = myFirstSet.getNodePriority() > getNodePriority();
-    if (needParen) buf.append('(');
-    buf.append(myFirstSet.getText());
-    if (needParen) buf.append(')');
-    buf.append("&&");
-    needParen = mySecondSet.getNodePriority() > getNodePriority();
-    if (needParen) buf.append('(');
-    buf.append(mySecondSet.getText());
-    if (needParen) buf.append(')');
+    if (myText == null) {
+      final StringBuilder buf = new StringBuilder();
+      boolean needParen = myFirstSet.getNodePriority() > getNodePriority();
+      if (needParen) buf.append('(');
+      buf.append(myFirstSet.getText());
+      if (needParen) buf.append(')');
+      buf.append("&&");
+      needParen = mySecondSet.getNodePriority() > getNodePriority();
+      if (needParen) buf.append('(');
+      buf.append(mySecondSet.getText());
+      if (needParen) buf.append(')');
 
-    return buf.toString();
+      myText = buf.toString();
+    }
+    return myText;
   }
 
   public PackageSet getFirstSet() {

@@ -24,6 +24,8 @@ public class UnionPackageSet extends PackageSetBase {
   private final PackageSet myFirstSet;
   private final PackageSet mySecondSet;
 
+  private String myText;
+
   public UnionPackageSet(@NotNull PackageSet set1, @NotNull PackageSet set2) {
     myFirstSet = set1;
     mySecondSet = set2;
@@ -54,7 +56,10 @@ public class UnionPackageSet extends PackageSetBase {
   @Override
   @NotNull
   public String getText() {
-    return myFirstSet.getText() + "||" + mySecondSet.getText();
+    if (myText == null) {
+      myText = myFirstSet.getText() + "||" + mySecondSet.getText();
+    }
+    return myText;
   }
 
   public PackageSet getFirstSet() {
