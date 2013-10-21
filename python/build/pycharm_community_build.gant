@@ -208,7 +208,7 @@ private String appInfoFile(String classesPath) {
 
 private layoutFull(Map args, String target, Set usedJars) {
   def openapiModules = pycharmPlatformApiModules()
-  def superLayouts = includeFile("$home/build/scripts/layouts.gant")
+  def superLayouts = includeFile("$ch/build/scripts/layouts.gant")
   def result = layout(target) {
     dir("lib") {
       jar("util.jar") {
