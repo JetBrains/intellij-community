@@ -376,7 +376,7 @@ public class AddSupportForFrameworksPanel implements Disposable {
   public void addSupport(final @NotNull Module module, final @NotNull ModifiableRootModel rootModel) {
     List<Library> addedLibraries = new ArrayList<Library>();
     List<FrameworkSupportNode> selectedFrameworks = getFrameworkNodes(true);
-    selectedFrameworks.addAll(ContainerUtil.map(myAssociatedFrameworks, new Function.InstanceOf<FrameworkSupportNodeBase, FrameworkSupportNode>(FrameworkSupportNode.class)));
+    selectedFrameworks.addAll(ContainerUtil.mapNotNull(myAssociatedFrameworks, new Function.InstanceOf<FrameworkSupportNodeBase, FrameworkSupportNode>(FrameworkSupportNode.class)));
     sortFrameworks(selectedFrameworks);
     List<FrameworkSupportConfigurable> selectedConfigurables = new ArrayList<FrameworkSupportConfigurable>();
     final IdeaModifiableModelsProvider modifiableModelsProvider = new IdeaModifiableModelsProvider();
