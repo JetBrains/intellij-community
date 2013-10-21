@@ -116,6 +116,7 @@ public abstract class AbstractExternalModuleBuilder<S extends ExternalProjectSet
 
     AbstractExternalSystemSettings settings = ExternalSystemApiUtil.getSettings(model.getProject(), myExternalSystemId);
     //noinspection unchecked
+    myExternalProjectSettings.setExternalProjectPath(getContentEntryPath());
     settings.linkProject(myExternalProjectSettings);
   }
 
