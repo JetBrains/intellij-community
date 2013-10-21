@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
+import com.intellij.util.containers.SortedList;
 import com.intellij.util.ui.UIUtil;
 
 import java.util.Collections;
@@ -43,7 +44,7 @@ public class EditorTextFieldActionPromoter implements ActionPromoter {
    * <code>'expand/reduce selection by word'</code> editor action and <code>'change dialog width'</code> non-editor action
    * and we want to use the first one.
    */
-  private static final Comparator<? super AnAction> ACTIONS_COMPARATOR = new Comparator<AnAction>() {
+  private static final Comparator<AnAction> ACTIONS_COMPARATOR = new Comparator<AnAction>() {
     @Override
     public int compare(AnAction o1, AnAction o2) {
       if (o1 instanceof EditorAction && o2 instanceof EditorAction) {
@@ -70,9 +71,15 @@ public class EditorTextFieldActionPromoter implements ActionPromoter {
     final Editor editor = CommonDataKeys.EDITOR.getData(context);
     if (editor != null) {
       if (UIUtil.getParentOfType(EditorTextField.class, editor.getComponent()) != null) {
-        Collections.sort(actions, ACTIONS_COMPARATOR);
+        final SortedList<AnAction> result = new SortedList<AnAction>(ACTIONS_COMPARATOR);
+        for (AnAction action : actions) {
+          if (action instanceof EditorAction) {
+            result.add(action);
+          }
+        }
+        return result;
       }
     }
-    return actions;
+    return Collections.emptyList();
   }
 }

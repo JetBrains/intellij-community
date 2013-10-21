@@ -18,9 +18,9 @@ package com.intellij.ui;
 import com.intellij.openapi.actionSystem.ActionPromoter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.util.containers.SortedList;
 
 import javax.swing.*;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -42,7 +42,8 @@ public class ToolbarDecoratorActionPromoter implements ActionPromoter {
 
   @Override
   public List<AnAction> promote(List<AnAction> actions, DataContext context) {
-    Collections.sort(actions, ACTION_BUTTONS_SORTER);
-    return actions;
+    final SortedList<AnAction> result = new SortedList<AnAction>(ACTION_BUTTONS_SORTER);
+    result.addAll(actions);
+    return result;
   }
 }
