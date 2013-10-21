@@ -4,7 +4,6 @@ PsiParameter:p : java.util.ArrayList<? super java.lang.Integer>
 PsiReferenceExpression:p : java.util.ArrayList<? super java.lang.Integer>
 
 Conversions:
-new Integer(8) -> $
 p.set(0, new Integer(8)) -> $
 
 New expression type changes:

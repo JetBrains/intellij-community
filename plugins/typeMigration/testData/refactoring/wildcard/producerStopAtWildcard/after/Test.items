@@ -5,7 +5,6 @@ PsiReferenceExpression:p1 : java.util.List<? super java.lang.Number>
 
 Conversions:
 p1.add(p2) -> $
-p2 -> $
 
 New expression type changes:
 Fails:
