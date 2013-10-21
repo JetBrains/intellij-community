@@ -92,7 +92,7 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
     styleManager.shortenClassReferences(element);
   }
 
-  protected static void replaceExpressionAndShorten(@NotNull PsiExpression expression, @NotNull @NonNls String newExpressionText) {
+  protected static PsiElement replaceExpressionAndShorten(@NotNull PsiExpression expression, @NotNull @NonNls String newExpressionText) {
     final Project project = expression.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory factory = psiFacade.getElementFactory();
@@ -101,17 +101,17 @@ public abstract class InspectionGadgetsFix implements LocalQuickFix {
     final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
     javaCodeStyleManager.shortenClassReferences(replacementExp);
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
-    styleManager.reformat(replacementExp);
+    return styleManager.reformat(replacementExp);
   }
 
-  protected static void replaceStatement(@NotNull PsiStatement statement, @NotNull @NonNls String newStatementText) {
+  protected static PsiElement replaceStatement(@NotNull PsiStatement statement, @NotNull @NonNls String newStatementText) {
     final Project project = statement.getProject();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory factory = psiFacade.getElementFactory();
     final PsiStatement newStatement = factory.createStatementFromText(newStatementText, statement);
     final PsiElement replacementExp = statement.replace(newStatement);
     final CodeStyleManager styleManager = CodeStyleManager.getInstance(project);
-    styleManager.reformat(replacementExp);
+    return styleManager.reformat(replacementExp);
   }
 
   protected static void replaceStatementAndShortenClassNames(@NotNull PsiStatement statement, @NotNull @NonNls String newStatementText) {
