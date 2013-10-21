@@ -123,7 +123,7 @@ public class PluginsAdvertiser implements StartupActivity {
         streamReader.close();
       }
     }
-    catch (IOException e) {
+    catch (Throwable e) {
       LOG.info(e);
       return null;
     }
