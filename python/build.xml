@@ -17,10 +17,11 @@
     <attribute name="script" />
     <sequential>
       <java failonerror="true" jar="${project.home}/lib/ant/lib/ant-launcher.jar" fork="true">
-        <jvmarg line="-Xmx612m -XX:MaxPermSize=152m"/>
+        <jvmarg line="-Xmx612m -XX:MaxPermSize=152m -Didea.build.number=${idea.build.number} -DideaPath=${idea.path}"/>
 
         <arg line="&quot;-Dgant.script=@{script}&quot;"/>
         <arg line="&quot;-Dteamcity.build.tempDir=${tmp.dir}&quot;"/>
+        <arg line="&quot;-Didea.build.number=${idea.build.number}&quot;"/>
         <arg line="&quot;-Didea.test.group=ALL_EXCLUDE_DEFINED&quot;"/>
         <arg value="-f"/>
         <arg value="${project.home}/build/gant.xml"/>
@@ -32,6 +33,9 @@
     <call_gant script="${python.home}/build/pycharm_community_build.gant"/>
   </target>
 
+  <target name="plugin" depends="init">
+    <call_gant script="${python.home}/build/python_plugin_build.gant"/>
+  </target>
   <!--
   <target name="test" depends="init">
     <call_gant script="${project.home}/build/scripts/tests.gant"/>

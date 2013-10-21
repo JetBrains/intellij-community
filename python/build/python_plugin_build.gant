@@ -7,6 +7,7 @@ includeTargets << new File("${projectHome}/build/scripts/utils.gant")
 
 setProperty("outDir", "${projectHome}/out/python")
 setProperty("ideaDir", "${outDir}/ideaCE")
+requireProperty("ideaPath", ideaDir)
 
 setProperty("pluginHelp", "${outDir}/help")
 
@@ -71,8 +72,8 @@ target(name: "clean", description: "Cleanup output") {
 
 target(name: "unzip") {
   ant.mkdir(dir: "${ideaHomePacked}")
-  ant.gunzip(src: "${ideaDir}/ideaIC-${ideaBuildNumber}.tar.gz")
-  ant.untar(src: "${ideaDir}/ideaIC-${ideaBuildNumber}.tar", dest: "${ideaHomePacked}")
+  ant.gunzip(src: "${ideaPath}/ideaIC-${ideaBuildNumber}.tar.gz")
+  ant.untar(src: "${ideaPath}/ideaIC-${ideaBuildNumber}.tar", dest: "${ideaHomePacked}")
 }
 
 target(name: "compile", description: "Compile module python") {
