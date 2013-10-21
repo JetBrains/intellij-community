@@ -23,7 +23,6 @@ To build and run the code:
 If you don't have IDEA yet:
 
 * Install ant
-* Install gant
 * Run `ant` command from the root (you probably have to set JAVA_HOME explicitly).
 * Installation archive is located at `./out/artifacts`
 
