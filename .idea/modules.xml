@@ -100,6 +100,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/lang-impl/lang-impl.iml" filepath="$PROJECT_DIR$/platform/lang-impl/lang-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" filepath="$PROJECT_DIR$/platform/lvcs-api/lvcs-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-impl/lvcs-impl.iml" filepath="$PROJECT_DIR$/platform/lvcs-impl/lvcs-impl.iml" group="platform" />
+      <module fileurl="file://$PROJECT_DIR$/python/main_idea_python_plugin.iml" filepath="$PROJECT_DIR$/python/main_idea_python_plugin.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/main_pycharm_ce.iml" filepath="$PROJECT_DIR$/python/main_pycharm_ce.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/java/manifest/manifest.iml" filepath="$PROJECT_DIR$/java/manifest/manifest.iml" group="java" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/maven.iml" filepath="$PROJECT_DIR$/plugins/maven/maven.iml" group="plugins/maven" />
