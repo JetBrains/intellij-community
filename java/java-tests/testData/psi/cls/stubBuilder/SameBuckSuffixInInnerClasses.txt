@@ -1,0 +1,31 @@
+PsiJavaFileStub []
+  PsiClassStub[name=SameBuckSuffixInInnerClasses fqn=SameBuckSuffixInInnerClasses]
+    PsiModifierListStub[mask=4096]
+    PsiTypeParameterListStub
+    PsiRefListStub[EXTENDS_LIST:]
+    PsiRefListStub[IMPLEMENTS_LIST:]
+    PsiClassStub[name=Inner2$class fqn=SameBuckSuffixInInnerClasses.Inner2.class]
+      PsiModifierListStub[mask=9]
+      PsiTypeParameterListStub
+      PsiRefListStub[EXTENDS_LIST:]
+      PsiRefListStub[IMPLEMENTS_LIST:]
+      PsiMethodStub[cons Inner2$class:void]
+        PsiModifierListStub[mask=1]
+        PsiTypeParameterListStub
+        PsiParameterListStub
+        PsiRefListStub[THROWS_LIST:]
+    PsiClassStub[name=Inner1$class fqn=SameBuckSuffixInInnerClasses.Inner1.class]
+      PsiModifierListStub[mask=9]
+      PsiTypeParameterListStub
+      PsiRefListStub[EXTENDS_LIST:]
+      PsiRefListStub[IMPLEMENTS_LIST:]
+      PsiMethodStub[cons Inner1$class:void]
+        PsiModifierListStub[mask=1]
+        PsiTypeParameterListStub
+        PsiParameterListStub
+        PsiRefListStub[THROWS_LIST:]
+    PsiMethodStub[cons SameBuckSuffixInInnerClasses:void]
+      PsiModifierListStub[mask=4096]
+      PsiTypeParameterListStub
+      PsiParameterListStub
+      PsiRefListStub[THROWS_LIST:]

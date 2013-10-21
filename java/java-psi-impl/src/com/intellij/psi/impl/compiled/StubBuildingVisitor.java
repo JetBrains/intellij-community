@@ -63,6 +63,12 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   private final T mySource;
   private PsiModifierListStub myModList;
   private PsiClassStub myResult;
+  private String shortNameForInner;
+
+  public StubBuildingVisitor(final T classSource, InnerClassSourceStrategy<T> innersStrategy, final StubElement parent, final int access, String shortNameForInner) {
+    this(classSource, innersStrategy, parent, access);
+    this.shortNameForInner = shortNameForInner;
+  }
 
   public StubBuildingVisitor(final T classSource, InnerClassSourceStrategy<T> innersStrategy, final StubElement parent, final int access) {
     super(Opcodes.ASM4);
@@ -85,7 +91,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
                     final String[] interfaces) {
     String fqn = getClassName(name);
 
-    final String shortName = PsiNameHelper.getShortClassName(fqn);
+    final String shortName = shortNameForInner != null ? shortNameForInner : PsiNameHelper.getShortClassName(fqn);
 
     final int flags = myAccess == 0 ? access : myAccess;
 
@@ -322,7 +328,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     final ClassReader reader = myInnersStrategy.readerForInnerClass(innerSource);
     if (reader == null) return;
 
-    final StubBuildingVisitor<T> classVisitor = new StubBuildingVisitor<T>(innerSource, myInnersStrategy, myResult, access);
+    final StubBuildingVisitor<T> classVisitor = new StubBuildingVisitor<T>(innerSource, myInnersStrategy, myResult, access, innerName);
     reader.accept(classVisitor, ClassReader.SKIP_FRAMES);
   }
 
