@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,7 @@ public class SliceNullnessAnalyzer {
     SliceManager.getInstance(root.getProject()).createToolWindow(true, root, true, SliceManager.getElementDescription(null, rootUsage.getElement(), " Grouped by Nullness") );
   }
 
+  @NotNull
   public static SliceRootNode createNewTree(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
     SliceRootNode root = oldRoot.copy();
     assert oldRoot.myCachedChildren.size() == 1;
@@ -65,10 +66,13 @@ public class SliceNullnessAnalyzer {
     return root;
   }
 
-  private static void createValueRootNode(NullAnalysisResult result, SliceRootNode oldRoot,
+  private static void createValueRootNode(NullAnalysisResult result,
+                                          SliceRootNode oldRoot,
                                           final Map<SliceNode, NullAnalysisResult> map,
                                           SliceRootNode root,
-                                          SliceNode oldRootStart, String nodeName, final int group) {
+                                          SliceNode oldRootStart,
+                                          String nodeName,
+                                          final int group) {
     Collection<PsiElement> groupedByValue = result.groupedByValue[group];
     if (groupedByValue.isEmpty()) {
       return;
@@ -152,16 +156,17 @@ public class SliceNullnessAnalyzer {
     };
   }
 
-  private static NullAnalysisResult node(SliceNode node, Map<SliceNode, NullAnalysisResult> nulls) {
+  private static NullAnalysisResult node(@NotNull SliceNode node, @NotNull Map<SliceNode, NullAnalysisResult> nulls) {
     return nulls.get(node);
   }
-  private static Collection<PsiElement> group(SliceNode node, Map<SliceNode, NullAnalysisResult> nulls, int group) {
+  private static Collection<PsiElement> group(@NotNull SliceNode node, @NotNull Map<SliceNode, NullAnalysisResult> nulls, int group) {
     return nulls.get(node).groupedByValue[group];
   }
 
   @NotNull
-  public static NullAnalysisResult calcNullableLeaves(@NotNull final SliceNode root, @NotNull AbstractTreeStructure treeStructure,
-                                                       final Map<SliceNode, NullAnalysisResult> map) {
+  public static NullAnalysisResult calcNullableLeaves(@NotNull final SliceNode root,
+                                                      @NotNull AbstractTreeStructure treeStructure,
+                                                      @NotNull final Map<SliceNode, NullAnalysisResult> map) {
     final SliceLeafAnalyzer.SliceNodeGuide guide = new SliceLeafAnalyzer.SliceNodeGuide(treeStructure);
     WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
       @Override
@@ -263,7 +268,7 @@ public class SliceNullnessAnalyzer {
     return Nullness.UNKNOWN;
   }
 
-  public static class NullAnalysisResult {
+  static class NullAnalysisResult {
     public static int NULLS = 0;
     public static int NOT_NULLS = 1;
     public static int UNKNOWNS = 2;
@@ -275,7 +280,7 @@ public class SliceNullnessAnalyzer {
       }
     }
 
-    public void add(NullAnalysisResult duplicate) {
+    private void add(NullAnalysisResult duplicate) {
       for (int i = 0; i < groupedByValue.length; i++) {
         Collection<PsiElement> elements = groupedByValue[i];
         Collection<PsiElement> other = duplicate.groupedByValue[i];

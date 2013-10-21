@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.slice;
+package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.slicer.SliceAnalysisParams;
-import com.intellij.slicer.SliceHandler;
-import com.intellij.slicer.SliceUsage;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.IntArrayList;
 import gnu.trove.THashMap;
@@ -42,10 +38,10 @@ import java.util.*;
 /**
  * @author cdr
  */
-public class SliceBackwardTest extends DaemonAnalyzerTestCase {
+public class SliceBackwardTest extends SliceTestCase {
   private final TIntObjectHashMap<IntArrayList> myFlownOffsets = new TIntObjectHashMap<IntArrayList>();
 
-  private void dotest() throws Exception {
+  private void doTest() throws Exception {
     configureByFile("/codeInsight/slice/backward/"+getTestName(false)+".java");
     Map<String, RangeMarker> sliceUsageName2Offset = extractSliceOffsetsFromDocument(getEditor().getDocument());
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -59,10 +55,10 @@ public class SliceBackwardTest extends DaemonAnalyzerTestCase {
     params.dataFlowToThis = true;
 
     SliceUsage usage = SliceUsage.createRootUsage(element, params);
-    checkUsages(usage, true, myFlownOffsets);
+    checkUsages(usage, myFlownOffsets);
   }
 
-  static void checkUsages(final SliceUsage usage, final boolean dataFlowToThis, final TIntObjectHashMap<IntArrayList> flownOffsets) {
+  static void checkUsages(final SliceUsage usage, final TIntObjectHashMap<IntArrayList> flownOffsets) {
     final List<SliceUsage> children = new ArrayList<SliceUsage>();
     boolean b = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
@@ -76,7 +72,7 @@ public class SliceBackwardTest extends DaemonAnalyzerTestCase {
     int[] offsets = list == null ? new int[0] : list.toArray();
     Arrays.sort(offsets);
 
-    int size = list == null ? 0 : list.size();
+    int size = offsets.length;
     assertEquals(message(startOffset, usage), size, children.size());
     Collections.sort(children, new Comparator<SliceUsage>() {
       @Override
@@ -90,7 +86,7 @@ public class SliceBackwardTest extends DaemonAnalyzerTestCase {
       int offset = offsets[i];
       assertEquals(message(offset, child), offset, child.getUsageInfo().getElement().getTextOffset());
 
-      checkUsages(child, dataFlowToThis, flownOffsets);
+      checkUsages(child, flownOffsets);
     }
   }
 
@@ -111,7 +107,10 @@ public class SliceBackwardTest extends DaemonAnalyzerTestCase {
     Map<String, RangeMarker> sliceUsageName2Offset = new THashMap<String, RangeMarker>();
 
     extract(document, sliceUsageName2Offset, "");
-    assertTrue(!document.getText().contains("<flown"));
+    int index = document.getText().indexOf("<flown");
+    if(index!=-1) {
+      fail(document.getText().substring(index, Math.min(document.getText().length(), index+50)));
+    }
     assertTrue(!sliceUsageName2Offset.isEmpty());
     return sliceUsageName2Offset;
   }
@@ -153,28 +152,33 @@ public class SliceBackwardTest extends DaemonAnalyzerTestCase {
     });
   }
 
-  public void testSimple() throws Exception { dotest();}
-  public void testLocalVar() throws Exception { dotest();}
-  public void testInterMethod() throws Exception { dotest();}
-  public void testConditional() throws Exception { dotest();}
-  public void testConditional2() throws Exception { dotest();}
-  public void testMethodReturn() throws Exception { dotest();}
-  public void testVarUse() throws Exception { dotest();}
-  public void testWeirdCaretPosition() throws Exception { dotest();}
-  public void testAnonClass() throws Exception { dotest();}
-  public void testPostfix() throws Exception { dotest();}
-  public void testMethodCall() throws Exception { dotest();}
-  public void testEnumConst() throws Exception { dotest();}
-  public void testTypeAware() throws Exception { dotest();}
-  public void testTypeAware2() throws Exception { dotest();}
-  public void testViaParameterizedMethods() throws Exception { dotest();}
-  public void testTypeErased() throws Exception { dotest();}
-  public void testComplexTypeErasure() throws Exception { dotest();}
-  public void testGenericsSubst() throws Exception { dotest();}
-  public void testOverrides() throws Exception { dotest();}
-  public void testGenericBoxing() throws Exception { dotest();}
-  public void testAssignment() throws Exception { dotest();}
-  public void testGenericImplement() throws Exception { dotest();}
-  public void testGenericImplement2() throws Exception { dotest();}
-  public void testOverloadConstructor() throws Exception { dotest();}
+  public void testSimple() throws Exception { doTest();}
+  public void testLocalVar() throws Exception { doTest();}
+  public void testInterMethod() throws Exception { doTest();}
+  public void testConditional() throws Exception { doTest();}
+  public void testConditional2() throws Exception { doTest();}
+  public void testMethodReturn() throws Exception { doTest();}
+  public void testVarUse() throws Exception { doTest();}
+  public void testWeirdCaretPosition() throws Exception { doTest();}
+  public void testAnonClass() throws Exception { doTest();}
+  public void testPostfix() throws Exception { doTest();}
+  public void testMethodCall() throws Exception { doTest();}
+  public void testEnumConst() throws Exception { doTest();}
+  public void testTypeAware() throws Exception { doTest();}
+  public void testTypeAware2() throws Exception { doTest();}
+  public void testViaParameterizedMethods() throws Exception { doTest();}
+  public void testTypeErased() throws Exception { doTest();}
+  public void testComplexTypeErasure() throws Exception { doTest();}
+  public void testGenericsSubst() throws Exception { doTest();}
+  public void testOverrides() throws Exception { doTest();}
+  public void testGenericBoxing() throws Exception { doTest();}
+  public void testAssignment() throws Exception { doTest();}
+  public void testGenericImplement() throws Exception { doTest();}
+  public void testGenericImplement2() throws Exception { doTest();}
+  public void testOverloadConstructor() throws Exception { doTest();}
+  public void testArrayElements() throws Exception { doTest();}
+  public void testAnonArray() throws Exception { doTest();}
+  public void testVarArgs() throws Exception { doTest();}
+
+  public void testListTrackToArray() throws Exception { doTest();}
 }

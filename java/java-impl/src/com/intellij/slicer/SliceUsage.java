@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,21 +35,34 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
   private final SliceUsage myParent;
   public final SliceAnalysisParams params;
   private final PsiSubstitutor mySubstitutor;
+  protected final int indexNesting; // 0 means bare expression 'x', 1 means x[?], 2 means x[?][?] etc
+  @NotNull protected final String syntheticField; // "" means no field, otherwise it's a name of fake field of container, e.g. "keys" for Map
 
-  public SliceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
+  public SliceUsage(@NotNull PsiElement element,
+                    @NotNull SliceUsage parent,
+                    @NotNull PsiSubstitutor substitutor,
+                    int indexNesting,
+                    @NotNull String syntheticField) {
     super(new UsageInfo(element));
     myParent = parent;
     mySubstitutor = substitutor;
+    this.syntheticField = syntheticField;
     params = parent.params;
     assert params != null;
+    this.indexNesting = indexNesting;
   }
+
+  // root usage
   private SliceUsage(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) {
     super(new UsageInfo(element));
     myParent = null;
     this.params = params;
     mySubstitutor = PsiSubstitutor.EMPTY;
+    indexNesting = 0;
+    syntheticField = "";
   }
 
+  @NotNull
   public static SliceUsage createRootUsage(@NotNull PsiElement element, @NotNull SliceAnalysisParams params) {
     return new SliceUsage(element, params);
   }
@@ -75,11 +88,17 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
       public void run() {
-        if (params.dataFlowToThis) {
-          SliceUtil.processUsagesFlownDownTo(element, uniqueProcessor, SliceUsage.this, mySubstitutor);
+        try {
+          if (params.dataFlowToThis) {
+            SliceUtil.processUsagesFlownDownTo(element, uniqueProcessor, SliceUsage.this, mySubstitutor, indexNesting,syntheticField);
+          }
+          else {
+            SliceForwardUtil.processUsagesFlownFromThe(element, uniqueProcessor, SliceUsage.this);
+          }
         }
-        else {
-          SliceForwardUtil.processUsagesFlownFromThe(element, uniqueProcessor, SliceUsage.this);
+        catch (Exception e) {
+          int i = 0;
+          throw new RuntimeException(e);
         }
       }
     });
@@ -94,13 +113,14 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
     return params.scope;
   }
 
+  @NotNull
   SliceUsage copy() {
     PsiElement element = getUsageInfo().getElement();
-    return getParent() == null ? createRootUsage(element, params) : new SliceUsage(element, getParent(),mySubstitutor);
+    return getParent() == null ? createRootUsage(element, params) : new SliceUsage(element, getParent(),mySubstitutor,indexNesting,syntheticField);
   }
 
+  @NotNull
   public PsiSubstitutor getSubstitutor() {
     return mySubstitutor;
   }
-
 }

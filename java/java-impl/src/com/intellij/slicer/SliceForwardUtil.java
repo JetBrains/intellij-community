@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.slicer;
 
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -62,7 +63,7 @@ public class SliceForwardUtil {
               if (parameters.length <= parameterIndex) return true;
               PsiParameter actualParam = parameters[parameterIndex];
 
-              SliceUsage usage = SliceUtil.createSliceUsage(actualParam, parent, superSubstitutor);
+              SliceUsage usage = SliceUtil.createSliceUsage(actualParam, parent, superSubstitutor,parent.indexNesting, "");
               return processor.process(usage);
             }
           };
@@ -71,7 +72,7 @@ public class SliceForwardUtil {
         }
       }
 
-      SliceUsage usage = SliceUtil.createSliceUsage(target, parent, parent.getSubstitutor());
+      SliceUsage usage = SliceUtil.createSliceUsage(target, parent, parent.getSubstitutor(),parent.indexNesting, "");
       return processor.process(usage);
     }
 
@@ -91,8 +92,10 @@ public class SliceForwardUtil {
     return true;
   }
 
-  private static boolean processAssignedFrom(final PsiElement from, final PsiElement context, final SliceUsage parent,
-                                                 final Processor<SliceUsage> processor) {
+  private static boolean processAssignedFrom(final PsiElement from,
+                                             final PsiElement context,
+                                             final SliceUsage parent,
+                                             @NotNull final Processor<SliceUsage> processor) {
     if (from instanceof PsiLocalVariable) {
       return searchReferencesAndProcessAssignmentTarget(from, context, parent, processor);
     }
@@ -107,7 +110,7 @@ public class SliceForwardUtil {
         Collection<PsiMethod> superMethods = new THashSet<PsiMethod>(Arrays.asList(method.findDeepestSuperMethods()));
         superMethods.add(method);
         for (Iterator<PsiMethod> iterator = superMethods.iterator(); iterator.hasNext(); ) {
-          SliceManager.getInstance(method.getProject()).checkCanceled();
+          ProgressManager.checkCanceled();
           PsiMethod superMethod = iterator.next();
           if (!parent.params.scope.contains(superMethod)) {
             iterator.remove();
@@ -116,18 +119,18 @@ public class SliceForwardUtil {
 
         final THashSet<PsiMethod> implementors = new THashSet<PsiMethod>(superMethods);
         for (PsiMethod superMethod : superMethods) {
-          SliceManager.getInstance(method.getProject()).checkCanceled();
+          ProgressManager.checkCanceled();
           if (!OverridingMethodsSearch.search(superMethod, parent.getScope().toSearchScope(), true).forEach(new Processor<PsiMethod>() {
             @Override
             public boolean process(PsiMethod sub) {
-              SliceManager.getInstance(method.getProject()).checkCanceled();
+              ProgressManager.checkCanceled();
               implementors.add(sub);
               return true;
             }
           })) return false;
         }
         for (PsiMethod implementor : implementors) {
-          SliceManager.getInstance(method.getProject()).checkCanceled();
+          ProgressManager.checkCanceled();
           if (!parent.params.scope.contains(implementor)) continue;
           if (implementor instanceof PsiCompiledElement) implementor = (PsiMethod)implementor.getNavigationElement();
 
@@ -141,7 +144,7 @@ public class SliceForwardUtil {
         parametersToAnalyze.add(parameter);
       }
       for (final PsiParameter psiParameter : parametersToAnalyze) {
-        SliceManager.getInstance(from.getProject()).checkCanceled();
+        ProgressManager.checkCanceled();
 
         if (!searchReferencesAndProcessAssignmentTarget(psiParameter, null, parent, processor)) return false;
       }
@@ -161,7 +164,7 @@ public class SliceForwardUtil {
         if (!MethodReferencesSearch.search(containingMethod, parent.getScope().toSearchScope(), true).forEach(new Processor<PsiReference>() {
             @Override
             public boolean process(final PsiReference reference) {
-              SliceManager.getInstance(from.getProject()).checkCanceled();
+              ProgressManager.checkCanceled();
               synchronized (processed) {
                 if (!processed.add(reference)) return true;
               }
@@ -194,7 +197,7 @@ public class SliceForwardUtil {
     if (element instanceof PsiCompiledElement) element = element.getNavigationElement();
     Pair<PsiElement, PsiSubstitutor> pair = getAssignmentTarget(element, parent);
     if (pair != null) {
-      SliceUsage usage = SliceUtil.createSliceUsage(element, parent, pair.getSecond());
+      SliceUsage usage = SliceUtil.createSliceUsage(element, parent, pair.getSecond(),parent.indexNesting, "");
       return processor.process(usage);
     }
     if (parent.params.showInstanceDereferences && isDereferenced(element)) {
@@ -261,6 +264,7 @@ public class SliceForwardUtil {
     return target == null ? null : Pair.create(target, substitutor);
   }
 
+  @NotNull
   public static PsiElement complexify(@NotNull PsiElement element) {
     PsiElement parent = element.getParent();
     if (parent instanceof PsiParenthesizedExpression && element.equals(((PsiParenthesizedExpression)parent).getExpression())) {

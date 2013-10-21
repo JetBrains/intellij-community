@@ -1,17 +1,31 @@
-package com.intellij.codeInsight.slice;
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.ToolWindowHeadlessManagerImpl;
 import com.intellij.psi.*;
-import com.intellij.slicer.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.*;
@@ -19,7 +33,7 @@ import java.util.*;
 /**
  * @author cdr
  */
-public class SliceTreeTest extends LightDaemonAnalyzerTestCase {
+public class SliceTreeTest extends SliceTestCase {
   private SliceTreeStructure configureTree(@NonNls final String name) throws Exception {
     configureByFile("/codeInsight/slice/backward/"+ name +".java");
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -78,26 +92,39 @@ public class SliceTreeTest extends LightDaemonAnalyzerTestCase {
     List<SliceNode> nodes = new ArrayList<SliceNode>();
     expandNodesTo(root, nodes);
 
-    for (int i = 0; i < nodes.size()-1; i++) {
-      SliceNode node = nodes.get(i);
-      assertNull(node.getDuplicate());
+    TIntArrayList hasDups = new TIntArrayList();
+    for (SliceNode node : nodes) {
+      if (node.getDuplicate() != null) {
+        PsiElement element = node.getValue().getElement();
+        hasDups.add(element.getTextRange().getStartOffset());
+        assertTrue(element instanceof PsiParameter && ((PsiParameter)element).getName().equals("i") || element instanceof PsiLiteralExpression);
+      }
     }
-    SliceNode last = nodes.get(nodes.size() - 1);
-    assertNotNull(last.getDuplicate());
 
     type("   xx");
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     backspace();
     backspace();
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    backspace();
+    backspace();
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    backspace();
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     nodes.clear();
     expandNodesTo(root, nodes);
-    for (int i = 0; i < nodes.size()-1; i++) {
-      SliceNode node = nodes.get(i);
-      assertNull(node.getDuplicate());
+    for (SliceNode node : nodes) {
+      if (node.getDuplicate() != null) {
+        PsiElement element = node.getValue().getElement();
+        int offset = element.getTextRange().getStartOffset();
+        int i = hasDups.indexOf(offset);
+        assertTrue(i != -1);
+        hasDups.remove(i);
+        assertTrue(element instanceof PsiParameter && ((PsiParameter)element).getName().equals("i") || element instanceof PsiLiteralExpression);
+      }
     }
-    assertNotNull(last.getDuplicate());
+    assertTrue(hasDups.isEmpty());
   }
 
   public void testLeafExpressionsAreEmptyInCaseOfInfinitelyExpandingTreeWithDuplicateNodes() throws Exception {
@@ -165,7 +192,17 @@ public class SliceTreeTest extends LightDaemonAnalyzerTestCase {
     children = child.getChildren();
     assertEquals(1, children.size());
     child = (SliceNode)children.iterator().next();
+    assertTrue(child.getValue().getElement() instanceof PsiParameter);
+
+    children = child.getChildren();
+    assertEquals(1, children.size());
+    child = (SliceNode)children.iterator().next();
     assertTrue(child.getValue().getElement() instanceof PsiReferenceExpression);
+
+    children = child.getChildren();
+    assertEquals(1, children.size());
+    child = (SliceNode)children.iterator().next();
+    assertTrue(child.getValue().getElement() instanceof PsiParameter);
 
     children = child.getChildren();
     assertEquals(1, children.size());
@@ -173,6 +210,7 @@ public class SliceTreeTest extends LightDaemonAnalyzerTestCase {
     assertTrue(child.getValue().getElement() instanceof PsiLiteralExpression);
     assertEquals(child.getValue().getElement(), leaf);
   }
+
   public void testNullness() throws Exception {
     SliceTreeStructure treeStructure = configureTree("Nulls");
     final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
@@ -185,67 +223,79 @@ public class SliceTreeTest extends LightDaemonAnalyzerTestCase {
                             "  Value: o\n" +
                             "    (6: 12) |String| |l|;\n" +
                             "      (52: 13) |l| |=| |d|;\n" +
-                            "        (15: 13) |set|(|o|)|;\n" +
+                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
+                            "          (15: 13) |set|(|o|)|;\n" +
                             "  Value: nu()\n" +
                             "    (6: 12) |String| |l|;\n" +
                             "      (52: 13) |l| |=| |d|;\n" +
-                            "        (29: 13) |set|(|nu|(|)|)|;\n" +
+                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
+                            "          (29: 13) |set|(|nu|(|)|)|;\n" +
                             "  Value: t\n" +
                             "    (6: 12) |String| |l|;\n" +
                             "      (52: 13) |l| |=| |d|;\n" +
-                            "        (46: 15) |x|.|set|(|t|)|;\n" +
+                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
+                            "          (46: 15) |x|.|set|(|t|)|;\n" +
                             "NotNull Values\n" +
                             "  Value: \"\"\n" +
                             "    (6: 12) |String| |l|;\n" +
                             "      (52: 13) |l| |=| |d|;\n" +
-                            "        (19: 13) |set|(|CON|)|;\n" +
-                            "          (5: 39) |private| |final| |static| |String| |CON| |=| |\"\"|;\n" +
+                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
+                            "          (19: 13) |set|(|CON|)|;\n" +
+                            "            (5: 39) |private| |final| |static| |String| |CON| |=| |\"\"|;\n" +
                             "  Value: \"xxx\"\n" +
                             "    (6: 12) |String| |l|;\n" +
                             "      (52: 13) |l| |=| |d|;\n" +
-                            "        (10: 13) |set|(|\"xxx\"|)|;\n" +
+                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
+                            "          (10: 13) |set|(|\"xxx\"|)|;\n" +
                             "  Value: new String()\n" +
                             "    (6: 12) |String| |l|;\n" +
                             "      (52: 13) |l| |=| |d|;\n" +
-                            "        (17: 13) |set|(|new| |String|(|)|)|;\n" +
+                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
+                            "          (17: 13) |set|(|new| |String|(|)|)|;\n" +
                             "  Value: nn()\n" +
                             "    (6: 12) |String| |l|;\n" +
                             "      (52: 13) |l| |=| |d|;\n" +
-                            "        (18: 13) |set|(|nn|(|)|)|;\n" +
+                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
+                            "          (18: 13) |set|(|nn|(|)|)|;\n" +
                             "  Value: nn\n" +
                             "    (6: 12) |String| |l|;\n" +
                             "      (52: 13) |l| |=| |d|;\n" +
-                            "        (21: 13) |set|(|nn|)|;\n" +
+                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
+                            "          (21: 13) |set|(|nn|)|;\n" +
                             "  Value: g\n" +
                             "    (6: 12) |String| |l|;\n" +
                             "      (52: 13) |l| |=| |d|;\n" +
-                            "        (27: 13) |set|(|g|)|;\n" +
+                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
+                            "          (27: 13) |set|(|g|)|;\n" +
                             "  Value: \"null\"\n" +
                             "    (6: 12) |String| |l|;\n" +
                             "      (52: 13) |l| |=| |d|;\n" +
-                            "        (48: 15) |x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
-                            "          (48: 27) |x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
+                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
+                            "          (48: 15) |x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
+                            "            (48: 27) |x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
                             "  Value: t\n" +
                             "    (6: 12) |String| |l|;\n" +
                             "      (52: 13) |l| |=| |d|;\n" +
-                            "        (48: 15) |x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
-                            "          (48: 36) |x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
+                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
+                            "          (48: 15) |x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
+                            "            (48: 36) |x|.|set|(|t| |==| |null| |?| |\"null\"| |:| |t|)|;\n" +
                             "  Value: d\n" +
                             "    (6: 12) |String| |l|;\n" +
                             "      (55: 13) |l| |=| |d|;\n" +
                             "Other Values\n" +
-                            "  Value: g\n" +
+                            "  Value: private String d;\n" +
                             "    (6: 12) |String| |l|;\n" +
                             "      (52: 13) |l| |=| |d|;\n" +
-                            "        (11: 13) |set|(|g|)|;\n" +
-                            "        (24: 13) |set|(|other|)|;\n" +
-                            "          (23: 24) |String| |other| |=| |g| |==| |\"\"| |?| |CON| |:| |g|;\n" +
-                            "            (23: 40) |String| |other| |=| |g| |==| |\"\"| |?| |CON| |:| |g|;\n" +
-                            "  Value: d\n" +
+                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
+                            "          (30: 13) |set|(|hz|(|)|)|;\n" +
+                            "            (42: 16) |return| |d|;\n" +
+                            "              (7: 20) |private| |String| |d|;\n" +
+                            "  Value: String g\n" +
                             "    (6: 12) |String| |l|;\n" +
                             "      (52: 13) |l| |=| |d|;\n" +
-                            "        (30: 13) |set|(|hz|(|)|)|;\n" +
-                            "          (42: 16) |return| |d|;\n" +
+                            "        (51: 21) |void| |set|(|String| |d|)| |{\n" +
+                            "          (11: 13) |set|(|g|)|;\n" +
+                            "            (9: 21) |public| |X|(|String| |g|)| |{\n" +
                             "");
   }
 
@@ -260,7 +310,7 @@ public class SliceTreeTest extends LightDaemonAnalyzerTestCase {
       }
     });
 
-    String[] childrenExpected = dataExpected.length() == 0 ? ArrayUtil.EMPTY_STRING_ARRAY : dataExpected.split("\n");
+    String[] childrenExpected = dataExpected.isEmpty() ? ArrayUtil.EMPTY_STRING_ARRAY : dataExpected.split("\n");
     String curChildren = "";
     String curNode = null;
     int iactual = 0;
@@ -283,7 +333,7 @@ public class SliceTreeTest extends LightDaemonAnalyzerTestCase {
         curChildren += StringUtil.trimStart(e, "  ") + "\n";
       }
     }
-    assertEquals(actualNodes.size(), iactual);
+    assertEquals(dataExpected, actualNodes.size(), iactual);
   }
 
   public void testDoubleNullness() throws Exception {
@@ -301,5 +351,52 @@ public class SliceTreeTest extends LightDaemonAnalyzerTestCase {
         "      (7: 9) |l| |=| |null|;\n" +
         ""
                    );
+  }
+
+  public void testGroupByLeavesWithLists() throws Exception {
+    SliceTreeStructure treeStructure = configureTree(getTestName(false));
+    final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
+    Map<SliceNode, Collection<PsiElement>> map = SliceLeafAnalyzer.createMap();
+    Collection<PsiElement> leaves = SliceLeafAnalyzer.calcLeafExpressions(root, treeStructure, map);
+    assertEquals(2, leaves.size());
+    Set<String> names = ContainerUtil.map2Set(leaves, new Function<PsiElement, String>() {
+      @Override
+      public String fun(PsiElement element) {
+        return element.getText();
+      }
+    });
+    assertEquals(ContainerUtil.newHashSet("\"uuu\"", "\"xxx\""), names);
+  }
+
+  public void testCollectionTrack() throws Exception {
+    Set<String> names = groupByLeaves();
+    assertEquals(3, names.size());
+    assertEquals(ContainerUtil.newHashSet("\"uuu\"", "\"x\"", "\"y\""), names);
+  }
+
+  private Set<String> groupByLeaves() throws Exception {
+    SliceTreeStructure treeStructure = configureTree(getTestName(false));
+    final SliceRootNode root = (SliceRootNode)treeStructure.getRootElement();
+    Map<SliceNode, Collection<PsiElement>> map = SliceLeafAnalyzer.createMap();
+    Collection<PsiElement> leaves = SliceLeafAnalyzer.calcLeafExpressions(root, treeStructure, map);
+    return ContainerUtil.map2Set(leaves, new Function<PsiElement, String>() {
+      @Override
+      public String fun(PsiElement element) {
+        return element.getText();
+      }
+    });
+  }
+
+  public void testArrayCopyTrack() throws Exception {
+    Set<String> names = groupByLeaves();
+    assertOrderedEquals(Collections.singletonList("\"x\""), assertOneElement(names));
+  }
+  public void testMapValuesTrack() throws Exception {
+    Set<String> names = groupByLeaves();
+    assertOrderedEquals(Collections.singletonList("\"y\""), assertOneElement(names));
+  }
+  public void testMapKeysTrack() throws Exception {
+    Set<String> names = groupByLeaves();
+    assertOrderedEquals(Collections.singletonList("\"x\""), assertOneElement(names));
   }
 }

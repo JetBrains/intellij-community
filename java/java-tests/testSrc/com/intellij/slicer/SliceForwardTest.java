@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.slice;
+package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
@@ -21,9 +21,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.slicer.SliceAnalysisParams;
-import com.intellij.slicer.SliceForwardHandler;
-import com.intellij.slicer.SliceUsage;
 import com.intellij.util.containers.IntArrayList;
 import gnu.trove.TIntObjectHashMap;
 
@@ -49,7 +46,7 @@ public class SliceForwardTest extends DaemonAnalyzerTestCase {
     params.scope = new AnalysisScope(getProject());
     params.dataFlowToThis = false;
     SliceUsage usage = SliceUsage.createRootUsage(element, params);
-    SliceBackwardTest.checkUsages(usage, false, myFlownOffsets);
+    SliceBackwardTest.checkUsages(usage, myFlownOffsets);
   }
 
   public void testSimple() throws Exception { dotest();}

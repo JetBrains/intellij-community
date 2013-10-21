@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Proxy;
 import java.util.*;
 
 /**
@@ -438,5 +440,19 @@ public class AnnotationUtil {
     PsiAnnotationMemberValue attrValue = anno.findAttributeValue(attributeName);
     Object constValue = JavaPsiFacade.getInstance(anno.getProject()).getConstantEvaluationHelper().computeConstantExpression(attrValue);
     return constValue instanceof String ? (String)constValue : null;
+  }
+  @Nullable
+  public static Boolean getBooleanAttributeValue(PsiAnnotation anno, @Nullable final String attributeName) {
+    PsiAnnotationMemberValue attrValue = anno.findAttributeValue(attributeName);
+    Object constValue = JavaPsiFacade.getInstance(anno.getProject()).getConstantEvaluationHelper().computeConstantExpression(attrValue);
+    return constValue instanceof Boolean ? (Boolean)constValue : null;
+  }
+
+  @Nullable
+  public static <T extends Annotation> T findAnnotationInHierarchy(@NotNull PsiModifierListOwner listOwner, @NotNull Class<T> annotationClass) {
+    PsiAnnotation annotation = findAnnotationInHierarchy(listOwner, Collections.singleton(annotationClass.getName()));
+    if (annotation == null) return null;
+    return (T)Proxy.newProxyInstance(
+      annotationClass.getClassLoader(), new Class<?>[]{annotationClass}, new AnnotationInvocationHandler(annotationClass, annotation));
   }
 }

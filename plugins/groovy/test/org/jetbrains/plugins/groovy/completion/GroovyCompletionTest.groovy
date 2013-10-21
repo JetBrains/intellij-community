@@ -1441,7 +1441,7 @@ import java.lang.annotation.Target;
 
     configure('@T<caret> @interface Foo {}')
     myFixture.completeBasic()
-    myFixture.assertPreferredCompletionItems 0, 'TMetaAnno', 'Target', 'TreeSelectionMode', 'TLocalAnno'
+    myFixture.assertPreferredCompletionItems 0, 'TMetaAnno', 'Target', 'TabLayoutPolicy', 'TabPlacement'
   }
 
   void testDiamondCompletion1() {

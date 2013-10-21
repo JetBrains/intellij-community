@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,13 @@ package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -45,7 +46,6 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
   private final Project myProject;
   private ContentManager myBackContentManager;
   private ContentManager myForthContentManager;
-  private volatile boolean myCanceled;
   private final StoredSettingsBean myStoredSettings = new StoredSettingsBean();
   private static final String BACK_TOOLWINDOW_ID = "Analyze Dataflow to";
   private static final String FORTH_TOOLWINDOW_ID = "Analyze Dataflow from";
@@ -61,38 +61,43 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
 
   public SliceManager(@NotNull Project project, PsiManager psiManager) {
     myProject = project;
+  }
 
-    psiManager.addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
+  @NotNull
+  private Disposable addPsiListener(@NotNull final ProgressIndicator indicator) {
+    Disposable disposable = Disposer.newDisposable();
+    PsiManager.getInstance(myProject).addPsiTreeChangeListener(new PsiTreeChangeAdapter() {
       @Override
       public void beforeChildAddition(@NotNull PsiTreeChangeEvent event) {
-        cancel();
+        indicator.cancel();
       }
 
       @Override
       public void beforeChildRemoval(@NotNull PsiTreeChangeEvent event) {
-        cancel();
+        indicator.cancel();
       }
 
       @Override
       public void beforeChildReplacement(@NotNull PsiTreeChangeEvent event) {
-        cancel();
+        indicator.cancel();
       }
 
       @Override
       public void beforeChildMovement(@NotNull PsiTreeChangeEvent event) {
-        cancel();
+        indicator.cancel();
       }
 
       @Override
       public void beforeChildrenChange(@NotNull PsiTreeChangeEvent event) {
-        cancel();
+        indicator.cancel();
       }
 
       @Override
       public void beforePropertyChange(@NotNull PsiTreeChangeEvent event) {
-        cancel();
+        indicator.cancel();
       }
-    }, project);
+    }, disposable);
+    return disposable;
   }
 
   private ContentManager getContentManager(boolean dataFlowToThis) {
@@ -111,10 +116,6 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
       new ContentManagerWatcher(forthToolWindow, myForthContentManager);
     }
     return myForthContentManager;
-  }
-
-  private void cancel() {
-    myCanceled = true;
   }
 
   public void slice(@NotNull PsiElement element, boolean dataFlowToThis, @NotNull SliceHandler handler) {
@@ -179,24 +180,22 @@ public class SliceManager implements PersistentStateComponent<SliceManager.Store
            "</body></html>";
   }
 
-  public void checkCanceled() throws ProcessCanceledException {
-    if (myCanceled) {
-      throw new ProcessCanceledException();
-    }
-  }
-
-  public void runInterruptibly(Runnable runnable, Runnable onCancel, ProgressIndicator progress) throws ProcessCanceledException {
-    myCanceled = false;
+  public void runInterruptibly(@NotNull ProgressIndicator progress,
+                               @NotNull Runnable onCancel,
+                               @NotNull Runnable runnable) throws ProcessCanceledException {
+    Disposable disposable = addPsiListener(progress);
     try {
       progress.checkCanceled();
-      ((ProgressManagerImpl)ProgressManager.getInstance()).executeProcessUnderProgress(runnable, progress);
+      ProgressManager.getInstance().executeProcessUnderProgress(runnable, progress);
     }
     catch (ProcessCanceledException e) {
-      cancel();
       progress.cancel();
       //reschedule for later
       onCancel.run();
       throw e;
+    }
+    finally {
+      Disposer.dispose(disposable);
     }
   }
 
