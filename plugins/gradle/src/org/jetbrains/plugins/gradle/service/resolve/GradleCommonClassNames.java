@@ -56,6 +56,7 @@ public final class GradleCommonClassNames {
   @NonNls public static final String GRADLE_API_TASK_CONTAINER = "org.gradle.api.tasks.TaskContainer";
   @NonNls public static final String GRADLE_API_JAVA_ARCHIVES_MANIFEST = "org.gradle.api.java.archives.Manifest";
   @NonNls public static final String GRADLE_API_NAMED_DOMAIN_OBJECT_COLLECTION = "org.gradle.api.NamedDomainObjectCollection";
+  @NonNls public static final String GRADLE_API_ARTIFACTS_REPOSITORIES_MAVEN_ARTIFACT_REPOSITORY = "org.gradle.api.artifacts.repositories.MavenArtifactRepository";
 
   private GradleCommonClassNames() {
   }

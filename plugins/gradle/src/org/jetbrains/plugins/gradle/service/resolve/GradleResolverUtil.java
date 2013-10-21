@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrImplicitVariableIm
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
 import java.util.Set;
 
@@ -122,13 +123,13 @@ public class GradleResolverUtil {
     processMethod(gradleConfigurationName, dependencyHandlerClass, processor, state, place, null);
   }
 
-  public static void processMethod(@NotNull String gradleConfigurationName,
-                                   @NotNull PsiClass dependencyHandlerClass,
+  public static void processMethod(@NotNull String methodName,
+                                   @NotNull PsiClass handlerClass,
                                    @NotNull PsiScopeProcessor processor,
                                    @NotNull ResolveState state,
                                    @NotNull PsiElement place,
                                    @Nullable String defaultMethodName) {
-    GrLightMethodBuilder builder = new GrLightMethodBuilder(place.getManager(), gradleConfigurationName);
+    GrLightMethodBuilder builder = new GrLightMethodBuilder(place.getManager(), methodName);
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getManager().getProject());
     PsiType type = new PsiArrayType(factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, place.getResolveScope()));
     builder.addParameter(new GrLightParameter("param", type, builder));
@@ -148,15 +149,24 @@ public class GradleResolverUtil {
     int argsCount = getGrMethodArumentsCount(args);
     argsCount++; // Configuration name is delivered as an argument.
 
-    for (PsiMethod method : dependencyHandlerClass.findMethodsByName(gradleConfigurationName, false)) {
+    for (PsiMethod method : handlerClass.findMethodsByName(methodName, false)) {
       if (method.getParameterList().getParametersCount() == argsCount) {
         builder.setNavigationElement(method);
         return;
       }
     }
 
+    // handle setter's shortcut facilities
+    final String setter = GroovyPropertyUtils.getSetterName(methodName);
+    for (PsiMethod method : handlerClass.findMethodsByName(setter, false)) {
+      if (method.getParameterList().getParametersCount() == 1) {
+      builder.setNavigationElement(method);
+      return;
+      }
+    }
+
     if (defaultMethodName != null) {
-      for (PsiMethod method : dependencyHandlerClass.findMethodsByName(defaultMethodName, false)) {
+      for (PsiMethod method : handlerClass.findMethodsByName(defaultMethodName, false)) {
         if (method.getParameterList().getParametersCount() == argsCount) {
           builder.setNavigationElement(method);
           return;
