@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -712,10 +712,16 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     myContext.setHasSecondStroke(hasSecondStroke);
+    final List<AnAction> actions = myContext.getActions();
 
-    Comparator<? super AnAction> comparator = PlatformDataKeys.ACTIONS_SORTER.getData(myContext.getDataContext());
-    if (comparator != null) {
-      Collections.sort(myContext.getActions(), comparator);
+    if (actions.size() > 1) {
+      for (ActionPromoter promoter : ActionPromoter.EP_NAME.getExtensions()) {
+        final List<AnAction> promoted = promoter.promote(actions, myContext.getDataContext());
+        if (promoted == actions || promoted.isEmpty()) continue;
+
+        actions.removeAll(promoted);
+        actions.addAll(0, promoted);
+      }
     }
 
     return myContext;

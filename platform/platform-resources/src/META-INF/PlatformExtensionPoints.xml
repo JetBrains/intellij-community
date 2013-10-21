@@ -118,6 +118,8 @@
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.actionSystem.EditorActionHandler"/>
     </extensionPoint>
 
+    <extensionPoint name="actionPromoter" interface="com.intellij.openapi.actionSystem.ActionPromoter"/>
+
     <extensionPoint name="editorTypedHandler" beanClass="com.intellij.openapi.editor.actionSystem.EditorTypedHandlerBean">
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.actionSystem.TypedActionHandler"/>
     </extensionPoint>
