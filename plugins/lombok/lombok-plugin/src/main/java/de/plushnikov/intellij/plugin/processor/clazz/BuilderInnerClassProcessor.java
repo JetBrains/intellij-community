@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
+import com.intellij.ide.util.PackageUtil;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
@@ -91,7 +92,15 @@ public class BuilderInnerClassProcessor extends AbstractClassProcessor {
          .withMethods(createMethods(psiClass, innerClass, psiAnnotation));
       target.add(innerClass);
     }
+
+//    target.add(createInnerClassNewWay(psiClass, psiAnnotation));
   }
+
+//  protected PsiClass createInnerClassNewWay(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+//    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
+//    PsiClass newClass = factory.createClass("SureBet");
+//    return newClass;
+//  }
 
   protected Collection<PsiMethod> createConstructors(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     NoArgsConstructorProcessor noArgsConstructorProcessor = new NoArgsConstructorProcessor();

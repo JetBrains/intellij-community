@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.psi;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.ItemPresentation;
@@ -9,9 +10,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.InheritanceImplUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
+import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.stubs.IStubElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +51,8 @@ public class LombokLightClass extends LightElement implements PsiClass, PsiQuali
   private boolean myIsAnnotationType = false;
   private boolean myIsEnum = false;
   private boolean myIsDeprecated = false;
+  private LombokLightIdentifier myNameIdentifier;
+  private ASTNode myNode;
 
   public LombokLightClass(PsiManager manager, Language language) {
     super(manager, language);
@@ -293,15 +298,26 @@ public class LombokLightClass extends LightElement implements PsiClass, PsiQuali
     return null;
   }
 
+  @Override
+  public ASTNode getNode() {
+    if (myNode == null) {
+      PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getManager().getProject()).getElementFactory();
+      PsiClass createdClass = elementFactory.createClass(getName());
+      myNode = createdClass.getNode();
+    }
+    return myNode;
+
+  }
+
   @Nullable
   @Override
   public PsiIdentifier getNameIdentifier() {
-    return null;
+    return myNameIdentifier;
   }
 
   @Override
   public PsiElement getScope() {
-    return null;
+    return getParent();
   }
 
   @Override
@@ -354,6 +370,7 @@ public class LombokLightClass extends LightElement implements PsiClass, PsiQuali
   @Override
   public PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException {
     myName = name;
+    myNameIdentifier = new LombokLightIdentifier(getManager(), name);
     return this;
   }
 
