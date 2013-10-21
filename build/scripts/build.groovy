@@ -207,7 +207,10 @@ class Build {
 
     if (steps.dmg) {
       projectBuilder.stage("buildDmg")
+      projectBuilder.stage("IU build dmg without jdk")
       ultimate_utils.buildDmg(product, getDmgImage(), extraArgs)
+      projectBuilder.stage("IU build dmg with jdk")
+      ultimate_utils.buildDmg("${product}-with_jdk", getDmgImage(), extraArgs + ["jdk_archive_name" : "${project.home}/build/jdk/jdk_mac_redist.tar"])
     }
   }
 }
