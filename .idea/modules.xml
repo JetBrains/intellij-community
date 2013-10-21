@@ -131,6 +131,7 @@
       <module fileurl="file://$PROJECT_DIR$/python/python-pydev.iml" filepath="$PROJECT_DIR$/python/python-pydev.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/python/python-rest/python-rest.iml" filepath="$PROJECT_DIR$/python/python-rest/python-rest.iml" group="python" />
       <module fileurl="file://$PROJECT_DIR$/xml/relaxng/relaxng.iml" filepath="$PROJECT_DIR$/xml/relaxng/relaxng.iml" group="plugins" />
+      <module fileurl="file://$PROJECT_DIR$/platform/remote-servers/agent-rt/remote-servers-agent-rt.iml" filepath="$PROJECT_DIR$/platform/remote-servers/agent-rt/remote-servers-agent-rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/remote-servers/api/remote-servers-api.iml" filepath="$PROJECT_DIR$/platform/remote-servers/api/remote-servers-api.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/platform/remote-servers/impl/remote-servers-impl.iml" filepath="$PROJECT_DIR$/platform/remote-servers/impl/remote-servers-impl.iml" group="platform" />
       <module fileurl="file://$PROJECT_DIR$/java/remote-servers/api/remote-servers-java-api.iml" filepath="$PROJECT_DIR$/java/remote-servers/api/remote-servers-java-api.iml" group="java" />
