@@ -28,5 +28,7 @@
     <framework.detector implementation="com.jetbrains.django.facet.DjangoFrameworkDetector"/>
     <frameworkSupport implementation="com.jetbrains.django.facet.DjangoFacetSupportProvider"/>
     <frameworkSupport implementation="com.jetbrains.appengine.facet.AppEngineFacetSupportProvider"/>
+    <!-- Console folding for Jython only, thus it's located in python-plugin only -->
+    <stacktrace.fold substring="*sys-package-mgr*:"/>
   </extensions>
 </idea-plugin>
