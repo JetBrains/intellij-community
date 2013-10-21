@@ -144,9 +144,11 @@ public class GithubCreatePullRequestDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    super.doOKAction();
-    myProjectSettings.setCreatePullRequestDefaultBranch(getTargetBranch());
-    myWorker.performAction(getRequestTitle(), getDescription(), getTargetBranch());
+    if (myWorker.checkAction(getTargetBranch())) {
+      myProjectSettings.setCreatePullRequestDefaultBranch(getTargetBranch());
+      myWorker.performAction(getRequestTitle(), getDescription(), getTargetBranch());
+      super.doOKAction();
+    }
   }
 
   @Nullable

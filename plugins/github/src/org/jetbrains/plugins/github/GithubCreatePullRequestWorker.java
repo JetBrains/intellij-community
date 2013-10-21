@@ -15,7 +15,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ThrowableConvertor;
-import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashMap;
 import git4idea.DialogManager;
@@ -56,7 +55,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class GithubCreatePullRequestWorker {
   private static final Logger LOG = GithubUtil.LOG;
-  private static final String CANNOT_CREATE_PULL_REQUEST = "Can't create pull request";
+  private static final String CANNOT_CREATE_PULL_REQUEST = "Can't Create Pull Request";
 
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
@@ -271,6 +270,25 @@ public class GithubCreatePullRequestWorker {
     return dialog.getPath();
   }
 
+  public boolean checkAction(@NotNull String targetBranch) {
+    DiffInfo info = getDiffInfoWithModal(targetBranch);
+    if (info == null) {
+      return true;
+    }
+    if (info.getInfo().getBranchToHeadCommits(myGitRepository).isEmpty()) {
+      GithubNotifications.showWarningDialog(myProject, CANNOT_CREATE_PULL_REQUEST,
+        "Can't create empty pull request: the branch" + getCurrentBranch() + " in fully merged to the branch " + targetBranch + ".");
+      return false;
+    }
+    if (info.getInfo().getHeadToBranchCommits(myGitRepository).isEmpty()) {
+      return GithubNotifications
+               .showYesNoDialog(myProject, "The branch" + targetBranch + " in not fully merged to the branch " + getCurrentBranch(),
+                                "Do you want to proceed anyway?") == Messages.YES;
+    }
+
+    return true;
+  }
+
   public void performAction(@NotNull final String title, @NotNull final String description, @NotNull final String targetBranch) {
     @NotNull final Project project = myProject;
 
@@ -375,11 +393,12 @@ public class GithubCreatePullRequestWorker {
                                        @NotNull final String currentBranch,
                                        @NotNull final String targetBranch) {
     try {
-      List<GitCommit> commits = GitHistoryUtils.history(project, repository.getRoot(), targetBranch + "..");
+      List<GitCommit> commits1 = GitHistoryUtils.history(project, repository.getRoot(), ".." + targetBranch);
+      List<GitCommit> commits2 = GitHistoryUtils.history(project, repository.getRoot(), targetBranch + "..");
       Collection<Change> diff = GitChangeUtils.getDiff(repository.getProject(), repository.getRoot(), targetBranch, currentBranch, null);
       GitCommitCompareInfo info = new GitCommitCompareInfo(GitCommitCompareInfo.InfoType.BRANCH_TO_HEAD);
       info.put(repository, diff);
-      info.put(repository, Pair.<List<GitCommit>, List<GitCommit>>create(Collections.<GitCommit>emptyList(), commits));
+      info.put(repository, Pair.create(commits1, commits2));
       return new DiffInfo(info, currentBranch, targetBranch);
     }
     catch (VcsException e) {
