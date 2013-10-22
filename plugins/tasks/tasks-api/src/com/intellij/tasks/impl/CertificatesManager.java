@@ -6,10 +6,8 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import org.apache.commons.httpclient.params.HttpConnectionParams;
 import org.apache.commons.httpclient.protocol.Protocol;
 import org.apache.commons.httpclient.protocol.ProtocolSocketFactory;
@@ -29,6 +27,8 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * {@code CertificatesManager} is responsible for negotiation SSL connection with server
@@ -150,35 +150,37 @@ public class CertificatesManager {
         mySystemManager.checkServerTrusted(certificates, s);
       }
       catch (CertificateException e1) {
-        try {
-          myCustomManager.checkServerTrusted(certificates, s);
-        }
-        catch (CertificateException e2) {
-          if (myCustomManager.isBroken() || !updateTrustStore(certificates)) {
-            throw e2;
+        // looks like self-signed certificate
+        if (certificates.length == 1) {
+          try {
+            myCustomManager.checkServerTrusted(certificates, s);
+          }
+          catch (CertificateException e2) {
+            if (!myCustomManager.isBroken()) {
+              updateTrustStore(certificates[0]);
+            }
           }
         }
       }
     }
 
-    private boolean updateTrustStore(final X509Certificate[] certificates) {
-      final Ref<Boolean> accepted = Ref.create(false);
-      final X509Certificate certificate = certificates[0];
-      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+    private void updateTrustStore(final X509Certificate certificate) {
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          int res = Messages.showOkCancelDialog(
-            String.format("<html>The following server's certificate is unknown: <pre>%s<pre></br>Add to trust storage?</html>",
-                          formatX509Certificate(certificate)),
-            "Unknown Server's Certificate", AllIcons.General.WarningDialog);
-          accepted.set(res == Messages.OK);
+          String message = String.format("<html>" +
+                                         "<p>The following server's certificate is unknown and appears to be self-signed:</p>" +
+                                         "<pre><h3>Certificate details</h3>%s</pre></br>" +
+                                         "<p>Add it to trust storage?</p>" +
+                                         "</html>",
+                                         formatX509Certificate(certificate));
+          int res = Messages.showOkCancelDialog(message, "Unknown Server's Certificate", "Accept", "Reject", AllIcons.General.WarningDialog);
+          if (res == Messages.OK) {
+            LOG.debug("Certificate was accepted");
+            myCustomManager.addCertificate(certificate);
+          }
         }
       }, ModalityState.any());
-      if (accepted.get()) {
-        LOG.debug("Certificate was accepted");
-        return myCustomManager.addCertificate(certificate);
-      }
-      return false;
     }
 
     @Override
@@ -333,19 +335,26 @@ public class CertificatesManager {
 
   private static String formatX509Certificate(X509Certificate certificate) {
     String info = certificate.getIssuerX500Principal().getName();
-    return StringUtil.join(info.split(","), "\n");
-//    StringBuilder builder = new StringBuilder();
-//    builder.append("<table>");
-//    for (String chunk : info.split(",")) {
-//      String[] parts = chunk.trim().split("=");
-//      if (parts.length == 0) {
-//        continue;
+//    return StringUtil.join(ContainerUtil.mapNotNull(info.split(","), new Function<String, String>() {
+//      @Override
+//      public String fun(String s) {
+//        s = s.trim();
+//        return s.matches("[A-Z]+=.*") ? s : null;
 //      }
-//      String name = parts.length >= 1 ? parts[0] : "";
-//      String value = parts.length >= 2 ? parts[1] : "";
-//      builder.append("<tr><td>").append(name).append("</td><td>").append(value).append("</td></tr>");
-//    }
-//    builder.append("</table>");
-//    return builder.toString();
+//    }), "\n");
+    StringBuilder builder = new StringBuilder("<table>");
+    Pattern pattern = Pattern.compile("([A-Z]+)=(.*)");
+    for (String s : info.split(",")) {
+      s = s.trim();
+      Matcher matcher = pattern.matcher(s);
+      if (matcher.matches()) {
+        builder.append("<tr><td align='right'>")
+          .append(matcher.group(1)).append(":")
+          .append("</td><td>")
+          .append(matcher.group(2))
+          .append("</td></tr>");
+      }
+    }
+    return builder.append("</table>").toString();
   }
 }
