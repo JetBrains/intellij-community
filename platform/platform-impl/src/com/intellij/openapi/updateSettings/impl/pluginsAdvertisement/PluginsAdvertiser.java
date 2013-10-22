@@ -20,6 +20,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.stream.JsonReader;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.RepositoryHelper;
 import com.intellij.notification.*;
@@ -177,21 +178,24 @@ public class PluginsAdvertiser implements StartupActivity {
               indicator.setText("Searching for plugin supporting \'" + feature.getImplementationName() + "\'");
               final List<PluginId> pluginId = retrieve(feature);
               if (pluginId != null) {
-                //do not suggest to download disabled plugins
-                final List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
-                for (PluginId id : pluginId) {
-                  if (!disabledPlugins.contains(id.getIdString())) {
-                    ids.add(id);
-                  }
-                }
+                ids.addAll(pluginId);
               }
               indicator.setFraction(((double) idx++) / unknownFeatures.size());
             }
 
             try {
+              final List<String> disabledPlugins = PluginManagerCore.getDisabledPlugins();
+              //include disabled plugins
+              for (PluginId id : ids) {
+                final IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
+                if (plugin != null) {
+                  myPlugins.add(PluginDownloader.createDownloader(plugin));
+                }
+              }
               myAllPlugins = RepositoryHelper.loadPluginsFromRepository(indicator);
               for (IdeaPluginDescriptor loadedPlugin : myAllPlugins) {
-                if (ids.contains(loadedPlugin.getPluginId())) {
+                final PluginId pluginId = loadedPlugin.getPluginId();
+                if (ids.contains(pluginId) && !disabledPlugins.contains(pluginId.getIdString())) {
                   myPlugins.add(PluginDownloader.createDownloader(loadedPlugin));
                 }
               }

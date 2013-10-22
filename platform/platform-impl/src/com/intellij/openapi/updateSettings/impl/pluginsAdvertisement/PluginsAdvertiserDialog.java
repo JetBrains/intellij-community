@@ -15,10 +15,9 @@
  */
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerMain;
-import com.intellij.ide.plugins.PluginNode;
+import com.intellij.ide.plugins.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.updateSettings.impl.DetectedPluginsPanel;
@@ -47,7 +46,7 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
     super(project);
     myUploadedPlugins = plugins;
     myAllPlugins = allPlugins;
-    setTitle("Choose Plugins to Install");
+    setTitle("Choose Plugins to Install or Enable");
     init();
   }
 
@@ -70,12 +69,18 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
+    final Set<IdeaPluginDescriptor> pluginsToEnable = new HashSet<IdeaPluginDescriptor>();
     final List<PluginNode> nodes = new ArrayList<PluginNode>();
     for (PluginDownloader downloader : myUploadedPlugins) {
       if (!mySkippedPlugins.contains(downloader.getPluginId())) {
-        final PluginNode pluginNode = PluginDownloader.createPluginNode(null, downloader);
-        if (pluginNode != null) {
-          nodes.add(pluginNode);
+        final IdeaPluginDescriptor descriptor = PluginManager.getPlugin(PluginId.getId(downloader.getPluginId()));
+        if (descriptor != null) {
+          pluginsToEnable.add(descriptor);
+        } else {
+          final PluginNode pluginNode = PluginDownloader.createPluginNode(null, downloader);
+          if (pluginNode != null) {
+            nodes.add(pluginNode);
+          }
         }
       }
     }
@@ -89,6 +94,9 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
     }
     catch (IOException e) {
       LOG.error(e);
+    }
+    for (IdeaPluginDescriptor pluginDescriptor : pluginsToEnable) {
+      PluginManagerCore.enablePlugin(pluginDescriptor.getPluginId().getIdString());
     }
     super.doOKAction();
   }
