@@ -45,7 +45,6 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.ex.IdeConfigurablesGroup;
 import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbServiceImpl;
@@ -794,7 +793,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   @SuppressWarnings("SSBasedInspection")
-  private class CalcThread implements Runnable {
+  private class CalcThread extends Thread {
     private final Project project;
     private final String pattern;
     private ProgressIndicator myProgressIndicator = new ProgressIndicatorBase();
@@ -806,65 +805,60 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     @Override
     public void run() {
-      //noinspection SSBasedInspection
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          myTitleIndexes.clear();
-          clearModel();
-          myAlreadyAddedFiles.clear();
-        }
-      });
-      if (pattern.trim().length() == 0) {
-        buildModelFromRecentFiles();
-        updatePopup();
-        return;
-      }
-
-      checkModelsUpToDate();
-      buildTopHit(pattern);
-      buildRecentFiles(pattern);
-      updatePopup();
-      AccessToken readLock = ApplicationManager.getApplication().acquireReadActionLock();
-      if (!DumbServiceImpl.getInstance(project).isDumb()) {
-        try {
-          buildClasses(pattern, false);
-        } finally {readLock.finish();}
-        updatePopup();
-      }
-
-      readLock = ApplicationManager.getApplication().acquireReadActionLock();
       try {
-        buildFiles(pattern);
-      } finally {readLock.finish();}
+        //noinspection SSBasedInspection
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            myTitleIndexes.clear();
+            clearModel();
+            myAlreadyAddedFiles.clear();
+          }
+        });
+        if (pattern.trim().length() == 0) {
+          buildModelFromRecentFiles();
+          updatePopup();
+          return;
+        }
 
-      buildActionsAndSettings(pattern);
-      updatePopup();
+        checkModelsUpToDate();
+        buildTopHit(pattern);
+        buildRecentFiles(pattern);
+        updatePopup();
+        buildToolWindows(pattern);
+        updatePopup();
+
+        AccessToken readLock = ApplicationManager.getApplication().acquireReadActionLock();
+        if (!DumbServiceImpl.getInstance(project).isDumb()) {
+          try {
+            buildClasses(pattern, false);
+          } finally {readLock.finish();}
+          updatePopup();
+        }
+
+        readLock = ApplicationManager.getApplication().acquireReadActionLock();
+        try {
+          buildFiles(pattern);
+        } finally {readLock.finish();}
+
+        buildActionsAndSettings(pattern);
+        updatePopup();
+      }
+      catch (Exception ignore) {
+      }
     }
 
-    private void buildActionsAndSettings(String pattern) {
-      final Set<AnAction> actions = new HashSet<AnAction>();
-      final Set<Object> settings = new HashSet<Object>();
+    private void buildToolWindows(String pattern) {
       final HashSet<AnAction> toolWindows = new HashSet<AnAction>();
       final MinusculeMatcher matcher = new MinusculeMatcher("*" +pattern, NameUtil.MatchingCaseSensitivity.NONE);
-
       List<MatchResult> matches = collectResults(pattern, myActions, myActionModel);
-
       for (MatchResult o : matches) {
         myProgressIndicator.checkCanceled();
         Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
         for (Object object : objects) {
           myProgressIndicator.checkCanceled();
-          if (isSetting(object) && settings.size() < 7) {
-            if (matcher.matches(getSettingText((OptionDescription)object))) {
-              settings.add(object);
-            }
-          }
-          else if (isToolWindowAction(object) && toolWindows.size() < 10) {
+          if (isToolWindowAction(object) && toolWindows.size() < 10) {
             toolWindows.add((AnAction)((Map.Entry)object).getKey());
-          }
-          else if (isActionValue(object) && actions.size() < 7) {
-            actions.add((AnAction)((Map.Entry)object).getKey());
           }
         }
       }
@@ -881,6 +875,39 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               myListModel.addElement(toolWindow);
             }
           }
+        }
+      });
+    }
+
+    private void buildActionsAndSettings(String pattern) {
+      final Set<AnAction> actions = new HashSet<AnAction>();
+      final Set<Object> settings = new HashSet<Object>();
+      final MinusculeMatcher matcher = new MinusculeMatcher("*" +pattern, NameUtil.MatchingCaseSensitivity.NONE);
+
+      List<MatchResult> matches = collectResults(pattern, myActions, myActionModel);
+
+      for (MatchResult o : matches) {
+        myProgressIndicator.checkCanceled();
+        Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
+        for (Object object : objects) {
+          myProgressIndicator.checkCanceled();
+          if (isSetting(object) && settings.size() < 7) {
+            if (matcher.matches(getSettingText((OptionDescription)object))) {
+              settings.add(object);
+            }
+          }
+          else if (!isToolWindowAction(object) && isActionValue(object) && actions.size() < 7) {
+            actions.add((AnAction)((Map.Entry)object).getKey());
+          }
+        }
+      }
+
+      myProgressIndicator.checkCanceled();
+
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          if (myProgressIndicator.isCanceled()) return;
           if (actions.size() > 0) {
             myTitleIndexes.actions = myListModel.size();
             for (Object action : actions) {
@@ -1282,12 +1309,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     public void cancel() {
       myProgressIndicator.cancel();
-    }
-
-    public void start() {
-      if (!myProgressIndicator.isCanceled()) {
-        ProgressManager.getInstance().runProcess(this, myProgressIndicator);
-      }
+      stop();
     }
   }
 
