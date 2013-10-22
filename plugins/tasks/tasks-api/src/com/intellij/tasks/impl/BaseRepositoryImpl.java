@@ -23,6 +23,7 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
   public static final String EASY_HTTPS = "easyhttps";
 
   static {
+    Protocol.registerProtocol("https", CertificatesManager.createDefault().createProtocol());
     Protocol.registerProtocol(EASY_HTTPS, new Protocol(EASY_HTTPS, (ProtocolSocketFactory)new EasySSLProtocolSocketFactory(), 443));
   }
 
