@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.beans.PropertyChangeListener;
 
 /**
  * @author spLeaner
@@ -65,4 +66,7 @@ public abstract class SpeedSearchSupply {
   protected void installSupplyTo(JComponent component) {
     component.putClientProperty(SPEED_SEARCH_COMPONENT_MARKER, this);
   }
+
+  public abstract void addChangeListener(@NotNull PropertyChangeListener listener);
+  public abstract void removeChangeListener(@NotNull PropertyChangeListener listener);
 }
