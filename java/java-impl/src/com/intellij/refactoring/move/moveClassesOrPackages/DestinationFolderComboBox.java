@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.ComboBoxWithWidePopup;
@@ -34,7 +35,6 @@ import com.intellij.refactoring.MoveDestination;
 import com.intellij.refactoring.PackageWrapper;
 import com.intellij.ui.*;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.awt.*;
@@ -81,7 +81,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
                       final PsiDirectory initialTargetDirectory,
                       final Pass<String> errorMessageUpdater, final EditorComboBox editorComboBox) {
     myInitialTargetDirectory = initialTargetDirectory;
-    mySourceRoots = ProjectRootManager.getInstance(project).getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES);
+    mySourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project);
     new ComboboxSpeedSearch(getComboBox()) {
       @Override
       protected String getElementText(Object element) {

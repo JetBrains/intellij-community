@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -77,12 +76,12 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
   @NotNull
   @Override
   public String getPackagePrefix() {
-    JpsSimpleElement<JavaSourceRootProperties> properties = getJavaProperties();
-    return properties != null ? properties.getData().getPackagePrefix() : DEFAULT_PACKAGE_PREFIX;
+    JavaSourceRootProperties properties = getJavaProperties();
+    return properties != null ? properties.getPackagePrefix() : DEFAULT_PACKAGE_PREFIX;
   }
 
   @Nullable
-  private JpsSimpleElement<JavaSourceRootProperties> getJavaProperties() {
+  private JavaSourceRootProperties getJavaProperties() {
     if (myJpsElement.getRootType() == JavaSourceRootType.SOURCE) {
       return myJpsElement.getProperties(JavaSourceRootType.SOURCE);
     }
@@ -94,9 +93,9 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
 
   @Override
   public void setPackagePrefix(@NotNull String packagePrefix) {
-    JpsSimpleElement<JavaSourceRootProperties> properties = getJavaProperties();
+    JavaSourceRootProperties properties = getJavaProperties();
     if (properties != null) {
-      properties.setData(new JavaSourceRootProperties(packagePrefix));
+      properties.setPackagePrefix(packagePrefix);
     }
   }
 
@@ -129,6 +128,12 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
     if (i!= 0) return i;
     i = Boolean.valueOf(isTestSource()).compareTo(sourceFolder.isTestSource());
     if (i != 0) return i;
+    JavaSourceRootProperties properties1 = getJavaProperties();
+    JavaSourceRootProperties properties2 = sourceFolder.getJavaProperties();
+    if (properties1 != null && properties2 != null) {
+      i = Boolean.valueOf(properties1.isForGeneratedSources()).compareTo(properties2.isForGeneratedSources());
+      if (i != 0) return i;
+    }
     //todo[nik] perhaps we should use LinkedSet instead of SortedSet and get rid of this method
     return myJpsElement.getRootType().getClass().getName().compareTo(sourceFolder.getRootType().getClass().getName());
   }

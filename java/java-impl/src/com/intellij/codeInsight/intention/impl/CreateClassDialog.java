@@ -26,7 +26,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
@@ -49,7 +49,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -208,7 +207,7 @@ public class CreateClassDialog extends DialogWrapper {
     gbConstraints.insets.top = 4;
     panel.add(myDestinationCB, gbConstraints);
 
-    final boolean isMultipleSourceRoots = ProjectRootManager.getInstance(myProject).getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES).size() > 1;
+    final boolean isMultipleSourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(myProject).size() > 1;
     myDestinationCB.setVisible(isMultipleSourceRoots);
     label.setVisible(isMultipleSourceRoots);
     label.setLabelFor(myDestinationCB);

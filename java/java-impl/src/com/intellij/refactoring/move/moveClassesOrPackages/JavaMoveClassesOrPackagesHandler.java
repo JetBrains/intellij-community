@@ -44,7 +44,6 @@ import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.awt.*;
@@ -301,7 +300,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
   private static boolean canMoveOrRearrangePackages(PsiElement[] elements) {
      if (elements.length == 0) return false;
      final Project project = elements[0].getProject();
-     if (ProjectRootManager.getInstance(project).getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES).size() == 1) {
+     if (JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project).size() == 1) {
        return false;
      }
      for (PsiElement element : elements) {

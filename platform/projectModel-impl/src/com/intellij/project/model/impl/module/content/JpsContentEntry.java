@@ -33,10 +33,9 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
@@ -190,7 +189,7 @@ public class JpsContentEntry implements ContentEntry, Disposable {
 
   private SourceFolder addSourceFolder(final String url, boolean isTestSource, String packagePrefix) {
     final JavaSourceRootType rootType = isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
-    JpsSimpleElement<JavaSourceRootProperties> properties = JpsElementFactory.getInstance().createSimpleElement(new JavaSourceRootProperties(packagePrefix));
+    JavaSourceRootProperties properties = JpsJavaExtensionService.getInstance().createSourceRootProperties(packagePrefix);
     return addSourceFolder(url, rootType, properties);
   }
 
