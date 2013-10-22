@@ -135,7 +135,7 @@ public class FinderRecursivePanel<T> extends JBSplitter implements DataProvider,
     list.addListSelectionListener(myListener);
     ListScrollingUtil.installActions(list);
 
-    installSpeedSearch(list);
+//    installSpeedSearch(list); // TODO
 
     installEditOnDoubleClick(list);
     return list;
