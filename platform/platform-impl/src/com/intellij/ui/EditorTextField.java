@@ -312,7 +312,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     return super.isFocusOwner();
   }
 
-  void releaseEditor(final Editor editor) {
+  void releaseEditor(@NotNull final Editor editor) {
     if (myProject != null && myIsViewer) {
       final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
       if (psiFile != null) {
@@ -333,7 +333,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
     if (application.isUnitTestMode() || application.isDispatchThread()) {
       runnable.run();
-    } else {
+    }
+    else {
       application.invokeLater(runnable);
     }
   }
@@ -599,13 +600,12 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     if (isEnabled() != enabled) {
       super.setEnabled(enabled);
       myIsViewer = !enabled;
-      if (myEditor == null) {
+      EditorEx editor = myEditor;
+      if (editor == null) {
         return;
       }
-      Editor editor = myEditor;
       releaseEditor(editor);
-      myEditor = createEditor();
-      add(myEditor.getComponent(), BorderLayout.CENTER);
+      initEditor();
       revalidate();
     }
   }
