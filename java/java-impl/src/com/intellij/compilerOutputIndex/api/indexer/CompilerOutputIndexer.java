@@ -21,10 +21,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.IndexInfrastructure;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.PersistentEnumeratorDelegate;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -103,13 +100,17 @@ public class CompilerOutputIndexer extends AbstractProjectComponent {
         myIndexTypeQNameToIndex.put(index.getClass().getCanonicalName(), index);
       }
       initTimestampIndex(needReindex);
-      try {
-        myFileEnumerator = new PersistentEnumeratorDelegate<String>(
-          IndexInfrastructure.getStorageFile(CompilerOutputIndexUtil.generateIndexId("compilerOutputIndexFileId.enum", myProject)),
-          new EnumeratorStringDescriptor(), 2048);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
+      File storageFile =
+        IndexInfrastructure.getStorageFile(CompilerOutputIndexUtil.generateIndexId("compilerOutputIndexFileId.enum", myProject));
+      for(int i = 0; i < 2; ++i) {
+        try {
+          myFileEnumerator = new PersistentEnumeratorDelegate<String>(
+            storageFile,
+            new EnumeratorStringDescriptor(), 2048);
+        } catch (IOException e) {
+          if (i == 1) throw new RuntimeException(e);
+          IOUtil.deleteAllFilesStartingWith(storageFile);
+        }
       }
       CompilerManager.getInstance(myProject).addCompilationStatusListener(new CompilationStatusAdapter() {
         @Override
