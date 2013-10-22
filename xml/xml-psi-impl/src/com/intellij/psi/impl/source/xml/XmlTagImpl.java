@@ -897,8 +897,9 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
             map = new BidirectionalMap<String, String>();
           }
           for (final String[] prefix2ns : defaultNamespace) {
-            if (!map.containsKey(prefix2ns[0])) {
-              map.put(prefix2ns[0], getRealNs(prefix2ns[1]));
+            final String prefix = prefix2ns[0];
+            if (!map.containsKey(prefix) || extension.canOverrideNamespace(prefix)) {
+              map.put(prefix, getRealNs(prefix2ns[1]));
             }
           }
         }

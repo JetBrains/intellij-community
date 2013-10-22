@@ -93,12 +93,16 @@ public abstract class XmlExtension {
   @Deprecated
   @Nullable
   public String[][] getNamespacesFromDocument(final XmlDocument parent, boolean declarationsExist) {
-    return getNamespacesFromDocument(parent);
+    return XmlUtil.getDefaultNamespaces(parent);
   }
 
   @Nullable
   public String[][] getNamespacesFromDocument(final XmlDocument parent) {
-    return XmlUtil.getDefaultNamespaces(parent);
+    return getNamespacesFromDocument(parent, false);
+  }
+
+  public boolean canOverrideNamespace(final String prefix) {
+    return false;
   }
 
   public boolean canBeDuplicated(XmlAttribute attribute) {
