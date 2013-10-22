@@ -79,6 +79,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -806,6 +807,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     @Override
     public void run() {
       try {
+        myList.getEmptyText().setText("Searching...");
         //noinspection SSBasedInspection
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
@@ -845,6 +847,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         updatePopup();
       }
       catch (Exception ignore) {
+      }
+      finally {
+        myList.getEmptyText().setText(StatusText.DEFAULT_EMPTY_TEXT);
       }
     }
 
@@ -1470,7 +1475,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     titleLabel.setForeground(UIUtil.getLabelDisabledForeground());
     final Color bg = UIUtil.getListBackground();
     SeparatorComponent separatorComponent =
-      new SeparatorComponent(titleLabel.getPreferredSize().height / 2, new JBColor(Gray._240, Gray._80), null);
+      new SeparatorComponent(titleLabel.getPreferredSize().height / 2, new JBColor(Gray._220, Gray._80), null);
 
     JPanel result = new JPanel(new BorderLayout(5, 10));
     result.add(titleLabel, BorderLayout.WEST);
