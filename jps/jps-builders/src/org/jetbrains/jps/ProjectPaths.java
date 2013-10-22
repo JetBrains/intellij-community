@@ -26,6 +26,7 @@ import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
+import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
@@ -215,10 +216,12 @@ public class ProjectPaths {
 
     @Override
     public boolean value(JpsDependencyElement dependency) {
-      if (myModule.equals(dependency.getContainingModule()) &&
-          dependency instanceof JpsSdkDependency && ((JpsSdkDependency)dependency).getSdkType().equals(JpsJavaSdkType.INSTANCE)) {
-        mySdkFound = true;
-        return false;
+      if (myModule.equals(dependency.getContainingModule()) && dependency instanceof JpsSdkDependency) {
+        final JpsSdkType<?> sdkType = ((JpsSdkDependency)dependency).getSdkType();
+        if (sdkType.equals(JpsJavaSdkType.INSTANCE) || sdkType instanceof JpsJavaSdkTypeWrapper) {
+          mySdkFound = true;
+          return false;
+        }
       }
       return mySdkFound;
     }
