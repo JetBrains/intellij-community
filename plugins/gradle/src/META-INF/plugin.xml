@@ -36,10 +36,12 @@
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleBuildScriptContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleRepositoriesContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleMavenArtifactRepositoryContributor"/>
+    <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleMavenDeployerContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleDependenciesContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleArtifactsContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleSourceSetsContributor"/>
     <resolve.contributor implementation="org.jetbrains.plugins.gradle.service.resolve.GradleImplicitContributor"/>
+    <!--<projectResolve implementation="org.jetbrains.plugins.gradle.service.project.BaseGradleProjectResolverExtension"/>-->
   </extensions>
   
   <extensions defaultExtensionNs="com.intellij">

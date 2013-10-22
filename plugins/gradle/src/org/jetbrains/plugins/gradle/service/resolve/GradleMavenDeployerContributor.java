@@ -19,43 +19,42 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
 import java.util.List;
 
 /**
+ * @{GradleMavenArtifactRepositoryContributor} provides gradle MavenArtifactRepository DSL resolving contributor.
+ *
+ * e.g.
+ * repositories {
+ *    maven {
+ *      url "http://snapshots.repository.codehaus.org/"
+ *    }
+ * }
+ *
  * @author Vladislav.Soroka
- * @since 8/30/13
+ * @since 10/21/13
  */
-public abstract class GradleSimpleContributor implements GradleMethodContextContributor {
-
-  private final String blockName;
-  private final String fqName;
-  private final List<String> myMixIns;
-
-  protected GradleSimpleContributor(@NotNull String blockName, @NotNull String fqName, String... mixIns) {
-    this.blockName = blockName;
-    this.fqName = fqName;
-    myMixIns = ContainerUtil.newArrayList(mixIns);
-  }
+public class GradleMavenDeployerContributor implements GradleMethodContextContributor {
 
   @Override
   public void process(@NotNull List<String> methodCallInfo,
                       @NotNull PsiScopeProcessor processor,
                       @NotNull ResolveState state,
                       @NotNull PsiElement place) {
-    if (methodCallInfo.isEmpty() || methodCallInfo.size() < 2 || !blockName.equals(methodCallInfo.get(1))) {
+    if (methodCallInfo.isEmpty() || methodCallInfo.size() < 3 ||
+        !"repositories".equals(methodCallInfo.get(2)) || !"mavenDeployer".equals(methodCallInfo.get(1))) {
       return;
     }
     GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
-    GradleResolverUtil.processDeclarations(psiManager, processor, state, place, fqName);
-    for(final String mixin : myMixIns) {
-      PsiClass contributorClass =
-        psiManager.findClassWithCache(mixin, place.getResolveScope());
-      if (contributorClass == null) continue;
-      GradleResolverUtil.processMethod(methodCallInfo.get(0), contributorClass, processor, state, place);
-    }
+    GradleResolverUtil.processDeclarations(
+      psiManager, processor, state, place,
+      GradleCommonClassNames.GRADLE_API_ARTIFACTS_MAVEN_MAVEN_DEPLOYER);
+    PsiClass contributorClass = psiManager.findClassWithCache(
+      GradleCommonClassNames.GRADLE_API_ARTIFACTS_MAVEN_MAVEN_DEPLOYER, place.getResolveScope());
+    if (contributorClass == null) return;
+    GradleResolverUtil.processMethod(methodCallInfo.get(0), contributorClass, processor, state, place);
   }
 }

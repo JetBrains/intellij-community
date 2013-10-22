@@ -177,7 +177,7 @@ public class GradleImplicitContributor implements GradleMethodContextContributor
                                   @NotNull PsiElement place) {
     if (taskName.equals(place.getText())) {
       if (!(place instanceof GrClosableBlock)) {
-        GrLightMethodBuilder methodBuilder = GradleResolverUtil.createMethodWithClosure(taskName, fqName, fqName, place, psiManager);
+        GrLightMethodBuilder methodBuilder = GradleResolverUtil.createMethodWithClosure(taskName, fqName, null, place, psiManager);
         if (methodBuilder == null) return;
         processor.execute(methodBuilder, state);
         PsiClass contributorClass =

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.service.resolve;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -115,12 +116,12 @@ public class GradleResolverUtil {
     return methodWithClosure;
   }
 
-  public static void processMethod(@NotNull String gradleConfigurationName,
-                                   @NotNull PsiClass dependencyHandlerClass,
+  public static void processMethod(@NotNull String methodName,
+                                   @NotNull PsiClass handlerClass,
                                    @NotNull PsiScopeProcessor processor,
                                    @NotNull ResolveState state,
                                    @NotNull PsiElement place) {
-    processMethod(gradleConfigurationName, dependencyHandlerClass, processor, state, place, null);
+    processMethod(methodName, handlerClass, processor, state, place, null);
   }
 
   public static void processMethod(@NotNull String methodName,
