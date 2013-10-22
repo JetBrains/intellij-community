@@ -100,6 +100,9 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Konstantin Bulenkov
  */
 public class SearchEverywhereAction extends AnAction implements CustomComponentAction, DumbAware{
+
+  public static final String ACTION_ID = "SearchEverywhere";
+
   public static final int SEARCH_FIELD_COLUMNS = 25;
   private final SearchEverywhereAction.MyListRenderer myRenderer;
   private final JPanel myContentPanel;
@@ -144,7 +147,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
           if (keyCode == KeyEvent.VK_SHIFT) {
             // To prevent performance issue check this only in case if Shift was pressed
-            if (keymapManager.getActiveKeymap().getShortcuts("SearchEverywhere").length != 0) return false;
+            if (keymapManager.getActiveKeymap().getShortcuts(ACTION_ID).length != 0) return false;
 
             if (ourOtherKeyWasPressed.get() && System.currentTimeMillis() - ourLastTimePressed.get() < 300) {
               ourPressed.set(false);
@@ -166,7 +169,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                     ourReleased.set(false);
                     ourLastTimePressed.set(System.currentTimeMillis());
                     final ActionManager actionManager = ActionManager.getInstance();
-                    final AnAction action = actionManager.getAction("SearchEverywhere");
+                    final AnAction action = actionManager.getAction(ACTION_ID);
 
                     final AnActionEvent anActionEvent = new AnActionEvent(keyEvent,
                                                                           DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner()),
