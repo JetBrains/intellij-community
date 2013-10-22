@@ -94,7 +94,7 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
       }
     }
     final ModuleWizardStep[] wizardSteps = steps.toArray(new ModuleWizardStep[steps.size()]);
-    return ArrayUtil.mergeArrays(wizardSteps, super.createWizardSteps(wizardContext, moduleBuilder, modulesProvider));
+    return ArrayUtil.mergeArrays(wizardSteps, super.createWizardSteps(wizardContext, moduleBuilder, modulesProvider, forNewWizard));
   }
 
   @Nullable
