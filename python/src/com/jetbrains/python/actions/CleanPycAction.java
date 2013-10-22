@@ -63,7 +63,8 @@ public class CleanPycAction extends AnAction {
         if (file.getParentFile().getName().equals(PyNames.PYCACHE) ||
             FileUtilRt.extensionEquals(file.getName(), "pyc") ||
             FileUtilRt.extensionEquals(file.getName(), "pyo") ||
-            FileUtilRt.extensionEquals(file.getName(), "$py.class")) {
+            (FileUtilRt.getNameWithoutExtension(file.getName()).toLowerCase().endsWith("$py") &&
+            FileUtilRt.extensionEquals(file.getName(), "class"))) {
           pycFiles.add(file);
         }
         return true;
