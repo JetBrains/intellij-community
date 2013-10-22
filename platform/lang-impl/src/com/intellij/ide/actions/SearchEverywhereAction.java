@@ -130,6 +130,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static AtomicBoolean ourReleased = new AtomicBoolean(false);
   private static AtomicBoolean ourOtherKeyWasPressed = new AtomicBoolean(false);
   private static AtomicLong ourLastTimePressed = new AtomicLong(0);
+  private static AtomicLong lastKeyPressTime = new AtomicLong(0);
+  private static AtomicLong lastKeyReleasedTime = new AtomicLong(0);
   private ArrayList<VirtualFile> myAlreadyAddedFiles = new ArrayList<VirtualFile>();
 
   static {
@@ -141,6 +143,26 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           final int keyCode = keyEvent.getKeyCode();
 
           if (keyCode == KeyEvent.VK_SHIFT) {
+            if (SystemInfo.isLinux) {
+              if (event.getID() == KeyEvent.KEY_PRESSED) {
+                lastKeyPressTime.set(((KeyEvent)event).getWhen());
+              }
+              if (event.getID() == KeyEvent.KEY_RELEASED) {
+                lastKeyReleasedTime.set(((KeyEvent)event).getWhen());
+              }
+
+              if (lastKeyPressTime.get() != 0 && lastKeyReleasedTime.get() != 0) {
+                if (lastKeyReleasedTime.get() == lastKeyPressTime.get()) {
+                  return false;
+                } else {
+                  lastKeyReleasedTime.set(0);
+                  lastKeyPressTime.set(0);
+                }
+              } else {
+                return false;
+              }
+            }
+
             if (ourOtherKeyWasPressed.get() && System.currentTimeMillis() - ourLastTimePressed.get() < 300) {
               ourPressed.set(false);
               ourReleased.set(false);
