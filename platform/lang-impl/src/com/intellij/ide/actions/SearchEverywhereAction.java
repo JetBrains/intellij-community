@@ -793,7 +793,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   @SuppressWarnings("SSBasedInspection")
-  private class CalcThread extends Thread {
+  private class CalcThread implements Runnable {
     private final Project project;
     private final String pattern;
     private ProgressIndicator myProgressIndicator = new ProgressIndicatorBase();
@@ -1026,7 +1026,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     private void buildRecentFiles(String pattern) {
-      final MinusculeMatcher matcher = new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
+      final MinusculeMatcher matcher = new MinusculeMatcher("*" + pattern, NameUtil.MatchingCaseSensitivity.NONE);
       final ArrayList<VirtualFile> files = new ArrayList<VirtualFile>();
       for (VirtualFile file : ArrayUtil.reverseArray(EditorHistoryManager.getInstance(project).getFiles())) {
         if (StringUtil.isEmptyOrSpaces(pattern) || matcher.matches(file.getName())) {
@@ -1190,10 +1190,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
           myRenderer.recalculateWidth();
           if (myPopup == null || !myPopup.isVisible()) {
-            //final Font editorFont = EditorColorsManager.getInstance().getGlobalScheme().getFont(EditorFontType.PLAIN);
-            //myList.setFont(editorFont);
-            //getField().getTextEditor().setFont(editorFont);
-            //More.instance.label.setFont(editorFont);
             final ActionCallback callback = ListDelegationUtil.installKeyboardDelegation(getField().getTextEditor(), myList);
             final ComponentPopupBuilder builder = JBPopupFactory.getInstance()
               .createComponentPopupBuilder(new JBScrollPane(myList), null);
@@ -1277,7 +1273,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       MatchResult result;
 
       for (String name : names) {
-        //myProgressIndicator.checkCanceled();
+        myProgressIndicator.checkCanceled();
         result = null;
         if (model instanceof CustomMatcherModel) {
           try {
@@ -1309,7 +1305,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     public void cancel() {
       myProgressIndicator.cancel();
-      stop();
+    }
+
+    public void start() {
+      ApplicationManager.getApplication().executeOnPooledThread(this);
     }
   }
 
