@@ -92,7 +92,11 @@ public class JavaModuleBuilder extends ModuleBuilder implements SourcePathsBuild
 
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider, boolean forNewWizard) {
-    return forNewWizard ? ModuleWizardStep.EMPTY_ARRAY : super.createWizardSteps(wizardContext, modulesProvider);
+    if (forNewWizard) return ModuleWizardStep.EMPTY_ARRAY;
+    ModuleType moduleType = getModuleType();
+    return moduleType == null
+           ? ModuleWizardStep.EMPTY_ARRAY
+           : moduleType.createWizardSteps(wizardContext, this, modulesProvider, false);
   }
 
   public void setupRootModel(ModifiableRootModel rootModel) throws ConfigurationException {

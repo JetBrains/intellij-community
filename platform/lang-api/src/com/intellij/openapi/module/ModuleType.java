@@ -58,11 +58,11 @@ public abstract class ModuleType<T extends ModuleBuilder> {
 
   @NotNull
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull T moduleBuilder, @NotNull ModulesProvider modulesProvider) {
-    return ModuleWizardStep.EMPTY_ARRAY;
+    return createWizardSteps(wizardContext, moduleBuilder, modulesProvider, false);
   }
 
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull T moduleBuilder, @NotNull ModulesProvider modulesProvider, boolean forNewWizard) {
-    return createWizardSteps(wizardContext, moduleBuilder, modulesProvider);
+    return ModuleWizardStep.EMPTY_ARRAY;
   }
 
   @Nullable
