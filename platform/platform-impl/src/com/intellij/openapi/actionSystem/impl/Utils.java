@@ -268,7 +268,7 @@ public class Utils{
                               final JComponent component,
                               final boolean enableMnemonics,
                               final PresentationFactory presentationFactory,
-                              final DataContext context,
+                              @NotNull DataContext context,
                               final String place,
                               final boolean isWindowMenu,
                               final boolean mayDataContextBeInvalid){

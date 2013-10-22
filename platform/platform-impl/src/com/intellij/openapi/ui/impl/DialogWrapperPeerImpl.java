@@ -1117,7 +1117,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     private class MyFocusCommand extends FocusCommand implements KeyEventProcessor {
 
       private Context myContextOnFinish;
-      private final ArrayList<KeyEvent> myEvents = new ArrayList<KeyEvent>();
+      private final List<KeyEvent> myEvents = new ArrayList<KeyEvent>();
       private final DialogWrapper myWrapper;
 
       private MyFocusCommand(DialogWrapper wrapper) {
@@ -1148,7 +1148,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       }
 
       @Override
-      public Boolean dispatch(KeyEvent e, Context context) {
+      public Boolean dispatch(@NotNull KeyEvent e, @NotNull Context context) {
         if (myWrapper == null || myTypeAheadDone.isProcessed()) return null;
 
         myEvents.addAll(context.getQueue());
@@ -1167,7 +1167,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       }
 
       @Override
-      public void finish(Context context) {
+      public void finish(@NotNull Context context) {
         myContextOnFinish = context;
       }
 

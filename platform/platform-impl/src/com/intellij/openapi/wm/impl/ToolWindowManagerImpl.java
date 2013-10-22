@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -2271,6 +2271,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     return "ToolWindowManager";
   }
 
+  @NotNull
   public ActionCallback requestDefaultFocus(final boolean forced) {
     return getFocusManagerImpl(myProject).requestFocus(new FocusCommand() {
       @NotNull
@@ -2361,7 +2362,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(runnable);
   }
 
-  public boolean dispatch(KeyEvent e) {
+  public boolean dispatch(@NotNull KeyEvent e) {
     return IdeFocusManager.getInstance(myProject).dispatch(e);
   }
 
