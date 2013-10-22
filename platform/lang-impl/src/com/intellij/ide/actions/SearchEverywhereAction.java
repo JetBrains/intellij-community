@@ -107,9 +107,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private GotoClassModel2 myClassModel;
   private GotoFileModel myFileModel;
   private GotoActionModel myActionModel;
+  private GotoSymbolModel2 mySymbolsModel;
   private String[] myClasses;
   private String[] myFiles;
   private String[] myActions;
+  private String[] mySymbols;
   private Component myFocusComponent;
   private JBPopup myPopup;
   private SearchListModel myListModel = new SearchListModel();
@@ -845,6 +847,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
         buildActionsAndSettings(pattern);
         updatePopup();
+
+        readLock = ApplicationManager.getApplication().acquireReadActionLock();
+        try {
+          buildSymbols(pattern);
+        } finally {readLock.finish();}
+        updatePopup();
       }
       catch (Exception ignore) {
       }
@@ -854,6 +862,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     private void buildToolWindows(String pattern) {
+      if (myActions == null) {
+        myActions = myActionModel.getNames(true);
+      }
       final HashSet<AnAction> toolWindows = new HashSet<AnAction>();
       final MinusculeMatcher matcher = new MinusculeMatcher("*" +pattern, NameUtil.MatchingCaseSensitivity.NONE);
       List<MatchResult> matches = collectResults(pattern, myActions, myActionModel);
@@ -888,6 +899,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       final Set<AnAction> actions = new HashSet<AnAction>();
       final Set<Object> settings = new HashSet<Object>();
       final MinusculeMatcher matcher = new MinusculeMatcher("*" +pattern, NameUtil.MatchingCaseSensitivity.NONE);
+      if (myActions == null) {
+        myActions = myActionModel.getNames(true);
+      }
 
       List<MatchResult> matches = collectResults(pattern, myActions, myActionModel);
 
@@ -933,6 +947,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private void buildFiles(String pattern) {
       int filesCounter = 0;
+      if (myFiles == null) {
+        myFiles = myFileModel.getNames(false);
+      }
       List<MatchResult> matches = collectResults(pattern, myFiles, myFileModel);
       final List<VirtualFile> files = new ArrayList<VirtualFile>();
       FindSymbolParameters parameters = FindSymbolParameters.wrap(pattern, project, false);
@@ -976,9 +993,52 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     }
 
+    private void buildSymbols(String pattern) {
+      int symbolCounter = 0;
+      if (mySymbols == null) {
+        mySymbols = mySymbolsModel.getNames(false);
+      }
+      List<MatchResult> matches = collectResults(pattern, mySymbols, mySymbolsModel);
+      final List<Object> symbols = new ArrayList<Object>();
+
+      final int maxFiles = 8;
+      for (MatchResult o : matches) {
+        if (symbolCounter > maxFiles) break;
+
+        Object[] objects = mySymbolsModel.getElementsByName(o.elementName, false, pattern);
+        for (Object object : objects) {
+          if (!myListModel.contains(object)) {
+              symbols.add(object);
+              symbolCounter++;
+              if (symbolCounter > maxFiles) break;
+          }
+        }
+      }
+
+      myProgressIndicator.checkCanceled();
+
+      if (symbols.size() > 0) {
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            if (!myProgressIndicator.isCanceled()) {
+              myTitleIndexes.symbols = myListModel.size();
+              for (Object file : symbols) {
+                myListModel.addElement(file);
+              }
+              myMoreFilesIndex = symbols.size() >= maxFiles ? myListModel.size() - 1 : -1;
+            }
+          }
+        });
+      }
+    }
+
     private void buildClasses(String pattern, boolean includeLibraries) {
       int clsCounter = 0;
       final int maxCount = includeLibraries ? 5 : 8;
+      if (myClasses == null) {
+        myClasses = myClassModel.getNames(false);
+      }
       List<MatchResult> matches = collectResults(pattern, includeLibraries ? myClassModel.getNames(true) : myClasses, myClassModel);
       FindSymbolParameters parameters = FindSymbolParameters.wrap(pattern, project, includeLibraries);
       final List<Object> classes = new ArrayList<Object>();
@@ -1094,9 +1154,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myClassModel = new GotoClassModel2(project);
         myFileModel = new GotoFileModel(project);
         myActionModel = createActionModel();
-        myClasses = myClassModel.getNames(false);
-        myFiles = myFileModel.getNames(false);
-        myActions = myActionModel.getNames(true);
+        mySymbolsModel = new GotoSymbolModel2(project);
         myConfigurables.clear();
         fillConfigurablesIds(null, new IdeConfigurablesGroup().getConfigurables());
         fillConfigurablesIds(null, new ProjectConfigurablesGroup(project).getConfigurables());
@@ -1383,12 +1441,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     int actions;
     int settings;
     int toolWindows;
+    int symbols;
 
     final String gotoClassTitle;
     final String gotoFileTitle;
     final String gotoActionTitle;
     final String gotoSettingsTitle;
     final String gotoRecentFilesTitle;
+    final String gotoSymbolTitle;
     static final String toolWindowsTitle = "Tool Windows";
 
     TitleIndexes() {
@@ -1402,6 +1462,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       gotoSettingsTitle = StringUtil.isEmpty(gotoAction) ? "Preferences" : "Preferences (" + gotoSettings + ")";
       String gotoRecentFiles = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("RecentFiles"));
       gotoRecentFilesTitle = StringUtil.isEmpty(gotoRecentFiles) ? "Recent Files" : "Recent Files (" + gotoRecentFiles + ")";
+      String gotoSymbol = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("GotoSymbol"));
+      gotoSymbolTitle = StringUtil.isEmpty(gotoClass) ? "Symbols" : "Symbols (" + gotoSymbol + ")";
     }
 
     String getTitle(int index) {
@@ -1412,6 +1474,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       if (index == toolWindows) return toolWindowsTitle;
       if (index == actions) return gotoActionTitle;
       if (index == settings) return gotoSettingsTitle;
+      if (index == symbols) return gotoSymbolTitle;
       return null;
     }
 
