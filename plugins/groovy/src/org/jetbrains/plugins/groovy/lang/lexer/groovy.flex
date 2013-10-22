@@ -144,7 +144,7 @@ mREGEX_ESC = \\ "/"
 
 mREGEX_CONTENT = ({mREGEX_ESC} | [^"/""$"])+
 
-mDOLLAR_SLASH_REGEX_CONTENT = ([^\/\$] | \/[^\/\$] )+
+mDOLLAR_SLASH_REGEX_CONTENT = ([^\/\$] | \$\$ | \$\/ | \/[^\/\$] )+
 
 ////////////////////////////////////////////////////////////////////////////
 

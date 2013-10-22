@@ -356,6 +356,8 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   public void testregex$dollarSlashyTriple() throws Throwable { doTest(); }
 
+  public void testregex$dollarSlashyUltimate() { doTest() }
+
   public void testrelational$eq1() throws Throwable { doTest(); }
 
   public void testrelational$inst0() throws Throwable { doTest(); }
