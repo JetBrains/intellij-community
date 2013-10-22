@@ -18,7 +18,6 @@ import com.intellij.vcs.log.ui.render.AbstractPaddingCellRender;
 import com.intellij.vcs.log.ui.render.CommitCellRender;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
-import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,7 +114,7 @@ public class VcsLogGraphTable extends JBTable {
       LOG.error("Unexpected table model passed to the VcsLogGraphTable: " + model);
       return null;
     }
-    return ((GraphTableModel)model).getSelectedChanges(getSelectedRows());
+    return ((AbstractVcsLogTableModel)model).getSelectedChanges(getSelectedRows());
   }
 
   private class MyMouseAdapter extends MouseAdapter {
