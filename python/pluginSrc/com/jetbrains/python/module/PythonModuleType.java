@@ -39,13 +39,16 @@ public class PythonModuleType extends PythonModuleTypeBase<PythonModuleBuilderBa
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull final WizardContext wizardContext,
                                               @NotNull final PythonModuleBuilderBase moduleBuilder,
-                                              @NotNull final ModulesProvider modulesProvider) {
+                                              @NotNull final ModulesProvider modulesProvider,
+                                              boolean forNewWizard) {
     ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
     final Project project = getProject(wizardContext);
     steps.add(new PythonSdkSelectStep(moduleBuilder, "reference.project.structure.sdk.python", project));
-    final List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getProviders(getInstance(), DefaultFacetsProvider.INSTANCE);
-    if (!providers.isEmpty()) {
-      steps.add(new SupportForFrameworksStep(wizardContext, moduleBuilder, LibrariesContainerFactory.createContainer(project)));
+    if (!forNewWizard) {
+      final List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getProviders(getInstance(), DefaultFacetsProvider.INSTANCE);
+      if (!providers.isEmpty()) {
+        steps.add(new SupportForFrameworksStep(wizardContext, moduleBuilder, LibrariesContainerFactory.createContainer(project)));
+      }
     }
     return steps.toArray(new ModuleWizardStep[steps.size()]);
   }

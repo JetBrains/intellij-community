@@ -15,8 +15,12 @@
  */
 package com.jetbrains.python.module;
 
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.SourcePathsBuilder;
+import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,5 +44,12 @@ public class PythonModuleBuilder extends PythonModuleBuilderBase implements Sour
       mySourcePaths = new ArrayList<Pair<String, String>>();
     }
     mySourcePaths.add(sourcePathInfo);
+  }
+
+  @Override
+  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext,
+                                              @NotNull ModulesProvider modulesProvider,
+                                              boolean forNewWizard) {
+    return getModuleType().createWizardSteps(wizardContext, this, modulesProvider, forNewWizard);
   }
 }
