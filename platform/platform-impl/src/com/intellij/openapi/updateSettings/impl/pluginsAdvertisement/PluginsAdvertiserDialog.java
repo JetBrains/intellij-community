@@ -38,12 +38,14 @@ import java.util.Set;
 public class PluginsAdvertiserDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#" + PluginsAdvertiserDialog.class.getName());
 
+  @Nullable private final Project myProject;
   private final PluginDownloader[] myUploadedPlugins;
   private final List<IdeaPluginDescriptor> myAllPlugins;
   private final HashSet<String> mySkippedPlugins = new HashSet<String>();
 
   PluginsAdvertiserDialog(@Nullable Project project, PluginDownloader[] plugins, List<IdeaPluginDescriptor> allPlugins) {
     super(project);
+    myProject = project;
     myUploadedPlugins = plugins;
     myAllPlugins = allPlugins;
     setTitle("Choose Plugins to Install or Enable");
@@ -84,19 +86,23 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
         }
       }
     }
+    final Runnable notifyRunnable = new Runnable() {
+      @Override
+      public void run() {
+        PluginManagerMain.notifyPluginsWereInstalled(null, myProject);
+      }
+    };
     try {
-      PluginManagerMain.downloadPlugins(nodes, myAllPlugins, new Runnable() {
-        @Override
-        public void run() {
-          PluginManagerMain.notifyPluginsWereInstalled(null);
-        }
-      }, null);
+      PluginManagerMain.downloadPlugins(nodes, myAllPlugins, notifyRunnable, null);
     }
     catch (IOException e) {
       LOG.error(e);
     }
     for (IdeaPluginDescriptor pluginDescriptor : pluginsToEnable) {
       PluginManagerCore.enablePlugin(pluginDescriptor.getPluginId().getIdString());
+    }
+    if (nodes.isEmpty()) {
+      notifyRunnable.run();
     }
     super.doOKAction();
   }
