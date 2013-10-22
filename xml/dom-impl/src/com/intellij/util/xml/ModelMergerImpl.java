@@ -5,8 +5,6 @@ import com.intellij.util.ReflectionCache;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ConcurrentSoftArrayHashMap;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.impl.DomManagerImpl;
@@ -27,12 +25,6 @@ import java.util.*;
  * @author peter
  */
 public class ModelMergerImpl implements ModelMerger {
-  // [greg] the key should actually be the MergingStrategy class, but this will break the API
-  private final ConcurrentFactoryMap<Class, ConcurrentSoftArrayHashMap<Object, Object>> myMergedMap = new ConcurrentFactoryMap<Class, ConcurrentSoftArrayHashMap<Object, Object>>() {
-    protected ConcurrentSoftArrayHashMap<Object, Object> create(final Class key) {
-      return new ConcurrentSoftArrayHashMap<Object, Object>(ContainerUtil.identityStrategy());
-    }
-  };
   private final List<Pair<InvocationStrategy,Class>> myInvocationStrategies = new ArrayList<Pair<InvocationStrategy,Class>>();
   private final List<MergingStrategy> myMergingStrategies = new ArrayList<MergingStrategy>();
   private final List<Class> myMergingStrategyClasses = new ArrayList<Class>();
@@ -195,10 +187,6 @@ public class ModelMergerImpl implements ModelMerger {
   }
 
   public <T> T mergeModels(final Class<T> aClass, final T... implementations) {
-    /*final Object o = myMergedMap.get(aClass).get(implementations);
-    if (o != null) {
-      return (T)o;
-    }*/
     if (implementations.length == 1) return implementations[0];
     final MergingInvocationHandler<T> handler = new MergingInvocationHandler<T>(aClass, Arrays.asList(implementations));
     return _mergeModels(aClass, handler, implementations);
@@ -214,7 +202,6 @@ public class ModelMergerImpl implements ModelMerger {
     commonClasses.add(MERGED_OBJECT_CLASS);
     commonClasses.add(aClass);
     final T t = AdvancedProxy.<T>createProxy(handler, null, commonClasses.toArray(new Class[commonClasses.size()]));
-    //myMergedMap.get(aClass).put(implementations, t);
     return t;
   }
 
