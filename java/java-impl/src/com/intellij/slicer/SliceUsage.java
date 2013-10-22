@@ -88,17 +88,11 @@ public class SliceUsage extends UsageInfo2UsageAdapter {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
       public void run() {
-        try {
-          if (params.dataFlowToThis) {
-            SliceUtil.processUsagesFlownDownTo(element, uniqueProcessor, SliceUsage.this, mySubstitutor, indexNesting,syntheticField);
-          }
-          else {
-            SliceForwardUtil.processUsagesFlownFromThe(element, uniqueProcessor, SliceUsage.this);
-          }
+        if (params.dataFlowToThis) {
+          SliceUtil.processUsagesFlownDownTo(element, uniqueProcessor, SliceUsage.this, mySubstitutor, indexNesting,syntheticField);
         }
-        catch (Exception e) {
-          int i = 0;
-          throw new RuntimeException(e);
+        else {
+          SliceForwardUtil.processUsagesFlownFromThe(element, uniqueProcessor, SliceUsage.this);
         }
       }
     });
