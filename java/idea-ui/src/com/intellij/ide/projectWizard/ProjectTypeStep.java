@@ -205,33 +205,6 @@ public class ProjectTypeStep extends ModuleWizardStep {
     FrameworkRole[] roles = framework.getRoles();
     if (roles.length == 0) return true;
 
-    /*
-    String[] ids = framework.getProjectCategories();
-    if (ids.length > 0) {
-      return ArrayUtil.contains(projectCategory.getId(), ids);
-    }
-    if (ArrayUtil.contains(framework.getFrameworkType().getId(), projectCategory.getAssociatedFrameworkIds())) return true;
-
-    FrameworkGroup frameworkGroup = projectCategory.getAssociatedFrameworkGroup();
-    FrameworkTypeEx frameworkType = framework.getFrameworkType();
-    if (frameworkGroup != null) {
-      return frameworkGroup == frameworkType.getParentGroup();
-    }
-    if (frameworkType.getParentGroup() != null) {
-      return false;
-    }
-
-    String underlyingFrameworkTypeId = frameworkType.getUnderlyingFrameworkTypeId();
-    if (underlyingFrameworkTypeId != null) {
-      return ArrayUtil.contains(underlyingFrameworkTypeId, projectCategory.getAssociatedFrameworkIds());
-    }
-    else if (projectCategory.getAssociatedFrameworkIds().length > 0) {
-      return false;
-    }
-
-    return framework.isEnabledForModuleBuilder(projectCategory.createModuleBuilder());
-    */
-
     List<FrameworkRole> acceptable = Arrays.asList(projectCategory.getAcceptableFrameworkRoles());
     return ContainerUtil.intersects(Arrays.asList(roles), acceptable);
   }
