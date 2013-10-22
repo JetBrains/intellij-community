@@ -32,6 +32,7 @@ import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
@@ -520,13 +521,13 @@ public abstract class PluginManagerMain implements Disposable {
   }
 
 
-  public static void notifyPluginsWereInstalled(@Nullable String pluginName) {
+  public static void notifyPluginsWereInstalled(@Nullable String pluginName, final Project project) {
     notifyPluginsWereUpdated(pluginName != null
                              ? "Plugin \'" + pluginName + "\' was successfully installed"
-                             : "Plugins were installed");
+                             : "Plugins were installed", project);
   }
 
-  public static void notifyPluginsWereUpdated(final String title) {
+  public static void notifyPluginsWereUpdated(final String title, final Project project) {
     final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     final boolean restartCapable = app.isRestartCapable();
     String message =
@@ -550,7 +551,7 @@ public abstract class PluginManagerMain implements Disposable {
                                 app.exit(true);
                               }
                             }
-                          }).notify(null);
+                          }).notify(project);
   }
 
   protected class SortByStatusAction extends ToggleAction {

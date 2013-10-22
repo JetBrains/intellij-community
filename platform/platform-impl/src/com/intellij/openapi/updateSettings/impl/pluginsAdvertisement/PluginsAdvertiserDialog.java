@@ -15,10 +15,9 @@
  */
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManagerMain;
-import com.intellij.ide.plugins.PluginNode;
+import com.intellij.ide.plugins.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.updateSettings.impl.DetectedPluginsPanel;
@@ -39,15 +38,17 @@ import java.util.Set;
 public class PluginsAdvertiserDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#" + PluginsAdvertiserDialog.class.getName());
 
+  @Nullable private final Project myProject;
   private final PluginDownloader[] myUploadedPlugins;
   private final List<IdeaPluginDescriptor> myAllPlugins;
   private final HashSet<String> mySkippedPlugins = new HashSet<String>();
 
   PluginsAdvertiserDialog(@Nullable Project project, PluginDownloader[] plugins, List<IdeaPluginDescriptor> allPlugins) {
     super(project);
+    myProject = project;
     myUploadedPlugins = plugins;
     myAllPlugins = allPlugins;
-    setTitle("Choose Plugins to Install");
+    setTitle("Choose Plugins to Install or Enable");
     init();
   }
 
@@ -70,25 +71,38 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
+    final Set<IdeaPluginDescriptor> pluginsToEnable = new HashSet<IdeaPluginDescriptor>();
     final List<PluginNode> nodes = new ArrayList<PluginNode>();
     for (PluginDownloader downloader : myUploadedPlugins) {
       if (!mySkippedPlugins.contains(downloader.getPluginId())) {
-        final PluginNode pluginNode = PluginDownloader.createPluginNode(null, downloader);
-        if (pluginNode != null) {
-          nodes.add(pluginNode);
+        final IdeaPluginDescriptor descriptor = PluginManager.getPlugin(PluginId.getId(downloader.getPluginId()));
+        if (descriptor != null) {
+          pluginsToEnable.add(descriptor);
+        } else {
+          final PluginNode pluginNode = PluginDownloader.createPluginNode(null, downloader);
+          if (pluginNode != null) {
+            nodes.add(pluginNode);
+          }
         }
       }
     }
+    final Runnable notifyRunnable = new Runnable() {
+      @Override
+      public void run() {
+        PluginManagerMain.notifyPluginsWereInstalled(null, myProject);
+      }
+    };
     try {
-      PluginManagerMain.downloadPlugins(nodes, myAllPlugins, new Runnable() {
-        @Override
-        public void run() {
-          PluginManagerMain.notifyPluginsWereInstalled(null);
-        }
-      }, null);
+      PluginManagerMain.downloadPlugins(nodes, myAllPlugins, notifyRunnable, null);
     }
     catch (IOException e) {
       LOG.error(e);
+    }
+    for (IdeaPluginDescriptor pluginDescriptor : pluginsToEnable) {
+      PluginManagerCore.enablePlugin(pluginDescriptor.getPluginId().getIdString());
+    }
+    if (nodes.isEmpty()) {
+      notifyRunnable.run();
     }
     super.doOKAction();
   }

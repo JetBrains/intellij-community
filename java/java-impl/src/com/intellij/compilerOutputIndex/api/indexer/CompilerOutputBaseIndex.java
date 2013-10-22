@@ -9,6 +9,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.asm4.ClassReader;
@@ -49,15 +50,26 @@ public abstract class CompilerOutputBaseIndex<K, V> {
         rewriteIndex.set(true);
       }
       final File storageFile = getStorageFile(indexId);
-      final MapIndexStorage<K, V> indexStorage = new MapIndexStorage<K, V>(storageFile, myKeyDescriptor, myValueExternalizer, 1024);
+      MapIndexStorage<K, V> indexStorage = null;
+      for(int i = 0; i < 2; ++i) {
+        try {
+          indexStorage = new MapIndexStorage<K, V>(storageFile, myKeyDescriptor, myValueExternalizer, 1024);
+        } catch (IOException ex) {
+          if (i == 1) throw ex;
+          IOUtil.deleteAllFilesStartingWith(storageFile);
+        }
+      }
+
+      assert indexStorage != null;
       index = new MapReduceIndex<K, V, ClassReader>(indexId, getIndexer(), indexStorage);
+      final MapIndexStorage<K, V> finalIndexStorage = indexStorage;
       index.setInputIdToDataKeysIndex(new Factory<PersistentHashMap<Integer, Collection<K>>>() {
         @Override
         public PersistentHashMap<Integer, Collection<K>> create() {
           Exception failCause = null;
           for (int attempts = 0; attempts < 2; attempts++) {
             try {
-              return FileBasedIndexImpl.createIdToDataKeysIndex(indexId, myKeyDescriptor, new MemoryIndexStorage<K, V>(indexStorage));
+              return FileBasedIndexImpl.createIdToDataKeysIndex(indexId, myKeyDescriptor, new MemoryIndexStorage<K, V>(finalIndexStorage));
             }
             catch (IOException e) {
               failCause = e;

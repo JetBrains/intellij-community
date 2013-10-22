@@ -22,8 +22,6 @@ import java.util.*;
 
 %%
 
-%{@SuppressWarnings({"UnnecessaryFullyQualifiedName", "FieldCanBeLocal", "UnusedDeclaration", "UnusedAssignment", "AccessStaticViaInstance",
-                    "AssignmentToStaticFieldFromInstanceMethod", "MethodMayBeStatic", "CStyleArrayDeclaration", "UnnecessarySemicolon"}) %}
 %class _GroovyLexer
 %implements FlexLexer, GroovyTokenTypes, TokenType
 %unicode
