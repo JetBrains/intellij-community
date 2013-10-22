@@ -95,7 +95,7 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
     if (b.hasFocus()) {
       int sysOffX = SystemInfo.isMac ? 0 : 1;
       int sysOffY = SystemInfo.isMac ? 0 : -1;
-      DarculaUIUtil.paintFocusOval(g, x-rad - 1  + sysOffX, y- (rad + 1)/2 + sysOffY, w-2, h-2);
+      DarculaUIUtil.paintFocusOval(g, w/2 - rad - sysOffX, y- (rad + 1)/2 + sysOffY, w-2, h-2);
     } else {
       if (UIUtil.isUnderDarcula()) {
         g.setPaint(UIUtil.getGradientPaint(w / 2, 1, Gray._160.withAlpha(90), w / 2, h, Gray._100.withAlpha(90)));
