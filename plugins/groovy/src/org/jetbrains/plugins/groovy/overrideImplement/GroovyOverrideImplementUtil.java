@@ -98,6 +98,9 @@ public class GroovyOverrideImplementUtil {
 
       for (PsiAnnotation annotation : original.getModifierList().getAnnotations()) {
         final GrModifierList modifierList = parameter.getModifierList();
+
+        String qname = annotation.getQualifiedName();
+
         if (annotation instanceof GrAnnotation) {
           modifierList.add(annotation);
         }

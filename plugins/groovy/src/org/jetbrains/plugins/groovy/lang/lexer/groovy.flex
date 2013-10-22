@@ -19,11 +19,11 @@ import com.intellij.lexer.FlexLexer;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import java.util.*;
-import java.lang.reflect.Field;
-import org.jetbrains.annotations.NotNull;
 
 %%
 
+%{@SuppressWarnings({"UnnecessaryFullyQualifiedName", "FieldCanBeLocal", "UnusedDeclaration", "UnusedAssignment", "AccessStaticViaInstance",
+                    "AssignmentToStaticFieldFromInstanceMethod", "MethodMayBeStatic", "CStyleArrayDeclaration", "UnnecessarySemicolon"}) %}
 %class _GroovyLexer
 %implements FlexLexer, GroovyTokenTypes, TokenType
 %unicode
@@ -144,7 +144,7 @@ mREGEX_ESC = \\ "/"
 
 mREGEX_CONTENT = ({mREGEX_ESC} | [^"/""$"])+
 
-mDOLLAR_SLASH_REGEX_CONTENT = ([^\/\$] | \/[^\/\$] )+
+mDOLLAR_SLASH_REGEX_CONTENT = ([^\/\$] | \$\$ | \$\/ | \/[^\/\$] )+
 
 ////////////////////////////////////////////////////////////////////////////
 
