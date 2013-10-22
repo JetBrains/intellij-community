@@ -147,7 +147,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               return false;
             }
             ourOtherKeyWasPressed.set(false);
-            if (System.currentTimeMillis() - ourLastTimePressed.get() > 400) {
+            if (System.currentTimeMillis() - ourLastTimePressed.get() > 300) {
               ourPressed.set(false);
               ourReleased.set(false);
             }
