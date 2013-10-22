@@ -22,7 +22,6 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
 
 import javax.swing.*;
-import javax.swing.text.Position;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
@@ -53,14 +52,8 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
     }
   };
 
-  /**
-   * @deprecated You should use {@link TreeSpeedSearch#TreeSpeedSearch(JTree)}
-   * @see Tree#getNextMatch(String, int, Position.Bias)
-   */
   public TreeSpeedSearch(JTree tree, Convertor<TreePath, String> toStringConvertor) {
-    super(tree);
-    myToStringConvertor = toStringConvertor;
-    setComparator(new SpeedSearchComparator(false, true));
+    this(tree, toStringConvertor, false);
   }
 
   public TreeSpeedSearch(JTree tree) {
@@ -72,6 +65,10 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
   }
 
   public TreeSpeedSearch(Tree tree, Convertor<TreePath, String> toString, boolean canExpand) {
+    this((JTree)tree, toString, canExpand);
+  }
+
+  public TreeSpeedSearch(JTree tree, Convertor<TreePath, String> toString, boolean canExpand) {
     super(tree);
     setComparator(new SpeedSearchComparator(false, true));
     myToStringConvertor = toString;
