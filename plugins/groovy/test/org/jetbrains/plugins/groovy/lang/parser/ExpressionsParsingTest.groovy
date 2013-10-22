@@ -148,6 +148,8 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   public void testgstring$ugly_lexer() throws Throwable { doTest(); }
 
+  public void testgstring$this() {doTest()}
+
   public void testmapLiteral() throws Throwable { doTest(); }
 
   public void testnew$arr_decl() throws Throwable { doTest(); }
