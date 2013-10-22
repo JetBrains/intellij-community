@@ -508,6 +508,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
     if (e == null) return;
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
+    if (myContextComponent == null) return;
+    final Window wnd = SwingUtilities.windowForComponent(myContextComponent);
+    if (wnd == null || wnd.getParent() != null) return;
     myActionEvent = e;
     myPopupField = new MySearchTextField();
     myPopupField.setOpaque(false);
