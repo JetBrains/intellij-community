@@ -38,6 +38,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.options.Configurable;
@@ -99,6 +100,9 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Konstantin Bulenkov
  */
 public class SearchEverywhereAction extends AnAction implements CustomComponentAction, DumbAware{
+
+  public static final String ACTION_ID = "SearchEverywhere";
+
   public static final int SEARCH_FIELD_COLUMNS = 25;
   private final SearchEverywhereAction.MyListRenderer myRenderer;
   private final JPanel myContentPanel;
@@ -133,6 +137,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private static AtomicBoolean ourOtherKeyWasPressed = new AtomicBoolean(false);
   private static AtomicLong ourLastTimePressed = new AtomicLong(0);
   private ArrayList<VirtualFile> myAlreadyAddedFiles = new ArrayList<VirtualFile>();
+  private static KeymapManager keymapManager = KeymapManager.getInstance();
 
   static {
     IdeEventQueue.getInstance().addPostprocessor(new IdeEventQueue.EventDispatcher() {
@@ -143,6 +148,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           final int keyCode = keyEvent.getKeyCode();
 
           if (keyCode == KeyEvent.VK_SHIFT) {
+            // To prevent performance issue check this only in case if Shift was pressed
+            if (keymapManager.getActiveKeymap().getShortcuts(ACTION_ID).length != 0) return false;
+
             if (ourOtherKeyWasPressed.get() && System.currentTimeMillis() - ourLastTimePressed.get() < 300) {
               ourPressed.set(false);
               ourReleased.set(false);
@@ -163,7 +171,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                     ourReleased.set(false);
                     ourLastTimePressed.set(System.currentTimeMillis());
                     final ActionManager actionManager = ActionManager.getInstance();
-                    final AnAction action = actionManager.getAction("SearchEverywhere");
+                    final AnAction action = actionManager.getAction(ACTION_ID);
 
                     final AnActionEvent anActionEvent = new AnActionEvent(keyEvent,
                                                                           DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner()),
