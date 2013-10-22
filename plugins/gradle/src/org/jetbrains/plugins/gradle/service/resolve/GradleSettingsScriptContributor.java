@@ -17,22 +17,17 @@ package org.jetbrains.plugins.gradle.service.resolve;
 
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall;
+import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 
-import java.util.List;
-
 /**
- * @author Denis Zhdanov
- * @since 7/23/13 4:21 PM
+ * @author Vladislav.Soroka
+ * @since 10/22/13
  */
-public class GradleScriptContributor extends NonCodeMembersContributor {
+public class GradleSettingsScriptContributor extends NonCodeMembersContributor {
 
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
@@ -49,26 +44,11 @@ public class GradleScriptContributor extends NonCodeMembersContributor {
     }
 
     PsiFile file = aClass.getContainingFile();
-    if (file == null || !file.getName().endsWith(GradleConstants.EXTENSION) || GradleConstants.SETTINGS_FILE_NAME.equals(file.getName())) {
+    if (file == null || !file.getName().equals(GradleConstants.SETTINGS_FILE_NAME)) {
       return;
     }
 
-    List<String> methodInfo = ContainerUtilRt.newArrayList();
-    for (GrMethodCall current = PsiTreeUtil.getParentOfType(place, GrMethodCall.class);
-         current != null;
-         current = PsiTreeUtil.getParentOfType(current, GrMethodCall.class)) {
-      GrExpression expression = current.getInvokedExpression();
-      if (expression == null) {
-        continue;
-      }
-      String text = expression.getText();
-      if (text != null) {
-        methodInfo.add(text);
-      }
-    }
-
-    for (GradleMethodContextContributor contributor : GradleMethodContextContributor.EP_NAME.getExtensions()) {
-      contributor.process(methodInfo, processor, state, place);
-    }
+    GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
+    GradleResolverUtil.processDeclarations(psiManager, processor, state, place, GradleCommonClassNames.GRADLE_API_INITIALIZATION_SETTINGS);
   }
 }
