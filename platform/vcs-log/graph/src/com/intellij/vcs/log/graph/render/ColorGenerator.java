@@ -27,7 +27,7 @@ public class ColorGenerator {
   }
 
   private static int rangeFix(int n) {
-    return Math.abs(n) % 200;
+    return Math.abs(n) % 100 + 70;
   }
 
 
