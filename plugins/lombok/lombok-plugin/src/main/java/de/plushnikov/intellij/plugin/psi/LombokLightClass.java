@@ -398,7 +398,7 @@ public class LombokLightClass extends LightElement implements PsiClass, PsiQuali
   @Nullable
   @Override
   public PsiTypeParameterList getTypeParameterList() {
-    return null;
+    return myTypeParameterList;
   }
 
   public void setTypeParameterList(@NotNull PsiTypeParameterList list) {
@@ -420,7 +420,7 @@ public class LombokLightClass extends LightElement implements PsiClass, PsiQuali
 
   @Override
   public boolean hasModifierProperty(@PsiModifier.ModifierConstant @NonNls @NotNull String name) {
-    return false;
+    return myModifierList.hasModifierProperty(name);
   }
 
   public void setMyContainingClass(PsiClass myContainingClass) {

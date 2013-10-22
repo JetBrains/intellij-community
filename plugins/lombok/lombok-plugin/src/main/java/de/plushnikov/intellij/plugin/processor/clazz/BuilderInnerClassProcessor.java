@@ -2,11 +2,13 @@ package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightClass;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
+import de.plushnikov.intellij.plugin.psi.LombokNewLightClassBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.ErrorMessages;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.BuilderUtil;
@@ -93,18 +95,26 @@ public class BuilderInnerClassProcessor extends AbstractClassProcessor {
       target.add(innerClass);
     }
 
-//    target.add(createInnerClassNewWay(psiClass, psiAnnotation));
+    target.add(createInnerClassNewWay(psiClass, psiAnnotation));
   }
 
-//  protected PsiClass createInnerClassNewWay(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
-//    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
-//    PsiClass newClass = factory.createClass("SureBet");
-//    return newClass;
-//  }
+  protected PsiClass createInnerClassNewWay(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
+    PsiClass newClass = factory.createClass("SureBet");
+    LombokNewLightClassBuilder innerClass = new LombokNewLightClassBuilder(newClass, "BuilderExample.ShouldWork")
+      .withContainingClass(psiClass)
+      .withParameterTypes(psiClass.getTypeParameterList())
+      .withModifier(PsiModifier.PUBLIC)
+      .withModifier(PsiModifier.STATIC);
+    innerClass.withConstructors(createConstructors(innerClass, psiAnnotation))
+      .withFields(createFields(psiClass))
+      .withMethods(createMethods(psiClass, innerClass, psiAnnotation));
+    return innerClass;
+  }
 
   protected Collection<PsiMethod> createConstructors(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     NoArgsConstructorProcessor noArgsConstructorProcessor = new NoArgsConstructorProcessor();
-    return noArgsConstructorProcessor.createNoArgsConstructor(psiClass, PsiModifier.PACKAGE_LOCAL, psiAnnotation);
+    return noArgsConstructorProcessor.createNoArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation);
   }
 
   protected Collection<PsiField> createFields(@NotNull PsiClass psiClass) {
