@@ -44,6 +44,7 @@ public interface EclipseXml {
   @NonNls String GROOVY_DSL_CONTAINER = "GROOVY_DSL_SUPPORT";
   @NonNls String GROOVY_SUPPORT = "GROOVY_SUPPORT";
   @NonNls String JREBEL_NATURE = "org.zeroturnaround.eclipse.jrebelNature";
+  @NonNls String JAVA_NATURE = "org.eclipse.jdt.core.javanature";
   @NonNls String SONAR_NATURE = "org.sonar.ide.eclipse.core.sonarNature";
   @NonNls String JUNIT3 = JUNIT_CONTAINER + "/" + "3.8.1";
   @NonNls String JUNIT4 = JUNIT_CONTAINER + "/" + "4";
