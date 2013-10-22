@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,8 +100,9 @@ public abstract class CachedValuesManager {
   }
 
   private final ConcurrentMap<String, Key<CachedValue>> keyForProvider = new ConcurrentHashMap<String, Key<CachedValue>>();
-  public <T> Key<CachedValue<T>> getKeyForClass(final Class<?> providerClass) {
+  public <T> Key<CachedValue<T>> getKeyForClass(@NotNull Class<?> providerClass) {
     String name = providerClass.getName();
+    assert name != null : providerClass + " doesn't have a name; can't be used for cache value provider";
     Key<CachedValue> key = keyForProvider.get(name);
     if (key == null) {
       key = ConcurrencyUtil.cacheOrGet(keyForProvider, name, Key.<CachedValue>create(name));

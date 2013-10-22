@@ -30,15 +30,13 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.reference.SoftReference;
+import com.intellij.psi.util.*;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SoftValueHashMap;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptTypeDetector;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -59,6 +57,17 @@ public class AntTasksProvider {
   public static final boolean antAvailable;
   private static final Key<CachedValue<Set<LightMethodBuilder>>> GANT_METHODS = Key.create("gantMethods");
   private static final Object ourLock = new Object();
+  public static final ParameterizedCachedValueProvider<Map<List<URL>,AntClassLoader>,Project> PROVIDER =
+    new ParameterizedCachedValueProvider<Map<List<URL>, AntClassLoader>, Project>() {
+      @Nullable
+      @Override
+      public CachedValueProvider.Result<Map<List<URL>, AntClassLoader>> compute(Project project) {
+        final Map<List<URL>, AntClassLoader> map = new SoftValueHashMap<List<URL>, AntClassLoader>();
+        return CachedValueProvider.Result.create(map, ProjectRootManager.getInstance(project));
+      }
+    };
+  public static final Key<ParameterizedCachedValue<Map<List<URL>,AntClassLoader>,Project>> KEY =
+    Key.create("ANtClassLoader");
 
   private AntTasksProvider() {
   }
@@ -122,18 +131,12 @@ public class AntTasksProvider {
 
     AntClassLoader loader;
     synchronized (ourLock) {
-      final Map<List<URL>, SoftReference<AntClassLoader>> map = CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Map<List<URL>, SoftReference<AntClassLoader>>>() {
-        @Override
-        public Result<Map<List<URL>, SoftReference<AntClassLoader>>> compute() {
-          final Map<List<URL>, SoftReference<AntClassLoader>> map = ContainerUtil.newHashMap();
-          return Result.create(map, ProjectRootManager.getInstance(project));
-        }
-      });
+      final Map<List<URL>, AntClassLoader> map = CachedValuesManager.getManager(project).getParameterizedCachedValue(project, KEY,
+                                                                                                                     PROVIDER, false, project);
 
-      final SoftReference<AntClassLoader> reference = map.get(urls);
-      loader = reference != null ? reference.get() : null;
+      loader = map.get(urls);
       if (loader == null) {
-        map.put(urls, new SoftReference<AntClassLoader>(loader = new AntClassLoader(urls)));
+        map.put(urls, loader = new AntClassLoader(urls));
       }
     }
 

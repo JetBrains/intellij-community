@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,23 @@
 
 package com.intellij.uiDesigner;
 
+import com.intellij.ProjectTopics;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.PropertiesUtil;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleServiceManager;
 import com.intellij.openapi.roots.ModuleRootAdapter;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.roots.ModuleRootEvent;
-import com.intellij.reference.SoftReference;
+import com.intellij.openapi.util.Pair;
 import com.intellij.uiDesigner.lw.StringDescriptor;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 import com.intellij.uiDesigner.radComponents.RadRootContainer;
+import com.intellij.util.containers.SoftValueHashMap;
 import com.intellij.util.messages.MessageBus;
-import com.intellij.ProjectTopics;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
@@ -42,7 +41,7 @@ import java.util.Map;
  */
 public class StringDescriptorManager {
   private Module myModule;
-  private final Map<Pair<Locale, String>, SoftReference<PropertiesFile>> myPropertiesFileCache = new HashMap<Pair<Locale, String>, SoftReference<PropertiesFile>>();
+  private final Map<Pair<Locale, String>, PropertiesFile> myPropertiesFileCache = new SoftValueHashMap<Pair<Locale, String>, PropertiesFile>();
 
   public StringDescriptorManager(final Module module, MessageBus bus) {
     myModule = module;
@@ -92,15 +91,14 @@ public class StringDescriptorManager {
   public IProperty resolveToProperty(@NotNull StringDescriptor descriptor, @Nullable Locale locale) {
     String propFileName = descriptor.getDottedBundleName();
     Pair<Locale, String> cacheKey = new Pair<Locale, String>(locale, propFileName);
-    SoftReference<PropertiesFile> propertiesFileRef;
+    PropertiesFile propertiesFile;
     synchronized (myPropertiesFileCache) {
-      propertiesFileRef = myPropertiesFileCache.get(cacheKey);
+      propertiesFile = myPropertiesFileCache.get(cacheKey);
     }
-    PropertiesFile propertiesFile = (propertiesFileRef == null) ? null : propertiesFileRef.get();
     if (propertiesFile == null || !propertiesFile.getContainingFile().isValid()) {
       propertiesFile = PropertiesUtil.getPropertiesFile(propFileName, myModule, locale);
       synchronized (myPropertiesFileCache) {
-        myPropertiesFileCache.put(cacheKey, new SoftReference<PropertiesFile>(propertiesFile));
+        myPropertiesFileCache.put(cacheKey, propertiesFile);
       }
     }
 

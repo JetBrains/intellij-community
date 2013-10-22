@@ -18,17 +18,17 @@ package com.intellij.util.containers;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.ref.ReferenceQueue;
-import java.lang.ref.WeakReference;
+import java.lang.ref.SoftReference;
 import java.util.*;
 
-public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
-  private final WeakHashMap<K, MyValueReference<K,V>> myWeakKeyMap = new WeakHashMap<K, MyValueReference<K, V>>();
+public final class SoftKeySoftValueHashMap<K,V> implements Map<K,V>{
+  private final SoftHashMap<K, MyValueReference<K,V>> mySoftKeyMap = new SoftHashMap<K, MyValueReference<K, V>>();
   private final ReferenceQueue<V> myQueue = new ReferenceQueue<V>();
 
-  private static class MyValueReference<K,V> extends WeakReference<V> {
-    private final WeakHashMap.Key<K> key;
+  private static class MyValueReference<K,V> extends SoftReference<V> {
+    private final SoftHashMap.Key<K> key;
 
-    private MyValueReference(WeakHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q) {
+    private MyValueReference(SoftHashMap.Key<K> key, V referent, ReferenceQueue<? super V> q) {
       super(referent, q);
       this.key = key;
     }
@@ -36,12 +36,12 @@ public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
 
   // returns true if some refs were tossed
   boolean processQueue() {
-    boolean processed = myWeakKeyMap.processQueue();
+    boolean processed = mySoftKeyMap.processQueue();
     while(true) {
       MyValueReference<K,V> ref = (MyValueReference<K, V>)myQueue.poll();
       if (ref == null) break;
-      WeakHashMap.Key<K> weakKey = ref.key;
-      myWeakKeyMap.removeKey(weakKey);
+      SoftHashMap.Key<K> key = ref.key;
+      mySoftKeyMap.removeKey(key);
       processed = true;
     }
     return processed;
@@ -49,7 +49,7 @@ public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
 
   @Override
   public V get(Object key) {
-    MyValueReference<K,V> ref = myWeakKeyMap.get(key);
+    MyValueReference<K,V> ref = mySoftKeyMap.get(key);
     if (ref == null) return null;
     return ref.get();
   }
@@ -57,16 +57,16 @@ public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
   @Override
   public V put(K key, V value) {
     processQueue();
-    WeakHashMap.Key<K> weakKey = myWeakKeyMap.createKey(key);
-    MyValueReference<K, V> reference = new MyValueReference<K, V>(weakKey, value, myQueue);
-    MyValueReference<K,V> oldRef = myWeakKeyMap.putKey(weakKey, reference);
+    SoftHashMap.Key<K> softKey = mySoftKeyMap.createKey(key);
+    MyValueReference<K, V> reference = new MyValueReference<K, V>(softKey, value, myQueue);
+    MyValueReference<K,V> oldRef = mySoftKeyMap.putKey(softKey, reference);
     return oldRef == null ? null : oldRef.get();
   }
 
   @Override
   public V remove(Object key) {
     processQueue();
-    MyValueReference<K,V> ref = myWeakKeyMap.remove(key);
+    MyValueReference<K,V> ref = mySoftKeyMap.remove(key);
     return ref != null ? ref.get() : null;
   }
 
@@ -77,18 +77,18 @@ public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
 
   @Override
   public void clear() {
-    myWeakKeyMap.clear();
+    mySoftKeyMap.clear();
     processQueue();
   }
 
   @Override
   public int size() {
-    return myWeakKeyMap.size(); //?
+    return mySoftKeyMap.size(); //?
   }
 
   @Override
   public boolean isEmpty() {
-    return myWeakKeyMap.isEmpty(); //?
+    return mySoftKeyMap.isEmpty(); //?
   }
 
   @Override
@@ -104,14 +104,14 @@ public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
   @NotNull
   @Override
   public Set<K> keySet() {
-    return myWeakKeyMap.keySet();
+    return mySoftKeyMap.keySet();
   }
 
   @NotNull
   @Override
   public Collection<V> values() {
     List<V> result = new ArrayList<V>();
-    final Collection<MyValueReference<K, V>> refs = myWeakKeyMap.values();
+    final Collection<MyValueReference<K, V>> refs = mySoftKeyMap.values();
     for (MyValueReference<K, V> ref : refs) {
       final V value = ref.get();
       if (value != null) {
