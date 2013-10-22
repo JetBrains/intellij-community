@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.testFramework.PlatformTestUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
@@ -34,8 +35,12 @@ public abstract class ArtifactsDownloadingTestCase extends MavenImportingTestCas
   }
 
   protected void createDummyArtifact(String remoteRepo, String name) throws IOException {
-    FileUtil.writeToFile(new File(remoteRepo, name), PlatformTestUtil.EMPTY_JAR_BYTES);
+    createEmptyJar(remoteRepo, name);
+  }
 
-    FileUtil.writeToFile(new File(remoteRepo, name + ".sha1"), ("b04f3ee8f5e43fa3b162981b50bb72fe1acabb33  " + name).getBytes(CharsetToolkit.UTF8_CHARSET));
+  public static void createEmptyJar(@NotNull String dir, @NotNull String name) throws IOException {
+    FileUtil.writeToFile(new File(dir, name), PlatformTestUtil.EMPTY_JAR_BYTES);
+
+    FileUtil.writeToFile(new File(dir, name + ".sha1"), ("b04f3ee8f5e43fa3b162981b50bb72fe1acabb33  " + name).getBytes(CharsetToolkit.UTF8_CHARSET));
   }
 }
