@@ -23,6 +23,7 @@ jsch-0.1.50.jar
 jsr173_1.0_api.jar
 junit.jar
 junit-4.10.jar
+jzlib-1.1.1.jar
 log4j.jar
 jgoodies-common-1.2.1.jar
 jgoodies-looks-2.4.2.jar
