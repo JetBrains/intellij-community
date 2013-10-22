@@ -27,7 +27,6 @@ import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -57,7 +56,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
     if (value instanceof Node && value != tree.getModel().getRoot()) {
       Node node = (Node)value;
       if (!node.isValid()) {
-        doAppend(UsageViewBundle.message("node.invalid") + " ", ourInvalidAttributes);
+        append(UsageViewBundle.message("node.invalid") + " ", ourInvalidAttributes);
       }
       if (myPresentation.isShowReadOnlyStatusAsRed() && node.isReadOnly()) {
         showAsReadOnly = true;
@@ -71,63 +70,61 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       if (userObject instanceof UsageTarget) {
         UsageTarget usageTarget = (UsageTarget)userObject;
         if (!usageTarget.isValid()) {
-          doAppend(UsageViewBundle.message("node.invalid"), ourInvalidAttributes);
+          append(UsageViewBundle.message("node.invalid"), ourInvalidAttributes);
           return;
         }
 
         final ItemPresentation presentation = usageTarget.getPresentation();
         LOG.assertTrue(presentation != null);
         if (showAsReadOnly) {
-          doAppend(UsageViewBundle.message("node.readonly") + " ", ourReadOnlyAttributes);
+          append(UsageViewBundle.message("node.readonly") + " ", ourReadOnlyAttributes);
         }
         final String text = presentation.getPresentableText();
-        doAppend(text != null? text : "", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        append(text != null ? text : "", SimpleTextAttributes.REGULAR_ATTRIBUTES);
         setIcon(presentation.getIcon(expanded));
       }
       else if (treeNode instanceof GroupNode) {
         GroupNode node = (GroupNode)treeNode;
 
         if (node.isRoot()) {
-          doAppend(StringUtil.capitalize(myPresentation.getUsagesWord()), patchAttrs(node, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES));
+          append(StringUtil.capitalize(myPresentation.getUsagesWord()), patchAttrs(node, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES));
         }
         else {
-          doAppend(node.getGroup().getText(myView),
+          append(node.getGroup().getText(myView),
                  patchAttrs(node, showAsReadOnly ? ourReadOnlyAttributes : SimpleTextAttributes.REGULAR_ATTRIBUTES));
           setIcon(node.getGroup().getIcon(expanded));
         }
 
         int count = node.getRecursiveUsageCount();
-        doAppend(" (" + StringUtil.pluralize(count + " " + myPresentation.getUsagesWord(), count) + ")", patchAttrs(node, myNumberOfUsagesAttribute));
+        append(" (" + StringUtil.pluralize(count + " " + myPresentation.getUsagesWord(), count) + ")",
+               patchAttrs(node, myNumberOfUsagesAttribute));
       }
       else if (treeNode instanceof UsageNode) {
         UsageNode node = (UsageNode)treeNode;
         setIcon(node.getUsage().getPresentation().getIcon());
         if (showAsReadOnly) {
-          doAppend(UsageViewBundle.message("node.readonly") + " ", patchAttrs(node, ourReadOnlyAttributes));
+          append(UsageViewBundle.message("node.readonly") + " ", patchAttrs(node, ourReadOnlyAttributes));
         }
 
         if (node.isValid()) {
           TextChunk[] text = node.getUsage().getPresentation().getText();
           for (TextChunk textChunk : text) {
             SimpleTextAttributes simples = textChunk.getSimpleAttributesIgnoreBackground();
-            doAppend(textChunk.getText(), patchAttrs(node, simples));
+            append(textChunk.getText(), patchAttrs(node, simples));
           }
         }
       }
       else if (userObject instanceof String) {
-        doAppend((String)userObject, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+        append((String)userObject, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
       }
       else {
-        doAppend(userObject == null ? "" : userObject.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        append(userObject == null ? "" : userObject.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     }
     else {
-      doAppend(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
-  }
-
-  private void doAppend(@NotNull String fragment, @NotNull SimpleTextAttributes attributes) {
-    SpeedSearchUtil.appendFragmentsForSpeedSearch(myTree, fragment, attributes, mySelected, this);
+    SpeedSearchUtil.applySpeedSearchHighlighting(myTree, this, mySelected);
   }
 
   private static SimpleTextAttributes patchAttrs(Node node, SimpleTextAttributes original) {
