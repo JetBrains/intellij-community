@@ -58,7 +58,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     String namePattern = getNamePattern(base, pattern);
     String qualifierPattern = getQualifierPattern(base, pattern);
 
-    if (removeModelSpecificMarkup(base, namePattern).isEmpty() && !base.canShowListForEmptyPattern()) return true;
+    if (removeModelSpecificMarkup(base.getModel(), namePattern).isEmpty() && !base.canShowListForEmptyPattern()) return true;
 
     final ChooseByNameModel model = base.getModel();
     String matchingPattern = convertToMatchingPattern(base, namePattern);
@@ -330,7 +330,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
   @NotNull
   private static String convertToMatchingPattern(@NotNull ChooseByNameBase base, @NotNull String pattern) {
-    pattern = removeModelSpecificMarkup(base, pattern);
+    pattern = removeModelSpecificMarkup(base.getModel(), pattern);
 
     if (!base.canShowListForEmptyPattern()) {
       LOG.assertTrue(!pattern.isEmpty(), base);
@@ -349,8 +349,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   }
 
   @NotNull
-  private static String removeModelSpecificMarkup(@NotNull ChooseByNameBase base, @NotNull String pattern) {
-    ChooseByNameModel model = base.getModel();
+  private static String removeModelSpecificMarkup(@NotNull ChooseByNameModel model, @NotNull String pattern) {
     if (model instanceof ContributorsBasedGotoByModel) {
       pattern = ((ContributorsBasedGotoByModel)model).removeModelSpecificMarkup(pattern);
     }
