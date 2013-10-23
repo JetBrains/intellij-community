@@ -53,7 +53,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.stubs.GroovyShortNamesCache;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class GroovyPositionManager implements PositionManager {
@@ -94,13 +93,16 @@ public class GroovyPositionManager implements PositionManager {
   }
 
   @Nullable
-  private static GrTypeDefinition findEnclosingTypeDefinition(SourcePosition position) {
+  private static PsiClass findEnclosingTypeDefinition(SourcePosition position) {
     PsiFile file = position.getFile();
     if (!(file instanceof GroovyFileBase)) return null;
     PsiElement element = file.findElementAt(position.getOffset());
     while (true) {
-      element = PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class);
-      if (element == null || !((GrTypeDefinition)element).isAnonymous()) {
+      element = PsiTreeUtil.getParentOfType(element, GrTypeDefinition.class, GroovyFileBase.class);
+      if (element instanceof GroovyFileBase) {
+        return ((GroovyFileBase)element).getScriptClass();
+      }
+      else if (element instanceof GrTypeDefinition && !((GrTypeDefinition)element).isAnonymous()) {
         return (GrTypeDefinition)element;
       }
     }
@@ -132,7 +134,7 @@ public class GroovyPositionManager implements PositionManager {
     AccessToken accessToken = ApplicationManager.getApplication().acquireReadActionLock();
 
     try {
-      GrTypeDefinition typeDefinition = findEnclosingTypeDefinition(position);
+      PsiClass typeDefinition = findEnclosingTypeDefinition(position);
       if (typeDefinition != null) {
         return getClassNameForJvm(typeDefinition);
       }
@@ -284,7 +286,7 @@ public class GroovyPositionManager implements PositionManager {
         }
         else {
           String enclosingName = findEnclosingName(position);
-          if (enclosingName == null) return Collections.emptyList();
+          if (enclosingName == null) return null;
 
           final List<ReferenceType> outers = myDebugProcess.getVirtualMachineProxy().classesByName(enclosingName);
           final List<ReferenceType> result = new ArrayList<ReferenceType>(outers.size());
@@ -296,11 +298,11 @@ public class GroovyPositionManager implements PositionManager {
           }
           return result;
         }
-        return Collections.emptyList();
+        return null;
       }
     });
 
-    if (result == null || result.isEmpty()) throw new NoDataException();
+    if (result == null) throw new NoDataException();
     return result;
   }
 
