@@ -451,7 +451,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
           ColoredTreeCellRenderer coloredRenderer = (ColoredTreeCellRenderer)renderer;
           coloredRenderer.clear();
           coloredRenderer.customizeCellRenderer(myTree, value, false, false, false, 0, false);
-          return coloredRenderer.getCharSequence().toString();
+          return coloredRenderer.getCharSequence(true).toString();
         }
         else {
           return value == null? null : value.toString();

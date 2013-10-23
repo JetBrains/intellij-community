@@ -124,7 +124,7 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
     else {
       append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
-    SpeedSearchUtil.applySpeedSearchHighlighting(myTree, this, mySelected);
+    SpeedSearchUtil.applySpeedSearchHighlighting(myTree, this, true, mySelected);
   }
 
   private static SimpleTextAttributes patchAttrs(Node node, SimpleTextAttributes original) {

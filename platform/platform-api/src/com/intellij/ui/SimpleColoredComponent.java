@@ -848,13 +848,15 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
   }
 
-  public CharSequence getCharSequence() {
-    return StringUtil.join(myFragments, "");
+  public CharSequence getCharSequence(boolean mainOnly) {
+    List<String> fragments = mainOnly && myMainTextLastIndex > -1 && myMainTextLastIndex + 1 < myFragments.size()?
+      myFragments.subList(0, myMainTextLastIndex + 1) : myFragments;
+    return StringUtil.join(fragments, "");
   }
 
   @Override
   public String toString() {
-    return getCharSequence().toString();
+    return getCharSequence(false).toString();
   }
 
   public void change(@NotNull Runnable runnable, boolean autoInvalidate) {

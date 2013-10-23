@@ -1114,7 +1114,7 @@ public class Switcher extends AnAction implements DumbAware {
         if (!selected &&  color != null) {
           setBackground(color);
         }
-        SpeedSearchUtil.applySpeedSearchHighlighting(mySwitcherPanel, this, selected);
+        SpeedSearchUtil.applySpeedSearchHighlighting(mySwitcherPanel, this, false, selected);
       }
     }
   }

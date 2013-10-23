@@ -43,9 +43,10 @@ public final class SpeedSearchUtil {
 
   public static void applySpeedSearchHighlighting(@NotNull JComponent speedSearchEnabledComponent,
                                                   @NotNull SimpleColoredComponent coloredComponent,
+                                                  boolean mainOnly,
                                                   boolean selected) {
     SpeedSearchSupply speedSearch = SpeedSearchSupply.getSupply(speedSearchEnabledComponent);
-    Iterable<TextRange> ranges = speedSearch == null ? null : speedSearch.matchingFragments(coloredComponent.getCharSequence().toString());
+    Iterable<TextRange> ranges = speedSearch == null ? null : speedSearch.matchingFragments(coloredComponent.getCharSequence(mainOnly).toString());
     Iterator<TextRange> rangesIterator = ranges != null ? ranges.iterator() : null;
     if (rangesIterator == null || !rangesIterator.hasNext()) return;
     Color bg = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
