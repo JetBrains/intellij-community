@@ -59,13 +59,15 @@ class PsiMethodListPopupStep implements ListPopupStep<JvmSmartStepIntoHandler.St
   @NotNull
     public String getTextFor(JvmSmartStepIntoHandler.StepTarget value) {
     final PsiMethod method = value.getMethod();
-    return PsiFormatUtil.formatMethod(
+    final String methodLabel = value.getMethodLabel();
+    final String methodRender = PsiFormatUtil.formatMethod(
       method,
       PsiSubstitutor.EMPTY,
       PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_PARAMETERS,
       PsiFormatUtil.SHOW_TYPE,
       999
     );
+    return methodLabel != null? methodLabel + methodRender : methodRender;
   }
 
   public ListSeparator getSeparatorAbove(JvmSmartStepIntoHandler.StepTarget value) {

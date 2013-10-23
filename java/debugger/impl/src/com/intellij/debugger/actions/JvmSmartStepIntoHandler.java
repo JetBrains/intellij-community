@@ -26,6 +26,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -44,6 +45,9 @@ public abstract class JvmSmartStepIntoHandler {
   public interface StepTarget {
     @NotNull
     PsiMethod getMethod();
+
+    @Nullable
+    String getMethodLabel();
 
     boolean needsBreakpointRequest();
 

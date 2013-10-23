@@ -25,9 +25,11 @@ import com.intellij.psi.*;
 import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * User: Alexander Podkhalyuzin
@@ -76,11 +78,18 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
       //noinspection unchecked
       final List<StepTarget> targets = new OrderedSet<StepTarget>();
-      final PsiElementVisitor methodCollector = new JavaRecursiveElementWalkingVisitor() {
+      final PsiElementVisitor methodCollector = new JavaRecursiveElementVisitor() {
+        final Stack<String> myParamNameStack = new Stack<String>();
+
+        @Nullable
+        private String getCurrentParamName() {
+          return myParamNameStack.size() > 0? myParamNameStack.peek() : null;
+        }
+
         @Override
         public void visitAnonymousClass(PsiAnonymousClass aClass) {
           for (PsiMethod psiMethod : aClass.getMethods()) {
-            targets.add(new MethodTarget(psiMethod, true));
+            targets.add(new MethodTarget(psiMethod, getCurrentParamName(), true));
           }
         }
 
@@ -95,10 +104,30 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         public void visitCallExpression(final PsiCallExpression expression) {
           final PsiMethod psiMethod = expression.resolveMethod();
           if (psiMethod != null) {
-            targets.add(new MethodTarget(psiMethod, false));
+            targets.add(new MethodTarget(psiMethod, null, false));
+            final PsiExpressionList argList = expression.getArgumentList();
+            if (argList != null) {
+              final String methodName = psiMethod.getName();
+              final PsiExpression[] expressions = argList.getExpressions();
+              final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+              for (int idx = 0; idx < expressions.length; idx++) {
+                final String paramName = (idx < parameters.length && !parameters[idx].isVarArgs())? parameters[idx].getName() : "arg"+(idx+1);
+                myParamNameStack.push(methodName + ": " + paramName);
+                final PsiExpression argExpression = expressions[idx];
+                try {
+                  argExpression.accept(this);
+                }
+                finally {
+                  myParamNameStack.pop();
+                }
+              }
+            }
           }
-          super.visitCallExpression(expression);
+          else {
+            super.visitCallExpression(expression);
+          }
         }
+
       };
       element.accept(methodCollector);
       for (PsiElement sibling = element.getNextSibling(); sibling != null; sibling = sibling.getNextSibling()) {
@@ -114,11 +143,18 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
   private static class MethodTarget implements StepTarget {
     private final PsiMethod myMethod;
+    private final String myLabel;
     private final boolean myNeedBreakpointRequest;
 
-    private MethodTarget(@NotNull PsiMethod method, boolean needBreakpointRequest) {
+    private MethodTarget(@NotNull PsiMethod method, String currentParamName, boolean needBreakpointRequest) {
       myMethod = method;
+      myLabel = currentParamName == null? null : currentParamName + ".";
       myNeedBreakpointRequest = needBreakpointRequest;
+    }
+
+    @Nullable
+    public String getMethodLabel() {
+      return myLabel;
     }
 
     @NotNull
