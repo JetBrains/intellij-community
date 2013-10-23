@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.psi;
 
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.*;
 import org.jetbrains.annotations.NonNls;
@@ -10,10 +11,9 @@ import java.util.Collection;
 
 public class LombokNewLightClassBuilder extends LombokNewLightClass {
 
-  public LombokNewLightClassBuilder(@NotNull PsiClass delegate, @NotNull String simpleName) {
-    super(delegate);
-//    setCanonicalName(canonicalName);
-//    setName(simpleName);
+  public LombokNewLightClassBuilder(@NotNull Project project, @NotNull String simpleName, @NotNull String qualifiedName) {
+    super(JavaPsiFacade.getElementFactory(project).createClass(simpleName));
+    setQualifiedName(qualifiedName);
   }
 
   public LombokNewLightClassBuilder withModifier(@PsiModifier.ModifierConstant @NotNull @NonNls String modifier) {

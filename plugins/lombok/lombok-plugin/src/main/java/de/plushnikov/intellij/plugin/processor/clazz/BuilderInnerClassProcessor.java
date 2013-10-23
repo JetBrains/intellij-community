@@ -78,6 +78,10 @@ public class BuilderInnerClassProcessor extends AbstractClassProcessor {
   }
 
   protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+    processInternNew(psiClass, psiAnnotation, target);
+  }
+
+  protected void processInternOld(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String innerClassSimpleName = BuilderUtil.createBuilderClassName(psiAnnotation, psiClass);
     final String innerClassCanonicalName = psiClass.getName() + "." + BuilderUtil.createBuilderClassName(psiAnnotation, psiClass);
 
@@ -94,22 +98,25 @@ public class BuilderInnerClassProcessor extends AbstractClassProcessor {
          .withMethods(createMethods(psiClass, innerClass, psiAnnotation));
       target.add(innerClass);
     }
-
-    target.add(createInnerClassNewWay(psiClass, psiAnnotation));
   }
 
-  protected PsiClass createInnerClassNewWay(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
-    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiClass.getProject());
-    PsiClass newClass = factory.createClass("SureBet");
-    LombokNewLightClassBuilder innerClass = new LombokNewLightClassBuilder(newClass, "BuilderExample.ShouldWork")
-      .withContainingClass(psiClass)
-      .withParameterTypes(psiClass.getTypeParameterList())
-      .withModifier(PsiModifier.PUBLIC)
-      .withModifier(PsiModifier.STATIC);
-    innerClass.withConstructors(createConstructors(innerClass, psiAnnotation))
-      .withFields(createFields(psiClass))
-      .withMethods(createMethods(psiClass, innerClass, psiAnnotation));
-    return innerClass;
+  protected void processInternNew(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
+    final String innerClassSimpleName = BuilderUtil.createBuilderClassName(psiAnnotation, psiClass);
+    final String innerClassQualifiedName = psiClass.getName() + "." + BuilderUtil.createBuilderClassName(psiAnnotation, psiClass);
+
+    // Create inner class only if it doesn't exist.
+    final PsiClass innerClassByName = PsiClassUtil.getInnerClassInternByName(psiClass, innerClassSimpleName);
+    if (innerClassByName == null) {
+      LombokNewLightClassBuilder innerClass = new LombokNewLightClassBuilder(psiClass.getProject(), innerClassSimpleName, innerClassQualifiedName)
+        .withContainingClass(psiClass)
+        .withParameterTypes(psiClass.getTypeParameterList())
+        .withModifier(PsiModifier.PUBLIC)
+        .withModifier(PsiModifier.STATIC);
+      innerClass.withConstructors(createConstructors(innerClass, psiAnnotation))
+        .withFields(createFields(psiClass))
+        .withMethods(createMethods(psiClass, innerClass, psiAnnotation));
+      target.add(innerClass);
+    }
   }
 
   protected Collection<PsiMethod> createConstructors(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {

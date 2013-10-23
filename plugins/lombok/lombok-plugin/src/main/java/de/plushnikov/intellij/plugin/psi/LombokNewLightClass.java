@@ -12,6 +12,7 @@ import javax.swing.*;
 import java.util.Arrays;
 
 public class LombokNewLightClass extends LightClass {
+  private String myQualifiedName;
   private PsiMethod[] myConstructors = new PsiMethod[0];
   private PsiField[] myFields = new PsiField[0];
   private PsiMethod[] myMethods = new PsiMethod[0];
@@ -23,6 +24,16 @@ public class LombokNewLightClass extends LightClass {
   public LombokNewLightClass(@NotNull PsiClass delegate) {
     super(delegate);
     myModifierList = new LombokLightModifierList(delegate.getManager(), JavaLanguage.INSTANCE);
+  }
+
+  @Nullable
+  @Override
+  public String getQualifiedName() {
+    return myQualifiedName;
+  }
+
+  public void setQualifiedName(@NotNull String qualifiedName) {
+    myQualifiedName = qualifiedName;
   }
 
   @NotNull
@@ -102,6 +113,14 @@ public class LombokNewLightClass extends LightClass {
       return myContainingClass.getScope();
     }
     return super.getScope();
+  }
+
+  @Override
+  public PsiElement getParent() {
+    if (myContainingClass != null) {
+      return myContainingClass.getParent();
+    }
+    return super.getParent();
   }
 
   @Override
