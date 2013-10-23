@@ -121,7 +121,7 @@ public class JobLauncherImpl extends JobLauncher {
     // supply our own indicator even if we haven't given one - to support cancellation
     final ProgressIndicator wrapper = progress == null ? new ProgressIndicatorBase() : new SensitiveProgressWrapper(progress);
 
-    if (things.size() <= 1 || JobSchedulerImpl.CORES_COUNT <= 2) {
+    if (things.size() <= 1 || JobSchedulerImpl.CORES_COUNT <= 1) {
       final AtomicBoolean result = new AtomicBoolean(true);
       ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
         @Override
