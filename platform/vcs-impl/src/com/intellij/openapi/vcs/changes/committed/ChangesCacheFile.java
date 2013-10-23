@@ -872,6 +872,7 @@ public class ChangesCacheFile {
         }
         
         for (Change change : changes) {
+          if (data.accountedChanges.contains(change)) continue;
           Function<VcsRevisionNumber, ProcessingResult> revisionHandler = results.get(change).revisionDependentProcessing;
           if (revisionHandler != null) {
             results.put(change, revisionHandler.fun(myCurrentRevisions.get(revisionDependentFiles.get(change))));
