@@ -669,20 +669,26 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       myAmend.setToolTipText(GitBundle.getString("commit.amend.tooltip"));
       myPanel.add(myAmend, c);
 
+      myPreviousMessage = myCheckinPanel.getCommitMessage();
+
       myAmend.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
           if (myAmend.isSelected()) {
-            if (myAmendedMessage != null) { // checkbox is selected not the first time
-              substituteCommitMessage(myAmendedMessage);
-            }
-            else {
-              loadMessageInModalTask(project);
+            if (myPreviousMessage.equals(myCheckinPanel.getCommitMessage())) { // if user has already typed something, don't revert it
+              if (myAmendedMessage == null) {
+                loadMessageInModalTask(project);
+              }
+              else { // checkbox is selected not the first time
+                substituteCommitMessage(myAmendedMessage);
+              }
             }
           }
           else {
-            myAmendedMessage = myCheckinPanel.getCommitMessage(); // save if user accidentally deselected amended message
-            myCheckinPanel.setCommitMessage(myPreviousMessage);
+            // there was the amended message, but user has changed it => not reverting
+            if (myCheckinPanel.getCommitMessage().equals(myAmendedMessage)) {
+              myCheckinPanel.setCommitMessage(myPreviousMessage);
+            }
           }
         }
       });
@@ -699,6 +705,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
           }, "Reading commit message...", false, project);
         if (!StringUtil.isEmptyOrSpaces(messageFromGit)) {
           substituteCommitMessage(messageFromGit);
+          myAmendedMessage = messageFromGit;
         }
       }
       catch (VcsException e) {
