@@ -36,10 +36,7 @@ import com.intellij.vcs.log.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * <p>Holds the commit data loaded from the VCS, and is capable to refresh this data by
@@ -157,14 +154,18 @@ public class VcsLogDataHolder implements Disposable {
 
   private void initialize(@NotNull final Consumer<VcsLogDataHolder> onInitialized) {
     myDataLoaderQueue.clear();
-    loadFirstPart(new Consumer<DataPack>() {
+    runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
-      public void consume(DataPack dataPack) {
-        onInitialized.consume(VcsLogDataHolder.this);
-        // after first part is loaded and shown to the user, load the whole log in background
-        loadAllLog();
+      public void consume(ProgressIndicator indicator) throws VcsException {
+        loadFromVcs(mySettings.getRecentCommitsCount(), indicator, new Consumer<DataPack>() {
+          @Override
+          public void consume(DataPack dataPack) {
+            onInitialized.consume(VcsLogDataHolder.this);
+            loadAllLog(); // after first part is loaded and shown to the user, start loading the whole log in background
+          }
+        });
       }
-    }, true);
+    });
   }
 
   private void loadAllLog() {
@@ -209,68 +210,111 @@ public class VcsLogDataHolder implements Disposable {
   }
 
   /**
-   * Loads the top part of the log and rebuilds the graph & log table.
-   *
-   * @param onSuccess this task is called {@link UIUtil#invokeAndWaitIfNeeded(Runnable) on the EDT} after loading and graph
-   *                  building completes.
-   * @param invalidateWholeLog if the whole log data should be invalidated and will be retrieved in onSuccess.
+   * Queries the VCS for the number of recent unordered commits, orders them and connects to the existing log structure.
+   * This is done after refresh, when the whole log skeleton has been loaded.
    */
-  private void loadFirstPart(@NotNull final Consumer<DataPack> onSuccess, final boolean invalidateWholeLog) {
-    runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
-      @Override
-      public void consume(ProgressIndicator indicator) throws VcsException {
-        boolean initialization = myLogData == null; // the object is null before the first refresh
-        boolean isFullLogReady = !initialization && myLogData.isFullLogReady();
-        // if we don't have the full log yet, the VcsLogJoiner won't work  => we need to fairly query the VCS
-        boolean fairRefresh = invalidateWholeLog || !isFullLogReady;
+  private void smartRefresh(ProgressIndicator indicator, Consumer<DataPack> onSuccess) throws VcsException {
+    if (myLogData == null || !myLogData.isFullLogReady()) {
+      LOG.error("The full log is not ready: ", new Attachment("log-data", myLogData.toString()));
+    }
 
-        Map<VirtualFile, List<TimedVcsCommit>> logsToBuild = ContainerUtil.newHashMap();
-        Map<VirtualFile, Collection<VcsRef>> refsByRoot = ContainerUtil.newHashMap();
-        int topCommitCount = myLogData == null ? 0 : myLogData.getTopCommitsCount();
+    Map<VirtualFile, List<TimedVcsCommit>> logsToBuild = ContainerUtil.newHashMap();
+    Map<VirtualFile, Collection<VcsRef>> refsByRoot = ContainerUtil.newHashMap();
+    int topCommitCount = myLogData.getTopCommitsCount();
 
-        for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
-          VirtualFile root = entry.getKey();
-          VcsLogProvider logProvider = entry.getValue();
+    for (Map.Entry<VirtualFile, RecentCommitsInfo> entry : collectInfoFromVcs(false, mySettings.getRecentCommitsCount())) {
+      VirtualFile root = entry.getKey();
+      RecentCommitsInfo info = entry.getValue();
 
-          // read info from VCS
-          List<? extends VcsFullCommitDetails> firstBlockDetails = logProvider.readFirstBlock(root, fairRefresh,
-                                                                                              mySettings.getRecentCommitsCount());
-          Collection<VcsRef> newRefs = logProvider.readAllRefs(root);
-          storeTopCommitsDetailsInCache(firstBlockDetails);
-          List<TimedVcsCommit> firstBlockCommits = getCommitsFromDetails(firstBlockDetails);
+      Pair<List<TimedVcsCommit>, Integer> joinResult = myLogJoiner.addCommits(myLogData.getLog(root), myLogData.getRefs(root),
+                                                                              info.firstBlockCommits, info.newRefs);
+      List<TimedVcsCommit> refreshedLog = joinResult.getFirst();
+      int newCommitsCount = joinResult.getSecond();
+      // the value can significantly increase if user keeps IDEA open for a long time, and frequently receives many new commits,
+      // but it is expected: we can work with long logs. A limit can be added in future if this becomes a problem.
+      topCommitCount += newCommitsCount;
 
-          // refresh
-          List<TimedVcsCommit> refreshedLog;
-          if (fairRefresh) {
-            refreshedLog = firstBlockCommits;
-            // in this case new commits won't be attached to the log, but will substitute existing ones.
-            topCommitCount = firstBlockCommits.size();
-          }
-          else {
-            Pair<List<TimedVcsCommit>, Integer> joinResult = myLogJoiner.addCommits(myLogData.getLog(root), myLogData.getRefs(root),
-                                                                                    firstBlockCommits, newRefs);
-            refreshedLog = joinResult.getFirst();
-            int newCommitsCount = joinResult.getSecond();
-            // the value can significantly increase if user keeps IDEA open for a long time, and frequently receives many new commits,
-            // but it is expected: we can work with long logs. A limit can be added in future if this becomes a problem.
-            topCommitCount += newCommitsCount;
-          }
+      logsToBuild.put(root, refreshedLog);
+      refsByRoot.put(root, info.newRefs);
+    }
 
-          logsToBuild.put(root, refreshedLog);
-          refsByRoot.put(root, newRefs);
-        }
+    List<TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(logsToBuild.values());
+    List<TimedVcsCommit> topPartOfTheLog = compoundLog.subList(0, topCommitCount);
 
-        List<TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(logsToBuild.values());
-        List<TimedVcsCommit> topPartOfTheLog = compoundLog.subList(0, topCommitCount);
+    List<TimedVcsCommit> logToBuild = myFullLogShowing ? compoundLog : topPartOfTheLog; // keep looking at the full log after refresh
+    DataPack dataPack = DataPack.build(logToBuild, collectAllRefs(refsByRoot), indicator);
 
-        List<TimedVcsCommit> logToBuild = myFullLogShowing ? compoundLog : topPartOfTheLog; // keep looking at the full log after refresh
-        final DataPack dataPack = DataPack.build(logToBuild, collectAllRefs(refsByRoot), indicator);
+    myLogData = new LogData(logsToBuild, refsByRoot, topPartOfTheLog, dataPack, true);
 
-        myLogData = new LogData(logsToBuild, refsByRoot, topPartOfTheLog, dataPack, isFullLogReady);
+    handleOnSuccessInEdt(onSuccess, dataPack);
+  }
 
-        handleOnSuccessInEdt(onSuccess, dataPack);
-      }
-    });
+  /**
+   * Queries the given number of commits (per each root) from the VCS, already sorted, and substitutes the "top commits" set by them.
+   * This is done initially, and when more commit details is needed.
+   * <p/>
+   * The whole log data is substituted with the retrieved part of the log only if it hasn't been loaded yet.
+   * Otherwise the previous log data is reused, and only top commits are substituted.
+   * <p/>
+   * This is not intended to be used for an ordinary refresh, because it assumes that no new commits have arrived, and therefore
+   * doesn't change the saved log skeleton.
+   */
+  private void loadFromVcs(int commitCount, ProgressIndicator indicator, final Consumer<DataPack> onSuccess) throws VcsException {
+    Map<VirtualFile, List<TimedVcsCommit>> logsToBuild = ContainerUtil.newHashMap();
+    Map<VirtualFile, Collection<VcsRef>> refsByRoot = ContainerUtil.newHashMap();
+
+    for (Map.Entry<VirtualFile, RecentCommitsInfo> entry : collectInfoFromVcs(true, commitCount)) {
+      VirtualFile root = entry.getKey();
+      RecentCommitsInfo info = entry.getValue();
+
+      // in this case new commits won't be attached to the log, but will substitute existing ones.
+      logsToBuild.put(root, info.firstBlockCommits);
+      refsByRoot.put(root, info.newRefs);
+    }
+
+    List<TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(logsToBuild.values());
+
+    // even if the full log was already loaded (and possibly presented to the user),
+    // build only the data that was retrieved from the VCS:
+    // if it is not one of the initial refreshes, then it is filtering, and then the DataPack will change anyway.
+    DataPack dataPack = DataPack.build(compoundLog, collectAllRefs(refsByRoot), indicator);
+
+    if (myLogData != null && myLogData.isFullLogReady()) {
+      // reuse the skeleton, since it didn't change, because it is not a refresh
+      myLogData = new LogData(myLogData.getLogs(), myLogData.getRefs(), compoundLog, dataPack, true);
+    }
+    else {
+      // full skeleton was not retrieved yet => use commits that we've got from the VCS
+      myLogData = new LogData(logsToBuild, refsByRoot, compoundLog, dataPack, false);
+    }
+
+    handleOnSuccessInEdt(onSuccess, dataPack);
+  }
+
+  private Set<Map.Entry<VirtualFile, RecentCommitsInfo>> collectInfoFromVcs(boolean ordered, int commitsCount) throws VcsException {
+    Map<VirtualFile, RecentCommitsInfo> infoByRoot = ContainerUtil.newHashMap();
+    for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
+      VirtualFile root = entry.getKey();
+      VcsLogProvider logProvider = entry.getValue();
+
+      List<? extends VcsFullCommitDetails> firstBlockDetails = logProvider.readFirstBlock(root, ordered, commitsCount);
+      Collection<VcsRef> newRefs = logProvider.readAllRefs(root);
+      storeTopCommitsDetailsInCache(firstBlockDetails);
+      List<TimedVcsCommit> firstBlockCommits = getCommitsFromDetails(firstBlockDetails);
+
+      infoByRoot.put(root, new RecentCommitsInfo(firstBlockCommits, newRefs));
+    }
+    return infoByRoot.entrySet();
+  }
+
+  private static class RecentCommitsInfo {
+    List<TimedVcsCommit> firstBlockCommits;
+    Collection<VcsRef> newRefs;
+
+    RecentCommitsInfo(List<TimedVcsCommit> commits, Collection<VcsRef> refs) {
+      firstBlockCommits = commits;
+      newRefs = refs;
+    }
   }
 
   private static Collection<VcsRef> collectAllRefs(Map<VirtualFile, Collection<VcsRef>> refsByRoot) {
@@ -322,12 +366,24 @@ public class VcsLogDataHolder implements Disposable {
   }
 
   private void refresh(@NotNull final Runnable onSuccess) {
-    loadFirstPart(new Consumer<DataPack>() {
+    runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
-      public void consume(DataPack dataPack) {
-        onSuccess.run();
+      public void consume(ProgressIndicator indicator) throws VcsException {
+        Consumer<DataPack> success = new Consumer<DataPack>() {
+          @Override
+          public void consume(DataPack dataPack) {
+            onSuccess.run();
+          }
+        };
+
+        if (isFullLogReady()) {
+          smartRefresh(indicator, success);
+        }
+        else {
+          loadFromVcs(mySettings.getRecentCommitsCount(), indicator, success);
+        }
       }
-    }, false);
+    });
   }
 
   /**
