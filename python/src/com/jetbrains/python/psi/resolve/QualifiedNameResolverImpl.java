@@ -28,12 +28,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyImportResolver;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -216,9 +216,8 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
       return Collections.emptyList();
     }
 
-    if (myRelativeLevel >= 0) {
-      PsiFile footholdFile = myContext.getFootholdFile();
-      assert footholdFile != null;
+    final PsiFile footholdFile = myContext.getFootholdFile();
+    if (myRelativeLevel >= 0 && footholdFile != null && !PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(footholdFile)) {
       PsiDirectory dir = footholdFile.getContainingDirectory();
       if (myRelativeLevel > 0) {
         dir = ResolveImportUtil.stepBackFrom(footholdFile, myRelativeLevel);
