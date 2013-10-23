@@ -52,6 +52,7 @@ import com.intellij.openapi.wm.impl.ToolWindowManagerImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
@@ -60,6 +61,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -377,7 +379,7 @@ public class Switcher extends AnAction implements DumbAware {
         filesModel.addElement(editor);
       }
 
-      final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(project) {
+      final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(this) {
         JPanel myPanel = new JPanel(new BorderLayout());
         JLabel myLabel = new JLabel() {
           @Override
@@ -1083,34 +1085,36 @@ public class Switcher extends AnAction implements DumbAware {
   }
 
   private static class VirtualFilesRenderer extends ColoredListCellRenderer {
-    private final Project myProject;
+    private final SwitcherPanel mySwitcherPanel;
     boolean open;
 
-    public VirtualFilesRenderer(Project project) {
-      myProject = project;
+    public VirtualFilesRenderer(@NotNull SwitcherPanel switcherPanel) {
+      mySwitcherPanel = switcherPanel;
     }
 
     protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
       if (value instanceof FileInfo) {
+        Project project = mySwitcherPanel.project;
         VirtualFile virtualFile = ((FileInfo)value).getFirst();
         String name = virtualFile instanceof VirtualFilePathWrapper
                       ? ((VirtualFilePathWrapper)virtualFile).getPresentablePath()
                       : UISettings.getInstance().SHOW_DIRECTORY_FOR_NON_UNIQUE_FILENAMES
-                        ? UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(myProject, virtualFile)
+                        ? UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, virtualFile)
                         : virtualFile.getName();
-        setIcon(IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, myProject));
+        setIcon(IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, project));
 
-        FileStatus fileStatus = FileStatusManager.getInstance(myProject).getStatus(virtualFile);
-        open = FileEditorManager.getInstance(myProject).isFileOpen(virtualFile);
+        FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(virtualFile);
+        open = FileEditorManager.getInstance(project).isFileOpen(virtualFile);
         TextAttributes attributes = new TextAttributes(fileStatus.getColor(), null , null, EffectType.LINE_UNDERSCORE, Font.PLAIN);
         append(name, SimpleTextAttributes.fromTextAttributes(attributes));
 
         // calc color the same way editor tabs do this, i.e. including extensions
-        Color color = EditorTabbedContainer.calcTabColor(myProject, virtualFile);
+        Color color = EditorTabbedContainer.calcTabColor(project, virtualFile);
 
         if (!selected &&  color != null) {
           setBackground(color);
         }
+        SpeedSearchUtil.applySpeedSearchHighlighting(mySwitcherPanel, this, selected);
       }
     }
   }
