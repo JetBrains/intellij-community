@@ -15,11 +15,10 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
+import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
 import org.tmatesoft.svn.core.auth.SVNSSLAuthentication;
-
-import java.util.List;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -45,18 +44,18 @@ public class TwoWaySslCallback extends UsernamePasswordCallback {
   }
 
   @Override
-  public void updateParameters(List<String> parameters) {
+  public void updateParameters(@NotNull Command command) {
     if (myAuthentication instanceof SVNSSLAuthentication) {
       SVNSSLAuthentication auth = (SVNSSLAuthentication)myAuthentication;
 
       // TODO: Seems that config option should be specified for concrete server and not for global group.
       // as in that case it could be overriden by settings in config file
-      parameters.add("--config-option");
-      parameters.add("servers:global:ssl-client-cert-file=" + auth.getCertificatePath());
-      parameters.add("--config-option");
-      parameters.add("servers:global:ssl-client-cert-password=" + auth.getPassword());
+      command.put("--config-option");
+      command.put("servers:global:ssl-client-cert-file=" + auth.getCertificatePath());
+      command.put("--config-option");
+      command.put("servers:global:ssl-client-cert-password=" + auth.getPassword());
       if (!auth.isStorageAllowed()) {
-        parameters.add("--no-auth-cache");
+        command.put("--no-auth-cache");
       }
     }
   }

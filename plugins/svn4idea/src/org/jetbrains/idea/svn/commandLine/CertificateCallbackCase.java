@@ -20,8 +20,6 @@ import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNException;
 import org.tmatesoft.svn.core.SVNURL;
 
-import java.util.List;
-
 /**
  * @author Konstantin Kolosovsky.
  */
@@ -77,11 +75,11 @@ public class CertificateCallbackCase extends AuthCallbackCase {
   }
 
   @Override
-  public void updateParameters(List<String> parameters) {
+  public void updateParameters(@NotNull Command command) {
     if (accepted) {
-      parameters.add("--trust-server-cert");
+      command.put("--trust-server-cert");
       // force --non-interactive as it is required by --trust-server-cert, but --non-interactive is not default mode for 1.7 or earlier
-      parameters.add("--non-interactive");
+      command.put("--non-interactive");
     }
   }
 

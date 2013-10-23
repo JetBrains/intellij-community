@@ -95,9 +95,7 @@ public class CommandRuntime {
             if (myAuthCallback.getSpecialConfigDir() != null) {
               command.setConfigDir(myAuthCallback.getSpecialConfigDir());
             }
-            List<String> newParameters = command.getParameters();
-            callback.updateParameters(newParameters);
-            command.setParameters(newParameters);
+            callback.updateParameters(command);
             repeat = true;
           } else {
             throw new SvnBindException(errText);

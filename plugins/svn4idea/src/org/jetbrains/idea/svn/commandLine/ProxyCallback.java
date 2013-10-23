@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.tmatesoft.svn.core.SVNURL;
 
 import java.net.PasswordAuthentication;
-import java.util.List;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -66,11 +65,11 @@ public class ProxyCallback extends AuthCallbackCase {
   }
 
   @Override
-  public void updateParameters(@NotNull List<String> parameters) {
+  public void updateParameters(@NotNull Command command) {
     // TODO: This is quite messy logic for determining group for host - either ProxyCallback could be unified with ProxyModule
     // TODO: or group name resolved in ProxyModule could be saved in Command instance.
     // TODO: This will be done later after corresponding refactorings.
-    String proxyHostParameter = ContainerUtil.find(parameters, new Condition<String>() {
+    String proxyHostParameter = ContainerUtil.find(command.getParameters(), new Condition<String>() {
       @Override
       public boolean value(String s) {
         return s.contains("http-proxy-port");
@@ -80,10 +79,10 @@ public class ProxyCallback extends AuthCallbackCase {
     if (!StringUtil.isEmpty(proxyHostParameter) && myUrl != null && myProxyAuthentication != null) {
       String group = getHostGroup(proxyHostParameter);
 
-      parameters.add("--config-option");
-      parameters.add(String.format("servers:%s:http-proxy-username=%s", group, myProxyAuthentication.getUserName()));
-      parameters.add("--config-option");
-      parameters.add(String.format("servers:%s:http-proxy-password=%s", group, String.valueOf(myProxyAuthentication.getPassword())));
+      command.put("--config-option");
+      command.put(String.format("servers:%s:http-proxy-username=%s", group, myProxyAuthentication.getUserName()));
+      command.put("--config-option");
+      command.put(String.format("servers:%s:http-proxy-password=%s", group, String.valueOf(myProxyAuthentication.getPassword())));
     }
   }
 

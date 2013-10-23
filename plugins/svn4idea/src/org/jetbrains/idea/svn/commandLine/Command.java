@@ -41,11 +41,6 @@ public class Command {
     myParameters.addAll(parameters);
   }
 
-  public void setParameters(@NotNull List<String> parameters) {
-    myParameters.clear();
-    put(parameters);
-  }
-
   @Nullable
   public File getConfigDir() {
     return myConfigDir;
