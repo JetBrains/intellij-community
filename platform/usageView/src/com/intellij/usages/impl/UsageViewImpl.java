@@ -46,7 +46,6 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.content.Content;
-import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
@@ -75,8 +74,6 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -447,10 +444,10 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       public String convert(TreePath o) {
         Object value = o.getLastPathComponent();
         TreeCellRenderer renderer = myTree.getCellRenderer();
-        if (renderer instanceof ColoredTreeCellRenderer) {
-          ColoredTreeCellRenderer coloredRenderer = (ColoredTreeCellRenderer)renderer;
+        if (renderer instanceof UsageViewTreeCellRenderer) {
+          UsageViewTreeCellRenderer coloredRenderer = (UsageViewTreeCellRenderer)renderer;
           coloredRenderer.clear();
-          coloredRenderer.customizeCellRenderer(myTree, value, false, false, false, 0, false);
+          coloredRenderer.customizeCellRenderer(null, value, false, false, false, 0, false);
           return coloredRenderer.getCharSequence(true).toString();
         }
         else {
