@@ -181,8 +181,8 @@ public class MavenFoldersImporter {
     myModel.unregisterAll(targetDir.getPath(), true, false);
 
     if (myImportingSettings.getGeneratedSourcesFolder() != MavenImportingSettings.GeneratedSourcesFolder.IGNORE) {
-      myModel.addSourceFolder(myMavenProject.getAnnotationProcessorDirectory(true), JavaSourceRootType.TEST_SOURCE, true);
-      myModel.addSourceFolder(myMavenProject.getAnnotationProcessorDirectory(false), JavaSourceRootType.SOURCE, true);
+      myModel.addGeneratedJavaSourceFolder(myMavenProject.getAnnotationProcessorDirectory(true), JavaSourceRootType.TEST_SOURCE);
+      myModel.addGeneratedJavaSourceFolder(myMavenProject.getAnnotationProcessorDirectory(false), JavaSourceRootType.SOURCE);
     }
 
     File[] targetChildren = targetDir.listFiles();
@@ -230,11 +230,11 @@ public class MavenFoldersImporter {
   private void configGeneratedSourceFolder(@NotNull File targetDir, final JavaSourceRootType rootType) {
     switch (myImportingSettings.getGeneratedSourcesFolder()) {
       case GENERATED_SOURCE_FOLDER:
-        myModel.addSourceFolder(targetDir.getPath(), rootType, true);
+        myModel.addGeneratedJavaSourceFolder(targetDir.getPath(), rootType);
         break;
 
       case SUBFOLDER:
-        addAllSubDirsAsSources(targetDir, rootType);
+        addAllSubDirsAsGeneratedSources(targetDir, rootType);
         break;
 
       case AUTODETECT:
@@ -242,14 +242,14 @@ public class MavenFoldersImporter {
 
         for (JavaModuleSourceRoot root : sourceRoots) {
           if (FileUtil.filesEqual(targetDir, root.getDirectory())) {
-            myModel.addSourceFolder(targetDir.getPath(), rootType);
+            myModel.addGeneratedJavaSourceFolder(targetDir.getPath(), rootType);
             return;
           }
 
-          addAsSourceFolder(root.getDirectory(), rootType);
+          addAsGeneratedSourceFolder(root.getDirectory(), rootType);
         }
 
-        addAllSubDirsAsSources(targetDir, rootType);
+        addAllSubDirsAsGeneratedSources(targetDir, rootType);
         break;
 
       case IGNORE:
@@ -257,16 +257,16 @@ public class MavenFoldersImporter {
     }
   }
 
-  private void addAsSourceFolder(@NotNull File dir, final JavaSourceRootType rootType) {
+  private void addAsGeneratedSourceFolder(@NotNull File dir, final JavaSourceRootType rootType) {
     if (!myModel.hasRegisteredSourceSubfolder(dir)) {
-      myModel.addSourceFolder(dir.getPath(), rootType, true);
+      myModel.addGeneratedJavaSourceFolder(dir.getPath(), rootType);
     }
   }
 
-  private void addAllSubDirsAsSources(@NotNull File dir, final JavaSourceRootType rootType) {
+  private void addAllSubDirsAsGeneratedSources(@NotNull File dir, final JavaSourceRootType rootType) {
     for (File f : getChildren(dir)) {
       if (f.isDirectory()) {
-        addAsSourceFolder(f, rootType);
+        addAsGeneratedSourceFolder(f, rootType);
       }
     }
   }

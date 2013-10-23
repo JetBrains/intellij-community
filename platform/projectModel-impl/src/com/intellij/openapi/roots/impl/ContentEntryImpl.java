@@ -219,8 +219,16 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   @NotNull
   @Override
   public <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url, @NotNull JpsModuleSourceRootType<P> type) {
+    return addSourceFolder(url, type, type.createDefaultProperties());
+  }
+
+  @NotNull
+  @Override
+  public <P extends JpsElement> SourceFolder addSourceFolder(@NotNull String url,
+                                                             @NotNull JpsModuleSourceRootType<P> type,
+                                                             @NotNull P properties) {
     assertFolderUnderMe(url);
-    JpsModuleSourceRoot sourceRoot = JpsElementFactory.getInstance().createModuleSourceRoot(url, type, type.createDefaultProperties());
+    JpsModuleSourceRoot sourceRoot = JpsElementFactory.getInstance().createModuleSourceRoot(url, type, properties);
     return addSourceFolder(new SourceFolderImpl(sourceRoot, this));
   }
 
