@@ -48,13 +48,13 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText {
     myEmptyText = new StatusText(this) {
       @Override
       protected boolean isStatusVisible() {
-        return JBTextField.this.getText().isEmpty();
+        return JBTextField.this.getText().isEmpty() && !JBTextField.this.isFocusOwner();
       }
 
       @Override
       protected Rectangle getTextComponentBound() {
-        Rectangle bounds = super.getTextComponentBound();
-        return new Rectangle(JBTextField.this.getInsets().left, bounds.y, bounds.width, bounds.height);
+        Rectangle b = JBTextField.this.getBounds();
+        return new Rectangle(JBTextField.this.getInsets().left >> 1, 0, b.width, b.height);
       }
     };
     myEmptyText.clear();
