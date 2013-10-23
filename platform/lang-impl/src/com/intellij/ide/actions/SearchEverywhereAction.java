@@ -59,6 +59,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -962,10 +963,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           if (!myListModel.contains(object)) {
             if (object instanceof PsiFile) {
               object = ((PsiFile)object).getVirtualFile();
+            } else if (object instanceof PsiDirectory) {
+              object = ((PsiDirectory)object).getVirtualFile();
             }
-            if (object instanceof VirtualFile &&
-                !myAlreadyAddedFiles.contains((VirtualFile)object) &&
-                !((VirtualFile)object).isDirectory()) {
+            if (object instanceof VirtualFile
+                && !myAlreadyAddedFiles.contains((VirtualFile)object)
+                /*&& !((VirtualFile)object).isDirectory()*/) {
               files.add((VirtualFile)object);
               myAlreadyAddedFiles.add((VirtualFile)object);
               filesCounter++;
@@ -1318,16 +1321,17 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private List<MatchResult> collectResults(String pattern, String[] names, final ChooseByNameModel model) {
       if (names == null) return Collections.emptyList();
-      final String trimmedPattern = pattern.trim();
-      if (!pattern.startsWith("*") && pattern.length() > 1) {
+      pattern = ChooseByNamePopup.getTransformedPattern(pattern, model);
+      pattern = DefaultChooseByNameItemProvider.getNamePattern(model, pattern);
+      if (model != myFileModel && !pattern.startsWith("*") && pattern.length() > 1) {
         pattern = "*" + pattern;
       }
       final ArrayList<MatchResult> results = new ArrayList<MatchResult>();
-
+      final String p = pattern;
       MinusculeMatcher matcher = new MinusculeMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE) {
         @Override
         public boolean matches(@NotNull String name) {
-          if (!(model instanceof GotoActionModel) && trimmedPattern.indexOf(' ') > 0 && name.trim().indexOf(' ') < 0) {
+          if (!(model instanceof GotoActionModel) && p.indexOf(' ') > 0 && name.trim().indexOf(' ') < 0) {
             return false;
           }
           return super.matches(name);
