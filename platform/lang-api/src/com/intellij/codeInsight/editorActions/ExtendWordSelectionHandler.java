@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,9 @@ public interface ExtendWordSelectionHandler {
    * then first selection range for @variable will be: <selection>@variable</selection>.
    * 
    * @param element element at caret
+   * @param text text in editor
+   * @param cursorOffset current caret offset in editor
    * @return minimal selection length for given element
    */
-  int getMinimalTextRangeLength(@NotNull PsiElement element);
+  int getMinimalTextRangeLength(@NotNull PsiElement element, @NotNull CharSequence text, int cursorOffset);
 }
