@@ -402,7 +402,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
             FileType detected = null;
             for (FileTypeDetector detector : Extensions.getExtensions(FileTypeDetector.EP_NAME)) {
-              detected = detector.detect(file, byteSequence, text);
+              try {
+                detected = detector.detect(file, byteSequence, text);
+              }
+              catch (Exception e) {
+                LOG.error("Detector " + detector + " (" + detector.getClass() + ") exception occurred:", e);
+              }
               if (detected != null) break;
             }
 
