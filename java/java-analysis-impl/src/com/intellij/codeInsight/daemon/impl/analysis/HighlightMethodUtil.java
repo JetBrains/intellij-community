@@ -1314,19 +1314,15 @@ public class HighlightMethodUtil {
         // ignore
       }
 
+      PsiElement infoElement = list.getTextLength() > 0 ? list : constructorCall;
       if (constructor == null) {
         String name = aClass.getName();
         name += buildArgTypesList(list);
         String description = JavaErrorMessages.message("cannot.resolve.constructor", name);
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description).navigationShift(+1).create();
-        QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), QUICK_FIX_FACTORY.createCreateConstructorFromCallFix(constructorCall));
-        if (classReference != null) {
-          ConstructorParametersFixer.registerFixActions(classReference, constructorCall, info,getFixRange(list));
-          PermuteArgumentsFix.registerFix(info, constructorCall, toMethodCandidates(results), getFixRange(list));
-        }
         WrapExpressionFix.registerWrapAction(results, list.getExpressions(), info);
+        registerFixesOnInvalidConstructorCall(constructorCall, classReference, list, aClass, constructors, results, infoElement, info);
         holder.add(info);
-        ChangeStringLiteralToCharInMethodCallFix.registerFixes(constructors, constructorCall, info);
       }
       else {
         if (classReference != null && (!result.isAccessible() ||
@@ -1339,21 +1335,11 @@ public class HighlightMethodUtil {
           String argTypes = buildArgTypesList(list);
           String description = JavaErrorMessages.message("wrong.method.arguments", constructorName, containerName, argTypes);
           String toolTip = createMismatchedArgumentsHtmlTooltip(result, list);
-          PsiElement infoElement = list.getTextLength() > 0 ? list : constructorCall;
+          
           HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(infoElement).description(description).escapedToolTip(toolTip).navigationShift(+1).create();
           if (info != null) {
-            QuickFixAction.registerQuickFixAction(info, constructorCall.getTextRange(), QUICK_FIX_FACTORY.createCreateConstructorFromCallFix(constructorCall));
-            if (classReference != null) {
-              ConstructorParametersFixer.registerFixActions(classReference, constructorCall, info, getFixRange(infoElement));
-              registerChangeMethodSignatureFromUsageIntentions(results, list, info, null);
-              ChangeTypeArgumentsFix.registerIntentions(results, list, info, aClass);
-              ConvertDoubleToFloatFix.registerIntentions(results, list, info, null);
-              PermuteArgumentsFix.registerFix(info, constructorCall, toMethodCandidates(results), getFixRange(list));
-              registerChangeParameterClassFix(constructorCall, list, info);
-              QuickFixAction.registerQuickFixAction(info, getFixRange(list), QUICK_FIX_FACTORY.createSurroundWithArrayFix(constructorCall,null));
-            }
+            registerFixesOnInvalidConstructorCall(constructorCall, classReference, list, aClass, constructors, results, infoElement, info);
             holder.add(info);
-            ChangeStringLiteralToCharInMethodCallFix.registerFixes(constructors, constructorCall, info);
           }
         }
         else {
@@ -1367,6 +1353,26 @@ public class HighlightMethodUtil {
         }
       }
     }
+  }
+
+  private static void registerFixesOnInvalidConstructorCall(PsiConstructorCall constructorCall,
+                                                            PsiJavaCodeReferenceElement classReference,
+                                                            PsiExpressionList list,
+                                                            PsiClass aClass,
+                                                            PsiMethod[] constructors,
+                                                            JavaResolveResult[] results, PsiElement infoElement, HighlightInfo info) {
+    QuickFixAction
+      .registerQuickFixAction(info, constructorCall.getTextRange(), QUICK_FIX_FACTORY.createCreateConstructorFromCallFix(constructorCall));
+    if (classReference != null) {
+      ConstructorParametersFixer.registerFixActions(classReference, constructorCall, info, getFixRange(infoElement));
+      registerChangeMethodSignatureFromUsageIntentions(results, list, info, null);
+      ChangeTypeArgumentsFix.registerIntentions(results, list, info, aClass);
+      ConvertDoubleToFloatFix.registerIntentions(results, list, info, null);
+      PermuteArgumentsFix.registerFix(info, constructorCall, toMethodCandidates(results), getFixRange(list));
+      registerChangeParameterClassFix(constructorCall, list, info);
+      QuickFixAction.registerQuickFixAction(info, getFixRange(list), QUICK_FIX_FACTORY.createSurroundWithArrayFix(constructorCall,null));
+    }
+    ChangeStringLiteralToCharInMethodCallFix.registerFixes(constructors, constructorCall, info);
   }
 
   private static HighlightInfo buildAccessProblem(@NotNull PsiJavaCodeReferenceElement classReference, JavaResolveResult result, PsiMember elementToFix) {
