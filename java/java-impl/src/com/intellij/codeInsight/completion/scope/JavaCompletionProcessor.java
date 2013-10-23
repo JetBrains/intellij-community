@@ -55,7 +55,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       if (object instanceof MethodSignature) {
         return MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.computeHashCode((MethodSignature)object);
       }
-      return object.hashCode();
+      return object != null ? object.hashCode() : 0;
     }
 
     @Override
@@ -63,7 +63,7 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
       if (o1 instanceof MethodSignature && o2 instanceof MethodSignature) {
         return MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.equals((MethodSignature)o1, (MethodSignature)o2);
       }
-      return o1.equals(o2);
+      return o1 != null ? o1.equals(o2) : o2 == null;
     }
   });
   private final List<CompletionElement> myResults = new ArrayList<CompletionElement>();
