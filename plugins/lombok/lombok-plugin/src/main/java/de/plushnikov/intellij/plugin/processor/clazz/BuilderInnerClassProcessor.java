@@ -121,7 +121,7 @@ public class BuilderInnerClassProcessor extends AbstractClassProcessor {
 
   protected Collection<PsiMethod> createConstructors(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     NoArgsConstructorProcessor noArgsConstructorProcessor = new NoArgsConstructorProcessor();
-    return noArgsConstructorProcessor.createNoArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation);
+    return noArgsConstructorProcessor.createNoArgsConstructor(psiClass, PsiModifier.PACKAGE_LOCAL, psiAnnotation);
   }
 
   protected Collection<PsiField> createFields(@NotNull PsiClass psiClass) {
