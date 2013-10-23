@@ -1291,7 +1291,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
         lExpr.accept(this); //?
       }
     }
-    else {
+    else if (lExpr != null) {
       lExpr.accept(this);
     }
 
