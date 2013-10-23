@@ -25,7 +25,10 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -324,7 +327,7 @@ public class ParameterInfoController implements Disposable {
         if (handler instanceof ParameterInfoHandlerWithTabActionSupport) {
           final ParameterInfoHandlerWithTabActionSupport parameterInfoHandler2 = (ParameterInfoHandlerWithTabActionSupport)handler;
 
-          final E e = (E)ParameterInfoUtils.findArgumentList(file, offset, lbraceOffset, parameterInfoHandler2);
+          final E e = ParameterInfoUtils.findArgumentList(file, offset, lbraceOffset, parameterInfoHandler2);
           if (e != null) return e;
         }
       }
