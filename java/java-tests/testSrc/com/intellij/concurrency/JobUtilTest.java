@@ -168,7 +168,7 @@ public class JobUtilTest extends PlatformTestCase {
       @Override
       public boolean process(Object o) {
         try {
-          if (objects.size() <= 1 || JobSchedulerImpl.CORES_COUNT <= 2) {
+          if (objects.size() <= 1 || JobSchedulerImpl.CORES_COUNT <= JobLauncherImpl.CORES_FORK_THRESHOLD) {
             assertTrue(ApplicationManager.getApplication().isDispatchThread());
           }
           else {
