@@ -131,8 +131,11 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
   }
 
   protected void dispose() {
-    for (ModuleWizardStep step : mySteps) {
-      step.disposeUIResources();
+    StepSequence sequence = getSequence();
+    if (sequence != null) {
+      for (ModuleWizardStep step : sequence.getAllSteps()) {
+        step.disposeUIResources();
+      }
     }
     super.dispose();
   }
