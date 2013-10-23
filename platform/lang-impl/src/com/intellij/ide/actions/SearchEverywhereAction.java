@@ -632,12 +632,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       Component cmp;
-      PsiFile file;
+      PsiFile file = null;
       myLocationString = null;
       if (isMoreItem(index)) {
         cmp = More.get(isSelected);
-      } else if (value instanceof VirtualFile && myProject != null && (file = PsiManager.getInstance(myProject).findFile((VirtualFile)value)) != null) {
-        cmp = new GotoFileCellRenderer(list.getWidth()).getListCellRendererComponent(list, file, index, isSelected, cellHasFocus);
+      } else if (value instanceof VirtualFile
+                 && myProject != null
+                 && (((VirtualFile)value).isDirectory()
+                     || (file = PsiManager.getInstance(myProject).findFile((VirtualFile)value)) != null)) {
+        cmp = new GotoFileCellRenderer(list.getWidth()).getListCellRendererComponent(list, file == null ? value : file, index, isSelected, cellHasFocus);
       } else if (value instanceof PsiElement) {
         cmp = myPsiRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
       } else {
@@ -952,7 +955,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myFiles = myFileModel.getNames(false);
       }
       List<MatchResult> matches = collectResults(pattern, myFiles, myFileModel);
-      final List<VirtualFile> files = new ArrayList<VirtualFile>();
+      final List<Object> files = new ArrayList<Object>();
       FindSymbolParameters parameters = FindSymbolParameters.wrap(pattern, project, false);
       final int maxFiles = 8;
       for (MatchResult o : matches) {
@@ -963,14 +966,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           if (!myListModel.contains(object)) {
             if (object instanceof PsiFile) {
               object = ((PsiFile)object).getVirtualFile();
-            } else if (object instanceof PsiDirectory) {
-              object = ((PsiDirectory)object).getVirtualFile();
             }
-            if (object instanceof VirtualFile
-                && !myAlreadyAddedFiles.contains((VirtualFile)object)
+            if ((object instanceof VirtualFile || object instanceof PsiDirectory)
+                && !myAlreadyAddedFiles.contains(object)
                 /*&& !((VirtualFile)object).isDirectory()*/) {
-              files.add((VirtualFile)object);
-              myAlreadyAddedFiles.add((VirtualFile)object);
+              files.add(object);
+              if (object instanceof VirtualFile) {
+                myAlreadyAddedFiles.add((VirtualFile)object);
+              }
               filesCounter++;
               if (filesCounter > maxFiles) break;
             }
