@@ -24,16 +24,17 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
-import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.types.PyClassLikeType;
 import com.jetbrains.python.psi.types.PyType;
@@ -75,6 +76,12 @@ public class PyUserSkeletonsUtil {
       }
     }
     return ourUserSkeletonsDirectory;
+  }
+
+  public static boolean isUnderUserSkeletonsDirectory(@NotNull PsiFile file) {
+    final VirtualFile skeletonsDir = getUserSkeletonsDirectory();
+    final VirtualFile virtualFile = file.getVirtualFile();
+    return skeletonsDir != null && virtualFile != null && VfsUtilCore.isAncestor(skeletonsDir, virtualFile, false);
   }
 
   @Nullable
