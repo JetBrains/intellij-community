@@ -53,7 +53,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
   public boolean filterElements(@NotNull final ChooseByNameBase base,
                                 @NotNull final String pattern,
                                 boolean everywhere,
-                                @NotNull ProgressIndicator indicator,
+                                @NotNull final ProgressIndicator indicator,
                                 @NotNull final Processor<Object> consumer) {
     String namePattern = getNamePattern(base, pattern);
     String qualifierPattern = getQualifierPattern(base, pattern);
@@ -74,7 +74,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
       ((ChooseByNameModelEx)model).processNames(new Processor<String>() {
         @Override
         public boolean process(String sequence) {
-          ProgressManager.checkCanceled();
+          indicator.checkCanceled();
           MatchResult result = matches(base, pattern, matcher, sequence);
           if (result != null) {
             collect.consume(result);
