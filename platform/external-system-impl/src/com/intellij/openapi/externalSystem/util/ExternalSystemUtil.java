@@ -33,12 +33,16 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExe
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.service.ImportCanceledException;
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemIdeNotificationManager;
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtension;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService;
@@ -419,7 +423,8 @@ public class ExternalSystemUtil {
       public void execute(@NotNull ProgressIndicator indicator) {
         ExternalSystemResolveProjectTask task
           = new ExternalSystemResolveProjectTask(externalSystemId, project, externalProjectPath, isPreviewMode);
-        task.execute(indicator);
+
+        task.execute(indicator, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions());
         final Throwable error = task.getError();
         if (error == null) {
           long stamp = getTimeStamp(externalProjectPath, externalSystemId);

@@ -2,6 +2,7 @@ package com.intellij.openapi.externalSystem.service.internal;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
@@ -118,6 +119,14 @@ public class ExternalSystemProcessingManager implements ExternalSystemTaskNotifi
     if (myTasksInProgress.isEmpty()) {
       myAlarm.cancelAllRequests();
     }
+  }
+
+  @Override
+  public void onSuccess(@NotNull ExternalSystemTaskId id) {
+  }
+
+  @Override
+  public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
   }
 
   public void update() {

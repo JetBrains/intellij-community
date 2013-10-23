@@ -102,4 +102,24 @@ public class ExternalSystemProgressNotificationManagerImpl extends RemoteObject
       }
     } 
   }
+
+  @Override
+  public void onSuccess(@NotNull ExternalSystemTaskId id) throws RemoteException {
+    for (Map.Entry<ExternalSystemTaskNotificationListener, Set<ExternalSystemTaskId>> entry : myListeners.entrySet()) {
+      final Set<ExternalSystemTaskId> ids = entry.getValue();
+      if (Collections.EMPTY_SET == ids || ids.contains(id)) {
+        entry.getKey().onSuccess(id);
+      }
+    }
+  }
+
+  @Override
+  public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) throws RemoteException {
+    for (Map.Entry<ExternalSystemTaskNotificationListener, Set<ExternalSystemTaskId>> entry : myListeners.entrySet()) {
+      final Set<ExternalSystemTaskId> ids = entry.getValue();
+      if (Collections.EMPTY_SET == ids || ids.contains(id)) {
+        entry.getKey().onFailure(id, e);
+      }
+    }
+  }
 }

@@ -7,6 +7,9 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
@@ -155,7 +158,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
                   public void run(@NotNull final ProgressIndicator indicator) {
                     ExternalSystemResolveProjectTask task
                       = new ExternalSystemResolveProjectTask(myExternalSystemId, project, projectSettings.getExternalProjectPath(), false);
-                    task.execute(indicator);
+                    task.execute(indicator, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions());
                     DataNode<ProjectData> projectWithResolvedLibraries = task.getExternalProject();
                     if (projectWithResolvedLibraries == null) {
                       return;

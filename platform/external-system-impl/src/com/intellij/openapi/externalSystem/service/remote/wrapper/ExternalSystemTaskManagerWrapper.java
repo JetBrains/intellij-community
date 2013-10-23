@@ -56,6 +56,14 @@ public class ExternalSystemTaskManagerWrapper<S extends ExternalSystemExecutionS
     try {
       getDelegate().executeTasks(id, taskNames, projectPath, settings, vmOptions, debuggerSetup);
     }
+    catch (ExternalSystemException e) {
+      myProgressManager.onFailure(id, e);
+      throw e;
+    }
+    catch (Exception e) {
+      myProgressManager.onFailure(id, e);
+      throw new ExternalSystemException(e);
+    }
     finally {
       myProgressManager.onEnd(id);
     }
