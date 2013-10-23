@@ -33,17 +33,17 @@ public class Command {
     myName = name;
   }
 
-  public void addParameters(@NonNls @NotNull String... parameters) {
-    addParameters(Arrays.asList(parameters));
+  public void put(@NonNls @NotNull String... parameters) {
+    put(Arrays.asList(parameters));
   }
 
-  public void addParameters(@NotNull List<String> parameters) {
+  public void put(@NotNull List<String> parameters) {
     myParameters.addAll(parameters);
   }
 
   public void setParameters(@NotNull List<String> parameters) {
     myParameters.clear();
-    addParameters(parameters);
+    put(parameters);
   }
 
   @Nullable

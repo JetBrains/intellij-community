@@ -44,7 +44,7 @@ public class CommandParametersResolutionModule extends BaseCommandRuntimeModule 
       command.setWorkingDirectory(resolveWorkingDirectory(command));
     }
     command.setConfigDir(myAuthCallback.getSpecialConfigDir());
-    command.addParameters("--non-interactive");
+    command.put("--non-interactive");
     command.saveOriginalParameters();
   }
 

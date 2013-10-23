@@ -54,10 +54,10 @@ public class ProxyModule extends BaseCommandRuntimeModule {
         String hostGroup = ensureGroupForHost(command, repositoryUrl.getHost());
         InetSocketAddress address = (InetSocketAddress)proxy.address();
 
-        command.addParameters("--config-option");
-        command.addParameters(String.format("servers:%s:http-proxy-host=%s", hostGroup, address.getHostName()));
-        command.addParameters("--config-option");
-        command.addParameters(String.format("servers:%s:http-proxy-port=%s", hostGroup, address.getPort()));
+        command.put("--config-option");
+        command.put(String.format("servers:%s:http-proxy-host=%s", hostGroup, address.getHostName()));
+        command.put("--config-option");
+        command.put(String.format("servers:%s:http-proxy-port=%s", hostGroup, address.getPort()));
       }
     }
   }
@@ -70,8 +70,8 @@ public class ProxyModule extends BaseCommandRuntimeModule {
     if (StringUtil.isEmptyOrSpaces(groupName)) {
       groupName = SvnConfiguration.getNewGroupName(host, configFile);
 
-      command.addParameters("--config-option");
-      command.addParameters(String.format("servers:groups:%s=%s*", groupName, host));
+      command.put("--config-option");
+      command.put(String.format("servers:groups:%s=%s*", groupName, host));
     }
 
     return groupName;
