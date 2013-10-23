@@ -92,17 +92,21 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
         PluginManagerMain.notifyPluginsWereInstalled(null, myProject);
       }
     };
-    try {
-      PluginManagerMain.downloadPlugins(nodes, myAllPlugins, notifyRunnable, null);
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
     for (IdeaPluginDescriptor pluginDescriptor : pluginsToEnable) {
       PluginManagerCore.enablePlugin(pluginDescriptor.getPluginId().getIdString());
     }
-    if (nodes.isEmpty()) {
-      notifyRunnable.run();
+    if (!nodes.isEmpty()) {
+      try {
+        PluginManagerMain.downloadPlugins(nodes, myAllPlugins, notifyRunnable, null);
+      }
+      catch (IOException e) {
+        LOG.error(e);
+      }
+    }
+    else {
+      if (!pluginsToEnable.isEmpty()) {
+        notifyRunnable.run();
+      }
     }
     super.doOKAction();
   }
