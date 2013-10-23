@@ -40,7 +40,6 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FrameTitleBuilder;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.openapi.wm.impl.IdePanePanel;
-import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
@@ -50,6 +49,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ArrayListSet;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -157,17 +157,17 @@ public class EditorsSplitters extends IdePanePanel {
       g.drawLine(0, 0, getWidth(), 0);
     }
 
-    boolean isDarkBackground = ColorUtil.isDark(getBackground().darker());
+    boolean isDarkBackground = UIUtil.isUnderDarcula();
 
     if (showEmptyText()) {
       UIUtil.applyRenderingHints(g);
-      g.setColor(new JBColor(isDarkBackground ? Gray._230 : Gray._100, Gray._160));
-      g.setFont(UIUtil.getLabelFont().deriveFont(UIUtil.isUnderDarcula() ? 24f : 18f));
+      GraphicsUtil.setupAntialiasing(g, true, false);
+      g.setColor(new JBColor(isDarkBackground ? Gray._230 : Gray._80, Gray._160));
+      g.setFont(UIUtil.getLabelFont().deriveFont(24f));
 
-      final UIUtil.TextPainter painter = new UIUtil.TextPainter().withLineSpacing(1.4f);
-      if (!isDarkBackground) {
-        painter.withShadow(true);
-      }
+      final UIUtil.TextPainter painter = new UIUtil.TextPainter().withLineSpacing(1.5f);
+      painter.withShadow(true, new JBColor(Gray._200.withAlpha(100), Gray._0.withAlpha(200)));
+
       painter.appendLine("No files are open").underlined(new JBColor(isDarkBackground ? Gray._210 : Gray._150, Gray._100));
 
       if (Registry.is("search.everywhere.enabled")) {
