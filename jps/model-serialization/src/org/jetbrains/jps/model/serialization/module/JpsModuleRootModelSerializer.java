@@ -105,7 +105,11 @@ public class JpsModuleRootModelSerializer {
         }
       }
       else if (INHERITED_JDK_TYPE.equals(type)) {
-        dependenciesList.addSdkDependency(projectSdkType != null ? projectSdkType : JpsJavaSdkType.INSTANCE);
+        final JpsSdkType<?> sdkType = projectSdkType != null? projectSdkType : JpsJavaSdkType.INSTANCE;
+        dependenciesList.addSdkDependency(sdkType);
+        if (sdkType instanceof JpsJavaSdkTypeWrapper) {
+          dependenciesList.addSdkDependency(JpsJavaSdkType.INSTANCE);
+        }
       }
       else if (LIBRARY_TYPE.equals(type)) {
         String name = orderEntry.getAttributeValue(NAME_ATTRIBUTE);
