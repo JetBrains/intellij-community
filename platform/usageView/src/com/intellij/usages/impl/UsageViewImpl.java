@@ -458,15 +458,6 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
         }
       }
     }, true);
-    SpeedSearchSupply speedSearch = SpeedSearchSupply.getSupply(myTree, true);
-    if (speedSearch != null) {
-      speedSearch.addChangeListener(new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          myTree.repaint();
-        }
-      });
-    }
   }
 
   @NotNull
