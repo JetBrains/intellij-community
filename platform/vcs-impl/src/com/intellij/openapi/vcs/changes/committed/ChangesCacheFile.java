@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes.committed;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
@@ -788,7 +789,6 @@ public class ChangesCacheFile {
   }
 
   private static class RefreshIncomingChangesOperation {
-    private final Map<VirtualFile, VcsRevisionNumber> myCurrentRevisions = ContainerUtil.newHashMap();
     private final Set<FilePath> myDeletedFiles = new HashSet<FilePath>();
     private final Set<FilePath> myCreatedFiles = new HashSet<FilePath>();
     private final Set<FilePath> myReplacedFiles = new HashSet<FilePath>();
@@ -844,47 +844,51 @@ public class ChangesCacheFile {
     private boolean refreshIncomingInFile(Collection<FilePath> incomingFiles, List<IncomingChangeListData> list) throws IOException {
       // the incoming changelist pointers are actually sorted in reverse chronological order,
       // so we process file delete changes before changes made to deleted files before they were deleted
-      boolean hadChanges = ! list.isEmpty();
+      
+      Map<Pair<IncomingChangeListData, Change>, VirtualFile> revisionDependentFiles = ContainerUtil.newHashMap();
+      Map<Pair<IncomingChangeListData, Change>, ProcessingResult> results = ContainerUtil.newHashMap();
+
+      // try to process changelists in a light way, remember which files need revisions
       for(IncomingChangeListData data: list) {
         debug("Checking incoming changelist " + data.changeList.getNumber());
 
-        Collection<Change> changes = data.changeList.getChanges();
-        
-        Map<Change, VirtualFile> revisionDependentFiles = ContainerUtil.newHashMap();
-        Map<Change, ProcessingResult> results = ContainerUtil.newIdentityHashMap();
-        
-        for(Change change: changes) {
-          if (data.accountedChanges.contains(change)) continue;
+        for(Change change: data.getChangesToProcess()) {
           final ProcessingResult result = processIncomingChange(change, data, incomingFiles);
-          results.put(change, result);
-          if (result.revisionDependentProcessing != null && !myCurrentRevisions.containsKey(result.file)) {
-            revisionDependentFiles.put(change, result.file);
+          
+          Pair<IncomingChangeListData, Change> key = Pair.create(data, change);
+          results.put(key, result);
+          if (result.revisionDependentProcessing != null) {
+            revisionDependentFiles.put(key, result.file);
           }
         }
+      }
 
-        if (!revisionDependentFiles.isEmpty()) {
-          Map<VirtualFile, VcsRevisionNumber> newRevisions = myDiffProvider instanceof DiffProviderEx
-                                                             ? ((DiffProviderEx)myDiffProvider).getCurrentRevisions(revisionDependentFiles.values())
-                                                             : DiffProviderEx.getCurrentRevisions(revisionDependentFiles.values(), myDiffProvider);
-          for (VirtualFile file : revisionDependentFiles.values()) {
-            myCurrentRevisions.put(file, newRevisions.get(file));
-          }
-        }
+      if (!revisionDependentFiles.isEmpty()) {
+        // bulk-get all needed revisions at once
+        Map<VirtualFile, VcsRevisionNumber> revisions = myDiffProvider instanceof DiffProviderEx
+                                                           ? ((DiffProviderEx)myDiffProvider).getCurrentRevisions(revisionDependentFiles.values())
+                                                           : DiffProviderEx.getCurrentRevisions(revisionDependentFiles.values(), myDiffProvider);
         
-        for (Change change : changes) {
-          if (data.accountedChanges.contains(change)) continue;
-          Function<VcsRevisionNumber, ProcessingResult> revisionHandler = results.get(change).revisionDependentProcessing;
-          if (revisionHandler != null) {
-            results.put(change, revisionHandler.fun(myCurrentRevisions.get(revisionDependentFiles.get(change))));
+        // perform processing requiring those revisions
+        for(IncomingChangeListData data: list) {
+          for (Change change : data.getChangesToProcess()) {
+            Pair<IncomingChangeListData, Change> key = Pair.create(data, change);
+            Function<VcsRevisionNumber, ProcessingResult> revisionHandler = results.get(key).revisionDependentProcessing;
+            if (revisionHandler != null) {
+              results.put(key, revisionHandler.fun(revisions.get(revisionDependentFiles.get(key))));
+            }
           }
         }
+      }
 
+      // collect and save processing results
+      for(IncomingChangeListData data: list) {
         boolean updated = false;
         boolean anyChangeFound = false;
-        for (Change change : changes) {
-          if (data.accountedChanges.contains(change)) continue;
+        for (Change change : data.getChangesToProcess()) {
           final ContentRevision revision = (change.getAfterRevision() == null) ? change.getBeforeRevision() : change.getAfterRevision();
-          ProcessingResult result = results.get(change);
+          assert revision != null;
+          ProcessingResult result = results.get(Pair.create(data, change));
           new IncomingChangeState(change, revision.getRevisionNumber().asString(), result.state).logSelf();
           if (result.changeFound) {
             updated = true;
@@ -898,7 +902,7 @@ public class ChangesCacheFile {
           myChangesCacheFile.saveIncoming(data, !anyChangeFound);
         }
       }
-      return myAnyChanges || hadChanges;
+      return myAnyChanges || !list.isEmpty();
     }
     
     private static class ProcessingResult {
@@ -1138,6 +1142,15 @@ public class ChangesCacheFile {
     public IndexEntry indexEntry;
     public CommittedChangeList changeList;
     public Set<Change> accountedChanges;
+
+    List<Change> getChangesToProcess() {
+      return ContainerUtil.filter(changeList.getChanges(), new Condition<Change>() {
+        @Override
+        public boolean value(Change change) {
+          return !accountedChanges.contains(change);
+        }
+      });
+    }
   }
 
   private static final IndexEntry[] NO_ENTRIES = new IndexEntry[0];
