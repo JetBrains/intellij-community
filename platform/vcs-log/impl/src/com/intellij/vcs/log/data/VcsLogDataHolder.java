@@ -236,21 +236,8 @@ public class VcsLogDataHolder implements Disposable {
           List<? extends VcsFullCommitDetails> firstBlockDetails = logProvider.readFirstBlock(root, fairRefresh,
                                                                                               mySettings.getRecentCommitsCount());
           Collection<VcsRef> newRefs = logProvider.readAllRefs(root);
-
-          // some commits may be no longer available (e.g. rewritten after rebase), but let them stay in the cache:
-          // they won't occupy too much place, while checking & removing them is not easy.
-          for (VcsFullCommitDetails detail : firstBlockDetails) {
-            myTopCommitsDetailsCache.put(detail.getHash(), detail);
-          }
-
-          // get commits from details
-          List<TimedVcsCommit> firstBlockCommits =
-            ContainerUtil.map(firstBlockDetails, new Function<VcsFullCommitDetails, TimedVcsCommit>() {
-              @Override
-              public TimedVcsCommit fun(VcsFullCommitDetails details) {
-                return myFactory.createTimedCommit(details.getHash(), details.getParents(), details.getAuthorTime());
-              }
-            });
+          storeTopCommitsDetailsInCache(firstBlockDetails);
+          List<TimedVcsCommit> firstBlockCommits = getCommitsFromDetails(firstBlockDetails);
 
           // refresh
           List<TimedVcsCommit> refreshedLog;
@@ -276,21 +263,46 @@ public class VcsLogDataHolder implements Disposable {
         List<TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(logsToBuild.values());
         List<TimedVcsCommit> topPartOfTheLog = compoundLog.subList(0, topCommitCount);
 
-        Collection<VcsRef> allRefs = new ArrayList<VcsRef>();
-        for (Collection<VcsRef> refs : refsByRoot.values()) {
-          allRefs.addAll(refs);
-        }
         List<TimedVcsCommit> logToBuild = myFullLogShowing ? compoundLog : topPartOfTheLog; // keep looking at the full log after refresh
-        final DataPack dataPack = DataPack.build(logToBuild, allRefs, indicator);
+        final DataPack dataPack = DataPack.build(logToBuild, collectAllRefs(refsByRoot), indicator);
 
         myLogData = new LogData(logsToBuild, refsByRoot, topPartOfTheLog, dataPack, isFullLogReady);
 
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-          @Override
-          public void run() {
-            onSuccess.consume(dataPack);
-          }
-        });
+        handleOnSuccessInEdt(onSuccess, dataPack);
+      }
+    });
+  }
+
+  private static Collection<VcsRef> collectAllRefs(Map<VirtualFile, Collection<VcsRef>> refsByRoot) {
+    Collection<VcsRef> allRefs = new ArrayList<VcsRef>();
+    for (Collection<VcsRef> refs : refsByRoot.values()) {
+      allRefs.addAll(refs);
+    }
+    return allRefs;
+  }
+
+  private static void handleOnSuccessInEdt(final Consumer<DataPack> onSuccess, final DataPack dataPack) {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        onSuccess.consume(dataPack);
+      }
+    });
+  }
+
+  private void storeTopCommitsDetailsInCache(List<? extends VcsFullCommitDetails> firstBlockDetails) {
+    // some commits may be no longer available (e.g. rewritten after rebase), but let them stay in the cache:
+    // they won't occupy too much place, while checking & removing them is not easy.
+    for (VcsFullCommitDetails detail : firstBlockDetails) {
+      myTopCommitsDetailsCache.put(detail.getHash(), detail);
+    }
+  }
+
+  private List<TimedVcsCommit> getCommitsFromDetails(List<? extends VcsFullCommitDetails> firstBlockDetails) {
+    return ContainerUtil.map(firstBlockDetails, new Function<VcsFullCommitDetails, TimedVcsCommit>() {
+      @Override
+      public TimedVcsCommit fun(VcsFullCommitDetails details) {
+        return myFactory.createTimedCommit(details.getHash(), details.getParents(), details.getAuthorTime());
       }
     });
   }
