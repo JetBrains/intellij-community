@@ -204,9 +204,11 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
   @NotNull
   private static String getNamePattern(@NotNull ChooseByNameBase base, String pattern) {
-    pattern = base.transformPattern(pattern);
+    String transformedPattern = base.transformPattern(pattern);
+    return getNamePattern(base.getModel(), transformedPattern);
+  }
 
-    ChooseByNameModel model = base.getModel();
+  public static String getNamePattern(ChooseByNameModel model, String pattern) {
     final String[] separators = model.getSeparators();
     int lastSeparatorOccurrence = 0;
     for (String separator : separators) {
