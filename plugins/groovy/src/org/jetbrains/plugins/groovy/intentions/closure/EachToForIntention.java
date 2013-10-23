@@ -189,7 +189,7 @@ public class EachToForIntention extends Intention {
 
       labeled = forStatement.replaceWithStatement(labeled);
 
-      forStatement = (GrForStatement)lIDEA-114606 Replace with for-in should replace return with continueabeled.getStatement();
+      forStatement = (GrForStatement)labeled.getStatement();
 
       body = forStatement.getBody();
       assert body != null;
