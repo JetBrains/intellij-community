@@ -99,6 +99,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     return Collections.unmodifiableSet(requestSet);
   }
 
+  @Nullable
   public Requestor findRequestor(EventRequest request) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     return request != null? (Requestor)request.getProperty(REQUESTOR) : null;

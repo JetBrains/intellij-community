@@ -91,7 +91,9 @@ public class MethodBreakpoint extends BreakpointWithHighlighter {
   @Nullable
   public PsiMethod getPsiMethod() {
     Document document = getDocument();
-    if(document == null) return null;
+    if(document == null) {
+      return null;
+    }
     PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
     if(psiFile instanceof PsiJavaFile) {
       int line = getLineIndex();

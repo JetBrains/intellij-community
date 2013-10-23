@@ -2,6 +2,7 @@ package org.jetbrains.java.debugger.breakpoints;
 
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -33,7 +34,10 @@ public abstract class JavaBreakpointAdapterBase extends XBreakpointAdapter<XLine
   }
 
   protected void configureCreatedBreakpoint(LineBreakpoint oldBreakpoint, XLineBreakpoint<XBreakpointProperties> breakpoint) {
-    oldBreakpoint.getHighlighter().dispose();
+    final RangeHighlighter highlighter = oldBreakpoint.getHighlighter();
+    if (highlighter != null) {
+      highlighter.dispose();
+    }
   }
 
   @Override

@@ -16,7 +16,7 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
-import com.intellij.debugger.engine.RequestHint;
+import com.intellij.debugger.engine.MethodFilter;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.psi.PsiMethod;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -35,9 +36,21 @@ import java.util.List;
 public abstract class JvmSmartStepIntoHandler {
   public static ExtensionPointName<JvmSmartStepIntoHandler> EP_NAME = ExtensionPointName.create("com.intellij.debugger.jvmSmartStepIntoHandler");
 
-  public abstract List<PsiMethod> findReferencedMethods(SourcePosition position);
+  @NotNull
+  public abstract List<StepTarget> findSmartStepTargets(SourcePosition position);
 
   public abstract boolean isAvailable(SourcePosition position);
+
+  public interface StepTarget {
+    @NotNull
+    PsiMethod getMethod();
+
+    boolean needsBreakpointRequest();
+
+    boolean equals(Object another);
+
+    int hashCode();
+  }
 
   /**
    * Override this if you haven't PsiMethod, like in Kotlin.
@@ -47,15 +60,15 @@ public abstract class JvmSmartStepIntoHandler {
    * @return false to continue for another handler or for default action (step into)
    */
   public boolean doSmartStep(SourcePosition position, final DebuggerSession session, TextEditor fileEditor) {
-    final List<PsiMethod> methods = findReferencedMethods(position);
-    if (methods.size() > 0) {
-      if (methods.size() == 1) {
-        session.stepInto(true, getSmartStepFilter(methods.get(0)));
+    final List<StepTarget> targets = findSmartStepTargets(position);
+    if (!targets.isEmpty()) {
+      if (targets.size() == 1) {
+        session.stepInto(true, createMethodFilter(targets.get(0)));
       }
       else {
-        final PsiMethodListPopupStep popupStep = new PsiMethodListPopupStep(methods, new PsiMethodListPopupStep.OnChooseRunnable() {
-          public void execute(PsiMethod chosenMethod) {
-            session.stepInto(true, getSmartStepFilter(chosenMethod));
+        final PsiMethodListPopupStep popupStep = new PsiMethodListPopupStep(targets, new PsiMethodListPopupStep.OnChooseRunnable() {
+          public void execute(StepTarget chosenTarget) {
+            session.stepInto(true, createMethodFilter(chosenTarget));
           }
         });
         final ListPopup popup = JBPopupFactory.getInstance().createListPopup(popupStep);
@@ -69,10 +82,11 @@ public abstract class JvmSmartStepIntoHandler {
 
   /**
    * Override in case if your JVMNames slightly different then it can be provided by getJvmSignature method.
-   * @param method
+   *
+   * @param stepTarget
    * @return SmartStepFilter
    */
-  protected RequestHint.SmartStepFilter getSmartStepFilter(PsiMethod method) {
-    return new RequestHint.SmartStepFilter(method);
+  protected MethodFilter createMethodFilter(StepTarget stepTarget) {
+    return new MethodFilter(stepTarget.getMethod(), stepTarget.needsBreakpointRequest());
   }
 }

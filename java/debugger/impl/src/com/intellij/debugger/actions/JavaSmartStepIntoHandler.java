@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -40,7 +41,8 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   }
 
   @Override
-  public List<PsiMethod> findReferencedMethods(final SourcePosition position) {
+  @NotNull
+  public List<StepTarget> findSmartStepTargets(final SourcePosition position) {
     final int line = position.getLine();
     if (line < 0) {
       return Collections.emptyList(); // the document has been changed
@@ -73,20 +75,27 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       while(true);
 
       //noinspection unchecked
-      final List<PsiMethod> methods = new OrderedSet<PsiMethod>();
+      final List<StepTarget> targets = new OrderedSet<StepTarget>();
       final PsiElementVisitor methodCollector = new JavaRecursiveElementWalkingVisitor() {
-        @Override public void visitAnonymousClass(PsiAnonymousClass aClass) { /*skip annonymous classes*/ }
+        @Override
+        public void visitAnonymousClass(PsiAnonymousClass aClass) {
+          for (PsiMethod psiMethod : aClass.getMethods()) {
+            targets.add(new MethodTarget(psiMethod, true));
+          }
+        }
 
-        @Override public void visitStatement(PsiStatement statement) {
+        @Override
+        public void visitStatement(PsiStatement statement) {
           if (lineRange.intersects(statement.getTextRange())) {
             super.visitStatement(statement);
           }
         }
 
-        @Override public void visitCallExpression(final PsiCallExpression expression) {
+        @Override
+        public void visitCallExpression(final PsiCallExpression expression) {
           final PsiMethod psiMethod = expression.resolveMethod();
           if (psiMethod != null) {
-            methods.add(psiMethod);
+            targets.add(new MethodTarget(psiMethod, false));
           }
           super.visitCallExpression(expression);
         }
@@ -98,8 +107,48 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
         sibling.accept(methodCollector);
       }
-      return methods;
+      return targets;
     }
     return Collections.emptyList();
+  }
+
+  private static class MethodTarget implements StepTarget {
+    private final PsiMethod myMethod;
+    private final boolean myNeedBreakpointRequest;
+
+    private MethodTarget(@NotNull PsiMethod method, boolean needBreakpointRequest) {
+      myMethod = method;
+      myNeedBreakpointRequest = needBreakpointRequest;
+    }
+
+    @NotNull
+    public PsiMethod getMethod() {
+      return myMethod;
+    }
+
+    public boolean needsBreakpointRequest() {
+      return myNeedBreakpointRequest;
+    }
+
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      final MethodTarget that = (MethodTarget)o;
+
+      if (!myMethod.equals(that.myMethod)) {
+        return false;
+      }
+
+      return true;
+    }
+
+    public int hashCode() {
+      return myMethod.hashCode();
+    }
   }
 }

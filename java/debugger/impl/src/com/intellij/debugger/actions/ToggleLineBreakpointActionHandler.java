@@ -24,7 +24,6 @@ import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.LineBreakpoint;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -89,11 +88,13 @@ public class ToggleLineBreakpointActionHandler extends DebuggerActionHandler {
         lineBreakpoint.REMOVE_AFTER_HIT = myTemporary;
         RequestManagerImpl.createRequests(lineBreakpoint);
       }
-    } else {
+    }
+    else {
       if (!breakpoint.REMOVE_AFTER_HIT && myTemporary) {
         breakpoint.REMOVE_AFTER_HIT = true;
         breakpoint.updateUI();
-      } else {
+      }
+      else {
         manager.removeBreakpoint(breakpoint);
       }
     }

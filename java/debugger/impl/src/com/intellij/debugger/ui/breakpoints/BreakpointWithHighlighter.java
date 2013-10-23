@@ -68,15 +68,20 @@ import java.awt.dnd.DragSource;
  * Time: 3:22:55 PM
  */
 public abstract class BreakpointWithHighlighter extends Breakpoint {
-  @Nullable private RangeHighlighter myHighlighter;
+  @Nullable
+  private RangeHighlighter myHighlighter;
 
-  @Nullable private SourcePosition mySourcePosition;
+  @Nullable
+  private SourcePosition mySourcePosition;
 
   private boolean myVisible = true;
   private volatile Icon myIcon = getSetIcon(false);
-  @Nullable private String myClassName;
-  @Nullable private String myPackageName;
-  @Nullable private String myInvalidMessage;
+  @Nullable
+  private String myClassName;
+  @Nullable
+  private String myPackageName;
+  @Nullable
+  private String myInvalidMessage;
 
   protected abstract void createRequestForPreparedClass(final DebugProcessImpl debugProcess, final ReferenceType classType);
 
@@ -122,7 +127,10 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   @Nullable
   public BreakpointWithHighlighter init() {
     if (!isValid()) {
-      myHighlighter.dispose();
+      final RangeHighlighter highlighter = myHighlighter;
+      if (highlighter != null) {
+        highlighter.dispose();
+      }
       return null;
     }
 
@@ -192,6 +200,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     highlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
   }
 
+  @Nullable
   public RangeHighlighter getHighlighter() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return myHighlighter;
@@ -493,7 +502,9 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       return false;
     }
 
-    oldHighlighter.dispose();
+    if (oldHighlighter != null) {
+      oldHighlighter.dispose();
+    }
 
     DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager().fireBreakpointChanged(this);
     updateUI();
@@ -509,9 +520,18 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
     myVisible = visible;
   }
 
-  @NotNull
+  @Nullable
   public Document getDocument() {
-    return getHighlighter().getDocument();
+    final RangeHighlighter highlighter = getHighlighter();
+    if (highlighter != null) {
+      return highlighter.getDocument();
+    }
+    final SourcePosition position = getSourcePosition();
+    if (position != null) {
+      final PsiFile file = position.getFile();
+      return PsiDocumentManager.getInstance(getProject()).getDocument(file);
+    }
+    return null;
   }
 
   public int getLineIndex() {
@@ -530,7 +550,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
 
     RangeHighlighter highlighter = ((MarkupModelEx)DocumentMarkupModel.forDocument(document, project, true))
       .addPersistentLineHighlighter(lineIndex, DebuggerColors.BREAKPOINT_HIGHLIGHTER_LAYER, attributes);
-    if (!highlighter.isValid()) {
+    if (highlighter == null || !highlighter.isValid()) {
       return null;
     }
     highlighter.putUserData(DebuggerColors.BREAKPOINT_HIGHLIGHTER_KEY, Boolean.TRUE);

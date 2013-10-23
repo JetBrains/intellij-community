@@ -25,6 +25,7 @@ import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
+import com.intellij.debugger.engine.MethodFilter;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
@@ -42,6 +43,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -365,10 +367,14 @@ public class BreakpointManager {
     DebuggerInvocationUtil.swingInvokeLater(myProject, new Runnable() {
       @Override
       public void run() {
-        final GutterIconRenderer renderer = ((BreakpointWithHighlighter)breakpoint).getHighlighter().getGutterIconRenderer();
-        if (renderer != null) {
-          DebuggerSupport.getDebuggerSupport(JavaDebuggerSupport.class).getEditBreakpointAction()
-            .editBreakpoint(myProject, editor, breakpoint, renderer);
+        final RangeHighlighter highlighter = ((BreakpointWithHighlighter)breakpoint).getHighlighter();
+        if (highlighter != null) {
+          final GutterIconRenderer renderer = highlighter.getGutterIconRenderer();
+          if (renderer != null) {
+            DebuggerSupport.getDebuggerSupport(JavaDebuggerSupport.class).getEditBreakpointAction().editBreakpoint(
+              myProject, editor, breakpoint, renderer
+            );
+          }
         }
       }
     });
@@ -391,6 +397,11 @@ public class BreakpointManager {
   @Nullable
   public RunToCursorBreakpoint addRunToCursorBreakpoint(Document document, int lineIndex, final boolean ignoreBreakpoints) {
     return RunToCursorBreakpoint.create(myProject, document, lineIndex, ignoreBreakpoints);
+  }
+
+  @Nullable
+  public StepIntoBreakpoint addStepIntoBreakpoint(@NotNull MethodFilter filter) {
+    return StepIntoBreakpoint.create(myProject, filter);
   }
 
   @Nullable
@@ -657,7 +668,10 @@ public class BreakpointManager {
     myBreakpointsListForIteration = null;
     if (breakpoint instanceof BreakpointWithHighlighter) {
       BreakpointWithHighlighter breakpointWithHighlighter = (BreakpointWithHighlighter)breakpoint;
-      myDocumentBreakpoints.putValue(breakpointWithHighlighter.getDocument(), breakpointWithHighlighter);
+      final Document document = breakpointWithHighlighter.getDocument();
+      if (document != null) {
+        myDocumentBreakpoints.putValue(document, breakpointWithHighlighter);
+      }
     }
     myDispatcher.getMulticaster().breakpointsChanged();
   }
