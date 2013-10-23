@@ -24,6 +24,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
@@ -166,7 +167,11 @@ public class StartupUtil {
                            new ProcessBuilder(ideTempFile.getAbsolutePath()).start().waitFor() == 0;
         }
 
-        tempAccessible = tempExecutable && ideTempFile.delete();
+        if (!FileUtilRt.delete(ideTempFile)) {
+          ideTempFile.deleteOnExit();
+        }
+
+        tempAccessible = tempExecutable;
       }
       catch (Exception ignored) { }
     }
