@@ -163,17 +163,14 @@ public class StartupUtil {
       try {
         FileUtil.writeToFile(ideTempFile, "#!/bin/sh\nexit 0");
 
-        boolean tempExecutable = !SystemInfo.isUnix || SystemInfo.isMac;
-        if (!tempExecutable) {
-          tempExecutable = ideTempFile.setExecutable(true, true) && ideTempDir.canExecute() &&
-                           new ProcessBuilder(ideTempFile.getAbsolutePath()).start().waitFor() == 0;
-        }
+        tempAccessible = (SystemInfo.isWindows || SystemInfo.isMac) ||
+                         (ideTempFile.setExecutable(true, true) &&
+                          ideTempDir.canExecute() &&
+                          new ProcessBuilder(ideTempFile.getAbsolutePath()).start().waitFor() == 0);
 
         if (!FileUtilRt.delete(ideTempFile)) {
           ideTempFile.deleteOnExit();
         }
-
-        tempAccessible = tempExecutable;
       }
       catch (Exception ignored) { }
     }
