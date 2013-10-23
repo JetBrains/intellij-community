@@ -20,13 +20,13 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.hash.HashSet;
 import com.intellij.util.text.CharArrayUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
@@ -377,11 +377,11 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         for (int j = 0; j < numParams; j++) {
           PsiParameter param = params[j];
 
-          int startOffset = buffer.length();
+          int startOffset = XmlStringUtil.escapeString(buffer.toString()).length();
 
           appendParameterText(param, substitutor, buffer);
 
-          int endOffset = buffer.length();
+          int endOffset = XmlStringUtil.escapeString(buffer.toString()).length();
 
           if (j < numParams - 1) {
             buffer.append(", ");
@@ -410,7 +410,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         for (int i = 0; i < parameters.length; i++) {
           if (i > 0) buffer.append(", ");
 
-          int startOffset = buffer.length();
+          int startOffset = XmlStringUtil.escapeString(buffer.toString()).length();
           final PsiType psiType = parameters[i].getType();
           if (psiType == null) {
             buffer.append("def");
@@ -420,7 +420,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           }
           buffer.append(' ').append(parameters[i].getName() != null ? parameters[i].getName() : "<unknown>");
 
-          int endOffset = buffer.length();
+          int endOffset = XmlStringUtil.escapeString(buffer.toString()).length();
 
           if (context.isUIComponentEnabled() &&
               (i == currentParameter || (i == parameters.length - 1 && ((GrClosureSignature)element).isVarargs() && currentParameter >= parameters.length))) {
@@ -442,7 +442,7 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     final boolean isDeprecated = o instanceof PsiDocCommentOwner && ((PsiDocCommentOwner) o).isDeprecated();
 
     context.setupUIComponentPresentation(
-      StringUtil.escapeXml(buffer.toString()),
+      buffer.toString(),
       highlightStartOffset,
       highlightEndOffset,
       !context.isUIComponentEnabled(),
