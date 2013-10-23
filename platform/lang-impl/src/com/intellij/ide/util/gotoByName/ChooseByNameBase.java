@@ -747,10 +747,6 @@ public abstract class ChooseByNameBase {
   }
 
   public String transformPattern(String pattern) {
-    final ChooseByNameModel model = getModel();
-    if (model instanceof ContributorsBasedGotoByModel) {
-      return ((ContributorsBasedGotoByModel)model).transformPattern(pattern);
-    }
     return pattern;
   }
 
