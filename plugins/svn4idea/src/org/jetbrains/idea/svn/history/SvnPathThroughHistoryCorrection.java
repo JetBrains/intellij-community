@@ -62,25 +62,22 @@ public class SvnPathThroughHistoryCorrection implements ISVNLogEntryHandler {
         return;
       }
     }
+    SVNLogEntryPath mostSpecificPath = null;
     for (SVNLogEntryPath path : paths.values()) {
       // "the origin path *from where* the item, ..."
       final String copyPath = path.getCopyPath();
       if (copyPath != null) {
         final String thisEntryPath = path.getPath();
-        if (parentPathChanged(copyPath, thisEntryPath)) {
-          return;
+        if (SVNPathUtil.isAncestor(thisEntryPath, this.myPath) &&
+            (mostSpecificPath == null || SVNPathUtil.isAncestor(mostSpecificPath.getPath(), thisEntryPath))) {
+          mostSpecificPath = path;
         }
       }
     }
-  }
-
-  private boolean parentPathChanged(String copyPath, String thisEntryPath) throws SVNException {
-    if (SVNPathUtil.isAncestor(thisEntryPath, myPath)) {
-      final String relativePath = SVNPathUtil.getRelativePath(thisEntryPath, myPath);
-      myPath = SvnUtil.appendMultiParts(copyPath, relativePath);
-      return true;
+    if (mostSpecificPath != null) {
+      final String relativePath = SVNPathUtil.getRelativePath(mostSpecificPath.getPath(), this.myPath);
+      this.myPath = SvnUtil.appendMultiParts(mostSpecificPath.getCopyPath(), relativePath);
     }
-    return false;
   }
 
   public String getBefore() {
