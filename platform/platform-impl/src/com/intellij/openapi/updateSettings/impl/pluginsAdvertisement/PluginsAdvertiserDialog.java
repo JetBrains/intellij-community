@@ -27,10 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
 * User: anna
@@ -46,6 +43,12 @@ public class PluginsAdvertiserDialog extends DialogWrapper {
   PluginsAdvertiserDialog(@Nullable Project project, PluginDownloader[] plugins, List<IdeaPluginDescriptor> allPlugins) {
     super(project);
     myProject = project;
+    Arrays.sort(plugins, new Comparator<PluginDownloader>() {
+      @Override
+      public int compare(PluginDownloader o1, PluginDownloader o2) {
+        return o1.getPluginName().compareToIgnoreCase(o2.getPluginName());
+      }
+    });
     myUploadedPlugins = plugins;
     myAllPlugins = allPlugins;
     setTitle("Choose Plugins to Install or Enable");
