@@ -783,7 +783,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
             assert VfsUtilCore.isAncestor(contentRoot, file, false) : "File: "+file+"; Content root: "+contentRoot;
         }
       }
-      assert id > 0;
+      assert id > 0 : id;
       myDirToInfoMap.put(id, info);
     }
 
