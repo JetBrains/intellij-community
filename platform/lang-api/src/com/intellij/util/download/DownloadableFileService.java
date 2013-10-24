@@ -46,9 +46,21 @@ public abstract class DownloadableFileService {
                                                                                                     @NotNull URL... localUrls);
 
   @NotNull
+  public abstract FileDownloader createDownloader(@NotNull DownloadableFileSetDescription description);
+
+  @NotNull
+  public abstract FileDownloader createDownloader(@NotNull List<? extends DownloadableFileDescription> fileDescriptions, @NotNull String presentableDownloadName);
+
+  /**
+   * @deprecated use {@link #createDownloader(DownloadableFileSetDescription)} instead
+   */
+  @NotNull
   public abstract FileDownloader createDownloader(@NotNull DownloadableFileSetDescription description, @Nullable Project project,
                                                   JComponent parent);
 
+  /**
+   * @deprecated use {@link #createDownloader(java.util.List, String)} instead
+   */
   @NotNull
   public abstract FileDownloader createDownloader(List<? extends DownloadableFileDescription> fileDescriptions, @Nullable Project project,
                                                   JComponent parent, @NotNull String presentableDownloadName);
