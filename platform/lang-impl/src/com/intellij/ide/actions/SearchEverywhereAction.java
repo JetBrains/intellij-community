@@ -21,8 +21,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.SearchTopHitProvider;
-import com.intellij.ide.ui.LafManager;
-import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
@@ -253,13 +251,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
 
   public SearchEverywhereAction() {
-    createSearchField();
-    LafManager.getInstance().addLafManagerListener(new LafManagerListener() {
-      @Override
-      public void lookAndFeelChanged(LafManager source) {
-        createSearchField();
-      }
-    });
     myRenderer = new MyListRenderer();
     myList.setCellRenderer(myRenderer);
     myList.addMouseListener(new MouseAdapter() {
@@ -353,6 +344,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       public void keyPressed(KeyEvent e) {
         int keyCode = e.getKeyCode();
         if (keyCode == KeyEvent.VK_ESCAPE) {
+          if (myBalloon != null && myBalloon.isVisible()) {
+            myBalloon.cancel();
+          }
           if (myPopup != null && myPopup.isVisible()) {
             myPopup.cancel();
           }
@@ -497,6 +491,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       e = new AnActionEvent(me, DataManager.getInstance().getDataContext(myFocusComponent), ActionPlaces.UNKNOWN, getTemplatePresentation(), ActionManager.getInstance(), 0);
     }
     if (e == null) return;
+    createSearchField();
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
     Window wnd = myContextComponent != null ? SwingUtilities.windowForComponent(myContextComponent)
       : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
