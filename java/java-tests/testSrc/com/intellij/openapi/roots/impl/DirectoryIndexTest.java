@@ -214,6 +214,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfoNull(myExcludedLibClsDir);
     checkInfoNull(myExcludedLibSrcDir);
 
+    assertEquals(myModule1Dir, checkInfoNotNull(myLibClsDir).getContentRoot());
+
     checkInfo(myModule3Dir, myModule3, false, false, null, null);
   }
 
@@ -495,6 +497,11 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
     checkInfo(myModule1Dir, myModule, true, false, "", null, myModule);
     checkInfo(mySrcDir1, myModule, true, false, "", JavaSourceRootType.SOURCE, myModule);
+    
+    checkInfo(myLibDir, myModule, true, false, "lib", null, myModule);
+    checkInfo(myLibClsDir, myModule, true, false, "", null, myModule2);
+    checkInfo(myLibSrcDir, myModule, true, true, "", null, myModule);
+    checkInfo(myResDir, myModule, true, false, "", JavaResourceRootType.RESOURCE, myModule);
   }
 
 
@@ -509,7 +516,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
                          @Nullable Module module,
                          boolean isInLibrary,
                          boolean isInLibrarySource,
-                         @Nullable String packageName, final JpsModuleSourceRootType<?> moduleSourceRootType,
+                         @Nullable String packageName, 
+                         @Nullable final JpsModuleSourceRootType<?> moduleSourceRootType,
                          Module... modulesOfOrderEntries) {
     DirectoryInfo info = checkInfoNotNull(dir);
     assertEquals(module, info.getModule());

@@ -180,9 +180,12 @@ class RootIndex {
     for (Map.Entry<VirtualFile, DirectoryInfo> entry : myRoots.entrySet()) {
       DirectoryInfo info = entry.getValue();
       Module module = info.getModule();
+      VirtualFile contentRoot = info.getContentRoot();
       VirtualFile libraryClassRoot = info.getLibraryClassRoot();
       boolean inModuleSource = info.isInModuleSource();
       boolean inLibrarySource = info.isInLibrarySource();
+
+      OrderEntry[] orderEntries = info.getOrderEntries();
       
       boolean nested = false;
       
@@ -191,11 +194,19 @@ class RootIndex {
         DirectoryInfo eachInfo = myRoots.get(eachFile);
         if (eachInfo != null) {
           nested = true;
+
+          if (eachInfo.getLibraryClassRoot() != null && libraryClassRoot == null && !info.isInModuleSource()) {
+            orderEntries = eachInfo.getOrderEntries();
+          }
+
           if (module == null) {
             module = eachInfo.getModule();
           }
           if (libraryClassRoot == null) {
             libraryClassRoot = eachInfo.getLibraryClassRoot();
+          }
+          if (contentRoot == null) {
+            contentRoot = eachInfo.getContentRoot();
           }
           inModuleSource |= eachInfo.isInModuleSource();
           inLibrarySource |= eachInfo.isInLibrarySource();
@@ -208,7 +219,8 @@ class RootIndex {
       }
       if (nested) {
         int sourceRootTypeData = DirectoryInfo.createSourceRootTypeData(inModuleSource, inLibrarySource, info.getSourceRootTypeId());
-        entry.setValue(info.with(module, info.getContentRoot(), info.getSourceRoot(), libraryClassRoot, sourceRootTypeData, info.getOrderEntries()));
+        if (orderEntries.length == 0) orderEntries = null;
+        entry.setValue(info.with(module, contentRoot, info.getSourceRoot(), libraryClassRoot, sourceRootTypeData, orderEntries));
       }
     }
   }
@@ -293,7 +305,15 @@ class RootIndex {
     myPackagePrefixRoots.get(packagePrefix).add(root);
   }
 
+  @Nullable 
   public DirectoryInfo getInfoForDirectory(@NotNull final VirtualFile dir) {
+    if (!dir.isValid()) {
+      return null;
+    }
+    if (!dir.isDirectory()) {
+      return myRoots.get(dir);
+    }
+
     int count = 0;
     for (VirtualFile root = dir; root != null; root = root.getParent()) {
       if (++count > 1000) {
