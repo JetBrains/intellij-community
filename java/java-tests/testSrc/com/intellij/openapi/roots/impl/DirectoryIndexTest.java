@@ -405,6 +405,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfoNull(projectOutput);
     checkInfoNull(module2Output);
     checkInfoNull(module2TestOutput);
+    
+    assertTrue(myIndex.isProjectExcludeRoot(excluded));
 
     excluded.delete(this);
     projectOutput.delete(this);
@@ -422,6 +424,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     };
     VirtualFileManager.getInstance().addVirtualFileListener(l, getTestRootDisposable());
     excluded = myModule1Dir.createChildDirectory(this, excluded.getName());
+    //todo assertTrue(myIndex.isProjectExcludeRoot(excluded));
     projectOutput = myModule1Dir.createChildDirectory(this, projectOutput.getName());
     module2Output = myModule1Dir.createChildDirectory(this, module2Output.getName());
     module2TestOutput = myModule2Dir.createChildDirectory(this, module2TestOutput.getName());
@@ -432,6 +435,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfoNull(module2TestOutput);
 
     assertEquals(created.toString(), 4, created.size());
+
+    assertTrue(myIndex.isProjectExcludeRoot(excluded));
   }
 
   public void testExcludesShouldBeRecognizedRightOnRefresh() throws Exception {
