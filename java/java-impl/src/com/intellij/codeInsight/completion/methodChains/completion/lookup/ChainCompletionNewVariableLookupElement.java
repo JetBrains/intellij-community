@@ -1,10 +1,13 @@
 package com.intellij.codeInsight.completion.methodChains.completion.lookup;
 
+import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -20,6 +23,7 @@ import java.util.Collection;
  * @author Dmitry Batkovich <dmitry.batkovich@jetbrains.com>
  */
 public class ChainCompletionNewVariableLookupElement extends LookupElementDecorator<LookupElement> {
+  private final static Logger log = Logger.getInstance(ChainCompletionNewVariableLookupElement.class);
 
   private final PsiClass myPsiClass;
   private final String myNewVarName;
@@ -39,20 +43,25 @@ public class ChainCompletionNewVariableLookupElement extends LookupElementDecora
 
   @Override
   public void handleInsert(final InsertionContext context) {
+    final RangeMarker rangeMarker = context.getDocument().createRangeMarker(context.getStartOffset(), context.getStartOffset());
+    getDelegate().handleInsert(context);
     final PsiFile file = context.getFile();
     ((PsiJavaFile)file).importClass(myPsiClass);
     final PsiElement caretElement = file.findElementAt(context.getEditor().getCaretModel().getOffset());
     if (caretElement == null) {
-      throw new NullPointerException();
+      log.error("element on caret position MUST BE not null");
+      return;
     }
     final PsiStatement statement = (PsiStatement) caretElement.getPrevSibling();
     final PsiCodeBlock codeBlock = PsiTreeUtil.getParentOfType(statement, PsiCodeBlock.class);
     if (codeBlock == null) {
-      throw new NullPointerException();
+      log.error("code block MUST BE not null");
+      return;
     }
     final Project project = context.getProject();
     final Ref<PsiElement> insertedStatementRef = Ref.create();
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+    context.commitDocument();
     new WriteCommandAction.Simple(project, file) {
       @Override
       protected void run() throws Throwable {
@@ -61,10 +70,9 @@ public class ChainCompletionNewVariableLookupElement extends LookupElementDecora
       }
     }.execute();
     final PsiLiteralExpression nullKeyword = findNull(insertedStatementRef.get());
-
-    context.commitDocument();
     PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(context.getDocument());
-    getDelegate().handleInsert(context);
+    context.getDocument().insertString(rangeMarker.getStartOffset(), myNewVarName + ".");
+    context.commitDocument();
     final int offset = nullKeyword.getTextOffset();
     final int endOffset = offset + nullKeyword.getTextLength();
     context.getEditor().getSelectionModel().setSelection(offset, endOffset);
@@ -74,7 +82,7 @@ public class ChainCompletionNewVariableLookupElement extends LookupElementDecora
   @NotNull
   @Override
   public String getLookupString() {
-    return myNewVarName + "." + getDelegate().getLookupString();
+    return getDelegate().getLookupString();
   }
 
   @Override

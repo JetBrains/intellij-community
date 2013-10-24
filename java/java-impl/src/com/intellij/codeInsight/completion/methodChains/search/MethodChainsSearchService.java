@@ -8,8 +8,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -22,8 +20,10 @@ public class MethodChainsSearchService {
   private final MethodsUsageIndex myMethodsUsageIndex;
   private final BigramMethodsUsageIndex myBigramMethodsUsageIndex;
   private final Project myProject;
+  private final boolean myUseBigrams;
 
-  public MethodChainsSearchService(final Project project) {
+  public MethodChainsSearchService(final Project project, final boolean useBigrams) {
+    myUseBigrams = useBigrams;
     myMethodsUsageIndex = MethodsUsageIndex.getInstance(project);
     myBigramMethodsUsageIndex = BigramMethodsUsageIndex.getInstance(project);
     myProject = project;
@@ -36,9 +36,11 @@ public class MethodChainsSearchService {
   @NotNull
   @SuppressWarnings("unchecked")
   public SortedSet<UsageIndexValue> getBigram(final MethodIncompleteSignature methodIncompleteSignature) {
-    final TreeSet<UsageIndexValue> value = myBigramMethodsUsageIndex.getValues(methodIncompleteSignature);
-    if (value != null) {
-      return value;
+    final TreeSet<UsageIndexValue> values = myUseBigrams
+                                            ? myBigramMethodsUsageIndex.getValues(methodIncompleteSignature)
+                                            : myMethodsUsageIndex.getValues(methodIncompleteSignature.getOwner());
+    if (values != null) {
+      return values;
     }
     return EMPTY_SORTED_SET;
   }

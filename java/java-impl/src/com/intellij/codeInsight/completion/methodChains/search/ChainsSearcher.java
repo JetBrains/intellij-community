@@ -56,22 +56,27 @@ public class ChainsSearcher {
     final List<WeightAware<MethodIncompleteSignature>> allInitialVertexes = initResult.getVertexes();
 
     final LinkedList<WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>> q =
-      new LinkedList<WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>>(
-        ContainerUtil.map(allInitialVertexes, new Function<WeightAware<MethodIncompleteSignature>, WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>>() {
-                           @Override
-                           public WeightAware<Pair<MethodIncompleteSignature, MethodsChain>> fun(
-                             final WeightAware<MethodIncompleteSignature> methodIncompleteSignatureWeightAware) {
-                             return new WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>(
-                               new Pair<MethodIncompleteSignature, MethodsChain>(
-                                 methodIncompleteSignatureWeightAware
-                                   .getUnderlying(),
-                                 new MethodsChain(resolver.get(
-                                   methodIncompleteSignatureWeightAware.getUnderlying()),
-                                                  methodIncompleteSignatureWeightAware.getWeight(),
-                                                  methodIncompleteSignatureWeightAware.getUnderlying().getOwner())),
-                               methodIncompleteSignatureWeightAware.getWeight());
-                           }
-                         }));
+      new LinkedList<WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>>(ContainerUtil.map(allInitialVertexes,
+                                                                                                   new Function<WeightAware<MethodIncompleteSignature>, WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>>() {
+                                                                                                     @Override
+                                                                                                     public WeightAware<Pair<MethodIncompleteSignature, MethodsChain>> fun(
+                                                                                                       final WeightAware<MethodIncompleteSignature> methodIncompleteSignatureWeightAware) {
+                                                                                                       return new WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>(
+                                                                                                         new Pair<MethodIncompleteSignature, MethodsChain>(
+                                                                                                           methodIncompleteSignatureWeightAware
+                                                                                                             .getUnderlying(),
+                                                                                                           new MethodsChain(resolver.get(
+                                                                                                             methodIncompleteSignatureWeightAware
+                                                                                                               .getUnderlying()),
+                                                                                                                            methodIncompleteSignatureWeightAware
+                                                                                                                              .getWeight(),
+                                                                                                                            methodIncompleteSignatureWeightAware
+                                                                                                                              .getUnderlying()
+                                                                                                                              .getOwner())),
+                                                                                                         methodIncompleteSignatureWeightAware
+                                                                                                           .getWeight());
+                                                                                                     }
+                                                                                                   }));
 
     int maxWeight = 0;
     for (final MethodsChain methodsChain : knownDistance.values()) {
@@ -214,5 +219,33 @@ public class ChainsSearcher {
     public int size() {
       return myResult.size();
     }
+  }
+
+  private static boolean doChoose(final SortedSet<UsageIndexValue> bigrams, final int currentWeight, final int maxResultSize) {
+    if (bigrams.size() == 1) {
+      return true;
+    }
+    int sumWeight = 0;
+    for (final UsageIndexValue bigram : bigrams) {
+      sumWeight += bigram.getOccurrences();
+    }
+    if (Math.abs(sumWeight - currentWeight) < currentWeight / maxResultSize) {
+      return true;
+    }
+    final List<UsageIndexValue> essentialValues = new ArrayList<UsageIndexValue>();
+    Integer max = null;
+    for (UsageIndexValue bigram : bigrams) {
+      if (max == null) {
+        max = bigram.getOccurrences();
+      }
+      if (max / bigram.getOccurrences() > maxResultSize) {
+        break;
+      }
+      essentialValues.add(bigram);
+      if (essentialValues.size() > maxResultSize) {
+        return false;
+      }
+    }
+    return true;
   }
 }
