@@ -16,16 +16,19 @@
 package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.xmlb.XmlSerializer;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,7 +43,7 @@ public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
   /**
    * @noinspection PublicField
    */
-  public boolean m_ignoreAnnotatedVariables = false;
+  public boolean m_ignoreAnnotatedVariables = true;
 
   @Override
   @NotNull

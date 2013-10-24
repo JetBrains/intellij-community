@@ -8,7 +8,7 @@ interface Project {}
 
 public class TestCompletion {
   void m() {
-      PsiManager psiManager = null;
+      PsiManager psiManager = <selection><caret>null</selection>;
       Project p = psiManager.getProject()
   }
 }

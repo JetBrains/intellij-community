@@ -29,6 +29,7 @@ import org.jetbrains.idea.maven.dom.MavenDomElement;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyScopeConverter;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencySystemPathConverter;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyTypeConverter;
+import org.jetbrains.idea.maven.dom.model.presentation.MavenArtifactCoordinatesPresentationProvider;
 
 /**
  * http://maven.apache.org/POM/4.0.0:Dependency interface.
@@ -37,7 +38,7 @@ import org.jetbrains.idea.maven.dom.converters.MavenDependencyTypeConverter;
  * 3.0.0+
  * </pre>
  */
-@Presentation(typeName = "Dependency", icon = "AllIcons.Nodes.PpLib")
+@Presentation(typeName = "Dependency", icon = "AllIcons.Nodes.PpLib", provider = MavenArtifactCoordinatesPresentationProvider.class)
 public interface MavenDomDependency extends MavenDomElement, MavenDomArtifactCoordinates {
   @Required(value = false, nonEmpty = true)
   GenericDomValue<String> getVersion();

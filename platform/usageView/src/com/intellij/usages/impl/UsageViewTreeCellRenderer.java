@@ -27,6 +27,7 @@ import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageTreeColorsScheme;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -51,9 +52,9 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
   }
 
   @Override
-  public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+  public void customizeCellRenderer(@Nullable JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
     boolean showAsReadOnly = false;
-    if (value instanceof Node && value != tree.getModel().getRoot()) {
+    if (value instanceof Node && tree != null && value != tree.getModel().getRoot()) {
       Node node = (Node)value;
       if (!node.isValid()) {
         append(UsageViewBundle.message("node.invalid") + " ", ourInvalidAttributes);
@@ -124,7 +125,9 @@ class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
     else {
       append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
-    SpeedSearchUtil.applySpeedSearchHighlighting(myTree, this, mySelected);
+    if (tree != null) {
+      SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, mySelected);
+    }
   }
 
   private static SimpleTextAttributes patchAttrs(Node node, SimpleTextAttributes original) {

@@ -39,6 +39,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
@@ -391,6 +392,8 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   @Nullable
   private FileEditor createTempFileEditor(VirtualFile file) {
+    if (file.getLength() > PersistentFSConstants.getMaxIntellisenseFileSize()) return null;
+
     FileEditorProviderManager editorProviderManager = FileEditorProviderManager.getInstance();
     final FileEditorProvider[] providers = editorProviderManager.getProviders(myProject, file);
     for (FileEditorProvider provider : providers) {

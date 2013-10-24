@@ -43,9 +43,12 @@ public final class SpeedSearchUtil {
 
   public static void applySpeedSearchHighlighting(@NotNull JComponent speedSearchEnabledComponent,
                                                   @NotNull SimpleColoredComponent coloredComponent,
+                                                  boolean mainTextOnly,
                                                   boolean selected) {
     SpeedSearchSupply speedSearch = SpeedSearchSupply.getSupply(speedSearchEnabledComponent);
-    Iterable<TextRange> ranges = speedSearch == null ? null : speedSearch.matchingFragments(coloredComponent.getCharSequence().toString());
+    // The bad thing is that SpeedSearch model is decoupled from UI presentation so we don't know the real matched text.
+    // Our best guess is to get strgin from the ColoredComponent. We can only provide main-text-only option.
+    Iterable<TextRange> ranges = speedSearch == null ? null : speedSearch.matchingFragments(coloredComponent.getCharSequence(mainTextOnly).toString());
     Iterator<TextRange> rangesIterator = ranges != null ? ranges.iterator() : null;
     if (rangesIterator == null || !rangesIterator.hasNext()) return;
     Color bg = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();

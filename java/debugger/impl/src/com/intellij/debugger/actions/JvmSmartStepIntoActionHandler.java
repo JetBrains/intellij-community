@@ -45,7 +45,9 @@ public class JvmSmartStepIntoActionHandler extends DebuggerActionHandler {
     final FileEditor fileEditor = file != null? FileEditorManager.getInstance(project).getSelectedEditor(file) : null;
     if (fileEditor instanceof TextEditor) {
       for (JvmSmartStepIntoHandler handler : Extensions.getExtensions(JvmSmartStepIntoHandler.EP_NAME)) {
-        if (handler.isAvailable(position) && handler.doSmartStep(position, session, (TextEditor)fileEditor)) return;
+        if (handler.isAvailable(position) && handler.doSmartStep(position, session, (TextEditor)fileEditor)) {
+          return;
+        }
       }
     }
     session.stepInto(true, null);

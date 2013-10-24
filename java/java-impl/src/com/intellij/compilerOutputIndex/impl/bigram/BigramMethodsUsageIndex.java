@@ -15,6 +15,7 @@ import com.intellij.util.indexing.ID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.asm4.Opcodes;
+import org.jetbrains.asm4.tree.ClassNode;
 
 import java.util.*;
 
@@ -26,13 +27,13 @@ public class BigramMethodsUsageIndex extends CompilerOutputBaseGramsIndex<Method
     return CompilerOutputIndexer.getInstance(project).getIndex(BigramMethodsUsageIndex.class);
   }
 
-  public BigramMethodsUsageIndex() {
-    super(MethodIncompleteSignature.createKeyDescriptor());
+  public BigramMethodsUsageIndex( final Project project) {
+    super(MethodIncompleteSignature.createKeyDescriptor(), project);
   }
 
   @Override
   protected ID<MethodIncompleteSignature, Multiset<MethodIncompleteSignature>> getIndexId() {
-    return generateIndexId(BigramMethodsUsageIndex.class);
+    return generateIndexId("BigramMethodsUsage");
   }
 
   @Override
@@ -41,14 +42,14 @@ public class BigramMethodsUsageIndex extends CompilerOutputBaseGramsIndex<Method
   }
 
   @Override
-  protected DataIndexer<MethodIncompleteSignature, Multiset<MethodIncompleteSignature>, ClassReader> getIndexer() {
+  protected DataIndexer<MethodIncompleteSignature, Multiset<MethodIncompleteSignature>,ClassNode> getIndexer() {
     //
     // not fair way, but works fast
     //
-    return new DataIndexer<MethodIncompleteSignature,Multiset<MethodIncompleteSignature>,ClassReader>() {
+    return new DataIndexer<MethodIncompleteSignature, Multiset<MethodIncompleteSignature>, ClassNode>() {
       @NotNull
       @Override
-      public Map<MethodIncompleteSignature, Multiset<MethodIncompleteSignature>> map(final ClassReader inputData) {
+      public Map<MethodIncompleteSignature, Multiset<MethodIncompleteSignature>> map(final ClassNode inputData) {
         final Map<MethodIncompleteSignature, Multiset<MethodIncompleteSignature>> map =
           new HashMap<MethodIncompleteSignature, Multiset<MethodIncompleteSignature>>();
         for (final ClassFileData.MethodData data : new ClassFileData(inputData).getMethodDatas()) {
