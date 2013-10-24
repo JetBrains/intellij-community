@@ -145,9 +145,7 @@ public abstract class Breakpoint extends FilteredRequestor implements ClassPrepa
   protected void createOrWaitPrepare(final DebugProcessImpl debugProcess, final SourcePosition classPosition) {
     debugProcess.getRequestsManager().callbackOnPrepareClasses(this, classPosition);
 
-    List list = debugProcess.getPositionManager().getAllClasses(classPosition);
-    for (final Object aList : list) {
-      ReferenceType refType = (ReferenceType)aList;
+    for (ReferenceType refType : debugProcess.getPositionManager().getAllClasses(classPosition)) {
       if (refType.isPrepared()) {
         processClassPrepare(debugProcess, refType);
       }

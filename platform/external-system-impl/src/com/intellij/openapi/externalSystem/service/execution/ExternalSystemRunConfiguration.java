@@ -221,10 +221,6 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase {
           }
           notifyTextAvailable(text, stdOut ? ProcessOutputTypes.STDOUT : ProcessOutputTypes.STDERR);
         }
-
-        @Override
-        public void onEnd(@NotNull ExternalSystemTaskId id) {
-        }
       });
       notifyProcessDetached();
     }

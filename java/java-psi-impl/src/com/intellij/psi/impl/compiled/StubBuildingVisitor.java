@@ -40,6 +40,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static com.intellij.psi.CommonClassNames.*;
+
 /**
  * @author max
  */
@@ -57,19 +59,21 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   @NonNls private static final String SYNTHETIC_CLASS_INIT_METHOD = "<clinit>";
   @NonNls private static final String SYNTHETIC_INIT_METHOD = "<init>";
 
+  private final T mySource;
   private final InnerClassSourceStrategy<T> myInnersStrategy;
   private final StubElement myParent;
   private final int myAccess;
-  private final T mySource;
-  private PsiModifierListStub myModList;
+  private final String myShortName;
   private PsiClassStub myResult;
+  private PsiModifierListStub myModList;
 
-  public StubBuildingVisitor(final T classSource, InnerClassSourceStrategy<T> innersStrategy, final StubElement parent, final int access) {
+  public StubBuildingVisitor(T classSource, InnerClassSourceStrategy<T> innersStrategy, StubElement parent, int access, String shortName) {
     super(Opcodes.ASM4);
     mySource = classSource;
     myInnersStrategy = innersStrategy;
     myParent = parent;
     myAccess = access;
+    myShortName = shortName;
   }
 
   public PsiClassStub<?> getResult() {
@@ -77,25 +81,17 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   }
 
   @Override
-  public void visit(final int version,
-                    final int access,
-                    final String name,
-                    final String signature,
-                    final String superName,
-                    final String[] interfaces) {
+  public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
     String fqn = getClassName(name);
+    String shortName = myShortName != null ? myShortName : PsiNameHelper.getShortClassName(fqn);
 
-    final String shortName = PsiNameHelper.getShortClassName(fqn);
-
-    final int flags = myAccess == 0 ? access : myAccess;
-
+    int flags = myAccess == 0 ? access : myAccess;
     boolean isDeprecated = (flags & Opcodes.ACC_DEPRECATED) != 0;
     boolean isInterface = (flags & Opcodes.ACC_INTERFACE) != 0;
     boolean isEnum = (flags & Opcodes.ACC_ENUM) != 0;
     boolean isAnnotationType = (flags & Opcodes.ACC_ANNOTATION) != 0;
 
-    final byte stubFlags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false, isAnnotationType, false, false);
-
+    byte stubFlags = PsiClassStubImpl.packFlags(isDeprecated, isInterface, isEnum, false, false, isAnnotationType, false, false);
     myResult = new PsiClassStubImpl(JavaStubElementTypes.CLASS, myParent, fqn, shortName, null, stubFlags);
 
     LanguageLevel languageLevel = convertFromVersion(version);
@@ -131,16 +127,15 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     if (isInterface) {
       if (isAnnotationType) {
-        convertedInterfaces.remove(CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION);
+        convertedInterfaces.remove(JAVA_LANG_ANNOTATION_ANNOTATION);
       }
       newReferenceList(JavaStubElementTypes.EXTENDS_LIST, myResult, ArrayUtil.toStringArray(convertedInterfaces));
       newReferenceList(JavaStubElementTypes.IMPLEMENTS_LIST, myResult);
     }
     else {
       if (convertedSuper == null ||
-          CommonClassNames.JAVA_LANG_OBJECT.equals(convertedSuper) ||
-          isEnum && (CommonClassNames.JAVA_LANG_ENUM.equals(convertedSuper) ||
-                     (CommonClassNames.JAVA_LANG_ENUM + "<" + fqn + ">").equals(convertedSuper))) {
+          JAVA_LANG_OBJECT.equals(convertedSuper) ||
+          isEnum && (JAVA_LANG_ENUM.equals(convertedSuper) || (JAVA_LANG_ENUM + "<" + fqn + ">").equals(convertedSuper))) {
         newReferenceList(JavaStubElementTypes.EXTENDS_LIST, myResult);
       }
       else {
@@ -303,12 +298,10 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   @Override
   public void visitInnerClass(final String name, final String outerName, final String innerName, final int access) {
     if ((access & Opcodes.ACC_SYNTHETIC) != 0) return;
-    if (!isCorrectName(innerName)) return;
+    if (!isCorrectName(innerName) || outerName == null) return;
 
-    if (innerName == null || outerName == null) return;
     if ((getClassName(outerName) + "." + innerName).equals(myResult.getQualifiedName())) {
-      // Our result is inner class
-
+      // our result is inner class
       if (myParent instanceof PsiFileStub) {
         throw new OutOfOrderInnerClassException();
       }
@@ -322,7 +315,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     final ClassReader reader = myInnersStrategy.readerForInnerClass(innerSource);
     if (reader == null) return;
 
-    final StubBuildingVisitor<T> classVisitor = new StubBuildingVisitor<T>(innerSource, myInnersStrategy, myResult, access);
+    final StubBuildingVisitor<T> classVisitor = new StubBuildingVisitor<T>(innerSource, myInnersStrategy, myResult, access, innerName);
     reader.accept(classVisitor, ClassReader.SKIP_FRAMES);
   }
 

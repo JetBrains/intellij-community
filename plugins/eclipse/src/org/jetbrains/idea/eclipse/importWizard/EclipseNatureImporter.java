@@ -23,6 +23,7 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.eclipse.EclipseXml;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -43,12 +44,14 @@ public abstract class EclipseNatureImporter {
     final Set<String> allCons = new HashSet<String>();
     allCons.add(EclipseXml.GROOVY_SUPPORT);
     allCons.add(EclipseXml.GROOVY_DSL_CONTAINER);
-    allCons.add(EclipseXml.JREBEL_NATURE);
-    allCons.add(EclipseXml.SONAR_NATURE);
 
     for (EclipseNatureImporter provider : Extensions.getExtensions(EP_NAME)) {
       allCons.addAll(provider.getProvidedCons());
     }
     return allCons;
+  }
+  
+  public static List<String> getDefaultNatures() {
+    return Arrays.asList(EclipseXml.JAVA_NATURE, EclipseXml.JREBEL_NATURE, EclipseXml.SONAR_NATURE);
   }
 }

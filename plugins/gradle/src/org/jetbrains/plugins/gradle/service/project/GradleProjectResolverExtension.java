@@ -16,23 +16,86 @@
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.externalSystem.JavaProjectData;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
-import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
+import com.intellij.openapi.util.KeyValue;
+import org.gradle.tooling.model.idea.IdeaModule;
+import org.gradle.tooling.model.idea.IdeaProject;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.GradleManager;
-import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
+
+import java.io.File;
+import java.util.Collection;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Allows to enhance {@link GradleProjectResolver} processing.
  * <p/>
  * Every extension is expected to have a no-args constructor because they are used at external process and we need a simple way
  * to instantiate it.
- * 
- * @author Denis Zhdanov
- * @since 4/17/13 11:24 AM
+ *
+ * @author Denis Zhdanov, Vladislav Soroka
  * @see GradleManager#enhanceRemoteProcessing(SimpleJavaParameters)   sample enhanceParameters() implementation
+ * @since 4/17/13 11:24 AM
  */
-public interface GradleProjectResolverExtension extends ParametersEnhancer, ExternalSystemProjectResolver<GradleExecutionSettings> {
-  
+public interface GradleProjectResolverExtension extends ParametersEnhancer {
+
   ExtensionPointName<GradleProjectResolverExtension> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.gradle.projectResolve");
+
+  void setProjectResolverContext(@NotNull ProjectResolverContext projectResolverContext);
+
+  void setNext(@Nullable GradleProjectResolverExtension projectResolverExtension);
+
+  @Nullable
+  GradleProjectResolverExtension getNext();
+
+  @NotNull
+  ProjectData createProject();
+
+  @NotNull
+  JavaProjectData createJavaProjectData();
+
+  @NotNull
+  ModuleData createModule(@NotNull IdeaModule gradleModule, @NotNull ProjectData projectData);
+
+  /**
+   * Populates {@link com.intellij.openapi.externalSystem.model.ProjectKeys#CONTENT_ROOT) content roots} of the given ide module on the basis of the information
+   * contained at the given gradle module.
+   *
+   * @param gradleModule holder of the module information received from the gradle tooling api
+   * @param ideModule    corresponding module from intellij gradle plugin domain
+   * @throws IllegalArgumentException if given gradle module contains invalid data
+   */
+  void populateModuleContentRoots(@NotNull IdeaModule gradleModule, @NotNull DataNode<ModuleData> ideModule);
+
+  void populateModuleCompileOutputSettings(@NotNull IdeaModule gradleModule, @NotNull DataNode<ModuleData> ideModule);
+
+  void populateModuleDependencies(@NotNull IdeaModule gradleModule,
+                                  @NotNull DataNode<ModuleData> ideModule,
+                                  @NotNull DataNode<ProjectData> ideProject);
+
+  @NotNull
+  Collection<TaskData> populateModuleTasks(@NotNull IdeaModule gradleModule,
+                                           @NotNull DataNode<ModuleData> ideModule,
+                                           @NotNull DataNode<ProjectData> ideProject);
+
+  @NotNull
+  Collection<TaskData> filterRootProjectTasks(@NotNull List<TaskData> allTasks);
+
+  @NotNull
+  Set<Class> getExtraProjectModelClasses();
+
+  @NotNull
+  List<KeyValue<String, String>> getExtraJvmArgs();
+
+  @NotNull
+  ExternalSystemException getUserFriendlyError(@NotNull Throwable error, @NotNull String projectPath, @Nullable String buildFilePath);
 }

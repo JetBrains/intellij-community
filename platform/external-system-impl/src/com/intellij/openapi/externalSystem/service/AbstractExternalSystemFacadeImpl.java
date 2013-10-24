@@ -1,6 +1,7 @@
 package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.execution.rmi.RemoteServer;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.*;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
@@ -243,6 +244,26 @@ public abstract class AbstractExternalSystemFacadeImpl<S extends ExternalSystemE
     public void onEnd(@NotNull ExternalSystemTaskId id) {
       try {
         myManager.onEnd(id);
+      }
+      catch (RemoteException e) {
+        // Ignore
+      }
+    }
+
+    @Override
+    public void onSuccess(@NotNull ExternalSystemTaskId id) {
+      try {
+        myManager.onSuccess(id);
+      }
+      catch (RemoteException e) {
+        // Ignore
+      }
+    }
+
+    @Override
+    public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception ex) {
+      try {
+        myManager.onFailure(id, ex);
       }
       catch (RemoteException e) {
         // Ignore

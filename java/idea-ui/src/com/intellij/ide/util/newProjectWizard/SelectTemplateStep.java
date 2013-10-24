@@ -43,6 +43,7 @@ import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,6 +94,13 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   private final StepSequence mySequence;
   @Nullable
   private ModuleWizardStep mySettingsStep;
+  private FactoryMap<String, ModuleWizardStep> mySettingsSteps = new FactoryMap<String, ModuleWizardStep>() {
+    @Nullable
+    @Override
+    protected ModuleWizardStep create(String key) {
+      return myModuleBuilder.modifySettingsStep(SelectTemplateStep.this);
+    }
+  };
 
   private final ProjectTypesList myList;
 
@@ -152,6 +160,9 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   @Override
   public void disposeUIResources() {
     Disposer.dispose(myList);
+    for (ModuleWizardStep step : mySettingsSteps.values()) {
+      step.disposeUIResources();
+    }
   }
 
   @Override
@@ -173,7 +184,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     restorePanel(myNamePathComponent, 4);
     restorePanel(myModulePanel, myWizardContext.isCreatingNewProject() ? 8 : 6);
     restorePanel(myExpertPanel, myWizardContext.isCreatingNewProject() ? 1 : 0);
-    mySettingsStep = myModuleBuilder == null ? null : myModuleBuilder.modifySettingsStep(this);
+    createSettingsStep();
 
     String description = null;
     if (template != null) {
@@ -195,6 +206,15 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
     mySettingsPanel.revalidate();
     mySettingsPanel.repaint();
+  }
+
+  private void createSettingsStep() {
+    if (myModuleBuilder == null) {
+      mySettingsStep = null;
+    }
+    else {
+      mySettingsStep = mySettingsSteps.get(myModuleBuilder.getBuilderId());
+    }
   }
 
   private static int restorePanel(JPanel component, int i) {

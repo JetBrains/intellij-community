@@ -225,7 +225,7 @@ public class AbstractMethodOverridesAbstractMethodInspection extends BaseInspect
         return true;
       }
       final PsiClass containingClass = method.getContainingClass();
-      return containingClass != null && containingClass.isInterface();
+      return containingClass != null && containingClass.isInterface() && !method.hasModifierProperty(PsiModifier.DEFAULT);
     }
   }
 }

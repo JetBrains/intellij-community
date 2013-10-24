@@ -148,6 +148,8 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   public void testgstring$ugly_lexer() throws Throwable { doTest(); }
 
+  public void testgstring$this() {doTest()}
+
   public void testmapLiteral() throws Throwable { doTest(); }
 
   public void testnew$arr_decl() throws Throwable { doTest(); }
@@ -355,6 +357,8 @@ public class ExpressionsParsingTest extends GroovyParsingTestCase {
   public void testregex$dollarSlashyDouble() throws Throwable { doTest(); }
 
   public void testregex$dollarSlashyTriple() throws Throwable { doTest(); }
+
+  public void testregex$dollarSlashyUltimate() { doTest() }
 
   public void testrelational$eq1() throws Throwable { doTest(); }
 

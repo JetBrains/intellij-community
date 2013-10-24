@@ -393,8 +393,13 @@ public class PostHighlightingPass extends ProgressableTextEditorHighlightingPass
     return UnusedSymbolLocalInspection.isInjected(element);
   }
 
+  @Nullable 
   public static HighlightInfo createUnusedSymbolInfo(@NotNull PsiElement element, @NotNull String message, @NotNull final HighlightInfoType highlightInfoType) {
     HighlightInfo info = HighlightInfo.newHighlightInfo(highlightInfoType).range(element).descriptionAndTooltip(message).create();
+    if (info == null) {
+      return null; //filtered out
+    }
+    
     UnusedDeclarationFixProvider[] fixProviders = Extensions.getExtensions(UnusedDeclarationFixProvider.EP_NAME);
     for (UnusedDeclarationFixProvider provider : fixProviders) {
       IntentionAction[] fixes = provider.getQuickFixes(element);

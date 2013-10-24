@@ -382,8 +382,6 @@ public class FileStructureDialog extends DialogWrapper {
               }
             }
           });
-
-          myList.repaint(); // to update match highlighting
         }
       });
       myListSpeedSearch.setComparator(createSpeedSearchComparator());

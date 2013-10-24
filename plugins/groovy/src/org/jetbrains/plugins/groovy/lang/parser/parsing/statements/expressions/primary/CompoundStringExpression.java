@@ -143,10 +143,10 @@ public class CompoundStringExpression implements GroovyElementTypes {
     final PsiBuilder.Marker injection = myBuilder.mark();
     ParserUtils.getToken(myBuilder, mDOLLAR);
 
-    if (mIDENT.equals(myBuilder.getTokenType())) {
+    if (myBuilder.getTokenType() == mIDENT || myBuilder.getTokenType() == kTHIS) {
       PathExpression.parse(myBuilder, myParser);
     }
-    else if (mLCURLY.equals(myBuilder.getTokenType())) {
+    else if (myBuilder.getTokenType() == mLCURLY) {
       OpenOrClosableBlock.parseClosableBlock(myBuilder, myParser);
     }
     else {

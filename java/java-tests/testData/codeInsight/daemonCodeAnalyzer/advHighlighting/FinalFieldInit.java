@@ -227,4 +227,16 @@ class Y {
   }
 }
 
-
+class IDEA100237 {
+    static class Foo {
+        final int bar;
+    
+        Foo() {
+            bar = 1;
+        }
+    
+        final Object baz = new Object() {
+            final int qux = <error descr="Variable 'bar' might not have been initialized">bar</error>.hashCode() + 1;
+        };
+    }
+}

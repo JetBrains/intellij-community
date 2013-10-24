@@ -60,3 +60,22 @@ class SuperclassSubst {
         public abstract String getList();
     }
 }
+
+class Java8DefaultMethods {
+  interface Super
+  {
+      default void method()
+      {
+          System.out.println("super");
+      }
+  }
+  
+  interface Sub extends Super
+  {
+      @Override
+      default void method()
+      {
+          System.out.println("sub");
+      }
+  }
+}

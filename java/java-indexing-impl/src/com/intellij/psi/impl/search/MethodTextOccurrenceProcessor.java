@@ -64,7 +64,9 @@ public class MethodTextOccurrenceProcessor extends RequestResultProcessor {
         return consumer.process(ref);
       }
 
-      return processInexactReference(ref, ref.resolve(), method, consumer);
+      if (!processInexactReference(ref, ref.resolve(), method, consumer)) {
+        return false;
+      }
     }
 
     return true;

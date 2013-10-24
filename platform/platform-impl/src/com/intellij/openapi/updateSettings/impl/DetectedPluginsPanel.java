@@ -55,6 +55,7 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
                                            final boolean hasFocus,
                                            final int row,
                                            final int column) {
+        setBorder(null);
         final PluginDownloader downloader = (PluginDownloader)value;
         if (downloader != null) {
           final String pluginName = downloader.getPluginName();

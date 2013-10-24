@@ -24,6 +24,10 @@ public class WeightAware<V> implements Comparable<WeightAware<V>> {
 
   @Override
   public int compareTo(@NotNull final WeightAware<V> that) {
-    return -getWeight() + that.getWeight();
+    final int sub = -getWeight() + that.getWeight();
+    if (sub != 0) {
+      return sub;
+    }
+    return myUnderlying.hashCode() - that.myUnderlying.hashCode();
   }
 }

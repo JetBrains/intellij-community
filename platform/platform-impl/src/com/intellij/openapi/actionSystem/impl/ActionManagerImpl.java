@@ -510,21 +510,28 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       }
     }
     try {
-      Class aClass = Class.forName(className, true, loader);
-      Object obj = new ConstructorInjectionComponentAdapter(className, aClass).getComponentInstance(ApplicationManager.getApplication().getPicoContainer());
+      ActionGroup group;
+      if (DefaultActionGroup.class.getName().equals(className)) {
+        group = new DefaultActionGroup();
+      } else if (DefaultCompactActionGroup.class.getName().equals(className)) {
+        group = new DefaultCompactActionGroup();
+      } else {
+        Class aClass = Class.forName(className, true, loader);
+        Object obj = new ConstructorInjectionComponentAdapter(className, aClass).getComponentInstance(ApplicationManager.getApplication().getPicoContainer());
 
-      if (!(obj instanceof ActionGroup)) {
-        reportActionError(pluginId, "class with name \"" + className + "\" should be instance of " + ActionGroup.class.getName());
-        return null;
-      }
-      if (element.getChildren().size() != element.getChildren(ADD_TO_GROUP_ELEMENT_NAME).size() ) {  //
-        if (!(obj instanceof DefaultActionGroup)) {
-          reportActionError(pluginId, "class with name \"" + className + "\" should be instance of " + DefaultActionGroup.class.getName() +
-                                      " because there are children specified");
+        if (!(obj instanceof ActionGroup)) {
+          reportActionError(pluginId, "class with name \"" + className + "\" should be instance of " + ActionGroup.class.getName());
           return null;
         }
+        if (element.getChildren().size() != element.getChildren(ADD_TO_GROUP_ELEMENT_NAME).size() ) {  //
+          if (!(obj instanceof DefaultActionGroup)) {
+            reportActionError(pluginId, "class with name \"" + className + "\" should be instance of " + DefaultActionGroup.class.getName() +
+                                        " because there are children specified");
+            return null;
+          }
+        }
+        group = (ActionGroup)obj;
       }
-      ActionGroup group = (ActionGroup)obj;
       // read ID and register loaded group
       String id = element.getAttributeValue(ID_ATTR_NAME);
       if (id != null && id.isEmpty()) {

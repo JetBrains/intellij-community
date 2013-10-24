@@ -1,16 +1,18 @@
 package com.intellij.openapi.externalSystem.model.task;
 
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Defines contract for callback to listen gradle task notifications. 
+ * Defines contract for callback to listen external task notifications.
  * 
  * @author Denis Zhdanov
  * @since 11/10/11 11:57 AM
  */
 public interface ExternalSystemTaskNotificationListener {
+
+  ExtensionPointName<ExternalSystemTaskNotificationListener> EP_NAME
+    = ExtensionPointName.create("com.intellij.externalSystemTaskNotificationListener");
 
   /**
    * Notifies that task with the given id is queued for the execution.
@@ -52,4 +54,19 @@ public interface ExternalSystemTaskNotificationListener {
    * @param id  target task's id
    */
   void onEnd(@NotNull ExternalSystemTaskId id);
+
+  /**
+   * Notifies that task with the given id is finished successfully.
+   *
+   * @param id  target task's id
+   */
+  void onSuccess(@NotNull ExternalSystemTaskId id);
+
+  /**
+   * Notifies that task with the given id is failed.
+   *
+   * @param id  target task's id
+   * @param e  failure exception
+   */
+  void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e);
 }

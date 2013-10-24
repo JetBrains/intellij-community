@@ -141,7 +141,7 @@ public class RefreshWorker {
               scheduleCreation(file, name, childAttributes.isDirectory(), false);
             }
             else {
-              LOG.warn("fs=" + fs + " dir=" + file + " name=" + name);
+              LOG.warn("[+] fs=" + fs + " dir=" + file + " name=" + name);
             }
           }
 
@@ -154,7 +154,7 @@ public class RefreshWorker {
                 checkAndScheduleFileNameChange(actualNames, child);
               }
               else {
-                LOG.warn("fs=" + fs + " dir=" + file + " name=" + child.getName());
+                LOG.warn("[x] fs=" + fs + " dir=" + file + " name=" + child.getName());
                 scheduleDeletion(child);
               }
             }

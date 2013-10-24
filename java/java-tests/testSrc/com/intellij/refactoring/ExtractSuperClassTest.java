@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.extractSuperclass.ExtractSuperClassProcessor;
 import com.intellij.refactoring.memberPullUp.PullUpConflictsUtil;
-import com.intellij.refactoring.memberPullUp.PullUpHelper;
+import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
@@ -183,7 +183,7 @@ public class ExtractSuperClassTest extends RefactoringTestCase {
       PullUpConflictsUtil.checkConflicts(members, psiClass, superClass, targetPackage, targetDirectory, new InterfaceContainmentVerifier() {
         @Override
         public boolean checkedInterfacesContain(PsiMethod psiMethod) {
-          return PullUpHelper.checkedInterfacesContain(Arrays.asList(members), psiMethod);
+          return PullUpProcessor.checkedInterfacesContain(Arrays.asList(members), psiMethod);
         }
       }, false);
     if (conflicts != null) {

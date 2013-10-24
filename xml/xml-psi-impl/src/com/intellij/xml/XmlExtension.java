@@ -87,18 +87,9 @@ public abstract class XmlExtension {
     return new TagNameReference(nameElement, startTagFlag);
   }
 
-  /**
-   * @deprecated use {@link com.intellij.xml.XmlExtension#getNamespacesFromDocument(XmlDocument parent)} instead
-   */
-  @Deprecated
   @Nullable
   public String[][] getNamespacesFromDocument(final XmlDocument parent, boolean declarationsExist) {
-    return getNamespacesFromDocument(parent);
-  }
-
-  @Nullable
-  public String[][] getNamespacesFromDocument(final XmlDocument parent) {
-    return XmlUtil.getDefaultNamespaces(parent);
+    return declarationsExist ? null : XmlUtil.getDefaultNamespaces(parent);
   }
 
   public boolean canBeDuplicated(XmlAttribute attribute) {

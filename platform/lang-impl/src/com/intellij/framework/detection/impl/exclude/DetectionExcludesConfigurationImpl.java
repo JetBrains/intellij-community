@@ -134,6 +134,15 @@ public class DetectionExcludesConfigurationImpl extends DetectionExcludesConfigu
     }
   }
 
+  @Override
+  public boolean isExcludedFromDetection(@NotNull VirtualFile file, @NotNull FrameworkType frameworkType) {
+    ensureOldSettingsLoaded();
+    if (myExcludedFrameworks.contains(frameworkType.getId())) {
+      return true;
+    }
+    return isFileExcluded(file, frameworkType.getId());
+  }
+  
   private boolean isFileExcluded(@NotNull VirtualFile file, @Nullable String typeId) {
     if (myExcludedFiles.containsKey(typeId) && isUnder(file, myExcludedFiles.get(typeId))) return true;
     return typeId != null && myExcludedFiles.containsKey(null) && isUnder(file, myExcludedFiles.get(null));

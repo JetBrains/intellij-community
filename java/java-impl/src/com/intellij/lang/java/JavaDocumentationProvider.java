@@ -194,7 +194,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     if (aClass.hasTypeParameters()) {
       PsiTypeParameter[] parms = aClass.getTypeParameters();
 
-      buffer.append("<");
+      buffer.append("&lt;");
 
       for (int i = 0; i < parms.length; i++) {
         PsiTypeParameter p = parms[i];
@@ -220,7 +220,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         }
       }
 
-      buffer.append(">");
+      buffer.append("&gt;");
     }
 
     PsiClassType[] refs;

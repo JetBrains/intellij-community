@@ -11,9 +11,13 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +25,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * This class is responsible for ide user by external system integration-specific events.
@@ -34,6 +40,11 @@ import java.util.concurrent.atomic.AtomicReference;
  * @since 3/21/12 4:04 PM
  */
 public class ExternalSystemIdeNotificationManager {
+  private static final Pattern ERROR_LOCATION_PATTERN;
+
+  static {
+    ERROR_LOCATION_PATTERN = Pattern.compile("error in file: (.*?) at line: (\\d+)");
+  }
 
   @NotNull private final AtomicReference<Notification> myNotification = new AtomicReference<Notification>();
 
@@ -62,7 +73,27 @@ public class ExternalSystemIdeNotificationManager {
         if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) {
           return;
         }
-        ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
+        if ("configure".equals(event.getDescription())) {
+          ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
+        }
+        else if (!StringUtil.isEmpty(event.getDescription())) {
+          Matcher matcher = ERROR_LOCATION_PATTERN.matcher(event.getDescription());
+          if(matcher.find()) {
+            String file = matcher.group(1);
+            String lineText = matcher.group(2);
+            Integer line;
+            try {
+              line = Integer.valueOf(lineText);
+            }
+            catch (NumberFormatException e) {
+              line = 0;
+            }
+            VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(file);
+            if(virtualFile != null) {
+              new OpenFileDescriptor(project, virtualFile, line - 1, -1).navigate(true);
+            }
+          }
+        }
       }
     };
     

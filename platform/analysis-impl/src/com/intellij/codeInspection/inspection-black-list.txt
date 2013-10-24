@@ -25,7 +25,7 @@ com.intellij.lang.javascript.inspections.JSPotentiallyInvalidConstructorUsageIns
 com.intellij.lang.javascript.inspections.JSSuspiciousNameCombinationInspection
 com.intellij.psi.css.inspections.CssUnknownPropertyInspection
 com.intellij.spellchecker.inspections.SpellCheckingInspection
-com.intellij.spring.model.highlighting.SpringFacetInspection
+com.intellij.spring.model.highlighting.config.SpringFacetInspection
 com.jetbrains.php.lang.inspections.controlFlow.PhpUnusedLocalVariableInspection
 com.jetbrains.php.lang.inspections.phpdoc.PhpMissingDocCommentInspection
 com.jetbrains.php.lang.inspections.PhpUndefinedClassInspection

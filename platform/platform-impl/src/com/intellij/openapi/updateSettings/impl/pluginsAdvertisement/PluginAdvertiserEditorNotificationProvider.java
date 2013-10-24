@@ -80,7 +80,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   @NotNull
   private EditorNotificationPanel createPanel(final String extension, final Set<String> plugins) {
     final EditorNotificationPanel panel = new EditorNotificationPanel();
-    panel.setText("Plugins supporting *." + extension + " are found");
+    panel.setText("Plugins supporting files with *." + extension + " are found");
     final IdeaPluginDescriptor disabledPlugin = getDisabledPlugin(plugins);
     if (disabledPlugin != null) {
       panel.createActionLabel("Enable " + disabledPlugin.getName() + " plugin", new Runnable() {
@@ -89,7 +89,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
           myEnabledExtensions.add(extension);
           PluginManagerCore.enablePlugin(disabledPlugin.getPluginId().getIdString());
           myNotifications.updateAllNotifications();
-          PluginManagerMain.notifyPluginsWereUpdated("Plugin was successfully enabled");
+          PluginManagerMain.notifyPluginsWereUpdated("Plugin was successfully enabled", myProject);
         }
       });
     } else {

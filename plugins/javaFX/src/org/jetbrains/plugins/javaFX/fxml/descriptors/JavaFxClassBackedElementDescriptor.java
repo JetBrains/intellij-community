@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
@@ -124,14 +123,13 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
   }
 
   private static <T> void collectParentStaticProperties(XmlTag context, List<T> children, Function<PsiMethod, T> factory) {
-    final CachedValuesManager manager = context != null ? CachedValuesManager.getManager(context.getProject()) : null;
     XmlTag tag = context;
     while (tag != null) {
       final XmlElementDescriptor descr = tag.getDescriptor();
       if (descr instanceof JavaFxClassBackedElementDescriptor) {
         final PsiElement element = descr.getDeclaration();
         if (element instanceof PsiClass) {
-          final List<PsiMethod> setters = manager.getCachedValue(element, new CachedValueProvider<List<PsiMethod>>() {
+          final List<PsiMethod> setters = CachedValuesManager.getCachedValue(element, new CachedValueProvider<List<PsiMethod>>() {
             @Nullable
             @Override
             public Result<List<PsiMethod>> compute() {
@@ -238,7 +236,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
 
   private <T> void collectProperties(final List<T> children, final Function<PsiMember, T> factory, final boolean acceptPrimitive) {
     final List<PsiMember> fieldList =
-      CachedValuesManager.getManager(myPsiClass.getProject()).getCachedValue(myPsiClass, new CachedValueProvider<List<PsiMember>>() {
+      CachedValuesManager.getCachedValue(myPsiClass, new CachedValueProvider<List<PsiMember>>() {
         @Nullable
         @Override
         public Result<List<PsiMember>> compute() {
@@ -368,7 +366,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
     if (parentTag != null) {
       final XmlAttribute attribute = context.getAttribute(FxmlConstants.FX_CONTROLLER);
       if (attribute != null) {
-        host.addMessage(((XmlAttributeImpl)attribute).getNameElement(), "fx:controller can only be applied to root element", ValidationHost.ErrorType.ERROR); //todo add delete/move to upper tag fix
+        host.addMessage(attribute.getNameElement(), "fx:controller can only be applied to root element", ValidationHost.ErrorType.ERROR); //todo add delete/move to upper tag fix
       }
     }
     PsiClass aClass = myPsiClass;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public class GrSyntheticTypeElement extends LightElement implements PsiTypeEleme
   @Override
   public PsiElement replace(@NotNull PsiElement newElement) throws IncorrectOperationException {
     if (newElement instanceof PsiTypeElement) {
-      GrTypeElement groovyTypeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(newElement.getText(), newElement);
+      GrTypeElement groovyTypeElement = GroovyPsiElementFactory.getInstance(getProject()).createTypeElement(((PsiTypeElement)newElement).getType());
       return myElement.replace(groovyTypeElement);
     }
     else {

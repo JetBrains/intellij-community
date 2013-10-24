@@ -8,12 +8,11 @@
   private static final int ZZ_UNKNOWN_ERROR = 0;
   private static final int ZZ_NO_MATCH = 1;
   private static final int ZZ_PUSHBACK_2BIG = 2;
-  private static final char[] EMPTY_BUFFER = new char[0];
   private static final int YYEOF = -1;
   private static java.io.Reader zzReader = null; // Fake
 
   /* error messages for the codes above */
-  private static final String ZZ_ERROR_MSG[] = {
+  private static final String[] ZZ_ERROR_MSG = {
     "Unkown internal scanner error",
     "Error: could not match input",
     "Error: pushback value was too large"

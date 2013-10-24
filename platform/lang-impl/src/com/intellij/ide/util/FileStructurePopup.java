@@ -58,7 +58,6 @@ import com.intellij.ui.*;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.ui.speedSearch.ElementFilter;
-import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.treeStructure.AlwaysExpandedTree;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
@@ -70,7 +69,6 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,7 +101,7 @@ public class FileStructurePopup implements Disposable {
   @NonNls private static final String narrowDownPropertyKey = "FileStructurePopup.narrowDown";
   private boolean myShouldNarrowDown = true;
   private FileStructureTree myTree;
-  private FilteringTreeBuilder myAbstractTreeBuilder;
+  private final FilteringTreeBuilder myAbstractTreeBuilder;
   private String myTitle;
   private TreeSpeedSearch mySpeedSearch;
   private SmartTreeStructure myTreeStructure;
@@ -186,30 +184,7 @@ public class FileStructurePopup implements Disposable {
 
     myTree = new FileStructureTree(myTreeStructure.getRootElement(), Registry.is("fast.tree.expand.in.structure.view"));
 
-    myTree.setCellRenderer(new NodeRenderer() {
-      @Override
-      protected void doAppend(@NotNull @Nls String fragment,
-                              @NotNull SimpleTextAttributes attributes,
-                              boolean isMainText,
-                              boolean selected) {
-        if (!isMainText) {
-          super.doAppend(fragment, attributes, isMainText, selected);
-        }
-        else {
-          SpeedSearchUtil.appendFragmentsForSpeedSearch(myTree, fragment, attributes, selected, this);
-        }
-      }
-
-      @Override
-      public void doAppend(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, boolean selected) {
-        SpeedSearchUtil.appendFragmentsForSpeedSearch(myTree, fragment, attributes, selected, this);
-      }
-
-      @Override
-      public void doAppend(String fragment, boolean selected) {
-        SpeedSearchUtil.appendFragmentsForSpeedSearch(myTree, fragment, SimpleTextAttributes.REGULAR_ATTRIBUTES, selected, this);
-      }
-    });
+    myTree.setCellRenderer(new NodeRenderer());
 
     mySpeedSearch = new MyTreeSpeedSearch();
     mySpeedSearch.setComparator(new SpeedSearchComparator(false, true));
@@ -355,6 +330,7 @@ public class FileStructurePopup implements Disposable {
                 SwingUtilities.invokeLater(new Runnable() {
                   @Override
                   public void run() {
+                    if (myAbstractTreeBuilder.isDisposed()) return;
                     if (selectPsiElement(myInitialPsiElement) == null) {
                       TreeUtil.ensureSelection(myAbstractTreeBuilder.getTree());
                       myAbstractTreeBuilder.revalidateTree();
@@ -395,6 +371,7 @@ public class FileStructurePopup implements Disposable {
               SwingUtilities.invokeLater(new Runnable() {
                 @Override
                 public void run() {
+                  if (myAbstractTreeBuilder.isDisposed()) return;
                   myTree.repaint();
                   if (isBackspace && handleBackspace(filter)) {
                     return;

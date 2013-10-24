@@ -213,10 +213,11 @@ public class ProjectPaths {
 
     @Override
     public boolean value(JpsDependencyElement dependency) {
-      if (myModule.equals(dependency.getContainingModule()) &&
-          dependency instanceof JpsSdkDependency && ((JpsSdkDependency)dependency).getSdkType().equals(JpsJavaSdkType.INSTANCE)) {
-        mySdkFound = true;
-        return false;
+      if (myModule.equals(dependency.getContainingModule())) {
+        if (dependency instanceof JpsSdkDependency && ((JpsSdkDependency)dependency).getSdkType().equals(JpsJavaSdkType.INSTANCE)) {
+          mySdkFound = true;
+          return false;
+        }
       }
       return mySdkFound;
     }

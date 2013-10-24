@@ -54,7 +54,6 @@ public abstract class IdeFocusManager implements FocusRequestor {
   /**
    * Finds most suitable component to request focus to. For instance you may pass a JPanel instance,
    * this method will traverse into it's children to find focusable component
-   * @param comp
    * @return suitable component to focus
    */
   @Nullable
@@ -63,31 +62,26 @@ public abstract class IdeFocusManager implements FocusRequestor {
 
   /**
    * Executes given runnable after all focus activities are finished
-   * @param runnable
    */
   public abstract void doWhenFocusSettlesDown(@NotNull Runnable runnable);
 
   /**
    * Executes given runnable after all focus activities are finished
-   * @param runnable
    */
   public abstract void doWhenFocusSettlesDown(@NotNull ExpirableRunnable runnable);
 
 
   /**
    * Finds focused component among descendants of the given component. Descendants may be in child popups and windows
-   * @param comp
-   * @return
    */
   @Nullable
   public abstract Component getFocusedDescendantFor(final Component comp);
 
   /**
    * Dispatches given key event. This methods should not be called by the user code
-   * @param e
    * @return true is the event was dispatched, false - otherwise.
    */
-  public abstract boolean dispatch(KeyEvent e);
+  public abstract boolean dispatch(@NotNull KeyEvent e);
 
   /**
    * Aggregates all key events until given callback object is processed
@@ -97,79 +91,67 @@ public abstract class IdeFocusManager implements FocusRequestor {
 
   /**
    * Reports if any focus activity is being done
-   * @return
    */
   public abstract boolean isFocusBeingTransferred();
 
   /**
    * Requests default focus. The method should not be called by the user code.
-   * @param forced
-   * @return
    */
+  @NotNull
   public abstract ActionCallback requestDefaultFocus(boolean forced);
 
   /**
    * Reports of focus transfer is enabled right now. It can be disabled if app is inactive. In this case
    * all focus requests will be either postponed or executed only if <code>FocusCommand</code> can be executed on an inaactive app.
    * @see com.intellij.openapi.wm.FocusCommand#canExecuteOnInactiveApp()
-   * @return
    */
   public abstract boolean isFocusTransferEnabled();
 
   /**
    * Returns <code>Expirable</code> instance for the given counter of focus commands. As any new <code>FocusCommand</code>
    * is emitted to execute, the counter increments thus making the returned <code>Expirable</code> objects expired.
-   * @param trackOnlyForcedCommands
-   * @return
    */
+  @NotNull
   public abstract Expirable getTimestamp(boolean trackOnlyForcedCommands);
 
   /**
    * Returns <code>FocusRequestor</code> object which will emit focus requests unless expired.
    * @see #getTimestamp(boolean)
-   * @return
    */
+  @NotNull
   public abstract FocusRequestor getFurtherRequestor();
 
   /**
    * Injects some procedure that will maybe do something with focus after all focus requests are fulfilled and
    * before focus transfer is reported ready.
-   * @param runnable
    */
   public abstract void revalidateFocus(@NotNull ExpirableRunnable runnable);
 
   /**
    * Enables or disables typeahead
    * @see #typeAheadUntil(com.intellij.openapi.util.ActionCallback)
-   * @param enabled
    */
   public abstract void setTypeaheadEnabled(boolean enabled);
 
   /**
    * Computes effective focus owner
-   * @return
    */
   public abstract Component getFocusOwner();
 
   /**
    * Runs runnable for whicj <code>DataContext</code> will no be computed from the current focus owner,
    * but used the given one
-   * @param context
-   * @param runnable
    */
-  public abstract void runOnOwnContext(DataContext context, Runnable runnable);
+  public abstract void runOnOwnContext(@NotNull DataContext context, @NotNull Runnable runnable);
 
   /**
    * Returns last focused component for the given <code>IdeFrame</code>
-   * @param frame
-   * @return
    */
   @Nullable
   public abstract Component getLastFocusedFor(@Nullable IdeFrame frame);
 
   /**
    * Returns last focused <code>IdeFrame</code>
-   * @return
    */
   @Nullable
   public abstract IdeFrame getLastFocusedFrame();
@@ -177,7 +159,6 @@ public abstract class IdeFocusManager implements FocusRequestor {
   /**
    * Put the container window to front. May not execute of the app is inactive or under some other conditions. This
    * is the preferred way to finding the container window and unconditionally calling <code>window.toFront()</code>
-   * @param c
    */
   public abstract void toFront(JComponent c);
 
@@ -227,9 +208,8 @@ public abstract class IdeFocusManager implements FocusRequestor {
   private static IdeFocusManager getInstanceSafe(@Nullable Project project) {
     if (project != null && !project.isDisposed() && project.isInitialized()) {
       return getInstance(project);
-    } else {
-      return null;
     }
+    return null;
   }
 
   @NotNull

@@ -79,10 +79,10 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     updateProjectFolders();
 
     assertExcludes("m1", "target/foo");
-    assertSources("m1", "target/generated-sources/xxx");
+    assertGeneratedSources("m1", "target/generated-sources/xxx");
 
     assertExcludes("m2", "target/bar");
-    assertSources("m2", "target/generated-sources/yyy");
+    assertGeneratedSources("m2", "target/generated-sources/yyy");
   }
 
   public void testDoesNotTouchSourceFolders() throws Exception {

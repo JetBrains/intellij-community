@@ -228,7 +228,12 @@ public class InlineUtil {
         if (lastInitializerSibling.getNode().getElementType() == JavaTokenType.COMMA) {
           lastInitializerSibling = lastInitializerSibling.getPrevSibling();
         }
-        argumentList.addRange(initializers[0], lastInitializerSibling);
+        PsiElement firstElement = initializers[0];
+        final PsiElement leadingComment = PsiTreeUtil.skipSiblingsBackward(firstElement, PsiWhiteSpace.class);
+        if (leadingComment instanceof PsiComment) {
+          firstElement = leadingComment;
+        }
+        argumentList.addRange(firstElement, lastInitializerSibling);
       }
       args[args.length - 1].delete();
     }

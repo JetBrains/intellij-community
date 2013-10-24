@@ -14,6 +14,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
@@ -107,9 +108,16 @@ public class FinderRecursivePanel<T> extends JBSplitter implements DataProvider,
   protected JComponent createLeftComponent() {
     myList = createList();
 
-    return ScrollPaneFactory.createScrollPane(myList,
-                                              ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
-                                              ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    final JScrollPane pane =
+      ScrollPaneFactory.createScrollPane(myList,
+                                         ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                                         ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    return ListWithFilter.wrap(myList, pane, new Function<T, String>() {
+      @Override
+      public String fun(T o) {
+        return getItemText(o);
+      }
+    });
   }
 
   protected String getListEmptyText() {
@@ -127,7 +135,7 @@ public class FinderRecursivePanel<T> extends JBSplitter implements DataProvider,
     list.addListSelectionListener(myListener);
     ListScrollingUtil.installActions(list);
 
-    installSpeedSearch(list);
+//    installSpeedSearch(list); // TODO
 
     installEditOnDoubleClick(list);
     return list;

@@ -33,12 +33,16 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExe
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.service.ImportCanceledException;
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemIdeNotificationManager;
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtension;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService;
@@ -72,6 +76,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -228,6 +233,11 @@ public class ExternalSystemUtil {
       }
 
       private void processOrphanModules() {
+        if(ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
+          LOG.info(String.format(
+            "Checking for orphan modules. External paths returned by external system: '%s'", myExternalModulePaths
+          ));
+        }
         PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
         List<Module> orphanIdeModules = ContainerUtilRt.newArrayList();
         String externalSystemIdAsString = externalSystemId.toString();
@@ -235,8 +245,18 @@ public class ExternalSystemUtil {
         for (Module module : platformFacade.getModules(project)) {
           String s = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
           String p = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
+          if(ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
+            LOG.info(String.format(
+              "IDE module: EXTERNAL_SYSTEM_ID_KEY - '%s', LINKED_PROJECT_PATH_KEY - '%s'.", s, p
+            ));
+          }
           if (externalSystemIdAsString.equals(s) && !myExternalModulePaths.contains(p)) {
             orphanIdeModules.add(module);
+            if(ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
+              LOG.info(String.format(
+                "External paths doesn't contain IDE module LINKED_PROJECT_PATH_KEY anymore => add to orphan IDE modules."
+              ));
+            }
           }
         }
 
@@ -419,7 +439,8 @@ public class ExternalSystemUtil {
       public void execute(@NotNull ProgressIndicator indicator) {
         ExternalSystemResolveProjectTask task
           = new ExternalSystemResolveProjectTask(externalSystemId, project, externalProjectPath, isPreviewMode);
-        task.execute(indicator);
+
+        task.execute(indicator, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions());
         final Throwable error = task.getError();
         if (error == null) {
           long stamp = getTimeStamp(externalProjectPath, externalSystemId);

@@ -1,7 +1,9 @@
 package com.intellij.codeInsight.completion.methodChains.search;
 
+import com.intellij.codeInsight.completion.methodChains.completion.context.ChainCompletionContext;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,27 +17,26 @@ import static com.intellij.util.containers.ContainerUtil.reverse;
 public class MethodsChain {
   private final List<PsiMethod[]> myRevertedPath;
   private final int myWeight;
+  //
+  // chain qualifier class could be different with method.getContainingClass()
+  private final String myQualifierClassName;
 
-  public MethodsChain(final PsiMethod[] methods, final int weight) {
-    this(ContainerUtil.<PsiMethod[]>newArrayList(methods), weight);
+  public MethodsChain(final PsiMethod[] methods, final int weight, final String qualifierClassName) {
+    this(ContainerUtil.<PsiMethod[]>newArrayList(methods), weight, qualifierClassName);
   }
 
-  public MethodsChain(final List<PsiMethod[]> revertedPath, final int weight) {
+  public MethodsChain(final List<PsiMethod[]> revertedPath, final int weight, final String qualifierClassName) {
     myRevertedPath = revertedPath;
     myWeight = weight;
+    myQualifierClassName = qualifierClassName;
   }
 
   public int size() {
     return myRevertedPath.size();
   }
 
-  public boolean isStaticChain() {
-    return myRevertedPath.get(myRevertedPath.size() - 1)[0].hasModifierProperty(PsiModifier.STATIC);
-  }
-
-  @Nullable
-  public PsiClass getFirstQualifierClass() {
-    return myRevertedPath.isEmpty() ? null : myRevertedPath.get(myRevertedPath.size() - 1)[0].getContainingClass();
+  public String getQualifierClassName() {
+    return myQualifierClassName;
   }
 
   @Nullable
@@ -51,43 +52,11 @@ public class MethodsChain {
     return myWeight;
   }
 
-  public MethodsChain addEdge(final PsiMethod[] psiMethods) {
+  public MethodsChain addEdge(final PsiMethod[] psiMethods, final String newQualifierClassName, final int newWeight) {
     final List<PsiMethod[]> newRevertedPath = new ArrayList<PsiMethod[]>(myRevertedPath.size() + 1);
     newRevertedPath.addAll(myRevertedPath);
     newRevertedPath.add(psiMethods);
-    return new MethodsChain(newRevertedPath, myWeight);
-  }
-
-  /**
-   * checking only method names
-   */
-  public boolean weakContains(final MethodsChain otherChain) {
-    if (otherChain.myRevertedPath.isEmpty()) {
-      return true;
-    }
-    if (myRevertedPath.isEmpty()) {
-      return false;
-    }
-    final Iterator<PsiMethod[]> otherChainIterator = otherChain.myRevertedPath.iterator();
-    String otherChainCurrentName = otherChainIterator.next()[0].getName();
-    boolean checkingStarted = false;
-    for (final PsiMethod[] methods : myRevertedPath) {
-      final String thisCurrentName = methods[0].getName();
-      if (!checkingStarted && thisCurrentName.equals(otherChainCurrentName)) {
-        checkingStarted = true;
-      }
-      if (checkingStarted) {
-        if (otherChainIterator.hasNext()) {
-          otherChainCurrentName = otherChainIterator.next()[0].getName();
-          if (!otherChainCurrentName.equals(thisCurrentName)) {
-            return false;
-          }
-        } else {
-          return false;
-        }
-      }
-    }
-    return !otherChainIterator.hasNext();
+    return new MethodsChain(newRevertedPath, newWeight, newQualifierClassName);
   }
 
   @Override
@@ -95,34 +64,8 @@ public class MethodsChain {
     return StringUtil.join(myRevertedPath, "<-");
   }
 
-  public static Set<Set<String>> edgeCombinations(final Set<Set<String>> oldCombinations,
-                                                  final MethodsChain methodsChain) {
-    if (oldCombinations.isEmpty()) {
-      final Set<Set<String>> result = new HashSet<Set<String>>(methodsChain.myRevertedPath.size());
-      for (final PsiMethod[] e : methodsChain.myRevertedPath) {
-        final Set<String> set = new HashSet<String>();
-        set.add(e[0].getName());
-        result.add(set);
-      }
-      return result;
-    } else {
-      final Set<Set<String>> newTail = new HashSet<Set<String>>(oldCombinations.size() * methodsChain.size());
-      for (final PsiMethod[] e : methodsChain.myRevertedPath) {
-        final String methodName = e[0].getName();
-        for (final Set<String> tailSet : oldCombinations) {
-          final Set<String> newSet = new HashSet<String>(tailSet);
-          newSet.add(methodName);
-          if (!oldCombinations.contains(newSet)) {
-            newTail.add(newSet);
-          }
-        }
-      }
-      return newTail;
-    }
-  }
-
   @SuppressWarnings("ConstantConditions")
-  public static CompareResult compare(final MethodsChain left, final MethodsChain right) {
+  public static CompareResult compare(final MethodsChain left, final MethodsChain right, final ChainCompletionContext context) {
     if (left.size() == 0) {
       return CompareResult.RIGHT_CONTAINS_LEFT;
     }
@@ -132,13 +75,14 @@ public class MethodsChain {
     final Iterator<PsiMethod[]> leftIterator = left.myRevertedPath.iterator();
     final Iterator<PsiMethod[]> rightIterator = right.myRevertedPath.iterator();
 
-    final PsiManager psiManager = PsiManager.getInstance(left.getFirstQualifierClass().getProject());
     while (leftIterator.hasNext() && rightIterator.hasNext()) {
       final PsiMethod thisNext = leftIterator.next()[0];
       final PsiMethod thatNext = rightIterator.next()[0];
+      if (thisNext == null || thatNext == null) {
+        throw new NullPointerException();
+      }
       if (((thisNext.isConstructor() != thatNext.isConstructor()))
-          || !thisNext.getName().equals(thatNext.getName())
-          || !psiManager.areElementsEquivalent(thisNext.getContainingClass(), thatNext.getContainingClass())) {
+          || !thisNext.getName().equals(thatNext.getName())) {
         return CompareResult.NOT_EQUAL;
       }
     }
@@ -148,7 +92,23 @@ public class MethodsChain {
     if (!leftIterator.hasNext() && rightIterator.hasNext()) {
       return CompareResult.RIGHT_CONTAINS_LEFT;
     }
-    return CompareResult.EQUAL;
+
+
+    final PsiClass leftQualifier = JavaPsiFacade.getInstance(context.getProject()).findClass(left.getQualifierClassName(), context.getResolveScope());
+    final PsiClass rightQualifier = JavaPsiFacade.getInstance(context.getProject()).findClass(left.getQualifierClassName(), context.getResolveScope());
+    return hasBaseClass(leftQualifier, rightQualifier, PsiManager.getInstance(context.getProject())) ? CompareResult.EQUAL : CompareResult.NOT_EQUAL;
+  }
+
+  private static boolean hasBaseClass(final PsiClass left, final PsiClass right, final PsiManager psiManager) {
+    //todo so slow
+    final Set<PsiClass> leftSupers = InheritanceUtil.getSuperClasses(left);
+    final Set<PsiClass> rightSupers = InheritanceUtil.getSuperClasses(right);
+    for (final PsiClass leftSuper : leftSupers) {
+      if (!CommonClassNames.JAVA_LANG_OBJECT.equals(leftSuper.getQualifiedName()) && rightSupers.contains(leftSuper)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public enum CompareResult {

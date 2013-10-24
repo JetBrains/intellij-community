@@ -51,7 +51,7 @@ public abstract class AbstractVcsLogTableModel<T> extends AbstractTableModel {
           return data.getAuthorName();
         }
       case DATE_COLUMN:
-        if (data == null) {
+        if (data == null || data.getAuthorTime() < 0) {
           return "";
         }
         else {

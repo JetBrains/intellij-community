@@ -30,10 +30,9 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.JavaScopeProcessorEvent;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.*;
 import gnu.trove.THashSet;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +49,23 @@ public class JavaCompletionProcessor extends BaseScopeProcessor implements Eleme
 
   private boolean myStatic = false;
   private PsiElement myDeclarationHolder = null;
-  private final Set<Object> myResultNames = new THashSet<Object>();
+  private final Set<Object> myResultNames = new THashSet<Object>(new TObjectHashingStrategy<Object>() {
+    @Override
+    public int computeHashCode(Object object) {
+      if (object instanceof MethodSignature) {
+        return MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.computeHashCode((MethodSignature)object);
+      }
+      return object != null ? object.hashCode() : 0;
+    }
+
+    @Override
+    public boolean equals(Object o1, Object o2) {
+      if (o1 instanceof MethodSignature && o2 instanceof MethodSignature) {
+        return MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.equals((MethodSignature)o1, (MethodSignature)o2);
+      }
+      return o1 != null ? o1.equals(o2) : o2 == null;
+    }
+  });
   private final List<CompletionElement> myResults = new ArrayList<CompletionElement>();
   private final List<CompletionElement> myFilteredResults = new ArrayList<CompletionElement>();
   private final PsiElement myElement;

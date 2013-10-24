@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.border.Border;
@@ -51,9 +52,9 @@ public class DarculaEditorTextFieldBorder implements Border {
     }
 
     if (textField.isEnabled() && textField.isVisible() && textField.getFocusTarget().hasFocus()) {
-      DarculaUIUtil.paintFocusRing((Graphics2D)g, x1, y1, width1, height1);
+      DarculaUIUtil.paintFocusRing(g, x1, y1, width1, height1);
     } else {
-      g.setColor(Gray._100);
+      g.setColor(new JBColor(Gray._150, Gray._100));
       g.drawRect(x1, y1, width1, height1);
     }
   }

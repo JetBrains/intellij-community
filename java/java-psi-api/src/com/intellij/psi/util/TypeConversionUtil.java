@@ -900,16 +900,17 @@ public class TypeConversionUtil {
     PsiClass leftClass = leftResult.getElement();
     PsiClass rightClass = rightResult.getElement();
 
-    if (!leftClass.hasTypeParameters()) return true;
+    Iterator<PsiTypeParameter> li = PsiUtil.typeParametersIterator(leftClass);
+
+    if (!li.hasNext()) return true;
     PsiSubstitutor leftSubstitutor = leftResult.getSubstitutor();
 
     if (!leftClass.getManager().areElementsEquivalent(leftClass, rightClass)) {
       rightSubstitutor = getSuperClassSubstitutor(leftClass, rightClass, rightSubstitutor);
       rightClass = leftClass;
     }
-    else if (!rightClass.hasTypeParameters()) return true;
+    else if (!PsiUtil.typeParametersIterator(rightClass).hasNext()) return true;
 
-    Iterator<PsiTypeParameter> li = PsiUtil.typeParametersIterator(leftClass);
     Iterator<PsiTypeParameter> ri = PsiUtil.typeParametersIterator(rightClass);
     while (li.hasNext()) {
       if (!ri.hasNext()) return false;

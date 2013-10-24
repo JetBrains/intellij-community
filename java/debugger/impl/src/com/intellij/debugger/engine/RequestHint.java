@@ -35,9 +35,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.sun.jdi.*;
+import com.sun.jdi.Location;
+import com.sun.jdi.Method;
+import com.sun.jdi.VMDisconnectedException;
 import com.sun.jdi.request.StepRequest;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,90 +51,25 @@ public class RequestHint {
   private VirtualMachineProxyImpl myVirtualMachineProxy;
 
   @Nullable
-  private final SmartStepFilter mySmartStepFilter;
+  private final MethodFilter myMethodFilter;
+  private boolean myTargetMethodMatched = false;
+
   private boolean myIgnoreFilters = false;
   private boolean myRestoreBreakpoints = false;
   private final boolean mySkipThisMethod = false;
 
-  public static final class SmartStepFilter {
-    private final JVMName myDeclaringClassName;
-    private final @NonNls String myTargetMethodName;
-    private final JVMName myTargetMethodSignature;
-    private boolean myMethodExecuted;
-
-    public SmartStepFilter(PsiMethod psiMethod) {
-      this(JVMNameUtil.getJVMQualifiedName(psiMethod.getContainingClass()),
-           psiMethod.isConstructor()? "<init>" : psiMethod.getName(),
-           JVMNameUtil.getJVMSignature(psiMethod));
-    }
-
-    public SmartStepFilter(@NotNull JVMName declaringClassName, @NonNls String targetMethodName,
-                           @NotNull JVMName targetMethodSignature) {
-      myDeclaringClassName = declaringClassName;
-      myTargetMethodName = targetMethodName;
-      myTargetMethodSignature = targetMethodSignature;
-    }
-
-    public String getTargetMethodName() {
-      return myTargetMethodName;
-    }
-
-    public boolean wasMethodExecuted() {
-      return myMethodExecuted;
-    }
-
-    public boolean shouldStopAtLocation(final SuspendContextImpl context) {
-      try {
-        final StackFrameProxyImpl frameProxy = context.getFrameProxy();
-        if (frameProxy == null) {
-          return true;
-        }
-        final Location location = frameProxy.location();
-        final Method method = location.method();
-        if (!myTargetMethodName.equals(method.name())) {
-          return false;
-        }
-        final DebugProcessImpl process = context.getDebugProcess();
-        if (!signatureMatches(method, myTargetMethodSignature.getName(process))) {
-          return false;
-        }
-        myMethodExecuted = true;
-        final ObjectReference thisObject = frameProxy.thisObject();
-        final ReferenceType locationClass = thisObject != null? thisObject.referenceType() : method.declaringType();
-        return DebuggerUtilsEx.isAssignableFrom(myDeclaringClassName.getName(process), locationClass);
-      }
-      catch (EvaluateException e) {
-        LOG.info(e);
-      }
-      return true;
-    }
-
-    private static boolean signatureMatches(Method method, final String expectedSignature) throws EvaluateException {
-      if (expectedSignature.equals(method.signature())) {
-        return true;
-      }
-      // check if there are any bridge methods that match
-      for (Method candidate : method.declaringType().methodsByName(method.name())) {
-        if (candidate != method && candidate.isBridge() && expectedSignature.equals(candidate.signature())) {
-          return true;
-        }
-      }
-      return false;
-    }
-  }
-
-  public RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, @NotNull SmartStepFilter smartStepFilter) {
-    this(stepThread, suspendContext, StepRequest.STEP_INTO, smartStepFilter);
+  public RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, @NotNull MethodFilter methodFilter) {
+    this(stepThread, suspendContext, StepRequest.STEP_INTO, methodFilter);
   }
 
   public RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, int depth) {
     this(stepThread, suspendContext, depth, null);
   }
 
-  private RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, int depth, @Nullable SmartStepFilter smartStepFilter) {
+  private RequestHint(final ThreadReferenceProxyImpl stepThread, final SuspendContextImpl suspendContext, int depth, @Nullable MethodFilter methodFilter) {
     final DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
     myDepth = depth;
-    mySmartStepFilter = smartStepFilter;
+    myMethodFilter = methodFilter;
     myVirtualMachineProxy = debugProcess.getVirtualMachineProxy();
 
     int frameCount = 0;
@@ -193,8 +129,12 @@ public class RequestHint {
   }
 
   @Nullable
-  public SmartStepFilter getSmartStepFilter() {
-    return mySmartStepFilter;
+  public MethodFilter getMethodFilter() {
+    return myMethodFilter;
+  }
+
+  public boolean wasStepTargetMethodMatched() {
+    return myTargetMethodMatched;
   }
 
   public int getNextStepDepth(final SuspendContextImpl context) {
@@ -286,9 +226,16 @@ public class RequestHint {
           }
         }
         // smart step feature
-        if (mySmartStepFilter != null) {
-          if (!mySmartStepFilter.shouldStopAtLocation(context)) {
+        if (myMethodFilter != null) {
+          if (myMethodFilter.getBreakpointPosition() != null) {
+            // continue stepping if stop criterion is implemented as breakpoint request
             return StepRequest.STEP_OUT;
+          }
+          if (frameProxy != null) {
+            if (!myMethodFilter.locationMatches(context.getDebugProcess(), frameProxy.location())) {
+              return StepRequest.STEP_OUT;
+            }
+            myTargetMethodMatched = true;
           }
         }
       }

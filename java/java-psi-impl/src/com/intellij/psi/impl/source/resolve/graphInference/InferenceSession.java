@@ -62,7 +62,10 @@ public class InferenceSession {
 
     LOG.assertTrue(leftTypes.length == rightTypes.length);
     for (int i = 0; i < leftTypes.length; i++) {
-      myConstraints.add(new TypeCompatibilityConstraint(leftTypes[i], mySiteSubstitutor.substitute(rightTypes[i])));
+      final PsiType rightType = mySiteSubstitutor.substitute(rightTypes[i]);
+      if (rightType != null) {
+        myConstraints.add(new TypeCompatibilityConstraint(leftTypes[i], rightType));
+      }
     }
   }
   

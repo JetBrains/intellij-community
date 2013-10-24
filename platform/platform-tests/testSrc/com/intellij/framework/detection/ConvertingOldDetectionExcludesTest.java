@@ -26,9 +26,6 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TempFiles;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author nik
  */
@@ -91,10 +88,7 @@ public class ConvertingOldDetectionExcludesTest extends PlatformTestCase {
   }
 
   private boolean isFileExcluded(VirtualFile file) {
-    final List<VirtualFile> files = new ArrayList<VirtualFile>();
-    files.add(file);
-    getNewConfiguration().removeExcluded(files, new MockFrameworkType(FRAMEWORK_ID));
-    return files.isEmpty();
+    return getNewConfiguration().isExcludedFromDetection(file, new MockFrameworkType(FRAMEWORK_ID));
   }
 
   public void testConvert() {
