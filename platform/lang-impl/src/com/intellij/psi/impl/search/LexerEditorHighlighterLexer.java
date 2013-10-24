@@ -15,12 +15,23 @@
  */
 package com.intellij.psi.impl.search;
 
+import com.intellij.lexer.Lexer;
 import com.intellij.lexer.LexerBase;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.editor.impl.EditorHighlighterCache;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.cache.impl.id.PlatformIdTableBuilding;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharSequenceSubSequence;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
 * @author Sergey Evdokimov
@@ -38,6 +49,30 @@ public class LexerEditorHighlighterLexer extends LexerBase {
     myAlreadyInitializedHighlighter = alreadyInitializedHighlighter;
   }
 
+  public static @Nullable Lexer getLexerBasedOnLexerHighlighter(CharSequence text, VirtualFile virtualFile, Project project) {
+    EditorHighlighter highlighter = null;
+
+    PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+    final Document document = psiFile != null ? PsiDocumentManager.getInstance(project).getDocument(psiFile) : null;
+    final EditorHighlighter cachedEditorHighlighter;
+    boolean alreadyInitializedHighlighter = false;
+
+    if (document != null &&
+        (cachedEditorHighlighter = EditorHighlighterCache.getEditorHighlighterForCachesBuilding(document)) != null &&
+        PlatformIdTableBuilding.checkCanUseCachedEditorHighlighter(text, cachedEditorHighlighter)) {
+      highlighter = cachedEditorHighlighter;
+      alreadyInitializedHighlighter = true;
+    }
+    else if (virtualFile != null) {
+      highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, virtualFile);
+    }
+
+    if (highlighter != null) {
+      return new LexerEditorHighlighterLexer(highlighter, alreadyInitializedHighlighter);
+    }
+    return null;
+  }
+
   @Override
   public void start(@NotNull CharSequence buffer, int startOffset, int endOffset, int state) {
     if (myAlreadyInitializedHighlighter) {
@@ -48,6 +83,10 @@ public class LexerEditorHighlighterLexer extends LexerBase {
       myHighlighter.setText(new CharSequenceSubSequence(this.buffer = buffer, start = startOffset, end = endOffset));
     }
     iterator = myHighlighter.createIterator(0);
+  }
+
+  public void resetPosition(int offset) {
+    iterator = myHighlighter.createIterator(offset);
   }
 
   @Override
