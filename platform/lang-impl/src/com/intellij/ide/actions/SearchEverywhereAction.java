@@ -99,8 +99,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   public static final int SEARCH_FIELD_COLUMNS = 25;
   private SearchEverywhereAction.MyListRenderer myRenderer;
 //  private JPanel myContentPanel;
-  SearchTextField field;
-  SearchTextField myPopupField;
+  MySearchTextField field;
+  MySearchTextField myPopupField;
   private GotoClassModel2 myClassModel;
   private GotoFileModel myFileModel;
   private GotoActionModel myActionModel;
@@ -281,13 +281,31 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private void createSearchField() {
+    if (field != null) {
+      Disposer.dispose(field);
+    }
     field = new MySearchTextField();
     initSearchField(field);
   }
 
-  private void initSearchField(final SearchTextField search) {
+  private void initSearchField(final MySearchTextField search) {
     final JTextField editor = search.getTextEditor();
 //    editor.setOpaque(false);
+
+    new AnAction(){
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        jumpNextGroup(true);
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), editor, search);
+    new AnAction(){
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        jumpNextGroup(false);
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), editor, search);
+
+
     editor.putClientProperty("JTextField.Search.noFocusRing", Boolean.TRUE);
     onFocusLost();
     editor.getDocument().addDocumentListener(new DocumentAdapter() {
@@ -342,22 +360,35 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     editor.addKeyListener(new KeyAdapter() {
       @Override
       public void keyPressed(KeyEvent e) {
-        int keyCode = e.getKeyCode();
-        if (keyCode == KeyEvent.VK_ESCAPE) {
-          if (myBalloon != null && myBalloon.isVisible()) {
-            myBalloon.cancel();
-          }
-          if (myPopup != null && myPopup.isVisible()) {
-            myPopup.cancel();
-          }
-          IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(editor);
-          focusManager.requestDefaultFocus(true);
-        }
-        else if (keyCode == KeyEvent.VK_ENTER) {
-          doNavigate(myList.getSelectedIndex());
+        switch (e.getKeyCode()) {
+          case KeyEvent.VK_ESCAPE:
+            if (myBalloon != null && myBalloon.isVisible()) {
+              myBalloon.cancel();
+            }
+            if (myPopup != null && myPopup.isVisible()) {
+              myPopup.cancel();
+            }
+            IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(editor);
+            focusManager.requestDefaultFocus(true);
+            break;
+          case KeyEvent.VK_ENTER:
+            doNavigate(myList.getSelectedIndex());
+            break;
+          case KeyEvent.VK_TAB:
+            jumpNextGroup(!e.isShiftDown());
+            break;
         }
       }
     });
+  }
+
+  private void jumpNextGroup(boolean forward) {
+    final int index = myList.getSelectedIndex();
+    if (index >= 0) {
+      final int newIndex = forward ? myTitleIndexes.next(index) : myTitleIndexes.prev(index);
+      myList.setSelectedIndex(newIndex);
+      ListScrollingUtil.ensureIndexIsVisible(myList, myList.getSelectedIndex(), forward ? 1 : -1);
+    }
   }
 
   private void onFocusLost() {
@@ -500,9 +531,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
     if (wnd == null || wnd.getParent() != null) return;
     myActionEvent = e;
+    if (myPopupField != null) {
+      Disposer.dispose(myPopupField);
+    }
     myPopupField = new MySearchTextField();
-    myPopupField.setOpaque(false);
     initSearchField(myPopupField);
+    myPopupField.setOpaque(false);
     myPopupField.getTextEditor().setColumns(SEARCH_FIELD_COLUMNS);
     final JPanel panel = new JPanel(new BorderLayout()) {
       @Override
@@ -551,7 +585,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     focusManager.requestFocus(myPopupField.getTextEditor(), true);
   }
 
-  private static class MySearchTextField extends SearchTextField implements DataProvider {
+  private static class MySearchTextField extends SearchTextField implements DataProvider, Disposable {
     public MySearchTextField() {
       super(false);
       if (UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
@@ -570,6 +604,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         return getTextEditor().getText();
       }
       return null;
+    }
+
+    @Override
+    public void dispose() {
     }
   }
 
@@ -1482,6 +1520,25 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       if (index == symbols) return gotoSymbolTitle;
       return null;
     }
+
+    int next(int index) {
+      int[] all = new int[]{topHit, recentFiles, classes, files, actions, settings, toolWindows, symbols};
+      Arrays.sort(all);
+      for (int next : all) {
+        if (next > index) return next;
+      }
+      return 0;
+    }
+
+    int prev(int index) {
+      int[] all = new int[]{topHit, recentFiles, classes, files, actions, settings, toolWindows, symbols};
+      Arrays.sort(all);
+      for (int i = all.length-1; i >= 0; i--) {
+        if (all[i] != -1 && all[i] < index) return all[i];
+      }
+      return all[all.length - 1];
+    }
+
 
     public void clear() {
       topHit = -1;
