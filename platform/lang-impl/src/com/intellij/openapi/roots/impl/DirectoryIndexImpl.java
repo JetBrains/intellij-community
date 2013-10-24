@@ -84,6 +84,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   private volatile boolean myInitialized = false;
   private volatile boolean myDisposed = false;
   private final PackageSink mySink = new PackageSink();
+  private static final boolean ourUseRootIndex = false;
+  private volatile RootIndex myRootIndex = null;
 
   public DirectoryIndexImpl(@NotNull ManagingFS managingFS, @NotNull Project project, @NotNull StartupManager startupManager) {
     myPersistence = managingFS;
@@ -342,6 +344,10 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
     @Override
     public void before(@NotNull List<? extends VFileEvent> events) {
+      if (ourUseRootIndex) {
+        return;
+      }
+
       myBatchChangePlanned = false;
       int directoriesRemoved = 0;
       int directoriesCreated = 0;
@@ -386,6 +392,11 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
     @Override
     public void after(@NotNull List<? extends VFileEvent> events) {
+      if (ourUseRootIndex) {
+        myRootIndex = null;
+        return;
+      }
+
       if (myBatchChangePlanned) {
         myBatchChangePlanned = false;
         long started = System.currentTimeMillis();
@@ -455,12 +466,35 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   @Override
   @NotNull
   public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
+    RootIndex rootIndex = getRootIndex();
+    if (rootIndex != null) {
+      return rootIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
+    }
+
     return mySink.search(packageName, includeLibrarySources);
+  }
+
+  @Nullable
+  private RootIndex getRootIndex() {
+    if (!ourUseRootIndex) {
+      return null;
+    }
+    RootIndex rootIndex = myRootIndex;
+    if (rootIndex == null) {
+      rootIndex = myRootIndex = new RootIndex(myProject);
+    }
+    return rootIndex;
   }
 
   @Override
   @TestOnly
   public void checkConsistency() {
+    RootIndex rootIndex = getRootIndex();
+    if (rootIndex != null) {
+      rootIndex.checkConsistency();
+      return;
+    }
+
     doCheckConsistency(false);
     doCheckConsistency(true);
   }
@@ -515,6 +549,11 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   }
 
   private void doInitialize() {
+    if (ourUseRootIndex) {
+      myRootIndex = null;
+      return;
+    }
+
     IndexState newState = new IndexState();
     newState.doInitialize(false);
     replaceState(newState);
@@ -546,6 +585,11 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     checkAvailability();
     dispatchPendingEvents();
 
+    RootIndex rootIndex = getRootIndex();
+    if (rootIndex != null) {
+      return rootIndex.getInfoForDirectory(dir);
+    }
+
     if (!(dir instanceof NewVirtualFile)) return null;
     return myState.getInfo(((NewVirtualFile)dir).getId());
   }
@@ -553,6 +597,11 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   @Override
   @Nullable
   public JpsModuleSourceRootType<?> getSourceRootType(@NotNull DirectoryInfo info) {
+    RootIndex rootIndex = getRootIndex();
+    if (rootIndex != null) {
+      return rootIndex.getSourceRootType(info);
+    }
+
     if (info.isInModuleSource()) {
       return myState.getRootTypeById(info.getSourceRootTypeId());
     }
@@ -562,6 +611,11 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   @Override
   public boolean isProjectExcludeRoot(@NotNull VirtualFile dir) {
     checkAvailability();
+    RootIndex rootIndex = getRootIndex();
+    if (rootIndex != null) {
+      return rootIndex.isProjectExcludeRoot(dir);
+    }
+
     return dir instanceof NewVirtualFile && myState.myProjectExcludeRoots.contains(((NewVirtualFile)dir).getId());
   }
 
@@ -573,6 +627,12 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   public String getPackageName(@NotNull VirtualFile dir) {
     checkAvailability();
     if (!(dir instanceof NewVirtualFile)) return null;
+    
+    RootIndex rootIndex = getRootIndex();
+    if (rootIndex != null) {
+      return rootIndex.getPackageName(dir);
+    }
+    
     return myState.getPackageNameForDirectory((NewVirtualFile)dir);
   }
 
