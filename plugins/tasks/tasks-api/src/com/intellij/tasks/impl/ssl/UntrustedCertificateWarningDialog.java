@@ -1,17 +1,17 @@
 package com.intellij.tasks.impl.ssl;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.ColumnInfo;
-import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.Nullable;
 
 import javax.security.auth.x500.X500Principal;
 import javax.swing.*;
+import java.awt.*;
 import java.security.cert.X509Certificate;
 import java.text.DateFormat;
 import java.util.Map;
@@ -22,7 +22,9 @@ import static com.intellij.openapi.util.Pair.create;
  * @author Mikhail Golubev
  */
 public class UntrustedCertificateWarningDialog extends DialogWrapper {
+  private static final Logger LOG = Logger.getInstance(UntrustedCertificateWarningDialog.class);
   private static DateFormat DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT);
+//  private static final String MESSAGE = "Server's certificate is untrusted and appears to be self-signed";
 
   private static final Map<String, String> FIELD_ABBREVIATIONS = ContainerUtil.newHashMap(
     create("CN", "Common Name"),
@@ -34,10 +36,11 @@ public class UntrustedCertificateWarningDialog extends DialogWrapper {
   );
 
   private JPanel myRootPanel;
-  private JBTable myIssuerInfo;
-  private JBTable mySubjectInfo;
-  private JBTable myValidityInfo;
   private JLabel myWarningSign;
+  private JPanel myIssuerInfoPanel;
+  private JPanel mySubjectInfoPanel;
+  private JPanel myValidityInfoPanel;
+  private JTextPane myMessagePane;
 
   public UntrustedCertificateWarningDialog(Project project, X509Certificate certificate) {
     super(project, false);
@@ -47,18 +50,27 @@ public class UntrustedCertificateWarningDialog extends DialogWrapper {
     setCancelButtonText("Reject");
     myWarningSign.setIcon(AllIcons.General.WarningDialog);
 
-    fillTable(myIssuerInfo, certificate.getIssuerX500Principal());
-    fillTable(mySubjectInfo, certificate.getSubjectX500Principal());
 
-    @SuppressWarnings("unchecked")
-    ListTableModel<Field> model = (ListTableModel<Field>)myValidityInfo.getModel();
-    model.addRow(new Field("Valid from", DATE_FORMAT.format(certificate.getNotBefore())));
-    model.addRow(new Field("Valid until", DATE_FORMAT.format(certificate.getNotAfter())));
+    fillPrincipalInfoPanel(myIssuerInfoPanel, certificate.getIssuerX500Principal());
+
+    myValidityInfoPanel.add(
+      FormBuilder.createFormBuilder()
+        .addLabeledComponent("Valid from", new JBLabel(DATE_FORMAT.format(certificate.getNotBefore())))
+        .addLabeledComponent("Valid until", new JBLabel(DATE_FORMAT.format(certificate.getNotAfter())))
+        .getPanel());
 
     init();
   }
 
-  private static void fillTable(JBTable table, X500Principal principal) {
+  @Override
+  protected void doOKAction() {
+    LOG.debug(getSize().toString());
+    super.doOKAction();
+  }
+
+  @SuppressWarnings("MethodMayBeStatic")
+  private void fillPrincipalInfoPanel(JPanel panel, X500Principal principal) {
+    FormBuilder builder = FormBuilder.createFormBuilder();
     for (String field : principal.getName().split(",")) {
       field = field.trim();
       String[] parts = field.split("=", 2);
@@ -74,73 +86,15 @@ public class UntrustedCertificateWarningDialog extends DialogWrapper {
         continue;
       }
 
-      @SuppressWarnings("unchecked")
-      ListTableModel<Field> model = (ListTableModel<Field>)table.getModel();
-      model.addRow(new Field(String.format("%s (%s)", longName, name), value));
+      builder = builder.addLabeledComponent(String.format("<html>%s (<b>%s</b>)</html>", longName, name), new JBLabel(value));
     }
+    JPanel builderPanel = builder.getPanel();
+    panel.add(builderPanel, BorderLayout.CENTER);
   }
-
 
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
     return myRootPanel;
-  }
-
-
-  private void createUIComponents() {
-    myIssuerInfo = createTable();
-    mySubjectInfo = createTable();
-    myValidityInfo = createTable();
-  }
-
-  private static JBTable createTable() {
-    return new JBTable(new ListTableModel<Field>(
-      new ColumnInfo<Field, String>("Field") {
-        @Nullable
-        @Override
-        public String valueOf(Field field) {
-          return field.getName();
-        }
-
-        @Nullable
-        @Override
-        public String getPreferredStringValue() {
-          return "###############################";
-        }
-
-
-      },
-      new ColumnInfo<Field, String>("Value") {
-        @Nullable
-        @Override
-        public String valueOf(Field field) {
-          return field.getValue();
-        }
-
-        @Nullable
-        @Override
-        public String getPreferredStringValue() {
-          return "###############################";
-        }
-      }
-    ));
-  }
-
-  private static class Field {
-    private final String myName, myValue;
-
-    private Field(String name, String value) {
-      myName = name;
-      myValue = value;
-    }
-
-    public String getName() {
-      return myName;
-    }
-
-    public String getValue() {
-      return myValue;
-    }
   }
 }
