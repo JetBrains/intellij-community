@@ -83,13 +83,13 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
         @Nullable
         private String getCurrentParamName() {
-          return myParamNameStack.size() > 0? myParamNameStack.peek() : null;
+          return myParamNameStack.size() > 0? myParamNameStack.peek(): null;
         }
 
         @Override
         public void visitAnonymousClass(PsiAnonymousClass aClass) {
           for (PsiMethod psiMethod : aClass.getMethods()) {
-            targets.add(new MethodTarget(psiMethod, getCurrentParamName(), psiMethod.getBody(), true));
+            targets.add(new StepTarget(psiMethod, getCurrentParamName(), psiMethod.getBody(), true));
           }
         }
 
@@ -106,7 +106,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           if (psiMethod != null) {
             final PsiElement highlightElement = expression instanceof PsiMethodCallExpression?
               ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceNameElement() : null;
-            targets.add(new MethodTarget(psiMethod, null, highlightElement, false));
+            targets.add(new StepTarget(psiMethod, null, highlightElement, false));
             final PsiExpressionList argList = expression.getArgumentList();
             if (argList != null) {
               final String methodName = psiMethod.getName();
@@ -114,7 +114,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
               final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
               for (int idx = 0; idx < expressions.length; idx++) {
                 final String paramName = (idx < parameters.length && !parameters[idx].isVarArgs())? parameters[idx].getName() : "arg"+(idx+1);
-                myParamNameStack.push(methodName + ": " + paramName);
+                myParamNameStack.push(methodName + ": " + paramName + ".");
                 final PsiExpression argExpression = expressions[idx];
                 try {
                   argExpression.accept(this);
@@ -143,57 +143,4 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
     return Collections.emptyList();
   }
 
-  private static class MethodTarget implements StepTarget {
-    private final PsiMethod myMethod;
-    private final PsiElement myHighlightElement;
-    private final String myLabel;
-    private final boolean myNeedBreakpointRequest;
-
-    private MethodTarget(@NotNull PsiMethod method, String currentParamName, PsiElement highlightElement, boolean needBreakpointRequest) {
-      myMethod = method;
-      myHighlightElement = highlightElement;
-      myLabel = currentParamName == null? null : currentParamName + ".";
-      myNeedBreakpointRequest = needBreakpointRequest;
-    }
-
-    @Nullable
-    public PsiElement getHighlightElement() {
-      return myHighlightElement;
-    }
-
-    @Nullable
-    public String getMethodLabel() {
-      return myLabel;
-    }
-
-    @NotNull
-    public PsiMethod getMethod() {
-      return myMethod;
-    }
-
-    public boolean needsBreakpointRequest() {
-      return myNeedBreakpointRequest;
-    }
-
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      final MethodTarget that = (MethodTarget)o;
-
-      if (!myMethod.equals(that.myMethod)) {
-        return false;
-      }
-
-      return true;
-    }
-
-    public int hashCode() {
-      return myMethod.hashCode();
-    }
-  }
 }

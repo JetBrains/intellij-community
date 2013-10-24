@@ -48,21 +48,62 @@ public abstract class JvmSmartStepIntoHandler {
 
   public abstract boolean isAvailable(SourcePosition position);
 
-  public interface StepTarget {
+  public class StepTarget {
+    private final PsiMethod myMethod;
+    private final PsiElement myHighlightElement;
+    private final String myLabel;
+    private final boolean myNeedBreakpointRequest;
+
+    public StepTarget(@NotNull PsiMethod method) {
+      this(method, null, null, false);
+    }
+
+    public StepTarget(@NotNull PsiMethod method, @Nullable String additionalLabel, @Nullable PsiElement highlightElement, boolean needBreakpointRequest) {
+      myMethod = method;
+      myHighlightElement = highlightElement;
+      myLabel = additionalLabel;
+      myNeedBreakpointRequest = needBreakpointRequest;
+    }
+
+    @Nullable
+    public PsiElement getHighlightElement() {
+      return myHighlightElement;
+    }
+
+    @Nullable
+    public String getMethodLabel() {
+      return myLabel;
+    }
+
     @NotNull
-    PsiMethod getMethod();
+    public PsiMethod getMethod() {
+      return myMethod;
+    }
 
-    @Nullable
-    String getMethodLabel();
+    public boolean needsBreakpointRequest() {
+      return myNeedBreakpointRequest;
+    }
 
-    @Nullable
-    PsiElement getHighlightElement();
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
 
-    boolean needsBreakpointRequest();
+      final StepTarget that = (StepTarget)o;
 
-    boolean equals(Object another);
+      if (!myMethod.equals(that.myMethod)) {
+        return false;
+      }
 
-    int hashCode();
+      return true;
+    }
+
+    public int hashCode() {
+      return myMethod.hashCode();
+    }
   }
 
   /**
