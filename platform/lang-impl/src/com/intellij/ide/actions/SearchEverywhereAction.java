@@ -510,7 +510,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
     if (e == null) return;
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
-    if (myContextComponent == null) return;
+    if (myContextComponent == null) {
+      myContextComponent = mySearchLabel;
+    }
     final Window wnd = SwingUtilities.windowForComponent(myContextComponent);
     if (wnd == null || wnd.getParent() != null) return;
     myActionEvent = e;
