@@ -52,31 +52,20 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
   private DirectoryIndex myIndex;
 
-  private Module myModule2;
-  private Module myModule3;
+  private Module myModule2, myModule3;
   private VirtualFile myRootVFile;
-  private VirtualFile myModule1Dir;
-  private VirtualFile myModule2Dir;
-  private VirtualFile myModule3Dir;
-  private VirtualFile mySrcDir1;
-  private VirtualFile mySrcDir2;
+  private VirtualFile myModule1Dir, myModule2Dir, myModule3Dir;
+  private VirtualFile mySrcDir1, mySrcDir2;
   private VirtualFile myTestSrc1;
-  private VirtualFile myPack1Dir;
-  private VirtualFile myPack2Dir;
-  private VirtualFile myFileLibDir;
-  private VirtualFile myFileLibSrc;
-  private VirtualFile myFileLibCls;
-  private VirtualFile myLibDir;
-  private VirtualFile myLibSrcDir;
-  private VirtualFile myLibClsDir;
+  private VirtualFile myPack1Dir, myPack2Dir;
+  private VirtualFile myFileLibDir, myFileLibSrc, myFileLibCls;
+  private VirtualFile myLibDir, myLibSrcDir, myLibClsDir;
   private VirtualFile myCvsDir;
   private VirtualFile myExcludeDir;
   private VirtualFile myOutputDir;
   private VirtualFile myModule1OutputDir;
-  private VirtualFile myResDir;
-  private VirtualFile myTestResDir;
-  private VirtualFile myExcludedLibSrcDir;
-  private VirtualFile myExcludedLibClsDir;
+  private VirtualFile myResDir, myTestResDir;
+  private VirtualFile myExcludedLibSrcDir, myExcludedLibClsDir;
 
   @Override
   protected void setUp() throws Exception {
