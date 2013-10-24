@@ -573,6 +573,23 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     runFindInCommentsAndLiterals(findManager, findModel, text, "cs");
   }
 
+  public void testFindInJsp() throws Exception{
+    FindManager findManager = FindManager.getInstance(myProject);
+
+    FindModel findModel = new FindModel();
+    findModel.setStringToFind("done");
+    findModel.setWholeWordsOnly(false);
+    findModel.setFromCursor(false);
+    findModel.setGlobal(true);
+    findModel.setMultipleFiles(false);
+    findModel.setProjectScope(true);
+
+    String text = "<!--done-->\n<%--done-->\n<% /*done*/ %>";
+
+    findModel.setInCommentsOnly(true);
+    runFindForwardAndBackward(findManager, findModel, text, "jsp");
+  }
+
   public void testFindInLiteralToSkipQuotes() throws Exception{
     FindManager findManager = FindManager.getInstance(myProject);
 
