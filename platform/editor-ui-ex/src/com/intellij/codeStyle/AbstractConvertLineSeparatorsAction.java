@@ -15,7 +15,6 @@
  */
 package com.intellij.codeStyle;
 
-import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Collections;
 
 /**
  * @author Nikolai Matveev
@@ -125,6 +123,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
 
   public static boolean shouldProcess(@NotNull VirtualFile file, @NotNull Project project) {
     if (file.isDirectory()
+        || !file.isWritable()
         || FileTypeRegistry.getInstance().isFileIgnored(file)
         || file.getFileType().isBinary()
         || file.equals(project.getProjectFile())
@@ -132,17 +131,14 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
     {
       return false;
     }
-
     Module module = FileIndexFacade.getInstance(project).getModuleForFile(file);
-    if (module != null && file.equals(module.getModuleFile())) {
-      return false;
-    }
-    return !FileModificationService.getInstance().prepareVirtualFilesForWrite(project, Collections.singletonList(file));
+    return module == null || !file.equals(module.getModuleFile());
   }
 
   public static void changeLineSeparators(@NotNull final Project project,
                                           @NotNull final VirtualFile virtualFile,
-                                          @NotNull final String newSeparator) {
+                                          @NotNull final String newSeparator)
+  {
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     Document document = fileDocumentManager.getCachedDocument(virtualFile);
     if (document != null) {
