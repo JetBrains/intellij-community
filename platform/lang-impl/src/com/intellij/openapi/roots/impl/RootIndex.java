@@ -172,6 +172,45 @@ class RootIndex {
     for (Map.Entry<VirtualFile, Collection<OrderEntry>> mapEntry : libSourceRootEntries.entrySet()) {
       fillMapWithOrderEntries(mapEntry.getKey(), mapEntry.getValue(), null, null, mapEntry.getKey());
     }
+
+    mergeWithParentInfos();
+  }
+
+  private void mergeWithParentInfos() {
+    for (Map.Entry<VirtualFile, DirectoryInfo> entry : myRoots.entrySet()) {
+      DirectoryInfo info = entry.getValue();
+      Module module = info.getModule();
+      VirtualFile libraryClassRoot = info.getLibraryClassRoot();
+      boolean inModuleSource = info.isInModuleSource();
+      boolean inLibrarySource = info.isInLibrarySource();
+      
+      boolean nested = false;
+      
+      VirtualFile eachFile = entry.getKey().getParent();
+      while (eachFile != null) {
+        DirectoryInfo eachInfo = myRoots.get(eachFile);
+        if (eachInfo != null) {
+          nested = true;
+          if (module == null) {
+            module = eachInfo.getModule();
+          }
+          if (libraryClassRoot == null) {
+            libraryClassRoot = eachInfo.getLibraryClassRoot();
+          }
+          inModuleSource |= eachInfo.isInModuleSource();
+          inLibrarySource |= eachInfo.isInLibrarySource();
+        }
+        if (isAnyExcludeRoot(eachFile)) {
+          break;
+        }
+        
+        eachFile = eachFile.getParent();
+      }
+      if (nested) {
+        int sourceRootTypeData = DirectoryInfo.createSourceRootTypeData(inModuleSource, inLibrarySource, info.getSourceRootTypeId());
+        entry.setValue(info.with(module, info.getContentRoot(), info.getSourceRoot(), libraryClassRoot, sourceRootTypeData, info.getOrderEntries()));
+      }
+    }
   }
 
   public void checkConsistency() {
@@ -268,12 +307,16 @@ class RootIndex {
       if (info != null) {
         return info;
       }
-      if (myProjectExcludedRoots.contains(root) || myLibraryExcludedRoots.contains(root)) {
+      if (isAnyExcludeRoot(root)) {
         return null;
       }
     }
 
     return null;
+  }
+
+  private boolean isAnyExcludeRoot(VirtualFile root) {
+    return myProjectExcludedRoots.contains(root) || myLibraryExcludedRoots.contains(root);
   }
 
   public boolean isProjectExcludeRoot(@NotNull final VirtualFile dir) {
