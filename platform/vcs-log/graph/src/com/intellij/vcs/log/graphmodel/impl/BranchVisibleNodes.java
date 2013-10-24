@@ -1,6 +1,5 @@
 package com.intellij.vcs.log.graphmodel.impl;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
@@ -14,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -23,6 +23,7 @@ public class BranchVisibleNodes {
 
   @NotNull private final MutableGraph myGraph;
   @NotNull private Set<Node> myVisibleNodes = Collections.emptySet();
+  @NotNull private Map<Hash, Node> myVisibleHashes = Collections.emptyMap();
 
   public BranchVisibleNodes(@NotNull MutableGraph graph) {
     myGraph = graph;
@@ -48,6 +49,10 @@ public class BranchVisibleNodes {
 
   public void setVisibleNodes(@NotNull Set<Node> visibleNodes) {
     myVisibleNodes = visibleNodes;
+    myVisibleHashes = ContainerUtil.newHashMap();
+    for (Node node : myVisibleNodes) {
+      myVisibleHashes.put(node.getCommitHash(), node);
+    }
   }
 
   public Set<Node> getVisibleNodes() {
@@ -60,12 +65,7 @@ public class BranchVisibleNodes {
 
   @Nullable
   public Node getNodeIfVisible(@NotNull final Hash hash) {
-    return ContainerUtil.find(myVisibleNodes, new Condition<Node>() {
-      @Override
-      public boolean value(Node node) {
-        return node.getCommitHash().equals(hash);
-      }
-    });
+    return myVisibleHashes.get(hash);
   }
 
 }
