@@ -93,5 +93,10 @@
     <referenceTypeEnhancer implementation="org.jetbrains.plugins.gradle.service.resolve.NamedDomainObjectCollectionTypeEnhancer"/>
     <unresolvedHighlightFilter implementation="org.jetbrains.plugins.gradle.service.resolve.GradleUnresolvedReferenceFilter"/>
   </extensions>
-  
+
+  <actions>
+    <action id="Gradle.GenerateGroup" class="org.jetbrains.plugins.gradle.codeInsight.actions.GradleGenerateActionGroup" text="Generate">
+      <add-to-group group-id="GenerateGroup" anchor="first"/>
+    </action>
+  </actions>
 </idea-plugin>
