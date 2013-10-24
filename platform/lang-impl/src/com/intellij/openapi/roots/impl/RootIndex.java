@@ -17,6 +17,7 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -302,7 +303,7 @@ class RootIndex {
       if (info != null) {
         return info;
       }
-      if (isAnyExcludeRoot(root)) {
+      if (isAnyExcludeRoot(root) || FileTypeManager.getInstance().isFileIgnored(root)) {
         return null;
       }
     }
