@@ -191,6 +191,14 @@
   <extensions defaultExtensionNs="com.intellij">
     <navbar implementation="org.jetbrains.plugins.groovy.navbar.GrNavBarModelExtension"/>
 
+    <declarationRangeHandler key="org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod"
+                             implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GrMethodDeclarationRangeHandler"/>
+    <declarationRangeHandler key="org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition"
+                             implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GrTypeDefinitionRangeHandler"/>
+    <declarationRangeHandler key="org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer"
+                             implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GrClassInitializerDeclarationRangeHandler"/>
+
+
     <psi.clsCustomNavigationPolicy implementation="org.jetbrains.plugins.groovy.codeInsight.GroovyClsCustomNavigationPolicy"/>
 
     <moduleBuilder builderClass="org.jetbrains.plugins.groovy.config.GroovyAwareModuleBuilder"/>
@@ -392,8 +400,6 @@
 
     <weigher key="proximity" implementationClass="org.jetbrains.plugins.groovy.lang.completion.weighers.GrReferenceListWeigher"
              id="groovyReferenceListWeigher" order="before openedInEditor"/>
-
-    <topLevelClassProvider implementation="org.jetbrains.plugins.groovy.debugger.GroovyTopLevelParentClassProvider"/>
 
     <debuggerClassFilterProvider implementation="org.jetbrains.plugins.groovy.debugger.filters.GroovyDebuggerClassFilterProvider"/>
 
@@ -1447,6 +1453,8 @@
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="org.jetbrains.plugins.groovy.jarFinder.GroovyFindJarQuickFixProvider"/>
     <lang.refactoringSupport.classMembersRefactoringSupport language="Groovy"
                                                             implementationClass="org.jetbrains.plugins.groovy.refactoring.classMembers.GroovyClassMembersRefactoringSupport"/>
+    <refactoring.pullUpHelperFactory language="Groovy"
+                                     implementationClass="org.jetbrains.plugins.groovy.refactoring.memberPullUp.GrPullUpHelperFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

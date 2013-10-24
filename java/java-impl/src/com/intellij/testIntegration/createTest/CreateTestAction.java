@@ -26,7 +26,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -84,18 +83,10 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     if (srcModule == null) return false;
 
     if (psiClass.isAnnotationType() ||
-        psiClass instanceof PsiAnonymousClass ||
-        isUnderTestSources(psiClass)) {
+        psiClass instanceof PsiAnonymousClass) {
       return false;
     }
     return true;
-  }
-
-  private static boolean isUnderTestSources(PsiClass c) {
-    ProjectRootManager rm = ProjectRootManager.getInstance(c.getProject());
-    VirtualFile f = c.getContainingFile().getVirtualFile();
-    if (f == null) return false;
-    return rm.getFileIndex().isInTestSourceContent(f);
   }
 
   @Override

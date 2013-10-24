@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package com.intellij.util.containers;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.util.ReflectionCache;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
@@ -35,12 +36,13 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
   private Dom myCurrent;
   private Boolean myCurrentPassedFilter = null;
   public static final Condition NOT_NULL = new Condition() {
+    @Override
     public boolean value(Object t) {
       return t != null;
     }
   };
 
-  public FilteringIterator(Iterator<Dom> baseIterator, Condition<Dom> filter) {
+  public FilteringIterator(@NotNull Iterator<Dom> baseIterator, @NotNull Condition<Dom> filter) {
     myBaseIterator = baseIterator;
     myFilter = filter;
   }
@@ -54,6 +56,7 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
     myNextObtained = true;
   }
 
+  @Override
   public boolean hasNext() {
     obtainNext();
     if (!myCurrentIsValid) return false;
@@ -78,6 +81,7 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
     return passed;
   }
 
+  @Override
   public E next() {
     if (!hasNext()) throw new NoSuchElementException();
     E result = (E)myCurrent;
@@ -89,6 +93,7 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
    * Works after call {@link #next} until call {@link #hasNext}
    * @throws IllegalStateException if {@link #hasNext} called
    */
+  @Override
   public void remove() {
     if (myNextObtained) throw new IllegalStateException();
     myBaseIterator.remove();
@@ -121,6 +126,7 @@ public class FilteringIterator<Dom, E extends Dom> implements Iterator<E> {
       myInstancesClass = instancesClass;
     }
 
+    @Override
     public boolean value(Object object) {
       return myInstancesClass.isInstance(object);
     }

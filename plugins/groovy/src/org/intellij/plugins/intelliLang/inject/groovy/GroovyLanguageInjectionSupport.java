@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.intelliLang.Configuration;
 import org.intellij.plugins.intelliLang.inject.AbstractLanguageInjectionSupport;
@@ -187,14 +188,34 @@ public class GroovyLanguageInjectionSupport extends AbstractLanguageInjectionSup
       }
     }
     else {
+
       if (parent instanceof PsiVariable) {
-        if (JavaLanguageInjectionSupport.doAddLanguageAnnotation(project, (PsiModifierListOwner)parent, host, languageId)) return true;
+        Processor<PsiLanguageInjectionHost> fixer = getAnnotationFixer(project, languageId);
+        if (JavaLanguageInjectionSupport.doAddLanguageAnnotation(project, (PsiModifierListOwner)parent, host, languageId, fixer)) return true;
       }
       else if (target instanceof PsiVariable && !(target instanceof LightElement)) {
-        if (JavaLanguageInjectionSupport.doAddLanguageAnnotation(project, (PsiModifierListOwner)target, host, languageId)) return true;
+        Processor<PsiLanguageInjectionHost> fixer = getAnnotationFixer(project, languageId);
+        if (JavaLanguageInjectionSupport.doAddLanguageAnnotation(project, (PsiModifierListOwner)target, host, languageId, fixer)) return true;
       }
     }
     return false;
+  }
+
+  private static Processor<PsiLanguageInjectionHost> getAnnotationFixer(final Project project, final String languageId) {
+    return new Processor<PsiLanguageInjectionHost>() {
+      @Override
+      public boolean process(PsiLanguageInjectionHost host) {
+        final Configuration.AdvancedConfiguration configuration = Configuration.getProjectInstance(project).getAdvancedConfiguration();
+        boolean allowed = configuration.isSourceModificationAllowed();
+        configuration.setSourceModificationAllowed(true);
+        try {
+          return doInject(languageId, host, host);
+        }
+        finally {
+          configuration.setSourceModificationAllowed(allowed);
+        }
+      }
+    };
   }
 
   private static boolean isStringLiteral(PsiLanguageInjectionHost element) {

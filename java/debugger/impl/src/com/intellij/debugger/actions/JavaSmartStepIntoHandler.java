@@ -24,9 +24,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * User: Alexander Podkhalyuzin
@@ -40,7 +43,8 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   }
 
   @Override
-  public List<PsiMethod> findReferencedMethods(final SourcePosition position) {
+  @NotNull
+  public List<StepTarget> findSmartStepTargets(final SourcePosition position) {
     final int line = position.getLine();
     if (line < 0) {
       return Collections.emptyList(); // the document has been changed
@@ -73,23 +77,59 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       while(true);
 
       //noinspection unchecked
-      final List<PsiMethod> methods = new OrderedSet<PsiMethod>();
-      final PsiElementVisitor methodCollector = new JavaRecursiveElementWalkingVisitor() {
-        @Override public void visitAnonymousClass(PsiAnonymousClass aClass) { /*skip annonymous classes*/ }
+      final List<StepTarget> targets = new OrderedSet<StepTarget>();
+      final PsiElementVisitor methodCollector = new JavaRecursiveElementVisitor() {
+        final Stack<String> myParamNameStack = new Stack<String>();
 
-        @Override public void visitStatement(PsiStatement statement) {
+        @Nullable
+        private String getCurrentParamName() {
+          return myParamNameStack.size() > 0? myParamNameStack.peek(): null;
+        }
+
+        @Override
+        public void visitAnonymousClass(PsiAnonymousClass aClass) {
+          for (PsiMethod psiMethod : aClass.getMethods()) {
+            targets.add(new StepTarget(psiMethod, getCurrentParamName(), psiMethod.getBody(), true));
+          }
+        }
+
+        @Override
+        public void visitStatement(PsiStatement statement) {
           if (lineRange.intersects(statement.getTextRange())) {
             super.visitStatement(statement);
           }
         }
 
-        @Override public void visitCallExpression(final PsiCallExpression expression) {
+        @Override
+        public void visitCallExpression(final PsiCallExpression expression) {
           final PsiMethod psiMethod = expression.resolveMethod();
           if (psiMethod != null) {
-            methods.add(psiMethod);
+            final PsiElement highlightElement = expression instanceof PsiMethodCallExpression?
+              ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceNameElement() : null;
+            targets.add(new StepTarget(psiMethod, null, highlightElement, false));
+            final PsiExpressionList argList = expression.getArgumentList();
+            if (argList != null) {
+              final String methodName = psiMethod.getName();
+              final PsiExpression[] expressions = argList.getExpressions();
+              final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+              for (int idx = 0; idx < expressions.length; idx++) {
+                final String paramName = (idx < parameters.length && !parameters[idx].isVarArgs())? parameters[idx].getName() : "arg"+(idx+1);
+                myParamNameStack.push(methodName + ": " + paramName + ".");
+                final PsiExpression argExpression = expressions[idx];
+                try {
+                  argExpression.accept(this);
+                }
+                finally {
+                  myParamNameStack.pop();
+                }
+              }
+            }
           }
-          super.visitCallExpression(expression);
+          else {
+            super.visitCallExpression(expression);
+          }
         }
+
       };
       element.accept(methodCollector);
       for (PsiElement sibling = element.getNextSibling(); sibling != null; sibling = sibling.getNextSibling()) {
@@ -98,8 +138,9 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
         sibling.accept(methodCollector);
       }
-      return methods;
+      return targets;
     }
     return Collections.emptyList();
   }
+
 }

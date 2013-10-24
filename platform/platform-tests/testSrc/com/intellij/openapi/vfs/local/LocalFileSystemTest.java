@@ -145,7 +145,8 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     final File dirFile = createTempDirectory();
     final String name = "te\u00dft123123123.txt";
     final File childFile = new File(dirFile, name);
-    assert childFile.createNewFile() || childFile.exists() : childFile;
+    boolean created = childFile.createNewFile();
+    assert created || childFile.exists() : childFile;
 
     final VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dirFile);
     assertNotNull(dir);

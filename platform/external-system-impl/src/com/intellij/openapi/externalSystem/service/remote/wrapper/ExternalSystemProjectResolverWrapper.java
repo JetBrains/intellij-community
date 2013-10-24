@@ -46,7 +46,17 @@ public class ExternalSystemProjectResolverWrapper<S extends ExternalSystemExecut
   {
     myProgressManager.onQueued(id);
     try {
-      return getDelegate().resolveProjectInfo(id, projectPath, isPreviewMode, settings);
+      DataNode<ProjectData> projectDataNode = getDelegate().resolveProjectInfo(id, projectPath, isPreviewMode, settings);
+      myProgressManager.onSuccess(id);
+      return projectDataNode;
+    }
+    catch (ExternalSystemException e) {
+      myProgressManager.onFailure(id, e);
+      throw e;
+    }
+    catch (Exception e) {
+      myProgressManager.onFailure(id, e);
+      throw new ExternalSystemException(e);
     }
     finally {
       myProgressManager.onEnd(id);

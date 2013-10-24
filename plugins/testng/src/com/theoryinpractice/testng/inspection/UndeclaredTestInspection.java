@@ -27,6 +27,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -79,7 +80,7 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
       final Project project = aClass.getProject();
       final String qName = aClass.getQualifiedName();
       if (qName == null) return null;
-
+      final String packageQName = StringUtil.getPackageName(qName);
       final List<String> names = new ArrayList<String>();
       for(int i = 0; i < qName.length(); i++) {
         if (qName.charAt(i) == '.') {
@@ -105,7 +106,7 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
                   if (attribute == null) return true;
                   final String value = attribute.getValue();
                   if (value == null) return true;
-                  if (!value.endsWith(".*")) return true;
+                  if (!value.endsWith(".*") && !value.equals(packageQName)) return true;
                 }
                 found[0] = true;
                 return false;

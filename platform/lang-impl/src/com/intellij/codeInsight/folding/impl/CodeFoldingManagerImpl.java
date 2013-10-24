@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -186,7 +186,7 @@ public class CodeFoldingManagerImpl extends CodeFoldingManager implements Projec
   public void releaseFoldings(@NotNull Editor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Project project = editor.getProject();
-    if (project != null && !project.equals(myProject)) return;
+    if (project != null && (!project.equals(myProject) || !project.isOpen())) return;
 
     Document document = editor.getDocument();
     PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);

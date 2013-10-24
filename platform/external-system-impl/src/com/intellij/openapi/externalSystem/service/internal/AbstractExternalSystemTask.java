@@ -44,7 +44,7 @@ public abstract class AbstractExternalSystemTask implements ExternalSystemTask {
   {
     myExternalSystemId = id;
     myIdeProject = project;
-    myId = ExternalSystemTaskId.create(type, myIdeProject);
+    myId = ExternalSystemTaskId.create(id, type, myIdeProject);
     myExternalProjectPath = externalProjectPath;
   }
 
@@ -133,6 +133,7 @@ public abstract class AbstractExternalSystemTask implements ExternalSystemTask {
       setState(ExternalSystemTaskState.FAILED);
       myError.set(e);
       LOG.warn(e);
+
     }
     finally {
       for (ExternalSystemTaskNotificationListener listener : listeners) {

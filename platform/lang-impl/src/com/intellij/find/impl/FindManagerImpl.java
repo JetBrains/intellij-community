@@ -41,6 +41,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighter;
+import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -53,6 +56,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.search.LexerEditorHighlighterLexer;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.ui.LightweightHint;
@@ -360,7 +364,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
   }
 
   @NotNull
-  private static FindResult doFindString(@NotNull CharSequence text,
+  private FindResult doFindString(@NotNull CharSequence text,
                                          @Nullable char[] textArray,
                                          int offset,
                                          @NotNull FindModel findmodel,
@@ -411,23 +415,26 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     final StringSearcher searcher;
     final Matcher matcher;
     final Set<Language> relevantLanguages;
+    final FindModel model;
 
-    public CommentsLiteralsSearchData(VirtualFile lastFile, Set<Language> relevantLanguages, SyntaxHighlighter highlighter, TokenSet tokensOfInterest,
-                                      StringSearcher searcher, Matcher matcher) {
+    public CommentsLiteralsSearchData(VirtualFile lastFile, Set<Language> relevantLanguages, SyntaxHighlighter highlighter,
+                                      Lexer lexer, TokenSet tokensOfInterest,
+                                      StringSearcher searcher, Matcher matcher, FindModel model) {
       this.lastFile = lastFile;
       this.highlighter = highlighter;
       this.tokensOfInterest = tokensOfInterest;
       this.searcher = searcher;
       this.matcher = matcher;
       this.relevantLanguages = relevantLanguages;
-      highlightingLexer = highlighter.getHighlightingLexer();
+      highlightingLexer = lexer;
+      this.model = model;
     }
   }
 
   public static final Key<CommentsLiteralsSearchData> ourCommentsLiteralsSearchDataKey = Key.create("comments.literals.search.data");
 
   @NotNull
-  private static FindResult findInCommentsAndLiterals(@NotNull CharSequence text,
+  private FindResult findInCommentsAndLiterals(@NotNull CharSequence text,
                                                       char[] textArray,
                                                       int offset,
                                                       @NotNull FindModel model,
@@ -439,7 +446,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     }
 
     CommentsLiteralsSearchData data = model.getUserData(ourCommentsLiteralsSearchDataKey);
-    if (data == null || !Comparing.equal(data.lastFile, file)) {
+    if (data == null || !Comparing.equal(data.lastFile, file) || !data.model.equals(model)) {
       SyntaxHighlighter highlighter = getHighlighter(file, lang);
 
       if (highlighter == null) {
@@ -448,7 +455,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       }
 
       TokenSet tokensOfInterest = TokenSet.EMPTY;
-      Set<Language> relevantLanguages = null;
+      Set<Language> relevantLanguages;
       if (lang != null) {
         final Language finalLang = lang;
         relevantLanguages = ApplicationManager.getApplication().runReadAction(new Computable<Set<Language>>() {
@@ -504,13 +511,26 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
       }
 
       Matcher matcher = model.isRegularExpressions() ? compileRegExp(model, ""):null;
-      StringSearcher searcher = matcher != null ? null: createStringSearcher(model);
-      data = new CommentsLiteralsSearchData(file, relevantLanguages, highlighter, tokensOfInterest, searcher, matcher);
+      StringSearcher searcher = matcher != null ? null: new StringSearcher(model.getStringToFind(), model.isCaseSensitive(), true);
+      EditorHighlighter editorHighlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, file);
+      Lexer lexer;
+      if (editorHighlighter instanceof LayeredLexerEditorHighlighter) {
+        lexer = LexerEditorHighlighterLexer.getLexerBasedOnLexerHighlighter(text, file, myProject);
+      } else {
+        lexer = highlighter.getHighlightingLexer();
+      }
+      data = new CommentsLiteralsSearchData(file, relevantLanguages, highlighter, lexer, tokensOfInterest, searcher, matcher, (FindModel)model.clone());
+      lexer.start(text, 0, text.length(), 0);
       model.putUserData(ourCommentsLiteralsSearchDataKey, data);
     }
 
+    int initialStartOffset = model.isForward() && data.startOffset < offset ? data.startOffset : 0;
     final Lexer lexer = data.highlightingLexer;
-    lexer.start(text, model.isForward() && data.startOffset < offset ? data.startOffset : 0, text.length(), 0);
+    if (lexer instanceof LexerEditorHighlighterLexer) {
+      ((LexerEditorHighlighterLexer)lexer).resetPosition(initialStartOffset);
+    } else {
+      lexer.start(text, initialStartOffset, text.length(), 0);
+    }
 
     IElementType tokenType;
     TokenSet tokens = data.tokensOfInterest;
@@ -545,12 +565,12 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
           FindResultImpl findResult = null;
 
           if (data.searcher != null) {
-            int i = data.searcher.scan(text, textArray, start, end);
+            int matchStart = data.searcher.scan(text, textArray, start, end);
 
-            if (i != -1 && i >= start) {
-              final int matchEnd = i + model.getStringToFind().length();
-              if (start >= offset || !scanningForward)
-                findResult = new FindResultImpl(i, matchEnd);
+            if (matchStart != -1 && matchStart >= start) {
+              final int matchEnd = matchStart + model.getStringToFind().length();
+              if (matchStart >= offset || !scanningForward)
+                findResult = new FindResultImpl(matchStart, matchEnd);
               else {
                 start = matchEnd;
                 continue;
@@ -560,8 +580,9 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
             data.matcher.reset(text.subSequence(start, end));
             if (data.matcher.find()) {
               final int matchEnd = start + data.matcher.end();
-              if (start >= offset || !scanningForward) {
-                findResult = new FindResultImpl(start + data.matcher.start(), matchEnd);
+              int matchStart = start + data.matcher.start();
+              if (matchStart >= offset || !scanningForward) {
+                findResult = new FindResultImpl(matchStart, matchEnd);
               }
               else {
                 start = matchEnd;

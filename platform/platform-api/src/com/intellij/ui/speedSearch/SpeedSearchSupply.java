@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 /**
@@ -63,8 +64,14 @@ public abstract class SpeedSearchSupply {
     return null;
   }
 
-  protected void installSupplyTo(JComponent component) {
+  protected void installSupplyTo(final JComponent component) {
     component.putClientProperty(SPEED_SEARCH_COMPONENT_MARKER, this);
+    addChangeListener(new PropertyChangeListener() {
+      @Override
+      public void propertyChange(PropertyChangeEvent evt) {
+        component.repaint();
+      }
+    });
   }
 
   public abstract void addChangeListener(@NotNull PropertyChangeListener listener);

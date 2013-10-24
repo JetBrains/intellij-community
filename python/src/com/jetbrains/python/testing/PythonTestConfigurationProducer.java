@@ -23,6 +23,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -42,6 +43,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -202,8 +205,13 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
 
   protected boolean isTestFolder(@NotNull final VirtualFile virtualFile, @NotNull final Project project) {
     final String name = virtualFile.getName();
-    final VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentSourceRoots();
-    return name.toLowerCase().contains("test") || Sets.newHashSet(roots).contains(virtualFile);
+    final HashSet<VirtualFile> roots = Sets.newHashSet();
+    final Module[] modules = ModuleManager.getInstance(project).getModules();
+    for (Module module : modules) {
+      roots.addAll(PyUtil.getSourceRoots(module));
+    }
+    Collections.addAll(roots, ProjectRootManager.getInstance(project).getContentRoots());
+    return name.toLowerCase().contains("test") || roots.contains(virtualFile);
   }
 
   protected boolean isAvailable(@NotNull final Location location) {

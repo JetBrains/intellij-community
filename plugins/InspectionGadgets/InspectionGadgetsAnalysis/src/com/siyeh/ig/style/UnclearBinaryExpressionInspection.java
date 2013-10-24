@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2012 Bas Leijdekkers
+ * Copyright 2011-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -258,7 +259,7 @@ public class UnclearBinaryExpressionInspection extends BaseInspection {
     public void visitConditionalExpression(PsiConditionalExpression expression) {
       super.visitConditionalExpression(expression);
       final PsiElement parent = expression.getParent();
-      if (mightBeConfusingExpression(parent)) {
+      if (mightBeConfusingExpression(parent) || PsiUtilCore.hasErrorElementChild(expression)) {
         return;
       }
       final PsiExpression condition = expression.getCondition();

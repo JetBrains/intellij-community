@@ -144,7 +144,6 @@
     <extensionPoint name="importFilter" interface="com.intellij.codeInsight.ImportFilter"/>
 
     <extensionPoint name="debuggerClassFilterProvider" interface="com.intellij.ui.classFilter.DebuggerClassFilterProvider"/>
-    <extensionPoint name="topLevelClassProvider" interface="com.intellij.debugger.engine.TopLevelParentClassProvider"/>
 
     <extensionPoint name="debuggerEditorTextProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" >
       <with attribute="implementationClass" implements="com.intellij.debugger.impl.EditorTextProvider"/>
@@ -168,6 +167,10 @@
 
     <extensionPoint name="expressionConverter" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.refactoring.introduceParameter.ExpressionConverter"/>
+    </extensionPoint>
+
+    <extensionPoint name="refactoring.pullUpHelperFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.refactoring.memberPullUp.PullUpHelperFactory"/>
     </extensionPoint>
 
     <!--<extensionPoint name="expectedTypesProvider" interface="com.intellij.codeInsight.ExpectedTypesProviderExtension"/>-->
@@ -1454,11 +1457,6 @@
 
     <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.MethodsUsageIndex"/>
     <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.bigram.BigramMethodsUsageIndex"/>
-    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.singleton.TwinVariablesIndex"/>
-    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.singleton.ParamsInMethodOccurrencesIndex"/>
-    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.quickInheritance.QuickMethodsIndex"/>
-    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.quickInheritance.QuickInheritanceIndex"/>
-    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.callingLocation.MethodCallingLocationIndex"/>
     <completion.contributor language="JAVA" id="methodsChainsCompletionContributor" order="first"
                             implementationClass="com.intellij.codeInsight.completion.methodChains.completion.MethodsChainsCompletionContributor"/>
     <weigher order="first" key="completion" id="methodsChains"
@@ -1479,6 +1477,8 @@
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="com.intellij.jarFinder.FindJarQuickFixProvider"/>
 
     <xdebugger.breakpointType implementation="org.jetbrains.java.debugger.breakpoints.JavaBreakpointType"/>
+
+    <refactoring.pullUpHelperFactory language="JAVA" implementationClass="com.intellij.refactoring.memberPullUp.JavaPullUpHelperFactory"/>
   </extensions>
 
   <actions>

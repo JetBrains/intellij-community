@@ -17,6 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -84,6 +85,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
                 body.accept(new JavaRecursiveElementWalkingVisitor() {
                   @Override
                   public void visitMethodCallExpression(PsiMethodCallExpression methodCallExpression) {
+                    if (bodyContainsForbiddenRefs[0]) return;
                     super.visitMethodCallExpression(methodCallExpression);
                     final PsiMethod psiMethod = methodCallExpression.resolveMethod();
                     if (psiMethod == methods[0] ||
@@ -97,6 +99,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
 
                   @Override
                   public void visitThisExpression(PsiThisExpression expression) {
+                    if (bodyContainsForbiddenRefs[0]) return;
                     if (expression.getQualifier() == null) {
                       bodyContainsForbiddenRefs[0] = true;
                     }
@@ -104,6 +107,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
 
                   @Override
                   public void visitSuperExpression(PsiSuperExpression expression) {
+                    if (bodyContainsForbiddenRefs[0]) return;
                     if (expression.getQualifier() == null) {
                       bodyContainsForbiddenRefs[0] = true;
                     }
@@ -111,8 +115,27 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
 
                   @Override
                   public void visitLocalVariable(PsiLocalVariable variable) {
+                    if (bodyContainsForbiddenRefs[0]) return;
                     super.visitLocalVariable(variable);
                     locals.add(variable);
+                  }
+
+                  @Override
+                  public void visitReferenceExpression(PsiReferenceExpression expression) {
+                    if (bodyContainsForbiddenRefs[0]) return;
+                    super.visitReferenceExpression(expression);
+                    if (!(expression.getParent() instanceof PsiMethodCallExpression)) {
+                      final PsiField field = PsiTreeUtil.getParentOfType(expression, PsiField.class);
+                      if (field != null) {
+                        final PsiElement resolved = expression.resolve();
+                        if (resolved instanceof PsiField && 
+                            ((PsiField)resolved).hasModifierProperty(PsiModifier.FINAL) && 
+                            !((PsiField)resolved).hasInitializer() &&
+                            ((PsiField)resolved).getContainingClass() == field.getContainingClass()) {
+                          bodyContainsForbiddenRefs[0] = true;
+                        }
+                      }
+                    }
                   }
                 });
                 if (!bodyContainsForbiddenRefs[0]) {

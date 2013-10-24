@@ -552,6 +552,31 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     runFindForwardAndBackward(findManager, findModel, text);
   }
 
+  public void testFindInCommentsProperlyWorksWithOffsets() throws Exception{
+    FindManager findManager = FindManager.getInstance(myProject);
+
+    FindModel findModel = new FindModel();
+    findModel.setStringToFind("done");
+    findModel.setWholeWordsOnly(false);
+    findModel.setFromCursor(false);
+    findModel.setGlobal(true);
+    findModel.setMultipleFiles(false);
+    findModel.setProjectScope(true);
+
+    String prefix = "/*";
+    String text = prefix + "done*/";
+
+    findModel.setInCommentsOnly(true);
+    LightVirtualFile file = new LightVirtualFile("A.java", text);
+
+    FindResult findResult = findManager.findString(text, prefix.length(), findModel, file);
+    assertTrue(findResult.isStringFound());
+
+    findModel.setRegularExpressions(true);
+    findResult = findManager.findString(text, prefix.length(), findModel, file);
+    assertTrue(findResult.isStringFound());
+  }
+
   public void testFindInUserFileType() throws Exception{
     FindManager findManager = FindManager.getInstance(myProject);
 
@@ -568,6 +593,23 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
                   "done */";
 
     runFindInCommentsAndLiterals(findManager, findModel, text, "cs");
+  }
+
+  public void testFindInJsp() throws Exception{
+    FindManager findManager = FindManager.getInstance(myProject);
+
+    FindModel findModel = new FindModel();
+    findModel.setStringToFind("done");
+    findModel.setWholeWordsOnly(false);
+    findModel.setFromCursor(false);
+    findModel.setGlobal(true);
+    findModel.setMultipleFiles(false);
+    findModel.setProjectScope(true);
+
+    String text = "<!--done-->\n<%--done-->\n<% /*done*/ %>";
+
+    findModel.setInCommentsOnly(true);
+    runFindForwardAndBackward(findManager, findModel, text, "jsp");
   }
 
   public void testFindInLiteralToSkipQuotes() throws Exception{

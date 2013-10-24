@@ -992,6 +992,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  @NotNull
   @Override
   public EditorHighlighter getHighlighter() {
     assertReadAccess();

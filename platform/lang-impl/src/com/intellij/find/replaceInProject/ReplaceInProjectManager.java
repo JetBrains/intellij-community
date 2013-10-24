@@ -42,6 +42,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageInfo;
@@ -433,7 +434,8 @@ public class ReplaceInProjectManager {
     }
     FindManager findManager = FindManager.getInstance(myProject);
     final CharSequence foundString = document.getCharsSequence().subSequence(textOffset, textEndOffset);
-    FindResult findResult = findManager.findString(document.getCharsSequence(), textOffset, findModel);
+    PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+    FindResult findResult = findManager.findString(document.getCharsSequence(), textOffset, findModel, file != null ? file.getVirtualFile() : null);
     if (!findResult.isStringFound()) {
       return false;
     }

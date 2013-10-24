@@ -16,6 +16,7 @@ import org.gradle.tooling.model.GradleProject;
 import org.gradle.tooling.model.gradle.GradleScript;
 import org.gradle.wrapper.WrapperConfiguration;
 import org.gradle.wrapper.WrapperExecutor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,6 +34,7 @@ import java.util.Properties;
 public class GradleUtil {
 
   private static final String LAST_USED_GRADLE_HOME_KEY    = "last.used.gradle.home";
+  @NonNls private static final String JVM_ARG_FORMAT = "-D%1$s=%2$s";
 
   private GradleUtil() {
   }
@@ -232,5 +234,10 @@ public class GradleUtil {
     }
 
     return candidates[0];
+  }
+
+  @NotNull
+  public static String createJvmArg(@NotNull String name, @NotNull String value) {
+    return String.format(JVM_ARG_FORMAT, name, value);
   }
 }

@@ -9,7 +9,7 @@ import com.intellij.codeInsight.completion.methodChains.search.MethodChainsSearc
 import com.intellij.codeInsight.completion.methodChains.search.MethodsChain;
 import com.intellij.codeInsight.completion.methodChains.search.MethodsChainLookupRangingHelper;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.compilerOutputIndex.api.indexer.CompilerOutputIndexer;
+import com.intellij.compilerOutputIndex.api.indexer.CompilerOutputIndexFeature;
 import com.intellij.compilerOutputIndex.impl.MethodIncompleteSignature;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,13 +35,13 @@ import static com.intellij.patterns.PsiJavaPatterns.or;
 public class MethodsChainsCompletionContributor extends CompletionContributor {
   public static final int INVOCATIONS_THRESHOLD = 3;
 
-  private final static int MAX_SEARCH_RESULT_SIZE = 20;
+  private final static int MAX_SEARCH_RESULT_SIZE = 5;
   private final static int MAX_CHAIN_SIZE = 4;
   private final static int FILTER_RATIO = 10;
 
   @Override
   public void fillCompletionVariants(final CompletionParameters parameters, final CompletionResultSet result) {
-    if (parameters.getInvocationCount() >= INVOCATIONS_THRESHOLD && CompilerOutputIndexer.getInstance(parameters.getPosition().getProject()).isEnabled()) {
+    if (parameters.getInvocationCount() >= INVOCATIONS_THRESHOLD && CompilerOutputIndexFeature.METHOD_CHAINS_COMPLETION.isEnabled()) {
       super.fillCompletionVariants(parameters, result);
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         result.stopHere();
@@ -73,16 +73,19 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
         }
         contextRelevantTypes.remove(targetClassQName);
 
-        final List<LookupElement> foundedElements = searchForLookups(targetClassQName, contextRelevantTypes, completionContext);
-        result.addAllElements(foundedElements);
+        //final boolean useBigrams = ApplicationManager.getApplication().isUnitTestMode() || parameters.getInvocationCount() == 3;
+        final boolean useBigrams = true;
+        final List<LookupElement> foundElements = searchForLookups(targetClassQName, contextRelevantTypes, completionContext, useBigrams);
+        result.addAllElements(foundElements);
       }
     });
   }
 
   private static List<LookupElement> searchForLookups(final String targetClassQName,
                                                       final Set<String> contextRelevantTypes,
-                                                      final ChainCompletionContext completionContext) {
-    final MethodChainsSearchService searchService = new MethodChainsSearchService(completionContext.getProject());
+                                                      final ChainCompletionContext completionContext,
+                                                      final boolean useBigrams) {
+    final MethodChainsSearchService searchService = new MethodChainsSearchService(completionContext.getProject(), useBigrams);
     final List<MethodsChain> searchResult =
       searchChains(targetClassQName, contextRelevantTypes, MAX_SEARCH_RESULT_SIZE, MAX_CHAIN_SIZE, completionContext, searchService);
     if (searchResult.size() < MAX_SEARCH_RESULT_SIZE) {
@@ -100,7 +103,8 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
                                                            completionContext, searchService)) {
                 boolean insert = true;
                 for (final MethodsChain baseChain : searchResult) {
-                  if (baseChain.weakContains(chain)) {
+                  final MethodsChain.CompareResult r = MethodsChain.compare(baseChain, chain, completionContext);
+                  if (r != MethodsChain.CompareResult.NOT_EQUAL) {
                     insert = false;
                     break;
                   }
@@ -116,8 +120,19 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
         });
       }
     }
-    return MethodsChainLookupRangingHelper.chainsToWeightableLookupElements(filterTailAndGetSumLastMethodOccurrence(searchResult),
-                                                                             completionContext);
+    final List<MethodsChain> chains = searchResult.size() > MAX_CHAIN_SIZE ? chooseHead(searchResult) : searchResult;
+    return MethodsChainLookupRangingHelper
+      .chainsToWeightableLookupElements(filterTailAndGetSumLastMethodOccurrence(chains), completionContext);
+  }
+
+  private static List<MethodsChain> chooseHead(final List<MethodsChain> elements) {
+    Collections.sort(elements, new Comparator<MethodsChain>() {
+      @Override
+      public int compare(final MethodsChain o1, final MethodsChain o2) {
+        return o2.getChainWeight() - o1.getChainWeight();
+      }
+    });
+    return elements.subList(0, MAX_CHAIN_SIZE);
   }
 
   @SuppressWarnings("unchecked")
@@ -188,8 +203,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
                                                  final MethodChainsSearchService searchService) {
     return ChainsSearcher.search(searchService, targetQName, contextVarsQNames, maxResultSize, maxChainSize,
                                  createNotDeprecatedMethodsResolver(JavaPsiFacade.getInstance(context.getProject()),
-                                                                    context.getResolveScope()),
-                                 context.getExcludedQNames(), context.getContextMethodName());
+                                                                    context.getResolveScope()), context.getExcludedQNames(), context);
   }
 
   private static FactoryMap<MethodIncompleteSignature, PsiMethod[]> createNotDeprecatedMethodsResolver(final JavaPsiFacade javaPsiFacade,

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -671,8 +671,10 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   private final class MyVisibilityWatcher extends VisibilityWatcher {
     @Override
     public void visibilityChanged() {
-      PsiDocumentManager.getInstance(myProject).commitAllDocuments();
-      myTodoTreeBuilder.setUpdatable(isShowing());
+      if (myProject.isOpen()) {
+        PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+        myTodoTreeBuilder.setUpdatable(isShowing());
+      }
     }
   }
 
