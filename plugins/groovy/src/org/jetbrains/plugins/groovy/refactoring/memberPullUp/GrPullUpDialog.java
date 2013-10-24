@@ -29,11 +29,10 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoModel;
 import com.intellij.refactoring.memberPullUp.PullUpDialogBase;
-import com.intellij.refactoring.memberPullUp.PullUpHelper;
+import com.intellij.refactoring.memberPullUp.PullUpProcessor;
 import com.intellij.refactoring.ui.AbstractMemberSelectionTable;
 import com.intellij.refactoring.ui.ClassCellRenderer;
 import com.intellij.refactoring.ui.DocCommentPanel;
-import com.intellij.refactoring.util.DocCommentPolicy;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.classMembers.InterfaceContainmentVerifier;
 import com.intellij.refactoring.util.classMembers.UsesAndInterfacesDependencyMemberInfoModel;
@@ -58,7 +57,7 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
 
   private final InterfaceContainmentVerifier myInterfaceContainmentVerifier = new InterfaceContainmentVerifier() {
     public boolean checkedInterfacesContain(PsiMethod psiMethod) {
-      return PullUpHelper.checkedInterfacesContain(myMemberInfos, psiMethod);
+      return PullUpProcessor.checkedInterfacesContain(myMemberInfos, psiMethod);
     }
   };
 
@@ -143,8 +142,8 @@ class GrPullUpDialog extends PullUpDialogBase<GrMemberInfoStorage, GrMemberInfo,
     }
 
     List<GrMemberInfo> infos = getSelectedMemberInfos();
-    GrPullUpHelper processor = new GrPullUpHelper(myClass, superClass, infos.toArray(new GrMemberInfo[infos.size()]), new DocCommentPolicy(getJavaDocPolicy()));
-    invokeRefactoring(processor);
+    //GrPullUpProcessor processor = new GrPullUpProcessor(myClass, superClass, infos.toArray(new GrMemberInfo[infos.size()]), new DocCommentPolicy(getJavaDocPolicy()));
+    //invokeRefactoring(processor);
     close(OK_EXIT_CODE);
   }
 
