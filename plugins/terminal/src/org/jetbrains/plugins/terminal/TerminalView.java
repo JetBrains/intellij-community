@@ -83,6 +83,7 @@ public class TerminalView {
       public void dispose() {
         if (myTerminalWidget != null) {
           myTerminalWidget.dispose();
+          myTerminalWidget = null;
         }
       }
     });
