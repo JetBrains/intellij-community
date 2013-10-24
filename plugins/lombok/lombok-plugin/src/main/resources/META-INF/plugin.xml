@@ -81,6 +81,7 @@
 				<ol>
 				    <li>Added support for @Accessors lombok experimental annotation</li>
 				    <li>Added support for @Wither lombok experimental annotation</li>
+				    <li>Added support for @Builder lombok experimental annotations</li>
 				</ol>
 			</li>
 			<li>0.6.5
