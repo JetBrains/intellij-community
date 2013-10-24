@@ -176,16 +176,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
                                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING, fix);
                   continue;
                 }
-                if (annotated.isDeclaredNotNull && manager.isNullable(parameter, false)) {
-                  final PsiIdentifier nameIdentifier2 = parameter.getNameIdentifier();
-                  assert nameIdentifier2 != null : parameter;
-                  holder.registerProblem(nameIdentifier2, InspectionsBundle.message(
-                    "inspection.nullable.problems.annotated.field.constructor.parameter.conflict", StringUtil.getShortName(anno),
-                    nullableSimpleName),
-                                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                         fix);
-                }
-                else if (annotated.isDeclaredNullable && manager.isNotNull(parameter, false)) {
+                if (annotated.isDeclaredNullable && manager.isNotNull(parameter, false)) {
                   boolean usedAsQualifier = !ReferencesSearch.search(parameter).forEach(new Processor<PsiReference>() {
                     @Override
                     public boolean process(PsiReference reference) {
