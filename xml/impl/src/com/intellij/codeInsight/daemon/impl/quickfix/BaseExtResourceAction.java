@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
  */
 abstract class BaseExtResourceAction extends BaseIntentionAction {
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     if (!(file instanceof XmlFile)) return false;
 
@@ -51,11 +52,13 @@ abstract class BaseExtResourceAction extends BaseIntentionAction {
 
   protected abstract String getQuickFixKeyId();
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return XmlBundle.message(getQuickFixKeyId());
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     int offset = editor.getCaretModel().getOffset();
 

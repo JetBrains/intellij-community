@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,13 +116,13 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
   private static void checkUnboundNamespacePrefix(final XmlElement element, final XmlTag context, String namespacePrefix, final XmlToken token,
                                                   final ProblemsHolder holder, boolean isOnTheFly) {
 
-    if (namespacePrefix.length() == 0 && (!(element instanceof XmlTag) || !(element.getParent() instanceof XmlDocument))
+    if (namespacePrefix.isEmpty() && (!(element instanceof XmlTag) || !(element.getParent() instanceof XmlDocument))
       || XML.equals(namespacePrefix)) {
       return;
     }
 
     final String namespaceByPrefix = context.getNamespaceByPrefix(namespacePrefix);
-    if (namespaceByPrefix.length() != 0) {
+    if (!namespaceByPrefix.isEmpty()) {
       return;
     }
     PsiFile psiFile = context.getContainingFile();
@@ -137,7 +137,7 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
 
     final String localizedMessage = isOnTheFly ? XmlErrorMessages.message("unbound.namespace", namespacePrefix) : XmlErrorMessages.message("unbound.namespace.no.param");
 
-    if (namespacePrefix.length() == 0) {
+    if (namespacePrefix.isEmpty()) {
       final XmlTag tag = (XmlTag)element;
       if (!XmlUtil.JSP_URI.equals(tag.getNamespace())) {
         reportTagProblem(tag, localizedMessage, null, ProblemHighlightType.INFORMATION, 
@@ -174,25 +174,30 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
   }
 
 
+  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.WARNING;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return XmlBundle.message("xml.inspections.group.name");
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return XmlBundle.message("xml.inspections.unbound.prefix");
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {

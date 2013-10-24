@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,29 +57,35 @@ public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFi
     myValues = values;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return XmlErrorMessages.message("insert.required.attribute.quickfix.text", myAttrName);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return getText();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return XmlErrorMessages.message("insert.required.attribute.quickfix.family");
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     invoke(project, null, myTag.getContainingFile());
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return myTag.isValid();
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(myTag);
@@ -116,14 +122,17 @@ public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFi
     Expression expression = new Expression() {
       TextResult result = new TextResult("");
 
+      @Override
       public Result calculateResult(ExpressionContext context) {
         return result;
       }
 
+      @Override
       public Result calculateQuickResult(ExpressionContext context) {
         return null;
       }
 
+      @Override
       public LookupElement[] calculateLookupItems(ExpressionContext context) {
         final LookupElement[] items = new LookupElement[myValues == null ? 0 : myValues.length];
 
@@ -148,9 +157,11 @@ public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFi
 
     final boolean indirectSyntax1 = indirectSyntax;
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(
           new Runnable() {
+            @Override
             public void run() {
               int textOffset = anchor1.getTextOffset();
               if (!anchorIsEmptyTag && indirectSyntax1) ++textOffset;
@@ -167,6 +178,7 @@ public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFi
 
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       Runnable commandRunnable = new Runnable() {
+        @Override
         public void run() {
           CommandProcessor.getInstance().executeCommand(
             project,
@@ -184,6 +196,7 @@ public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFi
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

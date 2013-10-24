@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
                                  new RemoveNamespaceDeclarationFix(declaredPrefix, false, !refCountHolder.isUsedNamespace(namespace)));
 
           XmlTag parent = attribute.getParent();
-          if (declaredPrefix.length() == 0) {
+          if (declaredPrefix.isEmpty()) {
             XmlAttribute location = getDefaultLocation(parent);
             if (location != null) {
               holder.registerProblem(location, NAMESPACE_LOCATION_IS_NEVER_USED, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
@@ -202,11 +202,13 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     return reference.getRangeInElement().substring(reference.getElement().getText());
   }
 
+  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.WARNING;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
@@ -245,16 +247,19 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
       myRemoveLocation = removeLocation;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return NAME;
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return XmlBundle.message("xml.inspections.group.name");
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       doFix(project, descriptor, true);
     }
@@ -310,7 +315,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
       assert document != null;
       attribute.delete();
       if (myRemoveLocation) {
-        if (prefix.length() == 0) {
+        if (prefix.isEmpty()) {
           XmlAttribute locationAttr = getDefaultLocation(parent);
           if (locationAttr != null) {
             locationAttr.delete();
