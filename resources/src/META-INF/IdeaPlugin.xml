@@ -553,7 +553,7 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.deprecation.DeprecationInspection"/>
     <localInspection language="XML" shortName="DeprecatedClassUsageInspection" displayName="Deprecated API usage in XML" groupName="XML"
-                     enabledByDefault="true" level="WARNING" implementationClass="com.intellij.util.xml.DeprecatedClassUsageInspection"/>
+                     enabledByDefault="true" level="WARNING" implementationClass="com.intellij.codeInspection.xml.DeprecatedClassUsageInspection"/>
     <localInspection language="JAVA" shortName="EqualsAndHashcode" bundle="messages.InspectionsBundle" key="inspection.equals.hashcode.display.name"
                      groupName="" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.equalsAndHashcode.EqualsAndHashcode"/>
