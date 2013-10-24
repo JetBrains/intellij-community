@@ -41,7 +41,6 @@ import java.util.*;
 
 class RootIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootIndex");
-  private final Project myProject;
 
   private final Set<VirtualFile> myProjectExcludedRoots = ContainerUtil.newHashSet();
   private final Set<VirtualFile> myLibraryExcludedRoots = ContainerUtil.newHashSet();
@@ -52,37 +51,12 @@ class RootIndex {
   private final List<JpsModuleSourceRootType<?>> myRootTypes = ContainerUtil.newArrayList();
   private final TObjectIntHashMap<JpsModuleSourceRootType<?>> myRootTypeId = new TObjectIntHashMap<JpsModuleSourceRootType<?>>();
 
-  public RootIndex(@NotNull final Project project) {
-    myProject = project;
-
-    initialize();
-  }
-
-  public void checkConsistency() {
-    for (VirtualFile file : myProjectExcludedRoots) {
-      assert file.exists() : file.getPath() + " does not exist";
-    }
-    for (VirtualFile file : myLibraryExcludedRoots) {
-      assert file.exists() : file.getPath() + " does not exist";
-    }
-
-    for (VirtualFile file : myRoots.keySet()) {
-      assert file.exists() : file.getPath() + " does not exist";
-    }
-
-    for (HashSet<VirtualFile> virtualFiles : myPackagePrefixRoots.values()) {
-      for (VirtualFile file : virtualFiles) {
-        assert file.exists() : file.getPath() + " does not exist";
-      }
-    }
-  }
-
-  public void initialize() {
+  RootIndex(@NotNull final Project project) {
     final MultiMap<VirtualFile, OrderEntry> depEntries = new MultiMap<VirtualFile, OrderEntry>();
     final MultiMap<VirtualFile, OrderEntry> libClassRootEntries = new MultiMap<VirtualFile, OrderEntry>();
     final MultiMap<VirtualFile, OrderEntry> libSourceRootEntries = new MultiMap<VirtualFile, OrderEntry>();
 
-    for (final Module module : ModuleManager.getInstance(myProject).getModules()) {
+    for (final Module module : ModuleManager.getInstance(project).getModules()) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
       final OrderEntry[] orderEntries = moduleRootManager.getOrderEntries();
       final ContentEntry[] contentEntries = moduleRootManager.getContentEntries();
@@ -151,7 +125,7 @@ class RootIndex {
           final LibraryOrSdkOrderEntry entry = (LibraryOrSdkOrderEntry)orderEntry;
           final VirtualFile[] sourceRoots = entry.getRootFiles(OrderRootType.SOURCES);
           final VirtualFile[] classRoots = entry.getRootFiles(OrderRootType.CLASSES);
-          
+
           // init library classes
           for (final VirtualFile classRoot : classRoots) {
             libClassRootEntries.putValue(classRoot, orderEntry);
@@ -184,7 +158,7 @@ class RootIndex {
       }
     }
 
-    for (DirectoryIndexExcludePolicy policy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, myProject)) {
+    for (DirectoryIndexExcludePolicy policy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, project)) {
       Collections.addAll(myProjectExcludedRoots, policy.getExcludeRootsForProject());
     }
 
@@ -197,6 +171,25 @@ class RootIndex {
     }
     for (Map.Entry<VirtualFile, Collection<OrderEntry>> mapEntry : libSourceRootEntries.entrySet()) {
       fillMapWithOrderEntries(mapEntry.getKey(), mapEntry.getValue(), null, null, mapEntry.getKey());
+    }
+  }
+
+  public void checkConsistency() {
+    for (VirtualFile file : myProjectExcludedRoots) {
+      assert file.exists() : file.getPath() + " does not exist";
+    }
+    for (VirtualFile file : myLibraryExcludedRoots) {
+      assert file.exists() : file.getPath() + " does not exist";
+    }
+
+    for (VirtualFile file : myRoots.keySet()) {
+      assert file.exists() : file.getPath() + " does not exist";
+    }
+
+    for (HashSet<VirtualFile> virtualFiles : myPackagePrefixRoots.values()) {
+      for (VirtualFile file : virtualFiles) {
+        assert file.exists() : file.getPath() + " does not exist";
+      }
     }
   }
 
