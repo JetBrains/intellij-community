@@ -33,5 +33,11 @@
   <item name="java.text.SimpleDateFormat SimpleDateFormat(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name="java.text.SimpleDateFormat SimpleDateFormat(java.lang.String, java.util.Locale) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name="java.text.SimpleDateFormat SimpleDateFormat(java.lang.String, java.text.DateFormatSymbols) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
 </root>
 
