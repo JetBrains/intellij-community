@@ -53,7 +53,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.ui.popup.MouseChecker;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -193,7 +192,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private JBPopup myBalloon;
-//  private JLabel mySearchLabel;
   private int myPopupActualWidth;
   private Component myFocusOwner;
   private ChooseByNamePopup myFileChooseByName;
@@ -203,7 +201,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     JPanel panel = new JPanel(new BorderLayout()) {
       @Override
       protected void paintComponent(Graphics g) {
-        if (myBalloon != null && !myBalloon.isDisposed() && myActionEvent != null && myActionEvent.getInputEvent() == null) {
+        if (myBalloon != null && !myBalloon.isDisposed() && myActionEvent != null && myActionEvent.getInputEvent() instanceof MouseEvent) {
           ((Graphics2D)g).setPaint(new GradientPaint(0,0, new JBColor(new Color(101, 136, 242), new Color(16, 91, 180)), 0, getHeight(),
                                                      new JBColor(new Color(44, 96, 238), new Color(16, 80, 147))));
           g.fillRect(0,0,getWidth(), getHeight());
@@ -255,56 +253,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
 
   public SearchEverywhereAction() {
-//    myContentPanel = new JPanel(new BorderLayout()) {
-//      @Override
-//      protected void paintComponent(Graphics g) {
-//        if (myBalloon != null && !myBalloon.isDisposed() && myActionEvent != null && myActionEvent.getInputEvent() == null) {
-//          ((Graphics2D)g).setPaint(new GradientPaint(0,0, new JBColor(new Color(101, 136, 242), new Color(16, 91, 180)), 0, getHeight(),
-//                                                     new JBColor(new Color(44, 96, 238), new Color(16, 80, 147))));
-//          g.fillRect(0,0,getWidth(), getHeight());
-//        } else {
-//          super.paintComponent(g);
-//        }
-//      }
-//    };
-//    myContentPanel.setOpaque(false);
-//    myList.setOpaque(false);
-//    mySearchLabel = new JBLabel(AllIcons.Actions.FindPlain) {
-//      {
-//        enableEvents(AWTEvent.MOUSE_EVENT_MASK);
-//        enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK);
-//      }
-//    };
-//    myContentPanel.add(mySearchLabel, BorderLayout.CENTER);
-////    initTooltip(label);
-//    mySearchLabel.addMouseListener(new MouseAdapter() {
-//      @Override
-//      public void mousePressed(MouseEvent e) {
-//        if (myBalloon != null) {
-//          myBalloon.cancel();
-//        }
-//        myFocusOwner = IdeFocusManager.findInstance().getFocusOwner();
-//        mySearchLabel.setToolTipText(null);
-//        IdeTooltipManager.getInstance().hideCurrentNow(false);
-//        mySearchLabel.setIcon(AllIcons.Actions.FindWhite);
-//        actionPerformed(null);
-//      }
-//
-//      @Override
-//      public void mouseEntered(MouseEvent e) {
-//        if (myBalloon == null || myBalloon.isDisposed()) {
-//          mySearchLabel.setIcon(AllIcons.Actions.Find);
-//        }
-//      }
-//
-//      @Override
-//      public void mouseExited(MouseEvent e) {
-//        if (myBalloon == null || myBalloon.isDisposed()) {
-//          mySearchLabel.setIcon(AllIcons.Actions.FindPlain);
-//        }
-//      }
-//    });
-//
     createSearchField();
     LafManager.getInstance().addLafManagerListener(new LafManagerListener() {
       @Override
@@ -327,7 +275,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
-        onFocusLost(field.getTextEditor());
+        onFocusLost();
       }
     });
 
@@ -350,7 +298,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     final JTextField editor = search.getTextEditor();
 //    editor.setOpaque(false);
     editor.putClientProperty("JTextField.Search.noFocusRing", Boolean.TRUE);
-    onFocusLost(editor);
+    onFocusLost();
     editor.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
@@ -396,7 +344,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         if ( myPopup instanceof AbstractPopup && myPopup.isVisible() && ((AbstractPopup)myPopup).getPopupWindow() == e.getOppositeComponent()) {
           return;
         }
-        onFocusLost(editor);
+        onFocusLost();
       }
     });
 
@@ -418,7 +366,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     });
   }
 
-  private void onFocusLost(final JTextField editor) {
+  private void onFocusLost() {
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
       @Override
@@ -515,7 +463,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
     finally {
       token.finish();
-      onFocusLost(field.getTextEditor());
+      onFocusLost();
     }
     focusManager.requestDefaultFocus(true);
   }
@@ -550,8 +498,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
     if (e == null) return;
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
-    final Window wnd = myContextComponent != null ? SwingUtilities.windowForComponent(myContextComponent)
+    Window wnd = myContextComponent != null ? SwingUtilities.windowForComponent(myContextComponent)
       : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+    if (wnd == null && myContextComponent instanceof Window) {
+      wnd = (Window)myContextComponent;
+    }
     if (wnd == null || wnd.getParent() != null) return;
     myActionEvent = e;
     myPopupField = new MySearchTextField();
@@ -895,7 +846,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myActions = myActionModel.getNames(true);
       }
       final HashSet<AnAction> toolWindows = new HashSet<AnAction>();
-      final MinusculeMatcher matcher = new MinusculeMatcher("*" +pattern, NameUtil.MatchingCaseSensitivity.NONE);
       List<MatchResult> matches = collectResults(pattern, myActions, myActionModel);
       for (MatchResult o : matches) {
         myProgressIndicator.checkCanceled();
@@ -980,9 +930,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myFiles = myFileModel.getNames(false);
       }
       final Set<Object> elements = new LinkedHashSet<Object>();
-//      pattern = ChooseByNamePopup.getTransformedPattern(pattern, myFileModel);
-//      pattern = DefaultChooseByNameItemProvider.getNamePattern(myFileModel, pattern);
-
       final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
       myFileChooseByName.getProvider().filterElements(myFileChooseByName, pattern, true,
                                                       myProgressIndicator, new Processor<Object>() {
@@ -1010,9 +957,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           if (object instanceof PsiFile) {
             object = ((PsiFile)object).getVirtualFile();
           }
-          if ((object instanceof VirtualFile || object instanceof PsiDirectory)
-              && !myAlreadyAddedFiles.contains(object)
-                /*&& !((VirtualFile)object).isDirectory()*/) {
+          if ((object instanceof VirtualFile && !myAlreadyAddedFiles.contains(object))
+              || object instanceof PsiDirectory) {
             files.add(object);
             if (object instanceof VirtualFile) {
               myAlreadyAddedFiles.add((VirtualFile)object);
@@ -1315,13 +1261,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                   return myBalloon == null || myBalloon.isDisposed() || !getField().getTextEditor().hasFocus();
                 }
               })
-              .setCancelOnMouseOutCallback(new MouseChecker() {
-                @Override
-                public boolean check(MouseEvent event) {
-                  final Component c = event.getComponent();
-                  return true;//myContentPanel != c && getField().getTextEditor() != c;
-                }
-              })
               .createPopup();
             Disposer.register(myPopup, new Disposable() {
               @Override
@@ -1330,11 +1269,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 if (myBalloon!= null) {
                   myBalloon.cancel();
                   myBalloon = null;
-//                  initTooltip(label);
-//                  mySearchLabel.setIcon(AllIcons.Actions.FindPlain);
                 }
                 myFileModel = null;
-                myFileChooseByName = null;
+                if (myFileChooseByName != null) {
+                  myFileChooseByName.close(false);
+                  myFileChooseByName = null;
+                }
                 myClassModel = null;
                 myActionModel = null;
                 myActions = null;
@@ -1348,6 +1288,16 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 myRenderer.myProject = null;
                 myCalcThread = null;
                 myPopup = null;
+                ActionToolbarImpl.updateAllToolbarsImmediately();
+                if (myActionEvent != null && myActionEvent.getInputEvent() instanceof MouseEvent) {
+                  final Component component = myActionEvent.getInputEvent().getComponent();
+                  if (component != null) {
+                    final JLabel label = UIUtil.getParentOfType(JLabel.class, component);
+                    if (label != null) {
+                      label.setIcon(AllIcons.Actions.FindPlain);
+                    }
+                  }
+                }
                 myActionEvent = null;
               }
             });
