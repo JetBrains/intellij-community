@@ -314,6 +314,9 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   public void testGetLogger() {
     checkPreferredItems 0, 'Foo.class', 'forName'
   }
+  public void testGetWildcardLogger() {
+    checkPreferredItems 0, 'Foo.class', 'forName'
+  }
 
   @Override
   protected String getBasePath() {

@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
+import com.intellij.openapi.options.ConfigurationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,11 +57,15 @@ public interface ExternalSystemSettingsControl<S> {
    * Asks current control to fill given settings with the current user-defined values.
    * 
    * @param settings  settings holder
-   * @return          <code>null</code> if all is ok; an error message describing the problem otherwise (e.g. an obligatory setting
-   *                  is undefined)
    */
-  @Nullable
-  String apply(@NotNull S settings);
+  void apply(@NotNull S settings);
+
+  /**
+   * Asks current control to validate given settings with the current user-defined values.
+   *
+   * @param settings  settings holder
+   */
+  boolean validate(@NotNull S settings) throws ConfigurationException;
 
   void disposeUIResources();
 

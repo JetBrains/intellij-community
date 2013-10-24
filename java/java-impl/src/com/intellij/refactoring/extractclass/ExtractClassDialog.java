@@ -18,7 +18,7 @@ package com.intellij.refactoring.extractclass;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
@@ -42,7 +42,6 @@ import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -252,7 +251,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
       .addLabeledComponent(new JLabel(), extractAsEnum)
       .addLabeledComponent(RefactorJBundle.message("package.for.new.class.label"), packageTextField);
 
-    if (ProjectRootManager.getInstance(myProject).getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES).size() > 1) {
+    if (JavaProjectRootsUtil.getSuitableDestinationSourceRoots(myProject).size() > 1) {
       builder.addLabeledComponent(RefactoringBundle.message("target.destination.folder"), myDestinationFolderComboBox);
     }
 

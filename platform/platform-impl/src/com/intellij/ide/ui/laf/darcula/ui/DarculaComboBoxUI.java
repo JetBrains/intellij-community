@@ -18,6 +18,7 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -93,9 +94,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
 
         final int w = getWidth();
         final int h = getHeight();
-        g.setColor(UIUtil.getControlColor());
+        g.setColor(getArrowButtonFillColor(UIUtil.getControlColor()));
         g.fillRect(0, 0, w, h);
-        g.setColor(myComboBox.isEnabled() ? getForeground() : getForeground().darker());
+        g.setColor(comboBox.isEnabled() ? new JBColor(Gray._255, getForeground()) : new JBColor(Gray._255, getForeground().darker()));
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
         g.setStroke(new BasicStroke(1.0f, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL));
@@ -110,7 +111,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
         path.closePath();
         g.fill(path);
         g.translate(-2, 0);
-        g.setColor(getBorderColor());
+        g.setColor(getArrowButtonFillColor(getBorderColor()));
         g.drawLine(0, -1, 0, h);
         config.restore();
       }
@@ -125,6 +126,12 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     button.setBorder(BorderFactory.createEmptyBorder());
     button.setOpaque(false);
     return button;
+  }
+
+  protected Color getArrowButtonFillColor(Color defaultColor) {
+    final Color color = myComboBox.hasFocus() ? UIManager.getColor("ComboBox.darcula.arrowFocusedFillColor")
+                        : UIManager.getColor("ComboBox.darcula.arrowFillColor");
+    return color == null ? defaultColor : comboBox != null && !comboBox.isEnabled() ? UIUtil.getControlColor() : color;
   }
 
   @Override
@@ -241,26 +248,29 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
       ((JComponent)editor).setBorder(null);
       g.setColor(editor.getBackground());
       g.fillRoundRect(x + 1, y + 1, width - 2, height - 4, 5, 5);
-      g.setColor(arrowButton.getBackground());
+      g.setColor(getArrowButtonFillColor(arrowButton.getBackground()));
       g.fillRoundRect(xxx, y + 1, width - xxx, height - 4, 5, 5);
       g.setColor(editor.getBackground());
       g.fillRect(xxx, y + 1, 5, height - 4);
     } else {
       g.setColor(UIUtil.getPanelBackground());
       g.fillRoundRect(x + 1, y + 1, width - 2, height - 4, 5, 5);
+      g.setColor(getArrowButtonFillColor(arrowButton.getBackground()));
+      g.fillRoundRect(xxx, y + 1, width - xxx, height - 4, 5, 5);
+      g.setColor(UIUtil.getPanelBackground());
+      g.fillRect(xxx, y + 1, 5, height - 4);
     }
-
     final Color borderColor = getBorderColor();//ColorUtil.shift(UIUtil.getBorderColor(), 4);
-    g.setColor(borderColor);
+    g.setColor(getArrowButtonFillColor(borderColor));
     int off = hasFocus ? 1 : 0;
     g.drawLine(xxx + 5, y + 1 + off, xxx + 5, height - 3);
 
     Rectangle r = rectangleForCurrentValue();
     paintCurrentValueBackground(g, r, hasFocus);
-    paintCurrentValue(g, r, hasFocus);
+    paintCurrentValue(g, r, false);
 
     if (hasFocus) {
-      DarculaUIUtil.paintFocusRing(g, 2, 2, width - 4, height - 4);
+      DarculaUIUtil.paintFocusRing(g, 2, 2, width - 4, height - 5);
     }
     else {
       g.setColor(borderColor);
@@ -285,8 +295,8 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     return owner != null && SwingUtilities.isDescendingFrom(owner, c);
   }
 
-  private static Gray getBorderColor() {
-    return Gray._100;
+  private static Color getBorderColor() {
+    return new JBColor(Gray._150, Gray._100);
   }
 
   @Override

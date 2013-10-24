@@ -153,7 +153,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
               }
 
               if (needToRestart) {
-                PluginManagerMain.notifyPluginsWereInstalled(list.size() == 1 ? list.get(0).getName() : null);
+                PluginManagerMain.notifyPluginsWereInstalled(list.size() == 1 ? list.get(0).getName() : null, null);
               }
             }
           }

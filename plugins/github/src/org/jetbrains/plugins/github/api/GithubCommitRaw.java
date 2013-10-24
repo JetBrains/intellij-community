@@ -25,6 +25,7 @@ import java.util.List;
 /**
  * @author Aleksey Pivovarov
  */
+@SuppressWarnings("UnusedDeclaration")
 class GithubCommitRaw implements DataConstructor {
   @Nullable public String url;
   @Nullable public String sha;

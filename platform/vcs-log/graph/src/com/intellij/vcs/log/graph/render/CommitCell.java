@@ -2,7 +2,7 @@ package com.intellij.vcs.log.graph.render;
 
 import com.intellij.vcs.log.VcsRef;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * @author erokhins
@@ -10,9 +10,9 @@ import java.util.List;
 public class CommitCell {
 
   private final String text;
-  private final List<VcsRef> refsToThisCommit;
+  private final Collection<VcsRef> refsToThisCommit;
 
-  public CommitCell(String text, List<VcsRef> refsToThisCommit) {
+  public CommitCell(String text, Collection<VcsRef> refsToThisCommit) {
     this.text = text;
     this.refsToThisCommit = refsToThisCommit;
   }
@@ -21,7 +21,7 @@ public class CommitCell {
     return text;
   }
 
-  public List<VcsRef> getRefsToThisCommit() {
+  public Collection<VcsRef> getRefsToThisCommit() {
     return refsToThisCommit;
   }
 

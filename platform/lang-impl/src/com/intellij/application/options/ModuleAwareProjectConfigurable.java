@@ -24,8 +24,10 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Condition;
 import com.intellij.platform.ModuleAttachProcessor;
 import com.intellij.ui.CollectionListModel;
+import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -93,6 +95,15 @@ public abstract class ModuleAwareProjectConfigurable<T extends UnnamedConfigurab
     }
     final Splitter splitter = new Splitter(false, 0.25f);
     final JBList moduleList = new JBList(new CollectionListModel<Module>(modules));
+    new ListSpeedSearch(moduleList, new Function<Object, String>() {
+      @Override
+      public String fun(Object o) {
+        if (o instanceof Module) {
+          return ((Module)o).getName();
+        }
+        return null;
+      }
+    });
     moduleList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     moduleList.setCellRenderer(new ModuleListCellRenderer());
     splitter.setFirstComponent(new JBScrollPane(moduleList));

@@ -21,7 +21,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeView;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.fileTemplates.JavaTemplateUtil;
+import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.ide.fileTemplates.actions.AttributesDefaults;
 import com.intellij.ide.fileTemplates.actions.CreateFromTemplateActionBase;
 import com.intellij.openapi.actionSystem.*;
@@ -42,7 +42,8 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 public class CreatePackageInfoAction extends CreateFromTemplateActionBase implements DumbAware {
 
   protected CreatePackageInfoAction() {
-    super("package-info.java", IdeBundle.message("action.create.new.package-info.description"), AllIcons.FileTypes.Java);
+    super(IdeBundle.message("action.create.new.package-info.title"),
+          IdeBundle.message("action.create.new.package-info.description"), AllIcons.FileTypes.Java);
   }
 
   @Nullable
@@ -56,14 +57,15 @@ public class CreatePackageInfoAction extends CreateFromTemplateActionBase implem
       }
       if (directory.findFile(PsiPackage.PACKAGE_INFO_FILE) != null) {
         Messages.showErrorDialog(CommonDataKeys.PROJECT.getData(dataContext),
-                                 "'package-info.java' already exists for package '" + aPackage.getQualifiedName() + '\'',
+                                 IdeBundle.message("error.package.already.contains.package-info", aPackage.getQualifiedName()),
                                  IdeBundle.message("title.cannot.create.file"));
         return null;
       }
       else if (directory.findFile("package.html") != null) {
         if (Messages.showOkCancelDialog(CommonDataKeys.PROJECT.getData(dataContext),
-                                    "Package '" + aPackage.getQualifiedName() + "' already has a 'package.html' file. Create 'package-info.java' anyway?",
-                                    "Found 'package.html'", "Create", CommonBundle.message("button.cancel"),
+                                    IdeBundle.message("error.package.already.contains.package.html", aPackage.getQualifiedName()),
+                                    IdeBundle.message("error.package.html.found.title"),
+                                    IdeBundle.message("button.create"), CommonBundle.message("button.cancel"),
                                     Messages.getQuestionIcon()) != Messages.OK) {
           return null;
         }
@@ -110,7 +112,7 @@ public class CreatePackageInfoAction extends CreateFromTemplateActionBase implem
   @Nullable
   @Override
   public AttributesDefaults getAttributesDefaults(DataContext dataContext) {
-    return new AttributesDefaults("package-info").withFixedName(true);
+    return new AttributesDefaults(FileTemplateUtil.INTERNAL_PACKAGE_INFO_TEMPLATE_NAME).withFixedName(true);
   }
 
   @Nullable
@@ -121,6 +123,6 @@ public class CreatePackageInfoAction extends CreateFromTemplateActionBase implem
 
   @Override
   protected FileTemplate getTemplate(Project project, PsiDirectory dir) {
-    return FileTemplateManager.getInstance().getInternalTemplate(JavaTemplateUtil.INTERNAL_PACKAGE_INFO_TEMPLATE_NAME);
+    return FileTemplateManager.getInstance().getInternalTemplate(FileTemplateUtil.INTERNAL_PACKAGE_INFO_TEMPLATE_NAME);
   }
 }

@@ -51,6 +51,34 @@
   <item name="java.util.concurrent.ConcurrentMap boolean replace(K, V, V) 2">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name='java.util.concurrent.ConcurrentSkipListSet ConcurrentSkipListSet(java.util.Collection&lt;? extends E&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.concurrent.ConcurrentSkipListSet ConcurrentSkipListSet(java.util.SortedSet&lt;E&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.concurrent.CopyOnWriteArrayList CopyOnWriteArrayList(E[]) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.util.concurrent.CopyOnWriteArrayList CopyOnWriteArrayList(java.util.Collection&lt;? extends E&gt;) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.intellij.lang.annotations.Flow'>
+      <val name="sourceIsContainer" val="true"/>
+      <val name="targetIsContainer" val="true"/>
+    </annotation>
+  </item>
   <item name="java.util.concurrent.CountDownLatch boolean await(long, java.util.concurrent.TimeUnit) 1">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>

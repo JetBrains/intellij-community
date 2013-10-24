@@ -142,4 +142,28 @@ public class ConcurrentMapsTest extends TestCase {
     assertEquals("ab", removed);
     assertTrue(map.isEmpty());
   }
+
+  public void testTossedSoftKeyAndValue() {
+    SoftKeySoftValueHashMap<Object, Object> map = new SoftKeySoftValueHashMap<Object, Object>();
+    map.put(new Object(), new Object());
+
+    tryGcSoftlyReachableObjects();
+    do {
+      System.gc();
+    }
+    while (!map.processQueue());
+    assertTrue(map.isEmpty());
+  }
+
+  public void testTossedWeakKeyAndValue() {
+    WeakKeyWeakValueHashMap<Object, Object> map = new WeakKeyWeakValueHashMap<Object, Object>();
+    map.put(new Object(), new Object());
+
+    tryGcSoftlyReachableObjects();
+    do {
+      System.gc();
+    }
+    while (!map.processQueue());
+    assertTrue(map.isEmpty());
+  }
 }

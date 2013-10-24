@@ -23,6 +23,7 @@ import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.eclipse.EclipseXml;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -48,5 +49,9 @@ public abstract class EclipseNatureImporter {
       allCons.addAll(provider.getProvidedCons());
     }
     return allCons;
+  }
+  
+  public static List<String> getDefaultNatures() {
+    return Arrays.asList(EclipseXml.JAVA_NATURE, EclipseXml.JREBEL_NATURE, EclipseXml.SONAR_NATURE);
   }
 }

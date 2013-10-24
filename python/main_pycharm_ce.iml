@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module type="JAVA_MODULE" version="4">
+  <component name="NewModuleRootManager" inherit-compiler-output="true">
+    <exclude-output />
+    <orderEntry type="inheritedJdk" />
+    <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module" module-name="bootstrap" />
+    <orderEntry type="module" module-name="colorSchemes" />
+    <orderEntry type="module" module-name="cvs-plugin" />
+    <orderEntry type="module" module-name="hg4idea" />
+    <orderEntry type="module" module-name="svn4idea" />
+    <orderEntry type="module" module-name="git4idea" />
+    <orderEntry type="module" module-name="relaxng" />
+    <orderEntry type="module" module-name="github" />
+    <orderEntry type="module" module-name="rest" />
+    <orderEntry type="module" module-name="python-helpers" />
+    <orderEntry type="module" module-name="terminal" />
+    <orderEntry type="module" module-name="python-ide-community" />
+    <orderEntry type="module" module-name="platform-main" />
+  </component>
+</module>
+

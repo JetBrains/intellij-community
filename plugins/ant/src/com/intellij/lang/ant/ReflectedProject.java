@@ -22,12 +22,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -106,27 +102,26 @@ public final class ReflectedProject {
     catch (ProcessCanceledException e) {
       throw e;
     }
-    catch (ExceptionInInitializerError e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof ProcessCanceledException) {
-        throw (ProcessCanceledException)cause;
-      }
-      else {
-        LOG.info(e);
-        project = null;
-      }
-    }
-    catch (InvocationTargetException e) {
-      final Throwable cause = e.getCause();
-      if (cause instanceof ProcessCanceledException) {
-        throw (ProcessCanceledException)cause;
-      }
-      else {
-        LOG.info(e);
-        project = null;
-      }
-    }
     catch (Throwable e) {
+      // rethrow PCE if it was the cause
+      Throwable cause = e.getCause();
+      Set<Throwable> checked = null; // init lazily; in most cases the set will not be created
+      while (cause != null && (checked == null || !checked.contains(cause))) {
+        if (cause instanceof ProcessCanceledException) {
+          throw (ProcessCanceledException)cause;
+        }
+        final Throwable nextCause = cause.getCause();
+        if (nextCause == null) {
+          break;
+        }
+        if (checked == null) {
+          checked = new HashSet<Throwable>();
+          checked.add(e);
+        }
+        checked.add(cause);
+        cause = nextCause;
+      }
+
       LOG.info(e);
       project = null;
     }

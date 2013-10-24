@@ -1,0 +1,57 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.jetbrains.python.run;
+
+import com.intellij.execution.configuration.AbstractRunConfiguration;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.WriteExternalException;
+import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
+
+/**
+ * @author traff
+ */
+abstract public class AbstractServerPythonRunConfiguration<T extends AbstractRunConfiguration> extends AbstractPythonRunConfiguration<T>{
+  @NonNls private static final String LAUNCH_JAVASCRIPT_DEBUGGER = "launchJavascriptDebuger";
+  private boolean myLaunchJavascriptDebugger;
+
+  public AbstractServerPythonRunConfiguration(final Project project, final ConfigurationFactory factory) {
+    super(project, factory);
+  }
+
+  @Override
+  public void readExternal(Element element) throws InvalidDataException {
+    super.readExternal(element);
+    setLaunchJavascriptDebugger(Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, LAUNCH_JAVASCRIPT_DEBUGGER)));
+  }
+
+  @Override
+  public void writeExternal(Element element) throws WriteExternalException {
+    super.writeExternal(element);
+    JDOMExternalizerUtil.writeField(element, LAUNCH_JAVASCRIPT_DEBUGGER, Boolean.toString(isLaunchJavascriptDebugger()));
+  }
+
+  public boolean isLaunchJavascriptDebugger() {
+    return myLaunchJavascriptDebugger;
+  }
+
+  public void setLaunchJavascriptDebugger(boolean launchJavascriptDebugger) {
+    myLaunchJavascriptDebugger = launchJavascriptDebugger;
+  }
+}

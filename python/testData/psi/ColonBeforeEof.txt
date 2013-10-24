@@ -1,0 +1,16 @@
+PyFile:ColonBeforeEof.py
+  PyForStatement
+    PyForPart
+      PsiElement(Py:FOR_KEYWORD)('for')
+      PsiWhiteSpace(' ')
+      PyTargetExpression: a
+        PsiElement(Py:IDENTIFIER)('a')
+      PsiWhiteSpace(' ')
+      PsiElement(Py:IN_KEYWORD)('in')
+      PsiWhiteSpace(' ')
+      PyReferenceExpression: b
+        PsiElement(Py:IDENTIFIER)('b')
+      PsiElement(Py:COLON)(':')
+      PyStatementList
+        PsiErrorElement:Indent expected
+          <empty list>

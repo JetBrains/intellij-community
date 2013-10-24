@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.generate.tostring.util.StringUtil;
@@ -75,8 +76,8 @@ public class EditContractIntention extends BaseIntentionAction {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiMethod method = getTargetMethod(project, editor, file);
     assert method != null;
-    PsiAnnotation existingAnno = ControlFlowAnalyzer.findContractAnnotation(method);
-    String oldContract = existingAnno != null ? AnnotationUtil.getStringAttributeValue(existingAnno, null) : null;
+    Contract existingAnno = AnnotationUtil.findAnnotationInHierarchy(method, Contract.class);
+    String oldContract = existingAnno == null ? null : existingAnno.value();
     String prompt =
       "<html>Please specify the contract text<p>" +
       "Example: <code>_, null -> false</code><br>" +

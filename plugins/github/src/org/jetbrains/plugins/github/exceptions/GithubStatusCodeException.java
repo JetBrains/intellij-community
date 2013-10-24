@@ -15,12 +15,10 @@
  */
 package org.jetbrains.plugins.github.exceptions;
 
-import java.io.IOException;
-
 /**
  * @author Aleksey Pivovarov
  */
-public class GithubStatusCodeException extends IOException {
+public class GithubStatusCodeException extends GithubConfusingException {
   private final int myStatusCode;
 
   public GithubStatusCodeException(String message, int statusCode) {

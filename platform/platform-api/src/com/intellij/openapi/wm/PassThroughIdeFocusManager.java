@@ -68,7 +68,7 @@ public class PassThroughIdeFocusManager extends IdeFocusManager {
     return null;
   }
 
-  public boolean dispatch(KeyEvent e) {
+  public boolean dispatch(@NotNull KeyEvent e) {
     return false;
   }
 
@@ -76,6 +76,7 @@ public class PassThroughIdeFocusManager extends IdeFocusManager {
   public void typeAheadUntil(ActionCallback done) {
   }
 
+  @NotNull
   public ActionCallback requestDefaultFocus(boolean forced) {
     return new ActionCallback.Done();
   }
@@ -85,6 +86,7 @@ public class PassThroughIdeFocusManager extends IdeFocusManager {
     return true;
   }
 
+  @NotNull
   @Override
   public Expirable getTimestamp(boolean trackOnlyForcedCommands) {
     return new Expirable() {
@@ -94,6 +96,7 @@ public class PassThroughIdeFocusManager extends IdeFocusManager {
     };
   }
 
+  @NotNull
   @Override
   public FocusRequestor getFurtherRequestor() {
     return this;
@@ -114,7 +117,7 @@ public class PassThroughIdeFocusManager extends IdeFocusManager {
   }
 
   @Override
-  public void runOnOwnContext(DataContext context, Runnable runnable) {
+  public void runOnOwnContext(@NotNull DataContext context, @NotNull Runnable runnable) {
     runnable.run();
   }
 

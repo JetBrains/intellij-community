@@ -84,15 +84,17 @@ public class JavaModuleType extends ModuleType<JavaModuleBuilder> {
   @NotNull
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull final WizardContext wizardContext, @NotNull final JavaModuleBuilder moduleBuilder,
-                                              @NotNull final ModulesProvider modulesProvider) {
+                                              @NotNull final ModulesProvider modulesProvider, boolean forNewWizard) {
     final ProjectWizardStepFactory wizardFactory = ProjectWizardStepFactory.getInstance();
     ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
-    final ModuleWizardStep supportForFrameworksStep = wizardFactory.createSupportForFrameworksStep(wizardContext, moduleBuilder, modulesProvider);
-    if (supportForFrameworksStep != null) {
-      steps.add(supportForFrameworksStep);
+    if (!forNewWizard) {
+      final ModuleWizardStep supportForFrameworksStep = wizardFactory.createSupportForFrameworksStep(wizardContext, moduleBuilder, modulesProvider);
+      if (supportForFrameworksStep != null) {
+        steps.add(supportForFrameworksStep);
+      }
     }
     final ModuleWizardStep[] wizardSteps = steps.toArray(new ModuleWizardStep[steps.size()]);
-    return ArrayUtil.mergeArrays(wizardSteps, super.createWizardSteps(wizardContext, moduleBuilder, modulesProvider));
+    return ArrayUtil.mergeArrays(wizardSteps, super.createWizardSteps(wizardContext, moduleBuilder, modulesProvider, forNewWizard));
   }
 
   @Nullable

@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -40,9 +41,54 @@ public final class SpeedSearchUtil {
   private SpeedSearchUtil() {
   }
 
-  public static void appendFragmentsForSpeedSearch(@NotNull final JComponent speedSearchEnabledComponent, @NotNull final String text,
-                                                   @NotNull final SimpleTextAttributes attributes, final boolean selected,
-                                                   @NotNull final SimpleColoredComponent simpleColoredComponent) {
+  public static void applySpeedSearchHighlighting(@NotNull JComponent speedSearchEnabledComponent,
+                                                  @NotNull SimpleColoredComponent coloredComponent,
+                                                  boolean mainTextOnly,
+                                                  boolean selected) {
+    SpeedSearchSupply speedSearch = SpeedSearchSupply.getSupply(speedSearchEnabledComponent);
+    // The bad thing is that SpeedSearch model is decoupled from UI presentation so we don't know the real matched text.
+    // Our best guess is to get strgin from the ColoredComponent. We can only provide main-text-only option.
+    Iterable<TextRange> ranges = speedSearch == null ? null : speedSearch.matchingFragments(coloredComponent.getCharSequence(mainTextOnly).toString());
+    Iterator<TextRange> rangesIterator = ranges != null ? ranges.iterator() : null;
+    if (rangesIterator == null || !rangesIterator.hasNext()) return;
+    Color bg = selected ? UIUtil.getTreeSelectionBackground() : UIUtil.getTreeTextBackground();
+
+    SimpleColoredComponent.ColoredIterator coloredIterator = coloredComponent.iterator();
+    TextRange range = rangesIterator.next();
+    main: while (coloredIterator.hasNext()) {
+      coloredIterator.next();
+      int offset = coloredIterator.getOffset();
+      int endOffset = coloredIterator.getEndOffset();
+      if (!range.intersectsStrict(offset, endOffset)) continue;
+      SimpleTextAttributes attributes = coloredIterator.getTextAttributes();
+      SimpleTextAttributes highlighted = new SimpleTextAttributes(bg, attributes.getFgColor(), null, attributes.getStyle() | SimpleTextAttributes.STYLE_SEARCH_MATCH);
+      if (range.getStartOffset() > offset) {
+        offset = coloredIterator.split(range.getStartOffset() - offset, attributes);
+      }
+      do {
+        if (range.getEndOffset() <= endOffset) {
+          offset = coloredIterator.split(range.getEndOffset() - offset, highlighted);
+          if (rangesIterator.hasNext()) {
+            range = rangesIterator.next();
+          }
+          else {
+            break main;
+          }
+        }
+        else {
+          coloredIterator.split(endOffset - offset, highlighted);
+          continue main;
+        }
+      }
+      while (range.intersectsStrict(offset, endOffset));
+    }
+  }
+
+  public static void appendFragmentsForSpeedSearch(@NotNull JComponent speedSearchEnabledComponent,
+                                                   @NotNull String text,
+                                                   @NotNull SimpleTextAttributes attributes,
+                                                   boolean selected,
+                                                   @NotNull SimpleColoredComponent simpleColoredComponent) {
     final SpeedSearchSupply speedSearch = SpeedSearchSupply.getSupply(speedSearchEnabledComponent);
     if (speedSearch != null) {
       final Iterable<TextRange> fragments = speedSearch.matchingFragments(text);
@@ -59,12 +105,12 @@ public final class SpeedSearchUtil {
     simpleColoredComponent.append(text, attributes);
   }
 
-  public static void appendColoredFragmentForMatcher(@NotNull final String text,
-                                                     final SimpleColoredComponent component,
+  public static void appendColoredFragmentForMatcher(@NotNull String text,
+                                                     SimpleColoredComponent component,
                                                      @NotNull final SimpleTextAttributes attributes,
-                                                     final Matcher matcher,
-                                                     final Color selectedBg,
-                                                     final boolean selected) {
+                                                     Matcher matcher,
+                                                     Color selectedBg,
+                                                     boolean selected) {
     if (!(matcher instanceof MinusculeMatcher) || (Registry.is("ide.highlight.match.in.selected.only") && !selected)) {
       component.append(text, attributes);
       return;

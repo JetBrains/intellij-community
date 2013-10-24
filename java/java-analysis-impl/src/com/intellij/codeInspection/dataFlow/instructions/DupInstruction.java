@@ -49,7 +49,7 @@ public class DupInstruction extends Instruction {
       for (int i = 0; i < myValueCount; i++) {
         values.add(memState.pop());
       }
-      for (int j = 0; j < myDuplicationCount; j++) {
+      for (int j = 0; j < myDuplicationCount + 1; j++) {
         for (int i = values.size() - 1; i >= 0; i--) {
           memState.push(values.get(i));
         }

@@ -46,7 +46,7 @@
       <display_name>Y</display_name>
     </class>
   </method>
-  <description>Parameter annotated @NonNull must not override @Nullable parameter</description>
+  <description>Parameter annotated @NotNull must not override @Nullable parameter</description>
 </problem>
 
 
@@ -112,7 +112,7 @@
         <display_name>Y</display_name>
       </class>
     </field>
-    <description>Primitive type members cannot be Nullable/NotNull annotated</description>
+    <description>Primitive type members cannot be annotated</description>
   </problem>
 
   <problem>
@@ -128,7 +128,7 @@
         <display_name>Y</display_name>
       </class>
     </method>
-    <description>Primitive type members cannot be Nullable/NotNull annotated</description>
+    <description>Primitive type members cannot be annotated</description>
   </problem>
 
 
@@ -145,7 +145,7 @@
         <display_name>Y</display_name>
       </class>
     </method>
-    <description>Primitive type members cannot be Nullable/NotNull annotated</description>
+    <description>Primitive type members cannot be annotated</description>
   </problem>
 
 

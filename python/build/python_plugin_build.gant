@@ -1,0 +1,204 @@
+import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
+
+setProperty("projectHome", guessHome(this as Script))
+setProperty("home", projectHome)
+
+includeTargets << new File("${projectHome}/build/scripts/utils.gant")
+
+setProperty("outDir", "${projectHome}/out/python")
+setProperty("ideaDir", "${outDir}/ideaCE")
+requireProperty("ideaPath", ideaDir)
+
+setProperty("pluginHelp", "${outDir}/help")
+
+setProperty("buildNumber", requireProperty("build.number", snapshot))
+setProperty("ideaBuildNumber", requireProperty("idea.build.number"))
+
+setProperty("ideaHomePacked", "${ideaDir}/jdk16") //compiled idea
+setProperty("ideaHome", "${ideaDir}/jdk16/idea-IC-${ideaBuildNumber}") //compiled idea
+
+setProperty("pluginHome", "${projectHome}/python")
+setProperty("pluginRevision", "${buildNumber}")
+
+setProperty("ideaLib", "${ideaHome}/lib")
+setProperty("ideaPlugins", "${ideaHome}/plugins") //compiled plugins
+
+
+setProperty("output", "${projectHome}/python/distCE")
+
+setProperty("zipdir", "${output}/zip")
+setProperty("plugindir", "${zipdir}/python")
+setProperty("zipname", "python-community-${pluginRevision}.zip")
+
+setProperty("srcDir", "${pluginHome}/src")
+
+setProperty("resourcesDir", "${pluginHome}/resources")
+
+setProperty("classesRootDir", "${outDir}/classes")
+setProperty("classesDir", "${classesRootDir}/python")
+
+//Compiler options
+setProperty("compilerDebug", "on")
+setProperty("compilerGenerateNoWarnings", "off")
+setProperty("compilerArgs", "")
+setProperty("compilerMaxMemory", "256m")
+
+ant.patternset(id: "resources.pt") {
+  include(name: "**/?*.properties")
+  include(name: "**/?*.template")
+  include(name: "**/?*.xml")
+  include(name: "**/?*.gif")
+  include(name: "**/?*.png")
+  include(name: "**/?*.txt")
+  include(name: "**/?*.jpeg")
+  include(name: "**/?*.jpg")
+  include(name: "**/?*.html")
+  include(name: "**/?*.dtd")
+  include(name: "**/?*.tld")
+  include(name: "**/?*.py")
+  include(name: "**/?*.ft")
+  include(name: "**/?*.dic")
+  exclude(name: "**/plugin.xml")
+}
+
+target(name: "clean", description: "Cleanup output") {
+  ant.echo("Cleaning ${output}")
+  ant.delete(dir: "${output}", failonerror: "false")
+  ant.echo("Cleaning ${classesRootDir}")
+  ant.delete(dir: "${classesRootDir}", failonerror: "false")
+  ant.echo("Cleaning ${ideaHome}")
+  ant.delete(dir: "${ideaHome}", failonerror: "false")          // out/python/idea/
+}
+
+target(name: "unzip") {
+  ant.mkdir(dir: "${ideaHomePacked}")
+  ant.gunzip(src: "${ideaPath}/ideaIC-${ideaBuildNumber}.tar.gz")
+  ant.untar(src: "${ideaPath}/ideaIC-${ideaBuildNumber}.tar", dest: "${ideaHomePacked}")
+}
+
+target(name: "compile", description: "Compile module python") {
+  depends("unzip")
+
+  ant.path(id: "classpath.lib") {
+    fileset(dir: "${ideaLib}") {
+      include(name: "?*.jar")
+    }
+    fileset(dir: "${ideaPlugins}/terminal/lib") {
+      include(name: "*.jar")
+    }
+  }
+
+  ant.path(id: "sourcepath") {
+    dirset(dir: "${pluginHome}") {
+      include(name: "resources")
+      include(name: "src")
+      include(name: "pluginSrc")
+      include(name: "pydevSrc")
+      include(name: "openapi/src")
+      include(name: "psi-api/src")
+    }
+  }
+  //The task requires the following libraries from IntelliJ IDEA distribution:
+  //javac2.jar; jdom.jar; asm.jar; asm-commons.jar
+  ant.taskdef(name: "javac2", classname: "com.intellij.ant.Javac2") {
+    classpath {
+      fileset(dir: "${ideaLib}") {
+        include(name: "?*.jar")
+      }
+    }
+  }
+
+  ant.mkdir(dir: "${classesDir}")
+
+  //compile
+  ant.javac2(destdir: "${classesDir}",
+             debug: "${compilerDebug}",
+             nowarn: "${compilerGenerateNoWarnings}",
+             memorymaximumsize: "${compilerMaxMemory}",
+             fork: "true") {
+    compilerarg(line: "${compilerArgs}")
+    classpath(refid: "classpath.lib")
+    src(refid: "sourcepath")
+  }
+
+  //copy resources
+  ant.copy(todir: "${classesDir}") {
+    fileset(dir: "${resourcesDir}") {
+      patternset(refid: "resources.pt")
+      type(type: "file")
+    }
+    fileset(dir: "${pluginHome}/src") {
+      patternset(refid: "resources.pt")
+      type(type: "file")
+    }
+    fileset(dir: "${pluginHome}/psi-api/resources") {
+      patternset(refid: "resources.pt")
+      type(type: "file")
+    }
+    fileset(dir: "${pluginHome}/resources") {
+      patternset(refid: "resources.pt")
+      type(type: "file")
+    }
+    fileset(dir: "${home}/colorSchemes/src")
+  }
+
+  //copy plugin.xml
+  ant.mkdir(dir: "${classesDir}/META-INF")
+  ant.copy(todir: "${classesDir}/META-INF") {
+    fileset(file: "${pluginHome}/pluginSrc/META-INF/*.xml")
+    fileset(file: "${pluginHome}/pluginResources/META-INF/*.xml")
+  }
+
+  ant.replaceregexp(file: "${classesDir}/META-INF/plugin.xml",
+                    match: "since-build=\"\\d+\\.\\d+\"",
+                    replace: "since-build=\"${ideaBuildNumber}\"")
+}
+
+target(name: "jar", description: "Generate jar file") {
+  depends("compile")
+  ant.mkdir(dir: "${output}")
+  ant.jar(destfile: "${output}/python-community.jar", basedir: "${classesDir}") {
+    manifest() {
+      attribute(name: "Revision", value: "${pluginRevision}")
+      //<!--<attribute name="Build" value="${plugin.version}"/>-->
+    }
+  }
+}
+
+target(name: "zip", description: "Generate zip plugin file") {
+  depends("jar")
+
+  ant.mkdir(dir: "${zipdir}")
+
+  // copy plugin jar
+  ant.mkdir(dir: "${plugindir}/lib")
+  ant.move(file: "${output}/python-community.jar", todir: "${plugindir}/lib")
+
+  ant.mkdir(dir: "${plugindir}/helpers")
+  ant.copy(todir: "${plugindir}/helpers") {
+    fileset(dir: "${pluginHome}/helpers") {
+      include(name: "**/*")
+    }
+  }
+
+  ant.mkdir(dir: "${plugindir}/help")
+  ant.copy(file: "${pluginHelp}/pytonpluginhelp.jar", tofile: "${plugindir}/help/pythonpluginhelp.jar", failonerror: false)
+  ant.copy(file: "${pluginHelp}/pytonpluginhelp_mac.jar", tofile: "${plugindir}/help/pythonpluginhelp_mac.jar", failonerror: false)
+
+  ant.zip(basedir: "${zipdir}", destfile: "${output}/${zipname}")
+}
+
+target(name: "build") {
+  depends("unzip")
+  depends("compile")
+}
+
+target(name: "dist", description: "main target") {
+  depends("clean")
+  depends("build")
+  depends("zip")
+}
+
+target('default': "Build artifacts") {
+  depends("dist")
+}

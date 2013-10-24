@@ -20,33 +20,43 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+
+import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
  */
 public class EachToForIntention extends Intention {
+
+  @NonNls public static final String OUTER = "Outer";
+  @NonNls public static final String HINT = "Replace with For-In";
+
   @NotNull
   @Override
   protected PsiElementPredicate getElementPredicate() {
@@ -93,9 +103,11 @@ public class EachToForIntention extends Intention {
     builder.append("}");
 
     final GrStatement statement = elementFactory.createStatementFromText(builder.toString());
-    final GrForStatement forStatement = (GrForStatement)expression.replaceWithStatement(statement);
+    GrForStatement forStatement = (GrForStatement)expression.replaceWithStatement(statement);
     final GrForClause clause = forStatement.getClause();
     GrVariable variable = clause.getDeclaredVariable();
+
+    forStatement = updateReturnStatements(forStatement);
 
     if (variable == null) return;
 
@@ -108,6 +120,106 @@ public class EachToForIntention extends Intention {
     documentManager.doPostponedOperationsAndUnblockDocument(doc);
     editor.getCaretModel().moveToOffset(variable.getTextOffset());
     new VariableInplaceRenamer(variable, editor).performInplaceRename();
+  }
+
+  private static GrForStatement updateReturnStatements(GrForStatement forStatement) {
+    GrStatement body = forStatement.getBody();
+    assert body != null;
+
+    final Set<String> usedLabels = ContainerUtil.newHashSet();
+    final Ref<Boolean> needLabel = Ref.create(false);
+
+    body.accept(new GroovyRecursiveElementVisitor() {
+      private int myLoops = 0;
+
+      @Override
+      public void visitReturnStatement(GrReturnStatement returnStatement) {
+        if (returnStatement.getReturnValue() != null) return;
+
+        if (myLoops > 0) needLabel.set(true);
+      }
+
+      @Override
+      public void visitLabeledStatement(GrLabeledStatement labeledStatement) {
+        super.visitLabeledStatement(labeledStatement);
+        usedLabels.add(labeledStatement.getName());
+      }
+
+      @Override
+      public void visitForStatement(GrForStatement forStatement) {
+        myLoops++;
+        super.visitForStatement(forStatement);
+        myLoops--;
+      }
+
+      @Override
+      public void visitWhileStatement(GrWhileStatement whileStatement) {
+        myLoops++;
+        super.visitWhileStatement(whileStatement);
+        myLoops--;
+      }
+
+      @Override
+      public void visitClosure(GrClosableBlock closure) {
+        //don't go into closures
+      }
+
+      @Override
+      public void visitAnonymousClassDefinition(GrAnonymousClassDefinition anonymousClassDefinition) {
+        //don't go into anonymous
+      }
+    });
+
+    GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(forStatement.getProject());
+
+    final String continueText;
+    if (needLabel.get()) {
+      int i = 0;
+      String label = OUTER;
+      while (usedLabels.contains(label)) {
+        label = OUTER + i;
+        i++;
+      }
+
+      continueText = "continue "+ label;
+
+      GrLabeledStatement labeled = (GrLabeledStatement)factory.createStatementFromText(label + ": while (true){}");
+
+      labeled.getStatement().replaceWithStatement(forStatement);
+
+      labeled = forStatement.replaceWithStatement(labeled);
+
+      forStatement = (GrForStatement)labeled.getStatement();
+
+      body = forStatement.getBody();
+      assert body != null;
+    }
+    else {
+      continueText = "continue";
+    }
+
+    final GrStatement continueStatement = factory.createStatementFromText(continueText);
+
+    body.accept(new GroovyRecursiveElementVisitor() {
+      @Override
+      public void visitReturnStatement(GrReturnStatement returnStatement) {
+        if (returnStatement.getReturnValue() == null) {
+          returnStatement.replaceWithStatement(continueStatement);
+        }
+      }
+
+      @Override
+      public void visitClosure(GrClosableBlock closure) {
+        //don't go into closures
+      }
+
+      @Override
+      public void visitAnonymousClassDefinition(GrAnonymousClassDefinition anonymousClassDefinition) {
+        //don't go into anonymous
+      }
+    });
+
+    return forStatement;
   }
 
   private static class EachToForPredicate implements PsiElementPredicate {

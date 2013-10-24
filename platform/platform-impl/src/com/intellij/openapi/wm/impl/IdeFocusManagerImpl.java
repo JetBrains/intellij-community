@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,20 +37,24 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
     myToolWindowManager = twManager;
   }
 
+  @Override
   @NotNull
   public ActionCallback requestFocus(@NotNull final Component c, final boolean forced) {
     return getGlobalInstance().requestFocus(c, forced);
   }
 
+  @Override
   @NotNull
   public ActionCallback requestFocus(@NotNull final FocusCommand command, final boolean forced) {
     return getGlobalInstance().requestFocus(command, forced);
   }
 
+  @Override
   public JComponent getFocusTargetFor(@NotNull final JComponent comp) {
     return getGlobalInstance().getFocusTargetFor(comp);
   }
 
+  @Override
   public void doWhenFocusSettlesDown(@NotNull final Runnable runnable) {
     getGlobalInstance().doWhenFocusSettlesDown(runnable);
   }
@@ -60,12 +64,14 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
     getGlobalInstance().doWhenFocusSettlesDown(runnable);
   }
 
+  @Override
   @Nullable
   public Component getFocusedDescendantFor(@NotNull final Component comp) {
     return getGlobalInstance().getFocusedDescendantFor(comp);
   }
 
-  public boolean dispatch(KeyEvent e) {
+  @Override
+  public boolean dispatch(@NotNull KeyEvent e) {
     return getGlobalInstance().dispatch(e);
   }
 
@@ -75,6 +81,8 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   }
 
 
+  @NotNull
+  @Override
   public ActionCallback requestDefaultFocus(boolean forced) {
     return myToolWindowManager.requestDefaultFocus(forced);
   }
@@ -84,11 +92,13 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
     return getGlobalInstance().isFocusTransferEnabled();
   }
 
+  @NotNull
   @Override
   public Expirable getTimestamp(boolean trackOnlyForcedCommands) {
     return getGlobalInstance().getTimestamp(trackOnlyForcedCommands);
   }
 
+  @NotNull
   @Override
   public FocusRequestor getFurtherRequestor() {
     return getGlobalInstance().getFurtherRequestor();
@@ -110,7 +120,7 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
   }
 
   @Override
-  public void runOnOwnContext(DataContext context, Runnable runnable) {
+  public void runOnOwnContext(@NotNull DataContext context, @NotNull Runnable runnable) {
     getGlobalInstance().runOnOwnContext(context, runnable);
   }
 
@@ -129,6 +139,7 @@ public class IdeFocusManagerImpl extends IdeFocusManager {
     getGlobalInstance().toFront(c);
   }
 
+  @Override
   public boolean isFocusBeingTransferred() {
     return getGlobalInstance().isFocusBeingTransferred();
   }

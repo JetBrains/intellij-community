@@ -122,7 +122,7 @@ public interface StatusBarWidget extends Disposable {
           g2.drawLine(x, y, x, y + height);
         }
       } else {
-        g2.setColor(SEPARATOR_COLOR);
+        g2.setColor(UIUtil.isUnderIntelliJLaF() ? Gray._200 : SEPARATOR_COLOR);
         g2.drawLine(x, y, x, y + height);
       }
 

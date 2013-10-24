@@ -20,10 +20,12 @@ import com.intellij.debugger.DebuggerContext;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
+import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluateExceptionUtil;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
+import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.FieldDescriptor;
@@ -38,6 +40,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDescriptor{
   public static final String OUTER_LOCAL_VAR_FIELD_PREFIX = "val$";
@@ -64,7 +68,9 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
 
   @SuppressWarnings({"HardCodedStringLiteral"})
   public SourcePosition getSourcePosition(final Project project, final DebuggerContextImpl context) {
-    if (context.getFrameProxy() == null) return null;
+    if (context.getFrameProxy() == null) {
+      return null;
+    }
     final ReferenceType type = myField.declaringType();
     final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     final String fieldName = myField.name();
@@ -87,14 +93,34 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
       return SourcePosition.createFromOffset(psiVariable.getContainingFile(), psiVariable.getTextOffset());
     }
     else {
-      PsiClass aClass =
-        facade.findClass(type.name().replace('$', '.'), GlobalSearchScope.allScope(myProject));
-      if (aClass == null) return null;
-      aClass = (PsiClass) aClass.getNavigationElement();
-      PsiField[] fields = aClass.getFields();
-      for (PsiField field : fields) {
-        if (fieldName.equals(field.getName())) {
-          return SourcePosition.createFromOffset(field.getContainingFile(), field.getTextOffset());
+      final DebuggerSession session = context.getDebuggerSession();
+      final GlobalSearchScope scope = session != null? session.getSearchScope() : GlobalSearchScope.allScope(myProject);
+      PsiClass aClass = facade.findClass(type.name().replace('$', '.'), scope);
+      if (aClass == null) {
+        // trying to search, assuming declaring class is an anonymous class
+        try {
+          final List<Location> locations = type.allLineLocations();
+          if (!locations.isEmpty()) {
+            // important: use the last location to be sure the position will be within the anonymous class
+            final Location lastLocation = locations.get(locations.size() - 1);
+            final SourcePosition position = context.getDebugProcess().getPositionManager().getSourcePosition(lastLocation);
+            if (position != null) {
+              aClass = JVMNameUtil.getClassAt(position);
+            }
+          }
+        }
+        catch (AbsentInformationException ignored) {
+        }
+        catch (ClassNotPreparedException ignored) {
+        }
+      }
+
+      if (aClass != null) {
+        aClass = (PsiClass) aClass.getNavigationElement();
+        for (PsiField field : aClass.getFields()) {
+          if (fieldName.equals(field.getName())) {
+            return SourcePosition.createFromOffset(field.getContainingFile(), field.getTextOffset());
+          }
         }
       }
       return null;

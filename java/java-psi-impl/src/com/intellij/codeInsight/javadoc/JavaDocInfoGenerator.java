@@ -605,9 +605,7 @@ public class JavaDocInfoGenerator {
       boolean trunc = index < text.length();
       if (trunc) {
         text = text.substring(0, index);
-        text = StringUtil.replace(text, "<", "&lt;");
-        text = StringUtil.replace(text, ">", "&gt;");
-        buffer.append(text);
+        buffer.append(StringUtil.escapeXml(text));
         buffer.append("...");
       }
       else {
@@ -1876,12 +1874,12 @@ public class JavaDocInfoGenerator {
 
     @Override
     public void visitLiteralExpression(PsiLiteralExpression expression) {
-      myBuffer.append(expression.getText());
+      myBuffer.append(StringUtil.escapeXml(expression.getText()));
     }
 
     @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
-      myBuffer.append(expression.getText());
+      myBuffer.append(StringUtil.escapeXml(expression.getText()));
     }
   }
 }

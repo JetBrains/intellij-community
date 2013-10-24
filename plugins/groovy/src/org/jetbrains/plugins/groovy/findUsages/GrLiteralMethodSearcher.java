@@ -50,7 +50,7 @@ public class GrLiteralMethodSearcher extends QueryExecutorBase<PsiReference, Met
 
     final String textToSearch = findLongestWord(name);
 
-    p.getOptimizer().searchWord(textToSearch, restrictedByAccess, UsageSearchContext.IN_STRINGS, true,
+    p.getOptimizer().searchWord(textToSearch, restrictedByAccess, UsageSearchContext.IN_STRINGS, true, method,
                                 new MethodTextOccurrenceProcessor(aClass, strictSignatureSearch, methods));
   }
 

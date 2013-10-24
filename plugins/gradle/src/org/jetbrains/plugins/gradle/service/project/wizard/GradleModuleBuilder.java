@@ -15,12 +15,16 @@
  */
 package org.jetbrains.plugins.gradle.service.project.wizard;
 
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalModuleBuilder;
+import com.intellij.openapi.externalSystem.service.project.wizard.ExternalModuleSettingsStep;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
-import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,7 +44,7 @@ import java.io.File;
 public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradleProjectSettings> {
 
   public GradleModuleBuilder() {
-    super(GradleConstants.SYSTEM_ID, new GradleProjectSettingsControl(new GradleProjectSettings()));
+    super(GradleConstants.SYSTEM_ID, new GradleProjectSettings());
   }
 
   @Nullable
@@ -65,8 +69,14 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   }
 
   @Override
+  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
+    final GradleProjectSettingsControl settingsControl = new GradleProjectSettingsControl(getExternalProjectSettings());
+    return new ModuleWizardStep[]{new ExternalModuleSettingsStep<GradleProjectSettings>(this, settingsControl)};
+  }
+
+  @Override
   public boolean isSuitableSdkType(SdkTypeId sdk) {
-    return sdk == JavaSdk.getInstance();
+    return sdk instanceof JavaSdkType;
   }
 
   @Override
@@ -77,11 +87,5 @@ public class GradleModuleBuilder extends AbstractExternalModuleBuilder<GradlePro
   @Override
   public ModuleType getModuleType() {
     return StdModuleTypes.JAVA;
-  }
-
-  @NotNull
-  @Override
-  protected GradleProjectSettings createSettings() {
-    return new GradleProjectSettings();
   }
 }

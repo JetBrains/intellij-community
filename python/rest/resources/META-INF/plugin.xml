@@ -1,0 +1,15 @@
+<idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <name>ReStructuredText Support</name>
+  <id>org.jetbrains.plugins.rest</id>
+  <description>This plugin enables support for reStructuredText files (*.rst)</description>
+  <vendor>JetBrains</vendor>
+  <version>132.SNAPSHOT</version>
+  <idea-version since-build="130.1" until-build="133.0"/>
+  <depends>com.intellij.modules.lang</depends>
+
+  <xi:include href="/META-INF/rest.xml" xpointer="xpointer(/idea-plugin/*)"/>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
+  </extensions>
+</idea-plugin>

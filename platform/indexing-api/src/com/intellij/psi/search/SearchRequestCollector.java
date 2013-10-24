@@ -73,13 +73,21 @@ public class SearchRequestCollector {
       myWordRequests.add(request);
     }
   }
+  public void searchWord(@NotNull String word,
+                          @NotNull SearchScope searchScope,
+                          short searchContext,
+                          boolean caseSensitive,
+                          @NotNull PsiElement searchTarget,
+                          @NotNull RequestResultProcessor processor) {
+    searchWord(word, searchScope, searchContext, caseSensitive, getContainerName(searchTarget), processor);
+  }
 
-  private static String getContainerName(PsiElement target) {
+  private static String getContainerName(@NotNull PsiElement target) {
     PsiElement container = getContainer(target);
     return container instanceof PsiNamedElement ? ((PsiNamedElement)container).getName() : null;
   }
 
-  private static PsiElement getContainer(PsiElement refElement) {
+  private static PsiElement getContainer(@NotNull PsiElement refElement) {
     for (ContainerProvider provider : ContainerProvider.EP_NAME.getExtensions()) {
       final PsiElement container = provider.getContainer(refElement);
       if (container != null) return container;
@@ -87,12 +95,16 @@ public class SearchRequestCollector {
     return refElement.getParent();
   }
 
+  @Deprecated
+  /** use {@link #searchWord(java.lang.String, com.intellij.psi.search.SearchScope, short, boolean, com.intellij.psi.PsiElement)}
+   * instead
+   */
   public void searchWord(@NotNull String word,
                          @NotNull SearchScope searchScope,
                          short searchContext,
                          boolean caseSensitive,
                          @NotNull RequestResultProcessor processor) {
-    searchWord(word, searchScope, searchContext, caseSensitive, null, processor);
+    searchWord(word, searchScope, searchContext, caseSensitive, (String)null, processor);
   }
 
   private static boolean makesSenseToSearch(@NotNull String word, @NotNull SearchScope searchScope) {
@@ -102,10 +114,7 @@ public class SearchRequestCollector {
     if (searchScope == GlobalSearchScope.EMPTY_SCOPE) {
       return false;
     }
-    if (StringUtil.isEmpty(word)) {
-      return false;
-    }
-    return true;
+    return !StringUtil.isEmpty(word);
   }
 
   public void searchQuery(@NotNull QuerySearchRequest request) {

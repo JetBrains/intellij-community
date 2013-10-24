@@ -37,6 +37,14 @@ public interface RemoteExternalSystemProgressNotificationManager extends Remote 
     @Override
     public void onEnd(@NotNull ExternalSystemTaskId id) {
     }
+
+    @Override
+    public void onSuccess(@NotNull ExternalSystemTaskId id) throws RemoteException {
+    }
+
+    @Override
+    public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) throws RemoteException {
+    }
   };
 
   void onQueued(@NotNull ExternalSystemTaskId id) throws RemoteException;
@@ -48,4 +56,8 @@ public interface RemoteExternalSystemProgressNotificationManager extends Remote 
   void onTaskOutput(@NotNull ExternalSystemTaskId id, @NotNull String text, boolean stdOut) throws RemoteException;
 
   void onEnd(@NotNull ExternalSystemTaskId id) throws RemoteException;
+
+  void onSuccess(@NotNull ExternalSystemTaskId id) throws RemoteException;
+
+  void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) throws RemoteException;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ public class ConvertingIterator <Domain, Range> implements Iterator<Range> {
   private final Convertor<Domain, Range> myConvertor;
 
   public static class IdConvertor <T> implements Convertor<T, T> {
+    @Override
     public T convert(T object) {
       return object;
     }
@@ -35,14 +36,17 @@ public class ConvertingIterator <Domain, Range> implements Iterator<Range> {
     myConvertor = convertor;
   }
 
+  @Override
   public boolean hasNext() {
     return myBaseIterator.hasNext();
   }
 
+  @Override
   public Range next() {
     return myConvertor.convert(myBaseIterator.next());
   }
 
+  @Override
   public void remove() {
     myBaseIterator.remove();
   }
@@ -50,6 +54,7 @@ public class ConvertingIterator <Domain, Range> implements Iterator<Range> {
   public static <Domain, Intermediate, Range> Convertor<Domain, Range> composition(final Convertor<Domain, Intermediate> convertor1,
                                                                                    final Convertor<Intermediate, Range> convertor2) {
     return new Convertor<Domain, Range>() {
+      @Override
       public Range convert(Domain domain) {
         return convertor2.convert(convertor1.convert(domain));
       }

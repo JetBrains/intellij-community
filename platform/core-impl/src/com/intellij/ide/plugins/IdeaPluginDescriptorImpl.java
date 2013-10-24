@@ -21,12 +21,15 @@ import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.ExtensionsArea;
+import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.StringInterner;
 import com.intellij.util.xmlb.JDOMXIncluder;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -79,8 +82,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   private boolean myDeleted = false;
   private ClassLoader myLoader;
   private HelpSetPath[] myHelpSets;
-  @Nullable private List<Element> myExtensions;
-  @Nullable private List<Element> myExtensionsPoints;
+  @Nullable private MultiMap<String, Element> myExtensions;
+  @Nullable private MultiMap<String, Element> myExtensionsPoints;
   private String myDescriptionChildText;
   private String myDownloadCounter;
   private long myDate;
@@ -227,8 +230,22 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (myProjectComponents == null) myProjectComponents = ComponentConfig.EMPTY_ARRAY;
     if (myModuleComponents == null) myModuleComponents = ComponentConfig.EMPTY_ARRAY;
 
-    myExtensions = copyElements(pluginBean.extensions);
-    myExtensionsPoints = copyElements(pluginBean.extensionPoints);
+    List<Element> extensions = copyElements(pluginBean.extensions);
+    if (extensions != null) {
+      myExtensions = new MultiMap<String, Element>();
+      for (Element extension : extensions) {
+        myExtensions.putValue(ExtensionsAreaImpl.extractEPName(extension), extension);
+      }
+    }
+    
+    List<Element> extensionPoints = copyElements(pluginBean.extensionPoints);
+    if (extensionPoints != null) {
+      myExtensionsPoints = new MultiMap<String, Element>();
+      for (Element extensionPoint : extensionPoints) {
+        myExtensionsPoints.putValue(extensionPoint.getAttributeValue(ExtensionsAreaImpl.ATTRIBUTE_AREA), extensionPoint);
+      }
+    }
+    
     myActionsElements = copyElements(pluginBean.actions);
 
     if (pluginBean.modules != null && !pluginBean.modules.isEmpty()) {
@@ -257,20 +274,19 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return "plugin." + id + ".description";
   }
 
-  void registerExtensions() {
-    if (myExtensions != null || myExtensionsPoints != null) {
-      Extensions.getRootArea().getExtensionPoint(Extensions.AREA_LISTENER_EXTENSION_POINT).registerExtension(new AreaListener() {
-        @Override
-        public void areaCreated(@NotNull String areaClass, @NotNull AreaInstance areaInstance) {
-          if (PluginManagerCore.shouldSkipPlugin(IdeaPluginDescriptorImpl.this)) return;
-          final ExtensionsArea area = Extensions.getArea(areaInstance);
-          area.registerAreaExtensionsAndPoints(IdeaPluginDescriptorImpl.this, myExtensionsPoints, myExtensions);
-        }
+  void registerExtensionPoints(ExtensionsArea area) {
+    if (myExtensionsPoints != null) {
+      for (Element element : myExtensionsPoints.get(area.getAreaClass())) {
+        area.registerExtensionPoint(this, element);
+      }
+    }
+  }
 
-        @Override
-        public void areaDisposing(@NotNull String areaClass, @NotNull AreaInstance areaInstance) {
-        }
-      });
+  void registerExtensions(ExtensionsArea area, String epName) {
+    if (myExtensions != null) {
+      for (Element element : myExtensions.get(epName)) {
+        area.registerExtension(this, element);
+      }
     }
   }
 
@@ -407,13 +423,8 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myDeleted = deleted;
   }
 
-  public void setLoader(ClassLoader loader, final boolean registerExtensions) {
+  public void setLoader(ClassLoader loader) {
     myLoader = loader;
-
-    //Now we're ready to load root area extensions
-    if (registerExtensions) {
-      Extensions.getRootArea().registerAreaExtensionsAndPoints(this, myExtensionsPoints, myExtensions);
-    }
   }
 
   public boolean equals(Object o) {
@@ -584,14 +595,14 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       myExtensions = descriptor.myExtensions;
     }
     else if (descriptor.myExtensions != null) {
-      myExtensions.addAll(descriptor.myExtensions);
+      myExtensions.putAllValues(descriptor.myExtensions);
     }
 
     if (myExtensionsPoints == null) {
       myExtensionsPoints = descriptor.myExtensionsPoints;
     }
     else if (descriptor.myExtensionsPoints != null) {
-      myExtensionsPoints.addAll(descriptor.myExtensionsPoints);
+      myExtensionsPoints.putAllValues(descriptor.myExtensionsPoints);
     }
 
     if (myActionsElements == null) {

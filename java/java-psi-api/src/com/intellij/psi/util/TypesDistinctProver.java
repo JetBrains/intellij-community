@@ -40,12 +40,12 @@ public class TypesDistinctProver {
     if (type2 instanceof PsiClassType && ((PsiClassType)type2).resolve() instanceof PsiTypeParameter && level < 2) return false;
     if (type1 instanceof PsiWildcardType) {
       if (type2 instanceof PsiWildcardType) {
-        return provablyDistinct((PsiWildcardType)type1, (PsiWildcardType)type2);
+        return provablyDistinct((PsiWildcardType)type1, (PsiWildcardType)type2, true);
       }
 
       if (level > 1) return true;
       if (type2 instanceof PsiCapturedWildcardType) {
-        return provablyDistinct((PsiWildcardType)type1, ((PsiCapturedWildcardType)type2).getWildcard());
+        return provablyDistinct((PsiWildcardType)type1, ((PsiCapturedWildcardType)type2).getWildcard(), false);
       }
 
       if (type2 instanceof PsiClassType) {
@@ -124,7 +124,7 @@ public class TypesDistinctProver {
             !InheritanceUtil.isInheritorOrSelf(boundClass2, boundClass1, true));
   }
 
-  public static boolean provablyDistinct(PsiWildcardType type1, PsiWildcardType type2) {
+  public static boolean provablyDistinct(PsiWildcardType type1, PsiWildcardType type2, boolean rejectInconsistentRaw) {
     if (type1.isSuper() && type2.isSuper()) return false;
     if (type1.isExtends() && type2.isExtends()) {
       final PsiType extendsBound1 = type1.getExtendsBound();
@@ -135,13 +135,14 @@ public class TypesDistinctProver {
       final PsiClass boundClass1 = PsiUtil.resolveClassInType(extendsBound1);
       final PsiClass boundClass2 = PsiUtil.resolveClassInType(extendsBound2);
       if (boundClass1 != null && boundClass2 != null) {
-        if (extendsBound1 instanceof PsiClassType && extendsBound2 instanceof PsiClassType && 
+        if (rejectInconsistentRaw &&
+            extendsBound1 instanceof PsiClassType && extendsBound2 instanceof PsiClassType && 
             (((PsiClassType)extendsBound1).isRaw() ^ ((PsiClassType)extendsBound2).isRaw())) return true;
         return proveExtendsBoundsDistinct(type1, type2, boundClass1, boundClass2);
       }
       return provablyDistinct(extendsBound1, extendsBound2, 1);
     }
-    if (type2.isExtends()) return provablyDistinct(type2, type1);
+    if (type2.isExtends()) return provablyDistinct(type2, type1, rejectInconsistentRaw);
     if (type1.isExtends() && type2.isSuper()) {
       final PsiType extendsBound = type1.getExtendsBound();
       final PsiType superBound = type2.getSuperBound();

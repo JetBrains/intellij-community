@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,7 +63,7 @@ public class SliceRootNode extends SliceNode {
 
   @NotNull
   @Override
-  public List<? extends AbstractTreeNode> getChildrenUnderProgress(ProgressIndicator progress) {
+  public List<? extends AbstractTreeNode> getChildrenUnderProgress(@NotNull ProgressIndicator progress) {
     return (List<? extends AbstractTreeNode>)getChildren();
   }
 

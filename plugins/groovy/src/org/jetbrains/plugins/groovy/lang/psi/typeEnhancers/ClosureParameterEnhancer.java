@@ -84,7 +84,6 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     simpleTypes.put("replaceAll", "java.util.regex.Matcher");
     simpleTypes.put("replaceFirst", "java.util.regex.Matcher");
     simpleTypes.put("splitEachLine", "java.util.List<java.lang.String>");
-    simpleTypes.put("takeWhile", "java.lang.Character");
 
     iterations.add("each");
     iterations.add("any");
@@ -104,6 +103,8 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     iterations.add("findIndexValues");
     iterations.add("findIndexOf");
     iterations.add("count");
+    iterations.add("takeWhile");
+
   }
 
   @Override

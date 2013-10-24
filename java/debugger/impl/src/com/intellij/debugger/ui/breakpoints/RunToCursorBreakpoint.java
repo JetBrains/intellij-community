@@ -15,6 +15,7 @@
  */
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -30,11 +31,26 @@ import org.jetbrains.annotations.Nullable;
  */
 public class RunToCursorBreakpoint extends LineBreakpoint {
   private final boolean myRestoreBreakpoints;
+  @Nullable
+  private final SourcePosition myCustomPosition;
 
-  private RunToCursorBreakpoint(Project project, RangeHighlighter highlighter, boolean restoreBreakpoints) {
+  protected RunToCursorBreakpoint(@NotNull Project project, @NotNull RangeHighlighter highlighter, boolean restoreBreakpoints) {
     super(project, highlighter);
     setVisible(false);
     myRestoreBreakpoints = restoreBreakpoints;
+    myCustomPosition = null;
+  }
+
+  protected RunToCursorBreakpoint(@NotNull Project project, @NotNull SourcePosition pos, boolean restoreBreakpoints) {
+    super(project);
+    myCustomPosition = pos;
+    setVisible(false);
+    myRestoreBreakpoints = restoreBreakpoints;
+  }
+
+  @Override
+  public SourcePosition getSourcePosition() {
+    return myCustomPosition != null ? myCustomPosition : super.getSourcePosition();
   }
 
   public boolean isRestoreBreakpoints() {
@@ -64,7 +80,10 @@ public class RunToCursorBreakpoint extends LineBreakpoint {
     }
 
     final RunToCursorBreakpoint breakpoint = new RunToCursorBreakpoint(project, highlighter, restoreBreakpoints);
-    breakpoint.getHighlighter().dispose();
+    final RangeHighlighter h = breakpoint.getHighlighter();
+    if (h != null) {
+      h.dispose();
+    }
 
     return (RunToCursorBreakpoint)breakpoint.init();
   }

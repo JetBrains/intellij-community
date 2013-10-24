@@ -1,9 +1,9 @@
 class Pair<A, B> {
-  public final A first;
+  public final A <flown111>first;
   public final B second;
 
-  public Pair(A first, B second) {
-    this.first = <flown111>first;
+  public Pair(A <flown11111>first, B second) {
+    this.first = <flown1111>first;
     this.second = second;
   }
 
@@ -15,8 +15,8 @@ class Pair<A, B> {
     return second;
   }
 
-  public static <A, B> Pair<A, B> create(A first, B second) {
-    return new Pair<A,B>(<flown1111>first, second);
+  public static <A, B> Pair<A, B> create(A <flown1111111>first, B second) {
+    return new Pair<A,B>(<flown111111>first, second);
   }
 
   public final boolean equals(Object o){

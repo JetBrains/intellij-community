@@ -20,7 +20,9 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -678,39 +680,50 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       myAmend.setToolTipText(GitBundle.getString("commit.amend.tooltip"));
       myPanel.add(myAmend, c);
 
+      myPreviousMessage = myCheckinPanel.getCommitMessage();
+
       myAmend.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
           if (myAmend.isSelected()) {
-            if (myAmendedMessage != null) { // checkbox is selected not the first time
-              substituteCommitMessage(myAmendedMessage);
-            }
-            else {
-              loadMessageInModalTask(project);
+            if (myPreviousMessage.equals(myCheckinPanel.getCommitMessage())) { // if user has already typed something, don't revert it
+              if (myAmendedMessage == null) {
+                loadMessageInModalTask(project);
+              }
+              else { // checkbox is selected not the first time
+                substituteCommitMessage(myAmendedMessage);
+              }
             }
           }
           else {
-            myAmendedMessage = myCheckinPanel.getCommitMessage(); // save if user accidentally deselected amended message
-            myCheckinPanel.setCommitMessage(myPreviousMessage);
+            // there was the amended message, but user has changed it => not reverting
+            if (myCheckinPanel.getCommitMessage().equals(myAmendedMessage)) {
+              myCheckinPanel.setCommitMessage(myPreviousMessage);
+            }
           }
         }
       });
     }
 
     private void loadMessageInModalTask(@NotNull Project project) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          final String messageFromGit = getLastCommitMessage();
-          if (!StringUtil.isEmptyOrSpaces(messageFromGit)) {
-            UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                substituteCommitMessage(messageFromGit);
-              }
-            });
-          }
+      try {
+        String messageFromGit =
+          ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<String, VcsException>() {
+            @Override
+            public String compute() throws VcsException {
+              return getLastCommitMessage();
+            }
+          }, "Reading commit message...", false, project);
+        if (!StringUtil.isEmptyOrSpaces(messageFromGit)) {
+          substituteCommitMessage(messageFromGit);
+          myAmendedMessage = messageFromGit;
         }
-      }, "Reading commit message...", false, project);
+      }
+      catch (VcsException e) {
+        Messages.showErrorDialog(getComponent(), "Couldn't load commit message of the commit to amend.\n" + e.getMessage(),
+                                 "Commit Message not Loaded");
+        log.info(e);
+      }
     }
 
     private void substituteCommitMessage(@NotNull String newMessage) {
@@ -719,29 +732,34 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     }
 
     @Nullable
-    private String getLastCommitMessage() {
+    private String getLastCommitMessage() throws VcsException {
       Set<VirtualFile> roots = GitUtil.gitRoots(getSelectedFilePaths());
-      return StringUtil.join(roots, new Function<VirtualFile, String>() {
+      final Ref<VcsException> exception = Ref.create();
+      String joined = StringUtil.join(roots, new Function<VirtualFile, String>() {
         @Override
         public String fun(VirtualFile root) {
-          return getLastCommitMessage(root);
+          try {
+            return getLastCommitMessage(root);
+          }
+          catch (VcsException e) {
+            exception.set(e);
+            return null;
+          }
         }
       }, "\n");
+      if (!exception.isNull()) {
+        throw exception.get();
+      }
+      return joined;
     }
 
     @Nullable
-    private String getLastCommitMessage(@NotNull VirtualFile root) {
+    private String getLastCommitMessage(@NotNull VirtualFile root) throws VcsException {
       GitSimpleHandler h = new GitSimpleHandler(myProject, root, GitCommand.LOG);
       h.addParameters("--max-count=1");
       // only message: subject + body; "%-b" means that preceding line-feeds will be deleted if the body is empty
       h.addParameters("--pretty=%s%n%n%-b");
-      try {
-        return h.run();
-      }
-      catch (VcsException e) {
-        log.info(e);
-        return null;
-      }
+      return h.run();
     }
 
     @NotNull

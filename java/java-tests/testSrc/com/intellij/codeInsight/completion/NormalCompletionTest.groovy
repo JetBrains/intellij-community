@@ -323,6 +323,11 @@ public class NormalCompletionTest extends LightFixtureCompletionTestCase {
     checkResultByFile("MethodWithLeftParTailType2_after.java");
   }
 
+  public void testSuperErasure() throws Exception {
+    configureByFile("SuperErasure.java");
+    checkResultByFile("SuperErasure_after.java");
+  }
+
   public void testMethodWithLeftParTailTypeNoPairBrace() throws Exception {
     final boolean old = CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET;
     CodeInsightSettings.getInstance().AUTOINSERT_PAIR_BRACKET = false;

@@ -12,6 +12,7 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.asm4.Opcodes;
+import org.jetbrains.asm4.tree.ClassNode;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -26,16 +27,16 @@ public class MethodsUsageIndex extends CompilerOutputBaseGramsIndex<String> {
     return CompilerOutputIndexer.getInstance(project).getIndex(MethodsUsageIndex.class);
   }
 
-  public MethodsUsageIndex() {
-    super(new EnumeratorStringDescriptor());
+  public MethodsUsageIndex(final Project project) {
+    super(new EnumeratorStringDescriptor(), project);
   }
 
   @Override
-  protected DataIndexer<String, Multiset<MethodIncompleteSignature>, ClassReader> getIndexer() {
-    return new DataIndexer<String, Multiset<MethodIncompleteSignature>, ClassReader>() {
+  protected DataIndexer<String, Multiset<MethodIncompleteSignature>, ClassNode> getIndexer() {
+    return new DataIndexer<String, Multiset<MethodIncompleteSignature>, ClassNode>() {
       @NotNull
       @Override
-      public Map<String, Multiset<MethodIncompleteSignature>> map(final ClassReader inputData) {
+      public Map<String, Multiset<MethodIncompleteSignature>> map(final ClassNode inputData) {
         final Map<String, Multiset<MethodIncompleteSignature>> map = new HashMap<String, Multiset<MethodIncompleteSignature>>();
         for (final ClassFileData.MethodData data : new ClassFileData(inputData).getMethodDatas()) {
           for (final ClassFileData.MethodInsnSignature ms : data.getMethodInsnSignatures()) {
@@ -59,18 +60,9 @@ public class MethodsUsageIndex extends CompilerOutputBaseGramsIndex<String> {
     };
   }
 
-  public void clear() {
-    try {
-      myIndex.clear();
-    }
-    catch (StorageException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
   @Override
   protected ID<String, Multiset<MethodIncompleteSignature>> getIndexId() {
-    return generateIndexId(MethodsUsageIndex.class);
+    return generateIndexId("MethodsUsage");
   }
 
   @Override

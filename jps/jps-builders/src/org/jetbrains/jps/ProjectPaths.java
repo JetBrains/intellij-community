@@ -21,7 +21,6 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsDummyElement;
-import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
@@ -113,8 +112,7 @@ public class ProjectPaths {
         for (JpsModuleSourceRoot root : module.getSourceRoots()) {
           if (root.getRootType().equals(JavaSourceRootType.SOURCE) ||
               includeTests && root.getRootType().equals(JavaSourceRootType.TEST_SOURCE)) {
-            JavaSourceRootProperties properties = (JavaSourceRootProperties)((JpsSimpleElement<?>)root.getProperties()).getData();
-            String prefix = properties.getPackagePrefix();
+            String prefix = ((JavaSourceRootProperties)root.getProperties()).getPackagePrefix();
             if (!prefix.isEmpty()) {
               prefix = prefix.replace('.', '/');
               if (!prefix.endsWith("/")) {
@@ -215,10 +213,11 @@ public class ProjectPaths {
 
     @Override
     public boolean value(JpsDependencyElement dependency) {
-      if (myModule.equals(dependency.getContainingModule()) &&
-          dependency instanceof JpsSdkDependency && ((JpsSdkDependency)dependency).getSdkType().equals(JpsJavaSdkType.INSTANCE)) {
-        mySdkFound = true;
-        return false;
+      if (myModule.equals(dependency.getContainingModule())) {
+        if (dependency instanceof JpsSdkDependency && ((JpsSdkDependency)dependency).getSdkType().equals(JpsJavaSdkType.INSTANCE)) {
+          mySdkFound = true;
+          return false;
+        }
       }
       return mySdkFound;
     }

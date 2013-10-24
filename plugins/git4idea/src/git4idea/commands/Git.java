@@ -126,4 +126,7 @@ public interface Git {
 
   @NotNull
   List<GitCommit> history(@NotNull GitRepository repository, @NotNull String range);
+
+  @NotNull
+  GitCommandResult fetch(@NotNull GitRepository repository, @NotNull String url, @NotNull String remote, String... params);
 }

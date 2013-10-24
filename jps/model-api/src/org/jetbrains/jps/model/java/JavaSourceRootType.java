@@ -16,15 +16,13 @@
 package org.jetbrains.jps.model.java;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.ex.JpsElementTypeBase;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 /**
  * @author nik
  */
-public class JavaSourceRootType extends JpsElementTypeBase<JpsSimpleElement<JavaSourceRootProperties>> implements JpsModuleSourceRootType<JpsSimpleElement<JavaSourceRootProperties>> {
+public class JavaSourceRootType extends JpsElementTypeBase<JavaSourceRootProperties> implements JpsModuleSourceRootType<JavaSourceRootProperties> {
   public static final JavaSourceRootType SOURCE = new JavaSourceRootType();
   public static final JavaSourceRootType TEST_SOURCE = new JavaSourceRootType();
 
@@ -33,7 +31,7 @@ public class JavaSourceRootType extends JpsElementTypeBase<JpsSimpleElement<Java
 
   @NotNull
   @Override
-  public JpsSimpleElement<JavaSourceRootProperties> createDefaultProperties() {
-    return JpsElementFactory.getInstance().createSimpleElement(new JavaSourceRootProperties());
+  public JavaSourceRootProperties createDefaultProperties() {
+    return JpsJavaExtensionService.getInstance().createSourceRootProperties("");
   }
 }

@@ -57,10 +57,22 @@ public class FileNameCache {
 
     Object rawName = convertToBytesIfAsciiString(name);
     IntObjectLinkedMap.MapEntry<Object> entry = new IntObjectLinkedMap.MapEntry<Object>(id, rawName);
-    final int stripe = id % ourNameCache.length;
+    final int stripe = calcStripeIdFromNameId(id);
     synchronized (ourNameCache[stripe]) {
       return ourNameCache[stripe].cacheEntry(entry);
     }
+  }
+
+  private static int calcStripeIdFromNameId(int id) {
+    int h = id;
+    h -= (h<<6);
+    h ^= (h>>17);
+    h -= (h<<9);
+    h ^= (h<<4);
+    h -= (h<<3);
+    h ^= (h<<10);
+    h ^= (h>>15);
+    return h % ourNameCache.length;
   }
 
   private static Object convertToBytesIfAsciiString(@NotNull String name) {
@@ -80,7 +92,7 @@ public class FileNameCache {
 
   @NotNull
   private static IntObjectLinkedMap.MapEntry<Object> getEntry(int id) {
-    final int stripe = id % ourNameCache.length;
+    final int stripe = calcStripeIdFromNameId(id);
     synchronized (ourNameCache[stripe]) {
       IntObjectLinkedMap.MapEntry<Object> entry = ourNameCache[stripe].getCachedEntry(id);
       if (entry != null) {

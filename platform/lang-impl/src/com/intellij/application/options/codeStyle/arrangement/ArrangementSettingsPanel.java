@@ -16,16 +16,13 @@
 package com.intellij.application.options.codeStyle.arrangement;
 
 import com.intellij.application.options.CodeStyleAbstractPanel;
-import com.intellij.application.options.codeStyle.arrangement.action.RemoveArrangementRuleAction;
 import com.intellij.application.options.codeStyle.arrangement.additional.ForceArrangementPanel;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProviderImpl;
 import com.intellij.application.options.codeStyle.arrangement.group.ArrangementGroupingRulesPanel;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesPanel;
 import com.intellij.lang.Language;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.CommonShortcuts;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -43,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -99,10 +97,22 @@ public abstract class ArrangementSettingsPanel extends CodeStyleAbstractPanel {
     final List<CompositeArrangementSettingsToken> groupingTokens = settingsManager.getSupportedGroupingTokens();
     myGroupingRulesPanel.setVisible(groupingTokens != null && !groupingTokens.isEmpty());
 
-    AnAction removeRuleAction = new RemoveArrangementRuleAction();
-    removeRuleAction.copyFrom(ActionManager.getInstance().getAction("Arrangement.Rule.Remove"));
-    removeRuleAction.registerCustomShortcutSet(CommonShortcuts.DELETE, myMatchingRulesPanel);
-    myMatchingRulesPanel.putClientProperty(AnAction.ourClientProperty, ContainerUtilRt.newArrayList(removeRuleAction));
+    registerShortcut(ArrangementConstants.MATCHING_RULE_ADD, CommonShortcuts.getNew(), myMatchingRulesPanel);
+    registerShortcut(ArrangementConstants.MATCHING_RULE_REMOVE, CommonShortcuts.getDelete(), myMatchingRulesPanel);
+    registerShortcut(ArrangementConstants.MATCHING_RULE_MOVE_UP, CommonShortcuts.MOVE_UP, myMatchingRulesPanel);
+    registerShortcut(ArrangementConstants.MATCHING_RULE_MOVE_DOWN, CommonShortcuts.MOVE_DOWN, myMatchingRulesPanel);
+    final CustomShortcutSet edit = new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0));
+    registerShortcut(ArrangementConstants.MATCHING_RULE_EDIT, edit, myMatchingRulesPanel);
+
+    registerShortcut(ArrangementConstants.GROUPING_RULE_MOVE_UP, CommonShortcuts.MOVE_UP, myGroupingRulesPanel);
+    registerShortcut(ArrangementConstants.GROUPING_RULE_MOVE_DOWN, CommonShortcuts.MOVE_DOWN, myGroupingRulesPanel);
+  }
+
+  private void registerShortcut(@NotNull String actionId, @NotNull ShortcutSet shortcut, @NotNull JComponent component) {
+    final AnAction action = ActionManager.getInstance().getAction(actionId);
+    if (action != null) {
+      action.registerCustomShortcutSet(shortcut, component, this);
+    }
   }
 
   @Nullable

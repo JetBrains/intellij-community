@@ -31,6 +31,7 @@ public class GradleIcons {
   public static final Icon Gradle = load("/icons/gradle.png"); // 16x16
   public static final Icon GradleImport = load("/icons/gradleImport.png"); // 16x16
   public static final Icon GradleNavigate = load("/icons/gradleNavigate.png"); // 16x16
+  public static final Icon GradlePlugin = load("/icons/gradlePlugin.png"); // 16x16
   public static final Icon GradleSync = load("/icons/gradleSync.png"); // 16x16
   public static final Icon ToolWindowGradle = load("/icons/toolWindowGradle.png"); // 13x13
 }

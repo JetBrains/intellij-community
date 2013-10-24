@@ -1138,7 +1138,7 @@
       <value>
         <option name="FOREGROUND" value="4cd6a3" />
         <option name="BACKGROUND" value="3d0909" />
-        <option name="EFFECT_COLOR" value="ff0000" />
+        <option name="EFFECT_COLOR" value="bc3f3c" />
         <option name="EFFECT_TYPE" value="2" />
       </value>
     </option>
@@ -1163,7 +1163,7 @@
       <value>
         <option name="FOREGROUND" value="9396c0" />
         <option name="FONT_TYPE" value="1" />
-        <option name="EFFECT_COLOR" value="ffff00" />
+        <option name="EFFECT_COLOR" value="aeae80" />
         <option name="EFFECT_TYPE" value="2" />
       </value>
     </option>

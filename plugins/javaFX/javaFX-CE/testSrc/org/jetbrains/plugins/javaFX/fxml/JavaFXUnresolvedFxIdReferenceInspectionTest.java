@@ -43,6 +43,13 @@ public class JavaFXUnresolvedFxIdReferenceInspectionTest extends AbstractJavaFXQ
     assertEmpty(intentionActions);
   }
 
+  public void testIncludeBtnWithController() throws Exception {
+    myFixture.addFileToProject("btn.fxml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                                           "<?import javafx.scene.control.*?>\n" +
+                                           "<Button/>");
+    doTest("MyController");
+  }
+
   public void testFieldsFromControllerSuper() throws Exception {
     myFixture.addClass("import javafx.scene.control.RadioButton;\n" +
                        "public class SuperController {\n" +

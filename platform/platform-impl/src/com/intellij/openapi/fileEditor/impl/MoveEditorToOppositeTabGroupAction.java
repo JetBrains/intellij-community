@@ -42,9 +42,13 @@ public class MoveEditorToOppositeTabGroupAction extends AnAction implements Dumb
         final EditorWithProviderComposite editorComposite = window.getSelectedEditor();
         final HistoryEntry entry = editorComposite.currentStateAsHistoryEntry();
         ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(project)).openFileImpl3(siblings[0], vFile, true, entry, true);
-        window.closeFile(vFile);
+        closeOldFile(vFile, window);
       }
     }
+  }
+
+  protected void closeOldFile(VirtualFile vFile, EditorWindow window) {
+    window.closeFile(vFile);
   }
 
   @Override

@@ -193,7 +193,7 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
     return null;
   }
 
-  private static XmlTag getIncludedRoot(XmlTag context) {
+  public static XmlTag getIncludedRoot(XmlTag context) {
     if (context == null) return null;
     final XmlAttribute xmlAttribute = context.getAttribute(FxmlConstants.FX_ELEMENT_SOURCE);
     if (xmlAttribute != null) {

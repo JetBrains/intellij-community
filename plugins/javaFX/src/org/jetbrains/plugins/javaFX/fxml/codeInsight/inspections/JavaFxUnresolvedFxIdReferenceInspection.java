@@ -39,6 +39,7 @@ import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxDefaultPropertyElementDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.refs.JavaFxFieldIdReferenceProvider;
 
 /**
@@ -87,14 +88,23 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
     if (attributeValue == null) return null;
     final PsiElement parent = attributeValue.getParent();
     if (parent instanceof XmlAttribute) {
-      final XmlTag tag = ((XmlAttribute)parent).getParent();
-      if (tag != null) {
-        final XmlElementDescriptor descriptor = tag.getDescriptor();
-        if (descriptor instanceof JavaFxClassBackedElementDescriptor) {
-          final PsiElement declaration = descriptor.getDeclaration();
-          if (declaration instanceof PsiClass) {
-            return (PsiClass)declaration;
-          }
+      return checkClass(((XmlAttribute)parent).getParent());
+    }
+    return null;
+  }
+
+  private static PsiClass checkClass(XmlTag tag) {
+    if (tag != null) {
+      final XmlElementDescriptor descriptor = tag.getDescriptor();
+      if (descriptor instanceof JavaFxClassBackedElementDescriptor) {
+        final PsiElement declaration = descriptor.getDeclaration();
+        if (declaration instanceof PsiClass) {
+          return (PsiClass)declaration;
+        }
+      } else if (descriptor instanceof JavaFxDefaultPropertyElementDescriptor) {
+        final XmlTag includedRoot = JavaFxDefaultPropertyElementDescriptor.getIncludedRoot(tag);
+        if (includedRoot != null && !includedRoot.equals(tag)) {
+          return checkClass(includedRoot);
         }
       }
     }

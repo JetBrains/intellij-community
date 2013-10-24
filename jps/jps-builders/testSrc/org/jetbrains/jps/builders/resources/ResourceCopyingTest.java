@@ -17,7 +17,6 @@ package org.jetbrains.jps.builders.resources;
 
 import com.intellij.util.PathUtil;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
-import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -60,9 +59,9 @@ public class ResourceCopyingTest extends JpsBuildTestCase {
     String file = createFile("src/a.xml");
     JpsModule m = addModule("m", PathUtil.getParentPath(file));
     JpsModuleSourceRoot sourceRoot = assertOneElement(m.getSourceRoots());
-    JpsTypedModuleSourceRoot<JpsSimpleElement<JavaSourceRootProperties>> typed = sourceRoot.asTyped(JavaSourceRootType.SOURCE);
+    JpsTypedModuleSourceRoot<JavaSourceRootProperties> typed = sourceRoot.asTyped(JavaSourceRootType.SOURCE);
     assertNotNull(typed);
-    typed.getProperties().setData(new JavaSourceRootProperties("xxx"));
+    typed.getProperties().setPackagePrefix("xxx");
     rebuildAll();
     assertOutput(m, fs().dir("xxx").file("a.xml"));
   }

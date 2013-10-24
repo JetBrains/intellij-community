@@ -39,6 +39,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -70,6 +71,9 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     // FixedSizeButton isn't focusable but it should be selectable via keyboard.
     if (ApplicationManager.getApplication() != null) {  // avoid crash at design time
       new MyDoClickAction(myBrowseButton).registerShortcut(myComponent);
+    }
+    if (UIUtil.isUnderIntelliJLaF() || UIUtil.isUnderDarcula()) {
+      setBorder(new EmptyBorder(0, 1, 0, 1));
     }
   }
 

@@ -25,7 +25,7 @@ public class FindSymbolParameters {
   private final String myCompletePattern;
   private final String myLocalPatternName;
   private final GlobalSearchScope mySearchScope;
-  private volatile IdFilter myIdFilter;
+  private final IdFilter myIdFilter;
 
   public FindSymbolParameters(@NotNull String pattern, @NotNull String name, @NotNull GlobalSearchScope scope, @Nullable IdFilter idFilter) {
     myCompletePattern = pattern;
@@ -48,10 +48,6 @@ public class FindSymbolParameters {
 
   public @Nullable IdFilter getIdFilter() {
     return myIdFilter;
-  }
-
-  public void setIdFilter(IdFilter idFilter) {
-    myIdFilter = idFilter;
   }
 
   public static FindSymbolParameters wrap(@NotNull String pattern, @NotNull Project project, boolean searchInLibraries) {

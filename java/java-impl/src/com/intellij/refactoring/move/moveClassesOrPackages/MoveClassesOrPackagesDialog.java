@@ -25,6 +25,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
@@ -54,7 +55,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.awt.*;
@@ -506,6 +506,6 @@ public class MoveClassesOrPackagesDialog extends RefactoringDialog {
   }
 
   private List<VirtualFile> getSourceRoots() {
-    return ProjectRootManager.getInstance(myProject).getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES);
+    return JavaProjectRootsUtil.getSuitableDestinationSourceRoots(myProject);
   }
 }

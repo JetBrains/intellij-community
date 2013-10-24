@@ -442,17 +442,7 @@ public class ColorAndFontDescriptionPanel extends JPanel {
       myInheritanceLabel.setEnabled(description.isInherited());
       myInheritAttributesBox.setEnabled(true);
       myInheritAttributesBox.setSelected(description.isInherited());
-      boolean editingAllowed = !description.isInherited();
-      myCbBackground.setEnabled(editingAllowed);
-      myCbForeground.setEnabled(editingAllowed);
-      myCbBold.setEnabled(editingAllowed);
-      myCbItalic.setEnabled(editingAllowed);
-      myCbEffects.setEnabled(editingAllowed);
-      myCbErrorStripe.setEnabled(editingAllowed);
-      myErrorStripeColorChooser.setEditable(editingAllowed);
-      myEffectsColorChooser.setEditable(editingAllowed);
-      myForegroundChooser.setEditable(editingAllowed);
-      myBackgroundChooser.setEditable(editingAllowed);
+      setEditEnabled(!description.isInherited(), description);
     }
     else {
       myInheritanceLabel.setText("X");
@@ -462,7 +452,21 @@ public class ColorAndFontDescriptionPanel extends JPanel {
       myInheritanceLabel.setForeground(myLabelFont.getBackground());
       myInheritAttributesBox.setEnabled(false);
       myInheritAttributesBox.setSelected(false);
+      setEditEnabled(true, description);
     }
+  }
+
+  private void setEditEnabled(boolean isEditEnabled, ColorAndFontDescription description) {
+    myCbBackground.setEnabled(isEditEnabled && description.isBackgroundEnabled());
+    myCbForeground.setEnabled(isEditEnabled && description.isForegroundEnabled());
+    myCbBold.setEnabled(isEditEnabled && description.isFontEnabled());
+    myCbItalic.setEnabled(isEditEnabled && description.isFontEnabled());
+    myCbEffects.setEnabled(isEditEnabled && description.isEffectsColorEnabled());
+    myCbErrorStripe.setEnabled(isEditEnabled && description.isErrorStripeEnabled());
+    myErrorStripeColorChooser.setEditable(isEditEnabled);
+    myEffectsColorChooser.setEditable(isEditEnabled);
+    myForegroundChooser.setEditable(isEditEnabled);
+    myBackgroundChooser.setEditable(isEditEnabled);
   }
 
   public void apply(ColorAndFontDescription description, EditorColorsScheme scheme) {

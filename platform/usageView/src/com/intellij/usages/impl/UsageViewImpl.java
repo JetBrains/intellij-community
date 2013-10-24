@@ -57,6 +57,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.DialogUtil;
@@ -438,7 +439,22 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       }
     });
 
-    //TODO: install speed search. Not in openapi though. It makes sense to create a common TreeEnchancer service.
+    TreeUIHelper.getInstance().installTreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
+      @Override
+      public String convert(TreePath o) {
+        Object value = o.getLastPathComponent();
+        TreeCellRenderer renderer = myTree.getCellRenderer();
+        if (renderer instanceof UsageViewTreeCellRenderer) {
+          UsageViewTreeCellRenderer coloredRenderer = (UsageViewTreeCellRenderer)renderer;
+          coloredRenderer.clear();
+          coloredRenderer.customizeCellRenderer(null, value, false, false, false, 0, false);
+          return coloredRenderer.getCharSequence(true).toString();
+        }
+        else {
+          return value == null? null : value.toString();
+        }
+      }
+    }, true);
   }
 
   @NotNull

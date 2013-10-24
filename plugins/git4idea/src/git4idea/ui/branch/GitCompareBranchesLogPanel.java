@@ -37,6 +37,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Kirill Likhodedov
@@ -146,10 +147,10 @@ class GitCompareBranchesLogPanel extends JPanel {
   private static void addSelectionListener(@NotNull GitCommitListPanel sourcePanel,
                                            @NotNull final GitCommitListPanel otherPanel,
                                            @NotNull final ChangesBrowser changesBrowser) {
-    sourcePanel.addListSelectionListener(new Consumer<GitCommit>() {
+    sourcePanel.addListMultipleSelectionListener(new Consumer<java.util.List<Change>>() {
       @Override
-      public void consume(GitCommit commit) {
-        changesBrowser.setChangesToDisplay(new ArrayList<Change>(commit.getChanges()));
+      public void consume(List<Change> changes) {
+        changesBrowser.setChangesToDisplay(changes);
         otherPanel.clearSelection();
       }
     });

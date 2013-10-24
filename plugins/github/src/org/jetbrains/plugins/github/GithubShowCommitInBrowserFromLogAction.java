@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.github;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
@@ -41,7 +41,7 @@ public class GithubShowCommitInBrowserFromLogAction extends GithubShowCommitInBr
 
   @Nullable
   private static EventData collectData(AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDefault()) {
       return null;
     }

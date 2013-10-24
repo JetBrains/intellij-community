@@ -176,7 +176,7 @@ public class GithubLoginPanel {
     return mySavePasswordCheckBox.isSelected();
   }
 
-  public JComponent getPreferrableFocusComponent() {
+  public JComponent getPreferableFocusComponent() {
     return myLoginTextField.isVisible() ? myLoginTextField : myPasswordField;
   }
 

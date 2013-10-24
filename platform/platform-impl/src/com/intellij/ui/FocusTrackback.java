@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import com.intellij.openapi.wm.FocusCommand;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.LayoutFocusTraversalPolicyExt;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.util.containers.WeakKeyWeakValueHashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +45,7 @@ import java.util.WeakHashMap;
 
 public class FocusTrackback {
 
-  private static Logger LOG = Logger.getInstance("FocusTrackback");
+  private static final Logger LOG = Logger.getInstance("FocusTrackback");
 
   private Window myParentWindow;
 
@@ -54,15 +55,14 @@ public class FocusTrackback {
   private Component myLocalFocusOwner;
 
   private static final Map<Window, List<FocusTrackback>> ourRootWindowToParentsStack = new WeakHashMap<Window, List<FocusTrackback>>();
-  private static final Map<Window, WeakReference<Component>> ourRootWindowToFocusedMap =
-      new WeakHashMap<Window, WeakReference<Component>>();
+  private static final Map<Window, Component> ourRootWindowToFocusedMap = new WeakKeyWeakValueHashMap<Window, Component>();
 
-  private String myRequestorName;
+  private final String myRequestorName;
   private ComponentQuery myFocusedComponentQuery;
   private boolean myMustBeShown;
 
   private boolean myConsumed;
-  private WeakReference myRequestor;
+  private final WeakReference myRequestor;
   private boolean mySheduledForRestore;
   private boolean myWillBeSheduledForRestore;
   private boolean myForcedRestore;
@@ -136,12 +136,11 @@ public class FocusTrackback {
   }
 
   public static Component getFocusFor(Window parent) {
-    final WeakReference<Component> ref = ourRootWindowToFocusedMap.get(parent);
-    return ref != null ? ref.get() : null;
+    return ourRootWindowToFocusedMap.get(parent);
   }
 
   private static void setFocusFor(Window parent, Component focus) {
-    ourRootWindowToFocusedMap.put(parent, new WeakReference<Component>(focus));
+    ourRootWindowToFocusedMap.put(parent, focus);
   }
 
   private static boolean wrongOS() {

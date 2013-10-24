@@ -160,11 +160,11 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     return new ViewIterator(this, startingIndex < 0 ? getElementCount() : startingIndex);
   }
 
-  public void addChangeListener(PropertyChangeListener listener) {
+  public void addChangeListener(@NotNull PropertyChangeListener listener) {
     myChangeSupport.addPropertyChangeListener(listener);
   }
 
-  public void removeChangeListener(PropertyChangeListener listener) {
+  public void removeChangeListener(@NotNull PropertyChangeListener listener) {
     myChangeSupport.removePropertyChangeListener(listener);
   }
 

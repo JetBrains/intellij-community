@@ -108,14 +108,14 @@ public class DfaPsiUtil {
     return true;
   }
 
-  private static Set<PsiField> getNotNullInitializedFields(final PsiMethod constructor, PsiClass containingClass) {
+  private static Set<PsiField> getNotNullInitializedFields(final PsiMethod constructor, final PsiClass containingClass) {
     final PsiCodeBlock body = constructor.getBody();
     if (body == null) return Collections.emptySet();
-    final PsiField[] fields = containingClass.getFields();
     return CachedValuesManager.getCachedValue(constructor, new CachedValueProvider<Set<PsiField>>() {
       @Nullable
       @Override
       public Result<Set<PsiField>> compute() {
+        final PsiCodeBlock body = constructor.getBody();
         final Map<PsiField, Boolean> map = ContainerUtil.newHashMap();
         final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner(body) {
           boolean shouldCheck;
@@ -131,7 +131,7 @@ public class DfaPsiUtil {
             if (shouldCheck) {
               Instruction instruction = instructionState.getInstruction();
               if (instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException()) {
-                for (PsiField field : fields) {
+                for (PsiField field : containingClass.getFields()) {
                   if (!instructionState.getMemoryState().isNotNull(getFactory().getVarFactory().createVariableValue(field, false))) {
                     map.put(field, false);
                   } else if (!map.containsKey(field)) {

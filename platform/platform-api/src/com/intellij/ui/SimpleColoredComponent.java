@@ -37,6 +37,7 @@ import javax.swing.border.Border;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
@@ -113,6 +114,10 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     myBorder = new MyBorder();
     myFixedWidths = new TIntIntHashMap(10);
     setOpaque(true);
+  }
+
+  public ColoredIterator iterator() {
+    return new MyIterator();
   }
 
   public boolean isIconOnTheRight() {
@@ -843,16 +848,16 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     }
   }
 
-  @Override
-  public String toString() {
-    final StringBuilder result = new StringBuilder();
-    for (String each : myFragments) {
-      result.append(each);
-    }
-
-    return result.toString();
+  public CharSequence getCharSequence(boolean mainOnly) {
+    List<String> fragments = mainOnly && myMainTextLastIndex > -1 && myMainTextLastIndex + 1 < myFragments.size()?
+      myFragments.subList(0, myMainTextLastIndex + 1) : myFragments;
+    return StringUtil.join(fragments, "");
   }
 
+  @Override
+  public String toString() {
+    return getCharSequence(false).toString();
+  }
 
   public void change(@NotNull Runnable runnable, boolean autoInvalidate) {
     boolean old = myAutoInvalidate;
@@ -912,6 +917,86 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     @Override
     public void run() {
       BrowserUtil.launchBrowser(myUrl);
+    }
+  }
+
+  public interface ColoredIterator extends Iterator<String> {
+    int getOffset();
+    int getEndOffset();
+    @NotNull
+    String getFragment();
+    @NotNull
+    SimpleTextAttributes getTextAttributes();
+
+    int split(int offset, @NotNull SimpleTextAttributes attributes);
+  }
+
+  private class MyIterator implements ColoredIterator {
+    int myIndex = -1;
+    int myOffset;
+    int myEndOffset;
+
+    @Override
+    public int getOffset() {
+      return myOffset;
+    }
+
+    @Override
+    public int getEndOffset() {
+      return myEndOffset;
+    }
+
+    @NotNull
+    @Override
+    public String getFragment() {
+      return myFragments.get(myIndex);
+    }
+
+    @NotNull
+    @Override
+    public SimpleTextAttributes getTextAttributes() {
+      return myAttributes.get(myIndex);
+    }
+
+    @Override
+    public int split(int offset, @NotNull SimpleTextAttributes attributes) {
+      if (offset < 0 || offset > myEndOffset - myOffset) {
+        throw new IllegalArgumentException(offset + " is not within [0, " + (myEndOffset - myOffset) + "]");
+      }
+      if (offset == myEndOffset - myOffset) {   // replace
+        myAttributes.set(myIndex, attributes);
+      }
+      else if (offset > 0) {   // split
+        String text = getFragment();
+        myFragments.set(myIndex, text.substring(0, offset));
+        myAttributes.add(myIndex, attributes);
+        myFragments.add(myIndex + 1, text.substring(offset));
+        if (myFragmentTags != null && myFragmentTags.size() > myIndex) {
+          myFragmentTags.add(myIndex, myFragments.get(myIndex));
+        }
+        myIndex ++;
+      }
+      myOffset += offset;
+      return myOffset;
+    }
+
+    @Override
+    public boolean hasNext() {
+      return myIndex + 1 < myFragments.size();
+    }
+
+    @Override
+    public String next() {
+      myIndex ++;
+      myOffset = myEndOffset;
+      String text = getFragment();
+      myEndOffset += text.length();
+      return text;
+    }
+
+    @Override
+    public void remove() {
+      throw new UnsupportedOperationException();
     }
   }
 }

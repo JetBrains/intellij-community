@@ -20,6 +20,7 @@ import com.intellij.lang.java.JavaFindUsagesProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
@@ -40,7 +41,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.intellij.psi.util.FileTypeUtils;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import java.io.File;
 import java.util.*;
@@ -284,8 +284,7 @@ public class MoveClassesOrPackagesUtil {
       directory = directories[0];
     }
     else {
-      final List<VirtualFile> contentSourceRoots = ProjectRootManager.getInstance(project).getModuleSourceRoots(
-        JavaModuleSourceRootTypes.SOURCES);
+      final List<VirtualFile> contentSourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(project);
       if (contentSourceRoots.size() == 1 && (baseDirVirtualFile == null || fileIndex.isInTestSourceContent(contentSourceRoots.get(0)) == isBaseDirInTestSources)) {
         directory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
           @Override

@@ -5,20 +5,23 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogFilter;
+import com.intellij.vcs.log.data.VcsLogFilterer;
 import com.intellij.vcs.log.graph.elements.GraphElement;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graphmodel.FragmentManager;
 import com.intellij.vcs.log.graphmodel.GraphFragment;
 import com.intellij.vcs.log.printmodel.SelectController;
 import com.intellij.vcs.log.ui.frame.MainFrame;
-import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.TableModel;
+import java.util.Collection;
 
 /**
  * @author erokhins
@@ -30,23 +33,23 @@ public class VcsLogUI {
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final MainFrame myMainFrame;
   @NotNull private final VcsLogColorManager myColorManager;
+  @NotNull private final VcsLogFilterer myFilterer;
 
   @Nullable private GraphElement prevGraphElement;
-  @NotNull  private TableModel myGraphModel;
 
-  public VcsLogUI(@NotNull VcsLogDataHolder logDataHolder, @NotNull Project project, @NotNull VcsLogColorManager manager) {
+  public VcsLogUI(@NotNull VcsLogDataHolder logDataHolder, @NotNull Project project, @NotNull VcsLogSettings settings,
+                  @NotNull VcsLogColorManager manager) {
     myLogDataHolder = logDataHolder;
     myColorManager = manager;
-    myMainFrame = new MainFrame(myLogDataHolder, this, project);
+    myFilterer = new VcsLogFilterer(logDataHolder, this);
+    myMainFrame = new MainFrame(myLogDataHolder, this, project, settings);
     project.getMessageBus().connect(project).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new Runnable() {
       @Override
       public void run() {
-        reloadModel();
-        updateUI();
+        applyFilters();
       }
     });
-    reloadModel();
-    updateUI();
+    applyFilters();
   }
 
   @NotNull
@@ -64,15 +67,14 @@ public class VcsLogUI {
     });
   }
 
-  public void reloadModel() {
-    myGraphModel = new GraphTableModel(myLogDataHolder);
+  public void setModel(@NotNull TableModel model) {
+    myMainFrame.getGraphTable().setModel(model);
   }
 
   public void updateUI() {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        myMainFrame.getGraphTable().setModel(myGraphModel);
         myMainFrame.getGraphTable().setPreferredColumnWidths();
         myMainFrame.getGraphTable().repaint();
         myMainFrame.refresh();
@@ -180,4 +182,24 @@ public class VcsLogUI {
   public VcsLogColorManager getColorManager() {
     return myColorManager;
   }
+
+  @NotNull
+  public VcsLogFilterer getFilterer() {
+    return myFilterer;
+  }
+
+  @NotNull
+  public VcsLogDataHolder getLogDataHolder() {
+    return myLogDataHolder;
+  }
+
+  private void applyFilters() {
+    myFilterer.applyFiltersAndUpdateUi(collectFilters());
+  }
+
+  @NotNull
+  private Collection<VcsLogFilter> collectFilters() {
+    return myMainFrame.getFilterUi().getFilters();
+  }
+
 }

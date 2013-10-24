@@ -26,16 +26,15 @@ import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
-import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.EventListener;
 import java.util.List;
 
 /**
@@ -207,7 +206,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
   @Nullable
   public SourceFolder addSourceFolder(@NotNull final VirtualFile file, boolean isTestSource, String packagePrefix) {
     return addSourceFolder(file, isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE,
-                           JpsElementFactory.getInstance().createSimpleElement(new JavaSourceRootProperties(packagePrefix)));
+                           JpsJavaExtensionService.getInstance().createSourceRootProperties(packagePrefix));
   }
 
   @Nullable

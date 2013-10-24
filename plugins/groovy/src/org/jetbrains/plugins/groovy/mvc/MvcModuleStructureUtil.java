@@ -49,9 +49,6 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.JpsElementFactory;
-import org.jetbrains.jps.model.JpsSimpleElement;
-import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -87,7 +84,7 @@ public class MvcModuleStructureUtil {
                                                                              final MvcProjectStructure structure) {
     ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(structure.myModule);
 
-    Map<VirtualFile, JpsModuleSourceRootType> sourceRoots = new HashMap<VirtualFile, JpsModuleSourceRootType>();
+    Map<VirtualFile, JpsModuleSourceRootType<?>> sourceRoots = new HashMap<VirtualFile, JpsModuleSourceRootType<?>>();
     for (ContentEntry entry : moduleRootManager.getContentEntries()) {
       for (SourceFolder folder : entry.getSourceFolders()) {
         sourceRoots.put(folder.getFile(), folder.getRootType());
@@ -99,7 +96,7 @@ public class MvcModuleStructureUtil {
     final List<Consumer<ContentEntry>> actions = ContainerUtil.newArrayList();
 
     for (Map.Entry<JpsModuleSourceRootType<?>, Collection<String>> entry : structure.getSourceFolders().entrySet()) {
-      JpsModuleSourceRootType rootType = entry.getKey();
+      JpsModuleSourceRootType<?> rootType = entry.getKey();
 
       for (String src : entry.getValue()) {
         addSourceFolder(root, src, rootType, actions, sourceRoots);
@@ -145,7 +142,7 @@ public class MvcModuleStructureUtil {
 
   public static void removeSrcFolderFromRoots(final VirtualFile file,
                                               List<Consumer<ContentEntry>> actions,
-                                              Map<VirtualFile, JpsModuleSourceRootType> sourceRoots) {
+                                              Map<VirtualFile, JpsModuleSourceRootType<?>> sourceRoots) {
     if (sourceRoots.containsKey(file)) {
       actions.add(new Consumer<ContentEntry>() {
         public void consume(ContentEntry contentEntry) {
@@ -204,17 +201,17 @@ public class MvcModuleStructureUtil {
     return library.getModifiableModel();
   }
 
-  public static void addSourceFolder(@NotNull VirtualFile root,
-                                     @NotNull String relativePath,
-                                     final JpsModuleSourceRootType rootType,
-                                     List<Consumer<ContentEntry>> actions,
-                                     Map<VirtualFile, JpsModuleSourceRootType> sourceRoots) {
+  private static void addSourceFolder(@NotNull VirtualFile root,
+                                      @NotNull String relativePath,
+                                      final JpsModuleSourceRootType<?> rootType,
+                                      List<Consumer<ContentEntry>> actions,
+                                      Map<VirtualFile, JpsModuleSourceRootType<?>> sourceRoots) {
     final VirtualFile src = root.findFileByRelativePath(relativePath);
     if (src == null) {
       return;
     }
 
-    JpsModuleSourceRootType existingRootType = sourceRoots.get(src);
+    JpsModuleSourceRootType<?> existingRootType = sourceRoots.get(src);
 
     if (rootType == JavaSourceRootType.TEST_SOURCE && (existingRootType != null && existingRootType != JavaSourceRootType.TEST_SOURCE)) { // see http://youtrack.jetbrains.net/issue/IDEA-70642
       actions.add(new Consumer<ContentEntry>() {
@@ -223,8 +220,7 @@ public class MvcModuleStructureUtil {
           for (SourceFolder folder : entry.getSourceFolders()) {
             if (Comparing.equal(folder.getFile(), src)) {
               entry.removeSourceFolder(folder);
-              JpsSimpleElement<JavaSourceRootProperties> properties = JpsElementFactory.getInstance().createSimpleElement(new JavaSourceRootProperties(""));
-              entry.addSourceFolder(src, rootType, properties);
+              entry.addSourceFolder(src, rootType);
               break;
             }
           }
@@ -235,8 +231,7 @@ public class MvcModuleStructureUtil {
 
     actions.add(new Consumer<ContentEntry>() {
       public void consume(ContentEntry contentEntry) {
-        JpsSimpleElement<JavaSourceRootProperties> properties = JpsElementFactory.getInstance().createSimpleElement(new JavaSourceRootProperties(""));
-        contentEntry.addSourceFolder(src, rootType, properties);
+        contentEntry.addSourceFolder(src, rootType);
       }
     });
   }
@@ -262,13 +257,13 @@ public class MvcModuleStructureUtil {
     }
   }
 
-  public static boolean checkValidity(VirtualFile pluginDir) {
+  private static boolean checkValidity(VirtualFile pluginDir) {
     pluginDir.refresh(false, false);
     return pluginDir.isValid();
   }
 
-  public static List<Consumer<ModifiableRootModel>> getUpdateProjectStructureActions(Collection<VirtualFile> appRoots,
-                                                                                     MvcProjectStructure structure) {
+  private static List<Consumer<ModifiableRootModel>> getUpdateProjectStructureActions(Collection<VirtualFile> appRoots,
+                                                                                      MvcProjectStructure structure) {
     for (final VirtualFile appRoot : ModuleRootManager.getInstance(structure.myModule).getContentRoots()) {
       appRoot.refresh(false, false);
     }

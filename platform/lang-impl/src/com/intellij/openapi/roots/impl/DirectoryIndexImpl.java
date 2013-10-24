@@ -1213,7 +1213,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     // orderEntries must be sorted BY_OWNER_MODULE
-    private void fillMapWithOrderEntries(@NotNull NewVirtualFile root,
+    private void fillMapWithOrderEntries(@NotNull final NewVirtualFile root,
                                          @NotNull final OrderEntry[] orderEntries,
                                          @Nullable final Module module,
                                          @Nullable final NewVirtualFile libraryClassRoot,
@@ -1222,32 +1222,30 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                          @Nullable final ProgressIndicator progress) {
       assertWritable();
       if (!isValid(root)) return;
-      VfsUtilCore.visitChildrenRecursively(root, new DirectoryVisitor() {
+      VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
         private final Stack<OrderEntry[]> myEntries = new Stack<OrderEntry[]>();
 
         @Override
-        protected DirectoryInfo updateInfo(@NotNull VirtualFile dir) {
+        public boolean visitFile(@NotNull VirtualFile file) {
           if (progress != null) {
             progress.checkCanceled();
           }
-          if (isIgnored(dir)) return null;
+          if (!file.isDirectory() && !file.equals(root) || isIgnored(file)) return false;
 
-          int dirId = ((NewVirtualFile)dir).getId();
-          DirectoryInfo info = getInfo(dirId); // do not create it here!
-          if (info == null) return null;
+          int fileId = ((NewVirtualFile)file).getId();
+          DirectoryInfo info = getInfo(fileId); // do not create it here!
+          if (info == null) return false;
 
           if (module != null) {
-            if (info.getModule() != module) return null;
-            if (!info.isInModuleSource()) return null;
+            if (info.getModule() != module || !info.isInModuleSource()) return false;
           }
           else if (libraryClassRoot != null) {
-            if (!libraryClassRoot.equals(info.getLibraryClassRoot())) return null;
-            if (info.isInModuleSource()) return null;
+            if (!libraryClassRoot.equals(info.getLibraryClassRoot()) || info.isInModuleSource()) return false;
           }
           else if (librarySourceRoot != null) {
-            if (!info.isInLibrarySource()) return null;
-            if (!librarySourceRoot.equals(info.getSourceRoot())) return null;
-            if (info.hasLibraryClassRoot()) return null;
+            if (!info.isInLibrarySource()
+                || !librarySourceRoot.equals(info.getSourceRoot())
+                || info.hasLibraryClassRoot()) return false;
           }
 
           OrderEntry[] oldParentEntries = myEntries.isEmpty() ? null : myEntries.peek();
@@ -1255,13 +1253,13 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           myEntries.push(oldEntries);
 
           OrderEntry[] newOrderEntries = info.calcNewOrderEntries(orderEntries, parentInfo, oldParentEntries);
-          info = with(dirId, info, null, null, null, null, 0, newOrderEntries);
+          with(fileId, info, null, null, null, null, 0, newOrderEntries);
 
-          return info;
+          return true;
         }
 
         @Override
-        protected void afterChildrenVisited(@NotNull VirtualFile file, @NotNull DirectoryInfo info) {
+        public void afterChildrenVisited(@NotNull VirtualFile file) {
           myEntries.pop();
         }
       });

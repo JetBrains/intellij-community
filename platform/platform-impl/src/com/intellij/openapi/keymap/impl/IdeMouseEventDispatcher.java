@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,7 +125,6 @@ public final class IdeMouseEventDispatcher {
    *         to normal event dispatching.
    */
   public boolean dispatchMouseEvent(MouseEvent e) {
-    boolean ignore = false;
     Component c = e.getComponent();
 
     //frame activation by mouse click
@@ -144,6 +143,7 @@ public final class IdeMouseEventDispatcher {
       resetPopupTrigger(e);
     }
 
+    boolean ignore = false;
     if (!(e.getID() == MouseEvent.MOUSE_PRESSED ||
           e.getID() == MouseEvent.MOUSE_RELEASED ||
           e.getID() == MOUSE_CLICKED)) {

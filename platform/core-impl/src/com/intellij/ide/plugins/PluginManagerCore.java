@@ -24,9 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExtensionAreas;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.LogProvider;
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,6 +32,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformUtilsCore;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
@@ -897,7 +896,7 @@ public class PluginManagerCore {
     final List<File> classPath = descriptor.getClassPath();
     final ClassLoader loader =
         createPluginClassLoader(classPath.toArray(new File[classPath.size()]), new ClassLoader[]{parentLoader}, descriptor);
-    descriptor.setLoader(loader, false);
+    descriptor.setLoader(loader);
   }
 
   static BuildNumber getBuildNumber() {
@@ -1056,7 +1055,7 @@ public class PluginManagerCore {
     int i = 0;
     for (final IdeaPluginDescriptorImpl pluginDescriptor : result) {
       if (pluginDescriptor.getPluginId().getIdString().equals(CORE_PLUGIN_ID) || pluginDescriptor.isUseCoreClassLoader()) {
-        pluginDescriptor.setLoader(parentLoader, true);
+        pluginDescriptor.setLoader(parentLoader);
       }
       else {
         final List<File> classPath = pluginDescriptor.getClassPath();
@@ -1066,16 +1065,45 @@ public class PluginManagerCore {
         final ClassLoader pluginClassLoader = createPluginClassLoader(classPath.toArray(new File[classPath.size()]),
                                                                       parentLoaders.length > 0 ? parentLoaders : new ClassLoader[] {parentLoader},
                                                                       pluginDescriptor);
-        pluginDescriptor.setLoader(pluginClassLoader, true);
+        pluginDescriptor.setLoader(pluginClassLoader);
       }
 
-      pluginDescriptor.registerExtensions();
       if (progress != null) {
         progress.showProgress("", PLUGINS_PROGRESS_MAX_VALUE + (i++ / (float)result.size()) * 0.35f);
       }
     }
 
+    registerExtensionPointsAndExtensions(Extensions.getRootArea(), result);
+    Extensions.getRootArea().getExtensionPoint(Extensions.AREA_LISTENER_EXTENSION_POINT).registerExtension(new AreaListener() {
+      @Override
+      public void areaCreated(@NotNull String areaClass, @NotNull AreaInstance areaInstance) {
+        registerExtensionPointsAndExtensions(Extensions.getArea(areaInstance), result);
+      }
+
+      @Override
+      public void areaDisposing(@NotNull String areaClass, @NotNull AreaInstance areaInstance) {
+      }
+    });
+
+
     ourPlugins = pluginDescriptors;
+  }
+
+  private static void registerExtensionPointsAndExtensions(ExtensionsArea area, List<IdeaPluginDescriptorImpl> loadedPlugins) {
+    for (IdeaPluginDescriptorImpl descriptor : loadedPlugins) {
+      descriptor.registerExtensionPoints(area);
+    }
+
+    Set<String> epNames = ContainerUtil.newHashSet();
+    for (ExtensionPoint point : area.getExtensionPoints()) {
+      epNames.add(point.getName());
+    }
+
+    for (IdeaPluginDescriptorImpl descriptor : loadedPlugins) {
+      for (String epName : epNames) {
+        descriptor.registerExtensions(area, epName);
+      }
+    }
   }
 
   public static void initPlugins(@Nullable StartupProgress progress) {

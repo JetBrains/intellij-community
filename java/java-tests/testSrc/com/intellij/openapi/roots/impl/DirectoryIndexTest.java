@@ -203,8 +203,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfoNull(myRootVFile);
 
     // beware: files in directory index
-    checkInfo(myFileLibSrc, null, false, true, "", null);
-    checkInfo(myFileLibCls, null, true, false, "", null);
+    checkInfo(myFileLibSrc, null, false, true, "", null, myModule);
+    checkInfo(myFileLibCls, null, true, false, "", null, myModule);
 
     checkInfo(myModule1Dir, myModule, false, false, null, null);
     checkInfo(mySrcDir1, myModule, false, false, "", JavaSourceRootType.SOURCE, myModule);

@@ -291,7 +291,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
         reported_nullable_method_overrides_notnull = true;
         final PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, nullableManager.getNullables(), true);
         holder.registerProblem(annotation != null ? annotation : method.getNameIdentifier(),
-                               InspectionsBundle.message("inspection.nullable.problems.Nullable.method.overrides.NotNull"),
+                               InspectionsBundle.message("inspection.nullable.problems.Nullable.method.overrides.NotNull", nullableManager.getPresentableDefaultNullable(), nullableManager.getPresentableDefaultNotNull()),
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       }
       if (!reported_not_annotated_method_overrides_notnull
@@ -306,7 +306,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
                                   ? createAnnotateMethodFix(defaultNotNull, annotationsToRemove)
                                   : createChangeDefaultNotNullFix(nullableManager, superMethod);
         holder.registerProblem(method.getNameIdentifier(),
-                               InspectionsBundle.message("inspection.nullable.problems.method.overrides.NotNull"),
+                               InspectionsBundle.message("inspection.nullable.problems.method.overrides.NotNull", nullableManager.getPresentableDefaultNotNull()),
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                wrapFix(fix));
       }
@@ -324,7 +324,9 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
             reported_notnull_parameter_overrides_nullable[i] = true;
             final PsiAnnotation annotation = AnnotationUtil.findAnnotation(parameter, nullableManager.getNotNulls(), true);
             holder.registerProblem(annotation != null ? annotation : parameter.getNameIdentifier(),
-                                   InspectionsBundle.message("inspection.nullable.problems.NotNull.parameter.overrides.Nullable"),
+                                   InspectionsBundle.message("inspection.nullable.problems.NotNull.parameter.overrides.Nullable",
+                                                             nullableManager.getPresentableDefaultNotNull(), 
+                                                             nullableManager.getPresentableDefaultNullable()),
                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
           if (!reported_not_annotated_parameter_overrides_notnull[i] && REPORT_NOT_ANNOTATED_METHOD_OVERRIDES_NOTNULL) {
@@ -335,7 +337,7 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
                                         ? new AddNotNullAnnotationFix(parameter)
                                         : createChangeDefaultNotNullFix(nullableManager, superParameter);
               holder.registerProblem(parameter.getNameIdentifier(),
-                                     InspectionsBundle.message("inspection.nullable.problems.parameter.overrides.NotNull"),
+                                     InspectionsBundle.message("inspection.nullable.problems.parameter.overrides.NotNull", nullableManager.getPresentableDefaultNotNull()),
                                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                      wrapFix(fix));
             }
@@ -442,11 +444,15 @@ public class NullableStuffInspectionBase extends BaseJavaBatchLocalInspectionToo
 
   private static void reportNullableNotNullConflict(final ProblemsHolder holder, final PsiModifierListOwner listOwner, final PsiAnnotation declaredNullable,
                                                     final PsiAnnotation declaredNotNull) {
+    final NullableNotNullManager nullableNotNullManager = NullableNotNullManager.getInstance(holder.getProject());
+    final String bothNullableNotNullMessage = InspectionsBundle.message("inspection.nullable.problems.Nullable.NotNull.conflict", 
+                                                                        nullableNotNullManager.getPresentableDefaultNullable(),
+                                                                        nullableNotNullManager.getPresentableDefaultNotNull());
     holder.registerProblem(declaredNotNull.isPhysical() ? declaredNotNull : listOwner.getNavigationElement(),
-                           InspectionsBundle.message("inspection.nullable.problems.Nullable.NotNull.conflict"),
+                           bothNullableNotNullMessage,
                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveAnnotationQuickFix(declaredNotNull, listOwner));
     holder.registerProblem(declaredNullable.isPhysical() ? declaredNullable : listOwner.getNavigationElement(),
-                           InspectionsBundle.message("inspection.nullable.problems.Nullable.NotNull.conflict"),
+                           bothNullableNotNullMessage,
                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveAnnotationQuickFix(declaredNullable, listOwner));
   }
 

@@ -15,24 +15,88 @@
  */
 package org.jetbrains.jps.model.java;
 
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.model.JpsSimpleElement;
+import org.jetbrains.jps.model.ex.JpsElementBase;
 
 /**
  * @author nik
  */
-public class JavaSourceRootProperties {
-  private final String myPackagePrefix;
+public class JavaSourceRootProperties extends JpsElementBase<JavaSourceRootProperties> implements JpsSimpleElement<JavaSourceRootProperties> {
+  private String myPackagePrefix = "";
+  private boolean myForGeneratedSources;
 
+  /**
+   * @deprecated do not call this method directly, use {@link org.jetbrains.jps.model.java.JpsJavaExtensionService#createSourceRootProperties(String)} instead
+   */
   public JavaSourceRootProperties() {
-    myPackagePrefix = "";
   }
 
+  /**
+   * @deprecated do not call this method directly, use {@link org.jetbrains.jps.model.java.JpsJavaExtensionService#createSourceRootProperties(String)} instead
+   */
   public JavaSourceRootProperties(@NotNull String packagePrefix) {
     myPackagePrefix = packagePrefix;
+  }
+
+  /**
+   * @deprecated do not call this method directly, use {@link org.jetbrains.jps.model.java.JpsJavaExtensionService#createSourceRootProperties(String, boolean)} instead
+   */
+  public JavaSourceRootProperties(@NotNull String packagePrefix, boolean forGeneratedSources) {
+    myPackagePrefix = packagePrefix;
+    myForGeneratedSources = forGeneratedSources;
   }
 
   @NotNull
   public String getPackagePrefix() {
     return myPackagePrefix;
+  }
+
+  @NotNull
+  @Override
+  public JavaSourceRootProperties createCopy() {
+    return new JavaSourceRootProperties(myPackagePrefix, myForGeneratedSources);
+  }
+
+  public boolean isForGeneratedSources() {
+    return myForGeneratedSources;
+  }
+
+  public void setPackagePrefix(@NotNull String packagePrefix) {
+    if (!Comparing.equal(myPackagePrefix, packagePrefix)) {
+      myPackagePrefix = packagePrefix;
+      fireElementChanged();
+    }
+  }
+
+  public void setForGeneratedSources(boolean forGeneratedSources) {
+    if (myForGeneratedSources != forGeneratedSources) {
+      myForGeneratedSources = forGeneratedSources;
+      fireElementChanged();
+    }
+  }
+
+  @Override
+  public void applyChanges(@NotNull JavaSourceRootProperties modified) {
+    setPackagePrefix(modified.myPackagePrefix);
+    setForGeneratedSources(modified.myForGeneratedSources);
+  }
+
+  /**
+   * @deprecated use {@link #setPackagePrefix(String)} instead
+   */
+  @Override
+  public void setData(@NotNull JavaSourceRootProperties data) {
+    applyChanges(data);
+  }
+
+  /**
+   * @deprecated use {@link #getPackagePrefix()} instead
+   */
+  @NotNull
+  @Override
+  public JavaSourceRootProperties getData() {
+    return this;
   }
 }

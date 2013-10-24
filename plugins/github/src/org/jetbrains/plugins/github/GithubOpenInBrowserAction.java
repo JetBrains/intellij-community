@@ -18,7 +18,6 @@ package org.jetbrains.plugins.github;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -55,7 +54,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
 
   @Override
   public void update(final AnActionEvent e) {
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     if (project == null || project.isDefault() || virtualFile == null) {
       setVisibleEnabled(e, false, false);
@@ -91,7 +90,7 @@ public class GithubOpenInBrowserAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     final VirtualFile virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE);
     final Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (virtualFile == null || project == null || project.isDisposed()) {

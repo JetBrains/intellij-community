@@ -189,7 +189,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       }
       return false;
     } else {
-      me = new MouseEvent(me.getComponent(), me.getID(), me.getWhen(), me.getModifiers(), me.getX(), me.getY() + myRowAdjuster, me.getClickCount(), me.isPopupTrigger());
+      float rowRatio = (float)Math.min(myEditor.getDocument().getLineCount() - 1, Math.max(0, line + myRowAdjuster)) /
+              (myEditor.getDocument().getLineCount() - 1);
+      int y = myRowAdjuster != 0 ? (int)(rowRatio * myEditor.getVerticalScrollBar().getHeight()) : me.getY();
+      me = new MouseEvent(me.getComponent(), me.getID(), me.getWhen(), me.getModifiers(), me.getX(), y, me.getClickCount(), me.isPopupTrigger());
       final List<RangeHighlighterEx> highlighters = new ArrayList<RangeHighlighterEx>();
       collectRangeHighlighters(this, line, highlighters);
       collectRangeHighlighters((MarkupModelEx)DocumentMarkupModel.forDocument(myEditor.getDocument(), getEditor().getProject(), true), line,
@@ -1051,14 +1054,15 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   private class EditorFragmentRenderer implements TooltipRenderer {
     private int myLine;
     private final List<RangeHighlighterEx> myHighlighters = new ArrayList<RangeHighlighterEx>();
-    private BufferedImage myImage;
-    private BufferedImage myCacheImage;
+    private BufferedImage myCacheLevel1;
+    private BufferedImage myCacheLevel2;
     private int myCacheStartLine;
     private int myCacheEndLine;
     private int myStartLine;
     private int myEndLine;
     private int myRelativeY;
     private boolean myDelayed = false;
+    private boolean isDirty = false;
     private final AtomicReference<Point> myPointHolder = new AtomicReference<Point>();
     private final AtomicReference<HintHint> myHintHolder = new AtomicReference<HintHint>();
 
@@ -1067,12 +1071,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     void update(int currentLine, Collection<RangeHighlighterEx> rangeHighlighters) {
-      myLine = Math.min(myEditor.getDocument().getLineCount() - 1, Math.max(0, currentLine + myRowAdjuster));
+      myLine = currentLine;
       myHighlighters.clear();
-      myImage = null;
-      if (currentLine ==-1) return;
+      if (myLine ==-1) return;
+      int oldStartLine = myStartLine;
+      int oldEndLine = myEndLine;
       myStartLine = Math.max(0, myLine - myPreviewLines);
       myEndLine = Math.min(myEditor.getDocument().getLineCount() - 1, myLine + myPreviewLines + 1);
+      isDirty = oldStartLine != myStartLine || oldEndLine != myEndLine;
       int popupStartOffset = myEditor.getDocument().getLineStartOffset(myStartLine);
       int popupEndOffset = myEditor.getDocument().getLineEndOffset(myEndLine);
       for (RangeHighlighterEx rangeHighlighter : rangeHighlighters) {
@@ -1118,14 +1124,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
             Dimension size = getPreferredSize();
             EditorGutterComponentEx gutterComponentEx = myEditor.getGutterComponentEx();
             int gutterWidth = gutterComponentEx.getWidth();
-            if (myCacheImage == null || myCacheStartLine > myStartLine || myCacheEndLine < myEndLine) {
+            if (myCacheLevel2 == null || myCacheStartLine > myStartLine || myCacheEndLine < myEndLine) {
               int oldCacheLineCount = myCacheEndLine - myCacheStartLine;
               myCacheStartLine = Math.max(0, myLine - myCachePreviewLines);
               myCacheEndLine = Math.min(myEditor.getDocument().getLineCount() - 1, myLine + myCachePreviewLines + 1);
-              if (myCacheImage == null || oldCacheLineCount != (myCacheEndLine - myCacheStartLine)) {
-                myCacheImage = UIUtil.createImage(size.width, myEditor.getLineHeight() * 2 * myCachePreviewLines + 1, BufferedImage.TYPE_INT_RGB);
+              if (myCacheLevel2 == null || oldCacheLineCount != (myCacheEndLine - myCacheStartLine)) {
+                myCacheLevel2 = UIUtil.createImage(size.width, myEditor.getLineHeight() * 2 * myCachePreviewLines + 1, BufferedImage.TYPE_INT_RGB);
               }
-              Graphics2D cg = myCacheImage.createGraphics();
+              Graphics2D cg = myCacheLevel2.createGraphics();
               final AffineTransform t = cg.getTransform();
               UISettings.setupAntialiasing(cg);
               int lineShift = -myEditor.getLineHeight() * myCacheStartLine;
@@ -1134,19 +1140,22 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               translateInstance.preConcatenate(t);
               cg.setTransform(translateInstance);
 
-              cg.setClip(0, 0, gutterWidth, gutterComponentEx.getHeight());
+              cg.setClip(0, 0, gutterWidth, myCacheLevel2.getHeight());
               gutterComponentEx.paint(cg);
               translateInstance = AffineTransform.getTranslateInstance(gutterWidth, lineShift);
               translateInstance.preConcatenate(t);
               cg.setTransform(translateInstance);
               EditorComponentImpl contentComponent = myEditor.getContentComponent();
-              cg.setClip(0, 0, contentComponent.getWidth(), contentComponent.getHeight());
+              cg.setClip(0, 0, contentComponent.getWidth(), myCacheLevel2.getHeight());
               contentComponent.paint(cg);
             }
-            if (myImage == null) {
+            if (myCacheLevel1 == null) {
+              myCacheLevel1 = UIUtil.createImage(size.width, myEditor.getLineHeight() * (2 * myPreviewLines + 1), BufferedImage.TYPE_INT_RGB);
+              isDirty = true;
+            }
+            if (isDirty) {
               myRelativeY = SwingUtilities.convertPoint(this, 0, 0, myEditor.getScrollPane()).y;
-              myImage = UIUtil.createImage(size.width, size.height, BufferedImage.TYPE_INT_RGB);
-              Graphics2D g2d = myImage.createGraphics();
+              Graphics2D g2d = myCacheLevel1.createGraphics();
               final AffineTransform transform = g2d.getTransform();
               UISettings.setupAntialiasing(g2d);
               GraphicsUtil.setupAAPainting(g2d);
@@ -1155,7 +1164,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               AffineTransform translateInstance = AffineTransform.getTranslateInstance(-LEFT_INDENT + gutterWidth, myEditor.getLineHeight() * (myCacheStartLine - myStartLine));
               translateInstance.preConcatenate(transform);
               g2d.setTransform(translateInstance);
-              UIUtil.drawImage(g2d, myCacheImage, -gutterWidth, 0, null);
+              UIUtil.drawImage(g2d, myCacheLevel2, -gutterWidth, 0, null);
               TIntIntHashMap rightEdges = new TIntIntHashMap();
               int h = myEditor.getLineHeight() - 2;
               for (RangeHighlighterEx ex : myHighlighters) {
@@ -1188,9 +1197,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 g2d.setColor(JBColor.foreground());
                 g2d.drawString(s, placeToShow.x + R, placeToShow.y - g2d.getFontMetrics().getDescent() + R/2 + a);
               }
-
+              isDirty = false;
             }
-            UIUtil.drawImage(g, myImage, 0, 0, this);
+            UIUtil.drawImage(g, myCacheLevel1, 0, 0, this);
             if (UIUtil.isUnderDarcula()) {
               //Add glass effect
               GraphicsUtil.setupAAPainting(g);
@@ -1220,11 +1229,13 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           @Override
           public void hide(boolean ok) {
             super.hide(ok);
-            if (myCacheImage != null) {
-              myCacheImage = null;
+            myCacheLevel1 = null;
+            if (myCacheLevel2 != null) {
+              myCacheLevel2 = null;
               myCacheStartLine = -1;
               myCacheEndLine = -1;
             }
+
             myDelayed = false;
           }
         };

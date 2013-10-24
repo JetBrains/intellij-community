@@ -75,7 +75,7 @@ public class GithubShareAction extends DumbAwareAction {
   }
 
   public void update(AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (project == null || project.isDefault()) {
       setVisibleEnabled(e, false, false);
       return;
@@ -94,7 +94,7 @@ public class GithubShareAction extends DumbAwareAction {
   // push everything (net)
   @Override
   public void actionPerformed(final AnActionEvent e) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     final VirtualFile file = e.getData(CommonDataKeys.VIRTUAL_FILE);
 
     if (project == null || project.isDisposed() || !GithubUtil.testGitExecutable(project)) {
@@ -243,7 +243,7 @@ public class GithubShareAction extends DumbAwareAction {
                                                boolean isPrivate) {
 
     try {
-      GithubRepo response = GithubApiUtil.createRepo(auth, name, description, !isPrivate);
+      GithubRepo response = GithubApiUtil.createRepo(auth, name, description, isPrivate);
       return response.getHtmlUrl();
     }
     catch (IOException e) {

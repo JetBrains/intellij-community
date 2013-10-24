@@ -29,4 +29,12 @@ public abstract class ExternalSystemTaskNotificationListenerAdapter implements E
   @Override
   public void onEnd(@NotNull ExternalSystemTaskId id) {
   }
+
+  @Override
+  public void onSuccess(@NotNull ExternalSystemTaskId id) {
+  }
+
+  @Override
+  public void onFailure(@NotNull ExternalSystemTaskId id, @NotNull Exception e) {
+  }
 }

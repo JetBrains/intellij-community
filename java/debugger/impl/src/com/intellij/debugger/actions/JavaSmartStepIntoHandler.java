@@ -24,9 +24,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * User: Alexander Podkhalyuzin
@@ -40,7 +43,8 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   }
 
   @Override
-  public List<PsiMethod> findReferencedMethods(final SourcePosition position) {
+  @NotNull
+  public List<StepTarget> findSmartStepTargets(final SourcePosition position) {
     final int line = position.getLine();
     if (line < 0) {
       return Collections.emptyList(); // the document has been changed
@@ -73,23 +77,57 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       while(true);
 
       //noinspection unchecked
-      final List<PsiMethod> methods = new OrderedSet<PsiMethod>();
-      final PsiElementVisitor methodCollector = new JavaRecursiveElementWalkingVisitor() {
-        @Override public void visitAnonymousClass(PsiAnonymousClass aClass) { /*skip annonymous classes*/ }
+      final List<StepTarget> targets = new OrderedSet<StepTarget>();
+      final PsiElementVisitor methodCollector = new JavaRecursiveElementVisitor() {
+        final Stack<String> myParamNameStack = new Stack<String>();
 
-        @Override public void visitStatement(PsiStatement statement) {
+        @Nullable
+        private String getCurrentParamName() {
+          return myParamNameStack.size() > 0? myParamNameStack.peek() : null;
+        }
+
+        @Override
+        public void visitAnonymousClass(PsiAnonymousClass aClass) {
+          for (PsiMethod psiMethod : aClass.getMethods()) {
+            targets.add(new MethodTarget(psiMethod, getCurrentParamName(), true));
+          }
+        }
+
+        @Override
+        public void visitStatement(PsiStatement statement) {
           if (lineRange.intersects(statement.getTextRange())) {
             super.visitStatement(statement);
           }
         }
 
-        @Override public void visitCallExpression(final PsiCallExpression expression) {
+        @Override
+        public void visitCallExpression(final PsiCallExpression expression) {
           final PsiMethod psiMethod = expression.resolveMethod();
           if (psiMethod != null) {
-            methods.add(psiMethod);
+            targets.add(new MethodTarget(psiMethod, null, false));
+            final PsiExpressionList argList = expression.getArgumentList();
+            if (argList != null) {
+              final String methodName = psiMethod.getName();
+              final PsiExpression[] expressions = argList.getExpressions();
+              final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+              for (int idx = 0; idx < expressions.length; idx++) {
+                final String paramName = (idx < parameters.length && !parameters[idx].isVarArgs())? parameters[idx].getName() : "arg"+(idx+1);
+                myParamNameStack.push(methodName + ": " + paramName);
+                final PsiExpression argExpression = expressions[idx];
+                try {
+                  argExpression.accept(this);
+                }
+                finally {
+                  myParamNameStack.pop();
+                }
+              }
+            }
           }
-          super.visitCallExpression(expression);
+          else {
+            super.visitCallExpression(expression);
+          }
         }
+
       };
       element.accept(methodCollector);
       for (PsiElement sibling = element.getNextSibling(); sibling != null; sibling = sibling.getNextSibling()) {
@@ -98,8 +136,55 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
         sibling.accept(methodCollector);
       }
-      return methods;
+      return targets;
     }
     return Collections.emptyList();
+  }
+
+  private static class MethodTarget implements StepTarget {
+    private final PsiMethod myMethod;
+    private final String myLabel;
+    private final boolean myNeedBreakpointRequest;
+
+    private MethodTarget(@NotNull PsiMethod method, String currentParamName, boolean needBreakpointRequest) {
+      myMethod = method;
+      myLabel = currentParamName == null? null : currentParamName + ".";
+      myNeedBreakpointRequest = needBreakpointRequest;
+    }
+
+    @Nullable
+    public String getMethodLabel() {
+      return myLabel;
+    }
+
+    @NotNull
+    public PsiMethod getMethod() {
+      return myMethod;
+    }
+
+    public boolean needsBreakpointRequest() {
+      return myNeedBreakpointRequest;
+    }
+
+    public boolean equals(Object o) {
+      if (this == o) {
+        return true;
+      }
+      if (o == null || getClass() != o.getClass()) {
+        return false;
+      }
+
+      final MethodTarget that = (MethodTarget)o;
+
+      if (!myMethod.equals(that.myMethod)) {
+        return false;
+      }
+
+      return true;
+    }
+
+    public int hashCode() {
+      return myMethod.hashCode();
+    }
   }
 }

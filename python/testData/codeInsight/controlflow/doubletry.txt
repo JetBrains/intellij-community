@@ -1,0 +1,26 @@
+0(1) element: null
+1(2) element: PyTryExceptStatement
+2(3,5) element: PyTryPart
+3(4,5) element: PyFromImportStatement
+4(5,9) WRITE ACCESS: lsprof
+5(6) element: PyExceptPart
+6(7) READ ACCESS: ImportError
+7(8) element: PyRaiseStatement
+8(25) READ ACCESS: Error
+9(10) element: PyAssignmentStatement
+10(11) WRITE ACCESS: p
+11(12) element: PyTryExceptStatement
+12(13,17) element: PyTryPart
+13(14,17) element: PyReturnStatement
+14(17) READ ACCESS: foo
+15(16,17) element: PyAssignmentStatement
+16(17,20) WRITE ACCESS: x
+17(18) element: PyFinallyPart
+18(19) element: PyPrintStatement
+19(25) READ ACCESS: p
+20(21) element: PyFinallyPart
+21(22) element: PyPrintStatement
+22(23) READ ACCESS: p
+23(24) element: PyAssignmentStatement
+24(25) WRITE ACCESS: y
+25() element: null

@@ -18,11 +18,14 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.roots.impl.SourceFolderImpl;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.roots.IconActionComponent;
+import com.intellij.util.ui.FormBuilder;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.JpsSimpleElement;
+import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -32,16 +35,23 @@ import java.awt.*;
 /**
  * @author nik
  */
-public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEditHandler<JpsSimpleElement<JavaSourceRootProperties>> {
-  public JavaSourceRootEditHandlerBase(JpsModuleSourceRootType<JpsSimpleElement<JavaSourceRootProperties>> rootType) {
+public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEditHandler<JavaSourceRootProperties> {
+  public JavaSourceRootEditHandlerBase(JpsModuleSourceRootType<JavaSourceRootProperties> rootType) {
     super(rootType);
   }
 
   @Nullable
   @Override
-  public String getPropertiesString(@NotNull JpsSimpleElement<JavaSourceRootProperties> properties) {
-    String packagePrefix = properties.getData().getPackagePrefix();
-    return packagePrefix.isEmpty() ? null : " (" + packagePrefix + ")";
+  public String getPropertiesString(@NotNull JavaSourceRootProperties properties) {
+    StringBuilder buffer = new StringBuilder();
+    if (properties.isForGeneratedSources()) {
+      buffer.append(" [generated]");
+    }
+    String packagePrefix = properties.getPackagePrefix();
+    if (!packagePrefix.isEmpty()) {
+      buffer.append(" (").append(packagePrefix).append(")");
+    }
+    return buffer.length() > 0 ? buffer.toString() : null;
   }
 
   @Nullable
@@ -51,16 +61,13 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
                                            @NotNull final ContentRootPanel.ActionCallback callback) {
     final IconActionComponent iconComponent = new IconActionComponent(AllIcons.Modules.SetPackagePrefix,
                                                                       AllIcons.Modules.SetPackagePrefixRollover,
-                                                                      ProjectBundle.message("module.paths.package.prefix.tooltip"), new Runnable() {
+                                                                      ProjectBundle.message("module.paths.edit.properties.tooltip"), new Runnable() {
       @Override
       public void run() {
-        final String message = ProjectBundle.message("module.paths.package.prefix.prompt",
-                                                     ContentRootPanel.toRelativeDisplayPath(folder.getUrl(), folder.getContentEntry().getUrl() + ":"));
-        final String prefix = Messages.showInputDialog(parentComponent, message,
-                                                       ProjectBundle.message("module.paths.package.prefix.title"),
-                                                       Messages.getQuestionIcon(), folder.getPackagePrefix(), null);
-        if (prefix != null) {
-          folder.setPackagePrefix(prefix);
+        JpsElement properties = ((SourceFolderImpl)folder).getJpsElement().getProperties();
+        SourceRootPropertiesDialog dialog = new SourceRootPropertiesDialog(parentComponent, (JavaSourceRootProperties)properties);
+        dialog.show();
+        if (dialog.isOK()) {
           callback.onSourceRootPropertiesChanged(folder);
         }
       }
@@ -70,5 +77,47 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
     panel.add(iconComponent, BorderLayout.CENTER);
     panel.add(Box.createHorizontalStrut(3), BorderLayout.EAST);
     return panel;
+  }
+
+  private static class SourceRootPropertiesDialog extends DialogWrapper {
+    private final JTextField myPackagePrefixField;
+    private final JCheckBox myIsGeneratedCheckBox;
+    private final JPanel myMainPanel;
+    @NotNull private final JavaSourceRootProperties myProperties;
+
+    private SourceRootPropertiesDialog(@NotNull JComponent parentComponent, @NotNull JavaSourceRootProperties properties) {
+      super(parentComponent, true);
+      myProperties = properties;
+      setTitle(ProjectBundle.message("module.paths.edit.properties.title"));
+      myPackagePrefixField = new JTextField();
+      myIsGeneratedCheckBox = new JCheckBox(UIUtil.replaceMnemonicAmpersand("For &generated sources"));
+      myMainPanel = FormBuilder.createFormBuilder()
+        .addLabeledComponent("Package &prefix:", myPackagePrefixField)
+        .addComponent(myIsGeneratedCheckBox)
+        .getPanel();
+      myPackagePrefixField.setText(myProperties.getPackagePrefix());
+      myPackagePrefixField.setColumns(25);
+      myIsGeneratedCheckBox.setSelected(myProperties.isForGeneratedSources());
+      init();
+    }
+
+    @Nullable
+    @Override
+    public JComponent getPreferredFocusedComponent() {
+      return myPackagePrefixField;
+    }
+
+    @Override
+    protected void doOKAction() {
+      myProperties.setPackagePrefix(myPackagePrefixField.getText().trim());
+      myProperties.setForGeneratedSources(myIsGeneratedCheckBox.isSelected());
+      super.doOKAction();
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createCenterPanel() {
+      return myMainPanel;
+    }
   }
 }

@@ -56,14 +56,13 @@ public class GrAliasedImportedElementSearcher extends QueryExecutorBase<PsiRefer
           final String propertyName = field.getName();
           if (propertyName != null) {
             final MyProcessor processor = new MyProcessor(method, GroovyPropertyUtils.getAccessorPrefix(method), session);
-            collector.searchWord(propertyName, onlyGroovy, UsageSearchContext.IN_CODE, true, processor);
+            collector.searchWord(propertyName, onlyGroovy, UsageSearchContext.IN_CODE, true, method, processor);
           }
         }
       }
     }
 
-    collector.searchWord(name, onlyGroovy, UsageSearchContext.IN_CODE, true, new MyProcessor(target, null, session));
-
+    collector.searchWord(name, onlyGroovy, UsageSearchContext.IN_CODE, true, target, new MyProcessor(target, null, session));
   }
 
   private static class MyProcessor extends RequestResultProcessor {

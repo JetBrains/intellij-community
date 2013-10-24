@@ -310,5 +310,6 @@
     <search.topHitProvider implementation="com.intellij.ide.ui.UISimpleSettingsProvider"/>
     <projectService serviceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.UnknownFeaturesCollector"/>
     <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser"/>
+    <actionPromoter implementation="com.intellij.ui.ToolbarDecoratorActionPromoter"/>
   </extensions>
 </idea-plugin>

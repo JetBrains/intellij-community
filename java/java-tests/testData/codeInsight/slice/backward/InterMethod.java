@@ -1,24 +1,24 @@
 public class WW {
-    void f(String ddd) {
+    void f(String <flown11111>ddd) {
         if (hashCode() == 0)
-            ddd = <flown1111>"dd";
-        foo(<flown111>ddd);
+            ddd = <flown11112>"dd";
+        foo(<flown1111>ddd);
     }
 
     {
-        f(<flown1112>"xxx");
+        f(<flown111111>"xxx");
     }
 
     {
-        x(<flown1121>"zzz");
+        x(<flown111211>"zzz");
     }
 
-    String x(String g) {
-        String d = <flown1>foo(<flown112>g);
+    String x(String <flown11121>g) {
+        String d = <flown1>foo(<flown1112>g);
         return <caret>d;
     }
 
-    private String foo(String i) {
+    private String foo(String <flown111>i) {
         return <flown11>i;
     }
 }

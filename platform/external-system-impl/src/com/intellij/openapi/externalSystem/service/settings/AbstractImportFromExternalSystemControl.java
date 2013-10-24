@@ -200,16 +200,12 @@ public abstract class AbstractImportFromExternalSystemControl<
     //noinspection ConstantConditions
     myProjectSettings.setExternalProjectPath(ExternalSystemApiUtil.normalizePath(linkedProjectPath));
 
-    String errorMessage = myProjectSettingsControl.apply(myProjectSettings);
-    if (errorMessage != null) {
-      throw new ConfigurationException(errorMessage);
-    }
+    myProjectSettingsControl.validate(myProjectSettings);
+    myProjectSettingsControl.apply(myProjectSettings);
 
     if (mySystemSettingsControl != null) {
-      errorMessage = mySystemSettingsControl.apply(mySystemSettings);
-      if (errorMessage != null) {
-        throw new ConfigurationException(errorMessage);
-      }
+      mySystemSettingsControl.validate(mySystemSettings);
+      mySystemSettingsControl.apply(mySystemSettings);
     }
   }
 }

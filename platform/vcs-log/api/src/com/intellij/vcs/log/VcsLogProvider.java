@@ -16,13 +16,11 @@ import java.util.List;
  */
 public interface VcsLogProvider {
 
-  int COMMIT_BLOCK_SIZE = 1000;
-
   /**
-   * Reads {@link #COMMIT_BLOCK_SIZE the first part} of the log.
+   * Reads the given number of the most recent commits from the log.
    */
   @NotNull
-  List<? extends VcsFullCommitDetails> readFirstBlock(@NotNull VirtualFile root, boolean ordered) throws VcsException;
+  List<? extends VcsFullCommitDetails> readFirstBlock(@NotNull VirtualFile root, boolean ordered, int commitCount) throws VcsException;
 
   /**
    * Reads the whole history, but only hashes & parents.

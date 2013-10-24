@@ -262,7 +262,7 @@ public class DebuggerSession implements AbstractDebuggerSession {
     resumeAction(cmd, EVENT_STEP);
   }
 
-  public void stepInto(final boolean ignoreFilters, final @Nullable RequestHint.SmartStepFilter smartStepFilter) {
+  public void stepInto(final boolean ignoreFilters, final @Nullable MethodFilter smartStepFilter) {
     final SuspendContextImpl suspendContext = getSuspendContext();
     final DebugProcessImpl.ResumeCommand cmd = myDebugProcess.createStepIntoCommand(suspendContext, ignoreFilters, smartStepFilter);
     mySteppingThroughThreads.add(cmd.getContextThread());

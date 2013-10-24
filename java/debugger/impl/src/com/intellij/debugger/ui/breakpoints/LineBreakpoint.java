@@ -71,6 +71,7 @@ import java.util.List;
 public class LineBreakpoint extends BreakpointWithHighlighter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.LineBreakpoint");
 
+  @Nullable
   private String myMethodName;
   public static final @NonNls Key<LineBreakpoint> CATEGORY = BreakpointCategory.lookup("line_breakpoints");
 
@@ -127,7 +128,16 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   @Override
   protected void reload(PsiFile file) {
     super.reload(file);
-    myMethodName = findMethodName(file, getHighlighter().getStartOffset());
+    int offset;
+    final SourcePosition position = getSourcePosition();
+    if (position != null) {
+      offset = position.getOffset();
+    }
+    else {
+      final RangeHighlighter highlighter = getHighlighter();
+      offset = highlighter != null? highlighter.getStartOffset() : -1;
+    }
+    myMethodName = offset >=0 ? findMethodName(file, offset) : null;
   }
 
   @Override
@@ -152,7 +162,10 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
           if (LOG.isDebugEnabled()) {
             LOG.debug("Found location [codeIndex=" + loc.codeIndex() +"] for reference type " + classType.name() + " at line " + getLineIndex() + "; isObsolete: " + (debugProcess.getVirtualMachineProxy().versionHigher("1.4") && loc.method().isObsolete()));
           }
-          BreakpointRequest request = debugProcess.getRequestsManager().createBreakpointRequest(this, loc);
+          if (!acceptLocation(debugProcess, classType, loc)) {
+            continue;
+          }
+          final BreakpointRequest request = debugProcess.getRequestsManager().createBreakpointRequest(this, loc);
           debugProcess.getRequestsManager().enableRequest(request);
           if (LOG.isDebugEnabled()) {
             LOG.debug("Created breakpoint request for reference type " + classType.name() + " at line " + getLineIndex() + "; codeIndex=" + loc.codeIndex());
@@ -194,6 +207,10 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       LOG.info(ex);
     }
     updateUI();
+  }
+
+  protected boolean acceptLocation(DebugProcessImpl debugProcess, ReferenceType classType, Location loc) {
+    return true;
   }
 
   private boolean isInScopeOf(DebugProcessImpl debugProcess, String className) {
@@ -353,7 +370,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
 
   private String getDisplayInfoInternal(boolean showPackageInfo, int totalTextLength) {
     final RangeHighlighter highlighter = getHighlighter();
-    if(highlighter.isValid() && isValid()) {
+    if(highlighter != null && highlighter.isValid() && isValid()) {
       final int lineNumber = (highlighter.getDocument().getLineNumber(highlighter.getStartOffset()) + 1);
       String className = getClassName();
       final boolean hasClassInfo = className != null && className.length() > 0;

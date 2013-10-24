@@ -1,0 +1,23 @@
+<component>
+  <company name="JetBrains s.r.o." url="http://www.jetbrains.com/?fromIDE"/>
+  <version major="3" minor="0" eap="true"/>
+  <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
+  <logo url="/pycharm_core_logo.png" textcolor="ffffff" progressColor="ffaa16" progressY="230" progressTailIcon="/community_progress_tail.png"/>
+  <about url="/pycharm_core_about.png" logoX="300" logoY="265" logoW="75" logoH="30" foreground="ffffff" linkColor="fca11a"/>
+  <icon size32="/PyCharmCore32.png" size16="/PyCharmCore16.png" size32opaque="/PyCharmCore32.png" size12="/PyCharmCore13.png" ico="PyCharmCore.ico"/>
+  <package code="__PACKAGE_CODE__"/>
+  <names product="PyCharm" fullname="PyCharm Community Edition" script="charm"/>
+  <install-over minbuild="0" maxbuild="0" version="1.x"/>
+
+  <welcome-screen logo-url="/PyCharmCoreWelcomeScreen.png" caption-url="PyCharmCoreWelcomeCaption.png" slogan-url="/developSlogan.png"/>
+
+  <third-party url="http://confluence.jetbrains.com/display/PYH/Third-Party+Software+Used+by+PyCharm"/>
+
+  <update-urls logo-url="/Logo_welcomeScreen.png"
+               check="http://www.jetbrains.com/updates/updates.xml"
+               patches="http://download.jetbrains.com/python/"/>
+
+  <feedback eap-url="http://www.jetbrains.com/feedback/feedback.jsp?product=PyCharm&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"
+            release-url="http://www.jetbrains.com/feedback/feedback.jsp?product=PyCharm&amp;build=$BUILD&amp;timezone=$TIMEZONE&amp;eval=$EVAL"/>
+  <help file="pycharmhelp.jar" root="pycharm"/>
+</component>

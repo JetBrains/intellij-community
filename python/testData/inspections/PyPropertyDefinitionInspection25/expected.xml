@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+  <problem>
+    <file>prop_test.py</file>
+    <line>15</line>
+    <description>Getter should return something</description>
+  </problem>
+  <problem>
+    <file>prop_test.py</file>
+    <line>15</line>
+    <description>Getter signature should be (self)</description>
+  </problem>
+  <problem>
+    <file>prop_test.py</file>
+    <line>16</line>
+    <description>Setter should not return a value</description>
+  </problem>
+  <problem>
+    <file>prop_test.py</file>
+    <line>16</line>
+    <description>Setter signature should be (self, value)</description>
+  </problem>
+  <problem>
+    <file>prop_test.py</file>
+    <line>17</line>
+    <description>Deleter should not return a value</description>
+  </problem>
+  <problem>
+    <file>prop_test.py</file>
+    <line>18</line>
+    <description>The doc parameter should be a string</description>
+  </problem>
+  <problem>
+    <file>prop_test.py</file>
+    <line>21</line>
+    <description>Setter should not return a value</description>
+  </problem>
+  <problem>
+    <file>prop_test.py</file>
+    <line>21</line>
+    <description>Setter signature should be (self, value)</description>
+  </problem>
+  <problem>
+    <file>prop_test.py</file>
+    <line>48</line>
+    <description>Getter should return something</description>
+  </problem>
+</problems>
+

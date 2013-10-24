@@ -93,7 +93,7 @@ public final class ResourcesTarget extends JVMModuleBuildTarget<ResourceRootDesc
     JavaSourceRootType type = isTests() ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
     Iterable<ExcludedJavaSourceRootProvider> excludedRootProviders = JpsServiceManager.getInstance().getExtensions(ExcludedJavaSourceRootProvider.class);
 
-    for (JpsTypedModuleSourceRoot<JpsSimpleElement<JavaSourceRootProperties>> sourceRoot : myModule.getSourceRoots(type)) {
+    for (JpsTypedModuleSourceRoot<? extends JpsSimpleElement<JavaSourceRootProperties>> sourceRoot : myModule.getSourceRoots(type)) {
       if (!isExcludedFromCompilation(excludedRootProviders, sourceRoot)) {
         final String packagePrefix = sourceRoot.getProperties().getData().getPackagePrefix();
         final File rootFile = sourceRoot.getFile();

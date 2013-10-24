@@ -31,10 +31,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
@@ -1159,12 +1156,14 @@ public class ExpectedTypesProvider {
         }
       }
       if ("Logger".equals(containingClass.getName()) || "Log".equals(containingClass.getName())) {
-        if (parameterType instanceof PsiClassType && 
-            parameterType.equalsToText(CommonClassNames.JAVA_LANG_CLASS)) {
-          PsiClass placeClass = PsiTreeUtil.getContextOfType(argument, PsiClass.class);
-          PsiClass classClass = ((PsiClassType)parameterType).resolve();
-          if (placeClass != null && classClass != null) {
-            return factory.createType(classClass, factory.createType(placeClass));
+        if (parameterType instanceof PsiClassType) {
+          PsiType typeArg = PsiUtil.substituteTypeParameter(parameterType, CommonClassNames.JAVA_LANG_CLASS, 0, true);
+          if (typeArg != null && TypeConversionUtil.erasure(typeArg).equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+            PsiClass placeClass = PsiTreeUtil.getContextOfType(argument, PsiClass.class);
+            PsiClass classClass = ((PsiClassType)parameterType).resolve();
+            if (placeClass != null && classClass != null) {
+              return factory.createType(classClass, factory.createType(placeClass));
+            }
           }
         }
       }

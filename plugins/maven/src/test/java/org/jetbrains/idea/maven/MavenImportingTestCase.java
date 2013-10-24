@@ -34,6 +34,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.SourceFolderImpl;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
@@ -48,11 +49,12 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.*;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -123,6 +125,17 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     doAssertContentFolders(moduleName, JavaSourceRootType.SOURCE, expectedSources);
   }
 
+  protected void assertGeneratedSources(String moduleName, String... expectedSources) {
+    ContentEntry contentRoot = getContentRoot(moduleName);
+    List<ContentFolder> folders = new ArrayList<ContentFolder>();
+    for (SourceFolder folder : contentRoot.getSourceFolders(JavaSourceRootType.SOURCE)) {
+      if (((JavaSourceRootProperties)((SourceFolderImpl)folder).getJpsElement().getProperties()).isForGeneratedSources()) {
+        folders.add(folder);
+      }
+    }
+    doAssertContentFolders(contentRoot, folders, expectedSources);
+  }
+
   protected void assertResources(String moduleName, String... expectedSources) {
     doAssertContentFolders(moduleName, JavaResourceRootType.RESOURCE, expectedSources);
   }
@@ -136,20 +149,23 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
   protected void assertExcludes(String moduleName, String... expectedExcludes) {
-    doAssertContentFolders(moduleName, null, expectedExcludes);
+    ContentEntry contentRoot = getContentRoot(moduleName);
+    doAssertContentFolders(contentRoot, Arrays.asList(contentRoot.getExcludeFolders()), expectedExcludes);
   }
 
   protected void assertContentRootExcludes(String moduleName, String contentRoot, String... expectedExcudes) {
-    doAssertContentFolders(getContentRoot(moduleName, contentRoot), null, expectedExcudes);
+    ContentEntry root = getContentRoot(moduleName, contentRoot);
+    doAssertContentFolders(root, Arrays.asList(root.getExcludeFolders()), expectedExcudes);
   }
 
-  private void doAssertContentFolders(String moduleName, @Nullable JpsModuleSourceRootType<?> rootType, String... expected) {
-    doAssertContentFolders(getContentRoot(moduleName), rootType, expected);
+  private void doAssertContentFolders(String moduleName, @NotNull JpsModuleSourceRootType<?> rootType, String... expected) {
+    ContentEntry contentRoot = getContentRoot(moduleName);
+    doAssertContentFolders(contentRoot, contentRoot.getSourceFolders(rootType), expected);
   }
 
-  private static void doAssertContentFolders(ContentEntry e, @Nullable JpsModuleSourceRootType<?> rootType, String... expected) {
+  private static void doAssertContentFolders(ContentEntry e, final List<? extends ContentFolder> folders, String... expected) {
     List<String> actual = new ArrayList<String>();
-    for (ContentFolder f : rootType != null ? e.getSourceFolders(rootType) : Arrays.asList(e.getExcludeFolders())) {
+    for (ContentFolder f : folders) {
       String rootUrl = e.getUrl();
       String folderUrl = f.getUrl();
 

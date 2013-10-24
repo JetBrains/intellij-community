@@ -1,0 +1,79 @@
+New LaTeX Writer
+================
+
+:Copyright: This document has been placed in the public domain.
+
+The new LaTeX writer (newlatex2e) is in active development.  These are
+development notes -- edit ahead!  Ultimately, they will be moved to
+the global to-do list, but while newlatex2e is incomplete, they remain
+here.
+
+* It appears that all visit_ methods can be turned into before_
+  methods (and renamed thereafter).
+
+* Also pass raw text (foo_bar) and not only renderable text (foo{\_}bar).
+  See http://article.gmane.org/gmane.text.docutils.user/2516.
+
+* Try the commands mentioned in
+  <http://groups.google.com/groups?selm=c7opho%248ts%241%40wsc10.lrz-muenchen.de>.
+
+* <http://www.tug.org/applications/pdftex/pdfTeX-FAQ.pdf>::
+
+      3.1.6. How can I make a document portable to both latex and pdflatex
+      Contributed by: Christian Kumpf
+      Check for the existence of the variable \pdfoutput:
+      \newif\ifpdf
+      \ifx\pdfoutput\undefined
+      \pdffalse % we are not running PDFLaTeX
+      \else
+      \pdfoutput=1 % we are running PDFLaTeX
+      \pdftrue
+      \fi
+      Then use your new variable \ifpdf
+      \ifpdf
+      \usepackage[pdftex]{graphicx}
+      \pdfcompresslevel=9
+      \else
+      \usepackage{graphicx}
+      \fi
+
+* Need to get some simple docinfo field handling. Move language look-up logic to nodes.py?
+  Same for admonitions.
+
+* Footnotes should be placed on the same page as their references.
+  However, there may be multiple references per footnote, so
+  we'll probably need an option and some sophisticated handling for this.
+
+* Make sure we don't break ligatures (and possibly hyphenation) with zealous brace protection.
+  See http://article.gmane.org/gmane.text.docutils.user/2586.
+
+* Tables inside of footnotes have too large vertical margins.
+  Need a "reduced vertical margin" mode, maybe?
+
+* There's not enough vertical space between fields::
+
+      :Name:
+          Paragraph.
+          Paragraph.
+      :Name:
+          Paragraph.
+          Paragraph.
+
+* Another edge case with too much vertical margin::
+
+      +--------------------+
+      | :Name:             |
+      |     Paragraph.     |
+      | :Name:             |
+      |     Paragraph.     |
+      +--------------------+
+
+* We want to support underscores in citation references, they need to
+  appear unescaped.
+
+* If there's raw code between paragraphs, it gets appended to the last
+  paragraph unless we do ``\par``.  That's a little bit ugly.  Can we
+  fix this?  (Change paragraph handling maybe?)
+
+* Test that, say, all Latin 1 characters are renderable.  (And
+  possibly test more characters.)
