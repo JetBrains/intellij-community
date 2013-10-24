@@ -35,4 +35,5 @@ public abstract class DetectionExcludesConfiguration {
   public abstract void addExcludedUrl(@NotNull String url, @Nullable FrameworkType type);
 
   public abstract boolean isExcludedFromDetection(@NotNull VirtualFile file, @NotNull FrameworkType frameworkType);
+  public abstract boolean isExcludedFromDetection(@NotNull FrameworkType frameworkType);
 }
