@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.intellij.codeInsight.actions.BaseCodeInsightAction;
 import com.intellij.codeInsight.hint.ShowContainerInfoHandler;
 import com.intellij.ide.structureView.TreeBasedStructureViewBuilder;
 import com.intellij.lang.LanguageStructureViewBuilder;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
@@ -38,7 +38,7 @@ public class ShowContainerInfoAction extends BaseCodeInsightAction{
   @Override
   @Nullable
   protected Editor getBaseEditor(final DataContext dataContext, final Project project) {
-    return PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE.getData(dataContext);
+    return CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getData(dataContext);
   }
 
   @Override
