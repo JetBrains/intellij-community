@@ -891,16 +891,13 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     if (parent instanceof XmlDocument) {
       final XmlExtension extension = XmlExtension.getExtensionByElement(parent);
       if (extension != null) {
-        final String[][] defaultNamespace = extension.getNamespacesFromDocument((XmlDocument)parent);
+        final String[][] defaultNamespace = extension.getNamespacesFromDocument((XmlDocument)parent, map != null);
         if (defaultNamespace != null) {
           if (map == null) {
             map = new BidirectionalMap<String, String>();
           }
           for (final String[] prefix2ns : defaultNamespace) {
-            final String prefix = prefix2ns[0];
-            if (!map.containsKey(prefix) || extension.canOverrideNamespace(prefix)) {
-              map.put(prefix, getRealNs(prefix2ns[1]));
-            }
+            map.put(prefix2ns[0], getRealNs(prefix2ns[1]));
           }
         }
       }

@@ -951,6 +951,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       final List<PyTargetExpression> result = new ArrayList<PyTargetExpression>();
       if (statementList != null) {
         statementList.accept(new PyRecursiveElementVisitor() {
+          @Override
+          public void visitPyClass(PyClass node) {}
+
           public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
             for (PyExpression expression : node.getTargets()) {
               if (expression instanceof PyTargetExpression) {

@@ -58,7 +58,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
 
   private final InterfaceContainmentVerifier myInterfaceContainmentVerifier = new InterfaceContainmentVerifier() {
     public boolean checkedInterfacesContain(PsiMethod psiMethod) {
-      return PullUpHelper.checkedInterfacesContain(myMemberInfos, psiMethod);
+      return PullUpProcessor.checkedInterfacesContain(myMemberInfos, psiMethod);
     }
   };
 
@@ -139,7 +139,7 @@ public class PullUpDialog extends PullUpDialogBase<MemberInfoStorage, MemberInfo
     }
 
     List<MemberInfo> infos = getSelectedMemberInfos();
-    invokeRefactoring(new PullUpHelper(myClass, superClass, infos.toArray(new MemberInfo[infos.size()]),
+    invokeRefactoring(new PullUpProcessor(myClass, superClass, infos.toArray(new MemberInfo[infos.size()]),
                                                new DocCommentPolicy(getJavaDocPolicy())));
     close(OK_EXIT_CODE);
   }

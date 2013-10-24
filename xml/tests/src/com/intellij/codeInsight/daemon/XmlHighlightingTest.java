@@ -2001,6 +2001,18 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     }, true, true);
   }
 
+  public void testDtdWithXsd() throws Exception {
+    doTest(
+      new VirtualFile[] {
+        getVirtualFile(BASE_PATH + "DtdWithXsd/help.xml"),
+        getVirtualFile(BASE_PATH + "DtdWithXsd/helptopic.xsd"),
+        getVirtualFile(BASE_PATH + "DtdWithXsd/html-entities.dtd")
+      },
+      true,
+      false
+    );
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();

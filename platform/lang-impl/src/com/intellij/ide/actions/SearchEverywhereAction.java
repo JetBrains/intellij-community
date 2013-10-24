@@ -65,6 +65,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -74,10 +75,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.IconUtil;
+import com.intellij.util.*;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.StatusText;
@@ -197,6 +195,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private JLabel mySearchLabel;
   private int myPopupActualWidth;
   private Component myFocusOwner;
+  private ChooseByNamePopup myFileChooseByName;
 
   public SearchEverywhereAction() {
     myContentPanel = new JPanel(new BorderLayout()) {
@@ -511,7 +510,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
     if (e == null) return;
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
-    if (myContextComponent == null) return;
+    if (myContextComponent == null) {
+      myContextComponent = mySearchLabel;
+    }
     final Window wnd = SwingUtilities.windowForComponent(myContextComponent);
     if (wnd == null || wnd.getParent() != null) return;
     myActionEvent = e;
@@ -815,7 +816,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       try {
         myList.getEmptyText().setText("Searching...");
         //noinspection SSBasedInspection
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
             myTitleIndexes.clear();
@@ -885,7 +886,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
       myProgressIndicator.checkCanceled();
 
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
         public void run() {
           if (myProgressIndicator.isCanceled()) return;
@@ -927,7 +928,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
       myProgressIndicator.checkCanceled();
 
-      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
         @Override
         public void run() {
           if (myProgressIndicator.isCanceled()) return;
@@ -954,37 +955,55 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       if (myFiles == null) {
         myFiles = myFileModel.getNames(false);
       }
-      List<MatchResult> matches = collectResults(pattern, myFiles, myFileModel);
-      final List<Object> files = new ArrayList<Object>();
-      FindSymbolParameters parameters = FindSymbolParameters.wrap(pattern, project, false);
-      final int maxFiles = 8;
-      for (MatchResult o : matches) {
-        if (filesCounter > maxFiles) break;
+      final Set<Object> elements = new LinkedHashSet<Object>();
+//      pattern = ChooseByNamePopup.getTransformedPattern(pattern, myFileModel);
+//      pattern = DefaultChooseByNameItemProvider.getNamePattern(myFileModel, pattern);
 
-        Object[] objects = myFileModel.getElementsByName(o.elementName, parameters, myProgressIndicator);
-        for (Object object : objects) {
-          if (!myListModel.contains(object)) {
-            if (object instanceof PsiFile) {
-              object = ((PsiFile)object).getVirtualFile();
-            }
-            if ((object instanceof VirtualFile || object instanceof PsiDirectory)
-                && !myAlreadyAddedFiles.contains(object)
+      final GlobalSearchScope scope = GlobalSearchScope.projectScope(project);
+      myFileChooseByName.getProvider().filterElements(myFileChooseByName, pattern, true,
+                                                      myProgressIndicator, new Processor<Object>() {
+        @Override
+        public boolean process(Object o) {
+          VirtualFile file = null;
+          if (o instanceof VirtualFile) {
+            file = (VirtualFile)o;
+          } else if (o instanceof PsiFile) {
+            file = ((PsiFile)o).getVirtualFile();
+          } else if (o instanceof PsiDirectory) {
+            file = ((PsiDirectory)o).getVirtualFile();
+          }
+          if (file != null && scope.accept(file)) {
+            elements.add(o);
+          }
+          return elements.size() < 30;
+        }
+      });
+      final List<Object> files = new ArrayList<Object>();
+      final int maxFiles = 8;
+      for (Object object : elements) {
+        if (filesCounter > maxFiles) break;
+        if (!myListModel.contains(object)) {
+          if (object instanceof PsiFile) {
+            object = ((PsiFile)object).getVirtualFile();
+          }
+          if ((object instanceof VirtualFile || object instanceof PsiDirectory)
+              && !myAlreadyAddedFiles.contains(object)
                 /*&& !((VirtualFile)object).isDirectory()*/) {
-              files.add(object);
-              if (object instanceof VirtualFile) {
-                myAlreadyAddedFiles.add((VirtualFile)object);
-              }
-              filesCounter++;
-              if (filesCounter > maxFiles) break;
+            files.add(object);
+            if (object instanceof VirtualFile) {
+              myAlreadyAddedFiles.add((VirtualFile)object);
             }
+            filesCounter++;
+            if (filesCounter > maxFiles) break;
           }
         }
       }
 
+
       myProgressIndicator.checkCanceled();
 
       if (files.size() > 0) {
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
             if (!myProgressIndicator.isCanceled()) {
@@ -1024,7 +1043,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       myProgressIndicator.checkCanceled();
 
       if (symbols.size() > 0) {
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
             if (!myProgressIndicator.isCanceled()) {
@@ -1077,7 +1096,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       myProgressIndicator.checkCanceled();
 
       if (classes.size() > 0) {
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
             if (!myProgressIndicator.isCanceled()) {
@@ -1111,7 +1130,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       if (files.size() > 0) {
         myAlreadyAddedFiles.addAll(files);
 
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
             if (!myProgressIndicator.isCanceled()) {
@@ -1141,7 +1160,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         provider.consumeTopHits(pattern, consumer);
       }
       if (elements.size() > 0) {
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
             if (!myProgressIndicator.isCanceled()) {
@@ -1159,6 +1178,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       if (myClassModel == null) {
         myClassModel = new GotoClassModel2(project);
         myFileModel = new GotoFileModel(project);
+        myFileChooseByName = ChooseByNamePopup.createPopup(project, myFileModel, (PsiElement)null);
         myActionModel = createActionModel();
         mySymbolsModel = new GotoSymbolModel2(project);
         myConfigurables.clear();
@@ -1290,6 +1310,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                   mySearchLabel.setIcon(AllIcons.Actions.FindPlain);
                 }
                 myFileModel = null;
+                myFileChooseByName = null;
                 myClassModel = null;
                 myActionModel = null;
                 myActions = null;
