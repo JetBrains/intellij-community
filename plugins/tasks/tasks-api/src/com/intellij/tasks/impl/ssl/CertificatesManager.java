@@ -1,11 +1,10 @@
-package com.intellij.tasks.impl;
+package com.intellij.tasks.impl.ssl;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.StreamUtil;
 import org.apache.commons.httpclient.params.HttpConnectionParams;
@@ -27,8 +26,7 @@ import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * {@code CertificatesManager} is responsible for negotiation SSL connection with server
@@ -103,7 +101,7 @@ public class CertificatesManager {
    * Creates special kind of {@code SSLContext} which X509TrustManager first checks certificate presence in
    * in default system-wide trust store (usually located at {@code ${JAVA_HOME}/lib/security/cacerts} or specified by
    * {@code javax.net.ssl.trustStore} property) and when in the one specified by first argument of factory method
-   * {@link com.intellij.tasks.impl.CertificatesManager#createInstance(String, String)}.
+   * {@link CertificatesManager#createInstance(String, String)}.
    * If certificate wasn't found in either, manager will ask user whether it can be
    * accepted (like web-browsers do) and if can, certificate will be added to specified trust store.
    * </p>
@@ -150,14 +148,18 @@ public class CertificatesManager {
         mySystemManager.checkServerTrusted(certificates, s);
       }
       catch (CertificateException e1) {
+        X509Certificate certificate = certificates[0];
         // looks like self-signed certificate
-        if (certificates.length == 1) {
-          try {
-            myCustomManager.checkServerTrusted(certificates, s);
-          }
-          catch (CertificateException e2) {
-            if (!myCustomManager.isBroken()) {
-              updateTrustStore(certificates[0]);
+        if (certificates.length == 1 && certificateIsSelfSigned(certificate)) {
+          // check-the-act sequence
+          synchronized (myCustomManager) {
+            try {
+              myCustomManager.checkServerTrusted(certificates, s);
+            }
+            catch (CertificateException e2) {
+              if (!myCustomManager.isBroken()) {
+                updateTrustStore(certificate);
+              }
             }
           }
         }
@@ -165,22 +167,34 @@ public class CertificatesManager {
     }
 
     private void updateTrustStore(final X509Certificate certificate) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      Application app = ApplicationManager.getApplication();
+      if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
+        myCustomManager.addCertificate(certificate);
+        return;
+      }
+
+      // can't use Application#invokeAndWait because of ReadAction
+      final CountDownLatch proceeded = new CountDownLatch(1);
+      app.invokeLater(new Runnable() {
         @Override
         public void run() {
-          String message = String.format("<html>" +
-                                         "<p>The following server's certificate is unknown and appears to be self-signed:</p>" +
-                                         "<pre><h3>Certificate details</h3>%s</pre></br>" +
-                                         "<p>Add it to trust storage?</p>" +
-                                         "</html>",
-                                         formatX509Certificate(certificate));
-          int res = Messages.showOkCancelDialog(message, "Unknown Server's Certificate", "Accept", "Reject", AllIcons.General.WarningDialog);
-          if (res == Messages.OK) {
-            LOG.debug("Certificate was accepted");
-            myCustomManager.addCertificate(certificate);
+          try {
+            if (new UntrustedCertificateWarningDialog(certificate).showAndGet()) {
+              LOG.debug("Certificate was accepted");
+              myCustomManager.addCertificate(certificate);
+            }
+          }
+          finally {
+            proceeded.countDown();
           }
         }
       }, ModalityState.any());
+      try {
+        proceeded.await();
+      }
+      catch (InterruptedException e) {
+        LOG.error(e);
+      }
     }
 
     @Override
@@ -333,28 +347,7 @@ public class CertificatesManager {
     return null;
   }
 
-  private static String formatX509Certificate(X509Certificate certificate) {
-    String info = certificate.getIssuerX500Principal().getName();
-//    return StringUtil.join(ContainerUtil.mapNotNull(info.split(","), new Function<String, String>() {
-//      @Override
-//      public String fun(String s) {
-//        s = s.trim();
-//        return s.matches("[A-Z]+=.*") ? s : null;
-//      }
-//    }), "\n");
-    StringBuilder builder = new StringBuilder("<table>");
-    Pattern pattern = Pattern.compile("([A-Z]+)=(.*)");
-    for (String s : info.split(",")) {
-      s = s.trim();
-      Matcher matcher = pattern.matcher(s);
-      if (matcher.matches()) {
-        builder.append("<tr><td align='right'>")
-          .append(matcher.group(1)).append(":")
-          .append("</td><td>")
-          .append(matcher.group(2))
-          .append("</td></tr>");
-      }
-    }
-    return builder.append("</table>").toString();
+  private static boolean certificateIsSelfSigned(X509Certificate certificate) {
+    return certificate.getIssuerX500Principal().equals(certificate.getSubjectX500Principal());
   }
 }

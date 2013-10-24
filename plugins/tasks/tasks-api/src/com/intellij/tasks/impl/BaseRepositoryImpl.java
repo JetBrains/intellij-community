@@ -2,6 +2,7 @@ package com.intellij.tasks.impl;
 
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.config.TaskSettings;
+import com.intellij.tasks.impl.ssl.CertificatesManager;
 import com.intellij.util.net.HttpConfigurable;
 import org.apache.commons.httpclient.*;
 import org.apache.commons.httpclient.auth.AuthScope;

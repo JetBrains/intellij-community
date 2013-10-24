@@ -42,8 +42,8 @@ public class UntrustedCertificateWarningDialog extends DialogWrapper {
   private JPanel myValidityInfoPanel;
   private JTextPane myMessagePane;
 
-  public UntrustedCertificateWarningDialog(Project project, X509Certificate certificate) {
-    super(project, false);
+  public UntrustedCertificateWarningDialog(X509Certificate certificate) {
+    super((Project) null, false);
 
     setTitle("Untrusted Server's Certificate");
     setOKButtonText("Accept");
