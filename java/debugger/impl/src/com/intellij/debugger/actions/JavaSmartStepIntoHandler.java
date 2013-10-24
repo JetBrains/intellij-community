@@ -89,7 +89,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         @Override
         public void visitAnonymousClass(PsiAnonymousClass aClass) {
           for (PsiMethod psiMethod : aClass.getMethods()) {
-            targets.add(new MethodTarget(psiMethod, getCurrentParamName(), true));
+            targets.add(new MethodTarget(psiMethod, getCurrentParamName(), psiMethod.getBody(), true));
           }
         }
 
@@ -104,7 +104,9 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         public void visitCallExpression(final PsiCallExpression expression) {
           final PsiMethod psiMethod = expression.resolveMethod();
           if (psiMethod != null) {
-            targets.add(new MethodTarget(psiMethod, null, false));
+            final PsiElement highlightElement = expression instanceof PsiMethodCallExpression?
+              ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceNameElement() : null;
+            targets.add(new MethodTarget(psiMethod, null, highlightElement, false));
             final PsiExpressionList argList = expression.getArgumentList();
             if (argList != null) {
               final String methodName = psiMethod.getName();
@@ -143,13 +145,20 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
   private static class MethodTarget implements StepTarget {
     private final PsiMethod myMethod;
+    private final PsiElement myHighlightElement;
     private final String myLabel;
     private final boolean myNeedBreakpointRequest;
 
-    private MethodTarget(@NotNull PsiMethod method, String currentParamName, boolean needBreakpointRequest) {
+    private MethodTarget(@NotNull PsiMethod method, String currentParamName, PsiElement highlightElement, boolean needBreakpointRequest) {
       myMethod = method;
+      myHighlightElement = highlightElement;
       myLabel = currentParamName == null? null : currentParamName + ".";
       myNeedBreakpointRequest = needBreakpointRequest;
+    }
+
+    @Nullable
+    public PsiElement getHighlightElement() {
+      return myHighlightElement;
     }
 
     @Nullable

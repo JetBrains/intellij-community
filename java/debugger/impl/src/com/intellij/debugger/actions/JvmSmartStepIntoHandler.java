@@ -18,16 +18,22 @@ package com.intellij.debugger.actions;
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.MethodFilter;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBList;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -49,6 +55,9 @@ public abstract class JvmSmartStepIntoHandler {
     @Nullable
     String getMethodLabel();
 
+    @Nullable
+    PsiElement getHighlightElement();
+
     boolean needsBreakpointRequest();
 
     boolean equals(Object another);
@@ -66,22 +75,43 @@ public abstract class JvmSmartStepIntoHandler {
   public boolean doSmartStep(SourcePosition position, final DebuggerSession session, TextEditor fileEditor) {
     final List<StepTarget> targets = findSmartStepTargets(position);
     if (!targets.isEmpty()) {
+      final StepTarget firstTarget = targets.get(0);
       if (targets.size() == 1) {
-        session.stepInto(true, createMethodFilter(targets.get(0)));
+        session.stepInto(true, createMethodFilter(firstTarget));
       }
       else {
-        final PsiMethodListPopupStep popupStep = new PsiMethodListPopupStep(targets, new PsiMethodListPopupStep.OnChooseRunnable() {
+        final Editor editor = fileEditor.getEditor();
+        final PsiMethodListPopupStep popupStep = new PsiMethodListPopupStep(editor, targets, new PsiMethodListPopupStep.OnChooseRunnable() {
           public void execute(StepTarget chosenTarget) {
             session.stepInto(true, createMethodFilter(chosenTarget));
           }
         });
         final ListPopup popup = JBPopupFactory.getInstance().createListPopup(popupStep);
-        final RelativePoint point = DebuggerUIUtil.calcPopupLocation(fileEditor.getEditor(), position.getLine());
+        popup.addListSelectionListener(new ListSelectionListener() {
+          public void valueChanged(ListSelectionEvent e) {
+            popupStep.getScopeHighlighter().dropHighlight();
+            if (!e.getValueIsAdjusting()) {
+              final StepTarget selectedTarget = (StepTarget)((JBList)e.getSource()).getSelectedValue();
+              if (selectedTarget != null) {
+                highlightTarget(popupStep, selectedTarget);
+              }
+            }
+          }
+        });
+        highlightTarget(popupStep, firstTarget);
+        final RelativePoint point = DebuggerUIUtil.calcPopupLocation(editor, position.getLine());
         popup.show(point);
       }
       return true;
     }
     return false;
+  }
+
+  private static void highlightTarget(PsiMethodListPopupStep popupStep, StepTarget target) {
+    final PsiElement highlightElement = target.getHighlightElement();
+    if (highlightElement != null) {
+      popupStep.getScopeHighlighter().highlight(highlightElement, Arrays.asList(highlightElement));
+    }
   }
 
   /**

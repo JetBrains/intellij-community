@@ -15,7 +15,9 @@
  */
 package com.intellij.debugger.actions;
 
+import com.intellij.codeInsight.unwrap.ScopeHighlighter;
 import com.intellij.debugger.DebuggerBundle;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiSubstitutor;
@@ -32,15 +34,21 @@ import java.util.List;
 class PsiMethodListPopupStep implements ListPopupStep<JvmSmartStepIntoHandler.StepTarget> {
   private final List<JvmSmartStepIntoHandler.StepTarget> myTargets;
   private final OnChooseRunnable myStepRunnable;
-
+  private final ScopeHighlighter myScopeHighlighter;
 
   public interface OnChooseRunnable {
     void execute(JvmSmartStepIntoHandler.StepTarget stepTarget);
   }
 
-  public PsiMethodListPopupStep(final List<JvmSmartStepIntoHandler.StepTarget> targets, final OnChooseRunnable stepRunnable) {
+  public PsiMethodListPopupStep(Editor editor, final List<JvmSmartStepIntoHandler.StepTarget> targets, final OnChooseRunnable stepRunnable) {
     myTargets = targets;
+    myScopeHighlighter = new ScopeHighlighter(editor);
     myStepRunnable = stepRunnable;
+  }
+
+  @NotNull
+  public ScopeHighlighter getScopeHighlighter() {
+    return myScopeHighlighter;
   }
 
   @NotNull
@@ -84,6 +92,7 @@ class PsiMethodListPopupStep implements ListPopupStep<JvmSmartStepIntoHandler.St
 
   public PopupStep onChosen(JvmSmartStepIntoHandler.StepTarget selectedValue, final boolean finalChoice) {
     if (finalChoice) {
+      myScopeHighlighter.dropHighlight();
       myStepRunnable.execute(selectedValue);
     }
     return FINAL_CHOICE;
@@ -98,6 +107,7 @@ class PsiMethodListPopupStep implements ListPopupStep<JvmSmartStepIntoHandler.St
   }
 
   public void canceled() {
+    myScopeHighlighter.dropHighlight();
   }
 
   public boolean isMnemonicsNavigationEnabled() {
