@@ -482,7 +482,7 @@ public class GitHistoryUtils {
     return null;
   }
 
-  public static List<? extends VcsShortCommitDetails> readAllMiniDetails(Project project, VirtualFile root) throws VcsException {
+  public static List<? extends VcsShortCommitDetails> readAllMiniDetails(Project project, final VirtualFile root) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME, AUTHOR_TIME, SUBJECT);
     h.setStdoutSuppressed(true);
@@ -502,13 +502,13 @@ public class GitHistoryUtils {
         for (String parent : record.getParentsHashes()) {
           parents.add(HashImpl.build(parent));
         }
-        return new VcsShortCommitDetailsImpl(HashImpl.build(record.getHash()), parents, record.getAuthorTimeStamp(),
-                                        record.getSubject(), record.getAuthorName());
+        return new VcsShortCommitDetailsImpl(HashImpl.build(record.getHash()), parents, record.getAuthorTimeStamp(), root,
+                                             record.getSubject(), record.getAuthorName());
       }
     });
   }
 
-  public static List<? extends VcsShortCommitDetails> readMiniDetails(Project project, VirtualFile root, List<String> hashes) throws VcsException {
+  public static List<? extends VcsShortCommitDetails> readMiniDetails(Project project, final VirtualFile root, List<String> hashes) throws VcsException {
     GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, PARENTS, AUTHOR_NAME, AUTHOR_TIME, SUBJECT);
     h.setStdoutSuppressed(true);
@@ -527,8 +527,8 @@ public class GitHistoryUtils {
         for (String parent : record.getParentsHashes()) {
           parents.add(HashImpl.build(parent));
         }
-        return new VcsShortCommitDetailsImpl(HashImpl.build(record.getHash()), parents, record.getAuthorTimeStamp(),
-                                        record.getSubject(), record.getAuthorName());
+        return new VcsShortCommitDetailsImpl(HashImpl.build(record.getHash()), parents, record.getAuthorTimeStamp(), root,
+                                             record.getSubject(), record.getAuthorName());
       }
     });
   }
@@ -711,9 +711,9 @@ public class GitHistoryUtils {
         return HashImpl.build(hash);
       }
     });
-    return new GitCommit(HashImpl.build(record.getHash()), parents, record.getAuthorTimeStamp(), record.getSubject(), record.getAuthorName(),
-                         record.getAuthorEmail(), record.getFullMessage(),
-                         record.getCommitterName(), record.getCommitterEmail(), record.getLongTimeStamp(),
+    return new GitCommit(HashImpl.build(record.getHash()), parents, record.getAuthorTimeStamp(), root, record.getSubject(),
+                         record.getAuthorName(), record.getAuthorEmail(), record.getFullMessage(), record.getCommitterName(),
+                         record.getCommitterEmail(), record.getLongTimeStamp(),
                          record.parseChanges(project, root));
   }
 

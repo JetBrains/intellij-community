@@ -1,8 +1,6 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -54,7 +52,7 @@ public class VcsLogFilterer {
     // apply details filters, and use simple table without graph (we can't filter by details and keep the graph yet).
     AbstractVcsLogTableModel model;
     if (!detailsFilters.isEmpty()) {
-      List<Pair<VcsFullCommitDetails, VirtualFile>> filteredCommits = filterByDetails(graphModel, detailsFilters);
+      List<VcsFullCommitDetails> filteredCommits = filterByDetails(graphModel, detailsFilters);
       model = new NoGraphTableModel(myLogDataHolder, myUI, filteredCommits, myLogDataHolder.getDataPack().getRefsModel());
     }
     else {
@@ -83,23 +81,17 @@ public class VcsLogFilterer {
     });
   }
 
-  private List<Pair<VcsFullCommitDetails, VirtualFile>> filterByDetails(final GraphModel graphModel,
-                                                                        final List<VcsLogDetailsFilter> detailsFilters) {
-    return ContainerUtil.mapNotNull(myLogDataHolder.getTopCommitDetails(),
-                                    new Function<VcsFullCommitDetails, Pair<VcsFullCommitDetails,VirtualFile>>() {
+  private List<VcsFullCommitDetails> filterByDetails(final GraphModel graphModel, final List<VcsLogDetailsFilter> detailsFilters) {
+    return ContainerUtil.filter(myLogDataHolder.getTopCommitDetails(), new Condition<VcsFullCommitDetails>() {
       @Override
-      public Pair<VcsFullCommitDetails, VirtualFile> fun(final VcsFullCommitDetails details) {
+      public boolean value(final VcsFullCommitDetails details) {
         boolean allFilterMatch = !ContainerUtil.exists(detailsFilters, new Condition<VcsLogDetailsFilter>() {
           @Override
           public boolean value(VcsLogDetailsFilter filter) {
             return !filter.matches(details);
           }
         });
-        Node node = graphModel.getNodeIfVisible(details.getHash());
-        if (node == null || !allFilterMatch) {
-          return null;
-        }
-        return Pair.create(details, node.getBranch().getRepositoryRoot());
+        return graphModel.isNodeOfHashVisible(details.getHash()) && allFilterMatch;
       }
     });
   }

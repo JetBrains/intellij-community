@@ -14,7 +14,6 @@ import com.intellij.vcs.log.graphmodel.FragmentManager;
 import com.intellij.vcs.log.graphmodel.GraphModel;
 import com.intellij.vcs.log.graphmodel.fragment.FragmentManagerImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -116,10 +115,9 @@ public class GraphModelImpl implements GraphModel {
     fullUpdate();
   }
 
-  @Nullable
   @Override
-  public Node getNodeIfVisible(@NotNull Hash hash) {
-    return visibleNodes.getNodeIfVisible(hash);
+  public boolean isNodeOfHashVisible(@NotNull Hash hash) {
+    return visibleNodes.isNodeVisible(hash);
   }
 
   @NotNull

@@ -1,6 +1,7 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import org.jetbrains.annotations.NotNull;
@@ -22,11 +23,11 @@ public class VcsFullCommitDetailsImpl extends VcsShortCommitDetailsImpl implemen
 
   @NotNull private final Collection<Change> myChanges;
 
-  public VcsFullCommitDetailsImpl(@NotNull Hash hash, @NotNull List<Hash> parents, long authorTime, @NotNull String subject,
-                                  @NotNull String authorName, @NotNull String authorEmail, @NotNull String message,
-                                  @NotNull String committerName,
-                                  @NotNull String committerEmail, long commitTime, @NotNull List<Change> changes) {
-    super(hash, parents, authorTime, subject, authorName);
+  public VcsFullCommitDetailsImpl(@NotNull Hash hash, @NotNull List<Hash> parents, long authorTime, @NotNull VirtualFile root,
+                                  @NotNull String subject, @NotNull String authorName, @NotNull String authorEmail, @NotNull String message,
+                                  @NotNull String committerName, @NotNull String committerEmail, long commitTime,
+                                  @NotNull List<Change> changes) {
+    super(hash, parents, authorTime, root, subject, authorName);
     myAuthorEmail = authorEmail;
     myCommitterName = committerName;
     myCommitterEmail = committerEmail;

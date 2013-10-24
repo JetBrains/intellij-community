@@ -9,11 +9,9 @@ import com.intellij.vcs.log.graph.mutable.MutableGraph;
 import com.intellij.vcs.log.graph.mutable.elements.MutableNode;
 import com.intellij.vcs.log.graph.mutable.elements.MutableNodeRow;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -23,7 +21,7 @@ public class BranchVisibleNodes {
 
   @NotNull private final MutableGraph myGraph;
   @NotNull private Set<Node> myVisibleNodes = Collections.emptySet();
-  @NotNull private Map<Hash, Node> myVisibleHashes = Collections.emptyMap();
+  @NotNull private Set<Hash> myVisibleHashes = Collections.emptySet();
 
   public BranchVisibleNodes(@NotNull MutableGraph graph) {
     myGraph = graph;
@@ -49,10 +47,12 @@ public class BranchVisibleNodes {
 
   public void setVisibleNodes(@NotNull Set<Node> visibleNodes) {
     myVisibleNodes = visibleNodes;
-    myVisibleHashes = ContainerUtil.newHashMap();
-    for (Node node : myVisibleNodes) {
-      myVisibleHashes.put(node.getCommitHash(), node);
-    }
+    myVisibleHashes = ContainerUtil.map2Set(myVisibleNodes, new Function<Node, Hash>() {
+      @Override
+      public Hash fun(Node node) {
+        return node.getCommitHash();
+      }
+    });
   }
 
   public Set<Node> getVisibleNodes() {
@@ -63,9 +63,8 @@ public class BranchVisibleNodes {
     return myVisibleNodes.contains(node);
   }
 
-  @Nullable
-  public Node getNodeIfVisible(@NotNull final Hash hash) {
-    return myVisibleHashes.get(hash);
+  public boolean isNodeVisible(@NotNull final Hash hash) {
+    return myVisibleHashes.contains(hash);
   }
 
 }
