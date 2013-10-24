@@ -17,12 +17,6 @@ public final class WeightableChainLookupElement extends LookupElementDecorator<L
     myChainRelevance = relevance;
   }
 
-  @Override
-  public void renderElement(LookupElementPresentation presentation) {
-    super.renderElement(presentation);
-    presentation.setItemText("c: " + presentation.getItemText());
-  }
-
   public ChainRelevance getChainRelevance() {
     return myChainRelevance;
   }
