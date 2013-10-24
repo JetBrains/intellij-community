@@ -801,14 +801,14 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   private void applyChildrenChangeEvents(VirtualFile parent, List<VFileEvent> events) {
     final NewVirtualFileSystem delegate = getDelegate(parent);
-    List<VirtualFile> childrenToBeAdded = null;
-    TIntArrayList childrenIdsToBeRemoved = null;
-    List<VirtualFile> childrenToBeRemoved = null;
+    TIntArrayList childrenIdsUpdated = new TIntArrayList();
+    List<VirtualFile> childrenToBeUpdated = new SmartList<VirtualFile>();
 
     assert parent != null && parent != mySuperRoot;
     final int parentId = getFileId(parent);
     assert parentId != 0;
-    TIntHashSet childrenIds = new TIntHashSet(FSRecords.list(parentId));
+    TIntHashSet parentChildrenIds = new TIntHashSet(FSRecords.list(parentId));
+    boolean hasRemovedChildren = false;
 
     for(VFileEvent event:events) {
       if (event instanceof VFileCreateEvent) {
@@ -818,15 +818,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
         if (attributes != null) {
           final int childId = createAndFillRecord(delegate, fake, parentId, attributes);
-          if (childrenToBeAdded == null) {
-            childrenToBeAdded = new SmartList<VirtualFile>();
-          }
-
           assert parent instanceof VirtualDirectoryImpl : parent;
           final VirtualDirectoryImpl dir = (VirtualDirectoryImpl)parent;
           VirtualFileSystemEntry child = dir.createChild(name, childId, dir.getFileSystem());
-          childrenToBeAdded.add(child);
-          childrenIds.add(childId);
+          childrenToBeUpdated.add(child);
+          childrenIdsUpdated.add(childId);
+          parentChildrenIds.add(childId);
         }
       } else if (event instanceof VFileDeleteEvent) {
         VirtualFile file = ((VFileDeleteEvent)event).getFile();
@@ -835,36 +832,30 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
           continue;
         }
 
+        hasRemovedChildren = true;
         int id = getFileId(file);
 
-        if(childrenIdsToBeRemoved == null) {
-          childrenIdsToBeRemoved = new TIntArrayList();
-          childrenToBeRemoved = new SmartList<VirtualFile>();
-        }
-
-        childrenIdsToBeRemoved.add(id);
-        childrenToBeRemoved.add(file);
-        childrenIds.remove(id);
+        childrenToBeUpdated.add(file);
+        childrenIdsUpdated.add(-id);
+        parentChildrenIds.remove(id);
       }
     }
 
-    FSRecords.updateList(parentId, childrenIds.toArray());
+    FSRecords.updateList(parentId, parentChildrenIds.toArray());
 
-    if (childrenToBeAdded != null) {
-      for(VirtualFile addedFile:childrenToBeAdded) {
-        ((VirtualDirectoryImpl)parent).addChild((VirtualFileSystemEntry)addedFile);
-      }
-    }
+    if (hasRemovedChildren)  clearIdCache();
+    VirtualDirectoryImpl parentImpl = (VirtualDirectoryImpl)parent;
 
-    if (childrenToBeRemoved != null) {
-      clearIdCache();
-      VirtualDirectoryImpl virtualDirectory = (VirtualDirectoryImpl)parent;
+    for(int i = 0, len = childrenIdsUpdated.size(); i < len; ++i) {
+      final int childId = childrenIdsUpdated.get(i);
+      final VirtualFile childFile = childrenToBeUpdated.get(i);
 
-      for(int i = 0, len = childrenIdsToBeRemoved.size(); i < len; ++i) {
-        FSRecords.deleteRecordRecursively(childrenIdsToBeRemoved.get(i));
-        VirtualFile removedFile = childrenToBeRemoved.get(i);
-        virtualDirectory.removeChild(removedFile);
-        invalidateSubtree(removedFile);
+      if (childId > 0) {
+        parentImpl.addChild((VirtualFileSystemEntry)childFile);
+      } else {
+        FSRecords.deleteRecordRecursively(-childId);
+        parentImpl.removeChild(childFile);
+        invalidateSubtree(childFile);
       }
     }
   }
