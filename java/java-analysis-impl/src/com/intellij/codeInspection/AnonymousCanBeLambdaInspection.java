@@ -125,7 +125,7 @@ public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspection
                     if (bodyContainsForbiddenRefs[0]) return;
                     super.visitReferenceExpression(expression);
                     if (!(expression.getParent() instanceof PsiMethodCallExpression)) {
-                      PsiField field = HighlightUtil.findEnclosingFieldInitializer(expression);
+                      final PsiField field = PsiTreeUtil.getParentOfType(expression, PsiField.class);
                       if (field != null) {
                         final PsiElement resolved = expression.resolve();
                         if (resolved instanceof PsiField && 
