@@ -10,7 +10,7 @@ import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.data.VcsLogFilter;
+import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.data.VcsLogFilterer;
 import com.intellij.vcs.log.graph.elements.GraphElement;
 import com.intellij.vcs.log.graph.elements.Node;
@@ -196,7 +196,7 @@ public class VcsLogUI {
   }
 
   @NotNull
-  private Collection<VcsLogFilter> collectFilters() {
+  public Collection<VcsLogFilter> collectFilters() {
     return myMainFrame.getFilterUi().getFilters();
   }
 

@@ -19,7 +19,7 @@ import com.intellij.ui.SearchTextField;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.data.VcsLogFilter;
+import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.data.VcsLogFilterer;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;

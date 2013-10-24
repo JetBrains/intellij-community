@@ -1,4 +1,4 @@
-package com.intellij.vcs.log.data;
+package com.intellij.vcs.log;
 
 /**
  * Marker interface indicating that this is a filter for the VCS log.
