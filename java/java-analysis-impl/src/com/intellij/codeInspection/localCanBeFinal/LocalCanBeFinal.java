@@ -197,8 +197,7 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
 
     PsiVariable[] psiVariables = result.toArray(new PsiVariable[result.size()]);
     for (PsiVariable psiVariable : psiVariables) {
-      if (!isReportParameters() && psiVariable instanceof PsiParameter || !isReportVariables() && psiVariable instanceof PsiLocalVariable ||
-          psiVariable.hasModifierProperty(PsiModifier.FINAL)) {
+      if (shouldBeIgnored(psiVariable)) {
         result.remove(psiVariable);
       }
 
@@ -240,6 +239,17 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
     }
 
     return problems;
+  }
+
+  private boolean shouldBeIgnored(PsiVariable psiVariable) {
+    if (psiVariable.hasModifierProperty(PsiModifier.FINAL)) return true;
+    if (!isReportParameters()) {
+      if (psiVariable instanceof PsiParameter) {
+        final PsiElement declarationScope = ((PsiParameter)psiVariable).getDeclarationScope();
+        if (declarationScope instanceof PsiMethod || declarationScope instanceof PsiLambdaExpression) return true;
+      }
+    }
+    return !isReportVariables() && psiVariable instanceof PsiLocalVariable;
   }
 
   @Override
