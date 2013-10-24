@@ -74,8 +74,9 @@ public class IntentionUtils {
     final Project project = owner.getProject();
     PsiTypeElement typeElement = method.getReturnTypeElement();
     ChooseTypeExpression expr =
-      new ChooseTypeExpression(constraints, PsiManager.getInstance(project), method.getLanguage() == GroovyFileType.GROOVY_LANGUAGE,
-                               context.getResolveScope());
+      new ChooseTypeExpression(constraints, PsiManager.getInstance(project), context.getResolveScope(),
+                               method.getLanguage() == GroovyFileType.GROOVY_LANGUAGE
+      );
     TemplateBuilderImpl builder = new TemplateBuilderImpl(method);
     if (!isConstructor) {
       assert typeElement != null;

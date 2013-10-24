@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrFinalListener;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrInplaceIntroducer;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
+import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
 import javax.swing.*;
@@ -98,11 +99,20 @@ public class GrInplaceVariableIntroducer extends GrInplaceIntroducer {
   }
 
   @Override
+  public void finish(boolean success) {
+    super.finish(success);
+
+    if (success) {
+      GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_SELECT_DEF = getVariable().getDeclaredType() == null;
+    }
+  }
+
+  @Override
   protected void addAdditionalVariables(TemplateBuilderImpl builder) {
     GrVariable variable = getVariable();
     assert variable != null;
-    TypeConstraint[] constraints = {SupertypeConstraint.create(variable.getType())};
-    ChooseTypeExpression typeExpression = new ChooseTypeExpression(constraints, variable.getManager(), true, variable.getResolveScope());
+    TypeConstraint[] constraints = {SupertypeConstraint.create(variable.getInitializerGroovy().getType())};
+    ChooseTypeExpression typeExpression = new ChooseTypeExpression(constraints, variable.getManager(), variable.getResolveScope(), true, GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_SELECT_DEF);
     PsiElement element = variable.getTypeElementGroovy() != null ? variable.getTypeElementGroovy()
                                                                  : PsiUtil.findModifierInList(variable.getModifierList(), GrModifier.DEF);
     builder.replaceElement(element, "Variable_type", typeExpression, true, true);
