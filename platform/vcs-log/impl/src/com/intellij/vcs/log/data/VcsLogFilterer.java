@@ -9,6 +9,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graphmodel.GraphModel;
 import com.intellij.vcs.log.ui.VcsLogUI;
+import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import com.intellij.vcs.log.ui.tables.NoGraphTableModel;
 import org.jetbrains.annotations.NotNull;
@@ -51,15 +52,21 @@ public class VcsLogFilterer {
     }
 
     // apply details filters, and use simple table without graph (we can't filter by details and keep the graph yet).
+    AbstractVcsLogTableModel model;
     if (!detailsFilters.isEmpty()) {
       List<Pair<VcsFullCommitDetails, VirtualFile>> filteredCommits = filterByDetails(graphModel, detailsFilters);
-      myUI.setModel(new NoGraphTableModel(filteredCommits, myLogDataHolder.getDataPack().getRefsModel()));
+      model = new NoGraphTableModel(myLogDataHolder, myUI, filteredCommits, myLogDataHolder.getDataPack().getRefsModel());
     }
     else {
-      myUI.setModel(new GraphTableModel(myLogDataHolder));
+      model = new GraphTableModel(myLogDataHolder, myUI);
     }
 
+    myUI.setModel(model);
     myUI.updateUI();
+
+    if (model.getRowCount() == 0) {
+      model.requestToLoadMore();
+    }
   }
 
   private static void applyGraphFilters(GraphModel graphModel, final List<VcsLogGraphFilter> onGraphFilters) {

@@ -3,6 +3,7 @@ package com.intellij.vcs.log.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogSettings;
@@ -46,10 +47,10 @@ public class VcsLogUI {
     project.getMessageBus().connect(project).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new Runnable() {
       @Override
       public void run() {
-        applyFilters();
+        applyFiltersAndUpdateUi();
       }
     });
-    applyFilters();
+    applyFiltersAndUpdateUi();
   }
 
   @NotNull
@@ -165,16 +166,13 @@ public class VcsLogUI {
     if (row != -1) {
       jumpToRow(row);
     }
-    else if (myLogDataHolder.isFullLogReady()) {
+    else {
       myLogDataHolder.showFullLog(new Runnable() {
         @Override
         public void run() {
           jumpToCommit(commitHash);
         }
       });
-    }
-    else {
-      LOG.info("No row for hash " + commitHash);
     }
   }
 
@@ -193,7 +191,7 @@ public class VcsLogUI {
     return myLogDataHolder;
   }
 
-  private void applyFilters() {
+  public void applyFiltersAndUpdateUi() {
     myFilterer.applyFiltersAndUpdateUi(collectFilters());
   }
 
@@ -202,4 +200,7 @@ public class VcsLogUI {
     return myMainFrame.getFilterUi().getFilters();
   }
 
+  public JBTable getTable() {
+    return myMainFrame.getGraphTable();
+  }
 }

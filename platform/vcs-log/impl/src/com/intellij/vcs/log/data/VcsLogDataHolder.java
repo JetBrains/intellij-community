@@ -37,6 +37,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * <p>Holds the commit data loaded from the VCS, and is capable to refresh this data by
@@ -86,6 +88,12 @@ public class VcsLogDataHolder implements Disposable {
 
   private static final Logger LOG = Logger.getInstance(VcsLogDataHolder.class);
 
+  /**
+   * Don't load more than ourDetailsLoadingRateLimit times of standard recent commits details per repository.
+   * If this amount of commits is not enough, ask the VCS directly.
+   */
+  private static final int MORE_DETAILS_LOADING_RATE_LIMIT = 10;
+
   @NotNull private final Project myProject;
   @NotNull private final VcsLogObjectsFactory myFactory;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
@@ -121,6 +129,17 @@ public class VcsLogDataHolder implements Disposable {
    */
   @NotNull private final Map<Hash, VcsFullCommitDetails> myTopCommitsDetailsCache = ContainerUtil.newConcurrentMap();
 
+  /**
+   * Checks if "load more commit details" process is already in progress to avoid scheduling multiple similar processes.
+   */
+  private final AtomicBoolean myLoadMoreInProgress = new AtomicBoolean(false);
+
+  /**
+   * One-time latch that lets wait until the entire log skeleton is loaded.
+   * It is reinitialized on full refresh.
+   */
+  private CountDownLatch myEntireLogLoadWaiter;
+
   public VcsLogDataHolder(@NotNull Project project, @NotNull VcsLogObjectsFactory logObjectsFactory,
                           @NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull VcsLogSettings settings) {
     myProject = project;
@@ -153,13 +172,20 @@ public class VcsLogDataHolder implements Disposable {
   }
 
   private void initialize(@NotNull final Consumer<VcsLogDataHolder> onInitialized) {
+    // complete refresh => other scheduled refreshes are not interesting
+    // TODO: interrupt the current task as well instead of waiting for it to finish, since the result is invalid anyway
     myDataLoaderQueue.clear();
+
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
+        resetState();
         loadFromVcs(mySettings.getRecentCommitsCount(), indicator, new Consumer<DataPack>() {
           @Override
           public void consume(DataPack dataPack) {
+            myEntireLogLoadWaiter.countDown(); // make sure to release any potential waiters of the previous latch
+            myEntireLogLoadWaiter = new CountDownLatch(1);
+
             onInitialized.consume(VcsLogDataHolder.this);
             loadAllLog(); // after first part is loaded and shown to the user, start loading the whole log in background
           }
@@ -168,43 +194,89 @@ public class VcsLogDataHolder implements Disposable {
     });
   }
 
+  private void resetState() {
+    // note: myLogData is not nullified: we want the log still be accessible even during the complete refresh
+
+    myFullLogShowing = false;
+    myTopCommitsDetailsCache.clear();
+    myLoadMoreInProgress.set(false);
+
+    if (myEntireLogLoadWaiter != null) {
+      // make sure that all waiters are released;
+      // they may perform some action after this release,
+      // but it is not important since the log will be rebuilt soon, once the initial part of refresh completes.
+      myEntireLogLoadWaiter.countDown();
+    }
+    myEntireLogLoadWaiter = new CountDownLatch(1);
+  }
+
   private void loadAllLog() {
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
-        Map<VirtualFile, List<TimedVcsCommit>> logs = ContainerUtil.newHashMap();
-        Map<VirtualFile, Collection<VcsRef>> refs = ContainerUtil.newHashMap();
-        for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
-          VirtualFile root = entry.getKey();
-          VcsLogProvider logProvider = entry.getValue();
-          logs.put(root, logProvider.readAllHashes(root));
-          refs.put(root, logProvider.readAllRefs(root));
+        try {
+          Map<VirtualFile, List<TimedVcsCommit>> logs = ContainerUtil.newHashMap();
+          Map<VirtualFile, Collection<VcsRef>> refs = ContainerUtil.newHashMap();
+          for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
+            VirtualFile root = entry.getKey();
+            VcsLogProvider logProvider = entry.getValue();
+            logs.put(root, logProvider.readAllHashes(root));
+            refs.put(root, logProvider.readAllRefs(root));
+          }
+          DataPack existingDataPack = myLogData.getDataPack();
+          // keep existing data pack: we don't want to rebuild the graph,
+          // we just make the whole log structure available for our cunning refresh procedure of if user requests the whole graph
+          myLogData = new LogData(logs, refs, myLogData.getTopCommits(), existingDataPack, true);
         }
-        DataPack existingDataPack = myLogData.getDataPack();
-        // keep existing data pack: we don't want to rebuild the graph,
-        // we just make the whole log structure available for our cunning refresh procedure of if user requests the whole graph
-        myLogData = new LogData(logs, refs, myLogData.getTopCommits(), existingDataPack, true);
+        finally {
+          myEntireLogLoadWaiter.countDown();
+        }
       }
     });
   }
 
+  /**
+   * Show the full log tree to the user.
+   * Initially only the top part of the log is shown to avoid memory and performance problems.
+   * However, if user wants to navigate to something in the past, we rebuild the log and show it.
+   * <p/>
+   * Method returns immediately, log building is executed in the background.
+   * <p/>
+   * TODO: in most cases, users don't need to go to such deep past even if they need to go deeper than to 1000 most recent commits.
+   * Therefore optimize: Add a hash parameter, and build only the necessary part of the log + some commits below.
+   *
+   * @param onSuccess Invoked in the EDT after the log DataPack is built.
+   */
   public void showFullLog(@NotNull final Runnable onSuccess) {
+    if (myFullLogShowing) {
+      return;
+    }
+
     runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
-        if (myLogData.isFullLogReady()) { // TODO if not ready, wait for it
-          List<TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(myLogData.myLogsByRoot.values());
-          DataPack fullDataPack = DataPack.build(compoundLog, myLogData.getAllRefs(), indicator);
-          myLogData = new LogData(myLogData.getLogs(), myLogData.getRefs(), myLogData.getTopCommits(), fullDataPack, true);
-          myFullLogShowing = true;
-          UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              notifyAboutDataRefresh();
-              onSuccess.run();
-            }
-          });
+        if (myFullLogShowing) {
+          return;
         }
+
+        try {
+          myEntireLogLoadWaiter.await();
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+
+        List<TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(myLogData.myLogsByRoot.values());
+        DataPack fullDataPack = DataPack.build(compoundLog, myLogData.getAllRefs(), indicator);
+        myLogData = new LogData(myLogData.getLogs(), myLogData.getRefs(), myLogData.getTopCommits(), fullDataPack, true);
+        myFullLogShowing = true;
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            notifyAboutDataRefresh();
+            onSuccess.run();
+          }
+        });
       }
     });
   }
@@ -351,6 +423,86 @@ public class VcsLogDataHolder implements Disposable {
     });
   }
 
+  /**
+   * The state of "load more" procedure.
+   */
+  public enum LoadingState {
+    /**
+     * currently in the process of loading more details;
+     */
+    LOADING,
+    /**
+     * details of all commit of the entire history have been loaded, nothing to load more
+     */
+    ALL_COMMITS_LOADED,
+    /**
+     * reached the limit to load more commit details; need to query the VCS directly if needed.
+     */
+    LIMIT_REACHED
+  }
+
+  @NotNull
+  public LoadingState loadMoreDetails(@NotNull final Runnable onSuccess) {
+    if (myLoadMoreInProgress.get()) { // quick check
+      return LoadingState.LOADING;
+    }
+
+    final int topCommitsCount = myLogData.getTopCommitsCount();
+    int rootsCount = getRootCount();
+    if (topCommitsCount >= MORE_DETAILS_LOADING_RATE_LIMIT * mySettings.getRecentCommitsCount() * rootsCount) {
+      return LoadingState.LIMIT_REACHED;
+    }
+
+    if (entireLogDetailsLoaded()) { // the entire history was small enough
+      return LoadingState.ALL_COMMITS_LOADED;
+    }
+
+    if (myLogData.isFullLogReady()) {
+      int totalSize = 0;
+      for (List<TimedVcsCommit> commits : myLogData.getLogs().values()) {
+        totalSize += commits.size();
+      }
+      if (topCommitsCount >= totalSize) {
+        // nothing more to load
+        return LoadingState.ALL_COMMITS_LOADED;
+      }
+    }
+
+    if (myLoadMoreInProgress.compareAndSet(false, true)) {
+      runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
+        @Override
+        public void consume(ProgressIndicator indicator) throws VcsException {
+          loadFromVcs(topCommitsCount * 2, indicator, new Consumer<DataPack>() {
+            @Override
+            public void consume(DataPack dataPack) {
+              myLoadMoreInProgress.set(false);
+              onSuccess.run();
+            }
+          });
+        }
+      });
+    }
+    return LoadingState.LOADING;
+  }
+
+  private int getRootCount() {
+    return myLogProviders.keySet().size();
+  }
+
+  private boolean entireLogDetailsLoaded() {
+    LogData logData = myLogData;
+    if (logData.isFullLogReady()) {
+      int totalSize = 0;
+      for (List<TimedVcsCommit> commits : logData.getLogs().values()) {
+        totalSize += commits.size();
+      }
+      if (logData.getTopCommitsCount() >= totalSize) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private void runInBackground(final ThrowableConsumer<ProgressIndicator, VcsException> task) {
     myDataLoaderQueue.run(new Task.Backgroundable(myProject, "Loading history...") {
       @Override
@@ -376,7 +528,7 @@ public class VcsLogDataHolder implements Disposable {
           }
         };
 
-        if (isFullLogReady()) {
+        if (myLogData.isFullLogReady()) {
           smartRefresh(indicator, success);
         }
         else {
@@ -448,12 +600,9 @@ public class VcsLogDataHolder implements Disposable {
 
   @Override
   public void dispose() {
-    myLogData = null;
     myDataLoaderQueue.clear();
-  }
-
-  public boolean isFullLogReady() {
-    return myLogData.isFullLogReady();
+    myLogData = null;
+    resetState();
   }
 
   @NotNull

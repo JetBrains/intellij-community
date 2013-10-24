@@ -9,7 +9,9 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.RefsModel;
+import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.render.CommitCell;
+import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,10 +20,16 @@ import java.util.*;
 public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell> {
 
   private static final Logger LOG = Logger.getInstance(NoGraphTableModel.class);
+  private final VcsLogDataHolder myLogDataHolder;
+  private final VcsLogUI myUi;
   @NotNull private final List<Pair<VcsFullCommitDetails, VirtualFile>> myCommitsWithRoots;
   @NotNull private final RefsModel myRefsModel;
 
-  public NoGraphTableModel(@NotNull List<Pair<VcsFullCommitDetails,VirtualFile>> commitsWithRoots, @NotNull RefsModel refsModel) {
+  public NoGraphTableModel(VcsLogDataHolder logDataHolder, VcsLogUI UI,
+                           @NotNull List<Pair<VcsFullCommitDetails, VirtualFile>> commitsWithRoots,
+                           @NotNull RefsModel refsModel) {
+    myLogDataHolder = logDataHolder;
+    myUi = UI;
     myCommitsWithRoots = commitsWithRoots;
     myRefsModel = refsModel;
   }
@@ -41,6 +49,24 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell> {
     else {
       LOG.error("Couldn't identify details for commit at " + rowIndex, new Attachment("loaded_commits", myCommitsWithRoots.toString()));
       return null;
+    }
+  }
+
+  @Override
+  public void requestToLoadMore() {
+    VcsLogDataHolder.LoadingState state = myLogDataHolder.loadMoreDetails(new Runnable() {
+      @Override
+      public void run() {
+        myUi.applyFiltersAndUpdateUi();
+        myUi.getTable().setPaintBusy(false);
+      }
+    });
+    if (state == VcsLogDataHolder.LoadingState.LOADING) {
+      myUi.getTable().setPaintBusy(true);
+    }
+    else {
+      // TODO handle LIMIT_REACHED case and request the VCS
+      myUi.getTable().setPaintBusy(false);
     }
   }
 
