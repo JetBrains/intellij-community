@@ -76,6 +76,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -232,6 +233,11 @@ public class ExternalSystemUtil {
       }
 
       private void processOrphanModules() {
+        if(ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
+          LOG.info(String.format(
+            "Checking for orphan modules. External paths returned by external system: '%s'", myExternalModulePaths
+          ));
+        }
         PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
         List<Module> orphanIdeModules = ContainerUtilRt.newArrayList();
         String externalSystemIdAsString = externalSystemId.toString();
@@ -239,8 +245,18 @@ public class ExternalSystemUtil {
         for (Module module : platformFacade.getModules(project)) {
           String s = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
           String p = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
+          if(ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
+            LOG.info(String.format(
+              "IDE module: EXTERNAL_SYSTEM_ID_KEY - '%s', LINKED_PROJECT_PATH_KEY - '%s'.", s, p
+            ));
+          }
           if (externalSystemIdAsString.equals(s) && !myExternalModulePaths.contains(p)) {
             orphanIdeModules.add(module);
+            if(ExternalSystemDebugEnvironment.DEBUG_ORPHAN_MODULES_PROCESSING) {
+              LOG.info(String.format(
+                "External paths doesn't contain IDE module LINKED_PROJECT_PATH_KEY anymore => add to orphan IDE modules."
+              ));
+            }
           }
         }
 
