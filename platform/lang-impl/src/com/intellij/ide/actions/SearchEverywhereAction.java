@@ -98,8 +98,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class SearchEverywhereAction extends AnAction implements CustomComponentAction, DumbAware{
   public static final int SEARCH_FIELD_COLUMNS = 25;
   private SearchEverywhereAction.MyListRenderer myRenderer;
-//  private JPanel myContentPanel;
-  MySearchTextField field;
   MySearchTextField myPopupField;
   private GotoClassModel2 myClassModel;
   private GotoFileModel myFileModel;
@@ -280,31 +278,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   }
 
-  private void createSearchField() {
-    if (field != null) {
-      Disposer.dispose(field);
-    }
-    field = new MySearchTextField();
-    initSearchField(field);
-  }
-
   private void initSearchField(final MySearchTextField search) {
     final JTextField editor = search.getTextEditor();
 //    editor.setOpaque(false);
-
-    new AnAction(){
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        jumpNextGroup(true);
-      }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), editor, search);
-    new AnAction(){
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        jumpNextGroup(false);
-      }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), editor, search);
-
 
     editor.putClientProperty("JTextField.Search.noFocusRing", Boolean.TRUE);
     onFocusLost();
@@ -427,7 +403,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private SearchTextField getField() {
-    return myBalloon != null ? myPopupField : field;
+    return myPopupField;
   }
 
   private void doNavigate(int index) {
@@ -452,7 +428,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
     final String pattern = getField().getText();
     final Object value = myList.getSelectedValue();
-    IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(field.getTextEditor());
+    IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(getField().getTextEditor());
     if (myPopup != null && myPopup.isVisible()) {
       myPopup.cancel();
     }
@@ -522,7 +498,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       e = new AnActionEvent(me, DataManager.getInstance().getDataContext(myFocusComponent), ActionPlaces.UNKNOWN, getTemplatePresentation(), ActionManager.getInstance(), 0);
     }
     if (e == null) return;
-    createSearchField();
     myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(e.getDataContext());
     Window wnd = myContextComponent != null ? SwingUtilities.windowForComponent(myContextComponent)
       : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
@@ -581,8 +556,24 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     }
     myBalloon.show(showPoint);
+    initSearchActions(myBalloon, myPopupField);
     IdeFocusManager focusManager = IdeFocusManager.getInstance(e.getProject());
     focusManager.requestFocus(myPopupField.getTextEditor(), true);
+  }
+
+  private void initSearchActions(JBPopup balloon, MySearchTextField searchTextField) {
+    new AnAction(){
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        jumpNextGroup(true);
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), searchTextField.getTextEditor(), balloon);
+    new AnAction(){
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        jumpNextGroup(false);
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), searchTextField.getTextEditor(), balloon);
   }
 
   private static class MySearchTextField extends SearchTextField implements DataProvider, Disposable {
