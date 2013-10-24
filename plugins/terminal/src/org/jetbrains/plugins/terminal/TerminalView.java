@@ -34,11 +34,20 @@ import java.awt.event.FocusListener;
 public class TerminalView {
 
   private JBTabbedTerminalWidget myTerminalWidget;
-  private Project myProject;
 
-  public void initTerminal(final Project project, final ToolWindow toolWindow) {
+  private final Project myProject;
+
+  public TerminalView(Project project) {
     myProject = project;
-    LocalTerminalDirectRunner terminalRunner = OpenLocalTerminalAction.createTerminalRunner(project);
+  }
+
+  public static TerminalView getInstance(@NotNull Project project) {
+    return project.getComponent(TerminalView.class);
+  }
+
+
+  public void initTerminal(final ToolWindow toolWindow) {
+    LocalTerminalDirectRunner terminalRunner = OpenLocalTerminalAction.createTerminalRunner(myProject);
 
     toolWindow.setToHideOnEmptyContent(true);
 
@@ -68,17 +77,17 @@ public class TerminalView {
 
       @Override
       public void stateChanged() {
-        ToolWindow window = ToolWindowManager.getInstance(project).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
+        ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
         if (window != null) {
           boolean visible = window.isVisible();
           if (visible && toolWindow.getContentManager().getContentCount() == 0) {
-            initTerminal(project, window);
+            initTerminal(window);
           }
         }
       }
     });
 
-    Disposer.register(project, new Disposable() {
+    Disposer.register(myProject, new Disposable() {
       @Override
       public void dispose() {
         if (myTerminalWidget != null) {
@@ -163,10 +172,6 @@ public class TerminalView {
     }, true);
   }
 
-  public static TerminalView getInstance() {
-    return ServiceManager.getService(TerminalView.class);
-  }
-
   private ActionToolbar createToolbar(@Nullable final LocalTerminalDirectRunner terminalRunner,
                                       final JBTabbedTerminalWidget terminal, ToolWindow toolWindow) {
     DefaultActionGroup group = new DefaultActionGroup();
@@ -195,6 +200,7 @@ public class TerminalView {
       toolWindow.getContentManager().removeAllContents(true);
     }
   }
+
 
   private static class NewSession extends DumbAwareAction {
     private final LocalTerminalDirectRunner myTerminalRunner;

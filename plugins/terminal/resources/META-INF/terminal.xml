@@ -11,11 +11,15 @@
     <toolWindow id="Terminal" anchor="bottom" icon="TerminalIcons.OpenTerminal_13x13"
                 factoryClass="org.jetbrains.plugins.terminal.TerminalToolWindowFactory" secondary="false"/>
 
-    <applicationService serviceInterface="org.jetbrains.plugins.terminal.TerminalView"
-                        serviceImplementation="org.jetbrains.plugins.terminal.TerminalView"/>
-
     <projectConfigurable instance="org.jetbrains.plugins.terminal.TerminalOptionsConfigurable"/>
   </extensions>
+
+  <project-components>
+    <component>
+      <interface-class>org.jetbrains.plugins.terminal.TerminalView</interface-class>
+      <implementation-class>org.jetbrains.plugins.terminal.TerminalView</implementation-class>
+    </component>
+  </project-components>
 
   <application-components>
     <component>
