@@ -721,7 +721,7 @@
     </option>
     <option name="INJECTED_LANGUAGE_FRAGMENT">
       <value>
-        <option name="BACKGROUND" value="303631" />
+        <option name="BACKGROUND" value="364135" />
       </value>
     </option>
     <option name="INSPECTION_MULTIPLE_RESOLVE_WARNING_ID">
@@ -1432,6 +1432,7 @@
     <option name="TEXT_SEARCH_RESULT_ATTRIBUTES">
       <value>
         <option name="BACKGROUND" value="425f44" />
+        <option name="EFFECT_COLOR" value="56ac48" />
         <option name="ERROR_STRIPE_COLOR" value="425f44" />
       </value>
     </option>
