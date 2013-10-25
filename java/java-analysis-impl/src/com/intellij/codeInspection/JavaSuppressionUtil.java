@@ -160,7 +160,7 @@ public class JavaSuppressionUtil {
     return null;
   }
 
-  static Collection<String> getInspectionIdsSuppressedInAnnotation(@NotNull PsiModifierListOwner owner) {
+  public static Collection<String> getInspectionIdsSuppressedInAnnotation(@NotNull PsiModifierListOwner owner) {
     if (!PsiUtil.isLanguageLevel5OrHigher(owner)) return Collections.emptyList();
     PsiModifierList modifierList = owner.getModifierList();
     return getInspectionIdsSuppressedInAnnotation(modifierList);

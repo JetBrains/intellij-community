@@ -16,11 +16,9 @@
 package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.BatchSuppressManager;
-import com.intellij.codeInspection.SuppressionUtil;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiJavaCodeReferenceElement;
+import com.intellij.codeInspection.JavaSuppressionUtil;
+import com.intellij.codeInspection.SuppressionUtilCore;
+import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -28,7 +26,12 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public class SuppressionAnnotationInspection extends BaseInspection {
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+public class SuppressionAnnotationInspectionBase extends BaseInspection {
+  public List<String> myAllowedSuppressions = new ArrayList<String>();
 
   @Override
   @NotNull
@@ -49,8 +52,7 @@ public class SuppressionAnnotationInspection extends BaseInspection {
     return new SuppressionAnnotationVisitor();
   }
 
-  private static class SuppressionAnnotationVisitor
-    extends BaseInspectionVisitor {
+  private class SuppressionAnnotationVisitor extends BaseInspectionVisitor {
     @Override
     public void visitComment(PsiComment comment) {
       super.visitComment(comment);
@@ -61,7 +63,7 @@ public class SuppressionAnnotationInspection extends BaseInspection {
         return;
       }
       @NonNls final String strippedComment = commentText.substring(2).trim();
-      if (strippedComment.startsWith(SuppressionUtil.SUPPRESS_INSPECTIONS_TAG_NAME)) {
+      if (strippedComment.startsWith(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME)) {
         registerError(comment);
       }
     }
@@ -69,15 +71,18 @@ public class SuppressionAnnotationInspection extends BaseInspection {
     @Override
     public void visitAnnotation(PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
-      final PsiJavaCodeReferenceElement reference =
-        annotation.getNameReferenceElement();
+      final PsiJavaCodeReferenceElement reference = annotation.getNameReferenceElement();
       if (reference == null) {
         return;
       }
       @NonNls final String text = reference.getText();
       if ("SuppressWarnings".equals(text) ||
           BatchSuppressManager.SUPPRESS_INSPECTIONS_ANNOTATION_NAME.equals(text)) {
-        registerError(annotation);
+        final Collection<String> ids =
+          JavaSuppressionUtil.getInspectionIdsSuppressedInAnnotation((PsiModifierList)annotation.getParent());
+        if (!myAllowedSuppressions.containsAll(ids)) {
+          registerError(annotation, annotation);
+        }
       }
     }
   }
