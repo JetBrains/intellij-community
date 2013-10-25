@@ -496,7 +496,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     final InspectionProfileImpl inspectionProfile = getSelectedObject();
     assert inspectionProfile != null : configuredProfiles();
     final SingleInspectionProfilePanel panel = getProfilePanel(inspectionProfile);
-    LOG.assertTrue(panel != null, "No settings panel for: " + inspectionProfile.getName() + "; " + configuredProfiles());
+    LOG.assertTrue(panel != null, "No settings panel for: " + inspectionProfile  + "; " + configuredProfiles());
     panel.selectInspectionTool(selectedToolShortName);
   }
 
