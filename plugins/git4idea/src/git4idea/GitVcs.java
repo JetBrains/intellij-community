@@ -116,7 +116,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   /**
    * Provide selected Git commit in some commit list. Use this, when {@link Change} is not enough.
    * @see VcsDataKeys#CHANGES
-   * @see #SELECTED_COMMITS
    * @deprecated Use {@link VcsLog#getSelectedCommits()}
    */
   @Deprecated
@@ -124,7 +123,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
 
   /**
    * Provides the list of Git commits selected in some list, for example, in the Git log.
-   * @see #GIT_COMMIT
    * @deprecated Use {@link VcsLog#getSelectedCommits()}
    */
   @Deprecated
