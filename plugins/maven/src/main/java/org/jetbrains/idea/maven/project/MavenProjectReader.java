@@ -354,7 +354,7 @@ public class MavenProjectReader {
 
     Properties props = mavenModelBase.getProperties();
 
-    for (Element each : (Iterable<? extends Element>)xmlProperties.getChildren()) {
+    for (Element each : xmlProperties.getChildren()) {
       String name = each.getName();
       String value = each.getTextTrim();
       if (!props.containsKey(name) && !StringUtil.isEmptyOrSpaces(value)) {

@@ -463,7 +463,7 @@ public class MavenProject {
 
     Element compilerArguments = compilerConfig.getChild("compilerArguments");
     if (compilerArguments != null) {
-      for (Element e : (Collection<Element>)compilerArguments.getChildren()){
+      for (Element e : compilerArguments.getChildren()){
         String name = e.getName();
         if (name.startsWith("-")) {
           name = name.substring(1);
