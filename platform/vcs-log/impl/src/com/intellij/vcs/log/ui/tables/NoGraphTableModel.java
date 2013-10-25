@@ -24,13 +24,15 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell> {
   @NotNull private final VcsLogUI myUi;
   @NotNull private final List<VcsFullCommitDetails> myCommits;
   @NotNull private final RefsModel myRefsModel;
+  private final boolean myAllowLoadingMoreRequest;
 
   public NoGraphTableModel(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI UI,
-                           @NotNull List<VcsFullCommitDetails> commits, @NotNull RefsModel refsModel) {
+                           @NotNull List<VcsFullCommitDetails> commits, @NotNull RefsModel refsModel, boolean allowLoadingMoreRequest) {
     myLogDataHolder = logDataHolder;
     myUi = UI;
     myCommits = commits;
     myRefsModel = refsModel;
+    myAllowLoadingMoreRequest = allowLoadingMoreRequest;
   }
 
   @Override
@@ -50,18 +52,25 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell> {
 
   @Override
   public void requestToLoadMore() {
-    VcsLogDataHolder.LoadingState state = myLogDataHolder.loadMoreDetails(new Runnable() {
+    if (!myAllowLoadingMoreRequest) {
+      return;
+    }
+
+    Runnable success = new Runnable() {
       @Override
       public void run() {
         myUi.applyFiltersAndUpdateUi();
         myUi.getTable().setPaintBusy(false);
       }
-    });
+    };
+    VcsLogDataHolder.LoadingState state = myLogDataHolder.loadMoreDetails(success);
     if (state == VcsLogDataHolder.LoadingState.LOADING) {
       myUi.getTable().setPaintBusy(true);
     }
+    else if (state == VcsLogDataHolder.LoadingState.LIMIT_REACHED) {
+      myUi.getFilterer().requestVcs(myUi.collectFilters());
+    }
     else {
-      // TODO handle LIMIT_REACHED case and request the VCS
       myUi.getTable().setPaintBusy(false);
     }
   }

@@ -981,6 +981,25 @@ public class GitHistoryUtils {
     return rc;
   }
 
+  @NotNull
+  public static List<GitCommit> getAllDetails(@NotNull Project project, @NotNull VirtualFile root,
+                                              @NotNull List<String> parameters) throws VcsException {
+    GitSimpleHandler h = new GitSimpleHandler(project, root, GitCommand.LOG);
+    GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.STATUS,
+                                           HASH, HASH, COMMIT_TIME, AUTHOR_NAME, AUTHOR_TIME, AUTHOR_EMAIL, COMMITTER_NAME,
+                                           COMMITTER_EMAIL, PARENTS, REF_NAMES, SUBJECT, BODY, RAW_BODY);
+    h.setStdoutSuppressed(true);
+    h.addParameters("--name-status", "-M", parser.getPretty(), "--encoding=UTF-8");
+    h.addParameters(parameters);
+
+    String output = h.run();
+    final List<GitCommit> rc = new ArrayList<GitCommit>();
+    for (GitLogRecord record : parser.parse(output)) {
+      rc.add(createCommit(project, root, record));
+    }
+    return rc;
+  }
+
   public static long getAuthorTime(Project project, FilePath path, final String commitsId) throws VcsException {
     // adjust path using change manager
     path = getLastCommitName(project, path);

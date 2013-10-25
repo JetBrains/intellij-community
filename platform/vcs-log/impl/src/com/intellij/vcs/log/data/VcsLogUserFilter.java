@@ -19,4 +19,9 @@ public class VcsLogUserFilter implements VcsLogDetailsFilter {
     return detail.getAuthorName().toLowerCase().contains(myUser) || detail.getAuthorEmail().toLowerCase().contains(myUser);
   }
 
+  @NotNull
+  public String getUserName() {
+    return myUser;
+  }
+
 }

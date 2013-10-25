@@ -22,9 +22,14 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.VcsLogBranchFilter;
+import com.intellij.vcs.log.data.VcsLogUserFilter;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsRefImpl;
+import com.intellij.vcs.log.ui.filter.VcsLogTextFilter;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitVcs;
@@ -37,7 +42,10 @@ import git4idea.repo.GitRepositoryChangeListener;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Kirill Likhodedov
@@ -153,5 +161,57 @@ public class GitLogProvider implements VcsLogProvider {
         }
       }
     });
+  }
+
+  @NotNull
+  @Override
+  public List<? extends VcsFullCommitDetails> getFilteredDetails(@NotNull VirtualFile root,
+                                                                 @NotNull Collection<VcsLogFilter> filters) throws VcsException {
+    List<String> filterParameters = ContainerUtil.newArrayList();
+
+    List<VcsLogBranchFilter> branchFilters = ContainerUtil.findAll(filters, VcsLogBranchFilter.class);
+    if (!branchFilters.isEmpty()) {
+      String branchFilter = joinFilters(branchFilters, new Function<VcsLogBranchFilter, String>() {
+        @Override
+        public String fun(VcsLogBranchFilter filter) {
+          return filter.getBranchName();
+        }
+      });
+      filterParameters.add(prepareParameter("branches", branchFilter));
+    }
+    else {
+      filterParameters.add("--all");
+    }
+
+    List<VcsLogUserFilter> userFilters = ContainerUtil.findAll(filters, VcsLogUserFilter.class);
+    if (!userFilters.isEmpty()) {
+      String authorFilter = joinFilters(userFilters, new Function<VcsLogUserFilter, String>() {
+        @Override
+        public String fun(VcsLogUserFilter filter) {
+          return filter.getUserName();
+        }
+      });
+      filterParameters.add(prepareParameter("author", authorFilter));
+    }
+
+    List<VcsLogTextFilter> textFilters = ContainerUtil.findAll(filters, VcsLogTextFilter.class);
+    if (textFilters.size() > 1) {
+      LOG.warn("Expected only one text filter: " + textFilters);
+    }
+    else if (!textFilters.isEmpty()) {
+      String textFilter = textFilters.iterator().next().getText();
+      filterParameters.add(prepareParameter("grep", textFilter));
+    }
+
+    filterParameters.add("--regexp-ignore-case"); // affects case sensitivity of any filter
+    return GitHistoryUtils.getAllDetails(myProject, root, filterParameters);
+  }
+
+  private static String prepareParameter(String paramName, String value) {
+    return "--" + paramName + "=" + value; // no value escaping needed, because the parameter itself will be quoted by GeneralCommandLine
+  }
+
+  private static <T> String joinFilters(List<T> filters, Function<T, String> toString) {
+    return StringUtil.join(filters, toString, "\\|");
   }
 }

@@ -1,6 +1,7 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.util.Condition;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -54,7 +55,7 @@ public class VcsLogFilterer {
     AbstractVcsLogTableModel model;
     if (!detailsFilters.isEmpty()) {
       List<VcsFullCommitDetails> filteredCommits = filterByDetails(graphModel, detailsFilters);
-      model = new NoGraphTableModel(myLogDataHolder, myUI, filteredCommits, myLogDataHolder.getDataPack().getRefsModel());
+      model = new NoGraphTableModel(myLogDataHolder, myUI, filteredCommits, myLogDataHolder.getDataPack().getRefsModel(), true);
     }
     else {
       model = new GraphTableModel(myLogDataHolder, myUI);
@@ -66,6 +67,16 @@ public class VcsLogFilterer {
     if (model.getRowCount() == 0) {
       model.requestToLoadMore();
     }
+  }
+
+  public void requestVcs(@NotNull Collection<VcsLogFilter> filters) {
+    myLogDataHolder.getFilteredDetailsFromTheVcs(filters, new Consumer<List<VcsFullCommitDetails>>() {
+      @Override
+      public void consume(List<VcsFullCommitDetails> details) {
+        myUI.setModel(new NoGraphTableModel(myLogDataHolder, myUI, details, myLogDataHolder.getDataPack().getRefsModel(), false));
+        myUI.updateUI();
+      }
+    });
   }
 
   private static void applyGraphFilters(GraphModel graphModel, final List<VcsLogGraphFilter> onGraphFilters) {

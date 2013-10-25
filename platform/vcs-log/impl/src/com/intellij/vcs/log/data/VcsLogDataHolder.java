@@ -94,6 +94,13 @@ public class VcsLogDataHolder implements Disposable {
    */
   private static final int MORE_DETAILS_LOADING_RATE_LIMIT = 10;
 
+  /**
+   * If more details of recent commits are requested, multiply the number of commits to load by this value on each step,
+   * until this value reaches {@link #MORE_DETAILS_LOADING_RATE_LIMIT} times of
+   * {@link VcsLogSettings#getRecentCommitsCount() the standard recent commits count}.
+   */
+  public static final int MORE_DETAILS_LOADING_STEP_MULTIPLIER = 10;
+
   @NotNull private final Project myProject;
   @NotNull private final VcsLogObjectsFactory myFactory;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
@@ -379,6 +386,44 @@ public class VcsLogDataHolder implements Disposable {
     return infoByRoot.entrySet();
   }
 
+  public void getFilteredDetailsFromTheVcs(final Collection<VcsLogFilter> filters, final Consumer<List<VcsFullCommitDetails>> success) {
+    runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
+      @Override
+      public void consume(ProgressIndicator indicator) throws VcsException {
+
+        Collection<List<TimedVcsCommit>> logs = ContainerUtil.newArrayList();
+        final Map<Hash, VcsFullCommitDetails> allDetails = ContainerUtil.newHashMap();
+        for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
+          List<? extends VcsFullCommitDetails> details = entry.getValue().getFilteredDetails(entry.getKey(), filters);
+          logs.add(getCommitsFromDetails(details));
+          for (VcsFullCommitDetails detail : details) {
+            allDetails.put(detail.getHash(), detail);
+          }
+        }
+
+        final List<TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(logs);
+
+        final List<VcsFullCommitDetails> list = ContainerUtil.mapNotNull(compoundLog, new Function<TimedVcsCommit, VcsFullCommitDetails>() {
+          @Override
+          public VcsFullCommitDetails fun(TimedVcsCommit commit) {
+            VcsFullCommitDetails detail = allDetails.get(commit.getHash());
+            if (detail == null) {
+              LOG.error("Details not stored for commit " + commit, new Attachment("filtered_details", allDetails.toString()),
+                        new Attachment("compound_log", compoundLog.toString()));
+            }
+            return detail;
+          }
+        });
+        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            success.consume(list);
+          }
+        });
+      }
+    });
+  }
+
   private static class RecentCommitsInfo {
     List<TimedVcsCommit> firstBlockCommits;
     Collection<VcsRef> newRefs;
@@ -472,7 +517,7 @@ public class VcsLogDataHolder implements Disposable {
       runInBackground(new ThrowableConsumer<ProgressIndicator, VcsException>() {
         @Override
         public void consume(ProgressIndicator indicator) throws VcsException {
-          loadFromVcs(topCommitsCount * 2, indicator, new Consumer<DataPack>() {
+          loadFromVcs(topCommitsCount * MORE_DETAILS_LOADING_STEP_MULTIPLIER, indicator, new Consumer<DataPack>() {
             @Override
             public void consume(DataPack dataPack) {
               myLoadMoreInProgress.set(false);

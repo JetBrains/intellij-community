@@ -70,4 +70,11 @@ public interface VcsLogProvider {
    */
   void subscribeToRootRefreshEvents(@NotNull Collection<VirtualFile> roots, @NotNull VcsLogRefresher refresher);
 
+  /**
+   * Return commits with full details, which correspond to the given filters.
+   */
+  @NotNull
+  List<? extends VcsFullCommitDetails> getFilteredDetails(@NotNull VirtualFile root,
+                                                          @NotNull Collection<VcsLogFilter> filters) throws VcsException;
+
 }

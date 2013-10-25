@@ -19,7 +19,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.data.VcsLogDetailsFilter;
 import org.jetbrains.annotations.NotNull;
 
-class VcsLogTextFilter implements VcsLogDetailsFilter {
+public class VcsLogTextFilter implements VcsLogDetailsFilter {
 
   @NotNull private final String myText;
 
@@ -32,4 +32,8 @@ class VcsLogTextFilter implements VcsLogDetailsFilter {
     return details.getFullMessage().toLowerCase().contains(myText);
   }
 
+  @NotNull
+  public String getText() {
+    return myText;
+  }
 }
