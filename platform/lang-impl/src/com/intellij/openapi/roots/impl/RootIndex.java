@@ -117,8 +117,9 @@ class RootIndex {
           }
         }
         else if (orderEntry instanceof ModuleSourceOrderEntry) {
-          for (VirtualFile sourceRoot : ((ModuleSourceOrderEntry)orderEntry).getRootModel().getSourceRoots()) {
-            depEntries.putValue(sourceRoot, orderEntry);
+          final VirtualFile[] sourceRoots = ((ModuleSourceOrderEntry)orderEntry).getRootModel().getSourceRoots();
+          for (VirtualFile sourceRoot : sourceRoots) {
+            fillMapWithOrderEntries(sourceRoot, Arrays.asList(orderEntry), orderEntry.getOwnerModule(), null, null);
           }
         }
         else if (orderEntry instanceof LibraryOrSdkOrderEntry) {
@@ -164,13 +165,13 @@ class RootIndex {
 
     // fill ordered entries
     for (Map.Entry<VirtualFile, Collection<OrderEntry>> mapEntry : depEntries.entrySet()) {
-      fillMapWithOrderEntries(mapEntry.getKey(), mapEntry.getValue(), null, null);
+      fillMapWithOrderEntries(mapEntry.getKey(), mapEntry.getValue(), null, null, null);
     }
     for (Map.Entry<VirtualFile, Collection<OrderEntry>> mapEntry : libClassRootEntries.entrySet()) {
-      fillMapWithOrderEntries(mapEntry.getKey(), mapEntry.getValue(), mapEntry.getKey(), null);
+      fillMapWithOrderEntries(mapEntry.getKey(), mapEntry.getValue(), null, mapEntry.getKey(), null);
     }
     for (Map.Entry<VirtualFile, Collection<OrderEntry>> mapEntry : libSourceRootEntries.entrySet()) {
-      fillMapWithOrderEntries(mapEntry.getKey(), mapEntry.getValue(), null, mapEntry.getKey());
+      fillMapWithOrderEntries(mapEntry.getKey(), mapEntry.getValue(), null, null, mapEntry.getKey());
     }
 
     mergeWithParentInfos();
@@ -261,6 +262,7 @@ class RootIndex {
 
   private void fillMapWithOrderEntries(final VirtualFile root,
                                        @NotNull final Collection<OrderEntry> orderEntries,
+                                       @Nullable final Module module,
                                        @Nullable final VirtualFile libraryClassRoot,
                                        @Nullable final VirtualFile librarySourceRoot) {
 
@@ -273,7 +275,10 @@ class RootIndex {
     DirectoryInfo info = myRoots.get(root);
     if (info == null) return;
 
-    if (libraryClassRoot != null) {
+    if (module != null) {
+      if (info.getModule() != module) return;
+      if (!info.isInModuleSource()) return;
+    } else if (libraryClassRoot != null) {
       if (info.getLibraryClassRoot() != libraryClassRoot) return;
       if (info.isInModuleSource()) return;
     } else if (librarySourceRoot != null) {
@@ -285,7 +290,7 @@ class RootIndex {
     OrderEntry[] orderEntriesArray = orderEntries.toArray(new OrderEntry[orderEntries.size()]);
     Arrays.sort(orderEntriesArray, DirectoryInfo.BY_OWNER_MODULE);
 
-    myRoots.put(root, info.withInternedEntries(orderEntriesArray));
+    myRoots.put(root, info.withInternedEntries(info.calcNewOrderEntries(orderEntriesArray, null, info.getOrderEntries())));
   }
 
   @NotNull

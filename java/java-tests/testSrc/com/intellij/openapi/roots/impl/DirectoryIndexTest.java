@@ -159,7 +159,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
             PsiTestUtil.addExcludedRoot(myModule2, myExcludeDir);
             ModuleRootModificationUtil.addModuleLibrary(myModule2, "lib",
                                                         singletonList(myLibClsDir.getUrl()), singletonList(myLibSrcDir.getUrl()),
-                                                        Arrays.asList(myExcludedLibClsDir.getUrl(), myExcludedLibSrcDir.getUrl()), DependencyScope.COMPILE);
+                                                        Arrays.asList(myExcludedLibClsDir.getUrl(), myExcludedLibSrcDir.getUrl()), DependencyScope.COMPILE, true);
           }
 
           // fill roots of module3
@@ -204,8 +204,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfo(myTestResDir, myModule, false, false, "", JavaResourceRootType.TEST_RESOURCE, myModule);
 
     checkInfo(myLibDir, myModule, false, false, null, null);
-    checkInfo(myLibSrcDir, myModule, false, true, "", null, myModule2);
-    checkInfo(myLibClsDir, myModule, true, false, "", null, myModule2);
+    checkInfo(myLibSrcDir, myModule, false, true, "", null, myModule2, myModule3);
+    checkInfo(myLibClsDir, myModule, true, false, "", null, myModule2, myModule3);
 
     checkInfo(myModule2Dir, myModule2, false, false, null, null);
     checkInfo(mySrcDir2, myModule2, false, false, "", JavaSourceRootType.SOURCE, myModule2, myModule3);
@@ -503,9 +503,11 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfo(myModule1Dir, myModule, true, false, "", null, myModule);
     checkInfo(mySrcDir1, myModule, true, false, "", JavaSourceRootType.SOURCE, myModule);
     
+    //todo this looks strange and inconsistent: the same library classes and sources have different order entries
     checkInfo(myLibDir, myModule, true, false, "lib", null, myModule);
-    checkInfo(myLibClsDir, myModule, true, false, "", null, myModule2);
-    checkInfo(myLibSrcDir, myModule, true, true, "", null, myModule);
+    checkInfo(myLibClsDir, myModule, true, false, "", null, myModule2, myModule3);
+    checkInfo(myLibSrcDir, myModule, true, true, "", null, myModule, myModule3);
+    
     checkInfo(myResDir, myModule, true, false, "", JavaResourceRootType.RESOURCE, myModule);
   }
 
