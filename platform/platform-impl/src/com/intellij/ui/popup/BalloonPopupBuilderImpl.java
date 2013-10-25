@@ -78,8 +78,8 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
     return myHideOnAction;
   }
 
-  @Override
   @NotNull
+  @Override
   public BalloonBuilder setHideOnAction(boolean hideOnAction) {
     myHideOnAction = hideOnAction;
     return this;
@@ -93,47 +93,55 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   }
 
   @NotNull
+  @Override
   public BalloonBuilder setPreferredPosition(final Balloon.Position position) {
     return this;
   }
 
   @NotNull
+  @Override
   public BalloonBuilder setBorderColor(@NotNull final Color color) {
     myBorder = color;
     return this;
   }
 
   @NotNull
+  @Override
   public BalloonBuilder setFillColor(@NotNull final Color color) {
     myFill = color;
     return this;
   }
 
   @NotNull
+  @Override
   public BalloonBuilder setHideOnClickOutside(final boolean hide) {
     myHideOnMouseOutside  = hide;
     return this;
   }
 
   @NotNull
+  @Override
   public BalloonBuilder setHideOnKeyOutside(final boolean hide) {
     myHideOnKeyOutside = hide;
     return this;
   }
 
   @NotNull
+  @Override
   public BalloonBuilder setShowCallout(final boolean show) {
     myShowCallout = show;
     return this;
   }
 
   @NotNull
+  @Override
   public BalloonBuilder setFadeoutTime(long fadeoutTime) {
     myFadeoutTime = fadeoutTime;
     return this;
   }
 
   @NotNull
+  @Override
   public BalloonBuilder setBlockClicksThroughBalloon(boolean block) {
     myBlockClicks = block;
     return this;
@@ -147,6 +155,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   }
 
   @NotNull
+  @Override
   public BalloonBuilder setHideOnFrameResize(boolean hide) {
     myHideOnFrameResize = hide;
     return this;
@@ -172,13 +181,16 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
     myPositionChangeYShift = positionChangeYShift;
     return this;
   }
+
   @NotNull
+  @Override
   public BalloonBuilder setCloseButtonEnabled(boolean enabled) {
     myCloseButtonEnabled = enabled;
     return this;
   }
 
   @NotNull
+  @Override
   public BalloonBuilder setClickHandler(ActionListener listener, boolean closeOnClick) {
     myClickHandler = listener;
     myCloseOnClick = closeOnClick;
@@ -235,6 +247,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   }
 
   @NotNull
+  @Override
   public Balloon createBalloon() {
     final BalloonImpl result = new BalloonImpl(
       myContent, myBorder, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myHideOnAction, myShowCallout, myCloseButtonEnabled,
@@ -267,7 +280,6 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
           if (!result.isDisposed()) {
             Disposer.dispose(result);
           }
-          myStorage.remove(result);
         }
       });
     }
