@@ -65,7 +65,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     };
 
     Pair<String, Integer> start = getInitialText(false, e);
-    showNavigationPopup(callback, null, createPopup(project, model, start.first, start.second));
+    showNavigationPopup(callback, null, createPopup(project, model, start.first, start.second), false);
   }
 
   private static ChooseByNamePopup createPopup(Project project, GotoActionModel model, String initialText, int initialIndex) {
