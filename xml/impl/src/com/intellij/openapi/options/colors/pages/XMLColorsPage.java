@@ -73,18 +73,19 @@ public class XMLColorsPage implements ColorSettingsPage {
     return "<?xml version='1.0' encoding='ISO-8859-1'  ?>\n" +
            "<!DOCTYPE index>\n" +
            "<!-- Some xml example -->\n" +
-           "<index version=\"1.0\" xmlns:<np>pf</np>=\"http://test\">\n" +
+           "<index version=\"1.0\" xmlns:<bg><np>pf</np></bg>=\"http://test\">\n" +
            "   <name>Main Index</name>\n" +
            "   <indexitem text=\"rename\" target=\"refactoring.rename\"/>\n" +
            "   <indexitem text=\"move\" target=\"refactoring.move\"/>\n" +
            "   <indexitem text=\"migrate\" target=\"refactoring.migrate\"/>\n" +
            "   <indexitem text=\"usage search\" target=\"find.findUsages\"/>\n&amp; &#x00B7;" +
            "   <indexitem text=\"project\" target=\"project.management\"/>" +
-           "   <<np>pf</np>:foo <np>pf</np>:bar=\"bar\"/>\n" +
+           "   <<bg><np>pf</np></bg>:foo <bg><np>pf</np></bg>:bar=\"bar\"/>\n" +
            "</index>";
   }
 
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
-    return ContainerUtil.newHashMap(Pair.create("np", XmlHighlighterColors.XML_NS_PREFIX));
+    return ContainerUtil.newHashMap(Pair.create("np", XmlHighlighterColors.XML_NS_PREFIX),
+                                    Pair.create("bg", XmlHighlighterColors.XML_TAG));
   }
 }
