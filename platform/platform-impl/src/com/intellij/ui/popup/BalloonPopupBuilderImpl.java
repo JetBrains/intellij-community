@@ -36,22 +36,19 @@ import java.util.List;
 import java.util.Map;
 
 public class BalloonPopupBuilderImpl implements BalloonBuilder {
-
   @Nullable private final Map<Disposable, List<Balloon>> myStorage;
   @Nullable private Disposable myAnchor;
 
-  JComponent myContent;
-  Color   myBorder             = new JBColor(JBColor.GRAY, Gray._200);
-  Color   myFill               = MessageType.INFO.getPopupBackground();
-  boolean myHideOnMouseOutside = true;
-  boolean myHideOnKeyOutside   = true;
-  long    myFadeoutTime        = -1;
+  private JComponent myContent;
 
-  private Balloon.Position myPrefferedPosition = Balloon.Position.below;
-
-  boolean myShowCalllout = true;
-  private boolean myCloseButtonEnabled;
-  private boolean myHideOnFrameResize = true;
+  private Color   myBorder             = new JBColor(JBColor.GRAY, Gray._200);
+  private Color   myFill               = MessageType.INFO.getPopupBackground();
+  private boolean myHideOnMouseOutside = true;
+  private boolean myHideOnKeyOutside   = true;
+  private long    myFadeoutTime        = -1;
+  private boolean myShowCallout        = true;
+  private boolean myCloseButtonEnabled = false;
+  private boolean myHideOnFrameResize  = true;
 
   private ActionListener myClickHandler;
   private boolean        myCloseOnClick;
@@ -96,7 +93,6 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
 
   @NotNull
   public BalloonBuilder setPreferredPosition(final Balloon.Position position) {
-    myPrefferedPosition = position;
     return this;
   }
 
@@ -126,7 +122,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
 
   @NotNull
   public BalloonBuilder setShowCallout(final boolean show) {
-    myShowCalllout = show;
+    myShowCallout = show;
     return this;
   }
 
@@ -172,11 +168,11 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   @NotNull
   public Balloon createBalloon() {
     final BalloonImpl result =
-      new BalloonImpl(myContent, myBorder, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myHideOnAction, myShowCalllout,
+      new BalloonImpl(myContent, myBorder, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myHideOnAction, myShowCallout,
                       myCloseButtonEnabled, myFadeoutTime, myHideOnFrameResize, myClickHandler, myCloseOnClick, myAnimationCycle,
                       myCalloutShift, myPositionChangeXShift, myPositionChangeYShift, myDialogMode, myTitle, myContentInsets, myShadow,
                       mySmallVariant, myBlockClicks, myLayer);
-    if (myAnchor != null) {
+    if (myStorage != null && myAnchor != null) {
       List<Balloon> balloons = myStorage.get(myAnchor);
       if (balloons == null) {
         myStorage.put(myAnchor, balloons = new ArrayList<Balloon>());
