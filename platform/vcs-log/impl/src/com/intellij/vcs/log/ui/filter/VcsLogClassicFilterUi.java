@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.ui.SearchTextField;
+import com.intellij.ui.SearchTextFieldWithStoredHistory;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -46,11 +47,12 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     JLabel filterCaption = new JLabel("Filter:");
     filterCaption.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor());
 
-    myTextFilter = new SearchTextField();
+    myTextFilter = new SearchTextFieldWithStoredHistory("Vcs.Log.Text.Filter.History");
     myTextFilter.getTextEditor().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         applyFilters();
+        myTextFilter.addCurrentTextToHistory();
       }
     });
     FilterPopupComponent branchFilter = new BranchFilterPopupComponent(this, ui);
