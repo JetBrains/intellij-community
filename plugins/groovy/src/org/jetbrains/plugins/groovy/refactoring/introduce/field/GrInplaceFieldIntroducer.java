@@ -79,7 +79,7 @@ public class GrInplaceFieldIntroducer extends GrInplaceIntroducer {
     myInitializer = initializer;
 
     myPanel = new GrInplaceIntroduceFieldPanel(context.getProject(),
-                                               GrIntroduceFieldHandler.getApplicableInitPlaces(context));
+                                               GrIntroduceFieldHandler.getApplicableInitPlaces(context, replaceAll));
 
     finalListener = new GrFinalListener(myEditor);
   }

@@ -33,14 +33,12 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceDialog;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceFieldHandlerBase;
-import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
+import org.jetbrains.plugins.groovy.refactoring.introduce.*;
 
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -97,7 +95,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceFieldHandlerBase<GrIntro
   @NotNull
   @Override
   protected GrIntroduceDialog<GrIntroduceFieldSettings> getDialog(@NotNull GrIntroduceContext context) {
-    return new GrIntroduceFieldDialog(context, getApplicableInitPlaces(context));
+    return new GrIntroduceFieldDialog(context);
   }
 
   @Override
@@ -138,20 +136,25 @@ public class GrIntroduceFieldHandler extends GrIntroduceFieldHandlerBase<GrIntro
                                         stringPartRangeMarker, initializer);
   }
 
-  static EnumSet<GrIntroduceFieldSettings.Init> getApplicableInitPlaces(GrIntroduceContext context) {
+  static EnumSet<GrIntroduceFieldSettings.Init> getApplicableInitPlaces(GrIntroduceContext context, boolean replaceAll) {
+    EnumSet<GrIntroduceFieldSettings.Init> result = EnumSet.of(GrIntroduceFieldSettings.Init.FIELD_DECLARATION,
+                                                               GrIntroduceFieldSettings.Init.CONSTRUCTOR);
 
-    if (TestFrameworks.getInstance().isTestClass((PsiClass)context.getScope())) {
-      return EnumSet.of(GrIntroduceFieldSettings.Init.CUR_METHOD,
-                        GrIntroduceFieldSettings.Init.FIELD_DECLARATION,
-                        GrIntroduceFieldSettings.Init.CONSTRUCTOR,
-                        GrIntroduceFieldSettings.Init.SETUP_METHOD);
-    }
-    else {
-      return EnumSet.of(GrIntroduceFieldSettings.Init.CUR_METHOD,
-                        GrIntroduceFieldSettings.Init.FIELD_DECLARATION,
-                        GrIntroduceFieldSettings.Init.CONSTRUCTOR);
+
+    GrTypeDefinition clazz = (GrTypeDefinition)context.getScope();
+
+    if (replaceAll) {
+      PsiElement anchor = GrIntroduceHandlerBase.findAnchor(context.getOccurrences(), clazz);
+      if (anchor != null) {
+        result.add(GrIntroduceFieldSettings.Init.CUR_METHOD);
+      }
     }
 
+    if (TestFrameworks.getInstance().isTestClass(clazz)) {
+      result.add(GrIntroduceFieldSettings.Init.SETUP_METHOD);
+    }
+
+    return result;
   }
 
   @Override
