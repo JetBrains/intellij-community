@@ -39,9 +39,8 @@ import java.util.List;
 public class DefaultUrlOpener extends UrlOpener {
   private static final Logger LOG = Logger.getInstance(DefaultUrlOpener.class);
 
-  @Override
-  public boolean openUrl(@NotNull BrowsersConfiguration.BrowserFamily family, @Nullable String url) {
-    return launchBrowser(family, url, false);
+  public boolean openUrl(final @NotNull WebBrowser browser, final @NotNull String url) {
+    return launchBrowser(browser, url, false);
   }
 
   /** @deprecated use {@linkplain #launchBrowser(BrowsersConfiguration.BrowserFamily, String, boolean, String...)} (to remove in IDEA 13) */
@@ -85,7 +84,7 @@ public class DefaultUrlOpener extends UrlOpener {
   private static boolean doLaunchBrowser(final String browserPath,
                                          final BrowserSpecificSettings browserSpecificSettings,
                                          final String url,
-                                         final boolean newWindowIfPossible, 
+                                         final boolean newWindowIfPossible,
                                          final String[] additionalParameters) {
     List<String> command = BrowserUtil.getOpenBrowserCommand(browserPath, newWindowIfPossible);
     if (url != null) {

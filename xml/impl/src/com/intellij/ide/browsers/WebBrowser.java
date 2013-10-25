@@ -29,6 +29,25 @@ public class WebBrowser {
   private final @NotNull Computable<String> myPathComputable;
   private final @NotNull String myBrowserNotFoundMessage;
 
+  @NotNull
+  public static WebBrowser getStandardBrowser(final @NotNull BrowserFamily browserFamily) {
+    switch (browserFamily) {
+      case CHROME:
+        return CHROME;
+      case FIREFOX:
+        return FIREFOX;
+      case EXPLORER:
+        return EXPLORER;
+      case OPERA:
+        return OPERA;
+      case SAFARI:
+        return SAFARI;
+      default:
+        assert false : browserFamily;
+        return null;
+    }
+  }
+
   private WebBrowser(final @NotNull BrowserFamily family,
                      final @NotNull String name,
                      final @NotNull Icon icon,
