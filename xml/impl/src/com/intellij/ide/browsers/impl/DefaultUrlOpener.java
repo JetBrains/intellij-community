@@ -15,14 +15,13 @@
  */
 package com.intellij.ide.browsers.impl;
 
+import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.browsers.BrowserSpecificSettings;
-import com.intellij.ide.browsers.BrowsersConfiguration;
-import com.intellij.ide.browsers.UrlOpener;
-import com.intellij.ide.browsers.WebBrowserSettings;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.browsers.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
@@ -55,23 +54,44 @@ public class DefaultUrlOpener extends UrlOpener {
     return launchBrowser(family, url, newWindowIfPossible, additionalParameters);
   }
 
+  public static boolean launchBrowser(@NotNull WebBrowser browser,
+                                      @Nullable String url,
+                                      boolean newWindowIfPossible,
+                                      @NotNull String... additionalParameters) {
+    final String browserPath = browser.getPath();
+    if (StringUtil.isEmptyOrSpaces(browserPath)) {
+      Messages.showErrorDialog(browser.getBrowserNotFoundMessage(), IdeBundle.message("title.browser.not.found"));
+      return false;
+    }
+
+    return doLaunchBrowser(browserPath, browser.getBrowserSpecificSettings(), url, newWindowIfPossible, additionalParameters);
+  }
+
   public static boolean launchBrowser(@NotNull BrowsersConfiguration.BrowserFamily family,
                                       @Nullable String url,
                                       boolean newWindowIfPossible,
                                       @NotNull String... additionalParameters) {
     WebBrowserSettings settings = BrowsersConfiguration.getInstance().getBrowserSettings(family);
-    String path = settings.getPath();
-    if (StringUtil.isEmpty(path)) {
-      String message = XmlBundle.message("browser.path.not.specified", family.getName());
-      Messages.showErrorDialog(message, XmlBundle.message("browser.path.not.specified.title"));
+    String browserPath = settings.getPath();
+    if (StringUtil.isEmpty(browserPath)) {
+      String message = IdeBundle.message("error.0.browser.path.not.specified", family.getName(), CommonBundle.settingsActionPath());
+      Messages.showErrorDialog(message, IdeBundle.message("title.browser.not.found"));
       return false;
     }
 
-    List<String> command = BrowserUtil.getOpenBrowserCommand(path, newWindowIfPossible);
+    return doLaunchBrowser(browserPath, settings.getBrowserSpecificSettings(), url, newWindowIfPossible, additionalParameters);
+  }
+
+  private static boolean doLaunchBrowser(final String browserPath,
+                                         final BrowserSpecificSettings browserSpecificSettings,
+                                         final String url,
+                                         final boolean newWindowIfPossible, 
+                                         final String[] additionalParameters) {
+    List<String> command = BrowserUtil.getOpenBrowserCommand(browserPath, newWindowIfPossible);
     if (url != null) {
       command.add(url);
     }
-    addArgs(command, settings.getBrowserSpecificSettings(), additionalParameters);
+    addArgs(command, browserSpecificSettings, additionalParameters);
 
     try {
       new GeneralCommandLine(command).createProcess();
