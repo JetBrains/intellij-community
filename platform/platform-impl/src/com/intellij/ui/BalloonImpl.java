@@ -756,27 +756,24 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
     return getPointerLength(getAbstractPositionFor(position), dialogMode);
   }
 
-
+  @Override
   public void hide() {
     hide(false);
   }
 
   @Override
   public void hide(boolean ok) {
-    if (myDisposed) return;
-
     hideAndDispose(ok);
   }
 
-  public void addListener(JBPopupListener listener) {
-    myListeners.add(listener);
+  @Override
+  public void dispose() {
+    hideAndDispose(false);
   }
 
   private void hideAndDispose(final boolean ok) {
     if (myDisposed) return;
-
     myDisposed = true;
-
 
     final Runnable disposeRunnable = new Runnable() {
       public void run() {
@@ -808,14 +805,11 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui, SwingConstants {
     myTracker = null;
   }
 
-  public void dispose() {
-    if (myDisposed) return;
+  protected void onDisposed() { }
 
-    hideAndDispose(false);
-  }
-
-  protected void onDisposed() {
-
+  @Override
+  public void addListener(JBPopupListener listener) {
+    myListeners.add(listener);
   }
 
   public boolean isVisible() {
