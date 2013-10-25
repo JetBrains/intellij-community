@@ -509,6 +509,9 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfo(myLibSrcDir, myModule, true, true, "", null, myModule, myModule3);
     
     checkInfo(myResDir, myModule, true, false, "", JavaResourceRootType.RESOURCE, myModule);
+
+    //todo uncomment or replace with another assertion about library-excluded dir inside module content 
+    //checkInfoNull(myExcludedLibSrcDir);
   }
 
 
