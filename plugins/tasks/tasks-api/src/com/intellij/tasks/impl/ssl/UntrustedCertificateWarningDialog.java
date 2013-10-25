@@ -4,6 +4,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FormBuilder;
@@ -24,7 +26,6 @@ import static com.intellij.openapi.util.Pair.create;
 public class UntrustedCertificateWarningDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(UntrustedCertificateWarningDialog.class);
   private static DateFormat DATE_FORMAT = DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT);
-//  private static final String MESSAGE = "Server's certificate is untrusted and appears to be self-signed";
 
   private static final Map<String, String> FIELD_ABBREVIATIONS = ContainerUtil.newHashMap(
     create("CN", "Common Name"),
@@ -37,41 +38,40 @@ public class UntrustedCertificateWarningDialog extends DialogWrapper {
 
   private JPanel myRootPanel;
   private JLabel myWarningSign;
-  private JPanel myIssuerInfoPanel;
-  private JPanel mySubjectInfoPanel;
-  private JPanel myValidityInfoPanel;
-  private JTextPane myMessagePane;
+  private JPanel myCertificateInfoPanel;
+  private final X509Certificate myCertificate;
 
   public UntrustedCertificateWarningDialog(X509Certificate certificate) {
-    super((Project) null, false);
+    super((Project)null, false);
+
+    myCertificate = certificate;
+
+    FormBuilder builder = FormBuilder.createFormBuilder();
+
+    // I'm not using separate panels and form builders to preserve alignment of labels
+    builder = updateBuilderWithTitle(builder, "Issued To");
+    builder = updateBuilderWithPrincipalData(builder, myCertificate.getSubjectX500Principal());
+    builder = updateBuilderWithTitle(builder, "Issued By");
+    builder = updateBuilderWithPrincipalData(builder, myCertificate.getIssuerX500Principal());
+    builder = updateBuilderWithTitle(builder, "Validity Period");
+    builder = builder
+      .setIndent(IdeBorderFactory.TITLED_BORDER_INDENT)
+      .addLabeledComponent("Valid from", new JBLabel(DATE_FORMAT.format(myCertificate.getNotBefore())))
+      .addLabeledComponent("Valid until", new JBLabel(DATE_FORMAT.format(myCertificate.getNotAfter())));
+    myCertificateInfoPanel.add(builder.getPanel(), BorderLayout.CENTER);
 
     setTitle("Untrusted Server's Certificate");
     setOKButtonText("Accept");
     setCancelButtonText("Reject");
     myWarningSign.setIcon(AllIcons.General.WarningDialog);
 
-
-    fillPrincipalInfoPanel(myIssuerInfoPanel, certificate.getIssuerX500Principal());
-    fillPrincipalInfoPanel(mySubjectInfoPanel, certificate.getSubjectX500Principal());
-
-    myValidityInfoPanel.add(
-      FormBuilder.createFormBuilder()
-        .addLabeledComponent("Valid from", new JBLabel(DATE_FORMAT.format(certificate.getNotBefore())))
-        .addLabeledComponent("Valid until", new JBLabel(DATE_FORMAT.format(certificate.getNotAfter())))
-        .getPanel());
-
     init();
-  }
-
-  @Override
-  protected void doOKAction() {
-    LOG.debug(getSize().toString());
-    super.doOKAction();
+    LOG.debug("Preferred size: " + getPreferredSize());
   }
 
   @SuppressWarnings("MethodMayBeStatic")
-  private void fillPrincipalInfoPanel(JPanel panel, X500Principal principal) {
-    FormBuilder builder = FormBuilder.createFormBuilder();
+  private FormBuilder updateBuilderWithPrincipalData(FormBuilder builder, X500Principal principal) {
+    builder = builder.setIndent(IdeBorderFactory.TITLED_BORDER_INDENT);
     for (String field : principal.getName().split(",")) {
       field = field.trim();
       String[] parts = field.split("=", 2);
@@ -89,8 +89,12 @@ public class UntrustedCertificateWarningDialog extends DialogWrapper {
 
       builder = builder.addLabeledComponent(String.format("<html>%s (<b>%s</b>)</html>", longName, name), new JBLabel(value));
     }
-    JPanel builderPanel = builder.getPanel();
-    panel.add(builderPanel, BorderLayout.CENTER);
+    return builder.setIndent(0);
+  }
+
+  @SuppressWarnings("MethodMayBeStatic")
+  private FormBuilder updateBuilderWithTitle(FormBuilder builder, String title) {
+    return builder.addComponent(new TitledSeparator(title), IdeBorderFactory.TITLED_BORDER_TOP_INSET);
   }
 
   @Nullable
