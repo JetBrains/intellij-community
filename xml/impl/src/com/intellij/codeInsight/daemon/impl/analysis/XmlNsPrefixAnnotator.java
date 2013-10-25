@@ -24,8 +24,9 @@ import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FilteringIterator;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * @author Dmitry Avdeev
@@ -35,9 +36,8 @@ public class XmlNsPrefixAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (element instanceof XmlTag || element instanceof XmlAttribute) {
-      SchemaPrefixReference reference =
-        (SchemaPrefixReference)ContainerUtil.find(element.getReferences(), FilteringIterator.instanceOf(SchemaPrefixReference.class));
-      if (reference != null) {
+      List<SchemaPrefixReference> references = ContainerUtil.findAll(element.getReferences(), SchemaPrefixReference.class);
+      for (SchemaPrefixReference reference : references) {
         TextRange rangeInElement = reference.getRangeInElement();
         if (!rangeInElement.isEmpty()) {
           TextRange range = rangeInElement.shiftRight(element.getTextRange().getStartOffset());
