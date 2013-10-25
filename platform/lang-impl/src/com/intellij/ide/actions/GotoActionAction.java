@@ -86,7 +86,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
                                                final String enteredText,
                                                final Project project,
                                                final Component component,
-                                               final AnActionEvent e) {
+                                               @NotNull final AnActionEvent e) {
     if (element instanceof OptionDescription) {
       final String configurableId = ((OptionDescription)element).getConfigurableId();
       ApplicationManager.getApplication().invokeLater(new Runnable() {
