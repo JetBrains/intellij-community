@@ -24,12 +24,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrFinalListener;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrInplaceIntroducer;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
@@ -60,7 +62,7 @@ public class GrInplaceVariableIntroducer extends GrInplaceIntroducer {
 
   @Override
   public LinkedHashSet<String> suggestNames(GrIntroduceContext context) {
-    return new GrVariableNameSuggester(context, new GroovyVariableValidator(context)).suggestNames();
+    return ContainerUtil.newLinkedHashSet(GroovyNameSuggestionUtil.suggestVariableNames(getVariable().getInitializerGroovy(), new GroovyVariableValidator(context)));
   }
 
   @Nullable

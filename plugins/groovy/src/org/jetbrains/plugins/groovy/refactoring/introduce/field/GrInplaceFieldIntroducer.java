@@ -33,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrFinalListener;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrInplaceIntroducer;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
@@ -203,7 +204,8 @@ public class GrInplaceFieldIntroducer extends GrInplaceIntroducer {
 
   @Override
   public LinkedHashSet<String> suggestNames(GrIntroduceContext context) {
-    return new GrFieldNameSuggester(context , new GroovyInplaceFieldValidator(context), false).suggestNames();
+    return ContainerUtil.newLinkedHashSet(
+      GroovyNameSuggestionUtil.suggestVariableNames(myInitializer, new GroovyInplaceFieldValidator(context), false));
   }
 
   public class GrInplaceIntroduceFieldPanel {
