@@ -61,17 +61,23 @@ public class DeployToServerState<S extends ServerConfiguration, D extends Deploy
     final Project project = myEnvironment.getProject();
     RemoteServersView.getInstance(project).showServerConnection(connection);
 
-    DebugConnector<?,?> debugConnector;
+    final DebugConnector<?,?> debugConnector;
     if (DefaultDebugExecutor.getDebugExecutorInstance().equals(executor)) {
       debugConnector = myServer.getType().createDebugConnector();
     }
     else {
       debugConnector = null;
     }
-    connection.deploy(new DeploymentTaskImpl(mySource, myConfiguration, project, debugConnector, myEnvironment), new ParameterizedRunnable<String>() {
+    connection.computeDeployments(new Runnable() {
       @Override
-      public void run(String s) {
-        RemoteServersView.getInstance(project).showDeployment(connection, s);
+      public void run() {
+        connection.deploy(new DeploymentTaskImpl(mySource, myConfiguration, project, debugConnector, myEnvironment),
+                          new ParameterizedRunnable<String>() {
+                            @Override
+                            public void run(String s) {
+                              RemoteServersView.getInstance(project).showDeployment(connection, s);
+                            }
+                          });
       }
     });
     return null;
