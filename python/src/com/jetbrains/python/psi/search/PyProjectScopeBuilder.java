@@ -76,7 +76,7 @@ public class PyProjectScopeBuilder extends ProjectScopeBuilderImpl {
     final FileIndexFacade fileIndex = FileIndexFacade.getInstance(myProject);
     return new ProjectScopeImpl(myProject, fileIndex) {
       @Override
-      public boolean contains(VirtualFile file) {
+      public boolean contains(@NotNull VirtualFile file) {
         if (file instanceof VirtualFileWindow) return true;
         return fileIndex.isInContent(file);
       }

@@ -54,7 +54,7 @@ public class JavaFxScopeEnlarger extends UseScopeEnlarger {
           final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(project);
           return new DelegatingGlobalSearchScope(projectScope){
             @Override
-            public boolean contains(VirtualFile file) {
+            public boolean contains(@NotNull VirtualFile file) {
               return super.contains(file) && JavaFxFileTypeFactory.isFxml(file);
             }
           };
