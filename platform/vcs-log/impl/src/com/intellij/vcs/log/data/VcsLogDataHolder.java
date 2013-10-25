@@ -198,7 +198,7 @@ public class VcsLogDataHolder implements Disposable {
           }
         });
       }
-    });
+    }, "Loading recent history...");
   }
 
   private void resetState() {
@@ -239,7 +239,7 @@ public class VcsLogDataHolder implements Disposable {
           myEntireLogLoadWaiter.countDown();
         }
       }
-    });
+    }, "Loading entire log structure...");
   }
 
   /**
@@ -285,7 +285,7 @@ public class VcsLogDataHolder implements Disposable {
           }
         });
       }
-    });
+    }, "Building full log...");
   }
 
   /**
@@ -421,7 +421,7 @@ public class VcsLogDataHolder implements Disposable {
           }
         });
       }
-    });
+    }, "Retrieving filtered results from the VCS...");
   }
 
   private static class RecentCommitsInfo {
@@ -525,7 +525,7 @@ public class VcsLogDataHolder implements Disposable {
             }
           });
         }
-      });
+      }, "Loading more details to filter...");
     }
     return LoadingState.LOADING;
   }
@@ -548,8 +548,8 @@ public class VcsLogDataHolder implements Disposable {
     return false;
   }
 
-  private void runInBackground(final ThrowableConsumer<ProgressIndicator, VcsException> task) {
-    myDataLoaderQueue.run(new Task.Backgroundable(myProject, "Loading history...") {
+  private void runInBackground(final ThrowableConsumer<ProgressIndicator, VcsException> task, final String title) {
+    myDataLoaderQueue.run(new Task.Backgroundable(myProject, title) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
@@ -580,7 +580,7 @@ public class VcsLogDataHolder implements Disposable {
           loadFromVcs(mySettings.getRecentCommitsCount(), indicator, success);
         }
       }
-    });
+    }, "Refreshing history...");
   }
 
   /**
