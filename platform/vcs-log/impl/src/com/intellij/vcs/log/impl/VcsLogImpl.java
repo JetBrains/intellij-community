@@ -64,6 +64,9 @@ public class VcsLogImpl implements VcsLog {
   @Nullable
   private VcsFullCommitDetails getDetailsAtRow(int row) {
     Node commitNode = myDataHolder.getDataPack().getGraphModel().getGraph().getCommitNodeInRow(row);
+    if (commitNode == null) {
+      return null;
+    }
     VcsFullCommitDetails details = myDataHolder.getCommitDetailsGetter().getCommitData(commitNode);
     return details instanceof LoadingDetails ? null : details;
   }
