@@ -29,7 +29,7 @@ public class VcsLogTextFilter implements VcsLogDetailsFilter {
 
   @Override
   public boolean matches(@NotNull VcsFullCommitDetails details) {
-    return details.getFullMessage().toLowerCase().contains(myText);
+    return details.getFullMessage().toLowerCase().contains(myText.toLowerCase());
   }
 
   @NotNull

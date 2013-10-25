@@ -16,7 +16,8 @@ public class VcsLogUserFilter implements VcsLogDetailsFilter {
 
   @Override
   public boolean matches(@NotNull VcsFullCommitDetails detail) {
-    return detail.getAuthorName().toLowerCase().contains(myUser) || detail.getAuthorEmail().toLowerCase().contains(myUser);
+    return detail.getAuthorName().toLowerCase().contains(myUser.toLowerCase()) ||
+           detail.getAuthorEmail().toLowerCase().contains(myUser.toLowerCase());
   }
 
   @NotNull
