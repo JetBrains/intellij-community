@@ -362,10 +362,10 @@ public class MavenProjectReader {
     }
   }
 
-  private ProfileApplicationResult applyProfiles(MavenModel model,
-                                                 File basedir,
-                                                 Collection<String> explicitProfiles,
-                                                 Collection<String> alwaysOnProfiles) {
+  private static ProfileApplicationResult applyProfiles(MavenModel model,
+                                                        File basedir,
+                                                        Collection<String> explicitProfiles,
+                                                        Collection<String> alwaysOnProfiles) {
     return MavenServerManager.getInstance().applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
   }
 

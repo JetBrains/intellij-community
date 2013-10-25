@@ -44,7 +44,7 @@ public class DownloadSelectedSourcesAndDocsAction extends MavenProjectsAction {
     return super.isAvailable(e) && !getDependencies(e).isEmpty();
   }
 
-  private Collection<MavenArtifact> getDependencies(AnActionEvent e) {
+  private static Collection<MavenArtifact> getDependencies(AnActionEvent e) {
     Collection<MavenArtifact> result = e.getData(MavenDataKeys.MAVEN_DEPENDENCIES);
     return result == null ? Collections.<MavenArtifact>emptyList() : result;
   }

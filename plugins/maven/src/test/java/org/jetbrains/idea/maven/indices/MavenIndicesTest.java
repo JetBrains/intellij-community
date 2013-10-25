@@ -366,7 +366,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
                         "junit:junit:3.8.1", "junit:junit:3.8.2", "junit:junit:4.0");
   }
 
-  private void damageFile(MavenIndex index, String fileName, boolean fullDamage) throws IOException {
+  private static void damageFile(MavenIndex index, String fileName, boolean fullDamage) throws IOException {
     File cachesDir = index.getCurrentDataDir();
     File file = new File(cachesDir, fileName);
     assertTrue(file.exists());
@@ -452,7 +452,7 @@ public class MavenIndicesTest extends MavenIndicesTestCase {
     assertSearchResults(i, new WildcardQuery(new Term(MavenServerIndexer.SEARCH_TERM_COORDINATES, "*jmock*")), "jmock:jmock:1.0.0");
   }
 
-  private void assertSearchResults(MavenIndex i, Query query, String... expectedArtifacts) {
+  private static void assertSearchResults(MavenIndex i, Query query, String... expectedArtifacts) {
     List<String> actualArtifacts = new ArrayList<String>();
     for (MavenArtifactInfo each : i.search(query, 100)) {
       actualArtifacts.add(each.getGroupId() + ":" + each.getArtifactId() + ":" + each.getVersion());

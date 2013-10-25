@@ -28,7 +28,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -1586,22 +1585,22 @@ public class MavenProjectReaderTest extends MavenTestCase {
     return result;
   }
 
-  private void assertParent(MavenModel p,
-                            String groupId,
-                            String artifactId,
-                            String version) {
+  private static void assertParent(MavenModel p,
+                                   String groupId,
+                                   String artifactId,
+                                   String version) {
     MavenId parent = p.getParent().getMavenId();
     assertEquals(groupId, parent.getGroupId());
     assertEquals(artifactId, parent.getArtifactId());
     assertEquals(version, parent.getVersion());
   }
 
-  private void assertResource(MavenResource resource,
-                              String dir,
-                              boolean filtered,
-                              String targetPath,
-                              List<String> includes,
-                              List<String> excludes) {
+  private static void assertResource(MavenResource resource,
+                                     String dir,
+                                     boolean filtered,
+                                     String targetPath,
+                                     List<String> includes,
+                                     List<String> excludes) {
     PlatformTestUtil.assertPathsEqual(dir, resource.getDirectory());
     assertEquals(filtered, resource.isFiltered());
     PlatformTestUtil.assertPathsEqual(targetPath, resource.getTargetPath());
@@ -1609,7 +1608,7 @@ public class MavenProjectReaderTest extends MavenTestCase {
     assertOrderedElementsAreEqual(resource.getExcludes(), excludes);
   }
 
-  private void assertProblems(MavenProjectReaderResult readerResult, String... expectedProblems) {
+  private static void assertProblems(MavenProjectReaderResult readerResult, String... expectedProblems) {
     List<String> actualProblems = new ArrayList<String>();
     for (MavenProjectProblem each : readerResult.readingProblems) {
       actualProblems.add(each.getDescription());
