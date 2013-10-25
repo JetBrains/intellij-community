@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.Processor;
@@ -118,8 +119,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   }
 
   @TestOnly
-  public boolean stripTrailingSpaces() {
-    return stripTrailingSpaces(null, false, false, -1, -1);
+  public boolean stripTrailingSpaces(Project project) {
+    return stripTrailingSpaces(project, false, false, -1, -1);
   }
 
   /**
@@ -159,6 +160,9 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
         }
         else {
           final int finalStart = whiteSpaceStart;
+          if (project != null) {
+            PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(this);
+          }
           ApplicationManager.getApplication().runWriteAction(new DocumentRunnable(this, project) {
             @Override
             public void run() {
