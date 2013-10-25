@@ -78,12 +78,14 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
       //noinspection unchecked
       final List<StepTarget> targets = new OrderedSet<StepTarget>();
+
       final PsiElementVisitor methodCollector = new JavaRecursiveElementVisitor() {
+        final Stack<PsiMethod> myContextStack = new Stack<PsiMethod>();
         final Stack<String> myParamNameStack = new Stack<String>();
 
         @Nullable
         private String getCurrentParamName() {
-          return myParamNameStack.size() > 0? myParamNameStack.peek(): null;
+          return myParamNameStack.isEmpty() ? null : myParamNameStack.peek();
         }
 
         @Override
@@ -100,37 +102,55 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           }
         }
 
-        @Override
-        public void visitCallExpression(final PsiCallExpression expression) {
-          final PsiMethod psiMethod = expression.resolveMethod();
+        public void visitExpressionList(PsiExpressionList expressionList) {
+          final PsiMethod psiMethod = myContextStack.isEmpty()? null : myContextStack.peek();
           if (psiMethod != null) {
-            final PsiElement highlightElement = expression instanceof PsiMethodCallExpression?
-              ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceNameElement() : null;
-            targets.add(new StepTarget(psiMethod, null, highlightElement, false));
-            final PsiExpressionList argList = expression.getArgumentList();
-            if (argList != null) {
-              final String methodName = psiMethod.getName();
-              final PsiExpression[] expressions = argList.getExpressions();
-              final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-              for (int idx = 0; idx < expressions.length; idx++) {
-                final String paramName = (idx < parameters.length && !parameters[idx].isVarArgs())? parameters[idx].getName() : "arg"+(idx+1);
-                myParamNameStack.push(methodName + ": " + paramName + ".");
-                final PsiExpression argExpression = expressions[idx];
-                try {
-                  argExpression.accept(this);
-                }
-                finally {
-                  myParamNameStack.pop();
-                }
+            final String methodName = psiMethod.getName();
+            final PsiExpression[] expressions = expressionList.getExpressions();
+            final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+            for (int idx = 0; idx < expressions.length; idx++) {
+              final String paramName = (idx < parameters.length && !parameters[idx].isVarArgs())? parameters[idx].getName() : "arg"+(idx+1);
+              myParamNameStack.push(methodName + ": " + paramName + ".");
+              final PsiExpression argExpression = expressions[idx];
+              try {
+                argExpression.accept(this);
+              }
+              finally {
+                myParamNameStack.pop();
               }
             }
           }
           else {
+            super.visitExpressionList(expressionList);
+          }
+        }
+
+        @Override
+        public void visitCallExpression(final PsiCallExpression expression) {
+          final PsiMethod psiMethod = expression.resolveMethod();
+          if (psiMethod != null) {
+            myContextStack.push(psiMethod);
+            targets.add(new StepTarget(
+              psiMethod,
+              null,
+              expression instanceof PsiMethodCallExpression?
+                ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceNameElement()
+                : expression instanceof PsiNewExpression? ((PsiNewExpression)expression).getClassOrAnonymousClassReference() : expression,
+              false
+            ));
+          }
+          try {
             super.visitCallExpression(expression);
+          }
+          finally {
+            if (psiMethod != null) {
+              myContextStack.pop();
+            }
           }
         }
 
       };
+
       element.accept(methodCollector);
       for (PsiElement sibling = element.getNextSibling(); sibling != null; sibling = sibling.getNextSibling()) {
         if (!lineRange.intersects(sibling.getTextRange())) {
