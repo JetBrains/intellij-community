@@ -31,6 +31,8 @@ public class XmlHighlighterColors {
     TextAttributesKey.createTextAttributesKey("XML_TAG", DefaultLanguageHighlighterColors.MARKUP_TAG);
   public static final TextAttributesKey XML_TAG_NAME =
     TextAttributesKey.createTextAttributesKey("XML_TAG_NAME", DefaultLanguageHighlighterColors.KEYWORD);
+  public static final TextAttributesKey XML_NS_PREFIX =
+    TextAttributesKey.createTextAttributesKey("XML_NS_PREFIX", DefaultLanguageHighlighterColors.IDENTIFIER);
   public static final TextAttributesKey XML_ATTRIBUTE_NAME =
     TextAttributesKey.createTextAttributesKey("XML_ATTRIBUTE_NAME", DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE);
   public static final TextAttributesKey XML_ATTRIBUTE_VALUE =
