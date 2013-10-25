@@ -4,11 +4,14 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.FormBuilder;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.security.auth.x500.X500Principal;
@@ -39,12 +42,17 @@ public class UntrustedCertificateWarningDialog extends DialogWrapper {
   private JPanel myRootPanel;
   private JLabel myWarningSign;
   private JPanel myCertificateInfoPanel;
+  private JTextPane myNoticePane;
   private final X509Certificate myCertificate;
+  private final String myPath, myPassword;
 
-  public UntrustedCertificateWarningDialog(X509Certificate certificate) {
+  public UntrustedCertificateWarningDialog(@NotNull X509Certificate certificate, @NotNull String storePath, @NotNull String password) {
     super((Project)null, false);
 
     myCertificate = certificate;
+    myPath = FileUtil.toCanonicalPath(storePath);
+
+    myPassword = password;
 
     FormBuilder builder = FormBuilder.createFormBuilder();
 
@@ -64,6 +72,14 @@ public class UntrustedCertificateWarningDialog extends DialogWrapper {
     setOKButtonText("Accept");
     setCancelButtonText("Reject");
     myWarningSign.setIcon(AllIcons.General.WarningDialog);
+
+    Messages.installHyperlinkSupport(myNoticePane);
+//    myNoticePane.setFont(myNoticePane.getFont().deriveFont((float)FontSize.SMALL.getSize()));
+    myNoticePane.setText(
+      String.format("<html><p><small>" +
+                    "Accepted certificate will be saved in truststore <code>%s</code> with password <code>%s</code>" +
+                    "</small></p><html>",
+                    myPath, myPassword));
 
     init();
     LOG.debug("Preferred size: " + getPreferredSize());

@@ -27,6 +27,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * {@code CertificatesManager} is responsible for negotiation SSL connection with server
@@ -36,14 +37,14 @@ import java.util.concurrent.CountDownLatch;
  */
 public class CertificatesManager {
   private static final Logger LOG = Logger.getInstance(CertificatesManager.class);
-  @NonNls private static final String HTTPS = "https";
-
   private static final X509Certificate[] NO_CERTIFICATES = new X509Certificate[0];
+
+  @NonNls private static final String DEFAULT_PATH = FileUtil.join(PathManager.getSystemPath(), "tasks", "cacerts");
+  @NonNls private static final String DEFAULT_PASSWORD = "changeit";
 
   @NotNull
   public static CertificatesManager createDefault() {
-    String path = FileUtil.join(PathManager.getSystemPath(), "tasks", "cacerts");
-    return createInstance(path, "changeit");
+    return createInstance(DEFAULT_PATH, DEFAULT_PASSWORD);
   }
 
 
@@ -71,7 +72,7 @@ public class CertificatesManager {
   public Protocol createProtocol() {
     try {
       final SSLSocketFactory factory = createSslContext().getSocketFactory();
-      return new Protocol(HTTPS, new ProtocolSocketFactory() {
+      return new Protocol("https", new ProtocolSocketFactory() {
         @Override
         public Socket createSocket(String host, int port, InetAddress localAddress, int localPort)
           throws IOException {
@@ -157,8 +158,8 @@ public class CertificatesManager {
               myCustomManager.checkServerTrusted(certificates, s);
             }
             catch (CertificateException e2) {
-              if (!myCustomManager.isBroken()) {
-                updateTrustStore(certificate);
+              if (myCustomManager.isBroken() || !updateTrustStore(certificate)) {
+                throw e1;
               }
             }
           }
@@ -166,20 +167,24 @@ public class CertificatesManager {
       }
     }
 
-    private void updateTrustStore(final X509Certificate certificate) {
+    private boolean updateTrustStore(final X509Certificate certificate) {
       Application app = ApplicationManager.getApplication();
       if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
         myCustomManager.addCertificate(certificate);
-        return;
+        return true;
       }
 
       // can't use Application#invokeAndWait because of ReadAction
       final CountDownLatch proceeded = new CountDownLatch(1);
+      final AtomicBoolean accepted = new AtomicBoolean();
       app.invokeLater(new Runnable() {
         @Override
         public void run() {
           try {
-            if (new UntrustedCertificateWarningDialog(certificate).showAndGet()) {
+            UntrustedCertificateWarningDialog dialog =
+              new UntrustedCertificateWarningDialog(certificate, myCustomManager.myPath, myCustomManager.myPassword);
+            accepted.set(dialog.showAndGet());
+            if (accepted.get()) {
               LOG.debug("Certificate was accepted");
               myCustomManager.addCertificate(certificate);
             }
@@ -195,6 +200,7 @@ public class CertificatesManager {
       catch (InterruptedException e) {
         LOG.error(e);
       }
+      return accepted.get();
     }
 
     @Override
