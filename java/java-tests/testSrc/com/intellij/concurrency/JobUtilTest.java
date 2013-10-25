@@ -219,17 +219,21 @@ public class JobUtilTest extends PlatformTestCase {
   public void testNotNormalCompletion() throws Throwable {
     final List<Object> objects = Collections.nCopies(100000000, null);
     COUNT.set(0);
-    boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(objects, null, true, new Processor<Object>() {
-      @Override
-      public boolean process(Object o) {
-        if (COUNT.incrementAndGet() == 100000) {
-          System.out.println("PCE");
-          return false;
+    try {
+      boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(objects, null, true, new Processor<Object>() {
+        @Override
+        public boolean process(Object o) {
+          if (COUNT.incrementAndGet() == 100000) {
+            System.out.println("PCE");
+            return false;
+          }
+          return true;
         }
-        return true;
-      }
-    });
-    assertFalse(success);
+      });
+      assertFalse(success);
+    }
+    catch (ProcessCanceledException e) {
+    }
   }
 
   public void testJobUtilCompletesEvenIfCannotGrabReadAction() throws Throwable {
