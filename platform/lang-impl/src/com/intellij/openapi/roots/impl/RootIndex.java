@@ -49,6 +49,7 @@ class RootIndex {
   private final Map<String, HashSet<VirtualFile>> myPackagePrefixRoots = ContainerUtil.newHashMap();
 
   private final Map<String, List<VirtualFile>> myDirectoriesByPackageNameCache = ContainerUtil.newConcurrentMap();
+  private final Map<String, List<VirtualFile>> myDirectoriesByPackageNameCacheWithLibSrc = ContainerUtil.newConcurrentMap();
   private final Map<VirtualFile, Boolean> myIgnoredCache = ContainerUtil.newConcurrentMap();
   private final List<JpsModuleSourceRootType<?>> myRootTypes = ContainerUtil.newArrayList();
   private final TObjectIntHashMap<JpsModuleSourceRootType<?>> myRootTypeId = new TObjectIntHashMap<JpsModuleSourceRootType<?>>();
@@ -351,7 +352,10 @@ class RootIndex {
 
   @NotNull
   public Query<VirtualFile> getDirectoriesByPackageName(@NotNull final String packageName, final boolean includeLibrarySources) {
-    final List<VirtualFile> cachedResult = myDirectoriesByPackageNameCache.get(packageName);
+    Map<String, List<VirtualFile>> cacheMap = includeLibrarySources ? 
+                                              myDirectoriesByPackageNameCacheWithLibSrc : 
+                                              myDirectoriesByPackageNameCache;
+    final List<VirtualFile> cachedResult = cacheMap.get(packageName);
     if (cachedResult != null) {
       return new CollectionQuery<VirtualFile>(cachedResult);
     }
@@ -364,7 +368,9 @@ class RootIndex {
 
       if (packageName.equals(entry.getKey())) {
         for (VirtualFile file : entry.getValue()) {
-          result.add(file);
+          if (isValidPackageDirectory(includeLibrarySources, file)) {
+            result.add(file);
+          }
         }
         continue;
       }
@@ -381,14 +387,26 @@ class RootIndex {
           }
         }
 
-        if (file != null) {
+        if (isValidPackageDirectory(includeLibrarySources, file)) {
           result.add(file);
         }
       }
     }
 
-    myDirectoriesByPackageNameCache.put(packageName, result);
+    cacheMap.put(packageName, result);
     return new CollectionQuery<VirtualFile>(result);
+  }
+
+  private boolean isValidPackageDirectory(boolean includeLibrarySources, @Nullable VirtualFile file) {
+    if (file != null) {
+      DirectoryInfo info = getInfoForDirectory(file);
+      if (info != null) {
+        if (includeLibrarySources || !info.isInLibrarySource() || info.isInModuleSource() || info.hasLibraryClassRoot()) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   @Nullable

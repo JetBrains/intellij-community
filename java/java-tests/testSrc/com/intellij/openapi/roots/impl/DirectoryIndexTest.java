@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -41,7 +40,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 
 import static java.util.Collections.singletonList;
@@ -220,9 +218,12 @@ public class DirectoryIndexTest extends IdeaTestCase {
   }
 
   public void testDirsByPackageName() {
-    checkPackage("", myFileLibSrc, myFileLibCls, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myLibSrcDir, myLibClsDir, mySrcDir2);
-    checkPackage("pack1", myPack1Dir);
-    checkPackage("pack2", myPack2Dir);
+    checkPackage("", true, myFileLibSrc, myFileLibCls, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myLibSrcDir, myLibClsDir, mySrcDir2);
+    checkPackage("", false, myFileLibCls, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myLibClsDir, mySrcDir2);
+    checkPackage("pack1", true, myPack1Dir);
+    checkPackage("pack1", false, myPack1Dir);
+    checkPackage("pack2", true, myPack2Dir);
+    checkPackage("pack2", false, myPack2Dir);
   }
 
   public void testCreateDir() throws Exception {
@@ -563,13 +564,9 @@ public class DirectoryIndexTest extends IdeaTestCase {
     return info;
   }
 
-  private void checkPackage(String packageName, VirtualFile... expectedDirs) {
-    VirtualFile[] actualDirs = myIndex.getDirectoriesByPackageName(packageName, true).toArray(VirtualFile.EMPTY_ARRAY);
+  private void checkPackage(String packageName, boolean includeLibrarySources, VirtualFile... expectedDirs) {
+    VirtualFile[] actualDirs = myIndex.getDirectoriesByPackageName(packageName, includeLibrarySources).toArray(VirtualFile.EMPTY_ARRAY);
     assertNotNull(actualDirs);
-    HashSet<VirtualFile> set1 = new HashSet<VirtualFile>();
-    ContainerUtil.addAll(set1, expectedDirs);
-    HashSet<VirtualFile> set2 = new HashSet<VirtualFile>();
-    ContainerUtil.addAll(set2, actualDirs);
-    assertEquals(set1, set2);
+    assertSameElements(actualDirs, expectedDirs);
   }
 }
