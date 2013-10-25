@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 public class PathUtilRt {
   @NotNull
   public static String getFileName(@NotNull String path) {
-    if (path.length() == 0) {
+    if (path.isEmpty()) {
       return "";
     }
     final char c = path.charAt(path.length() - 1);
