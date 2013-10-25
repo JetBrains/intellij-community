@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.BackgroundTaskQueue;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -277,7 +278,7 @@ public class VcsLogDataHolder implements Disposable {
         DataPack fullDataPack = DataPack.build(compoundLog, myLogData.getAllRefs(), indicator);
         myLogData = new LogData(myLogData.getLogs(), myLogData.getRefs(), myLogData.getTopCommits(), fullDataPack, true);
         myFullLogShowing = true;
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        invokeAndWait(new Runnable() {
           @Override
           public void run() {
             notifyAboutDataRefresh();
@@ -414,7 +415,7 @@ public class VcsLogDataHolder implements Disposable {
             return detail;
           }
         });
-        UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        invokeAndWait(new Runnable() {
           @Override
           public void run() {
             success.consume(list);
@@ -442,8 +443,8 @@ public class VcsLogDataHolder implements Disposable {
     return allRefs;
   }
 
-  private static void handleOnSuccessInEdt(final Consumer<DataPack> onSuccess, final DataPack dataPack) {
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+  private void handleOnSuccessInEdt(final Consumer<DataPack> onSuccess, final DataPack dataPack) {
+    invokeAndWait(new Runnable() {
       @Override
       public void run() {
         onSuccess.consume(dataPack);
@@ -684,6 +685,20 @@ public class VcsLogDataHolder implements Disposable {
                   new Attachment("details_cache.txt", myTopCommitsDetailsCache.toString()),
                   new Attachment("top_commits.txt", topCommits.toString()));
         return null;
+      }
+    });
+  }
+
+  /**
+   * Simply checks for isDisposed.
+   */
+  private void invokeAndWait(final Runnable task) {
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        if (!Disposer.isDisposed(VcsLogDataHolder.this)) {
+          task.run();
+        }
       }
     });
   }
