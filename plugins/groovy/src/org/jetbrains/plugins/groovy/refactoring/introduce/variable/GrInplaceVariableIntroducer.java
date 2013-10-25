@@ -60,7 +60,7 @@ public class GrInplaceVariableIntroducer extends GrInplaceIntroducer {
 
   @Override
   public LinkedHashSet<String> suggestNames(GrIntroduceContext context) {
-    return new GrVariableNameSuggester(context, new GroovyVariableValidator(context));
+    return new GrVariableNameSuggester(context, new GroovyVariableValidator(context)).suggestNames();
   }
 
   @Nullable

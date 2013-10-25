@@ -27,7 +27,7 @@ import java.util.LinkedHashSet;
 /**
  * @author Max Medvedev
  */
-public class GrVariableNameSuggester extends LinkedHashSet<String> {
+public class GrVariableNameSuggester {
   private final GrIntroduceContext myContext;
   private final NameValidator myValidator;
 
