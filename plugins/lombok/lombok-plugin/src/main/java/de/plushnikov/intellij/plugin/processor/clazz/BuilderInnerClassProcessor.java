@@ -1,14 +1,11 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.ide.util.PackageUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.LightClass;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
-import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightFieldBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
-import de.plushnikov.intellij.plugin.psi.LombokNewLightClassBuilder;
+import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.thirdparty.ErrorMessages;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.BuilderUtil;
@@ -23,14 +20,12 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Inspect and validate @Builder lombok annotation on a class
- * Creates methods for a builder pattern for initializing a class
+ * Inspect and validate @Builder lombok annotation on a class.
+ * Creates methods for a builder pattern for initializing a class.
  *
  * @author Tomasz Kalkosiński
  */
 public class BuilderInnerClassProcessor extends AbstractClassProcessor {
-
-  public static final String METHOD_NAME = "getInstance";
 
   public BuilderInnerClassProcessor() {
     super(Builder.class, PsiClass.class);
@@ -42,81 +37,58 @@ public class BuilderInnerClassProcessor extends AbstractClassProcessor {
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    boolean result = validateAnnotationOnRightType(psiClass, builder);
-    if (result) {
-      result = validateExistingInnerClass(psiClass, psiAnnotation, builder);
-    }
-
-    if (PsiClassUtil.hasSuperClass(psiClass)) {
-      builder.addError(ErrorMessages.canBeUsedOnConcreteClassOnly(Singleton.class));
-      result = false;
-    }
-
-    return result;
+    return validateInternal(psiAnnotation, psiClass, builder, true);
   }
 
-  protected boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    boolean result = true;
+  /**
+   * Two processors are used to process @Builder annotation on a class.
+   * Validation process is the same, but in case it fails, errors where added twice.
+   * There is a @param shouldAddErrors to avoid this duplication.
+   */
+  protected boolean validateInternal(PsiAnnotation psiAnnotation, PsiClass psiClass, ProblemBuilder builder, boolean shouldAddErrors) {
+    return validateAnnotationOnRightType(psiClass, builder, shouldAddErrors)
+       && validateExistingInnerClass(psiClass, psiAnnotation, builder, shouldAddErrors);
+  }
+
+  protected boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder, boolean shouldAddErrors) {
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
-      builder.addError(ErrorMessages.canBeUsedOnClassOnly(Singleton.class));
-      result = false;
+      if (shouldAddErrors) {
+        builder.addError(ErrorMessages.canBeUsedOnClassOnly(Singleton.class));
+      }
+      return false;
     }
-    return result;
+    return true;
   }
 
-  protected boolean validateExistingInnerClass(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder builder) {
-    boolean result = true;
-
+  protected boolean validateExistingInnerClass(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder builder, boolean shouldAddErrors) {
     final String innerClassSimpleName = BuilderUtil.createBuilderClassName(psiAnnotation, psiClass);
     final PsiClass innerClassByName = PsiClassUtil.getInnerClassInternByName(psiClass, innerClassSimpleName);
     if (innerClassByName != null) {
-      builder.addWarning(String.format("Not generated '%s' class: A class with same name already exists", innerClassSimpleName));
-      result = false;
+      if (shouldAddErrors) {
+        builder.addError(String.format("Not generated '%s' class: A class with same name already exists. This feature is not implemented and it's not planned.", innerClassSimpleName));
+      }
+      return false;
     }
-
-    return result;
+    return true;
   }
 
   protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    processInternNew(psiClass, psiAnnotation, target);
-  }
-
-  protected void processInternOld(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    final String innerClassSimpleName = BuilderUtil.createBuilderClassName(psiAnnotation, psiClass);
-    final String innerClassCanonicalName = psiClass.getName() + "." + BuilderUtil.createBuilderClassName(psiAnnotation, psiClass);
-
-    // Create inner class only if it doesn't exist.
-    final PsiClass innerClassByName = PsiClassUtil.getInnerClassInternByName(psiClass, innerClassSimpleName);
-    if (innerClassByName == null) {
-      LombokLightClassBuilder innerClass = new LombokLightClassBuilder(psiClass.getManager(), innerClassCanonicalName, innerClassSimpleName)
-         .withContainingClass(psiClass)
-         .withParameterTypes(psiClass.getTypeParameterList())
-         .withModifier(PsiModifier.PUBLIC)
-         .withModifier(PsiModifier.STATIC);
-      innerClass.withConstructors(createConstructors(innerClass, psiAnnotation))
-         .withFields(createFields(psiClass))
-         .withMethods(createMethods(psiClass, innerClass, psiAnnotation));
-      target.add(innerClass);
-    }
-  }
-
-  protected void processInternNew(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String innerClassSimpleName = BuilderUtil.createBuilderClassName(psiAnnotation, psiClass);
     final String innerClassQualifiedName = psiClass.getName() + "." + BuilderUtil.createBuilderClassName(psiAnnotation, psiClass);
 
-    // Create inner class only if it doesn't exist.
     final PsiClass innerClassByName = PsiClassUtil.getInnerClassInternByName(psiClass, innerClassSimpleName);
-    if (innerClassByName == null) {
-      LombokNewLightClassBuilder innerClass = new LombokNewLightClassBuilder(psiClass.getProject(), innerClassSimpleName, innerClassQualifiedName)
-        .withContainingClass(psiClass)
-        .withParameterTypes(psiClass.getTypeParameterList())
-        .withModifier(PsiModifier.PUBLIC)
-        .withModifier(PsiModifier.STATIC);
-      innerClass.withConstructors(createConstructors(innerClass, psiAnnotation))
-        .withFields(createFields(psiClass))
-        .withMethods(createMethods(psiClass, innerClass, psiAnnotation));
-      target.add(innerClass);
-    }
+    assert innerClassByName == null; // validation should ensure that
+
+    LombokLightClassBuilder innerClass = new LombokLightClassBuilder(psiClass.getProject(), innerClassSimpleName, innerClassQualifiedName)
+      .withContainingClass(psiClass)
+      .withNavigationElement(psiAnnotation)
+      .withParameterTypes(psiClass.getTypeParameterList())
+      .withModifier(PsiModifier.PUBLIC)
+      .withModifier(PsiModifier.STATIC);
+    innerClass.withConstructors(createConstructors(innerClass, psiAnnotation))
+      .withFields(createFields(psiClass))
+      .withMethods(createMethods(psiClass, innerClass, psiAnnotation));
+    target.add(innerClass);
   }
 
   protected Collection<PsiMethod> createConstructors(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {

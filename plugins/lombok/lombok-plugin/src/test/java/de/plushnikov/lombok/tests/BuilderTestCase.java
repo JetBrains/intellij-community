@@ -1,6 +1,7 @@
 package de.plushnikov.lombok.tests;
 
 import de.plushnikov.lombok.LombokParsingTestCase;
+import org.junit.Ignore;
 
 import java.io.IOException;
 
@@ -21,9 +22,10 @@ public class BuilderTestCase extends LombokParsingTestCase {
   }
 
   // This test is lombok's homepage example with predefined elements and another inner class.
-  public void testBuilderPredefined() throws IOException {
+  // Predefined inner builder class is not supported. There are no plans to support it.
+  /*public void testBuilderPredefined() throws IOException {
     doTest();
-  }
+  }*/
 
   public void testBuilderSimple() throws IOException {
     doTest();
@@ -33,7 +35,8 @@ public class BuilderTestCase extends LombokParsingTestCase {
     doTest();
   }
 
-  public void testBuilderWithExistingBuilderClass() throws IOException {
+  // Predefined inner builder class is not supported. There are no plans to support it.
+  /*public void testBuilderWithExistingBuilderClass() throws IOException {
     doTest();
-  }
+  }*/
 }

@@ -1,8 +1,7 @@
 package de.plushnikov.intellij.plugin.psi;
 
-import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.light.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,14 +9,13 @@ import java.util.Collection;
 
 public class LombokLightClassBuilder extends LombokLightClass {
 
-  public LombokLightClassBuilder(@NotNull PsiManager manager, @NotNull String canonicalName, @NotNull String simpleName) {
-    super(manager, JavaLanguage.INSTANCE);
-    setCanonicalName(canonicalName);
-    setName(simpleName);
+  public LombokLightClassBuilder(@NotNull Project project, @NotNull String simpleName, @NotNull String qualifiedName) {
+    super(JavaPsiFacade.getElementFactory(project).createClass(simpleName));
+    setQualifiedName(qualifiedName);
   }
 
   public LombokLightClassBuilder withModifier(@PsiModifier.ModifierConstant @NotNull @NonNls String modifier) {
-    ((LightModifierList) getModifierList()).addModifier(modifier);
+    getModifierList().addModifier(modifier);
     return this;
   }
 
@@ -43,6 +41,11 @@ public class LombokLightClassBuilder extends LombokLightClass {
 
   public LombokLightClassBuilder withParameterTypes(@NotNull PsiTypeParameterList parameterList) {
     setTypeParameterList(parameterList);
+    return this;
+  }
+
+  public LombokLightClassBuilder withNavigationElement(PsiElement navigationElement) {
+    setNavigationElement(navigationElement);
     return this;
   }
 }

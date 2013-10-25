@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.impl.source.PsiClassImpl;
+import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.BuilderUtil;
@@ -30,6 +31,11 @@ public class BuilderProcessor extends BuilderInnerClassProcessor {
     super(Builder.class, PsiMethod.class);
   }
 
+  @Override
+  protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
+    return validateInternal(psiAnnotation, psiClass, builder, false);
+  }
+
   protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
     // Create all args constructor only if there is no declared constructor
@@ -40,7 +46,7 @@ public class BuilderProcessor extends BuilderInnerClassProcessor {
 
     String innerClassName = BuilderUtil.createBuilderClassName(psiAnnotation, psiClass);
     PsiClass innerClassByName = PsiClassUtil.getInnerClassByName(psiClass, innerClassName);
-    assert innerClassByName != null;
+    assert innerClassByName != null; // BuilderInnerClassProcessor should run first
 
     final String builderMethodName = BuilderUtil.createBuilderMethodName(psiAnnotation);
     if (!PsiMethodUtil.hasMethodByName(PsiClassUtil.collectClassMethodsIntern(psiClass), builderMethodName)) {
@@ -51,13 +57,6 @@ public class BuilderProcessor extends BuilderInnerClassProcessor {
       method.withModifier(PsiModifier.STATIC);
       method.withModifier(PsiModifier.PUBLIC);
       target.add(method);
-    }
-
-    // Process predefined class // TODO
-    if (innerClassByName instanceof PsiClassImpl) {
-//      target.addAll(createConstructors(innerClassByName, psiAnnotation));
-//      target.addAll(createFields(innerClassByName));
-      target.addAll(createMethods(psiClass, innerClassByName, psiAnnotation));
     }
   }
 }
