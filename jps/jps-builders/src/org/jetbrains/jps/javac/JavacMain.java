@@ -372,7 +372,6 @@ public class JavacMain {
     }
   }
 
-  private static boolean ourCleanupFailed = false;
   private static final class NameTableCleanupDataHolder {
     static final Object emptyList;
     static final Field freelistField;
@@ -400,6 +399,9 @@ public class JavacMain {
         freelistRef.setAccessible(true);
         freelistField = freelistRef;
       }
+      catch (RuntimeException e) {
+        throw e;
+      }
       catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -408,12 +410,14 @@ public class JavacMain {
 
   private static void cleanupJavacNameTable() {
     try {
-      if (!ourCleanupFailed) {
-        NameTableCleanupDataHolder.freelistField.set(null, NameTableCleanupDataHolder.emptyList);
+      final Field freelistField = NameTableCleanupDataHolder.freelistField;
+      final Object emptyList = NameTableCleanupDataHolder.emptyList;
+        // both parameters should be non-null if properly initialized
+      if (freelistField != null && emptyList != null) {
+        freelistField.set(null, emptyList);
       }
     }
-    catch (Throwable e) {
-      ourCleanupFailed = true;
+    catch (Throwable ignored) {
     }
   }
 
