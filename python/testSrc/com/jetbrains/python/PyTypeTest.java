@@ -799,6 +799,12 @@ public class PyTypeTest extends PyTestCase {
            "expr = c.foo\n");
   }
 
+  public void testIterNext() {
+    doTest("int",
+           "xs = [1, 2, 3]\n" +
+           "expr = iter(xs).next()\n");
+  }
+
   private static TypeEvalContext getTypeEvalContext(@NotNull PyExpression element) {
     return TypeEvalContext.userInitiated(element.getContainingFile()).withTracing();
   }

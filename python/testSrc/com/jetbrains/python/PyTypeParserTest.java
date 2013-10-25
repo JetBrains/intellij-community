@@ -15,6 +15,8 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.psi.PsiFile;
+import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.types.*;
 
@@ -34,7 +36,7 @@ public class PyTypeParserTest extends PyTestCase {
 
   private static void assertClassType(PyType type, final String name) {
     assertNotNull(type);
-    assertEquals(name, ((PyClassType) type).getPyClass().getName());
+    assertEquals(name, ((PyClassType)type).getPyClass().getName());
   }
 
   public void testTupleType() {
@@ -275,5 +277,22 @@ public class PyTypeParserTest extends PyTestCase {
     final List<PyCallableParameter> parameterTypes = callableType.getParameters(getTypeEvalContext());
     assertNotNull(parameterTypes);
     assertEquals(0, parameterTypes.size());
+  }
+
+  public void testQualifiedUserSkeletonsClass() {
+    doTest("Iterator[int]", "collections.Iterator[int]");
+  }
+
+  public void testUnqualifiedUserSkeletonsClass() {
+    doTest("Iterator[int]", "Iterator[int]");
+  }
+
+  private void doTest(final String expectedType, final String text) {
+    myFixture.configureByFile("typeParser/typeParser.py");
+    final PsiFile file = myFixture.getFile();
+    final PyType type = PyTypeParser.getTypeByName(file, text);
+    TypeEvalContext context = TypeEvalContext.userInitiated(file).withTracing();
+    final String actualType = PythonDocumentationProvider.getTypeName(type, context);
+    assertEquals(expectedType, actualType);
   }
 }
