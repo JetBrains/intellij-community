@@ -356,7 +356,7 @@ public abstract class ChooseByNameBase {
    */
   protected void initUI(final ChooseByNamePopupComponent.Callback callback,
                         final ModalityState modalityState,
-                        boolean allowMultipleSelection) {
+                        final boolean allowMultipleSelection) {
     myPreviouslyFocusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
 
     myActionListener = callback;
@@ -668,7 +668,7 @@ public abstract class ChooseByNameBase {
           chosenElementMightChange();
           updateDocumentation();
         }
-        else {
+        else if (allowMultipleSelection) {
           myList.setSelectedIndex(myPreviousSelectionIndex);
         }
       }
