@@ -59,7 +59,7 @@ public interface BalloonBuilder {
   BalloonBuilder setHideOnFrameResize(boolean hide);
 
   @NotNull
-  Balloon createBalloon();
+  BalloonBuilder setHideOnLinkClick(boolean hide);
 
   @NotNull
   BalloonBuilder setClickHandler(ActionListener listener, boolean closeOnClick);
@@ -112,4 +112,7 @@ public interface BalloonBuilder {
    */
   @NotNull
   BalloonBuilder setDisposable(@NotNull Disposable anchor);
+
+  @NotNull
+  Balloon createBalloon();
 }

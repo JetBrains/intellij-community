@@ -49,6 +49,7 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   private boolean myShowCallout        = true;
   private boolean myCloseButtonEnabled = false;
   private boolean myHideOnFrameResize  = true;
+  private boolean myHideOnLinkClick    = false;
 
   private ActionListener myClickHandler;
   private boolean        myCloseOnClick;
@@ -153,6 +154,13 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
 
   @NotNull
   @Override
+  public BalloonBuilder setHideOnLinkClick(boolean hide) {
+    myHideOnLinkClick = hide;
+    return this;
+  }
+
+  @NotNull
+  @Override
   public BalloonBuilder setPositionChangeXShift(int positionChangeXShift) {
     myPositionChangeXShift = positionChangeXShift;
     return this;
@@ -164,46 +172,6 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
     myPositionChangeYShift = positionChangeYShift;
     return this;
   }
-
-  @NotNull
-  public Balloon createBalloon() {
-    final BalloonImpl result =
-      new BalloonImpl(myContent, myBorder, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myHideOnAction, myShowCallout,
-                      myCloseButtonEnabled, myFadeoutTime, myHideOnFrameResize, myClickHandler, myCloseOnClick, myAnimationCycle,
-                      myCalloutShift, myPositionChangeXShift, myPositionChangeYShift, myDialogMode, myTitle, myContentInsets, myShadow,
-                      mySmallVariant, myBlockClicks, myLayer);
-    if (myStorage != null && myAnchor != null) {
-      List<Balloon> balloons = myStorage.get(myAnchor);
-      if (balloons == null) {
-        myStorage.put(myAnchor, balloons = new ArrayList<Balloon>());
-        Disposer.register(myAnchor, new Disposable() {
-          @Override
-          public void dispose() {
-            List<Balloon> toDispose = myStorage.remove(myAnchor);
-            if (toDispose != null) {
-              for (Balloon balloon : toDispose) {
-                if (!balloon.isDisposed()) {
-                  Disposer.dispose(balloon);
-                }
-              }
-            }
-          }
-        });
-      }
-      balloons.add(result);
-      result.addListener(new JBPopupAdapter() {
-        @Override
-        public void onClosed(LightweightWindowEvent event) {
-          if (!result.isDisposed()) {
-            Disposer.dispose(result);
-          }
-          myStorage.remove(result);
-        }
-      });
-    }
-    return result;
-  }
-
   @NotNull
   public BalloonBuilder setCloseButtonEnabled(boolean enabled) {
     myCloseButtonEnabled = enabled;
@@ -264,5 +232,46 @@ public class BalloonPopupBuilderImpl implements BalloonBuilder {
   public BalloonBuilder setDisposable(@NotNull Disposable anchor) {
     myAnchor = anchor;
     return this;
+  }
+
+  @NotNull
+  public Balloon createBalloon() {
+    final BalloonImpl result = new BalloonImpl(
+      myContent, myBorder, myFill, myHideOnMouseOutside, myHideOnKeyOutside, myHideOnAction, myShowCallout, myCloseButtonEnabled,
+      myFadeoutTime, myHideOnFrameResize, myHideOnLinkClick, myClickHandler, myCloseOnClick, myAnimationCycle, myCalloutShift,
+      myPositionChangeXShift, myPositionChangeYShift, myDialogMode, myTitle, myContentInsets, myShadow, mySmallVariant, myBlockClicks,
+      myLayer);
+
+    if (myStorage != null && myAnchor != null) {
+      List<Balloon> balloons = myStorage.get(myAnchor);
+      if (balloons == null) {
+        myStorage.put(myAnchor, balloons = new ArrayList<Balloon>());
+        Disposer.register(myAnchor, new Disposable() {
+          @Override
+          public void dispose() {
+            List<Balloon> toDispose = myStorage.remove(myAnchor);
+            if (toDispose != null) {
+              for (Balloon balloon : toDispose) {
+                if (!balloon.isDisposed()) {
+                  Disposer.dispose(balloon);
+                }
+              }
+            }
+          }
+        });
+      }
+      balloons.add(result);
+      result.addListener(new JBPopupAdapter() {
+        @Override
+        public void onClosed(LightweightWindowEvent event) {
+          if (!result.isDisposed()) {
+            Disposer.dispose(result);
+          }
+          myStorage.remove(result);
+        }
+      });
+    }
+
+    return result;
   }
 }

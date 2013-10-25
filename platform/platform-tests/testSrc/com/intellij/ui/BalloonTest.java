@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,13 +41,13 @@ public class BalloonTest {
     final JTree tree = new Tree();
     content.add(tree);
 
-
     final Ref<BalloonImpl> balloon = new Ref<BalloonImpl>();
 
     tree.addMouseListener(new MouseAdapter() {
       @Override
       public void mousePressed(final MouseEvent e) {
         if (balloon.get() != null && balloon.get().isVisible()) {
+          //noinspection SSBasedInspection
           balloon.get().dispose();
         }
         else {
@@ -56,11 +56,11 @@ public class BalloonTest {
           //JPanel pane = new JPanel(new BorderLayout());
           //pane.add(pane1, BorderLayout.CENTER);
           //pane.add(pane2, BorderLayout.SOUTH);
-
           //pane.setBorder(new LineBorder(Color.blue));
 
-          balloon.set(new BalloonImpl(new JLabel("FUCK"), Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, true, 0, true, null, false, 500, 25, 0, 0, false, "This is the title",
-                                      new Insets(2, 2, 2, 2), true, false, false, Balloon.Layer.normal));
+          balloon.set(new BalloonImpl(
+            new JLabel("Content"), Color.black, MessageType.ERROR.getPopupBackground(), true, true, true, true, true, 0, true, false, null,
+            false, 500, 25, 0, 0, false, "This is the title", new Insets(2, 2, 2, 2), true, false, false, Balloon.Layer.normal));
           balloon.get().setShowPointer(true);
 
           if (e.isShiftDown()) {
@@ -87,6 +87,6 @@ public class BalloonTest {
     });
 
     frame.setBounds(300, 300, 300, 300);
-    frame.show();
+    frame.setVisible(true);
   }
 }
