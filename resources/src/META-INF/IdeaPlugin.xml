@@ -173,6 +173,8 @@
       <with attribute="implementationClass" implements="com.intellij.refactoring.memberPullUp.PullUpHelperFactory"/>
     </extensionPoint>
 
+    <extensionPoint name="classTypePointerFactory" interface="com.intellij.psi.ClassTypePointerFactory"/>
+
     <!--<extensionPoint name="expectedTypesProvider" interface="com.intellij.codeInsight.ExpectedTypesProviderExtension"/>-->
 
     <extensionPoint name="java.elementFinder" area="IDEA_PROJECT" interface="com.intellij.psi.PsiElementFinder"/>
@@ -348,6 +350,8 @@
                              implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator"/>
     <lang.elementManipulator forClass="com.intellij.psi.javadoc.PsiDocTag"
                              implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.manipulators.PsiDocTagValueManipulator"/>
+
+    <classTypePointerFactory implementation="com.intellij.psi.impl.smartPointers.PsiClassReferenceTypePointerFactory"/>
 
     <applicationService serviceInterface="com.intellij.util.xml.converters.values.ClassValueConverter"
                     serviceImplementation="com.intellij.util.xml.converters.ClassValueConverterImpl"/>
