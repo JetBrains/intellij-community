@@ -17,7 +17,6 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -357,7 +356,7 @@ public class MavenProjectReader {
     for (Element each : xmlProperties.getChildren()) {
       String name = each.getName();
       String value = each.getTextTrim();
-      if (!props.containsKey(name) && !StringUtil.isEmptyOrSpaces(value)) {
+      if (!props.containsKey(name) && !isEmptyOrSpaces(value)) {
         props.setProperty(name, value);
       }
     }
