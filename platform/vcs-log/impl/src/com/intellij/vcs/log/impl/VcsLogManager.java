@@ -54,6 +54,8 @@ public class VcsLogManager extends AbstractProjectComponent {
   @NotNull private final VcsLogSettings mySettings;
 
   private PostponeableLogRefresher myLogRefresher;
+  private VcsLogDataHolder myLogDataHolder;
+  private VcsLogUI myUi;
 
   protected VcsLogManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManagerInitializedFirst,
                           @NotNull VcsLogObjectsFactory logObjectsFactory, @NotNull VcsLogSettings settings) {
@@ -97,6 +99,8 @@ public class VcsLogManager extends AbstractProjectComponent {
                     Disposer.register(myProject, vcsLogDataHolder);
                     VcsLogUI logUI = new VcsLogUI(vcsLogDataHolder, myProject, mySettings,
                                                   new VcsLogColorManagerImpl(logProviders.keySet()));
+                    myLogDataHolder = vcsLogDataHolder;
+                    myUi = logUI;
                     mainPanel.init(logUI.getMainFrame().getMainComponent());
                     myLogRefresher = new PostponeableLogRefresher(myProject, vcsLogDataHolder, content);
                     refreshLogOnVcsEvents(logProviders);
@@ -136,6 +140,14 @@ public class VcsLogManager extends AbstractProjectComponent {
       }
     }
     return logProviders;
+  }
+
+  public VcsLogDataHolder getDataHolder() {
+    return myLogDataHolder;
+  }
+
+  public VcsLogUI getLogUi() {
+    return myUi;
   }
 
   private static class VcsLogContainer extends JPanel {

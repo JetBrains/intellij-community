@@ -13,6 +13,13 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory" serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl" />
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogSettings" serviceImplementation="com.intellij.vcs.log.impl.VcsLogSettingsImpl"/>
+    <projectService serviceInterface="com.intellij.vcs.log.VcsLog" serviceImplementation="com.intellij.vcs.log.impl.VcsLogImpl" />
   </extensions>
+
+  <actions>
+    <group id="Vcs.Log.Toolbar" />
+    <group id="Vcs.Log.ContextMenu" />
+  </actions>
+
 </idea-plugin>
 

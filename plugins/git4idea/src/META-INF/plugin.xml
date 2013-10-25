@@ -75,7 +75,10 @@
       <separator/>
     </group>
 
-    <action id="Git.CherryPick" class="git4idea.cherrypick.GitCherryPickAction" text="Cherry-Pick" icon="Git4ideaIcons.CherryPick" anchor="First"/>
+    <action id="Git.CherryPick" class="git4idea.cherrypick.GitCherryPickAction" text="Cherry-Pick" icon="Git4ideaIcons.CherryPick" anchor="First">
+      <add-to-group group-id="Vcs.Log.ContextMenu" />
+      <add-to-group group-id="Vcs.Log.Toolbar" />
+    </action>
 
   </actions>
 

@@ -6,11 +6,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.data.VcsLogFilterer;
 import com.intellij.vcs.log.graph.elements.GraphElement;
 import com.intellij.vcs.log.graph.elements.Node;
@@ -28,6 +28,10 @@ import java.util.Collection;
  * @author erokhins
  */
 public class VcsLogUI {
+
+  public static final String POPUP_ACTION_GROUP = "Vcs.Log.ContextMenu";
+  public static final String TOOLBAR_ACTION_GROUP = "Vcs.Log.Toolbar";
+  public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";
 
   private static final Logger LOG = Logger.getInstance(VcsLogUI.class);
 
