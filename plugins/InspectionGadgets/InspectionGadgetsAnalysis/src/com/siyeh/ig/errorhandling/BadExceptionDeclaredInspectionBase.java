@@ -28,9 +28,11 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class BadExceptionDeclaredInspectionBase extends BaseInspection {
-  /**
-   * @noinspection PublicField
-   */
+
+  @SuppressWarnings("PublicField")
+  public String exceptionsString = "";
+
+  @SuppressWarnings("PublicField")
   public final ExternalizableStringSet exceptions =
     new ExternalizableStringSet(
       "java.lang.Throwable",
@@ -41,14 +43,11 @@ public class BadExceptionDeclaredInspectionBase extends BaseInspection {
       "java.lang.ClassCastException",
       "java.lang.ArrayIndexOutOfBoundsException"
     );
-  /**
-   * @noinspection PublicField
-   */
-  public String exceptionsString = "";
-  /**
-   * @noinspection PublicField
-   */
+
+  @SuppressWarnings("PublicField")
   public boolean ignoreTestCases = false;
+
+  @SuppressWarnings("PublicField")
   public boolean ignoreLibraryOverrides = false;
 
   public BadExceptionDeclaredInspectionBase() {
