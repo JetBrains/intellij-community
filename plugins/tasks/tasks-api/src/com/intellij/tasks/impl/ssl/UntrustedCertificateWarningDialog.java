@@ -52,6 +52,7 @@ public class UntrustedCertificateWarningDialog extends DialogWrapper {
 
 
     fillPrincipalInfoPanel(myIssuerInfoPanel, certificate.getIssuerX500Principal());
+    fillPrincipalInfoPanel(mySubjectInfoPanel, certificate.getSubjectX500Principal());
 
     myValidityInfoPanel.add(
       FormBuilder.createFormBuilder()
