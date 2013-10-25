@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,129 +22,33 @@
  */
 package com.intellij.xml.util;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInspection.*;
-import com.intellij.lexer.Lexer;
-import com.intellij.lexer.XmlLexer;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.XmlElementVisitor;
-import com.intellij.psi.html.HtmlTag;
-import com.intellij.psi.impl.source.tree.TreeUtil;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlTagValue;
-import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.XmlBundle;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Maxim Mossienko
  */
-public class CheckValidXmlInScriptBodyInspection extends XmlSuppressableInspectionTool {
-  @NonNls
-  private static final String SCRIPT_TAG_NAME = "script";
-  private Lexer myXmlLexer;
-  @NonNls
-  private static final String AMP_ENTITY_REFERENCE = "&amp;";
-  @NonNls
-  private static final String LT_ENTITY_REFERENCE = "&lt;";
+public class CheckValidXmlInScriptBodyInspection extends CheckValidXmlInScriptBodyInspectionBase {
 
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
-  @NotNull
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    return new XmlElementVisitor() {
-      @Override public void visitXmlTag(final XmlTag tag) {
-        if (SCRIPT_TAG_NAME.equals(tag.getName()) ||
-            (tag instanceof HtmlTag && SCRIPT_TAG_NAME.equalsIgnoreCase(tag.getName()))
-           ) {
-          final PsiFile psiFile = tag.getContainingFile();
-          final FileType fileType = psiFile.getFileType();
-
-          if (fileType == StdFileTypes.XHTML || fileType == StdFileTypes.JSPX) {
-            synchronized(CheckValidXmlInScriptBodyInspection.class) {
-              if (myXmlLexer == null) myXmlLexer = new XmlLexer();
-              final XmlTagValue tagValue = tag.getValue();
-              final String tagBodyText = tagValue.getText();
-
-              if (tagBodyText.length() > 0) {
-                myXmlLexer.start(tagBodyText);
-
-                while(myXmlLexer.getTokenType() != null) {
-                  IElementType tokenType = myXmlLexer.getTokenType();
-
-                  if (tokenType == XmlTokenType.XML_CDATA_START) {
-                    while(tokenType != null && tokenType != XmlTokenType.XML_CDATA_END) {
-                      myXmlLexer.advance();
-                      tokenType = myXmlLexer.getTokenType();
-                    }
-                    if (tokenType == null) break;
-                  }
-                  if (( tokenType == XmlTokenType.XML_BAD_CHARACTER &&
-                        "&".equals(TreeUtil.getTokenText(myXmlLexer))
-                      ) ||
-                      tokenType == XmlTokenType.XML_START_TAG_START
-                    ) {
-                    final int valueStart = tagValue.getTextRange().getStartOffset();
-                    final int offset = valueStart + myXmlLexer.getTokenStart();
-                    final PsiElement psiElement = psiFile.findElementAt(offset);
-                    final TextRange elementRange = psiElement.getTextRange();
-
-                    final int offsetInElement = offset - elementRange.getStartOffset();
-                    holder.registerProblem(
-                      psiElement,
-                      XmlBundle.message("unescaped.xml.character"),
-                      ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                      new InsertQuotedCharacterQuickFix(
-                        psiFile,
-                        psiElement,
-                        offsetInElement
-                      )
-                    );
-
-                    int endOfElementInScriptTag = elementRange.getEndOffset() - valueStart;
-                    while(myXmlLexer.getTokenEnd() < endOfElementInScriptTag) {
-                      myXmlLexer.advance();
-                      if (myXmlLexer.getTokenType() == null) break;
-                    }
-                  }
-                  myXmlLexer.advance();
-                }
-              }
-            }
-          }
-        }
-      }
-    };
-  }
-
-  @NotNull
-  public String getGroupDisplayName() {
-    return XmlInspectionGroupNames.HTML_INSPECTIONS;
-  }
-
-  @NotNull
-  public String getDisplayName() {
-    return XmlBundle.message("html.inspections.check.valid.script.tag");
-  }
-
-  @NotNull
-  @NonNls
-  public String getShortName() {
-    return "CheckValidXmlInScriptTagBody";
+  @Override
+  protected InsertQuotedCharacterQuickFix createFix(PsiFile psiFile,
+                                                    PsiElement psiElement,
+                                                    int offsetInElement) {
+    return new InsertQuotedCharacterQuickFix(
+      psiFile,
+      psiElement,
+      offsetInElement
+    );
   }
 
   private static class InsertQuotedCharacterQuickFix implements LocalQuickFix {
@@ -158,6 +62,7 @@ public class CheckValidXmlInScriptBodyInspection extends XmlSuppressableInspecti
       this.startInElement = startInElement;
     }
 
+    @Override
     @NotNull
     public String getName() {
       final String character = getXmlCharacter();
@@ -170,11 +75,13 @@ public class CheckValidXmlInScriptBodyInspection extends XmlSuppressableInspecti
       );
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor problemDescriptor) {
       if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) return;
       final TextRange range = psiElement.getTextRange();
@@ -201,10 +108,5 @@ public class CheckValidXmlInScriptBodyInspection extends XmlSuppressableInspecti
     private String getXmlCharacter() {
       return psiElement.getText().substring(startInElement, startInElement + 1);
     }
-  }
-
-  @NotNull
-  public HighlightDisplayLevel getDefaultLevel() {
-    return HighlightDisplayLevel.ERROR;
   }
 }

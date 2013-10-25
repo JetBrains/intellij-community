@@ -158,6 +158,9 @@
     <applicationService serviceInterface="com.intellij.javaee.ExternalResourceManager"
                         serviceImplementation="com.intellij.javaee.ExternalResourceManagerImpl"/>
 
+    <applicationService serviceInterface="com.intellij.codeInspection.XmlQuickFixFactory"
+                        serviceImplementation="com.intellij.codeInspection.XmlQuickFixFactoryImpl"/>
+
     <standardResourceProvider implementation="com.intellij.javaee.InternalResourceProvider"/>
 
     <projectService serviceInterface="com.intellij.javaee.ProjectResources"

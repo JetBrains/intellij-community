@@ -15,7 +15,7 @@
  */
 package com.intellij.application.options.emmet;
 
-import com.intellij.application.options.editor.WebEditorOptions;
+import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,8 +40,8 @@ import java.util.Map;
 )
 public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, ExportableComponent {
   private boolean myBemFilterEnabledByDefault = false;
-  private boolean myEmmetEnabled = WebEditorOptions.getInstance().isZenCodingEnabled();
-  private int myEmmetExpandShortcut = WebEditorOptions.getInstance().getZenCodingExpandShortcut();
+  private boolean myEmmetEnabled = true;
+  private int myEmmetExpandShortcut = TemplateSettings.TAB_CHAR;
   private boolean myFuzzySearchEnabled = true;
   private boolean myAutoInsertCssPrefixedEnabled = true;
   private boolean myPreviewEnabled = false;
@@ -123,6 +123,7 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
     return this;
   }
 
+  @Override
   public void loadState(final EmmetOptions state) {
     XmlSerializerUtil.copyBean(state, this);
   }

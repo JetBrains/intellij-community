@@ -51,7 +51,7 @@ public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFi
   @NonNls
   private static final String NAME_TEMPLATE_VARIABLE = "name";
 
-  public InsertRequiredAttributeFix(final XmlTag tag, final String attrName,final String[] values) {
+  public InsertRequiredAttributeFix(@NotNull XmlTag tag, @NotNull String attrName,@NotNull String... values) {
     myTag = tag;
     myAttrName = attrName;
     myValues = values;
@@ -134,12 +134,10 @@ public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFi
 
       @Override
       public LookupElement[] calculateLookupItems(ExpressionContext context) {
-        final LookupElement[] items = new LookupElement[myValues == null ? 0 : myValues.length];
+        final LookupElement[] items = new LookupElement[myValues.length];
 
-        if (myValues != null) {
-          for (int i = 0; i < items.length; i++) {
-            items[i] = LookupElementBuilder.create(myValues[i]);
-          }
+        for (int i = 0; i < items.length; i++) {
+          items[i] = LookupElementBuilder.create(myValues[i]);
         }
         return items;
       }
