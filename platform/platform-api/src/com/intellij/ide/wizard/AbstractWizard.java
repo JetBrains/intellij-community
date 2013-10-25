@@ -267,10 +267,6 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       revalidate();
       repaint();
     }
-    
-    public boolean hasIcon() {
-      return myIcon != null;
-    }
 
     @Override
     public Dimension getPreferredSize() {
@@ -284,15 +280,12 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   }
 
   protected JComponent createCenterPanel() {
+    final JPanel iconPanel = new JPanel(new BorderLayout());
+    iconPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
+    iconPanel.add(myIcon, BorderLayout.CENTER);
+
     final JPanel panel = new JPanel(new BorderLayout());
-    
-    if (myIcon.hasIcon()) {
-      final JPanel iconPanel = new JPanel(new BorderLayout());
-      iconPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 8));
-      iconPanel.add(myIcon, BorderLayout.CENTER);
-      panel.add(iconPanel, BorderLayout.WEST);
-    }
-    
+    panel.add(iconPanel, BorderLayout.WEST);
     panel.add(myContentPanel, BorderLayout.CENTER);
     return panel;
   }
