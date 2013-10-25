@@ -49,6 +49,7 @@ class RootIndex {
   private final Map<String, HashSet<VirtualFile>> myPackagePrefixRoots = ContainerUtil.newHashMap();
 
   private final Map<String, List<VirtualFile>> myDirectoriesByPackageNameCache = ContainerUtil.newConcurrentMap();
+  private final Map<VirtualFile, Boolean> myIgnoredCache = ContainerUtil.newConcurrentMap();
   private final List<JpsModuleSourceRootType<?>> myRootTypes = ContainerUtil.newArrayList();
   private final TObjectIntHashMap<JpsModuleSourceRootType<?>> myRootTypeId = new TObjectIntHashMap<JpsModuleSourceRootType<?>>();
 
@@ -328,7 +329,11 @@ class RootIndex {
       if (info != null) {
         return info;
       }
-      if (isAnyExcludeRoot(root) || FileTypeManager.getInstance().isFileIgnored(root)) {
+      Boolean ignored = myIgnoredCache.get(root);
+      if (ignored == null) {
+        myIgnoredCache.put(root, ignored = isAnyExcludeRoot(root) || FileTypeManager.getInstance().isFileIgnored(root));
+      }
+      if (ignored.booleanValue()) {
         return null;
       }
     }
