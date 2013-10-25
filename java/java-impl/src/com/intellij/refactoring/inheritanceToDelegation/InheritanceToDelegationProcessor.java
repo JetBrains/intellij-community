@@ -90,7 +90,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
   public InheritanceToDelegationProcessor(Project project,
                                           PsiClass aClass,
-                                          PsiClass targetBaseClass,
+                                          @NotNull PsiClass targetBaseClass,
                                           String fieldName,
                                           String innerClassName,
                                           PsiClass[] delegatedInterfaces,
@@ -107,9 +107,8 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
     myBaseClass = targetBaseClass;
     LOG.assertTrue(
-            myBaseClass != null // && !myBaseClass.isInterface()
-            && (myBaseClass.getQualifiedName() == null || !myBaseClass.getQualifiedName().equals(CommonClassNames.JAVA_LANG_OBJECT))
-    );
+             // && !myBaseClass.isInterface()
+            myBaseClass.getQualifiedName() == null || !myBaseClass.getQualifiedName().equals(CommonClassNames.JAVA_LANG_OBJECT), myBaseClass);
     myBaseClassMembers = getAllBaseClassMembers();
     myBaseClassBases = getAllBases();
     myBaseClassType = myFactory.createType(myBaseClass, getSuperSubstitutor (myBaseClass));
