@@ -32,6 +32,7 @@ import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
 import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
@@ -52,17 +53,20 @@ public class VcsLogManager extends AbstractProjectComponent {
   @NotNull private final ProjectLevelVcsManager myVcsManager;
   @NotNull private final VcsLogObjectsFactory myLogObjectsFactory;
   @NotNull private final VcsLogSettings mySettings;
+  @NotNull private final VcsLogUiProperties myUiProperties;
 
   private PostponeableLogRefresher myLogRefresher;
   private VcsLogDataHolder myLogDataHolder;
   private VcsLogUI myUi;
 
   protected VcsLogManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManagerInitializedFirst,
-                          @NotNull VcsLogObjectsFactory logObjectsFactory, @NotNull VcsLogSettings settings) {
+                          @NotNull VcsLogObjectsFactory logObjectsFactory, @NotNull VcsLogSettings settings,
+                          @NotNull VcsLogUiProperties uiProperties) {
     super(project);
     myVcsManager = vcsManagerInitializedFirst;
     myLogObjectsFactory = logObjectsFactory;
     mySettings = settings;
+    myUiProperties = uiProperties;
   }
 
   @Override
@@ -98,7 +102,7 @@ public class VcsLogManager extends AbstractProjectComponent {
                   public void consume(VcsLogDataHolder vcsLogDataHolder) {
                     Disposer.register(myProject, vcsLogDataHolder);
                     VcsLogUI logUI = new VcsLogUI(vcsLogDataHolder, myProject, mySettings,
-                                                  new VcsLogColorManagerImpl(logProviders.keySet()));
+                                                  new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties);
                     myLogDataHolder = vcsLogDataHolder;
                     myUi = logUI;
                     mainPanel.init(logUI.getMainFrame().getMainComponent());

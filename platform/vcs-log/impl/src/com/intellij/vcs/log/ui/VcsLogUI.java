@@ -12,6 +12,7 @@ import com.intellij.vcs.log.compressedlist.UpdateRequest;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogFilterer;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.graph.elements.GraphElement;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graphmodel.FragmentManager;
@@ -43,11 +44,11 @@ public class VcsLogUI {
   @Nullable private GraphElement prevGraphElement;
 
   public VcsLogUI(@NotNull VcsLogDataHolder logDataHolder, @NotNull Project project, @NotNull VcsLogSettings settings,
-                  @NotNull VcsLogColorManager manager) {
+                  @NotNull VcsLogColorManager manager, @NotNull VcsLogUiProperties uiProperties) {
     myLogDataHolder = logDataHolder;
     myColorManager = manager;
     myFilterer = new VcsLogFilterer(logDataHolder, this);
-    myMainFrame = new MainFrame(myLogDataHolder, this, project, settings);
+    myMainFrame = new MainFrame(myLogDataHolder, this, project, uiProperties);
     project.getMessageBus().connect(project).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new Runnable() {
       @Override
       public void run() {
