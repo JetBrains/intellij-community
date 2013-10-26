@@ -16,6 +16,7 @@
 package com.intellij.lexer;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -27,6 +28,8 @@ import java.util.Map;
  * @author max
  */
 public class LayeredLexer extends DelegateLexer {
+  public static ThreadLocal<Boolean> ourDisableLayersFlag = new ThreadLocal<Boolean>();
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.lexer.LayeredLexer");
   private static final int IN_LAYER_STATE = 1024; // TODO: Other value?
   private static final int IN_LAYER_LEXER_FINISHED_STATE = 2048;
@@ -50,12 +53,14 @@ public class LayeredLexer extends DelegateLexer {
   }
 
   public void registerSelfStoppingLayer(Lexer lexer, IElementType[] startTokens, IElementType[] stopTokens) {
+    if (Boolean.TRUE.equals(ourDisableLayersFlag.get())) return;
     registerLayer(lexer, startTokens);
     mySelfStoppingLexers.add(lexer);
     myStopTokens.put(lexer, stopTokens);
   }
 
   public void registerLayer(Lexer lexer, IElementType... startTokens) {
+    if (Boolean.TRUE.equals(ourDisableLayersFlag.get())) return;
     for (IElementType startToken : startTokens) {
       LOG.assertTrue(!myStartTokenToLayerLexer.containsKey(startToken));
       myStartTokenToLayerLexer.put(startToken, lexer);
