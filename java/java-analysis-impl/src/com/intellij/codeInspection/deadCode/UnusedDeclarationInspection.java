@@ -391,7 +391,7 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
     });
 
     if (isAddNonJavaUsedEnabled()) {
-      checkForReachables();
+      checkForReachables(globalContext);
       final StrictUnreferencedFilter strictUnreferencedFilter = new StrictUnreferencedFilter(this, globalContext);
       ProgressManager.getInstance().runProcess(new Runnable() {
         @Override
@@ -520,7 +520,7 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
   public boolean queryExternalUsagesRequests(@NotNull InspectionManager manager,
                                              @NotNull GlobalInspectionContext globalContext,
                                              @NotNull ProblemDescriptionsProcessor problemDescriptionsProcessor) {
-    checkForReachables();
+    checkForReachables(globalContext);
     final RefFilter filter = myPhase == 1 ? new StrictUnreferencedFilter(this, globalContext) :
                              new RefUnreachableFilter(this, globalContext);
     final boolean[] requestAdded = {false};
@@ -647,16 +647,16 @@ public class UnusedDeclarationInspection extends GlobalInspectionTool {
   }
 
 
-  void checkForReachables() {
+  void checkForReachables(@NotNull final GlobalInspectionContext context) {
     CodeScanner codeScanner = new CodeScanner();
 
     // Cleanup previous reachability information.
-    getContext().getRefManager().iterate(new RefJavaVisitor() {
+    context.getRefManager().iterate(new RefJavaVisitor() {
       @Override
       public void visitElement(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefJavaElement) {
           final RefJavaElementImpl refElement = (RefJavaElementImpl)refEntity;
-          if (!((GlobalInspectionContextBase)getContext()).isToCheckMember(refElement, UnusedDeclarationInspection.this)) return;
+          if (!((GlobalInspectionContextBase)context).isToCheckMember(refElement, UnusedDeclarationInspection.this)) return;
           refElement.setReachable(false);
         }
       }

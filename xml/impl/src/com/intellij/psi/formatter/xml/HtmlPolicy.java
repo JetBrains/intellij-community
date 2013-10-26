@@ -94,6 +94,11 @@ public class HtmlPolicy extends XmlFormattingPolicy {
   }
 
   @Override
+  public boolean insertLineBreakAfterLastAttribute(XmlAttribute attribute) {
+    return false;
+  }
+
+  @Override
   public boolean insertLineBreakAfterTagBegin(XmlTag tag) {
     return false;
   }

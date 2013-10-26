@@ -61,7 +61,7 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
   }
 
   @NotNull
-  public T getCommitData(final Node node) {
+  public T getCommitData(@NotNull final Node node) {
     assert EventQueue.isDispatchThread();
     Hash hash = node.getCommitHash();
     T details = myCache.get(hash);

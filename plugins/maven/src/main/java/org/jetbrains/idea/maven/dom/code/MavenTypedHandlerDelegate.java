@@ -39,7 +39,7 @@ public class MavenTypedHandlerDelegate extends TypedHandlerDelegate {
     return Result.CONTINUE;
   }
 
-  private boolean shouldCloseBrace(Editor editor, int offset, char c) {
+  private static boolean shouldCloseBrace(Editor editor, int offset, char c) {
     CharSequence text = editor.getDocument().getCharsSequence();
 
     if (offset < 2) return false;

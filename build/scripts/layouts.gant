@@ -62,6 +62,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "remote-servers-api",
     "remote-servers-java-api",
     "testFramework-java",
+    "xml-analysis-api",
   ].flatten()
 
   //noinspection GroovyAssignabilityCheck
@@ -84,6 +85,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "remote-servers-java-impl",
     "testFramework",
     "tests_bootstrap",
+    "xml-analysis-impl",
           ].flatten()
 
   ant.patternset(id: "resources.included") {

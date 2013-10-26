@@ -459,12 +459,15 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   @Override
   @NotNull
   public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
+    Query<VirtualFile> standardResult = mySink.search(packageName, includeLibrarySources);
+    
     RootIndex rootIndex = getRootIndex();
     if (rootIndex != null) {
-      return rootIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
+      Collection<VirtualFile> riResult = rootIndex.getDirectoriesByPackageName(packageName, includeLibrarySources).findAll();
+      assertConsistentResult(packageName, new HashSet<VirtualFile>(riResult), new HashSet<VirtualFile>(standardResult.findAll()));
     }
 
-    return mySink.search(packageName, includeLibrarySources);
+    return standardResult;
   }
 
   @Nullable
@@ -581,10 +584,10 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     return assertConsistentResult(dir, riInfo, myState.getInfo(((NewVirtualFile)dir).getId()));
   }
 
-  private static <T> T assertConsistentResult(@Nullable VirtualFile dir, @Nullable T rootIndexResult, T standardResult) {
+  private static <T> T assertConsistentResult(@NotNull Object arg, @Nullable T rootIndexResult, T standardResult) {
     //noinspection ConstantConditions
     if (ourUseRootIndex && !Comparing.equal(rootIndexResult, standardResult)) {
-      LOG.error("DirectoryIndex differs from RootIndex at " + dir + "\nriInfo=" + rootIndexResult + "\nstandardResult=" + standardResult);
+      LOG.error("DirectoryIndex differs from RootIndex at " + arg + "\nriInfo=" + rootIndexResult + "\nstandardResult=" + standardResult);
     }
     return standardResult;
   }
@@ -595,7 +598,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     if (info.isInModuleSource()) {
       RootIndex rootIndex = getRootIndex();
       JpsModuleSourceRootType<?> riType = rootIndex != null ? rootIndex.getSourceRootType(info) : null;
-      return assertConsistentResult(null, riType, myState.getRootTypeById(info.getSourceRootTypeId()));
+      return assertConsistentResult(info, riType, myState.getRootTypeById(info.getSourceRootTypeId()));
     }
     return null;
   }
@@ -783,7 +786,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
             assert VfsUtilCore.isAncestor(contentRoot, file, false) : "File: "+file+"; Content root: "+contentRoot;
         }
       }
-      assert id > 0;
+      assert id > 0 : id;
       myDirToInfoMap.put(id, info);
     }
 

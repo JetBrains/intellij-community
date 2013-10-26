@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,6 +72,7 @@ public class Conditions {
       myCondition = condition;
     }
 
+    @Override
     public boolean value(T value) {
       return !myCondition.value(value);
     }
@@ -85,6 +86,7 @@ public class Conditions {
       this.t2 = t2;
     }
 
+    @Override
     public boolean value(final T object) {
       return t1.value(object) && t2.value(object);
     }
@@ -98,17 +100,20 @@ public class Conditions {
       this.t2 = t2;
     }
 
+    @Override
     public boolean value(final T object) {
       return t1.value(object) || t2.value(object);
     }
   }
 
   public static Condition<Object> TRUE = new Condition<Object>() {
+    @Override
     public boolean value(final Object object) {
       return true;
     }
   };
   public static Condition<Object> FALSE = new Condition<Object>() {
+    @Override
     public boolean value(final Object object) {
       return false;
     }

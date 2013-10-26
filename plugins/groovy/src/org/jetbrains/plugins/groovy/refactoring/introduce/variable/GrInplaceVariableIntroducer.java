@@ -24,15 +24,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.NonFocusableCheckBox;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrFinalListener;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrInplaceIntroducer;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
+import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
 import javax.swing.*;
@@ -59,7 +62,7 @@ public class GrInplaceVariableIntroducer extends GrInplaceIntroducer {
 
   @Override
   public LinkedHashSet<String> suggestNames(GrIntroduceContext context) {
-    return new GrVariableNameSuggester(context, new GroovyVariableValidator(context));
+    return ContainerUtil.newLinkedHashSet(GroovyNameSuggestionUtil.suggestVariableNames(getVariable().getInitializerGroovy(), new GroovyVariableValidator(context)));
   }
 
   @Nullable
@@ -98,11 +101,20 @@ public class GrInplaceVariableIntroducer extends GrInplaceIntroducer {
   }
 
   @Override
+  public void finish(boolean success) {
+    super.finish(success);
+
+    if (success) {
+      GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_SELECT_DEF = getVariable().getDeclaredType() == null;
+    }
+  }
+
+  @Override
   protected void addAdditionalVariables(TemplateBuilderImpl builder) {
     GrVariable variable = getVariable();
     assert variable != null;
-    TypeConstraint[] constraints = {SupertypeConstraint.create(variable.getType())};
-    ChooseTypeExpression typeExpression = new ChooseTypeExpression(constraints, variable.getManager(), true, variable.getResolveScope());
+    TypeConstraint[] constraints = {SupertypeConstraint.create(variable.getInitializerGroovy().getType())};
+    ChooseTypeExpression typeExpression = new ChooseTypeExpression(constraints, variable.getManager(), variable.getResolveScope(), true, GroovyApplicationSettings.getInstance().INTRODUCE_LOCAL_SELECT_DEF);
     PsiElement element = variable.getTypeElementGroovy() != null ? variable.getTypeElementGroovy()
                                                                  : PsiUtil.findModifierInList(variable.getModifierList(), GrModifier.DEF);
     builder.replaceElement(element, "Variable_type", typeExpression, true, true);

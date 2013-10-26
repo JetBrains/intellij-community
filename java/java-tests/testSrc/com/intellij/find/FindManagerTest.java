@@ -63,13 +63,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   public void testFindString() throws Exception{
     FindManager findManager = FindManager.getInstance(myProject);
 
-    FindModel findModel = new FindModel();
-    findModel.setStringToFind("done");
-    findModel.setWholeWordsOnly(false);
-    findModel.setFromCursor(false);
-    findModel.setGlobal(true);
-    findModel.setMultipleFiles(false);
-    findModel.setProjectScope(true);
+    FindModel findModel = FindManagerTestUtils.configureFindModel("done");
 
     String text = "public static class MyClass{\n/*done*/\npublic static void main(){}}";
     FindResult findResult = findManager.findString(text, 0, findModel);
@@ -460,108 +454,34 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   public void testFindInCommentsAndLiterals() throws Exception{
     FindManager findManager = FindManager.getInstance(myProject);
 
-    FindModel findModel = new FindModel();
-    findModel.setStringToFind("done");
-    findModel.setWholeWordsOnly(false);
-    findModel.setFromCursor(false);
-    findModel.setGlobal(true);
-    findModel.setMultipleFiles(false);
-    findModel.setProjectScope(true);
+    FindModel findModel = FindManagerTestUtils.configureFindModel("done");
 
     String text = "\"done done done\" /* done done done */";
 
-    runFindInCommentsAndLiterals(findManager, findModel, text);
+    FindManagerTestUtils.runFindInCommentsAndLiterals(findManager, findModel, text);
 
     findModel.setRegularExpressions(true);
-    runFindInCommentsAndLiterals(findManager, findModel, text);
-  }
-
-  private static void runFindInCommentsAndLiterals(FindManager findManager, FindModel findModel, String text) {
-    runFindInCommentsAndLiterals(findManager, findModel, text, "java");
-  }
-
-  private static void runFindInCommentsAndLiterals(FindManager findManager,
-                                                   FindModel findModel,
-                                                   String text,
-                                                   String ext) {
-    findModel.setInStringLiteralsOnly(true);
-    findModel.setInCommentsOnly(false);
-    runFindForwardAndBackward(findManager, findModel, text, ext);
-
-    findModel.setInStringLiteralsOnly(false);
-    findModel.setInCommentsOnly(true);
-    runFindForwardAndBackward(findManager, findModel, text, ext);
-  }
-
-  private static void runFindForwardAndBackward(FindManager findManager, FindModel findModel, String text) {
-    runFindForwardAndBackward(findManager, findModel, text, "java");
-  }
-
-  private static void runFindForwardAndBackward(FindManager findManager, FindModel findModel, String text, String ext) {
-    findModel.setForward(true);
-    LightVirtualFile file = new LightVirtualFile("A."+ext, text);
-    int previousOffset;
-
-    FindResult findResult = findManager.findString(text, 0, findModel, file);
-    assertTrue(findResult.isStringFound());
-    previousOffset = findResult.getStartOffset();
-
-    findResult = findManager.findString(text, findResult.getEndOffset(), findModel, file);
-    assertTrue(findResult.isStringFound());
-    assertTrue(findResult.getStartOffset() > previousOffset);
-    previousOffset = findResult.getStartOffset();
-
-    findResult = findManager.findString(text, findResult.getEndOffset(), findModel, file);
-    assertTrue(findResult.isStringFound());
-    assertTrue(findResult.getStartOffset() > previousOffset);
-
-    findModel.setForward(false);
-
-    findResult = findManager.findString(text, text.length(), findModel, file);
-    assertTrue(findResult.isStringFound());
-    previousOffset = findResult.getStartOffset();
-
-    findResult = findManager.findString(text, previousOffset, findModel, file);
-    assertTrue(findResult.isStringFound());
-    assertTrue(previousOffset > findResult.getStartOffset() );
-
-    previousOffset = findResult.getStartOffset();
-
-    findResult = findManager.findString(text, previousOffset, findModel, file);
-    assertTrue(findResult.isStringFound());
-    assertTrue(previousOffset > findResult.getStartOffset() );
+    FindManagerTestUtils.runFindInCommentsAndLiterals(findManager, findModel, text);
   }
 
   public void testFindInJavaDocs() throws Exception{
     FindManager findManager = FindManager.getInstance(myProject);
 
-    FindModel findModel = new FindModel();
-    findModel.setStringToFind("done");
-    findModel.setWholeWordsOnly(false);
-    findModel.setFromCursor(false);
-    findModel.setGlobal(true);
-    findModel.setMultipleFiles(false);
-    findModel.setProjectScope(true);
+    FindModel findModel = FindManagerTestUtils.configureFindModel("done");
 
     String text = "/** done done done */";
 
     findModel.setInCommentsOnly(true);
-    runFindForwardAndBackward(findManager, findModel, text);
+    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text);
 
     findModel.setRegularExpressions(true);
-    runFindForwardAndBackward(findManager, findModel, text);
+    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text);
   }
 
   public void testFindInCommentsProperlyWorksWithOffsets() throws Exception{
     FindManager findManager = FindManager.getInstance(myProject);
 
-    FindModel findModel = new FindModel();
-    findModel.setStringToFind("done");
-    findModel.setWholeWordsOnly(false);
-    findModel.setFromCursor(false);
-    findModel.setGlobal(true);
-    findModel.setMultipleFiles(false);
-    findModel.setProjectScope(true);
+    FindModel findModel = FindManagerTestUtils.configureFindModel("done");
 
     String prefix = "/*";
     String text = prefix + "done*/";
@@ -580,59 +500,30 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
   public void testFindInUserFileType() throws Exception{
     FindManager findManager = FindManager.getInstance(myProject);
 
-    FindModel findModel = new FindModel();
-    findModel.setStringToFind("done");
-    findModel.setWholeWordsOnly(false);
-    findModel.setFromCursor(false);
-    findModel.setGlobal(true);
-    findModel.setMultipleFiles(false);
-    findModel.setProjectScope(true);
+    FindModel findModel = FindManagerTestUtils.configureFindModel("done");
 
     String text = "\"done done\"; 'done'; // done\n" +
                   "/* done\n" +
                   "done */";
 
-    runFindInCommentsAndLiterals(findManager, findModel, text, "cs");
-  }
-
-  public void testFindInJsp() throws Exception{
-    FindManager findManager = FindManager.getInstance(myProject);
-
-    FindModel findModel = new FindModel();
-    findModel.setStringToFind("done");
-    findModel.setWholeWordsOnly(false);
-    findModel.setFromCursor(false);
-    findModel.setGlobal(true);
-    findModel.setMultipleFiles(false);
-    findModel.setProjectScope(true);
-
-    String text = "<!--done-->\n<%--done-->\n<% /*done*/ %>";
-
-    findModel.setInCommentsOnly(true);
-    runFindForwardAndBackward(findManager, findModel, text, "jsp");
+    FindManagerTestUtils.runFindInCommentsAndLiterals(findManager, findModel, text, "cs");
   }
 
   public void testFindInLiteralToSkipQuotes() throws Exception{
     FindManager findManager = FindManager.getInstance(myProject);
 
-    FindModel findModel = new FindModel();
-    findModel.setStringToFind("^done$");
-    findModel.setWholeWordsOnly(false);
+    FindModel findModel = FindManagerTestUtils.configureFindModel("^done$");
     findModel.setRegularExpressions(true);
-    findModel.setFromCursor(false);
-    findModel.setGlobal(true);
-    findModel.setMultipleFiles(false);
-    findModel.setProjectScope(true);
 
     String text = "\"done\"; 'done'; 'done' \"done2\"";
 
     findModel.setInStringLiteralsOnly(true);
     findModel.setInCommentsOnly(false);
-    runFindForwardAndBackward(findManager, findModel, text, "java");
+    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "java");
 
     text = "def n = \"\"\"done\"\"\"\n def n = /done/\n def n = \"done\"\n def n = \"done2\"";
 
-    runFindForwardAndBackward(findManager, findModel, text, "groovy");
+    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "groovy");
 
     text = "\"\"; \"done\"; 'done'; 'done' \"done2\"";
 
@@ -640,6 +531,30 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     findModel.setWholeWordsOnly(true);
     findModel.setRegularExpressions(false);
 
-    runFindForwardAndBackward(findManager, findModel, text, "java");
+    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "java");
+  }
+
+  public void testFindInShellCommentsOfGroovy() throws Exception{
+    FindManager findManager = FindManager.getInstance(myProject);
+
+    FindModel findModel = FindManagerTestUtils.configureFindModel("done");
+    findModel.setWholeWordsOnly(true);
+
+    String text = "#! done done done\n";
+
+    findModel.setInCommentsOnly(true);
+    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "groovy");
+  }
+
+  public void testFindInJavaDoc() throws Exception{
+    FindManager findManager = FindManager.getInstance(myProject);
+
+    FindModel findModel = FindManagerTestUtils.configureFindModel("do ne");
+    findModel.setWholeWordsOnly(true);
+
+    String text = "/** do ne do ne do ne */";
+
+    findModel.setInCommentsOnly(true);
+    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "java");
   }
 }

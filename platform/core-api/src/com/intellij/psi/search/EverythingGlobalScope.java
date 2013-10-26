@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,12 @@ public class EverythingGlobalScope extends GlobalSearchScope {
   }
 
   @Override
-  public int compare(final VirtualFile file1, final VirtualFile file2) {
+  public int compare(@NotNull final VirtualFile file1, @NotNull final VirtualFile file2) {
     return 0;
   }
 
   @Override
-  public boolean contains(final VirtualFile file) {
+  public boolean contains(@NotNull final VirtualFile file) {
     return true;
   }
 

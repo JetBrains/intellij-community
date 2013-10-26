@@ -160,7 +160,7 @@ public class GrInplaceParameterIntroducer extends GrInplaceIntroducer {
 
   @Override
   public LinkedHashSet<String> suggestNames(GrIntroduceContext context) {
-    return suggestNames(context, mySettings.getToReplaceIn());
+    return GroovyIntroduceParameterUtil.suggestNames(null, myExpr.getExpression(), null, (GrParametersOwner)context.getScope(), context.getProject());
   }
 
   static LinkedHashSet<String> suggestNames(GrIntroduceContext context, GrParametersOwner scope) {

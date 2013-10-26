@@ -13,6 +13,20 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory" serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl" />
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogSettings" serviceImplementation="com.intellij.vcs.log.impl.VcsLogSettingsImpl"/>
+    <projectService serviceInterface="com.intellij.vcs.log.data.VcsLogUiProperties" serviceImplementation="com.intellij.vcs.log.data.VcsLogUiProperties"/>
+    <projectService serviceInterface="com.intellij.vcs.log.VcsLog" serviceImplementation="com.intellij.vcs.log.impl.VcsLogImpl" />
   </extensions>
+
+  <actions>
+    <action class="com.intellij.vcs.log.ui.VcsLogCopyHashAction" id="Vcs.Log.CopyHash" use-shortcut-of="$Copy" />
+
+    <group id="Vcs.Log.Toolbar">
+      <reference id="Vcs.Log.CopyHash"/>
+    </group>
+    <group id="Vcs.Log.ContextMenu">
+      <reference id="Vcs.Log.CopyHash"/>
+    </group>
+  </actions>
+
 </idea-plugin>
 

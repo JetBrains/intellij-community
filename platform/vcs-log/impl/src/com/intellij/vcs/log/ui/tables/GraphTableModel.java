@@ -1,6 +1,7 @@
 package com.intellij.vcs.log.ui.tables;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -14,6 +15,7 @@ import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graph.render.GraphCommitCell;
 import com.intellij.vcs.log.graph.render.PositionUtil;
 import com.intellij.vcs.log.printmodel.GraphPrintCell;
+import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,9 +33,11 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell> {
 
   @NotNull private final DataPack myDataPack;
   @NotNull private final VcsLogDataHolder myDataHolder;
+  @NotNull private final VcsLogUI myUi;
 
-  public GraphTableModel(@NotNull VcsLogDataHolder dataHolder) {
+  public GraphTableModel(@NotNull VcsLogDataHolder dataHolder, @NotNull VcsLogUI ui) {
     myDataHolder = dataHolder;
+    myUi = ui;
     myDataPack = dataHolder.getDataPack();
   }
 
@@ -47,6 +51,11 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell> {
   protected VcsShortCommitDetails getShortDetails(int rowIndex) {
     Node commitNode = myDataPack.getGraphModel().getGraph().getCommitNodeInRow(rowIndex);
     return commitNode == null ? null : myDataHolder.getMiniDetailsGetter().getCommitData(commitNode);
+  }
+
+  @Override
+  public void requestToLoadMore() {
+    myDataHolder.showFullLog(EmptyRunnable.INSTANCE);
   }
 
   @Nullable

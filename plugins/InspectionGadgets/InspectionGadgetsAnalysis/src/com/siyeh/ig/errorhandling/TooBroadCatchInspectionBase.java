@@ -15,7 +15,6 @@
  */
 package com.siyeh.ig.errorhandling;
 
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -34,29 +33,6 @@ public class TooBroadCatchInspectionBase extends BaseInspection {
   public boolean ignoreInTestCode = false;
   @SuppressWarnings("PublicField")
   public boolean ignoreThrown = false;
-
-  protected static TextRange getRangeToSelect(PsiCodeBlock block) {
-    PsiElement first = block.getFirstBodyElement();
-    if (first instanceof PsiWhiteSpace) {
-      first = first.getNextSibling();
-    }
-    if (first == null) {
-      final int offset = block.getTextRange().getStartOffset() + 1;
-      return new TextRange(offset, offset);
-    }
-    PsiElement last = block.getLastBodyElement();
-    if (last instanceof PsiWhiteSpace) {
-      last = last.getPrevSibling();
-    }
-    final TextRange textRange;
-    if (last == null) {
-      textRange = first.getTextRange();
-    }
-    else {
-      textRange = last.getTextRange();
-    }
-    return new TextRange(first.getTextRange().getStartOffset(), textRange.getEndOffset());
-  }
 
   @Override
   @NotNull

@@ -90,6 +90,8 @@ public abstract class XmlFormattingPolicy {
 
   public abstract boolean insertLineBreakBeforeFirstAttribute(XmlAttribute attribute);
 
+  public abstract boolean insertLineBreakAfterLastAttribute(XmlAttribute attribute);
+
   public abstract boolean insertLineBreakAfterTagBegin(XmlTag tag);
 
   public abstract boolean removeLineBreakBeforeTag(XmlTag xmlTag);

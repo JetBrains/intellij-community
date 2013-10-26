@@ -1801,9 +1801,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return "(" + startLine + ", " + startCol + ")-(" + endLine + ", " + endCol + ")";
   }
 
-  private static String stripTrailingSpaces(String actualText) {
+  private String stripTrailingSpaces(String actualText) {
     final Document document = EditorFactory.getInstance().createDocument(actualText);
-    ((DocumentImpl)document).stripTrailingSpaces();
+    ((DocumentImpl)document).stripTrailingSpaces(getProject());
     actualText = document.getText();
     return actualText;
   }

@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
@@ -73,6 +74,8 @@ public class VcsLogGraphTable extends JBTable {
     MouseAdapter mouseAdapter = new MyMouseAdapter();
     addMouseMotionListener(mouseAdapter);
     addMouseListener(mouseAdapter);
+
+    PopupHandler.installPopupHandler(this, VcsLogUI.POPUP_ACTION_GROUP, VcsLogUI.VCS_LOG_TABLE_PLACE);
   }
 
   public void setPreferredColumnWidths() {

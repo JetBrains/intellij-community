@@ -224,8 +224,8 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
     }
 
     for (PsiVariable variable : result) {
-      final PsiIdentifier nameIdenitier = variable.getNameIdentifier();
-      PsiElement problemElement = nameIdenitier != null ? nameIdenitier : variable;
+      final PsiIdentifier nameIdentifier = variable.getNameIdentifier();
+      PsiElement problemElement = nameIdentifier != null ? nameIdentifier : variable;
       if (variable instanceof PsiParameter && !(((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement)) {
         problems.add(manager.createProblemDescriptor(problemElement,
                                                      InspectionsBundle.message("inspection.can.be.local.parameter.problem.descriptor"),
@@ -243,13 +243,19 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
 
   private boolean shouldBeIgnored(PsiVariable psiVariable) {
     if (psiVariable.hasModifierProperty(PsiModifier.FINAL)) return true;
-    if (!isReportParameters()) {
-      if (psiVariable instanceof PsiParameter) {
-        final PsiElement declarationScope = ((PsiParameter)psiVariable).getDeclarationScope();
-        if (declarationScope instanceof PsiMethod || declarationScope instanceof PsiLambdaExpression) return true;
-      }
+    return isLocalVariable(psiVariable) ? !isReportVariables() : !isReportParameters();
+  }
+
+  private static boolean isLocalVariable(PsiVariable variable) {
+    if (variable instanceof PsiLocalVariable) {
+      return true;
     }
-    return !isReportVariables() && psiVariable instanceof PsiLocalVariable;
+    if (!(variable instanceof PsiParameter)) {
+      return false;
+    }
+    final PsiParameter parameter = (PsiParameter)variable;
+    final PsiElement declarationScope = parameter.getDeclarationScope();
+    return !(declarationScope instanceof PsiMethod) && !(declarationScope instanceof PsiLambdaExpression);
   }
 
   @Override

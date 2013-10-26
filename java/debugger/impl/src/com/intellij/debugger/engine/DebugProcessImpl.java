@@ -1378,7 +1378,9 @@ public abstract class DebugProcessImpl implements DebugProcess {
       super(suspendContext);
       myForcedIgnoreFilters = ignoreFilters || methodFilter != null;
       mySmartStepFilter = methodFilter;
-      myBreakpoint = methodFilter == null ? null : DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().addStepIntoBreakpoint(methodFilter);
+      myBreakpoint = methodFilter instanceof BreakpointStepMethodFilter ?
+        DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().addStepIntoBreakpoint(((BreakpointStepMethodFilter)methodFilter)) :
+        null;
     }
 
     public void contextAction() {

@@ -43,7 +43,7 @@ public class SelectInMavenNavigatorTarget implements SelectInTarget {
     }
   }
 
-  private MavenProject getMavenProject(SelectInContext context) {
+  private static MavenProject getMavenProject(SelectInContext context) {
     VirtualFile file = context.getVirtualFile();
     MavenProjectsManager manager = MavenProjectsManager.getInstance(context.getProject());
     Module module = ProjectRootManager.getInstance(context.getProject()).getFileIndex().getModuleForFile(file);

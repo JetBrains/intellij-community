@@ -20,6 +20,7 @@
 package com.intellij.application.options.colors.highlighting;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,20 +37,21 @@ public class HighlightsExtractor {
   private int mySkippedLen;
   private int myIndex;
   private boolean myIsOpeningTag;
-  private static final HighlightData[] EMPTY_DATA = new HighlightData[0];
+
+  private List<TextRange> mySkipped = new ArrayList<TextRange>();
 
   public HighlightsExtractor(@Nullable Map<String, TextAttributesKey> tags) {
     myTags = tags;
   }
 
-  public HighlightData[] extractHighlights(String text) {
-    if (myTags == null || myTags.isEmpty()) return EMPTY_DATA;
+  public String extractHighlights(String text, List<HighlightData> highlights) {
+    mySkipped.clear();
+    if (myTags == null || myTags.isEmpty()) return text;
     resetIndices();
-    List<HighlightData> highlights = new ArrayList<HighlightData>();
     Stack<HighlightData> highlightsStack = new Stack<HighlightData>();
     while (true) {
       String tagName = findTagName(text);
-      if (tagName == null) break;
+      if (tagName == null || myIndex < 0) break;
       if (myTags.containsKey(tagName)) {
         if (myIsOpeningTag) {
           mySkippedLen += tagName.length() + 2;
@@ -64,7 +66,7 @@ public class HighlightsExtractor {
       }
     }
 
-    return highlights.toArray(new HighlightData[highlights.size()]);
+    return cutDefinedTags(text);
   }
 
   private String findTagName(String text) {
@@ -84,15 +86,26 @@ public class HighlightsExtractor {
       myIndex = openTag + 1;
       return "";
     }
-    
+
     int closeTag = text.indexOf('>', openTag + 1);
-    if (closeTag == -1) return null;    
+    if (closeTag == -1) return null;
+    int i = text.indexOf('<', openTag + 1);
+    if (i != -1 && i < closeTag) {
+      myIndex = i;
+      return "";
+    }
     final String tagName = text.substring(openTag + 1, closeTag);
 
     if (myIsOpeningTag) {
       myStartOffset = openTag + tagName.length() + 2;
+      if (myTags.containsKey(tagName)) {
+        mySkipped.add(TextRange.from(openTag, tagName.length() + 2));
+      }
     } else {
       myEndOffset = openTag - 1;
+      if (myTags.containsKey(tagName)) {
+        mySkipped.add(TextRange.from(openTag - 1, tagName.length() + 3));
+      }
     }
     myIndex = Math.max(myStartOffset, myEndOffset + 1);
     return tagName;
@@ -102,47 +115,13 @@ public class HighlightsExtractor {
     return Character.isLetter(c) || c == '_';
   }
 
-  public String cutDefinedTags(String text) {
-    if (myTags == null || myTags.isEmpty()) return text;
-
-    StringBuffer sb = new StringBuffer();
-    int index = 0;
-    while (true) {
-      int from = text.indexOf('<', index);
-      if (from == -1) {
-        sb.append(text.substring(index, text.length()));
-        break;
-      }
-      while (text.charAt(from+1) == '<') {
-        from++;
-      }
-      int to = text.indexOf('>', from+1);
-      if (to == -1) {
-        sb.append(text.substring(index, text.length()));
-        break;
-      }
-      int tagNameStart = from + 1;
-      if (text.charAt(tagNameStart) == '/') {
-        tagNameStart ++;
-      }
-
-      if (isValidTagFirstChar(text.charAt(tagNameStart))) {
-        String tag;
-        tag = text.substring(tagNameStart, to);
-        if (myTags.containsKey(tag)) {
-          sb.append(text.substring(index, from));
-          index = to + 1;
-          continue;
-        }
-      }
-      else {
-        to = from;
-      }
-      sb.append(text.substring(index, to + 1));
-      index = to + 1;
+  private String cutDefinedTags(String text) {
+    StringBuilder builder = new StringBuilder(text);
+    for (int i = mySkipped.size() - 1; i >= 0; i--) {
+      TextRange range = mySkipped.get(i);
+      builder.delete(range.getStartOffset(), range.getEndOffset());
     }
-
-    return sb.toString();
+    return builder.toString();
   }
 
   private void resetIndices() {

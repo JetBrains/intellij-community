@@ -2,14 +2,15 @@ package com.intellij.vcs.log.ui.tables;
 
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.RefsModel;
+import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.render.CommitCell;
+import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,29 +19,59 @@ import java.util.*;
 public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell> {
 
   private static final Logger LOG = Logger.getInstance(NoGraphTableModel.class);
-  @NotNull private final List<Pair<VcsFullCommitDetails, VirtualFile>> myCommitsWithRoots;
-  @NotNull private final RefsModel myRefsModel;
 
-  public NoGraphTableModel(@NotNull List<Pair<VcsFullCommitDetails,VirtualFile>> commitsWithRoots, @NotNull RefsModel refsModel) {
-    myCommitsWithRoots = commitsWithRoots;
+  @NotNull private final VcsLogDataHolder myLogDataHolder;
+  @NotNull private final VcsLogUI myUi;
+  @NotNull private final List<VcsFullCommitDetails> myCommits;
+  @NotNull private final RefsModel myRefsModel;
+  private final boolean myAllowLoadingMoreRequest;
+
+  public NoGraphTableModel(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI UI,
+                           @NotNull List<VcsFullCommitDetails> commits, @NotNull RefsModel refsModel, boolean allowLoadingMoreRequest) {
+    myLogDataHolder = logDataHolder;
+    myUi = UI;
+    myCommits = commits;
     myRefsModel = refsModel;
+    myAllowLoadingMoreRequest = allowLoadingMoreRequest;
   }
 
   @Override
   public int getRowCount() {
-    return myCommitsWithRoots.size();
+    return myCommits.size();
   }
 
   @Nullable
   @Override
   protected VcsShortCommitDetails getShortDetails(int rowIndex) {
-    Pair<VcsFullCommitDetails, VirtualFile> commitAndRoot = myCommitsWithRoots.get(rowIndex);
-    if (commitAndRoot != null) {
-      return commitAndRoot.getFirst();
+    VcsFullCommitDetails commits = myCommits.get(rowIndex);
+    if (commits == null) {
+      LOG.error("Couldn't identify details for commit at " + rowIndex, new Attachment("loaded_commits", myCommits.toString()));
+    }
+    return commits;
+  }
+
+  @Override
+  public void requestToLoadMore() {
+    if (!myAllowLoadingMoreRequest) {
+      return;
+    }
+
+    Runnable success = new Runnable() {
+      @Override
+      public void run() {
+        myUi.applyFiltersAndUpdateUi();
+        myUi.getTable().setPaintBusy(false);
+      }
+    };
+    VcsLogDataHolder.LoadingState state = myLogDataHolder.loadMoreDetails(success);
+    if (state == VcsLogDataHolder.LoadingState.LOADING) {
+      myUi.getTable().setPaintBusy(true);
+    }
+    else if (state == VcsLogDataHolder.LoadingState.LIMIT_REACHED) {
+      myUi.getFilterer().requestVcs(myUi.collectFilters());
     }
     else {
-      LOG.error("Couldn't identify details for commit at " + rowIndex, new Attachment("loaded_commits", myCommitsWithRoots.toString()));
-      return null;
+      myUi.getTable().setPaintBusy(false);
     }
   }
 
@@ -50,7 +81,7 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell> {
     Arrays.sort(selectedRows);
     List<Change> changes = new ArrayList<Change>();
     for (int selectedRow : selectedRows) {
-      changes.addAll(myCommitsWithRoots.get(selectedRow).getFirst().getChanges());
+      changes.addAll(myCommits.get(selectedRow).getChanges());
     }
     return changes;
   }
@@ -58,12 +89,12 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell> {
   @NotNull
   @Override
   protected VirtualFile getRoot(int rowIndex) {
-    Pair<VcsFullCommitDetails, VirtualFile> commitAndRoot = myCommitsWithRoots.get(rowIndex);
-    if (commitAndRoot != null) {
-      return commitAndRoot.getSecond();
+    VcsFullCommitDetails commit = myCommits.get(rowIndex);
+    if (commit != null) {
+      return commit.getRoot();
     }
     else {
-      LOG.error("Couldn't identify root for commit at " + rowIndex, new Attachment("loaded_commits", myCommitsWithRoots.toString()));
+      LOG.error("Couldn't identify root for commit at " + rowIndex, new Attachment("loaded_commits", myCommits.toString()));
       return UNKNOWN_ROOT;
     }
   }

@@ -50,16 +50,30 @@ public class ChooseTypeExpression extends Expression {
   private final LookupElement[] myItems;
   private final PsiManager myManager;
   private final boolean myForGroovy;
+  private final boolean mySelectDef;
 
   public ChooseTypeExpression(TypeConstraint[] constraints, PsiManager manager, GlobalSearchScope resolveScope) {
-    this(constraints, manager, true, resolveScope);
+    this(constraints, manager, resolveScope, true);
   }
 
-  public ChooseTypeExpression(TypeConstraint[] constraints, PsiManager manager, boolean forGroovy, GlobalSearchScope resolveScope) {
+  public ChooseTypeExpression(TypeConstraint[] constraints,
+                              PsiManager manager,
+                              GlobalSearchScope resolveScope,
+                              boolean forGroovy) {
+    this(constraints, manager, resolveScope, forGroovy, false);
+  }
+
+  public ChooseTypeExpression(TypeConstraint[] constraints,
+                              PsiManager manager,
+                              GlobalSearchScope resolveScope,
+                              boolean forGroovy,
+                              boolean selectDef) {
     myManager = manager;
     myForGroovy = forGroovy;
     myTypePointer = SmartTypePointerManager.getInstance(manager.getProject()).createSmartTypePointer(chooseType(constraints, resolveScope));
     myItems = createItems(constraints, forGroovy);
+
+    mySelectDef = selectDef;
   }
 
   private static LookupElement[] createItems(TypeConstraint[] constraints, boolean forGroovy) {
@@ -111,7 +125,7 @@ public class ChooseTypeExpression extends Expression {
     PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();
     PsiType type = myTypePointer.getType();
     if (type != null) {
-      if (myForGroovy && type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+      if (myForGroovy && (type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) || mySelectDef)) {
         return new TextResult(GrModifier.DEF);
       }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,7 +108,6 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer im
           final JComponent label = HintUtil.createErrorLabel(myEmptyText);
           label.setBorder(IdeBorderFactory.createEmptyBorder(2, 7, 2, 7));
           JBPopupFactory.getInstance().createBalloonBuilder(label)
-            .setPreferredPosition(Balloon.Position.above)
             .setFadeoutTime(3000)
             .setFillColor(HintUtil.ERROR_COLOR)
             .createBalloon()

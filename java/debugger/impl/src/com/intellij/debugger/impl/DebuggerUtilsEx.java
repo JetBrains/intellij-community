@@ -83,13 +83,19 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
 
     while(offset >= 0) {
       element = file.findElementAt(offset);
-      if(element != null) break;
+      if(element != null) {
+        break;
+      }
       offset --;
     }
 
     for (; element != null; element = element.getParent()) {
-      if (element instanceof PsiClass) return null;
-      if (element instanceof PsiMethod) return (PsiMethod)element;
+      if (element instanceof PsiClass || element instanceof PsiLambdaExpression) {
+        return null;
+      }
+      if (element instanceof PsiMethod) {
+        return (PsiMethod)element;
+      }
     }
     return null;
   }

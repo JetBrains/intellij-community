@@ -30,19 +30,17 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class BadExceptionCaughtInspectionBase extends BaseInspection {
-  /**
-   * @noinspection PublicField
-   */
+
+  @SuppressWarnings("PublicField")
+  public String exceptionsString = "";
+
+  @SuppressWarnings("PublicField")
   public final ExternalizableStringSet exceptions =
     new ExternalizableStringSet(
       "java.lang.NullPointerException",
       "java.lang.IllegalMonitorStateException",
       "java.lang.ArrayIndexOutOfBoundsException"
     );
-  /**
-   * @noinspection PublicField
-   */
-  public String exceptionsString = "";
 
   public BadExceptionCaughtInspectionBase() {
     if (!exceptionsString.isEmpty()) {

@@ -123,8 +123,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private AnActionEvent myActionEvent;
   private Component myContextComponent;
   private CalcThread myCalcThread;
-  private static AtomicBoolean ourPressed = new AtomicBoolean(false);
-  private static AtomicBoolean ourReleased = new AtomicBoolean(false);
+  private static AtomicBoolean shift1Pressed = new AtomicBoolean(false);
+  private static AtomicBoolean shift1Released = new AtomicBoolean(false);
+  private static AtomicBoolean shift2Pressed = new AtomicBoolean(false);
+  private static AtomicBoolean shift2Released = new AtomicBoolean(false);
   private static AtomicBoolean ourOtherKeyWasPressed = new AtomicBoolean(false);
   private static AtomicLong ourLastTimePressed = new AtomicLong(0);
   private ArrayList<VirtualFile> myAlreadyAddedFiles = new ArrayList<VirtualFile>();
@@ -138,51 +140,78 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           final int keyCode = keyEvent.getKeyCode();
 
           if (keyCode == KeyEvent.VK_SHIFT) {
-            if (ourOtherKeyWasPressed.get() && System.currentTimeMillis() - ourLastTimePressed.get() < 300) {
-              ourPressed.set(false);
-              ourReleased.set(false);
+            if (keyEvent.isControlDown() || keyEvent.isAltDown() || keyEvent.isMetaDown()) {
+              resetState();
+              return false;
+            }
+            if (ourOtherKeyWasPressed.get() && System.currentTimeMillis() - ourLastTimePressed.get() < 500) {
+              resetState();
               return false;
             }
             ourOtherKeyWasPressed.set(false);
-            if (System.currentTimeMillis() - ourLastTimePressed.get() > 300) {
-              ourPressed.set(false);
-              ourReleased.set(false);
-            }
-            if (event.getID() == KeyEvent.KEY_PRESSED) {
-              if (!ourPressed.get()) {
-                ourPressed.set(true);
-                ourLastTimePressed.set(System.currentTimeMillis());
-              } else {
-                if (ourPressed.get() && ourReleased.get()) {
-                    ourPressed.set(false);
-                    ourReleased.set(false);
-                    ourLastTimePressed.set(System.currentTimeMillis());
-                    final ActionManager actionManager = ActionManager.getInstance();
-                    final AnAction action = actionManager.getAction("SearchEverywhere");
 
-                    final AnActionEvent anActionEvent = new AnActionEvent(keyEvent,
-                                                                          DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner()),
-                                                                          ActionPlaces.UNKNOWN,
-                                                                          action.getTemplatePresentation(),
-                                                                          actionManager,
-                                                                          0);
-                    action.actionPerformed(anActionEvent);
-                }
-              }
-            } else if (event.getID() == KeyEvent.KEY_RELEASED) {
-              if (ourPressed.get()) {
-                ourReleased.set(true);
-              }
-            }
+            handleShift((KeyEvent)event);
             return false;
           } else {
             ourLastTimePressed.set(System.currentTimeMillis());
             ourOtherKeyWasPressed.set(true);
           }
-          ourPressed.set(false);
-          ourReleased.set(false);
+          resetState();
         }
         return false;
+      }
+
+      private void resetState() {
+        shift1Pressed.set(false);
+        shift1Released.set(false);
+        shift2Pressed.set(false);
+        shift2Released.set(false);
+      }
+
+      private void handleShift(KeyEvent event) {
+        if (shift1Pressed.get() && System.currentTimeMillis() - ourLastTimePressed.get() > 300) {
+          resetState();
+          return;
+        }
+
+        if (event.getID() == KeyEvent.KEY_PRESSED) {
+          if (!shift1Pressed.get()) {
+            resetState();
+            shift1Pressed.set(true);
+            ourLastTimePressed.set(System.currentTimeMillis());
+            return;
+          } else {
+            if (shift1Pressed.get() && shift1Released.get()) {
+              shift2Pressed.set(true);
+              ourLastTimePressed.set(System.currentTimeMillis());
+              return;
+            }
+          }
+        } else if (event.getID() == KeyEvent.KEY_RELEASED) {
+          if (shift1Pressed.get() && !shift1Released.get()) {
+            shift1Released.set(true);
+            ourLastTimePressed.set(System.currentTimeMillis());
+            return;
+          } else if (shift1Pressed.get() && shift1Released.get() && shift2Pressed.get()) {
+            resetState();
+            run(event);
+            return;
+          }
+        }
+        resetState();
+      }
+
+      private void run(KeyEvent event) {
+        final ActionManager actionManager = ActionManager.getInstance();
+                  final AnAction action = actionManager.getAction("SearchEverywhere");
+
+                  final AnActionEvent anActionEvent = new AnActionEvent(event,
+                                                                        DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner()),
+                                                                        ActionPlaces.UNKNOWN,
+                                                                        action.getTemplatePresentation(),
+                                                                        actionManager,
+                                                                        0);
+                  action.actionPerformed(anActionEvent);
       }
     }, null);
   }
@@ -559,6 +588,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     initSearchActions(myBalloon, myPopupField);
     IdeFocusManager focusManager = IdeFocusManager.getInstance(e.getProject());
     focusManager.requestFocus(myPopupField.getTextEditor(), true);
+//    FeatureUsageTracker.getInstance().triggerFeatureUsed("SearchEverywhere");
   }
 
   private void initSearchActions(JBPopup balloon, MySearchTextField searchTextField) {

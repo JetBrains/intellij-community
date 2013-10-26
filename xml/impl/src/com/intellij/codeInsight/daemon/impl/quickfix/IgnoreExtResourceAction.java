@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,12 +26,15 @@ import org.jetbrains.annotations.NotNull;
  * @author mike
  */
 public class IgnoreExtResourceAction extends BaseExtResourceAction {
+  @Override
   protected String getQuickFixKeyId() {
     return "ignore.external.resource.text";
   }
 
+  @Override
   protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor) throws IncorrectOperationException {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ExternalResourceManagerEx.getInstanceEx().addIgnoredResource(uri);
       }

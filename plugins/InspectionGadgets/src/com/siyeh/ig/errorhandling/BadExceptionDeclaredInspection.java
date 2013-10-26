@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,26 +17,21 @@ package com.siyeh.ig.errorhandling;
 
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.ui.UiUtils;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
 
 public class BadExceptionDeclaredInspection extends BadExceptionDeclaredInspectionBase {
-
-  public BadExceptionDeclaredInspection() {
-  }
 
   @Override
   public JComponent createOptionsPanel() {
     final JComponent panel = new JPanel(new GridBagLayout());
     final ListTable table =
       new ListTable(new ListWrappingTableModel(exceptions, InspectionGadgetsBundle.message("exception.class.column.name")));
-    JPanel tablePanel =
+    final JPanel tablePanel =
       UiUtils.createAddRemoveTreeClassChooserPanel(table, InspectionGadgetsBundle.message("choose.exception.class"), "java.lang.Throwable");
     final GridBagConstraints constraints = new GridBagConstraints();
     constraints.gridx = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -130,7 +131,7 @@ public class UsedIconsListingAction extends AnAction {
       "icon",
       new DelegatingGlobalSearchScope(GlobalSearchScope.projectScope(project)) {
         @Override
-        public boolean contains(VirtualFile file) {
+        public boolean contains(@NotNull VirtualFile file) {
           return super.contains(file) && file.getFileType() == XmlFileType.INSTANCE && index.isInSource(file);
         }
       },

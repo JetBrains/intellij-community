@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,10 +82,12 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     myForceResultIsValid = forceResultIsValid;
   }
 
+  @Override
   protected String getQuickFixKeyId() {
     return "fetch.external.resource";
   }
 
+  @Override
   protected boolean isAcceptableUri(final String uri) {
     return uri.startsWith(HTTP_PROTOCOL) || uri.startsWith(FTP_PROTOCOL) || uri.startsWith(HTTPS_PROTOCOL);
   }
@@ -122,6 +124,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     return uri;
   }
 
+  @Override
   @NotNull
   public Set<String> getRootsToWatch() {
     final File path = new File(getExternalResourcesPath());
@@ -140,6 +143,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     }
   }
 
+  @Override
   protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor)
     throws IncorrectOperationException {
     final String url = findUrl(file, offset, uri);
@@ -190,6 +194,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
 
     final PsiManager psiManager = PsiManager.getInstance(project);
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
       public void run() {
         @SuppressWarnings("deprecation")
         final AccessToken token = ApplicationManager.getApplication().acquireWriteActionLock(FetchExtResourceAction.class);
@@ -279,8 +284,10 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
   private static VirtualFile findFileByPath(final String resPath, final @Nullable String dtdUrl, ProgressIndicator indicator) {
     final Ref<VirtualFile> ref = new Ref<VirtualFile>();
     ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             ref.set(LocalFileSystem.getInstance().refreshAndFindFileByPath(resPath.replace(File.separatorChar, '/')));
             if (dtdUrl != null) {
@@ -299,8 +306,10 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
 
   private void cleanup(final List<String> resourceUrls, final List<String> downloadedResources) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             for (String resourcesUrl : resourceUrls) {
               ExternalResourceManager.getInstance().removeResource(resourcesUrl);
@@ -331,6 +340,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
                                      @Nullable String refname) throws IOException {
     SwingUtilities.invokeLater(
       new Runnable() {
+        @Override
         public void run() {
           indicator.setText(XmlBundle.message("fetching.progress.indicator", resourceUrl));
         }
@@ -392,6 +402,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
         result.contentType.contains(HTML_MIME) &&
         new String(result.bytes).contains("<html")) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           Messages.showMessageDialog(project,
                                      XmlBundle.message("invalid.url.no.xml.file.at.location", resourceUrl),
@@ -413,6 +424,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     XmlUtil.processXmlElements(
       file,
       new PsiElementProcessor() {
+        @Override
         public boolean execute(@NotNull PsiElement element) {
           if (element instanceof XmlEntityDecl) {
             String candidateName = null;
@@ -531,6 +543,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     catch (MalformedURLException e) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             Messages.showMessageDialog(project,
                                        XmlBundle.message("invalid.url.message", dtdUrl),

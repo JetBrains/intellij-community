@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.xml.*;
-import com.intellij.xml.util.XmlTagTextUtil;
+import com.intellij.xml.util.XmlTagUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +47,7 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
   }
 
   @Nullable
-  protected abstract T convertString(final @Nullable String string, final ConvertContext context);
+  protected abstract T convertString(@Nullable final String string, final ConvertContext context);
 
   @Nullable
   protected abstract String convertValue(@Nullable final T t, final ConvertContext context);
@@ -60,21 +60,25 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
 
   protected abstract String getUnresolvedMessage(String value);
 
+  @Override
   @NotNull
   public Collection<? extends T> getVariants(final ConvertContext context) {
     return Collections.emptyList();
   }
 
+  @Override
   public T fromString(final String str, final ConvertContext context) {
     return convertString(unquote(str, getQuoteSigns()), context);
   }
 
+  @Override
   public String toString(final T ts, final ConvertContext context) {
     final char delimiter = getQuoteSign(ts, context);
     final String s = convertValue(ts, context);
     return delimiter > 0? delimiter + s+ delimiter : s;
   }
 
+  @Override
   @NotNull
   public PsiReference[] createReferences(final GenericDomValue<T> genericDomValue,
                                          final PsiElement element,
@@ -82,7 +86,7 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
     final String originalValue = genericDomValue.getStringValue();
     if (originalValue == null) return PsiReference.EMPTY_ARRAY;
     final String unquotedValue = unquote(originalValue, getQuoteSigns());
-    int startOffset = originalValue == unquotedValue? 0 : XmlTagTextUtil.escapeString(originalValue.substring(0, 1), false).length();
+    int startOffset = originalValue == unquotedValue? 0 : XmlTagUtilBase.escapeString(originalValue.substring(0, 1), false).length();
     int endOffset = originalValue == unquotedValue || quotationIsNotClosed(originalValue)? 0 : startOffset;
     final ElementManipulator<PsiElement> manipulator = ElementManipulators.getManipulator(element);
     assert manipulator != null : "manipulator not found";
@@ -136,6 +140,7 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
       myBadQuotation = badQuotation;
     }
 
+    @Override
     @NotNull
     public ResolveResult[] multiResolve(final boolean incompleteCode) {
       if (myBadQuotation) return ResolveResult.EMPTY_ARRAY;
@@ -143,11 +148,13 @@ public abstract class QuotedValueConverter<T> extends ResolvingConverter<T> impl
       return multiResolveReference(convertString(value, myContext), myContext);
     }
 
+    @Override
     @NotNull
     public Object[] getVariants() {
       return getReferenceVariants(myContext, myGenericDomValue, getRangeInElement());
     }
 
+    @Override
     @NotNull
     public String getUnresolvedMessagePattern() {
       return myBadQuotation? DomBundle.message("message.invalid.value.quotation") : getUnresolvedMessage(getValue());

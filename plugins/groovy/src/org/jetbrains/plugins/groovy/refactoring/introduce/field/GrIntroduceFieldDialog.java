@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -37,6 +38,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
@@ -55,7 +57,6 @@ import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 
@@ -92,7 +93,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
 
   private final GrIntroduceContext myContext;
 
-  public GrIntroduceFieldDialog(GrIntroduceContext context, EnumSet<Init> initPlaces) {
+  public GrIntroduceFieldDialog(final GrIntroduceContext context) {
     super(context.getProject(), true);
     myContext = context;
 
@@ -104,10 +105,17 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
 
     ButtonGroup initialization = new ButtonGroup();
     ArrayList<JRadioButton> inits = ContainerUtil.newArrayList();
-    if (initPlaces.contains(Init.CUR_METHOD))        inits.add(myCurrentMethodRadioButton);     else myCurrentMethodRadioButton.setVisible(false);
-    if (initPlaces.contains(Init.FIELD_DECLARATION)) inits.add(myFieldDeclarationRadioButton);  else myFieldDeclarationRadioButton.setVisible(false);
-    if (initPlaces.contains(Init.CONSTRUCTOR))       inits.add(myClassConstructorSRadioButton); else myClassConstructorSRadioButton.setVisible(false);
-    if (initPlaces.contains(Init.SETUP_METHOD))      inits.add(mySetUpMethodRadioButton);       else mySetUpMethodRadioButton.setVisible(false);
+
+    inits.add(myCurrentMethodRadioButton);
+    inits.add(myFieldDeclarationRadioButton);
+    inits.add(myClassConstructorSRadioButton);
+
+    if (TestFrameworks.getInstance().isTestClass(clazz)) {
+      inits.add(mySetUpMethodRadioButton);
+    }
+    else {
+      mySetUpMethodRadioButton.setVisible(false);
+    }
 
     for (JRadioButton init : inits) {
       initialization.add(init);
@@ -156,6 +164,20 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
       public void itemStateChanged(ItemEvent e) {
         myNameField.requestFocusInWindow();
         checkErrors();
+
+        if (myReplaceAllOccurrencesCheckBox.isSelected()) {
+          PsiElement anchor = GrIntroduceHandlerBase.findAnchor(myContext.getOccurrences(), myContext.getScope());
+          if (anchor != null && anchor != myContext.getScope() && anchor != ((GrTypeDefinition)myContext.getScope()).getBody()) {
+            myCurrentMethodRadioButton.setEnabled(true);
+          }
+          else if (myCurrentMethodRadioButton.isEnabled()) {
+            myCurrentMethodRadioButton.setEnabled(false);
+            myFieldDeclarationRadioButton.setSelected(true);
+          }
+        }
+        else if (!myCurrentMethodRadioButton.isEnabled()) {
+          myCurrentMethodRadioButton.setEnabled(true);
+        }
       }
     };
     myPrivateRadioButton.addItemListener(l);

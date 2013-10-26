@@ -3,6 +3,7 @@ package com.intellij.vcs.log.data;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.impl.VcsFullCommitDetailsImpl;
+import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -16,7 +17,8 @@ import java.util.Collections;
 public class LoadingDetails extends VcsFullCommitDetailsImpl {
 
   public LoadingDetails(@NotNull Hash hash) {
-    super(hash, Collections.<Hash>emptyList(), -1, "Loading...", "", "", "", "", "", -1, Collections.<Change>emptyList());
+    super(hash, Collections.<Hash>emptyList(), -1, AbstractVcsLogTableModel.UNKNOWN_ROOT,
+          "Loading...", "", "", "", "", "", -1, Collections.<Change>emptyList());
   }
 
 }
