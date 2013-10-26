@@ -2,8 +2,9 @@
 <idea-plugin version="2" url="http://code.google.com/p/lombok-intellij-plugin">
   <id>Lombook Plugin</id>
   <name>Lombok Plugin</name>
-  <vendor url="http://code.google.com/p/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov</vendor>
-  <version>0.7</version>
+  <vendor url="http://code.google.com/p/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov
+  </vendor>
+  <version>0.7.1</version>
   <idea-version since-build="123.72"/>
 
   <description><![CDATA[
@@ -39,7 +40,8 @@
   <extensions defaultExtensionNs="Lombook Plugin">
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor"/>
-    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor"/>
+    <processor
+        implementation="de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor"/>
 
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.LogProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.Log4jProcessor"/>
@@ -79,6 +81,11 @@
 
   <change-notes><![CDATA[
 		<ul>
+		 <li>0.7.1
+				<ol>
+				    <li>TODO ...</li>
+				</ol>
+			</li>
 		  <li>0.7
 				<ol>
 				    <li>Added partial support for @Value lombok annotations</li>
