@@ -27,7 +27,9 @@ import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.ParserDefinition;
+import com.intellij.lexer.LayeredLexer;
 import com.intellij.lexer.Lexer;
+import com.intellij.lexer.LexerUtil;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -514,13 +516,21 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
       Matcher matcher = model.isRegularExpressions() ? compileRegExp(model, ""):null;
       StringSearcher searcher = matcher != null ? null: new StringSearcher(model.getStringToFind(), model.isCaseSensitive(), true);
+      LayeredLexer.ourDisableLayersFlag.set(Boolean.TRUE);
       EditorHighlighter editorHighlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, file);
       Lexer lexer;
-      if (editorHighlighter instanceof LayeredLexerEditorHighlighter) {
-        lexer = LexerEditorHighlighterLexer.getLexerBasedOnLexerHighlighter(text, file, myProject);
-      } else {
-        lexer = highlighter.getHighlightingLexer();
+
+      try {
+        if (editorHighlighter instanceof LayeredLexerEditorHighlighter) {
+          lexer = LexerEditorHighlighterLexer.getLexerBasedOnLexerHighlighter(text, file, myProject);
+        } else {
+          lexer = highlighter.getHighlightingLexer();
+        }
       }
+      finally {
+        LayeredLexer.ourDisableLayersFlag.set(null);
+      }
+
       data = new CommentsLiteralsSearchData(file, relevantLanguages, highlighter, lexer, tokensOfInterest, searcher, matcher, (FindModel)model.clone());
       lexer.start(text, 0, text.length(), 0);
       model.putUserData(ourCommentsLiteralsSearchDataKey, data);
