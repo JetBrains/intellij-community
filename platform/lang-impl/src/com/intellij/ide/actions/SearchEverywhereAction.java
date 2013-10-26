@@ -1308,6 +1308,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                 mySymbols = null;
                 myConfigurables.clear();
                 myFocusComponent = null;
+                myContextComponent = null;
                 myFocusOwner = null;
                 myRenderer.myProject = null;
                 myCalcThread = null;
