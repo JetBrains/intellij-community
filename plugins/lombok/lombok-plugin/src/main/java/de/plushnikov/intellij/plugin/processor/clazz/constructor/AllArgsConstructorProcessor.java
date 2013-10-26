@@ -36,6 +36,12 @@ public class AllArgsConstructorProcessor extends AbstractConstructorClassProcess
     return result;
   }
 
+  @NotNull
+  public Collection<PsiMethod> createAllArgsConstructor(@NotNull PsiClass psiClass, @NotNull String methodVisibility, @NotNull PsiAnnotation psiAnnotation) {
+    final Collection<PsiField> allNotInitializedNotStaticFields = getAllNotInitializedAndNotStaticFields(psiClass);
+    return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, allNotInitializedNotStaticFields);
+  }
+
   protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getAccessVisibity(psiAnnotation);
     if (null != methodVisibility) {

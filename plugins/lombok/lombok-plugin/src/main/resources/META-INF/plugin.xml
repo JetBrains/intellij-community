@@ -56,12 +56,17 @@
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ValueProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ValueExperimentalProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.WitherProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.BuilderProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.BuilderInnerClassProcessor"/>
 
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.DelegateFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.LazyGetterFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor"/>
+
+    <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderMethodProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.method.BuilderMethodInnerClassProcessor"/>
 
     <!-- lombok-pg-->
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.FluentSetterProcessor"/>
@@ -79,6 +84,7 @@
 				    <li>Added partial support for @Value lombok annotations</li>
 				    <li>Added support for @Accessors lombok experimental annotation</li>
 				    <li>Added support for @Wither lombok experimental annotation</li>
+				    <li>Added support for @Builder lombok experimental annotations</li>
 				</ol>
 			</li>
 			<li>0.6.5

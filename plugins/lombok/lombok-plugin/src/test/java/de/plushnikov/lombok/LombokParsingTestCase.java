@@ -10,12 +10,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.PomNamedTarget;
 import com.intellij.psi.*;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.apache.log4j.Logger;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Pattern;
 
 /**
@@ -30,7 +29,7 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
   private static final String LOMBOK_SRC_PATH = "./lombok-api/target/generated-sources/lombok";
   private static final String LOMBOKPG_SRC_PATH = "./lombok-api/target/generated-sources/lombok-pg";
 
-  private static final Logger LOG = Logger.getLogger(LombokParsingTestCase.class.getSimpleName());
+  private static final Logger LOG = Logger.getLogger(LombokParsingTestCase.class);
 
   @Override
   protected String getTestDataPath() {
@@ -61,6 +60,12 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
     }
   }
 
+  private PsiFile loadToPsiFile(String fileName) {
+    VirtualFile virtualFile = myFixture.copyFileToProject(getBasePath() + "/" + fileName, fileName);
+    myFixture.configureFromExistingVirtualFile(virtualFile);
+    return myFixture.getFile();
+  }
+
   public void doTest() throws IOException {
     doTest(getTestName(false).replace('$', '/') + ".java");
   }
@@ -78,30 +83,46 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
 
     PsiClass[] intellijClasses = intellij.getClasses();
     PsiClass[] theirsClasses = theirs.getClasses();
+
+    compareClasses(intellijClasses, theirsClasses);
+  }
+
+  private void compareClasses(PsiClass[] intellijClasses, PsiClass[] theirsClasses) {
     assertEquals("Class counts are different", theirsClasses.length, intellijClasses.length);
 
     for (PsiClass theirsClass : theirsClasses) {
       boolean compared = false;
       for (PsiClass intellijClass : intellijClasses) {
         if (theirsClass.getName().equals(intellijClass.getName())) {
-          compareFields(intellijClass, theirsClass);
-          compareMethods(intellijClass, theirsClass);
+          compareTwoClasses(intellijClass, theirsClass);
           compared = true;
         }
       }
-      assertTrue("Classnames are not equal, class (" + theirsClass.getName() + ") not found", compared);
+      assertTrue("Class names are not equal, class (" + theirsClass.getName() + ") not found", compared);
     }
   }
 
-  private PsiFile loadToPsiFile(String fileName) {
-    VirtualFile virtualFile = myFixture.copyFileToProject(getBasePath() + "/" + fileName, fileName);
-    myFixture.configureFromExistingVirtualFile(virtualFile);
-    return myFixture.getFile();
+  private void compareTwoClasses(PsiClass intellijClass, PsiClass theirsClass) {
+    LOG.info("Comparing classes IntelliJ " + intellijClass.getName() + " with " + theirsClass.getName());
+    PsiModifierList intellijFieldModifierList = intellijClass.getModifierList();
+    PsiModifierList theirsFieldModifierList = intellijClass.getModifierList();
+
+    compareContainingClasses(intellijClass, theirsClass);
+    compareModifiers(intellijFieldModifierList, theirsFieldModifierList);
+    compareFields(intellijClass, theirsClass);
+    compareMethods(intellijClass, theirsClass);
+    compareConstructors(intellijClass, theirsClass);
+    compareInnerClasses(intellijClass, theirsClass);
+
+    LOG.info("Compared classes IntelliJ " + intellijClass.getName() + " with " + theirsClass.getName());
   }
 
   private void compareFields(PsiClass intellij, PsiClass theirs) {
     PsiField[] intellijFields = intellij.getFields();
     PsiField[] theirsFields = theirs.getFields();
+
+    LOG.info("IntelliJ fields for class " + intellij.getName() + ": " + Arrays.toString(intellijFields));
+    LOG.info("Theirs fields for class " + theirs.getName() + ": " + Arrays.toString(theirsFields));
 
     assertEquals("Field counts are different for Class " + intellij.getName(), theirsFields.length, intellijFields.length);
 
@@ -156,28 +177,80 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
     PsiMethod[] intellijMethods = intellij.getMethods();
     PsiMethod[] theirsMethods = theirs.getMethods();
 
-    LOG.log(Level.INFO, "IntelliJ Methods for class " + intellij.getName() + ": " + Arrays.toString(intellijMethods));
-    LOG.log(Level.INFO, "Theirs Methods for class " + theirs.getName() + ": " + Arrays.toString(theirsMethods));
+    LOG.info("IntelliJ methods for class " + intellij.getName() + ": " + Arrays.toString(intellijMethods));
+    LOG.info("Theirs methods for class " + theirs.getName() + ": " + Arrays.toString(theirsMethods));
 
-    assertEquals("Methodscounts are different for Class: " + intellij.getName(), theirsMethods.length, intellijMethods.length);
+    assertEquals("Method counts are different for Class: " + intellij.getName(), theirsMethods.length, intellijMethods.length);
 
     for (PsiMethod theirsMethod : theirsMethods) {
       boolean compared = false;
-      final PsiModifierList theirsFieldModifierList = theirsMethod.getModifierList();
+      final PsiModifierList theirsMethodModifierList = theirsMethod.getModifierList();
       for (PsiMethod intellijMethod : intellijMethods) {
         if (theirsMethod.getName().equals(intellijMethod.getName()) &&
             theirsMethod.getParameterList().getParametersCount() == intellijMethod.getParameterList().getParametersCount()) {
-          PsiModifierList intellijFieldModifierList = intellijMethod.getModifierList();
+          PsiModifierList intellijMethodModifierList = intellijMethod.getModifierList();
 
-          compareModifiers(intellijFieldModifierList, theirsFieldModifierList);
+          compareModifiers(intellijMethodModifierList, theirsMethodModifierList);
           compareType(intellijMethod.getReturnType(), theirsMethod.getReturnType(), theirsMethod);
           compareParams(intellijMethod.getParameterList(), theirsMethod.getParameterList());
 
           compared = true;
         }
       }
-      assertTrue("Methodnames are not equal, Method: (" + theirsMethod.getName() + ") not found in class : " + intellij.getName(), compared);
+      assertTrue("Method names are not equal, Method: (" + theirsMethod.getName() + ") not found in class : " + intellij.getName(), compared);
     }
+  }
+
+  private void compareConstructors(PsiClass intellij, PsiClass theirs) {
+    PsiMethod[] intellijConstructors = intellij.getConstructors();
+    PsiMethod[] theirsConstructors = theirs.getConstructors();
+
+    LOG.info("IntelliJ constructors for class " + intellij.getName() + ": " + Arrays.toString(intellijConstructors));
+    LOG.info("Theirs constructors for class " + theirs.getName() + ": " + Arrays.toString(theirsConstructors));
+
+    assertEquals("Constructor counts are different for Class: " + intellij.getName(), theirsConstructors.length, intellijConstructors.length);
+
+    for (PsiMethod theirsConstructor : theirsConstructors) {
+      boolean compared = false;
+      final PsiModifierList theirsFieldModifierList = theirsConstructor.getModifierList();
+      for (PsiMethod intellijConstructor : intellijConstructors) {
+        if (theirsConstructor.getName().equals(intellijConstructor.getName()) &&
+            theirsConstructor.getParameterList().getParametersCount() == intellijConstructor.getParameterList().getParametersCount()) {
+          PsiModifierList intellijConstructorModifierList = intellijConstructor.getModifierList();
+
+          compareModifiers(intellijConstructorModifierList, theirsFieldModifierList);
+          compareType(intellijConstructor.getReturnType(), theirsConstructor.getReturnType(), theirsConstructor);
+          compareParams(intellijConstructor.getParameterList(), theirsConstructor.getParameterList());
+
+          compared = true;
+        }
+        assertTrue("Constructor names are not equal, Method: (" + theirsConstructor.getName() + ") not found in class : " + intellijConstructor.getName(), compared);
+      }
+    }
+  }
+
+  private void compareContainingClasses(PsiClass intellij, PsiClass theirs) {
+    PsiClass intellijContainingClass = intellij.getContainingClass();
+    PsiClass theirsContainingClass = theirs.getContainingClass();
+
+    String intellijContainingClassName = intellijContainingClass == null ? null : intellijContainingClass.toString();
+    String theirsContainingClassName = theirsContainingClass == null ? null : theirsContainingClass.toString();
+
+
+    LOG.info("IntelliJ containing class for class " + intellij.getName() + ": " + intellijContainingClassName);
+    LOG.info("Theirs containing class for class " + theirs.getName() + ": " + theirsContainingClassName);
+
+    assertEquals("Containing classes different for class: " + intellij.getName(), intellijContainingClassName, theirsContainingClassName);
+  }
+
+  private void compareInnerClasses(PsiClass intellij, PsiClass theirs) {
+    PsiClass[] intellijClasses = intellij.getInnerClasses();
+    PsiClass[] theirsClasses = theirs.getInnerClasses();
+
+    LOG.info("IntelliJ inner classes for class " + intellij.getName() + ": " + Arrays.toString(intellijClasses));
+    LOG.info("Theirs inner classes for class " + theirs.getName() + ": " + Arrays.toString(theirsClasses));
+
+    compareClasses(intellijClasses, theirsClasses);
   }
 
   private void compareParams(PsiParameterList intellij, PsiParameterList theirs) {

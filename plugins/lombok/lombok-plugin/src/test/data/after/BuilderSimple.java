@@ -5,7 +5,7 @@ class BuilderSimple<T> {
 	private List<T> also;
 	private int $butNotMe;
 	@java.lang.SuppressWarnings("all")
-	private BuilderSimple(final int yes, final List<T> also) {
+	BuilderSimple(final int yes, final List<T> also) {
 		this.yes = yes;
 		this.also = also;
 	}
