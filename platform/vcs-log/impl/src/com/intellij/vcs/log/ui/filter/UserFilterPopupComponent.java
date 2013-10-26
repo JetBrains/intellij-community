@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.vcs.log.VcsLogFilter;
+import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUserFilter;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,14 +37,19 @@ import java.awt.event.KeyEvent;
  */
 class UserFilterPopupComponent extends FilterPopupComponent {
 
-  UserFilterPopupComponent(VcsLogClassicFilterUi filterUi) {
+  private static final String ME = "me";
+  private final VcsLogDataHolder myDataHolder;
+
+  UserFilterPopupComponent(VcsLogClassicFilterUi filterUi, VcsLogDataHolder dataHolder) {
     super(filterUi, "User");
+    myDataHolder = dataHolder;
   }
 
   @Override
   protected ActionGroup createActionGroup() {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(createAllAction());
+    group.add(new SetValueAction(ME, this));
     // TODO show recently selected users
     group.add(new SelectUserAction());
     return group;
@@ -56,7 +62,10 @@ class UserFilterPopupComponent extends FilterPopupComponent {
     if (value == ALL) {
       return null;
     }
-    return new VcsLogUserFilter(value);
+    if (value == ME) {
+      return new VcsLogUserFilter.Me(myDataHolder.getCurrentUser());
+    }
+    return new VcsLogUserFilter.ByName(value);
   }
 
   private class SelectUserAction extends DumbAwareAction {

@@ -15,6 +15,7 @@
  */
 package git4idea.log;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,12 +36,14 @@ import git4idea.GitRemoteBranch;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.GitLogParser;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -57,11 +60,13 @@ public class GitLogProvider implements VcsLogProvider {
   @NotNull private final Project myProject;
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final VcsLogRefManager myRefSorter;
+  @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
 
   public GitLogProvider(@NotNull Project project, @NotNull GitRepositoryManager repositoryManager) {
     myProject = project;
     myRepositoryManager = repositoryManager;
     myRefSorter = new GitRefManager(myRepositoryManager);
+    myVcsObjectsFactory = ServiceManager.getService(VcsLogObjectsFactory.class);
   }
 
   @NotNull
@@ -165,7 +170,7 @@ public class GitLogProvider implements VcsLogProvider {
 
   @NotNull
   @Override
-  public List<? extends VcsFullCommitDetails> getFilteredDetails(@NotNull VirtualFile root,
+  public List<? extends VcsFullCommitDetails> getFilteredDetails(@NotNull final VirtualFile root,
                                                                  @NotNull Collection<VcsLogFilter> filters) throws VcsException {
     List<String> filterParameters = ContainerUtil.newArrayList();
 
@@ -188,7 +193,7 @@ public class GitLogProvider implements VcsLogProvider {
       String authorFilter = joinFilters(userFilters, new Function<VcsLogUserFilter, String>() {
         @Override
         public String fun(VcsLogUserFilter filter) {
-          return filter.getUserName();
+          return filter.getUserName(root);
         }
       });
       filterParameters.add(prepareParameter("author", authorFilter));
@@ -205,6 +210,13 @@ public class GitLogProvider implements VcsLogProvider {
 
     filterParameters.add("--regexp-ignore-case"); // affects case sensitivity of any filter
     return GitHistoryUtils.getAllDetails(myProject, root, filterParameters);
+  }
+
+  @Nullable
+  @Override
+  public VcsUser getCurrentUser(@NotNull VirtualFile root) throws VcsException {
+    String userName = GitConfigUtil.getValue(myProject, root, GitConfigUtil.USER_NAME);
+    return userName == null ? null : myVcsObjectsFactory.createUser(userName);
   }
 
   private static String prepareParameter(String paramName, String value) {

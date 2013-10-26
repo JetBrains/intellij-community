@@ -32,4 +32,8 @@ public interface VcsLogObjectsFactory {
                                          @NotNull String authorName, @NotNull String authorEmail, @NotNull String message,
                                          @NotNull String committerName,
                                          @NotNull String committerEmail, long commitTime, @NotNull List<Change> changes);
+
+  @NotNull
+  VcsUser createUser(@NotNull String name);
+
 }

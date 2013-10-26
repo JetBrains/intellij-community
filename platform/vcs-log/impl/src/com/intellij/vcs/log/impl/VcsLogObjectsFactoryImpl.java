@@ -46,4 +46,11 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
     return new VcsFullCommitDetailsImpl(hash, parents, authorTime, root, subject, authorName, authorEmail, message, committerName,
                                         committerEmail, commitTime, changes);
   }
+
+  @NotNull
+  @Override
+  public VcsUser createUser(@NotNull String name) {
+    return new VcsUserImpl(name);
+  }
+
 }

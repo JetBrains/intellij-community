@@ -113,6 +113,12 @@ public class VcsLogDataHolder implements Disposable {
   @NotNull private final VcsLogSettings mySettings;
 
   /**
+   * Current user name, as specified in the VCS settings.
+   * It can be configured differently for different roots => store in a map.
+   */
+  private final Map<VirtualFile, VcsUser> myCurrentUser = ContainerUtil.newHashMap();
+
+  /**
    * Encapsulates all information about the log, which can be accessed by external clients.
    * When something changes in the log (on refresh, for example), the whole object is replaced with the new one;
    * all write-access operations with are performed from the myDataLoaderQueue;
@@ -188,6 +194,7 @@ public class VcsLogDataHolder implements Disposable {
       @Override
       public void consume(ProgressIndicator indicator) throws VcsException {
         resetState();
+        readCurrentUser();
         loadFromVcs(mySettings.getRecentCommitsCount(), indicator, new Consumer<DataPack>() {
           @Override
           public void consume(DataPack dataPack) {
@@ -200,6 +207,24 @@ public class VcsLogDataHolder implements Disposable {
         });
       }
     }, "Loading recent history...");
+  }
+
+  private void readCurrentUser() {
+    for (Map.Entry<VirtualFile, VcsLogProvider> entry : myLogProviders.entrySet()) {
+      VirtualFile root = entry.getKey();
+      try {
+        VcsUser me = entry.getValue().getCurrentUser(root);
+        if (me != null) {
+          myCurrentUser.put(root, me);
+        }
+        else {
+          LOG.info("Username not configured for root " + root);
+        }
+      }
+      catch (VcsException e) {
+        LOG.warn("Couldn't read the username from root " + root, e);
+      }
+    }
   }
 
   private void resetState() {
@@ -423,6 +448,11 @@ public class VcsLogDataHolder implements Disposable {
         });
       }
     }, "Retrieving filtered results from the VCS...");
+  }
+
+  @NotNull
+  public Map<VirtualFile, VcsUser> getCurrentUser() {
+    return myCurrentUser;
   }
 
   private static class RecentCommitsInfo {
