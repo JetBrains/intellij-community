@@ -39,6 +39,7 @@ public class VcsLogUI {
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final MainFrame myMainFrame;
   @NotNull private final VcsLogColorManager myColorManager;
+  @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogFilterer myFilterer;
 
   @Nullable private GraphElement prevGraphElement;
@@ -47,6 +48,7 @@ public class VcsLogUI {
                   @NotNull VcsLogColorManager manager, @NotNull VcsLogUiProperties uiProperties) {
     myLogDataHolder = logDataHolder;
     myColorManager = manager;
+    myUiProperties = uiProperties;
     myFilterer = new VcsLogFilterer(logDataHolder, this);
     myMainFrame = new MainFrame(myLogDataHolder, this, project, uiProperties);
     project.getMessageBus().connect(project).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new Runnable() {
@@ -207,5 +209,10 @@ public class VcsLogUI {
 
   public JBTable getTable() {
     return myMainFrame.getGraphTable();
+  }
+
+  @NotNull
+  public VcsLogUiProperties getUiProperties() {
+    return myUiProperties;
   }
 }

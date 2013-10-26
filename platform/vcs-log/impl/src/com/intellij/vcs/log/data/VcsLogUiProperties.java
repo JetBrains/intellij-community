@@ -20,7 +20,13 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.vcs.log.VcsLogSettings;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Deque;
+import java.util.List;
 
 /**
  * Stores UI configuration based on user activity and preferences.
@@ -30,10 +36,13 @@ import org.jetbrains.annotations.Nullable;
 @State(name = "Vcs.Log.UiProperties", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
 public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProperties.State> {
 
+  private static final int RECENTLY_FILTERED_USERS_AMOUNT = 5;
+
   private State myState = new State();
 
   public static class State {
     public boolean SHOW_DETAILS = false;
+    public Deque<String> RECENTLY_FILTERED_USERS = new ArrayDeque<String>();
   }
 
   @Nullable
@@ -57,6 +66,21 @@ public class VcsLogUiProperties implements PersistentStateComponent<VcsLogUiProp
 
   public void setShowDetails(boolean showDetails) {
     myState.SHOW_DETAILS = showDetails;
+  }
+
+  public void addRecentlyFilteredUser(@NotNull String username) {
+    if (myState.RECENTLY_FILTERED_USERS.contains(username)) {
+      return;
+    }
+    myState.RECENTLY_FILTERED_USERS.addFirst(username);
+    if (myState.RECENTLY_FILTERED_USERS.size() > RECENTLY_FILTERED_USERS_AMOUNT) {
+      myState.RECENTLY_FILTERED_USERS.removeLast();
+    }
+  }
+
+  @NotNull
+  public List<String> getRecentlyFilteredUsers() {
+    return new ArrayList<String>(myState.RECENTLY_FILTERED_USERS);
   }
 
 }
