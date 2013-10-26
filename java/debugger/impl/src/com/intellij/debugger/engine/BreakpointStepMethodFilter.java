@@ -15,9 +15,14 @@
  */
 package com.intellij.debugger.engine;
 
-import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.sun.jdi.Location;
+import com.intellij.debugger.SourcePosition;
+import org.jetbrains.annotations.Nullable;
 
-public interface MethodFilter {
-  boolean locationMatches(DebugProcessImpl process, Location location) throws EvaluateException;
+/**
+ * @author Eugene Zhuravlev
+ *         Date: 10/26/13
+ */
+public interface BreakpointStepMethodFilter extends MethodFilter{
+  @Nullable
+  SourcePosition getBreakpointPosition();
 }

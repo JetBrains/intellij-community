@@ -44,7 +44,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
 
   @Override
   @NotNull
-  public List<StepTarget> findSmartStepTargets(final SourcePosition position) {
+  public List<SmartStepTarget> findSmartStepTargets(final SourcePosition position) {
     final int line = position.getLine();
     if (line < 0) {
       return Collections.emptyList(); // the document has been changed
@@ -77,11 +77,12 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       while(true);
 
       //noinspection unchecked
-      final List<StepTarget> targets = new OrderedSet<StepTarget>();
+      final List<SmartStepTarget> targets = new OrderedSet<SmartStepTarget>();
 
       final PsiElementVisitor methodCollector = new JavaRecursiveElementVisitor() {
         final Stack<PsiMethod> myContextStack = new Stack<PsiMethod>();
         final Stack<String> myParamNameStack = new Stack<String>();
+        private int myNextLambdaExpressionOrdinal = 0;
 
         @Nullable
         private String getCurrentParamName() {
@@ -91,8 +92,12 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         @Override
         public void visitAnonymousClass(PsiAnonymousClass aClass) {
           for (PsiMethod psiMethod : aClass.getMethods()) {
-            targets.add(new StepTarget(psiMethod, getCurrentParamName(), psiMethod.getBody(), true));
+            targets.add(new MethodSmartStepTarget(psiMethod, getCurrentParamName(), psiMethod.getBody(), true));
           }
+        }
+
+        public void visitLambdaExpression(PsiLambdaExpression expression) {
+          targets.add(new LambdaSmartStepTarget(expression, getCurrentParamName(), expression.getBody(), myNextLambdaExpressionOrdinal++));
         }
 
         @Override
@@ -130,7 +135,7 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
           final PsiMethod psiMethod = expression.resolveMethod();
           if (psiMethod != null) {
             myContextStack.push(psiMethod);
-            targets.add(new StepTarget(
+            targets.add(new MethodSmartStepTarget(
               psiMethod,
               null,
               expression instanceof PsiMethodCallExpression?
