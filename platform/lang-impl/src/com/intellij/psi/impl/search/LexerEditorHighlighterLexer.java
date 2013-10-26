@@ -37,10 +37,10 @@ import org.jetbrains.annotations.Nullable;
 * @author Sergey Evdokimov
 */
 public class LexerEditorHighlighterLexer extends LexerBase {
-  HighlighterIterator iterator;
-  CharSequence buffer;
-  int start;
-  int end;
+  private HighlighterIterator iterator;
+  private CharSequence buffer;
+  private int start;
+  private int end;
   private final EditorHighlighter myHighlighter;
   private final boolean myAlreadyInitializedHighlighter;
 
@@ -124,5 +124,9 @@ public class LexerEditorHighlighterLexer extends LexerBase {
   @Override
   public int getBufferEnd() {
     return end;
+  }
+
+  public HighlighterIterator getHighlighterIterator() {
+    return iterator;
   }
 }
