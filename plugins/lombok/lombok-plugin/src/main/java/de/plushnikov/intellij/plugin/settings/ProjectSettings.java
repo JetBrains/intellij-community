@@ -1,10 +1,9 @@
 package de.plushnikov.intellij.plugin.settings;
 
-import org.jetbrains.annotations.NotNull;
-
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import org.jetbrains.annotations.NotNull;
 
 /**
  *

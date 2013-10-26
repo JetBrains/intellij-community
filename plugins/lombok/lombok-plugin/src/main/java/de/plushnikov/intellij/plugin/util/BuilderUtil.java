@@ -2,7 +2,6 @@ package de.plushnikov.intellij.plugin.util;
 
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;

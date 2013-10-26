@@ -1,7 +1,12 @@
 package de.plushnikov.intellij.plugin.psi;
 
 import com.intellij.lang.java.JavaLanguage;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiTypeParameter;
+import com.intellij.psi.PsiTypeParameterList;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.light.LightClass;
 import org.jetbrains.annotations.NonNls;
