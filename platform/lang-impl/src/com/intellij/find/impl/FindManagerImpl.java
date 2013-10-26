@@ -41,9 +41,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
+import com.intellij.openapi.editor.ex.util.LayeredHighlighterIterator;
 import com.intellij.openapi.editor.ex.util.LayeredLexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
@@ -526,8 +528,13 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
     int initialStartOffset = model.isForward() && data.startOffset < offset ? data.startOffset : 0;
     final Lexer lexer = data.highlightingLexer;
+    LayeredHighlighterIterator layeredHighlighterIterator = null;
     if (lexer instanceof LexerEditorHighlighterLexer) {
       ((LexerEditorHighlighterLexer)lexer).resetPosition(initialStartOffset);
+      HighlighterIterator iterator = ((LexerEditorHighlighterLexer)lexer).getHighlighterIterator();
+      if (iterator instanceof LayeredHighlighterIterator) {
+        layeredHighlighterIterator = (LayeredHighlighterIterator)iterator;
+      }
     } else {
       lexer.start(text, initialStartOffset, text.length(), 0);
     }
@@ -542,13 +549,14 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     while((tokenType = lexer.getTokenType()) != null) {
       if (lexer.getState() == 0) lastGoodOffset = lexer.getTokenStart();
 
-      final TextAttributesKey[] keys = data.highlighter.getTokenHighlights(tokenType);
+      final SyntaxHighlighter activeSyntaxHighlighter =
+        layeredHighlighterIterator != null ? layeredHighlighterIterator.getActiveSyntaxHighlighter() : data.highlighter;
+      final TextAttributesKey[] keys = activeSyntaxHighlighter.getTokenHighlights(tokenType);
 
       if (tokens.contains(tokenType) ||
           (model.isInStringLiteralsOnly() && isHighlightedAsString(keys)) ||
           (model.isInCommentsOnly() && isHighlightedAsDocComment(keys))
         ) {
-
         int start = lexer.getTokenStart();
         int end = lexer.getTokenEnd();
         if (model.isInStringLiteralsOnly()) { // skip literal quotes itself from matching

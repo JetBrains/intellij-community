@@ -332,6 +332,10 @@ public class LexerEditorHighlighter implements EditorHighlighter, PrioritizedDoc
     return new TokenProcessor();
   }
 
+  protected SyntaxHighlighter getSyntaxHighlighter() {
+    return myHighlighter;
+  }
+
   private TextAttributes getAttributes(IElementType tokenType) {
     TextAttributes attrs = myAttributesMap.get(tokenType);
     if (attrs == null) {
