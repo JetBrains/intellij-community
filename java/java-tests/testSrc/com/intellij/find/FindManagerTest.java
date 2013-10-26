@@ -533,4 +533,16 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "java");
   }
+
+  public void testFindInShellCommentsOfGroovy() throws Exception{
+    FindManager findManager = FindManager.getInstance(myProject);
+
+    FindModel findModel = FindManagerTestUtils.configureFindModel("done");
+    findModel.setWholeWordsOnly(true);
+
+    String text = "#! done done done\n";
+
+    findModel.setInCommentsOnly(true);
+    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "groovy");
+  }
 }
