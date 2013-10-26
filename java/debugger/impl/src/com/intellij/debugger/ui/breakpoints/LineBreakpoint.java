@@ -210,6 +210,17 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   }
 
   protected boolean acceptLocation(DebugProcessImpl debugProcess, ReferenceType classType, Location loc) {
+    final String methodName = myMethodName;
+    if (methodName != null) {
+      // Consider:
+      //  proc(()->{System.out.println("Task 1");}, ()->{System.out.println("Task 2");});  <breakpoint at this line>
+      //
+      // there will be 3 locations for this line: one corresponding to calling method, and two locations from
+      // the lambda expression implementation methods.
+      // Without additional filtering, breakpoint request will be set on each location,
+      // while we do not need to stop in lambda expressions here
+      return methodName.equals(loc.method().name());
+    }
     return true;
   }
 
@@ -374,7 +385,8 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       final int lineNumber = (highlighter.getDocument().getLineNumber(highlighter.getStartOffset()) + 1);
       String className = getClassName();
       final boolean hasClassInfo = className != null && className.length() > 0;
-      final boolean hasMethodInfo = myMethodName != null && myMethodName.length() > 0;
+      final String methodName = myMethodName == null? null : myMethodName + "()";
+      final boolean hasMethodInfo = methodName != null && methodName.length() > 0;
       if (hasClassInfo || hasMethodInfo) {
         final StringBuilder info = StringBuilderSpinAllocator.alloc();
         try {
@@ -388,8 +400,8 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
             }
 
             if (totalTextLength != -1) {
-              if (className.length() + (hasMethodInfo ? myMethodName.length() : 0) > totalTextLength + 3) {
-                int offset = totalTextLength - (hasMethodInfo ? myMethodName.length() : 0);
+              if (className.length() + (hasMethodInfo ? methodName.length() : 0) > totalTextLength + 3) {
+                int offset = totalTextLength - (hasMethodInfo ? methodName.length() : 0);
                 if (offset > 0 && offset < className.length()) {
                   className = className.substring(className.length() - offset);
                   info.append("...");
@@ -406,7 +418,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
             else if (hasClassInfo) {
               info.append(".");
             }
-            info.append(myMethodName);
+            info.append(methodName);
           }
           if (showPackageInfo && packageName != null) {
             info.append(" (").append(packageName).append(")");
@@ -422,7 +434,8 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     return DebuggerBundle.message("status.breakpoint.invalid");
   }
 
-  private static @Nullable String findMethodName(final PsiFile file, final int offset) {
+  @Nullable
+  private static String findMethodName(final PsiFile file, final int offset) {
     if (file instanceof JspFile) {
       return null;
     }
@@ -431,7 +444,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
         @Override
         public String compute() {
           final PsiMethod method = DebuggerUtilsEx.findPsiMethod(file, offset);
-          return method != null? method.getName() + "()" : null;
+          return method != null? method.getName(): null;
         }
       });
     }
@@ -559,7 +572,8 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     return canAdd[0];
   }
 
-  public @Nullable String getMethodName() {
+  @Nullable
+  public String getMethodName() {
     return myMethodName;
   }
 }
