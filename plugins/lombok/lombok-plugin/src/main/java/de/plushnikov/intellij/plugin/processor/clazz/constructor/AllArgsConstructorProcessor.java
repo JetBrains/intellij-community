@@ -28,7 +28,7 @@ public class AllArgsConstructorProcessor extends AbstractConstructorClassProcess
 
     result = super.validate(psiAnnotation, psiClass, builder);
 
-    final Collection<PsiField> allNotInitializedNotStaticFields = getAllNotInitializedAndNotStaticFields(psiClass);
+    final Collection<PsiField> allNotInitializedNotStaticFields = getAllFields(psiClass);
     final String staticConstructorName = getStaticConstructorName(psiAnnotation);
     if (!validateIsConstructorDefined(psiClass, staticConstructorName, allNotInitializedNotStaticFields, builder)) {
       result = false;
@@ -45,10 +45,19 @@ public class AllArgsConstructorProcessor extends AbstractConstructorClassProcess
   protected void processIntern(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final String methodVisibility = LombokProcessorUtil.getAccessVisibity(psiAnnotation);
     if (null != methodVisibility) {
-      final Collection<PsiField> allNotInitializedNotStaticFields = getAllNotInitializedAndNotStaticFields(psiClass);
-
-      target.addAll(createConstructorMethod(psiClass, methodVisibility, psiAnnotation, allNotInitializedNotStaticFields));
+      final String staticConstructorName = getStaticConstructorName(psiAnnotation);
+      target.addAll(createAllArgsConstructor(psiClass, methodVisibility, psiAnnotation, staticConstructorName));
     }
   }
 
+  @NotNull
+  public Collection<PsiField> getAllFields(@NotNull PsiClass psiClass) {
+    return getAllNotInitializedAndNotStaticFields(psiClass);
+  }
+
+  @NotNull
+  public Collection<PsiMethod> createAllArgsConstructor(PsiClass psiClass, String methodVisibility, PsiAnnotation psiAnnotation, String staticName) {
+    final Collection<PsiField> allNotInitializedNotStaticFields = getAllFields(psiClass);
+    return createConstructorMethod(psiClass, methodVisibility, psiAnnotation, allNotInitializedNotStaticFields, staticName);
+  }
 }
