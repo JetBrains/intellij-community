@@ -532,7 +532,13 @@ public class SubstitutionHandler extends MatchingHandler {
     return myNestedResult;
   }
 
-  public static final String getText(final PsiElement match, int start,int end) {
+  public static final String getText(PsiElement match, int start,int end) {
+    if (match instanceof PsiIdentifier) {
+      PsiElement parent = match.getParent();
+      if (parent instanceof PsiJavaCodeReferenceElement && !(parent instanceof PsiExpression)) {
+        match = parent; // care about generic
+      }
+    }
     final String matchText = match.getText();
     if (start==0 && end==-1) return matchText;
     return matchText.substring(start,end == -1? matchText.length():end);

@@ -1544,6 +1544,25 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     );
   }
 
+  public void testSavingAccessModifiersDuringClassReplacement() {
+    String actualResult;
+
+    String s43 = "public @Deprecated class Foo implements Comparable<Foo> {\n  int x;\n  void m(){}\n }";
+    String s44 = "class 'Class implements 'Interface { 'Content* }";
+    String s45 = "@MyAnnotation\n" +
+                 "class $Class$ implements $Interface$ {$Content$}";
+    String expectedResult16 = "@MyAnnotation public @Deprecated\n" +
+                              "class Foo implements Comparable<Foo> {int x;\n" +
+                              "void m(){}}";
+
+    actualResult = replacer.testReplace(s43,s44,s45,options, true);
+    assertEquals(
+      "Preserving var modifiers and generic information in type during replacement",
+      expectedResult16,
+      actualResult
+    );
+  }
+
   public void _testClassReplacement2() {
     final String actualResult;
     String s40 = "class A {\n" +

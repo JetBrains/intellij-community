@@ -213,21 +213,27 @@ public class JavaReplaceHandler extends StructuralReplaceHandler {
         ) {
         PsiModifierList modifierList = ((PsiModifierListOwner)originalNamedElements.get(name)).getModifierList();
 
-        if (searchNamedElement instanceof PsiModifierListOwner &&
-            ((PsiModifierListOwner)searchNamedElement).getModifierList().getTextLength() == 0 &&
-            ((PsiModifierListOwner)replacementNamedElement).getModifierList().getTextLength() == 0 &&
-            modifierList.getTextLength() > 0
-          ) {
+        if (searchNamedElement instanceof PsiModifierListOwner) {
+          PsiModifierList modifierListOfSearchedElement = ((PsiModifierListOwner)searchNamedElement).getModifierList();
           final PsiModifierListOwner modifierListOwner = ((PsiModifierListOwner)replacementNamedElement);
-          PsiElement space = modifierList.getNextSibling();
-          if (!(space instanceof PsiWhiteSpace)) {
-            space = createWhiteSpace(space);
-          }
+          PsiModifierList modifierListOfReplacement = modifierListOwner.getModifierList();
 
-          modifierListOwner.getModifierList().replace(modifierList);
-          // copy space after modifier list
-          if (space instanceof PsiWhiteSpace) {
-            modifierListOwner.addRangeAfter(space, space, modifierListOwner.getModifierList());
+          if (modifierListOfSearchedElement.getTextLength() == 0 &&
+              modifierListOfReplacement.getTextLength() == 0 &&
+              modifierList.getTextLength() > 0
+            ) {
+            PsiElement space = modifierList.getNextSibling();
+            if (!(space instanceof PsiWhiteSpace)) {
+              space = createWhiteSpace(space);
+            }
+
+            modifierListOfReplacement.replace(modifierList);
+            // copy space after modifier list
+            if (space instanceof PsiWhiteSpace) {
+              modifierListOwner.addRangeAfter(space, space, modifierListOwner.getModifierList());
+            }
+          } else if (modifierListOfSearchedElement.getTextLength() == 0 && modifierList.getTextLength() > 0) {
+            modifierListOfReplacement.addRange(modifierList.getFirstChild(), modifierList.getLastChild());
           }
         }
       }
