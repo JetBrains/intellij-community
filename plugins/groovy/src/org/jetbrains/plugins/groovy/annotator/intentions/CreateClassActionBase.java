@@ -96,13 +96,14 @@ public abstract class CreateClassActionBase extends Intention {
                                                    @NotNull final String name,
                                                    @NotNull final PsiManager manager,
                                                    @Nullable final PsiElement contextElement,
-                                                   @NotNull final String templateName) {
+                                                   @NotNull final String templateName,
+                                                   boolean allowReformatting) {
     AccessToken accessToken = WriteAction.start();
 
     try {
       GrTypeDefinition targetClass = null;
       try {
-        PsiFile file = GroovyTemplatesFactory.createFromTemplate(directory, name, name + ".groovy", templateName);
+        PsiFile file = GroovyTemplatesFactory.createFromTemplate(directory, name, name + ".groovy", templateName, allowReformatting);
         for (PsiElement element : file.getChildren()) {
           if (element instanceof GrTypeDefinition) {
             targetClass = ((GrTypeDefinition)element);

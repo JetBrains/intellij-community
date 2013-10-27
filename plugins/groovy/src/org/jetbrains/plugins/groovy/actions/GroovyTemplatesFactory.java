@@ -79,6 +79,7 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
                                            @NotNull final String name,
                                            @NotNull String fileName,
                                            @NotNull String templateName,
+                                           boolean allowReformatting,
                                            @NonNls String... parameters) throws IncorrectOperationException {
     final FileTemplate template = FileTemplateManager.getInstance().getInternalTemplate(templateName);
 
@@ -104,7 +105,7 @@ public class GroovyTemplatesFactory implements FileTemplateGroupDescriptorFactor
 
     file = (PsiFile)directory.add(file);
 
-    if (file != null && template.isReformatCode()) {
+    if (file != null && allowReformatting && template.isReformatCode()) {
       new ReformatCodeProcessor(project, file, null, false).run();
     }
 

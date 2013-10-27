@@ -95,7 +95,7 @@ public class ConvertMapToClassIntention extends Intention {
 
     final GrTypeDefinition typeDefinition = createClass(project, namedArguments, selectedPackageName, shortName);
     final PsiClass generatedClass = CreateClassActionBase.createClassByType(
-      dialog.getTargetDirectory(), typeDefinition.getName(), PsiManager.getInstance(project), map, GroovyTemplates.GROOVY_CLASS);
+      dialog.getTargetDirectory(), typeDefinition.getName(), PsiManager.getInstance(project), map, GroovyTemplates.GROOVY_CLASS, true);
     final PsiClass replaced = (PsiClass)generatedClass.replace(typeDefinition);
     replaceMapWithClass(project, map, replaced, replaceReturnType, variableDeclaration, methodParameter);
   }

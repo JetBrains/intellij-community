@@ -86,7 +86,8 @@ public abstract class CreateClassFix {
         PsiDirectory targetDirectory = getTargetDirectory(project, qualifier, name, module, getText());
         if (targetDirectory == null) return;
 
-        final GrTypeDefinition targetClass = createClassByType(targetDirectory, name, manager, myRefElement, GroovyTemplates.GROOVY_CLASS);
+        final GrTypeDefinition targetClass = createClassByType(targetDirectory, name, manager, myRefElement, GroovyTemplates.GROOVY_CLASS,
+                                                               true);
         if (targetClass == null) return;
 
         PsiType[] argTypes = getArgTypes(myRefElement);
@@ -249,7 +250,7 @@ public abstract class CreateClassFix {
         if (targetDirectory == null) return;
 
         String templateName = getTemplateName(getType());
-        final PsiClass targetClass = createClassByType(targetDirectory, name, manager, myRefElement, templateName);
+        final PsiClass targetClass = createClassByType(targetDirectory, name, manager, myRefElement, templateName, true);
         if (targetClass == null) return;
 
         bindRef(targetClass, myRefElement);
