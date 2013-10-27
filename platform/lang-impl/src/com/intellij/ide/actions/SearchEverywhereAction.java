@@ -157,7 +157,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               return false;
             }
             ourOtherKeyWasPressed.set(false);
-
+            if (shift1Pressed.get() && System.currentTimeMillis() - ourLastTimePressed.get() > 500) {
+              resetState();
+            }
             handleShift((KeyEvent)event);
             return false;
           } else {
