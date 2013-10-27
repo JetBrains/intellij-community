@@ -97,6 +97,14 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class SearchEverywhereAction extends AnAction implements CustomComponentAction, DumbAware{
   public static final int SEARCH_FIELD_COLUMNS = 25;
+  private static final int MAX_CLASSES = 6;
+  private static final int MAX_FILES = 6;
+  private static final int MAX_TOOL_WINDOWS = 4;
+  private static final int MAX_SYMBOLS = 6;
+  private static final int MAX_SETTINGS = 5;
+  private static final int MAX_ACTIONS = 5;
+  private static final int MAX_RECENT_FILES = 10;
+
   private SearchEverywhereAction.MyListRenderer myRenderer;
   MySearchTextField myPopupField;
   private GotoClassModel2 myClassModel;
@@ -908,7 +916,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
         for (Object object : objects) {
           myProgressIndicator.checkCanceled();
-          if (isToolWindowAction(object) && toolWindows.size() < 10) {
+          if (isToolWindowAction(object) && toolWindows.size() < MAX_TOOL_WINDOWS) {
             toolWindows.add((AnAction)((Map.Entry)object).getKey());
           }
         }
@@ -945,12 +953,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         Object[] objects = myActionModel.getElementsByName(o.elementName, true, pattern);
         for (Object object : objects) {
           myProgressIndicator.checkCanceled();
-          if (isSetting(object) && settings.size() < 7) {
+          if (isSetting(object) && settings.size() < MAX_SETTINGS) {
             if (matcher.matches(getSettingText((OptionDescription)object))) {
               settings.add(object);
             }
           }
-          else if (!isToolWindowAction(object) && isActionValue(object) && actions.size() < 7) {
+          else if (!isToolWindowAction(object) && isActionValue(object) && actions.size() < MAX_ACTIONS) {
             actions.add((AnAction)((Map.Entry)object).getKey());
           }
         }
@@ -968,14 +976,14 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               myListModel.addElement(action);
             }
           }
-          myMoreActionsIndex = actions.size() >= 7 ? myListModel.size() - 1 : -1;
+          myMoreActionsIndex = actions.size() >= MAX_ACTIONS ? myListModel.size() - 1 : -1;
           if (settings.size() > 0) {
             myTitleIndexes.settings = myListModel.size();
             for (Object setting : settings) {
               myListModel.addElement(setting);
             }
           }
-          myMoreSettingsIndex = settings.size() >= 7 ? myListModel.size() - 1 : -1;
+          myMoreSettingsIndex = settings.size() >= MAX_SETTINGS ? myListModel.size() - 1 : -1;
         }
       });
     }
@@ -1006,9 +1014,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
       });
       final List<Object> files = new ArrayList<Object>();
-      final int maxFiles = 8;
       for (Object object : elements) {
-        if (filesCounter > maxFiles) break;
+        if (filesCounter > MAX_FILES) break;
         if (!myListModel.contains(object)) {
           if (object instanceof PsiFile) {
             object = ((PsiFile)object).getVirtualFile();
@@ -1020,7 +1027,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               myAlreadyAddedFiles.add((VirtualFile)object);
             }
             filesCounter++;
-            if (filesCounter > maxFiles) break;
+            if (filesCounter > MAX_FILES) break;
           }
         }
       }
@@ -1037,7 +1044,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               for (Object file : files) {
                 myListModel.addElement(file);
               }
-              myMoreFilesIndex = files.size() >= maxFiles ? myListModel.size() - 1 : -1;
+              myMoreFilesIndex = files.size() >= MAX_FILES ? myListModel.size() - 1 : -1;
             }
           }
         });
@@ -1052,16 +1059,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       List<MatchResult> matches = collectResults(pattern, mySymbols, mySymbolsModel);
       final List<Object> symbols = new ArrayList<Object>();
 
-      final int maxFiles = 8;
       for (MatchResult o : matches) {
-        if (symbolCounter > maxFiles) break;
+        if (symbolCounter > MAX_SYMBOLS) break;
 
         Object[] objects = mySymbolsModel.getElementsByName(o.elementName, false, pattern);
         for (Object object : objects) {
           if (!myListModel.contains(object)) {
               symbols.add(object);
               symbolCounter++;
-              if (symbolCounter > maxFiles) break;
+              if (symbolCounter > MAX_SYMBOLS) break;
           }
         }
       }
@@ -1077,7 +1083,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               for (Object file : symbols) {
                 myListModel.addElement(file);
               }
-              myMoreFilesIndex = symbols.size() >= maxFiles ? myListModel.size() - 1 : -1;
+              myMoreFilesIndex = symbols.size() >= MAX_SYMBOLS ? myListModel.size() - 1 : -1;
             }
           }
         });
@@ -1086,7 +1092,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private void buildClasses(String pattern, boolean includeLibraries) {
       int clsCounter = 0;
-      final int maxCount = includeLibraries ? 5 : 8;
+      final int maxCount = includeLibraries ? 5 : MAX_CLASSES;
       if (myClasses == null) {
         myClasses = myClassModel.getNames(false);
       }
@@ -1150,7 +1156,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
             files.add(file);
           }
         }
-        if (files.size() > 15) break;
+        if (files.size() > MAX_RECENT_FILES) break;
       }
 
       if (files.size() > 0) {
@@ -1452,9 +1458,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       size.width = parent.getWidth();
     }
     Dimension sz = new Dimension(size.width, size.height);
-    if (sz.width > 800 || sz.height > 800) {
-      final int extra = new JBScrollPane().getVerticalScrollBar().getWidth();
-      sz = new Dimension(Math.min(800, Math.max(getField().getWidth(), size.width + extra)), Math.min(800, size.height + extra));
+    if (sz.width > 1000 || sz.height > 800) {
+      final JBScrollPane pane = new JBScrollPane();
+      final int extraWidth = pane.getVerticalScrollBar().getWidth() + 1;
+      final int extraHeight = pane.getHorizontalScrollBar().getHeight() + 1;
+      sz = new Dimension(Math.min(1000, Math.max(getField().getWidth(), size.width + extraWidth)), Math.min(800, size.height + extraHeight));
       sz.width += 16;
     }
     else {
