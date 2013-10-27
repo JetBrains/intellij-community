@@ -223,9 +223,11 @@ public abstract class LombokParsingTestCase extends LightCodeInsightFixtureTestC
           compareParams(intellijConstructor.getParameterList(), theirsConstructor.getParameterList());
 
           compared = true;
+          break;
         }
-        assertTrue("Constructor names are not equal, Method: (" + theirsConstructor.getName() + ") not found in class : " + intellijConstructor.getName(), compared);
+
       }
+      assertTrue("Constructor names are not equal, Method: (" + theirsConstructor.getName() + ") not found in class : " + intellij.getName(), compared);
     }
   }
 
