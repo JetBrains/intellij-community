@@ -965,9 +965,9 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public PsiField createField(@NotNull @NonNls String name, @NotNull PsiType type) throws IncorrectOperationException {
+  public GrField createField(@NotNull @NonNls String name, @NotNull PsiType type) throws IncorrectOperationException {
     final GrVariableDeclaration fieldDeclaration = createFieldDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, name, null, type);
-    return (PsiField)fieldDeclaration.getVariables()[0];
+    return (GrField)fieldDeclaration.getVariables()[0];
   }
 
   @NotNull
@@ -1007,7 +1007,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
 
   @NotNull
   @Override
-  public PsiMethod createConstructor() {
+  public GrMethod createConstructor() {
     return createConstructorFromText("Foo", "Foo(){}", null);
   }
 
