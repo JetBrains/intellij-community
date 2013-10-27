@@ -476,6 +476,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
       else {
         focusManager.requestDefaultFocus(true);
+        final Component comp = myContextComponent;
+        final AnActionEvent event = myActionEvent;
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(new Runnable() {
           @Override
           public void run() {
@@ -484,7 +486,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               option.setOptionState(!option.isOptionEnabled());
             }
             else {
-              GotoActionAction.openOptionOrPerformAction(value, pattern, project, myContextComponent, myActionEvent);
+              GotoActionAction.openOptionOrPerformAction(value, pattern, project, comp, event);
             }
           }
         });
