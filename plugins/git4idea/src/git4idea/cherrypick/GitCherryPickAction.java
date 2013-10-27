@@ -31,6 +31,7 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
+import com.intellij.vcs.log.impl.VcsLogImpl;
 import git4idea.GitLocalBranch;
 import git4idea.GitPlatformFacade;
 import git4idea.GitVcs;
@@ -174,7 +175,11 @@ public class GitCherryPickAction extends DumbAwareAction {
     if (project == null) {
       return null;
     }
-    List<VcsFullCommitDetails> selectedCommits = getVcsLog(project).getSelectedCommits();
+    VcsLog log = getVcsLog(project);
+    if (log == null) {
+      return null;
+    }
+    List<VcsFullCommitDetails> selectedCommits = log.getSelectedCommits();
     // don't allow to cherry-pick if a non-Git commit was selected
     // we could cherry-pick just Git commits filtered from the list, but it might provide confusion
     boolean nonGitCommitSelected = ContainerUtil.find(selectedCommits, new Condition<VcsFullCommitDetails>() {
@@ -207,7 +212,8 @@ public class GitCherryPickAction extends DumbAwareAction {
   }
 
   private static VcsLog getVcsLog(@NotNull Project project) {
-    return ServiceManager.getService(project, VcsLog.class);
+    VcsLog logService = ServiceManager.getService(project, VcsLog.class);
+    return logService != null && ((VcsLogImpl)logService).isReady() ? logService : null;
   }
 
   // TODO remove after removing the old Vcs Log implementation
@@ -220,7 +226,11 @@ public class GitCherryPickAction extends DumbAwareAction {
     if (event.getProject() == null) {
       return null;
     }
-    return getVcsLog(event.getProject()).getContainingBranches(commit.getHash());
+    VcsLog log = getVcsLog(event.getProject());
+    if (log == null) {
+      return null;
+    }
+    return log.getContainingBranches(commit.getHash());
   }
 
 }
