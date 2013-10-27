@@ -8,7 +8,6 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import com.intellij.vcs.log.data.RefsModel;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.render.CommitCell;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
@@ -20,15 +19,13 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell> {
 
   private static final Logger LOG = Logger.getInstance(NoGraphTableModel.class);
 
-  @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final VcsLogUI myUi;
   @NotNull private final List<VcsFullCommitDetails> myCommits;
   @NotNull private final RefsModel myRefsModel;
-  private final boolean myAllowLoadingMoreRequest;
+  private boolean myAllowLoadingMoreRequest;
 
-  public NoGraphTableModel(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI UI,
-                           @NotNull List<VcsFullCommitDetails> commits, @NotNull RefsModel refsModel, boolean allowLoadingMoreRequest) {
-    myLogDataHolder = logDataHolder;
+  public NoGraphTableModel(@NotNull VcsLogUI UI, @NotNull List<VcsFullCommitDetails> commits, @NotNull RefsModel refsModel,
+                           boolean allowLoadingMoreRequest) {
     myUi = UI;
     myCommits = commits;
     myRefsModel = refsModel;
@@ -56,23 +53,14 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell> {
       return;
     }
 
-    Runnable success = new Runnable() {
+    myUi.getTable().setPaintBusy(true);
+    myUi.getFilterer().requestVcs(myUi.collectFilters(), new Runnable() {
       @Override
       public void run() {
-        myUi.applyFiltersAndUpdateUi();
         myUi.getTable().setPaintBusy(false);
       }
-    };
-    VcsLogDataHolder.LoadingState state = myLogDataHolder.loadMoreDetails(success);
-    if (state == VcsLogDataHolder.LoadingState.LOADING) {
-      myUi.getTable().setPaintBusy(true);
-    }
-    else if (state == VcsLogDataHolder.LoadingState.LIMIT_REACHED) {
-      myUi.getFilterer().requestVcs(myUi.collectFilters());
-    }
-    else {
-      myUi.getTable().setPaintBusy(false);
-    }
+    });
+    myAllowLoadingMoreRequest = false; // Don't send the request to VCS twice
   }
 
   @Nullable

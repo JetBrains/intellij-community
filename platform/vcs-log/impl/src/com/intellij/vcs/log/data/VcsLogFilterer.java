@@ -55,7 +55,7 @@ public class VcsLogFilterer {
     AbstractVcsLogTableModel model;
     if (!detailsFilters.isEmpty()) {
       List<VcsFullCommitDetails> filteredCommits = filterByDetails(graphModel, detailsFilters);
-      model = new NoGraphTableModel(myLogDataHolder, myUI, filteredCommits, myLogDataHolder.getDataPack().getRefsModel(), true);
+      model = new NoGraphTableModel(myUI, filteredCommits, myLogDataHolder.getDataPack().getRefsModel(), true);
     }
     else {
       model = new GraphTableModel(myLogDataHolder, myUI);
@@ -69,12 +69,13 @@ public class VcsLogFilterer {
     }
   }
 
-  public void requestVcs(@NotNull Collection<VcsLogFilter> filters) {
+  public void requestVcs(@NotNull Collection<VcsLogFilter> filters, final Runnable onSuccess) {
     myLogDataHolder.getFilteredDetailsFromTheVcs(filters, new Consumer<List<VcsFullCommitDetails>>() {
       @Override
       public void consume(List<VcsFullCommitDetails> details) {
-        myUI.setModel(new NoGraphTableModel(myLogDataHolder, myUI, details, myLogDataHolder.getDataPack().getRefsModel(), false));
+        myUI.setModel(new NoGraphTableModel(myUI, details, myLogDataHolder.getDataPack().getRefsModel(), false));
         myUI.updateUI();
+        onSuccess.run();
       }
     });
   }
