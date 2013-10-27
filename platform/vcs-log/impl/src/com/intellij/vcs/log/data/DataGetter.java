@@ -64,18 +64,43 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
   public T getCommitData(@NotNull final Node node) {
     assert EventQueue.isDispatchThread();
     Hash hash = node.getCommitHash();
+    T details = getFromCache(hash);
+    if (details != null) {
+      return details;
+    }
+    return loadingDetails(node, hash);
+  }
+
+  @NotNull
+  private T loadingDetails(Node node, Hash hash) {
+    T loadingDetails = (T)new LoadingDetails(hash);
+    runLoadAroundCommitData(node);
+    return loadingDetails;
+  }
+
+  @NotNull
+  public T getCommitData(@NotNull Hash hash) {
+    assert EventQueue.isDispatchThread();
+    T details = getFromCache(hash);
+    if (details != null) {
+      return details;
+    }
+    Node node = myDataHolder.getDataPack().getNodeByHash(hash); // TODO this may possibly be slow => need to add to the Task as well
+    return loadingDetails(node, hash);
+  }
+
+  @Nullable
+  public T getCommitDataIfAvailable(@NotNull Hash hash) {
+    return getFromCache(hash);
+  }
+
+  @Nullable
+  private T getFromCache(@NotNull Hash hash) {
     T details = myCache.get(hash);
     if (details != null) {
       return details;
     }
-    details = (T)myDataHolder.getTopCommitDetails(hash);
-    if (details != null) {
-      return details;
-    }
-
-    T loadingDetails = (T)new LoadingDetails(hash);
-    runLoadAroundCommitData(node);
-    return loadingDetails;
+    return (T)myDataHolder.getTopCommitDetails(hash);
   }
 
   @Nullable

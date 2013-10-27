@@ -5,6 +5,7 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsShortCommitDetails;
@@ -114,11 +115,13 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell> {
     GraphPrintCell graphPrintCell = myDataPack.getPrintCellModel().getGraphPrintCell(rowIndex);
     String message = "";
     List<VcsRef> refs = Collections.emptyList();
+    Hash hash = null;
     if (details != null) {
+      hash = details.getHash();
       message = details.getSubject();
       refs = (List<VcsRef>)myDataPack.getRefsModel().refsToCommit(details.getHash());
     }
-    return new GraphCommitCell(graphPrintCell, message, refs);
+    return new GraphCommitCell(hash, graphPrintCell, message, refs);
   }
 
   @NotNull

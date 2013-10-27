@@ -96,7 +96,7 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell> {
       subject = details.getSubject();
       refs = myRefsModel.refsToCommit(details.getHash());
     }
-    return new CommitCell(subject, refs);
+    return new CommitCell(myCommits.get(index).getHash(), subject, refs);
   }
 
   @NotNull

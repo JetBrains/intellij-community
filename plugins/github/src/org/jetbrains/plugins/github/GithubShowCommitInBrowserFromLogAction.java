@@ -22,7 +22,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLog;
+import com.intellij.vcs.log.VcsLogObjectsFactory;
+import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.impl.VcsLogImpl;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.history.browser.GitHeavyCommit;
@@ -80,9 +84,13 @@ public class GithubShowCommitInBrowserFromLogAction extends GithubShowCommitInBr
       return factory.createShortDetails(factory.createHash(heavyCommit.getHash().getValue()), parents, heavyCommit.getAuthorTime(),
                                         heavyCommit.getRoot(), heavyCommit.getSubject(), heavyCommit.getAuthor());
     }
-    List<VcsFullCommitDetails> selectedCommits = ServiceManager.getService(e.getProject(), VcsLog.class).getSelectedCommits();
+    VcsLog log = ServiceManager.getService(e.getProject(), VcsLog.class);
+    if (log == null || !((VcsLogImpl)log).isReady()) {
+      return null;
+    }
+    List<Hash> selectedCommits = log.getSelectedCommits();
     if (selectedCommits.size() == 1) {
-      return selectedCommits.get(0);
+      return log.getDetailsIfAvailable(selectedCommits.get(0));
     }
     return null;
   }

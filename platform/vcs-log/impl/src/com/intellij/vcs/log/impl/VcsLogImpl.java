@@ -15,14 +15,15 @@
  */
 package com.intellij.vcs.log.impl;
 
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLog;
-import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.graph.elements.Node;
+import com.intellij.vcs.log.graph.render.CommitCell;
 import com.intellij.vcs.log.ui.VcsLogUI;
+import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,33 +51,31 @@ public class VcsLogImpl implements VcsLog {
     return myDataHolder != null && myUi != null;
   }
 
-  @NotNull
   @Override
-  public List<VcsFullCommitDetails> getSelectedCommits() {
-    List<VcsFullCommitDetails> selectedDetails = ContainerUtil.newArrayList();
-    for (int row : myUi.getTable().getSelectedRows()) {
-      VcsFullCommitDetails data = getDetailsAtRow(row);
-      if (data != null) {
-        selectedDetails.add(data);
+  @NotNull
+  public List<Hash> getSelectedCommits() {
+    List<Hash> hashes = ContainerUtil.newArrayList();
+    JBTable table = myUi.getTable();
+    for (int row : table.getSelectedRows()) {
+      CommitCell cell = (CommitCell)table.getModel().getValueAt(row, AbstractVcsLogTableModel.COMMIT_COLUMN);
+      Hash hash = cell.getHash();
+      if (hash != null) {
+        hashes.add(hash);
       }
     }
-    return selectedDetails;
+    return hashes;
+  }
+
+  @Override
+  @Nullable
+  public VcsFullCommitDetails getDetailsIfAvailable(@NotNull final Hash hash) {
+    return myDataHolder.getCommitDetailsGetter().getCommitDataIfAvailable(hash);
   }
 
   @Nullable
   @Override
   public Collection<String> getContainingBranches(@NotNull Hash commitHash) {
     return null;
-  }
-
-  @Nullable
-  private VcsFullCommitDetails getDetailsAtRow(int row) {
-    Node commitNode = myDataHolder.getDataPack().getGraphModel().getGraph().getCommitNodeInRow(row);
-    if (commitNode == null) {
-      return null;
-    }
-    VcsFullCommitDetails details = myDataHolder.getCommitDetailsGetter().getCommitData(commitNode);
-    return details instanceof LoadingDetails ? null : details;
   }
 
 }
