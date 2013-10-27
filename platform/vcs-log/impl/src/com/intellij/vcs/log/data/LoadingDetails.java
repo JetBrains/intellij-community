@@ -16,9 +16,16 @@ import java.util.Collections;
  */
 public class LoadingDetails extends VcsFullCommitDetailsImpl {
 
-  public LoadingDetails(@NotNull Hash hash) {
+  private final long myLoadingTaskIndex;
+
+  public LoadingDetails(@NotNull Hash hash, long loadingTaskIndex) {
     super(hash, Collections.<Hash>emptyList(), -1, AbstractVcsLogTableModel.UNKNOWN_ROOT,
           "Loading...", "", "", "", "", "", -1, Collections.<Change>emptyList());
+    myLoadingTaskIndex = loadingTaskIndex;
+  }
+
+  public long getLoadingTaskIndex() {
+    return myLoadingTaskIndex;
   }
 
 }

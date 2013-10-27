@@ -23,7 +23,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
-import com.intellij.vcs.log.VcsFullCommitDetails;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLog;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,15 +42,15 @@ public class VcsLogCopyHashAction extends DumbAwareAction {
     if (log == null) {
       return;
     }
-    List<VcsFullCommitDetails> commits = log.getSelectedCommits();
+    List<Hash> commits = log.getSelectedCommits();
     if (commits.isEmpty()) {
       return;
     }
 
-    String hashes = StringUtil.join(commits, new Function<VcsFullCommitDetails, String>() {
+    String hashes = StringUtil.join(commits, new Function<Hash, String>() {
       @Override
-      public String fun(VcsFullCommitDetails details) {
-        return details.getHash().asString();
+      public String fun(Hash hash) {
+        return hash.asString();
       }
     }, "\n");
     CopyPasteManager.getInstance().setContents(new StringSelection(hashes));

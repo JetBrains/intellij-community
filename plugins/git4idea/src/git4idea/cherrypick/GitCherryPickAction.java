@@ -24,7 +24,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
@@ -175,20 +174,27 @@ public class GitCherryPickAction extends DumbAwareAction {
     if (project == null) {
       return null;
     }
-    VcsLog log = getVcsLog(project);
+    final VcsLog log = getVcsLog(project);
     if (log == null) {
       return null;
     }
-    List<VcsFullCommitDetails> selectedCommits = log.getSelectedCommits();
-    // don't allow to cherry-pick if a non-Git commit was selected
-    // we could cherry-pick just Git commits filtered from the list, but it might provide confusion
-    boolean nonGitCommitSelected = ContainerUtil.find(selectedCommits, new Condition<VcsFullCommitDetails>() {
-      @Override
-      public boolean value(VcsFullCommitDetails details) {
-        return myPlatformFacade.getRepositoryManager(project).getRepositoryForRoot(details.getRoot()) == null;
+
+    List<Hash> selectedCommits = log.getSelectedCommits();
+    List<VcsFullCommitDetails> selectedDetails = ContainerUtil.newArrayList();
+    for (Hash commit : selectedCommits) {
+      VcsFullCommitDetails details = log.getDetailsIfAvailable(commit);
+      if (details == null) { // let the action be unavailable until all details are loaded
+        return null;
       }
-    }) != null;
-    return nonGitCommitSelected ? null : selectedCommits;
+      GitRepository root = myPlatformFacade.getRepositoryManager(project).getRepositoryForRoot(details.getRoot());
+      // don't allow to cherry-pick if a non-Git commit was selected
+      // we could cherry-pick just Git commits filtered from the list, but it might provide confusion
+      if (root == null) {
+        return null;
+      }
+      selectedDetails.add(details);
+    }
+    return selectedDetails;
   }
 
   private static List<? extends VcsFullCommitDetails> convertHeavyCommitToFullDetails(List<GitHeavyCommit> commits) {

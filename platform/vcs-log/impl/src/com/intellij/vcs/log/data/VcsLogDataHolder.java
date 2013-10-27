@@ -440,6 +440,10 @@ public class VcsLogDataHolder implements Disposable {
             return detail;
           }
         });
+
+        myDetailsGetter.saveInCache(list);
+        myMiniDetailsGetter.saveInCache(list);
+
         invokeAndWait(new Runnable() {
           @Override
           public void run() {
