@@ -24,7 +24,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.browsers.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -41,16 +40,6 @@ public class DefaultUrlOpener extends UrlOpener {
 
   public boolean openUrl(final @NotNull WebBrowser browser, final @NotNull String url) {
     return launchBrowser(browser, url, false);
-  }
-
-  /** @deprecated use {@linkplain #launchBrowser(BrowsersConfiguration.BrowserFamily, String, boolean, String...)} (to remove in IDEA 13) */
-  @SuppressWarnings("unused")
-  public static boolean launchBrowser(@NotNull BrowsersConfiguration.BrowserFamily family,
-                                      @Nullable String url,
-                                      @NotNull String[] additionalParameters,
-                                      @NotNull Condition<String> browserSpecificParametersFilter,
-                                      boolean newWindowIfPossible) {
-    return launchBrowser(family, url, newWindowIfPossible, additionalParameters);
   }
 
   public static boolean launchBrowser(@NotNull WebBrowser browser,

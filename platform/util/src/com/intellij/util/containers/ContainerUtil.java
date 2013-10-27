@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.*;
 import gnu.trove.*;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1999,5 +2000,10 @@ public class ContainerUtil extends ContainerUtilRt {
       result.add(enumeration.nextElement());
     }
     return result;
+  }
+
+  @Contract("null -> null")
+  public static <T> boolean isEmpty(List<T> list) {
+    return list == null || list.isEmpty();
   }
 }
