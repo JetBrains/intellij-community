@@ -15,7 +15,6 @@ import com.intellij.vcs.log.graph.render.*;
 import com.intellij.vcs.log.printmodel.GraphPrintCell;
 import com.intellij.vcs.log.printmodel.SpecialPrintElement;
 import com.intellij.vcs.log.ui.VcsLogUI;
-import com.intellij.vcs.log.ui.render.AbstractPaddingCellRender;
 import com.intellij.vcs.log.ui.render.CommitCellRender;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
@@ -234,12 +233,7 @@ public class VcsLogGraphTable extends JBTable {
       Component rendererComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       Object commit = getValueAt(row, AbstractVcsLogTableModel.COMMIT_COLUMN);
       if (commit instanceof GraphCommitCell) {
-        if (AbstractPaddingCellRender.isMarked(commit) && !isSelected) {
-          rendererComponent.setBackground(AbstractPaddingCellRender.MARKED_BACKGROUND);
-        }
-        else {
-          setBackground(isSelected ? table.getSelectionBackground() : JBColor.WHITE);
-        }
+        setBackground(isSelected ? table.getSelectionBackground() : JBColor.WHITE);
       }
       return rendererComponent;
     }

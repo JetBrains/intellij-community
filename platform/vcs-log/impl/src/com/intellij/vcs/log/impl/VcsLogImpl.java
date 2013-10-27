@@ -42,6 +42,14 @@ public class VcsLogImpl implements VcsLog {
     myUi = vcsLogManager.getLogUi();
   }
 
+  /**
+   * Checks if the log is initialized.
+   * TODO Temporary method until the old Git log is switched off and removed
+   */
+  public boolean isReady() {
+    return myDataHolder != null && myUi != null;
+  }
+
   @NotNull
   @Override
   public List<VcsFullCommitDetails> getSelectedCommits() {

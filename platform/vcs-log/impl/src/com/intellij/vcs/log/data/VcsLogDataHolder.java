@@ -447,7 +447,7 @@ public class VcsLogDataHolder implements Disposable {
           }
         });
       }
-    }, "Retrieving filtered results from the VCS...");
+    }, "Looking for more results...");
   }
 
   @NotNull

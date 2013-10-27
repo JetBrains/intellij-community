@@ -10,7 +10,6 @@ import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.SeparatorOrientation;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
-import com.intellij.vcs.log.ui.GitLogIcons;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUi;
@@ -64,14 +63,14 @@ public class MainFrame {
   }
 
   private JComponent createActionsToolbar() {
-    AnAction hideBranchesAction = new DumbAwareAction("Collapse linear branches", "Collapse linear branches", GitLogIcons.SPIDER) {
+    AnAction hideBranchesAction = new DumbAwareAction("Collapse linear branches", "Collapse linear branches", AllIcons.Actions.Collapseall) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         myUI.hideAll();
       }
     };
 
-    AnAction showBranchesAction = new DumbAwareAction("Expand all branches", "Expand all branches", GitLogIcons.WEB) {
+    AnAction showBranchesAction = new DumbAwareAction("Expand all branches", "Expand all branches", AllIcons.Actions.Expandall) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         myUI.showAll();
@@ -90,8 +89,9 @@ public class MainFrame {
       }
     };
 
-    AnAction showFullPatchAction = new ToggleAction("Show full patch", "Expand all branches even if they occupy a lot of space",
-                                                    AllIcons.Actions.Expandall) {
+    AnAction showFullPatchAction = new ToggleAction("Show long edges",
+                                                    "Show long branch edges even if commits are invisible in the current view.",
+                                                    AllIcons.Ide.UpDown) {
       @Override
       public boolean isSelected(AnActionEvent e) {
         return !myUI.areLongEdgesHidden();

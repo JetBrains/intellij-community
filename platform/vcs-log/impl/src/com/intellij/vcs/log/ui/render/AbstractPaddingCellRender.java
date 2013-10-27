@@ -55,12 +55,7 @@ public abstract class AbstractPaddingCellRender implements TableCellRenderer {
                                                    boolean isSelected, boolean hasFocus, int row, int column) {
       myValue = value;
       super.getTableCellRendererComponent(table, getCellText(value), isSelected, hasFocus, row, column);
-      if (isMarked(value) && !isSelected) {
-        setBackground(MARKED_BACKGROUND);
-      }
-      else {
-        setBackground(isSelected ? table.getSelectionBackground() : JBColor.WHITE);
-      }
+      setBackground(isSelected ? table.getSelectionBackground() : JBColor.WHITE);
 
       Border paddingBorder = BorderFactory.createEmptyBorder(0, getLeftPadding(table, value), 0, 0);
       setBorder(BorderFactory.createCompoundBorder(this.getBorder(), paddingBorder));
