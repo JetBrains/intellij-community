@@ -19,6 +19,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
@@ -85,7 +86,7 @@ public class FinderRecursivePanelTest extends PlatformTestCase {
     assertMerge(items, -1, -1, newItems);
   }
 
-  public void testUpdate() {
+  public void testUpdate() throws InterruptedException {
     StringFinderRecursivePanel panel_0 = new StringFinderRecursivePanel() {
       @NotNull
       @Override
@@ -109,13 +110,13 @@ public class FinderRecursivePanelTest extends PlatformTestCase {
     panel_0.getList().setSelectedIndex(0);
     //panel_0.updateRightComponent(true);
 
-    StringFinderRecursivePanel panel_1 = (StringFinderRecursivePanel)panel_0.getChildPanel();
+    StringFinderRecursivePanel panel_1 = (StringFinderRecursivePanel)panel_0.getSecondComponent();
     panel_1.getList().setSelectedIndex(1);
 
-    StringFinderRecursivePanel panel_2 = (StringFinderRecursivePanel)panel_1.getChildPanel();
+    StringFinderRecursivePanel panel_2 = (StringFinderRecursivePanel)panel_1.getSecondComponent();
     panel_2.getList().setSelectedIndex(2);
 
-    StringFinderRecursivePanel panel_3 = (StringFinderRecursivePanel)panel_2.getChildPanel();
+    StringFinderRecursivePanel panel_3 = (StringFinderRecursivePanel)panel_2.getSecondComponent();
     panel_3.getList().setSelectedIndex(3);
 
     panel_0.updatePanel();
@@ -143,6 +144,18 @@ public class FinderRecursivePanelTest extends PlatformTestCase {
     @Override
     protected List<String> getListItems() {
       return Arrays.asList("a", "b", "c", "d");
+    }
+
+    @NotNull
+    @Override
+    protected String getItemText(String s) {
+      return s;
+    }
+
+    @Nullable
+    @Override
+    protected JComponent createRightComponent(String s) {
+      return null;
     }
 
     @Override
