@@ -21,13 +21,13 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Direct spring annotation analogue. 
- * 
+ * Direct spring annotation analogue.
+ *
  * @author Denis Zhdanov
  * @since 4/16/13 11:45 AM
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.TYPE, ElementType.METHOD, ElementType.FIELD})
 public @interface Order {
-  int value() default Integer.MAX_VALUE;
+  int value() default 0;
 }

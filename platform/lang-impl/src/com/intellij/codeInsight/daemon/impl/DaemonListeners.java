@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -179,13 +179,22 @@ public class DaemonListeners implements Disposable {
     eventMulticaster.addCaretListener(new CaretListener() {
       @Override
       public void caretPositionChanged(CaretEvent e) {
-        Editor editor = e.getEditor();
+        final Editor editor = e.getEditor();
         if (!editor.getComponent().isShowing() && !application.isUnitTestMode() ||
             !worthBothering(editor.getDocument(), editor.getProject())) {
           return; //no need to stop daemon if something happened in the console
         }
 
-        myDaemonCodeAnalyzer.hideLastIntentionHint();
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (!editor.getComponent().isShowing() && !application.isUnitTestMode() ||
+                myProject.isDisposed()) {
+              return;
+            }
+            myDaemonCodeAnalyzer.hideLastIntentionHint();
+          }
+        }, ModalityState.current());
       }
     }, this);
 

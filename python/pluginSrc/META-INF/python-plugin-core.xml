@@ -11,6 +11,9 @@
     <applicationService serviceInterface="com.jetbrains.python.run.PyCommonOptionsFormFactory"
                         serviceImplementation="com.jetbrains.python.run.PyPluginCommonOptionsFormFactory"/>
     <completion.contributor language="Python" implementationClass="com.jetbrains.python.psi.impl.PyConstructorArgumentCompletionContributor"/>
+
+    <!-- Console folding for Jython only, thus it's located in python-plugin only -->
+    <stacktrace.fold substring="*sys-package-mgr*:"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">

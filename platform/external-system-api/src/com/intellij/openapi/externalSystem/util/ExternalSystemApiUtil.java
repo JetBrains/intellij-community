@@ -77,10 +77,10 @@ public class ExternalSystemApiUtil {
   @NotNull public static final Comparator<Object> ORDER_AWARE_COMPARATOR = new Comparator<Object>() {
 
     @Override
-    public int compare(Object o1, Object o2) {
+    public int compare(@NotNull Object o1, @NotNull Object o2) {
       int order1 = getOrder(o1);
       int order2 = getOrder(o2);
-      return order1 > order2 ? 1 : order1 < order2 ? -1 : 0;
+      return (order1 < order2) ? -1 : ((order1 == order2) ? 0 : 1);
     }
 
     private int getOrder(@NotNull Object o) {
@@ -97,9 +97,7 @@ public class ExternalSystemApiUtil {
           toCheck.add(c);
         }
         Class<?>[] interfaces = clazz.getInterfaces();
-        if (interfaces != null) {
-          Collections.addAll(toCheck, interfaces);
-        }
+        Collections.addAll(toCheck, interfaces);
       }
       return ExternalSystemConstants.UNORDERED;
     }

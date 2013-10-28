@@ -16,31 +16,56 @@
 package com.siyeh.ig.dataflow;
 
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.xmlb.XmlSerializer;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.lang.reflect.Field;
 
 public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
-
+  private static final String VARIABLES_NEW = "m_ignoreAnnotatedVariablesNew";
   /**
    * @noinspection PublicField
    */
   public boolean m_ignoreImmediatelyReturnedVariables = false;
 
+  @Deprecated
   /**
    * @noinspection PublicField
    */
   public boolean m_ignoreAnnotatedVariables = false;
+  public boolean m_ignoreAnnotatedVariablesNew = true;
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    DefaultJDOMExternalizer.writeExternal(this, node, new DefaultJDOMExternalizer.JDOMFilter() {
+      @Override
+      public boolean isAccept(@NotNull Field field) {
+        return !Comparing.equal(VARIABLES_NEW, field.getName());
+      }
+    });
+
+    if (!m_ignoreAnnotatedVariablesNew) {
+      final Element option = new Element("option");
+      option.setAttribute("name", VARIABLES_NEW);
+      option.setAttribute("value", Boolean.toString(m_ignoreAnnotatedVariablesNew));
+      node.addContent(option);
+    }
+  }
 
   @Override
   @NotNull
@@ -54,7 +79,7 @@ public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("redundant.local.variable.ignore.option"),
                              "m_ignoreImmediatelyReturnedVariables");
     optionsPanel.addCheckbox(InspectionGadgetsBundle.message("redundant.local.variable.annotation.option"),
-                             "m_ignoreAnnotatedVariables");
+                             "m_ignoreAnnotatedVariablesNew");
     return optionsPanel;
   }
 
@@ -85,7 +110,7 @@ public class UnnecessaryLocalVariableInspectionBase extends BaseInspection {
     @Override
     public void visitLocalVariable(@NotNull PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
-      if (m_ignoreAnnotatedVariables) {
+      if (m_ignoreAnnotatedVariablesNew) {
         final PsiModifierList list = variable.getModifierList();
         if (list != null && list.getAnnotations().length > 0) {
           return;

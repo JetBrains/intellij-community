@@ -86,7 +86,7 @@ public class NameSuggestionsField extends JPanel {
     this(suggestedNames, project, fileType);
     if (editor == null) return;
     // later here because EditorTextField creates Editor during addNotify()
-    SwingUtilities.invokeLater(new Runnable() {
+    final Runnable selectionRunnable = new Runnable() {
       @Override
       public void run() {
         final int offset = editor.getCaretModel().getOffset();
@@ -99,9 +99,11 @@ public class NameSuggestionsField extends JPanel {
           if (!word.equals(getEnteredName())) continue;
           final SelectionModel selectionModel = editor.getSelectionModel();
           myEditor.getSelectionModel().removeSelection();
-          int myOffset = offset - wordRange.getStartOffset();
+          final int wordRangeStartOffset = wordRange.getStartOffset();
+          int myOffset = offset - wordRangeStartOffset;
           myEditor.getCaretModel().moveToOffset(myOffset);
-          TextRange selected = new TextRange(selectionModel.getSelectionStart(), selectionModel.getSelectionEnd()).shiftRight(-wordRange.getStartOffset());
+          TextRange selected = new TextRange(Math.max(0, selectionModel.getSelectionStart() - wordRangeStartOffset),
+                                             selectionModel.getSelectionEnd() - wordRangeStartOffset);
           selected = selected.intersection(new TextRange(0, myEditor.getDocument().getTextLength()));
           if (selectionModel.hasSelection() && selected != null && !selected.isEmpty()) {
             myEditor.getSelectionModel().setSelection(selected.getStartOffset(), selected.getEndOffset());
@@ -112,7 +114,8 @@ public class NameSuggestionsField extends JPanel {
           break;
         }
       }
-    });
+    };
+    SwingUtilities.invokeLater(selectionRunnable);
   }
 
   protected boolean shouldSelectAll() {

@@ -307,7 +307,7 @@ public class FileSystemUtil {
       if (SystemInfo.isUnix) {
         Object pathObj = myGetPath.invoke(myDefaultFileSystem, source, ArrayUtil.EMPTY_STRING_ARRAY);
         Map attributes = (Map)myReadAttributes.invoke(null, pathObj, "posix:permissions", myLinkOptions);
-        if (attributes != null && SystemProperties.getUserName().equals(attributes.get("posix:owner"))) {
+        if (attributes != null) {
           Object permissions = attributes.get("permissions");
           if (permissions instanceof Collection) {
             mySetAttribute.invoke(null, pathObj, "posix:permissions", permissions, myLinkOptions);
@@ -437,7 +437,7 @@ public class FileSystemUtil {
     protected boolean clonePermissions(@NotNull String source, @NotNull String target) throws Exception {
       Memory buffer = new Memory(256);
       int res = SystemInfo.isLinux ? myLibC.__xstat64(0, source, buffer) : myLibC.stat(source, buffer);
-      if (res == 0 && ownFile(buffer)) {
+      if (res == 0) {
         int permissions = (SystemInfo.isLinux ? buffer.getInt(myOffsets[OFF_MODE]) : buffer.getShort(myOffsets[OFF_MODE])) & LibC.PERM_MASK;
         return myLibC.chmod(target, permissions) == 0;
       }
@@ -506,6 +506,17 @@ public class FileSystemUtil {
     @Override
     protected String resolveSymLink(@NotNull final String path) throws Exception {
       return new File(path).getCanonicalPath();
+    }
+
+    @Override
+    protected boolean clonePermissions(@NotNull String source, @NotNull String target) throws Exception {
+      if (SystemInfo.isUnix) {
+        File srcFile = new File(source);
+        File dstFile = new File(target);
+        return dstFile.setWritable(srcFile.canWrite(), true) && dstFile.setExecutable(srcFile.canExecute(), true);
+      }
+
+      return false;
     }
   }
 

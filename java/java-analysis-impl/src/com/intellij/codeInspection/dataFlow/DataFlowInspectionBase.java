@@ -482,9 +482,10 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         holder.registerProblem(expr, text);
       }
       else if (AnnotationUtil.isAnnotatingApplicable(statement)) {
+        final String defaultNullable = NullableNotNullManager.getInstance(holder.getProject()).getPresentableDefaultNullable();
         final String text = isNullLiteralExpression(expr)
-                            ? InspectionsBundle.message("dataflow.message.return.null.from.notnullable")
-                            : InspectionsBundle.message("dataflow.message.return.nullable.from.notnullable");
+                            ? InspectionsBundle.message("dataflow.message.return.null.from.notnullable", defaultNullable)
+                            : InspectionsBundle.message("dataflow.message.return.nullable.from.notnullable", defaultNullable);
         final NullableNotNullManager manager = NullableNotNullManager.getInstance(expr.getProject());
         holder.registerProblem(expr, text, new AnnotateMethodFix(manager.getDefaultNullable(), ArrayUtil.toStringArray(manager.getNotNulls())){
           @Override

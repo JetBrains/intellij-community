@@ -85,7 +85,7 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
   @Override
   public void loadState(Element state) {
     myUrls.clear();
-    for (Element element : (List<Element>)state.getChildren("service-url")) {
+    for (Element element : state.getChildren("service-url")) {
       myUrls.add(StringUtil.unescapeXml(element.getTextTrim()));
     }
   }

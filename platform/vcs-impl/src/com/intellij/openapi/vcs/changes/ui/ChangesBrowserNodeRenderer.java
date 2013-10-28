@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.speedSearch.SpeedSearchUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -53,6 +54,7 @@ public class ChangesBrowserNodeRenderer extends ColoredTreeCellRenderer {
                                     boolean hasFocus) {
     ChangesBrowserNode node = (ChangesBrowserNode)value;
     node.render(this, selected, expanded, hasFocus);
+    SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, selected);
   }
 
 

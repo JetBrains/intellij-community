@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.containers.SoftHashMap;
+import com.intellij.util.containers.SoftKeySoftValueHashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -89,7 +89,7 @@ public class RecursionManager {
         if (memoize) {
           Object o = stack.getMemoizedValue(realKey);
           if (o != null) {
-            SoftHashMap<MyKey, SoftReference> map = stack.intermediateCache.get(realKey);
+            SoftKeySoftValueHashMap<MyKey, Object> map = stack.intermediateCache.get(realKey);
             if (map != null) {
               for (MyKey noCacheUntil : map.keySet()) {
                 stack.prohibitResultCaching(noCacheUntil);
@@ -205,7 +205,7 @@ public class RecursionManager {
     private final LinkedHashMap<MyKey, Integer> progressMap = new LinkedHashMap<MyKey, Integer>();
     private final Set<MyKey> toMemoize = new THashSet<MyKey>();
     private final THashMap<MyKey, MyKey> key2ReentrancyDuringItsCalculation = new THashMap<MyKey, MyKey>();
-    private final SoftHashMap<MyKey, SoftHashMap<MyKey, SoftReference>> intermediateCache = new SoftHashMap<MyKey, SoftHashMap<MyKey, SoftReference>>();
+    private final SoftHashMap<MyKey, SoftKeySoftValueHashMap<MyKey, Object>> intermediateCache = new SoftHashMap<MyKey, SoftKeySoftValueHashMap<MyKey, Object>>();
     private int enters = 0;
     private int exits = 0;
 
@@ -220,7 +220,7 @@ public class RecursionManager {
 
     @Nullable
     Object getMemoizedValue(MyKey realKey) {
-      SoftHashMap<MyKey, SoftReference> map = intermediateCache.get(realKey);
+      SoftKeySoftValueHashMap<MyKey, Object> map = intermediateCache.get(realKey);
       if (map == null) return null;
 
       if (depth == 0) {
@@ -228,12 +228,9 @@ public class RecursionManager {
       }
 
       for (MyKey key : map.keySet()) {
-        final SoftReference reference = map.get(key);
-        if (reference != null) {
-          final Object result = reference.get();
-          if (result != null) {
-            return result;
-          }
+        final Object result = map.get(key);
+        if (result != null) {
+          return result;
         }
       }
 
@@ -263,13 +260,13 @@ public class RecursionManager {
 
     final void maybeMemoize(MyKey realKey, @NotNull Object result, int startStamp) {
       if (memoizationStamp == startStamp && toMemoize.contains(realKey)) {
-        SoftHashMap<MyKey, SoftReference> map = intermediateCache.get(realKey);
+        SoftKeySoftValueHashMap<MyKey, Object> map = intermediateCache.get(realKey);
         if (map == null) {
-          intermediateCache.put(realKey, map = new SoftHashMap<MyKey, SoftReference>());
+          intermediateCache.put(realKey, map = new SoftKeySoftValueHashMap<MyKey, Object>());
         }
         final MyKey reentered = key2ReentrancyDuringItsCalculation.get(realKey);
         assert reentered != null;
-        map.put(reentered, new SoftReference<Object>(result));
+        map.put(reentered, result);
       }
     }
 

@@ -16,7 +16,7 @@ public class VcsLogSettingsImpl implements VcsLogSettings, PersistentStateCompon
   private State myState = new State();
 
   public static class State {
-    public boolean SHOW_DETAILS = false;
+    public int RECENT_COMMITS_COUNT = 1000;
   }
 
   @Nullable
@@ -31,13 +31,12 @@ public class VcsLogSettingsImpl implements VcsLogSettings, PersistentStateCompon
   }
 
   @Override
-  public boolean isShowDetails() {
-    return myState.SHOW_DETAILS;
+  public int getRecentCommitsCount() {
+    return myState.RECENT_COMMITS_COUNT;
   }
 
-  @Override
-  public void setShowDetails(boolean showDetails) {
-    myState.SHOW_DETAILS = showDetails;
+  public void setRecentCommitsBlockSize(int commitCount) {
+    myState.RECENT_COMMITS_COUNT = commitCount;
   }
 
 }

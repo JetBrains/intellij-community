@@ -1195,10 +1195,10 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     configureByFile(BASE_PATH + "web-app_2_4.xsd");
     final String testName = getTestName(false);
     final String actionName = XmlBundle.message(AddXsiSchemaLocationForExtResourceAction.KEY);
-    doTestWithQuickFix(BASE_PATH + testName, actionName, true);
-    doTestWithQuickFix(BASE_PATH + testName + "2", actionName, true);
-    doTestWithQuickFix(BASE_PATH + testName + "3", actionName, true);
-    doTestWithQuickFix(BASE_PATH + testName + "4", actionName, true);
+    doTestWithQuickFix(BASE_PATH + testName, actionName, false);
+    doTestWithQuickFix(BASE_PATH + testName + "2", actionName, false);
+    doTestWithQuickFix(BASE_PATH + testName + "3", actionName, false);
+    doTestWithQuickFix(BASE_PATH + testName + "4", actionName, false);
   }
 
   public void testHighlightingWithConditionalSectionsInDtd() throws Exception {
@@ -1998,7 +1998,19 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       getVirtualFile(BASE_PATH + "Substitute/test.xml"),
       getVirtualFile(BASE_PATH + "Substitute/schema-b.xsd"),
       getVirtualFile(BASE_PATH + "Substitute/schema-a.xsd")
-    }, true, true);
+    }, true, false);
+  }
+
+  public void testDtdWithXsd() throws Exception {
+    doTest(
+      new VirtualFile[] {
+        getVirtualFile(BASE_PATH + "DtdWithXsd/help.xml"),
+        getVirtualFile(BASE_PATH + "DtdWithXsd/helptopic.xsd"),
+        getVirtualFile(BASE_PATH + "DtdWithXsd/html-entities.dtd")
+      },
+      true,
+      false
+    );
   }
 
   @Override

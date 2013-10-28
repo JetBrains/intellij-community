@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
   protected static GlobalSearchScope createFilter(final Project project) {
     final GlobalSearchScope projectScope = GlobalSearchScope.allScope(project);
     return new GlobalSearchScope(project) {
-      public int compare(VirtualFile file1, VirtualFile file2) {
+      public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
         return projectScope.compare(file1, file2);
       }
 
@@ -54,7 +54,7 @@ public abstract class XmlIndex<V> extends FileBasedIndexExtension<String, V> {
       }
 
       @Override
-      public boolean contains(VirtualFile file) {
+      public boolean contains(@NotNull VirtualFile file) {
         final VirtualFile parent = file.getParent();
         return parent != null && (parent.getName().equals("standardSchemas") || projectScope.contains(file));
       }

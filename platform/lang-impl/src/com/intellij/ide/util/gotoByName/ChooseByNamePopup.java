@@ -257,7 +257,9 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
     cleanupUI(isOk);
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    myActionListener.onClose();
+    if (myActionListener != null) {
+      myActionListener.onClose();
+    }
   }
 
   private void cleanupUI(boolean ok) {
@@ -336,6 +338,11 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   @Override
   public String transformPattern(String pattern) {
+    final ChooseByNameModel model = getModel();
+    return getTransformedPattern(pattern, model);
+  }
+
+  public static String getTransformedPattern(String pattern, ChooseByNameModel model) {
     Pattern regex = null;
     if (pattern.indexOf(':') != -1 ||
         pattern.indexOf(',') != -1 ||
@@ -345,7 +352,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       regex = patternToDetectLinesAndColumns;
     }
 
-    if (getModel() instanceof GotoClassModel2) {
+    if (model instanceof GotoClassModel2) {
       if (pattern.indexOf('#') != -1) {
         regex = patternToDetectMembers;
       }
@@ -362,7 +369,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       }
     }
 
-    return super.transformPattern(pattern);
+    return pattern;
   }
 
   public int getLinePosition() {

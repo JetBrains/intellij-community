@@ -17,7 +17,7 @@ import static com.intellij.vcs.log.printmodel.impl.GraphElementsVisibilityContro
  */
 class GraphElementsVisibilityController {
   private static final int LONG_EDGE = 20;
-  private static final int EDGE_PART_SHOW = 3;
+  private static final int EDGE_PART_SHOW = 1;
 
 
   private final LayoutModel layoutModel;

@@ -56,6 +56,7 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   private static final String JAVADOC_PATHS_TAG = "javadoc-paths";
   private static final String MODULE_LANGUAGE_LEVEL_ATTRIBUTE = "LANGUAGE_LEVEL";
   public static final String ROOT_TAG = "root";
+  private static final String IS_GENERATED_ATTRIBUTE = "generated";
   public static final JavaSourceRootPropertiesSerializer JAVA_SOURCE_ROOT_PROPERTIES_SERIALIZER =
     new JavaSourceRootPropertiesSerializer(JavaSourceRootType.SOURCE, JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID);
 
@@ -301,24 +302,28 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     }
   }
 
-  private static class JavaSourceRootPropertiesSerializer extends JpsModuleSourceRootPropertiesSerializer<JpsSimpleElement<JavaSourceRootProperties>> {
-    private JavaSourceRootPropertiesSerializer(JpsModuleSourceRootType<JpsSimpleElement<JavaSourceRootProperties>> type, String typeId) {
+  private static class JavaSourceRootPropertiesSerializer extends JpsModuleSourceRootPropertiesSerializer<JavaSourceRootProperties> {
+    private JavaSourceRootPropertiesSerializer(JpsModuleSourceRootType<JavaSourceRootProperties> type, String typeId) {
       super(type, typeId);
     }
 
     @Override
-    public JpsSimpleElement<JavaSourceRootProperties> loadProperties(@NotNull Element sourceRootTag) {
+    public JavaSourceRootProperties loadProperties(@NotNull Element sourceRootTag) {
       String packagePrefix = StringUtil.notNullize(sourceRootTag.getAttributeValue(JpsModuleRootModelSerializer.PACKAGE_PREFIX_ATTRIBUTE));
-      return JpsElementFactory.getInstance().createSimpleElement(new JavaSourceRootProperties(packagePrefix));
+      boolean isGenerated = Boolean.parseBoolean(sourceRootTag.getAttributeValue(IS_GENERATED_ATTRIBUTE));
+      return getService().createSourceRootProperties(packagePrefix, isGenerated);
     }
 
     @Override
-    public void saveProperties(@NotNull JpsSimpleElement<JavaSourceRootProperties> properties, @NotNull Element sourceRootTag) {
+    public void saveProperties(@NotNull JavaSourceRootProperties properties, @NotNull Element sourceRootTag) {
       String isTestSource = Boolean.toString(getType().equals(JavaSourceRootType.TEST_SOURCE));
       sourceRootTag.setAttribute(JpsModuleRootModelSerializer.IS_TEST_SOURCE_ATTRIBUTE, isTestSource);
-      String packagePrefix = properties.getData().getPackagePrefix();
+      String packagePrefix = properties.getPackagePrefix();
       if (!packagePrefix.isEmpty()) {
         sourceRootTag.setAttribute(JpsModuleRootModelSerializer.PACKAGE_PREFIX_ATTRIBUTE, packagePrefix);
+      }
+      if (properties.isForGeneratedSources()) {
+        sourceRootTag.setAttribute(IS_GENERATED_ATTRIBUTE, Boolean.TRUE.toString());
       }
     }
   }

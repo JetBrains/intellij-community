@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlNSDescriptor;
-import com.intellij.xml.util.CheckDtdReferencesInspection;
+import com.intellij.xml.util.AddDtdDeclarationFix;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -65,14 +65,17 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
 
     }
 
+    @Override
     public PsiElement getElement() {
       return myElement;
     }
 
+    @Override
     public TextRange getRangeInElement() {
       return myRange;
     }
 
+    @Override
     @Nullable
     public PsiElement resolve() {
       XmlElementDescriptor descriptor = DtdResolveUtil.resolveElementReference(getCanonicalText(), myElement);
@@ -80,12 +83,14 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
     }
 
 
+    @Override
     @NotNull
     public String getCanonicalText() {
       final XmlElement nameElement = myNameElement;
       return nameElement != null ? nameElement.getText() : "";
     }
 
+    @Override
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
       myNameElement = ElementManipulators.getManipulator(myNameElement).handleContentChange(
         myNameElement,
@@ -96,14 +101,17 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
       return null;
     }
 
+    @Override
     public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
       return null;
     }
 
+    @Override
     public boolean isReferenceTo(PsiElement element) {
       return myElement.getManager().areElementsEquivalent(element, resolve());
     }
 
+    @Override
     @NotNull
     public Object[] getVariants() {
       final XmlNSDescriptor rootTagNSDescriptor = DtdResolveUtil.getNsDescriptor(myElement);
@@ -118,15 +126,17 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
       return psiFile;
     }
 
+    @Override
     public boolean isSoft() {
       return true;
     }
 
+    @Override
     public LocalQuickFix[] getQuickFixes() {
       if (!canHaveAdequateFix(getElement())) return LocalQuickFix.EMPTY_ARRAY;
 
       return new LocalQuickFix[] {
-        new CheckDtdReferencesInspection.AddDtdDeclarationFix(
+        new AddDtdDeclarationFix(
           "xml.dtd.create.dtd.element.intention.name",
           ELEMENT_DECLARATION_NAME,
           this
@@ -134,6 +144,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
       };
     }
 
+    @Override
     @NotNull
     public String getUnresolvedMessagePattern() {
       return XmlBundle.message("xml.dtd.unresolved.element.reference", getCanonicalText());
@@ -157,14 +168,17 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
       }
     }
 
+    @Override
     public PsiElement getElement() {
       return myElement;
     }
 
+    @Override
     public TextRange getRangeInElement() {
       return myRange;
     }
 
+    @Override
     @Nullable
     public PsiElement resolve() {
       XmlEntityDecl xmlEntityDecl = XmlEntityRefImpl.resolveEntity(
@@ -180,38 +194,45 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
       return xmlEntityDecl;
     }
 
+    @Override
     @NotNull
     public String getCanonicalText() {
       return myRange.substring(myElement.getText());
     }
 
+    @Override
     public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
       final PsiElement elementAt = myElement.findElementAt(myRange.getStartOffset());
       return ElementManipulators.getManipulator(elementAt).handleContentChange(elementAt, getRangeInElement(), newElementName);
     }
 
+    @Override
     public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
       return null;
     }
 
+    @Override
     public boolean isReferenceTo(PsiElement element) {
       return myElement.getManager().areElementsEquivalent(resolve(), element);
     }
 
+    @Override
     @NotNull
     public Object[] getVariants() {
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
+    @Override
     public boolean isSoft() {
       return false;
     }
 
+    @Override
     public LocalQuickFix[] getQuickFixes() {
       if (!canHaveAdequateFix(getElement())) return LocalQuickFix.EMPTY_ARRAY;
 
       return new LocalQuickFix[] {
-        new CheckDtdReferencesInspection.AddDtdDeclarationFix(
+        new AddDtdDeclarationFix(
           "xml.dtd.create.entity.intention.name",
           myElement.getText().charAt(myRange.getStartOffset() - 1) == '%' ?
           ENTITY_DECLARATION_NAME + " %":
@@ -221,6 +242,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
       };
     }
 
+    @Override
     @NotNull
     public String getUnresolvedMessagePattern() {
       return XmlBundle.message("xml.dtd.unresolved.entity.reference", getCanonicalText());
@@ -239,6 +261,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
     return true;
   }
 
+  @Override
   @NotNull
   public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull final ProcessingContext context) {
     XmlElement nameElement = null;
@@ -278,6 +301,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
 
   public ElementFilter getSystemReferenceFilter() {
     return new ElementFilter() {
+      @Override
       public boolean isAcceptable(Object element, PsiElement context) {
         final PsiElement parent = context.getParent();
         
@@ -301,6 +325,7 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
         return false;
       }
 
+      @Override
       public boolean isClassAcceptable(Class hintClass) {
         return true;
       }

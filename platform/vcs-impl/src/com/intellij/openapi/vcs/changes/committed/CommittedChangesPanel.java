@@ -40,11 +40,13 @@ import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.FilterComponent;
+import com.intellij.ui.LightColors;
 import com.intellij.util.AsynchConsumer;
 import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,6 +58,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vcs.changes.committed.CommittedChangesPanel");
@@ -67,10 +71,12 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
   private final RepositoryLocation myLocation;
   private int myMaxCount = 0;
   private final MyFilterComponent myFilterComponent = new MyFilterComponent();
+  private final JCheckBox myRegexCheckbox;
   private final List<Runnable> myShouldBeCalledOnDispose;
   private volatile boolean myDisposed;
   private volatile boolean myInLoad;
   private Consumer<String> myIfNotCachedReloader;
+  private boolean myChangesLoaded;
 
   public CommittedChangesPanel(Project project, final CommittedChangesProvider provider, final ChangeBrowserSettings settings,
                                @Nullable final RepositoryLocation location, @Nullable ActionGroup extraActions) {
@@ -95,7 +101,16 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
                                                                auxiliary != null ? auxiliary.getToolbarActions() : Collections.<AnAction>emptyList());
     toolbarPanel.add(toolBar.getComponent());
     toolbarPanel.add(Box.createHorizontalGlue());
+    myRegexCheckbox = new JCheckBox(VcsBundle.message("committed.changes.regex.title"));
+    myRegexCheckbox.setSelected(false);
+    myRegexCheckbox.getModel().addChangeListener(new ChangeListener() {
+      @Override
+      public void stateChanged(ChangeEvent e) {
+        myFilterComponent.filter();
+      }
+    });
     toolbarPanel.add(myFilterComponent);
+    toolbarPanel.add(myRegexCheckbox);
     myFilterComponent.setMinimumSize(myFilterComponent.getPreferredSize());
     myFilterComponent.setMaximumSize(myFilterComponent.getPreferredSize());
     myBrowser.setToolBar(toolbarPanel);
@@ -234,10 +249,44 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     });
   }
 
-  private static class FilterHelper {
+  private interface FilterHelper {
+    boolean filter(@NotNull final CommittedChangeList cl);
+  }
+
+  private class RegexFilterHelper implements FilterHelper {
+    private final Pattern myPattern;
+
+    RegexFilterHelper(@NotNull final String regex) {
+      Pattern pattern;
+      try {
+        pattern = Pattern.compile(regex);
+      } catch (PatternSyntaxException e) {
+        pattern = null;
+        myBrowser.getEmptyText().setText(VcsBundle.message("committed.changes.incorrect.regex.message"));
+      }
+      this.myPattern = pattern;
+    }
+
+    @Override
+    public boolean filter(@NotNull CommittedChangeList cl) {
+      return changeListMatches(cl);
+    }
+
+    private boolean changeListMatches(@NotNull CommittedChangeList cl) {
+      if (myPattern == null) {
+        return false;
+      }
+      boolean commentMatches = myPattern.matcher(cl.getComment()).find();
+      boolean committerMatches = myPattern.matcher(cl.getCommitterName()).find();
+      boolean revisionMatches = myPattern.matcher(Long.toString(cl.getNumber())).find();
+      return commentMatches || committerMatches || revisionMatches;
+    }
+  }
+
+  private static class WordMatchFilterHelper implements FilterHelper {
     private final String[] myParts;
 
-    FilterHelper(final String filterString) {
+    WordMatchFilterHelper(final String filterString) {
       myParts = filterString.split(" ");
       for(int i = 0; i < myParts.length; ++ i) {
         myParts [i] = myParts [i].toLowerCase();
@@ -266,14 +315,19 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     if (committedChangeLists == null) {
       return;
     }
-    final String emptyText;
-    if (reset) {
+    myChangesLoaded = !reset;
+    setEmptyMessage(myChangesLoaded);
+    myBrowser.setItems(committedChangeLists, CommittedChangesBrowserUseCase.COMMITTED);
+  }
+
+  private void setEmptyMessage(boolean changesLoaded) {
+    String emptyText;
+    if (!changesLoaded) {
       emptyText = VcsBundle.message("committed.changes.not.loaded.message");
     } else {
       emptyText = VcsBundle.message("committed.changes.empty.message");
     }
     myBrowser.getEmptyText().setText(emptyText);
-    myBrowser.setItems(committedChangeLists, CommittedChangesBrowserUseCase.COMMITTED);
   }
 
   public void setChangesFilter() {
@@ -301,6 +355,14 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
       runnable.run();
     }
     myDisposed = true;
+  }
+
+  private void setRegularFilterBackground() {
+    myFilterComponent.getTextEditor().setBackground(UIUtil.getTextFieldBackground());
+  }
+
+  private void setNotFoundFilterBackground() {
+    myFilterComponent.getTextEditor().setBackground(LightColors.RED);
   }
 
   private class MyFilterComponent extends FilterComponent implements ChangeListFilteringStrategy {
@@ -337,12 +399,23 @@ public class CommittedChangesPanel extends JPanel implements TypeSafeDataProvide
     }
     @NotNull
     public List<CommittedChangeList> filterChangeLists(List<CommittedChangeList> changeLists) {
-      final FilterHelper filterHelper = new FilterHelper(myFilterComponent.getFilter());
+      final FilterHelper filterHelper;
+      setEmptyMessage(myChangesLoaded);
+      if (myRegexCheckbox.isSelected()) {
+        filterHelper = new RegexFilterHelper(myFilterComponent.getFilter());
+      } else {
+        filterHelper = new WordMatchFilterHelper(myFilterComponent.getFilter());
+      }
       final List<CommittedChangeList> result = new ArrayList<CommittedChangeList>();
       for (CommittedChangeList list : changeLists) {
         if (filterHelper.filter(list)) {
           result.add(list);
         }
+      }
+      if (result.size() == 0 && !myFilterComponent.getFilter().isEmpty()) {
+        setNotFoundFilterBackground();
+      } else {
+        setRegularFilterBackground();
       }
       return result;
     }

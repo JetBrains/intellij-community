@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jetbrains.python.psi.types;
 
 import com.google.common.collect.ImmutableMap;
@@ -9,6 +24,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.hash.HashMap;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.intellij.psi.util.QualifiedName;
@@ -507,11 +523,22 @@ public class PyTypeParser {
     private ParseResult fromClassNameIndex(@NotNull Token<PyElementType> token) {
       final Collection<PyClass> classes = PyClassNameIndex.find(token.getText().toString(), myAnchor.getProject(), true);
       if (classes.size() == 1) {
-        final PyClassTypeImpl type = new PyClassTypeImpl(classes.iterator().next(), false);
-        type.assertValid("PyClassNameIndex.find().iterator().next()");
-        return new ParseResult(type, token.getRange());
+        return parseResultFromClass(token, classes.iterator().next());
+      }
+      for (PyClass cls : classes) {
+        final PsiFile file = cls.getContainingFile();
+        if (file != null && !PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(file)) {
+          return parseResultFromClass(token, cls);
+        }
       }
       return null;
+    }
+
+    @NotNull
+    private static ParseResult parseResultFromClass(@NotNull Token<PyElementType> token, @NotNull PyClass cls) {
+      final PyClassTypeImpl type = new PyClassTypeImpl(cls, false);
+      type.assertValid("PyClassNameIndex.find().iterator()");
+      return new ParseResult(type, token.getRange());
     }
   }
 

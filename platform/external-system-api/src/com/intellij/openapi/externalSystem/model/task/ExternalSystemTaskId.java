@@ -1,5 +1,6 @@
 package com.intellij.openapi.externalSystem.model.task;
 
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -7,7 +8,7 @@ import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Represents id of the task enqueued to Gradle API for execution. 
+ * Represents id of the task enqueued to external API for execution.
  *
  * @author Denis Zhdanov
  * @since 11/10/11 9:09 AM
@@ -19,18 +20,25 @@ public class ExternalSystemTaskId implements Serializable {
 
   @NotNull private final ExternalSystemTaskType myType;
   @NotNull private final String                 myProjectId;
+  @NotNull private final ProjectSystemId        myProjectSystemId;
 
   private final long myId;
 
-  private ExternalSystemTaskId(@NotNull ExternalSystemTaskType type, @NotNull String projectId, long taskId) {
+  private ExternalSystemTaskId(@NotNull ProjectSystemId projectSystemId, @NotNull ExternalSystemTaskType type, @NotNull String projectId, long taskId) {
     myType = type;
     myProjectId = projectId;
+    myProjectSystemId = projectSystemId;
     myId = taskId;
   }
 
   @NotNull
   public String getIdeProjectId() {
     return myProjectId;
+  }
+
+  @NotNull
+  public ProjectSystemId getProjectSystemId() {
+    return myProjectSystemId;
   }
 
   /**
@@ -41,13 +49,13 @@ public class ExternalSystemTaskId implements Serializable {
    * @return         distinct task id object of the given type
    */
   @NotNull
-  public static ExternalSystemTaskId create(@NotNull ExternalSystemTaskType type, @NotNull Project project) {
-    return create(type, getProjectId(project));
+  public static ExternalSystemTaskId create(@NotNull ProjectSystemId projectSystemId, @NotNull ExternalSystemTaskType type, @NotNull Project project) {
+    return create(projectSystemId, type, getProjectId(project));
   }
 
   @NotNull
-  public static ExternalSystemTaskId create(@NotNull ExternalSystemTaskType type, @NotNull String ideProjectId) {
-    return new ExternalSystemTaskId(type, ideProjectId, COUNTER.getAndIncrement());
+  public static ExternalSystemTaskId create(@NotNull ProjectSystemId projectSystemId, @NotNull ExternalSystemTaskType type, @NotNull String ideProjectId) {
+    return new ExternalSystemTaskId(projectSystemId, type, ideProjectId, COUNTER.getAndIncrement());
   }
 
   @NotNull

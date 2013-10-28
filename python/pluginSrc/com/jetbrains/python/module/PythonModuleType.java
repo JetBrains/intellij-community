@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jetbrains.python.module;
 
 import com.intellij.facet.impl.DefaultFacetsProvider;
@@ -24,13 +39,16 @@ public class PythonModuleType extends PythonModuleTypeBase<PythonModuleBuilderBa
   @Override
   public ModuleWizardStep[] createWizardSteps(@NotNull final WizardContext wizardContext,
                                               @NotNull final PythonModuleBuilderBase moduleBuilder,
-                                              @NotNull final ModulesProvider modulesProvider) {
+                                              @NotNull final ModulesProvider modulesProvider,
+                                              boolean forNewWizard) {
     ArrayList<ModuleWizardStep> steps = new ArrayList<ModuleWizardStep>();
     final Project project = getProject(wizardContext);
     steps.add(new PythonSdkSelectStep(moduleBuilder, "reference.project.structure.sdk.python", project));
-    final List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getProviders(getInstance(), DefaultFacetsProvider.INSTANCE);
-    if (!providers.isEmpty()) {
-      steps.add(new SupportForFrameworksStep(wizardContext, moduleBuilder, LibrariesContainerFactory.createContainer(project)));
+    if (!forNewWizard) {
+      final List<FrameworkSupportInModuleProvider> providers = FrameworkSupportUtil.getProviders(getInstance(), DefaultFacetsProvider.INSTANCE);
+      if (!providers.isEmpty()) {
+        steps.add(new SupportForFrameworksStep(wizardContext, moduleBuilder, LibrariesContainerFactory.createContainer(project)));
+      }
     }
     return steps.toArray(new ModuleWizardStep[steps.size()]);
   }

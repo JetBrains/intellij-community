@@ -76,6 +76,7 @@ public class JobLauncherImpl extends JobLauncher {
   };
 
   private static final ForkJoinPool pool = new ForkJoinPool(JobSchedulerImpl.CORES_COUNT, FACTORY, null, false);
+  static final int CORES_FORK_THRESHOLD = 1;
 
   private static <T> boolean invokeConcurrentlyForAll(@NotNull final List<T> things,
                                                       boolean runInReadAction,
@@ -121,7 +122,7 @@ public class JobLauncherImpl extends JobLauncher {
     // supply our own indicator even if we haven't given one - to support cancellation
     final ProgressIndicator wrapper = progress == null ? new ProgressIndicatorBase() : new SensitiveProgressWrapper(progress);
 
-    if (things.size() <= 1 || JobSchedulerImpl.CORES_COUNT <= 2) {
+    if (things.size() <= 1 || JobSchedulerImpl.CORES_COUNT <= CORES_FORK_THRESHOLD) {
       final AtomicBoolean result = new AtomicBoolean(true);
       ProgressManager.getInstance().executeProcessUnderProgress(new Runnable() {
         @Override

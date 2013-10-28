@@ -53,7 +53,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrContinueSta
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -63,7 +62,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEn
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrVariableDeclarationOwner;
 
@@ -83,24 +81,6 @@ public abstract class GroovyRefactoringUtil {
       TokenSets.KEYWORDS.getTypes(), StringUtil.createToStringFunction(IElementType.class));
 
   private static final String[] finalModifiers = new String[]{PsiModifier.FINAL};
-
-  @Nullable
-  public static PsiElement getEnclosingContainer(PsiElement place) {
-    PsiElement parent = place.getParent();
-    while (true) {
-      if (parent == null) {
-        return null;
-      }
-      if (parent instanceof GrDeclarationHolder && !(parent instanceof GrClosableBlock && parent.getParent() instanceof GrStringInjection)) {
-        return parent;
-      }
-      if (parent instanceof GrLoopStatement) {
-        return parent;
-      }
-
-      parent = parent.getParent();
-    }
-  }
 
   @Nullable
   public static <T extends PsiElement> T findElementInRange(final PsiFile file,

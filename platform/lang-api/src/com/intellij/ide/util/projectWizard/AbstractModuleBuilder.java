@@ -35,7 +35,7 @@ public abstract class AbstractModuleBuilder extends ProjectBuilder {
 
   /** @deprecated Will be removed soon */
   public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider, boolean forNewWizard) {
-    return forNewWizard ? ModuleWizardStep.EMPTY_ARRAY : createWizardSteps(wizardContext, modulesProvider);
+    return createWizardSteps(wizardContext, modulesProvider);
   }
 
   @Nullable

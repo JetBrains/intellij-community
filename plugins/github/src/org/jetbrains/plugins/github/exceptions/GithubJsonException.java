@@ -20,7 +20,7 @@ import java.io.IOException;
 /**
  * @author Aleksey Pivovarov
  */
-public class GithubJsonException extends IOException {
+public class GithubJsonException extends GithubConfusingException {
   public GithubJsonException() {
     super();
   }

@@ -19,14 +19,15 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager
 import com.intellij.refactoring.listeners.MoveMemberListener
+import com.intellij.refactoring.memberPullUp.PullUpProcessor
 import com.intellij.refactoring.util.DocCommentPolicy
+import com.intellij.refactoring.util.classMembers.MemberInfo
 import com.intellij.util.ui.UIUtil
 import junit.framework.Assert
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember
-import org.jetbrains.plugins.groovy.refactoring.classMembers.GrMemberInfo
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * Created by Max Medvedev on 8/17/13
@@ -46,9 +47,9 @@ class GrPullUpTest extends LightGroovyTestCase {
   }
 
   public void testQualifiedReference() {     // IDEADEV-25008
-    doTest(new MemberDescriptor("x", PsiField),
-           new MemberDescriptor("getX", PsiMethod),
-           new MemberDescriptor("setX", PsiMethod));
+    doTest(new MemberDescriptor("getX", PsiMethod),
+           new MemberDescriptor("setX", PsiMethod),
+           new MemberDescriptor("x", PsiField));
   }
 
   public void testPullUpInheritedStaticClasses() {
@@ -179,7 +180,7 @@ class GrPullUpTest extends LightGroovyTestCase {
       assertTrue(interfaces[0].isWritable());
       targetClass = interfaces[0];
     }
-    GrMemberInfo[] infos = findMembers(sourceClass, membersToFind);
+    MemberInfo[] infos = findMembers(sourceClass, membersToFind);
 
     final int[] countMoved = [0];
     final MoveMemberListener listener = new MoveMemberListener() {
@@ -190,7 +191,7 @@ class GrPullUpTest extends LightGroovyTestCase {
       }
     };
     JavaRefactoringListenerManager.getInstance(getProject()).addMoveMembersListener(listener);
-    final GrPullUpHelper helper = new GrPullUpHelper(sourceClass, targetClass, infos, new DocCommentPolicy(DocCommentPolicy.ASIS));
+    final PullUpProcessor helper = new PullUpProcessor(sourceClass, targetClass, infos, new DocCommentPolicy(DocCommentPolicy.ASIS));
     helper.run();
     UIUtil.dispatchAllInvocationEvents();
     JavaRefactoringListenerManager.getInstance(getProject()).removeMoveMembersListener(listener);
@@ -217,8 +218,8 @@ class GrPullUpTest extends LightGroovyTestCase {
     }
   }
 
-  public static GrMemberInfo[] findMembers(final PsiClass sourceClass, final MemberDescriptor... membersToFind) {
-    GrMemberInfo[] infos = new GrMemberInfo[membersToFind.length]
+  public static MemberInfo[] findMembers(final PsiClass sourceClass, final MemberDescriptor... membersToFind) {
+    MemberInfo[] infos = new MemberInfo[membersToFind.length]
     for (int i = 0; i < membersToFind.length; i++) {
       final Class<? extends PsiMember> clazz = membersToFind[i].myClass
       final String name = membersToFind[i].myName
@@ -251,7 +252,7 @@ class GrPullUpTest extends LightGroovyTestCase {
 
       assertNotNull(member)
       assertInstanceOf(member, GrMember)
-      infos[i] = new GrMemberInfo(member as GrMember, overrides, refList)
+      infos[i] = new MemberInfo(member as GrMember, overrides, refList)
       infos[i].setToAbstract(membersToFind[i].myAbstract)
     }
     return infos

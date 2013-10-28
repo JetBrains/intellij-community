@@ -57,6 +57,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.DialogUtil;
@@ -107,7 +108,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public static final Comparator<Usage> USAGE_COMPARATOR = new Comparator<Usage>() {
     @Override
     public int compare(final Usage o1, final Usage o2) {
-      if (o1 == NULL_NODE || o2 == NULL_NODE) return -1;
+      if (o1 == o2) return 0;
+      if (o1 == NULL_NODE) return -1;
+      if (o2 == NULL_NODE) return 1;
       if (o1 instanceof Comparable && o2 instanceof Comparable) {
         final int selfcompared = ((Comparable<Usage>)o1).compareTo(o2);
         if (selfcompared != 0) return selfcompared;
@@ -126,7 +129,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
         return 0;
       }
-      return -1;
+      return o1.toString().compareTo(o2.toString());
     }
   };
   @NonNls private static final String HELP_ID = "ideaInterface.find";
@@ -438,7 +441,22 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
       }
     });
 
-    //TODO: install speed search. Not in openapi though. It makes sense to create a common TreeEnchancer service.
+    TreeUIHelper.getInstance().installTreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
+      @Override
+      public String convert(TreePath o) {
+        Object value = o.getLastPathComponent();
+        TreeCellRenderer renderer = myTree.getCellRenderer();
+        if (renderer instanceof UsageViewTreeCellRenderer) {
+          UsageViewTreeCellRenderer coloredRenderer = (UsageViewTreeCellRenderer)renderer;
+          coloredRenderer.clear();
+          coloredRenderer.customizeCellRenderer(null, value, false, false, false, 0, false);
+          return coloredRenderer.getCharSequence(true).toString();
+        }
+        else {
+          return value == null? null : value.toString();
+        }
+      }
+    }, true);
   }
 
   @NotNull

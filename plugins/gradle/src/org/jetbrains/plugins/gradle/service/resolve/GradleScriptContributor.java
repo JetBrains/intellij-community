@@ -49,7 +49,7 @@ public class GradleScriptContributor extends NonCodeMembersContributor {
     }
 
     PsiFile file = aClass.getContainingFile();
-    if (file == null || !file.getName().endsWith(GradleConstants.EXTENSION)) {
+    if (file == null || !file.getName().endsWith(GradleConstants.EXTENSION) || GradleConstants.SETTINGS_FILE_NAME.equals(file.getName())) {
       return;
     }
 

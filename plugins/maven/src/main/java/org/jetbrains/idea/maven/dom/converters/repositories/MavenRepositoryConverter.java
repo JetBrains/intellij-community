@@ -25,6 +25,7 @@ import com.intellij.psi.impl.UrlPsiReference;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.ResolvingConverter;
+import icons.MavenIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +53,7 @@ public abstract class MavenRepositoryConverter extends ResolvingConverter<String
     @Override
     public LookupElement createLookupElement(String s) {
       return LookupElementBuilder.create(s)
-        .withIcon(icons.MavenIcons.MavenPlugin)
+        .withIcon(MavenIcons.MavenPlugin)
         .withTailText(" (" + MavenRepositoriesProvider.getInstance().getRepositoryUrl(s) + ")", true);
     }
   }

@@ -25,6 +25,7 @@ import com.intellij.codeInsight.hint.PriorityQuestionAction;
 import com.intellij.codeInsight.hint.ScrollAwareHint;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.impl.config.IntentionActionWrapper;
 import com.intellij.codeInsight.intention.impl.config.IntentionManagerSettings;
 import com.intellij.codeInsight.intention.impl.config.IntentionSettingsConfigurable;
 import com.intellij.icons.AllIcons;
@@ -46,6 +47,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.BaseRefactoringIntentionAction;
@@ -525,36 +527,24 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     }
   }
 
-  public static class EnableDisableIntentionAction implements IntentionAction{
-    private final String myActionFamilyName;
+  public static class EnableDisableIntentionAction extends AbstractEditIntentionSettingsAction {
     private final IntentionManagerSettings mySettings = IntentionManagerSettings.getInstance();
     private final IntentionAction myAction;
 
     public EnableDisableIntentionAction(IntentionAction action) {
-      myActionFamilyName = action.getFamilyName();
+      super(action);
       myAction = action;
       // needed for checking errors in user written actions
       //noinspection ConstantConditions
-      LOG.assertTrue(myActionFamilyName != null, "action "+action.getClass()+" family returned null");
+      LOG.assertTrue(myFamilyName != null, "action "+action.getClass()+" family returned null");
     }
 
     @Override
     @NotNull
     public String getText() {
       return mySettings.isEnabled(myAction) ?
-             CodeInsightBundle.message("disable.intention.action", myActionFamilyName) :
-             CodeInsightBundle.message("enable.intention.action", myActionFamilyName);
-    }
-
-    @Override
-    @NotNull
-    public String getFamilyName() {
-      return getText();
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return true;
+             CodeInsightBundle.message("disable.intention.action", myFamilyName) :
+             CodeInsightBundle.message("enable.intention.action", myFamilyName);
     }
 
     @Override
@@ -563,38 +553,20 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
     }
 
     @Override
-    public boolean startInWriteAction() {
-      return false;
-    }
-
-    @Override
     public String toString() {
       return getText();
     }
   }
 
-  public static class EditIntentionSettingsAction implements IntentionAction, HighPriorityAction {
-    private final String myFamilyName;
-
+  public static class EditIntentionSettingsAction extends AbstractEditIntentionSettingsAction implements HighPriorityAction {
     public EditIntentionSettingsAction(IntentionAction action) {
-      myFamilyName = action.getFamilyName();
+      super(action);
     }
 
     @NotNull
     @Override
     public String getText() {
       return "Edit intention settings";
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return getText();
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return true;
     }
 
     @Override
@@ -611,6 +583,28 @@ public class IntentionHintComponent extends JPanel implements Disposable, Scroll
           });
         }
       });
+    }
+  }
+
+  private static abstract class AbstractEditIntentionSettingsAction implements IntentionAction {
+    protected final String myFamilyName;
+    private final boolean myDisabled;
+
+    public AbstractEditIntentionSettingsAction(IntentionAction action) {
+      myFamilyName = action.getFamilyName();
+      myDisabled = action instanceof IntentionActionWrapper &&
+                   Comparing.equal(action.getFamilyName(), ((IntentionActionWrapper)action).getFullFamilyName());
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getText();
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      return !myDisabled;
     }
 
     @Override

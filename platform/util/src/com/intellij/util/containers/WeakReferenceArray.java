@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +117,7 @@ public class WeakReferenceArray<T> {
     return doCompress(myReferences, trackIndex);
   }
 
-  private int doCompress(MyWeakReference[] references, int trackIndex) {
+  private int doCompress(MyWeakReference[] newReferences, int trackIndex) {
     myCorpseCounter = 0;
     int validIndex = 0;
     int newIndex = -1;
@@ -141,7 +141,7 @@ public class WeakReferenceArray<T> {
       else {
         LOG.assertTrue(validIndex == i);
       }
-      aliveReference.moveTo(myReferences, references, validIndex);
+      aliveReference.moveTo(myReferences, newReferences, validIndex);
       validIndex++;
     }
 

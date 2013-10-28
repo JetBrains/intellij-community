@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ConcurrentSoftValueHashMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.xmlb.annotations.*;
@@ -37,12 +37,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
 
 class BeanBinding implements Binding {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xmlb.BeanBinding");
 
-  private static final ConcurrentHashMap<Class, SoftReference<List<Accessor>>> ourAccessorCache = new ConcurrentHashMap<Class, SoftReference<List<Accessor>>>();
+  private static final Map<Class, List<Accessor>> ourAccessorCache = new ConcurrentSoftValueHashMap<Class, List<Accessor>>();
 
   private final String myTagName;
   private final Map<Binding, Accessor> myPropertyBindings = new HashMap<Binding, Accessor>();
@@ -202,8 +201,7 @@ class BeanBinding implements Binding {
 
   @NotNull
   static List<Accessor> getAccessors(Class<?> aClass) {
-    final SoftReference<List<Accessor>> reference = ourAccessorCache.get(aClass);
-    List<Accessor> accessors = reference == null ? null : reference.get();
+    List<Accessor> accessors = ourAccessorCache.get(aClass);
     if (accessors != null) {
       return accessors;
     }
@@ -215,7 +213,7 @@ class BeanBinding implements Binding {
     }
     collectFieldAccessors(aClass, accessors);
 
-    ourAccessorCache.put(aClass, new SoftReference<List<Accessor>>(accessors));
+    ourAccessorCache.put(aClass, accessors);
 
     return accessors;
   }

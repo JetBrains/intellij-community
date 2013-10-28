@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -257,7 +257,7 @@ class DocumentFoldingInfo implements JDOMExternalizable, CodeFoldingState {
               continue;
             }
             PsiElement restoredElement = FoldingPolicy.restoreBySignature(psiFile, signature);
-            if (restoredElement != null) {
+            if (restoredElement != null && restoredElement.isValid()) {
               myPsiElements.add(SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(restoredElement));
               FoldingInfo fi = new FoldingInfo(DEFAULT_PLACEHOLDER, expanded);
               restoredElement.putUserData(FOLDING_INFO_KEY, fi);

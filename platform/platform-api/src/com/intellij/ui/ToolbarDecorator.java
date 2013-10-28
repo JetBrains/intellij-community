@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@
  */
 package com.intellij.ui;
 
-import com.intellij.ide.DataManager;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.ActionToolbarPosition;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -25,7 +27,6 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,19 +44,7 @@ import java.util.List;
  * @see #createDecorator(javax.swing.JTree)
  */
 @SuppressWarnings("UnusedDeclaration")
-public abstract class ToolbarDecorator implements DataProvider, CommonActionsPanel.ListenerFactory {
-  private static final Comparator<AnAction> ACTION_BUTTONS_SORTER = new Comparator<AnAction>() {
-    @Override
-    public int compare(AnAction a1, AnAction a2) {
-      if (a1 instanceof AnActionButton && a2 instanceof AnActionButton) {
-        final JComponent c1 = ((AnActionButton)a1).getContextComponent();
-        final JComponent c2 = ((AnActionButton)a2).getContextComponent();
-        return c1.hasFocus() ? -1 : c2.hasFocus() ? 1 : 0;
-      }
-      return 0;
-    }
-  };
-
+public abstract class ToolbarDecorator implements CommonActionsPanel.ListenerFactory {
   protected Border myToolbarBorder;
   protected boolean myAddActionEnabled;
   protected boolean myEditActionEnabled;
@@ -340,7 +329,6 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
     updateButtons();
     installDnD();
     panel.putClientProperty(ActionToolbar.ACTION_TOOLBAR_PROPERTY_KEY, myActionsPanel.getComponent(0));
-    DataManager.registerDataProvider(panel, this);
     if (myAsUsualTopToolbar) {
       scrollPane.setBorder(IdeBorderFactory.createBorder(SideBorder.ALL));
     } else {
@@ -380,14 +368,6 @@ public abstract class ToolbarDecorator implements DataProvider, CommonActionsPan
   protected abstract void installDnDSupport();
 
   protected abstract boolean isModelEditable();
-
-  @Override
-  public Object getData(@NonNls String dataId) {
-    if (PlatformDataKeys.ACTIONS_SORTER.is(dataId)) {
-      return ACTION_BUTTONS_SORTER;
-    }
-    return null;
-  }
 
   private Object getPlacement() {
     switch (myToolbarPosition) {

@@ -16,6 +16,7 @@
 package org.jetbrains.jps.javac;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.CanceledStatus;
@@ -24,10 +25,8 @@ import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.LineOutputWriter;
 
 import javax.tools.*;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -79,9 +78,7 @@ public class JavacMain {
           Class.forName("com.sun.tools.javac.api.JavacTool", false, JavacMain.class.getClassLoader());
         }
         catch (Throwable ex) {
-          final ByteArrayOutputStream out = new ByteArrayOutputStream();
-          ex.printStackTrace(new PrintStream(out));
-          message = message + ":\n" + out.toString();
+          message = message + ":\n" + ExceptionUtil.getThrowableText(ex);
         }
         diagnosticConsumer.report(new PlainMessageDiagnostic(Diagnostic.Kind.ERROR, message));
         return false;
@@ -392,7 +389,6 @@ public class JavacMain {
     }
   }
 
-  private static boolean ourCleanupFailed = false;
   private static final class NameTableCleanupDataHolder {
     static final Object emptyList;
     static final Field freelistField;
@@ -403,7 +399,7 @@ public class JavacMain {
         if (loader == null) {
           throw new RuntimeException("no tools provided");
         }
-        
+
         final Class<?> listClass = Class.forName("com.sun.tools.javac.util.List", true, loader);
         final Method nilMethod = listClass.getDeclaredMethod("nil");
         emptyList = nilMethod.invoke(null);
@@ -420,6 +416,9 @@ public class JavacMain {
         freelistRef.setAccessible(true);
         freelistField = freelistRef;
       }
+      catch(RuntimeException e) {
+        throw e;
+      }
       catch (Exception e) {
         throw new RuntimeException(e);
       }
@@ -428,12 +427,14 @@ public class JavacMain {
 
   private static void cleanupJavacNameTable() {
     try {
-      if (!ourCleanupFailed) {
-        NameTableCleanupDataHolder.freelistField.set(null, NameTableCleanupDataHolder.emptyList);
+      final Field freelistField = NameTableCleanupDataHolder.freelistField;
+      final Object emptyList = NameTableCleanupDataHolder.emptyList;
+        // both parameters should be non-null if properly initialized
+      if (freelistField != null && emptyList != null) {
+        freelistField.set(null, emptyList);
       }
     }
-    catch (Throwable e) {
-      ourCleanupFailed = true;
+    catch (Throwable ignored) {
     }
   }
 

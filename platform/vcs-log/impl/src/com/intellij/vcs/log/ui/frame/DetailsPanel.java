@@ -15,10 +15,11 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.graph.elements.Node;
-import com.intellij.vcs.log.ui.VcsLogColorManager;
+import com.intellij.vcs.log.graph.render.CommitCell;
 import com.intellij.vcs.log.graph.render.PrintParameters;
+import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.RefPainter;
+import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -74,25 +76,21 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
   public void valueChanged(@Nullable ListSelectionEvent notUsed) {
     int[] rows = myGraphTable.getSelectedRows();
     if (rows.length < 1) {
-      myLoadingPanel.stopLoading();
-      ((CardLayout)getLayout()).show(this, MESSAGE_LAYER);
-      myMessagePanel.setText("Nothing selected");
+      showMessage("Nothing selected");
     }
     else if (rows.length > 1) {
-      myLoadingPanel.stopLoading();
-      ((CardLayout)getLayout()).show(this, MESSAGE_LAYER);
-      myMessagePanel.setText("Several commits selected");
+      showMessage("Several commits selected");
     }
     else {
       ((CardLayout)getLayout()).show(this, STANDARD_LAYER);
-      Node node = myLogDataHolder.getDataPack().getNode(rows[0]);
-      if (node == null) {
-        LOG.info("Couldn't find node for row " + rows[0] +
-                 ". All nodes: " + myLogDataHolder.getDataPack().getGraphModel().getGraph().getNodeRows());
+      CommitCell cell = (CommitCell)myGraphTable.getModel().getValueAt(rows[0], AbstractVcsLogTableModel.COMMIT_COLUMN);
+      Hash hash = cell.getHash();
+      if (hash == null) {
+        showMessage("Nothing selected");
         return;
       }
-      Hash hash = node.getCommitHash();
-      VcsFullCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(node);
+
+      VcsFullCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(hash);
       if (commitData instanceof LoadingDetails) {
         myLoadingPanel.startLoading();
         myDataPanel.setData(null);
@@ -101,14 +99,20 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       else {
         myLoadingPanel.stopLoading();
         myDataPanel.setData(commitData);
-        myRefsPanel.setRefs(sortRefs(hash, node.getBranch().getRepositoryRoot()));
+        myRefsPanel.setRefs(sortRefs(hash, commitData.getRoot()));
       }
     }
   }
 
+  private void showMessage(String text) {
+    myLoadingPanel.stopLoading();
+    ((CardLayout)getLayout()).show(this, MESSAGE_LAYER);
+    myMessagePanel.setText(text);
+  }
+
   @NotNull
   private List<VcsRef> sortRefs(@NotNull Hash hash, @NotNull VirtualFile root) {
-    List<VcsRef> refs = myLogDataHolder.getDataPack().getRefsModel().refsToCommit(hash);
+    Collection<VcsRef> refs = myLogDataHolder.getDataPack().getRefsModel().refsToCommit(hash);
     return myLogDataHolder.getLogProvider(root).getReferenceManager().sort(refs);
   }
 

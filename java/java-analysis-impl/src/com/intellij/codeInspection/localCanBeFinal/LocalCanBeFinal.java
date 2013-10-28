@@ -197,8 +197,7 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
 
     PsiVariable[] psiVariables = result.toArray(new PsiVariable[result.size()]);
     for (PsiVariable psiVariable : psiVariables) {
-      if (!isReportParameters() && psiVariable instanceof PsiParameter || !isReportVariables() && psiVariable instanceof PsiLocalVariable ||
-          psiVariable.hasModifierProperty(PsiModifier.FINAL)) {
+      if (shouldBeIgnored(psiVariable)) {
         result.remove(psiVariable);
       }
 
@@ -225,8 +224,8 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
     }
 
     for (PsiVariable variable : result) {
-      final PsiIdentifier nameIdenitier = variable.getNameIdentifier();
-      PsiElement problemElement = nameIdenitier != null ? nameIdenitier : variable;
+      final PsiIdentifier nameIdentifier = variable.getNameIdentifier();
+      PsiElement problemElement = nameIdentifier != null ? nameIdentifier : variable;
       if (variable instanceof PsiParameter && !(((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement)) {
         problems.add(manager.createProblemDescriptor(problemElement,
                                                      InspectionsBundle.message("inspection.can.be.local.parameter.problem.descriptor"),
@@ -240,6 +239,23 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
     }
 
     return problems;
+  }
+
+  private boolean shouldBeIgnored(PsiVariable psiVariable) {
+    if (psiVariable.hasModifierProperty(PsiModifier.FINAL)) return true;
+    return isLocalVariable(psiVariable) ? !isReportVariables() : !isReportParameters();
+  }
+
+  private static boolean isLocalVariable(PsiVariable variable) {
+    if (variable instanceof PsiLocalVariable) {
+      return true;
+    }
+    if (!(variable instanceof PsiParameter)) {
+      return false;
+    }
+    final PsiParameter parameter = (PsiParameter)variable;
+    final PsiElement declarationScope = parameter.getDeclarationScope();
+    return !(declarationScope instanceof PsiMethod) && !(declarationScope instanceof PsiLambdaExpression);
   }
 
   @Override

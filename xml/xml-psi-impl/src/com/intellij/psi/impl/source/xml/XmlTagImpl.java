@@ -89,7 +89,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   private volatile long myDescriptorModCount = -1;
   private volatile long myExtResourcesModCount = -1;
 
-  private volatile boolean myHaveNamespaceDeclarations = false;
+  private volatile boolean myHasNamespaceDeclarations = false;
   private volatile BidirectionalMap<String, String> myNamespaceMap = null;
   @NonNls private static final String XML_NS_PREFIX = "xml";
 
@@ -135,7 +135,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     myDescriptorModCount = -1;
     myAttributes = null;
     myAttributeValueMap = null;
-    myHaveNamespaceDeclarations = false;
+    myHasNamespaceDeclarations = false;
     myValue = null;
     myNSDescriptorsMap = null;
     super.clearCaches();
@@ -584,7 +584,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
           XmlAttribute attribute = (XmlAttribute)element;
           result.add(attribute);
           cacheOneAttributeValue(attribute.getName(), attribute.getValue(), attributesValueMap);
-          myHaveNamespaceDeclarations = myHaveNamespaceDeclarations || attribute.isNamespaceDeclaration();
+          myHasNamespaceDeclarations = myHasNamespaceDeclarations || attribute.isNamespaceDeclaration();
         }
         else if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_TAG_END) {
           return false;
@@ -866,7 +866,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   @Nullable
   private BidirectionalMap<String, String> computeNamespaceMap(PsiElement parent) {
     BidirectionalMap<String, String> map = null;
-    if (hasNamespaceDeclarations()) {
+    boolean hasNamespaceDeclarations = hasNamespaceDeclarations();
+    if (hasNamespaceDeclarations) {
       map = new BidirectionalMap<String, String>();
       final XmlAttribute[] attributes = getAttributes();
 
@@ -891,12 +892,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     if (parent instanceof XmlDocument) {
       final XmlExtension extension = XmlExtension.getExtensionByElement(parent);
       if (extension != null) {
-        final String[][] defaultNamespace = extension.getNamespacesFromDocument((XmlDocument)parent, map != null);
-        if (defaultNamespace != null) {
+        final String[][] namespacesFromDocument = extension.getNamespacesFromDocument((XmlDocument)parent, hasNamespaceDeclarations);
+        if (namespacesFromDocument != null) {
           if (map == null) {
             map = new BidirectionalMap<String, String>();
           }
-          for (final String[] prefix2ns : defaultNamespace) {
+          for (final String[] prefix2ns : namespacesFromDocument) {
             map.put(prefix2ns[0], getRealNs(prefix2ns[1]));
           }
         }
@@ -930,7 +931,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   @Override
   public boolean hasNamespaceDeclarations() {
     getAttributes();
-    return myHaveNamespaceDeclarations;
+    return myHasNamespaceDeclarations;
   }
 
   @Override

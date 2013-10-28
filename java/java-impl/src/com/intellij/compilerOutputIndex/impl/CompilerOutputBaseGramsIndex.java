@@ -3,6 +3,7 @@ package com.intellij.compilerOutputIndex.impl;
 import com.google.common.collect.HashMultiset;
 import com.google.common.collect.Multiset;
 import com.intellij.compilerOutputIndex.api.indexer.CompilerOutputBaseIndex;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.io.KeyDescriptor;
@@ -14,8 +15,8 @@ import java.util.TreeSet;
  */
 public abstract class CompilerOutputBaseGramsIndex<K> extends CompilerOutputBaseIndex<K, Multiset<MethodIncompleteSignature>> {
 
-  protected CompilerOutputBaseGramsIndex(final KeyDescriptor<K> keyDescriptor) {
-    super(keyDescriptor, new GuavaHashMultiSetExternalizer<MethodIncompleteSignature>(MethodIncompleteSignature.createKeyDescriptor()));
+  protected CompilerOutputBaseGramsIndex(final KeyDescriptor<K> keyDescriptor, final Project project) {
+    super(keyDescriptor, new GuavaHashMultiSetExternalizer<MethodIncompleteSignature>(MethodIncompleteSignature.createKeyDescriptor()), project);
   }
 
   public TreeSet<UsageIndexValue> getValues(final K key) {

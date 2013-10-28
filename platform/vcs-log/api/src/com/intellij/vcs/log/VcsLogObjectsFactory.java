@@ -1,6 +1,7 @@
 package com.intellij.vcs.log;
 
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -23,11 +24,16 @@ public interface VcsLogObjectsFactory {
 
   @NotNull
   VcsShortCommitDetails createShortDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp,
-                                           @NotNull String subject, @NotNull String authorName);
+                                           VirtualFile root, @NotNull String subject, @NotNull String authorName);
 
   @NotNull
-  VcsFullCommitDetails createFullDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long authorTime, @NotNull String subject,
+  VcsFullCommitDetails createFullDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long authorTime, VirtualFile root,
+                                         @NotNull String subject,
                                          @NotNull String authorName, @NotNull String authorEmail, @NotNull String message,
                                          @NotNull String committerName,
                                          @NotNull String committerEmail, long commitTime, @NotNull List<Change> changes);
+
+  @NotNull
+  VcsUser createUser(@NotNull String name);
+
 }

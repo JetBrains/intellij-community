@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.completion.NormalCompletionDfaTest;
 import com.intellij.codeInsight.completion.SmartTypeCompletionDfaTest;
-import com.intellij.codeInsight.slice.SliceBackwardTest;
-import com.intellij.codeInsight.slice.SliceTreeTest;
+import com.intellij.slicer.SliceBackwardTest;
+import com.intellij.slicer.SliceTreeTest;
 import junit.framework.Test;
 import junit.framework.TestSuite;
 

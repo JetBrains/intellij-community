@@ -38,6 +38,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitPlatformFacade;
@@ -47,7 +48,6 @@ import git4idea.commands.GitSimpleHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.history.NewGitUsersComponent;
-import git4idea.history.browser.GitHeavyCommit;
 import git4idea.i18n.GitBundle;
 import git4idea.push.GitPusher;
 import git4idea.repo.GitRepositoryFiles;
@@ -680,20 +680,26 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       myAmend.setToolTipText(GitBundle.getString("commit.amend.tooltip"));
       myPanel.add(myAmend, c);
 
+      myPreviousMessage = myCheckinPanel.getCommitMessage();
+
       myAmend.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
           if (myAmend.isSelected()) {
-            if (myAmendedMessage != null) { // checkbox is selected not the first time
-              substituteCommitMessage(myAmendedMessage);
-            }
-            else {
-              loadMessageInModalTask(project);
+            if (myPreviousMessage.equals(myCheckinPanel.getCommitMessage())) { // if user has already typed something, don't revert it
+              if (myAmendedMessage == null) {
+                loadMessageInModalTask(project);
+              }
+              else { // checkbox is selected not the first time
+                substituteCommitMessage(myAmendedMessage);
+              }
             }
           }
           else {
-            myAmendedMessage = myCheckinPanel.getCommitMessage(); // save if user accidentally deselected amended message
-            myCheckinPanel.setCommitMessage(myPreviousMessage);
+            // there was the amended message, but user has changed it => not reverting
+            if (myCheckinPanel.getCommitMessage().equals(myAmendedMessage)) {
+              myCheckinPanel.setCommitMessage(myPreviousMessage);
+            }
           }
         }
       });
@@ -710,6 +716,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
           }, "Reading commit message...", false, project);
         if (!StringUtil.isEmptyOrSpaces(messageFromGit)) {
           substituteCommitMessage(messageFromGit);
+          myAmendedMessage = messageFromGit;
         }
       }
       catch (VcsException e) {
@@ -812,9 +819,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     @Override
     public void onChangeListSelected(LocalChangeList list) {
       Object data = list.getData();
-      if (data instanceof GitHeavyCommit) {
-        GitHeavyCommit commit = (GitHeavyCommit)data;
-        String author = String.format("%s <%s>", commit.getAuthor(), commit.getAuthorEmail());
+      if (data instanceof VcsFullCommitDetails) {
+        VcsFullCommitDetails commit = (VcsFullCommitDetails)data;
+        String author = String.format("%s <%s>", commit.getAuthorName(), commit.getAuthorEmail());
         myAuthor.getEditor().setItem(author);
         myAuthorDate = new Date(commit.getAuthorTime());
       }

@@ -39,6 +39,9 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.idea.maven.utils.Url;
+import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
+import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
@@ -130,11 +133,16 @@ public class MavenRootModelAdapter {
     }
   }
 
-  public void addSourceFolder(String path, final JpsModuleSourceRootType<?> rootType) {
-    addSourceFolder(path, rootType, false);
+  public <P extends JpsElement> void addSourceFolder(String path, final JpsModuleSourceRootType<P> rootType) {
+    addSourceFolder(path, rootType, false, rootType.createDefaultProperties());
   }
 
-  public void addSourceFolder(String path, final JpsModuleSourceRootType<?> rootType, boolean ifNotEmpty) {
+  public void addGeneratedJavaSourceFolder(String path, JavaSourceRootType rootType) {
+    addSourceFolder(path, rootType, true, JpsJavaExtensionService.getInstance().createSourceRootProperties("", true));
+  }
+
+  private  <P extends JpsElement> void addSourceFolder(@NotNull String path, final @NotNull JpsModuleSourceRootType<P> rootType, boolean ifNotEmpty,
+                                                       final @NotNull P properties) {
     if (ifNotEmpty) {
       String[] childs = new File(toPath(path).getPath()).list();
       if (childs == null || childs.length == 0) return;
@@ -148,7 +156,7 @@ public class MavenRootModelAdapter {
     if (e == null) return;
     unregisterAll(path, true, true);
     unregisterAll(path, false, true);
-    e.addSourceFolder(url.getUrl(), rootType);
+    e.addSourceFolder(url.getUrl(), rootType, properties);
   }
 
   public boolean hasRegisteredSourceSubfolder(File f) {

@@ -686,12 +686,12 @@ public class AnalysisScope {
       case VIRTUAL_FILES:
         return new GlobalSearchScope() {
           @Override
-          public boolean contains(VirtualFile file) {
+          public boolean contains(@NotNull VirtualFile file) {
             return myFilesSet.contains(file);
           }
 
           @Override
-          public int compare(VirtualFile file1, VirtualFile file2) {
+          public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
             return 0;
           }
 

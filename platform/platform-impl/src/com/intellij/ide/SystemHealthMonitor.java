@@ -16,6 +16,7 @@
 package com.intellij.ide;
 
 import com.intellij.concurrency.JobScheduler;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -35,10 +36,13 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.PropertyKey;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.io.File;
 import java.util.concurrent.Callable;
@@ -49,41 +53,61 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class SystemHealthMonitor extends ApplicationComponent.Adapter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.SystemHealthMonitor");
 
+  @NotNull private final PropertiesComponent myProperties;
+
+  public SystemHealthMonitor(@NotNull PropertiesComponent properties) {
+    myProperties = properties;
+  }
+
   @Override
   public void initComponent() {
-    checkJdk();
+    checkJvm();
     startDiskSpaceMonitoring();
   }
 
-  private static void checkJdk() {
-    String vmName = System.getProperty("java.vm.name", "");
-    if (StringUtil.containsIgnoreCase(vmName, "OpenJDK") && !SystemInfo.isJavaVersionAtLeast("1.7")) {
-      LOG.warn("unsupported VM: " + vmName + " " + SystemInfo.JAVA_VERSION);
-      final Application app = ApplicationManager.getApplication();
-      app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
-        @Override
-        public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
-          app.invokeLater(new Runnable() {
-            public void run() {
-              notifyWrongJavaVersion();
-            }
-          });
-        }
-      });
+  private void checkJvm() {
+    if (StringUtil.containsIgnoreCase(System.getProperty("java.vm.name", ""), "OpenJDK") && !SystemInfo.isJavaVersionAtLeast("1.7")) {
+      notifyUnsupportedJvm("unsupported.jvm.openjdk.message");
+    }
+    else if (StringUtil.endsWithIgnoreCase(System.getProperty("java.version", ""), "-ea")) {
+      notifyUnsupportedJvm("unsupported.jvm.ea.message");
     }
   }
 
-  private static void notifyWrongJavaVersion() {
-    JComponent component = WindowManager.getInstance().findVisibleFrame().getRootPane();
-    if (component != null) {
-      Rectangle rect = component.getVisibleRect();
-      JBPopupFactory.getInstance()
-        .createHtmlTextBalloonBuilder(IdeBundle.message("unsupported.jdk.message"), MessageType.WARNING, null)
-        .setFadeoutTime(-1)
-        .setHideOnFrameResize(false)
-        .createBalloon()
-        .show(new RelativePoint(component, new Point(rect.x + 30, rect.y + rect.height - 10)), Balloon.Position.above);
+  private void notifyUnsupportedJvm(@PropertyKey(resourceBundle = "messages.IdeBundle") final String key) {
+    final String ignoreKey = "ignore." + key;
+    if (myProperties.isValueSet(ignoreKey)) {
+      return;
     }
+
+    final Application app = ApplicationManager.getApplication();
+    app.getMessageBus().connect(app).subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener.Adapter() {
+      @Override
+      public void appFrameCreated(String[] commandLineArgs, @NotNull Ref<Boolean> willOpenProject) {
+        app.invokeLater(new Runnable() {
+          public void run() {
+            JComponent component = WindowManager.getInstance().findVisibleFrame().getRootPane();
+            if (component != null) {
+              String message = IdeBundle.message(key) + IdeBundle.message("unsupported.jvm.link");
+              Rectangle rect = component.getVisibleRect();
+              JBPopupFactory.getInstance()
+                .createHtmlTextBalloonBuilder(message, MessageType.WARNING, new HyperlinkAdapter() {
+                  @Override
+                  protected void hyperlinkActivated(HyperlinkEvent e) {
+                    myProperties.setValue(ignoreKey, "true");
+                  }
+                })
+                .setFadeoutTime(-1)
+                .setHideOnFrameResize(false)
+                .setHideOnLinkClick(true)
+                .setDisposable(app)
+                .createBalloon()
+                .show(new RelativePoint(component, new Point(rect.x + 30, rect.y + rect.height - 10)), Balloon.Position.above);
+            }
+          }
+        });
+      }
+    });
   }
 
   private static void startDiskSpaceMonitoring() {

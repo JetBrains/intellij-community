@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner,
   private final PsiMethod myMethod;
   private final String myName;
 
-  public BeanPropertyElement(final PsiMethod method, final String name) {
+  public BeanPropertyElement(@NotNull PsiMethod method, @NotNull String name) {
     myMethod = method;
     myName = name;
   }
@@ -56,6 +56,7 @@ public class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner,
     return myMethod;
   }
 
+  @NotNull
   @Override
   public PsiElement getNavigationElement() {
     return myMethod;
@@ -133,16 +134,16 @@ public class BeanPropertyElement extends FakePsiElement implements PsiMetaOwner,
 
     BeanPropertyElement element = (BeanPropertyElement)o;
 
-    if (myMethod != null ? !myMethod.equals(element.myMethod) : element.myMethod != null) return false;
-    if (myName != null ? !myName.equals(element.myName) : element.myName != null) return false;
+    if (!myMethod.equals(element.myMethod)) return false;
+    if (!myName.equals(element.myName)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myMethod != null ? myMethod.hashCode() : 0;
-    result = 31 * result + (myName != null ? myName.hashCode() : 0);
+    int result = myMethod.hashCode();
+    result = 31 * result + myName.hashCode();
     return result;
   }
 }

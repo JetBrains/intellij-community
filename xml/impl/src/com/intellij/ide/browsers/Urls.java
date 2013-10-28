@@ -94,14 +94,7 @@ public final class Urls {
 
   // java.net.URI.create cannot parse "file:///Test Stuff" - but you don't need to worry about it - this method is aware
   public static Url newFromIdea(@NotNull String url) {
-    int index = url.indexOf(URLUtil.SCHEME_SEPARATOR);
-    if (index < 0) {
-      // nodejs debug — files only in local filesystem
-      return new LocalFileUrl(url);
-    }
-    else {
-      return parseUrl(VfsUtil.toIdeaUrl(url), false);
-    }
+    return URLUtil.containsScheme(url) ? parseUrl(VfsUtil.toIdeaUrl(url), false) : new LocalFileUrl(url);
   }
 
   // must not be used in NodeJS

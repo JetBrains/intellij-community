@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
 
   // ---=== Classes ===---
 
-  public static abstract class Effect {
+  public abstract static class Effect {
     public abstract void annotate(@NotNull XmlTag tag, ProblemsHolder holder);
   }
 
@@ -228,7 +228,7 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
 
       LocalQuickFix[] fixes = new LocalQuickFix[myAttributeNames.length];
       for (int i = 0; i < myAttributeNames.length; i++) {
-        fixes[i] = new InsertRequiredAttributeFix(tag, myAttributeNames[i], null);
+        fixes[i] = new InsertRequiredAttributeFix(tag, myAttributeNames[i]);
       }
 
       holder.registerProblem(tagNameElement, "Tag should have one of following attributes: " + StringUtil.join(myAttributeNames, ", "),

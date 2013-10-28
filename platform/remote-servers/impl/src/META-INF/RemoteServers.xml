@@ -12,6 +12,8 @@
                         serviceImplementation="com.intellij.remoteServer.impl.runtime.ServerConnectionManagerImpl"/>
     <applicationService serviceInterface="com.intellij.remoteServer.agent.RemoteAgentManager"
                         serviceImplementation="com.intellij.remoteServer.agent.impl.RemoteAgentManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.remoteServer.runtime.clientLibrary.ClientLibraryManager"
+                        serviceImplementation="com.intellij.remoteServer.impl.runtime.clientLibrary.ClientLibraryManagerImpl"/>
     <applicationConfigurable instance="com.intellij.remoteServer.impl.configuration.RemoteServerListConfigurable"/>
     <programRunner implementation="com.intellij.remoteServer.impl.runtime.DeployToServerRunner"/>
     <projectService serviceInterface="com.intellij.remoteServer.runtime.ui.RemoteServersView"
@@ -34,7 +36,7 @@
       <action id="RemoteServers.RunServer" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.RunServerAction"/>
       <action id="RemoteServers.DebugServer" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DebugServerAction"/>
       <action id="RemoteServers.StopServer" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.StopServerAction"/>
-      <action id="RemoteServers.EditServer" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.EditServerConfigAction"/>
+      <action id="RemoteServers.EditServer" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.EditConfigurationAction"/>
       <separator/>
       <action id="RemoteServers.DeployAll" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.DeployAllAction"/>
     </group>

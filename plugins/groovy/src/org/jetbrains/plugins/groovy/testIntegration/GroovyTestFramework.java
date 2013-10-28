@@ -19,7 +19,6 @@ import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -34,6 +33,7 @@ import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
+import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
 
@@ -125,7 +125,7 @@ public class GroovyTestFramework extends JavaTestFramework {
   @NotNull
   @Override
   public String getLibraryPath() {
-    return JavaSdkUtil.getJunit3JarPath();
+    return GroovyUtils.getBundledGroovyJar().getAbsolutePath();
   }
 
   @Override

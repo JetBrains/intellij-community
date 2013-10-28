@@ -25,6 +25,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.changeSignature.ChangeSignatureHandler;
+import com.intellij.refactoring.memberPullUp.JavaPullUpHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -41,7 +42,6 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.constant.GrIntroduceCo
 import org.jetbrains.plugins.groovy.refactoring.introduce.field.GrIntroduceFieldHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduce.parameter.GrIntroduceParameterHandler;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GrIntroduceVariableHandler;
-import org.jetbrains.plugins.groovy.refactoring.memberPullUp.GrPullUpHandler;
 
 /**
  * @author ilyas
@@ -134,7 +134,7 @@ public class GroovyRefactoringSupportProvider extends RefactoringSupportProvider
   @Nullable
   @Override
   public RefactoringActionHandler getPullUpHandler() {
-    return new GrPullUpHandler();
+    return new JavaPullUpHandler();
   }
 
   @Nullable

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,16 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.importing.ArtifactsDownloadingTestCase;
 import org.jetbrains.idea.maven.importing.MavenModuleImporter;
 
 import java.io.File;
@@ -1108,7 +1112,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     assertPaths(expectedPaths, actualPaths);
   }
 
-  private void assertPaths(String[] expectedPaths, List<String> actualPaths) {
+  private static void assertPaths(String[] expectedPaths, List<String> actualPaths) {
     List<String> normalizedActualPaths = new ArrayList<String>();
     List<String> normalizedExpectedPaths = new ArrayList<String>();
 
@@ -1123,7 +1127,10 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
   }
 
   private void createRepositoryFile(String filePath) throws IOException {
-    createProjectSubFile("repo/" + filePath);
+    File f = new File(getProjectPath(), "repo/" + filePath);
+    f.getParentFile().mkdirs();
+
+    ArtifactsDownloadingTestCase.createEmptyJar(f.getParent(), f.getName());
     setRepositoryPath(createProjectSubDir("repo").getPath());
   }
 

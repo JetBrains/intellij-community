@@ -58,7 +58,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
         else {
           if (qualifier instanceof PsiReferenceExpression &&
               ((PsiReferenceExpression)qualifier).isReferenceTo(member.getContainingClass())) {
-            return new MoveMembersProcessor.MoveMembersUsageInfo(member, refExpr, null, qualifier, psiReference);  // change qualifier
+            return new MoveMembersProcessor.MoveMembersUsageInfo(member, refExpr, targetClass, qualifier, psiReference);  // change qualifier
           }
         }
       }

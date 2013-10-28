@@ -3,19 +3,21 @@ import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 setProperty("projectHome", guessHome(this as Script))
 setProperty("home", projectHome)
 
-includeTargets << new File("${projectHome}/community/build/scripts/utils.gant")
+includeTargets << new File("${projectHome}/build/scripts/utils.gant")
 
 setProperty("outDir", "${projectHome}/out/python")
 setProperty("ideaDir", "${outDir}/ideaCE")
-
-setProperty("ideaHome", "${ideaDir}/jdk16") //compiled idea
+requireProperty("ideaPath", ideaDir)
 
 setProperty("pluginHelp", "${outDir}/help")
 
 setProperty("buildNumber", requireProperty("build.number", snapshot))
 setProperty("ideaBuildNumber", requireProperty("idea.build.number"))
 
-setProperty("pluginHome", "${projectHome}/python/community")
+setProperty("ideaHomePacked", "${ideaDir}/jdk16") //compiled idea
+setProperty("ideaHome", "${ideaDir}/jdk16/idea-IC-${ideaBuildNumber}") //compiled idea
+
+setProperty("pluginHome", "${projectHome}/python")
 setProperty("pluginRevision", "${buildNumber}")
 
 setProperty("ideaLib", "${ideaHome}/lib")
@@ -69,8 +71,9 @@ target(name: "clean", description: "Cleanup output") {
 }
 
 target(name: "unzip") {
-  ant.mkdir(dir: "${ideaHome}")
-  ant.unzip(src: "${ideaDir}/ideaIC-${ideaBuildNumber}.win.zip", dest: "${ideaHome}")
+  ant.mkdir(dir: "${ideaHomePacked}")
+  ant.gunzip(src: "${ideaPath}/ideaIC-${ideaBuildNumber}.tar.gz")
+  ant.untar(src: "${ideaPath}/ideaIC-${ideaBuildNumber}.tar", dest: "${ideaHomePacked}")
 }
 
 target(name: "compile", description: "Compile module python") {
@@ -136,7 +139,7 @@ target(name: "compile", description: "Compile module python") {
       patternset(refid: "resources.pt")
       type(type: "file")
     }
-    fileset(dir: "${pluginHome}/../../community/colorSchemes/src")
+    fileset(dir: "${home}/colorSchemes/src")
   }
 
   //copy plugin.xml
@@ -179,8 +182,8 @@ target(name: "zip", description: "Generate zip plugin file") {
   }
 
   ant.mkdir(dir: "${plugindir}/help")
-  ant.copy(file: "${pluginHelp}/pytonpluginhelp.jar", tofile: "${plugindir}/help/pythonpluginhelp.jar")
-  ant.copy(file: "${pluginHelp}/pytonpluginhelp_mac.jar", tofile: "${plugindir}/help/pythonpluginhelp_mac.jar")
+  ant.copy(file: "${pluginHelp}/pytonpluginhelp.jar", tofile: "${plugindir}/help/pythonpluginhelp.jar", failonerror: false)
+  ant.copy(file: "${pluginHelp}/pytonpluginhelp_mac.jar", tofile: "${plugindir}/help/pythonpluginhelp_mac.jar", failonerror: false)
 
   ant.zip(basedir: "${zipdir}", destfile: "${output}/${zipname}")
 }

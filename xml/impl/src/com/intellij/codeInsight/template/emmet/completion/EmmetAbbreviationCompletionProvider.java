@@ -51,6 +51,11 @@ abstract public class EmmetAbbreviationCompletionProvider extends CompletionProv
       return;
     }
 
+    final ZenCodingGenerator generator = getGenerator();
+    if (!generator.isMyContext(parameters.getPosition(), false) || !generator.isAppliedByDefault(parameters.getPosition())) {
+      return;
+    }
+
     final PsiFile file = parameters.getPosition().getContainingFile();
     final Editor editor = parameters.getEditor();
 
@@ -78,7 +83,7 @@ abstract public class EmmetAbbreviationCompletionProvider extends CompletionProv
     };
 
     final Collection<SingleLineEmmetFilter> extraFilters = ContainerUtil.newLinkedList(new SingleLineEmmetFilter());
-    ZenCodingTemplate.expand(templatePrefix, callback, null, getGenerator(), extraFilters, false);
+    ZenCodingTemplate.expand(templatePrefix, callback, null, generator, extraFilters, false);
     if (!generatedTemplate.isNull()) {
       result = result.withPrefixMatcher(templatePrefix);
       final TemplateImpl template = generatedTemplate.get();

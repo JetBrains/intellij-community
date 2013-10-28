@@ -25,6 +25,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
@@ -162,13 +163,14 @@ public class StartupUtil {
       try {
         FileUtil.writeToFile(ideTempFile, "#!/bin/sh\nexit 0");
 
-        boolean tempExecutable = !SystemInfo.isUnix || SystemInfo.isMac;
-        if (!tempExecutable) {
-          tempExecutable = ideTempFile.setExecutable(true, true) && ideTempDir.canExecute() &&
-                           new ProcessBuilder(ideTempFile.getAbsolutePath()).start().waitFor() == 0;
-        }
+        tempAccessible = (SystemInfo.isWindows || SystemInfo.isMac) ||
+                         (ideTempFile.setExecutable(true, true) &&
+                          ideTempDir.canExecute() &&
+                          new ProcessBuilder(ideTempFile.getAbsolutePath()).start().waitFor() == 0);
 
-        tempAccessible = tempExecutable && ideTempFile.delete();
+        if (!FileUtilRt.delete(ideTempFile)) {
+          ideTempFile.deleteOnExit();
+        }
       }
       catch (Exception ignored) { }
     }

@@ -577,6 +577,9 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
     final List<PsiFile> files = viewProvider.getAllFiles();
     PsiFile psiCause = null;
     for (PsiFile file : files) {
+      if (file == null) {
+        throw new AssertionError("View provider "+viewProvider+" ("+viewProvider.getClass()+") returned null in its files array: "+files+" for file "+viewProvider.getVirtualFile());
+      }
       mySmartPointerManager.fastenBelts(file, event.getOffset(), null);
 
       if (TextBlock.get(file).isLocked()) {

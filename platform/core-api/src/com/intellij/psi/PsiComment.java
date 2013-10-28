@@ -28,4 +28,12 @@ public interface PsiComment extends PsiElement {
    * @return the token type of the comment.
    */
   IElementType getTokenType();
+
+  /**
+   * The instance with implemented interface need to be formatted as set of formatting blocks.
+   *
+   * Applying for in-comment documentation that is similar, but different from Javadoc,
+   * and does not contain internal PSI nodes (injections).
+   */
+  interface BlockFormatting {}
 }

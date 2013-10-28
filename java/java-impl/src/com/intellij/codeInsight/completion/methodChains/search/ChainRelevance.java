@@ -7,7 +7,7 @@ import org.jetbrains.annotations.TestOnly;
  * @author Dmitry Batkovich <dmitry.batkovich@jetbrains.com>
  */
 public class ChainRelevance implements Comparable<ChainRelevance> {
-  public static final ChainRelevance LOWEST = new ChainRelevance(Integer.MAX_VALUE, 0, Integer.MAX_VALUE, Integer.MAX_VALUE, false, false);
+  public static final ChainRelevance LOWEST = new ChainRelevance(Integer.MAX_VALUE, 0, Integer.MAX_VALUE, Integer.MAX_VALUE, false, false, 0);
 
   private final int myChainSize;
   private final int myLastMethodOccurrences;
@@ -15,19 +15,22 @@ public class ChainRelevance implements Comparable<ChainRelevance> {
   private final int myNotMatchedStringVars;
   private final boolean myHasCallingVariableInContext;
   private final boolean myFirstMethodStatic;
+  private final int myParametersInContext;
 
   public ChainRelevance(final int chainSize,
                         final int lastMethodOccurrences,
                         final int unreachableParametersCount,
                         final int notMatchedStringVars,
                         final boolean hasCallingVariableInContext,
-                        final boolean firstMethodStatic) {
+                        final boolean firstMethodStatic,
+                        final int parametersInContext) {
     myChainSize = chainSize;
     myLastMethodOccurrences = lastMethodOccurrences;
     myUnreachableParametersCount = unreachableParametersCount;
     myNotMatchedStringVars = notMatchedStringVars;
     myHasCallingVariableInContext = hasCallingVariableInContext;
     myFirstMethodStatic = firstMethodStatic;
+    myParametersInContext = parametersInContext;
   }
 
   @TestOnly
@@ -62,16 +65,22 @@ public class ChainRelevance implements Comparable<ChainRelevance> {
 
   @Override
   public int compareTo(@NotNull final ChainRelevance that) {
+    if (myHasCallingVariableInContext && !that.myHasCallingVariableInContext) {
+      return 1;
+    }
+    if (that.myHasCallingVariableInContext && !myHasCallingVariableInContext) {
+      return -1;
+    }
     if (myFirstMethodStatic && !that.myFirstMethodStatic) {
       return -1;
     }
     if (that.myFirstMethodStatic && !myFirstMethodStatic) {
       return 1;
     }
-    if (myHasCallingVariableInContext && !that.myHasCallingVariableInContext) {
+    if (myParametersInContext > that.myParametersInContext) {
       return 1;
     }
-    if (that.myHasCallingVariableInContext && !myHasCallingVariableInContext) {
+    if (myParametersInContext <= that.myParametersInContext) {
       return -1;
     }
     int sub = myLastMethodOccurrences - that.myLastMethodOccurrences;

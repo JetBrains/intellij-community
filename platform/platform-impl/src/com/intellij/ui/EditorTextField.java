@@ -19,7 +19,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaEditorTextFieldBorder;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -313,7 +312,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     return super.isFocusOwner();
   }
 
-  void releaseEditor(final Editor editor) {
+  void releaseEditor(@NotNull final Editor editor) {
     if (myProject != null && myIsViewer) {
       final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
       if (psiFile != null) {
@@ -334,7 +333,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
     if (application.isUnitTestMode() || application.isDispatchThread()) {
       runnable.run();
-    } else {
+    }
+    else {
       application.invokeLater(runnable);
     }
   }
@@ -561,8 +561,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
       final Container parent = getParent();
       if (parent instanceof JTable || parent instanceof CellRendererPane) return;
 
-      if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderDarcula()) {
-        editor.setBorder(UIUtil.isUnderDarcula() ?  new DarculaEditorTextFieldBorder() : new MacUIUtil.EditorTextFieldBorder(this));
+      if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+        editor.setBorder(UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ?  new DarculaEditorTextFieldBorder() : new MacUIUtil.EditorTextFieldBorder(this));
         editor.addFocusListener(new FocusChangeListener() {
           @Override
           public void focusGained(Editor editor) {
@@ -600,13 +600,12 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
     if (isEnabled() != enabled) {
       super.setEnabled(enabled);
       myIsViewer = !enabled;
-      if (myEditor == null) {
+      EditorEx editor = myEditor;
+      if (editor == null) {
         return;
       }
-      Editor editor = myEditor;
       releaseEditor(editor);
-      myEditor = createEditor();
-      add(myEditor.getComponent(), BorderLayout.CENTER);
+      initEditor();
       revalidate();
     }
   }

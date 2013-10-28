@@ -23,18 +23,23 @@ import org.jetbrains.annotations.Nullable;
 public abstract class UrlOpener {
   public static final ExtensionPointName<UrlOpener> EP_NAME = ExtensionPointName.create("org.jetbrains.urlOpener");
 
-  public static void launchBrowser(@Nullable BrowsersConfiguration.BrowserFamily family, @NotNull String url) {
-    if (family == null) {
+  public static void launchBrowser(final @Nullable BrowsersConfiguration.BrowserFamily family, final @NotNull String url) {
+    launchBrowser(url, family == null ? null : WebBrowser.getStandardBrowser(family));
+  }
+
+  // different params order in order not to break compilation for launchBrowser(null, url)
+  public static void launchBrowser(final @NotNull String url, final @Nullable WebBrowser browser) {
+    if (browser == null) {
       BrowserUtil.launchBrowser(url);
     }
     else {
       for (UrlOpener urlOpener : EP_NAME.getExtensions()) {
-        if (urlOpener.openUrl(family, url)) {
+        if (urlOpener.openUrl(browser, url)) {
           return;
         }
       }
     }
   }
 
-  public abstract boolean openUrl(@NotNull BrowsersConfiguration.BrowserFamily family, String url);
+  public abstract boolean openUrl(final @NotNull WebBrowser browser, final @NotNull String url);
 }

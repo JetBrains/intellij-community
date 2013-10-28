@@ -2404,18 +2404,22 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
+  public static String trimMiddle(@NotNull String text, int maxLength) {
+    return shortenTextWithEllipsis(text, maxLength, maxLength >> 1, true);
+  }
+
+  @NotNull
   public static String shortenTextWithEllipsis(@NotNull final String text, final int maxLength, final int suffixLength, boolean useEllipsisSymbol) {
-    final int prefix_length = maxLength - suffixLength - 3;
-    assert prefix_length > 0;
-    String result;
     final int textLength = text.length();
     if (textLength > maxLength) {
-      result = text.substring(0, prefix_length) + (useEllipsisSymbol ? "\u2026" : "...") + text.substring(textLength - suffixLength);
+      String symbol = useEllipsisSymbol ? "\u2026" : "...";
+      final int prefixLength = maxLength - suffixLength - symbol.length();
+      assert prefixLength > 0;
+      return text.substring(0, prefixLength) + symbol + text.substring(textLength - suffixLength);
     }
     else {
-      result = text;
+      return text;
     }
-    return result;
   }
 
   @NotNull

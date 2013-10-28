@@ -84,7 +84,7 @@ public class RunInspectionAction extends GotoActionBase {
           }
         });
       }
-    });
+    }, false);
   }
 
   private static void runInspection(@NotNull Project project,

@@ -356,7 +356,7 @@ public abstract class ChooseByNameBase {
    */
   protected void initUI(final ChooseByNamePopupComponent.Callback callback,
                         final ModalityState modalityState,
-                        boolean allowMultipleSelection) {
+                        final boolean allowMultipleSelection) {
     myPreviouslyFocusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
 
     myActionListener = callback;
@@ -668,7 +668,7 @@ public abstract class ChooseByNameBase {
           chosenElementMightChange();
           updateDocumentation();
         }
-        else {
+        else if (allowMultipleSelection) {
           myList.setSelectedIndex(myPreviousSelectionIndex);
         }
       }
@@ -1402,6 +1402,10 @@ public abstract class ChooseByNameBase {
     }
   }
 
+  public ChooseByNameItemProvider getProvider() {
+    return myProvider;
+  }
+
   protected void handlePaste(String str) {
     if (!myInitIsDone) return;
     if (myModel instanceof GotoClassModel2 && isFileName(str)) {
@@ -1547,7 +1551,7 @@ public abstract class ChooseByNameBase {
 
     }
 
-    private void addElementsByPattern(@NotNull String pattern,
+    public void addElementsByPattern(@NotNull String pattern,
                                       @NotNull final Set<Object> elements,
                                       @NotNull final ProgressIndicator cancelled,
                                       boolean everywhere) {

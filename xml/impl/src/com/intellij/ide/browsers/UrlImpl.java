@@ -69,9 +69,7 @@ public final class UrlImpl implements Url {
     if (authority != null) {
       builder.append(authority);
     }
-    if (path != null) {
-      builder.append(getPath());
-    }
+    builder.append(getPath());
     if (!skipQueryAndFragment && parameters != null) {
       builder.append(parameters);
     }

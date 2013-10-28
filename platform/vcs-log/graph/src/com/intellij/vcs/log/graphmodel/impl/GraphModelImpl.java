@@ -2,6 +2,7 @@ package com.intellij.vcs.log.graphmodel.impl;
 
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsCommit;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
@@ -79,7 +80,11 @@ public class GraphModelImpl implements GraphModel {
   private void fullUpdate() {
     int oldSize = graph.getNodeRows().size();
     graph.updateVisibleRows();
-    UpdateRequest updateRequest = UpdateRequest.buildFromToInterval(0, oldSize - 1, 0, graph.getNodeRows().size() - 1);
+
+    int newSize = graph.getNodeRows().size();
+    int newTo = newSize == 0 ? 0 : newSize - 1;
+    int oldTo = oldSize == 0 ? 0 : oldSize - 1;
+    UpdateRequest updateRequest = UpdateRequest.buildFromToInterval(0, oldTo, 0, newTo);
     callUpdateListener(updateRequest);
   }
 
@@ -108,6 +113,11 @@ public class GraphModelImpl implements GraphModel {
     branchShowFixer.fixCrashBranches(prevVisibleNodes, newVisibleNodes);
     visibleNodes.setVisibleNodes(newVisibleNodes);
     fullUpdate();
+  }
+
+  @Override
+  public boolean isNodeOfHashVisible(@NotNull Hash hash) {
+    return visibleNodes.isNodeVisible(hash);
   }
 
   @NotNull

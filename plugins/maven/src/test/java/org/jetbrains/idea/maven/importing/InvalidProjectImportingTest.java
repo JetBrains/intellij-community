@@ -679,7 +679,7 @@ public class InvalidProjectImportingTest extends MavenImportingTestCase {
     assertProblems(root, "'profiles.xml' has syntax errors");
   }
 
-  private void assertProblems(MavenProject project, String... expectedProblems) {
+  private static void assertProblems(MavenProject project, String... expectedProblems) {
     List<String> actualProblems = new ArrayList<String>();
     for (MavenProjectProblem each : project.getProblems()) {
       actualProblems.add(each.getDescription());

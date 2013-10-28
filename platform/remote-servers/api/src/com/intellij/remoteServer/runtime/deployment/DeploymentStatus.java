@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public enum DeploymentStatus {
   DEPLOYED("Deployed"), NOT_DEPLOYED("Not deployed"), DEPLOYING("Deploying"), UNDEPLOYING("Undeploying");
-  private String myPresentableText;
+  private final String myPresentableText;
 
   DeploymentStatus(@NotNull String presentableText) {
     myPresentableText = presentableText;

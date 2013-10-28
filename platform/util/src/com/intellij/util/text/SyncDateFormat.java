@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,8 @@
 
 package com.intellij.util.text;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -28,15 +30,15 @@ import java.util.TimeZone;
 public class SyncDateFormat {
   private final DateFormat myDelegate;
 
-  public SyncDateFormat(DateFormat delegate) {
+  public SyncDateFormat(@NotNull DateFormat delegate) {
     myDelegate = delegate;
   }
 
-  public synchronized Date parse(String s) throws ParseException {
+  public synchronized Date parse(@NotNull String s) throws ParseException {
     return myDelegate.parse(s);
   }
 
-  public synchronized String format(Date date) {
+  public synchronized String format(@NotNull Date date) {
     return myDelegate.format(date);
   }
 
@@ -44,7 +46,7 @@ public class SyncDateFormat {
     return myDelegate.format(time);
   }
 
-  public synchronized void setTimeZone(final TimeZone timeZone) {
+  public synchronized void setTimeZone(@NotNull final TimeZone timeZone) {
     myDelegate.setTimeZone(timeZone);
   }
 

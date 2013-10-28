@@ -1,5 +1,8 @@
 package com.intellij.vcs.log.data;
 
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
 import org.jetbrains.annotations.NotNull;
@@ -10,18 +13,28 @@ import java.util.*;
  * @author erokhins
  */
 public class RefsModel {
-  private final Collection<VcsRef> allRefs;
-  private final Set<Hash> trackedCommitHashes = new HashSet<Hash>();
 
-  public RefsModel(Collection<VcsRef> allRefs) {
-    this.allRefs = allRefs;
-    computeTrackedCommitHash();
+  @NotNull private final Collection<VcsRef> myBranches;
+  @NotNull private final MultiMap<Hash, VcsRef> myRefsToHashes;
+
+  public RefsModel(@NotNull Collection<VcsRef> allRefs) {
+    myBranches = ContainerUtil.filter(allRefs, new Condition<VcsRef>() {
+      @Override
+      public boolean value(VcsRef ref) {
+        return ref.getType().isBranch();
+      }
+    });
+
+    myRefsToHashes = prepareRefsMap(allRefs);
   }
 
-  private void computeTrackedCommitHash() {
-    for (VcsRef ref : allRefs) {
-      trackedCommitHashes.add(ref.getCommitHash());
+  @NotNull
+  private static MultiMap<Hash, VcsRef> prepareRefsMap(@NotNull Collection<VcsRef> refs) {
+    MultiMap<Hash, VcsRef> map = MultiMap.create();
+    for (VcsRef ref : refs) {
+      map.putValue(ref.getCommitHash(), ref);
     }
+    return map;
   }
 
   public boolean isBranchRef(@NotNull Hash commitHash) {
@@ -34,27 +47,15 @@ public class RefsModel {
   }
 
   @NotNull
-  public List<VcsRef> refsToCommit(@NotNull Hash hash) {
-    List<VcsRef> refs = new ArrayList<VcsRef>();
-    if (trackedCommitHashes.contains(hash)) {
-      for (VcsRef ref : allRefs) {
-        if (ref.getCommitHash().equals(hash)) {
-          refs.add(ref);
-        }
-      }
+  public Collection<VcsRef> refsToCommit(@NotNull Hash hash) {
+    if (myRefsToHashes.containsKey(hash)) {
+      return myRefsToHashes.get(hash);
     }
-    return refs;
+    return Collections.emptyList();
   }
 
   @NotNull
-  public Set<Hash> getTrackedCommitHashes() {
-    return Collections.unmodifiableSet(trackedCommitHashes);
+  public Collection<VcsRef> getBranches() {
+    return myBranches;
   }
-
-  @NotNull
-  public Collection<VcsRef> getAllRefs() {
-    return Collections.unmodifiableCollection(allRefs);
-  }
-
-
 }

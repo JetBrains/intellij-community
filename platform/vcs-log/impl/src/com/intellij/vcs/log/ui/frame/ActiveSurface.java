@@ -4,20 +4,15 @@ import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ArrayUtil;
-import com.intellij.vcs.log.VcsFullCommitDetails;
-import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +21,6 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -36,8 +30,6 @@ import java.util.List;
  * @author Kirill Likhodedov
  */
 public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
-
-  private static final Logger LOG = Logger.getInstance("Vcs.Log");
 
   @NotNull private final VcsLogGraphTable myGraphTable;
   @NotNull private final BranchesPanel myBranchesPanel;
@@ -122,15 +114,7 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
 
   @Nullable
   public List<Change> getSelectedChanges() {
-    List<Change> changes = new ArrayList<Change>();
-    for (Node node : myGraphTable.getSelectedNodes()) {
-      VcsFullCommitDetails commitData = myLogDataHolder.getCommitDetailsGetter().getCommitData(node);
-      if (commitData instanceof LoadingDetails) {
-        return null;
-      }
-      changes.addAll(commitData.getChanges());
-    }
-    return CommittedChangesTreeBrowser.zipChanges(changes);
+    return myGraphTable.getSelectedChanges();
   }
 
   private class CommitSelectionListener implements ListSelectionListener {

@@ -393,9 +393,9 @@ public class DebugProcessEvents extends DebugProcessImpl {
       }
       getSuspendManager().voteSuspend(suspendContext);
       if (hint != null) {
-        final RequestHint.SmartStepFilter smartStepFilter = hint.getSmartStepFilter();
-        if (smartStepFilter != null && !smartStepFilter.wasMethodExecuted()) {
-          final String message = "Method <b>" + smartStepFilter.getTargetMethodName() + "()</b> has not been called";
+        final MethodFilter methodFilter = hint.getMethodFilter();
+        if (methodFilter instanceof BasicStepMethodFilter && !hint.wasStepTargetMethodMatched()) {
+          final String message = "Method <b>" + ((BasicStepMethodFilter)methodFilter).getMethodName() + "()</b> has not been called";
           XDebugSessionImpl.NOTIFICATION_GROUP.createNotification(message, MessageType.INFO).notify(project);
         }
       }

@@ -132,7 +132,7 @@ public abstract class MavenIndicesStressTest extends MavenIndicesTestCase implem
     indices2.close();
   }
 
-  private Thread createThread(final MavenIndex index, final AtomicInteger finishedCount) {
+  private static Thread createThread(final MavenIndex index, final AtomicInteger finishedCount) {
     Thread t2 = new Thread(new Runnable() {
       @Override
       public void run() {

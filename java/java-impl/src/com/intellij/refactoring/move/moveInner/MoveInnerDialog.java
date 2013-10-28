@@ -23,6 +23,7 @@ package com.intellij.refactoring.move.moveInner;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NullableComputable;
@@ -49,7 +50,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
@@ -198,7 +198,7 @@ public class MoveInnerDialog extends RefactoringDialog {
       final String targetName = myPackageNameField.getText();
       if (!Comparing.equal(name, targetName)) {
         final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
-        final List<VirtualFile> contentSourceRoots = projectRootManager.getModuleSourceRoots(JavaModuleSourceRootTypes.SOURCES);
+        final List<VirtualFile> contentSourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(myProject);
         final PackageWrapper newPackage = new PackageWrapper(PsiManager.getInstance(myProject), targetName);
         final VirtualFile targetSourceRoot;
         if (contentSourceRoots.size() > 1) {

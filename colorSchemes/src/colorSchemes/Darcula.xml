@@ -721,7 +721,7 @@
     </option>
     <option name="INJECTED_LANGUAGE_FRAGMENT">
       <value>
-        <option name="BACKGROUND" value="303631" />
+        <option name="BACKGROUND" value="364135" />
       </value>
     </option>
     <option name="INSPECTION_MULTIPLE_RESOLVE_WARNING_ID">
@@ -982,8 +982,9 @@
     </option>
     <option name="MATCHED_BRACE_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="ff8647" />
+        <option name="FOREGROUND" value="ffef28" />
         <option name="BACKGROUND" value="3b514d" />
+        <option name="FONT_TYPE" value="1" />
       </value>
     </option>
     <option name="MESSAGE_ARGUMENT">
@@ -1138,7 +1139,7 @@
       <value>
         <option name="FOREGROUND" value="4cd6a3" />
         <option name="BACKGROUND" value="3d0909" />
-        <option name="EFFECT_COLOR" value="ff0000" />
+        <option name="EFFECT_COLOR" value="bc3f3c" />
         <option name="EFFECT_TYPE" value="2" />
       </value>
     </option>
@@ -1163,6 +1164,8 @@
       <value>
         <option name="FOREGROUND" value="9396c0" />
         <option name="FONT_TYPE" value="1" />
+        <option name="EFFECT_COLOR" value="aeae80" />
+        <option name="EFFECT_TYPE" value="2" />
       </value>
     </option>
     <option name="REQUIRE_GEM_CALL">
@@ -1430,6 +1433,7 @@
     <option name="TEXT_SEARCH_RESULT_ATTRIBUTES">
       <value>
         <option name="BACKGROUND" value="425f44" />
+        <option name="EFFECT_COLOR" value="56ac48" />
         <option name="ERROR_STRIPE_COLOR" value="425f44" />
       </value>
     </option>

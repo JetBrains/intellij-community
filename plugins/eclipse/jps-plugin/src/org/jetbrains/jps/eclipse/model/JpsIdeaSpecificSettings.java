@@ -24,7 +24,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.eclipse.IdeaXml;
 import org.jetbrains.idea.eclipse.conversion.AbstractIdeaSpecificSettings;
-import org.jetbrains.jps.model.JpsSimpleElement;
+import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.jps.model.module.JpsDependenciesList;
@@ -167,7 +167,10 @@ class JpsIdeaSpecificSettings extends AbstractIdeaSpecificSettings<JpsModule, St
       final String url = ppElement.getAttributeValue(IdeaXml.URL_ATTR);
       for (JpsModuleSourceRoot sourceRoot : model.getSourceRoots()) {
         if (Comparing.strEqual(sourceRoot.getUrl(), url)) {
-          ((JpsSimpleElement)sourceRoot.getProperties()).setData(new JavaSourceRootProperties(prefix));
+          JpsElement properties = sourceRoot.getProperties();
+          if (properties instanceof JavaSourceRootProperties) {
+            ((JavaSourceRootProperties)properties).setPackagePrefix(prefix);
+          }
           break;
         }
       }

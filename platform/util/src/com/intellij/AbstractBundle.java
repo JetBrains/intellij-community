@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ConcurrentHashMap;
+import com.intellij.util.containers.ConcurrentSoftValueHashMap;
 import com.intellij.util.containers.ConcurrentWeakFactoryMap;
 import com.intellij.util.containers.FactoryMap;
 import org.jetbrains.annotations.NonNls;
@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.lang.ref.Reference;
 import java.lang.ref.SoftReference;
 import java.util.Locale;
+import java.util.Map;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
 
@@ -69,18 +70,17 @@ public abstract class AbstractBundle {
   }
 
   @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
-  private static final FactoryMap<ClassLoader, ConcurrentHashMap<String, SoftReference<ResourceBundle>>> ourCache =
-    new ConcurrentWeakFactoryMap<ClassLoader, ConcurrentHashMap<String, SoftReference<ResourceBundle>>>() {
+  private static final FactoryMap<ClassLoader, Map<String, ResourceBundle>> ourCache =
+    new ConcurrentWeakFactoryMap<ClassLoader, Map<String, ResourceBundle>>() {
       @Override
-      protected ConcurrentHashMap<String, SoftReference<ResourceBundle>> create(ClassLoader key) {
-        return new ConcurrentHashMap<String, SoftReference<ResourceBundle>>();
+      protected Map<String, ResourceBundle> create(ClassLoader key) {
+        return new ConcurrentSoftValueHashMap<String, ResourceBundle>();
       }
     };
 
   public static ResourceBundle getResourceBundle(@NotNull String pathToBundle, @NotNull ClassLoader loader) {
-    ConcurrentHashMap<String, SoftReference<ResourceBundle>> map = ourCache.get(loader);
-    SoftReference<ResourceBundle> reference = map.get(pathToBundle);
-    ResourceBundle result = reference == null ? null : reference.get();
+    Map<String, ResourceBundle> map = ourCache.get(loader);
+    ResourceBundle result = map.get(pathToBundle);
     if (result == null) {
       try {
         ResourceBundle.Control control = ResourceBundle.Control.getControl(ResourceBundle.Control.FORMAT_PROPERTIES);
@@ -91,7 +91,7 @@ public abstract class AbstractBundle {
         ResourceBundle.clearCache(loader);
         result = ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader);
       }
-      map.put(pathToBundle, new SoftReference<ResourceBundle>(result));
+      map.put(pathToBundle, result);
     }
     return result;
   }

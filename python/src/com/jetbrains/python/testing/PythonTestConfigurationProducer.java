@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.jetbrains.python.testing;
 
 import com.google.common.collect.Sets;
@@ -8,6 +23,7 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -27,6 +43,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -187,8 +205,13 @@ abstract public class PythonTestConfigurationProducer extends RunConfigurationPr
 
   protected boolean isTestFolder(@NotNull final VirtualFile virtualFile, @NotNull final Project project) {
     final String name = virtualFile.getName();
-    final VirtualFile[] roots = ProjectRootManager.getInstance(project).getContentSourceRoots();
-    return name.toLowerCase().contains("test") || Sets.newHashSet(roots).contains(virtualFile);
+    final HashSet<VirtualFile> roots = Sets.newHashSet();
+    final Module[] modules = ModuleManager.getInstance(project).getModules();
+    for (Module module : modules) {
+      roots.addAll(PyUtil.getSourceRoots(module));
+    }
+    Collections.addAll(roots, ProjectRootManager.getInstance(project).getContentRoots());
+    return name.toLowerCase().contains("test") || roots.contains(virtualFile);
   }
 
   protected boolean isAvailable(@NotNull final Location location) {

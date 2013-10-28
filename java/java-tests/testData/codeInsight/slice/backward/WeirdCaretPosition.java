@@ -1,29 +1,29 @@
 class Foo {
-    private static MyEnum staticMyEnum = MyEnum.<flown11>BAR;
+    private static MyEnum staticMyEnum = MyEnum.<flown111>BAR;
 
     public static void main(String[] args) {
         produce();
     }
 
     static void produce() {
-        produce(<flown1>staticMyEnum);
+        produce(<flown11>staticMyEnum);
     }
 
-    static void produce(MyEnum myEnum) {
+    static void produce(MyEnum <flown1>myEnum) {
         System.out.println("myEnum: " + myEnum<caret>);
     }
 
     static void f() {
-        staticMyEnum = MyEnum.<flown12>BAZ;
+        staticMyEnum = MyEnum.<flown112>BAZ;
     }
 
     static void g() {
-        staticMyEnum = MyEnum.<flown13>FOO;
+        staticMyEnum = MyEnum.<flown113>FOO;
     }
 
     enum MyEnum {
-        FOO,
-        BAR,
-        BAZ
+      <flown1131>FOO,
+      <flown1111>BAR,
+      <flown1121>BAZ
     }
 }

@@ -1,16 +1,17 @@
-import java.util.Map;
-
 class M<X, Y> {
+  interface Map<X,Y> {
+    Y get(X x);
+  }
     Map<X, Y> m;
-    Y y;
+    Y <flown11111>y;
 
-    public M(Map<X, Y> m, Y y) {
+    public M(Map<X, Y> m, Y <flown1111111>y) {
         this.m = m;
-        this.y = <flown11111>y;
+        this.y = <flown111111>y;
     }
 
-    public static <MX, MY> M<MX, MY> makeM(MY y) {
-        return new M<MX, MY>(null, <flown111111>y);
+    public static <MX, MY> M<MX, MY> makeM(MY <flown111111111>y) {
+        return new M<MX, MY>(null, <flown11111111>y);
     }
 
     Y get(X x) {
@@ -19,7 +20,7 @@ class M<X, Y> {
     }
 
     public static void g() {
-        String <caret>a = <flown1>f(M.<String, String>makeM(<flown1111111>"a"), "k");
+        String <caret>a = <flown1>f(M.<String, String>makeM(<flown1111111111>"a"), "k");
     }
 
     public static <A> A f(M<A, A> a, A ka) {

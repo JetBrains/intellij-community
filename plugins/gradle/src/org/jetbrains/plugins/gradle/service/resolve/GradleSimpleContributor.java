@@ -15,9 +15,11 @@
  */
 package org.jetbrains.plugins.gradle.service.resolve;
 
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.ResolveState;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
@@ -31,10 +33,12 @@ public abstract class GradleSimpleContributor implements GradleMethodContextCont
 
   private final String blockName;
   private final String fqName;
+  private final List<String> myMixIns;
 
-  protected GradleSimpleContributor(@NotNull String blockName, @NotNull String fqName) {
+  protected GradleSimpleContributor(@NotNull String blockName, @NotNull String fqName, String... mixIns) {
     this.blockName = blockName;
     this.fqName = fqName;
+    myMixIns = ContainerUtil.newArrayList(mixIns);
   }
 
   @Override
@@ -47,5 +51,11 @@ public abstract class GradleSimpleContributor implements GradleMethodContextCont
     }
     GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
     GradleResolverUtil.processDeclarations(psiManager, processor, state, place, fqName);
+    for(final String mixin : myMixIns) {
+      PsiClass contributorClass =
+        psiManager.findClassWithCache(mixin, place.getResolveScope());
+      if (contributorClass == null) continue;
+      GradleResolverUtil.processMethod(methodCallInfo.get(0), contributorClass, processor, state, place);
+    }
   }
 }

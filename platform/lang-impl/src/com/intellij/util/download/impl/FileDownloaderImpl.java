@@ -23,11 +23,11 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -58,166 +58,191 @@ public class FileDownloaderImpl implements FileDownloader {
   private static final int READ_TIMEOUT = 60*1000;
   @NonNls private static final String LIB_SCHEMA = "lib://";
 
-  private List<? extends DownloadableFileDescription> myFileDescriptions;
-  private JComponent myParent;
+  private final List<? extends DownloadableFileDescription> myFileDescriptions;
+  private JComponent myParentComponent;
   private @Nullable Project myProject;
   private String myDirectoryForDownloadedFilesPath;
-  private String myDialogTitle;
+  private final String myDialogTitle;
 
-  public FileDownloaderImpl(final List<? extends DownloadableFileDescription> fileDescriptions,
+  public FileDownloaderImpl(@NotNull List<? extends DownloadableFileDescription> fileDescriptions,
                             final @Nullable Project project,
-                            JComponent parent,
+                            @Nullable JComponent parentComponent,
                             @NotNull String presentableDownloadName) {
     myProject = project;
     myFileDescriptions = fileDescriptions;
-    myParent = parent;
+    myParentComponent = parentComponent;
     myDialogTitle = IdeBundle.message("progress.download.0.title", StringUtil.capitalize(presentableDownloadName));
   }
 
-  @NotNull
+  @Nullable
   @Override
-  public FileDownloader toDirectory(@NotNull String directoryForDownloadedFilesPath) {
-    myDirectoryForDownloadedFilesPath = directoryForDownloadedFilesPath;
-    return this;
-  }
-
-  @Override
-  public VirtualFile[] download() {
-    final List<Pair<VirtualFile, DownloadableFileDescription>> pairs = downloadAndReturnWithDescriptions();
+  public List<VirtualFile> downloadFilesWithProgress(@Nullable String targetDirectoryPath,
+                                                     @Nullable Project project,
+                                                     @Nullable JComponent parentComponent) {
+    final List<Pair<VirtualFile, DownloadableFileDescription>> pairs = downloadWithProgress(targetDirectoryPath, project, parentComponent);
     if (pairs == null) return null;
 
     List<VirtualFile> files = new ArrayList<VirtualFile>();
     for (Pair<VirtualFile, DownloadableFileDescription> pair : pairs) {
       files.add(pair.getFirst());
     }
-    return VfsUtilCore.toVirtualFileArray(files);
-  }
-
-  @Override
-  public List<Pair<VirtualFile, DownloadableFileDescription>> downloadAndReturnWithDescriptions() {
-    VirtualFile dir = null;
-    if (myDirectoryForDownloadedFilesPath != null) {
-      File ioDir = new File(FileUtil.toSystemDependentName(myDirectoryForDownloadedFilesPath));
-      ioDir.mkdirs();
-      dir = LocalFileSystem.getInstance().refreshAndFindFileByPath(myDirectoryForDownloadedFilesPath);
-    }
-
-    if (dir == null) {
-      dir = chooseDirectoryForFiles();
-    }
-
-    if (dir != null) {
-      return doDownload(dir);
-    }
-    return null;
+    return files;
   }
 
   @Nullable
-  private List<Pair<VirtualFile,DownloadableFileDescription>> doDownload(final VirtualFile dir) {
-    final List<Pair<File, DownloadableFileDescription>> downloadedFiles = new ArrayList<Pair<File, DownloadableFileDescription>>();
-    final List<Pair<File, DownloadableFileDescription>> existingFiles = new ArrayList<Pair<File, DownloadableFileDescription>>();
-    final Ref<Exception> exceptionRef = Ref.create(null);
-    final Ref<DownloadableFileDescription> currentFile = new Ref<DownloadableFileDescription>();
-    final File ioDir = VfsUtilCore.virtualToIoFile(dir);
+  @Override
+  public List<Pair<VirtualFile, DownloadableFileDescription>> downloadWithProgress(@Nullable String targetDirectoryPath,
+                                                                                   @Nullable Project project,
+                                                                                   @Nullable JComponent parentComponent) {
+    File dir;
+    if (targetDirectoryPath != null) {
+      dir = new File(targetDirectoryPath);
+    }
+    else {
+      VirtualFile virtualDir = chooseDirectoryForFiles(project, parentComponent);
+      if (virtualDir != null) {
+        dir = VfsUtilCore.virtualToIoFile(virtualDir);
+      }
+      else {
+        return null;
+      }
+    }
 
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+    return downloadWithProcess(dir, project, parentComponent);
+  }
+
+  @Nullable
+  private List<Pair<VirtualFile,DownloadableFileDescription>> downloadWithProcess(final File targetDir,
+                                                                                  Project project,
+                                                                                  JComponent parentComponent) {
+    final Ref<List<Pair<File, DownloadableFileDescription>>> localFiles = Ref.create(null);
+    final Ref<IOException> exceptionRef = Ref.create(null);
+
+    boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
       public void run() {
-        final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         try {
-          for (int i = 0; i < myFileDescriptions.size(); i++) {
-            DownloadableFileDescription description = myFileDescriptions.get(i);
-            currentFile.set(description);
-            if (indicator != null) {
-              indicator.checkCanceled();
-              indicator.setText(IdeBundle.message("progress.downloading.0.of.1.file.text", i+1, myFileDescriptions.size()));
-            }
-
-            final File existing = new File(ioDir, description.getDefaultFileName());
-            long size = existing.exists() ? existing.length() : -1;
-
-            if (!download(description, size, downloadedFiles)) {
-              existingFiles.add(Pair.create(existing, description));
-            }
-          }
-        }
-        catch (ProcessCanceledException e) {
-          exceptionRef.set(e);
+          localFiles.set(download(targetDir));
         }
         catch (IOException e) {
           exceptionRef.set(e);
         }
       }
-    }, myDialogTitle, true, myProject, myParent);
+    }, myDialogTitle, true, project, parentComponent);
+    if (!completed) {
+      return null;
+    }
 
     Exception exception = exceptionRef.get();
     if (exception != null) {
-      deleteFiles(downloadedFiles);
-      if (exception instanceof IOException) {
-        String message = IdeBundle.message("error.file.download.failed", exception.getMessage());
-        if (currentFile.get() != null) {
-          message += ": " + currentFile.get().getDownloadUrl();
-        }
-        final boolean tryAgain = IOExceptionDialog.showErrorDialog(myDialogTitle, message);
-        if (tryAgain) {
-          return doDownload(dir);
-        }
+      final boolean tryAgain = IOExceptionDialog.showErrorDialog(myDialogTitle, exception.getMessage());
+      if (tryAgain) {
+        return downloadWithProcess(targetDir, project, parentComponent);
       }
       return null;
     }
 
+    return findVirtualFiles(localFiles.get());
+  }
+
+  @NotNull
+  @Override
+  public List<Pair<File, DownloadableFileDescription>> download(@NotNull File targetDir) throws IOException {
+    final List<Pair<File, DownloadableFileDescription>> downloadedFiles = new ArrayList<Pair<File, DownloadableFileDescription>>();
+    final List<Pair<File, DownloadableFileDescription>> existingFiles = new ArrayList<Pair<File, DownloadableFileDescription>>();
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator == null) {
+      indicator = new EmptyProgressIndicator();
+    }
     try {
-      return moveToDir(existingFiles, downloadedFiles, dir);
+      for (int i = 0; i < myFileDescriptions.size(); i++) {
+        DownloadableFileDescription description = myFileDescriptions.get(i);
+        indicator.checkCanceled();
+        indicator.setText(IdeBundle.message("progress.downloading.0.of.1.file.text", i + 1, myFileDescriptions.size()));
+
+        final File existing = new File(targetDir, description.getDefaultFileName());
+        final String url = description.getDownloadUrl();
+        if (url.startsWith(LIB_SCHEMA)) {
+          indicator.setText2(IdeBundle.message("progress.locate.file.text", description.getPresentableFileName()));
+          final String path = FileUtil.toSystemDependentName(StringUtil.trimStart(url, LIB_SCHEMA));
+          final File file = PathManager.findFileInLibDirectory(path);
+          existingFiles.add(Pair.create(file, description));
+        }
+        else if (url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
+          String path = FileUtil.toSystemDependentName(StringUtil.trimStart(url, LocalFileSystem.PROTOCOL_PREFIX));
+          File file = new File(path);
+          if (file.exists()) {
+            existingFiles.add(Pair.create(file, description));
+          }
+        }
+        else {
+          File downloaded;
+          try {
+            downloaded = downloadFile(description, existing, indicator);
+          }
+          catch (IOException e) {
+            throw new IOException(IdeBundle.message("error.file.download.failed", description.getDownloadUrl(), e.getMessage()), e);
+          }
+          if (FileUtil.filesEqual(downloaded, existing)) {
+            existingFiles.add(Pair.create(existing, description));
+          }
+          else {
+            downloadedFiles.add(Pair.create(downloaded, description));
+          }
+        }
+      }
+      List<Pair<File, DownloadableFileDescription>> localFiles = new ArrayList<Pair<File, DownloadableFileDescription>>();
+      localFiles.addAll(moveToDir(downloadedFiles, targetDir));
+      localFiles.addAll(existingFiles);
+      return localFiles;
+    }
+    catch (ProcessCanceledException e) {
+      deleteFiles(downloadedFiles);
+      throw e;
     }
     catch (IOException e) {
-      if (myProject != null) {
-        Messages.showErrorDialog(myProject, myDialogTitle, e.getMessage());
-      }
-      else {
-        Messages.showErrorDialog(myParent, myDialogTitle, e.getMessage());
-      }
-      return null;
+      deleteFiles(downloadedFiles);
+      throw e;
     }
   }
 
   @Nullable
-  private VirtualFile chooseDirectoryForFiles() {
+  private static VirtualFile chooseDirectoryForFiles(Project project, JComponent parentComponent) {
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     descriptor.setTitle(IdeBundle.message("dialog.directory.for.downloaded.files.title"));
-    final VirtualFile baseDir = myProject != null ? myProject.getBaseDir() : null;
-    return FileChooser.chooseFile(descriptor, myParent, myProject, baseDir);
+    final VirtualFile baseDir = project != null ? project.getBaseDir() : null;
+    return FileChooser.chooseFile(descriptor, parentComponent, project, baseDir);
+  }
+
+  private static List<Pair<File, DownloadableFileDescription>> moveToDir(List<Pair<File, DownloadableFileDescription>> downloadedFiles,
+                                                                         final File targetDir) throws IOException {
+    FileUtil.createDirectory(targetDir);
+    List<Pair<File, DownloadableFileDescription>> result = new ArrayList<Pair<File, DownloadableFileDescription>>();
+    for (Pair<File, DownloadableFileDescription> pair : downloadedFiles) {
+      final DownloadableFileDescription description = pair.getSecond();
+      final String fileName = description.generateFileName(new Condition<String>() {
+        @Override
+        public boolean value(String s) {
+          return !new File(targetDir, s).exists();
+        }
+      });
+      final File toFile = new File(targetDir, fileName);
+      FileUtil.rename(pair.getFirst(), toFile);
+      result.add(Pair.create(toFile, description));
+    }
+    return result;
   }
 
   @NotNull
-  private static List<Pair<VirtualFile,DownloadableFileDescription>> moveToDir(final List<Pair<File, DownloadableFileDescription>> existingFiles, final List<Pair<File, DownloadableFileDescription>> downloadedFiles, final VirtualFile dir) throws IOException {
+  private static List<Pair<VirtualFile, DownloadableFileDescription>> findVirtualFiles(List<Pair<File, DownloadableFileDescription>> ioFiles) {
     List<Pair<VirtualFile,DownloadableFileDescription>> result = new ArrayList<Pair<VirtualFile, DownloadableFileDescription>>();
-
-    final File ioDir = VfsUtilCore.virtualToIoFile(dir);
-    for (Pair<File, DownloadableFileDescription> pair : downloadedFiles) {
-      final DownloadableFileDescription description = pair.getSecond();
-      final boolean dontTouch = description.getDownloadUrl().startsWith(LIB_SCHEMA) || description.getDownloadUrl().startsWith(LocalFileSystem.PROTOCOL_PREFIX);
-      final File toFile = dontTouch? pair.getFirst() : generateName(description, ioDir);
-      if (!dontTouch) {
-        FileUtil.rename(pair.getFirst(), toFile);
-      }
-      VirtualFile file = new WriteAction<VirtualFile>() {
-        @Override
-        protected void run(final Result<VirtualFile> result) {
-          final String url = VfsUtil.getUrlForLibraryRoot(toFile);
-          LocalFileSystem.getInstance().refreshAndFindFileByIoFile(toFile);
-          result.setResult(VirtualFileManager.getInstance().refreshAndFindFileByUrl(url));
-        }
-      }.execute().getResultObject();
-      if (file != null) {
-        result.add(Pair.create(file, description));
-      }
-    }
-
-    for (final Pair<File, DownloadableFileDescription> pair : existingFiles) {
+    for (final Pair<File, DownloadableFileDescription> pair : ioFiles) {
+      final File ioFile = pair.getFirst();
       VirtualFile libraryRootFile = new WriteAction<VirtualFile>() {
         @Override
         protected void run(final Result<VirtualFile> result) {
-          final String url = VfsUtil.getUrlForLibraryRoot(pair.getFirst());
+          final String url = VfsUtil.getUrlForLibraryRoot(ioFile);
+          LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
           result.setResult(VirtualFileManager.getInstance().refreshAndFindFileByUrl(url));
         }
 
@@ -229,89 +254,80 @@ public class FileDownloaderImpl implements FileDownloader {
     return result;
   }
 
-  private static File generateName(DownloadableFileDescription info, final File dir) {
-    final String fileName = info.generateFileName(new Condition<String>() {
-      @Override
-      public boolean value(String s) {
-        return !new File(dir, s).exists();
-      }
-    });
-    return new File(dir, fileName);
-  }
-
   private static void deleteFiles(final List<Pair<File, DownloadableFileDescription>> pairs) {
     for (Pair<File, DownloadableFileDescription> pair : pairs) {
       FileUtil.delete(pair.getFirst());
     }
-    pairs.clear();
   }
 
-  private static boolean download(final DownloadableFileDescription fileDescription,
-                                  final long existingFileSize,
-                                  final List<Pair<File,DownloadableFileDescription>> downloadedFiles) throws IOException {
-    final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+  @NotNull
+  private static File downloadFile(final @NotNull DownloadableFileDescription fileDescription, final @NotNull File existingFile,
+                                   final @NotNull ProgressIndicator indicator) throws IOException {
     final String presentableUrl = fileDescription.getPresentableDownloadUrl();
-    final String url = fileDescription.getDownloadUrl();
-    if (url.startsWith(LIB_SCHEMA)) {
-      indicator.setText2(IdeBundle.message("progress.locate.file.text", fileDescription.getPresentableFileName()));
-      final String path = FileUtil.toSystemDependentName(StringUtil.trimStart(url, LIB_SCHEMA));
-      final File file = PathManager.findFileInLibDirectory(path);
-      downloadedFiles.add(Pair.create(file, fileDescription));
-    }
-    else if (url.startsWith(LocalFileSystem.PROTOCOL_PREFIX)) {
-      String path = FileUtil.toSystemDependentName(StringUtil.trimStart(url, LocalFileSystem.PROTOCOL_PREFIX));
-      File file = new File(path);
-      if (file.exists()) {
-        downloadedFiles.add(Pair.create(file, fileDescription));
+    indicator.setText2(IdeBundle.message("progress.connecting.to.download.file.text", presentableUrl));
+    indicator.setIndeterminate(true);
+    HttpURLConnection connection = (HttpURLConnection)new URL(fileDescription.getDownloadUrl()).openConnection();
+    connection.setConnectTimeout(CONNECTION_TIMEOUT);
+    connection.setReadTimeout(READ_TIMEOUT);
+
+    InputStream input = null;
+    BufferedOutputStream output = null;
+
+    boolean deleteFile = true;
+    File tempFile = null;
+    try {
+      final int responseCode = connection.getResponseCode();
+      if (responseCode != HttpURLConnection.HTTP_OK) {
+        throw new IOException(IdeBundle.message("error.connection.failed.with.http.code.N", responseCode));
       }
-    }
-    else {
-      indicator.setText2(IdeBundle.message("progress.connecting.to.download.file.text", presentableUrl));
-      indicator.setIndeterminate(true);
-      HttpURLConnection connection = (HttpURLConnection)new URL(url).openConnection();
-      connection.setConnectTimeout(CONNECTION_TIMEOUT);
-      connection.setReadTimeout(READ_TIMEOUT);
 
-      InputStream input = null;
-      BufferedOutputStream output = null;
-
-      boolean deleteFile = true;
-      File tempFile = null;
-      try {
-        final int responseCode = connection.getResponseCode();
-        if (responseCode != HttpURLConnection.HTTP_OK) {
-          throw new IOException(IdeBundle.message("error.connection.failed.with.http.code.N", responseCode));
-        }
-
-        final int size = connection.getContentLength();
-        if (size != -1 && size == existingFileSize) {
-          return false;
-        }
-
-        tempFile = FileUtil.createTempFile("downloaded", "file");
-        input = UrlConnectionUtil.getConnectionInputStreamWithException(connection, indicator);
-        output = new BufferedOutputStream(new FileOutputStream(tempFile));
-        indicator.setText2(IdeBundle.message("progress.download.file.text", fileDescription.getPresentableFileName(), presentableUrl));
-        indicator.setIndeterminate(size == -1);
-
-        NetUtils.copyStreamContent(indicator, input, output, size);
-
-        deleteFile = false;
-        downloadedFiles.add(Pair.create(tempFile, fileDescription));
+      final int size = connection.getContentLength();
+      if (existingFile.exists() && size == existingFile.length()) {
+        return existingFile;
       }
-      finally {
-        if (input != null) {
-          input.close();
-        }
-        if (output != null) {
-          output.close();
-        }
-        if (deleteFile && tempFile != null) {
-          FileUtil.delete(tempFile);
-        }
-        connection.disconnect();
-      }
+
+      tempFile = FileUtil.createTempFile("downloaded", "file");
+      input = UrlConnectionUtil.getConnectionInputStreamWithException(connection, indicator);
+      output = new BufferedOutputStream(new FileOutputStream(tempFile));
+      indicator.setText2(IdeBundle.message("progress.download.file.text", fileDescription.getPresentableFileName(), presentableUrl));
+      indicator.setIndeterminate(size == -1);
+
+      NetUtils.copyStreamContent(indicator, input, output, size);
+
+      deleteFile = false;
+      return tempFile;
     }
-    return true;
+    finally {
+      if (input != null) {
+        input.close();
+      }
+      if (output != null) {
+        output.close();
+      }
+      if (deleteFile && tempFile != null) {
+        FileUtil.delete(tempFile);
+      }
+      connection.disconnect();
+    }
+  }
+
+  @NotNull
+  @Override
+  public FileDownloader toDirectory(@NotNull String directoryForDownloadedFilesPath) {
+    myDirectoryForDownloadedFilesPath = directoryForDownloadedFilesPath;
+    return this;
+  }
+
+  @Nullable
+  @Override
+  public VirtualFile[] download() {
+    List<VirtualFile> files = downloadFilesWithProgress(myDirectoryForDownloadedFilesPath, myProject, myParentComponent);
+    return files != null ? VfsUtilCore.toVirtualFileArray(files) : null;
+  }
+
+  @Nullable
+  @Override
+  public List<Pair<VirtualFile, DownloadableFileDescription>> downloadAndReturnWithDescriptions() {
+    return downloadWithProgress(myDirectoryForDownloadedFilesPath, myProject, myParentComponent);
   }
 }

@@ -38,10 +38,16 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
 
   private static final int UP_PRELOAD_COUNT = 20;
   private static final int DOWN_PRELOAD_COUNT = 40;
+  private static final int MAX_LOADING_TASKS = 10;
 
   @NotNull protected final VcsLogDataHolder myDataHolder;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
   @NotNull private final VcsCommitCache<T> myCache;
+
+  /**
+   * The sequence number of the current "loading" task.
+   */
+  private long myCurrentTaskIndex = 0;
 
   @NotNull private final QueueProcessor<TaskDescriptor> myLoader = new QueueProcessor<TaskDescriptor>(new DetailsLoadingTask());
   @NotNull private final Collection<Runnable> myLoadingFinishedListeners = new ArrayList<Runnable>();
@@ -61,17 +67,53 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
   }
 
   @NotNull
-  public T getCommitData(final Node node) {
+  public T getCommitData(@NotNull final Node node) {
     assert EventQueue.isDispatchThread();
     Hash hash = node.getCommitHash();
-    T details = myCache.get(hash);
+    T details = getFromCache(hash);
     if (details != null) {
       return details;
     }
+    return loadingDetails(node, hash);
+  }
 
-    T loadingDetails = (T)new LoadingDetails(hash);
-    runLoadAroundCommitData(node);
+  @NotNull
+  private T loadingDetails(Node node, Hash hash) {
+    TaskDescriptor descriptor = runLoadAroundCommitData(node);
+    T loadingDetails = (T)new LoadingDetails(hash, descriptor.getTaskNum());
     return loadingDetails;
+  }
+
+  @NotNull
+  public T getCommitData(@NotNull Hash hash) {
+    assert EventQueue.isDispatchThread();
+    T details = getFromCache(hash);
+    if (details != null) {
+      return details;
+    }
+    Node node = myDataHolder.getDataPack().getNodeByHash(hash); // TODO this may possibly be slow => need to add to the Task as well
+    return loadingDetails(node, hash);
+  }
+
+  @Nullable
+  public T getCommitDataIfAvailable(@NotNull Hash hash) {
+    return getFromCache(hash);
+  }
+
+  @Nullable
+  private T getFromCache(@NotNull Hash hash) {
+    T details = myCache.get(hash);
+    if (details != null) {
+      if (details instanceof LoadingDetails) {
+        if (((LoadingDetails)details).getLoadingTaskIndex() <= myCurrentTaskIndex - MAX_LOADING_TASKS) {
+          // don't let old "loading" requests stay in the cache forever
+          myCache.remove(hash);
+          return null;
+        }
+      }
+      return details;
+    }
+    return (T)myDataHolder.getTopCommitDetails(hash);
   }
 
   @Nullable
@@ -89,9 +131,11 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
     return null;
   }
 
-  private void runLoadAroundCommitData(@NotNull Node node) {
+  @NotNull 
+  private TaskDescriptor runLoadAroundCommitData(@NotNull Node node) {
     int rowIndex = node.getRowIndex();
     List<Node> nodes = new ArrayList<Node>();
+    long taskNumber = myCurrentTaskIndex++;
     for (int i = rowIndex - UP_PRELOAD_COUNT; i < rowIndex + DOWN_PRELOAD_COUNT; i++) {
       Node commitNode = getCommitNodeInRow(i);
       if (commitNode != null) {
@@ -101,11 +145,13 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
         // fill the cache with temporary "Loading" values to avoid producing queries for each commit that has not been cached yet,
         // even if it will be loaded within a previous query
         if (!myCache.isKeyCached(hash)) {
-          myCache.put(hash, (T)new LoadingDetails(hash));
+          myCache.put(hash, (T)new LoadingDetails(hash, taskNumber));
         }
       }
     }
-    myLoader.addFirst(new TaskDescriptor(nodes));
+    TaskDescriptor task = new TaskDescriptor(nodes, taskNumber);
+    myLoader.addFirst(task);
+    return task;
   }
 
   private void preLoadCommitData(@NotNull List<Node> nodes) throws VcsException {
@@ -146,19 +192,24 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
 
   private static class TaskDescriptor {
     private final List<Node> nodes;
+    private long myTaskNum;
 
-    private TaskDescriptor(List<Node> nodes) {
+    private TaskDescriptor(List<Node> nodes, long taskNum) {
       this.nodes = nodes;
+      myTaskNum = taskNum;
+    }
+
+    public long getTaskNum() {
+      return myTaskNum;
     }
   }
 
   private class DetailsLoadingTask implements Consumer<TaskDescriptor> {
-    private static final int MAX_LOADINGS = 10;
 
     @Override
     public void consume(final TaskDescriptor task) {
       try {
-        myLoader.dismissLastTasks(MAX_LOADINGS);
+        myLoader.dismissLastTasks(MAX_LOADING_TASKS);
         preLoadCommitData(task.nodes);
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override

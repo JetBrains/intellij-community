@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,9 +40,8 @@ public class DefaultClsStubBuilderFactory extends ClsStubBuilderFactory {
     final PsiJavaFileStubImpl file = new PsiJavaFileStubImpl("do.not.know.yet", true);
     try {
       final ClassReader reader = new ClassReader(bytes);
-
       final StubBuildingVisitor<VirtualFile> classVisitor =
-        new StubBuildingVisitor<VirtualFile>(vFile, VirtualFileInnerClassStrategy.INSTANCE, file, 0);
+        new StubBuildingVisitor<VirtualFile>(vFile, VirtualFileInnerClassStrategy.INSTANCE, file, 0, null);
       try {
         reader.accept(classVisitor, ClassReader.SKIP_FRAMES);
       }

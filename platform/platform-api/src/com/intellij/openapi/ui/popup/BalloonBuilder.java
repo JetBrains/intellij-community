@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,8 @@ import java.awt.event.ActionListener;
  * @see JBPopupFactory#createBalloonBuilder(javax.swing.JComponent)
  */
 public interface BalloonBuilder {
-
+  /** @deprecated use {@link Balloon#show(com.intellij.ui.awt.RelativePoint, Balloon.Position)} (to remove in IDEA 14) */
+  @SuppressWarnings("UnusedDeclaration")
   @NotNull
   BalloonBuilder setPreferredPosition(Balloon.Position position);
 
@@ -58,7 +59,7 @@ public interface BalloonBuilder {
   BalloonBuilder setHideOnFrameResize(boolean hide);
 
   @NotNull
-  Balloon createBalloon();
+  BalloonBuilder setHideOnLinkClick(boolean hide);
 
   @NotNull
   BalloonBuilder setClickHandler(ActionListener listener, boolean closeOnClick);
@@ -72,6 +73,8 @@ public interface BalloonBuilder {
   @NotNull
   BalloonBuilder setPositionChangeYShift(int positionChangeYShift);
 
+  /** @deprecated to remove in IDEA 14 */
+  @SuppressWarnings("UnusedDeclaration")
   boolean isHideOnAction();
 
   @NotNull
@@ -91,7 +94,7 @@ public interface BalloonBuilder {
 
   @NotNull
   BalloonBuilder setSmallVariant(boolean smallVariant);
-  
+
   @NotNull
   BalloonBuilder setLayer(Balloon.Layer layer);
 
@@ -103,10 +106,13 @@ public interface BalloonBuilder {
    * as given anchor is disposed.
    * <p/>
    * <b>Note:</b> given disposable anchor is assumed to correctly implement {@link #hashCode()} and {@link #equals(Object)}.
-   * 
+   *
    * @param anchor  target anchor to link to
    * @return        balloon builder which produces balloon linked to the given object life cycle
    */
   @NotNull
   BalloonBuilder setDisposable(@NotNull Disposable anchor);
+
+  @NotNull
+  Balloon createBalloon();
 }

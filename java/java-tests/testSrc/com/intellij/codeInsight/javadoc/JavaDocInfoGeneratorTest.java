@@ -60,6 +60,10 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     doTestField();
   }
 
+  public void testInitializerWithLiteral() throws Exception {
+    doTestField();
+  }
+
   public void testInitializerWithReference() throws Exception {
     doTestField();
   }
@@ -74,6 +78,18 @@ public class JavaDocInfoGeneratorTest extends CodeInsightTestCase {
     final File htmlPath = new File(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/javadocIG/" + getTestName(true) + ".html");
     String htmlText = FileUtil.loadFile(htmlPath);
     String docInfo = new JavaDocumentationProvider().getQuickNavigateInfo(field, field);
+    assertNotNull(docInfo);
+    assertEquals(StringUtil.convertLineSeparators(htmlText.trim()), StringUtil.convertLineSeparators(docInfo.trim()));
+  }
+
+  public void testClassTypeParamsPresentation() throws Exception {
+    PsiClass psiClass = getTestClass();
+    final PsiReferenceList extendsList = psiClass.getExtendsList();
+    final PsiJavaCodeReferenceElement referenceElement = extendsList.getReferenceElements()[0];
+    final PsiClass superClass = extendsList.getReferencedTypes()[0].resolve();
+    final File htmlPath = new File(JavaTestUtil.getJavaTestDataPath() + "/codeInsight/javadocIG/" + getTestName(true) + ".html");
+    String htmlText = FileUtil.loadFile(htmlPath);
+    String docInfo = new JavaDocumentationProvider().getQuickNavigateInfo(superClass, referenceElement);
     assertNotNull(docInfo);
     assertEquals(StringUtil.convertLineSeparators(htmlText.trim()), StringUtil.convertLineSeparators(docInfo.trim()));
   }

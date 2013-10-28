@@ -52,7 +52,7 @@ public class JpsSourceFolder extends JpsContentFolderBase implements SourceFolde
   }
 
   @Nullable
-  private JpsSimpleElement<JavaSourceRootProperties> getJavaProperties() {
+  private JavaSourceRootProperties getJavaProperties() {
     if (mySourceRoot.getRootType() == JavaSourceRootType.SOURCE) {
       return mySourceRoot.getProperties(JavaSourceRootType.SOURCE);
     }
@@ -64,9 +64,9 @@ public class JpsSourceFolder extends JpsContentFolderBase implements SourceFolde
 
   @Override
   public void setPackagePrefix(@NotNull String packagePrefix) {
-    JpsSimpleElement<JavaSourceRootProperties> properties = getJavaProperties();
+    JavaSourceRootProperties properties = getJavaProperties();
     if (properties != null) {
-      properties.setData(new JavaSourceRootProperties(packagePrefix));
+      properties.setPackagePrefix(packagePrefix);
     }
   }
 

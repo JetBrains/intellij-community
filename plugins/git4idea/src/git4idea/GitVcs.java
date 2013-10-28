@@ -54,6 +54,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ComparatorDelegate;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.VcsLog;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.annotate.GitRepositoryForAnnotationsListener;
 import git4idea.changes.GitCommittedChangeListProvider;
@@ -115,19 +116,23 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   /**
    * Provide selected Git commit in some commit list. Use this, when {@link Change} is not enough.
    * @see VcsDataKeys#CHANGES
-   * @see #SELECTED_COMMITS
+   * @deprecated Use {@link VcsLog#getSelectedCommits()}
    */
+  @Deprecated
   public static final DataKey<GitHeavyCommit> GIT_COMMIT = DataKey.create("Git.Commit");
 
   /**
    * Provides the list of Git commits selected in some list, for example, in the Git log.
-   * @see #GIT_COMMIT
+   * @deprecated Use {@link VcsLog#getSelectedCommits()}
    */
+  @Deprecated
   public static final DataKey<List<GitHeavyCommit>> SELECTED_COMMITS = DataKey.create("Git.Selected.Commits");
 
   /**
    * Provides the possibility to receive on demand those commit details which usually are not accessible from the {@link git4idea.history.browser.GitHeavyCommit} object.
+   * @deprecated Use {@link VcsLog#getSelectedCommits()}
    */
+  @Deprecated
   public static final DataKey<GitCommitDetailsProvider> COMMIT_DETAILS_PROVIDER = DataKey.create("Git.Commits.Details.Provider");
 
   private static final Logger log = Logger.getInstance(GitVcs.class.getName());

@@ -176,8 +176,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
 
       final FacetType<?,?> type = myFacetTypeRegistry.findFacetType(typeId);
       if (type == null) {
-        addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.unknown.facet.type.0", typeId));
-        UnknownFeaturesCollector.getInstance(myModule.getProject()).registerUnknownFeature("com.intellij.facetType", typeId);
+        addInvalidFacet(child, model, underlyingFacet, ProjectBundle.message("error.message.unknown.facet.type.0", typeId), typeId);
         continue;
       }
 
@@ -222,6 +221,14 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
                                ModifiableFacetModel model,
                                final Facet underlyingFacet,
                                final String errorMessage) {
+    addInvalidFacet(state, model, underlyingFacet, errorMessage, null);
+  }
+
+  private void addInvalidFacet(final FacetState state,
+                               ModifiableFacetModel model,
+                               final Facet underlyingFacet,
+                               final String errorMessage,
+                               final String typeId) {
     final InvalidFacetManager invalidFacetManager = InvalidFacetManager.getInstance(myModule.getProject());
     final InvalidFacetType type = InvalidFacetType.getInstance();
     final InvalidFacetConfiguration configuration = new InvalidFacetConfiguration(state, errorMessage);
@@ -230,6 +237,7 @@ public class FacetManagerImpl extends FacetManager implements ModuleComponent, P
     if (!invalidFacetManager.isIgnored(facet)) {
       FacetLoadingErrorDescription description = new FacetLoadingErrorDescription(facet);
       ProjectLoadingErrorsNotifier.getInstance(myModule.getProject()).registerError(description);
+      UnknownFeaturesCollector.getInstance(myModule.getProject()).registerUnknownFeature("com.intellij.facetType", typeId);
     }
   }
 

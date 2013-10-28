@@ -3,50 +3,63 @@ package com.intellij.vcs.log.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogFilter;
+import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogFilterer;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.graph.elements.GraphElement;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graphmodel.FragmentManager;
 import com.intellij.vcs.log.graphmodel.GraphFragment;
 import com.intellij.vcs.log.printmodel.SelectController;
 import com.intellij.vcs.log.ui.frame.MainFrame;
-import com.intellij.vcs.log.ui.tables.GraphTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.TableModel;
+import java.util.Collection;
 
 /**
  * @author erokhins
  */
 public class VcsLogUI {
 
+  public static final String POPUP_ACTION_GROUP = "Vcs.Log.ContextMenu";
+  public static final String TOOLBAR_ACTION_GROUP = "Vcs.Log.Toolbar";
+  public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";
+
   private static final Logger LOG = Logger.getInstance(VcsLogUI.class);
 
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final MainFrame myMainFrame;
+  @NotNull private final Project myProject;
   @NotNull private final VcsLogColorManager myColorManager;
+  @NotNull private final VcsLogUiProperties myUiProperties;
+  @NotNull private final VcsLogFilterer myFilterer;
 
   @Nullable private GraphElement prevGraphElement;
-  @NotNull  private TableModel myGraphModel;
 
-  public VcsLogUI(@NotNull VcsLogDataHolder logDataHolder, @NotNull Project project, @NotNull VcsLogColorManager manager) {
+  public VcsLogUI(@NotNull VcsLogDataHolder logDataHolder, @NotNull Project project, @NotNull VcsLogSettings settings,
+                  @NotNull VcsLogColorManager manager, @NotNull VcsLogUiProperties uiProperties) {
     myLogDataHolder = logDataHolder;
+    myProject = project;
     myColorManager = manager;
-    myMainFrame = new MainFrame(myLogDataHolder, this, project);
+    myUiProperties = uiProperties;
+    myFilterer = new VcsLogFilterer(logDataHolder, this);
+    myMainFrame = new MainFrame(myLogDataHolder, this, project, uiProperties);
     project.getMessageBus().connect(project).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new Runnable() {
       @Override
       public void run() {
-        reloadModel();
-        updateUI();
+        applyFiltersAndUpdateUi();
       }
     });
-    reloadModel();
-    updateUI();
+    applyFiltersAndUpdateUi();
   }
 
   @NotNull
@@ -64,15 +77,14 @@ public class VcsLogUI {
     });
   }
 
-  public void reloadModel() {
-    myGraphModel = new GraphTableModel(myLogDataHolder);
+  public void setModel(@NotNull TableModel model) {
+    myMainFrame.getGraphTable().setModel(model);
   }
 
   public void updateUI() {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        myMainFrame.getGraphTable().setModel(myGraphModel);
         myMainFrame.getGraphTable().setPreferredColumnWidths();
         myMainFrame.getGraphTable().repaint();
         myMainFrame.refresh();
@@ -163,7 +175,7 @@ public class VcsLogUI {
     if (row != -1) {
       jumpToRow(row);
     }
-    else if (myLogDataHolder.isFullLogReady()) {
+    else {
       myLogDataHolder.showFullLog(new Runnable() {
         @Override
         public void run() {
@@ -171,13 +183,43 @@ public class VcsLogUI {
         }
       });
     }
-    else {
-      LOG.info("No row for hash " + commitHash);
-    }
   }
 
   @NotNull
   public VcsLogColorManager getColorManager() {
     return myColorManager;
+  }
+
+  @NotNull
+  public VcsLogFilterer getFilterer() {
+    return myFilterer;
+  }
+
+  @NotNull
+  public VcsLogDataHolder getLogDataHolder() {
+    return myLogDataHolder;
+  }
+
+  public void applyFiltersAndUpdateUi() {
+    myFilterer.applyFiltersAndUpdateUi(collectFilters());
+  }
+
+  @NotNull
+  public Collection<VcsLogFilter> collectFilters() {
+    return myMainFrame.getFilterUi().getFilters();
+  }
+
+  public JBTable getTable() {
+    return myMainFrame.getGraphTable();
+  }
+
+  @NotNull
+  public VcsLogUiProperties getUiProperties() {
+    return myUiProperties;
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
   }
 }

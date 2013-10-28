@@ -217,24 +217,32 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
                                                 final PsiModifierListOwner modifierListOwner,
                                                 @NotNull PsiLanguageInjectionHost host,
                                                 final String languageId) {
+    // todo add languageId comment
+    return doAddLanguageAnnotation(project, modifierListOwner, host, languageId, new Processor<PsiLanguageInjectionHost>() {
+      @Override
+      public boolean process(PsiLanguageInjectionHost host) {
+        final Configuration.AdvancedConfiguration configuration = Configuration.getProjectInstance(project).getAdvancedConfiguration();
+        boolean allowed = configuration.isSourceModificationAllowed();
+        configuration.setSourceModificationAllowed(true);
+        try {
+          return doInjectInJava(project, host, host, languageId);
+        }
+        finally {
+          configuration.setSourceModificationAllowed(allowed);
+        }
+      }
+    });
+  }
+
+  public static boolean doAddLanguageAnnotation(final Project project,
+                                                final PsiModifierListOwner modifierListOwner,
+                                                @NotNull PsiLanguageInjectionHost host,
+                                                final String languageId,
+                                                Processor<PsiLanguageInjectionHost> annotationFixer) {
     if (modifierListOwner.getModifierList() == null || !PsiUtil.isLanguageLevel5OrHigher(modifierListOwner)) return false;
     final Configuration.AdvancedConfiguration configuration = Configuration.getProjectInstance(project).getAdvancedConfiguration();
     if (!configuration.isSourceModificationAllowed()) {
-      // todo add languageId comment
-      host.putUserData(InjectLanguageAction.FIX_KEY, new Processor<PsiLanguageInjectionHost>() {
-        @Override
-        public boolean process(PsiLanguageInjectionHost host) {
-          boolean allowed = configuration.isSourceModificationAllowed();
-          configuration.setSourceModificationAllowed(true);
-          try {
-            return doInjectInJava(project, host, host, languageId);
-          }
-          finally {
-            configuration.setSourceModificationAllowed(allowed);
-          }
-        }
-      });
-
+      host.putUserData(InjectLanguageAction.FIX_KEY, annotationFixer);
       return false;
     }
     if (!OrderEntryFix.ensureAnnotationsJarInPath(ModuleUtilCore.findModuleForPsiElement(modifierListOwner))) {

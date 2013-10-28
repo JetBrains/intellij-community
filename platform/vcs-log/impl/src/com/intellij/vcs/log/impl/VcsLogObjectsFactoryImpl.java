@@ -1,6 +1,7 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,17 +33,24 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
   @NotNull
   @Override
   public VcsShortCommitDetails createShortDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp,
-                                                  @NotNull String subject, @NotNull String authorName) {
-    return new VcsShortCommitDetailsImpl(hash, parents, timeStamp, subject, authorName);
+                                                  @NotNull VirtualFile root, @NotNull String subject, @NotNull String authorName) {
+    return new VcsShortCommitDetailsImpl(hash, parents, timeStamp, root, subject, authorName);
   }
 
   @NotNull
   @Override
-  public VcsFullCommitDetails createFullDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long authorTime, @NotNull String subject,
-                                                @NotNull String authorName, @NotNull String authorEmail, @NotNull String message,
-                                                @NotNull String committerName,
+  public VcsFullCommitDetails createFullDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long authorTime, @NotNull VirtualFile root,
+                                                @NotNull String subject, @NotNull String authorName, @NotNull String authorEmail,
+                                                @NotNull String message, @NotNull String committerName,
                                                 @NotNull String committerEmail, long commitTime, @NotNull List<Change> changes) {
-    return new VcsFullCommitDetailsImpl(hash, parents, authorTime, subject, authorName, authorEmail, message, committerName, committerEmail,
-                                        commitTime, changes);
+    return new VcsFullCommitDetailsImpl(hash, parents, authorTime, root, subject, authorName, authorEmail, message, committerName,
+                                        committerEmail, commitTime, changes);
   }
+
+  @NotNull
+  @Override
+  public VcsUser createUser(@NotNull String name) {
+    return new VcsUserImpl(name);
+  }
+
 }

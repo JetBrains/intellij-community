@@ -163,6 +163,10 @@ public class MoveMembersTest extends MultiFileTestCase {
     doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0, 1);
   }
 
+  public void testMultipleWithDependencies1() throws Exception {
+    doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0, 1);
+  }
+
   public void testFromNestedToOuter() throws Exception {
     doTest("Outer.Inner", "Outer", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
   }

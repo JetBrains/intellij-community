@@ -24,9 +24,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Stack;
 
 /**
  * User: Alexander Podkhalyuzin
@@ -40,7 +43,8 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
   }
 
   @Override
-  public List<PsiMethod> findReferencedMethods(final SourcePosition position) {
+  @NotNull
+  public List<SmartStepTarget> findSmartStepTargets(final SourcePosition position) {
     final int line = position.getLine();
     if (line < 0) {
       return Collections.emptyList(); // the document has been changed
@@ -73,24 +77,85 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
       while(true);
 
       //noinspection unchecked
-      final List<PsiMethod> methods = new OrderedSet<PsiMethod>();
-      final PsiElementVisitor methodCollector = new JavaRecursiveElementWalkingVisitor() {
-        @Override public void visitAnonymousClass(PsiAnonymousClass aClass) { /*skip annonymous classes*/ }
+      final List<SmartStepTarget> targets = new OrderedSet<SmartStepTarget>();
 
-        @Override public void visitStatement(PsiStatement statement) {
+      final PsiElementVisitor methodCollector = new JavaRecursiveElementVisitor() {
+        final Stack<PsiMethod> myContextStack = new Stack<PsiMethod>();
+        final Stack<String> myParamNameStack = new Stack<String>();
+        private int myNextLambdaExpressionOrdinal = 0;
+
+        @Nullable
+        private String getCurrentParamName() {
+          return myParamNameStack.isEmpty() ? null : myParamNameStack.peek();
+        }
+
+        @Override
+        public void visitAnonymousClass(PsiAnonymousClass aClass) {
+          for (PsiMethod psiMethod : aClass.getMethods()) {
+            targets.add(new MethodSmartStepTarget(psiMethod, getCurrentParamName(), psiMethod.getBody(), true));
+          }
+        }
+
+        public void visitLambdaExpression(PsiLambdaExpression expression) {
+          targets.add(new LambdaSmartStepTarget(expression, getCurrentParamName(), expression.getBody(), myNextLambdaExpressionOrdinal++));
+        }
+
+        @Override
+        public void visitStatement(PsiStatement statement) {
           if (lineRange.intersects(statement.getTextRange())) {
             super.visitStatement(statement);
           }
         }
 
-        @Override public void visitCallExpression(final PsiCallExpression expression) {
+        public void visitExpressionList(PsiExpressionList expressionList) {
+          final PsiMethod psiMethod = myContextStack.isEmpty()? null : myContextStack.peek();
+          if (psiMethod != null) {
+            final String methodName = psiMethod.getName();
+            final PsiExpression[] expressions = expressionList.getExpressions();
+            final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
+            for (int idx = 0; idx < expressions.length; idx++) {
+              final String paramName = (idx < parameters.length && !parameters[idx].isVarArgs())? parameters[idx].getName() : "arg"+(idx+1);
+              myParamNameStack.push(methodName + ": " + paramName + ".");
+              final PsiExpression argExpression = expressions[idx];
+              try {
+                argExpression.accept(this);
+              }
+              finally {
+                myParamNameStack.pop();
+              }
+            }
+          }
+          else {
+            super.visitExpressionList(expressionList);
+          }
+        }
+
+        @Override
+        public void visitCallExpression(final PsiCallExpression expression) {
           final PsiMethod psiMethod = expression.resolveMethod();
           if (psiMethod != null) {
-            methods.add(psiMethod);
+            myContextStack.push(psiMethod);
+            targets.add(new MethodSmartStepTarget(
+              psiMethod,
+              null,
+              expression instanceof PsiMethodCallExpression?
+                ((PsiMethodCallExpression)expression).getMethodExpression().getReferenceNameElement()
+                : expression instanceof PsiNewExpression? ((PsiNewExpression)expression).getClassOrAnonymousClassReference() : expression,
+              false
+            ));
           }
-          super.visitCallExpression(expression);
+          try {
+            super.visitCallExpression(expression);
+          }
+          finally {
+            if (psiMethod != null) {
+              myContextStack.pop();
+            }
+          }
         }
+
       };
+
       element.accept(methodCollector);
       for (PsiElement sibling = element.getNextSibling(); sibling != null; sibling = sibling.getNextSibling()) {
         if (!lineRange.intersects(sibling.getTextRange())) {
@@ -98,8 +163,9 @@ public class JavaSmartStepIntoHandler extends JvmSmartStepIntoHandler {
         }
         sibling.accept(methodCollector);
       }
-      return methods;
+      return targets;
     }
     return Collections.emptyList();
   }
+
 }

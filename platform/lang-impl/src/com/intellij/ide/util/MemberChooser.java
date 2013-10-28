@@ -439,13 +439,6 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
       }
     });
     treeSpeedSearch.setComparator(getSpeedSearchComparator());
-
-    treeSpeedSearch.addChangeListener(new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        myTree.repaint(); // to update match highlighting
-      }
-    });
   }
 
   protected SpeedSearchComparator getSpeedSearchComparator() {

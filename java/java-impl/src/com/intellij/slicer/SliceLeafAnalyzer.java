@@ -78,7 +78,9 @@ public class SliceLeafAnalyzer {
     }
   };
 
-  static SliceNode filterTree(SliceNode oldRoot, NullableFunction<SliceNode, SliceNode> filter, PairProcessor<SliceNode, List<SliceNode>> postProcessor){
+  static SliceNode filterTree(SliceNode oldRoot,
+                              NullableFunction<SliceNode, SliceNode> filter,
+                              PairProcessor<SliceNode, List<SliceNode>> postProcessor) {
     SliceNode filtered = filter.fun(oldRoot);
     if (filtered == null) return null;
 
@@ -257,10 +259,12 @@ public class SliceLeafAnalyzer {
             PsiElement value = ApplicationManager.getApplication().runReadAction(new Computable<PsiElement>() {
               @Override
               public PsiElement compute() {
-                return sliceUsage.getElement();
+                return sliceUsage.indexNesting == 0 ? sliceUsage.getElement() : null;
               }
             });
-            node(element, map).addAll(ContainerUtil.singleton(value, LEAF_ELEMENT_EQUALITY));
+            if (value != null) {
+              node(element, map).addAll(ContainerUtil.singleton(value, LEAF_ELEMENT_EQUALITY));
+            }
           }
           super.visit(element);
         }

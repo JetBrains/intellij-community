@@ -1089,9 +1089,8 @@ public class PluginManagerCore {
     ourPlugins = pluginDescriptors;
   }
 
-  private static void registerExtensionPointsAndExtensions(ExtensionsArea area, List<IdeaPluginDescriptorImpl> result) {
-    for (IdeaPluginDescriptorImpl descriptor : result) {
-      if (shouldSkipPlugin(descriptor)) continue;
+  private static void registerExtensionPointsAndExtensions(ExtensionsArea area, List<IdeaPluginDescriptorImpl> loadedPlugins) {
+    for (IdeaPluginDescriptorImpl descriptor : loadedPlugins) {
       descriptor.registerExtensionPoints(area);
     }
 
@@ -1100,8 +1099,7 @@ public class PluginManagerCore {
       epNames.add(point.getName());
     }
 
-    for (IdeaPluginDescriptorImpl descriptor : result) {
-      if (shouldSkipPlugin(descriptor)) continue;
+    for (IdeaPluginDescriptorImpl descriptor : loadedPlugins) {
       for (String epName : epNames) {
         descriptor.registerExtensions(area, epName);
       }

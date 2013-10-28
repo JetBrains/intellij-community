@@ -45,7 +45,7 @@ public class FileStatusMap implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.FileStatusMap");
   private final Project myProject;
   private final Map<Document,FileStatus> myDocumentToStatusMap = new WeakHashMap<Document, FileStatus>(); // all dirty if absent
-  private boolean myAllowDirt = true;
+  private volatile boolean myAllowDirt = true;
 
   public FileStatusMap(@NotNull Project project) {
     myProject = project;

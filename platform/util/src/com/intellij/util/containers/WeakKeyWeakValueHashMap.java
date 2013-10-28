@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,14 +34,17 @@ public final class WeakKeyWeakValueHashMap<K,V> implements Map<K,V>{
     }
   }
 
-  private void processQueue() {
-    myWeakKeyMap.processQueue();
+  // returns true if some refs were tossed
+  boolean processQueue() {
+    boolean processed = myWeakKeyMap.processQueue();
     while(true) {
       MyValueReference<K,V> ref = (MyValueReference<K, V>)myQueue.poll();
       if (ref == null) break;
       WeakHashMap.Key<K> weakKey = ref.key;
       myWeakKeyMap.removeKey(weakKey);
+      processed = true;
     }
+    return processed;
   }
 
   @Override

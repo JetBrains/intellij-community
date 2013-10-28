@@ -27,6 +27,7 @@ jsr166e.jar
 jsr173_1.0_api.jar
 junit-4.10.jar
 junit.jar
+jzlib-1.1.1.jar
 log4j.jar
 markdownj-core-0.4.2-SNAPSHOT.jar
 microba.jar

@@ -46,6 +46,7 @@ import com.intellij.openapi.extensions.LoadingOrder
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.statistics.StatisticsManager
@@ -576,10 +577,13 @@ public interface Test {
  }
 
   private def registerContributor(final Class contributor, LoadingOrder order = LoadingOrder.LAST) {
+    registerCompletionContributor(contributor, testRootDisposable, order)
+  }
+  static def registerCompletionContributor(final Class contributor, Disposable parentDisposable, LoadingOrder order) {
     def ep = Extensions.rootArea.getExtensionPoint("com.intellij.completion.contributor")
     def bean = new CompletionContributorEP(language: 'JAVA', implementationClass: contributor.name)
     ep.registerExtension(bean, order)
-    disposeOnTearDown({ ep.unregisterExtension(bean) } as Disposable)
+    Disposer.register(parentDisposable, { ep.unregisterExtension(bean) } as Disposable)
   }
 
   public void testLeftRightMovements() {

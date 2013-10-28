@@ -1,9 +1,12 @@
 package com.intellij.vcs.log.graph.render;
 
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.printmodel.GraphPrintCell;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.Collection;
 
 
 /**
@@ -11,29 +14,15 @@ import java.util.List;
  */
 public class GraphCommitCell extends CommitCell {
 
-  public enum Kind {
-    NORMAL,
-    PICK,
-    FIXUP,
-    REWORD,
-    APPLIED
-  }
-
   private final GraphPrintCell row;
-  private final Kind kind;
 
-  public GraphCommitCell(GraphPrintCell row, Kind kind, String text, List<VcsRef> refsToThisCommit) {
-    super(text, refsToThisCommit);
-    this.kind = kind;
+  public GraphCommitCell(@Nullable Hash hash, @NotNull GraphPrintCell row, @NotNull String text,
+                         @NotNull Collection<VcsRef> refsToThisCommit) {
+    super(hash, text, refsToThisCommit);
     this.row = row;
   }
 
   public GraphPrintCell getPrintCell() {
     return row;
-  }
-
-
-  public Kind getKind() {
-    return kind;
   }
 }

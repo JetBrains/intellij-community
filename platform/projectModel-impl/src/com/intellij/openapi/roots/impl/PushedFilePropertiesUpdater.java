@@ -20,8 +20,11 @@
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -163,12 +166,20 @@ public class PushedFilePropertiesUpdater {
   }
 
   private void applyPushersToFile(VirtualFile fileOrDir, FilePropertyPusher[] pushers, Object[] moduleValues) {
-    final boolean isDir = fileOrDir.isDirectory();
-    for (int i = 0, pushersLength = pushers.length; i < pushersLength; i++) {
-      final FilePropertyPusher<Object> pusher = pushers[i];
-      if (!isDir && (pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir))) continue;
-      else if (isDir && !pusher.acceptsDirectory(fileOrDir, myProject)) continue;
-      findAndUpdateValue(myProject, fileOrDir, pusher, moduleValues != null ? moduleValues[i]:null);
+    FilePropertyPusher<Object> pusher = null;
+    try {
+      final boolean isDir = fileOrDir.isDirectory();
+      for (int i = 0, pushersLength = pushers.length; i < pushersLength; i++) {
+        pusher = pushers[i];
+        if (!isDir && (pusher.pushDirectoriesOnly() || !pusher.acceptsFile(fileOrDir))) continue;
+        else if (isDir && !pusher.acceptsDirectory(fileOrDir, myProject)) continue;
+        findAndUpdateValue(myProject, fileOrDir, pusher, moduleValues != null ? moduleValues[i]:null);
+      }
+    }
+    catch (AbstractMethodError ame) { // acceptsDirectory is missed
+      PluginId pluginId = pusher != null ? PluginManagerCore.getPluginByClassName(pusher.getClass().getName()) : null;
+      if (pluginId != null) throw new PluginException("Incompatible plugin", ame, pluginId);
+      throw ame;
     }
   }
 

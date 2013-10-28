@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,6 +98,9 @@ public class PlatformDataKeys extends CommonDataKeys {
    * <p/>
    * Current key allows to specify custom actions sorter to use if any. I.e. every component can define it's custom
    * sorting rule in order to define priorities for target actions (classes of actions).
+   *
+   * @deprecated use com.intellij.openapi.actionSystem.ActionPromoter
    */
+  @Deprecated
   public static final DataKey<Comparator<? super AnAction>> ACTIONS_SORTER = DataKey.create("actionsSorter");
 }

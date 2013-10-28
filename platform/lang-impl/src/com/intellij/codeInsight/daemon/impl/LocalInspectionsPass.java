@@ -101,6 +101,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                               boolean ignoreSuppressed,
                               @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     super(file.getProject(), document, PRESENTABLE_NAME, file, null, new TextRange(startOffset, endOffset), true, highlightInfoProcessor);
+    assert file.isPhysical() : "can't inspect non-physical file: " + file + "; " + file.getVirtualFile();
     myStartOffset = startOffset;
     myEndOffset = endOffset;
     myPriorityRange = priorityRange;
@@ -277,6 +278,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       }
     };
     for (LocalInspectionToolWrapper wrapper : toolWrappers) {
+      ProgressManager.checkCanceled();
       String language = wrapper.getLanguage();
       if (language == null) {
         LocalInspectionTool tool = wrapper.getTool();
@@ -698,6 +700,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     InspectionProfileWrapper.checkInspectionsDuplicates(toolWrappers);
     Language language = myFile.getLanguage();
     for (InspectionToolWrapper toolWrapper : toolWrappers) {
+      ProgressManager.checkCanceled();
       if (!profile.isToolEnabled(HighlightDisplayKey.find(toolWrapper.getShortName()), element)) continue;
       LocalInspectionToolWrapper wrapper = null;
       if (toolWrapper instanceof LocalInspectionToolWrapper) {

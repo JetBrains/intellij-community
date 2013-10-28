@@ -36,6 +36,7 @@ import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
 import com.intellij.debugger.ui.breakpoints.RunToCursorBreakpoint;
+import com.intellij.debugger.ui.breakpoints.StepIntoBreakpoint;
 import com.intellij.debugger.ui.tree.ValueDescriptor;
 import com.intellij.debugger.ui.tree.render.*;
 import com.intellij.execution.CantRunException;
@@ -719,18 +720,19 @@ public abstract class DebugProcessImpl implements DebugProcess {
     myPositionManager.appendPositionManager(positionManager);
   }
 
-  private RunToCursorBreakpoint myRunToCursorBreakpoint;
+  private volatile RunToCursorBreakpoint myRunToCursorBreakpoint;
 
   public void cancelRunToCursorBreakpoint() {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    if (myRunToCursorBreakpoint != null) {
-      getRequestsManager().deleteRequest(myRunToCursorBreakpoint);
-      myRunToCursorBreakpoint.delete();
-      if (myRunToCursorBreakpoint.isRestoreBreakpoints()) {
+    final RunToCursorBreakpoint runToCursorBreakpoint = myRunToCursorBreakpoint;
+    if (runToCursorBreakpoint != null) {
+      myRunToCursorBreakpoint = null;
+      getRequestsManager().deleteRequest(runToCursorBreakpoint);
+      runToCursorBreakpoint.delete();
+      if (runToCursorBreakpoint.isRestoreBreakpoints()) {
         final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(getProject()).getBreakpointManager();
         breakpointManager.enableBreakpoints(this);
       }
-      myRunToCursorBreakpoint = null;
     }
   }
 
@@ -1368,12 +1370,17 @@ public abstract class DebugProcessImpl implements DebugProcess {
 
   private class StepIntoCommand extends ResumeCommand {
     private final boolean myForcedIgnoreFilters;
-    private final RequestHint.SmartStepFilter mySmartStepFilter;
+    private final MethodFilter mySmartStepFilter;
+    @Nullable
+    private final StepIntoBreakpoint myBreakpoint;
 
-    public StepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, @Nullable final RequestHint.SmartStepFilter smartStepFilter) {
+    public StepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, @Nullable final MethodFilter methodFilter) {
       super(suspendContext);
-      myForcedIgnoreFilters = ignoreFilters || smartStepFilter != null;
-      mySmartStepFilter = smartStepFilter;
+      myForcedIgnoreFilters = ignoreFilters || methodFilter != null;
+      mySmartStepFilter = methodFilter;
+      myBreakpoint = methodFilter instanceof BreakpointStepMethodFilter ?
+        DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().addStepIntoBreakpoint(((BreakpointStepMethodFilter)methodFilter)) :
+        null;
     }
 
     public void contextAction() {
@@ -1393,6 +1400,11 @@ public abstract class DebugProcessImpl implements DebugProcess {
       }
       hint.setIgnoreFilters(myForcedIgnoreFilters || mySession.shouldIgnoreSteppingFilters());
       applyThreadFilter(stepThread);
+      if (myBreakpoint != null) {
+        myBreakpoint.SUSPEND_POLICY = suspendContext.getSuspendPolicy() == EventRequest.SUSPEND_EVENT_THREAD? DebuggerSettings.SUSPEND_THREAD : DebuggerSettings.SUSPEND_ALL;
+        myBreakpoint.createRequest(suspendContext.getDebugProcess());
+        myRunToCursorBreakpoint = myBreakpoint;
+      }
       doStep(suspendContext, stepThread, StepRequest.STEP_INTO, hint);
       super.contextAction();
     }
@@ -1471,7 +1483,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     public ResumeCommand(SuspendContextImpl suspendContext) {
       super(suspendContext);
       final ThreadReferenceProxyImpl contextThread = mySession.getContextManager().getContext().getThreadProxy();
-      myContextThread = contextThread != null ? contextThread : getSuspendContext().getThread();
+      myContextThread = contextThread != null ? contextThread : (suspendContext != null? suspendContext.getThread() : null);
     }
 
     public Priority getPriority() {
@@ -1836,7 +1848,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     return new StepOutCommand(suspendContext);
   }
 
-  public ResumeCommand createStepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, final RequestHint.SmartStepFilter smartStepFilter) {
+  public ResumeCommand createStepIntoCommand(SuspendContextImpl suspendContext, boolean ignoreFilters, final MethodFilter smartStepFilter) {
     return new StepIntoCommand(suspendContext, ignoreFilters, smartStepFilter);
   }
 

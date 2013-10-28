@@ -380,10 +380,10 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
               GrVariable var = pointer != null ? pointer.getElement() : null;
 
               if (isInplace && var != null) {
-                GrInplaceIntroducer introducer =
-                  getIntroducer(var, context, settings, occurrences, varRangeMarker, expressionRangeMarker, stringPartRangeMarker);
+                GrInplaceIntroducer introducer = getIntroducer(var, context, settings, occurrences, varRangeMarker, expressionRangeMarker, stringPartRangeMarker);
+                LinkedHashSet<String> suggestions = introducer.suggestNames(context);
                 PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-                introducer.performInplaceRefactoring(introducer.suggestNames(context));
+                introducer.performInplaceRefactoring(suggestions);
               }
             }
           }, getRefactoringName(), getRefactoringName());

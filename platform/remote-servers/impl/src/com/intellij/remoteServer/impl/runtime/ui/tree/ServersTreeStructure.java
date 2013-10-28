@@ -1,7 +1,9 @@
 package com.intellij.remoteServer.impl.runtime.ui.tree;
 
 import com.intellij.execution.Executor;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.RunDialog;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.TreeStructureProvider;
@@ -14,6 +16,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
 import com.intellij.remoteServer.impl.configuration.RemoteServerConfigurable;
+import com.intellij.remoteServer.impl.runtime.deployment.DeploymentTaskImpl;
 import com.intellij.remoteServer.impl.runtime.log.DeploymentLogManagerImpl;
 import com.intellij.remoteServer.impl.runtime.log.LoggingHandlerImpl;
 import com.intellij.remoteServer.impl.runtime.ui.RemoteServersViewContributor;
@@ -23,6 +26,7 @@ import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
+import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.ui.LayeredIcon;
 import icons.RemoteServersIcons;
 import org.jetbrains.annotations.NotNull;
@@ -241,6 +245,22 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       DeploymentRuntime runtime = getValue().getRuntime();
       if (runtime != null) {
         getConnection().undeploy(getValue(), runtime);
+      }
+    }
+
+    @Override
+    public boolean isEditConfigurationActionEnabled() {
+      return getValue().getDeploymentTask() != null;
+    }
+
+    @Override
+    public void editConfiguration() {
+      DeploymentTask<?> task = getValue().getDeploymentTask();
+      if (task != null) {
+        RunnerAndConfigurationSettings settings = ((DeploymentTaskImpl)task).getExecutionEnvironment().getRunnerAndConfigurationSettings();
+        if (settings != null) {
+          RunDialog.editConfiguration(doGetProject(), settings, "Edit Deployment Configuration");
+        }
       }
     }
 

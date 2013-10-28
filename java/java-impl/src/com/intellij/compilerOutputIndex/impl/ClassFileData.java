@@ -6,6 +6,7 @@ import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.asm4.ClassVisitor;
 import org.jetbrains.asm4.MethodVisitor;
 import org.jetbrains.asm4.Opcodes;
+import org.jetbrains.asm4.tree.ClassNode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,13 +17,13 @@ import java.util.List;
 public class ClassFileData {
   private final List<MethodData> myMethodDatas;
 
-  public ClassFileData(final ClassReader classReader) {
-    this(classReader, true);
+  public ClassFileData(final ClassNode classNode) {
+    this(classNode, true);
   }
 
-  public ClassFileData(final ClassReader classReader, final boolean checkForPrimitiveReturn) {
+  public ClassFileData(final ClassNode classNode, final boolean checkForPrimitiveReturn) {
     myMethodDatas = new ArrayList<MethodData>();
-    classReader.accept(new ClassVisitor(Opcodes.ASM4) {
+    classNode.accept(new ClassVisitor(Opcodes.ASM4) {
       @Override
       public MethodVisitor visitMethod(final int access,
                                        final String name,
@@ -33,7 +34,7 @@ public class ClassFileData {
         myMethodDatas.add(methodDataAccumulator.getMethodData());
         return methodDataAccumulator;
       }
-    }, Opcodes.ASM4);
+    });
   }
 
   public List<MethodData> getMethodDatas() {

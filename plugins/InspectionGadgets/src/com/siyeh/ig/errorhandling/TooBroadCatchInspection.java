@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInsight.generation.surroundWith.SurroundWithUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.editor.Document;
@@ -138,7 +139,9 @@ public class TooBroadCatchInspection extends TooBroadCatchInspectionBase {
       codeStyleManager.shortenClassReferences(element);
 
       if (isOnTheFly()) {
-        final TextRange range = getRangeToSelect(element.getCatchBlock());
+        final PsiCodeBlock newBlock = element.getCatchBlock();
+        assert newBlock != null;
+        final TextRange range = SurroundWithUtil.getRangeToSelect(newBlock);
         final PsiFile file = element.getContainingFile();
         final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
         if (editor == null) {
