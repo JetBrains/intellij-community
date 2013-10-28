@@ -256,10 +256,8 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
 
     @Override
     public void startServer(@NotNull Executor executor) {
-      ServerConnection<?> connection = getConnection();
-      if (connection != null) {
-        connection.computeDeployments(EmptyRunnable.INSTANCE);
-      }
+      ServerConnection<?> connection = ServerConnectionManager.getInstance().getOrCreateConnection(getValue());
+      connection.computeDeployments(EmptyRunnable.INSTANCE);
     }
 
     @Override
