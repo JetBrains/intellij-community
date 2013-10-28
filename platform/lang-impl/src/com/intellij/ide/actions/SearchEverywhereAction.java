@@ -56,6 +56,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -753,7 +754,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           final Map.Entry actionWithParentGroup = value instanceof Map.Entry ? (Map.Entry)value : null;
           final AnAction anAction = actionWithParentGroup == null ? (AnAction)value : (AnAction)actionWithParentGroup.getKey();
           final Presentation templatePresentation = anAction.getTemplatePresentation();
-          final Icon icon = templatePresentation.getIcon();
+          Icon icon = templatePresentation.getIcon();
+          if (anAction instanceof ActivateToolWindowAction) {
+            final String id = ((ActivateToolWindowAction)anAction).getToolWindowId();
+            icon = ToolWindowManager.getInstance(myProject).getToolWindow(id).getIcon();
+          }
 
           append(templatePresentation.getText());
 
@@ -1213,6 +1218,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         myClassModel = new GotoClassModel2(project);
         myFileModel = new GotoFileModel(project);
         myFileChooseByName = ChooseByNamePopup.createPopup(project, myFileModel, (PsiElement)null);
+        project.putUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
         myActionModel = createActionModel();
         mySymbolsModel = new GotoSymbolModel2(project);
         myConfigurables.clear();
@@ -1367,6 +1373,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               }
             });
             myPopup.show(new RelativePoint(getField().getParent(), new Point(0, getField().getParent().getHeight())));
+            updatePopupBounds();
 
             ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
               @Override
@@ -1458,6 +1465,9 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     final Dimension size = myList.getPreferredSize();
     if (size.width < parent.getWidth()) {
       size.width = parent.getWidth();
+    }
+    if (myList.getItemsCount() == 0) {
+      size.height = 70;
     }
     Dimension sz = new Dimension(size.width, size.height);
     if (sz.width > 1000 || sz.height > 800) {
