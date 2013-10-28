@@ -15,9 +15,8 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +24,7 @@ import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
 
-public class FinderRecursivePanelTest extends LightPlatformTestCase {
+public class FinderRecursivePanelTest extends PlatformTestCase {
 
   public void testListModelMerge1() {
     assertMerge(new String[]{"a", "b", "c", "d"}, 0, 0, "a");
@@ -87,7 +86,7 @@ public class FinderRecursivePanelTest extends LightPlatformTestCase {
   }
 
   public void testUpdate() {
-    StringFinderRecursivePanel panel_0 = new StringFinderRecursivePanel(getProject()) {
+    StringFinderRecursivePanel panel_0 = new StringFinderRecursivePanel() {
       @NotNull
       @Override
       protected JComponent createRightComponent(String s) {
@@ -130,8 +129,8 @@ public class FinderRecursivePanelTest extends LightPlatformTestCase {
 
   private class StringFinderRecursivePanel extends FinderRecursivePanel<String> {
 
-    private StringFinderRecursivePanel(Project project) {
-      super(project, "fooPanel");
+    private StringFinderRecursivePanel() {
+      super(FinderRecursivePanelTest.this.myProject, "fooPanel");
       init();
     }
 
