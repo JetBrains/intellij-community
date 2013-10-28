@@ -16,7 +16,6 @@ import de.plushnikov.intellij.plugin.thirdparty.ErrorMessages;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.BuilderUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import lombok.Singleton;
 import lombok.experimental.Builder;
 import org.jetbrains.annotations.NotNull;
 
@@ -59,7 +58,7 @@ public class BuilderInnerClassProcessor extends AbstractClassProcessor {
   protected boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder, boolean shouldAddErrors) {
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
       if (shouldAddErrors) {
-        builder.addError(ErrorMessages.canBeUsedOnClassOnly(Singleton.class));
+        builder.addError(ErrorMessages.canBeUsedOnClassOnly(Builder.class));
       }
       return false;
     }

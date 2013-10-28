@@ -20,4 +20,8 @@ public class InspectionTest extends InspectionTestCase {
   public void testIssue37() throws Exception {
     doTest();
   }
+
+  public void testBuilderonrighttype() throws Exception {
+    doTest();
+  }
 }
