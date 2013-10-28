@@ -17,6 +17,7 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.XmlHighlighterColors;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -35,6 +36,7 @@ import java.util.List;
 public class XmlNsPrefixAnnotator implements Annotator {
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return;
     if (element instanceof XmlTag || element instanceof XmlAttribute) {
       List<SchemaPrefixReference> references = ContainerUtil.findAll(element.getReferences(), SchemaPrefixReference.class);
       for (SchemaPrefixReference reference : references) {
