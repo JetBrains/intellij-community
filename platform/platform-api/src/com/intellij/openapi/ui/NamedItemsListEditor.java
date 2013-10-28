@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeNode;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -78,6 +79,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
         }
     }
 
+    @Override
     public void reset() {
         myResultItems = myOriginalItems;
         myItems.clear();
@@ -90,9 +92,11 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
         super.reset();
     }
 
+    @Override
     protected void processRemovedItems() {
     }
 
+    @Override
     protected boolean wasObjectStored(Object editableObject) {
         return true;
     }
@@ -105,10 +109,12 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     public String askForProfileName(String titlePattern) {
         String title = MessageFormat.format(titlePattern, subjDisplayName());
         return Messages.showInputDialog("New " + subjDisplayName() + " name:", title, Messages.getQuestionIcon(), "", new InputValidator() {
+            @Override
             public boolean checkInput(String s) {
                 return s.length() > 0 && findByName(s) == null;
             }
 
+            @Override
             public boolean canClose(String s) {
                 return checkInput(s);
             }
@@ -124,12 +130,14 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
         return null;
     }
 
+    @Override
     @Nullable
     protected ArrayList<AnAction> createActions(boolean fromPopup) {
         ArrayList<AnAction> result = new ArrayList<AnAction>();
         result.add(new AddAction());
 
         result.add(new MyDeleteAction(forAll(new Condition<Object>() {
+            @Override
             @SuppressWarnings({"unchecked"})
             public boolean value(Object o) {
                 return canDelete((T) ((MyNode) o).getConfigurable().getEditableObject());
@@ -154,7 +162,8 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
 
     @Override
     protected void onItemDeleted(Object item) {
-        myItems.remove((T)item);
+      //noinspection unchecked
+      myItems.remove((T)item);
     }
 
     protected void setDisplayName(T item, String name) {
@@ -169,9 +178,11 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     protected UnnamedConfigurable getItemConfigurable(final T item) {
       final Ref<UnnamedConfigurable> result = new Ref<UnnamedConfigurable>();
       TreeUtil.traverse((TreeNode)myTree.getModel().getRoot(), new TreeUtil.Traverse() {
+        @Override
         public boolean accept(Object node) {
           final NamedConfigurable configurable = (NamedConfigurable)((DefaultMutableTreeNode)node).getUserObject();
           if (configurable.getEditableObject() == item) {
+            //noinspection unchecked
             result.set(((ItemConfigurable)configurable).myConfigurable);
             return false;
           }
@@ -198,22 +209,27 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
             myConfigurable = createConfigurable(item);
         }
 
+        @Override
         public void setDisplayName(String name) {
           NamedItemsListEditor.this.setDisplayName(myItem, name);
         }
 
+        @Override
         public Object getEditableObject() {
             return myItem;
         }
 
+        @Override
         public String getBannerSlogan() {
             return myNamer.getName(myItem);
         }
 
+        @Override
         public JComponent createOptionsPanel() {
             return myConfigurable.createComponent();
         }
 
+        @Override
         public String getDisplayName() {
             return myNamer.getName(myItem);
         }
@@ -226,22 +242,27 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
             return null;
         }
 
+    @Override
     public String getHelpTopic() {
             return null;
         }
 
+        @Override
         public boolean isModified() {
             return myConfigurable.isModified();
         }
 
+        @Override
         public void apply() throws ConfigurationException {
             myConfigurable.apply();
         }
 
+        @Override
         public void reset() {
             myConfigurable.reset();
         }
 
+        @Override
         public void disposeUIResources() {
             myConfigurable.disposeUIResources();
         }
@@ -258,6 +279,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
         return super.isModified();
     }
 
+    @Override
     public void apply() throws ConfigurationException {
         super.apply();
         myResultItems = myItems;
@@ -272,21 +294,23 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
     }
 
     public T getSelectedItem() {
-        return (T) getSelectedObject();
+      //noinspection unchecked
+      return (T) getSelectedObject();
     }
 
 
     private class CopyAction extends DumbAwareAction {
         public CopyAction() {
             super("Copy", "Copy", MasterDetailsComponent.COPY_ICON);
-            registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, KeyEvent.CTRL_MASK)), myTree);
+            registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_D, InputEvent.CTRL_MASK)), myTree);
         }
 
+        @Override
         public void actionPerformed(AnActionEvent event) {
             final String profileName = askForProfileName("Copy {0}");
             if (profileName == null) return;
 
-            final T clone = myCloner.copyOf((T) getSelectedObject());
+            @SuppressWarnings("unchecked") final T clone = myCloner.copyOf((T) getSelectedObject());
             myNamer.setName(clone, profileName);
             addNewNode(clone);
             selectNodeInTree(clone);
@@ -294,6 +318,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
         }
 
 
+        @Override
         public void update(AnActionEvent event) {
             super.update(event);
             event.getPresentation().setEnabled(getSelectedObject() != null);
@@ -309,6 +334,7 @@ public abstract class NamedItemsListEditor<T> extends MasterDetailsComponent {
             registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
         }
 
+        @Override
         public void actionPerformed(AnActionEvent event) {
           final T newItem = createItem();
           if (newItem != null) {
