@@ -332,6 +332,12 @@ void AddPredefinedVMOptions(std::vector<std::string>& vmOptionLines)
 		while(pos < vmOptions.size() && vmOptions[pos] == ' ') pos++;
 		vmOptions = vmOptions.substr(pos);
 	}
+
+	char ideaProperties[_MAX_PATH];
+	if (GetEnvironmentVariableA("IDEA_PROPERTIES", ideaProperties, _MAX_PATH-1))
+	{
+		vmOptionLines.push_back(std::string("-Didea.properties.file=") + ideaProperties);
+	}
 }
 
 bool LoadVMOptions()
