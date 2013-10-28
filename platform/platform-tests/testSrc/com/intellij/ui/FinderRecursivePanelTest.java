@@ -36,15 +36,15 @@ public class FinderRecursivePanelTest extends PlatformTestCase {
   }
 
   public void testListModelMerge3() {
-    assertMerge(new String[]{"a", "b", "c", "d"}, 0, -1, new String[0]);
+    assertMerge(new String[]{"a", "b", "c", "d"}, 0, -1 /* nothing */);
   }
 
   public void testListModelMerge4() {
-    assertMerge(new String[]{"a", "b", "c", "d"}, 2, 2, new String[]{"a", "b", "c", "d"});
+    assertMerge(new String[]{"a", "b", "c", "d"}, 2, 2, "a", "b", "c", "d");
   }
 
   public void _testListModelMerge5() {
-    assertMerge(new String[]{"a", "b", "c", "d"}, new String[]{"d", "c", "b", "a"});
+    assertMerge(new String[]{"a", "b", "c", "d"}, "d", "c", "b", "a");
   }
 
   public void testListModelMerge6() {
@@ -68,18 +68,17 @@ public class FinderRecursivePanelTest extends PlatformTestCase {
   }
 
   private static void assertMerge(String[] items, int startSelection, int expectedSelection, String... newItems) {
-
     CollectionListModel<String> model = new CollectionListModel<String>();
     model.add(Arrays.asList(items));
     JBList list = new JBList(model);
     list.setSelectedIndex(startSelection);
 
     FinderRecursivePanel.mergeListItems(model, Arrays.asList(newItems));
-    assertEquals(model.getSize(), newItems.length);
+    assertEquals(newItems.length, model.getSize());
     for (int i = 0; i < newItems.length; i++) {
       assertEquals(newItems[i], model.getElementAt(i));
     }
-    assertEquals(list.getSelectedIndex(), expectedSelection);
+    assertEquals(expectedSelection, list.getSelectedIndex());
   }
 
   private static void assertMerge(String[] items, String... newItems) {
@@ -121,10 +120,10 @@ public class FinderRecursivePanelTest extends PlatformTestCase {
 
     panel_0.updatePanel();
 
-    assertEquals(panel_0.getSelectedValue(), "a");
-    assertEquals(panel_1.getSelectedValue(), "b");
-    assertEquals(panel_2.getSelectedValue(), "c");
-    assertEquals(panel_3.getSelectedValue(), "d");
+    assertEquals("a", panel_0.getSelectedValue());
+    assertEquals("b", panel_1.getSelectedValue());
+    assertEquals("c", panel_2.getSelectedValue());
+    assertEquals("d", panel_3.getSelectedValue());
   }
 
 
