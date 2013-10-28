@@ -14,6 +14,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.PsiReferenceList;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
 import com.intellij.psi.impl.CheckUtil;
@@ -32,12 +33,14 @@ import org.jetbrains.annotations.Nullable;
  */
 public class LombokLightMethodBuilder extends LightMethodBuilder {
   private final LightIdentifier myNameIdentifier;
+  private final LombokLightReferenceListBuilder myThrowsList;
   private ASTNode myASTNode;
 
   public LombokLightMethodBuilder(@NotNull PsiManager manager, @NotNull String name) {
     super(manager, JavaLanguage.INSTANCE, name,
-        new LightParameterListBuilder(manager, JavaLanguage.INSTANCE), new LombokLightModifierList(manager, JavaLanguage.INSTANCE));
+       new LightParameterListBuilder(manager, JavaLanguage.INSTANCE), new LombokLightModifierList(manager, JavaLanguage.INSTANCE));
     myNameIdentifier = new LombokLightIdentifier(manager, name);
+    myThrowsList = new LombokLightReferenceListBuilder(manager, JavaLanguage.INSTANCE, PsiReferenceList.Role.THROWS_LIST);
   }
 
   public LombokLightMethodBuilder withNavigationElement(PsiElement navigationElement) {
@@ -58,6 +61,22 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
   public LombokLightMethodBuilder withParameter(@NotNull String name, @NotNull PsiType type) {
     addParameter(new LombokLightParameter(name, type, this, JavaLanguage.INSTANCE));
     return this;
+  }
+
+  public LightMethodBuilder addException(PsiClassType type) {
+    myThrowsList.addReference(type);
+    return this;
+  }
+
+  public LightMethodBuilder addException(String fqName) {
+    myThrowsList.addReference(fqName);
+    return this;
+  }
+
+  @Override
+  @NotNull
+  public PsiReferenceList getThrowsList() {
+    return myThrowsList;
   }
 
   public LombokLightMethodBuilder withException(@NotNull PsiClassType type) {
@@ -85,7 +104,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
     return this;
   }
 
-    @Override
+  @Override
   public PsiIdentifier getNameIdentifier() {
     return myNameIdentifier;
   }
