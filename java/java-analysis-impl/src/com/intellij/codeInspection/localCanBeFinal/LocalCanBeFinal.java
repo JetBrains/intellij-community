@@ -145,6 +145,23 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
         }
       }
 
+      @Override
+      public void visitCatchSection(PsiCatchSection section) {
+        super.visitCatchSection(section);
+        final PsiParameter parameter = section.getParameter();
+        if (PsiTreeUtil.getParentOfType(parameter, PsiClass.class) != PsiTreeUtil.getParentOfType(body, PsiClass.class)) {
+          return;
+        }
+        final PsiCodeBlock catchBlock = section.getCatchBlock();
+        if (catchBlock == null) return;
+        final int from = flow.getStartOffset(catchBlock);
+        final int end = flow.getEndOffset(catchBlock);
+        if (!ControlFlowUtil.getWrittenVariables(flow, from, end, false).contains(parameter)) {
+          writtenVariables.remove(parameter);
+          result.add(parameter);
+        }
+      }
+
       @Override public void visitForeachStatement(PsiForeachStatement statement) {
         super.visitForeachStatement(statement);
         final PsiParameter param = statement.getIterationParameter();
@@ -174,6 +191,22 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
               PsiElement[] declaredElements = statement.getDeclaredElements();
               for (PsiElement declaredElement : declaredElements) {
                 if (declaredElement instanceof PsiVariable) result.add(declaredElement);
+              }
+            }
+
+            @Override
+            public void visitForStatement(PsiForStatement statement) {
+              super.visitForStatement(statement);
+              final PsiStatement initialization = statement.getInitialization();
+              if (!(initialization instanceof PsiDeclarationStatement)) {
+                return;
+              }
+              final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)initialization;
+              final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
+              for (final PsiElement declaredElement : declaredElements) {
+                if (declaredElement instanceof PsiVariable) {
+                  result.add(declaredElement);
+                }
               }
             }
           });
