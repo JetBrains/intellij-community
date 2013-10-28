@@ -27,8 +27,11 @@ public class DeployAction extends ServersTreeActionBase {
       if (node.isDeployed()) {
         presentation.setText("Redeploy");
         presentation.setDescription("Redeploy '" + node.getDeploymentName() + "'");
+        return;
       }
     }
+    presentation.setText(getTemplatePresentation().getText());
+    presentation.setDescription(getTemplatePresentation().getDescription());
   }
 
   @Override
