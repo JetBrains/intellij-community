@@ -1,12 +1,18 @@
 package com.intellij.vcs.log.ui.frame;
 
+import com.intellij.ide.CopyProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.graph.elements.Edge;
 import com.intellij.vcs.log.graph.elements.GraphElement;
@@ -29,6 +35,7 @@ import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -38,7 +45,7 @@ import static com.intellij.vcs.log.graph.render.PrintParameters.HEIGHT_CELL;
 /**
  * @author erokhins
  */
-public class VcsLogGraphTable extends JBTable {
+public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, CopyProvider {
 
   private static final Logger LOG = Logger.getInstance(VcsLogGraphTable.class);
   private static final int ROOT_INDICATOR_WIDTH = 5;
@@ -117,6 +124,37 @@ public class VcsLogGraphTable extends JBTable {
       return null;
     }
     return ((AbstractVcsLogTableModel)model).getSelectedChanges(getSelectedRows());
+  }
+
+  @Override
+  public void calcData(DataKey key, DataSink sink) {
+    if (PlatformDataKeys.COPY_PROVIDER == key) {
+      sink.put(key, this);
+    }
+  }
+
+  @Override
+  public void performCopy(@NotNull DataContext dataContext) {
+    List<String> hashes = ContainerUtil.newArrayList();
+    for (int row : getSelectedRows()) {
+      Hash hash = ((AbstractVcsLogTableModel)getModel()).getHashAtRow(row);
+      if (hash != null) {
+        hashes.add(hash.asString());
+      }
+    }
+    if (!hashes.isEmpty()) {
+      CopyPasteManager.getInstance().setContents(new StringSelection(StringUtil.join(hashes, "\n")));
+    }
+  }
+
+  @Override
+  public boolean isCopyEnabled(@NotNull DataContext dataContext) {
+    return getSelectedRowCount() > 0;
+  }
+
+  @Override
+  public boolean isCopyVisible(@NotNull DataContext dataContext) {
+    return true;
   }
 
   private class MyMouseAdapter extends MouseAdapter {

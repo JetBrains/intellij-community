@@ -121,12 +121,20 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell> {
       message = details.getSubject();
       refs = (List<VcsRef>)myDataPack.getRefsModel().refsToCommit(details.getHash());
     }
-    return new GraphCommitCell(hash, graphPrintCell, message, refs);
+    return new GraphCommitCell(graphPrintCell, message, refs);
   }
 
   @NotNull
   @Override
   protected Class<GraphCommitCell> getCommitColumnClass() {
     return GraphCommitCell.class;
+  }
+
+  @Nullable
+  @Override
+  public Hash getHashAtRow(int row) {
+    Node node = myDataPack.getGraphModel().getGraph().getCommitNodeInRow(row);
+    return node == null ? null : node.getCommitHash();
+    
   }
 }

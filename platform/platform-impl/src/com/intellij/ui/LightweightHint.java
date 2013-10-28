@@ -171,6 +171,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           .setTextForeground(hintHint.getTextForeground())
           .setTextBackground(hintHint.getTextBackground())
           .setBorderColor(hintHint.getBorderColor())
+          .setBorderInsets(hintHint.getBorderInsets())
           .setFont(hintHint.getTextFont())
           .setCalloutShift(hintHint.getCalloutShift())
           .setPositionChangeShift(hintHint.getPositionChangeX(), hintHint.getPositionChangeY())

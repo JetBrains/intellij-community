@@ -41,10 +41,11 @@ public class HintHint {
   private Color myTextFg;
   private Color myTextBg;
   private Color myBorderColor;
+  private Insets myBorderInsets;
   private Font myFont;
   private int myCalloutShift;
-  private boolean myExplicitClose;
 
+  private boolean myExplicitClose;
   private int myPositionChangeX;
   private int myPositionChangeY;
   private boolean myShowImmediately = false;
@@ -123,6 +124,10 @@ public class HintHint {
 
   public Color getBorderColor() {
     return myBorderColor != null ? myBorderColor : getTooltipManager().getBorderColor(myAwtTooltip);
+  }
+
+  public Insets getBorderInsets() {
+    return myBorderInsets;
   }
 
   public boolean isOpaqueAllowed() {
@@ -214,6 +219,12 @@ public class HintHint {
     myBorderColor = borderColor;
     return this;
   }
+
+  public HintHint setBorderInsets(Insets insets) {
+    myBorderInsets = insets;
+    return this;
+  }
+
 
   public int getCalloutShift() {
     return myCalloutShift;

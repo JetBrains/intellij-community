@@ -40,6 +40,7 @@ public class IdeTooltip extends ComparableObject.Impl {
   private Color myTextBackground;
   private Color myTextForeground;
   private Color myBorderColor;
+  private Insets myBorderInsets;
   private Font myFont;
 
   private int myCalloutShift = 4;
@@ -159,6 +160,11 @@ public class IdeTooltip extends ComparableObject.Impl {
     myBorderColor = borderColor;
     return this;
   }
+  public IdeTooltip setBorderInsets(Insets insets) {
+    myBorderInsets = insets;
+    return this;
+  }
+
 
   public Color getTextBackground() {
     return myTextBackground;
@@ -174,6 +180,10 @@ public class IdeTooltip extends ComparableObject.Impl {
 
   public Color getBorderColor() {
     return myBorderColor;
+  }
+
+  public Insets getBorderInsets() {
+    return myBorderInsets;
   }
 
   public IdeTooltip setFont(Font font) {

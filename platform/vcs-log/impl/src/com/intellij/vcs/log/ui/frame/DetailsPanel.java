@@ -15,7 +15,6 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.data.LoadingDetails;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.graph.render.CommitCell;
 import com.intellij.vcs.log.graph.render.PrintParameters;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.render.RefPainter;
@@ -83,8 +82,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     }
     else {
       ((CardLayout)getLayout()).show(this, STANDARD_LAYER);
-      CommitCell cell = (CommitCell)myGraphTable.getModel().getValueAt(rows[0], AbstractVcsLogTableModel.COMMIT_COLUMN);
-      Hash hash = cell.getHash();
+      Hash hash = ((AbstractVcsLogTableModel)myGraphTable.getModel()).getHashAtRow(rows[0]);
       if (hash == null) {
         showMessage("Nothing selected");
         return;

@@ -24,8 +24,11 @@ import git4idea.actions.GitInit;
 import git4idea.commands.Git;
 import git4idea.repo.GitRepository;
 import git4idea.test.TestDialogHandler;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.github.api.GithubFullPath;
 import org.jetbrains.plugins.github.test.GithubTest;
 import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog;
+import org.jetbrains.plugins.github.util.GithubUrlUtil;
 import org.jetbrains.plugins.github.util.GithubUtil;
 
 import java.util.Random;
@@ -38,6 +41,7 @@ import static git4idea.test.GitExecutor.git;
  */
 public abstract class GithubCreatePullRequestTestBase extends GithubTest {
   protected static final String PROJECT_URL = "https://github.com/ideatest1/PullRequestTest";
+  protected static final String PROJECT_NAME = "PullRequestTest";
   protected String BRANCH_NAME;
 
   @Override
@@ -67,12 +71,14 @@ public abstract class GithubCreatePullRequestTestBase extends GithubTest {
     }
   }
 
-  protected void registerDefaultCreatePullRequestDialogHandler(final String branch) {
+  protected void registerDefaultCreatePullRequestDialogHandler(@NotNull final String branch, @NotNull final String user) {
     myDialogManager.registerDialogHandler(GithubCreatePullRequestDialog.class, new TestDialogHandler<GithubCreatePullRequestDialog>() {
       @Override
       public int handleDialog(GithubCreatePullRequestDialog dialog) {
-        dialog.setRequestTitle(BRANCH_NAME);
-        dialog.setBranch(branch);
+        dialog.testSetRequestTitle(BRANCH_NAME);
+        dialog.testSetBranch(branch);
+        dialog.testSetTarget(new GithubFullPath(user, PROJECT_NAME));
+        dialog.testCreatePullRequest();
         return DialogWrapper.OK_EXIT_CODE;
       }
     });
@@ -82,6 +88,10 @@ public abstract class GithubCreatePullRequestTestBase extends GithubTest {
     git("clone " + PROJECT_URL + " .");
     setGitIdentity(myProjectRoot);
     GitInit.refreshAndConfigureVcsMappings(myProject, myProjectRoot, myProjectRoot.getPath());
+  }
+
+  protected void addRemote(@NotNull String user) {
+    git("remote add somename " + GithubUrlUtil.getCloneUrl(new GithubFullPath(user, PROJECT_NAME)));
   }
 
   protected void createBranch() {

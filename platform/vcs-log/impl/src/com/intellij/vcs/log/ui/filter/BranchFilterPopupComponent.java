@@ -16,19 +16,18 @@
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.vcs.log.RefGroup;
-import com.intellij.vcs.log.VcsLogProvider;
-import com.intellij.vcs.log.VcsLogRefManager;
-import com.intellij.vcs.log.VcsRef;
+import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilter;
-import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.impl.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -56,20 +55,39 @@ class BranchFilterPopupComponent extends FilterPopupComponent {
       VcsLogRefManager refManager = provider.getReferenceManager();
       List<RefGroup> groups = refManager.group(refs);
 
-      for (RefGroup group : groups) {
-        if (group.getRefs().size() == 1) {
-          actionGroup.add(new SetValueAction(group.getRefs().iterator().next().getName(), this));
-        }
-        else {
-          DefaultActionGroup innerGroup = new DefaultActionGroup();
-          for (VcsRef ref : group.getRefs()) {
-            innerGroup.add(new SetValueAction(ref.getName(), this));
-          }
-          actionGroup.add(innerGroup);
-        }
-      }
+      List<AnAction> orderedGroups = orderRefGroups(groups);
+      actionGroup.addAll(orderedGroups);
     }
     return actionGroup;
+  }
+
+  private List<AnAction> orderRefGroups(List<RefGroup> groups) {
+    DefaultActionGroup singletonGroup = new DefaultActionGroup();
+    DefaultActionGroup expandedGroup = new DefaultActionGroup();
+    DefaultActionGroup collapsedGroup = new DefaultActionGroup();
+
+    for (RefGroup group : groups) {
+      if (group.getRefs().size() == 1) {
+        singletonGroup.add(new SetValueAction(group.getRefs().iterator().next().getName(), this));
+      }
+      else if (group.isExpanded()) {
+        expandedGroup.addSeparator(group.getName());
+        expandedGroup.add(createActionGroup(group, false));
+      }
+      else {
+        collapsedGroup.add(createActionGroup(group, true));
+      }
+    }
+
+    return Arrays.asList(singletonGroup, expandedGroup, Separator.getInstance(), collapsedGroup);
+  }
+
+  private DefaultActionGroup createActionGroup(RefGroup group, boolean popup) {
+    DefaultActionGroup innerGroup = new DefaultActionGroup(group.getName(), popup);
+    for (VcsRef ref : group.getRefs()) {
+      innerGroup.add(new SetValueAction(ref.getName(), this));
+    }
+    return innerGroup;
   }
 
   @Nullable

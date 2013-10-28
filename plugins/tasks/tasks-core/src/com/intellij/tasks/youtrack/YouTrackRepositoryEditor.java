@@ -1,5 +1,6 @@
 package com.intellij.tasks.youtrack;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,6 +47,15 @@ public class YouTrackRepositoryEditor extends BaseRepositoryEditor<YouTrackRepos
     installListener(myOptions.getResolvedState());
 
     myTabbedPane.add("Options", myOptions.getRootPanel());
+  }
+
+  @Override
+  protected void afterTestConnection(boolean connectionSuccessful) {
+    super.afterTestConnection(connectionSuccessful);
+    // highlight query if connection was successful
+    if (connectionSuccessful) {
+      DaemonCodeAnalyzer.getInstance(myProject).restart();
+    }
   }
 
   @Override
