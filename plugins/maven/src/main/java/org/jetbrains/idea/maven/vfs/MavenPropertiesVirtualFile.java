@@ -40,7 +40,7 @@ public class MavenPropertiesVirtualFile extends VirtualFile {
     myContent = createContent(properties);
   }
 
-  private byte[] createContent(Properties properties) {
+  private static byte[] createContent(Properties properties) {
     StringBuilder builder = new StringBuilder();
     TreeSet<String> sortedKeys = new TreeSet<String>((Set)properties.keySet());
     for (String each : sortedKeys) {

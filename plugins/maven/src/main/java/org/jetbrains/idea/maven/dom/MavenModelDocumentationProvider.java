@@ -61,7 +61,7 @@ public class MavenModelDocumentationProvider implements DocumentationProvider, E
   }
 
   @Nullable
-  private String getDoc(PsiElement element, boolean html) {
+  private static String getDoc(PsiElement element, boolean html) {
     return getMavenElementDescription(element, DescKind.TYPE_NAME_VALUE, html);
   }
 

@@ -150,7 +150,14 @@ public abstract class GotoActionBase extends AnAction {
   }
 
   protected <T> void showNavigationPopup(AnActionEvent e, ChooseByNameModel model, final GotoActionCallback<T> callback) {
-    showNavigationPopup(e, model, callback, null, true);
+    showNavigationPopup(e, model, callback, true);
+  }
+
+  protected <T> void showNavigationPopup(AnActionEvent e,
+                                         ChooseByNameModel model,
+                                         final GotoActionCallback<T> callback,
+                                         final boolean allowMultipleSelection) {
+    showNavigationPopup(e, model, callback, null, true, allowMultipleSelection);
   }
 
   protected <T> void showNavigationPopup(AnActionEvent e,
@@ -158,18 +165,33 @@ public abstract class GotoActionBase extends AnAction {
                                          final GotoActionCallback<T> callback,
                                          @Nullable final String findUsagesTitle,
                                          boolean useSelectionFromEditor) {
+    showNavigationPopup(e, model, callback, findUsagesTitle, useSelectionFromEditor, true);
+  }
+
+  protected <T> void showNavigationPopup(AnActionEvent e,
+                                         ChooseByNameModel model,
+                                         final GotoActionCallback<T> callback,
+                                         @Nullable final String findUsagesTitle,
+                                         boolean useSelectionFromEditor,
+                                         final boolean allowMultipleSelection) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     boolean mayRequestOpenInCurrentWindow = model.willOpenEditor() && FileEditorManagerEx.getInstanceEx(project).hasSplitOrUndockedWindows();
     Pair<String, Integer> start = getInitialText(useSelectionFromEditor, e);
     showNavigationPopup(callback, findUsagesTitle,
                         ChooseByNamePopup.createPopup(project, model, getPsiContext(e), start.first,
-                                                      mayRequestOpenInCurrentWindow, start.second));
+                                                      mayRequestOpenInCurrentWindow, start.second), allowMultipleSelection);
   }
 
   protected <T> void showNavigationPopup(final GotoActionCallback<T> callback,
                                          @Nullable final String findUsagesTitle,
                                          final ChooseByNamePopup popup) {
+    showNavigationPopup(callback, findUsagesTitle, popup, true);
+  }
 
+  protected <T> void showNavigationPopup(final GotoActionCallback<T> callback,
+                                         @Nullable final String findUsagesTitle,
+                                         final ChooseByNamePopup popup,
+                                         final boolean allowMultipleSelection) {
 
     final Class startedAction = myInAction;
     LOG.assertTrue(startedAction != null);
@@ -196,7 +218,7 @@ public abstract class GotoActionBase extends AnAction {
       public void elementChosen(Object element) {
         callback.elementChosen(popup, element);
       }
-    }, ModalityState.current(), true);
+    }, ModalityState.current(), allowMultipleSelection);
   }
 
 }

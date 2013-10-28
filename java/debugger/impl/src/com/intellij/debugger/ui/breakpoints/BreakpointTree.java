@@ -225,13 +225,16 @@ public class BreakpointTree extends CheckboxTree {
   }
 
   private static final class MethodDescriptor extends TreeDescriptor {
+    @NotNull
     private final String myClassName;
+    @NotNull
     private final String myMethodName;
-    @NotNull private final String myPackageName;
+    @NotNull
+    private final String myPackageName;
 
-    public MethodDescriptor(String methodName, String className, @NotNull String packageName) {
+    public MethodDescriptor(@NotNull String methodName, @NotNull String className, @NotNull String packageName) {
       myClassName = className;
-      myMethodName = methodName;
+      myMethodName = methodName.endsWith("()")? methodName : methodName + "()";
       myPackageName = packageName;
     }
 

@@ -16,6 +16,9 @@
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.AnonymousClassMethodFilter;
+import com.intellij.debugger.engine.BasicStepMethodFilter;
+import com.intellij.debugger.engine.LambdaMethodFilter;
 import com.intellij.debugger.engine.MethodFilter;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.openapi.editor.Editor;
@@ -44,67 +47,9 @@ public abstract class JvmSmartStepIntoHandler {
   public static ExtensionPointName<JvmSmartStepIntoHandler> EP_NAME = ExtensionPointName.create("com.intellij.debugger.jvmSmartStepIntoHandler");
 
   @NotNull
-  public abstract List<StepTarget> findSmartStepTargets(SourcePosition position);
+  public abstract List<SmartStepTarget> findSmartStepTargets(SourcePosition position);
 
   public abstract boolean isAvailable(SourcePosition position);
-
-  public class StepTarget {
-    private final PsiMethod myMethod;
-    private final PsiElement myHighlightElement;
-    private final String myLabel;
-    private final boolean myNeedBreakpointRequest;
-
-    public StepTarget(@NotNull PsiMethod method) {
-      this(method, null, null, false);
-    }
-
-    public StepTarget(@NotNull PsiMethod method, @Nullable String additionalLabel, @Nullable PsiElement highlightElement, boolean needBreakpointRequest) {
-      myMethod = method;
-      myHighlightElement = highlightElement;
-      myLabel = additionalLabel;
-      myNeedBreakpointRequest = needBreakpointRequest;
-    }
-
-    @Nullable
-    public PsiElement getHighlightElement() {
-      return myHighlightElement;
-    }
-
-    @Nullable
-    public String getMethodLabel() {
-      return myLabel;
-    }
-
-    @NotNull
-    public PsiMethod getMethod() {
-      return myMethod;
-    }
-
-    public boolean needsBreakpointRequest() {
-      return myNeedBreakpointRequest;
-    }
-
-    public boolean equals(Object o) {
-      if (this == o) {
-        return true;
-      }
-      if (o == null || getClass() != o.getClass()) {
-        return false;
-      }
-
-      final StepTarget that = (StepTarget)o;
-
-      if (!myMethod.equals(that.myMethod)) {
-        return false;
-      }
-
-      return true;
-    }
-
-    public int hashCode() {
-      return myMethod.hashCode();
-    }
-  }
 
   /**
    * Override this if you haven't PsiMethod, like in Kotlin.
@@ -114,16 +59,16 @@ public abstract class JvmSmartStepIntoHandler {
    * @return false to continue for another handler or for default action (step into)
    */
   public boolean doSmartStep(SourcePosition position, final DebuggerSession session, TextEditor fileEditor) {
-    final List<StepTarget> targets = findSmartStepTargets(position);
+    final List<SmartStepTarget> targets = findSmartStepTargets(position);
     if (!targets.isEmpty()) {
-      final StepTarget firstTarget = targets.get(0);
+      final SmartStepTarget firstTarget = targets.get(0);
       if (targets.size() == 1) {
         session.stepInto(true, createMethodFilter(firstTarget));
       }
       else {
         final Editor editor = fileEditor.getEditor();
         final PsiMethodListPopupStep popupStep = new PsiMethodListPopupStep(editor, targets, new PsiMethodListPopupStep.OnChooseRunnable() {
-          public void execute(StepTarget chosenTarget) {
+          public void execute(SmartStepTarget chosenTarget) {
             session.stepInto(true, createMethodFilter(chosenTarget));
           }
         });
@@ -132,7 +77,7 @@ public abstract class JvmSmartStepIntoHandler {
           public void valueChanged(ListSelectionEvent e) {
             popupStep.getScopeHighlighter().dropHighlight();
             if (!e.getValueIsAdjusting()) {
-              final StepTarget selectedTarget = (StepTarget)((JBList)e.getSource()).getSelectedValue();
+              final SmartStepTarget selectedTarget = (SmartStepTarget)((JBList)e.getSource()).getSelectedValue();
               if (selectedTarget != null) {
                 highlightTarget(popupStep, selectedTarget);
               }
@@ -148,7 +93,7 @@ public abstract class JvmSmartStepIntoHandler {
     return false;
   }
 
-  private static void highlightTarget(PsiMethodListPopupStep popupStep, StepTarget target) {
+  private static void highlightTarget(PsiMethodListPopupStep popupStep, SmartStepTarget target) {
     final PsiElement highlightElement = target.getHighlightElement();
     if (highlightElement != null) {
       popupStep.getScopeHighlighter().highlight(highlightElement, Arrays.asList(highlightElement));
@@ -161,7 +106,16 @@ public abstract class JvmSmartStepIntoHandler {
    * @param stepTarget
    * @return SmartStepFilter
    */
-  protected MethodFilter createMethodFilter(StepTarget stepTarget) {
-    return new MethodFilter(stepTarget.getMethod(), stepTarget.needsBreakpointRequest());
+  @Nullable
+  protected MethodFilter createMethodFilter(SmartStepTarget stepTarget) {
+    if (stepTarget instanceof MethodSmartStepTarget) {
+      final PsiMethod method = ((MethodSmartStepTarget)stepTarget).getMethod();
+      return stepTarget.needsBreakpointRequest()? new AnonymousClassMethodFilter(method) : new BasicStepMethodFilter(method);
+    }
+    if (stepTarget instanceof LambdaSmartStepTarget) {
+      final LambdaSmartStepTarget lambdaTarget = (LambdaSmartStepTarget)stepTarget;
+      return new LambdaMethodFilter(lambdaTarget.getLambda(), lambdaTarget.getOrdinal());
+    }
+    return null;
   }
 }

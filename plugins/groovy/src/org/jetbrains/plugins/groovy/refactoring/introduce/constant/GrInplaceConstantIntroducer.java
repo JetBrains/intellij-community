@@ -27,10 +27,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaratio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrInplaceIntroducer;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContextImpl;
-import org.jetbrains.plugins.groovy.refactoring.introduce.field.GrFieldNameSuggester;
 import org.jetbrains.plugins.groovy.refactoring.introduce.field.GroovyInplaceFieldValidator;
 
 import javax.swing.*;
@@ -65,7 +65,11 @@ public class GrInplaceConstantIntroducer extends GrInplaceIntroducer {
 
   @Override
   public LinkedHashSet<String> suggestNames(GrIntroduceContext context) {
-    return new GrFieldNameSuggester(context , new GroovyInplaceFieldValidator(context), false).suggestNames();
+    return ContainerUtil.newLinkedHashSet(GroovyNameSuggestionUtil.suggestVariableNames(
+      context.getExpression(),
+      new GroovyInplaceFieldValidator(context),
+      getVariable().hasModifierProperty(PsiModifier.STATIC))
+    );
   }
 
   @Override

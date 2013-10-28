@@ -11,4 +11,7 @@ public interface DeploymentNode {
 
   boolean isUndeployActionEnabled();
   void undeploy();
+
+  boolean isEditConfigurationActionEnabled();
+  void editConfiguration();
 }

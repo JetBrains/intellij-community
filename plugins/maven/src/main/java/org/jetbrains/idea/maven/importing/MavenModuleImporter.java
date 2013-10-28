@@ -269,8 +269,8 @@ public class MavenModuleImporter {
                                            @NotNull MavenArtifact artifact) {
     Library.ModifiableModel libraryModel = null;
 
-    for (Element artifactsElement : (List<Element>)buildHelperCfg.getChildren("artifacts")) {
-      for (Element artifactElement : (List<Element>)artifactsElement.getChildren("artifact")) {
+    for (Element artifactsElement : buildHelperCfg.getChildren("artifacts")) {
+      for (Element artifactElement : artifactsElement.getChildren("artifact")) {
         String typeString = artifactElement.getChildTextTrim("type");
         if (typeString != null && !typeString.equals("jar")) continue;
 

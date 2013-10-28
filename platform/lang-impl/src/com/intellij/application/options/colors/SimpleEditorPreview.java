@@ -69,10 +69,11 @@ public class SimpleEditorPreview implements PreviewPanel{
     String text = page.getDemoText();
 
     HighlightsExtractor extractant2 = new HighlightsExtractor(page.getAdditionalHighlightingTagToDescriptorMap());
-    myHighlightData = extractant2.extractHighlights(text);
-
+    List<HighlightData> highlights = new ArrayList<HighlightData>();
+    String stripped = extractant2.extractHighlights(text, highlights);
+    myHighlightData = highlights.toArray(new HighlightData[highlights.size()]);
     int selectedLine = -1;
-    myEditor = (EditorEx)FontEditorPreview.createPreviewEditor(extractant2.cutDefinedTags(text), 10, 3, selectedLine, myOptions, false);
+    myEditor = (EditorEx)FontEditorPreview.createPreviewEditor(stripped, 10, 3, selectedLine, myOptions, false);
 
     FontEditorPreview.installTrafficLights(myEditor);
     myBlinkingAlarm = new Alarm().setActivationComponent(myEditor.getComponent());

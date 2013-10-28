@@ -334,7 +334,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
 
   @Override
   public void updateContent() {
-    getTool().checkForReachables();
+    getTool().checkForReachables(getContext());
     myPackageContents = new HashMap<String, Set<RefEntity>>();
     getContext().getRefManager().iterate(new RefJavaVisitor() {
       @Override public void visitElement(@NotNull RefEntity refEntity) {

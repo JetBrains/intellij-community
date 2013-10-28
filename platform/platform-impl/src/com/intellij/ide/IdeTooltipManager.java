@@ -300,7 +300,6 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
     Color border = tooltip.getBorderColor() != null ? tooltip.getBorderColor() : getBorderColor(true);
 
     BalloonBuilder builder = myPopupFactory.createBalloonBuilder(tooltip.getTipComponent())
-      .setPreferredPosition(tooltip.getPreferredPosition())
       .setFillColor(bg)
       .setBorderColor(border)
       .setAnimationCycle(animationEnabled ? Registry.intValue("ide.tooltip.animationCycle") : 0)
@@ -342,7 +341,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
       }
     }, tooltip.getDismissDelay());
   }
-  
+
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public Color getTextForeground(boolean awtTooltip) {
     return UIUtil.getToolTipForeground();

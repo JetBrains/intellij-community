@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -147,7 +147,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   }
 
   @Override
-  public boolean contains(VirtualFile file) {
+  public boolean contains(@NotNull VirtualFile file) {
     if (hasOption(CONTENT)) {
       return myRoots.contains(myProjectFileIndex.getContentRootForFile(file));
     }
@@ -158,7 +158,7 @@ public class ModuleWithDependenciesScope extends GlobalSearchScope {
   }
 
   @Override
-  public int compare(VirtualFile file1, VirtualFile file2) {
+  public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
     VirtualFile r1 = getFileRoot(file1);
     VirtualFile r2 = getFileRoot(file2);
     if (Comparing.equal(r1, r2)) return 0;

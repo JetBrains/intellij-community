@@ -40,4 +40,8 @@ public class VcsLogBranchFilter implements VcsLogGraphFilter {
     return "on: " + myBranchName;
   }
 
+  @NotNull
+  public String getBranchName() {
+    return myBranchName;
+  }
 }

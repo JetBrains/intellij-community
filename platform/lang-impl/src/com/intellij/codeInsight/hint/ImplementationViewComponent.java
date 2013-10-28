@@ -24,6 +24,7 @@ import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
@@ -67,6 +68,7 @@ import java.util.Set;
 public class ImplementationViewComponent extends JPanel {
   @NonNls private static final String TEXT_PAGE_KEY = "Text";
   @NonNls private static final String BINARY_PAGE_KEY = "Binary";
+  private static final Logger LOG = Logger.getInstance("#" + ImplementationViewComponent.class.getName());
 
   private PsiElement[] myElements;
   private int myIndex;
@@ -366,10 +368,12 @@ public class ImplementationViewComponent extends JPanel {
   private void updateEditorText() {
     disposeNonTextEditor();
 
-    final PsiElement elt = myElements[myIndex].getNavigationElement();
-    Project project = elt.getProject();
-    PsiFile psiFile = getContainingFile(elt);
-    final VirtualFile vFile = psiFile.getVirtualFile();
+    final PsiElement foundElement = myElements[myIndex];
+    final PsiElement elt = foundElement.getNavigationElement();
+    LOG.assertTrue(elt != null, foundElement);
+    final Project project = foundElement.getProject();
+    final PsiFile psiFile = getContainingFile(elt);
+    final VirtualFile vFile = psiFile != null ? psiFile.getVirtualFile() : null;
     if (vFile == null) return;
     final FileEditorProvider[] providers = FileEditorProviderManager.getInstance().getProviders(project, vFile);
     for (FileEditorProvider provider : providers) {

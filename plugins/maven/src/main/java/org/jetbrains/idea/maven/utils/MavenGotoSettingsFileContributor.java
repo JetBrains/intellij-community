@@ -57,7 +57,7 @@ public class MavenGotoSettingsFileContributor implements ChooseByNameContributor
     return result.toArray(new NavigationItem[result.size()]);
   }
 
-  private List<VirtualFile> getSettingsFiles(Project project) {
+  private static List<VirtualFile> getSettingsFiles(Project project) {
     return MavenProjectsManager.getInstance(project).getGeneralSettings().getEffectiveSettingsFiles();
   }
 }

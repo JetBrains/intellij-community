@@ -96,6 +96,16 @@ public class SyntheticBlock extends AbstractSyntheticBlock implements Block, Rea
       return Spacing.createSafeSpacing(myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
     }
 
+    if (type1 == XmlElementType.XML_ATTRIBUTE && (type2 == XmlTokenType.XML_TAG_END || type2 == XmlTokenType.XML_EMPTY_ELEMENT_END)) {
+      final PsiElement psi1 = node1.getPsi();
+
+      if (psi1 instanceof XmlAttribute && myXmlFormattingPolicy.insertLineBreakAfterLastAttribute((XmlAttribute)psi1)) {
+        return Spacing.createSpacing(0, 0, 1,
+                                     myXmlFormattingPolicy.getShouldKeepLineBreaks(),
+                                     myXmlFormattingPolicy.getKeepBlankLines());
+      }
+    }
+
     if (type2 == XmlElementType.XML_EMPTY_ELEMENT_END && myXmlFormattingPolicy.addSpaceIntoEmptyTag()) {
       return Spacing.createSpacing(1, 1, 0,
                                    myXmlFormattingPolicy.getShouldKeepLineBreaks(),

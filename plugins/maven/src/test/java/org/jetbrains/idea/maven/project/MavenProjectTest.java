@@ -896,11 +896,11 @@ public class MavenProjectTest extends MavenImportingTestCase {
     return myProjectsTree.getRootProjects().get(0);
   }
 
-  private PluginInfo p(String groupId, String artifactId) {
+  private static PluginInfo p(String groupId, String artifactId) {
     return new PluginInfo(groupId, artifactId);
   }
 
-  private PluginInfo p(MavenPlugin mavenPlugin) {
+  private static PluginInfo p(MavenPlugin mavenPlugin) {
     return new PluginInfo(mavenPlugin.getGroupId(), mavenPlugin.getArtifactId());
   }
 

@@ -151,7 +151,7 @@ public class ChainsSearcher {
           }
           final MethodsChain methodsChain =
             currentVertexUnderlying.second.addEdge(resolved, sign.getUnderlying().getOwner(), sign.getWeight());
-          if (ParametersMatcher.matchParameters(methodsChain, context).noUnmatched()) {
+          if (ParametersMatcher.matchParameters(methodsChain, context).noUnmatchedAndHasMatched()) {
             updated = true;
             q.addFirst(new WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>(
               new Pair<MethodIncompleteSignature, MethodsChain>(sign.getUnderlying(), methodsChain), sign.getWeight()));
@@ -219,6 +219,14 @@ public class ChainsSearcher {
     public int size() {
       return myResult.size();
     }
+  }
+
+  private static int sumWeight(MaxSizeTreeSet<WeightAware<MethodIncompleteSignature>> weightAwareSignatures) {
+    int weight = 0;
+    for (WeightAware<MethodIncompleteSignature> weightAware : weightAwareSignatures) {
+      weight += weightAware.getWeight();
+    }
+    return weight;
   }
 
   private static boolean doChoose(final SortedSet<UsageIndexValue> bigrams, final int currentWeight, final int maxResultSize) {

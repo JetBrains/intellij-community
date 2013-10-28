@@ -93,7 +93,7 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
     }
   }
 
-  private List<VirtualFile> collectVirtualFiles(List<File> files) {
+  private static List<VirtualFile> collectVirtualFiles(List<File> files) {
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (File each : files) {
       VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(each);

@@ -16,8 +16,12 @@
 
 package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
+import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
+import com.intellij.openapi.keymap.Keymap;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
@@ -143,7 +147,22 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
                                                       RangeMarker varRangeMarker, RangeMarker expressionRangeMarker,
                                                       RangeMarker stringPartRangeMarker) {
     context.getEditor().getCaretModel().moveToOffset(var.getTextOffset());
-    return new GrInplaceVariableIntroducer(var, context.getEditor(), context.getProject(), REFACTORING_NAME, occurrenceMarkers, var);
+    GrInplaceVariableIntroducer introducer = new GrInplaceVariableIntroducer(var, context.getEditor(), context.getProject(), REFACTORING_NAME, occurrenceMarkers, var);
+    introducer.setAdvertisementText(getAdvertisementText(var.getDeclaredType() != null));
+
+    return introducer;
+  }
+
+  @Nullable
+  private static String getAdvertisementText(final boolean hasTypeSuggestion) {
+    final Keymap keymap = KeymapManager.getInstance().getActiveKeymap();
+    if (hasTypeSuggestion) {
+      final Shortcut[] shortcuts = keymap.getShortcuts("PreviousTemplateVariable");
+      if  (shortcuts.length > 0) {
+        return "Press " + KeymapUtil.getShortcutText(shortcuts[0]) + " to change type";
+      }
+    }
+    return null;
   }
 
   @Override

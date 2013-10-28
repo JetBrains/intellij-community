@@ -395,12 +395,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public long checkHighlighting() {
-    return checkHighlighting(true, true, true);
+    return checkHighlighting(true, false, true);
   }
 
   @Override
   public long testHighlighting(final String... filePaths) {
-    return testHighlighting(true, true, true, filePaths);
+    return testHighlighting(true, false, true, filePaths);
   }
 
   @Override
@@ -512,8 +512,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     List<HighlightInfo> infos = doHighlighting();
     ArrayList<IntentionAction> actions = new ArrayList<IntentionAction>();
     for (HighlightInfo info : infos) {
-      for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-        actions.add(pair.getFirst().getAction());
+      if (info.quickFixActionRanges != null) {
+        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
+          actions.add(pair.getFirst().getAction());
+        }
       }
     }
     return actions;
@@ -1801,9 +1803,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return "(" + startLine + ", " + startCol + ")-(" + endLine + ", " + endCol + ")";
   }
 
-  private static String stripTrailingSpaces(String actualText) {
+  private String stripTrailingSpaces(String actualText) {
     final Document document = EditorFactory.getInstance().createDocument(actualText);
-    ((DocumentImpl)document).stripTrailingSpaces();
+    ((DocumentImpl)document).stripTrailingSpaces(getProject());
     actualText = document.getText();
     return actualText;
   }

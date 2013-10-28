@@ -138,9 +138,9 @@ public class LibraryDownloadSettings {
     }
 
     List<Pair<VirtualFile,DownloadableFileDescription>> downloaded =
-      DownloadableFileService.getInstance().createDownloader(toDownload, null, parent, myLibraryName + " Library")
-      .toDirectory(myDirectoryForDownloadedLibrariesPath)
-      .downloadAndReturnWithDescriptions();
+      DownloadableFileService.getInstance()
+        .createDownloader(toDownload, myLibraryName + " Library")
+        .downloadWithProgress(myDirectoryForDownloadedLibrariesPath, null, parent);
     if (downloaded == null) {
       return null;
     }

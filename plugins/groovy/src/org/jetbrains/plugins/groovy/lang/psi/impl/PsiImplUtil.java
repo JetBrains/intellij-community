@@ -411,11 +411,11 @@ public class PsiImplUtil {
     if (qName == null) return null;
     final List<OrderEntry> orderEntries = idx.getOrderEntriesForFile(vFile);
     PsiClass original = facade.findClass(qName, new GlobalSearchScope(facade.getProject()) {
-      public int compare(VirtualFile file1, VirtualFile file2) {
+      public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
         return 0;
       }
 
-      public boolean contains(VirtualFile file) {
+      public boolean contains(@NotNull VirtualFile file) {
         // order for file and vFile has non empty intersection.
         List<OrderEntry> entries = idx.getOrderEntriesForFile(file);
         //noinspection ForLoopReplaceableByForEach

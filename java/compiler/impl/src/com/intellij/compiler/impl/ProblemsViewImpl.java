@@ -21,6 +21,7 @@ import com.intellij.ide.errorTreeView.ErrorTreeElement;
 import com.intellij.ide.errorTreeView.ErrorViewStructure;
 import com.intellij.ide.errorTreeView.GroupingElement;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
@@ -153,12 +154,12 @@ public class ProblemsViewImpl extends ProblemsView{
   }
 
   private void updateIcon(final boolean active) {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
         ToolWindowManager.getInstance(myProject).getToolWindow(PROBLEMS_TOOLWINDOW_ID).setIcon(active ? myActiveIcon : myPassiveIcon);
       }
-    });
+    }, myProject.getDisposed());
   }
 
   @Override

@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
@@ -14,7 +15,6 @@ import com.intellij.vcs.log.graph.render.*;
 import com.intellij.vcs.log.printmodel.GraphPrintCell;
 import com.intellij.vcs.log.printmodel.SpecialPrintElement;
 import com.intellij.vcs.log.ui.VcsLogUI;
-import com.intellij.vcs.log.ui.render.AbstractPaddingCellRender;
 import com.intellij.vcs.log.ui.render.CommitCellRender;
 import com.intellij.vcs.log.ui.render.GraphCommitCellRender;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
@@ -73,6 +73,8 @@ public class VcsLogGraphTable extends JBTable {
     MouseAdapter mouseAdapter = new MyMouseAdapter();
     addMouseMotionListener(mouseAdapter);
     addMouseListener(mouseAdapter);
+
+    PopupHandler.installPopupHandler(this, VcsLogUI.POPUP_ACTION_GROUP, VcsLogUI.VCS_LOG_TABLE_PLACE);
   }
 
   public void setPreferredColumnWidths() {
@@ -231,12 +233,7 @@ public class VcsLogGraphTable extends JBTable {
       Component rendererComponent = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       Object commit = getValueAt(row, AbstractVcsLogTableModel.COMMIT_COLUMN);
       if (commit instanceof GraphCommitCell) {
-        if (AbstractPaddingCellRender.isMarked(commit) && !isSelected) {
-          rendererComponent.setBackground(AbstractPaddingCellRender.MARKED_BACKGROUND);
-        }
-        else {
-          setBackground(isSelected ? table.getSelectionBackground() : JBColor.WHITE);
-        }
+        setBackground(isSelected ? table.getSelectionBackground() : JBColor.WHITE);
       }
       return rendererComponent;
     }

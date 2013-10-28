@@ -24,8 +24,8 @@ import com.intellij.codeInsight.folding.impl.actions.ExpandRegionAction;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
+import com.intellij.debugger.engine.BreakpointStepMethodFilter;
 import com.intellij.debugger.engine.DebugProcessImpl;
-import com.intellij.debugger.engine.MethodFilter;
 import com.intellij.debugger.engine.evaluation.CodeFragmentKind;
 import com.intellij.debugger.engine.evaluation.TextWithImportsImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
@@ -400,7 +400,7 @@ public class BreakpointManager {
   }
 
   @Nullable
-  public StepIntoBreakpoint addStepIntoBreakpoint(@NotNull MethodFilter filter) {
+  public StepIntoBreakpoint addStepIntoBreakpoint(@NotNull BreakpointStepMethodFilter filter) {
     return StepIntoBreakpoint.create(myProject, filter);
   }
 

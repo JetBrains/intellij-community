@@ -26,7 +26,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.RoundedLineBorder;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.data.VcsLogFilter;
+import com.intellij.vcs.log.VcsLogFilter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

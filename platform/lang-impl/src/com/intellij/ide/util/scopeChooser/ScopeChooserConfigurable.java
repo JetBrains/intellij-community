@@ -117,7 +117,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     loadScopes(mySharedScopesManager);
     loadScopes(myLocalScopesManager);
 
-    super.reset();
+    loadComponentState();
 
     final List<String> order = getScopesState().myOrder;
     TreeUtil.sort(myRoot, new Comparator<DefaultMutableTreeNode>() {
@@ -128,6 +128,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
         return idx1 - idx2;
       }
     });
+
+    super.reset();
   }
 
 

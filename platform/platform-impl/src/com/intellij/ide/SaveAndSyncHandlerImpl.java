@@ -178,7 +178,7 @@ public class SaveAndSyncHandlerImpl implements ApplicationComponent, SaveAndSync
   }
 
   public void maybeRefresh(@NotNull ModalityState modalityState) {
-    if (myBlockSyncOnFrameActivationCount.get() == 0) {
+    if (myBlockSyncOnFrameActivationCount.get() == 0 && GeneralSettings.getInstance().isSyncOnFrameActivation()) {
       LOG.debug("VFS refresh started");
 
       RefreshQueue queue = RefreshQueue.getInstance();

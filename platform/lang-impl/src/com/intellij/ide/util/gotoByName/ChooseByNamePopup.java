@@ -257,7 +257,9 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
     cleanupUI(isOk);
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    myActionListener.onClose();
+    if (myActionListener != null) {
+      myActionListener.onClose();
+    }
   }
 
   private void cleanupUI(boolean ok) {

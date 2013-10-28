@@ -28,6 +28,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -119,8 +120,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
   private void onSelectionChanged() {
     Set<AbstractTreeNode> nodes = myBuilder.getSelectedElements(AbstractTreeNode.class);
     if (nodes.size() != 1) {
-      myMessageLabel.setText(EMPTY_SELECTION_MESSAGE);
-      myPropertiesPanelLayout.show(myPropertiesPanel, MESSAGE_CARD);
+      showMessageLabel(EMPTY_SELECTION_MESSAGE);
       myLastSelection = null;
       return;
     }
@@ -152,8 +152,7 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
       updateServerDetails((ServersTreeStructure.RemoteServerNode)node);
     }
     else {
-      myMessageLabel.setText("");
-      myPropertiesPanelLayout.show(myPropertiesPanel, MESSAGE_CARD);
+      showMessageLabel("");
     }
   }
 
@@ -161,11 +160,15 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
     RemoteServer<?> server = ((ServersTreeStructure.RemoteServerNode)node).getValue();
     ServerConnection connection = ServerConnectionManager.getInstance().getConnection(server);
     if (connection == null || connection.getStatus() == ConnectionStatus.DISCONNECTED) {
-      myMessageLabel.setText("Double-click on the server node to connect");
+      showMessageLabel("Double-click on the server node to connect");
     }
     else {
-      myMessageLabel.setText(connection.getStatusText());
+      showMessageLabel(connection.getStatusText());
     }
+  }
+
+  private void showMessageLabel(final String text) {
+    myMessageLabel.setText(UIUtil.toHtml(text));
     myPropertiesPanelLayout.show(myPropertiesPanel, MESSAGE_CARD);
   }
 
@@ -188,16 +191,21 @@ public class ServersToolWindowContent extends JPanel implements Disposable {
       @Override
       public void onConnectionStatusChanged(@NotNull ServerConnection<?> connection) {
         getBuilder().queueUpdate();
-        if (myLastSelection instanceof ServersTreeStructure.RemoteServerNode) {
-          updateServerDetails((ServersTreeStructure.RemoteServerNode)myLastSelection);
-        }
+        updateSelectedServerDetails();
       }
 
       @Override
       public void onDeploymentsChanged(@NotNull ServerConnection<?> connection) {
         getBuilder().queueUpdate();
+        updateSelectedServerDetails();
       }
     });
+  }
+
+  private void updateSelectedServerDetails() {
+    if (myLastSelection instanceof ServersTreeStructure.RemoteServerNode) {
+      updateServerDetails((ServersTreeStructure.RemoteServerNode)myLastSelection);
+    }
   }
 
   private JComponent createToolbar() {

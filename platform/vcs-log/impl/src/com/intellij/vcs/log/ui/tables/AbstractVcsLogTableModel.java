@@ -37,6 +37,10 @@ public abstract class AbstractVcsLogTableModel<T> extends AbstractTableModel {
   @NotNull
   @Override
   public final Object getValueAt(int rowIndex, int columnIndex) {
+    if (rowIndex >= getRowCount() - 1) {
+      requestToLoadMore();
+    }
+
     VcsShortCommitDetails data = getShortDetails(rowIndex);
     switch (columnIndex) {
       case ROOT_COLUMN:
@@ -61,6 +65,8 @@ public abstract class AbstractVcsLogTableModel<T> extends AbstractTableModel {
         throw new IllegalArgumentException("columnIndex is " + columnIndex + " > " + (COLUMN_COUNT - 1));
     }
   }
+
+  public abstract void requestToLoadMore();
 
   @Nullable
   public abstract List<Change> getSelectedChanges(int[] selectedRows);

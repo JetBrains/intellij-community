@@ -64,7 +64,7 @@ public class GlobalSearchScopesCore {
     }
 
     @Override
-    public boolean contains(VirtualFile file) {
+    public boolean contains(@NotNull VirtualFile file) {
       Project project = getProject();
       NamedScopesHolder holder = NamedScopeManager.getInstance(project);
       final PackageSet packageSet = mySet.getValue();
@@ -82,7 +82,7 @@ public class GlobalSearchScopesCore {
     }
 
     @Override
-    public int compare(VirtualFile file1, VirtualFile file2) {
+    public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
       return 0;
 
     }
@@ -107,12 +107,12 @@ public class GlobalSearchScopesCore {
     }
 
     @Override
-    public boolean contains(VirtualFile file) {
+    public boolean contains(@NotNull VirtualFile file) {
       return myFileIndex.isInSourceContent(file) && !myFileIndex.isInTestSourceContent(file);
     }
 
     @Override
-    public int compare(VirtualFile file1, VirtualFile file2) {
+    public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
       return 0;
     }
 
@@ -146,12 +146,12 @@ public class GlobalSearchScopesCore {
     }
 
     @Override
-    public boolean contains(VirtualFile file) {
+    public boolean contains(@NotNull VirtualFile file) {
       return myFileIndex.isInTestSourceContent(file);
     }
 
     @Override
-    public int compare(VirtualFile file1, VirtualFile file2) {
+    public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
       return 0;
     }
 
@@ -193,12 +193,12 @@ public class GlobalSearchScopesCore {
     }
 
     @Override
-    public boolean contains(VirtualFile file) {
+    public boolean contains(@NotNull VirtualFile file) {
       return myWithSubdirectories ? VfsUtilCore.isAncestor(myDirectory, file, false) : myDirectory.equals(file.getParent());
     }
 
     @Override
-    public int compare(VirtualFile file1, VirtualFile file2) {
+    public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
       return 0;
     }
 
