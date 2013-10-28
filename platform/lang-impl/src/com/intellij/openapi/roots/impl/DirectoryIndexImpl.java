@@ -388,7 +388,10 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
     @Override
     public void after(@NotNull List<? extends VFileEvent> events) {
-      myRootIndex = null;
+      RootIndex rootIndex = myRootIndex;
+      if (rootIndex != null && !rootIndex.handleAfterEvent(events)) {
+        myRootIndex = null;
+      }
 
       if (myBatchChangePlanned) {
         myBatchChangePlanned = false;
@@ -464,7 +467,15 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     RootIndex rootIndex = getRootIndex();
     if (rootIndex != null) {
       Collection<VirtualFile> riResult = rootIndex.getDirectoriesByPackageName(packageName, includeLibrarySources).findAll();
-      assertConsistentResult(packageName, new HashSet<VirtualFile>(riResult), new HashSet<VirtualFile>(standardResult.findAll()));
+      Collection<VirtualFile> standard = standardResult.findAll();
+      if (!new HashSet<VirtualFile>(riResult).equals(new HashSet<VirtualFile>(standard))) {
+        for (VirtualFile file : standard) {
+          if (file.getPath().contains(".")) {
+            return standardResult; // standard and rootIndex return different results for directories with dot in name
+          }
+        }
+        assertConsistentResult(packageName, riResult, standard);
+      }
     }
 
     return standardResult;
