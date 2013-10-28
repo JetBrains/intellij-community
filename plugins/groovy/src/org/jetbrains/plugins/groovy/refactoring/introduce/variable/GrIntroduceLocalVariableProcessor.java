@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -33,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -75,7 +77,7 @@ public class GrIntroduceLocalVariableProcessor {
     int expressionIndex = ArrayUtilRt.find(myOccurrences, myExpression);
     final PsiElement[] replaced = processOccurrences();
     PsiElement replacedExpression = replaced[expressionIndex];
-    GrStatement anchor = getAnchor(replaced, replacedExpression);
+    GrStatement anchor = getAnchor(replaced);
 
     RefactoringUtil.highlightAllOccurrences(myContext.getProject(), replaced, myContext.getEditor());
 
@@ -103,8 +105,6 @@ public class GrIntroduceLocalVariableProcessor {
       if (!(occurrence instanceof GrExpression)) {
         throw new IncorrectOperationException("Expression occurrence to be replaced is not instance of GroovyPsiElement");
       }
-
-      boolean isOriginal = myExpression == occurrence;
 
       final GrExpression replaced = ((GrExpression)occurrence).replaceWithExpression(templateRef, true);
       result.add(replaced);
@@ -174,10 +174,10 @@ public class GrIntroduceLocalVariableProcessor {
     return variable;
   }
 
-  private GrVariableDeclaration doInsertDefinition(GrVariableDeclaration declaration,
-                                                   GrStatement anchor,
-                                                   boolean deleteExpression,
-                                                   boolean anchorEqualsExpression) {
+  private static GrVariableDeclaration doInsertDefinition(GrVariableDeclaration declaration,
+                                                          GrStatement anchor,
+                                                          boolean deleteExpression,
+                                                          boolean anchorEqualsExpression) {
     PsiElement realContainer = anchor.getParent();
 
     GrStatementOwner block = (GrStatementOwner)realContainer;
@@ -206,11 +206,34 @@ public class GrIntroduceLocalVariableProcessor {
   }
 
   @NotNull
-  private GrStatement getAnchor(PsiElement[] replaced, PsiElement replacedExpression) {
-    PsiElement anchor = GrIntroduceHandlerBase.findAnchor(replaced, GroovyRefactoringUtil.getEnclosingContainer(replacedExpression));
+  private GrStatement getAnchor(PsiElement[] replaced) {
+    PsiElement parent = PsiTreeUtil.findCommonParent(replaced);
+    PsiElement container = getEnclosingContainer(parent);
+    assert container != null;
+    PsiElement anchor = GrIntroduceHandlerBase.findAnchor(replaced, container);
+
     GrIntroduceHandlerBase.assertStatement(anchor, myOccurrences, myContext.getScope());
     return (GrStatement)anchor;
   }
+
+  @Nullable
+  public static PsiElement getEnclosingContainer(PsiElement place) {
+    PsiElement parent = place;
+    while (true) {
+      if (parent == null) {
+        return null;
+      }
+      if (parent instanceof GrDeclarationHolder && !(parent instanceof GrClosableBlock && parent.getParent() instanceof GrStringInjection)) {
+        return parent;
+      }
+      if (parent instanceof GrLoopStatement) {
+        return parent;
+      }
+
+      parent = parent.getParent();
+    }
+  }
+
 
   @Nullable
   private static String getFieldName(@Nullable PsiElement element) {

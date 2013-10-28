@@ -52,6 +52,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -75,6 +76,7 @@ import com.intellij.testFramework.HighlightTestInfo;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlSchemaProvider;
 import gnu.trove.THashMap;
 import gnu.trove.TIntArrayList;
@@ -284,8 +286,18 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     return doDoTest(checkWarnings, checkInfos, false);
   }
 
-  protected Collection<HighlightInfo> doDoTest(boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) {
-    return checkHighlighting(new ExpectedHighlightingData(myEditor.getDocument(),checkWarnings, checkWeakWarnings, checkInfos, myFile));
+  protected Collection<HighlightInfo> doDoTest(final boolean checkWarnings, final boolean checkInfos, final boolean checkWeakWarnings) {
+    return ContainerUtil.filter(
+      checkHighlighting(new ExpectedHighlightingData(myEditor.getDocument(), checkWarnings, checkWeakWarnings, checkInfos, myFile)),
+      new Condition<HighlightInfo>() {
+        @Override
+        public boolean value(HighlightInfo info) {
+          return (info.getSeverity() == HighlightSeverity.INFORMATION) && checkInfos ||
+                 (info.getSeverity() == HighlightSeverity.WARNING) && checkWarnings ||
+                 (info.getSeverity() == HighlightSeverity.WEAK_WARNING) && checkWeakWarnings ||
+                  info.getSeverity().compareTo(HighlightSeverity.WARNING) > 0;
+        }
+      });
   }
 
   @NotNull
