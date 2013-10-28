@@ -7,6 +7,7 @@ import com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowContent;
 import com.intellij.remoteServer.impl.runtime.ui.tree.DeploymentNode;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServerNode;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -20,14 +21,16 @@ public class DeployAction extends ServersTreeActionBase {
   }
 
   @Override
-  protected void updatePresentation(Presentation presentation, ServersToolWindowContent content) {
-    Set<DeploymentNode> nodes = content.getSelectedDeploymentNodes();
-    if (nodes.size() == 1) {
-      DeploymentNode node = nodes.iterator().next();
-      if (node.isDeployed()) {
-        presentation.setText("Redeploy");
-        presentation.setDescription("Redeploy '" + node.getDeploymentName() + "'");
-        return;
+  protected void updatePresentation(@NotNull Presentation presentation, @Nullable ServersToolWindowContent content) {
+    if (content != null) {
+      Set<DeploymentNode> nodes = content.getSelectedDeploymentNodes();
+      if (nodes.size() == 1) {
+        DeploymentNode node = nodes.iterator().next();
+        if (node.isDeployed()) {
+          presentation.setText("Redeploy");
+          presentation.setDescription("Redeploy '" + node.getDeploymentName() + "'");
+          return;
+        }
       }
     }
     presentation.setText(getTemplatePresentation().getText());

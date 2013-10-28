@@ -5,6 +5,7 @@ import com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowContent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -26,7 +27,7 @@ public abstract class ServersTreeActionBase extends AnAction {
     updatePresentation(presentation, content);
   }
 
-  protected void updatePresentation(Presentation presentation, ServersToolWindowContent content) {
+  protected void updatePresentation(@NotNull Presentation presentation, @Nullable ServersToolWindowContent content) {
   }
 
   @Override
