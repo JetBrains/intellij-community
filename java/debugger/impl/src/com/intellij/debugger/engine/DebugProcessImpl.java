@@ -1483,7 +1483,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
     public ResumeCommand(SuspendContextImpl suspendContext) {
       super(suspendContext);
       final ThreadReferenceProxyImpl contextThread = mySession.getContextManager().getContext().getThreadProxy();
-      myContextThread = contextThread != null ? contextThread : getSuspendContext().getThread();
+      myContextThread = contextThread != null ? contextThread : (suspendContext != null? suspendContext.getThread() : null);
     }
 
     public Priority getPriority() {
