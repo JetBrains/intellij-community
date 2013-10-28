@@ -17,4 +17,8 @@ public interface DeploymentNode {
 
   boolean isEditConfigurationActionEnabled();
   void editConfiguration();
+
+  boolean isDeployed();
+
+  String getDeploymentName();
 }

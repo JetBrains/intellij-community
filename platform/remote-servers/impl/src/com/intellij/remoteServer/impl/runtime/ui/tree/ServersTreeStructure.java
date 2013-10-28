@@ -355,6 +355,16 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       }
     }
 
+    @Override
+    public boolean isDeployed() {
+      return getValue().getStatus() == DeploymentStatus.DEPLOYED;
+    }
+
+    @Override
+    public String getDeploymentName() {
+      return getValue().getName();
+    }
+
     public ServerConnection<?> getConnection() {
       return myConnection;
     }

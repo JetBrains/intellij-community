@@ -2,6 +2,7 @@ package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowContent;
 import com.intellij.remoteServer.impl.runtime.ui.tree.DeploymentNode;
 import com.intellij.remoteServer.impl.runtime.ui.tree.ServerNode;
@@ -16,6 +17,18 @@ import java.util.Set;
 public class DeployAction extends ServersTreeActionBase {
   public DeployAction() {
     super("Deploy", "Deploy the selected item", AllIcons.Nodes.Deploy);
+  }
+
+  @Override
+  protected void updatePresentation(Presentation presentation, ServersToolWindowContent content) {
+    Set<DeploymentNode> nodes = content.getSelectedDeploymentNodes();
+    if (nodes.size() == 1) {
+      DeploymentNode node = nodes.iterator().next();
+      if (node.isDeployed()) {
+        presentation.setText("Redeploy");
+        presentation.setDescription("Redeploy '" + node.getDeploymentName() + "'");
+      }
+    }
   }
 
   @Override
