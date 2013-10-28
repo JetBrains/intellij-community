@@ -67,6 +67,7 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
       public void applicationDeactivated(IdeFrame ideFrame) {
         mySyncAlarm.cancelAllRequests();
         mySyncAlarm.addRequest(new Runnable() {
+          @Override
           public void run() {
             if (!app.isActive() && !app.isDisposed()) {
               myShouldSynchronize = true;
@@ -83,15 +84,18 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
     return myActive.getReady(this);
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getComponentName() {
     return "FrameStateManager";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
   }
 
@@ -107,10 +111,12 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
     }
   }
 
+  @Override
   public void addListener(@NotNull FrameStateListener listener) {
     addListener(listener, null);
   }
 
+  @Override
   public void addListener(@NotNull final FrameStateListener listener, @Nullable Disposable disposable) {
     myListeners.add(listener);
     if (disposable != null) {
@@ -123,6 +129,7 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
     }
   }
 
+  @Override
   public void removeListener(@NotNull FrameStateListener listener) {
     myListeners.remove(listener);
   }
