@@ -1,5 +1,6 @@
 package com.intellij.vcs.log.ui.render;
 
+import com.intellij.ui.JBColor;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,7 @@ public class RefPainter {
   private static final int ROUND_RADIUS = 5;
 
   private static final Font DEFAULT_FONT = new Font("Arial", Font.PLAIN, 12);
-  private static final Color DEFAULT_FONT_COLOR = Color.black;
+  private static final Color DEFAULT_FONT_COLOR = JBColor.BLACK;
 
   @NotNull private final VcsLogColorManager myColorManager;
   private final boolean myDrawMultiRepoIndicator;
@@ -55,26 +56,11 @@ public class RefPainter {
   }
 
   private int draw(@NotNull Graphics2D g2, @NotNull VcsRef ref, int padding) {
-    FontMetrics metrics = g2.getFontMetrics();
-    int x = padding + REF_PADDING / 2 - RECTANGLE_X_PADDING;
-    int y = RECTANGLE_Y_PADDING;
-    int width = metrics.stringWidth(ref.getName()) + 2 * RECTANGLE_X_PADDING + flagWidth();
-    int height = HEIGHT_CELL - 2 * RECTANGLE_Y_PADDING;
-    RoundRectangle2D rectangle2D = new RoundRectangle2D.Double(x, y, width, height, ROUND_RADIUS, ROUND_RADIUS);
-
-    g2.setColor(ref.getType().getBackgroundColor());
-    g2.fill(rectangle2D);
-
-    g2.setColor(myColorManager.getReferenceBorderColor());
-    g2.draw(rectangle2D);
-
+    Rectangle rectangle = drawLabel(g2, ref.getName(), padding, ref.getType().getBackgroundColor());
     if (myColorManager.isMultipleRoots() && myDrawMultiRepoIndicator) {
-      drawRootIndicator(g2, ref, padding, y, height);
+      drawRootIndicator(g2, ref, padding, rectangle.y, rectangle.height);
     }
-
-    g2.setColor(Color.black);
-    drawText(g2, ref.getName(), padding + flagWidth());
-    return x;
+    return rectangle.x;
   }
 
   private void drawRootIndicator(@NotNull Graphics2D g2, @NotNull VcsRef ref, int padding, int y, int height) {
@@ -105,9 +91,7 @@ public class RefPainter {
 
   public Map<Integer, VcsRef> draw(@NotNull Graphics2D g2, @NotNull Collection<VcsRef> refs, int startPadding, int maxWidth) {
     float currentPadding = startPadding;
-    g2.setFont(DEFAULT_FONT);
-    g2.setStroke(new BasicStroke(1.5f));
-    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+    setupGraphics(g2);
     FontRenderContext renderContext = g2.getFontRenderContext();
     Map<Integer, VcsRef> positions = new HashMap<Integer, VcsRef>();
     for (VcsRef ref : refs) {
@@ -119,6 +103,33 @@ public class RefPainter {
       }
     }
     return positions;
+  }
+
+  private static void setupGraphics(Graphics2D g2) {
+    g2.setFont(DEFAULT_FONT);
+    g2.setStroke(new BasicStroke(1.5f));
+    g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+  }
+
+  public Rectangle drawLabel(@NotNull Graphics2D g2, @NotNull String label, int paddingX, @NotNull Color bgColor) {
+    setupGraphics(g2);
+    FontMetrics metrics = g2.getFontMetrics();
+    int x = paddingX + REF_PADDING / 2 - RECTANGLE_X_PADDING;
+    int y = RECTANGLE_Y_PADDING;
+    int width = metrics.stringWidth(label) + 2 * RECTANGLE_X_PADDING + flagWidth();
+    int height = HEIGHT_CELL - 2 * RECTANGLE_Y_PADDING;
+    RoundRectangle2D rectangle2D = new RoundRectangle2D.Double(x, y, width, height, ROUND_RADIUS, ROUND_RADIUS);
+
+    g2.setColor(bgColor);
+    g2.fill(rectangle2D);
+
+    g2.setColor(myColorManager.getReferenceBorderColor());
+    g2.draw(rectangle2D);
+
+    g2.setColor(JBColor.BLACK);
+    drawText(g2, label, paddingX + flagWidth());
+
+    return new Rectangle(x, y, width, height);
   }
 
 }
