@@ -20,12 +20,23 @@
   <depends>com.intellij.modules.lang</depends>
 
   <application-components>
+    <component>
+      <implementation-class>
+        org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplatesManager
+      </implementation-class>
+    </component>
+    <component>
+      <implementation-class>
+        org.jetbrains.postfixCompletion.TemplateProviders.IfStatementTemplateProvider
+      </implementation-class>
+    </component>
   </application-components>
 
   <project-components>
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">
-    <completion.contributor language="JAVA" implementationClass="org.jetbrains.postfixCompletion.Postfix" />
+    <completion.contributor language="JAVA"
+                            implementationClass="org.jetbrains.postfixCompletion.Infrastructure.PostfixCompletionContributor" />
   </extensions>
 </idea-plugin>
