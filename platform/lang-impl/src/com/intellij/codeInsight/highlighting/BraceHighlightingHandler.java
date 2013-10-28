@@ -108,7 +108,7 @@ public class BraceHighlightingHandler {
                                                          @NotNull final Processor<BraceHighlightingHandler> processor) {
     ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
     final Project project = editor.getProject();
-    if (project == null) return;
+    if (project == null || project.isDisposed()) return;
     if (!PROCESSED_EDITORS.add(editor)) {
       // Skip processing if that is not really necessary.
       // Assuming to be in EDT here.
