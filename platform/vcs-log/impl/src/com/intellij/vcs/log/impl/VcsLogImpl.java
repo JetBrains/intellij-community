@@ -21,7 +21,6 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.graph.render.CommitCell;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import org.jetbrains.annotations.NotNull;
@@ -57,8 +56,7 @@ public class VcsLogImpl implements VcsLog {
     List<Hash> hashes = ContainerUtil.newArrayList();
     JBTable table = myUi.getTable();
     for (int row : table.getSelectedRows()) {
-      CommitCell cell = (CommitCell)table.getModel().getValueAt(row, AbstractVcsLogTableModel.COMMIT_COLUMN);
-      Hash hash = cell.getHash();
+      Hash hash = ((AbstractVcsLogTableModel)table.getModel()).getHashAtRow(row);
       if (hash != null) {
         hashes.add(hash);
       }

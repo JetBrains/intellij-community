@@ -4,6 +4,7 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsShortCommitDetails;
@@ -96,13 +97,19 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell> {
       subject = details.getSubject();
       refs = myRefsModel.refsToCommit(details.getHash());
     }
-    return new CommitCell(myCommits.get(index).getHash(), subject, refs);
+    return new CommitCell(subject, refs);
   }
 
   @NotNull
   @Override
   protected Class<CommitCell> getCommitColumnClass() {
     return CommitCell.class;
+  }
+
+  @Nullable
+  @Override
+  public Hash getHashAtRow(int row) {
+    return myCommits.get(row).getHash();
   }
 
 }

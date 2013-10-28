@@ -19,7 +19,7 @@ public class EditConfigurationAction extends ServersTreeActionBase {
   }
 
   @Override
-  protected void doActionPerformed(@NotNull ServersToolWindowContent content) {
+  protected void doActionPerformed(@NotNull ServersToolWindowContent content, AnActionEvent e) {
     Set<DeploymentNode> deploymentNodes = content.getSelectedDeploymentNodes();
     Set<ServerNode> serverNodes = content.getSelectedServerNodes();
     if (deploymentNodes.size() == 1) {

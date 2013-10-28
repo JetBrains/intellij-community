@@ -1,5 +1,6 @@
 package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
 
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowContent;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -20,7 +21,12 @@ public abstract class ServersTreeActionBase extends AnAction {
   @Override
   public void update(AnActionEvent e) {
     ServersToolWindowContent content = e.getData(ServersToolWindowContent.KEY);
-    e.getPresentation().setEnabled(content != null && isEnabled(content, e));
+    Presentation presentation = e.getPresentation();
+    presentation.setEnabled(content != null && isEnabled(content, e));
+    updatePresentation(presentation, content);
+  }
+
+  protected void updatePresentation(Presentation presentation, ServersToolWindowContent content) {
   }
 
   @Override
@@ -29,10 +35,10 @@ public abstract class ServersTreeActionBase extends AnAction {
     if (content == null) {
       return;
     }
-    doActionPerformed(content);
+    doActionPerformed(content, e);
   }
 
   protected abstract boolean isEnabled(@NotNull ServersToolWindowContent content, AnActionEvent e);
 
-  protected abstract void doActionPerformed(@NotNull ServersToolWindowContent content);
+  protected abstract void doActionPerformed(@NotNull ServersToolWindowContent content, AnActionEvent e);
 }

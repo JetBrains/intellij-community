@@ -35,6 +35,9 @@ public interface BalloonBuilder {
   BalloonBuilder setBorderColor(@NotNull Color color);
 
   @NotNull
+  BalloonBuilder setBorderInsets(@Nullable Insets insets);
+
+  @NotNull
   BalloonBuilder setFillColor(@NotNull Color color);
 
   @NotNull

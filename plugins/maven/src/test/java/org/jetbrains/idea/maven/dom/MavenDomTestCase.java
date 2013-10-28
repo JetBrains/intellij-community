@@ -26,8 +26,6 @@ import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.Comparing;
@@ -291,7 +289,7 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   }
 
   protected void checkHighlighting(VirtualFile f) throws IOException {
-    checkHighlighting(f, true, true, true);
+    checkHighlighting(f, true, false, true);
   }
 
   protected void checkHighlighting(VirtualFile f, boolean checkWarnings, boolean checkInfos, boolean checkWeakWarnings) throws IOException {

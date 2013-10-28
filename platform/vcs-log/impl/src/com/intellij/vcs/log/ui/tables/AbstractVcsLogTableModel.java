@@ -4,6 +4,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -79,6 +80,14 @@ public abstract class AbstractVcsLogTableModel<T> extends AbstractTableModel {
 
   @NotNull
   protected abstract Class<T> getCommitColumnClass();
+
+  /**
+   * Returns the Hash of the commit displayed in the given row.
+   * May be null if there is no commit in the row
+   * (such situations may appear, for example, if graph is filtered by branch, as described in IDEA-115442).
+   */
+  @Nullable
+  public abstract Hash getHashAtRow(int row);
 
   @Override
   public Class<?> getColumnClass(int column) {

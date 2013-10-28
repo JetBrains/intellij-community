@@ -96,6 +96,29 @@ print "a" + preved<caret> + "c"
 ''')
   }
 
+  void testAllUsages() {
+    doTest('''\
+def foo() {
+    println(123);        // (1)
+    println(123);        // (2)
+    if (true) {
+        println(<all>123<end>);    // (3)
+        println(123);    // (4)
+    }
+}
+''', '''\
+def foo() {
+    def preved = 123
+    println(preved);        // (1)
+    println(preved);        // (2)
+    if (true) {
+        println(preved<caret>);    // (3)
+        println(preved);    // (4)
+    }
+}
+''')
+  }
+
   protected static final String ALL_MARKER = "<all>"
 
   private void processFile(String fileText, boolean explicitType) {
