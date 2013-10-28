@@ -18,7 +18,8 @@
   </extensions>
 
   <actions>
-    <action class="com.intellij.vcs.log.ui.VcsLogCopyHashAction" id="Vcs.Log.CopyHash" use-shortcut-of="$Copy" />
+    <action class="com.intellij.vcs.log.ui.VcsLogCopyHashAction" id="Vcs.Log.CopyHash"
+            icon="AllIcons.Actions.Copy" text="Copy Hash" description="Copy hash value of the selected commit to clipboard" />
 
     <group id="Vcs.Log.Toolbar">
       <reference id="Vcs.Log.CopyHash"/>
