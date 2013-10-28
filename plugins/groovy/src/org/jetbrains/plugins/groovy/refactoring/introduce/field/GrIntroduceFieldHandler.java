@@ -140,17 +140,16 @@ public class GrIntroduceFieldHandler extends GrIntroduceFieldHandlerBase<GrIntro
     EnumSet<GrIntroduceFieldSettings.Init> result = EnumSet.of(GrIntroduceFieldSettings.Init.FIELD_DECLARATION,
                                                                GrIntroduceFieldSettings.Init.CONSTRUCTOR);
 
-
-    GrTypeDefinition clazz = (GrTypeDefinition)context.getScope();
+    PsiElement scope = context.getScope();
 
     if (replaceAll) {
-      PsiElement anchor = GrIntroduceHandlerBase.findAnchor(context.getOccurrences(), clazz);
+      PsiElement anchor = GrIntroduceHandlerBase.findAnchor(context.getOccurrences(), scope);
       if (anchor != null) {
         result.add(GrIntroduceFieldSettings.Init.CUR_METHOD);
       }
     }
 
-    if (TestFrameworks.getInstance().isTestClass(clazz)) {
+    if (scope instanceof GrTypeDefinition && TestFrameworks.getInstance().isTestClass((PsiClass)scope)) {
       result.add(GrIntroduceFieldSettings.Init.SETUP_METHOD);
     }
 
