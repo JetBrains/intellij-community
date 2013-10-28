@@ -796,6 +796,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
           @Override
           public boolean process(final Usage usage) {
             if (searchHasBeenCancelled()) return false;
+            TooManyUsagesStatus.getFrom(indicator).pauseProcessingIfTooManyUsages();
 
             boolean incrementCounter = !com.intellij.usages.UsageViewManager.isSelfUsage(usage, myTargets);
 
@@ -808,6 +809,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
                 }
               }
               ApplicationManager.getApplication().runReadAction(new Runnable() {
+                @Override
                 public void run() {
                   appendUsage(usage);
                 }
