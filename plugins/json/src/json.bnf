@@ -1,0 +1,56 @@
+{
+  parserClass='com.jetbrains.json.Parser'
+  parserUtilClass="com.jetbrains.json.JsonParserUtil"
+  psiPackage='com.jetbrains.json.psi'
+  psiImplPackage='com.jetbrains.json.psi.impl'
+
+  elementTypeHolderClass='com.jetbrains.json.JsonParserTypes'
+  elementTypeClass='com.jetbrains.json.JsonElementType'
+  psiClassPrefix="Json"
+
+  psiImplUtilClass='com.jetbrains.json.psi.JsonPsiImplUtils'
+  tokenTypeClass='com.jetbrains.json.JsonTokenType'
+
+    tokens = [
+        L_CURLY='{'
+        R_CURLY='}'
+        L_BRAKET='['
+        R_BRAKET=']'
+        
+        COMMA=','
+        COLON=':'
+        STRING='regexp:"([^\\"]|\\([\\"/bfnrt]|u[a-fA-F0-9]{4}))*"'
+        NUMBER='regexp:-?\d+(\.\d+([eE][+-]?\d+)?)?'
+        TRUE='true'
+        FALSE='false'
+        NULL='null'
+    ]
+
+    extends("object|array|literal")=property_value
+}
+
+json ::= object | array
+
+object ::= L_CURLY properties? R_CURLY {
+  pin=1
+  methods=[
+    findProperty
+  ]
+}
+private properties ::= property (COMMA property)*
+property ::= property_name COLON property_value {
+  pin=1
+  methods=[
+    getName
+    delete
+  ]
+}
+property_name ::= STRING
+property_value ::= object | array | literal
+literal ::= STRING | NUMBER | TRUE | FALSE | NULL {
+  methods=[isQuotedString]
+  mixin="com.jetbrains.json.psi.impl.JsonLiteralMixin"
+}
+
+array ::= L_BRAKET values? R_BRAKET {pin=1}
+private values ::= property_value (COMMA property_value)*
