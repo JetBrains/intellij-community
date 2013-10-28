@@ -66,6 +66,7 @@ import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Area;
 import java.awt.geom.Ellipse2D;
+import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
 import java.util.*;
 import java.util.List;
@@ -182,8 +183,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                           e.isPopupTrigger());
       bigRenderer = myTooltipRendererProvider.calcTooltipRenderer(highlighters);
       if (bigRenderer != null) {
-        HintHint hint = new HintHint(me).setAwtTooltip(true).setPreferredPosition(Balloon.Position.atLeft).setShowImmediately(true).setAnimationEnabled(false);
-        showTooltip(me, bigRenderer, hint);
+        showTooltip(me, bigRenderer, createHint(me));
         return true;
       }
       return false;
@@ -197,11 +197,14 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                                visualLine,
                                highlighters);
       myEditorFragmentRenderer.update(visualLine, highlighters, me.isAltDown());
-      HintHint hint = new HintHint(me).setAwtTooltip(true).setPreferredPosition(Balloon.Position.atLeft).setShowImmediately(true)
-        .setAnimationEnabled(false);
-      myEditorFragmentRenderer.show(myEditor, me.getPoint(), true, ERROR_STRIPE_TOOLTIP_GROUP, hint);
+      myEditorFragmentRenderer.show(myEditor, me.getPoint(), true, ERROR_STRIPE_TOOLTIP_GROUP, createHint(me));
       return true;
     }
+  }
+
+  private static HintHint createHint(MouseEvent me) {
+    return new HintHint(me).setAwtTooltip(true).setPreferredPosition(Balloon.Position.atLeft).setBorderInsets(new Insets(1, 1, 1, 1))
+      .setShowImmediately(true).setAnimationEnabled(false);
   }
 
   private int getVisualLineByEvent(MouseEvent e) {
@@ -1192,28 +1195,34 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
               }
               isDirty = false;
             }
-            UIUtil.drawImage(g, myCacheLevel1, 0, 0, this);
-            if (UIUtil.isUnderDarcula()) {
-              //Add glass effect
-              GraphicsUtil.setupAAPainting(g);
-              Shape s = new Rectangle(0, 0, size.width, size.height);
-              Graphics2D g2 = (Graphics2D)g;
-              double cx = size.width / 2;
-              double cy = 0;
-              double rx = size.width / 10;
-              int ry = myEditor.getLineHeight() * 3 / 2;
-              g2.setPaint(new GradientPaint(0, 0, new Color(255, 255, 255, 135), 0, ry, new Color(255, 255, 255, 40)));
-              double pseudoMajorAxis = size.width - rx * 9 / 5;
-              Shape topShape1 = new Ellipse2D.Double(cx - rx - pseudoMajorAxis / 2, cy - ry, 2 * rx, 2 * ry);
-              Shape topShape2 = new Ellipse2D.Double(cx - rx + pseudoMajorAxis / 2, cy - ry, 2 * rx, 2 * ry);
-              Area topArea = new Area(topShape1);
-              topArea.add(new Area(topShape2));
-              topArea.add(new Area(new Rectangle.Double(cx - pseudoMajorAxis / 2, cy, pseudoMajorAxis, ry)));
-              g2.fill(topArea);
-              Area bottomArea = new Area(s);
-              bottomArea.subtract(topArea);
-              g2.setPaint(new GradientPaint(0, size.height - ry, new Color(0, 0, 0, 10), 0, size.height, new Color(255, 255, 255, 30)));
-              g2.fill(bottomArea);
+            Graphics2D g2 = (Graphics2D)g.create();
+            try {
+              GraphicsUtil.setupAAPainting(g2);
+              g2.setClip(new RoundRectangle2D.Double(0, 0, size.width-.5, size.height-.5, 2, 2));
+              UIUtil.drawImage(g2, myCacheLevel1, 0, 0, this);
+              if (UIUtil.isUnderDarcula()) {
+                //Add glass effect
+                Shape s = new Rectangle(0, 0, size.width, size.height);
+                double cx = size.width / 2;
+                double cy = 0;
+                double rx = size.width / 10;
+                int ry = myEditor.getLineHeight() * 3 / 2;
+                g2.setPaint(new GradientPaint(0, 0, new Color(255, 255, 255, 75), 0, ry, new Color(255, 255, 255, 10)));
+                double pseudoMajorAxis = size.width - rx * 9 / 5;
+                Shape topShape1 = new Ellipse2D.Double(cx - rx - pseudoMajorAxis / 2, cy - ry, 2 * rx, 2 * ry);
+                Shape topShape2 = new Ellipse2D.Double(cx - rx + pseudoMajorAxis / 2, cy - ry, 2 * rx, 2 * ry);
+                Area topArea = new Area(topShape1);
+                topArea.add(new Area(topShape2));
+                topArea.add(new Area(new Rectangle.Double(cx - pseudoMajorAxis / 2, cy, pseudoMajorAxis, ry)));
+                g2.fill(topArea);
+                Area bottomArea = new Area(s);
+                bottomArea.subtract(topArea);
+                g2.setPaint(new GradientPaint(0, size.height - ry, new Color(0, 0, 0, 10), 0, size.height, new Color(255, 255, 255, 30)));
+                g2.fill(bottomArea);
+              }
+            }
+            finally {
+              g2.dispose();
             }
           }
         };
@@ -1246,25 +1255,21 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
           @Override
           public void run() {
             if (myEditorPreviewHint == null || !myDelayed) return;
-            hintManager.showEditorHint(myEditorPreviewHint, myEditor, myPointHolder.get(), HintManager.HIDE_BY_ANY_KEY |
-                                                                                           HintManager.HIDE_BY_TEXT_CHANGE |
-                                                                                           HintManager.HIDE_BY_MOUSEOVER |
-                                                                                           HintManager.HIDE_BY_ESCAPE |
-                                                                                           HintManager.HIDE_BY_SCROLLING, 0, false,
-                                       myHintHolder.get());
+            showEditorHint(hintManager, myPointHolder.get(), myHintHolder.get());
             myDelayed = false;
           }
         }, Registry.intValue("ide.tooltip.initialDelay"));
       }
       else if (!myDelayed) {
-        hintManager.showEditorHint(myEditorPreviewHint, myEditor, point, HintManager.HIDE_BY_ANY_KEY |
-                                                                                       HintManager.HIDE_BY_TEXT_CHANGE |
-                                                                                       HintManager.HIDE_BY_MOUSEOVER |
-                                                                                       HintManager.HIDE_BY_ESCAPE |
-                                                                                       HintManager.HIDE_BY_SCROLLING, 0, false,
-                                   hintInfo);
+        showEditorHint(hintManager, point, hintInfo);
       }
       return myEditorPreviewHint;
+    }
+
+    private void showEditorHint(HintManagerImpl hintManager, Point point, HintHint hintInfo) {
+      int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_MOUSEOVER |
+                  HintManager.HIDE_BY_ESCAPE | HintManager.HIDE_BY_SCROLLING;
+      hintManager.showEditorHint(myEditorPreviewHint, myEditor, point, flags, 0, false, hintInfo);
     }
   }
 }
