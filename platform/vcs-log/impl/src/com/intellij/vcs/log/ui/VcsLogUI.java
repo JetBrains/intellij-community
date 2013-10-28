@@ -38,6 +38,7 @@ public class VcsLogUI {
 
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final MainFrame myMainFrame;
+  @NotNull private final Project myProject;
   @NotNull private final VcsLogColorManager myColorManager;
   @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogFilterer myFilterer;
@@ -47,6 +48,7 @@ public class VcsLogUI {
   public VcsLogUI(@NotNull VcsLogDataHolder logDataHolder, @NotNull Project project, @NotNull VcsLogSettings settings,
                   @NotNull VcsLogColorManager manager, @NotNull VcsLogUiProperties uiProperties) {
     myLogDataHolder = logDataHolder;
+    myProject = project;
     myColorManager = manager;
     myUiProperties = uiProperties;
     myFilterer = new VcsLogFilterer(logDataHolder, this);
@@ -214,5 +216,10 @@ public class VcsLogUI {
   @NotNull
   public VcsLogUiProperties getUiProperties() {
     return myUiProperties;
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
   }
 }
