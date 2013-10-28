@@ -68,7 +68,7 @@ public class FrameStateManagerImpl extends FrameStateManager implements Applicat
         mySyncAlarm.cancelAllRequests();
         mySyncAlarm.addRequest(new Runnable() {
           public void run() {
-            if (!app.isActive()) {
+            if (!app.isActive() && !app.isDisposed()) {
               myShouldSynchronize = true;
               fireDeactivationEvent();
             }
