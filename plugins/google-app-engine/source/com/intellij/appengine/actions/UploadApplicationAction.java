@@ -62,7 +62,7 @@ public class UploadApplicationAction extends AnAction {
       }
       final AppEngineUploader uploader = AppEngineUploader.createUploader(project, artifact, null, new ServerRuntimeInstance.DeploymentOperationCallback() {
         @Override
-        public void succeeded(@NotNull DeploymentRuntime deployment) {
+        public void succeeded(@NotNull DeploymentRuntime deploymentRuntime) {
 
         }
 

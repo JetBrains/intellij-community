@@ -45,8 +45,7 @@ public class DeployToServerState<S extends ServerConfiguration, D extends Deploy
   @NotNull private final D myConfiguration;
   @NotNull private final ExecutionEnvironment myEnvironment;
 
-  public DeployToServerState(@NotNull RemoteServer<S> server,
-                             @NotNull DeploymentSource deploymentSource,
+  public DeployToServerState(@NotNull RemoteServer<S> server, @NotNull DeploymentSource deploymentSource,
                              @NotNull D deploymentConfiguration, @NotNull ExecutionEnvironment environment) {
     myServer = server;
     mySource = deploymentSource;
