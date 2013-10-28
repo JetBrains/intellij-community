@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -210,17 +210,17 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   }
 
   protected boolean acceptLocation(DebugProcessImpl debugProcess, ReferenceType classType, Location loc) {
-    final String methodName = myMethodName;
-    if (methodName != null) {
-      // Consider:
-      //  proc(()->{System.out.println("Task 1");}, ()->{System.out.println("Task 2");});  <breakpoint at this line>
-      //
-      // there will be 3 locations for this line: one corresponding to calling method, and two locations from
-      // the lambda expression implementation methods.
-      // Without additional filtering, breakpoint request will be set on each location,
-      // while we do not need to stop in lambda expressions here
-      return methodName.equals(loc.method().name());
-    }
+//    final String methodName = myMethodName;
+//    if (methodName != null) {
+//      // Consider:
+//      //  proc(()->{System.out.println("Task 1");}, ()->{System.out.println("Task 2");});  <breakpoint at this line>
+//      //
+//      // there will be 3 locations for this line: one corresponding to calling method, and two locations from
+//      // the lambda expression implementation methods.
+//      // Without additional filtering, breakpoint request will be set on each location,
+//      // while we do not need to stop in lambda expressions here
+//      return methodName.equals(loc.method().name());
+//    }
     return true;
   }
 
