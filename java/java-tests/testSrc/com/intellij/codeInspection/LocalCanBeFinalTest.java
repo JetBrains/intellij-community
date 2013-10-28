@@ -129,4 +129,10 @@ public class LocalCanBeFinalTest extends InspectionTestCase {
     myTool.REPORT_VARIABLES = false;
     doTest();
   }
+
+  public void testNestedForeach() throws Exception {
+    myTool.REPORT_VARIABLES = true;
+    myTool.REPORT_PARAMETERS = false;
+    doTest();
+  }
 }
