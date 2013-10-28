@@ -56,16 +56,14 @@ public class RefPainter {
   }
 
   private int draw(@NotNull Graphics2D g2, @NotNull VcsRef ref, int padding) {
-    Rectangle rectangle = drawLabel(g2, ref.getName(), padding, ref.getType().getBackgroundColor());
-    if (myColorManager.isMultipleRoots() && myDrawMultiRepoIndicator) {
-      drawRootIndicator(g2, ref, padding, rectangle.y, rectangle.height);
-    }
+    Rectangle rectangle = drawLabel(g2, ref.getName(), padding, ref.getType().getBackgroundColor(),
+                                    myColorManager.getRootColor(ref.getRoot()));
     return rectangle.x;
   }
 
-  private void drawRootIndicator(@NotNull Graphics2D g2, @NotNull VcsRef ref, int padding, int y, int height) {
-    g2.setColor(myColorManager.getRootColor(ref.getRoot()));
-    int x0 = padding + FLAG_PADDING;
+  private void drawRootIndicator(@NotNull Graphics2D g2, int x, int y, int height, @NotNull Color rootIndicatorColor) {
+    g2.setColor(rootIndicatorColor);
+    int x0 = x + FLAG_PADDING;
     int xMid = x0 + FLAG_WIDTH / 2;
     int xRight = x0 + FLAG_WIDTH;
 
@@ -111,7 +109,7 @@ public class RefPainter {
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
   }
 
-  public Rectangle drawLabel(@NotNull Graphics2D g2, @NotNull String label, int paddingX, @NotNull Color bgColor) {
+  public Rectangle drawLabel(@NotNull Graphics2D g2, @NotNull String label, int paddingX, @NotNull Color bgColor, Color rootIndicatorColor) {
     setupGraphics(g2);
     FontMetrics metrics = g2.getFontMetrics();
     int x = paddingX + REF_PADDING / 2 - RECTANGLE_X_PADDING;
@@ -128,6 +126,10 @@ public class RefPainter {
 
     g2.setColor(JBColor.BLACK);
     drawText(g2, label, paddingX + flagWidth());
+
+    if (myColorManager.isMultipleRoots() && myDrawMultiRepoIndicator) {
+      drawRootIndicator(g2, paddingX, y, height, rootIndicatorColor);
+    }
 
     return new Rectangle(x, y, width, height);
   }

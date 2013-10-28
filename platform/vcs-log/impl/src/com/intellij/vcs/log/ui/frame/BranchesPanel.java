@@ -95,7 +95,9 @@ public class BranchesPanel extends JPanel {
     myRefPositions = ContainerUtil.newHashMap();
     int paddingX = 0;
     for (RefGroup group : myRefGroups) {
-      Rectangle rectangle = myRefPainter.drawLabel((Graphics2D)g, group.getName(), paddingX, group.getBgColor());
+      // TODO it is assumed here that all refs in a single group belong to a single root
+      Color rootIndicatorColor = myUI.getColorManager().getRootColor(group.getRefs().iterator().next().getRoot());
+      Rectangle rectangle = myRefPainter.drawLabel((Graphics2D)g, group.getName(), paddingX, group.getBgColor(), rootIndicatorColor);
       paddingX += rectangle.width + UIUtil.DEFAULT_HGAP;
       myRefPositions.put(rectangle.x, group);
     }
