@@ -29,10 +29,10 @@ public abstract class ServersTreeActionBase extends AnAction {
     if (content == null) {
       return;
     }
-    doActionPerformed(content);
+    doActionPerformed(content, e);
   }
 
   protected abstract boolean isEnabled(@NotNull ServersToolWindowContent content, AnActionEvent e);
 
-  protected abstract void doActionPerformed(@NotNull ServersToolWindowContent content);
+  protected abstract void doActionPerformed(@NotNull ServersToolWindowContent content, AnActionEvent e);
 }

@@ -1,11 +1,13 @@
 package com.intellij.remoteServer.impl.runtime.ui.tree.actions;
 
-import com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowContent;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.remoteServer.impl.runtime.ui.ServersToolWindowContent;
 import com.intellij.remoteServer.impl.runtime.ui.tree.DeploymentNode;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -16,16 +18,20 @@ public abstract class DeploymentActionBase extends ServersTreeActionBase {
     super(text, description, icon);
   }
 
-  protected abstract void perform(DeploymentNode node);
+  protected abstract void perform(@NotNull List<DeploymentNode> nodes, ServersToolWindowContent content, AnActionEvent e);
 
-  protected abstract boolean isApplicable(DeploymentNode node);
+  protected abstract boolean isApplicable(@NotNull DeploymentNode node);
 
   @Override
-  public void doActionPerformed(@NotNull ServersToolWindowContent content) {
+  public void doActionPerformed(@NotNull ServersToolWindowContent content, AnActionEvent e) {
+    List<DeploymentNode> toPerform = new ArrayList<DeploymentNode>();
     for (DeploymentNode node : content.getSelectedDeploymentNodes()) {
       if (isApplicable(node)) {
-        perform(node);
+        toPerform.add(node);
       }
+    }
+    if (!toPerform.isEmpty()) {
+      perform(toPerform, content, e);
     }
   }
 

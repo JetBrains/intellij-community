@@ -33,7 +33,7 @@ public abstract class SingleServerActionBase extends ServersTreeActionBase {
   }
 
   @Override
-  protected void doActionPerformed(@NotNull ServersToolWindowContent content) {
+  protected void doActionPerformed(@NotNull ServersToolWindowContent content, AnActionEvent e) {
     doActionPerformed(content, content.getSelectedServerNodes().iterator().next());
   }
 

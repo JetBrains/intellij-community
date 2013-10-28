@@ -9,6 +9,9 @@ public interface DeploymentNode {
   @NotNull
   ServerNode getServerNode();
 
+  boolean isRedeployActionEnabled();
+  void redeploy();
+
   boolean isUndeployActionEnabled();
   void undeploy();
 

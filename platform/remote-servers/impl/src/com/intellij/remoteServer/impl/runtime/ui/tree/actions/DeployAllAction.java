@@ -16,13 +16,13 @@ public class DeployAllAction extends ServerActionBase {
 
   @Override
   protected void performAction(@NotNull ServerNode serverNode) {
-    if (serverNode.isDeployAllEnabled()) {
+    if (serverNode.isDeployAllActionEnabled()) {
       serverNode.deployAll();
     }
   }
 
   @Override
   protected boolean isEnabledForServer(@NotNull ServerNode serverNode) {
-    return serverNode.isDeployAllEnabled();
+    return serverNode.isDeployAllActionEnabled();
   }
 }

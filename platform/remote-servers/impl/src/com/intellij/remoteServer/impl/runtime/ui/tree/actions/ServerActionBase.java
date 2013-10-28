@@ -35,7 +35,7 @@ public abstract class ServerActionBase extends ServersTreeActionBase {
   }
 
   @Override
-  protected void doActionPerformed(@NotNull ServersToolWindowContent content) {
+  protected void doActionPerformed(@NotNull ServersToolWindowContent content, AnActionEvent e) {
     for (ServerNode node : content.getSelectedServerNodes()) {
       performAction(node);
     }
