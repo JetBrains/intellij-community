@@ -354,6 +354,7 @@ public abstract class DaemonAnalyzerTestCase extends CodeInsightTestCase {
     if (forceExternalValidation()) {
       toIgnore.add(Pass.LINE_MARKERS);
       toIgnore.add(Pass.LOCAL_INSPECTIONS);
+      toIgnore.add(Pass.WHOLE_FILE_LOCAL_INSPECTIONS);
       toIgnore.add(Pass.POPUP_HINTS);
       toIgnore.add(Pass.POST_UPDATE_ALL);
       toIgnore.add(Pass.UPDATE_ALL);
