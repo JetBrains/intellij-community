@@ -179,6 +179,20 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
     return list;
   }
 
+  private void handleGotoPrevious() {
+    IdeFocusManager.getInstance(myProject).requestFocus(myList, true);
+  }
+
+  private void handleGotoNext() {
+    if (!myList.isEmpty()) {
+      if (myList.getSelectedValue() == null) {
+        myList.setSelectedIndex(0);
+        updateRightComponent(true);
+      }
+    }
+    IdeFocusManager.getInstance(myProject).requestFocus(myList, true);
+  }
+
   private void installListActions(JBList list) {
     AnAction previousPanelAction = new AnAction("Previous", null, AllIcons.Actions.Back) {
       @Override
@@ -189,7 +203,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
       @Override
       public void actionPerformed(AnActionEvent e) {
         assert myParent != null;
-        IdeFocusManager.getInstance(myProject).requestFocus(myParent.getList(), true);
+        myParent.handleGotoPrevious();
       }
     };
     previousPanelAction.registerCustomShortcutSet(KeyEvent.VK_LEFT, 0, list);
@@ -206,14 +220,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
       @Override
       public void actionPerformed(AnActionEvent e) {
         FinderRecursivePanel finderRecursivePanel = (FinderRecursivePanel)getSecondComponent();
-        JBList jbList = finderRecursivePanel.getList();
-        if (!jbList.isEmpty()) {
-          if (jbList.getSelectedValue() == null) {
-            jbList.setSelectedIndex(0);
-            finderRecursivePanel.updateRightComponent(true);
-          }
-        }
-        IdeFocusManager.getInstance(myProject).requestFocus(jbList, true);
+        finderRecursivePanel.handleGotoNext();
       }
     };
     nextPanelAction.registerCustomShortcutSet(KeyEvent.VK_RIGHT, 0, list);
@@ -274,7 +281,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
   }
 
   protected boolean performEditAction() {
-    Navigatable data = CommonDataKeys.NAVIGATABLE.getData(DataManager.getInstance().getDataContext(getList()));
+    Navigatable data = CommonDataKeys.NAVIGATABLE.getData(DataManager.getInstance().getDataContext(myList));
     if (data != null) {
       data.navigate(true);
     }
@@ -357,13 +364,9 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
     myMergingUpdateQueue.cancelAllUpdates();
   }
 
-  protected JBList getList() {
-    return myList;
-  }
-
   @SuppressWarnings("unchecked")
   public T getSelectedValue() {
-    return (T)getList().getSelectedValue();
+    return (T)myList.getSelectedValue();
   }
 
   @NotNull
@@ -387,7 +390,7 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
       @Override
       public void run() {
         final T oldValue = getSelectedValue();
-        final int oldIndex = getList().getSelectedIndex();
+        final int oldIndex = myList.getSelectedIndex();
 
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           @Override
@@ -494,5 +497,4 @@ public abstract class FinderRecursivePanel<T> extends JBSplitter implements Data
   protected int getFirstComponentPreferredSize() {
     return 200;
   }
-
 }

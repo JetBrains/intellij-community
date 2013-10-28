@@ -106,17 +106,17 @@ public class FinderRecursivePanelTest extends PlatformTestCase {
       }
     };
     Disposer.register(myTestRootDisposable, panel_0);
-    panel_0.getList().setSelectedIndex(0);
+    panel_0.setTestSelectedIndex(0);
     //panel_0.updateRightComponent(true);
 
     StringFinderRecursivePanel panel_1 = (StringFinderRecursivePanel)panel_0.getSecondComponent();
-    panel_1.getList().setSelectedIndex(1);
+    panel_1.setTestSelectedIndex(1);
 
     StringFinderRecursivePanel panel_2 = (StringFinderRecursivePanel)panel_1.getSecondComponent();
-    panel_2.getList().setSelectedIndex(2);
+    panel_2.setTestSelectedIndex(2);
 
     StringFinderRecursivePanel panel_3 = (StringFinderRecursivePanel)panel_2.getSecondComponent();
-    panel_3.getList().setSelectedIndex(3);
+    panel_3.setTestSelectedIndex(3);
 
     panel_0.updatePanel();
 
@@ -128,6 +128,8 @@ public class FinderRecursivePanelTest extends PlatformTestCase {
 
 
   private class StringFinderRecursivePanel extends FinderRecursivePanel<String> {
+
+    private JBList myList;
 
     private StringFinderRecursivePanel() {
       super(FinderRecursivePanelTest.this.myProject, "fooPanel");
@@ -159,9 +161,13 @@ public class FinderRecursivePanelTest extends PlatformTestCase {
 
     @Override
     protected JBList createList() {
-      JBList list = super.createList();
-      ((CollectionListModel)list.getModel()).replaceAll(getListItems());
-      return list;
+      myList = super.createList();
+      ((CollectionListModel)myList.getModel()).replaceAll(getListItems());
+      return myList;
+    }
+
+    private void setTestSelectedIndex(int index) {
+      myList.setSelectedIndex(index);
     }
   }
 }
