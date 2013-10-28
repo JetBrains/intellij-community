@@ -12,7 +12,7 @@ import java.util.Set;
  * @author nik
  */
 public abstract class DeploymentActionBase extends ServersTreeActionBase {
-  public DeploymentActionBase(String text, String description, Icon icon) {
+  protected DeploymentActionBase(String text, String description, Icon icon) {
     super(text, description, icon);
   }
 
