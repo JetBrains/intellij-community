@@ -259,7 +259,7 @@ public class RemoteFilePanel implements PropertyChangeListener {
       myProgressUpdatesQueue.queue(new Update("fraction") {
         @Override
         public void run() {
-          myProgressBar.setValue((int)Math.round(100*fraction));
+          myProgressBar.setValue((int)Math.round(100 * fraction));
         }
       });
     }
