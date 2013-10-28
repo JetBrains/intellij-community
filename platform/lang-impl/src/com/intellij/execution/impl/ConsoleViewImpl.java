@@ -871,8 +871,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
         editor.addEditorMouseListener(new EditorPopupHandler() {
           @Override
           public void invokePopup(final EditorMouseEvent event) {
-            final MouseEvent mouseEvent = event.getMouseEvent();
-            popupInvoked(mouseEvent);
+            popupInvoked(event.getMouseEvent());
           }
         });
 
