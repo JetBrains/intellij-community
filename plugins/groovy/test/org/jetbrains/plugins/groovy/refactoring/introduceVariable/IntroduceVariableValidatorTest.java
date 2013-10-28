@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContextImpl;
+import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GrIntroduceLocalVariableProcessor;
 import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyVariableValidator;
 import org.jetbrains.plugins.groovy.util.TestUtils;
 
@@ -83,7 +84,7 @@ public class IntroduceVariableValidatorTest extends LightCodeInsightFixtureTestC
 
     Assert.assertNotNull("Selected expression reference points to null", selectedExpr);
 
-    final PsiElement tempContainer = GroovyRefactoringUtil.getEnclosingContainer(selectedExpr);
+    final PsiElement tempContainer = GrIntroduceLocalVariableProcessor.getEnclosingContainer(selectedExpr);
     Assert.assertTrue(tempContainer instanceof GroovyPsiElement);
 
     PsiElement[] occurences = GroovyRefactoringUtil.getExpressionOccurrences(PsiUtil.skipParentheses(selectedExpr, false), tempContainer);
