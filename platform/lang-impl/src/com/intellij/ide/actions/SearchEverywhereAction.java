@@ -382,7 +382,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     if (index >= 0) {
       final int newIndex = forward ? myTitleIndexes.next(index) : myTitleIndexes.prev(index);
       myList.setSelectedIndex(newIndex);
-      ListScrollingUtil.ensureIndexIsVisible(myList, myList.getSelectedIndex(), forward ? 1 : -1);
+      int more = myTitleIndexes.next(newIndex) - 1;
+      if (more < newIndex) {
+        more = myList.getItemsCount() - 1;
+      }
+      ListScrollingUtil.ensureIndexIsVisible(myList, more, forward ? 1 : -1);
+      ListScrollingUtil.ensureIndexIsVisible(myList, newIndex, forward ? 1 : -1);
     }
   }
 
