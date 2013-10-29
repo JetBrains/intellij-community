@@ -22,7 +22,9 @@ import com.sun.tools.javac.util.List;
 import org.jetbrains.jps.incremental.Utils;
 
 import javax.lang.model.SourceVersion;
-import javax.tools.*;
+import javax.tools.FileObject;
+import javax.tools.JavaFileObject;
+import javax.tools.StandardLocation;
 import java.io.*;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
@@ -100,6 +102,23 @@ class OptimizedFileManager extends DefaultFileManager {
     final String relativePath = packageName.replace('.', File.separatorChar);
     ListBuffer<JavaFileObject> results = new ListBuffer<JavaFileObject>();
 
+    final Set<File> outputRoots;
+    if (location.isOutputLocation() || location != StandardLocation.CLASS_PATH) {
+      outputRoots = Collections.emptySet();
+    }
+    else {
+      final Iterable<? extends File> outputs = getLocation(StandardLocation.CLASS_OUTPUT);
+      if (outputs == null) {
+        outputRoots = Collections.emptySet();
+      }
+      else {
+        outputRoots = new HashSet<File>(1, 0.98f);
+        for (File file : outputs) {
+          outputRoots.add(file);
+        }
+      }
+    }
+
     for (File root : locationRoots) {
       final Archive archive = myArchives.get(root);
       final boolean isFile;
@@ -114,11 +133,12 @@ class OptimizedFileManager extends DefaultFileManager {
       }
       else {
         final File directory = relativePath.length() != 0 ? new File(root, relativePath) : root;
+        final boolean canUseCache = !location.isOutputLocation() && !outputRoots.contains(root);
         if (recurse) {
-          collectFromDirectoryRecursively(directory, kinds, results, true, !location.isOutputLocation());
+          collectFromDirectoryRecursively(directory, kinds, results, true, canUseCache);
         }
         else {
-          collectFromDirectory(directory, kinds, results, !location.isOutputLocation());
+          collectFromDirectory(directory, kinds, results, canUseCache);
         }
       }
     }
