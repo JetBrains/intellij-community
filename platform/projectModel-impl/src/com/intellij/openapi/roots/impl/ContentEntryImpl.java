@@ -293,6 +293,18 @@ public class ContentEntryImpl extends RootModelComponentBase implements ContentE
   }
 
   @Override
+  public boolean removeExcludeFolder(@NotNull String url) {
+    for (ExcludeFolder folder : myExcludeFolders) {
+      if (folder.getUrl().equals(url)) {
+        myExcludeFolders.remove(folder);
+        Disposer.dispose((Disposable)folder);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
   public void clearExcludeFolders() {
     assert !isDisposed();
     getRootModel().assertWritable();

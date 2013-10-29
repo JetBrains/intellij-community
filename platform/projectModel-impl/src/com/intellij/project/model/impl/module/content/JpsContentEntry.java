@@ -256,6 +256,19 @@ public class JpsContentEntry implements ContentEntry, Disposable {
   }
 
   @Override
+  public boolean removeExcludeFolder(@NotNull String url) {
+    for (JpsExcludeFolder folder : myExcludeFolders) {
+      if (folder.getUrl().equals(url)) {
+        myExcludeFolders.remove(folder);
+        myModule.getExcludeRootsList().removeUrl(url);
+        Disposer.dispose(folder);
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Override
   public void clearExcludeFolders() {
     List<String> toRemove = new ArrayList<String>();
     for (JpsExcludeFolder folder : myExcludeFolders) {
