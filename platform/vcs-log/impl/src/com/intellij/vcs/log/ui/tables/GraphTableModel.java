@@ -100,13 +100,7 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell> {
   @Override
   protected VirtualFile getRoot(int rowIndex) {
     Node commitNode = myDataPack.getGraphModel().getGraph().getCommitNodeInRow(rowIndex);
-    if (commitNode != null) {
-      return commitNode.getBranch().getRepositoryRoot();
-    }
-    else {
-      LOG.error("Couldn't identify commit node at " + rowIndex);
-      return UNKNOWN_ROOT;
-    }
+    return commitNode != null ? commitNode.getBranch().getRepositoryRoot() : FAKE_ROOT;
   }
 
   @NotNull

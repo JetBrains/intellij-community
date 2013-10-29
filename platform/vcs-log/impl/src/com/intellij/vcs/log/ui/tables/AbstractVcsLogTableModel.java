@@ -17,7 +17,7 @@ import java.util.List;
  */
 public abstract class AbstractVcsLogTableModel<T> extends AbstractTableModel {
 
-  public static final VirtualFile UNKNOWN_ROOT = NullVirtualFile.INSTANCE;
+  public static final VirtualFile FAKE_ROOT = NullVirtualFile.INSTANCE;
 
   public static final int ROOT_COLUMN = 0;
   public static final int COMMIT_COLUMN = 1;
