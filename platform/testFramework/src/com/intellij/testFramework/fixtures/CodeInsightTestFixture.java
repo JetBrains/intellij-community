@@ -27,6 +27,7 @@ import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Document;
@@ -284,6 +285,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
    */
   @NotNull
   List<HighlightInfo> doHighlighting();
+
+  @NotNull
+  List<HighlightInfo> doHighlighting(HighlightSeverity minimalSeverity);
 
   /**
    * Finds the reference in position marked by {@link #CARET_MARKER}.
