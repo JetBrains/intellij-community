@@ -325,7 +325,9 @@ public class AtomicConversionRule extends TypeConversionRule {
     LOG.assertTrue(atomicClass != null);
     final PsiTypeParameter[] typeParameters = atomicClass.getTypeParameters();
     if (typeParameters.length == 1) {
-      final PsiType initial = resolveResult.getSubstitutor().substitute(typeParameters[0]);
+      final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
+      LOG.assertTrue(substitutor.isValid());
+      final PsiType initial = substitutor.substitute(typeParameters[0]);
       final PsiPrimitiveType unboxedInitialType = PsiPrimitiveType.getUnboxedType(initial);
       if (unboxedInitialType != null) {
         LOG.assertTrue(initial != null);
