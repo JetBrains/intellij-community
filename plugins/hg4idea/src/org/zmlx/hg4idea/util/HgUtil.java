@@ -38,6 +38,8 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -634,5 +636,14 @@ public abstract class HgUtil {
     cmdArgs.add("-q");
     ShellCommand shellCommand = new ShellCommand(cmdArgs, null, CharsetToolkit.getDefaultSystemCharset());
     return shellCommand.execute();
+  }
+
+  public static List<String> getNamesWithoutHashes(Collection<HgNameWithHashInfo> namesWithHashes) {
+    return ContainerUtil.map(namesWithHashes, new Function<HgNameWithHashInfo, String>() {
+      @Override
+      public String fun(HgNameWithHashInfo info) {
+        return info.getName();
+      }
+    });
   }
 }

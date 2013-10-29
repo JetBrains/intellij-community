@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.repo.HgRepositoryReader;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,12 +72,12 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
   }
 
   public void testBranches() {
-    Collection<String> branches = myRepositoryReader.readBranches();
+    Collection<String> branches = HgUtil.getNamesWithoutHashes(myRepositoryReader.readBranches());
     TestRepositoryUtil.assertEqualCollections(branches, myBranches);
   }
 
   public void testBookmarks() {
-    Collection<String> bookmarks = myRepositoryReader.readBookmarks();
+    Collection<String> bookmarks = HgUtil.getNamesWithoutHashes(myRepositoryReader.readBookmarks());
     TestRepositoryUtil.assertEqualCollections(bookmarks, myBookmarks);
   }
 

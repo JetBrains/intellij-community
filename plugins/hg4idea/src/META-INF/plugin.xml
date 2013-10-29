@@ -12,6 +12,7 @@
     <checkoutProvider implementation="org.zmlx.hg4idea.provider.HgCheckoutProvider"/>
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <vcsPopupProvider implementation="org.zmlx.hg4idea.provider.HgQuickListProvider"/>
+    <logProvider implementation="org.zmlx.hg4idea.log.HgLogProvider"/>
 
     <applicationService serviceInterface="org.zmlx.hg4idea.HgGlobalSettings"
                         serviceImplementation="org.zmlx.hg4idea.HgGlobalSettings"/>
