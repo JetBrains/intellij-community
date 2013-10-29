@@ -4,6 +4,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.graph.elements.Node;
@@ -52,7 +53,7 @@ public class VcsLogFilterer {
     }
 
     // apply details filters, and use simple table without graph (we can't filter by details and keep the graph yet).
-    AbstractVcsLogTableModel model;
+    final AbstractVcsLogTableModel model;
     if (!detailsFilters.isEmpty()) {
       List<VcsFullCommitDetails> filteredCommits = filterByDetails(graphModel, detailsFilters);
       model = new NoGraphTableModel(myUI, filteredCommits, myLogDataHolder.getDataPack().getRefsModel(), true);
@@ -61,12 +62,21 @@ public class VcsLogFilterer {
       model = new GraphTableModel(myLogDataHolder, myUI);
     }
 
-    myUI.setModel(model);
-    myUI.updateUI();
+    updateUi(model);
+  }
 
-    if (model.getRowCount() == 0) {
-      model.requestToLoadMore();
-    }
+  private void updateUi(final AbstractVcsLogTableModel model) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        myUI.setModel(model);
+        myUI.updateUI();
+
+        if (model.getRowCount() == 0) {
+          model.requestToLoadMore();
+        }
+      }
+    });
   }
 
   public void requestVcs(@NotNull Collection<VcsLogFilter> filters, final Runnable onSuccess) {

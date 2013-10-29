@@ -21,7 +21,6 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogFilter;
-import com.intellij.vcs.log.data.VcsLogFilterer;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,13 +35,13 @@ import java.util.List;
  */
 public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
-  @NotNull private final VcsLogFilterer myFilterer;
   @NotNull private final JComponent myRootPanel;
   @NotNull private final List<FilterPopupComponent> myFilterPopupComponents;
   @NotNull private final SearchTextField myTextFilter;
+  @NotNull private final VcsLogUI myUi;
 
   public VcsLogClassicFilterUi(@NotNull VcsLogUI ui) {
-    myFilterer = ui.getFilterer();
+    myUi = ui;
 
     JLabel filterCaption = new JLabel("Filter:");
     filterCaption.setForeground(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : UIUtil.getInactiveTextColor());
@@ -97,7 +96,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   }
 
   void applyFilters() {
-    myFilterer.applyFiltersAndUpdateUi(getFilters());
+    myUi.applyFiltersAndUpdateUi();
   }
 
 }

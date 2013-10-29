@@ -1,7 +1,7 @@
 package com.intellij.vcs.log.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.TableModel;
 import java.util.Collection;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * @author erokhins
@@ -103,15 +104,25 @@ public class VcsLogUI {
   }
 
   public void showAll() {
-    myLogDataHolder.getDataPack().getGraphModel().getFragmentManager().showAll();
-    updateUI();
-    jumpToRow(0);
+    runUnderModalProgress("Expanding linear branches...", new Runnable() {
+      @Override
+      public void run() {
+        myLogDataHolder.getDataPack().getGraphModel().getFragmentManager().showAll();
+        updateUI();
+        jumpToRow(0);
+      }
+    });
   }
 
   public void hideAll() {
-    myLogDataHolder.getDataPack().getGraphModel().getFragmentManager().hideAll();
-    updateUI();
-    jumpToRow(0);
+    runUnderModalProgress("Collapsing linear branches...", new Runnable() {
+      @Override
+      public void run() {
+        myLogDataHolder.getDataPack().getGraphModel().getFragmentManager().hideAll();
+        updateUI();
+        jumpToRow(0);
+      }
+    });
   }
 
   public void setLongEdgeVisibility(boolean visibility) {
@@ -176,10 +187,23 @@ public class VcsLogUI {
       jumpToRow(row);
     }
     else {
-      myLogDataHolder.showFullLog(new Runnable() {
+      runUnderModalProgress("Building graph...", new Runnable() {
         @Override
         public void run() {
-          jumpToCommit(commitHash);
+          final CountDownLatch waiter = new CountDownLatch(1);
+          myLogDataHolder.showFullLog(new Runnable() {
+            @Override
+            public void run() {
+              waiter.countDown();
+              jumpToCommit(commitHash);
+            }
+          });
+          try {
+            waiter.await();
+          }
+          catch (InterruptedException e) {
+            LOG.error(e);
+          }
         }
       });
     }
@@ -201,7 +225,11 @@ public class VcsLogUI {
   }
 
   public void applyFiltersAndUpdateUi() {
-    myFilterer.applyFiltersAndUpdateUi(collectFilters());
+    runUnderModalProgress("Applying filters...", new Runnable() {
+      public void run() {
+        myFilterer.applyFiltersAndUpdateUi(collectFilters());
+      }
+    });
   }
 
   @NotNull
@@ -222,4 +250,9 @@ public class VcsLogUI {
   public Project getProject() {
     return myProject;
   }
+
+  public void runUnderModalProgress(@NotNull String task, @NotNull Runnable runnable) {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, task, false, null, this.getMainFrame().getMainComponent());
+  }
+
 }
