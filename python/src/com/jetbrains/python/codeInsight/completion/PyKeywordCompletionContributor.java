@@ -310,7 +310,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
   private static final PsiElementPattern.Capture<PsiElement> IN_EXCEPT_BODY =
     psiElement().inside(psiElement(PyStatementList.class).inside(psiElement(PyExceptPart.class)));
 
-  private static final PsiElementPattern.Capture<PsiElement> AFTER_IF = afterStatement(psiElement(PyIfStatement.class));
+  private static final PsiElementPattern.Capture<PsiElement> AFTER_IF = afterStatement(psiElement(PyIfStatement.class).withLastChild(psiElement(PyIfPart.class)));
   private static final PsiElementPattern.Capture<PsiElement> AFTER_TRY = afterStatement(psiElement(PyTryExceptStatement.class));
 
   private static final PsiElementPattern.Capture<PsiElement> AFTER_LOOP_NO_ELSE =
@@ -355,14 +355,11 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     }
   }
 
-  private static void putKeyword(
-    @NotNull @NonNls String keyword,
-    InsertHandler<PythonLookupElement> handler,
-    TailType tail,
-    CompletionResultSet result) {
-    final PythonLookupElement lookup_elt = new PythonLookupElement(keyword, true, null);
-    lookup_elt.setHandler(handler);
-    result.addElement(TailTypeDecorator.withTail(lookup_elt, tail));
+  private static void putKeyword(@NotNull @NonNls String keyword, InsertHandler<PythonLookupElement> handler, TailType tail,
+                                 CompletionResultSet result) {
+    final PythonLookupElement lookupElement = new PythonLookupElement(keyword, true, null);
+    lookupElement.setHandler(handler);
+    result.addElement(TailTypeDecorator.withTail(lookupElement, tail));
   }
 
   private void addPreColonStatements() {
@@ -472,8 +469,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
       CompletionType.BASIC, psiElement()
       .withLanguage(PythonLanguage.getInstance())
       .and(FIRST_ON_LINE)
-      .andOr(IN_IF_BODY, AFTER_IF)  // NOTE: does allow 'elif' after 'else', may be useful for easier reordering of branches
-        //.andNot(RIGHT_AFTER_COLON)
+      .andOr(IN_IF_BODY, AFTER_IF)
       .andNot(AFTER_QUALIFIER).andNot(IN_STRING_LITERAL)
       ,
       new PyKeywordCompletionProvider(TailType.NONE, UnindentingInsertHandler.INSTANCE, "elif"));
