@@ -293,12 +293,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     if (contentEntry == null) {
       return false;
     }
-    final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
-    for (ExcludeFolder excludeFolder : excludeFolders) {
-      final VirtualFile excludedDir = excludeFolder.getFile();
-      if (excludedDir == null) {
-        continue;
-      }
+    for (VirtualFile excludedDir : contentEntry.getExcludeFolderFiles()) {
       if (VfsUtilCore.isAncestor(excludedDir, file, true)) {
         return true;
       }
@@ -312,8 +307,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     if (contentEntry == null) {
       return null;
     }
-    final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
-    for (final ExcludeFolder excludeFolder : excludeFolders) {
+    for (final ExcludeFolder excludeFolder : contentEntry.getExcludeFolders()) {
       final VirtualFile f = excludeFolder.getFile();
       if (f == null) {
         continue;

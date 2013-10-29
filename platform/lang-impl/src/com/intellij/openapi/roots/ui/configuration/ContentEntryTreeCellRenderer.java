@@ -21,7 +21,6 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -81,9 +80,8 @@ public class ContentEntryTreeCellRenderer extends NodeRenderer {
   }
 
   protected Icon updateIcon(final ContentEntry entry, final VirtualFile file, Icon originalIcon) {
-    for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
-      final VirtualFile excludePath = excludeFolder.getFile();
-      if (excludePath != null && VfsUtilCore.isAncestor(excludePath, file, false)) {
+    for (VirtualFile excludePath : entry.getExcludeFolderFiles()) {
+      if (VfsUtilCore.isAncestor(excludePath, file, false)) {
         return AllIcons.Modules.ExcludeRoot;
       }
     }
