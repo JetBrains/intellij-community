@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -77,7 +78,7 @@ public class FileReferenceQuickFixProvider {
       }
 
       PsiElement element = reference.getElement();
-      Module module = element != null ? ModuleUtil.findModuleForPsiElement(element) : null;
+      Module module = element != null ? ModuleUtilCore.findModuleForPsiElement(element) : null;
 
       for (PsiFileSystemItem defaultContext : defaultContexts) {
         if (defaultContext != null) {
@@ -86,7 +87,7 @@ public class FileReferenceQuickFixProvider {
             if (context == null) {
               context = defaultContext;
             }
-            else if (module != null && module == getModuleForContext(defaultContext)) {
+            if (module != null && module == getModuleForContext(defaultContext)) {
               // fixes IDEA-64156
               // todo: fix it on PsiFileReferenceHelper level in 10.X
               context = defaultContext;
