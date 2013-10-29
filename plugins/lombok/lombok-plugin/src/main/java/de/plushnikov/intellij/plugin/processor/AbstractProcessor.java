@@ -44,13 +44,13 @@ public abstract class AbstractProcessor implements Processor {
 
   @NotNull
   @Override
-  public String getSupportedAnnotation() {
+  public final String getSupportedAnnotation() {
     return supportedAnnotation;
   }
 
   @NotNull
   @Override
-  public Class<? extends Annotation> getSupportedAnnotationClass() {
+  public final Class<? extends Annotation> getSupportedAnnotationClass() {
     return supportedAnnotationClass;
   }
 

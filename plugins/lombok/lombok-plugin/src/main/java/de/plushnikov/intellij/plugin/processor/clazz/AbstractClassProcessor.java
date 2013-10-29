@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
@@ -8,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -40,10 +40,11 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
   @NotNull
   @Override
   public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
-    List<? super PsiElement> result = new ArrayList<PsiElement>();
+    List<? super PsiElement> result = Collections.emptyList();
 
-    PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotation(psiClass, Collections.singleton(getSupportedAnnotation()), true);
+    PsiAnnotation psiAnnotation = PsiImplUtil.findAnnotation(psiClass.getModifierList(), getSupportedAnnotation());
     if (null != psiAnnotation) {
+      result = new ArrayList<PsiElement>();
       process(psiClass, psiAnnotation, result);
     }
 
@@ -77,10 +78,10 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     Boolean callSuperProperty = PsiAnnotationUtil.getDeclaredAnnotationValue(psiAnnotation, "callSuper", Boolean.class);
     if (null == callSuperProperty && PsiClassUtil.hasSuperClass(psiClass)) {
       builder.addWarning("Generating " + generatedMethodName + " implementation but without a call to superclass, " +
-          "even though this class does not extend java.lang.Object." +
-          "If this is intentional, add '(callSuper=false)' to your type.",
-          PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "true"),
-          PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"));
+         "even though this class does not extend java.lang.Object." +
+         "If this is intentional, add '(callSuper=false)' to your type.",
+         PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "true"),
+         PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "callSuper", "false"));
     }
   }
 
@@ -91,7 +92,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
         if (null == fieldByName) {
           final String newPropertyValue = calcNewPropertyValue(ofProperty, fieldName);
           builder.addWarning(String.format("The field '%s' does not exist", fieldName),
-              PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "of", newPropertyValue));
+             PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "of", newPropertyValue));
         }
       }
     }
@@ -104,12 +105,12 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
         if (null == fieldByName) {
           final String newPropertyValue = calcNewPropertyValue(excludeProperty, fieldName);
           builder.addWarning(String.format("The field '%s' does not exist", fieldName),
-              PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));
+             PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));
         } else {
           if (fieldName.startsWith(LombokUtils.LOMBOK_INTERN_FIELD_MARKER) || fieldByName.hasModifierProperty(PsiModifier.STATIC)) {
             final String newPropertyValue = calcNewPropertyValue(excludeProperty, fieldName);
             builder.addWarning(String.format("The field '%s' would have been excluded anyway", fieldName),
-                PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));
+               PsiQuickFixFactory.createChangeAnnotationParameterFix(psiAnnotation, "exclude", newPropertyValue));
           }
         }
       }

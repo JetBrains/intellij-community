@@ -1,11 +1,11 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -39,7 +39,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
   public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     List<? super PsiElement> result = new ArrayList<PsiElement>();
     for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
-      PsiAnnotation psiAnnotation = AnnotationUtil.findAnnotation(psiField, Collections.singleton(getSupportedAnnotation()), true);
+      PsiAnnotation psiAnnotation = PsiImplUtil.findAnnotation(psiField.getModifierList(), getSupportedAnnotation());
       if (null != psiAnnotation) {
         process(psiField, psiAnnotation, result);
       }
