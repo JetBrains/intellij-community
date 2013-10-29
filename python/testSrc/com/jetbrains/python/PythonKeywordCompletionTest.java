@@ -122,6 +122,14 @@ public class PythonKeywordCompletionTest extends PyTestCase {
     assertDoesntContain(lookupElementStrings, "elif");
   }
 
+  public void testNoElseBeforeExcept() {
+    final List<String> lookupElementStrings = doTestByText("try:\n" +
+                                              "  a = 1\n" +
+                                              "<caret>");
+    assertNotNull(lookupElementStrings);
+    assertDoesntContain(lookupElementStrings, "else");
+  }
+
   public void testElseInCondExpr() {  // PY-2397
     doTest();
   }
