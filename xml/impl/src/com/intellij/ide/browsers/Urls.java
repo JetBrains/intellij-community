@@ -31,6 +31,11 @@ public final class Urls {
     return result;
   }
 
+  @NotNull
+  public static Url newHttpUrl(@Nullable String authority, @Nullable String path) {
+    return new UrlImpl("http", authority, path);
+  }
+
   @Nullable
   public static Url parse(@NotNull String url, boolean asLocalIfNoScheme) {
     if (asLocalIfNoScheme && !URLUtil.containsScheme(url)) {
@@ -84,7 +89,7 @@ public final class Urls {
   public static Url newFromVirtualFile(@NotNull VirtualFile file) {
     String path = file.getPath();
     if (file.isInLocalFileSystem()) {
-      return new UrlImpl(null, file.getFileSystem().getProtocol(), null, path, null);
+      return new UrlImpl(file.getFileSystem().getProtocol(), null, path);
     }
     else {
       return parseUrl(file.getUrl(), false);

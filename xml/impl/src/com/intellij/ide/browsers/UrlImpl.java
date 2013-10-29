@@ -23,6 +23,10 @@ public final class UrlImpl implements Url {
 
   private String externalFormWithoutParameters;
 
+  public UrlImpl(@NotNull String scheme, @Nullable String authority, @Nullable String path) {
+    this(null, scheme, authority, path, null);
+  }
+
   public UrlImpl(@Nullable String raw, @NotNull String scheme, @Nullable String authority, @Nullable String path, @Nullable String parameters) {
     this.raw = raw;
     this.scheme = scheme;
