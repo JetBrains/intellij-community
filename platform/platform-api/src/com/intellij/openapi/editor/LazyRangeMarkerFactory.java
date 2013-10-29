@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.openapi.editor;
 import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -64,7 +63,7 @@ public class LazyRangeMarkerFactory extends AbstractProjectComponent {
   }
 
   private void addToLazyMarkersList(@NotNull LazyMarker marker, @NotNull VirtualFile file) {
-    WeakList<LazyMarker> markers = myMarkers.get(file);
+    List<LazyMarker> markers = myMarkers.get(file);
     if (markers == null) {
       markers = ConcurrencyUtil.cacheOrGet(myMarkers, file, new WeakList<LazyMarker>());
     }
