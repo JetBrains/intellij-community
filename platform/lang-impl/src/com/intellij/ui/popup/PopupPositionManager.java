@@ -283,7 +283,7 @@ public class PopupPositionManager {
       return result;
     }
 
-    protected static Dimension getPopupSize(final JBPopup popup) {
+    public static Dimension getPopupSize(final JBPopup popup) {
       Dimension size = null;
       if (popup instanceof AbstractPopup) {
         final String dimensionKey = ((AbstractPopup)popup).getDimensionServiceKey();
