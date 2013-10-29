@@ -16,8 +16,13 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
+import com.intellij.util.Function;
+import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +34,7 @@ import javax.swing.text.Document;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 /**
  * @author spleaner
@@ -56,7 +62,27 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
     final JPanel internalPanel = new JPanel(new BorderLayout());
     result.add(internalPanel, BorderLayout.NORTH);
 
-    final FieldPanel additionalAttributesPanel = new FieldPanel(null, inspection.getPanelTitle(), null, null);
+    final Ref<FieldPanel> panelRef = new Ref<FieldPanel>();
+    final FieldPanel additionalAttributesPanel = new FieldPanel(null, null, new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent event) {
+        Messages.showTextAreaDialog(panelRef.get().getTextField(), inspection.getPanelTitle(), "HtmlUnknownTagInspection",
+                                    new Function<String, List<String>>() {
+                                      @Override
+                                      public List<String> fun(String s) {
+                                        return reparseProperties(s);
+                                      }
+                                    }, new Function<List<String>, String>() {
+            @Override
+            public String fun(List<String> strings) {
+              return StringUtil.join(strings, ",");
+            }
+          }
+        );
+      }
+    }, null);
+    ((JButton)additionalAttributesPanel.getComponent(1)).setIcon(PlatformIcons.OPEN_EDIT_DIALOG_ICON);
+    panelRef.set(additionalAttributesPanel);
     additionalAttributesPanel.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {

@@ -4,6 +4,8 @@
       <root url="jar://$PROJECT_DIR$/lib/asm4-all.jar!/" />
     </CLASSES>
     <JAVADOC />
-    <SOURCES />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/src/asm4-src.zip!/"/>
+    </SOURCES>
   </library>
 </component>

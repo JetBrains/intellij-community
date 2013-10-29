@@ -171,10 +171,8 @@ public class MavenRootModelAdapter {
 
   public boolean isAlreadyExcluded(File f) {
     String url = toUrl(f.getPath()).getUrl();
-    for (ContentEntry eachEntry : myRootModel.getContentEntries()) {
-      for (ExcludeFolder eachFolder : eachEntry.getExcludeFolders()) {
-        if (VfsUtilCore.isEqualOrAncestor(eachFolder.getUrl(), url)) return true;
-      }
+    for (String excludedUrl : myRootModel.getExcludeRootUrls()) {
+      if (VfsUtilCore.isEqualOrAncestor(excludedUrl, url)) return true;
     }
     return false;
   }

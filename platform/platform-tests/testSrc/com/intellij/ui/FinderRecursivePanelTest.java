@@ -15,7 +15,7 @@
  */
 package com.intellij.ui;
 
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
@@ -86,7 +86,7 @@ public class FinderRecursivePanelTest extends PlatformTestCase {
   }
 
   public void testUpdate() throws InterruptedException {
-    StringFinderRecursivePanel panel_0 = new StringFinderRecursivePanel() {
+    StringFinderRecursivePanel panel_0 = new StringFinderRecursivePanel(getProject()) {
       @NotNull
       @Override
       protected JComponent createRightComponent(String s) {
@@ -105,7 +105,8 @@ public class FinderRecursivePanelTest extends PlatformTestCase {
         };
       }
     };
-    Disposer.register(myTestRootDisposable, panel_0);
+    disposeOnTearDown(panel_0);
+
     panel_0.setTestSelectedIndex(0);
     //panel_0.updateRightComponent(true);
 
@@ -131,8 +132,8 @@ public class FinderRecursivePanelTest extends PlatformTestCase {
 
     private JBList myList;
 
-    private StringFinderRecursivePanel() {
-      super(FinderRecursivePanelTest.this.myProject, "fooPanel");
+    private StringFinderRecursivePanel(Project project) {
+      super(project, "fooPanel");
       init();
     }
 

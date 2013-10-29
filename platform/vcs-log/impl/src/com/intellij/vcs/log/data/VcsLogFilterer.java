@@ -4,6 +4,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.graph.elements.Node;
@@ -35,7 +36,7 @@ public class VcsLogFilterer {
   }
 
   public void applyFiltersAndUpdateUi(@NotNull Collection<VcsLogFilter> filters) {
-    GraphModel graphModel = myLogDataHolder.getDataPack().getGraphModel();
+    final GraphModel graphModel = myLogDataHolder.getDataPack().getGraphModel();
     List<VcsLogGraphFilter> graphFilters = ContainerUtil.findAll(filters, VcsLogGraphFilter.class);
     List<VcsLogDetailsFilter> detailsFilters = ContainerUtil.findAll(filters, VcsLogDetailsFilter.class);
 
@@ -48,11 +49,16 @@ public class VcsLogFilterer {
       applyGraphFilters(graphModel, graphFilters);
     }
     else {
-      graphModel.setVisibleBranchesNodes(ALL_NODES_VISIBLE);
+      myUI.getTable().executeWithoutRepaint(new Runnable() {
+        @Override
+        public void run() {
+          graphModel.setVisibleBranchesNodes(ALL_NODES_VISIBLE);
+        }
+      });
     }
 
     // apply details filters, and use simple table without graph (we can't filter by details and keep the graph yet).
-    AbstractVcsLogTableModel model;
+    final AbstractVcsLogTableModel model;
     if (!detailsFilters.isEmpty()) {
       List<VcsFullCommitDetails> filteredCommits = filterByDetails(graphModel, detailsFilters);
       model = new NoGraphTableModel(myUI, filteredCommits, myLogDataHolder.getDataPack().getRefsModel(), true);
@@ -61,12 +67,21 @@ public class VcsLogFilterer {
       model = new GraphTableModel(myLogDataHolder, myUI);
     }
 
-    myUI.setModel(model);
-    myUI.updateUI();
+    updateUi(model);
+  }
 
-    if (model.getRowCount() == 0) {
-      model.requestToLoadMore();
-    }
+  private void updateUi(final AbstractVcsLogTableModel model) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        myUI.setModel(model);
+        myUI.updateUI();
+
+        if (model.getRowCount() == 0) {
+          model.requestToLoadMore();
+        }
+      }
+    });
   }
 
   public void requestVcs(@NotNull Collection<VcsLogFilter> filters, final Runnable onSuccess) {
@@ -80,14 +95,19 @@ public class VcsLogFilterer {
     });
   }
 
-  private static void applyGraphFilters(GraphModel graphModel, final List<VcsLogGraphFilter> onGraphFilters) {
-    graphModel.setVisibleBranchesNodes(new Function<Node, Boolean>() {
+  private void applyGraphFilters(final GraphModel graphModel, final List<VcsLogGraphFilter> onGraphFilters) {
+    myUI.getTable().executeWithoutRepaint(new Runnable() {
       @Override
-      public Boolean fun(final Node node) {
-        return !ContainerUtil.exists(onGraphFilters, new Condition<VcsLogGraphFilter>() {
+      public void run() {
+        graphModel.setVisibleBranchesNodes(new Function<Node, Boolean>() {
           @Override
-          public boolean value(VcsLogGraphFilter filter) {
-            return !filter.matches(node.getCommitHash());
+          public Boolean fun(final Node node) {
+            return !ContainerUtil.exists(onGraphFilters, new Condition<VcsLogGraphFilter>() {
+              @Override
+              public boolean value(VcsLogGraphFilter filter) {
+                return !filter.matches(node.getCommitHash());
+              }
+            });
           }
         });
       }

@@ -179,5 +179,12 @@ public interface ContentEntry extends Synthetic {
    */
   void removeExcludeFolder(@NotNull ExcludeFolder excludeFolder);
 
+  /**
+   * Removes an exclude root from this content root.
+   * @param url url of the exclude root
+   * @return {@code true} if the exclude root was removed
+   */
+  boolean removeExcludeFolder(@NotNull String url);
+
   void clearExcludeFolders();
 }

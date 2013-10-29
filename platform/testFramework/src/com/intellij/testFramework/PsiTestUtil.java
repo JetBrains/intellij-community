@@ -236,11 +236,7 @@ public class PsiTestUtil {
       @Override
       public void consume(ModifiableRootModel model) {
         ContentEntry entry = findContentEntryWithAssertion(model, root);
-        for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
-          if (root.equals(excludeFolder.getFile())) {
-            entry.removeExcludeFolder(excludeFolder);
-          }
-        }
+        entry.removeExcludeFolder(root.getUrl());
       }
     });
   }

@@ -84,7 +84,7 @@ public class NoGraphTableModel extends AbstractVcsLogTableModel<CommitCell> {
     }
     else {
       LOG.error("Couldn't identify root for commit at " + rowIndex, new Attachment("loaded_commits", myCommits.toString()));
-      return UNKNOWN_ROOT;
+      return FAKE_ROOT;
     }
   }
 

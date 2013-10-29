@@ -15,7 +15,7 @@
  */
 package com.intellij.lexer;
 
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 
 public class XHtmlHighlightingLexer extends HtmlHighlightingLexer {
   public XHtmlHighlightingLexer() {
@@ -23,7 +23,7 @@ public class XHtmlHighlightingLexer extends HtmlHighlightingLexer {
   }
 
   public XHtmlHighlightingLexer(Lexer baseLexer) {
-    super(baseLexer,false, FileTypeManager.getInstance().getStdFileType("CSS"));
+    super(baseLexer,false, FileTypeRegistry.getInstance().findFileTypeByName("CSS"));
   }
 
   @Override

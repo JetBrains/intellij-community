@@ -167,12 +167,7 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
   }
 
   private static void createExcludedRootIfAbsent(@NotNull ContentEntry entry, @NotNull String path, @NotNull String moduleName) {
-    ExcludeFolder[] folders = entry.getExcludeFolders();
-    for (ExcludeFolder folder : folders) {
-      VirtualFile file = folder.getFile();
-      if (file == null) {
-        continue;
-      }
+    for (VirtualFile file : entry.getExcludeFolderFiles()) {
       if (ExternalSystemApiUtil.getLocalFileSystemPath(file).equals(path)) {
         return;
       }

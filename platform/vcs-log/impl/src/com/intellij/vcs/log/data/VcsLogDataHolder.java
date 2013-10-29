@@ -704,6 +704,7 @@ public class VcsLogDataHolder implements Disposable {
   @NotNull
   public Collection<VcsFullCommitDetails> getTopCommitDetails() {
     final Collection<TimedVcsCommit> topCommits = getTopCommits();
+    final AtomicBoolean errorDetailsAttached = new AtomicBoolean();
     return ContainerUtil.mapNotNull(topCommits, new Function<TimedVcsCommit, VcsFullCommitDetails>() {
       @Nullable
       @Override
@@ -715,9 +716,14 @@ public class VcsLogDataHolder implements Disposable {
         }
 
         // shouldn't happen
-        LOG.error("No details were stored for commit " + hash,
-                  new Attachment("details_cache.txt", myTopCommitsDetailsCache.toString()),
-                  new Attachment("top_commits.txt", topCommits.toString()));
+        String errorMessage = "No details were stored for commit " + hash;
+        // log the error only once for the getTopCommitDetails request
+        if (!errorDetailsAttached.get()) {
+          errorDetailsAttached.set(true);
+          LOG.error(errorMessage,
+                    new Attachment("details_cache.txt", myTopCommitsDetailsCache.toString()),
+                    new Attachment("top_commits.txt", topCommits.toString()));
+        }
         return null;
       }
     });

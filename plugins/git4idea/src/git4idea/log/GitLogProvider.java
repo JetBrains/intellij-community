@@ -132,6 +132,7 @@ public class GitLogProvider implements VcsLogProvider {
   // TODO this is to be removed when tags will be supported by the GitRepositoryReader
   private Collection<? extends VcsRef> readTags(@NotNull VirtualFile root) throws VcsException {
     GitSimpleHandler tagHandler = new GitSimpleHandler(myProject, root, GitCommand.LOG);
+    tagHandler.setSilent(true);
     tagHandler.addParameters("--tags", "--no-walk", "--format=%H%d" + GitLogParser.RECORD_START_GIT, "--decorate=full");
     String out = tagHandler.run();
     Collection<VcsRef> refs = new ArrayList<VcsRef>();

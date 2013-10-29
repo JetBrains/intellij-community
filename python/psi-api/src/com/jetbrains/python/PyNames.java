@@ -106,10 +106,11 @@ public class PyNames {
   public static final String SEQUENCE = "Sequence";
   public static final String MAPPING = "Mapping";
 
-  public static final String COMPLEX = "Complex";
-  public static final String REAL = "Real";
-  public static final String RATIONAL = "Rational";
-  public static final String INTEGRAL = "Integral";
+  public static final String ABC_NUMBER = "Number";
+  public static final String ABC_COMPLEX = "Complex";
+  public static final String ABC_REAL = "Real";
+  public static final String ABC_RATIONAL = "Rational";
+  public static final String ABC_INTEGRAL = "Integral";
 
   public static final String CONTAINS = "__contains__";
   public static final String HASH = "__hash__";
@@ -386,7 +387,8 @@ public class PyNames {
   );
 
   public static Set<String> BuiltinInterfaces = ImmutableSet.of(
-      CALLABLE, HASHABLE, ITERABLE, ITERATOR, SIZED, CONTAINER, SEQUENCE, MAPPING, COMPLEX, REAL, RATIONAL, INTEGRAL
+      CALLABLE, HASHABLE, ITERABLE, ITERATOR, SIZED, CONTAINER, SEQUENCE, MAPPING, ABC_COMPLEX, ABC_REAL, ABC_RATIONAL, ABC_INTEGRAL,
+      ABC_NUMBER
   );
 
   /**

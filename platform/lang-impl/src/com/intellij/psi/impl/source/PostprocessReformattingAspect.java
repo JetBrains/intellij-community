@@ -375,6 +375,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       final PostprocessFormattingTask currentTask = iterator.next();
       if (accumulatedTask == null) {
         accumulatedTask = currentTask;
+        iterator.remove();
       }
       else if (accumulatedTask.getStartOffset() > currentTask.getEndOffset() ||
                accumulatedTask.getStartOffset() == currentTask.getEndOffset() &&
@@ -388,6 +389,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         }
 
         accumulatedTask = currentTask;
+        iterator.remove();
       }
       else if (accumulatedTask instanceof ReformatTask && currentTask instanceof ReindentTask) {
         // split accumulated reformat range into two
@@ -403,93 +405,49 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         final RangeMarker rangeToProcess = document.createRangeMarker(currentTask.getEndOffset(), accumulatedTask.getEndOffset());
         freeFormattingActions.add(new ReformatWithHeadingWhitespaceTask(rangeToProcess));
         accumulatedTask = currentTask;
-      }
-      else if (!(accumulatedTask instanceof ReindentTask)) {
-        boolean withLeadingWhitespace = accumulatedTask instanceof ReformatWithHeadingWhitespaceTask;
-        if (accumulatedTask instanceof ReformatTask &&
-            currentTask instanceof ReformatWithHeadingWhitespaceTask &&
-            accumulatedTask.getStartOffset() == currentTask.getStartOffset()) {
-          withLeadingWhitespace = true;
-        }
-        else if (accumulatedTask instanceof ReformatWithHeadingWhitespaceTask &&
-            currentTask instanceof ReformatTask &&
-            accumulatedTask.getStartOffset() < currentTask.getStartOffset()) {
-          withLeadingWhitespace = false;
-        }
-        int newStart = Math.min(accumulatedTask.getStartOffset(), currentTask.getStartOffset());
-        int newEnd = Math.max(accumulatedTask.getEndOffset(), currentTask.getEndOffset());
-        RangeMarker rangeMarker;
-
-        if (accumulatedTask.getStartOffset() == newStart && accumulatedTask.getEndOffset() == newEnd) {
-          rangeMarker = accumulatedTask.getRange();
-        }
-        else if (currentTask.getStartOffset() == newStart && currentTask.getEndOffset() == newEnd) {
-          rangeMarker = currentTask.getRange();
-        }
-        else {
-          rangeMarker = document.createRangeMarker(newStart, newEnd);
-        }
-
-        if (withLeadingWhitespace) {
-          accumulatedTask = new ReformatWithHeadingWhitespaceTask(rangeMarker);
-        }
-        else {
-          accumulatedTask = new ReformatTask(rangeMarker);
-        }
-      }
-      // accumulatedTask is an instance of ReindentTask
-      else if (currentTask instanceof ReindentTask) {
-        // child indent is different from parent, the child condition
-        //         accumulatedTask.getStartOffset() <= currentTask.getStartOffset()
-        //      && accumulatedTask.getEndOffset() >= currentTask.getEndOffset()
-        // is always true here (ordered-by-end + up "if" in the method):
-
-        final CharSequence charsSequence = document.getCharsSequence();
-        int curEndOffset = currentTask.getEndOffset();
-        int curStartOffset = currentTask.getStartOffset();
-
-        // don't process ranges that have no new lines:
-        // optimization:  the case is covered by formatting task, or does not need the indent (fragment-in-the-middle-of-line).
-        // compatibility: inline blocks have wrong indent due to historical reasons (always for inline function calls).
-        if (charsSequence.subSequence(curStartOffset, curEndOffset).toString().indexOf('\n') != -1) {
-          if (accumulatedTask.getEndOffset() > curEndOffset) {
-            // tail of parent indent (the order is from-end-to-start)
-            // restore "canonical" indent for calibration of the indent
-            freeFormattingActions.add(new ReformatWithHeadingWhitespaceTask(document.createRangeMarker(curEndOffset, curEndOffset)));
-
-            // add the indent,
-            // push indent task directly, that is in correct from-end-to-start order.
-            indentActions.add(new ReindentTask(
-              document.createRangeMarker(curEndOffset, accumulatedTask.getEndOffset()),
-              ((ReindentTask)accumulatedTask).getOldIndent()));
-          }
-
-          if (accumulatedTask.getStartOffset() < curStartOffset) {
-            // head of parent indent (the order is from-end-to-start)
-            // the "canonical" indent for calibration of the indent should be prepared by previous tasks
-            // here don't care about.
-            // cannot push indent task directly, some child range task could be found.
-            rangesToProcess.add(new ReindentTask(
-              document.createRangeMarker(accumulatedTask.getStartOffset(), curStartOffset - 1),
-              ((ReindentTask)accumulatedTask).getOldIndent()));
-
-            //restore position
-            iterator = rangesToProcess.iterator();
-            //noinspection StatementWithEmptyBody
-            while (iterator.next().getRange() != currentTask.getRange()) ;
-          }
-
-          //body
-          final RangeMarker rangeToProcess = document.createRangeMarker(curStartOffset, curStartOffset);
-          freeFormattingActions.add(new ReformatWithHeadingWhitespaceTask(rangeToProcess));
-          accumulatedTask = currentTask;
-        }
-        //else do nothing, just drop unused ReindentTask [currentTask]
+        iterator.remove();
       }
       else {
-        continue;
+        if (!(accumulatedTask instanceof ReindentTask)) {
+          iterator.remove();
+
+          boolean withLeadingWhitespace = accumulatedTask instanceof ReformatWithHeadingWhitespaceTask;
+          if (accumulatedTask instanceof ReformatTask &&
+              currentTask instanceof ReformatWithHeadingWhitespaceTask &&
+              accumulatedTask.getStartOffset() == currentTask.getStartOffset()) {
+            withLeadingWhitespace = true;
+          }
+          else if (accumulatedTask instanceof ReformatWithHeadingWhitespaceTask &&
+              currentTask instanceof ReformatTask &&
+              accumulatedTask.getStartOffset() < currentTask.getStartOffset()) {
+            withLeadingWhitespace = false;
+          }
+          int newStart = Math.min(accumulatedTask.getStartOffset(), currentTask.getStartOffset());
+          int newEnd = Math.max(accumulatedTask.getEndOffset(), currentTask.getEndOffset());
+          RangeMarker rangeMarker;
+
+          if (accumulatedTask.getStartOffset() == newStart && accumulatedTask.getEndOffset() == newEnd) {
+            rangeMarker = accumulatedTask.getRange();
+          }
+          else if (currentTask.getStartOffset() == newStart && currentTask.getEndOffset() == newEnd) {
+            rangeMarker = currentTask.getRange();
+          }
+          else {
+            rangeMarker = document.createRangeMarker(newStart, newEnd);
+          }
+
+          if (withLeadingWhitespace) {
+            accumulatedTask = new ReformatWithHeadingWhitespaceTask(rangeMarker);
+          }
+          else {
+            accumulatedTask = new ReformatTask(rangeMarker);
+
+          }
+        }
+        else if (currentTask instanceof ReindentTask) {
+          iterator.remove();
+        } // TODO[ik]: need to be fixed to correctly process indent inside indent
       }
-      iterator.remove();
     }
     if (accumulatedTask != null) {
       if (accumulatedTask instanceof ReindentTask) {

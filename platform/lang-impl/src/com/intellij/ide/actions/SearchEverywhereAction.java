@@ -21,6 +21,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.SearchTopHitProvider;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
@@ -58,6 +59,7 @@ import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -74,6 +76,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.util.*;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.ui.EmptyIcon;
@@ -372,30 +375,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         onFocusLost();
       }
     });
-
-    editor.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        switch (e.getKeyCode()) {
-          case KeyEvent.VK_ESCAPE:
-            if (myBalloon != null && myBalloon.isVisible()) {
-              myBalloon.cancel();
-            }
-            if (myPopup != null && myPopup.isVisible()) {
-              myPopup.cancel();
-            }
-            IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(editor);
-            focusManager.requestDefaultFocus(true);
-            break;
-          case KeyEvent.VK_ENTER:
-            doNavigate(myList.getSelectedIndex());
-            break;
-          case KeyEvent.VK_TAB:
-            jumpNextGroup(!e.isShiftDown());
-            break;
-        }
-      }
-    });
   }
 
   private void jumpNextGroup(boolean forward) {
@@ -403,7 +382,12 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     if (index >= 0) {
       final int newIndex = forward ? myTitleIndexes.next(index) : myTitleIndexes.prev(index);
       myList.setSelectedIndex(newIndex);
-      ListScrollingUtil.ensureIndexIsVisible(myList, myList.getSelectedIndex(), forward ? 1 : -1);
+      int more = myTitleIndexes.next(newIndex) - 1;
+      if (more < newIndex) {
+        more = myList.getItemsCount() - 1;
+      }
+      ListScrollingUtil.ensureIndexIsVisible(myList, more, forward ? 1 : -1);
+      ListScrollingUtil.ensureIndexIsVisible(myList, newIndex, forward ? 1 : -1);
     }
   }
 
@@ -592,7 +576,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       showPoint = new RelativePoint(button, new Point(button.getWidth() - panel.getPreferredSize().width, button.getHeight()));
     } else {
       if (parent != null) {
-        showPoint = new RelativePoint(parent, new Point((parent.getSize().width - panel.getPreferredSize().width)/ 2, parent.getHeight()/4));
+        int height = UISettings.getInstance().SHOW_MAIN_TOOLBAR ? 95 : 75;
+        if (parent instanceof IdeFrameImpl && ((IdeFrameImpl)parent).isInFullScreen()) {
+          height -= 20;
+        }
+        showPoint = new RelativePoint(parent, new Point((parent.getSize().width - panel.getPreferredSize().width)/ 2, height));
       } else {
         showPoint = JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext());
       }
@@ -605,18 +593,39 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private void initSearchActions(JBPopup balloon, MySearchTextField searchTextField) {
+    final JTextField editor = searchTextField.getTextEditor();
     new AnAction(){
       @Override
       public void actionPerformed(AnActionEvent e) {
         jumpNextGroup(true);
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), searchTextField.getTextEditor(), balloon);
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), editor, balloon);
     new AnAction(){
       @Override
       public void actionPerformed(AnActionEvent e) {
         jumpNextGroup(false);
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), searchTextField.getTextEditor(), balloon);
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), editor, balloon);
+    new AnAction(){
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        if (myBalloon != null && myBalloon.isVisible()) {
+          myBalloon.cancel();
+        }
+        if (myPopup != null && myPopup.isVisible()) {
+          myPopup.cancel();
+        }
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), editor, balloon);
+    new AnAction(){
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        final int index = myList.getSelectedIndex();
+        if (index != -1) {
+          doNavigate(index);
+        }
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), editor, balloon);
   }
 
   private static class MySearchTextField extends SearchTextField implements DataProvider, Disposable {
@@ -1462,15 +1471,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       return;
     }
     final Container parent = getField().getParent();
-    final Dimension size = myList.getPreferredSize();
+    final Dimension size = myList.getParent().getParent().getPreferredSize();
     if (size.width < parent.getWidth()) {
       size.width = parent.getWidth();
     }
     if (myList.getItemsCount() == 0) {
       size.height = 70;
     }
-    Dimension sz = new Dimension(size.width, size.height);
-    if (sz.width > 1000 || sz.height > 800) {
+    Dimension sz = new Dimension(size.width, myList.getPreferredSize().height);
+    if (sz.width > 1200 || sz.height > 800) {
       final JBScrollPane pane = new JBScrollPane();
       final int extraWidth = pane.getVerticalScrollBar().getWidth() + 1;
       final int extraHeight = pane.getHorizontalScrollBar().getHeight() + 1;
@@ -1497,7 +1506,36 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private void adjustPopup() {
-//    new PopupPositionManager.PositionAdjuster(getField().getParent()).adjust(myPopup, BOTTOM, RIGHT, LEFT, TOP);
+//    new PopupPositionManager.PositionAdjuster(getField().getParent(), 0).adjust(myPopup, PopupPositionManager.Position.BOTTOM);
+    final Dimension d = PopupPositionManager.PositionAdjuster.getPopupSize(myPopup);
+    final JComponent myRelativeTo = myBalloon.getContent();
+    Point myRelativeOnScreen = myRelativeTo.getLocationOnScreen();
+    Rectangle screen = ScreenUtil.getScreenRectangle(myRelativeOnScreen);
+    Rectangle popupRect = null;
+    Rectangle r = new Rectangle(myRelativeOnScreen.x, myRelativeOnScreen.y + myRelativeTo.getHeight(), d.width, d.height);
+
+      if (screen.contains(r)) {
+        popupRect = r;
+      }
+
+    if (popupRect != null) {
+      myPopup.setLocation(new Point(r.x, r.y));
+    }
+    else {
+      if (r.y + d.height > screen.y + screen.height) {
+        r.height =  screen.y + screen.height - r.y - 2;
+      }
+      if (r.width > screen.width) {
+        r.width = screen.width - 50;
+      }
+      if (r.x + r.width > screen.x + screen.width) {
+        r.x = screen.x + screen.width - r.width - 2;
+      }
+
+      myPopup.setSize(r.getSize());
+      myPopup.setLocation(r.getLocation());
+    }
+
   }
 
   private static boolean isToolWindowAction(Object o) {

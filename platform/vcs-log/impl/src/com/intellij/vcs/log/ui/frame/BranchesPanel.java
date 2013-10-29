@@ -232,10 +232,10 @@ public class BranchesPanel extends JPanel {
     }
 
     private void jumpToSelectedRef() {
+      myPopup.cancel(); // close the popup immediately not to stay at the front if jumping to a commits takes long time.
       VcsRef selectedRef = (VcsRef)myList.getSelectedValue();
       if (selectedRef != null) {
         myUi.jumpToCommit(selectedRef.getCommitHash());
-        myPopup.cancel();
       }
     }
   }
