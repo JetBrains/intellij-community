@@ -193,10 +193,10 @@ public class PyTypeChecker {
     if (superName == null || subName == null ||
         superName.equals(subName) ||
         ("int".equals(superName) && subIsBool) ||
-        (("long".equals(superName) || "Integral".equals(superName)) && (subIsBool || subIsInt)) ||
-        (("float".equals(superName) || "Real".equals(superName)) && (subIsBool || subIsInt || subIsLong)) ||
-        (("complex".equals(superName) || "Complex".equals(superName)) && (subIsBool || subIsInt || subIsLong || subIsFloat)) ||
-        ("Number".equals(superName) && (subIsBool || subIsInt || subIsLong || subIsFloat || subIsComplex))) {
+        (("long".equals(superName) || PyNames.ABC_INTEGRAL.equals(superName)) && (subIsBool || subIsInt)) ||
+        (("float".equals(superName) || PyNames.ABC_REAL.equals(superName)) && (subIsBool || subIsInt || subIsLong)) ||
+        (("complex".equals(superName) || PyNames.ABC_COMPLEX.equals(superName)) && (subIsBool || subIsInt || subIsLong || subIsFloat)) ||
+        (PyNames.ABC_NUMBER.equals(superName) && (subIsBool || subIsInt || subIsLong || subIsFloat || subIsComplex))) {
       return true;
     }
     return false;
@@ -355,16 +355,6 @@ public class PyTypeChecker {
         final PyType initType = init.getReturnType(context, null);
         if (initType != null) {
           match(initType, qualifierType, context, substitutions);
-        }
-      }
-      else {
-        // Unify generics in stdlib pseudo-constructor
-        final PyStdlibTypeProvider stdlib = PyStdlibTypeProvider.getInstance();
-        if (stdlib != null) {
-          final PyType initType = stdlib.getConstructorType(cls, context);
-          if (initType != null) {
-            match(initType, qualifierType, context, substitutions);
-          }
         }
       }
     }

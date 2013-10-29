@@ -68,14 +68,17 @@ public class PyABCUtil {
     if (PyNames.MAPPING.equals(superClassName)) {
       return isSized && hasIter && isContainer && hasGetItem && hasMethod(subClass, PyNames.KEYS, inherited);
     }
-    if (PyNames.COMPLEX.equals(superClassName)) {
+    if (PyNames.ABC_COMPLEX.equals(superClassName)) {
       return hasMethod(subClass, "__complex__", inherited);
     }
-    if (PyNames.REAL.equals(superClassName)) {
+    if (PyNames.ABC_REAL.equals(superClassName)) {
       return hasMethod(subClass, "__float__", inherited);
     }
-    if (PyNames.INTEGRAL.equals(superClassName)) {
+    if (PyNames.ABC_INTEGRAL.equals(superClassName)) {
       return hasMethod(subClass, "__int__", inherited);
+    }
+    if (PyNames.ABC_NUMBER.equals(superClassName) && "Decimal".equals(subClass.getName())) {
+      return true;
     }
     return false;
   }
