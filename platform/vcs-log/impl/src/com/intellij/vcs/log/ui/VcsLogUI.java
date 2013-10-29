@@ -68,7 +68,7 @@ public class VcsLogUI {
   }
 
   public void jumpToRow(final int rowIndex) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         myMainFrame.getGraphTable().jumpToRow(rowIndex);
@@ -93,7 +93,7 @@ public class VcsLogUI {
   }
 
   public void addToSelection(final Hash hash) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         int row = myLogDataHolder.getDataPack().getRowByHash(hash);
