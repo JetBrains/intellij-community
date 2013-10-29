@@ -21,6 +21,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.SearchTopHitProvider;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl;
@@ -58,6 +59,7 @@ import com.intellij.openapi.vfs.VirtualFilePathWrapper;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -74,6 +76,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.popup.AbstractPopup;
+import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.util.*;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.ui.EmptyIcon;
@@ -568,7 +571,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       showPoint = new RelativePoint(button, new Point(button.getWidth() - panel.getPreferredSize().width, button.getHeight()));
     } else {
       if (parent != null) {
-        showPoint = new RelativePoint(parent, new Point((parent.getSize().width - panel.getPreferredSize().width)/ 2, parent.getHeight()/4));
+        int height = UISettings.getInstance().SHOW_MAIN_TOOLBAR ? 95 : 75;
+        if (parent instanceof IdeFrameImpl && ((IdeFrameImpl)parent).isInFullScreen()) {
+          height -= 20;
+        }
+        showPoint = new RelativePoint(parent, new Point((parent.getSize().width - panel.getPreferredSize().width)/ 2, height));
       } else {
         showPoint = JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext());
       }
@@ -1459,15 +1466,15 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       return;
     }
     final Container parent = getField().getParent();
-    final Dimension size = myList.getPreferredSize();
+    final Dimension size = myList.getParent().getParent().getPreferredSize();
     if (size.width < parent.getWidth()) {
       size.width = parent.getWidth();
     }
     if (myList.getItemsCount() == 0) {
       size.height = 70;
     }
-    Dimension sz = new Dimension(size.width, size.height);
-    if (sz.width > 1000 || sz.height > 800) {
+    Dimension sz = new Dimension(size.width, myList.getPreferredSize().height);
+    if (sz.width > 1200 || sz.height > 800) {
       final JBScrollPane pane = new JBScrollPane();
       final int extraWidth = pane.getVerticalScrollBar().getWidth() + 1;
       final int extraHeight = pane.getHorizontalScrollBar().getHeight() + 1;
@@ -1494,7 +1501,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private void adjustPopup() {
-//    new PopupPositionManager.PositionAdjuster(getField().getParent()).adjust(myPopup, BOTTOM, RIGHT, LEFT, TOP);
+    new PopupPositionManager.PositionAdjuster(getField().getParent(), 0).adjust(myPopup, PopupPositionManager.Position.BOTTOM);
   }
 
   private static boolean isToolWindowAction(Object o) {
