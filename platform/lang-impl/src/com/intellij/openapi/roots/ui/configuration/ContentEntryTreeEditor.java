@@ -264,7 +264,7 @@ public class ContentEntryTreeEditor {
     }
 
     @Override
-    public void folderIncluded(@NotNull ContentEntryEditor editor, VirtualFile file) {
+    public void folderIncluded(@NotNull ContentEntryEditor editor, String fileUrl) {
       update();
     }
 

@@ -72,12 +72,7 @@ class RootIndex {
 
       for (ContentEntry contentEntry : contentEntries) {
         // Init excluded roots
-        for (ExcludeFolder excludeRoot : contentEntry.getExcludeFolders()) {
-          final VirtualFile excludeRootFile = excludeRoot.getFile();
-          if (excludeRootFile != null) {
-            myProjectExcludedRoots.add(excludeRootFile);
-          }
-        }
+        Collections.addAll(myProjectExcludedRoots, contentEntry.getExcludeFolderFiles());
 
         // Init module sources
         SourceFolder[] sourceFolders = contentEntry.getSourceFolders();

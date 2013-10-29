@@ -1429,20 +1429,20 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           VirtualFile contentRoot = contentEntry.getFile();
           if (!(contentRoot instanceof NewVirtualFile)) continue;
 
-          ExcludeFolder[] excludeRoots = contentEntry.getExcludeFolders();
-          for (ExcludeFolder excludeRoot : excludeRoots) {
+          for (VirtualFile excludeRoot : contentEntry.getExcludeFolderFiles()) {
             // Output paths should be excluded (if marked as such) regardless if they're under corresponding module's content root
-            VirtualFile excludeRootFile = excludeRoot.getFile();
-            if (excludeRootFile instanceof NewVirtualFile) {
+            if (excludeRoot instanceof NewVirtualFile) {
               if (!FileUtil.startsWith(contentRoot.getUrl(), excludeRoot.getUrl())) {
-                if (isExcludeRootForModule(module, excludeRootFile)) {
-                  putForFileAndAllAncestors((NewVirtualFile)excludeRootFile, excludeRoot.getUrl());
+                if (isExcludeRootForModule(module, excludeRoot)) {
+                  putForFileAndAllAncestors((NewVirtualFile)excludeRoot, excludeRoot.getUrl());
                 }
-                myProjectExcludeRoots.add(((NewVirtualFile)excludeRootFile).getId());
+                myProjectExcludeRoots.add(((NewVirtualFile)excludeRoot).getId());
               }
             }
 
-            putForFileAndAllAncestors((NewVirtualFile)contentRoot, excludeRoot.getUrl());
+          }
+          for (String url : contentEntry.getExcludeFolderUrls()) {
+            putForFileAndAllAncestors((NewVirtualFile)contentRoot, url);
           }
         }
       }
