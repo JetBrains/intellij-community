@@ -37,7 +37,6 @@ import java.io.File;
     )}
 )
 public class WebEditorOptions implements PersistentStateComponent<WebEditorOptions>, ExportableComponent {
-
   private boolean myBreadcrumbsEnabled = true;
   private boolean myBreadcrumbsEnabledInXml = false;
   private boolean myShowCssColorPreviewInGutter = true;
@@ -47,6 +46,7 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   private boolean myAutomaticallyInsertRequiredAttributes = true;
   private boolean myAutomaticallyInsertRequiredSubTags = true;
   private boolean myAutomaticallyStartAttribute = true;
+  private boolean myInsertQuotesForAttributeValue = true;
   private boolean myZenCodingEnabled = true;
   private int myZenCodingExpandShortcut = TemplateSettings.TAB_CHAR;
 
@@ -166,16 +166,19 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
     return myTagTreeHighlightingEnabled;
   }
 
+  @Override
   @NotNull
   public File[] getExportFiles() {
     return new File[]{PathManager.getOptionsFile("editor")};
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return XmlBundle.message("xml.options");
   }
 
+  @Override
   @Nullable
   public Object clone() {
     try {
@@ -186,10 +189,12 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
     }
   }
 
+  @Override
   public WebEditorOptions getState() {
     return this;
   }
 
+  @Override
   public void loadState(final WebEditorOptions state) {
     XmlSerializerUtil.copyBean(state, this);
   }
@@ -200,5 +205,13 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
 
   public void setSelectWholeCssSelectorSuffixOnDoubleClick(boolean selectWholeCssSelectorSuffixOnDoubleClick) {
     mySelectWholeCssSelectorSuffixOnDoubleClick = selectWholeCssSelectorSuffixOnDoubleClick;
+  }
+
+  public boolean isInsertQuotesForAttributeValue() {
+    return myInsertQuotesForAttributeValue;
+  }
+
+  public void setInsertQuotesForAttributeValue(boolean insertQuotesForAttributeValue) {
+    myInsertQuotesForAttributeValue = insertQuotesForAttributeValue;
   }
 }
