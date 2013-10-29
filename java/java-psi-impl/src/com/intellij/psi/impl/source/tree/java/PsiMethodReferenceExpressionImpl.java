@@ -421,7 +421,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         psiSubstitutor = psiSubstitutor.putAll(substitutor);
       }
       return LambdaUtil.inferFromReturnType(method.getTypeParameters(),
-                                            psiSubstitutor.substitute(method.getReturnType()),
+                                            method.getReturnType(),
                                             interfaceMethodReturnType,
                                             psiSubstitutor,
                                             languageLevel, getProject());
