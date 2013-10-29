@@ -476,6 +476,8 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     findModel.setRegularExpressions(true);
     FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text);
+
+    FindManagerTestUtils.runFindForwardAndBackward(findManager, findModel, text, "groovy");
   }
 
   public void testFindInCommentsProperlyWorksWithOffsets() throws Exception{
