@@ -357,16 +357,6 @@ public class PyTypeChecker {
           match(initType, qualifierType, context, substitutions);
         }
       }
-      else {
-        // Unify generics in stdlib pseudo-constructor
-        final PyStdlibTypeProvider stdlib = PyStdlibTypeProvider.getInstance();
-        if (stdlib != null) {
-          final PyType initType = stdlib.getConstructorType(cls, context);
-          if (initType != null) {
-            match(initType, qualifierType, context, substitutions);
-          }
-        }
-      }
     }
     return substitutions;
   }
