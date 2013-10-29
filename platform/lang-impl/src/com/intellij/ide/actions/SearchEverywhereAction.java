@@ -1506,7 +1506,36 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private void adjustPopup() {
-    new PopupPositionManager.PositionAdjuster(getField().getParent(), 0).adjust(myPopup, PopupPositionManager.Position.BOTTOM);
+//    new PopupPositionManager.PositionAdjuster(getField().getParent(), 0).adjust(myPopup, PopupPositionManager.Position.BOTTOM);
+    final Dimension d = PopupPositionManager.PositionAdjuster.getPopupSize(myPopup);
+    final JComponent myRelativeTo = myBalloon.getContent();
+    Point myRelativeOnScreen = myRelativeTo.getLocationOnScreen();
+    Rectangle screen = ScreenUtil.getScreenRectangle(myRelativeOnScreen);
+    Rectangle popupRect = null;
+    Rectangle r = new Rectangle(myRelativeOnScreen.x, myRelativeOnScreen.y + myRelativeTo.getHeight(), d.width, d.height);
+
+      if (screen.contains(r)) {
+        popupRect = r;
+      }
+
+    if (popupRect != null) {
+      myPopup.setLocation(new Point(r.x, r.y));
+    }
+    else {
+      if (r.y + d.height > screen.y + screen.height) {
+        r.height =  screen.y + screen.height - r.y - 2;
+      }
+      if (r.width > screen.width) {
+        r.width = screen.width - 50;
+      }
+      if (r.x + r.width > screen.x + screen.width) {
+        r.x = screen.x + screen.width - r.width - 2;
+      }
+
+      myPopup.setSize(r.getSize());
+      myPopup.setLocation(r.getLocation());
+    }
+
   }
 
   private static boolean isToolWindowAction(Object o) {
