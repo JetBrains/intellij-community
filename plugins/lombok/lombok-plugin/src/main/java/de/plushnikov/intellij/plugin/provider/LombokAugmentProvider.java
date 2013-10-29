@@ -61,7 +61,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
       if (!UserMapKeys.containLombok(containingFile)) {
         if (containingFile.getText().contains("lombok.")) {
           UserMapKeys.addLombokPresentFor(containingFile);
-        }else {
+        } else {
           UserMapKeys.addLombokNotPresentFor(containingFile);
         }
       }
@@ -76,10 +76,15 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
           }
         }
         return result;
+      }else{
+        if (log.isDebugEnabled()) {
+          log.debug(String.format("Skipped file %s", containingFile.getName()));
+        }
       }
-    }
-    if (log.isDebugEnabled()) {
-      log.debug(String.format("Skipped File %s", containingFile.getName()));
+    } else {
+      if (log.isDebugEnabled()) {
+        log.debug(String.format("Skipped file %s quickly", containingFile.getName()));
+      }
     }
     return emptyResult;
   }

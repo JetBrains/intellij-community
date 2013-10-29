@@ -12,7 +12,7 @@ import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
 import de.plushnikov.intellij.plugin.extension.UserMapKeys;
 import org.jetbrains.annotations.NotNull;
 
-
+//PsiTreeChangeListener //DaemonCodeAnalyzer.getInstance(project).updateVisibleHighlighters(editor)
 public class LombokAnnotator implements Annotator {
   private static final Logger log = Logger.getInstance(LombokAnnotator.class.getName());
 
