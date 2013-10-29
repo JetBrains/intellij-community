@@ -107,6 +107,11 @@ public class HgRefManager implements VcsLogRefManager {
       @Override
       public RefGroup fun(final VcsRef ref) {
         return new RefGroup() {
+          @Override
+          public boolean isExpanded() {
+            return false;
+          }
+
           @NotNull
           @Override
           public String getName() {
@@ -117,6 +122,12 @@ public class HgRefManager implements VcsLogRefManager {
           @Override
           public List<VcsRef> getRefs() {
             return Collections.singletonList(ref);
+          }
+
+          @NotNull
+          @Override
+          public Color getBgColor() {
+            return HEAD_COLOR;
           }
         };
       }
