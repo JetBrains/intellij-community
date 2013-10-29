@@ -272,7 +272,7 @@
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.util.concurrent.ThreadFactory java.lang.Thread newThread(java.lang.Runnable)">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.Nullable" />
   </item>
   <item name="java.util.concurrent.ThreadFactory java.lang.Thread newThread(java.lang.Runnable) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
