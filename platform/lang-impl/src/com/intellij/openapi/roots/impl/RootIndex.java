@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.CollectionQuery;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
@@ -436,6 +437,16 @@ class RootIndex {
   @Nullable
   public JpsModuleSourceRootType<?> getSourceRootType(@NotNull DirectoryInfo directoryInfo) {
     return myRootTypes.get(directoryInfo.getSourceRootTypeId());
+  }
+
+  boolean handleAfterEvent(List<? extends VFileEvent> events) {
+    for (VFileEvent event : events) {
+      VirtualFile file = event.getFile();
+      if (file == null || file.isDirectory()) {
+        return false;
+      }
+    }
+    return true;
   }
 
 }
