@@ -3,7 +3,6 @@ package com.intellij.vcs.log.ui;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsLogFilter;
@@ -19,6 +18,7 @@ import com.intellij.vcs.log.graphmodel.FragmentManager;
 import com.intellij.vcs.log.graphmodel.GraphFragment;
 import com.intellij.vcs.log.printmodel.SelectController;
 import com.intellij.vcs.log.ui.frame.MainFrame;
+import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -156,18 +156,24 @@ public class VcsLogUI {
 
   public void click(@Nullable GraphElement graphElement) {
     SelectController selectController = myLogDataHolder.getDataPack().getPrintCellModel().getSelectController();
-    FragmentManager fragmentController = myLogDataHolder.getDataPack().getGraphModel().getFragmentManager();
+    final FragmentManager fragmentController = myLogDataHolder.getDataPack().getGraphModel().getFragmentManager();
     selectController.deselectAll();
     if (graphElement == null) {
       return;
     }
-    GraphFragment fragment = fragmentController.relateFragment(graphElement);
+    final GraphFragment fragment = fragmentController.relateFragment(graphElement);
     if (fragment == null) {
       return;
     }
-    UpdateRequest updateRequest = fragmentController.changeVisibility(fragment);
+
+    myMainFrame.getGraphTable().executeWithoutRepaint(new Runnable() {
+      @Override
+      public void run() {
+        UpdateRequest updateRequest = fragmentController.changeVisibility(fragment);
+        jumpToRow(updateRequest.from());
+      }
+    });
     updateUI();
-    jumpToRow(updateRequest.from());
   }
 
   public void click(int rowIndex) {
@@ -237,7 +243,7 @@ public class VcsLogUI {
     return myMainFrame.getFilterUi().getFilters();
   }
 
-  public JBTable getTable() {
+  public VcsLogGraphTable getTable() {
     return myMainFrame.getGraphTable();
   }
 

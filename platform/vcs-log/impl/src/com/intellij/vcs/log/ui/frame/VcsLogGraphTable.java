@@ -53,6 +53,8 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   @NotNull private final VcsLogUI myUI;
   @NotNull private final GraphCellPainter myGraphPainter = new SimpleGraphCellPainter();
 
+  private  volatile boolean myRepaintFreezed;
+
   public VcsLogGraphTable(@NotNull VcsLogUI UI, final VcsLogDataHolder logDataHolder) {
     super();
     myUI = UI;
@@ -101,6 +103,27 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     scrollRectToVisible(getCellRect(rowIndex, 0, false));
     setRowSelectionInterval(rowIndex, rowIndex);
     scrollRectToVisible(getCellRect(rowIndex, 0, false));
+  }
+
+  @Override
+  protected void paintComponent(Graphics g) {
+    if (myRepaintFreezed) {
+      return;
+    }
+    super.paintComponent(g);
+  }
+
+  /**
+   * Freeze repaint to avoid repainting during changing the Graph.
+   */
+  public void executeWithoutRepaint(@NotNull Runnable action) {
+    myRepaintFreezed = true;
+    try {
+      action.run();
+    }
+    finally {
+      myRepaintFreezed = false;
+    }
   }
 
   @Nullable
