@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Editor;
@@ -34,12 +35,15 @@ public class XmlEqTypedHandler extends TypedHandlerDelegate {
                                 Editor editor,
                                 PsiFile file,
                                 FileType fileType) {
-    boolean inXml = file.getLanguage() instanceof XMLLanguage || file.getViewProvider().getBaseLanguage() instanceof XMLLanguage;
-    if (c == '=' && inXml) {
-      int offset = editor.getCaretModel().getOffset();
-      PsiElement at = file.findElementAt(offset - 1);
-      PsiElement atParent = at != null ? at.getParent() : null;
-      needToInsertQuotes = atParent instanceof XmlAttribute && ((XmlAttribute)atParent).getValueElement() == null;
+
+    if (WebEditorOptions.getInstance().isInsertQuotesForAttributeValue()) {
+      boolean inXml = file.getLanguage() instanceof XMLLanguage || file.getViewProvider().getBaseLanguage() instanceof XMLLanguage;
+      if (c == '=' && inXml) {
+        int offset = editor.getCaretModel().getOffset();
+        PsiElement at = file.findElementAt(offset - 1);
+        PsiElement atParent = at != null ? at.getParent() : null;
+        needToInsertQuotes = atParent instanceof XmlAttribute && ((XmlAttribute)atParent).getValueElement() == null;
+      }
     }
 
     return super.beforeCharTyped(c, project, editor, file, fileType);
