@@ -100,6 +100,9 @@ public class XmlEmmetParser extends EmmetParser {
       final String text = ((StringLiteralToken)token).getText();
       return text.substring(1, text.length() - 1);
     }
+    else if (token instanceof TextToken) {
+      return ((TextToken)token).getText();
+    }
     else if (token instanceof IdentifierToken) {
       return ((IdentifierToken)token).getText();
     }
