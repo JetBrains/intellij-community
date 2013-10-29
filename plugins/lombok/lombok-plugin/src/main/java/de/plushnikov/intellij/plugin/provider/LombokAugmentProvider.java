@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import de.plushnikov.intellij.plugin.extension.LombokProcessorExtensionPoint;
 import de.plushnikov.intellij.plugin.extension.UserMapKeys;
@@ -52,18 +53,35 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
 
     final PsiClass psiClass = (PsiClass) element;
     if (log.isDebugEnabled()) {
-      log.debug(String.format("Process class %s with LombokAugmentProvider", psiClass.getName()));
+      log.debug(String.format("Process class %s with LombokAugmentProvider for type %s", psiClass.getQualifiedName(), type.getName()));
     }
 
-    cleanAttributeUsage(psiClass);
+    final PsiFile containingFile = psiClass.getContainingFile();
+    if (UserMapKeys.mayContainLombok(containingFile)) {
+      if (!UserMapKeys.containLombok(containingFile)) {
+        if (containingFile.getText().contains("lombok.")) {
+          UserMapKeys.addLombokPresentFor(containingFile);
+        }else {
+          UserMapKeys.addLombokNotPresentFor(containingFile);
+        }
+      }
 
-    List<Psi> result = new ArrayList<Psi>();
-    for (Processor processor : LombokProcessorExtensionPoint.EP_NAME.getExtensions()) {
-      if (processor.canProduce(type) && processor.isEnabled(project)) {
-        result.addAll((Collection<Psi>) processor.process(psiClass));
+      if (UserMapKeys.containLombok(containingFile)) {
+        cleanAttributeUsage(psiClass);
+
+        final List<Psi> result = new ArrayList<Psi>();
+        for (Processor processor : LombokProcessorExtensionPoint.EP_NAME.getExtensions()) {
+          if (processor.canProduce(type) && processor.isEnabled(project)) {
+            result.addAll((Collection<Psi>) processor.process(psiClass));
+          }
+        }
+        return result;
       }
     }
-    return result;
+    if (log.isDebugEnabled()) {
+      log.debug(String.format("Skipped File %s", containingFile.getName()));
+    }
+    return emptyResult;
   }
 
   protected void cleanAttributeUsage(PsiClass psiClass) {
