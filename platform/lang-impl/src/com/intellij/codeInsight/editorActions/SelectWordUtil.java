@@ -211,7 +211,9 @@ public class SelectWordUtil {
     List<ExtendWordSelectionHandler> availableSelectioners = ContainerUtil.newLinkedList();
     for (ExtendWordSelectionHandler selectioner : extendWordSelectionHandlers) {
       if (selectioner.canSelect(element)) {
-        int selectionerMinimalTextRange = selectioner.getMinimalTextRangeLength(element, text, cursorOffset);
+        int selectionerMinimalTextRange = selectioner instanceof ExtendWordSelectionHandlerBase
+          ? ((ExtendWordSelectionHandlerBase)selectioner).getMinimalTextRangeLength(element, text, cursorOffset)
+          : 0;
         minimalTextRangeLength = Math.max(minimalTextRangeLength, selectionerMinimalTextRange);
         availableSelectioners.add(selectioner);
       }
