@@ -372,30 +372,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         onFocusLost();
       }
     });
-
-    editor.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        switch (e.getKeyCode()) {
-          case KeyEvent.VK_ESCAPE:
-            if (myBalloon != null && myBalloon.isVisible()) {
-              myBalloon.cancel();
-            }
-            if (myPopup != null && myPopup.isVisible()) {
-              myPopup.cancel();
-            }
-            IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(editor);
-            focusManager.requestDefaultFocus(true);
-            break;
-          case KeyEvent.VK_ENTER:
-            doNavigate(myList.getSelectedIndex());
-            break;
-          case KeyEvent.VK_TAB:
-            jumpNextGroup(!e.isShiftDown());
-            break;
-        }
-      }
-    });
   }
 
   private void jumpNextGroup(boolean forward) {
@@ -605,18 +581,39 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private void initSearchActions(JBPopup balloon, MySearchTextField searchTextField) {
+    final JTextField editor = searchTextField.getTextEditor();
     new AnAction(){
       @Override
       public void actionPerformed(AnActionEvent e) {
         jumpNextGroup(true);
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), searchTextField.getTextEditor(), balloon);
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), editor, balloon);
     new AnAction(){
       @Override
       public void actionPerformed(AnActionEvent e) {
         jumpNextGroup(false);
       }
-    }.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), searchTextField.getTextEditor(), balloon);
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), editor, balloon);
+    new AnAction(){
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        if (myBalloon != null && myBalloon.isVisible()) {
+          myBalloon.cancel();
+        }
+        if (myPopup != null && myPopup.isVisible()) {
+          myPopup.cancel();
+        }
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), editor, balloon);
+    new AnAction(){
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        final int index = myList.getSelectedIndex();
+        if (index != -1) {
+          doNavigate(index);
+        }
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("ENTER"), editor, balloon);
   }
 
   private static class MySearchTextField extends SearchTextField implements DataProvider, Disposable {
