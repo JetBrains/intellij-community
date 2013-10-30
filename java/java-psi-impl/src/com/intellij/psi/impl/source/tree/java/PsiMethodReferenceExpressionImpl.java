@@ -82,7 +82,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       if (element instanceof PsiIdentifier) {
         methods = containingClass.findMethodsByName(element.getText(), false);
       }
-      else if (element instanceof PsiKeyword && PsiKeyword.NEW.equals(element.getText())) {
+      else if (isConstructor()) {
         methods = containingClass.getConstructors();
         if (methods.length == 0) { //default constructor
           return containingClass;
@@ -299,7 +299,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
       if (containingClass != null) {
         final PsiElement element = getReferenceNameElement();
-        final boolean isConstructor = element instanceof PsiKeyword && PsiKeyword.NEW.equals(element.getText());
+        final boolean isConstructor = isConstructor();
         if (element instanceof PsiIdentifier || isConstructor) {
           if (isConstructor && (containingClass.isEnum() || containingClass.hasModifierProperty(PsiModifier.ABSTRACT))) {
             return JavaResolveResult.EMPTY_ARRAY;
@@ -570,5 +570,11 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
         return method == conflict;
       }
     }
+  }
+
+  @Override
+  public boolean isConstructor() {
+    final PsiElement element = getReferenceNameElement();
+    return element instanceof PsiKeyword && PsiKeyword.NEW.equals(element.getText());
   }
 }
