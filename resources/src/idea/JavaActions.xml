@@ -34,7 +34,7 @@
     </action>
 
     <action id="InferNullity" class="com.intellij.codeInspection.inferNullity.InferNullityAnnotationsAction">
-      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="RunInspection"/>
+      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
     </action>
 
     <group id="AnalyzeJavaMenu">
