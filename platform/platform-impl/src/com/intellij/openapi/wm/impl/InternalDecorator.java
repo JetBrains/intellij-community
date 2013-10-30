@@ -332,7 +332,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     myHeader.setAdditionalTitleActions(actions);
   }
 
-  private static class InnerPanelBorder implements Border {
+  private class InnerPanelBorder implements Border {
 
     private final ToolWindow myWindow;
 
@@ -370,7 +370,10 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
 
     @Override
     public Insets getBorderInsets(final Component c) {
-      if (myWindow.getType() == ToolWindowType.FLOATING) return new Insets(0, 0, 0, 0);
+      ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+      if (!(toolWindowManager instanceof ToolWindowManagerImpl)
+          || !((ToolWindowManagerImpl)toolWindowManager).isToolWindowRegistered(myInfo.getId())
+          || myWindow.getType() == ToolWindowType.FLOATING) return new Insets(0, 0, 0, 0);
       ToolWindowAnchor anchor = myWindow.getAnchor();
       Component component = myWindow.getComponent();
       Container parent = component.getParent();
