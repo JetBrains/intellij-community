@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAware;
@@ -40,6 +41,8 @@ import java.io.File;
  * @author yole
  */
 public class NewDirectoryProjectAction extends AnAction implements DumbAware {
+  private static final Logger LOG = Logger.getInstance(NewDirectoryProjectAction.class);
+
   public void actionPerformed(final AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     NewDirectoryProjectDialog dlg = new NewDirectoryProjectDialog(project);
@@ -67,6 +70,7 @@ public class NewDirectoryProjectAction extends AnAction implements DumbAware {
         return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(location);
       }
     });
+    LOG.assertTrue(baseDir != null, "Couldn't find '" + location + "' in VFS");
     baseDir.refresh(false, true);
 
     if (baseDir.getChildren().length > 0) {
