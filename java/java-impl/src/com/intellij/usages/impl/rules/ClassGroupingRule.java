@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.navigation.NavigationItemFileStatus;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.vcs.FileStatus;
@@ -181,7 +180,7 @@ public class ClassGroupingRule implements UsageGroupingRule {
     }
 
     @Override
-    public int compareTo(UsageGroup usageGroup) {
+    public int compareTo(@NotNull UsageGroup usageGroup) {
       return getText(null).compareToIgnoreCase(usageGroup.getText(null));
     }
 

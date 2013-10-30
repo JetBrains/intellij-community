@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
  *         Date: Jan 17, 2005
  */
 public class ImportFilteringRule extends com.intellij.usages.rules.ImportFilteringRule {
+  @Override
   public boolean isVisible(@NotNull Usage usage) {
     if (usage instanceof PsiElementUsage) {
       final PsiElement psiElement = ((PsiElementUsage)usage).getElement();

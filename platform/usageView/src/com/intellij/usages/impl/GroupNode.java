@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -331,7 +331,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   @Override
-  public int compareTo(GroupNode groupNode) {
+  public int compareTo(@NotNull GroupNode groupNode) {
     if (myRuleIndex == groupNode.myRuleIndex) {
       return myGroup.compareTo(groupNode.myGroup);
     }

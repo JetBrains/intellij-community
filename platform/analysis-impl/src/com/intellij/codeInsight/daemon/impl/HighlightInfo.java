@@ -88,7 +88,7 @@ public class HighlightInfo implements Segment {
   public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
 
-  private GutterMark gutterIconRenderer;
+  private final GutterMark gutterIconRenderer;
   private final ProblemGroup myProblemGroup;
 
   private volatile byte myFlags; // bit packed flags below:
