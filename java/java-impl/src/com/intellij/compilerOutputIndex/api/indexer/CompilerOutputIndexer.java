@@ -3,13 +3,10 @@ package com.intellij.compilerOutputIndex.api.indexer;
 import com.intellij.compilerOutputIndex.api.fs.CompilerOutputFilesUtil;
 import com.intellij.compilerOutputIndex.api.fs.FileVisitorService;
 import com.intellij.openapi.compiler.CompilationStatusAdapter;
-import com.intellij.openapi.compiler.CompileContext;
-import com.intellij.openapi.compiler.CompileTask;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -24,10 +21,7 @@ import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.IndexInfrastructure;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.PersistentEnumeratorDelegate;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -159,13 +153,16 @@ public class CompilerOutputIndexer extends AbstractProjectComponent {
   private void doEnable() {
     if (myInitialized.compareAndSet(false, true)) {
       initTimestampIndex();
-      try {
-        myFileEnumerator = new PersistentEnumeratorDelegate<String>(
-          IndexInfrastructure.getStorageFile(CompilerOutputIndexUtil.generateIndexId("compilerOutputIndexFileId.enum", myProject)),
-          new EnumeratorStringDescriptor(), 2048);
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
+      File storageFile =
+        IndexInfrastructure.getStorageFile(CompilerOutputIndexUtil.generateIndexId("compilerOutputIndexFileId.enum", myProject));
+      for (int i = 0; i < 2; i++) {
+        try {
+          myFileEnumerator = new PersistentEnumeratorDelegate<String>(storageFile, new EnumeratorStringDescriptor(), 2048);
+        }
+        catch (IOException e) {
+          if (i == 1) throw new RuntimeException(e);
+          IOUtil.deleteAllFilesStartingWith(storageFile);
+        }
       }
       CompilerManager.getInstance(myProject).addCompilationStatusListener(new CompilationStatusAdapter() {
         @Override
