@@ -12,6 +12,7 @@
       <root url="jar://$PROJECT_DIR$/lib/dev/jmock-2.5.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/dev/jmock-junit4-2.5.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/dev/jmock-legacy-2.5.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/dev/jmockit.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
@@ -20,6 +21,7 @@
       <root url="jar://$PROJECT_DIR$/lib/dev/jmock-2.5.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/dev/jmock-junit4-2.5.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/dev/jmock-legacy-2.5.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/dev/jmockit.jar!/" />
     </SOURCES>
   </library>
 </component>
