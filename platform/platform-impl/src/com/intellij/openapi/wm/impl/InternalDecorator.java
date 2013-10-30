@@ -373,7 +373,9 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
       ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
       if (!(toolWindowManager instanceof ToolWindowManagerImpl)
           || !((ToolWindowManagerImpl)toolWindowManager).isToolWindowRegistered(myInfo.getId())
-          || myWindow.getType() == ToolWindowType.FLOATING) return new Insets(0, 0, 0, 0);
+          || myWindow.getType() == ToolWindowType.FLOATING) {
+        return new Insets(0, 0, 0, 0);
+      }
       ToolWindowAnchor anchor = myWindow.getAnchor();
       Component component = myWindow.getComponent();
       Container parent = component.getParent();
