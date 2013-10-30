@@ -14,7 +14,6 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -32,7 +31,6 @@ import org.zmlx.hg4idea.util.HgChangesetUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.util.HgVersion;
 
-import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -358,53 +356,6 @@ public class HgLogCommand {
     }
     LOG.info("Unexpected output during parse copied files in log command " + str);
     return -1;
-  }
-
-  @NotNull
-  public HgFile getNameThroughCopies(@NotNull final HgFile hgFile, @NotNull HgRevisionNumber vcsRevisionNumber) throws HgCommandException {
-    String targetName = FileUtil.toSystemIndependentName(hgFile.getRelativePath());
-    String revNumber = vcsRevisionNumber.getRevisionNumber();
-    if (StringUtil.isEmptyOrSpaces(revNumber)) {
-      LOG.info("Revision Number shouldn't be empty, may be vcsDirectory mapping problem for: " + hgFile.getRepo().getPath());
-      return hgFile;
-    }
-    int targetRevNumber = Integer.valueOf(revNumber);
-    String[] COPIES_TEMPLATE =
-      myBuiltInSupported
-      ? new String[]{"{rev}", "{join(file_copies,'" + HgChangesetUtil.FILE_SEPARATOR + "')}"}
-      : new String[]{"{rev}", "{file_copies}"};
-    String template = HgChangesetUtil.makeTemplate(COPIES_TEMPLATE);
-    HgCommandResult result = execute(hgFile.getRepo(), template, -1, hgFile, Arrays.asList("-r", ".:0"));
-    if (result == null) {
-      throw new HgCommandException("Could not execute log command.");
-    }
-
-    List<String> errors = result.getErrorLines();
-    if (errors != null && !errors.isEmpty()) {
-      throw new HgCommandException(errors.toString());
-    }
-    String output = result.getRawOutput();
-    String[] changeSets = output.split(HgChangesetUtil.CHANGESET_SEPARATOR);
-    for (String line : changeSets) {
-      String[] attributes = line.split(HgChangesetUtil.ITEM_SEPARATOR);
-      //if there are no moved/renamed files in the revision, then this revision should be skipped
-      if (attributes.length != 2) {
-        continue;
-      }
-
-      if (Integer.valueOf(attributes[0]) <= targetRevNumber) {
-        break;
-      }
-      Map<String, String> copies = myBuiltInSupported ? parseCopiesFileList(attributes[1]) : parseCopiesFileListAsOldVersion(attributes[1]);
-      for (Map.Entry<String, String> entry : copies.entrySet()) {
-        if (entry.getValue().equals(targetName)) {
-          targetName = entry.getKey();
-          break;
-        }
-      }
-    }
-    VirtualFile root = hgFile.getRepo();
-    return new HgFile(root, new File(root.getPath(), targetName));
   }
 
   //todo refactor: create one log command with more flexible ability of templates and arguments;May be use one common parse method
