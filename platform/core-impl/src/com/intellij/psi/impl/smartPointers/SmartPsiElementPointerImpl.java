@@ -190,7 +190,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       if (!elementInfo1.pointsToTheSameElementAs(elementInfo2)) return false;
       PsiElement cachedElement1 = impl1.getCachedElement();
       PsiElement cachedElement2 = impl2.getCachedElement();
-      return cachedElement1 == null || cachedElement2 == null || cachedElement1 == cachedElement2;
+      return cachedElement1 == null || cachedElement2 == null || Comparing.equal(cachedElement1, cachedElement2);
     }
     return Comparing.equal(pointer1.getElement(), pointer2.getElement());
   }
