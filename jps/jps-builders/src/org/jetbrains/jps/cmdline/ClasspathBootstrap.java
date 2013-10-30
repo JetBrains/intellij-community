@@ -38,8 +38,11 @@ import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.impl.JpsModelImpl;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.StandardJavaFileManager;
+import javax.tools.ToolProvider;
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -53,20 +56,31 @@ public class ClasspathBootstrap {
     static final String CLASS_NAME = "org.jetbrains.jps.javac.OptimizedFileManager";
     @Nullable
     static final Class<StandardJavaFileManager> managerClass;
+    static final Method directoryCacheClearMethod;
     @Nullable
     static final String initError;
     static {
-      Class<StandardJavaFileManager> aClass;
+      Class<StandardJavaFileManager> aClass = null;
+      Method cacheClearMethod = null;
       String error = null;
       try {
-        @SuppressWarnings("unchecked") Class<StandardJavaFileManager> c = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
+        @SuppressWarnings("unchecked")
+        Class<StandardJavaFileManager> c = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
         aClass = c;
+        try {
+          cacheClearMethod = c.getMethod("fileGenerated", File.class);
+          cacheClearMethod.setAccessible(true);
+        }
+        catch (NoSuchMethodException e) {
+          LOG.info(e);
+        }
       }
       catch (Throwable ex) {
         aClass = null;
         error = ex.getClass().getName() + ": " + ex.getMessage();
       }
       managerClass = aClass;
+      directoryCacheClearMethod = cacheClearMethod;
       initError = error;
     }
 
@@ -78,20 +92,31 @@ public class ClasspathBootstrap {
     static final String CLASS_NAME = "org.jetbrains.jps.javac.OptimizedFileManager17";
     @Nullable
     static final Class<StandardJavaFileManager> managerClass;
+    static final Method directoryCacheClearMethod;
     @Nullable
     static final String initError;
     static {
       Class<StandardJavaFileManager> aClass;
+      Method cacheClearMethod = null;
       String error = null;
       try {
-        @SuppressWarnings("unchecked") Class<StandardJavaFileManager> c = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
+        @SuppressWarnings("unchecked")
+        Class<StandardJavaFileManager> c = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
         aClass = c;
+        try {
+          cacheClearMethod = c.getMethod("fileGenerated", File.class);
+          cacheClearMethod.setAccessible(true);
+        }
+        catch (NoSuchMethodException e) {
+          LOG.info(e);
+        }
       }
       catch (Throwable ex) {
         aClass = null;
         error = ex.getClass().getName() + ": " + ex.getMessage();
       }
       managerClass = aClass;
+      directoryCacheClearMethod = cacheClearMethod;
       initError = error;
     }
 
@@ -237,6 +262,15 @@ public class ClasspathBootstrap {
       return aClass;
     }
     return OptimizedFileManager17ClassHolder.managerClass;
+  }
+
+  @Nullable
+  public static Method getOptimizedFileManagerCacheClearMethod() {
+    final Method method = OptimizedFileManagerClassHolder.directoryCacheClearMethod;
+    if (method != null) {
+      return method;
+    }
+    return OptimizedFileManager17ClassHolder.directoryCacheClearMethod;
   }
 
   @Nullable
