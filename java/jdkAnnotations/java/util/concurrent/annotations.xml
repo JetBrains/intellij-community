@@ -271,9 +271,6 @@
   <item name="java.util.concurrent.ScheduledExecutorService java.util.concurrent.ScheduledFuture&lt;V&gt; schedule(java.util.concurrent.Callable&lt;V&gt;, long, java.util.concurrent.TimeUnit) 2">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name="java.util.concurrent.ThreadFactory java.lang.Thread newThread(java.lang.Runnable)">
-    <annotation name="org.jetbrains.annotations.Nullable" />
-  </item>
   <item name="java.util.concurrent.ThreadFactory java.lang.Thread newThread(java.lang.Runnable) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
