@@ -293,9 +293,7 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
 
   private static final PsiElementPattern.Capture<PsiElement> IN_IMPORT_STMT =
     psiElement().inside(
-      StandardPatterns.or(
-        psiElement(PyImportStatement.class), psiElement(PyFromImportStatement.class)
-      )
+      or(psiElement(PyImportStatement.class), psiElement(PyFromImportStatement.class))
     );
 
   private static final PsiElementPattern.Capture<PsiElement> IN_PARAM_LIST = psiElement().inside(PyParameterList.class);
@@ -646,6 +644,24 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     addExprElse();
     addRaiseFrom();
     addYieldFrom();
+    addToComprehensions();
+  }
+
+  private void addToComprehensions() {
+    extend(CompletionType.BASIC,
+           psiElement()
+             .withLanguage(PythonLanguage.getInstance())
+             .inside(psiElement(PySequenceExpression.class))
+             .andNot(psiElement().afterLeaf(or(psiElement(PyTokenTypes.LBRACE), psiElement(PyTokenTypes.LBRACKET), psiElement(PyTokenTypes.LPAR)))),
+           new PyKeywordCompletionProvider("for"));
+
+    extend(CompletionType.BASIC,
+           psiElement()
+             .withLanguage(PythonLanguage.getInstance())
+             .and(psiElement().inside(psiElement(PyComprehensionElement.class)))
+             .afterLeaf(psiElement().inside(psiElement(PyComprehensionElement.class)).and(psiElement().afterLeaf("for"))),
+           new PyKeywordCompletionProvider("in"));
+
   }
 
   private static class PyKeywordCompletionProvider extends CompletionProvider<CompletionParameters> {

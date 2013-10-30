@@ -168,4 +168,24 @@ public class PythonKeywordCompletionTest extends PyTestCase {
                             "    pass\n" +
                             "el<caret>").contains("else"));
   }
+
+  public void testForInComprehension() {  // PY-3687
+    assertContainsElements(doTestByText("L = [x fo<caret>]"), "for");
+    assertContainsElements(doTestByText("L = [x <caret>]"), "for");
+    assertContainsElements(doTestByText("L = [x <caret> x in y]"), "for");
+
+    assertDoesntContain(doTestByText("L = [<caret>]"), "for");
+    assertDoesntContain(doTestByText("L = [x for x <caret>]"), "for");
+    assertDoesntContain(doTestByText("L = [x for x <caret> in y]"), "for");
+  }
+
+  public void testInInComprehension() {  // PY-3687
+    assertContainsElements(doTestByText("L = [x for x <caret>]"), "in");
+    assertContainsElements(doTestByText("L = [x for x i<caret>]"), "in");
+    assertContainsElements(doTestByText("L = [x for x i<caret>n y]"), "in");
+
+    assertDoesntContain(doTestByText("L = [<caret>]"), "in");
+    assertDoesntContain(doTestByText("L = [x <caret> for]"), "in");
+    assertDoesntContain(doTestByText("L = [x <caret>]"), "in");
+  }
 }
