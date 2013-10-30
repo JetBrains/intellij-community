@@ -644,22 +644,24 @@ public class PyKeywordCompletionContributor extends CompletionContributor {
     addExprElse();
     addRaiseFrom();
     addYieldFrom();
-    addToComprehensions();
+    addForToComprehensions();
+    addInToFor();
   }
 
-  private void addToComprehensions() {
+  private void addForToComprehensions() {
     extend(CompletionType.BASIC,
            psiElement()
              .withLanguage(PythonLanguage.getInstance())
              .inside(psiElement(PySequenceExpression.class))
              .andNot(psiElement().afterLeaf(or(psiElement(PyTokenTypes.LBRACE), psiElement(PyTokenTypes.LBRACKET), psiElement(PyTokenTypes.LPAR)))),
            new PyKeywordCompletionProvider("for"));
+  }
 
+  private void addInToFor() {
     extend(CompletionType.BASIC,
            psiElement()
              .withLanguage(PythonLanguage.getInstance())
-             .and(psiElement().inside(psiElement(PyComprehensionElement.class)))
-             .afterLeaf(psiElement().inside(psiElement(PyComprehensionElement.class)).and(psiElement().afterLeaf("for"))),
+             .and(psiElement()).afterLeaf(psiElement().afterLeaf("for")),
            new PyKeywordCompletionProvider("in"));
 
   }
