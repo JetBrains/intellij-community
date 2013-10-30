@@ -209,7 +209,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
     for (String each : ids) {
       ToolWindow eachWnd = mgr.getToolWindow(each);
-      if (!eachWnd.isAvailable()) continue;
+      if (eachWnd == null || !eachWnd.isAvailable()) continue;
 
       if (eachWnd.isVisible() && eachWnd.getType() == ToolWindowType.DOCKED) {
         ToolWindowAnchor eachAnchor = eachWnd.getAnchor();
