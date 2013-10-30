@@ -18,7 +18,8 @@ package org.zmlx.hg4idea.repo;
 import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryUtil;
-import com.intellij.vcs.log.impl.HashImpl;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.vcs.log.VcsLogObjectsFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
@@ -44,6 +45,7 @@ public class HgRepositoryReader {
   @NotNull private final File myCurrentBranch;    // .hg/branch
   @NotNull private final File myBookmarksFile; //.hg/bookmarks
   @NotNull private final File myCurrentBookmark; //.hg/bookmarks.current
+  @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
 
   public HgRepositoryReader(@NotNull File hgDir) {
     myHgDir = hgDir;
@@ -54,6 +56,7 @@ public class HgRepositoryReader {
     myCurrentBranch = new File(myHgDir, "branch");
     myBookmarksFile = new File(myHgDir, "bookmarks");
     myCurrentBookmark = new File(myHgDir, "bookmarks.current");
+    myVcsObjectsFactory = ServiceManager.getService(VcsLogObjectsFactory.class);
   }
 
   /**
@@ -84,7 +87,7 @@ public class HgRepositoryReader {
   @NotNull
   public Collection<HgNameWithHashInfo> readBranches() {
     List<HgNameWithHashInfo> branches = new ArrayList<HgNameWithHashInfo>();
-   // Set<String> branchNames = new HashSet<String>();
+    // Set<String> branchNames = new HashSet<String>();
     if (!checkIsFresh()) {
       String[] branchesWithHeads = RepositoryUtil.tryLoadFile(myBranchHeadsFile).split("\n");
       // first one - is a head revision: head hash + head number;
@@ -92,8 +95,8 @@ public class HgRepositoryReader {
         Matcher matcher = HASH_NAME.matcher(branchesWithHeads[i]);
         if (matcher.matches()) {
           String name = matcher.group(2);
-         // if (branchNames.add(name)) {
-            branches.add(new HgNameWithHashInfo(name, HashImpl.build(matcher.group(1))));
+          // if (branchNames.add(name)) {
+          branches.add(new HgNameWithHashInfo(name, myVcsObjectsFactory.createHash(matcher.group(1))));
           //}
         }
       }
@@ -129,7 +132,7 @@ public class HgRepositoryReader {
     for (String str : bookmarksWithHeads) {
       Matcher matcher = HASH_NAME.matcher(str);
       if (matcher.matches()) {
-        bookmarks.add(new HgNameWithHashInfo(matcher.group(2), HashImpl.build(matcher.group(1))));
+        bookmarks.add(new HgNameWithHashInfo(matcher.group(2), myVcsObjectsFactory.createHash(matcher.group(1))));
       }
     }
     return bookmarks;

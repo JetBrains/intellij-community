@@ -16,10 +16,7 @@
 package org.zmlx.hg4idea.util;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
@@ -28,13 +25,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.vcs.log.Hash;
-import com.intellij.vcs.log.TimedVcsCommit;
-import com.intellij.vcs.log.VcsLogObjectsFactory;
-import com.intellij.vcs.log.VcsShortCommitDetails;
-import com.intellij.vcs.log.impl.HashImpl;
-import com.intellij.vcs.log.impl.VcsFullCommitDetailsImpl;
-import com.intellij.vcs.log.impl.VcsShortCommitDetailsImpl;
+import com.intellij.vcs.log.*;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,9 +43,6 @@ import java.util.*;
  */
 public class HgHistoryUtil {
 
-  private final static Logger LOG = Logger.getInstance("#hg4idea.util.HgHistoryUtils");
-
-
   private HgHistoryUtil() {
   }
 
@@ -65,21 +53,15 @@ public class HgHistoryUtil {
    * and it can occupy too much memory. The estimate is ~600Kb for 1000 commits.</p>
    */
   @NotNull
-  public static List<VcsFullCommitDetailsImpl> history(@NotNull final Project project,
-                                                       @NotNull final VirtualFile root, int limit,
-                                                       String... parameters)
+  public static List<VcsFullCommitDetails> history(@NotNull final Project project,
+                                                   @NotNull final VirtualFile root, int limit,
+                                                   String... parameters)
     throws VcsException {
     List<HgCommittedChangeList> result = getCommittedChangeList(project, root, limit, true, parameters);
-    return ContainerUtil.mapNotNull(result, new Function<HgCommittedChangeList, VcsFullCommitDetailsImpl>() {
+    return ContainerUtil.mapNotNull(result, new Function<HgCommittedChangeList, VcsFullCommitDetails>() {
       @Override
-      public VcsFullCommitDetailsImpl fun(HgCommittedChangeList record) {
-        try {
-          return createCommit(root, record);
-        }
-        catch (VcsException e) {
-          LOG.error(e);
-          return null;
-        }
+      public VcsFullCommitDetails fun(HgCommittedChangeList record) {
+        return createCommit(root, record);
       }
     });
   }
@@ -136,7 +118,7 @@ public class HgHistoryUtil {
   @NotNull
   public static List<? extends VcsShortCommitDetails> readMiniDetails(Project project, final VirtualFile root, List<String> hashes)
     throws VcsException {
-
+    final VcsLogObjectsFactory factory = ServiceManager.getService(VcsLogObjectsFactory.class);
     return ContainerUtil.map(getCommittedChangeList(project, root, -1, false, prepareHashes(hashes)),
                              new Function<HgCommittedChangeList, VcsShortCommitDetails>() {
                                @Override
@@ -144,11 +126,11 @@ public class HgHistoryUtil {
                                  HgRevisionNumber revNumber = (HgRevisionNumber)record.getRevisionNumber();
                                  List<Hash> parents = new SmartList<Hash>();
                                  for (HgRevisionNumber parent : revNumber.getParents()) {
-                                   parents.add(HashImpl.build(parent.getChangeset()));
+                                   parents.add(factory.createHash(parent.getChangeset()));
                                  }
-                                 return new VcsShortCommitDetailsImpl(HashImpl.build(revNumber.getChangeset()), parents,
-                                                                      record.getCommitDate().getTime(), root,
-                                                                      revNumber.getSubject(), revNumber.getAuthor());
+                                 return factory.createShortDetails(factory.createHash(revNumber.getChangeset()), parents,
+                                                                   record.getCommitDate().getTime(), root,
+                                                                   revNumber.getSubject(), revNumber.getAuthor());
                                }
                              });
   }
@@ -156,16 +138,17 @@ public class HgHistoryUtil {
   @NotNull
   public static List<TimedVcsCommit> readAllHashes(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
 
+    final VcsLogObjectsFactory factory = ServiceManager.getService(VcsLogObjectsFactory.class);
     return ContainerUtil.map(getCommittedChangeList(project, root, -1, false, ""), new Function<HgCommittedChangeList, TimedVcsCommit>() {
       @Override
       public TimedVcsCommit fun(HgCommittedChangeList record) {
         HgRevisionNumber revNumber = (HgRevisionNumber)record.getRevisionNumber();
         List<Hash> parents = new SmartList<Hash>();
         for (HgRevisionNumber parent : revNumber.getParents()) {
-          parents.add(HashImpl.build(parent.getChangeset()));
+          parents.add(factory.createHash(parent.getChangeset()));
         }
-        return ServiceManager.getService(VcsLogObjectsFactory.class).createTimedCommit(HashImpl.build(revNumber.getChangeset()),
-                                                                                       parents, record.getCommitDate().getTime());
+        return factory.createTimedCommit(factory.createHash(revNumber.getChangeset()),
+                                         parents, record.getCommitDate().getTime());
       }
     });
   }
@@ -186,27 +169,28 @@ public class HgHistoryUtil {
   }
 
   @NotNull
-  private static VcsFullCommitDetailsImpl createCommit(@NotNull VirtualFile root,
-                                                       @NotNull HgCommittedChangeList record)
-    throws VcsException {
+  private static VcsFullCommitDetails createCommit(@NotNull VirtualFile root,
+                                                   @NotNull HgCommittedChangeList record) {
+
+    final VcsLogObjectsFactory factory = ServiceManager.getService(VcsLogObjectsFactory.class);
     HgRevisionNumber revNumber = (HgRevisionNumber)record.getRevisionNumber();
 
     List<Hash> parents = ContainerUtil.map(revNumber.getParents(), new Function<HgRevisionNumber, Hash>() {
       @Override
       public Hash fun(HgRevisionNumber parent) {
-        return HashImpl.build(parent.getChangeset());
+        return factory.createHash(parent.getChangeset());
       }
     });
-    return new VcsFullCommitDetailsImpl(HashImpl.build(revNumber.getChangeset()), parents, record.getCommitDate().getTime(), root,
-                                        revNumber.getSubject(),
-                                        revNumber.getAuthor(), "", revNumber.getCommitMessage(), record.getCommitterName(),
-                                        "", record.getCommitDate().getTime(),
-                                        ContainerUtil.newArrayList(record.getChanges()));
+    return factory.createFullDetails(factory.createHash(revNumber.getChangeset()), parents, record.getCommitDate().getTime(), root,
+                                     revNumber.getSubject(),
+                                     revNumber.getAuthor(), "", revNumber.getCommitMessage(), record.getCommitterName(),
+                                     "", record.getCommitDate().getTime(),
+                                     ContainerUtil.newArrayList(record.getChanges()));
   }
 
   @Nullable
   public static String[] prepareHashes(@NotNull List<String> hashes) {
-    if(hashes.isEmpty()){
+    if (hashes.isEmpty()) {
       return ArrayUtil.EMPTY_STRING_ARRAY;
     }
     StringBuilder builder = new StringBuilder();

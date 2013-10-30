@@ -29,17 +29,16 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilter;
 import com.intellij.vcs.log.data.VcsLogUserFilter;
-import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsRefImpl;
 import com.intellij.vcs.log.ui.filter.VcsLogTextFilter;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.HgUpdater;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.repo.HgConfig;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.util.HgHistoryUtil;
 
 import java.util.ArrayList;
@@ -94,7 +93,7 @@ public class HgLogProvider implements VcsLogProvider {
   @NotNull
   @Override
   public List<? extends VcsFullCommitDetails> readFullDetails(@NotNull VirtualFile root, @NotNull List<String> hashes) throws VcsException {
-    return HgHistoryUtil.history(myProject, root, -1,HgHistoryUtil.prepareHashes(hashes));
+    return HgHistoryUtil.history(myProject, root, -1, HgHistoryUtil.prepareHashes(hashes));
   }
 
   @NotNull
@@ -114,15 +113,15 @@ public class HgLogProvider implements VcsLogProvider {
     Collection<VcsRef> refs = new ArrayList<VcsRef>(branches.size() + bookmarks.size());
 
     for (HgNameWithHashInfo branchInfo : branches) {
-      refs.add(new VcsRefImpl(HashImpl.build(branchInfo.getHash()), branchInfo.getName(), HgRefManager.BRANCH, root));
+      refs.add(new VcsRefImpl(myVcsObjectsFactory.createHash(branchInfo.getHash()), branchInfo.getName(), HgRefManager.BRANCH, root));
     }
     for (HgNameWithHashInfo bookmarkInfo : bookmarks) {
-      refs.add(new VcsRefImpl(HashImpl.build(bookmarkInfo.getHash()), bookmarkInfo.getName(),
-                              HgRefManager.BOOKMARK, root));
+      refs.add(new VcsRefImpl(myVcsObjectsFactory.createHash(bookmarkInfo.getHash()), bookmarkInfo.getName(),
+                         HgRefManager.BOOKMARK, root));
     }
     String currentRevision = repository.getCurrentRevision();
     if (currentRevision != null) { // null => fresh repository
-      refs.add(new VcsRefImpl(HashImpl.build(currentRevision), "HEAD", HgRefManager.HEAD, root));
+      refs.add(new VcsRefImpl(myVcsObjectsFactory.createHash(currentRevision), "HEAD", HgRefManager.HEAD, root));
     }
 
     //refs.addAll(readTags(root));
