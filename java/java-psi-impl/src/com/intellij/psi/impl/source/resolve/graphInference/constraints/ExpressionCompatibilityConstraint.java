@@ -81,7 +81,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         final PsiMethod method = ((PsiCallExpression)myExpression).resolveMethod();
         PsiType returnType = null;
         InferenceSession callSession = null;
-        if (method != null) {
+        if (method != null && !method.isConstructor()) {
           returnType = method.getReturnType();
           final PsiParameter[] parameters = method.getParameterList().getParameters();
           if (returnType != null) {
