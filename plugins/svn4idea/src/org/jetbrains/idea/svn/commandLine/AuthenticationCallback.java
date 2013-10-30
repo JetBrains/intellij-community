@@ -15,13 +15,14 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.tmatesoft.svn.core.SVNURL;
 import org.tmatesoft.svn.core.auth.SVNAuthentication;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
+import java.net.PasswordAuthentication;
 
 /**
  * Passed for authentication purpose to SvnLineCommand
@@ -101,9 +102,11 @@ public interface AuthenticationCallback {
    * @param repositoryUrl
    * @return true if have written data, false if wasn't able to determine parameters etc
    * @throws IOException
-   * @throws URISyntaxException
    */
-  boolean persistDataToTmpConfig(SVNURL repositoryUrl) throws IOException, URISyntaxException;
+  boolean persistDataToTmpConfig(SVNURL repositoryUrl) throws IOException;
+
+  @Nullable
+  PasswordAuthentication getProxyAuthentication(@NotNull SVNURL repositoryUrl);
 
   /**
    * Ask for IDEA-defined proxy credentials, using standard authenticator

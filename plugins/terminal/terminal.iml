@@ -11,35 +11,6 @@
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module-library">
-      <library name="jna">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/jna.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="pty4j">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/pty4j-0.3.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library name="purejavacomm">
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/purejavacomm.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES>
-          <root url="jar://$MODULE_DIR$/lib/purejavacomm-src.jar!/" />
-        </SOURCES>
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
       <library name="jediterm-pty">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/jediterm-pty-0.08.jar!/" />
@@ -49,6 +20,9 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="library" name="pty4j" level="project" />
+    <orderEntry type="library" name="jna" level="project" />
+    <orderEntry type="library" name="purejavacomm" level="project" />
   </component>
 </module>
 

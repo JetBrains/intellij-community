@@ -21,6 +21,7 @@ jgoodies-forms.jar
 jgoodies-looks-2.4.2.jar
 jh.jar
 jna-utils.jar
+jna-platform.jar
 jna.jar
 jsch-0.1.50.jar
 jsr166e.jar
@@ -39,6 +40,8 @@ oromatcher.jar
 picocontainer.jar
 protobuf-2.5.0.jar
 proxy-vole_20120920.jar
+pty4j-0.3.jar
+purejavacomm.jar
 resolver.jar
 rhino-js-1_7R4.jar
 sanselan-0.98-snapshot.jar

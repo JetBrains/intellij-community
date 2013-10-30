@@ -184,15 +184,7 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     final IdeaSVNConfigFile configFile = new IdeaSVNConfigFile(new File(configDir, SERVERS_FILE_NAME));
     configFile.updateGroups();
 
-    String groupName = SvnAuthenticationManager.getGroupForHost(host, configFile);
-
-    if (StringUtil.isEmptyOrSpaces(groupName)) {
-      groupName = host;
-      final Map<String,ProxyGroup> groups = configFile.getAllGroups();
-      while (StringUtil.isEmptyOrSpaces(groupName) || groups.containsKey(groupName)) {
-        groupName += "1";
-      }
-    }
+    String groupName = ensureHostGroup(host, configFile);
 
     final HashMap<String, String> map = new HashMap<String, String>();
     final InetSocketAddress address = ((InetSocketAddress) proxyInfo.address());
@@ -200,6 +192,27 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     map.put(SvnAuthenticationManager.HTTP_PROXY_PORT, String.valueOf(address.getPort()));
     configFile.addGroup(groupName, host + "*", map);
     configFile.save();
+  }
+
+  @NotNull
+  public static String ensureHostGroup(@NotNull String host, @NotNull IdeaSVNConfigFile configFile) {
+    String groupName = SvnAuthenticationManager.getGroupForHost(host, configFile);
+
+    if (StringUtil.isEmptyOrSpaces(groupName)) {
+      groupName = getNewGroupName(host, configFile);
+    }
+
+    return groupName;
+  }
+
+  @NotNull
+  public static String getNewGroupName(@NotNull String host, @NotNull IdeaSVNConfigFile configFile) {
+    String groupName = host;
+    final Map<String,ProxyGroup> groups = configFile.getAllGroups();
+    while (StringUtil.isEmptyOrSpaces(groupName) || groups.containsKey(groupName)) {
+      groupName += "1";
+    }
+    return groupName;
   }
 
   public static boolean putProxyCredentialsIntoServerFile(@NotNull final File configDir, @NotNull final String host,
