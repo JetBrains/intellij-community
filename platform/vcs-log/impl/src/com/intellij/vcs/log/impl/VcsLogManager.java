@@ -1,17 +1,12 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.changes.ui.ChangesViewContentI;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -22,11 +17,9 @@ import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
-import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
@@ -46,10 +39,11 @@ import java.util.Set;
 /**
  * @author Kirill Likhodedov
  */
-public class VcsLogManager extends AbstractProjectComponent {
+public class VcsLogManager {
 
   public static final ExtensionPointName<VcsLogProvider> LOG_PROVIDER_EP = ExtensionPointName.create("com.intellij.logProvider");
 
+  @NotNull private final Project myProject;
   @NotNull private final ProjectLevelVcsManager myVcsManager;
   @NotNull private final VcsLogObjectsFactory myLogObjectsFactory;
   @NotNull private final VcsLogSettings mySettings;
@@ -59,63 +53,34 @@ public class VcsLogManager extends AbstractProjectComponent {
   private VcsLogDataHolder myLogDataHolder;
   private VcsLogUI myUi;
 
-  protected VcsLogManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManagerInitializedFirst,
-                          @NotNull VcsLogObjectsFactory logObjectsFactory, @NotNull VcsLogSettings settings,
-                          @NotNull VcsLogUiProperties uiProperties) {
-    super(project);
-    myVcsManager = vcsManagerInitializedFirst;
+  public VcsLogManager(@NotNull Project project, @NotNull ProjectLevelVcsManager vcsManager,
+                       @NotNull VcsLogObjectsFactory logObjectsFactory, @NotNull VcsLogSettings settings,
+                       @NotNull VcsLogUiProperties uiProperties) {
+    myProject = project;
+    myVcsManager = vcsManager;
     myLogObjectsFactory = logObjectsFactory;
     mySettings = settings;
     myUiProperties = uiProperties;
   }
 
-  @Override
-  public void initComponent() {
-    super.initComponent();
+  @NotNull
+  public JComponent initContent() {
+    final Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders();
+    final VcsLogContainer mainPanel = new VcsLogContainer(myProject);
 
-    if (!Registry.is("git.new.log")) {
-      return;
-    }
-
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
-      public void run() {
-        ChangesViewContentManager changesView = (ChangesViewContentManager)ChangesViewContentManager.getInstance(myProject);
-        changesView.executeWhenInitialized(new DumbAwareRunnable() {
-          @Override
-          public void run() {
-            UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                final Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders();
-                if (logProviders.isEmpty()) {
-                  return;
-                }
-
-                final VcsLogContainer mainPanel = new VcsLogContainer(myProject);
-                final Content content = new ContentImpl(mainPanel, "Log", true);
-                ChangesViewContentI changesView = ChangesViewContentManager.getInstance(myProject);
-                changesView.addContent(content);
-                content.setCloseable(false);
-
-                VcsLogDataHolder.init(myProject, myLogObjectsFactory, logProviders, mySettings, new Consumer<VcsLogDataHolder>() {
-                  @Override
-                  public void consume(VcsLogDataHolder vcsLogDataHolder) {
-                    Disposer.register(myProject, vcsLogDataHolder);
-                    VcsLogUI logUI = new VcsLogUI(vcsLogDataHolder, myProject, mySettings,
-                                                  new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties);
-                    myLogDataHolder = vcsLogDataHolder;
-                    myUi = logUI;
-                    mainPanel.init(logUI.getMainFrame().getMainComponent());
-                    myLogRefresher = new PostponeableLogRefresher(myProject, vcsLogDataHolder, content);
-                    refreshLogOnVcsEvents(logProviders);
-                  }
-                });
-              }
-            });
-          }
-        });
+    VcsLogDataHolder.init(myProject, myLogObjectsFactory, logProviders, mySettings, new Consumer<VcsLogDataHolder>() {
+      @Override
+      public void consume(VcsLogDataHolder vcsLogDataHolder) {
+        VcsLogUI logUI = new VcsLogUI(vcsLogDataHolder, myProject, mySettings,
+                                      new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties);
+        myLogDataHolder = vcsLogDataHolder;
+        myUi = logUI;
+        mainPanel.init(logUI.getMainFrame().getMainComponent());
+        myLogRefresher = new PostponeableLogRefresher(myProject, vcsLogDataHolder);
+        refreshLogOnVcsEvents(logProviders);
       }
     });
+    return mainPanel;
   }
 
   private void refreshLogOnVcsEvents(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
@@ -130,7 +95,7 @@ public class VcsLogManager extends AbstractProjectComponent {
   }
 
   @NotNull
-  private Map<VirtualFile, VcsLogProvider> findLogProviders() {
+  public Map<VirtualFile, VcsLogProvider> findLogProviders() {
     Map<VirtualFile, VcsLogProvider> logProviders = ContainerUtil.newHashMap();
     VcsLogProvider[] allLogProviders = Extensions.getExtensions(LOG_PROVIDER_EP, myProject);
     for (AbstractVcs vcs : myVcsManager.getAllActiveVcss()) {
@@ -174,9 +139,9 @@ public class VcsLogManager extends AbstractProjectComponent {
   private static class PostponeableLogRefresher implements VcsLogRefresher, Disposable {
 
     private  static final String TOOLWINDOW_ID = ChangesViewContentManager.TOOLWINDOW_ID;
+    private static final String TAB_NAME = "Log";
 
     @NotNull private final VcsLogDataHolder myDataHolder;
-    @NotNull private final Content myContentPane;
     @NotNull private final ToolWindowManagerImpl myToolWindowManager;
     @NotNull private final ToolWindowImpl myToolWindow;
     @NotNull private final MyRefreshPostponedEventsListener myPostponedEventsListener;
@@ -185,9 +150,8 @@ public class VcsLogManager extends AbstractProjectComponent {
     @NotNull private final Set<VirtualFile> myRootsToRefresh = ContainerUtil.newHashSet();
     @NotNull private final Object REFRESH_LOCK = new Object();
 
-    public PostponeableLogRefresher(@NotNull Project project, @NotNull VcsLogDataHolder dataHolder, @NotNull Content contentPane) {
+    public PostponeableLogRefresher(@NotNull Project project, @NotNull VcsLogDataHolder dataHolder) {
       myDataHolder = dataHolder;
-      myContentPane = contentPane;
       myToolWindowManager = (ToolWindowManagerImpl)ToolWindowManager.getInstance(project);
       myToolWindow = (ToolWindowImpl)myToolWindowManager.getToolWindow(TOOLWINDOW_ID);
 
@@ -229,8 +193,11 @@ public class VcsLogManager extends AbstractProjectComponent {
     }
 
     private boolean isOurContentPaneShowing() {
-      return myToolWindowManager.isToolWindowRegistered(TOOLWINDOW_ID) &&
-             myToolWindow.isVisible() && myContentPane.equals(myToolWindow.getContentManager().getSelectedContent());
+      if (myToolWindowManager.isToolWindowRegistered(TOOLWINDOW_ID) && myToolWindow.isVisible()) {
+        Content content = myToolWindow.getContentManager().getSelectedContent();
+        return content != null && content.getTabName().equals(TAB_NAME);
+      }
+      return false;
     }
 
     private void refreshPostponedRoots() {
