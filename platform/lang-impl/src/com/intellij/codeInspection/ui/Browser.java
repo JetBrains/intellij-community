@@ -23,6 +23,7 @@ import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.ui.actions.SuppressActionWrapper;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
@@ -197,8 +198,9 @@ class Browser extends JPanel {
       doc.processHTMLFrameHyperlinkEvent(evt);
       return;
     }
+    URL url = null;
     try {
-      URL url = e.getURL();
+      url = e.getURL();
       @NonNls String ref = url.getRef();
       if (ref.startsWith("pos:")) {
         int delimeterPos = ref.indexOf(':', "pos:".length() + 1);
@@ -264,7 +266,9 @@ class Browser extends JPanel {
       }
     }
     catch (Throwable t) {
-      //???
+      if (url != null) {
+        BrowserUtil.browse(url);
+      }
     }
   }
 
