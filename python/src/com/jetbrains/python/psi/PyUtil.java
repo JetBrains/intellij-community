@@ -694,6 +694,30 @@ public class PyUtil {
     return false;
   }
 
+  public static boolean isDecoratedAsAbstract(@NotNull final PyDecoratable decoratable) {
+    final PyDecoratorList decoratorList = decoratable.getDecoratorList();
+    if (decoratorList == null) {
+      return false;
+    }
+    for (PyDecorator decorator : decoratorList.getDecorators()) {
+      final PyExpression callee = decorator.getCallee();
+      if (callee instanceof PyReferenceExpression) {
+        final PsiReference reference = callee.getReference();
+        if (reference == null) continue;
+        final PsiElement resolved = reference.resolve();
+        if (resolved instanceof PyQualifiedNameOwner) {
+          final String name = ((PyQualifiedNameOwner)resolved).getQualifiedName();
+          return PyNames.ABSTRACTMETHOD.equals(name) || PyNames.ABSTRACTPROPERTY.equals(name);
+        }
+      }
+    }
+    return false;
+  }
+
+  public static ASTNode createNewName(PyElement element, String name) {
+    return PyElementGenerator.getInstance(element.getProject()).createNameIdentifier(name, LanguageLevel.forElement(element));
+  }
+
   public static class KnownDecoratorProviderHolder {
     public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 
