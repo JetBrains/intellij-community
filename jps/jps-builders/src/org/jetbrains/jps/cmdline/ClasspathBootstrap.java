@@ -39,6 +39,7 @@ import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
 import javax.tools.*;
 import java.io.File;
+import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -51,16 +52,27 @@ public class ClasspathBootstrap {
   private static class OptimizedFileManagerClassHolder {
     static final String CLASS_NAME = "org.jetbrains.jps.javac.OptimizedFileManager";
     static final Class<StandardJavaFileManager> managerClass;
+    static final Method directoryCacheClearMethod;
     static {
       Class<StandardJavaFileManager> aClass;
+      Method cacheClearMethod = null;
       try {
-        @SuppressWarnings("unchecked") Class<StandardJavaFileManager> c = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
+        @SuppressWarnings("unchecked")
+        Class<StandardJavaFileManager> c = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
         aClass = c;
+        try {
+          cacheClearMethod = c.getMethod("fileGenerated", File.class);
+          cacheClearMethod.setAccessible(true);
+        }
+        catch (NoSuchMethodException e) {
+          LOG.info(e);
+        }
       }
       catch (Throwable e) {
         aClass = null;
       }
       managerClass = aClass;
+      directoryCacheClearMethod = cacheClearMethod;
     }
 
     private OptimizedFileManagerClassHolder() {
@@ -70,16 +82,27 @@ public class ClasspathBootstrap {
   private static class OptimizedFileManager17ClassHolder {
     static final String CLASS_NAME = "org.jetbrains.jps.javac.OptimizedFileManager17";
     static final Class<StandardJavaFileManager> managerClass;
+    static final Method directoryCacheClearMethod;
     static {
       Class<StandardJavaFileManager> aClass;
+      Method cacheClearMethod = null;
       try {
-        @SuppressWarnings("unchecked") Class<StandardJavaFileManager> c = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
+        @SuppressWarnings("unchecked")
+        Class<StandardJavaFileManager> c = (Class<StandardJavaFileManager>)Class.forName(CLASS_NAME);
         aClass = c;
+        try {
+          cacheClearMethod = c.getMethod("fileGenerated", File.class);
+          cacheClearMethod.setAccessible(true);
+        }
+        catch (NoSuchMethodException e) {
+          LOG.info(e);
+        }
       }
       catch (Throwable e) {
         aClass = null;
       }
       managerClass = aClass;
+      directoryCacheClearMethod = cacheClearMethod;
     }
 
     private OptimizedFileManager17ClassHolder() {
@@ -223,6 +246,15 @@ public class ClasspathBootstrap {
       return aClass;
     }
     return OptimizedFileManager17ClassHolder.managerClass;
+  }
+
+  @Nullable
+  public static Method getOptimizedFileManagerCacheClearMethod() {
+    final Method method = OptimizedFileManagerClassHolder.directoryCacheClearMethod;
+    if (method != null) {
+      return method;
+    }
+    return OptimizedFileManager17ClassHolder.directoryCacheClearMethod;
   }
 
   public static String getResourcePath(Class aClass) {
