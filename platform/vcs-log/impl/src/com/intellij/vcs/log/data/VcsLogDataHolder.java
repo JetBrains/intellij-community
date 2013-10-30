@@ -720,9 +720,12 @@ public class VcsLogDataHolder implements Disposable {
         // log the error only once for the getTopCommitDetails request
         if (!errorDetailsAttached.get()) {
           errorDetailsAttached.set(true);
-          LOG.error(errorMessage,
-                    new Attachment("details_cache.txt", myTopCommitsDetailsCache.toString()),
-                    new Attachment("top_commits.txt", topCommits.toString()));
+          // temporary disable the error message until the bug is properly fixed.
+          // the bug is: we store 1000 commit details per root, but iterate through the roots_num * 1000 latest commits
+          // therefore this error shouldn't happen only in the case when commits of all repositories are evently distributed in time.
+//          LOG.error(errorMessage,
+//                    new Attachment("details_cache.txt", myTopCommitsDetailsCache.toString()),
+//                    new Attachment("top_commits.txt", topCommits.toString()));
         }
         return null;
       }
