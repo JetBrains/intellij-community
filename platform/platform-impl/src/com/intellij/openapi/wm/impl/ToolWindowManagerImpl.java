@@ -458,7 +458,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         if (isToolWindowVisible(id)) {
           hideToolWindow(id, true);
         }
-        getStripeButton(id).setEnabled(false);
+        StripeButton button = getStripeButton(id);
+        if (button != null) {
+          button.setEnabled(false);
+        }
       }
     }
   }
