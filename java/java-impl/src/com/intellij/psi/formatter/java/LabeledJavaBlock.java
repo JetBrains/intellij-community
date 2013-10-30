@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.intellij.formatting.*;
 import com.intellij.formatting.alignment.AlignmentStrategy;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
@@ -45,7 +46,7 @@ public class LabeledJavaBlock extends AbstractJavaBlock{
     while (child != null) {
       if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getTextLength() > 0){
         result.add(createJavaBlock(child, mySettings, currentIndent, currentWrap, AlignmentStrategy.getNullStrategy()));
-        if (child.getElementType() == ElementType.COLON) {
+        if (child.getElementType() == JavaTokenType.COLON) {
           currentIndent = Indent.getNoneIndent();
           currentWrap =Wrap.createWrap(WrapType.ALWAYS, true);
         }

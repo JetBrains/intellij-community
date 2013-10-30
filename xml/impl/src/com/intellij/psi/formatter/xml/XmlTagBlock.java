@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,13 +68,13 @@ public class XmlTagBlock extends AbstractXmlBlock{
         Wrap wrap = chooseWrap(child, tagBeginWrap, attrWrap, textWrap);
         Alignment alignment = chooseAlignment(child, attrAlignment, textAlignment);
 
-        if (child.getElementType() == XmlElementType.XML_TAG_END) {
+        if (child.getElementType() == XmlTokenType.XML_TAG_END) {
           child = processChild(localResult,child, wrap, alignment, null);
           result.add(createTagDescriptionNode(localResult));
           localResult = new ArrayList<Block>(1);
           insideTag = true;
         }
-        else if (child.getElementType() == XmlElementType.XML_START_TAG_START) {
+        else if (child.getElementType() == XmlTokenType.XML_START_TAG_START) {
           insideTag = false;
           if (!localResult.isEmpty()) {
             result.add(createTagContentNode(localResult));
@@ -81,14 +82,14 @@ public class XmlTagBlock extends AbstractXmlBlock{
           localResult = new ArrayList<Block>(1);
           child = processChild(localResult,child, wrap, alignment, null);
         }
-        else if (child.getElementType() == XmlElementType.XML_END_TAG_START) {
+        else if (child.getElementType() == XmlTokenType.XML_END_TAG_START) {
           insideTag = false;
           if (!localResult.isEmpty()) {
             result.add(createTagContentNode(localResult));
             localResult = new ArrayList<Block>(1);
           }
           child = processChild(localResult,child, wrap, alignment, null);
-        } else if (child.getElementType() == XmlElementType.XML_EMPTY_ELEMENT_END) {
+        } else if (child.getElementType() == XmlTokenType.XML_EMPTY_ELEMENT_END) {
           child = processChild(localResult,child, wrap, alignment, null);
           result.add(createTagDescriptionNode(localResult));
           localResult = new ArrayList<Block>(1);

@@ -30,6 +30,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlDocument;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -143,8 +144,8 @@ public class XmlBlock extends AbstractXmlBlock {
     final ArrayList<Block> result = new ArrayList<Block>(3);
     ASTNode child = node.getFirstChildNode();
     while (child != null) {
-      if (child.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE_START_DELIMITER ||
-          child.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
+      if (child.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_START_DELIMITER ||
+          child.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_END_DELIMITER) {
         result.add(new XmlBlock(child, null, null, formattingPolicy, null, null, isPreserveSpace()));
       }
       else if (!child.getPsi().getLanguage().isKindOf(XMLLanguage.INSTANCE) && containsOuterLanguageElement(child)) {
@@ -247,7 +248,7 @@ public class XmlBlock extends AbstractXmlBlock {
     final ASTNode node2 = ((AbstractBlock)child2).getNode();
     final IElementType type2 = node2.getElementType();
 
-    if ((isXmlTag(node2) || type2 == XmlElementType.XML_END_TAG_START || type2 == XmlElementType.XML_TEXT) && myXmlFormattingPolicy
+    if ((isXmlTag(node2) || type2 == XmlTokenType.XML_END_TAG_START || type2 == XmlElementType.XML_TEXT) && myXmlFormattingPolicy
       .getShouldKeepWhiteSpaces()) {
       return Spacing.getReadOnlySpacing();
     }
@@ -272,7 +273,7 @@ public class XmlBlock extends AbstractXmlBlock {
   }
 
   private Spacing getSpacesInsideAttribute(final IElementType type1, final IElementType type2) {
-    if (type1 == XmlElementType.XML_EQ || type2 == XmlElementType.XML_EQ) {
+    if (type1 == XmlTokenType.XML_EQ || type2 == XmlTokenType.XML_EQ) {
       int spaces = myXmlFormattingPolicy.getShouldAddSpaceAroundEqualityInAttribute() ? 1 : 0;
       return Spacing
         .createSpacing(spaces, spaces, 0, myXmlFormattingPolicy.getShouldKeepLineBreaks(), myXmlFormattingPolicy.getKeepBlankLines());
@@ -283,7 +284,7 @@ public class XmlBlock extends AbstractXmlBlock {
   }
 
   private Spacing getSpacesInsideText(final IElementType type1, final IElementType type2) {
-    if (type1 == XmlElementType.XML_DATA_CHARACTERS && type2 == XmlElementType.XML_DATA_CHARACTERS) {
+    if (type1 == XmlTokenType.XML_DATA_CHARACTERS && type2 == XmlTokenType.XML_DATA_CHARACTERS) {
       return Spacing
         .createSpacing(1, 1, 0, myXmlFormattingPolicy.getShouldKeepLineBreaksInText(), myXmlFormattingPolicy.getKeepBlankLines());
     }
@@ -309,8 +310,8 @@ public class XmlBlock extends AbstractXmlBlock {
   }
 
   public boolean isTextElement() {
-    return myNode.getElementType() == XmlElementType.XML_TEXT || myNode.getElementType() == XmlElementType.XML_DATA_CHARACTERS ||
-           myNode.getElementType() == XmlElementType.XML_CHAR_ENTITY_REF;
+    return myNode.getElementType() == XmlElementType.XML_TEXT || myNode.getElementType() == XmlTokenType.XML_DATA_CHARACTERS ||
+           myNode.getElementType() == XmlTokenType.XML_CHAR_ENTITY_REF;
   }
 
   @Override

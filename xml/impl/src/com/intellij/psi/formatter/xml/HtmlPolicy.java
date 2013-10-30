@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElementType;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlTokenType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -50,7 +51,7 @@ public class HtmlPolicy extends XmlFormattingPolicy {
       return false;
     }
 
-    if (firstChild.getNode().getElementType() != XmlElementType.XML_START_TAG_START) {
+    if (firstChild.getNode().getElementType() != XmlTokenType.XML_START_TAG_START) {
       return false;
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     try {
       targetElement.putUserData(EVALUATION_IN_PROCESS, "");
       final List<PsiElement> deps = new ArrayList<PsiElement>();
-      final XmlEntityDecl[] result = new XmlEntityDecl[]{null};
+      final XmlEntityDecl[] result = {null};
 
       PsiElementProcessor processor = new PsiElementProcessor() {
         public boolean execute(@NotNull PsiElement element) {

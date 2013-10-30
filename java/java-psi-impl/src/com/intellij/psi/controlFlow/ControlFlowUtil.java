@@ -369,7 +369,8 @@ public class ControlFlowUtil {
     return offset;
   }
 
-  public static final Class[] DEFAULT_EXIT_STATEMENTS_CLASSES = new Class[]{PsiReturnStatement.class, PsiBreakStatement.class, PsiContinueStatement.class};
+  public static final Class[] DEFAULT_EXIT_STATEMENTS_CLASSES =
+    {PsiReturnStatement.class, PsiBreakStatement.class, PsiContinueStatement.class};
 
   private static PsiStatement findStatement(ControlFlow flow, int offset) {
     PsiElement element = flow.getElement(offset);
@@ -675,7 +676,7 @@ public class ControlFlowUtil {
   }
 
   public static Object[] getAllWorldProblemsAtOnce(final ControlFlow flow) {
-    InstructionClientVisitor[] visitors = new InstructionClientVisitor[]{
+    InstructionClientVisitor[] visitors = {
       new ReturnPresentClientVisitor(flow),
       new UnreachableStatementClientVisitor(flow),
       new ReadBeforeWriteClientVisitor(flow, true),

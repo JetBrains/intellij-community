@@ -134,7 +134,7 @@ public class ImportsFormatter extends XmlRecursiveElementVisitor {
   private static ASTNode findValueToken(final ASTNode node) {
     ASTNode child = node.getFirstChildNode();
     while (child != null){
-      if (child.getElementType() == XmlElementType.XML_ATTRIBUTE_VALUE_TOKEN) return child;
+      if (child.getElementType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) return child;
       child = child.getTreeNext();
     }
     return null;

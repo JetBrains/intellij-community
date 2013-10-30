@@ -47,7 +47,7 @@ public class ArrangementSettingsToken implements Comparable<ArrangementSettingsT
   }
 
   @Override
-  public int compareTo(ArrangementSettingsToken that) {
+  public int compareTo(@NotNull ArrangementSettingsToken that) {
     return myId.compareTo(that.myId);
   }
 

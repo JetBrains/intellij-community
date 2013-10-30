@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -232,49 +232,49 @@ public interface CodeStyleSettingsCustomizable {
   String WRAPPING_MODIFIER_LIST = ApplicationBundle.message("wrapping.modifier.list");
   String WRAPPING_ASSERT_STATEMENT = ApplicationBundle.message("wrapping.assert.statement");
 
-  String[] WRAP_OPTIONS = new String[]{
+  String[] WRAP_OPTIONS = {
     ApplicationBundle.message("wrapping.do.not.wrap"),
     ApplicationBundle.message("wrapping.wrap.if.long"),
     ApplicationBundle.message("wrapping.chop.down.if.long"),
     ApplicationBundle.message("wrapping.wrap.always")
   };
-  String[] WRAP_OPTIONS_FOR_SINGLETON = new String[]{
+  String[] WRAP_OPTIONS_FOR_SINGLETON = {
     ApplicationBundle.message("wrapping.do.not.wrap"),
     ApplicationBundle.message("wrapping.wrap.if.long"),
     ApplicationBundle.message("wrapping.wrap.always")
   };
-  int[] WRAP_VALUES = new int[]{CodeStyleSettings.DO_NOT_WRAP,
-    CodeStyleSettings.WRAP_AS_NEEDED,
-    CodeStyleSettings.WRAP_AS_NEEDED |
-    CodeStyleSettings.WRAP_ON_EVERY_ITEM,
-    CodeStyleSettings.WRAP_ALWAYS};
+  int[] WRAP_VALUES = {CommonCodeStyleSettings.DO_NOT_WRAP,
+    CommonCodeStyleSettings.WRAP_AS_NEEDED,
+    CommonCodeStyleSettings.WRAP_AS_NEEDED |
+    CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM,
+    CommonCodeStyleSettings.WRAP_ALWAYS};
 
-  int[] WRAP_VALUES_FOR_SINGLETON = new int[]{CodeStyleSettings.DO_NOT_WRAP,
-    CodeStyleSettings.WRAP_AS_NEEDED,
-    CodeStyleSettings.WRAP_ALWAYS};
-  String[] BRACE_OPTIONS = new String[]{
+  int[] WRAP_VALUES_FOR_SINGLETON = {CommonCodeStyleSettings.DO_NOT_WRAP,
+    CommonCodeStyleSettings.WRAP_AS_NEEDED,
+    CommonCodeStyleSettings.WRAP_ALWAYS};
+  String[] BRACE_OPTIONS = {
     ApplicationBundle.message("wrapping.force.braces.do.not.force"),
     ApplicationBundle.message("wrapping.force.braces.when.multiline"),
     ApplicationBundle.message("wrapping.force.braces.always")
   };
-  int[] BRACE_VALUES = new int[]{
-    CodeStyleSettings.DO_NOT_FORCE,
-    CodeStyleSettings.FORCE_BRACES_IF_MULTILINE,
-    CodeStyleSettings.FORCE_BRACES_ALWAYS
+  int[] BRACE_VALUES = {
+    CommonCodeStyleSettings.DO_NOT_FORCE,
+    CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE,
+    CommonCodeStyleSettings.FORCE_BRACES_ALWAYS
   };
-  String[] BRACE_PLACEMENT_OPTIONS = new String[]{
+  String[] BRACE_PLACEMENT_OPTIONS = {
     ApplicationBundle.message("wrapping.brace.placement.end.of.line"),
     ApplicationBundle.message("wrapping.brace.placement.next.line.if.wrapped"),
     ApplicationBundle.message("wrapping.brace.placement.next.line"),
     ApplicationBundle.message("wrapping.brace.placement.next.line.shifted"),
     ApplicationBundle.message("wrapping.brace.placement.next.line.each.shifted")
   };
-  int[] BRACE_PLACEMENT_VALUES = new int[]{
-    CodeStyleSettings.END_OF_LINE,
-    CodeStyleSettings.NEXT_LINE_IF_WRAPPED,
-    CodeStyleSettings.NEXT_LINE,
-    CodeStyleSettings.NEXT_LINE_SHIFTED,
-    CodeStyleSettings.NEXT_LINE_SHIFTED2
+  int[] BRACE_PLACEMENT_VALUES = {
+    CommonCodeStyleSettings.END_OF_LINE,
+    CommonCodeStyleSettings.NEXT_LINE_IF_WRAPPED,
+    CommonCodeStyleSettings.NEXT_LINE,
+    CommonCodeStyleSettings.NEXT_LINE_SHIFTED,
+    CommonCodeStyleSettings.NEXT_LINE_SHIFTED2
   };
 
   void showAllStandardOptions();

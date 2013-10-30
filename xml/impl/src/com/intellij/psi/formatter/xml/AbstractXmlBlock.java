@@ -161,8 +161,8 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
     return Wrap.createWrap(myXmlFormattingPolicy.getWrappingTypeForTagBegin(tag), true);
   }
 
-  protected
   @Nullable
+  protected
   ASTNode processChild(List<Block> result,
                        final ASTNode child,
                        final Wrap wrap,
@@ -264,7 +264,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
   private ASTNode processAllChildrenFrom(final List<Block> result,
-                                         final @NotNull ASTNode child,
+                                         @NotNull final ASTNode child,
                                          final Wrap wrap,
                                          final Alignment alignment,
                                          final Indent indent) {

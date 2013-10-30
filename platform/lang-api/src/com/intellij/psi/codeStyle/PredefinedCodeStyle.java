@@ -27,7 +27,7 @@ public abstract class PredefinedCodeStyle {
   public static final ExtensionPointName<PredefinedCodeStyle> EP_NAME =
     ExtensionPointName.create("com.intellij.predefinedCodeStyle");
 
-  public static final PredefinedCodeStyle[] EMPTY_ARRAY = new PredefinedCodeStyle[]{};
+  public static final PredefinedCodeStyle[] EMPTY_ARRAY = {};
   private final String myName;
   private final Language myLanguage;
 
