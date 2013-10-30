@@ -6,16 +6,14 @@ import com.intellij.psi.FileViewProvider;
 import org.jetbrains.annotations.NotNull;
 
 public class JsonFile extends PsiFileBase {
-  @NotNull private final FileType myType;
 
-  public JsonFile(FileViewProvider fileViewProvider, @NotNull FileType type) {
+  public JsonFile(FileViewProvider fileViewProvider) {
     super(fileViewProvider, JsonLanguage.INSTANCE);
-    myType = type;
   }
 
   @NotNull
   @Override
   public FileType getFileType() {
-    return myType;
+    return JsonFileType.INSTANCE;
   }
 }

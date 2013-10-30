@@ -9,11 +9,15 @@ import com.jetbrains.json.psi.impl.*;
 public interface JsonParserTypes {
 
   IElementType ARRAY = new JsonElementType("ARRAY");
+  IElementType BOOLEAN_LITERAL = new JsonElementType("BOOLEAN_LITERAL");
   IElementType LITERAL = new JsonElementType("LITERAL");
+  IElementType NULL_LITERAL = new JsonElementType("NULL_LITERAL");
+  IElementType NUMBER_LITERAL = new JsonElementType("NUMBER_LITERAL");
   IElementType OBJECT = new JsonElementType("OBJECT");
   IElementType PROPERTY = new JsonElementType("PROPERTY");
   IElementType PROPERTY_NAME = new JsonElementType("PROPERTY_NAME");
   IElementType PROPERTY_VALUE = new JsonElementType("PROPERTY_VALUE");
+  IElementType STRING_LITERAL = new JsonElementType("STRING_LITERAL");
 
   IElementType COLON = new JsonTokenType(":");
   IElementType COMMA = new JsonTokenType(",");
@@ -33,8 +37,17 @@ public interface JsonParserTypes {
        if (type == ARRAY) {
         return new JsonArrayImpl(node);
       }
+      else if (type == BOOLEAN_LITERAL) {
+        return new JsonBooleanLiteralImpl(node);
+      }
       else if (type == LITERAL) {
         return new JsonLiteralImpl(node);
+      }
+      else if (type == NULL_LITERAL) {
+        return new JsonNullLiteralImpl(node);
+      }
+      else if (type == NUMBER_LITERAL) {
+        return new JsonNumberLiteralImpl(node);
       }
       else if (type == OBJECT) {
         return new JsonObjectImpl(node);
@@ -47,6 +60,9 @@ public interface JsonParserTypes {
       }
       else if (type == PROPERTY_VALUE) {
         return new JsonPropertyValueImpl(node);
+      }
+      else if (type == STRING_LITERAL) {
+        return new JsonStringLiteralImpl(node);
       }
       throw new AssertionError("Unknown element type: " + type);
     }

@@ -4,6 +4,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.json.JsonParserTypes;
+import com.jetbrains.json.psi.impl.JsonPropertyImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,6 +18,11 @@ public class JsonPsiImplUtils {
   @NotNull
   public static String getName(@NotNull JsonProperty property) {
     return StringUtil.unquoteString(property.getPropertyName().getText());
+  }
+
+  @Nullable
+  public static JsonPropertyValue getValue(JsonPropertyImpl property) {
+    return PsiTreeUtil.getChildOfType(property, JsonPropertyValue.class);
   }
 
   public static void delete(@NotNull JsonProperty property) {

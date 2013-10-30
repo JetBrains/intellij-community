@@ -19,6 +19,8 @@
         
         COMMA=','
         COLON=':'
+//        COMMENT='regexp:"//.*|/\*.*?\*/"'
+        // else /\*(?:[^*]|\*[^/])*\*/
         STRING='regexp:"([^\\"]|\\([\\"/bfnrt]|u[a-fA-F0-9]{4}))*"'
         NUMBER='regexp:-?\d+(\.\d+([eE][+-]?\d+)?)?'
         TRUE='true'
@@ -27,30 +29,37 @@
     ]
 
     extends("object|array|literal")=property_value
+    extends("string_literal|number_literal|boolean_literal|null_literal")=literal
 }
 
 json ::= object | array
 
-object ::= L_CURLY properties? R_CURLY {
+object ::= L_CURLY (property (COMMA property)*)? R_CURLY {
   pin=1
   methods=[
     findProperty
   ]
 }
-private properties ::= property (COMMA property)*
 property ::= property_name COLON property_value {
   pin=1
   methods=[
     getName
+    getValue
     delete
   ]
 }
-property_name ::= STRING
+
+array ::= L_BRAKET (property_value (COMMA property_value)*)? R_BRAKET {pin=1}
+
+property_name ::= string_literal
 property_value ::= object | array | literal
-literal ::= STRING | NUMBER | TRUE | FALSE | NULL {
+
+string_literal ::= STRING
+number_literal ::= NUMBER
+boolean_literal ::= TRUE | FALSE
+null_literal ::= NULL
+
+literal ::= string_literal | number_literal | boolean_literal | null_literal {
   methods=[isQuotedString]
   mixin="com.jetbrains.json.psi.impl.JsonLiteralMixin"
 }
-
-array ::= L_BRAKET values? R_BRAKET {pin=1}
-private values ::= property_value (COMMA property_value)*

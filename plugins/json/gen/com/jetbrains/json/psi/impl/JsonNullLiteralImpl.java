@@ -8,24 +8,17 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.PsiTreeUtil;
 import static com.jetbrains.json.JsonParserTypes.*;
-import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.jetbrains.json.psi.*;
 
-public class JsonPropertyNameImpl extends ASTWrapperPsiElement implements JsonPropertyName {
+public class JsonNullLiteralImpl extends JsonLiteralImpl implements JsonNullLiteral {
 
-  public JsonPropertyNameImpl(ASTNode node) {
+  public JsonNullLiteralImpl(ASTNode node) {
     super(node);
   }
 
   public void accept(@NotNull PsiElementVisitor visitor) {
-    if (visitor instanceof JsonVisitor) ((JsonVisitor)visitor).visitPropertyName(this);
+    if (visitor instanceof JsonVisitor) ((JsonVisitor)visitor).visitNullLiteral(this);
     else super.accept(visitor);
-  }
-
-  @Override
-  @NotNull
-  public JsonStringLiteral getStringLiteral() {
-    return findNotNullChildByClass(JsonStringLiteral.class);
   }
 
 }

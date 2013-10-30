@@ -15,13 +15,11 @@ import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class JsonParserDefinitionBase implements ParserDefinition {
+public class JsonParserDefinition implements ParserDefinition {
   public static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE);
   public static final TokenSet STRING_LITERALS = TokenSet.create(JsonParserTypes.STRING);
 
   private static final IFileElementType FILE = new IFileElementType(JsonLanguage.INSTANCE);
-
-  protected abstract FileType getFileType();
 
   @NotNull
   @Override
@@ -65,7 +63,7 @@ public abstract class JsonParserDefinitionBase implements ParserDefinition {
 
   @Override
   public PsiFile createFile(FileViewProvider fileViewProvider) {
-    return new JsonFile(fileViewProvider, getFileType());
+    return new JsonFile(fileViewProvider);
   }
 
   @Override

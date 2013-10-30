@@ -11,8 +11,20 @@ public class JsonVisitor extends PsiElementVisitor {
     visitPropertyValue(o);
   }
 
+  public void visitBooleanLiteral(@NotNull JsonBooleanLiteral o) {
+    visitLiteral(o);
+  }
+
   public void visitLiteral(@NotNull JsonLiteral o) {
     visitPropertyValue(o);
+  }
+
+  public void visitNullLiteral(@NotNull JsonNullLiteral o) {
+    visitLiteral(o);
+  }
+
+  public void visitNumberLiteral(@NotNull JsonNumberLiteral o) {
+    visitLiteral(o);
   }
 
   public void visitObject(@NotNull JsonObject o) {
@@ -29,6 +41,10 @@ public class JsonVisitor extends PsiElementVisitor {
 
   public void visitPropertyValue(@NotNull JsonPropertyValue o) {
     visitPsiElement(o);
+  }
+
+  public void visitStringLiteral(@NotNull JsonStringLiteral o) {
+    visitLiteral(o);
   }
 
   public void visitPsiElement(@NotNull PsiElement o) {
