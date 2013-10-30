@@ -131,7 +131,10 @@ public class PsiMethodReferenceUtil {
         if (resolve instanceof PsiClass) {
           containingClass = (PsiClass)resolve;
           substitutor = resolveResult.getSubstitutor();
-          return new QualifierResolveResult(containingClass, substitutor, true);
+          final PsiElement element = methodReferenceExpression.getReferenceNameElement();
+          final boolean isConstructor = element instanceof PsiKeyword && PsiKeyword.NEW.equals(element.getText());
+          final boolean isRawSubst = (!isConstructor && PsiTreeUtil.isAncestor(containingClass, methodReferenceExpression, true)) && PsiUtil.isRawSubstitutor(containingClass, substitutor);
+          return new QualifierResolveResult(containingClass, isRawSubst ? PsiSubstitutor.EMPTY : substitutor, true);
         }
       }
     }
