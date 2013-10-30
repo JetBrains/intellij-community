@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ public class CharSequenceCharacterIterator implements CharacterIterator {
     myCurPosition = 0;
   }
 
+  @Override
   public char current() {
     if (myCurPosition < 0) {
       myCurPosition = 0;
@@ -43,38 +44,46 @@ public class CharSequenceCharacterIterator implements CharacterIterator {
     return myChars.charAt(myCurPosition);
   }
 
+  @Override
   public char first() {
     myCurPosition = 0;
     return current();
   }
 
+  @Override
   public char last() {
     myCurPosition = myChars.length() - 1;
     return current();
   }
 
+  @Override
   public char next() {
     myCurPosition++;
     return current();
   }
 
+  @Override
   public char previous() {
     myCurPosition--;
     return current();
   }
 
+  @Override
   public int getBeginIndex() {
     return 0;
   }
 
+  @Override
   public int getEndIndex() {
     return myChars.length();
   }
 
+  @Override
   public int getIndex() {
     return myCurPosition;
   }
 
+  @Override
   public char setIndex(int position) {
     if (position < 0 || position > myChars.length()) {
       throw new IllegalArgumentException("Wrong index: " + position);
@@ -83,6 +92,7 @@ public class CharSequenceCharacterIterator implements CharacterIterator {
     return current();
   }
 
+  @Override
   public Object clone() {
     final CharSequenceCharacterIterator it = new CharSequenceCharacterIterator(myChars);
     it.myCurPosition = myCurPosition;

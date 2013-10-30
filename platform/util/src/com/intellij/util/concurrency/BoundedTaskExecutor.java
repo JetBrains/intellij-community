@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.util.concurrency;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Queue;
@@ -28,6 +29,7 @@ public class BoundedTaskExecutor implements Executor {
   private final Queue<FutureTask> myTaskQueue = new LinkedBlockingQueue<FutureTask>();
 
   private final Runnable USER_TASK_RUNNER = new Runnable() {
+    @Override
     public void run() {
       final FutureTask task = myTaskQueue.poll();
       try {
@@ -50,7 +52,7 @@ public class BoundedTaskExecutor implements Executor {
   }
 
   @Override
-  public void execute(Runnable task) {
+  public void execute(@NotNull Runnable task) {
     submit(task);
   }
 

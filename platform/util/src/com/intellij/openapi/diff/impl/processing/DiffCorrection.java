@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,12 +40,14 @@ public interface DiffCorrection {
       myComparisonPolicy = comparisonPolicy;
     }
 
+    @Override
     public DiffFragment[] correct(DiffFragment[] fragments) throws FilesTooBigForDiffException {
       FragmentsCollector collector = new FragmentsCollector();
       collector.processAll(fragments, this);
       return collector.toArray();
     }
 
+    @Override
     public void process(DiffFragment fragment, FragmentsCollector collector) throws FilesTooBigForDiffException {
       if (!fragment.isEqual()) {
         if (myComparisonPolicy.isEqual(fragment))
@@ -74,6 +76,7 @@ public interface DiffCorrection {
       myDiffPolicy = new DiffPolicy.ByChar(myComparisonPolicy);
     }
 
+    @Override
     public void process(DiffFragment fragment, FragmentsCollector collector) throws FilesTooBigForDiffException {
       if (!fragment.isChange()) {
         collector.add(fragment);
@@ -96,7 +99,7 @@ public interface DiffCorrection {
       }
       String spaces1 = leadingSpaces(text1);
       String spaces2 = leadingSpaces(text2);
-      if (spaces1.length() == 0 && spaces2.length() == 0) {
+      if (spaces1.isEmpty() && spaces2.isEmpty()) {
         DiffFragment trailing = myComparisonPolicy.createFragment(text1, text2);
         collector.add(trailing);
         return;
@@ -113,6 +116,7 @@ public interface DiffCorrection {
       return text.substring(0, i);
     }
 
+    @Override
     public DiffFragment[] correct(DiffFragment[] fragments) throws FilesTooBigForDiffException {
       FragmentsCollector collector = new FragmentsCollector();
       collector.processAll(fragments, this);
@@ -188,6 +192,7 @@ public interface DiffCorrection {
       myMarkMode = mode;
     }
 
+    @Override
     public void add(DiffFragment fragment) {
       flushMarked();
       super.add(fragment);
@@ -200,6 +205,7 @@ public interface DiffCorrection {
       }
     }
 
+    @Override
     public void processAll(DiffFragment[] fragments, FragmentProcessor<FragmentBuffer> processor) throws FilesTooBigForDiffException {
       super.processAll(fragments, processor);
       flushMarked();
@@ -210,12 +216,14 @@ public interface DiffCorrection {
     public static final DiffCorrection INSTANCE = new ConcatenateSingleSide();
     private static final int DEFAULT_MODE = 1;
 
+    @Override
     public DiffFragment[] correct(DiffFragment[] fragments) throws FilesTooBigForDiffException {
       FragmentBuffer buffer = new FragmentBuffer();
       buffer.processAll(fragments, this);
       return buffer.toArray();
     }
 
+    @Override
     public void process(DiffFragment fragment, FragmentBuffer buffer) {
       if (fragment.isOneSide()) buffer.markIfNone(DEFAULT_MODE);
       else buffer.add(fragment);
@@ -227,12 +235,14 @@ public interface DiffCorrection {
     private static final int EQUAL_MODE = 1;
     private static final int FORMATTING_MODE = 2;
 
+    @Override
     public DiffFragment[] correct(DiffFragment[] fragments) throws FilesTooBigForDiffException {
       FragmentBuffer buffer = new FragmentBuffer();
       buffer.processAll(fragments, this);
       return buffer.toArray();
     }
 
+    @Override
     public void process(DiffFragment fragment, FragmentBuffer buffer) {
       if (fragment.isEqual()) buffer.markIfNone(EQUAL_MODE);
       else if (ComparisonPolicy.TRIM_SPACE.isEqual(fragment)) buffer.markIfNone(FORMATTING_MODE);
@@ -245,6 +255,7 @@ public interface DiffCorrection {
 
     private Normalize() {}
 
+    @Override
     public DiffFragment[] correct(DiffFragment[] fragments) throws FilesTooBigForDiffException {
       return UnitEquals.INSTANCE.correct(ConcatenateSingleSide.INSTANCE.correct(fragments));
     }
@@ -254,12 +265,14 @@ public interface DiffCorrection {
     public static final ConnectSingleSideToChange INSTANCE = new ConnectSingleSideToChange();
     private static final int CHANGE = 1;
 
+    @Override
     public DiffFragment[] correct(DiffFragment[] fragments) throws FilesTooBigForDiffException {
       FragmentBuffer buffer = new FragmentBuffer();
       buffer.processAll(fragments, this);
       return buffer.toArray();
     }
 
+    @Override
     public void process(DiffFragment fragment, FragmentBuffer buffer) {
       if (fragment.isEqual()) buffer.add(fragment);
       else if (fragment.isOneSide()) {

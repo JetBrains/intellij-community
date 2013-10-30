@@ -45,9 +45,9 @@ public class PagedFileStorage implements Forceable {
 
   public static final int MB = 1024 * 1024;
 
-  private final static int LOWER_LIMIT;
-  private final static int UPPER_LIMIT;
-  public final static int BUFFER_SIZE;
+  private static final int LOWER_LIMIT;
+  private static final int UPPER_LIMIT;
+  public static final int BUFFER_SIZE;
   private static final int UNKNOWN_PAGE = -1;
 
   static {
@@ -347,7 +347,7 @@ public class PagedFileStorage implements Forceable {
     mySize = newSize;
   }
 
-  private final static int MAX_FILLER_SIZE = 8192;
+  private static final int MAX_FILLER_SIZE = 8192;
   private void fillWithZeros(int from, int length) {
     byte[] buff = new byte[MAX_FILLER_SIZE];
     Arrays.fill(buff, (byte)0);
@@ -439,6 +439,7 @@ public class PagedFileStorage implements Forceable {
     buffer.markDirty();
   }
 
+  @Override
   public void force() {
     long started = IOStatistics.DEBUG ? System.currentTimeMillis():0;
     if (isDirty) {
@@ -454,6 +455,7 @@ public class PagedFileStorage implements Forceable {
     }
   }
 
+  @Override
   public boolean isDirty() {
     return isDirty;
   }
@@ -669,7 +671,8 @@ public class PagedFileStorage implements Forceable {
       }
     }
 
-    private @Nullable Map<Integer, ByteBufferWrapper> getBuffersOrderedForOwner(int index, StorageLockContext storageLockContext) {
+    @Nullable
+    private Map<Integer, ByteBufferWrapper> getBuffersOrderedForOwner(int index, StorageLockContext storageLockContext) {
       mySegmentsAccessLock.lock();
       try {
         checkThreadAccess(storageLockContext);

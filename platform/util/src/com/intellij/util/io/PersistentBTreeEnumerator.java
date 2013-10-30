@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,9 +180,11 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     return pageStart;
   }
 
+  @Override
   public boolean processAllDataObject(@NotNull final Processor<Data> processor, @Nullable final DataFilter filter) throws IOException {
     if(myInlineKeysNoMapping) {
       return traverseAllRecords(new RecordsProcessor() {
+        @Override
         public boolean process(final int record) throws IOException {
           if (filter == null || filter.accept(record)) {
             Data data = ((InlineKeyDescriptor<Data>)myDataDescriptor).fromInt(getCurrentKey());
@@ -200,6 +202,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     try {
       lockStorage();
       return btree.processMappings(new IntToIntBtree.KeyValueProcessor() {
+        @Override
         public boolean process(int key, int value) throws IOException {
           p.setCurrentKey(key);
 
@@ -276,6 +279,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   private final int[] myResultBuf = new int[1];
 
+  @Override
   protected int enumerateImpl(final Data value, final boolean onlyCheckForExisting, boolean saveNewValue) throws IOException {
     try {
       lockStorage();

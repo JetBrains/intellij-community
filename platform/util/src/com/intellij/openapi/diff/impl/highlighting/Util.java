@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -272,7 +272,7 @@ public class Util {
       if (fragment.isEqual()) continue;
       for (int side = 0;  side < 2; side++) {
         String text = FragmentSide.fromIndex(side).getText(fragment);
-        if (text == null || text.trim().length() == 0) continue;
+        if (text == null || text.trim().isEmpty()) continue;
         return false;
       }
     }
@@ -298,7 +298,7 @@ public class Util {
         DiffFragment fragment = fragments[i];
         if (fragment == null) continue;
         String text = side.getText(fragment);
-        if (text == null || text.length() == 0) continue;
+        if (text == null || text.isEmpty()) continue;
         text = text.length() > 1 ? text.substring(1) : null;
         String otherText = side.getOtherText(fragment);
         if (otherText == null && text == null) {

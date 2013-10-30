@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -161,7 +161,7 @@ public class PathMappingSettings implements Cloneable {
   }
 
   public boolean isUseMapping() {
-    return myPathMappings.size() > 0;
+    return !myPathMappings.isEmpty();
   }
 
   @NotNull
@@ -273,7 +273,7 @@ public class PathMappingSettings implements Cloneable {
       }
 
       String localPrefix = normLocal(myLocalRoot);
-      return localPrefix.length() > 0 && normLocal(path).startsWith(localPrefix);
+      return !localPrefix.isEmpty() && normLocal(path).startsWith(localPrefix);
     }
 
     public String mapToRemote(@NotNull String path) {
@@ -302,7 +302,7 @@ public class PathMappingSettings implements Cloneable {
 
       path = norm(path);
       String remotePrefix = norm(myRemoteRoot);
-      return myRemoteRoot.length() > 0 && path.startsWith(remotePrefix);
+      return !myRemoteRoot.isEmpty() && path.startsWith(remotePrefix);
     }
 
     @Override

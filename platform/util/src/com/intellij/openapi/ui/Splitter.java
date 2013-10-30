@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,6 +154,7 @@ public class Splitter extends JPanel {
    * @see #setSecondComponent(JComponent)
    * @deprecated
    */
+  @Override
   public Component add(Component comp) {
     final int childCount = getComponentCount();
     LOG.assertTrue(childCount >= 1);
@@ -178,11 +179,13 @@ public class Splitter extends JPanel {
     return new Divider();
   }
 
+  @Override
   public boolean isVisible() {
     return super.isVisible() &&
            (myFirstComponent != null && myFirstComponent.isVisible() || mySecondComponent != null && mySecondComponent.isVisible());
   }
 
+  @Override
   public Dimension getMinimumSize() {
     final int dividerWidth = getDividerWidth();
     if (myFirstComponent != null && myFirstComponent.isVisible() && mySecondComponent != null && mySecondComponent.isVisible()) {
@@ -231,6 +234,7 @@ public class Splitter extends JPanel {
     mySkipNextLayouting = true;
   }
 
+  @Override
   public void doLayout() {
     if (mySkipNextLayouting) {
       mySkipNextLayouting = false;
@@ -572,6 +576,7 @@ public class Splitter extends JPanel {
       repaint();
     }
 
+    @Override
     protected void processMouseMotionEvent(MouseEvent e) {
       super.processMouseMotionEvent(e);
       if (!myResizeEnabled) return;
@@ -612,6 +617,7 @@ public class Splitter extends JPanel {
       return 0.0f;
     }
 
+    @Override
     protected void processMouseEvent(MouseEvent e) {
       super.processMouseEvent(e);
       if (e.getID() == MouseEvent.MOUSE_CLICKED) {

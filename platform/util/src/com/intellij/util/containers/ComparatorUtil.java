@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ public class ComparatorUtil {
 
   public static <Type, Aspect> Comparator<Type> compareBy(final Convertor<Type, Aspect> aspect, final Comparator<Aspect> comparator) {
     return new Comparator<Type>() {
+      @Override
       public int compare(Type element1, Type element2) {
         return comparator.compare(aspect.convert(element1), aspect.convert(element2));
       }

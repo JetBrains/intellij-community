@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ class TagBinding implements Binding {
     binding = XmlSerializerImpl.getBinding(accessor);
   }
 
+  @Override
   public Object serialize(Object o, Object context, SerializationFilter filter) {
     Object value = accessor.read(o);
     if (value == null) return context;
@@ -54,6 +55,7 @@ class TagBinding implements Binding {
     return v;
   }
 
+  @Override
   public Object deserialize(Object o, @NotNull Object... nodes) {
     assert nodes.length > 0;
     Object[] children;
@@ -81,14 +83,17 @@ class TagBinding implements Binding {
     return o;
   }
 
+  @Override
   public boolean isBoundTo(Object node) {
     return node instanceof Element && ((Element)node).getName().equals(myTagName);
   }
 
+  @Override
   public Class getBoundNodeType() {
     throw new UnsupportedOperationException("Method getBoundNodeType is not supported in " + getClass());
   }
 
+  @Override
   public void init() {
   }
 }

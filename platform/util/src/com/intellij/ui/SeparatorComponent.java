@@ -62,6 +62,7 @@ public class SeparatorComponent extends JComponent {
     myVGap = 0;
   }
 
+  @Override
   protected void paintComponent(Graphics g) {
     if (!isVisible()) return;
 
@@ -84,6 +85,7 @@ public class SeparatorComponent extends JComponent {
 
   }
 
+  @Override
   public Dimension getPreferredSize() {
     if (myOrientation != SeparatorOrientation.VERTICAL)
       return new Dimension(0, myVGap * 2 + 1);
@@ -91,6 +93,7 @@ public class SeparatorComponent extends JComponent {
       return new Dimension(myHGap * 2 + 1, 1 + ((myShadow != null) ? 1 : 0));
   }
 
+  @Override
   public Dimension getMinimumSize() {
     return getPreferredSize();
   }
@@ -111,7 +114,7 @@ public class SeparatorComponent extends JComponent {
 
     SeparatorComponent separatorComponent = new SeparatorComponent(5, containerBackgroundColor.darker(), containerBackgroundColor.brighter());
 
-    int hgap = titleText.length() > 0 ? 5 : 0;
+    int hgap = !titleText.isEmpty() ? 5 : 0;
     JPanel result = new JPanel(new BorderLayout(hgap, 10));
     result.add(titleLabel, BorderLayout.WEST);
     result.add(separatorComponent, BorderLayout.CENTER);

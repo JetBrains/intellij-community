@@ -265,7 +265,7 @@ public class UnixProcessManager {
     void kill(int pid, int signal);
   }
 
-  private final static ProcessKiller UNIX_KILLER = new ProcessKiller() {
+  private static final ProcessKiller UNIX_KILLER = new ProcessKiller() {
     @Override
     public void kill(int pid, int signal) {
       sendSignal(pid, signal);

@@ -134,10 +134,12 @@ public class StringTokenizer implements Enumeration<String> {
     return nextToken();
   }
 
+  @Override
   public boolean hasMoreElements() {
     return hasMoreTokens();
   }
 
+  @Override
   public String nextElement() {
     return nextToken();
   }

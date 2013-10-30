@@ -183,6 +183,7 @@ public class PersistentStringEnumerator extends PersistentEnumeratorDelegate<Str
     }
   }
 
+  @Override
   public void markCorrupted() {
     myEnumerator.markCorrupted();
   }

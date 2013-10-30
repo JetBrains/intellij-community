@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,21 +36,26 @@ public class Layers extends JLayeredPane {
   }
 
   private class Layout implements LayoutManager2 {
+    @Override
     public void addLayoutComponent(Component comp, Object constraints) {
       myComponents.add(comp);
     }
 
+    @Override
     public float getLayoutAlignmentX(Container target) {
       return 0;
     }
 
+    @Override
     public float getLayoutAlignmentY(Container target) {
       return 0;
     }
 
+    @Override
     public void invalidateLayout(Container target) {
     }
 
+    @Override
     public Dimension maximumLayoutSize(Container target) {
       int maxWidth = 0;
       int maxHeight = 0;
@@ -62,16 +67,19 @@ public class Layers extends JLayeredPane {
       return new Dimension(maxWidth, maxHeight);
     }
 
+    @Override
     public void addLayoutComponent(String name, Component comp) {
       myComponents.add(comp);
     }
 
+    @Override
     public void layoutContainer(Container parent) {
       for (Component each : myComponents) {
         each.setBounds(0, 0, parent.getWidth() - 1, parent.getHeight() - 1);
       }
     }
 
+    @Override
     public Dimension minimumLayoutSize(Container parent) {
       int minWidth = 0;
       int minHeight = 0;
@@ -83,6 +91,7 @@ public class Layers extends JLayeredPane {
       return new Dimension(minWidth, minHeight);
     }
 
+    @Override
     public Dimension preferredLayoutSize(Container parent) {
       int prefWidth = 0;
       int prefHeight = 0;
@@ -94,6 +103,7 @@ public class Layers extends JLayeredPane {
       return new Dimension(prefWidth, prefHeight);
     }
 
+    @Override
     public void removeLayoutComponent(Component comp) {
       myComponents.remove(comp);
     }
