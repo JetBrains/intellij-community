@@ -1,0 +1,4 @@
+//empty file
+dependencies{
+compile 'testGroupId:testArtifactId:1.0'
+}

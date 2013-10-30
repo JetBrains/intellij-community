@@ -9,6 +9,7 @@
       <sourceFolder url="file://$MODULE_DIR$/testData" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
+    <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="idea-ui" />
     <orderEntry type="module" module-name="lang-api" />
@@ -20,7 +21,6 @@
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="java-impl" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
-    <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="module-library" exported="">
