@@ -318,7 +318,7 @@ class RootIndex {
     int count = 0;
     for (VirtualFile root = dir; root != null; root = root.getParent()) {
       if (++count > 1000) {
-        throw new IllegalStateException("Possible loop in tree");
+        throw new IllegalStateException("Possible loop in tree, started at " + dir.getName());
       }
       final DirectoryInfo info = myRoots.get(root);
       if (info != null) {
