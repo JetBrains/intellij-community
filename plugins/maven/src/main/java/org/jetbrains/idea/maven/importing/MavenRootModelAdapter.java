@@ -209,12 +209,14 @@ public class MavenRootModelAdapter {
         String child = under ? excludedUrl : url.getUrl();
 
         if (VfsUtilCore.isEqualOrAncestor(ancestor, child)) {
-          if (excludedUrl.equals(getCompilerExtension().getCompilerOutputUrl()) || excludedUrl.equals(getCompilerExtension().getCompilerOutputUrlForTests())) {
-            getCompilerExtension().setExcludeOutput(false);
-          }
-          else {
-            eachEntry.removeExcludeFolder(excludedUrl);
-          }
+          eachEntry.removeExcludeFolder(excludedUrl);
+        }
+      }
+      for (String outputUrl : getCompilerExtension().getOutputRootUrls(true)) {
+        String ancestor = under ? url.getUrl() : outputUrl;
+        String child = under ? outputUrl : url.getUrl();
+        if (VfsUtilCore.isEqualOrAncestor(ancestor, child)) {
+          getCompilerExtension().setExcludeOutput(false);
         }
       }
     }
