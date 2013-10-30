@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -174,7 +174,7 @@ public class ProgressIndicatorBase extends AbstractProgressIndicatorBase impleme
 
   @Override
   public boolean isFinished(@NotNull final TaskInfo task) {
-    WeakList<TaskInfo> list = myFinished;
+    List<TaskInfo> list = myFinished;
     return list != null && list.contains(task);
   }
 

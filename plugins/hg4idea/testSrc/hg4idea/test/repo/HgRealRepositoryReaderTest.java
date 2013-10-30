@@ -20,6 +20,7 @@ import com.intellij.dvcs.test.TestRepositoryUtil;
 import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.repo.HgRepositoryReader;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
 import java.util.Arrays;
@@ -57,7 +58,8 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
   }
 
   public void testBranches() {
-    TestRepositoryUtil.assertEqualCollections(myRepositoryReader.readBranches(), Arrays.asList("default", "branchA", "branchB"));
+    TestRepositoryUtil.assertEqualCollections(HgUtil.getNamesWithoutHashes(myRepositoryReader.readBranches()),
+                                              Arrays.asList("default", "branchA", "branchB"));
   }
 
   public void testCurrentBookmark() {
@@ -66,7 +68,8 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
   }
 
   public void testBookmarks() {
-    TestRepositoryUtil.assertEqualCollections(myRepositoryReader.readBookmarks(), Arrays.asList("A_BookMark", "B_BookMark", "C_BookMark"));
+    TestRepositoryUtil.assertEqualCollections(HgUtil.getNamesWithoutHashes(myRepositoryReader.readBookmarks()),
+                                              Arrays.asList("A_BookMark", "B_BookMark", "C_BookMark"));
   }
 
   private void createBranches() {

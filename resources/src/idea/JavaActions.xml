@@ -26,7 +26,7 @@
     </action>
 
     <action id="NewPackageInfo" class="com.intellij.ide.actions.CreatePackageInfoAction">
-      <add-to-group group-id="NewGroup1" anchor="after" relative-to-action="NewClass"/>
+      <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewDir"/>
     </action>
 
     <action id="CollapseBlock" class="com.intellij.codeInsight.folding.impl.actions.CollapseBlockAction">

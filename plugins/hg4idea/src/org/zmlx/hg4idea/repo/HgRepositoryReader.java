@@ -18,13 +18,13 @@ package org.zmlx.hg4idea.repo;
 import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryUtil;
+import com.intellij.vcs.log.impl.HashImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgNameWithHashInfo;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
  */
 public class HgRepositoryReader {
 
-  private static Pattern HASH_NAME = Pattern.compile("\\s*(.+)\\s+(.+)");
+  private static Pattern HASH_NAME = Pattern.compile("\\s*([0-9a-fA-F]+)\\s+(.+)");
 
   @NotNull private final File myHgDir;            // .hg
   @NotNull private final File myBranchHeadsFile;  // .hg/cache/branchheads (does not exist before first commit)
@@ -82,15 +82,19 @@ public class HgRepositoryReader {
   }
 
   @NotNull
-  public Collection<String> readBranches() {
-    Set<String> branches = new HashSet<String>();
+  public Collection<HgNameWithHashInfo> readBranches() {
+    List<HgNameWithHashInfo> branches = new ArrayList<HgNameWithHashInfo>();
+   // Set<String> branchNames = new HashSet<String>();
     if (!checkIsFresh()) {
       String[] branchesWithHeads = RepositoryUtil.tryLoadFile(myBranchHeadsFile).split("\n");
       // first one - is a head revision: head hash + head number;
       for (int i = 1; i < branchesWithHeads.length; ++i) {
         Matcher matcher = HASH_NAME.matcher(branchesWithHeads[i]);
         if (matcher.matches()) {
-          branches.add(matcher.group(2));
+          String name = matcher.group(2);
+         // if (branchNames.add(name)) {
+            branches.add(new HgNameWithHashInfo(name, HashImpl.build(matcher.group(1))));
+          //}
         }
       }
     }
@@ -115,9 +119,9 @@ public class HgRepositoryReader {
   }
 
   @NotNull
-  public Collection<String> readBookmarks() {
+  public Collection<HgNameWithHashInfo> readBookmarks() {
     // .hg/bookmarks contains hash + name, f.e. 25e44c95b2612e3cdf29a704dabf82c77066cb67 A_BookMark
-    Set<String> bookmarks = new HashSet<String>();
+    Set<HgNameWithHashInfo> bookmarks = new HashSet<HgNameWithHashInfo>();
     if (!myBookmarksFile.exists()) {
       return bookmarks;
     }
@@ -125,7 +129,7 @@ public class HgRepositoryReader {
     for (String str : bookmarksWithHeads) {
       Matcher matcher = HASH_NAME.matcher(str);
       if (matcher.matches()) {
-        bookmarks.add(matcher.group(2));
+        bookmarks.add(new HgNameWithHashInfo(matcher.group(2), HashImpl.build(matcher.group(1))));
       }
     }
     return bookmarks;

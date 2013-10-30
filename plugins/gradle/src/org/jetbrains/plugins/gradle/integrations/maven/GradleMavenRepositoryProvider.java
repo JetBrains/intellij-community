@@ -13,16 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.codeInsight.actions;
+package org.jetbrains.plugins.gradle.integrations.maven;
 
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.indices.MavenRepositoryProvider;
+import org.jetbrains.idea.maven.model.MavenRemoteRepository;
+
+import java.util.Set;
 
 /**
  * @author Vladislav.Soroka
- * @since 10/22/13
+ * @since 10/25/13
  */
-public class GradleGenerateActionGroup extends DefaultActionGroup {
-  public GradleGenerateActionGroup() {
-    add(new AddGradleDslPluginAction());
+public class GradleMavenRepositoryProvider implements MavenRepositoryProvider {
+
+  @NotNull
+  @Override
+  public Set<MavenRemoteRepository> getRemoteRepositories(@NotNull Project project) {
+    return MavenRepositoriesHolder.getInstance(project).getRemoteRepositories();
   }
 }

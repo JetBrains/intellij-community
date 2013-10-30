@@ -80,7 +80,7 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
   @NotNull
   private T loadingDetails(Node node, Hash hash) {
     TaskDescriptor descriptor = runLoadAroundCommitData(node);
-    T loadingDetails = (T)new LoadingDetails(hash, descriptor.getTaskNum());
+    T loadingDetails = (T)new LoadingDetails(hash, descriptor.getTaskNum(), node.getBranch().getRepositoryRoot());
     return loadingDetails;
   }
 
@@ -145,7 +145,7 @@ public abstract class DataGetter<T extends VcsShortCommitDetails> implements Dis
         // fill the cache with temporary "Loading" values to avoid producing queries for each commit that has not been cached yet,
         // even if it will be loaded within a previous query
         if (!myCache.isKeyCached(hash)) {
-          myCache.put(hash, (T)new LoadingDetails(hash, taskNumber));
+          myCache.put(hash, (T)new LoadingDetails(hash, taskNumber, commitNode.getBranch().getRepositoryRoot()));
         }
       }
     }

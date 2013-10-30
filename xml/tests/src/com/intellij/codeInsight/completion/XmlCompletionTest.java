@@ -332,6 +332,12 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     checkResultByFile(getTestName(true) + ".xml");
   }
 
+  public void testBeforeAttributeNameWithPrefix() throws Exception {
+    configureByFile(getTestName(true) + ".xml");
+    selectItem(myFixture.getLookupElements()[0], '\t');
+    checkResultByFile(getTestName(true) + "_after.xml");
+  }
+
   public void testUrlCompletionInDtd() throws Exception {
     configureByFile("20.xml");
     final PsiReference referenceAt = myFixture.getFile().findReferenceAt(myFixture.getEditor().getCaretModel().getOffset() - 1);

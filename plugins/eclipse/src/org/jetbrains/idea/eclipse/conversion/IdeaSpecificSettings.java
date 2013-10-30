@@ -22,7 +22,6 @@ package org.jetbrains.idea.eclipse.conversion;
 
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -30,8 +29,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy;
-import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Comparing;
@@ -43,7 +40,6 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -310,17 +306,9 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
       }
 
       final VirtualFile entryFile = entry.getFile();
-      exclude: for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
+      for (ExcludeFolder excludeFolder : entry.getExcludeFolders()) {
         final String exludeFolderUrl = excludeFolder.getUrl();
         final VirtualFile excludeFile = excludeFolder.getFile();
-        for (DirectoryIndexExcludePolicy excludePolicy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, model.getModule().getProject())) {
-          final VirtualFilePointer[] excludeRootsForModule = excludePolicy.getExcludeRootsForModule(model);
-          for (VirtualFilePointer pointer : excludeRootsForModule) {
-            if (Comparing.strEqual(pointer.getUrl(), exludeFolderUrl)) {
-              continue exclude;
-            }
-          }
-        }
         if (entryFile == null || excludeFile == null || VfsUtilCore.isAncestor(entryFile, excludeFile, false)) {
           Element element = new Element(IdeaXml.EXCLUDE_FOLDER_TAG);
           contentEntryElement.addContent(element);

@@ -61,4 +61,9 @@ public class VcsShortCommitDetailsImpl implements VcsShortCommitDetails {
     return myAuthorName;
   }
 
+  @Override
+  public String toString() {
+    return getHash().toShortString() + "(" + getSubject() + ")";
+  }
+
 }

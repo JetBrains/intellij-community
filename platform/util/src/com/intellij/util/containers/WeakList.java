@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -28,153 +27,112 @@ import java.util.List;
  *   <li>Stores elements using weak semantics (see {@link java.lang.ref.WeakReference})</li>
  *   <li>Automatically reclaims storage for garbage collected elements</li>
  *   <li>Is thread safe</li>
+ *   <li>Is NOT RandomAccess, because garbage collector can remove element at any time</li>
+ *   <li>Does NOT support null elements</li>
  * </ul>
  */
 public class WeakList<T> extends UnsafeWeakList<T> {
-  public WeakList() {
-    this(new WeakReferenceArray<T>());
-  }
-
-  // For testing only
-  WeakList(@NotNull WeakReferenceArray<T> array) {
-    super(array);
-  }
-
   @Override
-  public T get(int index) {
-    synchronized (myArray) {
-      return super.get(index);
-    }
-  }
-
-  @Override
-  public boolean add(T element) {
-    synchronized (myArray) {
+  public boolean add(@NotNull T element) {
+    synchronized (myList) {
       return super.add(element);
     }
   }
 
   @Override
-  public boolean contains(Object o) {
-    synchronized (myArray) {
-      return super.contains(o);
+  public boolean addAll(@NotNull Collection<? extends T> c) {
+    synchronized (myList) {
+      return super.addAll(c);
     }
   }
 
   @Override
-  public boolean addIfAbsent(T element) {
-    synchronized (myArray) {
+  public boolean addIfAbsent(@NotNull T element) {
+    synchronized (myList) {
       return super.addIfAbsent(element);
     }
   }
 
   @Override
-  public void add(int index, T element) {
-    synchronized (myArray) {
-      super.add(index, element);
-    }
-  }
-
-  @Override
-  public T set(int index, T element) {
-    synchronized (myArray) {
-      return super.set(index, element);
-    }
-  }
-
-  @Override
-  public int indexOf(Object o) {
-    synchronized (myArray) {
-      return super.indexOf(o);
-    }
-  }
-
-  @Override
-  public int lastIndexOf(Object o) {
-    synchronized (myArray) {
-      return super.lastIndexOf(o);
-    }
-  }
-
-  @Override
   public void clear() {
-    synchronized (myArray) {
+    synchronized (myList) {
       super.clear();
     }
   }
 
   @Override
-  protected void removeRange(int fromIndex, int toIndex) {
-    synchronized (myArray) {
-      super.removeRange(fromIndex, toIndex);
+  public boolean contains(@NotNull Object o) {
+    synchronized (myList) {
+      return super.contains(o);
     }
   }
 
   @Override
-  public boolean remove(Object o) {
-    synchronized (myArray) {
+  public boolean remove(@NotNull Object o) {
+    synchronized (myList) {
       return super.remove(o);
     }
   }
 
   @Override
-  public T remove(int index) {
-    synchronized (myArray) {
-      return super.remove(index);
+  public boolean removeAll(@NotNull Collection<?> c) {
+    synchronized (myList) {
+      return super.removeAll(c);
     }
   }
 
   @Override
-  public boolean removeAll(Collection<?> c) {
-    synchronized (myArray) {
-      return super.removeAll(c);
+  public boolean isEmpty() {
+    synchronized (myList) {
+      return super.isEmpty();
     }
   }
 
   @Override
   @NotNull
   public Iterator<T> iterator() {
-    return new MySyncIterator();
-  }
-
-  @Override
-  public int size() {
-    synchronized (myArray) {
-      return myArray.size();
+    final Iterator<T> iterator;
+    synchronized (myList) {
+      iterator = super.iterator();
     }
+    return new Iterator<T>(){
+      @Override
+      public boolean hasNext() {
+        synchronized (myList) {
+          return iterator.hasNext();
+        }
+      }
+
+      @Override
+      public T next() {
+        synchronized (myList) {
+          return iterator.next();
+        }
+      }
+
+      @Override
+      public void remove() {
+        synchronized (myList) {
+          iterator.remove();
+        }
+      }
+    };
   }
 
+  @NotNull
   @Override
   public List<T> toStrongList() {
-    synchronized (myArray) {
-      List<T> result = new ArrayList<T>(myArray.size());
-      myArray.toStrongCollection(result);
-      return result;
+    synchronized (myList) {
+      return super.toStrongList();
     }
   }
 
+  @NotNull
   public List<T> copyAndClear() {
-    synchronized (myArray) {
-      List<T> result = new ArrayList<T>(myArray.size());
-      myArray.toStrongCollection(result);
+    synchronized (myList) {
+      List<T> result = toStrongList();
       clear();
       return result;
-    }
-  }
-
-  private class MySyncIterator extends MyIterator {
-    @Override
-    protected void findNext() {
-      synchronized (myArray) {
-        super.findNext();
-      }
-    }
-
-    @Override
-    public void remove() {
-      synchronized (myArray) {
-        super.remove();
-      }
     }
   }
 }

@@ -144,6 +144,14 @@ public class QualifiedName {
   }
 
   @Nullable
+  public String getFirstComponent() {
+    if (myComponents.size() == 0) {
+      return null;
+    }
+    return myComponents.get(0);
+  }
+
+  @Nullable
   public String getLastComponent() {
     if (myComponents.size() == 0) {
       return null;
