@@ -34,7 +34,8 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
-import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -91,32 +92,35 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
 
   /**
    * Converts format expressions inside a string
-   * @param stringLiteralExpression
    * @return a pair of string builder with resulting string expression and a flag which is true if formats inside use mapping by name.
    */
-  private static Pair<StringBuilder, Boolean> convertFormat(PyStringLiteralExpression stringLiteralExpression) {
+  private static Pair<StringBuilder, Boolean> convertFormat(PyStringLiteralExpression stringLiteralExpression, String prefix) {
     // python string may be made of several literals, all different
     List<StringBuilder> constants = new ArrayList<StringBuilder>();
-    boolean uses_named_format = false;
-    final List<ASTNode> text_nodes = stringLiteralExpression.getStringNodes();
-    sure(text_nodes);
-    sure(text_nodes.size() > 0);
-    for (ASTNode text_node : text_nodes) {
+    boolean usesNamedFormat = false;
+    final List<ASTNode> stringNodes = stringLiteralExpression.getStringNodes();
+    sure(stringNodes);
+    sure(stringNodes.size() > 0);
+    for (ASTNode stringNode : stringNodes) {
       // preserve prefixes and quote form
-      CharSequence text = text_node.getChars();
-      int open_pos = 0;
-      if ("uUbB".indexOf(text.charAt(open_pos)) >= 0)  open_pos += 1;  // unicode modifier
-      if ("rR".indexOf(text.charAt(open_pos)) >= 0) open_pos += 1; // raw modifier
-      char quote = text.charAt(open_pos);
+      CharSequence text = stringNode.getChars();
+      int openPos = 0;
+      boolean hasPrefix = false;
+      final int prefixLength = PyStringLiteralExpressionImpl.getPrefixLength(String.valueOf(text));
+      if (prefixLength != 0) hasPrefix = true;
+      openPos += prefixLength;
+
+      char quote = text.charAt(openPos);
       sure("\"'".indexOf(quote) >= 0);
-      if (text.length() - open_pos >= 6) {
+      if (text.length() - openPos >= 6) {
         // triple-quoted?
-        if (text.charAt(open_pos+1) == quote && text.charAt(open_pos+2) == quote) {
-          open_pos += 2;
+        if (text.charAt(openPos+1) == quote && text.charAt(openPos+2) == quote) {
+          openPos += 2;
         }
       }
-      int index = open_pos + 1; // from quote to first in-string char
-      StringBuilder out = new StringBuilder(text.subSequence(0, open_pos+1));
+      int index = openPos + 1; // from quote to first in-string char
+      StringBuilder out = new StringBuilder(text.subSequence(0, openPos+1));
+      if (!hasPrefix) out.insert(0, prefix);
       int position_count = 0;
       Matcher scanner = FORMAT_PATTERN.matcher(text);
       while (scanner.find(index)) {
@@ -139,7 +143,7 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
           out.append("{");
           if (f_key != null) {
             out.append(f_key);
-            uses_named_format = true;
+            usesNamedFormat = true;
           }
           else {
             out.append(position_count);
@@ -182,10 +186,10 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
     TextRange full_range = stringLiteralExpression.getTextRange();
     int full_start = full_range.getStartOffset();
     CharSequence full_text = stringLiteralExpression.getNode().getChars();
-    TextRange prev_range = text_nodes.get(0).getTextRange();
+    TextRange prev_range = stringNodes.get(0).getTextRange();
     int fragment_no = 1; // look at second and further fragments
-    while (fragment_no < text_nodes.size()) {
-      TextRange next_range = text_nodes.get(fragment_no).getTextRange();
+    while (fragment_no < stringNodes.size()) {
+      TextRange next_range = stringNodes.get(fragment_no).getTextRange();
       int left = prev_range.getEndOffset() - full_start;
       int right = next_range.getStartOffset() - full_start;
       if (left < right) {
@@ -204,7 +208,7 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
     // join everything
     StringBuilder result = new StringBuilder();
     for (StringBuilder one : constants) result.append(one);
-    return new Pair<StringBuilder, Boolean>(result, uses_named_format);
+    return new Pair<StringBuilder, Boolean>(result, usesNamedFormat);
   }
 
   private static boolean has(String where, char what) {
@@ -242,52 +246,68 @@ public class ConvertFormatOperatorToMethodIntention extends BaseIntentionAction 
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PyBinaryExpression element =
-      PsiTreeUtil.getParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyBinaryExpression.class, false);
-    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+    final PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
+    final PyBinaryExpression element = PsiTreeUtil.getParentOfType(elementAt, PyBinaryExpression.class, false);
+    if (element == null) return;
+    final PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
     final PyExpression rightExpression = sure(element).getRightExpression();
     if (rightExpression == null) {
       return;
     }
-    PyExpression rhs = PyPsiUtils.flattenParens(rightExpression);
-    String param_text = sure(rhs).getText();
-    final PyStringLiteralExpression leftExpression = (PyStringLiteralExpression)element.getLeftExpression();
-    Pair<StringBuilder, Boolean> converted = convertFormat(leftExpression);
-    StringBuilder target = converted.getFirst();
-    String separator = ""; // detect nontrivial whitespace around the "%"
-    Pair<String, PsiElement> crop = collectWhitespace(leftExpression);
-    String maybe_separator = crop.getFirst();
-    if (!"".equals(maybe_separator) && !" ".equals(maybe_separator)) separator = maybe_separator;
-    else { // after "%"
-      crop = collectWhitespace(crop.getSecond());
-      maybe_separator = crop.getFirst();
-      if (!"".equals(maybe_separator) && !" ".equals(maybe_separator)) separator = maybe_separator;
+    final PyExpression rhs = PyPsiUtils.flattenParens(rightExpression);
+    if (rhs == null) return;
+    final String paramText = sure(rhs).getText();
+    final TypeEvalContext context = TypeEvalContext.userInitiated(file);
+    final PyType rhsType = context.getType(rhs);
+    String prefix = "";
+    if (PyTypeChecker.match(PyBuiltinCache.getInstance(rhs).getObjectType("unicode"), rhsType, context)) {
+      prefix = "u";
     }
+    final PyStringLiteralExpression leftExpression = (PyStringLiteralExpression)element.getLeftExpression();
+    final Pair<StringBuilder, Boolean> converted = convertFormat(leftExpression, prefix);
+    final StringBuilder target = converted.getFirst();
+    final String separator = getSeparator(leftExpression);
     target.append(separator).append(".format");
-    if (rhs instanceof PyDictLiteralExpression) target.append("(**").append(param_text).append(")");
+
+    if (rhs instanceof PyDictLiteralExpression) target.append("(**").append(paramText).append(")");
     else if (rhs instanceof PyCallExpression) { // potential dict(foo=1) -> format(foo=1)
-      final PyCallExpression call_expression = (PyCallExpression)rhs;
-      final PyExpression callee = call_expression.getCallee();
+      final PyCallExpression callExpression = (PyCallExpression)rhs;
+      final PyExpression callee = callExpression.getCallee();
       if (callee instanceof PyReferenceExpression) {
-        PsiElement maybe_dict = ((PyReferenceExpression)callee).getReference().resolve();
-        if (maybe_dict instanceof PyFunction) {
-          PyFunction dict_init = (PyFunction)maybe_dict;
-          if (PyNames.INIT.equals(dict_init.getName())) {
-            final PyClassType dict_type = PyBuiltinCache.getInstance(file).getDictType();
-            if (dict_type != null && dict_type.getPyClass() == dict_init.getContainingClass()) {
-              target.append(sure(sure(call_expression.getArgumentList()).getNode()).getChars());
+        PsiElement maybeDict = ((PyReferenceExpression)callee).getReference().resolve();
+        if (maybeDict instanceof PyFunction) {
+          PyFunction dictInit = (PyFunction)maybeDict;
+          if (PyNames.INIT.equals(dictInit.getName())) {
+            final PyClassType dictType = PyBuiltinCache.getInstance(file).getDictType();
+            if (dictType != null && dictType.getPyClass() == dictInit.getContainingClass()) {
+              target.append(sure(sure(callExpression.getArgumentList()).getNode()).getChars());
             }
           }
           else { // just a call, reuse
             target.append("(");
             if (converted.getSecond()) target.append("**"); // map-by-name formatting was detected
-            target.append(param_text).append(")");
+            target.append(paramText).append(")");
           }
         }
       }
     }
-    else target.append("(").append(param_text).append(")"); // tuple is ok as is
-    element.replace(elementGenerator.createExpressionFromText(target.toString()));
+    else target.append("(").append(paramText).append(")"); // tuple is ok as is
+    element.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(element), target.toString()));
+  }
+
+  private static String getSeparator(PyStringLiteralExpression leftExpression) {
+    String separator = ""; // detect nontrivial whitespace around the "%"
+    Pair<String, PsiElement> crop = collectWhitespace(leftExpression);
+    String maybeSeparator = crop.getFirst();
+    if (maybeSeparator != null && !maybeSeparator.isEmpty() && !" ".equals(maybeSeparator))
+      separator = maybeSeparator;
+    else { // after "%"
+      crop = collectWhitespace(crop.getSecond());
+      maybeSeparator = crop.getFirst();
+      if (maybeSeparator != null && !maybeSeparator.isEmpty() && !" ".equals(maybeSeparator))
+        separator = maybeSeparator;
+    }
+    return separator;
   }
 
   private static Pair<String, PsiElement> collectWhitespace(PsiElement start) {
