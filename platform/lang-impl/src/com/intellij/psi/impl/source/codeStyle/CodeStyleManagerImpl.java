@@ -537,7 +537,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     try {
       comment = PsiParserFacade.SERVICE.getInstance(file.getProject()).createLineOrBlockCommentFromText(language, "");
     }
-    catch (Exception ignored) {
+    catch (Throwable ignored) {
     }
     String text = comment != null ? comment.getText() : null;
     return text != null ? text : DUMMY_IDENTIFIER;
