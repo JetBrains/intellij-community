@@ -194,7 +194,7 @@ public class PsiMethodReferenceUtil {
       if (resolve instanceof PsiMethod) {
         final MethodSignature signature1 = method.getSignature(LambdaUtil.getSubstitutor(method, resolveResult));
         PsiSubstitutor subst = PsiSubstitutor.EMPTY;
-        subst = subst.putAll(qualifierResolveResult.getSubstitutor());
+        subst = subst.putAll(TypeConversionUtil.getSuperClassSubstitutor(((PsiMethod)resolve).getContainingClass(), qualifierResolveResult.getContainingClass(), qualifierResolveResult.getSubstitutor()));
         subst = subst.putAll(result.getSubstitutor());
         final MethodSignature signature2 = ((PsiMethod)resolve).getSignature(subst);
 

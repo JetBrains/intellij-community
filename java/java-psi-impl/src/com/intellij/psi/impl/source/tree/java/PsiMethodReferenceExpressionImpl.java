@@ -471,7 +471,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
           final PsiMethod psiMethod = ((MethodCandidateInfo)conflict).getElement();
           if (psiMethod == null) continue;
           PsiSubstitutor subst = PsiSubstitutor.EMPTY;
-          subst = subst.putAll(mySubstitutor);
+          subst = subst.putAll(TypeConversionUtil.getSuperClassSubstitutor(psiMethod.getContainingClass(), myQualifierResolveResult.getContainingClass(), mySubstitutor));
           subst = subst.putAll(conflict.getSubstitutor());
           final PsiType[] signatureParameterTypes2 = psiMethod.getSignature(subst).getParameterTypes();
 
@@ -534,6 +534,9 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
 
       @Override
       public CandidateInfo resolveConflict(@NotNull List<CandidateInfo> conflicts) {
+        checkSameSignatures(conflicts);
+        if (conflicts.size() == 1) return conflicts.get(0);
+
         checkAccessStaticLevels(conflicts, true);
         if (conflicts.size() == 1) return conflicts.get(0);
 
