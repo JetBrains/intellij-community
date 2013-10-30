@@ -22,6 +22,7 @@ import com.intellij.vcs.log.RefGroup;
 import com.intellij.vcs.log.VcsLogRefManager;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
+import com.intellij.vcs.log.impl.SingletonRefGroup;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -106,30 +107,7 @@ public class HgRefManager implements VcsLogRefManager {
     return ContainerUtil.map(sort(refs), new Function<VcsRef, RefGroup>() {
       @Override
       public RefGroup fun(final VcsRef ref) {
-        return new RefGroup() {
-          @Override
-          public boolean isExpanded() {
-            return false;
-          }
-
-          @NotNull
-          @Override
-          public String getName() {
-            return ref.getName();
-          }
-
-          @NotNull
-          @Override
-          public List<VcsRef> getRefs() {
-            return Collections.singletonList(ref);
-          }
-
-          @NotNull
-          @Override
-          public Color getBgColor() {
-            return HEAD_COLOR;
-          }
-        };
+        return new SingletonRefGroup(ref);
       }
     });
   }
