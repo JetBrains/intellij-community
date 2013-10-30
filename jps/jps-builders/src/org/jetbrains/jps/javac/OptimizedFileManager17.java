@@ -80,6 +80,23 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
     
     ListBuffer<JavaFileObject> results = new ListBuffer<JavaFileObject>();
 
+    final Set<File> outputRoots;
+    if (location.isOutputLocation() || location != StandardLocation.CLASS_PATH) {
+      outputRoots = Collections.emptySet();
+    }
+    else {
+      final Iterable<? extends File> outputs = getLocation(StandardLocation.CLASS_OUTPUT);
+      if (outputs == null) {
+        outputRoots = Collections.emptySet();
+      }
+      else {
+        outputRoots = new HashSet<File>(1, 0.98f);
+        for (File file : outputs) {
+          outputRoots.add(file);
+        }
+      }
+    }
+
     for (File root : locationRoots) {
       Archive archive = myArchives.get(root);
       
@@ -105,11 +122,12 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
       }
       else {
         final File dir = subdirectory.getFile(root);
+        final boolean canUseCache = !location.isOutputLocation() && !outputRoots.contains(root);
         if (recurse) {
-          listDirectoryRecursively(dir, kinds, results, true, !location.isOutputLocation());
+          listDirectoryRecursively(dir, kinds, results, true, canUseCache);
         }
         else {
-          listDirectory(dir, kinds, results, !location.isOutputLocation());
+          listDirectory(dir, kinds, results, canUseCache);
         }
       }
       

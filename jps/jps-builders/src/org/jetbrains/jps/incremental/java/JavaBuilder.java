@@ -876,18 +876,20 @@ public class JavaBuilder extends ModuleLevelBuilder {
     }
 
     public void save(@NotNull final OutputFileObject fileObject) {
-      if (JavaFileObject.Kind.CLASS != fileObject.getKind()) {
-        // generated sources or resources must be saved synchronously, because some compilers (e.g. eclipse)
-        // may want to read generated text for further compilation
-        try {
-          final BinaryContent content = fileObject.getContent();
-          if (content != null) {
-            content.saveToFile(fileObject.getFile());
-          }
+      // generated files must be saved synchronously, because some compilers (e.g. eclipse)
+      // may want to read them for further compilation
+      try {
+        final BinaryContent content = fileObject.getContent();
+        final File file = fileObject.getFile();
+        if (content != null) {
+          content.saveToFile(file);
         }
-        catch (IOException e) {
-          myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
+        else {
+          myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.WARNING, "Missing content for file " + file.getPath()));
         }
+      }
+      catch (IOException e) {
+        myContext.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage()));
       }
 
       submitAsyncTask(myContext, new Runnable() {
