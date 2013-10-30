@@ -156,6 +156,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private boolean showToolTipByMouseMove(final MouseEvent e) {
+    if (myEditor.getVisibleLineCount() == 0) return false;
     MouseEvent me = new MouseEvent(e.getComponent(), e.getID(), e.getWhen(), e.getModifiers(), 0, e.getY() + 1, e.getClickCount(),
                                               e.isPopupTrigger());
 

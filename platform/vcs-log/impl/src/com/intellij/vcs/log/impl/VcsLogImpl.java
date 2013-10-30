@@ -20,8 +20,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.VcsLog;
-import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.ui.VcsLogUI;
 import com.intellij.vcs.log.ui.tables.AbstractVcsLogTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,12 +32,10 @@ import java.util.List;
  */
 public class VcsLogImpl implements VcsLog {
 
-  private final VcsLogDataHolder myDataHolder;
-  private final VcsLogUI myUi;
+  private final VcsLogManager myLogManager;
 
   public VcsLogImpl(VcsLogManager vcsLogManager) {
-    myDataHolder = vcsLogManager.getDataHolder();
-    myUi = vcsLogManager.getLogUi();
+    myLogManager = vcsLogManager;
   }
 
   /**
@@ -47,14 +43,14 @@ public class VcsLogImpl implements VcsLog {
    * TODO Temporary method until the old Git log is switched off and removed
    */
   public boolean isReady() {
-    return myDataHolder != null && myUi != null;
+    return myLogManager.getDataHolder() != null && myLogManager.getLogUi() != null;
   }
 
   @Override
   @NotNull
   public List<Hash> getSelectedCommits() {
     List<Hash> hashes = ContainerUtil.newArrayList();
-    JBTable table = myUi.getTable();
+    JBTable table = myLogManager.getLogUi().getTable();
     for (int row : table.getSelectedRows()) {
       Hash hash = ((AbstractVcsLogTableModel)table.getModel()).getHashAtRow(row);
       if (hash != null) {
@@ -67,7 +63,7 @@ public class VcsLogImpl implements VcsLog {
   @Override
   @Nullable
   public VcsFullCommitDetails getDetailsIfAvailable(@NotNull final Hash hash) {
-    return myDataHolder.getCommitDetailsGetter().getCommitDataIfAvailable(hash);
+    return myLogManager.getDataHolder().getCommitDetailsGetter().getCommitDataIfAvailable(hash);
   }
 
   @Nullable
