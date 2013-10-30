@@ -110,7 +110,7 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
   }
 
   private static boolean isQuote(final char c) {
-    return c == '"' || c == '\'';
+    return c == '"' || c == '\'' || c == '`';
   }
 
   private static boolean isSimilarDelimiters(final char c1, final char c2) {
