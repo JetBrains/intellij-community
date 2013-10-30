@@ -29,8 +29,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.util.CollectionQuery;
-import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TObjectIntHashMap;
@@ -347,54 +345,44 @@ class RootIndex {
   }
 
   @NotNull
-  public Query<VirtualFile> getDirectoriesByPackageName(@NotNull final String packageName, final boolean includeLibrarySources) {
+  List<VirtualFile> getDirectoriesByPackageName(@NotNull final String packageName, final boolean includeLibrarySources) {
     Map<String, List<VirtualFile>> cacheMap = includeLibrarySources ? 
                                               myDirectoriesByPackageNameCacheWithLibSrc : 
                                               myDirectoriesByPackageNameCache;
     final List<VirtualFile> cachedResult = cacheMap.get(packageName);
     if (cachedResult != null) {
-      return new CollectionQuery<VirtualFile>(cachedResult);
+      return cachedResult;
     }
 
     final ArrayList<VirtualFile> result = ContainerUtil.newArrayList();
-    for (Map.Entry<String, HashSet<VirtualFile>> entry : myPackagePrefixRoots.entrySet()) {
-      if (!packageName.startsWith(entry.getKey())) {
-        continue;
-      }
-
-      if (packageName.equals(entry.getKey())) {
-        for (VirtualFile file : entry.getValue()) {
-          if (isValidPackageDirectory(includeLibrarySources, file)) {
-            result.add(file);
-          }
-        }
-        continue;
-      }
-
-      final String nestedPackageName = entry.getKey().isEmpty() ? packageName : packageName.substring( entry.getKey().length());
-      final List<String> nestedPackages = StringUtil.split(nestedPackageName, ".");
-
-      for (final VirtualFile root : entry.getValue()) {
-        VirtualFile file = root;
-        for (String name : nestedPackages) {
-          file = file.findChild(name);
-          if (file == null) {
-            break;
-          }
-        }
-
+    Set<VirtualFile> packagePrefixRoots = myPackagePrefixRoots.get(packageName);
+    if (packagePrefixRoots != null) {
+      for (VirtualFile file : packagePrefixRoots) {
         if (isValidPackageDirectory(includeLibrarySources, file)) {
           result.add(file);
         }
       }
     }
 
-    cacheMap.put(packageName, result);
-    return new CollectionQuery<VirtualFile>(result);
+    if (StringUtil.isNotEmpty(packageName)) {
+      String parentPackage = StringUtil.getPackageName(packageName);
+      String shortName = StringUtil.getShortName(packageName);
+      for (VirtualFile parentDir : getDirectoriesByPackageName(parentPackage, includeLibrarySources)) {
+        VirtualFile child = parentDir.findChild(shortName);
+        if (isValidPackageDirectory(includeLibrarySources, child)) {
+          result.add(child);
+        }
+      }
+    }
+
+    if (!result.isEmpty()) {
+      cacheMap.put(packageName, result);
+    }
+    return result;
   }
 
   private boolean isValidPackageDirectory(boolean includeLibrarySources, @Nullable VirtualFile file) {
-    if (file != null) {
+    if (file != null && file.isDirectory()) {
       DirectoryInfo info = getInfoForDirectory(file);
       if (info != null) {
         if (includeLibrarySources || !info.isInLibrarySource() || info.isInModuleSource() || info.hasLibraryClassRoot()) {

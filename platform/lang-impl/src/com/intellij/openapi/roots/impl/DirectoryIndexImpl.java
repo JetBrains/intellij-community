@@ -466,7 +466,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     
     RootIndex rootIndex = getRootIndex();
     if (rootIndex != null) {
-      Collection<VirtualFile> riResult = rootIndex.getDirectoriesByPackageName(packageName, includeLibrarySources).findAll();
+      Collection<VirtualFile> riResult = rootIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
       Collection<VirtualFile> standard = standardResult.findAll();
       if (!new HashSet<VirtualFile>(riResult).equals(new HashSet<VirtualFile>(standard))) {
         for (VirtualFile file : standard) {
