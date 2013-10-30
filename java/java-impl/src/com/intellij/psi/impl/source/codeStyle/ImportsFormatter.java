@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,8 @@ public class ImportsFormatter extends XmlRecursiveElementVisitor {
   
   private final FormattingDocumentModelImpl myDocumentModel;
   private final CommonCodeStyleSettings.IndentOptions myIndentOptions;
-  private static final @NonNls String PAGE_DIRECTIVE = "page";
-  private static final @NonNls String IMPORT_ATT = "import";
+  @NonNls private static final String PAGE_DIRECTIVE = "page";
+  @NonNls private static final String IMPORT_ATT = "import";
 
   private final PostFormatProcessorHelper myPostProcessor;
 

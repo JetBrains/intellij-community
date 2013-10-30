@@ -76,7 +76,7 @@ public class PsiPolyExpressionUtil {
     if (isInAssignmentOrInvocationContext(expression) && ((PsiCallExpression)expression).getTypeArguments().length == 0) {
       if (method != null) {
         final Set<PsiTypeParameter> typeParameters = new HashSet<PsiTypeParameter>(Arrays.asList(method.getTypeParameters()));
-        if (typeParameters.size() > 0) {
+        if (!typeParameters.isEmpty()) {
           final PsiType returnType = method.getReturnType();
           if (returnType != null) {
             return mentionsTypeParameters(returnType, typeParameters);

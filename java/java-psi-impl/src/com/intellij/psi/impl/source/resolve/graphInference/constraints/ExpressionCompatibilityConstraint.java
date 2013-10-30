@@ -31,7 +31,7 @@ import java.util.*;
  * User: anna
  */
 public class ExpressionCompatibilityConstraint extends InputOutputConstraintFormula {
-  private PsiExpression myExpression;
+  private final PsiExpression myExpression;
   private PsiType myT;
 
   public ExpressionCompatibilityConstraint(@NotNull PsiExpression expression, @NotNull PsiType type) {

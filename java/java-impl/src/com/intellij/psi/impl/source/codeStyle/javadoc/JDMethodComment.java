@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class JDMethodComment extends JDParamListOwnerComment {
     super.generateSpecial(prefix, sb);
 
     if (myReturnTag != null) {
-      if (myFormatter.getSettings().JD_KEEP_EMPTY_RETURN || myReturnTag.trim().length() != 0) {
+      if (myFormatter.getSettings().JD_KEEP_EMPTY_RETURN || !myReturnTag.trim().isEmpty()) {
         JDTag tag = JDTag.RETURN;
         sb.append(prefix);
         sb.append(tag.getWithEndWhitespace());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,7 +176,7 @@ public class PsiDocMethodOrFieldRef extends CompositePsiElement implements PsiDo
         final String[] typeStrings = child.getText().split("[, ]");  //avoid param types list parsing hmm method(paramType1, paramType2, ...) -> typeElement1, identifier2, ...
         if (typeStrings != null) {
           for (String type : typeStrings) {
-            if (type.length() > 0) {
+            if (!type.isEmpty()) {
               types.add(type);
             }
           }

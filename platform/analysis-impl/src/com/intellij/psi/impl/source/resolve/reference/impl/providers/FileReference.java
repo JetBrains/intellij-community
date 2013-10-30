@@ -200,8 +200,8 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     return decode(getCanonicalText());
   }
 
-  public
   @Nullable
+  public
   String getNewFileTemplateName() {
     return null;
   }

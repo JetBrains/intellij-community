@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1249,7 +1249,7 @@ public class ControlFlowUtil {
     // map of variable->PsiReferenceExpressions for all read before written variables for this point and below in control flow
     private final CopyOnWriteList[] readVariables;
     private final ControlFlow myFlow;
-    private boolean localVariablesOnly;
+    private final boolean localVariablesOnly;
 
     public ReadBeforeWriteClientVisitor(ControlFlow flow, boolean localVariablesOnly) {
       myFlow = flow;

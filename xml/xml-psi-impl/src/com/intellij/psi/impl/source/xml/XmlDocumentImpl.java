@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -217,7 +217,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
 
       if (nsDescriptor == null) {
         String htmlns = ExternalResourceManagerEx.getInstanceEx().getDefaultHtmlDoctype(getProject());
-        if (htmlns.length() == 0) {
+        if (htmlns.isEmpty()) {
           htmlns = Html5SchemaProvider.getHtml5SchemaLocation();
         }
         nsDescriptor = getDefaultNSDescriptor(htmlns, false);
@@ -226,7 +226,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     }
     else if (XmlUtil.XHTML_URI.equals(namespace)) {
       String xhtmlNamespace = XmlUtil.getDefaultXhtmlNamespace(getProject());
-      if (xhtmlNamespace == null || xhtmlNamespace.length() == 0) {
+      if (xhtmlNamespace == null || xhtmlNamespace.isEmpty()) {
         xhtmlNamespace = Html5SchemaProvider.getXhtml5SchemaLocation();
       }
       return getDefaultNSDescriptor(xhtmlNamespace, false);
@@ -301,7 +301,7 @@ public class XmlDocumentImpl extends XmlElementImpl implements XmlDocument {
     final String dtdUri = XmlUtil.getDtdUri(doctype);
     LOG.debug("DTD url for doctype " + doctype.getText() + " in file " + filePath + " is " + dtdUri);
     
-    if (dtdUri != null && dtdUri.length() > 0){
+    if (dtdUri != null && !dtdUri.isEmpty()){
       XmlFile xmlFile = XmlUtil.findNamespace(containingFile, dtdUri);
       if (xmlFile == null) {
         // try to auto-detect it

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ public class PsiBasedFormatterModelWithShiftIndentInside extends PsiBasedFormatt
          if(type == TokenType.WHITE_SPACE) {
            final String text = prevNode.getText();
 
-           final @NonNls String cdataStartMarker = "<![CDATA[";
+           @NonNls final String cdataStartMarker = "<![CDATA[";
            final int cdataPos = text.indexOf(cdataStartMarker);
            if (cdataPos != -1 && whiteSpace.indexOf(cdataStartMarker) == -1) {
              whiteSpace = DocumentBasedFormattingModel.mergeWsWithCdataMarker(whiteSpace, text, cdataPos);
@@ -95,7 +95,7 @@ public class PsiBasedFormatterModelWithShiftIndentInside extends PsiBasedFormatt
            type = prevNode != null ? prevNode.getElementType():null;
          }
 
-         final @NonNls String cdataEndMarker = "]]>";
+         @NonNls final String cdataEndMarker = "]]>";
          if(type == XmlElementType.XML_CDATA_END && whiteSpace.indexOf(cdataEndMarker) == -1) {
            final ASTNode at = findElementAt(prevNode.getStartOffset());
 

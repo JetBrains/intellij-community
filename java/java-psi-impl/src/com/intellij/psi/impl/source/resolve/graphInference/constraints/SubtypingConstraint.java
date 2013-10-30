@@ -29,7 +29,7 @@ import java.util.List;
 public class SubtypingConstraint implements ConstraintFormula {
   private PsiType myS;
   private PsiType myT;
-  private boolean myIsRefTypes;
+  private final boolean myIsRefTypes;
 
   public SubtypingConstraint(PsiType t, PsiType s, boolean isRefTypes) {
     myT = t;

@@ -29,8 +29,8 @@ public class InferenceVariable {
     return myParameter;
   }
 
-  private Map<InferenceBound, List<PsiType>> myBounds = new HashMap<InferenceBound, List<PsiType>>();
-  private PsiTypeParameter myParameter;
+  private final Map<InferenceBound, List<PsiType>> myBounds = new HashMap<InferenceBound, List<PsiType>>();
+  private final PsiTypeParameter myParameter;
 
   private PsiType myInstantiation = PsiType.NULL;
   public InferenceVariable(PsiTypeParameter parameter) {
