@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.table.TableModel;
 import java.util.Collection;
-import java.util.concurrent.CountDownLatch;
 
 /**
  * @author erokhins
@@ -193,23 +192,10 @@ public class VcsLogUI {
       jumpToRow(row);
     }
     else {
-      runUnderModalProgress("Building graph...", new Runnable() {
+      myLogDataHolder.showFullLog(new Runnable() {
         @Override
         public void run() {
-          final CountDownLatch waiter = new CountDownLatch(1);
-          myLogDataHolder.showFullLog(new Runnable() {
-            @Override
-            public void run() {
-              waiter.countDown();
-              jumpToCommit(commitHash);
-            }
-          });
-          try {
-            waiter.await();
-          }
-          catch (InterruptedException e) {
-            LOG.error(e);
-          }
+          jumpToCommit(commitHash);
         }
       });
     }
