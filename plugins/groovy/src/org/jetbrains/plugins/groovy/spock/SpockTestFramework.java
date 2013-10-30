@@ -37,15 +37,9 @@ public class SpockTestFramework extends GroovyTestFramework {
     return "Spock";
   }
 
-  @NotNull
   @Override
   public String getLibraryPath() {
-    try {
-      return PathUtil.getJarPathForClass(Class.forName(getMarkerClassFQName()));
-    }
-    catch (ClassNotFoundException e) {
-      throw new RuntimeException(e);
-    }
+    return null;
   }
 
   @Nullable

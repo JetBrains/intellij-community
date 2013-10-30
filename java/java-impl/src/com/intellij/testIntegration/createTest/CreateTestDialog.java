@@ -232,9 +232,16 @@ public class CreateTestDialog extends DialogWrapper {
   }
 
   private void onLibrarySelected(TestFramework descriptor) {
-    String text = CodeInsightBundle.message("intention.create.test.dialog.library.not.found", descriptor.getName());
-    myFixLibraryLabel.setText(text);
-    myFixLibraryPanel.setVisible(!descriptor.isLibraryAttached(myTargetModule));
+    if (descriptor.isLibraryAttached(myTargetModule)) {
+      myFixLibraryPanel.setVisible(false);
+    }
+    else {
+      myFixLibraryPanel.setVisible(true);
+      String text = CodeInsightBundle.message("intention.create.test.dialog.library.not.found", descriptor.getName());
+      myFixLibraryLabel.setText(text);
+
+      myFixLibraryButton.setVisible(descriptor.getLibraryPath() != null);
+    }
 
     String superClass = descriptor.getDefaultSuperClass();
 
