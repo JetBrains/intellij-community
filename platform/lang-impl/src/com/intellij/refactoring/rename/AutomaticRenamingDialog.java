@@ -86,7 +86,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     myUsagePreviewPanel = new UsagePreviewPanel(myProject);
     myUsageFileLabel = new JLabel();
     populateData();
-    myTableModel = new MyTableModel();
+    myTableModel = new MyTableModel(renamer.allowChangeSuggestedName());
     setTitle(myRenamer.getDialogTitle());
     init();
   }
@@ -300,6 +300,12 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   }
 
   private class MyTableModel extends AbstractTableModel {
+    private final boolean myAllowRename;
+
+    private MyTableModel(boolean allowRename) {
+      myAllowRename = allowRename;
+    }
+
     @Override
     public int getColumnCount() {
       return 3;
@@ -342,7 +348,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
 
     @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
-      return columnIndex != OLD_NAME_COLUMN;
+      return columnIndex != OLD_NAME_COLUMN && (myAllowRename || columnIndex != NEW_NAME_COLUMN);
     }
 
     @Override
