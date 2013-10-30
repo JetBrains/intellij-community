@@ -325,7 +325,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
             final PsiClassType returnType = JavaPsiFacade.getElementFactory(project).createType(containingClass,
                                                                                                      isRawSubst ? PsiSubstitutor.EMPTY : substitutor);
 
-            substitutor = LambdaUtil.inferFromReturnType(typeParameters, returnType, interfaceMethodReturnType, substitutor, languageLevel,
+            substitutor = LambdaUtil.inferFromReturnType(typeParameters, returnType, GenericsUtil.eliminateWildcards(interfaceMethodReturnType), substitutor, languageLevel,
                                                          project);
 
             if (containingClass.getConstructors().length == 0) {
@@ -422,7 +422,7 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
       }
       return LambdaUtil.inferFromReturnType(method.getTypeParameters(),
                                             method.getReturnType(),
-                                            interfaceMethodReturnType,
+                                            GenericsUtil.eliminateWildcards(interfaceMethodReturnType),
                                             psiSubstitutor,
                                             languageLevel, getProject());
     }
