@@ -200,6 +200,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     }
 
     myToolWindow.getContentUI().setType(myInfo.getContentUiType());
+    setBorder(new InnerPanelBorder(myToolWindow));
   }
 
   @Override
@@ -314,7 +315,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
 
     contentPane.add(inner, BorderLayout.CENTER);
     add(contentPane, BorderLayout.CENTER);
-    setBorder(new InnerPanelBorder(myToolWindow));
     if (SystemInfo.isMac) {
       setBackground(new JBColor(Gray._200, Gray._90));
     }
