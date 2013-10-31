@@ -43,7 +43,7 @@ import java.util.EnumSet;
  * @author Max Medvedev
  */
 public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntroduceFieldSettings> {
-  private final GrInplaceIntroduceFieldPanel myPanel;
+  private GrInplaceIntroduceFieldPanel myPanel;
   private final GrFinalListener finalListener;
   private String[] mySuggestedNames;
   private boolean myIsStatic;
@@ -51,13 +51,11 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
   @Nullable
   @Override
   protected PsiElement checkLocalScope() {
-    return getVariable().getContainingFile();
+    return ((PsiField)getVariable()).getContainingClass();
   }
 
   public GrInplaceFieldIntroducer(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
     super(IntroduceFieldHandler.REFACTORING_NAME, choice, context);
-
-    myPanel = new GrInplaceIntroduceFieldPanel(context.getProject(), GrIntroduceFieldHandler.getApplicableInitPlaces(context, choice == OccurrencesChooser.ReplaceChoice.ALL));
 
     finalListener = new GrFinalListener(myEditor);
 
@@ -216,6 +214,7 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
   @Nullable
   @Override
   protected JComponent getComponent() {
+    myPanel = new GrInplaceIntroduceFieldPanel(myProject, GrIntroduceFieldHandler.getApplicableInitPlaces(getContext(), isReplaceAllOccurrences()));
     return myPanel.getRootPane();
   }
 
@@ -224,6 +223,7 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
     private JPanel myRootPane;
     private JComboBox myInitCB;
     private NonFocusableCheckBox myDeclareFinalCB;
+    private JComponent myPreview;
 
     public GrInplaceIntroduceFieldPanel(Project project, EnumSet<GrIntroduceFieldSettings.Init> initPlaces) {
       myProject = project;
@@ -261,6 +261,10 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
 
     public boolean isFinal() {
       return myDeclareFinalCB.isSelected();
+    }
+
+    private void createUIComponents() {
+      myPreview = getPreviewComponent();
     }
   }
 }

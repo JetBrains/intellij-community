@@ -124,6 +124,28 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
     return null;
   }
 
+  @Override
+  protected void updateTitle(@Nullable GrVariable variable, String value) {
+    if (variable == null) {
+      super.updateTitle(variable, value);
+    }
+    else {
+      final String variableText = variable.getParent().getText();
+      final PsiElement identifier = variable.getNameIdentifierGroovy();
+      final int startOffsetInParent = identifier.getStartOffsetInParent() + variable.getStartOffsetInParent();
+      setPreviewText(
+        variableText.substring(0, startOffsetInParent) + value + variableText.substring(startOffsetInParent + identifier.getTextLength()));
+      revalidate();
+    }
+  }
+
+  @Override
+  protected void updateTitle(@Nullable GrVariable variable) {
+    if (variable == null) return;
+    setPreviewText(variable.getParent().getText());
+    revalidate();
+  }
+
   @Nullable
   @Override
   protected PsiElement getNameIdentifier() {
