@@ -22,6 +22,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +54,11 @@ public class MavenDependenciesGradleCompletionContributor extends CompletionCont
     new PatternCondition<GrMethodCallExpression>("withInvokedExpressionText") {
       @Override
       public boolean accepts(@NotNull GrMethodCallExpression expression, ProcessingContext context) {
+        PsiFile file = expression.getContainingFile();
+        if (!file.getName().endsWith(".gradle")) {
+          return false;
+        }
+
         GrExpression grExpression = expression.getInvokedExpression();
         return grExpression != null && "dependencies".equals(grExpression.getText());
       }
