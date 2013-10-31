@@ -38,6 +38,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.actions.TextComponentEditorAction;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.options.Configurable;
@@ -217,8 +218,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
       private void run(KeyEvent event) {
         final ActionManager actionManager = ActionManager.getInstance();
-                  final AnAction action = actionManager.getAction("SearchEverywhere");
-
+                  final AnAction action = actionManager.getAction(IdeActions.ACTION_SEARCH_EVERYWHERE);
+                  if (KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).length > 0) {
+                    return;
+                  }
                   final AnActionEvent anActionEvent = new AnActionEvent(event,
                                                                         DataManager.getInstance().getDataContext(IdeFocusManager.findInstance().getFocusOwner()),
                                                                         ActionPlaces.UNKNOWN,
@@ -314,10 +317,17 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   private void initTooltip(JLabel label) {
-    label.setToolTipText("<html><body>Search Everywhere<br/>Press <b>" +
-                                 "Double " +
-                                 (SystemInfo.isMac ? MacKeymapUtil.SHIFT : "Shift") +
-                                 "</b> to access<br/> - Classes<br/> - Files<br/> - Tool Windows<br/> - Actions<br/> - Settings</body></html>");
+    final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE);
+    final String shortcutText;
+    if (shortcuts.length == 0) {
+      shortcutText = "Double " + (SystemInfo.isMac ? MacKeymapUtil.SHIFT : "Shift");
+    } else {
+      shortcutText = KeymapUtil.getShortcutsText(shortcuts);
+    }
+
+    label.setToolTipText("<html><body>Search Everywhere<br/>Press <b>"
+                                 + shortcutText
+                                 + "</b> to access<br/> - Classes<br/> - Files<br/> - Tool Windows<br/> - Actions<br/> - Settings</body></html>");
 
   }
 
@@ -589,7 +599,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     initSearchActions(myBalloon, myPopupField);
     IdeFocusManager focusManager = IdeFocusManager.getInstance(e.getProject());
     focusManager.requestFocus(myPopupField.getTextEditor(), true);
-//    FeatureUsageTracker.getInstance().triggerFeatureUsed("SearchEverywhere");
+//    FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
   }
 
   private void initSearchActions(JBPopup balloon, MySearchTextField searchTextField) {
