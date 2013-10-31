@@ -236,6 +236,7 @@
     <extensionPoint name="java.compilerOutputIndex" area="IDEA_PROJECT"
                     interface="com.intellij.compilerOutputIndex.api.indexer.CompilerOutputBaseIndex"/>
     <extensionPoint name="vetoSPICondition" interface="com.intellij.openapi.util.Condition"/>
+    <extensionPoint name="testStatusListener" interface="com.intellij.execution.testframework.TestStatusListener"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
