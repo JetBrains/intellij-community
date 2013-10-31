@@ -43,7 +43,7 @@ import java.util.List;
 /**
  * @author Maxim.Medvedev
  */
-public class GrIntroduceFieldHandler extends GrNewIntroduceFieldHandlerBase<GrIntroduceFieldSettings> {
+public class GrIntroduceFieldHandler extends GrIntroduceFieldHandlerBase<GrIntroduceFieldSettings> {
 
   @NotNull
   @Override

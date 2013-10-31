@@ -69,8 +69,7 @@ public class GrIntroduceConstantProcessor {
       return null;
     }
 
-    final GrVariableDeclaration rawDeclaration = createField(targetClass);
-    final GrVariableDeclaration declaration = addDeclaration(targetClass, rawDeclaration);
+    final GrVariableDeclaration declaration = addDeclaration(targetClass);
     final GrField field = (GrField)declaration.getVariables()[0];
 
     if (context.getVar() != null) {
@@ -102,7 +101,8 @@ public class GrIntroduceConstantProcessor {
     context.getEditor().getSelectionModel().removeSelection();
   }
 
-  protected GrVariableDeclaration addDeclaration(PsiClass targetClass, GrVariableDeclaration declaration) {
+  protected GrVariableDeclaration addDeclaration(PsiClass targetClass) {
+    GrVariableDeclaration declaration = createField(targetClass);
     final GrVariableDeclaration added;
     if (targetClass instanceof GrEnumTypeDefinition) {
       final GrEnumConstantList enumConstants = ((GrEnumTypeDefinition)targetClass).getEnumConstantList();

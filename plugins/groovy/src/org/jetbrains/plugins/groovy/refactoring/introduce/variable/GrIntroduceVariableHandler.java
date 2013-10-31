@@ -38,13 +38,12 @@ import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrNewIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 /**
  * Created by Max Medvedev on 10/29/13
  */
-public class GrIntroduceVariableHandler extends GrNewIntroduceHandlerBase<GroovyIntroduceVariableSettings, GrControlFlowOwner> {
+public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyIntroduceVariableSettings, GrControlFlowOwner> {
   public static final String DUMMY_NAME = "________________xxx_________________";
   protected static final String REFACTORING_NAME = GroovyRefactoringBundle.message("introduce.variable.title");
   private RangeMarker myPosition = null;

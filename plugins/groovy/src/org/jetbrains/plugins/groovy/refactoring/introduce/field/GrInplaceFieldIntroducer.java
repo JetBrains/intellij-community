@@ -68,7 +68,7 @@ public abstract class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroduc
   @Override
   protected GrIntroduceFieldSettings getInitialSettingsForInplace(@NotNull final GrIntroduceContext context,
                                                                   @NotNull final OccurrencesChooser.ReplaceChoice choice,
-                                                                  String[] names) {
+                                                                  final String[] names) {
     return new GrIntroduceFieldSettings() {
       @Override
       public boolean declareFinal() {
@@ -115,7 +115,7 @@ public abstract class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroduc
       @Nullable
       @Override
       public String getName() {
-        return new GrFieldNameSuggester(context, new GroovyInplaceFieldValidator(context), false).suggestNames().iterator().next();
+        return names[0];
       }
 
       @Override
