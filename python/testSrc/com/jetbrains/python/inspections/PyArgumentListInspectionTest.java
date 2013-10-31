@@ -158,4 +158,9 @@ public class PyArgumentListInspectionTest extends PyTestCase {
   public void testPropertyReturnsCallable() {
     doTest();
   }
+
+  // PY-11162
+  public void testUnicodeConstructor() {
+    doTest();
+  }
 }
