@@ -155,13 +155,14 @@ public class HotSwapManager extends AbstractProjectComponent {
   }
 
   private void reloadClasses(DebuggerSession session, Map<String, HotSwapFile> classesToReload, HotSwapProgress progress) {
-    if (progress.isCancelled()) {
-      session.setModifiedClassesScanRequired(true);
-      return;
-    }
     final long newSwapTime = System.currentTimeMillis();
     new ReloadClassesWorker(session, progress).reloadClasses(classesToReload);
-    setTimeStamp(session, newSwapTime);
+    if (progress.isCancelled()) {
+      session.setModifiedClassesScanRequired(true);
+    }
+    else {
+      setTimeStamp(session, newSwapTime);
+    }
   }
 
   public static Map<DebuggerSession, Map<String, HotSwapFile>> findModifiedClasses(List<DebuggerSession> sessions, Map<String, List<String>> generatedPaths) {
