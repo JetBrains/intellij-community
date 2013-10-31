@@ -275,18 +275,24 @@
       <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
 
+    <intentionAction>
+      <className>com.siyeh.ipp.types.MakeMethodDefaultIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.declaration</categoryKey>
+    </intentionAction>
+
     <!-- Imports -->
 
     <intentionAction>
       <className>com.siyeh.ipp.fqnames.ReplaceFullyQualifiedNameWithImportIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
+      <categoryKey>intention.category.imports</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.siyeh.ipp.imports.ReplaceOnDemandImportIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
+      <categoryKey>intention.category.imports</categoryKey>
     </intentionAction>
 
     <!-- Comments -->
@@ -599,11 +605,6 @@
       <className>com.siyeh.ipp.unicode.ReplaceOctalEscapeWithUnicodeEscapeIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.other</categoryKey>
-    </intentionAction>
-    <intentionAction>
-      <className>com.siyeh.ipp.types.MakeMethodDefaultIntention</className>
-      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
-      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
   </extensions>
 </idea-plugin>
