@@ -300,7 +300,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       add(mySecondaryActionsButton);
     }
 
-    if (Registry.is("search.everywhere.enabled") && (ActionPlaces.MAIN_TOOLBAR.equals(myPlace) || ActionPlaces.NAVIGATION_BAR.equals(myPlace))) {
+    if ((ActionPlaces.MAIN_TOOLBAR.equals(myPlace) || ActionPlaces.NAVIGATION_BAR.equals(myPlace))) {
       final AnAction searchEverywhereAction = ActionManager.getInstance().getAction("SearchEverywhere");
       if (searchEverywhereAction != null) {
         try {
