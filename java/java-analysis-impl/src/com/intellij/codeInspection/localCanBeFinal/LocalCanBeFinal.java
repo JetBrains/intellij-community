@@ -33,9 +33,7 @@ import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
 
 /**
@@ -118,10 +116,10 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
     int start = flow.getStartOffset(body);
     int end = flow.getEndOffset(body);
 
-    final List<PsiVariable> writtenVariables = new ArrayList<PsiVariable>(ControlFlowUtil.getWrittenVariables(flow, start, end, false));
+    final Collection<PsiVariable> writtenVariables = ControlFlowUtil.getWrittenVariables(flow, start, end, false);
 
     final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
-    final HashSet<PsiVariable> ssaVarsSet = new HashSet<PsiVariable>();
+    final HashSet<PsiVariable> result = new HashSet<PsiVariable>();
     body.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitCodeBlock(PsiCodeBlock block) {
         if (block.getParent() instanceof PsiLambdaExpression && block != body) {
@@ -142,21 +140,41 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
         HashSet<PsiElement> declared = getDeclaredVariables(block);
         for (PsiVariable psiVariable : ssa) {
           if (declared.contains(psiVariable)) {
-            ssaVarsSet.add(psiVariable);
+            result.add(psiVariable);
           }
+        }
+      }
+
+      @Override
+      public void visitCatchSection(PsiCatchSection section) {
+        super.visitCatchSection(section);
+        final PsiParameter parameter = section.getParameter();
+        if (PsiTreeUtil.getParentOfType(parameter, PsiClass.class) != PsiTreeUtil.getParentOfType(body, PsiClass.class)) {
+          return;
+        }
+        final PsiCodeBlock catchBlock = section.getCatchBlock();
+        if (catchBlock == null) return;
+        final int from = flow.getStartOffset(catchBlock);
+        final int end = flow.getEndOffset(catchBlock);
+        if (!ControlFlowUtil.getWrittenVariables(flow, from, end, false).contains(parameter)) {
+          writtenVariables.remove(parameter);
+          result.add(parameter);
         }
       }
 
       @Override public void visitForeachStatement(PsiForeachStatement statement) {
         super.visitForeachStatement(statement);
         final PsiParameter param = statement.getIterationParameter();
+        if (PsiTreeUtil.getParentOfType(param, PsiClass.class) != PsiTreeUtil.getParentOfType(body, PsiClass.class)) {
+          return;
+        }
         final PsiStatement body = statement.getBody();
         if (body == null) return;
         int from = flow.getStartOffset(body);
         int end = flow.getEndOffset(body);
         if (!ControlFlowUtil.getWrittenVariables(flow, from, end, false).contains(param)) {
           writtenVariables.remove(param);
-          ssaVarsSet.add(param);
+          result.add(param);
         }
       }
 
@@ -175,6 +193,22 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
                 if (declaredElement instanceof PsiVariable) result.add(declaredElement);
               }
             }
+
+            @Override
+            public void visitForStatement(PsiForStatement statement) {
+              super.visitForStatement(statement);
+              final PsiStatement initialization = statement.getInitialization();
+              if (!(initialization instanceof PsiDeclarationStatement)) {
+                return;
+              }
+              final PsiDeclarationStatement declarationStatement = (PsiDeclarationStatement)initialization;
+              final PsiElement[] declaredElements = declarationStatement.getDeclaredElements();
+              for (final PsiElement declaredElement : declaredElements) {
+                if (declaredElement instanceof PsiVariable) {
+                  result.add(declaredElement);
+                }
+              }
+            }
           });
         }
 
@@ -185,28 +219,15 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
       }
     });
 
-    final ArrayList<PsiVariable> result = new ArrayList<PsiVariable>(ssaVarsSet);
-
-    if (body.getParent() instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod)body.getParent();
-      PsiParameter[] parameters = method.getParameterList().getParameters();
-      for (PsiParameter parameter : parameters) {
-        if (!result.contains(parameter)) result.add(parameter);
-      }
+    if (body.getParent() instanceof PsiMethod && isReportParameters()) {
+      final PsiMethod method = (PsiMethod)body.getParent();
+      Collections.addAll(result, method.getParameterList().getParameters());
     }
 
-    PsiVariable[] psiVariables = result.toArray(new PsiVariable[result.size()]);
-    for (PsiVariable psiVariable : psiVariables) {
-      if (!isReportParameters() && psiVariable instanceof PsiParameter || !isReportVariables() && psiVariable instanceof PsiLocalVariable ||
-          psiVariable.hasModifierProperty(PsiModifier.FINAL)) {
-        result.remove(psiVariable);
-      }
-
-      if (psiVariable instanceof PsiLocalVariable) {
-        PsiDeclarationStatement decl = (PsiDeclarationStatement)psiVariable.getParent();
-        if (decl != null && decl.getParent() instanceof PsiForStatement) {
-          result.remove(psiVariable);
-        }
+    for (Iterator<PsiVariable> iterator = result.iterator(); iterator.hasNext(); ) {
+      final PsiVariable variable = iterator.next();
+      if (shouldBeIgnored(variable) || !variable.isPhysical()) {
+        iterator.remove();
       }
     }
 
@@ -217,16 +238,10 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
     }
 
     if (result.isEmpty()) return null;
-    for (Iterator<PsiVariable> iterator = result.iterator(); iterator.hasNext();) {
-      final PsiVariable variable = iterator.next();
-      if (!variable.isPhysical()){
-        iterator.remove();
-      }
-    }
 
     for (PsiVariable variable : result) {
-      final PsiIdentifier nameIdenitier = variable.getNameIdentifier();
-      PsiElement problemElement = nameIdenitier != null ? nameIdenitier : variable;
+      final PsiIdentifier nameIdentifier = variable.getNameIdentifier();
+      PsiElement problemElement = nameIdentifier != null ? nameIdentifier : variable;
       if (variable instanceof PsiParameter && !(((PsiParameter)variable).getDeclarationScope() instanceof PsiForeachStatement)) {
         problems.add(manager.createProblemDescriptor(problemElement,
                                                      InspectionsBundle.message("inspection.can.be.local.parameter.problem.descriptor"),
@@ -240,6 +255,23 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
     }
 
     return problems;
+  }
+
+  private boolean shouldBeIgnored(PsiVariable psiVariable) {
+    if (psiVariable.hasModifierProperty(PsiModifier.FINAL)) return true;
+    return isLocalVariable(psiVariable) ? !isReportVariables() : !isReportParameters();
+  }
+
+  private static boolean isLocalVariable(PsiVariable variable) {
+    if (variable instanceof PsiLocalVariable) {
+      return true;
+    }
+    if (!(variable instanceof PsiParameter)) {
+      return false;
+    }
+    final PsiParameter parameter = (PsiParameter)variable;
+    final PsiElement declarationScope = parameter.getDeclarationScope();
+    return !(declarationScope instanceof PsiMethod) && !(declarationScope instanceof PsiLambdaExpression);
   }
 
   @Override

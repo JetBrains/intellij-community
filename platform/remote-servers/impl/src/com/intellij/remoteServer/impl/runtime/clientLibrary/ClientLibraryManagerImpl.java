@@ -2,26 +2,29 @@ package com.intellij.remoteServer.impl.runtime.clientLibrary;
 
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.PerformInBackgroundOption;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remoteServer.runtime.clientLibrary.ClientLibraryDescription;
 import com.intellij.remoteServer.runtime.clientLibrary.ClientLibraryManager;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.Semaphore;
+import com.intellij.util.download.DownloadableFileDescription;
 import com.intellij.util.download.DownloadableFileService;
 import com.intellij.util.download.DownloadableFileSetDescription;
 import com.intellij.util.download.DownloadableFileSetVersions;
-import com.intellij.util.download.FileDownloader;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
@@ -31,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
@@ -84,16 +88,22 @@ public class ClientLibraryManagerImpl extends ClientLibraryManager implements Pe
 
   @Override
   public boolean isDownloaded(@NotNull ClientLibraryDescription description) {
+    return !getExistentFiles(description).isEmpty();
+  }
+
+  @NotNull
+  private List<File> getExistentFiles(ClientLibraryDescription description) {
     List<File> files = myFiles.get(description.getId());
-    if (files == null || files.isEmpty()) {
-      return false;
+    if (files == null) {
+      return Collections.emptyList();
     }
+    List<File> existentFiles = new ArrayList<File>();
     for (File file : files) {
-      if (!file.exists()) {
-        return false;
+      if (file.exists()) {
+        existentFiles.add(file);
       }
     }
-    return true;
+    return existentFiles;
   }
 
   @Override
@@ -122,52 +132,94 @@ public class ClientLibraryManagerImpl extends ClientLibraryManager implements Pe
 
   @Override
   public void download(@NotNull final ClientLibraryDescription libraryDescription, @Nullable Project project, @Nullable JComponent component) {
+    final Ref<IOException> exc = Ref.create(null);
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      new Runnable() {
+        @Override
+        public void run() {
+          try {
+            download(libraryDescription);
+          }
+          catch (IOException e) {
+            exc.set(e);
+          }
+        }
+      }, "Downloading Client Libraries", false, project, component);
+    if (exc.isNull()) {
+      myEventDispatcher.getMulticaster().downloaded();
+    }
+    else {
+      LOG.info(exc.get());
+    }
+  }
+
+  @NotNull
+  @Override
+  public List<File> download(@NotNull final ClientLibraryDescription libraryDescription) throws IOException {
+    List<File> existentFiles = getExistentFiles(libraryDescription);
+    if (!existentFiles.isEmpty()) {
+      return existentFiles;
+    }
+
     final DownloadableFileService downloadService = DownloadableFileService.getInstance();
 
     final Ref<DownloadableFileSetDescription> descriptionRef = new Ref<DownloadableFileSetDescription>();
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      new Runnable() {
+    URL versionsUrl = libraryDescription.getDescriptionUrl();
+    final DownloadableFileSetVersions<DownloadableFileSetDescription> versions = downloadService.createFileSetVersions(null, versionsUrl);
 
-        @Override
-        public void run() {
-          URL versionsUrl = libraryDescription.getDescriptionUrl();
-          final DownloadableFileSetVersions<DownloadableFileSetDescription> versions = downloadService.createFileSetVersions(null, versionsUrl);
-
-          final Semaphore semaphore = new Semaphore();
-          semaphore.down();
-          versions.fetchVersions(new DownloadableFileSetVersions.FileSetVersionsCallback<DownloadableFileSetDescription>() {
-            @Override
-            public void onSuccess(@NotNull List<? extends DownloadableFileSetDescription> versions) {
-              if (versions.isEmpty()) {
-                LOG.error("No versions fetched");
-              }
-              else {
-                descriptionRef.set(versions.get(0));
-              }
-              semaphore.up();
-            }
-
-            @Override
-            public void onError(@NotNull String errorMessage) {
-              LOG.error(errorMessage);
-              semaphore.up();
-            }
-          });
-          semaphore.waitFor();
+    final Semaphore semaphore = new Semaphore();
+    semaphore.down();
+    versions.fetchVersions(new DownloadableFileSetVersions.FileSetVersionsCallback<DownloadableFileSetDescription>() {
+      @Override
+      public void onSuccess(@NotNull List<? extends DownloadableFileSetDescription> versions) {
+        if (!versions.isEmpty()) {
+          descriptionRef.set(versions.get(0));
         }
-      }, "Fetching library description", false, project, component);
+        semaphore.up();
+      }
 
-    if (descriptionRef.isNull()) {
-      return;
+      @Override
+      public void onError(@NotNull String errorMessage) {
+        LOG.error(errorMessage);
+        semaphore.up();
+      }
+    });
+    semaphore.waitFor();
+
+    final DownloadableFileSetDescription description = descriptionRef.get();
+    if (description == null) {
+      throw new IOException("No client library versions loaded");
     }
 
-    DownloadableFileSetDescription description = descriptionRef.get();
+    final Ref<List<Pair<File,DownloadableFileDescription>>> downloaded = Ref.create(null);
+    final Ref<IOException> exception = Ref.create(null);
+    semaphore.down();
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        new Task.Backgroundable(null, "Downloading Client Libraries", true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
+          @Override
+          public void run(@NotNull ProgressIndicator indicator) {
+            try {
+              downloaded.set(downloadService.createDownloader(description).download(getStoreDirectory(libraryDescription)));
+            }
+            catch (IOException e) {
+              exception.set(e);
+            }
+            finally {
+              semaphore.up();
+            }
+          }
+        }.queue();
+      }
+    });
+    semaphore.waitFor();
 
-    FileDownloader downloader = downloadService.createDownloader(description, project, component);
-    downloader = downloader.toDirectory(getStoreDirectory(libraryDescription).getAbsolutePath());
-    VirtualFile[] virtualFiles = downloader.download();
-    if (virtualFiles == null || virtualFiles.length != description.getFiles().size()) {
-      return;
+    if (!exception.isNull()) {
+      throw exception.get();
+    }
+    if (downloaded.isNull()) {
+      throw new IOException("Downloading client libraries cancelled");
     }
 
     List<File> files = myFiles.get(libraryDescription.getId());
@@ -175,22 +227,13 @@ public class ClientLibraryManagerImpl extends ClientLibraryManager implements Pe
       files = new ArrayList<File>();
       myFiles.put(libraryDescription.getId(), files);
     }
-    for (VirtualFile file : virtualFiles) {
-      files.add(VfsUtilCore.virtualToIoFile(file));
+    for (Pair<File, DownloadableFileDescription> pair : downloaded.get()) {
+      files.add(pair.getFirst());
     }
 
     myEventDispatcher.getMulticaster().downloaded();
-  }
 
-  @Override
-  public boolean download(@NotNull final ClientLibraryDescription description) {
-    if (isDownloaded(description)) {
-      return true;
-    }
-
-    download(description, null, null);
-
-    return isDownloaded(description);
+    return files;
   }
 
   @Tag("client-library")

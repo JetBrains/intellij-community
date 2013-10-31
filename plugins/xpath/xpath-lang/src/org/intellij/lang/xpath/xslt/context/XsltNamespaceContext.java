@@ -43,6 +43,7 @@ import java.util.*;
 public class XsltNamespaceContext implements NamespaceContext {
     public static final XsltNamespaceContext NAMESPACE_CONTEXT = new XsltNamespaceContext();
 
+    @Override
     public String getNamespaceURI(String prefix, XmlElement context) {
         return getNamespaceUriStatic(prefix, context);
     }
@@ -53,12 +54,14 @@ public class XsltNamespaceContext implements NamespaceContext {
         return tag != null ? tag.getNamespaceByPrefix(prefix) : null;
     }
 
+    @Override
     @Nullable
     public String getPrefixForURI(String uri, XmlElement context) {
         final XmlTag tag = PsiTreeUtil.getParentOfType(context, XmlTag.class);
         return tag != null ? tag.getPrefixByNamespace(uri) : null;
     }
 
+    @Override
     @NotNull
     public Collection<String> getKnownPrefixes(XmlElement context) {
         return getPrefixes(context);
@@ -74,7 +77,7 @@ public class XsltNamespaceContext implements NamespaceContext {
                     final Set<Map.Entry<String,String>> localPrefixes = p.getLocalNamespaceDeclarations().entrySet();
                     for (Map.Entry<String,String> entry : localPrefixes) {
                         final String prefix = entry.getKey();
-                        if (prefix.length() > 0 && entry.getValue().equals(uri)) {
+                        if (!prefix.isEmpty() && entry.getValue().equals(uri)) {
                             if (!allPrefixes.contains(prefix)) {
                                 allPrefixes.add(prefix);
                             }
@@ -88,6 +91,7 @@ public class XsltNamespaceContext implements NamespaceContext {
         }
     }
 
+    @Override
     @Nullable
     public PsiElement resolve(String prefix, XmlElement context) {
         return resolvePrefix(prefix, context);
@@ -118,6 +122,7 @@ public class XsltNamespaceContext implements NamespaceContext {
         return null;
     }
 
+    @Override
     public IntentionAction[] getUnresolvedNamespaceFixes(PsiReference reference, String localName) {
         return getUnresolvedNamespaceFixesStatic(reference, localName);
     }
@@ -134,7 +139,7 @@ public class XsltNamespaceContext implements NamespaceContext {
               String uri;
               if ((uri = tag.getAttributeValue("xpath-default-namespace", null)) != null ||
                   (uri = tag.getAttributeValue("xpath-default-namespace", XsltSupport.XSLT_NS)) != null) {
-                return uri.length() > 0 ? uri : null;
+                return !uri.isEmpty() ? uri : null;
               }
               context = PsiTreeUtil.getParentOfType(context, XmlTag.class, true);
             }
@@ -165,6 +170,7 @@ public class XsltNamespaceContext implements NamespaceContext {
             myXmlFile = xmlFile;
         }
 
+        @Override
         public void invoke(@NotNull Project project, Editor editor, PsiFile psiFile) throws IncorrectOperationException {
             super.invoke(project, editor, myXmlFile);
         }
@@ -174,6 +180,7 @@ public class XsltNamespaceContext implements NamespaceContext {
             return false; // doesn't work properly yet
         }
 
+        @Override
         public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile psiFile) {
             return super.isAvailable(project, editor, myXmlFile);
         }

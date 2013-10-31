@@ -134,7 +134,7 @@ public class RequestHint {
   }
 
   public boolean wasStepTargetMethodMatched() {
-    return myTargetMethodMatched;
+    return myMethodFilter instanceof BreakpointStepMethodFilter || myTargetMethodMatched;
   }
 
   public int getNextStepDepth(final SuspendContextImpl context) {
@@ -227,7 +227,7 @@ public class RequestHint {
         }
         // smart step feature
         if (myMethodFilter != null) {
-          if (myMethodFilter.getBreakpointPosition() != null) {
+          if (myMethodFilter instanceof BreakpointStepMethodFilter) {
             // continue stepping if stop criterion is implemented as breakpoint request
             return StepRequest.STEP_OUT;
           }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,19 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.reference.SoftReference;
 import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.Reference;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,8 +36,6 @@ import java.util.Set;
  * @author max
  */
 public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.smartPointers.SmartTypePointerManagerImpl");
-
   private static final SmartTypePointer NULL_POINTER = new SmartTypePointer() {
     @Override
     public PsiType getType() { return null; }
@@ -152,59 +146,6 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
     }
   }
 
-  private abstract static class TypePointerBase<T extends PsiType> implements SmartTypePointer {
-    private Reference<T> myTypeRef;
-
-    TypePointerBase(@NotNull T type) {
-      myTypeRef = new SoftReference<T>(type);
-    }
-
-    @Override
-    public T getType() {
-      Reference<T> typeRef = myTypeRef;
-      T myType = typeRef == null ? null : typeRef.get();
-      if (myType != null && myType.isValid()) return myType;
-
-      myType = calcType();
-      myTypeRef = myType == null ? null : new SoftReference<T>(myType);
-      return myType;
-    }
-
-    @Nullable
-    protected abstract T calcType();
-  }
-
-  private class ClassReferenceTypePointer extends TypePointerBase<PsiClassReferenceType> {
-    private final SmartPsiElementPointer mySmartPsiElementPointer;
-    private final String myReferenceText;
-
-    ClassReferenceTypePointer(@NotNull PsiClassReferenceType type) {
-      super(type);
-      final PsiJavaCodeReferenceElement reference = type.getReference();
-      mySmartPsiElementPointer = myPsiPointerManager.createSmartPsiElementPointer(reference);
-      myReferenceText = reference.getText();
-    }
-
-    @Override
-    protected PsiClassReferenceType calcType() {
-      PsiClassReferenceType myType = null;
-      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)mySmartPsiElementPointer.getElement();
-      final PsiElementFactory factory = JavaPsiFacade.getInstance(myProject).getElementFactory();
-      if (referenceElement != null) {
-        myType = (PsiClassReferenceType)factory.createType(referenceElement);
-      }
-      else {
-        try {
-          myType = (PsiClassReferenceType)factory.createTypeFromText(myReferenceText, null);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
-      }
-      return myType;
-    }
-  }
-
   private class DisjunctionTypePointer extends TypePointerBase<PsiDisjunctionType> {
     private final List<SmartTypePointer> myPointers;
 
@@ -251,10 +192,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
       if (aClass == null) {
-        if (classType instanceof PsiClassReferenceType) {
-          return new ClassReferenceTypePointer((PsiClassReferenceType)classType);
-        }
-        return new SimpleTypePointer(classType);
+        return createClassReferenceTypePointer(classType);
       }
       if (classType instanceof PsiClassReferenceType) {
         classType = ((PsiClassReferenceType)classType).createImmediateCopy();
@@ -276,4 +214,17 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
       return new DisjunctionTypePointer(disjunctionType);
     }
   }
+
+  @NotNull
+  private SmartTypePointer createClassReferenceTypePointer(@NotNull PsiClassType classType) {
+    for (ClassTypePointerFactory factory : ClassTypePointerFactory.EP_NAME.getExtensions()) {
+      SmartTypePointer pointer = factory.createClassTypePointer(classType, myProject);
+      if (pointer != null) {
+        return pointer;
+      }
+    }
+
+    return new SimpleTypePointer(classType);
+  }
+
 }

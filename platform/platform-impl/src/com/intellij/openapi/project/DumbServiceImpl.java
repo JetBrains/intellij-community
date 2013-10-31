@@ -268,6 +268,10 @@ public class DumbServiceImpl extends DumbService {
       assert !application.isReadAccessAllowed();
     }
 
+    if (!isDumb()) {
+      return;
+    }
+
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     runWhenSmart(new Runnable() {

@@ -37,9 +37,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * @author spleaner
- */
 @State(name = "WebBrowsersConfiguration", storages = {@Storage(file = StoragePathMacros.APP_CONFIG + "/browsers.xml")})
 public class BrowsersConfiguration implements PersistentStateComponent<Element> {
   public enum BrowserFamily {

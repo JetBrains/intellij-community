@@ -62,6 +62,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "remote-servers-api",
     "remote-servers-java-api",
     "testFramework-java",
+    "xml-analysis-api",
   ].flatten()
 
   //noinspection GroovyAssignabilityCheck
@@ -84,6 +85,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
     "remote-servers-java-impl",
     "testFramework",
     "tests_bootstrap",
+    "xml-analysis-impl",
           ].flatten()
 
   ant.patternset(id: "resources.included") {
@@ -115,6 +117,12 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
       dir("groovy") {
         dir("lib") {
           fileset(dir:"$home/lib/groovy/lib")
+        }
+      }
+
+      dir("libpty") {
+        fileset(dir: "$home/lib/libpty") {
+          exclude(name: "readme.txt")
         }
       }
 
@@ -476,10 +484,6 @@ public def layoutCommunityPlugins(String home) {
       fileset(dir: "$home/plugins/terminal/lib") {
         include(name: "*.jar")
         include(name: "*.in")
-        include(name: "**/*.dll")
-        include(name: "**/*.exe")
-        include(name: "**/*.dylib")
-        include(name: "**/*.so")
       }
     }
   }

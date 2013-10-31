@@ -44,6 +44,7 @@
     </action>
     <action id="Github.Open.Commit.In.Browser" class="org.jetbrains.plugins.github.GithubShowCommitInBrowserFromLogAction">
       <add-to-group group-id="Git.LogContextMenu" />
+      <add-to-group group-id="Vcs.Log.ContextMenu" />
     </action>
     <action id="Github.Create.Gist" class="org.jetbrains.plugins.github.GithubCreateGistAction">
       <add-to-group group-id="EditorPopupMenu"/>

@@ -124,7 +124,6 @@ public abstract class ToolWindowManager {
 
   /**
    * Utility method for quick access to the focus manager
-   * @return
    */
   public abstract IdeFocusManager getFocusManager();
 
@@ -138,5 +137,4 @@ public abstract class ToolWindowManager {
 
   @Nullable
   public abstract Balloon getToolWindowBalloon(String id);
-
 }

@@ -176,7 +176,7 @@ public class MavenModuleBuilderHelper {
     }.execute();
   }
 
-  private PsiFile getPsiFile(Project project, VirtualFile pom) {
+  private static PsiFile getPsiFile(Project project, VirtualFile pom) {
     return PsiManager.getInstance(project).findFile(pom);
   }
 
@@ -234,7 +234,7 @@ public class MavenModuleBuilderHelper {
     LocalFileSystem.getInstance().refreshWithoutFileWatcher(true);
   }
 
-  private void showError(Project project, Throwable e) {
+  private static void showError(Project project, Throwable e) {
     MavenUtil.showError(project, "Failed to create a Maven project", e);
   }
 }

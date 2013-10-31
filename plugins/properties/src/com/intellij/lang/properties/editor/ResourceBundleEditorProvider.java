@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,13 +36,16 @@ import org.jetbrains.annotations.NotNull;
 public class ResourceBundleEditorProvider extends FileTypeFactory implements FileEditorProvider, DumbAware {
   private static final ResourceBundleFileType RESOURCE_BUNDLE_FILE_TYPE = new ResourceBundleFileType();
 
+  @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file){
     if (file instanceof ResourceBundleAsVirtualFile) return true;
+    if (!file.isValid()) return false;
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile(psiFile);
     return propertiesFile != null &&  propertiesFile.getResourceBundle().getPropertiesFiles(project).size() > 1;
   }
 
+  @Override
   @NotNull
   public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file){
     ResourceBundle resourceBundle;
@@ -60,29 +63,35 @@ public class ResourceBundleEditorProvider extends FileTypeFactory implements Fil
     return new ResourceBundleEditor(project, resourceBundle);
   }
 
+  @Override
   public void disposeEditor(@NotNull FileEditor editor) {
     Disposer.dispose(editor);
   }
 
+  @Override
   @NotNull
   public FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file) {
     return new ResourceBundleEditor.ResourceBundleEditorState(null);
   }
 
+  @Override
   public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element element){
   }
 
+  @Override
   @NotNull
   public FileEditorPolicy getPolicy() {
     return FileEditorPolicy.PLACE_AFTER_DEFAULT_EDITOR;
   }
 
+  @Override
   @NotNull
   public String getEditorTypeId(){
     return "ResourceBundle";
   }
 
 
+  @Override
   public void createFileTypes(@NotNull final FileTypeConsumer consumer) {
     consumer.consume(RESOURCE_BUNDLE_FILE_TYPE, "");
   }

@@ -57,6 +57,19 @@ public class DownloadableFileServiceImpl extends DownloadableFileService {
 
   @NotNull
   @Override
+  public FileDownloader createDownloader(@NotNull DownloadableFileSetDescription description) {
+    return createDownloader(description.getFiles(), description.getName());
+  }
+
+  @NotNull
+  @Override
+  public FileDownloader createDownloader(@NotNull List<? extends DownloadableFileDescription> fileDescriptions,
+                                         @NotNull String presentableDownloadName) {
+    return new FileDownloaderImpl(fileDescriptions, null, null, presentableDownloadName);
+  }
+
+  @NotNull
+  @Override
   public FileDownloader createDownloader(@NotNull DownloadableFileSetDescription description,
                                          @Nullable Project project,
                                          JComponent parent) {

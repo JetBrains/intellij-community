@@ -2,12 +2,14 @@ package com.intellij.codeInsight.completion.methodChains.search;
 
 import com.intellij.codeInsight.completion.methodChains.completion.context.ChainCompletionContext;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 import static com.intellij.util.containers.ContainerUtil.reverse;
 
@@ -81,8 +83,7 @@ public class MethodsChain {
       if (thisNext == null || thatNext == null) {
         throw new NullPointerException();
       }
-      if (((thisNext.isConstructor() != thatNext.isConstructor()))
-          || !thisNext.getName().equals(thatNext.getName())) {
+      if (((thisNext.isConstructor() != thatNext.isConstructor())) || !thisNext.getName().equals(thatNext.getName())) {
         return CompareResult.NOT_EQUAL;
       }
     }
@@ -94,21 +95,25 @@ public class MethodsChain {
     }
 
 
-    final PsiClass leftQualifier = JavaPsiFacade.getInstance(context.getProject()).findClass(left.getQualifierClassName(), context.getResolveScope());
-    final PsiClass rightQualifier = JavaPsiFacade.getInstance(context.getProject()).findClass(left.getQualifierClassName(), context.getResolveScope());
-    return hasBaseClass(leftQualifier, rightQualifier, PsiManager.getInstance(context.getProject())) ? CompareResult.EQUAL : CompareResult.NOT_EQUAL;
+    return hasBaseMethod(left.getPath().get(0), right.getPath().get(0), PsiManager.getInstance(context.getProject()))
+           ? CompareResult.EQUAL
+           : CompareResult.NOT_EQUAL;
   }
 
-  private static boolean hasBaseClass(final PsiClass left, final PsiClass right, final PsiManager psiManager) {
-    //todo so slow
-    final Set<PsiClass> leftSupers = InheritanceUtil.getSuperClasses(left);
-    final Set<PsiClass> rightSupers = InheritanceUtil.getSuperClasses(right);
-    for (final PsiClass leftSuper : leftSupers) {
-      if (!CommonClassNames.JAVA_LANG_OBJECT.equals(leftSuper.getQualifiedName()) && rightSupers.contains(leftSuper)) {
-        return true;
+  private static boolean hasBaseMethod(final PsiMethod[] left, final PsiMethod[] right, final PsiManager psiManager) {
+    for (PsiMethod rightMethod : right) {
+      final PsiMethod[] rightSupers = rightMethod.findDeepestSuperMethods();
+      if (rightSupers.length != 0) {
+        for (final PsiMethod leftMethod : left) {
+          final PsiMethod[] leftSupers = leftMethod.findDeepestSuperMethods();
+          if (leftSupers.length != 0) {
+            if (psiManager.areElementsEquivalent(leftSupers[0], rightSupers[0])) {
+              return true;
+            }
+          }
+        }
       }
-    }
-    return false;
+    } return false;
   }
 
   public enum CompareResult {

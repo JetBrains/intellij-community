@@ -60,7 +60,7 @@ public class MavenJUnitPatcher extends JUnitPatcher {
 
     Element systemPropertyVariables = config.getChild("systemPropertyVariables");
     if (systemPropertyVariables != null) {
-      for (Element element : (List<Element>)systemPropertyVariables.getChildren()) {
+      for (Element element : systemPropertyVariables.getChildren()) {
         String propertyName = element.getName();
 
         if (!javaParameters.getVMParametersList().hasProperty(propertyName)) {
@@ -71,7 +71,7 @@ public class MavenJUnitPatcher extends JUnitPatcher {
 
     Element environmentVariables = config.getChild("environmentVariables");
     if (environmentVariables != null) {
-      for (Element element : (List<Element>)environmentVariables.getChildren()) {
+      for (Element element : environmentVariables.getChildren()) {
         String variableName = element.getName();
 
         if (javaParameters.getEnv() == null || !javaParameters.getEnv().containsKey(variableName)) {

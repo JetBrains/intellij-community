@@ -66,8 +66,8 @@ public class ParametersMatcher {
       return new MatchResult(getMatched() + other.getMatched(), getUnMatched() + other.getUnMatched());
     }
 
-    public boolean noUnmatched() {
-      return myUnMatched == 0;
+    public boolean noUnmatchedAndHasMatched() {
+      return myUnMatched == 0 && myMatched != 0;
     }
 
     @Override

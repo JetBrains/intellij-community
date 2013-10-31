@@ -104,8 +104,8 @@ public class PsiMethodReferenceCompatibilityConstraint implements ConstraintForm
           constraints.add(new TypeCompatibilityConstraint(GenericsUtil.eliminateWildcards(returnType), psiSubstitutor.substitute(applicableMethodReturnType)));
         } else if (applicableMember instanceof PsiClass || applicableMember instanceof PsiMethod && ((PsiMethod)applicableMember).isConstructor()) {
           final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(applicableMember.getProject());
-          final PsiClassType classType = elementFactory.createType(qualifierResolveResult.getContainingClass(), PsiSubstitutor.EMPTY);
-          constraints.add(new TypeCompatibilityConstraint(GenericsUtil.eliminateWildcards(returnType), psiSubstitutor.substitute(classType)));
+          final PsiClassType classType = elementFactory.createType(qualifierResolveResult.getContainingClass(), psiSubstitutor);
+          constraints.add(new TypeCompatibilityConstraint(GenericsUtil.eliminateWildcards(returnType), classType));
         }
       }
       return true;

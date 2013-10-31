@@ -1,18 +1,31 @@
 <idea-plugin>
-  <project-components>
-    <component>
-      <interface-class>com.intellij.vcs.log.impl.VcsLogManager</interface-class>
-      <implementation-class>com.intellij.vcs.log.impl.VcsLogManager</implementation-class>
-    </component>
-  </project-components>
 
   <extensionPoints>
     <extensionPoint name="logProvider" interface="com.intellij.vcs.log.VcsLogProvider" area="IDEA_PROJECT"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <changesViewContent tabName="Log" className="com.intellij.vcs.log.impl.VcsLogContentProvider"
+                        predicateClassName="com.intellij.vcs.log.impl.VcsLogContentProvider"/>
+
     <applicationService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory" serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl" />
+    <projectService serviceInterface="com.intellij.vcs.log.impl.VcsLogManager" serviceImplementation="com.intellij.vcs.log.impl.VcsLogManager"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogSettings" serviceImplementation="com.intellij.vcs.log.impl.VcsLogSettingsImpl"/>
+    <projectService serviceInterface="com.intellij.vcs.log.data.VcsLogUiProperties" serviceImplementation="com.intellij.vcs.log.data.VcsLogUiProperties"/>
+    <projectService serviceInterface="com.intellij.vcs.log.VcsLog" serviceImplementation="com.intellij.vcs.log.impl.VcsLogImpl" />
   </extensions>
+
+  <actions>
+    <action class="com.intellij.vcs.log.ui.VcsLogCopyHashAction" id="Vcs.Log.CopyHash"
+            icon="AllIcons.Actions.Copy" text="Copy Hash" description="Copy hash value of the selected commit to clipboard" />
+
+    <group id="Vcs.Log.Toolbar">
+      <reference id="Vcs.Log.CopyHash"/>
+    </group>
+    <group id="Vcs.Log.ContextMenu">
+      <reference id="Vcs.Log.CopyHash"/>
+    </group>
+  </actions>
+
 </idea-plugin>
 

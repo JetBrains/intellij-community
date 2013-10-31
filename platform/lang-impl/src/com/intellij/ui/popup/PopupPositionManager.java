@@ -135,33 +135,38 @@ public class PopupPositionManager {
   }
 
   public static class PositionAdjuster {
-    private static final int GAP = 5;
+    private final int myGap;
 
     private final Component myRelativeTo;
     private final Point myRelativeOnScreen;
     private final Rectangle myScreenRect;
 
-    public PositionAdjuster(final Component relativeTo) {
+    public PositionAdjuster(final Component relativeTo, int gap) {
       myRelativeTo = relativeTo;
       myRelativeOnScreen = relativeTo.getLocationOnScreen();
       myScreenRect = ScreenUtil.getScreenRectangle(myRelativeOnScreen);
+      myGap = gap;
+    }
+
+    public PositionAdjuster(final Component relativeTo) {
+      this(relativeTo, 5);
     }
 
     protected Rectangle positionRight(final Dimension d) {
-      return new Rectangle(myRelativeOnScreen.x + myRelativeTo.getWidth() + GAP, myRelativeOnScreen.y, d.width,
+      return new Rectangle(myRelativeOnScreen.x + myRelativeTo.getWidth() + myGap, myRelativeOnScreen.y, d.width,
                            d.height);
     }
 
     protected Rectangle positionLeft(final Dimension d) {
-      return new Rectangle(myRelativeOnScreen.x - GAP - d.width, myRelativeOnScreen.y, d.width, d.height);
+      return new Rectangle(myRelativeOnScreen.x - myGap - d.width, myRelativeOnScreen.y, d.width, d.height);
     }
 
     protected Rectangle positionAbove(final Dimension d) {
-      return new Rectangle(myRelativeOnScreen.x, getYForTopPositioning() - GAP - d.height, d.width, d.height);
+      return new Rectangle(myRelativeOnScreen.x, getYForTopPositioning() - myGap - d.height, d.width, d.height);
     }
 
     protected Rectangle positionUnder(final Dimension d) {
-      return new Rectangle(myRelativeOnScreen.x, myRelativeOnScreen.y + GAP + myRelativeTo.getHeight(), d.width, d.height);
+      return new Rectangle(myRelativeOnScreen.x, myRelativeOnScreen.y + myGap + myRelativeTo.getHeight(), d.width, d.height);
     }
 
     protected int getYForTopPositioning() {
@@ -213,19 +218,19 @@ public class PopupPositionManager {
         // ok, popup does not fit, will try to resize it
         final java.util.List<Rectangle> boxes = new ArrayList<Rectangle>();
         // right
-        boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x + myRelativeTo.getWidth() + GAP, myRelativeOnScreen.y,
+        boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x + myRelativeTo.getWidth() + myGap, myRelativeOnScreen.y,
                                                    myScreenRect.width, myScreenRect.height)));
 
         // left
-        boxes.add(crop(myScreenRect, new Rectangle(myScreenRect.x, myRelativeOnScreen.y, myRelativeOnScreen.x - myScreenRect.x - GAP,
+        boxes.add(crop(myScreenRect, new Rectangle(myScreenRect.x, myRelativeOnScreen.y, myRelativeOnScreen.x - myScreenRect.x - myGap,
                                                    myScreenRect.height)));
 
         // top
         boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x, myScreenRect.y,
-                                                   myScreenRect.width, getYForTopPositioning() - myScreenRect.y - GAP)));
+                                                   myScreenRect.width, getYForTopPositioning() - myScreenRect.y - myGap)));
 
         // bottom
-        boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x, myRelativeOnScreen.y + myRelativeTo.getHeight() + GAP,
+        boxes.add(crop(myScreenRect, new Rectangle(myRelativeOnScreen.x, myRelativeOnScreen.y + myRelativeTo.getHeight() + myGap,
                                                    myScreenRect.width, myScreenRect.height)));
 
         Collections.sort(boxes, new Comparator<Rectangle>() {
@@ -278,7 +283,7 @@ public class PopupPositionManager {
       return result;
     }
 
-    protected static Dimension getPopupSize(final JBPopup popup) {
+    public static Dimension getPopupSize(final JBPopup popup) {
       Dimension size = null;
       if (popup instanceof AbstractPopup) {
         final String dimensionKey = ((AbstractPopup)popup).getDimensionServiceKey();

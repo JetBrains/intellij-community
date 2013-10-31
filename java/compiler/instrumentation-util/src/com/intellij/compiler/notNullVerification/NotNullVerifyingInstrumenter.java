@@ -190,8 +190,9 @@ public class NotNullVerifyingInstrumenter extends ClassVisitor implements Opcode
 
       @Override
       public void visitLocalVariable(String name, String desc, String signature, Label start, Label end, int index) {
-        final boolean isParameter = getParameterIndex(index, access, args) >= 0;
-        final Label label = (isParameter && myStartGeneratedCodeLabel != null) ? myStartGeneratedCodeLabel : start;
+        final boolean isStatic = (access & ACC_STATIC) != 0;
+        final boolean isParameterOrThisRef = isStatic ? index < args.length : index <= args.length;
+        final Label label = (isParameterOrThisRef && myStartGeneratedCodeLabel != null) ? myStartGeneratedCodeLabel : start;
         mv.visitLocalVariable(name, desc, signature, label, end, index);
       }
 

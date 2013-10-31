@@ -1,5 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
+  <item name='java.text.DateFormat java.lang.Object parseObject(java.lang.String, java.text.ParsePosition) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.text.Format java.lang.Object parseObject(java.lang.String, java.text.ParsePosition) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.text.Format java.lang.StringBuffer format(java.lang.Object, java.lang.StringBuffer, java.text.FieldPosition) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.text.Format java.lang.StringBuffer format(java.lang.Object, java.lang.StringBuffer, java.text.FieldPosition) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.text.Format java.text.AttributedCharacterIterator formatToCharacterIterator(java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
   <item name="java.text.MessageFormat MessageFormat(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -32,6 +47,51 @@
   </item>
   <item name="java.text.SimpleDateFormat SimpleDateFormat(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name="java.text.SimpleDateFormat SimpleDateFormat(java.lang.String, java.text.DateFormatSymbols) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.text.SimpleDateFormat SimpleDateFormat(java.lang.String, java.text.DateFormatSymbols) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name="java.text.SimpleDateFormat SimpleDateFormat(java.lang.String, java.util.Locale) 0">
+    <annotation name="org.jetbrains.annotations.NonNls" />
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.text.SimpleDateFormat SimpleDateFormat(java.lang.String, java.util.Locale) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.text.SimpleDateFormat java.lang.StringBuffer format(java.util.Date, java.lang.StringBuffer, java.text.FieldPosition) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.text.SimpleDateFormat java.lang.StringBuffer format(java.util.Date, java.lang.StringBuffer, java.text.FieldPosition) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.text.SimpleDateFormat java.lang.StringBuffer format(java.util.Date, java.lang.StringBuffer, java.text.FieldPosition) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.text.SimpleDateFormat java.text.AttributedCharacterIterator formatToCharacterIterator(java.lang.Object) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.text.SimpleDateFormat java.util.Date parse(java.lang.String, java.text.ParsePosition) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.text.SimpleDateFormat java.util.Date parse(java.lang.String, java.text.ParsePosition) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.text.SimpleDateFormat void applyLocalizedPattern(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.text.SimpleDateFormat void applyPattern(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.text.SimpleDateFormat void set2DigitYearStart(java.util.Date) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.text.SimpleDateFormat void setDateFormatSymbols(java.text.DateFormatSymbols) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
 </root>
 

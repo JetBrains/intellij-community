@@ -51,4 +51,9 @@ class VcsCommitCache<T extends VcsShortCommitDetails> {
     assert EventQueue.isDispatchThread();
     return myCache.get(hash);
   }
+
+  public void remove(@NotNull Hash hash) {
+    myCache.remove(hash);
+  }
+
 }

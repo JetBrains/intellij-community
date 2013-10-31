@@ -4,6 +4,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsShortCommitDetails;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,7 +17,7 @@ import java.util.List;
  */
 public abstract class AbstractVcsLogTableModel<T> extends AbstractTableModel {
 
-  public static final VirtualFile UNKNOWN_ROOT = NullVirtualFile.INSTANCE;
+  public static final VirtualFile FAKE_ROOT = NullVirtualFile.INSTANCE;
 
   public static final int ROOT_COLUMN = 0;
   public static final int COMMIT_COLUMN = 1;
@@ -37,6 +38,10 @@ public abstract class AbstractVcsLogTableModel<T> extends AbstractTableModel {
   @NotNull
   @Override
   public final Object getValueAt(int rowIndex, int columnIndex) {
+    if (rowIndex >= getRowCount() - 1) {
+      requestToLoadMore();
+    }
+
     VcsShortCommitDetails data = getShortDetails(rowIndex);
     switch (columnIndex) {
       case ROOT_COLUMN:
@@ -62,6 +67,8 @@ public abstract class AbstractVcsLogTableModel<T> extends AbstractTableModel {
     }
   }
 
+  public abstract void requestToLoadMore();
+
   @Nullable
   public abstract List<Change> getSelectedChanges(int[] selectedRows);
 
@@ -73,6 +80,14 @@ public abstract class AbstractVcsLogTableModel<T> extends AbstractTableModel {
 
   @NotNull
   protected abstract Class<T> getCommitColumnClass();
+
+  /**
+   * Returns the Hash of the commit displayed in the given row.
+   * May be null if there is no commit in the row
+   * (such situations may appear, for example, if graph is filtered by branch, as described in IDEA-115442).
+   */
+  @Nullable
+  public abstract Hash getHashAtRow(int row);
 
   @Override
   public Class<?> getColumnClass(int column) {

@@ -44,8 +44,9 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
     group.add(new MyCopyAction());
     myHelpArea.addMouseListener(
       new PopupHandler(){
+        @Override
         public void invokePopup(final Component comp,final int x,final int y){
-          createPopupMenu(group).getComponent().show(comp,x,y);
+          ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group).getComponent().show(comp, x, y);
         }
       }
     );
@@ -67,10 +68,6 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
     myToolbarPanel.setVisible(true);
   }
 
-  private static ActionPopupMenu createPopupMenu(DefaultActionGroup group) {
-    return ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
-  }
-
   public void updateText(final String text) {
     myHelpArea.setText(text);
   }
@@ -89,6 +86,7 @@ public class ConfigurationArgumentsHelpArea extends JPanel {
       copyFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_COPY));
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       final StringSelection contents = new StringSelection(myHelpArea.getText().trim());
       CopyPasteManager.getInstance().setContents(contents);

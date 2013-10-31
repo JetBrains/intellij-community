@@ -34,6 +34,7 @@ import java.util.List;
  * @author nik
  */
 public class DeployToServerConfigurationType extends ConfigurationTypeBase {
+  private final DeployToServerConfigurationType.DeployToServerConfigurationFactory myFactory;
 
   public static String getId(ServerType<?> serverType) {
     return serverType.getId() + "-deploy";
@@ -41,11 +42,21 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
 
   private final ServerType<?> myServerType;
 
-  public DeployToServerConfigurationType(ServerType<?> serverType) {
+  public DeployToServerConfigurationType(@NotNull ServerType<?> serverType) {
     super(getId(serverType), serverType.getPresentableName() + " Deployment",
           "Deploy to " + serverType.getPresentableName() + " run configuration", serverType.getIcon());
-    addFactory(new DeployToServerConfigurationFactory());
+    myFactory = new DeployToServerConfigurationFactory();
+    addFactory(myFactory);
     myServerType = serverType;
+  }
+
+  public ConfigurationFactoryEx getFactory() {
+    return myFactory;
+  }
+
+  @NotNull
+  public ServerType<?> getServerType() {
+    return myServerType;
   }
 
   public class DeployToServerConfigurationFactory extends ConfigurationFactoryEx {

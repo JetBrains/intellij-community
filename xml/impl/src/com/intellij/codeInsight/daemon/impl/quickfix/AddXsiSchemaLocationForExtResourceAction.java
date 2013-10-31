@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,16 +48,19 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
   @NonNls private static final String XSI_SCHEMA_LOCATION_ATTR_NAME = "xsi:schemaLocation";
   public static final String KEY = "add.xsi.schema.location.for.external.resource";
 
+  @Override
   protected String getQuickFixKeyId() {
     return KEY;
   }
 
+  @Override
   protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor) throws IncorrectOperationException {
     final XmlTag tag = PsiTreeUtil.getParentOfType(file.findElementAt(offset), XmlTag.class);
     if (tag == null) return;
     final List<String> schemaLocations = new ArrayList<String>();
 
     CreateNSDeclarationIntentionFix.processExternalUris(new CreateNSDeclarationIntentionFix.TagMetaHandler(tag.getLocalName()), file, new CreateNSDeclarationIntentionFix.ExternalUriProcessor() {
+      @Override
       public void process(@NotNull final String currentUri, final String url) {
         if (currentUri.equals(uri) && url != null) schemaLocations.add(url);
       }
@@ -66,6 +69,7 @@ public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAct
 
     CreateNSDeclarationIntentionFix.runActionOverSeveralAttributeValuesAfterLettingUserSelectTheNeededOne(
       ArrayUtil.toStringArray(schemaLocations), file.getProject(), new CreateNSDeclarationIntentionFix.StringToAttributeProcessor() {
+        @Override
         public void doSomethingWithGivenStringToProduceXmlAttributeNowPlease(@NotNull final String attrName) throws IncorrectOperationException {
           doIt(file, editor, uri, tag, attrName);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,14 +41,12 @@ public class AnnotationAttributeChildLink extends PsiChildLink<PsiAnnotation, Ps
   public PsiAnnotationMemberValue findLinkedChild(@Nullable PsiAnnotation psiAnnotation) {
     if (psiAnnotation == null) return null;
 
-    psiAnnotation.getText();
     return psiAnnotation.findDeclaredAttributeValue(myAttributeName);
   }
 
   @Override
   @NotNull
   public PsiAnnotationMemberValue createChild(@NotNull PsiAnnotation psiAnnotation) throws IncorrectOperationException {
-    psiAnnotation.getText();
     final PsiExpression nullValue = JavaPsiFacade.getElementFactory(psiAnnotation.getProject()).createExpressionFromText(PsiKeyword.NULL, null);
     psiAnnotation.setDeclaredAttributeValue(myAttributeName, nullValue);
     return ObjectUtils.assertNotNull(psiAnnotation.findDeclaredAttributeValue(myAttributeName));

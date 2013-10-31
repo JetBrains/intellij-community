@@ -14,7 +14,6 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -32,7 +31,6 @@ import org.zmlx.hg4idea.util.HgChangesetUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 import org.zmlx.hg4idea.util.HgVersion;
 
-import java.io.File;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -48,6 +46,13 @@ public class HgLogCommand {
   private static final String[] LONG_TEMPLATE_FOR_OLD_VERSIONS =
     {"{rev}", "{node|short}", "{parents}", "{date|isodatesec}", "{author}", "{branches}", "{desc}", "{file_adds}", "{file_mods}",
       "{file_dels}", "{file_copies}"};
+  //todo fix too many different static arrays
+  private static final String[] LOG_TEMPLATE_ITEMS =
+    {"{rev}", "{node}", "{p1rev}", "{p1node}", "{p2rev}", "{p2node}", "{date|isodatesec}", "{author}", "{branch}", "{tags}", "{desc}",
+      "{file_adds}", "{file_mods}",
+      "{file_dels}", "{join(file_copies,'" + HgChangesetUtil.FILE_SEPARATOR + "')}"};
+  private static final String[] SHORT_LOG_TEMPLATE_ITEMS =
+    {"{rev}", "{node}", "{p1rev}", "{p1node}", "{p2rev}", "{p2node}", "{date|isodatesec}", "{author}", "{branch}","{tags}", "{desc}"};
 
   private static final int REVISION_INDEX = 0;
   private static final int CHANGESET_INDEX = 1;
@@ -224,7 +229,8 @@ public class HgLogCommand {
         }
 
         revisions.add(
-          new HgFileRevision(myProject, hgFile, vcsRevisionNumber, branchName, revisionDate, author, commitMessage, filesModified, filesAdded,
+          new HgFileRevision(myProject, hgFile, vcsRevisionNumber, branchName, revisionDate, author, commitMessage, filesModified,
+                             filesAdded,
                              filesDeleted, copies));
       }
       catch (NumberFormatException e) {
@@ -352,50 +358,128 @@ public class HgLogCommand {
     return -1;
   }
 
+  //todo refactor: create one log command with more flexible ability of templates and arguments;May be use one common parse method
   @NotNull
-  public HgFile getNameThroughCopies(@NotNull final HgFile hgFile, @NotNull HgRevisionNumber vcsRevisionNumber) throws HgCommandException {
-    String targetName = FileUtil.toSystemIndependentName(hgFile.getRelativePath());
-    String revNumber = vcsRevisionNumber.getRevisionNumber();
-    if (StringUtil.isEmptyOrSpaces(revNumber)) {
-      LOG.info("Revision Number shouldn't be empty, may be vcsDirectory mapping problem for: " + hgFile.getRepo().getPath());
-      return hgFile;
-    }
-    int targetRevNumber = Integer.valueOf(revNumber);
-    String[] COPIES_TEMPLATE =
-      myBuiltInSupported
-      ? new String[]{"{rev}", "{join(file_copies,'" + HgChangesetUtil.FILE_SEPARATOR + "')}"}
-      : new String[]{"{rev}", "{file_copies}"};
-    String template = HgChangesetUtil.makeTemplate(COPIES_TEMPLATE);
-    HgCommandResult result = execute(hgFile.getRepo(), template, -1, hgFile, Arrays.asList("-r", ".:0"));
-    if (result == null) {
-      throw new HgCommandException("Could not execute log command.");
+  public List<HgFileRevision> getFullHistory(HgFile hgFile, int limit, boolean includeFiles, List<String> argsForCmd)
+    throws HgCommandException {
+    if ((limit <= 0 && limit != -1) || hgFile == null) {
+      return Collections.emptyList();
     }
 
+    String template = HgChangesetUtil.makeTemplate(includeFiles ? LOG_TEMPLATE_ITEMS : SHORT_LOG_TEMPLATE_ITEMS);
+
+    FilePath originalFileName = HgUtil.getOriginalFileName(hgFile.toFilePath(), ChangeListManager.getInstance(myProject));
+    HgFile originalHgFile = new HgFile(hgFile.getRepo(), originalFileName);
+    HgCommandResult result = execute(hgFile.getRepo(), template, limit, originalHgFile, argsForCmd);
+
+    final List<HgFileRevision> revisions = new LinkedList<HgFileRevision>();
+    if (result == null) {
+      return revisions;
+    }
+    int P1_REV_INDEX = 2;
+    int P1_HASH_INDEX = 3;
+    int P2_REV_INDEX = 4;
+    int P2_HASH_INDEX = 5;
+
+    int DATE_INDEX = 6;
+    int AUTHOR_INDEX = 7;
+    int BRANCH_INDEX = 8;
+    //int TAGS_INDEX = 9;
+    int MESSAGE_INDEX = 10;
+
+    int ADDED_INDEX = 11;
+    int MODIFIED_INDEX = 12;
+    int DELETED_INDEX = 13;
+    int COPIED_INDEX = 14;
     List<String> errors = result.getErrorLines();
     if (errors != null && !errors.isEmpty()) {
       throw new HgCommandException(errors.toString());
     }
     String output = result.getRawOutput();
+    if(output.isEmpty()){
+      //todo handle if no revisions satisfied query
+      return revisions;
+    }
     String[] changeSets = output.split(HgChangesetUtil.CHANGESET_SEPARATOR);
     for (String line : changeSets) {
-      String[] attributes = line.split(HgChangesetUtil.ITEM_SEPARATOR);
-      //if there are no moved/renamed files in the revision, then this revision should be skipped
-      if (attributes.length != 2) {
-        continue;
-      }
+      try {
+        String[] attributes = line.split(HgChangesetUtil.ITEM_SEPARATOR);
+        // At least in the case of the long template, it's OK that we don't have everything...for example, if there were no
+        //  deleted or copied files, then we won't get any attributes for them...
+        int numAttributes = attributes.length;
 
-      if (Integer.valueOf(attributes[0]) <= targetRevNumber) {
-        break;
-      }
-      Map<String, String> copies = myBuiltInSupported ? parseCopiesFileList(attributes[1]) : parseCopiesFileListAsOldVersion(attributes[1]);
-      for (Map.Entry<String, String> entry : copies.entrySet()) {
-        if (entry.getValue().equals(targetName)) {
-          targetName = entry.getKey();
-          break;
+        String revisionString = attributes[REVISION_INDEX];
+        String changeset = attributes[CHANGESET_INDEX];
+        String[] prevs = {attributes[P1_REV_INDEX], attributes[P2_REV_INDEX]};
+        String[] phashes = {attributes[P1_HASH_INDEX], attributes[P2_HASH_INDEX]};
+
+
+        List<HgRevisionNumber> parents = new ArrayList<HgRevisionNumber>(2);
+        //if revision has only 1 parent and "--debug" argument were added,  its second parent has revision number  -1
+        for (int i = 0; i < prevs.length; ++i) {
+          if (Integer.valueOf(prevs[i]) >= 0) {
+            parents.add(HgRevisionNumber.getInstance(prevs[i], phashes[i]));
+          }
         }
+
+        Date revisionDate = DATE_FORMAT.parse(attributes[DATE_INDEX]);
+        String author = attributes[AUTHOR_INDEX];
+        String commitMessage = attributes[MESSAGE_INDEX];
+        final HgRevisionNumber vcsRevisionNumber = new HgRevisionNumber(revisionString, changeset, author, commitMessage, parents);
+
+        String branchName = attributes[BRANCH_INDEX];
+
+        if (includeFiles && (numAttributes < ADDED_INDEX)) {
+          LOG.debug("Wrong format for long template. Skipping line " + line);
+          continue;
+        }
+
+        Set<String> filesAdded = Collections.emptySet();
+        Set<String> filesModified = Collections.emptySet();
+        Set<String> filesDeleted = Collections.emptySet();
+        Map<String, String> copies = Collections.emptyMap();
+
+        if (numAttributes > ADDED_INDEX) {
+          filesAdded = parseFileList(attributes[ADDED_INDEX]);
+
+          if (numAttributes > MODIFIED_INDEX) {
+            filesModified = parseFileList(attributes[MODIFIED_INDEX]);
+
+            if (numAttributes > DELETED_INDEX) {
+              filesDeleted = parseFileList(attributes[DELETED_INDEX]);
+
+              if (numAttributes > COPIED_INDEX) {
+                copies =
+                  parseCopiesFileList(attributes[COPIED_INDEX]);
+                // Only keep renames, i.e. copies where the source file is also deleted.
+                Iterator<String> keys = copies.keySet().iterator();
+                while (keys.hasNext()) {
+                  String s = keys.next();
+                  if (filesAdded.contains(copies.get(s)) && filesDeleted.contains(s)) {
+                    filesAdded.remove(copies.get(s));
+                    filesDeleted.remove(s);
+                  }
+                  else if (!filesDeleted.contains(s)) {
+                    keys.remove();
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        revisions.add(
+          new HgFileRevision(myProject, hgFile, vcsRevisionNumber, branchName, revisionDate, author, commitMessage, filesModified,
+                             filesAdded,
+                             filesDeleted, copies));
+      }
+      catch (NumberFormatException e) {
+        LOG.warn("Error parsing rev in line " + line);
+      }
+      catch (ParseException e) {
+        LOG.warn("Error parsing date in line " + line);
       }
     }
-    VirtualFile root = hgFile.getRepo();
-    return new HgFile(root, new File(root.getPath(), targetName));
+    return revisions;
   }
 }

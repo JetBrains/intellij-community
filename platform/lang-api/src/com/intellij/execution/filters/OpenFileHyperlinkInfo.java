@@ -69,9 +69,9 @@ public final class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       @Override
       public void run() {
-        final VirtualFile file = myFile;
-        if (file.isValid()) {
-          FileEditorManager.getInstance(project).openTextEditor(getDescriptor(), true);
+        OpenFileDescriptor descriptor = getDescriptor();
+        if (descriptor != null) {
+          FileEditorManager.getInstance(project).openTextEditor(descriptor, true);
         }
       }
     });

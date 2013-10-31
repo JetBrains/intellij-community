@@ -129,8 +129,8 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
     final List<ExcludeFolder> excludeFolders =  ContainerUtilRt.newArrayList(entry.getExcludeFolders());
     for(final ExcludeFolder excludeFolder : excludeFolders) {
       final String path = VirtualFileManager.extractPath(excludeFolder.getUrl());
-      if(!(excludeFolder instanceof ExcludedOutputFolder) && !retainedContentFolders.contains(path)) {
-       entry.removeExcludeFolder(excludeFolder);
+      if (!retainedContentFolders.contains(path)) {
+        entry.removeExcludeFolder(excludeFolder);
       }
     }
   }
@@ -167,12 +167,7 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
   }
 
   private static void createExcludedRootIfAbsent(@NotNull ContentEntry entry, @NotNull String path, @NotNull String moduleName) {
-    ExcludeFolder[] folders = entry.getExcludeFolders();
-    for (ExcludeFolder folder : folders) {
-      VirtualFile file = folder.getFile();
-      if (file == null) {
-        continue;
-      }
+    for (VirtualFile file : entry.getExcludeFolderFiles()) {
       if (ExternalSystemApiUtil.getLocalFileSystemPath(file).equals(path)) {
         return;
       }

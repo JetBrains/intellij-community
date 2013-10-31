@@ -286,12 +286,13 @@ public abstract class FindJarFix<T extends PsiElement> implements IntentionActio
       PropertiesComponent.getInstance(project).setValue("findjar.last.used.dir", file.getPath());
       final DownloadableFileService downloader = DownloadableFileService.getInstance();
       final DownloadableFileDescription description = downloader.createFileDescription(jarUrl, jarName);
-      final VirtualFile[] jars = downloader.createDownloader(Arrays.asList(description), project, myEditorComponent, jarName)
-        .toDirectory(file.getPath()).download();
-      if (jars != null && jars.length == 1) {
+      final List<VirtualFile> jars =
+        downloader.createDownloader(Arrays.asList(description), jarName)
+                  .downloadFilesWithProgress(file.getPath(), project, myEditorComponent);
+      if (jars != null && jars.size() == 1) {
         AccessToken token = WriteAction.start();
         try {
-          OrderEntryFix.addJarToRoots(jars[0].getPresentableUrl(), myModule, myRef);
+          OrderEntryFix.addJarToRoots(jars.get(0).getPresentableUrl(), myModule, myRef);
         }
         finally {
           token.finish();

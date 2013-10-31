@@ -48,7 +48,7 @@ public class HgCommittedChangeList extends CommittedChangeListImpl implements Vc
     return getComment();
   }
 
-  @Nullable
+  @NotNull
   @Override
   public VcsRevisionNumber getRevisionNumber() {
     return myRevision;

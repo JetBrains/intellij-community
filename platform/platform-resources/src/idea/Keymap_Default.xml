@@ -301,7 +301,7 @@
     <keyboard-shortcut first-keystroke="control shift N"/>
   </action>
   <action id="ActivateTerminalToolWindow">
-    <keyboard-shortcut first-keystroke="alt MINUS"/>
+    <keyboard-shortcut first-keystroke="alt F12"/>
   </action>
   <action id="ActivateMessagesToolWindow">
     <keyboard-shortcut first-keystroke="alt 0"/>

@@ -191,9 +191,6 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
   private void buildSimplifiedExpression(List<PsiExpression> expressions, String token, boolean negate, StringBuilder out) {
     if (expressions.size() == 1) {
       final PsiExpression expression = expressions.get(0);
-      if (isBoxedTypeComparison(token, expression)) {
-        out.append(expression.getText()).append(" != null && ");
-      }
       if (!negate) {
         out.append(expression.getText());
         return;
@@ -241,10 +238,6 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
         out.append(')');
       }
     }
-  }
-
-  private static boolean isBoxedTypeComparison(String token, PsiExpression expression) {
-    return ("==".equals(token) || "!=".equals(token)) && expression instanceof PsiReferenceExpression && expression.getType() instanceof PsiClassType;
   }
 
   private void buildSimplifiedPrefixExpression(PsiPrefixExpression expression, StringBuilder out) {
@@ -398,7 +391,7 @@ public class PointlessBooleanExpressionInspection extends BaseInspection {
       }
     }
     final Boolean value = (Boolean)ConstantExpressionUtil.computeCastTo(expression, PsiType.BOOLEAN);
-    return value != null ? value.booleanValue() : null;
+    return value != null ? value : null;
   }
 
   private static boolean containsReference(@Nullable PsiExpression expression) {

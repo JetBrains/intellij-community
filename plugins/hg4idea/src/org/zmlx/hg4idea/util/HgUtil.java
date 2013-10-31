@@ -38,15 +38,15 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.status.StatusBarUtil;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.*;
-import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.command.HgRemoveCommand;
 import org.zmlx.hg4idea.command.HgStatusCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
-import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.ShellCommand;
 import org.zmlx.hg4idea.execution.ShellCommandException;
@@ -306,7 +306,6 @@ public abstract class HgUtil {
     return null;
   }
 
-
   /**
     * Shows a message dialog to enter the name of new branch.
     * @return name of new branch or {@code null} if user has cancelled the dialog.
@@ -351,32 +350,16 @@ public abstract class HgUtil {
   }
 
   @NotNull
-  public static HgFile getFileNameInTargetRevision(@NotNull Project project,
-                                                   @NotNull HgRevisionNumber vcsRevisionNumber,
-                                                   @NotNull HgFile localHgFile) {
-    //change status command execution to log command because the last one is faster,
-    // but need to find file renames manually.
-    //if virtualFile is null - our parent revision does not contain this file,
-    // so this selected localHgFile comes from selected revision from history and his name is result filename
-    if (localHgFile.toFilePath().getVirtualFile() == null) {
-      return localHgFile;
+  public static HgFile getFileNameInTargetRevision(Project project, HgRevisionNumber vcsRevisionNumber, HgFile localHgFile) {
+    HgStatusCommand statCommand = new HgStatusCommand.Builder(true).unknown(false).baseRevision(vcsRevisionNumber).build(project);
+
+    Set<HgChange> changes = statCommand.execute(localHgFile.getRepo());
+
+    for (HgChange change : changes) {
+      if (change.afterFile().equals(localHgFile)) {
+        return change.beforeFile();
+      }
     }
-    HgLogCommand logCommand = new HgLogCommand(project);
-    //--follow could be changed to --branch filter, but the last one is slower
-    logCommand.setFollowCopies(true);
-    try {
-      //usually when 'compare' 2 revision or 'compare with local' performed the localHgFile - is really local copy,
-      //so we need to get all previous revision from current.
-      // But when 'compare with' called from "get Affected path -> compare with..." then localHgFile is hgFile from selected revision,
-      //so if this name was changed then file is not in parent revision and log command could not follow history.
-      return logCommand.getNameThroughCopies(localHgFile, vcsRevisionNumber);
-    }
-    catch (HgCommandException e) {
-      LOG.warn("Could not find filename in target revision: " + localHgFile.toString(), e);
-    }
-    //todo: fix: when filename comes from another revision and working copy contains another file with the same name,
-    //then 'show diff with local' produce inconvenient behaviour.
-    // todo: fix: If performed 'show diff with local' but there are no selected filename in currant working copy - nothing shows.
     return localHgFile;
   }
 
@@ -634,5 +617,14 @@ public abstract class HgUtil {
     cmdArgs.add("-q");
     ShellCommand shellCommand = new ShellCommand(cmdArgs, null, CharsetToolkit.getDefaultSystemCharset());
     return shellCommand.execute();
+  }
+
+  public static List<String> getNamesWithoutHashes(Collection<HgNameWithHashInfo> namesWithHashes) {
+    return ContainerUtil.map(namesWithHashes, new Function<HgNameWithHashInfo, String>() {
+      @Override
+      public String fun(HgNameWithHashInfo info) {
+        return info.getName();
+      }
+    });
   }
 }

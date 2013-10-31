@@ -131,7 +131,10 @@ public class PsiMethodReferenceUtil {
         if (resolve instanceof PsiClass) {
           containingClass = (PsiClass)resolve;
           substitutor = resolveResult.getSubstitutor();
-          return new QualifierResolveResult(containingClass, substitutor, true);
+          final boolean isRawSubst = !methodReferenceExpression.isConstructor() && 
+                                     PsiTreeUtil.isAncestor(containingClass, methodReferenceExpression, true) && 
+                                     PsiUtil.isRawSubstitutor(containingClass, substitutor);
+          return new QualifierResolveResult(containingClass, isRawSubst ? PsiSubstitutor.EMPTY : substitutor, true);
         }
       }
     }
@@ -191,7 +194,7 @@ public class PsiMethodReferenceUtil {
       if (resolve instanceof PsiMethod) {
         final MethodSignature signature1 = method.getSignature(LambdaUtil.getSubstitutor(method, resolveResult));
         PsiSubstitutor subst = PsiSubstitutor.EMPTY;
-        subst = subst.putAll(qualifierResolveResult.getSubstitutor());
+        subst = subst.putAll(TypeConversionUtil.getSuperClassSubstitutor(((PsiMethod)resolve).getContainingClass(), qualifierResolveResult.getContainingClass(), qualifierResolveResult.getSubstitutor()));
         subst = subst.putAll(result.getSubstitutor());
         final MethodSignature signature2 = ((PsiMethod)resolve).getSignature(subst);
 

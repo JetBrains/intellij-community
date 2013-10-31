@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -445,7 +445,6 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * for processing to the specified scope processor.
    *
    * @param processor  the processor receiving the declarations.
-   * @param state
    * @param lastParent the child of this element has been processed during the previous
    *                   step of the tree up walk (declarations under this element do not need
    *                   to be processed again)

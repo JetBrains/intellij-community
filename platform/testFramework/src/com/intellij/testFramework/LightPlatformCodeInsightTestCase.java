@@ -375,7 +375,7 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
                                          : null;
 
         if (ignoreTrailingSpaces) {
-          ((DocumentImpl)document).stripTrailingSpaces();
+          ((DocumentImpl)document).stripTrailingSpaces(getProject());
         }
 
         if (caretMarker != null) {

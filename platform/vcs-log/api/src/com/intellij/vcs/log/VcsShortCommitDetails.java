@@ -1,5 +1,6 @@
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -10,7 +11,8 @@ import java.util.List;
  * <p>These details will be displayed in the log table.</p>
  *
  * <p>An instance of this object can be obtained via
- *    {@link VcsLogObjectsFactory#createShortDetails(Hash, List, long, String, String) VcsLogObjectsFactory#createShortDetails}</p>
+ *    {@link VcsLogObjectsFactory#createShortDetails(Hash, List, long, VirtualFile, String, String) VcsLogObjectsFactory#createShortDetails}
+ * </p>
  *
  * @see VcsFullCommitDetails
  * @author Kirill Likhodedov
@@ -19,6 +21,9 @@ public interface VcsShortCommitDetails {
 
   @NotNull
   Hash getHash();
+
+  @NotNull
+  VirtualFile getRoot();
 
   @NotNull
   List<Hash> getParents();

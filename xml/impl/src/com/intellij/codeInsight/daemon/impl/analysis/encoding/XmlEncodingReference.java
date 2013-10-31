@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,14 +49,17 @@ public class XmlEncodingReference implements PsiReference, EmptyResolveMessagePr
     myPriority = priority;
   }
 
+  @Override
   public PsiElement getElement() {
     return myValue;
   }
 
+  @Override
   public TextRange getRangeInElement() {
     return myRangeInElement;
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     return CharsetToolkit.forName(myCharsetName) == null ? null : myValue;
@@ -65,29 +68,35 @@ public class XmlEncodingReference implements PsiReference, EmptyResolveMessagePr
     //return myValue.getManager().findClass(fqn, GlobalSearchScope.allScope(myValue.getProject()));
   }
 
+  @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
     //noinspection UnresolvedPropertyKey
     return XmlErrorMessages.message("unknown.encoding.0");
   }
 
+  @Override
   @NotNull
   public String getCanonicalText() {
     return myCharsetName;
   }
 
+  @Override
   public PsiElement handleElementRename(String newElementName) throws IncorrectOperationException {
     return null;
   }
 
+  @Override
   public PsiElement bindToElement(@NotNull PsiElement element) throws IncorrectOperationException {
     return null;
   }
 
+  @Override
   public boolean isReferenceTo(PsiElement element) {
     return false;
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     Charset[] charsets = CharsetToolkit.getAvailableCharsets();
@@ -98,11 +107,13 @@ public class XmlEncodingReference implements PsiReference, EmptyResolveMessagePr
     return suggestions.toArray(new LookupElement[suggestions.size()]);
   }
 
+  @Override
   public boolean isSoft() {
     return false;
   }
 
-  public int compareTo(XmlEncodingReference ref) {
+  @Override
+  public int compareTo(@NotNull XmlEncodingReference ref) {
     return myPriority - ref.myPriority;
   }
 }

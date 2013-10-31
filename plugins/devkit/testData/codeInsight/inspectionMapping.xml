@@ -8,9 +8,9 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <<warning descr="groupName or groupKey should be specified"><warning descr="Bundle should be specified">localInspection</warning></warning> key="foo"/>
-    <<warning descr="displayName or key should be specified"><warning descr="Bundle should be specified">localInspection</warning></warning> groupKey="foo"/>
-    <<warning descr="groupName or groupKey should be specified"><warning descr="Bundle should be specified">localInspection</warning></warning> key="foo" groupBundle="bundle"/>
+    <<warning descr="Bundle should be specified"><warning descr="groupName or groupKey should be specified">localInspection</warning></warning> key="<error descr="Cannot resolve property key">foo</error>"/>
+    <<warning descr="Bundle should be specified"><warning descr="displayName or key should be specified">localInspection</warning></warning> groupKey="<error descr="Cannot resolve property key">foo</error>"/>
+    <<warning descr="Bundle should be specified"><warning descr="groupName or groupKey should be specified">localInspection</warning></warning> key="<error descr="Cannot resolve property key">foo</error>" groupBundle="bundle"/>
 
     <<warning descr="groupName or groupKey should be specified">localInspection</warning> key="foo" bundle="bundle"/>
     <<warning descr="displayName or key should be specified">localInspection</warning> groupKey="foo" bundle="bundle"/>

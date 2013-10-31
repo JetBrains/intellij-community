@@ -419,8 +419,8 @@ public class InferenceSession {
           PsiType bound = null;
           for (PsiType eqBound : eqBounds) {
             if (eqBound == null) continue;
+            if (bound != null && !isProperType(eqBound)) continue;
             bound = acceptBoundsWithRecursiveDependencies(typeParameter, eqBound, substitutor);
-            if (bound != null) break;
           }
           if (bound != null) {
             if (bound instanceof PsiCapturedWildcardType && eqBounds.size() > 1) {

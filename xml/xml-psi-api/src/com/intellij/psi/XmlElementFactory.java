@@ -55,6 +55,16 @@ public abstract class XmlElementFactory {
   public abstract XmlTag createXHTMLTagFromText(@NotNull @NonNls String s) throws IncorrectOperationException;
 
   /**
+   * Creates an HTML tag with the specified text.
+   *
+   * @param s the text of an HTML tag (which can contain attributes and subtags).
+   * @return the created tag instance.
+   * @throws IncorrectOperationException if the text does not specify a valid XML fragment.
+   */
+  @NotNull
+  public abstract XmlTag createHTMLTagFromText(@NotNull @NonNls String s) throws IncorrectOperationException;
+
+  /**
    * Creates an XML tag with the specified text.
    *
    * @param text the text of an XML tag (which can contain attributes and subtags).

@@ -28,7 +28,6 @@ import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.resolve.PsiResolveHelperImpl;
-import com.intellij.psi.impl.source.resolve.graphInference.PsiGraphInferenceHelper;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.FileTreeAccessFilter;
 import com.intellij.testFramework.HighlightTestInfo;
@@ -161,6 +160,7 @@ public abstract class LightDaemonAnalyzerTestCase extends LightCodeInsightTestCa
     }
     if (!doInspections()) {
       toIgnoreList.add(Pass.LOCAL_INSPECTIONS);
+      toIgnoreList.add(Pass.WHOLE_FILE_LOCAL_INSPECTIONS);
     }
     int[] toIgnore = toIgnoreList.isEmpty() ? ArrayUtil.EMPTY_INT_ARRAY : toIgnoreList.toNativeArray();
     Editor editor = getEditor();

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,8 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageTargetUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -97,10 +99,13 @@ public class HighlightUsagesHandler extends HighlightHandlerBase {
         ResolveResult[] results = ((PsiPolyVariantReference)ref).multiResolve(false);
 
         if (results.length > 0) {
-          usageTargets = new UsageTarget[results.length];
-          for (int i = 0; i < results.length; ++i) {
-            usageTargets[i] = new PsiElement2UsageTargetAdapter(results[i].getElement());
-          }
+          usageTargets = ContainerUtil.mapNotNull(results, new Function<ResolveResult, UsageTarget>() {
+            @Override
+            public UsageTarget fun(ResolveResult result) {
+              PsiElement element = result.getElement();
+              return element == null ? null : new PsiElement2UsageTargetAdapter(element);
+            }
+          }, UsageTarget.EMPTY_ARRAY);
         }
       }
     }

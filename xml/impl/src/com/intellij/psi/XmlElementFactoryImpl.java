@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.ASTFactory;
@@ -94,6 +95,15 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
   @NotNull
   public XmlTag createXHTMLTagFromText(@NotNull String text) throws IncorrectOperationException {
     final XmlDocument document = createXmlDocument(text, "dummy.xhtml", XHtmlFileType.INSTANCE);
+    final XmlTag tag = document.getRootTag();
+    assert tag != null;
+    return tag;
+  }
+
+  @Override
+  @NotNull
+  public XmlTag createHTMLTagFromText(@NotNull String text) throws IncorrectOperationException {
+    final XmlDocument document = createXmlDocument(text, "dummy.html", HtmlFileType.INSTANCE);
     final XmlTag tag = document.getRootTag();
     assert tag != null;
     return tag;

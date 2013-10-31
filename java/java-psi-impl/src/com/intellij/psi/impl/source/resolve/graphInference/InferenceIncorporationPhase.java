@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.graphInference;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula;
 import com.intellij.psi.impl.source.resolve.graphInference.constraints.SubtypingConstraint;
@@ -146,7 +147,7 @@ public class InferenceIncorporationPhase {
       final boolean properType = mySession.isProperType(upperBound);
       for (PsiType eqBound : eqBounds) {
         if (properType && mySession.isProperType(eqBound)) continue;
-        if (!upperBound.equals(eqBound)) {
+        if (!upperBound.equals(eqBound) && !upperBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
           addConstraint(new SubtypingConstraint(upperBound, eqBound, true));
         }
       }

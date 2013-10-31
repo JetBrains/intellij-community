@@ -327,7 +327,8 @@ public class ParameterInfoController implements Disposable {
         if (handler instanceof ParameterInfoHandlerWithTabActionSupport) {
           final ParameterInfoHandlerWithTabActionSupport parameterInfoHandler2 = (ParameterInfoHandlerWithTabActionSupport)handler;
 
-          final E e = ParameterInfoUtils.findArgumentList(file, offset, lbraceOffset, parameterInfoHandler2);
+          // please don't remove typecast in the following line; it's required to compile the code under old JDK 6 versions
+          final E e = (E) ParameterInfoUtils.findArgumentList(file, offset, lbraceOffset, parameterInfoHandler2);
           if (e != null) return e;
         }
       }

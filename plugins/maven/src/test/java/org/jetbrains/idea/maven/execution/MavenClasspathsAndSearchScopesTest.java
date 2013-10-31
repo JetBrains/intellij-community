@@ -28,7 +28,10 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.LibraryScopeCache;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.PathsList;
@@ -1109,7 +1112,7 @@ public class MavenClasspathsAndSearchScopesTest extends MavenImportingTestCase {
     assertPaths(expectedPaths, actualPaths);
   }
 
-  private void assertPaths(String[] expectedPaths, List<String> actualPaths) {
+  private static void assertPaths(String[] expectedPaths, List<String> actualPaths) {
     List<String> normalizedActualPaths = new ArrayList<String>();
     List<String> normalizedExpectedPaths = new ArrayList<String>();
 

@@ -5,6 +5,7 @@ import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
@@ -69,5 +70,19 @@ public interface VcsLogProvider {
    * @param refresher The refresher which should be notified about the need of refresh.
    */
   void subscribeToRootRefreshEvents(@NotNull Collection<VirtualFile> roots, @NotNull VcsLogRefresher refresher);
+
+  /**
+   * Return commits with full details, which correspond to the given filters.
+   */
+  @NotNull
+  List<? extends VcsFullCommitDetails> getFilteredDetails(@NotNull VirtualFile root,
+                                                          @NotNull Collection<VcsLogFilter> filters) throws VcsException;
+
+  /**
+   * Returns the name of current user as specified for the given root,
+   * or null if user didn't configure his name in the VCS settings.
+   */
+  @Nullable
+  VcsUser getCurrentUser(@NotNull VirtualFile root) throws VcsException;
 
 }

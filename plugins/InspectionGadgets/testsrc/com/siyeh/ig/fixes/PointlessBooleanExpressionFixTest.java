@@ -29,12 +29,7 @@ public class PointlessBooleanExpressionFixTest extends IGQuickFixesTestCase {
     myDefaultHint = InspectionGadgetsBundle.message("pointless.bitwise.expression.simplify.quickfix");
   }
 
-
-  public void testNegation() {
-    doTest();
-  }
-  
-  public void testPolyadic() {
-    doTest();
-  }
+  public void testNegation() { doTest(); }
+  public void testPolyadic() { doTest(); }
+  public void testBoxed() { doTest(); }
 }

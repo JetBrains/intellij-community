@@ -201,7 +201,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
   }
 
-  private void checkSameSignatures(@NotNull List<CandidateInfo> conflicts) {
+  protected void checkSameSignatures(@NotNull List<CandidateInfo> conflicts) {
     // candidates should go in order of class hierarchy traversal
     // in order for this to work
     Map<MethodSignature, CandidateInfo> signatures = new THashMap<MethodSignature, CandidateInfo>(conflicts.size());

@@ -108,7 +108,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
-    final ASTNode nameElement = PyElementGenerator.getInstance(getProject()).createNameIdentifier(name);
+    final ASTNode nameElement = PyUtil.createNewName(this, name);
     final ASTNode node = getNameNode();
     if (node != null) {
       getNode().replaceChild(node, nameElement);

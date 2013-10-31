@@ -1,22 +1,24 @@
 package com.intellij.vcs.log.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
 import com.intellij.vcs.log.data.DataPack;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
-import com.intellij.vcs.log.data.VcsLogFilter;
 import com.intellij.vcs.log.data.VcsLogFilterer;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.graph.elements.GraphElement;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graphmodel.FragmentManager;
 import com.intellij.vcs.log.graphmodel.GraphFragment;
 import com.intellij.vcs.log.printmodel.SelectController;
 import com.intellij.vcs.log.ui.frame.MainFrame;
+import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,28 +30,36 @@ import java.util.Collection;
  */
 public class VcsLogUI {
 
+  public static final String POPUP_ACTION_GROUP = "Vcs.Log.ContextMenu";
+  public static final String TOOLBAR_ACTION_GROUP = "Vcs.Log.Toolbar";
+  public static final String VCS_LOG_TABLE_PLACE = "Vcs.Log.ContextMenu";
+
   private static final Logger LOG = Logger.getInstance(VcsLogUI.class);
 
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final MainFrame myMainFrame;
+  @NotNull private final Project myProject;
   @NotNull private final VcsLogColorManager myColorManager;
+  @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogFilterer myFilterer;
 
   @Nullable private GraphElement prevGraphElement;
 
   public VcsLogUI(@NotNull VcsLogDataHolder logDataHolder, @NotNull Project project, @NotNull VcsLogSettings settings,
-                  @NotNull VcsLogColorManager manager) {
+                  @NotNull VcsLogColorManager manager, @NotNull VcsLogUiProperties uiProperties) {
     myLogDataHolder = logDataHolder;
+    myProject = project;
     myColorManager = manager;
+    myUiProperties = uiProperties;
     myFilterer = new VcsLogFilterer(logDataHolder, this);
-    myMainFrame = new MainFrame(myLogDataHolder, this, project, settings);
+    myMainFrame = new MainFrame(myLogDataHolder, this, project, uiProperties);
     project.getMessageBus().connect(project).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new Runnable() {
       @Override
       public void run() {
-        applyFilters();
+        applyFiltersAndUpdateUi();
       }
     });
-    applyFilters();
+    applyFiltersAndUpdateUi();
   }
 
   @NotNull
@@ -58,7 +68,7 @@ public class VcsLogUI {
   }
 
   public void jumpToRow(final int rowIndex) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         myMainFrame.getGraphTable().jumpToRow(rowIndex);
@@ -83,7 +93,7 @@ public class VcsLogUI {
   }
 
   public void addToSelection(final Hash hash) {
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
         int row = myLogDataHolder.getDataPack().getRowByHash(hash);
@@ -93,15 +103,25 @@ public class VcsLogUI {
   }
 
   public void showAll() {
-    myLogDataHolder.getDataPack().getGraphModel().getFragmentManager().showAll();
-    updateUI();
-    jumpToRow(0);
+    runUnderModalProgress("Expanding linear branches...", new Runnable() {
+      @Override
+      public void run() {
+        myLogDataHolder.getDataPack().getGraphModel().getFragmentManager().showAll();
+        updateUI();
+        jumpToRow(0);
+      }
+    });
   }
 
   public void hideAll() {
-    myLogDataHolder.getDataPack().getGraphModel().getFragmentManager().hideAll();
-    updateUI();
-    jumpToRow(0);
+    runUnderModalProgress("Collapsing linear branches...", new Runnable() {
+      @Override
+      public void run() {
+        myLogDataHolder.getDataPack().getGraphModel().getFragmentManager().hideAll();
+        updateUI();
+        jumpToRow(0);
+      }
+    });
   }
 
   public void setLongEdgeVisibility(boolean visibility) {
@@ -135,18 +155,24 @@ public class VcsLogUI {
 
   public void click(@Nullable GraphElement graphElement) {
     SelectController selectController = myLogDataHolder.getDataPack().getPrintCellModel().getSelectController();
-    FragmentManager fragmentController = myLogDataHolder.getDataPack().getGraphModel().getFragmentManager();
+    final FragmentManager fragmentController = myLogDataHolder.getDataPack().getGraphModel().getFragmentManager();
     selectController.deselectAll();
     if (graphElement == null) {
       return;
     }
-    GraphFragment fragment = fragmentController.relateFragment(graphElement);
+    final GraphFragment fragment = fragmentController.relateFragment(graphElement);
     if (fragment == null) {
       return;
     }
-    UpdateRequest updateRequest = fragmentController.changeVisibility(fragment);
+
+    myMainFrame.getGraphTable().executeWithoutRepaint(new Runnable() {
+      @Override
+      public void run() {
+        UpdateRequest updateRequest = fragmentController.changeVisibility(fragment);
+        jumpToRow(updateRequest.from());
+      }
+    });
     updateUI();
-    jumpToRow(updateRequest.from());
   }
 
   public void click(int rowIndex) {
@@ -165,16 +191,13 @@ public class VcsLogUI {
     if (row != -1) {
       jumpToRow(row);
     }
-    else if (myLogDataHolder.isFullLogReady()) {
+    else {
       myLogDataHolder.showFullLog(new Runnable() {
         @Override
         public void run() {
           jumpToCommit(commitHash);
         }
       });
-    }
-    else {
-      LOG.info("No row for hash " + commitHash);
     }
   }
 
@@ -193,13 +216,35 @@ public class VcsLogUI {
     return myLogDataHolder;
   }
 
-  private void applyFilters() {
-    myFilterer.applyFiltersAndUpdateUi(collectFilters());
+  public void applyFiltersAndUpdateUi() {
+    runUnderModalProgress("Applying filters...", new Runnable() {
+      public void run() {
+        myFilterer.applyFiltersAndUpdateUi(collectFilters());
+      }
+    });
   }
 
   @NotNull
-  private Collection<VcsLogFilter> collectFilters() {
+  public Collection<VcsLogFilter> collectFilters() {
     return myMainFrame.getFilterUi().getFilters();
+  }
+
+  public VcsLogGraphTable getTable() {
+    return myMainFrame.getGraphTable();
+  }
+
+  @NotNull
+  public VcsLogUiProperties getUiProperties() {
+    return myUiProperties;
+  }
+
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
+  public void runUnderModalProgress(@NotNull String task, @NotNull Runnable runnable) {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, task, false, null, this.getMainFrame().getMainComponent());
   }
 
 }

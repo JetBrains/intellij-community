@@ -16,19 +16,15 @@
 package com.intellij.notification.impl.ui;
 
 import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationSettings;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
-import com.intellij.notification.impl.NotificationsManagerImpl;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.StripeTable;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.ui.TableSpeedSearch;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
-import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -185,7 +181,7 @@ public class NotificationsConfigurablePanel extends JPanel implements Disposable
         final TableColumn readAloudColumn = getColumnModel().getColumn(READ_ALOUD_COLUMN);
         readAloudColumn.setMaxWidth(readAloudColumn.getPreferredWidth());
       }
-
+      new TableSpeedSearch(this);
       getEmptyText().setText("No notifications configured");
     }
 

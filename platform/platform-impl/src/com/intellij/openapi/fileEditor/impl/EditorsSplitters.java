@@ -163,7 +163,7 @@ public class EditorsSplitters extends IdePanePanel {
       UIUtil.applyRenderingHints(g);
       GraphicsUtil.setupAntialiasing(g, true, false);
       g.setColor(new JBColor(isDarkBackground ? Gray._230 : Gray._80, Gray._160));
-      g.setFont(UIUtil.getLabelFont().deriveFont(24f));
+      g.setFont(UIUtil.getLabelFont().deriveFont(isDarkBackground ? 24f : 20f));
 
       final UIUtil.TextPainter painter = new UIUtil.TextPainter().withLineSpacing(1.5f);
       painter.withShadow(true, new JBColor(Gray._200.withAlpha(100), Gray._0.withAlpha(200)));

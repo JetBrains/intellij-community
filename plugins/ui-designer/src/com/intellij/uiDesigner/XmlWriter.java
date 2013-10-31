@@ -114,7 +114,7 @@ public final class XmlWriter{
    * Helper method
    */
   public void addAttribute(@NonNls final String name, final String value){
-    addAttributeImpl(name, StringUtil.convertLineSeparators(XmlStringUtil.escapeString(value, true)));
+    addAttributeImpl(name, StringUtil.convertLineSeparators(XmlStringUtil.escapeString(value, true, false)));
   }
 
   /**

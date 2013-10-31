@@ -156,6 +156,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
                 new Task.Backgroundable(project, progressText, false) {
                   @Override
                   public void run(@NotNull final ProgressIndicator indicator) {
+                    if(project.isDisposed()) return;
                     ExternalSystemResolveProjectTask task
                       = new ExternalSystemResolveProjectTask(myExternalSystemId, project, projectSettings.getExternalProjectPath(), false);
                     task.execute(indicator, ExternalSystemTaskNotificationListener.EP_NAME.getExtensions());

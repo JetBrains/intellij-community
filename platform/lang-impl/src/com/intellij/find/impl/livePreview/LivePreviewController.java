@@ -117,6 +117,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     Runnable request = new Runnable() {
       @Override
       public void run() {
+        if (myDisposed) return;
         mySearchResults.updateThreadSafe(copy, allowedToChangedEditorSelection, null, stamp);
       }
     };

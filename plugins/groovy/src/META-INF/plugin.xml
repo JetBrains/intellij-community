@@ -209,6 +209,8 @@
                               implementationClass="org.jetbrains.plugins.groovy.findUsages.GrFileItemPresentationProvider"/>
 
     <testFramework implementation="org.jetbrains.plugins.groovy.testIntegration.GroovyTestFramework" order="first"/>
+    <testFramework implementation="org.jetbrains.plugins.groovy.spock.SpockTestFramework" order="first"/>
+
     <testCreator language="Groovy" implementationClass="com.intellij.testIntegration.JavaTestCreator"/>
     <testGenerator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.testIntegration.GroovyTestGenerator"/>
     <constructorBodyGenerator language="Groovy"
@@ -1455,6 +1457,7 @@
                                                             implementationClass="org.jetbrains.plugins.groovy.refactoring.classMembers.GroovyClassMembersRefactoringSupport"/>
     <refactoring.pullUpHelperFactory language="Groovy"
                                      implementationClass="org.jetbrains.plugins.groovy.refactoring.memberPullUp.GrPullUpHelperFactory"/>
+    <classTypePointerFactory implementation="org.jetbrains.plugins.groovy.lang.psi.impl.smartPointers.GrClassReferenceTypePointerFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

@@ -662,6 +662,10 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="negated.conditional.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.control.flow.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.controlflow.NegatedConditionalInspection"/>
+    <localInspection language="JAVA" shortName="NegatedConditionalExpression" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="negated.conditional.expression.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.controlflow.NegatedConditionalExpressionInspection"/>
     <localInspection language="JAVA" shortName="NegatedEqualityExpression" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="negated.equality.expression.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.control.flow.issues" enabledByDefault="false" level="WARNING"
