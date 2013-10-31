@@ -31,6 +31,7 @@ import com.intellij.util.ui.UIUtil;
 import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -121,15 +122,12 @@ class ReloadClassesWorker {
           myProgress.setFraction(processedClassesCount / (double)modifiedClasses.size());
         }
         final HotSwapFile fileDescr = modifiedClasses.get(qualifiedName);
-        final byte[] content;
         try {
-          content = FileUtil.loadFileBytes(fileDescr.file);
+          redefineProcessor.processClass(qualifiedName, fileDescr.file);
         }
         catch (IOException e) {
           reportProblem(qualifiedName, e);
-          continue;
         }
-        redefineProcessor.processClass(qualifiedName, content);
       }
       redefineProcessor.processPending();
       myProgress.setFraction(1);
@@ -233,10 +231,13 @@ class ReloadClassesWorker {
       myVirtualMachineProxy = virtualMachineProxy;
     }
 
-    public void processClass(String qualifiedName, byte[] content) throws Throwable {
+    public void processClass(String qualifiedName, File file) throws Throwable {
       final List<ReferenceType> vmClasses = myVirtualMachineProxy.classesByName(qualifiedName);
-      if (vmClasses.isEmpty()) return;
+      if (vmClasses.isEmpty()) {
+        return;
+      }
 
+      final byte[] content = FileUtil.loadFileBytes(file);
       if (vmClasses.size() == 1) {
         myRedefineMap.put(vmClasses.get(0), content);
         if (myRedefineMap.size() >= CLASSES_CHUNK_SIZE) {
