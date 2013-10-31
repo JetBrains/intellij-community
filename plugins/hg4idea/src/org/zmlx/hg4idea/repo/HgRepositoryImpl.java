@@ -75,6 +75,13 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     return myHgDir;
   }
 
+
+  @NotNull
+  @Override
+  public State getState() {
+    return myInfo.getState();
+  }
+
   @Override
   @NotNull
   public String getCurrentBranch() {
