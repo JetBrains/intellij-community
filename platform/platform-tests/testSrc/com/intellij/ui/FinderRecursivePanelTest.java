@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.ui.components.JBList;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
 
 public class FinderRecursivePanelTest extends PlatformTestCase {
@@ -85,6 +87,7 @@ public class FinderRecursivePanelTest extends PlatformTestCase {
     assertMerge(items, -1, -1, newItems);
   }
 
+  @Bombed(year = 2013, month = Calendar.DECEMBER, day = 01, user = "Yann Cebron")
   public void testUpdate() throws InterruptedException {
     StringFinderRecursivePanel panel_0 = new StringFinderRecursivePanel(getProject()) {
       @NotNull
