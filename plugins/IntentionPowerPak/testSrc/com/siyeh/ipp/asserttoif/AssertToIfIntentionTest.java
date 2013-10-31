@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,23 @@
  */
 package com.siyeh.ipp.asserttoif;
 
-import com.intellij.psi.PsiAssertStatement;
-import com.intellij.psi.PsiElement;
-import com.siyeh.ipp.base.PsiElementPredicate;
+import com.siyeh.IntentionPowerPackBundle;
+import com.siyeh.ipp.IPPTestCase;
 
-class AssertStatementPredicate implements PsiElementPredicate {
+/**
+ * @author Bas Leijdekkers
+ */
+public class AssertToIfIntentionTest extends IPPTestCase {
 
-  public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiAssertStatement)) {
-      return false;
-    }
-    final PsiAssertStatement assertStatement = (PsiAssertStatement)element;
-    return assertStatement.getAssertCondition() != null;
+  public void testIncomplete() { doTest(); }
+
+  @Override
+  protected String getRelativePath() {
+    return "asserttoif/assert_to_if";
+  }
+
+  @Override
+  protected String getIntentionName() {
+    return IntentionPowerPackBundle.message("assert.to.if.intention.name");
   }
 }
