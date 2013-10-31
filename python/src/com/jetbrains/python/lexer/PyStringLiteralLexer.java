@@ -221,6 +221,7 @@ public class PyStringLiteralLexer extends LexerBase {
     if (myBuffer.charAt(i) == '\\') {
       LOG.assertTrue(myState == AFTER_FIRST_QUOTE);
       i++;
+      if (myIsRaw) return i;
       if (i == myBufferEnd) {
         myState = AFTER_LAST_QUOTE;
         return i;
@@ -282,7 +283,7 @@ public class PyStringLiteralLexer extends LexerBase {
       final int quote_limit = myIsTriple ? 3 : 1;
       int qcnt = 0; // count consequent quotes
       while (i < myBufferEnd) { // scan to next \something
-        if (myBuffer.charAt(i) == '\\') {
+        if (myBuffer.charAt(i) == '\\' && !myIsRaw) {
           return i;
         }
         if (myState == BEFORE_FIRST_QUOTE && myBuffer.charAt(i) == myQuoteChar) {
@@ -292,7 +293,7 @@ public class PyStringLiteralLexer extends LexerBase {
             qcnt = 0; // for last quote detection in the same pass
           }
         }
-        else if (myState == AFTER_FIRST_QUOTE && myBuffer.charAt(i) == myQuoteChar) { // done?
+        else if (myState == AFTER_FIRST_QUOTE && myBuffer.charAt(i) == myQuoteChar && (!myIsRaw || myBuffer.charAt(i-1) != '\\')) { // done?
           qcnt += 1;
           if (qcnt == quote_limit) {
             myState = AFTER_LAST_QUOTE;
