@@ -64,7 +64,8 @@ public class LocalFsFinder implements FileLookup.Finder, FileLookup {
     return null;
   }
 
-  public String normalize(@NotNull final String path) {
+  public String normalize(@NotNull String path) {
+    path = FileUtil.expandUserHome(path);
     final File file = new File(path);
     if (file.isAbsolute()) return file.getAbsolutePath();
 
