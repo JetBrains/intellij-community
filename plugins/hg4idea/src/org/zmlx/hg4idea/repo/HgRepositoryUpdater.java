@@ -92,6 +92,8 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
     boolean branchFileChanged = false;
     boolean mergeFileChanged = false;
     boolean bookmarksFileChanged = false;
+    boolean tagsFileChanged = false;
+    boolean localTagsFileChanged = false;
     boolean currentBookmarkFileChanged = false;
     boolean configHgrcChanged = false;
     for (VFileEvent event : events) {
@@ -112,6 +114,12 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
       else if (myRepositoryFiles.isBookmarksFile(filePath)) {
         bookmarksFileChanged = true;
       }
+      else if (myRepositoryFiles.isTagsFile(filePath)) {
+        tagsFileChanged = true;
+      }
+      else if (myRepositoryFiles.isLocalTagsFile(filePath)) {
+        localTagsFileChanged = true;
+      }
       else if (myRepositoryFiles.isCurrentBookmarksFile(filePath)) {
         currentBookmarkFileChanged = true;
       }
@@ -121,7 +129,13 @@ final class HgRepositoryUpdater implements Disposable, BulkFileListener {
       }
     }
 
-    if (branchHeadsChanged || branchFileChanged || mergeFileChanged || bookmarksFileChanged || currentBookmarkFileChanged) {
+    if (branchHeadsChanged ||
+        branchFileChanged ||
+        mergeFileChanged ||
+        bookmarksFileChanged ||
+        currentBookmarkFileChanged ||
+        tagsFileChanged ||
+        localTagsFileChanged) {
       myUpdateQueue.add(Void.TYPE);
     }
     if (configHgrcChanged) {

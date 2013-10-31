@@ -107,6 +107,18 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
   @NotNull
   @Override
+  public Collection<HgNameWithHashInfo> getTags() {
+    return myInfo.getTags();
+  }
+
+  @NotNull
+  @Override
+  public Collection<HgNameWithHashInfo> getLocalTags() {
+    return myInfo.getLocalTags();
+  }
+
+  @NotNull
+  @Override
   public HgConfig getRepositoryConfig() {
     return myConfig;
   }
@@ -142,7 +154,7 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     //in GitRepositoryImpl there are temporary state object for reader fields storing! Todo Check;
     return
       new HgRepoInfo(myReader.readCurrentBranch(), myReader.readCurrentRevision(), myReader.readState(), myReader.readBranches(),
-                     myReader.readBookmarks(), myReader.readCurrentBookmark());
+                     myReader.readBookmarks(), myReader.readCurrentBookmark(), myReader.readTags(), myReader.readLocalTags());
   }
 
   public void updateConfig() {
