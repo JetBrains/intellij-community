@@ -662,12 +662,12 @@ public class LambdaUtil {
 
   public static boolean isValidQualifier4InterfaceStaticMethodCall(@NotNull PsiMethod method,
                                                                    @NotNull PsiReferenceExpression methodReferenceExpression,
-                                                                   @NotNull LanguageLevel languageLevel) {
+                                                                   @Nullable PsiElement scope, @NotNull LanguageLevel languageLevel) {
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
       final PsiExpression qualifierExpression = methodReferenceExpression.getQualifierExpression();
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass != null && containingClass.isInterface() && method.hasModifierProperty(PsiModifier.STATIC)) {
-        return qualifierExpression == null && PsiTreeUtil.isAncestor(containingClass, methodReferenceExpression, true)||
+        return qualifierExpression == null && (scope instanceof PsiImportStaticStatement || PsiTreeUtil.isAncestor(containingClass, methodReferenceExpression, true))||
                qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).resolve() == containingClass;
       }
     }
