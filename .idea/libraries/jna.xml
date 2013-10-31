@@ -3,7 +3,6 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/jna-utils.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/jna.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/jna-platform.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>

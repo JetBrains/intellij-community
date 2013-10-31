@@ -21,7 +21,6 @@ jgoodies-forms.jar
 jgoodies-looks-2.4.2.jar
 jh.jar
 jna-utils.jar
-jna-platform.jar
 jna.jar
 jsch-0.1.50.jar
 jsr166e.jar
