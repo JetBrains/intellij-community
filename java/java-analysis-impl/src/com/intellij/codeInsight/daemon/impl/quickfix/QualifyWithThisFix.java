@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.impl.analysis;
+package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -26,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
 /**
 * User: anna
 */
-class QualifyWithThisFix implements IntentionAction {
+public class QualifyWithThisFix implements IntentionAction {
   private final PsiClass myContainingClass;
   private final PsiElement myExpression;
 
@@ -54,6 +55,7 @@ class QualifyWithThisFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     final PsiThisExpression thisExpression =
       RefactoringChangeUtil.createThisExpression(PsiManager.getInstance(project), myContainingClass);
     ((PsiReferenceExpression)myExpression).setQualifierExpression(thisExpression);

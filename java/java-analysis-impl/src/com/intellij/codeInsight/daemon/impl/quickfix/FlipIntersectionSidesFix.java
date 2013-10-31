@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.codeInsight.daemon.impl.analysis;
+package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -32,7 +33,7 @@ import java.util.List;
 * User: anna
 * Date: 10/31/13
 */
-class FlipIntersectionSidesFix implements IntentionAction {
+public class FlipIntersectionSidesFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#" + FlipIntersectionSidesFix.class.getName());
   private final String myClassName;
   private final List<PsiTypeElement> myConjuncts;
@@ -71,6 +72,7 @@ class FlipIntersectionSidesFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     myConjuncts.remove(myConjunct);
     myConjuncts.add(0, myConjunct);
 
