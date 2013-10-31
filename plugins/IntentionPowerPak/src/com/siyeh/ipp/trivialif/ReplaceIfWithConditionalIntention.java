@@ -18,7 +18,6 @@ package com.siyeh.ipp.trivialif;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ipp.base.Intention;
@@ -36,8 +35,7 @@ public class ReplaceIfWithConditionalIntention extends Intention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiIfStatement ifStatement = (PsiIfStatement)element.getParent();
     if (ifStatement == null) {
       return;
@@ -183,9 +181,8 @@ public class ReplaceIfWithConditionalIntention extends Intention {
       return null;
     }
     @NonNls final StringBuilder conditional = new StringBuilder();
-    final String conditionText = getExpressionText(condition);
-    conditional.append(conditionText);
-    conditional.append('?');
+    final String conditionText = getExpressionText(condition, true);
+    conditional.append(conditionText).append('?');
     final PsiType thenType = thenValue.getType();
     final PsiType elseType = elseValue.getType();
     if (thenType instanceof PsiPrimitiveType &&
@@ -195,28 +192,24 @@ public class ReplaceIfWithConditionalIntention extends Intention {
       // prevent unboxing of boxed value to preserve semantics (IDEADEV-36008)
       final PsiPrimitiveType primitiveType = (PsiPrimitiveType)thenType;
       conditional.append(primitiveType.getBoxedTypeName());
-      conditional.append(".valueOf(");
-      conditional.append(thenValue.getText());
-      conditional.append("):");
-      conditional.append(getExpressionText(elseValue));
+      conditional.append(".valueOf(").append(thenValue.getText()).append("):");
+      conditional.append(getExpressionText(elseValue, false));
     }
     else if (elseType instanceof PsiPrimitiveType &&
              !PsiType.NULL.equals(elseType) &&
              !(thenType instanceof PsiPrimitiveType) &&
              !(requiredType instanceof PsiPrimitiveType)) {
       // prevent unboxing of boxed value to preserve semantics (IDEADEV-36008)
-      conditional.append(getExpressionText(thenValue));
+      conditional.append(getExpressionText(thenValue, false));
       conditional.append(':');
       final PsiPrimitiveType primitiveType = (PsiPrimitiveType)elseType;
       conditional.append(primitiveType.getBoxedTypeName());
-      conditional.append(".valueOf(");
-      conditional.append(elseValue.getText());
-      conditional.append(')');
+      conditional.append(".valueOf(").append(elseValue.getText()).append(')');
     }
     else {
-      conditional.append(getExpressionText(thenValue));
+      conditional.append(getExpressionText(thenValue, false));
       conditional.append(':');
-      conditional.append(getExpressionText(elseValue));
+      conditional.append(getExpressionText(elseValue, false));
     }
     return conditional.toString();
   }
@@ -230,9 +223,12 @@ public class ReplaceIfWithConditionalIntention extends Intention {
     return thenValue;
   }
 
-  private static String getExpressionText(PsiExpression expression) {
-    if (ParenthesesUtils.getPrecedence(expression) <=
-        ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
+  private static String getExpressionText(PsiExpression expression, boolean isCondition) {
+    final int precedence = ParenthesesUtils.getPrecedence(expression);
+    if (precedence <= ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
+      if (isCondition && precedence == ParenthesesUtils.CONDITIONAL_PRECEDENCE) {
+        return '(' + expression.getText() + ')';
+      }
       return expression.getText();
     }
     else {
