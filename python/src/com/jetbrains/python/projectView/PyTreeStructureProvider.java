@@ -17,15 +17,21 @@ package com.jetbrains.python.projectView;
 
 import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.ViewSettings;
+import com.intellij.ide.projectView.impl.nodes.NamedLibraryElementNode;
+import com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode;
 import com.intellij.ide.projectView.impl.nodes.PsiFileNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.roots.JdkOrderEntry;
+import com.intellij.openapi.roots.LibraryOrSdkOrderEntry;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.PyDocStringOwner;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.sdk.PythonSdkType;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,6 +43,9 @@ import java.util.List;
 public class PyTreeStructureProvider implements SelectableTreeStructureProvider, DumbAware {
   @Override
   public Collection<AbstractTreeNode> modify(AbstractTreeNode parent, Collection<AbstractTreeNode> children, ViewSettings settings) {
+    if (parent instanceof NamedLibraryElementNode) {
+      return hideSkeletons((NamedLibraryElementNode)parent, children);
+    }
     if (settings.isShowMembers()) {
       List<AbstractTreeNode> newChildren = new ArrayList<AbstractTreeNode>();
       for (AbstractTreeNode child : children) {
@@ -46,6 +55,25 @@ public class PyTreeStructureProvider implements SelectableTreeStructureProvider,
         else {
           newChildren.add(child);
         }
+      }
+      return newChildren;
+    }
+    return children;
+  }
+
+  protected Collection<AbstractTreeNode> hideSkeletons(NamedLibraryElementNode parent, Collection<AbstractTreeNode> children) {
+    LibraryOrSdkOrderEntry orderEntry = parent.getValue().getOrderEntry();
+    if (orderEntry instanceof JdkOrderEntry) {
+      List<AbstractTreeNode> newChildren = new ArrayList<AbstractTreeNode>();
+      for (AbstractTreeNode child : children) {
+        if (child instanceof PsiDirectoryNode) {
+          PsiDirectory directory = ((PsiDirectoryNode)child).getValue();
+          PsiDirectory dirParent = directory.getParent();
+          if (dirParent != null && dirParent.getName().equals(PythonSdkType.SKELETON_DIR_NAME)) {
+            continue;
+          }
+        }
+        newChildren.add(child);
       }
       return newChildren;
     }
