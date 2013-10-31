@@ -21,6 +21,7 @@ import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -365,12 +366,18 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       else {
         final Settings settings = showDialog(context);
         if (settings == null) return false;
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+
+        CommandProcessor.getInstance().executeCommand(context.getProject(), new Runnable() {
           @Override
           public void run() {
-            runRefactoring(context, settings);
+            ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
+              public void run() {
+                runRefactoring(context, settings);
+              }
+            });
           }
-        });
+        }, getRefactoringName(), null);
       }
 
       return true;
