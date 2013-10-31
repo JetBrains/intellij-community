@@ -39,6 +39,7 @@ import git4idea.config.GitVcsSettings;
 import git4idea.history.browser.GitHeavyCommit;
 import git4idea.history.wholeTree.AbstractHash;
 import git4idea.history.wholeTree.GitCommitDetailsProvider;
+import git4idea.log.GitContentRevisionFactory;
 import git4idea.repo.GitRepository;
 import icons.Git4ideaIcons;
 import org.jetbrains.annotations.NotNull;
@@ -166,13 +167,13 @@ public class GitCherryPickAction extends DumbAwareAction {
   // TODO remove after removing the old Vcs Log implementation
   @Nullable
   private List<? extends VcsFullCommitDetails> getSelectedCommits(AnActionEvent e) {
-    List<GitHeavyCommit> commits = e.getData(GitVcs.SELECTED_COMMITS);
-    if (commits != null) {
-      return convertHeavyCommitToFullDetails(commits);
-    }
     final Project project = e.getProject();
     if (project == null) {
       return null;
+    }
+    List<GitHeavyCommit> commits = e.getData(GitVcs.SELECTED_COMMITS);
+    if (commits != null) {
+      return convertHeavyCommitToFullDetails(commits, project);
     }
     final VcsLog log = getVcsLog(project);
     if (log == null) {
@@ -197,7 +198,7 @@ public class GitCherryPickAction extends DumbAwareAction {
     return selectedDetails;
   }
 
-  private static List<? extends VcsFullCommitDetails> convertHeavyCommitToFullDetails(List<GitHeavyCommit> commits) {
+  private static List<? extends VcsFullCommitDetails> convertHeavyCommitToFullDetails(List<GitHeavyCommit> commits, final Project project) {
     return ContainerUtil.map(commits, new Function<GitHeavyCommit, VcsFullCommitDetails>() {
       @Override
       public VcsFullCommitDetails fun(GitHeavyCommit commit) {
@@ -211,7 +212,7 @@ public class GitCherryPickAction extends DumbAwareAction {
         return factory.createFullDetails(
           factory.createHash(commit.getHash().getValue()), parents, commit.getAuthorTime(), commit.getRoot(), commit.getSubject(),
           commit.getAuthor(), commit.getAuthorEmail(), commit.getDescription(), commit.getCommitter(), commit.getCommitterEmail(),
-          commit.getDate().getTime(), commit.getChanges()
+          commit.getDate().getTime(), commit.getChanges(), GitContentRevisionFactory.getInstance(project)
         );
       }
     });

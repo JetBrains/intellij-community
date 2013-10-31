@@ -711,7 +711,7 @@ public class GitHistoryUtils {
         return HashImpl.build(hash);
       }
     });
-    return new GitCommit(HashImpl.build(record.getHash()), parents, record.getAuthorTimeStamp(), root, record.getSubject(),
+    return new GitCommit(project, HashImpl.build(record.getHash()), parents, record.getAuthorTimeStamp(), root, record.getSubject(),
                          record.getAuthorName(), record.getAuthorEmail(), record.getFullMessage(), record.getCommitterName(),
                          record.getCommitterEmail(), record.getLongTimeStamp(),
                          record.parseChanges(project, root));

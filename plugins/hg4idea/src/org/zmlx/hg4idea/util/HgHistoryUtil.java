@@ -33,6 +33,7 @@ import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgLogCommand;
 import org.zmlx.hg4idea.execution.HgCommandException;
+import org.zmlx.hg4idea.log.HgContentRevisionFactory;
 import org.zmlx.hg4idea.provider.HgCommittedChangeList;
 
 import java.io.File;
@@ -61,7 +62,7 @@ public class HgHistoryUtil {
     return ContainerUtil.mapNotNull(result, new Function<HgCommittedChangeList, VcsFullCommitDetails>() {
       @Override
       public VcsFullCommitDetails fun(HgCommittedChangeList record) {
-        return createCommit(root, record);
+        return createCommit(project, root, record);
       }
     });
   }
@@ -169,7 +170,7 @@ public class HgHistoryUtil {
   }
 
   @NotNull
-  private static VcsFullCommitDetails createCommit(@NotNull VirtualFile root,
+  private static VcsFullCommitDetails createCommit(@NotNull Project project, @NotNull VirtualFile root,
                                                    @NotNull HgCommittedChangeList record) {
 
     final VcsLogObjectsFactory factory = ServiceManager.getService(VcsLogObjectsFactory.class);
@@ -185,7 +186,7 @@ public class HgHistoryUtil {
                                      revNumber.getSubject(),
                                      revNumber.getAuthor(), "", revNumber.getCommitMessage(), record.getCommitterName(),
                                      "", record.getCommitDate().getTime(),
-                                     ContainerUtil.newArrayList(record.getChanges()));
+                                     ContainerUtil.newArrayList(record.getChanges()), HgContentRevisionFactory.getInstance(project));
   }
 
   @Nullable

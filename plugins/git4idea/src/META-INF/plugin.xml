@@ -148,6 +148,8 @@
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
 
+    <projectService serviceImplementation="git4idea.log.GitContentRevisionFactory" />
+
     <applicationService serviceImplementation="git4idea.history.wholeTree.GitCommitsSequentialIndex"
                         serviceInterface="git4idea.history.wholeTree.GitCommitsSequentially"/>
     <applicationService serviceInterface="git4idea.config.GitVcsApplicationSettings"
