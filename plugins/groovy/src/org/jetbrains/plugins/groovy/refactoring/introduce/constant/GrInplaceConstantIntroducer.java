@@ -15,12 +15,10 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
+import com.intellij.ui.components.JBCheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -163,7 +161,27 @@ public class GrInplaceConstantIntroducer extends GrAbstractInplaceIntroducer<GrI
   @Nullable
   @Override
   protected PsiElement checkLocalScope() {
-    return getVariable().getContainingFile();
+    return ((PsiField)getVariable()).getContainingClass();
   }
 
+  /**
+   * Created by Max Medvedev on 8/29/13
+   */
+  public class GrInplaceIntroduceConstantPanel {
+    private JBCheckBox myMoveToAnotherClassJBCheckBox;
+    private JPanel myRootPane;
+    private JComponent myPreview;
+
+    public boolean isMoveToAnotherClass() {
+      return myMoveToAnotherClassJBCheckBox.isSelected();
+    }
+
+    public JComponent getRootPane() {
+      return myRootPane;
+    }
+
+    private void createUIComponents() {
+      myPreview = getPreviewComponent();
+    }
+  }
 }
