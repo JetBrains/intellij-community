@@ -20,6 +20,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -46,6 +47,7 @@ public class FlipIntersectionSidesFix implements IntentionAction {
                                   PsiTypeElement castTypeElement) {
     myClassName = className;
     myConjuncts = conjList;
+    LOG.assertTrue(!conjList.isEmpty());
     myConjunct = conjunct;
     myCastTypeElement = castTypeElement;
   }
@@ -67,7 +69,7 @@ public class FlipIntersectionSidesFix implements IntentionAction {
     for (PsiTypeElement typeElement : myConjuncts) {
       if (!typeElement.isValid()) return false;
     }
-    return true;
+    return !Comparing.strEqual(myConjunct.getText(), myConjuncts.get(0).getText());
   }
 
   @Override
