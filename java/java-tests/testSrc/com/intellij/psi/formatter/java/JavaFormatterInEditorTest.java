@@ -56,12 +56,12 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
                   "}";
     doTest(text, text);
 
-    String after = "class Test {\n" +
+    String before = "class Test {\n" +
                    "    void test() {\n" +
                    "         <caret>       \n" +
                    "    }\n" +
                    "}";
-    doTest(text, after);
+    doTest(before, text);
   }
 
   public void testCaretPositionPreserved_WhenSomeFormattingNeeded() throws IOException {
