@@ -44,21 +44,12 @@ public class EditorTextFieldActionPromoter implements ActionPromoter {
   private static final Comparator<AnAction> ACTIONS_COMPARATOR = new Comparator<AnAction>() {
     @Override
     public int compare(AnAction o1, AnAction o2) {
-      if (o1 instanceof EditorAction && o2 instanceof EditorAction) {
-        return 0;
-      }
-      if (o1 instanceof TextComponentEditorAction) {
-        return -1;
-      }
-      if (o2 instanceof TextComponentEditorAction) {
-        return 1;
-      }
-      if (o1 instanceof EditorAction) {
-        return 1;
-      }
-      if (o2 instanceof EditorAction) {
-        return -1;
-      }
+      boolean textFieldAction1 = o1 instanceof TextComponentEditorAction;
+      boolean textFieldAction2 = o2 instanceof TextComponentEditorAction;
+      boolean plainEditorAction1 = o1 instanceof EditorAction && !textFieldAction1;
+      boolean plainEditorAction2 = o2 instanceof EditorAction && !textFieldAction2;
+      if (textFieldAction1 && plainEditorAction2) return -1;
+      if (textFieldAction2 && plainEditorAction1) return 1;
       return 0;
     }
   };
