@@ -4,7 +4,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.notification.EventLog;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -24,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 
@@ -59,7 +57,9 @@ public class TerminalView {
           UIUtil.invokeLaterIfNeeded(new Runnable() {
             @Override
             public void run() {
-              hideIfNoActiveSessions(toolWindow, myTerminalWidget);
+              if (myTerminalWidget != null) {
+                hideIfNoActiveSessions(toolWindow, myTerminalWidget);
+              }
             }
           });
         }
@@ -194,7 +194,7 @@ public class TerminalView {
     }, true);
   }
 
-  private static void hideIfNoActiveSessions(final ToolWindow toolWindow, JBTabbedTerminalWidget terminal) {
+  private static void hideIfNoActiveSessions(@NotNull final ToolWindow toolWindow, @NotNull JBTabbedTerminalWidget terminal) {
     if (terminal.isNoActiveSessions()) {
       toolWindow.getContentManager().removeAllContents(true);
     }
