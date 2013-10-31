@@ -36,19 +36,25 @@ public class HgRepoInfo {
   @Nullable private String myCurrentBookmark = null;
   @NotNull private Set<HgNameWithHashInfo> myBranches = Collections.emptySet();
   @NotNull private Set<HgNameWithHashInfo> myBookmarks = Collections.emptySet();
+  @NotNull private Set<HgNameWithHashInfo> myTags = Collections.emptySet();
+  @NotNull private Set<HgNameWithHashInfo> myLocalTags = Collections.emptySet();
 
   public HgRepoInfo(@NotNull String currentBranch,
                     @Nullable String currentRevision,
                     @NotNull Repository.State state,
                     @NotNull Collection<HgNameWithHashInfo> branches,
                     @NotNull Collection<HgNameWithHashInfo> bookmarks,
-                    @Nullable String currentBookmark) {
+                    @Nullable String currentBookmark,
+                    @NotNull Collection<HgNameWithHashInfo> tags,
+                    @NotNull Collection<HgNameWithHashInfo> localTags) {
     myCurrentBranch = currentBranch;
     myCurrentRevision = currentRevision;
     myState = state;
     myBranches = new LinkedHashSet<HgNameWithHashInfo>(branches);
     myBookmarks = new LinkedHashSet<HgNameWithHashInfo>(bookmarks);
     myCurrentBookmark = currentBookmark;
+    myTags = new LinkedHashSet<HgNameWithHashInfo>(tags);
+    myLocalTags = new LinkedHashSet<HgNameWithHashInfo>(localTags);
   }
 
   @NotNull
@@ -64,6 +70,16 @@ public class HgRepoInfo {
   @NotNull
   public Collection<HgNameWithHashInfo> getBookmarks() {
     return myBookmarks;
+  }
+
+  @NotNull
+  public Collection<HgNameWithHashInfo> getTags() {
+    return myTags;
+  }
+
+  @NotNull
+  public Collection<HgNameWithHashInfo> getLocalTags() {
+    return myLocalTags;
   }
 
   @Nullable
@@ -94,13 +110,15 @@ public class HgRepoInfo {
     if (myCurrentBookmark != null ? !myCurrentBookmark.equals(info.myCurrentBookmark) : info.myCurrentBookmark != null) return false;
     if (!myBranches.equals(info.myBranches)) return false;
     if (!myBookmarks.equals(info.myBookmarks)) return false;
+    if (!myTags.equals(info.myTags)) return false;
+    if (!myLocalTags.equals(info.myLocalTags)) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hashCode(myCurrentBranch, myCurrentRevision, myCurrentBookmark, myState, myBranches, myBookmarks);
+    return Objects.hashCode(myCurrentBranch, myCurrentRevision, myCurrentBookmark, myState, myBranches, myBookmarks, myTags, myLocalTags);
   }
 
   @Override
