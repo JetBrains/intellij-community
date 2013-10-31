@@ -18,7 +18,10 @@ package com.intellij.application.options.emmet;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.template.emmet.generators.ZenCodingGenerator;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.CompositeConfigurable;
+import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -35,8 +38,7 @@ import java.util.List;
  * User: zolotov
  * Date: 9/24/13
  */
-public class EmmetCompositeConfigurable extends CompositeConfigurable<UnnamedConfigurable> implements Configurable.NoScroll,
-                                                                                                      SearchableConfigurable {
+public class EmmetCompositeConfigurable extends CompositeConfigurable<UnnamedConfigurable> implements SearchableConfigurable {
   private JPanel myRootPanel;
   private JPanel myGeneratorSettingsPanel;
   private JComboBox myEmmetExpandShortcutCombo;
