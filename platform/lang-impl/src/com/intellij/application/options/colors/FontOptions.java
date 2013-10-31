@@ -420,7 +420,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
 
 
   @Nullable
-    private JList<?> getPopupList() {
+    private JList getPopupList() {
       ComboPopup popup = ReflectionUtil.getField(getUI().getClass(), getUI(), ComboPopup.class, "popup");
       return (popup != null) ? popup.getList() : null;
     }
@@ -436,7 +436,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
           }
         });
       }
-      final JList<?> list = getPopupList();
+      final JList list = getPopupList();
       if (list != null && !(list.getCellRenderer() instanceof MyListCellRenderer)) {
         list.setCellRenderer(new MyListCellRenderer());
       }
