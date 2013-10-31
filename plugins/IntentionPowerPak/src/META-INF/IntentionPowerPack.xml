@@ -72,6 +72,12 @@
     </intentionAction>
 
     <intentionAction>
+      <className>com.siyeh.ipp.bool.NegateConditionalIntention</className>
+      <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
+      <categoryKey>intention.category.boolean</categoryKey>
+    </intentionAction>
+
+    <intentionAction>
       <className>com.siyeh.ipp.bool.FlipComparisonIntention</className>
       <bundleName>com.siyeh.IntentionPowerPackBundle</bundleName>
       <categoryKey>intention.category.boolean</categoryKey>
