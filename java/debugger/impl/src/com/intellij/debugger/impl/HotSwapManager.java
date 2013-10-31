@@ -155,6 +155,10 @@ public class HotSwapManager extends AbstractProjectComponent {
   }
 
   private void reloadClasses(DebuggerSession session, Map<String, HotSwapFile> classesToReload, HotSwapProgress progress) {
+    if (progress.isCancelled()) {
+      session.setModifiedClassesScanRequired(true);
+      return;
+    }
     final long newSwapTime = System.currentTimeMillis();
     new ReloadClassesWorker(session, progress).reloadClasses(classesToReload);
     setTimeStamp(session, newSwapTime);
@@ -220,7 +224,13 @@ public class HotSwapManager extends AbstractProjectComponent {
     swapProgress.setTitle(DebuggerBundle.message("progress.hotswap.scanning.classes"));
     scanClassesCommand.run();
 
-    return swapProgress.isCancelled() ? new HashMap<DebuggerSession, Map<String, HotSwapFile>>() : modifiedClasses;
+    if (swapProgress.isCancelled()) {
+      for (DebuggerSession session : sessions) {
+        session.setModifiedClassesScanRequired(true);
+      }
+      return new HashMap<DebuggerSession, Map<String, HotSwapFile>>();
+    }
+    return modifiedClasses;
   }
 
   public static void reloadModifiedClasses(final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses, final HotSwapProgress reloadClassesProgress) {
@@ -239,6 +249,10 @@ public class HotSwapManager extends AbstractProjectComponent {
           getInstance(reloadClassesProgress.getProject()).reloadClasses(
             debuggerSession, modifiedClasses.get(debuggerSession), reloadClassesProgress
           );
+        }
+
+        protected void commandCancelled() {
+          debuggerSession.setModifiedClassesScanRequired(true);
         }
       });
     }
