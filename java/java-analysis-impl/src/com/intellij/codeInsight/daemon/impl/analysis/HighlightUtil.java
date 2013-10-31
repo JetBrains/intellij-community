@@ -290,7 +290,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   static HighlightInfo checkInconvertibleTypeCast(@NotNull PsiTypeCastExpression expression) {
-    PsiTypeElement castTypeElement = expression.getCastType();
+    final PsiTypeElement castTypeElement = expression.getCastType();
     if (castTypeElement == null) return null;
     PsiType castType = castTypeElement.getType();
 
@@ -306,6 +306,27 @@ public class HighlightUtil extends HighlightUtilBase {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
     }
 
+    if (castType instanceof PsiIntersectionType && PsiUtil.isLanguageLevel8OrHigher(expression)) {
+      final PsiTypeElement[] conjuncts = PsiTreeUtil.getChildrenOfType(castTypeElement, PsiTypeElement.class);
+      if (conjuncts != null) {
+        final List<PsiTypeElement> conjList = new ArrayList<PsiTypeElement>(Arrays.asList(conjuncts));
+        for (int i = 1; i < conjuncts.length; i++) {
+          final PsiTypeElement conjunct = conjuncts[i];
+          final PsiType conjType = conjunct.getType();
+          if (conjType instanceof PsiClassType) {
+            final PsiClass aClass = ((PsiClassType)conjType).resolve();
+            if (aClass != null && !aClass.isInterface()) {
+              final HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                .range(conjunct)
+                .descriptionAndTooltip(JavaErrorMessages.message("interface.expected")).create();
+              QuickFixAction.registerQuickFixAction(errorResult, new FlipIntersectionSidesFix(aClass.getName(), conjList, conjunct, castTypeElement), null);
+              return errorResult;
+            }
+          }
+        }
+      }
+    }
+    
     return null;
   }
 
