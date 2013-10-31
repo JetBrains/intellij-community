@@ -259,13 +259,13 @@ public class PsiTreeUtil {
   }
 
   @NotNull
-  public static <T extends PsiElement> Collection<T> findChildrenOfType(@Nullable PsiElement element, @NotNull Class<T> aClass) {
+  public static <T extends PsiElement> Collection<T> findChildrenOfType(@Nullable PsiElement element, @NotNull Class<? extends T> aClass) {
     return findChildrenOfAnyType(element, aClass);
   }
 
   @NotNull
   public static <T extends PsiElement> Collection<T> findChildrenOfAnyType(@Nullable final PsiElement element,
-                                                                           @NotNull final Class<T>... classes) {
+                                                                           @NotNull final Class<? extends T>... classes) {
     if (element == null) {
       return ContainerUtil.emptyList();
     }
