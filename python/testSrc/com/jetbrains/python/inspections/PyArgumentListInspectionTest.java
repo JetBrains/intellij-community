@@ -163,4 +163,9 @@ public class PyArgumentListInspectionTest extends PyTestCase {
   public void testUnicodeConstructor() {
     doTest();
   }
+
+  // PY-11169
+  public void testDictFromKeys() {
+    doTest();
+  }
 }
