@@ -180,15 +180,9 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
     for (PyExpression arg : unmatched_subargs) {
       markArgument(arg, ArgFlag.IS_UNMAPPED);
     }
-    // mark past-bound positional args
-    i = positional_bound;
-    while (i<arguments.length) {
-      PyExpression arg = arguments[i];
-      if (!(arg instanceof PyStarArgument) && !(arg instanceof PyKeywordArgument)) {
-        markArgument(arg, ArgFlag.IS_POS_PAST_KWD);
-      }
-      i += 1;
-    }
+
+    markPastBoundPositionalArguments(arguments, positional_bound);
+
     boolean seen_named_args = false;
     // map named args to named params if possible
     Map<String, PyNamedParameter> parameter_by_name = new LinkedHashMap<String, PyNamedParameter>();
@@ -348,6 +342,19 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
         if (flags == null || flags.isEmpty()) {
           markArgument(arg, ArgFlag.IS_UNMAPPED);
         }
+      }
+    }
+  }
+
+  private void markPastBoundPositionalArguments(PyExpression[] arguments, int positionalBound) {
+    boolean seenKwArg = false;
+    for(int i=positionalBound; i<arguments.length; i++) {
+      PyExpression arg = arguments[i];
+      if (arg == myKwdArg) {
+        seenKwArg = true;
+      }
+      if (!(arg instanceof PyStarArgument) && (seenKwArg || !(arg instanceof PyKeywordArgument))) {
+        markArgument(arg, ArgFlag.IS_POS_PAST_KWD);
       }
     }
   }
