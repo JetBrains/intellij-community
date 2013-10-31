@@ -19,11 +19,11 @@ import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.openapi.util.Pair;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 public class MultiProcessCommand implements Runnable{
-  private final List<Pair<DebugProcessImpl,  DebuggerCommandImpl>> myCommands = new ArrayList<Pair<DebugProcessImpl, DebuggerCommandImpl>>();
+  private final List<Pair<DebugProcessImpl,  DebuggerCommandImpl>> myCommands = new LinkedList<Pair<DebugProcessImpl, DebuggerCommandImpl>>();
 
   public void run() {
     while(true) {
@@ -40,7 +40,10 @@ public class MultiProcessCommand implements Runnable{
 
   public void cancel() {
     synchronized(myCommands) {
-      myCommands.clear();
+      while (!myCommands.isEmpty()) {
+        Pair<DebugProcessImpl,  DebuggerCommandImpl> pair = myCommands.remove(0);
+        pair.getSecond().notifyCancelled();
+      }
     }
   }
 

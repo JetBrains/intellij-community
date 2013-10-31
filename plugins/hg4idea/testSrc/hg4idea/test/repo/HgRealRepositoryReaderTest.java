@@ -40,7 +40,7 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
     super.setUp();
     File hgDir = new File(myRepository.getPath(), ".hg");
     assertTrue(hgDir.exists());
-    createBranches();
+    createBranchesAndTags();
     myRepositoryReader = new HgRepositoryReader(hgDir);
   }
 
@@ -62,6 +62,16 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
                                               Arrays.asList("default", "branchA", "branchB"));
   }
 
+  public void testTags() {
+    TestRepositoryUtil.assertEqualCollections(HgUtil.getNamesWithoutHashes(myRepositoryReader.readTags()),
+                                              Arrays.asList("tag1", "tag2"));
+  }
+
+  public void testLocalTags() {
+    TestRepositoryUtil.assertEqualCollections(HgUtil.getNamesWithoutHashes(myRepositoryReader.readLocalTags()),
+                                              Arrays.asList("localTag"));
+  }
+
   public void testCurrentBookmark() {
     hg("update B_BookMark");
     assertEquals(myRepositoryReader.readCurrentBookmark(), "B_BookMark");
@@ -72,19 +82,22 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
                                               Arrays.asList("A_BookMark", "B_BookMark", "C_BookMark"));
   }
 
-  private void createBranches() {
+  private void createBranchesAndTags() {
     cd(myRepository);
     hg("bookmark A_BookMark");
+    hg("tag tag1");
     String aFile = "A.txt";
     touch(aFile, "base");
     hg("add " + aFile);
     hg("commit -m 'create file'");
     hg("bookmark B_BookMark");
     hg("branch branchA");
+    hg("tag tag2");
     echo(aFile, " modify with a");
     hg("commit -m 'create branchA'");
     hg("up default");
     hg("branch branchB");
+    hg("tag -l localTag");
     echo(aFile, " modify with b");
     hg("commit -m 'modify file in branchB'");
     hg("bookmark C_BookMark");

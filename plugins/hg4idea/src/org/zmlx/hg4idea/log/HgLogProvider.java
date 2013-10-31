@@ -109,6 +109,8 @@ public class HgLogProvider implements VcsLogProvider {
     repository.update();
     Collection<HgNameWithHashInfo> branches = repository.getBranches();
     Collection<HgNameWithHashInfo> bookmarks = repository.getBookmarks();
+    Collection<HgNameWithHashInfo> tags = repository.getTags();
+    Collection<HgNameWithHashInfo> localTags = repository.getLocalTags();
 
     Collection<VcsRef> refs = new ArrayList<VcsRef>(branches.size() + bookmarks.size());
 
@@ -123,16 +125,15 @@ public class HgLogProvider implements VcsLogProvider {
     if (currentRevision != null) { // null => fresh repository
       refs.add(new VcsRefImpl(myVcsObjectsFactory.createHash(currentRevision), "HEAD", HgRefManager.HEAD, root));
     }
-
-    //refs.addAll(readTags(root));
+    for (HgNameWithHashInfo tagInfo : tags) {
+      refs.add(new VcsRefImpl(myVcsObjectsFactory.createHash(tagInfo.getHash()), tagInfo.getName(), HgRefManager.TAG, root));
+    }
+    for (HgNameWithHashInfo localTagInfo : localTags) {
+      refs.add(new VcsRefImpl(myVcsObjectsFactory.createHash(localTagInfo.getHash()), localTagInfo.getName(),
+                              HgRefManager.LOCAL_TAG, root));
+    }
     return refs;
   }
-
-  //todo implement
- /* @NotNull
-  private  Collection<? extends VcsRef> readTags(@NotNull VirtualFile root) throws VcsException {
-    return Collections.emptyList();
-  }*/
 
   @NotNull
   @Override
