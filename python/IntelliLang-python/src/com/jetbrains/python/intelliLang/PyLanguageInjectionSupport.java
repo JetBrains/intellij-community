@@ -27,6 +27,7 @@ import org.intellij.plugins.intelliLang.inject.config.BaseInjection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -78,5 +79,11 @@ public class PyLanguageInjectionSupport extends AbstractLanguageInjectionSupport
     // XXX: Disable temporary injections via intention actions for Python elements, since TemporaryPlacesInjector cannot handle elements
     // with multiple injection text ranges (PY-10691)
     return true;
+  }
+
+  @Nullable
+  @Override
+  public String getHelpId() {
+    return "reference.settings.language.injection.generic.python";
   }
 }
