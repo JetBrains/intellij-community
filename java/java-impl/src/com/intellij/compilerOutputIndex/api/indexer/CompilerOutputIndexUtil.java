@@ -11,11 +11,7 @@ public final class CompilerOutputIndexUtil {
   private CompilerOutputIndexUtil() {}
 
   public static <K, V> ID<K, V> generateIndexId(final String indexName, final Project project) {
-    return ID.create(String.format("compilerOutputIndex.%s.%d", indexName, Math.abs(project.getBasePath().hashCode())));
-  }
-
-  public static boolean isSetterOrConstructorMethodName(final String methodName) {
-    return MethodIncompleteSignature.CONSTRUCTOR_METHOD_NAME.equals(methodName) || methodName.startsWith("set");
-
+    final String hash = Integer.toHexString(project.getBasePath().hashCode());
+    return ID.create(String.format("compilerOutputIndex.%s.%s", indexName, hash));
   }
 }

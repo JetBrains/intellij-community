@@ -1,5 +1,6 @@
 package com.intellij.compilerOutputIndex.impl;
 
+import com.intellij.compilerOutputIndex.api.fs.AsmUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -12,6 +13,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -42,6 +44,13 @@ public class MethodIncompleteSignature {
 
   public static MethodIncompleteSignature constructor(@NotNull final String className) {
     return new MethodIncompleteSignature(className, className, CONSTRUCTOR_METHOD_NAME, true);
+  }
+
+  public MethodIncompleteSignature toExternalRepresentation() {
+    return new MethodIncompleteSignature(AsmUtil.getQualifiedClassName(getOwner()),
+                                         AsmUtil.getQualifiedClassName(getReturnType()),
+                                         getName(),
+                                         isStatic());
   }
 
   @NotNull
@@ -86,6 +95,14 @@ public class MethodIncompleteSignature {
           filtered.add(method);
         }
       }
+    }
+    if (filtered.size() > 1) {
+      Collections.sort(filtered, new Comparator<PsiMethod>() {
+        @Override
+        public int compare(final PsiMethod o1, final PsiMethod o2) {
+          return o1.getParameterList().getParametersCount() - o2.getParameterList().getParametersCount();
+        }
+      });
     }
     return filtered.toArray(new PsiMethod[filtered.size()]);
   }
