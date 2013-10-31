@@ -62,7 +62,7 @@ public class ExternalSystemTaskId implements Serializable {
 
   @NotNull
   public static String getProjectId(@NotNull Project project) {
-    return project.getName() + ":" + project.getLocationHash();
+    return project.isDisposed() ? project.getName() : project.getName() + ":" + project.getLocationHash();
   }
 
   @Nullable
