@@ -23,13 +23,13 @@ import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 
 /**
- * Is intended to test formatting in editor behavior, i.e. check how formatting affects things like caret position, selection etc. 
- * 
+ * Is intended to test formatting in editor behavior, i.e. check how formatting affects things like caret position, selection etc.
+ *
  * @author Denis Zhdanov
  * @since 6/1/11 6:17 PM
  */
 public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase {
-  
+
   public void testCaretPositionOnLongLineWrapping() throws IOException {
     // Inspired by IDEA-70242
     getCurrentCodeStyleSettings().getCommonSettings(JavaLanguage.INSTANCE).WRAP_LONG_LINES = true;
@@ -39,7 +39,7 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
       "\n" +
       "class <caret>Test {\n" +
       "}",
-      
+
       "import static java.util.concurrent\n" +
       "        .atomic.AtomicInteger.*;\n" +
       "\n" +
@@ -47,7 +47,56 @@ public class JavaFormatterInEditorTest extends LightPlatformCodeInsightTestCase 
       "}"
     );
   }
-  
+
+  public void testCaretPositionPreserved_WhenOnSameLineWithWhiteSpacesOnly() throws IOException {
+    String text = "class Test {\n" +
+                  "    void test() {\n" +
+                  "         <caret>\n" +
+                  "    }\n" +
+                  "}";
+    doTest(text, text);
+
+    String after = "class Test {\n" +
+                   "    void test() {\n" +
+                   "         <caret>       \n" +
+                   "    }\n" +
+                   "}";
+    doTest(text, after);
+  }
+
+  public void testCaretPositionPreserved_WhenSomeFormattingNeeded() throws IOException {
+    String before = "public class Test {\n" +
+                    "        int a;\n" +
+                    "    \n" +
+                    "    public static void main(String[] args) {\n" +
+                    "                     <caret>\n" +
+                    "    }\n" +
+                    "\n" +
+                    "    static final long j = 2;\n" +
+                    "}";
+    String after = "public class Test {\n" +
+                   "    int a;\n" +
+                   "\n" +
+                   "    public static void main(String[] args) {\n" +
+                   "                     <caret>\n" +
+                   "    }\n" +
+                   "\n" +
+                   "    static final long j = 2;\n" +
+                   "}";
+    doTest(before, after);
+
+    before = "public class Test {\n" +
+             "        int a;\n" +
+             "    \n" +
+             "    public static void main(String[] args) {\n" +
+             "                     <caret>           \n" +
+             "    }\n" +
+             "\n" +
+             "    static final long j = 2;\n" +
+             "}";
+    doTest(before, after);
+  }
+
   public void doTest(@NotNull String before, @NotNull String after) throws IOException {
     configureFromFileText(getTestName(false) + ".java", before);
     CodeStyleManager.getInstance(getProject()).reformatText(getFile(), 0, getEditor().getDocument().getTextLength());
