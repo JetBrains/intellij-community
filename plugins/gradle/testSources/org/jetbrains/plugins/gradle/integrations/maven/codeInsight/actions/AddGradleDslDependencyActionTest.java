@@ -20,10 +20,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
-import mockit.Mocked;
-import mockit.NonStrictExpectations;
-import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
-import org.jetbrains.idea.maven.indices.MavenArtifactSearchDialog;
 import org.jetbrains.idea.maven.model.MavenId;
 
 import java.io.File;
@@ -34,31 +30,17 @@ import java.io.File;
  */
 public class AddGradleDslDependencyActionTest extends LightPlatformCodeInsightFixtureTestCase {
 
-  @Mocked(stubOutClassInitialization = true) final MavenArtifactSearchDialog unused = null;
-
   public AddGradleDslDependencyActionTest() {
     IdeaTestCase.initPlatformPrefix();
   }
 
   public void testAddMavenDependencyInEmptyFile() throws Exception {
-    new NonStrictExpectations() {
-      {
-        MavenArtifactSearchDialog.searchForArtifact(getProject(), ContainerUtil.<MavenDomDependency>emptyList());
-        result = ContainerUtil.list(new MavenId("testGroupId", "testArtifactId", "1.0"));
-      }
-    };
-
+    AddGradleDslDependencyAction.TEST_THREAD_LOCAL.set(ContainerUtil.list(new MavenId("testGroupId", "testArtifactId", "1.0")));
     doTest("testAddMavenDependencyInEmptyFile.gradle");
   }
 
   public void testAddMavenDependencyIntoExistingBlock() throws Exception {
-    new NonStrictExpectations() {
-      {
-        MavenArtifactSearchDialog.searchForArtifact(getProject(), ContainerUtil.<MavenDomDependency>emptyList());
-        result = ContainerUtil.list(new MavenId("testGroupId", "testArtifactId", "1.0"));
-      }
-    };
-
+    AddGradleDslDependencyAction.TEST_THREAD_LOCAL.set(ContainerUtil.list(new MavenId("testGroupId", "testArtifactId", "1.0")));
     doTest("testAddMavenDependencyIntoExistingBlock.gradle");
   }
 

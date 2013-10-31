@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.integrations.maven.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -50,7 +51,14 @@ class AddGradleDslDependencyActionHandler implements CodeInsightActionHandler {
   public void invoke(@NotNull final Project project, @NotNull final Editor editor, @NotNull final PsiFile file) {
     if (!CodeInsightUtilBase.prepareEditorForWrite(editor)) return;
 
-    final List<MavenId> ids = MavenArtifactSearchDialog.searchForArtifact(project, ContainerUtil.<MavenDomDependency>emptyList());
+    final List<MavenId> ids;
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      ids = AddGradleDslDependencyAction.TEST_THREAD_LOCAL.get();
+    }
+    else {
+      ids = MavenArtifactSearchDialog.searchForArtifact(project, ContainerUtil.<MavenDomDependency>emptyList());
+    }
+
     if (ids.isEmpty()) return;
 
     new WriteCommandAction.Simple(project, GradleBundle.message("gradle.codeInsight.action.add_maven_dependency.text"), file) {

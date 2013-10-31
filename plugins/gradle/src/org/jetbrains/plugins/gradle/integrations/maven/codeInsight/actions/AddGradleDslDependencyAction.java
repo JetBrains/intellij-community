@@ -23,15 +23,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+
+import java.util.List;
 
 /**
  * @author Vladislav.Soroka
  * @since 10/23/13
  */
 public class AddGradleDslDependencyAction extends CodeInsightAction {
+  static final ThreadLocal<List<MavenId>> TEST_THREAD_LOCAL = new ThreadLocal<List<MavenId>>();
 
   public AddGradleDslDependencyAction() {
     getTemplatePresentation().setDescription(GradleBundle.message("gradle.codeInsight.action.add_maven_dependency.description"));
