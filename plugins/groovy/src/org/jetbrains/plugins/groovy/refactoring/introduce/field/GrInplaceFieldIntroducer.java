@@ -17,140 +17,133 @@ package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.introduce.inplace.KeyboardComboSwitcher;
+import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.ui.NonFocusableCheckBox;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrAbstractInplaceIntroducer;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrFinalListener;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrInplaceIntroducer;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContextImpl;
+import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.EnumSet;
-import java.util.LinkedHashSet;
-import java.util.List;
 
 /**
  * @author Max Medvedev
  */
-public class GrInplaceFieldIntroducer extends GrInplaceIntroducer {
-  private final GrInplaceIntroduceFieldPanel myPanel;
-  private final GrIntroduceContext myContext;
-  private final RangeMarker myExpressionRangeMarker;
-  private final RangeMarker myStringPartRangeMarker;
-  private final GrExpression myInitializer;
+public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntroduceFieldSettings> {
+  private GrInplaceIntroduceFieldPanel myPanel;
   private final GrFinalListener finalListener;
-  private final boolean myReplaceAll;
+  private String[] mySuggestedNames;
+  private boolean myIsStatic;
 
   @Nullable
   @Override
   protected PsiElement checkLocalScope() {
-    return getVariable().getContainingFile();
+    return ((PsiField)getVariable()).getContainingClass();
   }
 
-  public GrInplaceFieldIntroducer(GrVariable var,
-                                  GrIntroduceContext context,
-                                  List<RangeMarker> occurrences,
-                                  boolean replaceAll,
-                                  @Nullable RangeMarker expressionRangeMarker,
-                                  @Nullable RangeMarker stringPartRangeMarker,
-                                  GrExpression initializer) {
-    super(var, context.getEditor(), context.getProject(), IntroduceFieldHandler.REFACTORING_NAME, occurrences, context.getPlace());
-
-    myContext = context;
-    myReplaceAll = replaceAll;
-    myExpressionRangeMarker = expressionRangeMarker;
-    myStringPartRangeMarker = stringPartRangeMarker;
-    myInitializer = initializer;
-
-    myPanel = new GrInplaceIntroduceFieldPanel(context.getProject(),
-                                               GrIntroduceFieldHandler.getApplicableInitPlaces(context, replaceAll));
+  public GrInplaceFieldIntroducer(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
+    super(IntroduceFieldHandler.REFACTORING_NAME, choice, context);
 
     finalListener = new GrFinalListener(myEditor);
+
+    mySuggestedNames = GroovyNameSuggestionUtil.suggestVariableNames(context.getExpression(), new GroovyInplaceFieldValidator(getContext()), false);
   }
 
   @Override
-  protected void moveOffsetAfter(boolean success) {
-    if (success) {
-      final GrVariable field = getVariable();
-      assert field != null;
-      GrIntroduceFieldProcessor processor = new GrIntroduceFieldProcessor(generateContext(), generateSettings(), false) {
-        @NotNull
-        @Override
-        protected GrExpression getInitializer() {
-          return myInitializer;
-        }
-
-        @NotNull
-        @Override
-        protected GrVariableDeclaration insertField(@NotNull PsiClass targetClass, @NotNull GrVariableDeclaration declaration) {
-          return (GrVariableDeclaration)field.getParent();
-        }
-      };
-      processor.run();
-    }
-    super.moveOffsetAfter(success);
-  }
-
-  private GrIntroduceContext generateContext() {
-    final List<RangeMarker> occurrenceMarkers = getOccurrenceMarkers();
-
-    List<PsiElement> occurrences = ContainerUtil.newArrayList();
-    for (RangeMarker marker : occurrenceMarkers) {
-      ContainerUtil.addIfNotNull(occurrences, findExpression(marker));
-    }
-
-    GrExpression expr = null;
-    if (myExpressionRangeMarker != null) expr = findExpression(myExpressionRangeMarker);
-    if (myStringPartRangeMarker != null) {
-      expr = findExpressionFromStringPartMarker(myStringPartRangeMarker);
-      occurrences.add(expr);
-    }
-
-    return new GrIntroduceContextImpl(myContext.getProject(), myContext.getEditor(), expr, null, null, PsiUtilCore.toPsiElementArray(
-      occurrences), myContext.getScope());
+  protected GrVariable runRefactoring(GrIntroduceContext context, GrIntroduceFieldSettings settings, boolean processUsages) {
+      GrIntroduceFieldProcessor processor = new GrIntroduceFieldProcessor(context, settings);
+      return processUsages ? processor.run()
+                           : processor.insertField((PsiClass)context.getScope()).getVariables()[0];
   }
 
   @Nullable
-  private GrExpression findExpressionFromStringPartMarker(RangeMarker marker) {
-    PsiFile file = PsiDocumentManager.getInstance(myContext.getProject()).getPsiFile(marker.getDocument());
-    if (file == null) return null;
-    PsiElement leaf = file.findElementAt(marker.getStartOffset());
-    GrBinaryExpression binary = PsiTreeUtil.getParentOfType(leaf, GrBinaryExpression.class);
-    if (binary != null) {
-      return binary.getRightOperand();
-    }
-    return null;
+  @Override
+  protected GrIntroduceFieldSettings getInitialSettingsForInplace(@NotNull final GrIntroduceContext context,
+                                                                  @NotNull final OccurrencesChooser.ReplaceChoice choice,
+                                                                  final String[] names) {
+    return new GrIntroduceFieldSettings() {
+      @Override
+      public boolean declareFinal() {
+        return false;
+      }
+
+      @Override
+      public Init initializeIn() {
+        return Init.FIELD_DECLARATION;
+      }
+
+      @Override
+      public String getVisibilityModifier() {
+        return PsiModifier.PRIVATE;
+      }
+
+      @Override
+      public boolean isStatic() {
+        boolean hasInstanceInScope = true;
+        PsiClass clazz = (PsiClass)context.getScope();
+        if (replaceAllOccurrences()) {
+          for (PsiElement occurrence : context.getOccurrences()) {
+            if (!PsiUtil.hasEnclosingInstanceInScope(clazz, occurrence, false)) {
+              hasInstanceInScope = false;
+              break;
+            }
+          }
+        }
+        else if (context.getExpression() != null) {
+          hasInstanceInScope = PsiUtil.hasEnclosingInstanceInScope(clazz, context.getExpression(), false);
+        }
+        else if (context.getStringPart() != null) {
+          hasInstanceInScope = PsiUtil.hasEnclosingInstanceInScope(clazz, context.getStringPart().getLiteral(), false);
+        }
+
+        return !hasInstanceInScope;
+      }
+
+      @Override
+      public boolean removeLocalVar() {
+        return context.getVar() != null;
+      }
+
+      @Nullable
+      @Override
+      public String getName() {
+        return names[0];
+      }
+
+      @Override
+      public boolean replaceAllOccurrences() {
+        return context.getVar() != null || choice == OccurrencesChooser.ReplaceChoice.ALL;
+      }
+
+      @Nullable
+      @Override
+      public PsiType getSelectedType() {
+        GrExpression expression = context.getExpression();
+        GrVariable var = context.getVar();
+        StringPartInfo stringPart = context.getStringPart();
+        return var != null ? var.getDeclaredType() :
+               expression != null ? expression.getType() :
+               stringPart != null ? stringPart.getLiteral().getType() :
+               null;
+      }
+    };
   }
 
-  @Nullable
-  private GrExpression findExpression(@NotNull RangeMarker marker) {
-    PsiFile file = PsiDocumentManager.getInstance(myContext.getProject()).getPsiFile(marker.getDocument());
-    if (file == null) return null;
-    PsiElement leaf = file.findElementAt(marker.getStartOffset());
-    if (leaf != null && leaf.getParent() instanceof GrReferenceExpression) {
-      return (GrExpression)leaf.getParent();
-    }
-    return null;
-  }
-
-  private GrIntroduceFieldSettings generateSettings() {
+  @Override
+  protected GrIntroduceFieldSettings getSettings() {
     return new GrIntroduceFieldSettings() {
       @Override
       public boolean declareFinal() {
@@ -169,7 +162,7 @@ public class GrInplaceFieldIntroducer extends GrInplaceIntroducer {
 
       @Override
       public boolean isStatic() {
-        return getVariable().hasModifierProperty(PsiModifier.STATIC);
+        return myIsStatic;
       }
 
       @Override
@@ -180,32 +173,49 @@ public class GrInplaceFieldIntroducer extends GrInplaceIntroducer {
       @Nullable
       @Override
       public String getName() {
-        return getVariable().getName();
+        return getInputName();
       }
 
       @Override
       public boolean replaceAllOccurrences() {
-        return myReplaceAll;
+        return isReplaceAllOccurrences();
       }
 
       @Nullable
       @Override
       public PsiType getSelectedType() {
-        return getVariable().getDeclaredType();
+        return GrInplaceFieldIntroducer.this.getSelectedType();
       }
     };
+  }
+
+  @Override
+  protected String getActionName() {
+    return IntroduceFieldHandler.REFACTORING_NAME;
+  }
+
+  @Override
+  protected String[] suggestNames(boolean replaceAll, @Nullable GrVariable variable) {
+    return mySuggestedNames;
+  }
+
+  @Override
+  protected void saveSettings(@NotNull GrVariable variable) {
+
+  }
+
+  @Override
+  protected void restoreState(GrVariable psiField) {
+    myIsStatic = psiField.hasModifierProperty(PsiModifier.STATIC);
+
+    super.restoreState(psiField);
   }
 
   @Nullable
   @Override
   protected JComponent getComponent() {
+    myPanel = new GrInplaceIntroduceFieldPanel(myProject, GrIntroduceFieldHandler.getApplicableInitPlaces(getContext(), isReplaceAllOccurrences()));
     return myPanel.getRootPane();
-  }
-
-  @Override
-  public LinkedHashSet<String> suggestNames(GrIntroduceContext context) {
-    return ContainerUtil.newLinkedHashSet(
-      GroovyNameSuggestionUtil.suggestVariableNames(myInitializer, new GroovyInplaceFieldValidator(context), false));
   }
 
   public class GrInplaceIntroduceFieldPanel {
@@ -213,6 +223,7 @@ public class GrInplaceFieldIntroducer extends GrInplaceIntroducer {
     private JPanel myRootPane;
     private JComboBox myInitCB;
     private NonFocusableCheckBox myDeclareFinalCB;
+    private JComponent myPreview;
 
     public GrInplaceIntroduceFieldPanel(Project project, EnumSet<GrIntroduceFieldSettings.Init> initPlaces) {
       myProject = project;
@@ -250,6 +261,10 @@ public class GrInplaceFieldIntroducer extends GrInplaceIntroducer {
 
     public boolean isFinal() {
       return myDeclareFinalCB.isSelected();
+    }
+
+    private void createUIComponents() {
+      myPreview = getPreviewComponent();
     }
   }
 }

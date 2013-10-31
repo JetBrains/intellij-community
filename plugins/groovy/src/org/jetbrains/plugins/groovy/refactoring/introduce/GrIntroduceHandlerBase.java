@@ -21,7 +21,6 @@ import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.refactoring.RefactoringSupportProvider;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -32,7 +31,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
@@ -77,7 +75,7 @@ import java.util.*;
 import static org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.skipParentheses;
 
 /**
- * @author Maxim.Medvedev
+ * Created by Max Medvedev on 10/29/13
  */
 public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSettings, Scope extends PsiElement> implements RefactoringActionHandler {
   private static final Logger LOG = Logger.getInstance(GrIntroduceHandlerBase.class);
@@ -144,15 +142,8 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   @Nullable
   public abstract GrVariable runRefactoring(@NotNull GrIntroduceContext context, @NotNull Settings settings);
 
-  protected abstract GrInplaceIntroducer getIntroducer(@NotNull GrVariable var,
-                                                       @NotNull GrIntroduceContext context,
-                                                       @NotNull Settings settings,
-                                                       @NotNull List<RangeMarker> occurrenceMarkers,
-                                                       RangeMarker varRangeMarker,
-                                                       @Nullable RangeMarker expressionRangeMarker,
-                                                       @Nullable RangeMarker stringPartRangeMarker);
-
-  protected abstract Settings getSettingsForInplace(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice);
+  protected abstract GrAbstractInplaceIntroducer<Settings> getIntroducer(@NotNull GrIntroduceContext context,
+                                                                         OccurrencesChooser.ReplaceChoice choice);
 
   public static Map<OccurrencesChooser.ReplaceChoice, List<Object>> fillChoice(GrIntroduceContext context) {
     HashMap<OccurrencesChooser.ReplaceChoice, List<Object>> map = ContainerUtil.newLinkedHashMap();
@@ -296,7 +287,8 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     };
 
     if (scopes.length == 0) {
-      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage( getRefactoringName() + "is not available in current scope"),
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle
+        .getCannotRefactorMessage(getRefactoringName() + "is not available in current scope"),
                                           getRefactoringName(), getHelpID());
     }
     else if (scopes.length == 1) {
@@ -310,11 +302,11 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
   protected abstract void showScopeChooser(Scope[] scopes, Pass<Scope> callback, Editor editor);
 
   public GrIntroduceContext getContext(@NotNull Project project,
-                                        @NotNull Editor editor,
-                                        @Nullable GrExpression expression,
-                                        @Nullable GrVariable variable,
-                                        @Nullable StringPartInfo stringPart,
-                                        @NotNull PsiElement scope) {
+                                       @NotNull Editor editor,
+                                       @Nullable GrExpression expression,
+                                       @Nullable GrVariable variable,
+                                       @Nullable StringPartInfo stringPart,
+                                       @NotNull PsiElement scope) {
     if (variable != null) {
       final List<PsiElement> list = Collections.synchronizedList(new ArrayList<PsiElement>());
       ReferencesSearch.search(variable, new LocalSearchScope(scope)).forEach(new Processor<PsiReference>() {
@@ -348,48 +340,6 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       checkOccurrences(context.getOccurrences());
 
 
-      final boolean isInplace = isInplace(context.getEditor(), context.getPlace());
-      Pass<OccurrencesChooser.ReplaceChoice> callback = new Pass<OccurrencesChooser.ReplaceChoice>() {
-        @Override
-        public void pass(final OccurrencesChooser.ReplaceChoice choice) {
-
-          final Settings settings = isInplace ? getSettingsForInplace(context, choice) : showDialog(context);
-          if (settings == null) return;
-
-          CommandProcessor.getInstance().executeCommand(project, new Runnable() {
-            public void run() {
-              List<RangeMarker> occurrences = ContainerUtil.newArrayList();
-              Document document = editor.getDocument();
-              for (PsiElement element : context.getOccurrences()) {
-                occurrences.add(createRange(document, element));
-              }
-              RangeMarker expressionRangeMarker = createRange(document, context.getExpression());
-              RangeMarker stringPartRangeMarker = createRange(document, context.getStringPart());
-              RangeMarker varRangeMarker = createRange(document, context.getVar());
-
-              SmartPsiElementPointer<GrVariable> pointer =
-                ApplicationManager.getApplication().runWriteAction(new Computable<SmartPsiElementPointer<GrVariable>>() {
-                  @Override
-                  public SmartPsiElementPointer<GrVariable> compute() {
-                    GrVariable var = runRefactoring(context, settings);
-                    return var != null
-                           ? SmartPointerManager.getInstance(context.getProject()).createSmartPsiElementPointer(var)
-                           : null;
-                  }
-                });
-              GrVariable var = pointer != null ? pointer.getElement() : null;
-
-              if (isInplace && var != null) {
-                GrInplaceIntroducer introducer = getIntroducer(var, context, settings, occurrences, varRangeMarker, expressionRangeMarker, stringPartRangeMarker);
-                LinkedHashSet<String> suggestions = introducer.suggestNames(context);
-                PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
-                introducer.performInplaceRefactoring(suggestions);
-              }
-            }
-          }, getRefactoringName(), getRefactoringName());
-        }
-      };
-
       if (isInplace(context.getEditor(), context.getPlace())) {
         Map<OccurrencesChooser.ReplaceChoice, List<Object>> occurrencesMap = fillChoice(context);
         new OccurrencesChooser<Object>(editor) {
@@ -405,17 +355,28 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
               return null;
             }
           }
-        }.showChooser(callback, occurrencesMap);
+        }.showChooser(new Pass<OccurrencesChooser.ReplaceChoice>() {
+          @Override
+          public void pass(final OccurrencesChooser.ReplaceChoice choice) {
+            getIntroducer(context, choice).startInplaceIntroduceTemplate();
+          }
+        }, occurrencesMap);
       }
       else {
-        callback.pass(null);
+        final Settings settings = showDialog(context);
+        if (settings == null) return false;
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            runRefactoring(context, settings);
+          }
+        });
       }
 
       return true;
     }
     catch (GrRefactoringError e) {
-      CommonRefactoringUtil
-        .showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(e.getMessage()), getRefactoringName(), getHelpID());
+      CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(e.getMessage()), getRefactoringName(), getHelpID());
       return false;
     }
   }

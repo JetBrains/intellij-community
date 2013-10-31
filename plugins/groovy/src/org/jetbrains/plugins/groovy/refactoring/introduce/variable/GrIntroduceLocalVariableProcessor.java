@@ -46,26 +46,26 @@ import java.util.List;
 /**
  * @author Max Medvedev
  */
-public class GrIntroduceLocalVariableProcessor {
+public abstract class GrIntroduceLocalVariableProcessor {
   private static final Logger LOG = Logger.getInstance(GrIntroduceLocalVariableProcessor.class);
 
   private final GrIntroduceContext myContext;
   private final GroovyIntroduceVariableSettings mySettings;
+  private final boolean myProcessUsages;
   private final PsiElement[] myOccurrences;
   private GrExpression myExpression;
-  private final GrIntroduceVariableHandler myHandler;
 
   public GrIntroduceLocalVariableProcessor(@NotNull GrIntroduceContext context,
                                            @NotNull GroovyIntroduceVariableSettings settings,
                                            @NotNull PsiElement[] occurrences,
                                            @NotNull GrExpression expression,
-                                           @NotNull GrIntroduceVariableHandler handler) {
+                                           boolean processUsages) {
 
     myContext = context;
     mySettings = settings;
+    myProcessUsages = processUsages;
     myOccurrences = settings.replaceAllOccurrences() ? occurrences : new PsiElement[]{expression};
     myExpression = expression;
-    myHandler = handler;
   }
 
   @NotNull
@@ -75,7 +75,7 @@ public class GrIntroduceLocalVariableProcessor {
     preprocessOccurrences();
 
     int expressionIndex = ArrayUtilRt.find(myOccurrences, myExpression);
-    final PsiElement[] replaced = processOccurrences();
+    final PsiElement[] replaced = myProcessUsages ? processOccurrences() : myOccurrences;
     PsiElement replacedExpression = replaced[expressionIndex];
     GrStatement anchor = getAnchor(replaced);
 
@@ -84,9 +84,7 @@ public class GrIntroduceLocalVariableProcessor {
     return insertVariableDefinition(declaration, anchor, replacedExpression);
   }
 
-  private void refreshPositionMarker(PsiElement e) {
-    myHandler.refreshPositionMarker(myContext.getEditor().getDocument().createRangeMarker(e.getTextRange()));
-  }
+  protected abstract void refreshPositionMarker(PsiElement e);
 
   private static boolean isControlStatementBranch(GrStatement statement) {
     return statement.getParent() instanceof GrLoopStatement && statement == ((GrLoopStatement)statement.getParent()).getBody() ||
