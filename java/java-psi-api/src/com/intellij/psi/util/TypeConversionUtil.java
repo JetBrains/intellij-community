@@ -179,7 +179,15 @@ public class TypeConversionUtil {
       }
       return false;
     }
-    else if (toType instanceof PsiIntersectionType) return false;
+    else if (toType instanceof PsiIntersectionType) {
+      if (fromType instanceof PsiClassType && ((PsiClassType)fromType).getLanguageLevel().isAtLeast(LanguageLevel.JDK_1_8)) {
+        for (PsiType conjunct : ((PsiIntersectionType)toType).getConjuncts()) {
+          if (!isNarrowingReferenceConversionAllowed(fromType, conjunct)) return false;
+        }
+        return true;
+      }
+      return false;
+    }
 
     if (fromType instanceof PsiDisjunctionType) {
       return isNarrowingReferenceConversionAllowed(((PsiDisjunctionType)fromType).getLeastUpperBound(), toType);

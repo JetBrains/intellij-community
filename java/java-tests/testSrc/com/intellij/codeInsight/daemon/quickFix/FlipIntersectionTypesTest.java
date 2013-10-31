@@ -13,24 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
+package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.ui.components.JBCheckBox;
-
-import javax.swing.*;
-
-/**
- * Created by Max Medvedev on 8/29/13
- */
-public class GrInplaceIntroduceConstantPanel {
-  private JBCheckBox myMoveToAnotherClassJBCheckBox;
-  private JPanel myRootPane;
-
-  public boolean isMoveToAnotherClass() {
-    return myMoveToAnotherClassJBCheckBox.isSelected();
+public class FlipIntersectionTypesTest extends LightQuickFixTestCase {
+  public void test() throws Exception {
+    doAllTests();
   }
 
-  public JComponent getRootPane() {
-    return myRootPane;
+  @Override
+  protected String getBasePath() {
+    return "/codeInsight/daemonCodeAnalyzer/quickFix/flipIntersection";
   }
 }
+

@@ -289,8 +289,47 @@ public class HighlightUtil extends HighlightUtilBase {
 
 
   @Nullable
+  static HighlightInfo checkIntersectionInTypeCast(@NotNull PsiTypeCastExpression expression) {
+    final PsiTypeElement castTypeElement = expression.getCastType();
+    if (castTypeElement == null) return null;
+    PsiType castType = castTypeElement.getType();
+    if (isIntersection(castTypeElement, castType)) {
+      if (PsiUtil.isLanguageLevel8OrHigher(expression)) {
+        final PsiTypeElement[] conjuncts = PsiTreeUtil.getChildrenOfType(castTypeElement, PsiTypeElement.class);
+        if (conjuncts != null) {
+          final List<PsiTypeElement> conjList = new ArrayList<PsiTypeElement>(Arrays.asList(conjuncts));
+          for (int i = 1; i < conjuncts.length; i++) {
+            final PsiTypeElement conjunct = conjuncts[i];
+            final PsiType conjType = conjunct.getType();
+            if (conjType instanceof PsiClassType) {
+              final PsiClass aClass = ((PsiClassType)conjType).resolve();
+              if (aClass != null && !aClass.isInterface()) {
+                final HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                  .range(conjunct)
+                  .descriptionAndTooltip(JavaErrorMessages.message("interface.expected")).create();
+                QuickFixAction.registerQuickFixAction(errorResult, new FlipIntersectionSidesFix(aClass.getName(), conjList, conjunct, castTypeElement), null);
+                return errorResult;
+              }
+            }
+          }
+        }
+      } else {
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .range(expression)
+          .descriptionAndTooltip("Intersection types in cast are not supported at this language level").create();
+      }
+    }
+    return null;
+  }
+
+  static boolean isIntersection(PsiTypeElement castTypeElement, PsiType castType) {
+    if (castType instanceof PsiIntersectionType) return true;
+    return PsiTreeUtil.getChildrenOfType(castTypeElement, PsiTypeElement.class) != null;
+  }
+  
+  @Nullable
   static HighlightInfo checkInconvertibleTypeCast(@NotNull PsiTypeCastExpression expression) {
-    PsiTypeElement castTypeElement = expression.getCastType();
+    final PsiTypeElement castTypeElement = expression.getCastType();
     if (castTypeElement == null) return null;
     PsiType castType = castTypeElement.getType();
 
@@ -306,6 +345,7 @@ public class HighlightUtil extends HighlightUtilBase {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
     }
 
+    
     return null;
   }
 

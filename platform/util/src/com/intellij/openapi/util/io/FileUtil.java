@@ -1213,6 +1213,13 @@ public class FileUtil extends FileUtilRt {
     return path;
   }
 
+  public static String expandUserHome(String path) {
+    if (path.startsWith("~/") || path.startsWith("~\\")) {
+      path = SystemProperties.getUserHome() + path.substring(1);
+    }
+    return path;
+  }
+
   @NotNull
   public static File[] notNullize(@Nullable File[] files) {
     return notNullize(files, ArrayUtil.EMPTY_FILE_ARRAY);

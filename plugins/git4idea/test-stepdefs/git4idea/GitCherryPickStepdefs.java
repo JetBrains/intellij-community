@@ -39,6 +39,7 @@ import cucumber.annotation.en.Then;
 import cucumber.annotation.en.When;
 import git4idea.cherrypick.GitCherryPicker;
 import git4idea.config.GitVersionSpecialty;
+import git4idea.log.GitContentRevisionFactory;
 
 import java.util.*;
 
@@ -263,7 +264,7 @@ public class GitCherryPickStepdefs {
     changes.add(new Change(null, new MockContentRevision(new FilePathImpl(new MockVirtualFile("name")), VcsRevisionNumber.NULL)));
     return ServiceManager.getService(VcsLogObjectsFactory.class).createFullDetails(
       HashImpl.build(hash), Collections.<Hash>emptyList(), 0, NullVirtualFile.INSTANCE, message, "John Smith", "john@mail.com", message,
-      "John Smith", "john@mail.com", 0, changes);
+      "John Smith", "john@mail.com", 0, changes, GitContentRevisionFactory.getInstance(myProject));
   }
 
 }

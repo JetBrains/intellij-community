@@ -42,9 +42,10 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
   public VcsFullCommitDetails createFullDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long authorTime, @NotNull VirtualFile root,
                                                 @NotNull String subject, @NotNull String authorName, @NotNull String authorEmail,
                                                 @NotNull String message, @NotNull String committerName,
-                                                @NotNull String committerEmail, long commitTime, @NotNull List<Change> changes) {
+                                                @NotNull String committerEmail, long commitTime, @NotNull List<Change> changes,
+                                                @NotNull ContentRevisionFactory contentRevisionFactory) {
     return new VcsFullCommitDetailsImpl(hash, parents, authorTime, root, subject, authorName, authorEmail, message, committerName,
-                                        committerEmail, commitTime, changes);
+                                        committerEmail, commitTime, changes, contentRevisionFactory);
   }
 
   @NotNull

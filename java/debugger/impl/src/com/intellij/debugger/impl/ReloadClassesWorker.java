@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2009 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -130,13 +130,8 @@ class ReloadClassesWorker {
           continue;
         }
         redefineProcessor.processClass(qualifiedName, content);
-        if (myProgress.isCancelled()) {
-          break;
-        }
       }
-      if (!myProgress.isCancelled()) {
-        redefineProcessor.processPending();
-      }
+      redefineProcessor.processPending();
       myProgress.setFraction(1);
 
       final int partiallyRedefinedClassesCount = redefineProcessor.getPartiallyRedefinedClassesCount();
