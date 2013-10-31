@@ -145,8 +145,6 @@ public abstract class GrNewIntroduceHandlerBase<Settings extends GrIntroduceSett
   protected abstract GrAbstractInplaceIntroducer<Settings> getIntroducer(@NotNull GrIntroduceContext context,
                                                                          OccurrencesChooser.ReplaceChoice choice);
 
-  protected abstract Settings getSettingsForInplace(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice);
-
   public static Map<OccurrencesChooser.ReplaceChoice, List<Object>> fillChoice(GrIntroduceContext context) {
     HashMap<OccurrencesChooser.ReplaceChoice, List<Object>> map = ContainerUtil.newLinkedHashMap();
 

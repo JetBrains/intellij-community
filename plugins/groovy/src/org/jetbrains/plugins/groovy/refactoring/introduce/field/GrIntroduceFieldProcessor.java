@@ -25,8 +25,10 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GrQualifiedReference;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
@@ -62,19 +64,19 @@ public class GrIntroduceFieldProcessor {
 
   private final GrIntroduceContext context;
   private final GrIntroduceFieldSettings settings;
-  private boolean myForInplacePrepare;
 
-  public GrIntroduceFieldProcessor(@NotNull GrIntroduceContext context, @NotNull GrIntroduceFieldSettings settings, boolean forInplacePrepare) {
+  public GrIntroduceFieldProcessor(@NotNull GrIntroduceContext context,
+                                   @NotNull GrIntroduceFieldSettings settings) {
     this.context = context;
     this.settings = settings;
-    myForInplacePrepare = forInplacePrepare;
   }
 
   public GrVariable run() {
-    final PsiClass targetClass = (PsiClass)context.getScope();
+    PsiElement scope = context.getScope();
+    final PsiClass targetClass = scope instanceof GroovyFileBase ? ((GroovyFileBase)scope).getScriptClass() : (PsiClass)scope;
     if (targetClass == null) return null;
 
-    final GrVariableDeclaration declaration = insertField(targetClass, createField());
+    final GrVariableDeclaration declaration = insertField(targetClass);
     final GrVariable field = declaration.getVariables()[0];
 
     switch (settings.initializeIn()) {
@@ -119,7 +121,7 @@ public class GrIntroduceFieldProcessor {
       else {
         final GrExpression expression = context.getExpression();
         assert expression != null;
-        if (!myForInplacePrepare && PsiUtil.isExpressionStatement(expression)) {
+        if (PsiUtil.isExpressionStatement(expression)) {
           expression.delete();
         }
         else {
@@ -135,7 +137,8 @@ public class GrIntroduceFieldProcessor {
   }
 
   @NotNull
-  protected GrVariableDeclaration insertField(@NotNull PsiClass targetClass, @NotNull GrVariableDeclaration declaration) {
+  protected GrVariableDeclaration insertField(@NotNull PsiClass targetClass) {
+    GrVariableDeclaration declaration = createField(targetClass);
     if (targetClass instanceof GrEnumTypeDefinition) {
       final GrEnumConstantList enumConstants = ((GrEnumTypeDefinition)targetClass).getEnumConstantList();
       return (GrVariableDeclaration)targetClass.addAfter(declaration, enumConstants);
@@ -304,7 +307,7 @@ public class GrIntroduceFieldProcessor {
     }
 
     if (replaced instanceof GrQualifiedReference<?>) {
-      org.jetbrains.plugins.groovy.codeStyle.GrReferenceAdjuster.shortenReference((GrQualifiedReference<?>)replaced);
+      GrReferenceAdjuster.shortenReference((GrQualifiedReference<?>)replaced);
     }
     if (isOriginal) {
       updateCaretPosition(replaced);
@@ -326,13 +329,13 @@ public class GrIntroduceFieldProcessor {
     return GroovyPsiElementFactory.getInstance(place.getProject()).createReferenceExpressionFromText(refText, place);
   }
 
-  private GrVariableDeclaration createField() {
+  private GrVariableDeclaration createField(PsiClass targetClass) {
     final String name = settings.getName();
     final PsiType type = settings.getSelectedType();
     final String modifier = settings.getVisibilityModifier();
 
     List<String> modifiers = new ArrayList<String>();
-    if (context.getScope() instanceof GroovyScriptClass) {
+    if (targetClass instanceof GroovyScriptClass) {
       modifiers.add("@" + GroovyCommonClassNames.GROOVY_TRANSFORM_FIELD);
     }
     if (settings.isStatic()) modifiers.add(PsiModifier.STATIC);
@@ -341,7 +344,7 @@ public class GrIntroduceFieldProcessor {
 
     final String[] arr_modifiers = ArrayUtil.toStringArray(modifiers);
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.getProject());
-    if (context.getScope() instanceof GroovyScriptClass) {
+    if (targetClass instanceof GroovyScriptClass) {
       return factory.createVariableDeclaration(arr_modifiers, ((GrExpression)null), type, name);
     }
     else {

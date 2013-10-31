@@ -142,11 +142,6 @@ public class GrIntroduceVariableHandler extends GrNewIntroduceHandlerBase<Groovy
   }
 
   @Override
-  protected GroovyIntroduceVariableSettings getSettingsForInplace(GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
-    return null;
-  }
-
-  @Override
   protected void showScopeChooser(GrControlFlowOwner[] scopes, Pass<GrControlFlowOwner> callback, Editor editor) {
     //todo do nothing right now
   }

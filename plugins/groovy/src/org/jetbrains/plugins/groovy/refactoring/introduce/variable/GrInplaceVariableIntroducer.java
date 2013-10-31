@@ -22,7 +22,9 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.ui.NonFocusableCheckBox;
@@ -52,7 +54,6 @@ import java.awt.event.ActionListener;
  */
 public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntroducer<GroovyIntroduceVariableSettings> {
   private JCheckBox myCanBeFinalCb;
-  private SmartTypePointer myTypePointer;
 
   public GrInplaceVariableIntroducer(String title,
                                      OccurrencesChooser.ReplaceChoice replaceChoice,
@@ -192,7 +193,7 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
       @Nullable
       @Override
       public PsiType getSelectedType() {
-        return myTypePointer != null ? myTypePointer.getType() : null;
+        return GrInplaceVariableIntroducer.this.getSelectedType();
       }
     };
   }
@@ -205,12 +206,5 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
   @Override
   protected int getCaretOffset() {
     return getVariable().getNameIdentifierGroovy().getTextRange().getEndOffset();
-  }
-
-  @Override
-  protected void restoreState(GrVariable psiField) {
-    PsiType declaredType = getVariable().getDeclaredType();
-    myTypePointer = declaredType != null ? SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(declaredType) : null;
-    super.restoreState(psiField);
   }
 }

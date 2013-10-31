@@ -21,10 +21,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
@@ -53,6 +50,7 @@ import java.util.List;
  */
 public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSettings> extends AbstractInplaceIntroducer<GrVariable, PsiElement> {
 
+  private SmartTypePointer myTypePointer;
   private OccurrencesChooser.ReplaceChoice myReplaceChoice;
 
   private RangeMarker myVarMarker;
@@ -243,4 +241,15 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
 
   protected abstract Settings getSettings();
 
+  @Override
+  protected void restoreState(GrVariable psiField) {
+    PsiType declaredType = psiField.getDeclaredType();
+    myTypePointer = declaredType != null ? SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(declaredType) : null;
+    super.restoreState(psiField);
+  }
+
+  @Nullable
+  protected PsiType getSelectedType() {
+    return myTypePointer != null ? myTypePointer.getType() : null;
+  }
 }
