@@ -7,11 +7,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 public class PostfixTemplatesManager implements ApplicationComponent {
-  private final ArrayList<PostfixTemplateProvider> myFoo;
+  @NotNull private final PostfixTemplateProvider[] myTemplateProviders;
 
-  public PostfixTemplatesManager(Collection<PostfixTemplateProvider> providers) {
-    myFoo = new ArrayList<>();
-    myFoo.addAll(providers);
+  public PostfixTemplatesManager(@NotNull PostfixTemplateProvider[] providers) {
+    myTemplateProviders = providers;
+  }
+
+  public void getAvailableActions() {
+    for (PostfixTemplateProvider myTemplateProvider : myTemplateProviders) {
+
+    }
   }
 
   @Override

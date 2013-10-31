@@ -17,26 +17,29 @@
 
   <idea-version since-build="107.105"/>
 
-  <depends>com.intellij.modules.lang</depends>
+  <!-- <depends>com.intellij.modules.lang</depends> -->
 
   <application-components>
-    <component>
-      <implementation-class>
-        org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplatesManager
-      </implementation-class>
+     <component>
+      <implementation-class>org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplatesManager</implementation-class>
     </component>
     <component>
-      <implementation-class>
-        org.jetbrains.postfixCompletion.TemplateProviders.IfStatementTemplateProvider
-      </implementation-class>
+      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.IfStatementTemplateProvider</implementation-class>
+    </component>
+    <component>
+      <implementation-class>org.jetbrains.postfixCompletion.TemplateProviders.IntroduceVariableTemplateProvider</implementation-class>
     </component>
   </application-components>
+
+  <module-components>
+
+  </module-components>
 
   <project-components>
   </project-components>
 
   <extensions defaultExtensionNs="com.intellij">
     <completion.contributor language="JAVA"
-                            implementationClass="org.jetbrains.postfixCompletion.Infrastructure.PostfixCompletionContributor" />
+      implementationClass="org.jetbrains.postfixCompletion.PostfixCompletionContributor" />
   </extensions>
 </idea-plugin>
