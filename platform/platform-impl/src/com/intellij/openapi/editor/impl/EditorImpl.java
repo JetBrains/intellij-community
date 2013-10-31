@@ -5009,6 +5009,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDropHandler = dropHandler;
   }
 
+
   private static class MyInputMethodHandleSwingThreadWrapper implements InputMethodRequests {
     private final InputMethodRequests myDelegate;
 
@@ -5018,114 +5019,53 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public Rectangle getTextLocation(final TextHitInfo offset) {
-      if (ApplicationManager.getApplication().isDispatchThread()) return myDelegate.getTextLocation(offset);
-
-      final Rectangle[] r = new Rectangle[1];
-      try {
-        GuiUtils.invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            r[0] = myDelegate.getTextLocation(offset);
-          }
-        });
-      }
-      catch (InterruptedException e) {
-        LOG.error(e);
-      }
-      catch (InvocationTargetException e) {
-        LOG.error(e);
-      }
-      return r[0];
+      return execute(new Computable<Rectangle>() {
+        @Override
+        public Rectangle compute() {
+          return myDelegate.getTextLocation(offset);
+        }
+      });
     }
 
     @Override
     public TextHitInfo getLocationOffset(final int x, final int y) {
-      if (ApplicationManager.getApplication().isDispatchThread()) return myDelegate.getLocationOffset(x, y);
-
-      final TextHitInfo[] r = new TextHitInfo[1];
-      try {
-        GuiUtils.invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            r[0] = myDelegate.getLocationOffset(x, y);
-          }
-        });
-      }
-      catch (InterruptedException e) {
-        LOG.error(e);
-      }
-      catch (InvocationTargetException e) {
-        LOG.error(e);
-      }
-      return r[0];
+      return execute(new Computable<TextHitInfo>() {
+        @Override
+        public TextHitInfo compute() {
+          return myDelegate.getLocationOffset(x, y);
+        }
+      });
     }
 
     @Override
     public int getInsertPositionOffset() {
-      if (ApplicationManager.getApplication().isDispatchThread()) return myDelegate.getInsertPositionOffset();
-
-      final int[] r = new int[1];
-      try {
-        GuiUtils.invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            r[0] = myDelegate.getInsertPositionOffset();
-          }
-        });
-      }
-      catch (InterruptedException e) {
-        LOG.error(e);
-      }
-      catch (InvocationTargetException e) {
-        LOG.error(e);
-      }
-      return r[0];
+      return execute(new Computable<Integer>() {
+        @Override
+        public Integer compute() {
+          return myDelegate.getInsertPositionOffset();
+        }
+      });
     }
 
     @Override
-    public AttributedCharacterIterator getCommittedText(final int beginIndex,
-                                                        final int endIndex,
+    public AttributedCharacterIterator getCommittedText(final int beginIndex, final int endIndex,
                                                         final AttributedCharacterIterator.Attribute[] attributes) {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        return myDelegate.getCommittedText(beginIndex, endIndex, attributes);
-      }
-      final AttributedCharacterIterator[] r = new AttributedCharacterIterator[1];
-      try {
-        GuiUtils.invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            r[0] = myDelegate.getCommittedText(beginIndex, endIndex, attributes);
-          }
-        });
-      }
-      catch (InterruptedException e) {
-        LOG.error(e);
-      }
-      catch (InvocationTargetException e) {
-        LOG.error(e);
-      }
-      return r[0];
+      return execute(new Computable<AttributedCharacterIterator>() {
+        @Override
+        public AttributedCharacterIterator compute() {
+          return myDelegate.getCommittedText(beginIndex, endIndex, attributes);
+        }
+      });
     }
 
     @Override
     public int getCommittedTextLength() {
-      if (ApplicationManager.getApplication().isDispatchThread()) return myDelegate.getCommittedTextLength();
-      final int[] r = new int[1];
-      try {
-        GuiUtils.invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            r[0] = myDelegate.getCommittedTextLength();
-          }
-        });
-      }
-      catch (InterruptedException e) {
-        LOG.error(e);
-      }
-      catch (InvocationTargetException e) {
-        LOG.error(e);
-      }
-      return r[0];
+      return execute(new Computable<Integer>() {
+        @Override
+        public Integer compute() {
+          return myDelegate.getCommittedTextLength();
+        }
+      });
     }
 
     @Override
@@ -5136,26 +5076,39 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public AttributedCharacterIterator getSelectedText(final AttributedCharacterIterator.Attribute[] attributes) {
-      if (ApplicationManager.getApplication().isDispatchThread()) return myDelegate.getSelectedText(attributes);
+      return execute(new Computable<AttributedCharacterIterator>() {
+        @Override
+        public AttributedCharacterIterator compute() {
+          return myDelegate.getSelectedText(attributes);
+        }
+      });
+    }
 
-      final AttributedCharacterIterator[] r = new AttributedCharacterIterator[1];
-      try {
-        GuiUtils.invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            r[0] = myDelegate.getSelectedText(attributes);
-          }
-        });
+    private static <T> T execute(final Computable<T> computable) {
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        return computable.compute();
       }
-      catch (InterruptedException e) {
-        LOG.error(e);
+      else {
+        final Ref<T> ref = Ref.create();
+        try {
+          GuiUtils.invokeAndWait(new Runnable() {
+            @Override
+            public void run() {
+              ref.set(computable.compute());
+            }
+          });
+        }
+        catch (InterruptedException e) {
+          LOG.error(e);
+        }
+        catch (InvocationTargetException e) {
+          LOG.error(e);
+        }
+        return ref.get();
       }
-      catch (InvocationTargetException e) {
-        LOG.error(e);
-      }
-      return r[0];
     }
   }
+
 
   private class MyInputMethodHandler implements InputMethodRequests {
     private String composedText;
@@ -5357,8 +5310,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
-  private class MyMouseAdapter extends MouseAdapter {
 
+  private class MyMouseAdapter extends MouseAdapter {
     private boolean mySelectionTweaked;
 
     @Override
@@ -6160,14 +6113,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public void updateStarted(@NotNull Document doc) {
       if (doc != getDocument()) return;
-      
+
       bulkUpdateStarted();
     }
 
     @Override
     public void updateFinished(@NotNull Document doc) {
       if (doc != getDocument()) return;
-      
+
       bulkUpdateFinished();
     }
   }
