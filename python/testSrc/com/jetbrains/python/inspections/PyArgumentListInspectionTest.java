@@ -172,4 +172,8 @@ public class PyArgumentListInspectionTest extends PyTestCase {
   public void testParameterWithDefaultAfterKeywordContainer() {  // PY-9934
     doTest();
   }
+
+  public void testParameterWithDefaultAfterKeywordContainer2() {  // PY-10351
+    doTest();
+  }
 }

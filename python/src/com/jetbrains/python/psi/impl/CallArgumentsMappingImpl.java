@@ -65,29 +65,9 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
   public void mapArguments(PyCallExpression.PyMarkedCallee resolved_callee, @NotNull TypeEvalContext context) {
     PyExpression[] arguments = myArgumentList.getArguments();
     myMarkedCallee = resolved_callee;
-    List<PyExpression> unmatched_args = new LinkedList<PyExpression>();
-    Collections.addAll(unmatched_args, arguments);
     final List<PyExpression> unmatched_subargs = new LinkedList<PyExpression>(); // unmatched nested arguments will go here
-    // detect starred args
-    for (PyExpression arg : arguments) {
-      if (arg instanceof PyStarArgument) {
-        PyStarArgument star_arg = (PyStarArgument)arg;
-        if (star_arg.isKeyword()) {
-          if (myKwdArg == null) myKwdArg = star_arg;
-          else {
-            markArgument(arg, ArgFlag.IS_DUP_KWD);
-            unmatched_args.remove(arg);
-          }
-        }
-        else {
-          if (myTupleArg == null) myTupleArg = star_arg;
-          else {
-            markArgument(arg, ArgFlag.IS_DUP_TUPLE);
-            unmatched_args.remove(arg);
-          }
-        }
-      }
-    }
+    List<PyExpression> unmatched_args = verifyArguments();
+
     final List<PyParameter> parameters = PyUtil.getParameters(myMarkedCallee.getCallable(), context);
     // prepare parameter slots
     Map<PyNamedParameter, PyExpression> slots = new LinkedHashMap<PyNamedParameter, PyExpression>();
@@ -181,7 +161,6 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
       markArgument(arg, ArgFlag.IS_UNMAPPED);
     }
 
-    markPastBoundPositionalArguments(arguments, positional_bound);
 
     boolean seen_named_args = false;
     // map named args to named params if possible
@@ -346,15 +325,53 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
     }
   }
 
-  private void markPastBoundPositionalArguments(PyExpression[] arguments, int positionalBound) {
+  public List<PyExpression> verifyArguments() {
+    List<PyExpression> unmatched_args = new LinkedList<PyExpression>();
+    Collections.addAll(unmatched_args, myArgumentList.getArguments());
+    // detect starred args
+    for (PyExpression arg : myArgumentList.getArguments()) {
+      if (arg instanceof PyStarArgument) {
+        PyStarArgument star_arg = (PyStarArgument)arg;
+        if (star_arg.isKeyword()) {
+          if (myKwdArg == null) myKwdArg = star_arg;
+          else {
+            markArgument(arg, ArgFlag.IS_DUP_KWD);
+            unmatched_args.remove(arg);
+          }
+        }
+        else {
+          if (myTupleArg == null) myTupleArg = star_arg;
+          else {
+            markArgument(arg, ArgFlag.IS_DUP_TUPLE);
+            unmatched_args.remove(arg);
+          }
+        }
+      }
+    }
+
+    markPastBoundPositionalArguments(myArgumentList.getArguments());
+    return unmatched_args;
+  }
+
+  private void markPastBoundPositionalArguments(PyExpression[] arguments) {
     boolean seenKwArg = false;
-    for(int i=positionalBound; i<arguments.length; i++) {
-      PyExpression arg = arguments[i];
+    boolean seenKeyword = false;
+    boolean seenStar = false;
+    for (PyExpression arg : arguments) {
       if (arg == myKwdArg) {
         seenKwArg = true;
       }
-      if (!(arg instanceof PyStarArgument) && (seenKwArg || !(arg instanceof PyKeywordArgument))) {
-        markArgument(arg, ArgFlag.IS_POS_PAST_KWD);
+      else if (arg instanceof PyKeywordArgument) {
+        seenKeyword = true;
+      }
+      else if (arg instanceof PyStarArgument) {
+        seenStar = true;
+      }
+
+      if (seenKeyword || seenKwArg || seenStar) {
+        if (!(arg instanceof PyStarArgument) && (seenKwArg || !(arg instanceof PyKeywordArgument))) {
+          markArgument(arg, ArgFlag.IS_POS_PAST_KWD);
+        }
       }
     }
   }
