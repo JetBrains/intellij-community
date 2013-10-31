@@ -103,17 +103,7 @@ public class GrIntroduceFieldHandler extends GrIntroduceFieldHandlerBase<GrIntro
   @Override
   protected GrAbstractInplaceIntroducer<GrIntroduceFieldSettings> getIntroducer(@NotNull GrIntroduceContext context,
                                                                                 OccurrencesChooser.ReplaceChoice choice) {
-    return new GrInplaceFieldIntroducer(context, choice) {
-      @Override
-      protected GrVariable runRefactoring(GrIntroduceContext context, GrIntroduceFieldSettings settings, boolean processUsages) {
-        if (processUsages) {
-          return GrIntroduceFieldHandler.this.runRefactoring(context, settings);
-        }
-        else {
-          return new GrIntroduceFieldProcessor(context, settings).insertField( (PsiClass)context.getScope()).getVariables()[0];
-        }
-      }
-    };
+    return new GrInplaceFieldIntroducer(context, choice);
   }
 
   static EnumSet<GrIntroduceFieldSettings.Init> getApplicableInitPlaces(GrIntroduceContext context, boolean replaceAll) {

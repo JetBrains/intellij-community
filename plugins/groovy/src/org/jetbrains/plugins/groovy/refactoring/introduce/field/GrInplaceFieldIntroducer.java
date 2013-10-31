@@ -42,7 +42,7 @@ import java.util.EnumSet;
 /**
  * @author Max Medvedev
  */
-public abstract class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntroduceFieldSettings> {
+public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntroduceFieldSettings> {
   private final GrInplaceIntroduceFieldPanel myPanel;
   private final GrFinalListener finalListener;
   private String[] mySuggestedNames;
@@ -62,6 +62,13 @@ public abstract class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroduc
     finalListener = new GrFinalListener(myEditor);
 
     mySuggestedNames = GroovyNameSuggestionUtil.suggestVariableNames(context.getExpression(), new GroovyInplaceFieldValidator(getContext()), false);
+  }
+
+  @Override
+  protected GrVariable runRefactoring(GrIntroduceContext context, GrIntroduceFieldSettings settings, boolean processUsages) {
+      GrIntroduceFieldProcessor processor = new GrIntroduceFieldProcessor(context, settings);
+      return processUsages ? processor.run()
+                           : processor.insertField((PsiClass)context.getScope()).getVariables()[0];
   }
 
   @Nullable

@@ -119,8 +119,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   public GrVariable runRefactoring(@NotNull final GrIntroduceContext context, @NotNull final GroovyIntroduceVariableSettings settings) {
     // Generating variable declaration
 
-    final GrVariableDeclaration varDecl = generateDeclaration(context, settings);
-    GrVariable insertedVar = processExpression(context, settings, varDecl, true);
+    GrVariable insertedVar = processExpression(context, settings, true);
 
     if (context.getEditor() != null && getPositionMarker() != null) {
       context.getEditor().getCaretModel().moveToOffset(getPositionMarker().getEndOffset());
@@ -134,8 +133,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     return new GrInplaceVariableIntroducer(getRefactoringName(), choice, context) {
       @Override
       protected GrVariable runRefactoring(GrIntroduceContext context, GroovyIntroduceVariableSettings settings, boolean processUsages) {
-        final GrVariableDeclaration varDecl = generateDeclaration(context, settings);
-        return processExpression(context, settings, varDecl, processUsages);
+        return processExpression(context, settings, processUsages);
       }
     };
   }
@@ -161,7 +159,9 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   @NotNull
   private GrVariable processExpression(@NotNull GrIntroduceContext context,
                                        @NotNull GroovyIntroduceVariableSettings settings,
-                                       @NotNull GrVariableDeclaration varDecl, boolean processUsages) {
+                                       boolean processUsages) {
+    GrVariableDeclaration varDecl = generateDeclaration(context, settings);
+
     if (context.getStringPart() != null) {
       final GrExpression ref = processLiteral(DUMMY_NAME, context.getStringPart(), context.getProject());
       return doProcessExpression(context, settings, varDecl, new PsiElement[]{ref}, ref, processUsages);
