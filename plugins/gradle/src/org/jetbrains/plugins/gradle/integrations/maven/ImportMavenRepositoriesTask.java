@@ -204,7 +204,7 @@ public class ImportMavenRepositoriesTask implements Runnable {
         if (uri.getScheme() != null && StringUtil.startsWith(uri.getScheme(), "http")) return uri;
       }
     }
-    catch (URISyntaxException e) {
+    catch (URISyntaxException ignored) {
       // ignore it
     }
 
@@ -219,7 +219,7 @@ public class ImportMavenRepositoriesTask implements Runnable {
         if (uri.getScheme() != null && StringUtil.startsWith("http", uri.getScheme())) return uri;
       }
     }
-    catch (URISyntaxException e) {
+    catch (URISyntaxException ignored) {
       // ignore it
     }
 

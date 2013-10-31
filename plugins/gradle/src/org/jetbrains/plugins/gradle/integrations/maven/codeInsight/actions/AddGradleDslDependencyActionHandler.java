@@ -19,11 +19,9 @@ import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -90,12 +88,6 @@ class AddGradleDslDependencyActionHandler implements CodeInsightActionHandler {
                 factory.createStatementFromText(String.format("compile '%s'\n", getMavenArtifactKey(mavenId))), null);
             }
           }
-        }
-
-        PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
-        Document document = documentManager.getDocument(file);
-        if (document != null) {
-          documentManager.commitDocument(document);
         }
       }
     }.execute();
