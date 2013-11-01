@@ -32,6 +32,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTagValue;
+import com.intellij.util.Consumer;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.NonNls;
@@ -155,10 +156,9 @@ public class PackageDotHtmlMayBePackageInfoInspection extends PackageDotHtmlMayB
             return;
           }
           final AsyncResult<DataContext> dataContextFromFocus = DataManager.getInstance().getDataContextFromFocus();
-          dataContextFromFocus.doWhenDone(
-            new AsyncResult.Handler<DataContext>() {
+          dataContextFromFocus.doWhenDone(new Consumer<DataContext>() {
               @Override
-              public void run(DataContext dataContext) {
+              public void consume(DataContext dataContext) {
                 final FileEditorManager editorManager = FileEditorManager.getInstance(project);
                 final VirtualFile virtualFile = file.getVirtualFile();
                 if (virtualFile == null) {

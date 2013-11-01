@@ -51,6 +51,7 @@ import com.intellij.ui.switcher.SwitchTarget;
 import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
+import com.intellij.util.Consumer;
 import com.intellij.util.ui.AwtVisitor;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
@@ -483,9 +484,9 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     final FileEditorManagerEx mgr = FileEditorManagerEx.getInstanceEx(myProject);
 
     AsyncResult<EditorWindow> window = mgr.getActiveWindow();
-    window.doWhenDone(new AsyncResult.Handler<EditorWindow>() {
+    window.doWhenDone(new Consumer<EditorWindow>() {
       @Override
-      public void run(EditorWindow wnd) {
+      public void consume(EditorWindow wnd) {
         if (wnd != null) {
           if (wnd.findFileComposite(file) != null) {
             mgr.closeFile(file, wnd);

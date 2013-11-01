@@ -42,6 +42,7 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -83,9 +84,9 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
     @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
-      asyncResult.doWhenDone(new AsyncResult.Handler<DataContext>() {
+      asyncResult.doWhenDone(new Consumer<DataContext>() {
         @Override
-        public void run(DataContext dataContext) {
+        public void consume(DataContext dataContext) {
           final Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
           assert editor != null;
           final TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRange();
@@ -152,9 +153,9 @@ public class JavaDocReferenceInspection extends JavaDocReferenceInspectionBase {
           }
         };
         final AsyncResult<DataContext> asyncResult = DataManager.getInstance().getDataContextFromFocus();
-        asyncResult.doWhenDone(new AsyncResult.Handler<DataContext>() {
+        asyncResult.doWhenDone(new Consumer<DataContext>() {
           @Override
-          public void run(DataContext dataContext) {
+          public void consume(DataContext dataContext) {
             new PopupChooserBuilder(list).
               setTitle(QuickFixBundle.message("add.qualifier.original.class.chooser.title")).
               setItemChoosenCallback(runnable).
