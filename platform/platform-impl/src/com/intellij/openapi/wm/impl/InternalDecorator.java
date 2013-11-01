@@ -370,7 +370,8 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
 
     @Override
     public Insets getBorderInsets(final Component c) {
-      ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+      if (myProject == null) return new Insets(0, 0, 0, 0);
+      ToolWindowManager toolWindowManager =  ToolWindowManager.getInstance(myProject);
       if (!(toolWindowManager instanceof ToolWindowManagerImpl)
           || !((ToolWindowManagerImpl)toolWindowManager).isToolWindowRegistered(myInfo.getId())
           || myWindow.getType() == ToolWindowType.FLOATING) {
