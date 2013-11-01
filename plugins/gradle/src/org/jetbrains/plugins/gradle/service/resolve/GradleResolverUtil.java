@@ -155,19 +155,19 @@ public class GradleResolverUtil {
     int argsCount = getGrMethodArumentsCount(args);
     argsCount++; // Configuration name is delivered as an argument.
 
-    for (PsiMethod method : handlerClass.findMethodsByName(methodName, false)) {
-      if (method.getParameterList().getParametersCount() == argsCount) {
+    // handle setter's shortcut facilities
+    final String setter = GroovyPropertyUtils.getSetterName(methodName);
+    for (PsiMethod method : handlerClass.findMethodsByName(setter, false)) {
+      if (method.getParameterList().getParametersCount() == 1) {
         builder.setNavigationElement(method);
         return;
       }
     }
 
-    // handle setter's shortcut facilities
-    final String setter = GroovyPropertyUtils.getSetterName(methodName);
-    for (PsiMethod method : handlerClass.findMethodsByName(setter, false)) {
-      if (method.getParameterList().getParametersCount() == 1) {
-      builder.setNavigationElement(method);
-      return;
+    for (PsiMethod method : handlerClass.findMethodsByName(methodName, false)) {
+      if (method.getParameterList().getParametersCount() == argsCount) {
+        builder.setNavigationElement(method);
+        return;
       }
     }
 
@@ -186,10 +186,22 @@ public class GradleResolverUtil {
                                          @NotNull ResolveState state,
                                          @NotNull PsiElement place,
                                          @NotNull String... fqNames) {
+    processDeclarations(null, psiManager, processor, state, place, fqNames);
+  }
+
+  public static void processDeclarations(@Nullable String methodName,
+                                         @NotNull GroovyPsiManager psiManager,
+                                         @NotNull PsiScopeProcessor processor,
+                                         @NotNull ResolveState state,
+                                         @NotNull PsiElement place,
+                                         @NotNull String... fqNames) {
     for (String fqName : fqNames) {
       PsiClass psiClass = psiManager.findClassWithCache(fqName, place.getResolveScope());
       if (psiClass != null) {
         psiClass.processDeclarations(processor, state, null, place);
+        if (methodName != null) {
+          processMethod(methodName, psiClass, processor, state, place);
+        }
       }
     }
   }

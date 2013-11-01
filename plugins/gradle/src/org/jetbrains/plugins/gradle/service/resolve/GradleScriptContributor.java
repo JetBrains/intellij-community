@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.service.resolve;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -27,12 +28,22 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.resolve.NonCodeMembersContributor;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Denis Zhdanov
  * @since 7/23/13 4:21 PM
  */
 public class GradleScriptContributor extends NonCodeMembersContributor {
+
+  public final static Set<String> BUILD_PROJECT_SCRIPT_BLOCKS = ContainerUtil.newHashSet(
+    "project",
+    "configure",
+    "subprojects",
+    "allprojects",
+    "buildscript"
+  );
+
 
   @Override
   public void processDynamicElements(@NotNull PsiType qualifierType,
@@ -65,6 +76,11 @@ public class GradleScriptContributor extends NonCodeMembersContributor {
       if (text != null) {
         methodInfo.add(text);
       }
+    }
+
+    final String methodCall = ContainerUtil.getLastItem(methodInfo);
+    if (methodInfo.size() > 1 && BUILD_PROJECT_SCRIPT_BLOCKS.contains(methodCall)) {
+      methodInfo.remove(methodInfo.size() - 1);
     }
 
     for (GradleMethodContextContributor contributor : GradleMethodContextContributor.EP_NAME.getExtensions()) {
