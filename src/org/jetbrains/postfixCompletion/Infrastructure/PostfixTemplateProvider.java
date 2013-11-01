@@ -1,5 +1,7 @@
 package org.jetbrains.postfixCompletion.Infrastructure;
 
+import org.jetbrains.annotations.NotNull;
+
 public interface PostfixTemplateProvider {
-  void createItems(/* TODO */);
+  void createItems(@NotNull final PostfixTemplateAcceptanceContext context);
 }
