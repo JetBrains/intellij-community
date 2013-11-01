@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.roots;
+package com.intellij.openapi.vcs.roots;
 
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.openapi.application.Result;
@@ -41,12 +41,13 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 
-import static com.intellij.dvcs.test.Executor.*;
+import static com.intellij.openapi.vcs.Executor.*;
+
 
 /**
  * @author Nadya Zabrodina
  */
-public abstract class GitPlatformTest extends UsefulTestCase {
+public abstract class VcsPlatformTest extends UsefulTestCase {
 
   protected Project myProject;
   protected VirtualFile myProjectRoot;
@@ -54,11 +55,12 @@ public abstract class GitPlatformTest extends UsefulTestCase {
   public static final String myRepositoryFolderName = "repository";
   private RootModelImpl myRootModel;
   protected static final Collection<File> myFilesToDelete = new HashSet<File>();
+  protected final static String myVcsName = "Git";       //now scanner test executed only for git  todo: create for all
 
   protected IdeaProjectTestFixture myProjectFixture;
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
-  protected GitPlatformTest() {
+  protected VcsPlatformTest() {
     PlatformTestCase.initPlatformLangPrefix();
   }
 

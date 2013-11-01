@@ -14,8 +14,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import static com.intellij.dvcs.test.Executor.cd;
-import static com.intellij.dvcs.test.Executor.echo;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.echo;
 import static hg4idea.test.HgExecutor.hg;
 
 /**

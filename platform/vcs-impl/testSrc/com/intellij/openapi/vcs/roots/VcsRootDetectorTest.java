@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.roots;
+package com.intellij.openapi.vcs.roots;
 
-import com.intellij.dvcs.test.Executor;
-import com.intellij.dvcs.test.TestRepositoryUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsRoot;
-import com.intellij.openapi.vcs.roots.VcsRootDetectInfo;
-import com.intellij.openapi.vcs.roots.VcsRootDetector;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,13 +29,14 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-import static com.intellij.dvcs.test.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.mkdir;
 
 
 /**
  * @author Nadya Zabrodina
  */
-public class GitRootDetectorTest extends GitPlatformTest {
+public class VcsRootDetectorTest extends VcsPlatformTest {
 
   public void testNoRootsInProject() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
@@ -59,8 +57,8 @@ public class GitRootDetectorTest extends GitPlatformTest {
     map.put("git", Arrays.asList("community"));
     map.put("content_roots", Collections.<String>emptyList());
     cd(myProjectRoot);
-    Executor.mkdir("src");
-    Executor.mkdir(".idea");
+    mkdir("src");
+    mkdir(".idea");
     doTest(map, myProjectRoot, Arrays.asList("community"), false, false);
   }
 
@@ -72,11 +70,10 @@ public class GitRootDetectorTest extends GitPlatformTest {
     doTest(map, myProjectRoot, Arrays.asList(dirNames), false, false);
   }
 
-
   public void testProjectUnderVcsAboveIt() throws IOException {
     String subdir = "insideRepo";
     cd(myRepository);
-    Executor.mkdir(subdir);
+    mkdir(subdir);
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
     map.put("git", Arrays.asList(myRepository.getName()));
     map.put("content_roots", Collections.<String>emptyList());
@@ -85,7 +82,6 @@ public class GitRootDetectorTest extends GitPlatformTest {
            true, true);
   }
 
-
   public void testIDEAProject() throws IOException {
     String[] names = {"community", "contrib", "."};
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
@@ -93,7 +89,6 @@ public class GitRootDetectorTest extends GitPlatformTest {
     map.put("content_roots", Collections.<String>emptyList());
     doTest(map, myProjectRoot, Arrays.asList(names), true, false);
   }
-
 
   public void testOneAboveAndOneUnder() throws IOException {
     String[] names = {myRepository.getName() + "/community", "."};
@@ -119,14 +114,13 @@ public class GitRootDetectorTest extends GitPlatformTest {
     doTest(map, myRepository, Arrays.asList(names), true, true);
   }
 
-
   public void testMultipleAboveShouldBeDetectedAsOneAbove() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
     map.put("git", Arrays.asList(".", myRepository.getName()));
     map.put("content_roots", Collections.<String>emptyList());
     String subdir = "insideRepo";
     cd(myRepository);
-    Executor.mkdir(subdir);
+    mkdir(subdir);
     VirtualFile vfile = myRepository.findChild(subdir);
     doTest(map, vfile, Arrays.asList(myRepository.getName()), true, true);
   }
@@ -169,7 +163,7 @@ public class GitRootDetectorTest extends GitPlatformTest {
   }
 
   void assertRoots(Collection<String> expectedRelativePaths, Collection<String> actual) {
-    TestRepositoryUtil.assertEqualCollections(actual, toAbsolute(expectedRelativePaths, myProject));
+    VcsTestUtil.assertEqualCollections(actual, toAbsolute(expectedRelativePaths, myProject));
   }
 
   @NotNull

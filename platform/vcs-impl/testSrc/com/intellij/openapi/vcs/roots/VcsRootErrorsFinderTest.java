@@ -13,25 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.roots;
+package com.intellij.openapi.vcs.roots;
 
-import com.intellij.dvcs.test.TestRepositoryUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.VcsRootError;
-import com.intellij.openapi.vcs.roots.VcsRootErrorsFinder;
-import git4idea.GitVcs;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.*;
 
-import static git4idea.test.GitGTestUtil.toAbsolute;
 
 /**
  * @author Nadya Zabrodina
  */
-public class GitRootErrorsFinderTest extends GitPlatformTest {
+public class VcsRootErrorsFinderTest extends VcsPlatformTest {
 
   static final String PROJECT = VcsDirectoryMapping.PROJECT_CONSTANT;
   @NotNull private ProjectLevelVcsManager myVcsManager;
@@ -225,17 +222,17 @@ public class GitRootErrorsFinderTest extends GitPlatformTest {
       expected.addAll(extraAll(extraPaths));
     }
     Collection<VcsRootError> actual = new VcsRootErrorsFinder(myProject).find();
-    TestRepositoryUtil.assertEqualCollections(actual, expected);
+    VcsTestUtil.assertEqualCollections(actual, expected);
   }
 
   void addVcsRoots(@NotNull Collection<String> relativeRoots) {
     for (String root : relativeRoots) {
       if (root.equals(PROJECT)) {
-        myVcsManager.setDirectoryMapping("", GitVcs.NAME);
+        myVcsManager.setDirectoryMapping("", myVcsName);
       }
       else {
-        String absoluteRoot = toAbsolute(root, myProject);
-        myVcsManager.setDirectoryMapping(absoluteRoot, GitVcs.NAME);
+        String absoluteRoot = VcsTestUtil.toAbsolute(root, myProject);
+        myVcsManager.setDirectoryMapping(absoluteRoot, myVcsName);
       }
     }
   }
@@ -260,11 +257,12 @@ public class GitRootErrorsFinderTest extends GitPlatformTest {
 
   @NotNull
   VcsRootError unreg(@NotNull String path) {
-    return new VcsRootError(VcsRootError.Type.UNREGISTERED_ROOT, toAbsolute(path, myProject), GitVcs.NAME);
+    return new VcsRootError(VcsRootError.Type.UNREGISTERED_ROOT, VcsTestUtil.toAbsolute(path, myProject), myVcsName);
   }
 
   @NotNull
   VcsRootError extra(@NotNull String path) {
-    return new VcsRootError(VcsRootError.Type.EXTRA_MAPPING, PROJECT.equals(path) ? PROJECT : toAbsolute(path, myProject), GitVcs.NAME);
+    return new VcsRootError(VcsRootError.Type.EXTRA_MAPPING, PROJECT.equals(path) ? PROJECT : VcsTestUtil.toAbsolute(path, myProject),
+                            myVcsName);
   }
 }

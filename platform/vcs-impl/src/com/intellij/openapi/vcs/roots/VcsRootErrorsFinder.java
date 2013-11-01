@@ -114,7 +114,7 @@ public class VcsRootErrorsFinder {
     return ContainerUtil.find(checkers, new Condition<VcsRootChecker>() {
       @Override
       public boolean value(VcsRootChecker checker) {
-        return checker.getSupportedVcs().getName().equals(mapping.getVcs()) && checker.isRoot(pathToCheck);
+        return checker.getSupportedVcs().getName().equalsIgnoreCase(mapping.getVcs()) && checker.isRoot(pathToCheck);
       }
     }) != null;
   }

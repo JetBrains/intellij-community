@@ -28,7 +28,7 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.io.File;
 import java.util.List;
 
-import static com.intellij.dvcs.test.Executor.*;
+import static com.intellij.openapi.vcs.Executor.*;
 import static hg4idea.test.HgExecutor.hg;
 
 /**

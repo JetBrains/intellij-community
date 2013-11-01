@@ -15,7 +15,7 @@
  */
 package git4idea.test;
 
-import com.intellij.dvcs.test.Executor;
+import com.intellij.openapi.vcs.Executor;
 import git4idea.repo.GitRepository;
 
 import java.util.Arrays;

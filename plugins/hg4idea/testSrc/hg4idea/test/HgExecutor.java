@@ -15,10 +15,10 @@
  */
 package hg4idea.test;
 
-import com.intellij.dvcs.test.Executor;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.Executor;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;

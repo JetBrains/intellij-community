@@ -1,4 +1,4 @@
-package com.intellij.dvcs.test;
+package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -7,6 +7,8 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +17,8 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.fail;
@@ -22,8 +26,7 @@ import static junit.framework.Assert.fail;
 /**
  * @author Nadya Zabrodina
  */
-public class TestRepositoryUtil {
-
+public class VcsTestUtil {
 
   // TODO: option - create via IDEA or via java.io. In latter case no need in Project parameter.
   public static VirtualFile createFile(@NotNull Project project,
@@ -192,5 +195,27 @@ public class TestRepositoryUtil {
   @NotNull
   public static String stringifyActualExpected(@NotNull Object actual, @NotNull Object expected) {
     return "\nExpected:\n" + expected + "\nActual:\n" + actual;
+  }
+
+  @NotNull
+  public static String toAbsolute(@NotNull String relPath, @NotNull Project project) {
+    new File(toAbsolute(Collections.singletonList(relPath), project).get(0)).mkdir();
+    return toAbsolute(Collections.singletonList(relPath), project).get(0);
+  }
+
+  @NotNull
+  public static List<String> toAbsolute(@NotNull Collection<String> relPaths, @NotNull final Project project) {
+    return ContainerUtil.map2List(relPaths, new Function<String, String>() {
+      @Override
+      public String fun(String s) {
+        try {
+          return FileUtil.toSystemIndependentName((new File(project.getBasePath() + "/" + s).getCanonicalPath()));
+        }
+        catch (IOException e) {
+          e.printStackTrace();
+          return "";
+        }
+      }
+    });
   }
 }
