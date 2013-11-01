@@ -16,6 +16,7 @@
 package com.intellij.remoteServer.configuration.deployment;
 
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.remoteServer.configuration.RemoteServer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,5 +33,5 @@ public abstract class DeploymentConfigurator<D extends DeploymentConfiguration> 
   public abstract D createDefaultConfiguration(@NotNull DeploymentSource source);
 
   @Nullable
-  public abstract SettingsEditor<D> createEditor(@NotNull DeploymentSource source);
+  public abstract SettingsEditor<D> createEditor(@NotNull DeploymentSource source, @NotNull RemoteServer<?> server);
 }

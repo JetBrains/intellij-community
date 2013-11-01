@@ -55,7 +55,8 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
   private final SortedComboBoxModel<DeploymentSource> mySourceListModel;
   private final JPanel myDeploymentSettingsComponent;
   private SettingsEditor<D> myDeploymentSettingsEditor;
-  private DeploymentSource myLastSelection;
+  private DeploymentSource myLastSelectedSource;
+  private RemoteServer<S> myLastSelectedServer;
 
   public DeployToServerSettingsEditor(final ServerType<S> type, DeploymentConfigurator<D> deploymentConfigurator, Project project) {
     myServerType = type;
@@ -72,6 +73,12 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
         if (ShowSettingsUtil.getInstance().editConfigurable(myServerComboBox, configurable)) {
           fillApplicationServersList(configurable.getLastSelectedServer());
         }
+      }
+    });
+    myServerComboBox.getComboBox().addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        updateDeploymentSettingsEditor();
       }
     });
     myServerComboBox.getComboBox().setRenderer(new ColoredListCellRendererWrapper<String>() {
@@ -106,7 +113,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
     mySourceComboBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        onDeploymentSourceChanged(null);
+        updateDeploymentSettingsEditor();
       }
     });
   }
@@ -120,27 +127,28 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
     myServerComboBox.getComboBox().setSelectedItem(newSelection != null ? newSelection.getName() : oldSelection);
   }
 
-  private void onDeploymentSourceChanged(@Nullable D configuration) {
-    DeploymentSource selected = mySourceListModel.getSelectedItem();
-    if (Comparing.equal(selected, myLastSelection)) {
-      if (configuration != null && myDeploymentSettingsEditor != null) {
-        myDeploymentSettingsEditor.resetFrom(configuration);
-      }
+  private void updateDeploymentSettingsEditor() {
+    String serverName = myServerListModel.getSelectedItem();
+    RemoteServer<S> selectedServer = serverName != null ? RemoteServersManager.getInstance().findByName(serverName, myServerType) : null;
+    DeploymentSource selectedSource = mySourceListModel.getSelectedItem();
+    if (Comparing.equal(selectedSource, myLastSelectedSource) && Comparing.equal(selectedServer, myLastSelectedServer)) {
       return;
     }
 
-    updateBeforeRunOptions(myLastSelection, false);
-    updateBeforeRunOptions(selected, true);
-    myDeploymentSettingsComponent.removeAll();
-    myDeploymentSettingsEditor = myDeploymentConfigurator.createEditor(selected);
-    if (myDeploymentSettingsEditor != null) {
-      Disposer.register(this, myDeploymentSettingsEditor);
-      myDeploymentSettingsComponent.add(BorderLayout.CENTER, myDeploymentSettingsEditor.getComponent());
-      if (configuration != null) {
-        myDeploymentSettingsEditor.resetFrom(configuration);
+    if (!Comparing.equal(selectedSource, myLastSelectedSource)) {
+      updateBeforeRunOptions(myLastSelectedSource, false);
+      updateBeforeRunOptions(selectedSource, true);
+    }
+    if (selectedSource != null && selectedServer != null) {
+      myDeploymentSettingsComponent.removeAll();
+      myDeploymentSettingsEditor = myDeploymentConfigurator.createEditor(selectedSource, selectedServer);
+      if (myDeploymentSettingsEditor != null) {
+        Disposer.register(this, myDeploymentSettingsEditor);
+        myDeploymentSettingsComponent.add(BorderLayout.CENTER, myDeploymentSettingsEditor.getComponent());
       }
     }
-    myLastSelection = selected;
+    myLastSelectedSource = selectedSource;
+    myLastSelectedServer = selectedServer;
   }
 
   private void updateBeforeRunOptions(@Nullable DeploymentSource source, boolean selected) {
@@ -158,7 +166,11 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
     }
     myServerComboBox.getComboBox().setSelectedItem(serverName);
     mySourceComboBox.setSelectedItem(configuration.getDeploymentSource());
-    onDeploymentSourceChanged(configuration.getDeploymentConfiguration());
+    D deploymentConfiguration = configuration.getDeploymentConfiguration();
+    updateDeploymentSettingsEditor();
+    if (deploymentConfiguration != null && myDeploymentSettingsEditor != null) {
+      myDeploymentSettingsEditor.resetFrom(deploymentConfiguration);
+    }
   }
 
   @Override
