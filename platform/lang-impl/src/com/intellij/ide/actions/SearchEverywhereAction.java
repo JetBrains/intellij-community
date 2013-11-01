@@ -48,6 +48,7 @@ import com.intellij.openapi.options.ex.ProjectConfigurablesGroup;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
@@ -604,19 +605,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private void initSearchActions(JBPopup balloon, MySearchTextField searchTextField) {
     final JTextField editor = searchTextField.getTextEditor();
-    new AnAction(){
+    new DumbAwareAction(){
       @Override
       public void actionPerformed(AnActionEvent e) {
         jumpNextGroup(true);
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("TAB"), editor, balloon);
-    new AnAction(){
+    new DumbAwareAction(){
       @Override
       public void actionPerformed(AnActionEvent e) {
         jumpNextGroup(false);
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("shift TAB"), editor, balloon);
-    new AnAction(){
+    new DumbAwareAction(){
       @Override
       public void actionPerformed(AnActionEvent e) {
         if (myBalloon != null && myBalloon.isVisible()) {
@@ -627,7 +628,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
       }
     }.registerCustomShortcutSet(CustomShortcutSet.fromString("ESCAPE"), editor, balloon);
-    new AnAction(){
+    new DumbAwareAction(){
       @Override
       public void actionPerformed(AnActionEvent e) {
         final int index = myList.getSelectedIndex();
