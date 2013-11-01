@@ -121,7 +121,7 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
     }
   }
 
-  private static class AppEngineDeploymentConfigurator extends DeploymentConfigurator<DummyDeploymentConfiguration> {
+  private static class AppEngineDeploymentConfigurator extends DeploymentConfigurator<DummyDeploymentConfiguration, AppEngineServerConfiguration> {
     private final Project myProject;
 
     public AppEngineDeploymentConfigurator(Project project) {
@@ -142,7 +142,7 @@ public class AppEngineCloudType extends ServerType<AppEngineServerConfiguration>
     }
 
     @Override
-    public SettingsEditor<DummyDeploymentConfiguration> createEditor(@NotNull DeploymentSource source, RemoteServer<?> server) {
+    public SettingsEditor<DummyDeploymentConfiguration> createEditor(@NotNull DeploymentSource source, @NotNull RemoteServer<AppEngineServerConfiguration> server) {
       return null;
     }
   }

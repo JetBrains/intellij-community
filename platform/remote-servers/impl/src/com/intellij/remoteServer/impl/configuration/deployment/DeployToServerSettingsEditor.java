@@ -47,7 +47,7 @@ import java.util.Comparator;
  */
 public class DeployToServerSettingsEditor<S extends ServerConfiguration, D extends DeploymentConfiguration> extends SettingsEditor<DeployToServerRunConfiguration<S, D>> {
   private final ServerType<S> myServerType;
-  private final DeploymentConfigurator<D> myDeploymentConfigurator;
+  private final DeploymentConfigurator<D, S> myDeploymentConfigurator;
   private final Project myProject;
   private final ComboboxWithBrowseButton myServerComboBox;
   private final ComboBox mySourceComboBox;
@@ -58,7 +58,7 @@ public class DeployToServerSettingsEditor<S extends ServerConfiguration, D exten
   private DeploymentSource myLastSelectedSource;
   private RemoteServer<S> myLastSelectedServer;
 
-  public DeployToServerSettingsEditor(final ServerType<S> type, DeploymentConfigurator<D> deploymentConfigurator, Project project) {
+  public DeployToServerSettingsEditor(final ServerType<S> type, DeploymentConfigurator<D, S> deploymentConfigurator, Project project) {
     myServerType = type;
     myDeploymentConfigurator = deploymentConfigurator;
     myProject = project;
