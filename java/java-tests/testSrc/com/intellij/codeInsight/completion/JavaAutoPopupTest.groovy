@@ -116,7 +116,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
       }
     """)
     type "r"
-    assertContains "iterable", "iter"
+    myFixture.assertPreferredCompletionItems 1, "iter", "iterable"
 
     type '\b'
     assertContains "iterable"
@@ -131,7 +131,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assertContains "iterable"
 
     type "r"
-    assertContains "iterable", "iter"
+    myFixture.assertPreferredCompletionItems 1, "iter", "iterable"
   }
 
   public void testExplicitSelectionShouldSurvive() {
@@ -151,7 +151,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assertEquals 'iterable2', lookup.currentItem.lookupString
 
     type "r"
-    myFixture.assertPreferredCompletionItems 2, "iterable", "iter", 'iterable2'
+    myFixture.assertPreferredCompletionItems 2, "iter", "iterable", 'iterable2'
 
   }
 
@@ -172,7 +172,7 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assertEquals 'iterable2', lookup.currentItem.lookupString
 
     type "r"
-    myFixture.assertPreferredCompletionItems 2, "iterable", "iter", 'iterable2'
+    myFixture.assertPreferredCompletionItems 2, "iter", "iterable", 'iterable2'
 
   }
 
@@ -1305,7 +1305,7 @@ class Foo {
     type 'e'
     myFixture.assertPreferredCompletionItems 0, 'itera', 'itex'
     type 'r'
-    myFixture.assertPreferredCompletionItems 0, 'itera', 'iter'
+    myFixture.assertPreferredCompletionItems 1, 'iter', 'itera'
     type '\b'
     myFixture.assertPreferredCompletionItems 0, 'itera', 'itex'
   }
@@ -1544,9 +1544,9 @@ class Foo {
 }
 '''
     type 'tpl'
-    myFixture.assertPreferredCompletionItems 0, 'tplMn', 'tpl'
+    myFixture.assertPreferredCompletionItems 1, 'tpl', 'tplMn'
 
-    LookupElementPresentation p = LookupElementPresentation.renderElement(myFixture.lookupElements[1])
+    LookupElementPresentation p = LookupElementPresentation.renderElement(myFixture.lookupElements[0])
     assert p.itemText == 'tpl'
     assert !p.tailText
     def tabKeyPresentation = KeyEvent.getKeyText(TemplateSettings.TAB_CHAR as int)
