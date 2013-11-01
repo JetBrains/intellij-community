@@ -286,6 +286,8 @@ public class PositionManagerImpl implements PositionManager {
           return null;
         }
 
+        final boolean canGetSynthetic = vmProxy.canGetSyntheticAttribute();
+        final boolean canReloadClasses = vmProxy.canRedefineClasses();
         int rangeBegin = Integer.MAX_VALUE;
         int rangeEnd = Integer.MIN_VALUE;
         for (Location location : fromClass.allLineLocations()) {
@@ -294,8 +296,14 @@ public class PositionManagerImpl implements PositionManager {
             continue; // should be a native method, skipping
           }
           final Method method = location.method();
-          if (method == null || method.isSynthetic() || method.isBridge() || method.isObsolete()) {
-            continue; // do not take into account synthetic stuff
+          try {
+            if (method == null || (canGetSynthetic && method.isSynthetic()) || method.isBridge() || (canReloadClasses && method.isObsolete())) {
+              // do not take into account synthetic stuff
+              continue;
+            }
+          }
+          catch (Throwable ignored) {
+            LOG.info(ignored);
           }
           final int locationLine = lnumber - 1;
           rangeBegin = Math.min(rangeBegin,  locationLine);
