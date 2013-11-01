@@ -94,6 +94,9 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   }
 
   public String asString() {
+    if (revision.isEmpty()) {
+      return changeset;
+    }
     return revision + ":" + changeset;
   }
 
