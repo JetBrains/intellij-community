@@ -473,6 +473,8 @@
     <postStartupActivity implementation="com.jetbrains.python.packaging.PyPIPackagesUpdater"/>
     <postStartupActivity implementation="com.jetbrains.python.testing.PyTestRunnerUpdater"/>
 
+    <macro implementation="com.jetbrains.python.sdk.InterpreterDirectoryMacro"/>
+
     <!-- User skeletons -->
     <codeInsight.lineMarkerProvider language="Python" implementationClass="com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsLineMarkerProvider"/>
 
@@ -504,7 +506,6 @@
     <!-- Packaging -->
     <moduleService serviceInterface="com.jetbrains.python.packaging.PyPackageRequirementsSettings"
                    serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings"/>
-
   </extensions>
 
   <extensionPoints>
@@ -547,6 +548,7 @@
     <dumbAnnotator implementation="com.jetbrains.python.validation.DocStringAnnotator"/>
     <dumbAnnotator implementation="com.jetbrains.python.validation.PyDefinitionsAnnotator"/>
     <dumbAnnotator implementation="com.jetbrains.python.validation.GeneratorInArgumentListAnnotator"/>
+    <dumbAnnotator implementation="com.jetbrains.python.validation.StarAnnotator"/>
 
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PropertyStubType"/>
     <dialectsTokenSetContributor implementation="com.jetbrains.python.PythonTokenSetContributor"/>

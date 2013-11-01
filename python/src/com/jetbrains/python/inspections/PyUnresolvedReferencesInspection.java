@@ -835,7 +835,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     private void addCreateClassFix(String refText, PsiElement element, List<LocalQuickFix> actions) {
-      if (refText.length() > 2 && Character.isUpperCase(refText.charAt(0)) && !Character.isUpperCase(refText.charAt(1)) &&
+      if (refText.length() > 2 && Character.isUpperCase(refText.charAt(0)) && !refText.toUpperCase().equals(refText) &&
           PsiTreeUtil.getParentOfType(element, PyImportStatementBase.class) == null) {
         PsiElement anchor = element;
         if (element instanceof PyQualifiedExpression) {

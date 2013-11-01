@@ -13,7 +13,7 @@ namedpast(1,2,3, foo='a') # pass
 namedpast(*args, foo='b') # pass
 namedpast(foo='c') # pass
 namedpast() # pass
-namedpast(foo='1', <warning descr="Cannot appear past keyword arguments or *arg or **kwarg">2</warning>) # fail
+namedpast(foo='1', <error descr="Cannot appear past keyword arguments or *arg or **kwarg">2</error>) # fail
 
 def a23(a, *b, c=1):
     pass
@@ -21,7 +21,7 @@ def a23(a, *b, c=1):
 a23(1,2,3, c=10) # pass
 a23(1,2,3, c=10, <warning descr="Duplicate argument">a=1</warning>) # fail
 a23(c=10, a=1) # pass
-a23(c=10, <warning descr="Cannot appear past keyword arguments or *arg or **kwarg">1</warning><warning descr="Parameter 'a' unfilled">)</warning> # fail
+a23(c=10, <error descr="Cannot appear past keyword arguments or *arg or **kwarg">1</error><warning descr="Parameter 'a' unfilled">)</warning> # fail
 a23(<warning descr="Multiple values resolve to positional parameter 'a'">*args</warning>, a=1) # fail
 a23(*args, c=1) # pass
 

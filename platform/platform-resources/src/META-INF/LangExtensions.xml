@@ -432,6 +432,7 @@
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.FileNameWithoutExtensionMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.ReplaceUnderscoresToCamelCaseMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CapitalizeAndUnderscoreMacro"/>
+    <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.SnakeCaseMacro"/>
 
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CompleteMacro"/>
     <liveTemplateMacro implementation="com.intellij.codeInsight.template.macro.CompleteSmartMacro"/>

@@ -32,23 +32,31 @@ public class CapitalizeAndUnderscoreMacro extends MacroBase {
     super("capitalizeAndUnderscore", CodeInsightBundle.message("macro.capitalizeAndUnderscore.string"));
   }
 
+  protected CapitalizeAndUnderscoreMacro(String name, String description) {
+    super(name, description);
+  }
+
   @Override
   protected Result calculateResult(@NotNull Expression[] params, ExpressionContext context, boolean quick) {
     String text = getTextResult(params, context, true);
     if (text != null && text.length() > 0) {
       final String[] words = NameUtil.nameToWords(text);
       boolean insertUnderscore = false;
-      final StringBuffer buf = new StringBuffer();
+      final StringBuilder buf = new StringBuilder();
       for (String word : words) {
         if (insertUnderscore) {
           buf.append("_");
         } else {
           insertUnderscore = true;
         }
-        buf.append(StringUtil.toUpperCase(word));
+        buf.append(convertCase(word));
       }
       return new TextResult(buf.toString());
     }
     return null;
+  }
+
+  protected String convertCase(String word) {
+    return StringUtil.toUpperCase(word);
   }
 }

@@ -35,6 +35,13 @@ public abstract class PyLexerTestCase extends PlatformLiteFixture {
   }
 
   public static void doLexerTest(String text, Lexer lexer, String... expectedTokens) {
+    doLexerTest(text, lexer, false, expectedTokens);
+  }
+
+  public static void doLexerTest(String text,
+                                 Lexer lexer,
+                                 boolean checkTokenText,
+                                 String... expectedTokens) {
     lexer.start(text);
     int idx = 0;
     int tokenPos = 0;
@@ -44,13 +51,13 @@ public abstract class PyLexerTestCase extends PlatformLiteFixture {
         lexer.advance();
         while (lexer.getTokenType() != null) {
           remainingTokens.append(",");
-          remainingTokens.append(" \"").append(lexer.getTokenType().toString()).append("\"");
+          remainingTokens.append(" \"").append(checkTokenText ? lexer.getTokenText() : lexer.getTokenType().toString()).append("\"");
           lexer.advance();
         }
         fail("Too many tokens. Following tokens: " + remainingTokens.toString());
       }
       assertEquals("Token offset mismatch at position " + idx, tokenPos, lexer.getTokenStart());
-      String tokenName = lexer.getTokenType().toString();
+      String tokenName = checkTokenText ? lexer.getTokenText() : lexer.getTokenType().toString();
       assertEquals("Token mismatch at position " + idx, expectedTokens[idx], tokenName);
       idx++;
       tokenPos = lexer.getTokenEnd();

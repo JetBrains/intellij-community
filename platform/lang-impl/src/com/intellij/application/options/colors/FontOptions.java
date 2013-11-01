@@ -140,22 +140,12 @@ public class FontOptions extends JPanel implements OptionsPanel{
       @Override
       public void textChanged(DocumentEvent event) {
         if (myIsInSchemeChange || !SwingUtilities.isEventDispatchThread()) return;
-        try {
-          int fontSize = Integer.parseInt(myEditorFontSizeField.getText());
-          if (fontSize < 1) fontSize = 1;
-          if (fontSize > OptionsConstants.MAX_EDITOR_FONT_SIZE) fontSize = OptionsConstants.MAX_EDITOR_FONT_SIZE;
-          Object selectedFont = myPrimaryCombo.getSelectedItem();
-          if (selectedFont instanceof String) {
-            FontPreferences fontPreferences = getFontPreferences();
-            fontPreferences.register((String)selectedFont, fontSize);
-          }
+        Object selectedFont = myPrimaryCombo.getSelectedItem();
+        if (selectedFont instanceof String) {
+          FontPreferences fontPreferences = getFontPreferences();
+          fontPreferences.register((String)selectedFont, getFontSizeFromField());
         }
-        catch (NumberFormatException e) {
-          // OK, ignore
-        }
-        finally {
-          updateDescription(true);
-        }
+        updateDescription(true);
       }
     });
 
@@ -163,25 +153,32 @@ public class FontOptions extends JPanel implements OptionsPanel{
       @Override
       public void textChanged(DocumentEvent event) {
         if (myIsInSchemeChange) return;
-        float lineSpacing = 1;
-        try {
-          lineSpacing = Float.parseFloat(myLineSpacingField.getText());
+        float lineSpacing = getLineSpacingFromField();
+        if (getLineSpacing() != lineSpacing) {
+          setCurrentLineSpacing(lineSpacing);
         }
-        catch (NumberFormatException e) {
-          // OK, ignore
-        }
-        finally {
-          if (lineSpacing <= 0) lineSpacing = 1;
-          if (lineSpacing > 30) lineSpacing = 30;
-          if (getLineSpacing() != lineSpacing) {
-            setCurrentLineSpacing(lineSpacing);
-          }
-          updateDescription(true);
-        }
+        updateDescription(true);
       }
     });
-
   }
+
+  private int getFontSizeFromField() {
+    try {
+      return Math.min(OptionsConstants.MAX_EDITOR_FONT_SIZE, Math.max(1, Integer.parseInt(myEditorFontSizeField.getText())));
+    }
+    catch (NumberFormatException e) {
+      return OptionsConstants.DEFAULT_EDITOR_FONT_SIZE;
+    }
+  }
+
+  private float getLineSpacingFromField() {
+    try {
+       return Math.min(30, Math.max(1, Float.parseFloat(myLineSpacingField.getText())));
+    } catch (NumberFormatException e){
+      return 1;
+    }
+  }
+
   private void syncFontFamilies() {
     if (myIsInSchemeChange) {
       return;
@@ -190,11 +187,18 @@ public class FontOptions extends JPanel implements OptionsPanel{
     fontPreferences.clearFonts();
     String primaryFontFamily = (String)myPrimaryCombo.getSelectedItem();
     String secondaryFontFamily = mySecondaryCombo.isEnabled() ? (String)mySecondaryCombo.getSelectedItem() : null;
-    if (primaryFontFamily != null && !FontPreferences.DEFAULT_FONT_NAME.equals(primaryFontFamily)) {
-      fontPreferences.addFontFamily(primaryFontFamily);
+    int fontSize = getFontSizeFromField();
+    if (primaryFontFamily != null ) {
+      if (!FontPreferences.DEFAULT_FONT_NAME.equals(primaryFontFamily)) {
+        fontPreferences.addFontFamily(primaryFontFamily);
+      }
+      fontPreferences.register(primaryFontFamily, fontSize);
     }
-    if (secondaryFontFamily != null && !FontPreferences.DEFAULT_FONT_NAME.equals(secondaryFontFamily)) {
-      fontPreferences.addFontFamily(secondaryFontFamily);
+    if (secondaryFontFamily != null) {
+      if (!FontPreferences.DEFAULT_FONT_NAME.equals(secondaryFontFamily)){
+        fontPreferences.addFontFamily(secondaryFontFamily);
+      }
+      fontPreferences.register(secondaryFontFamily, fontSize);
     }
     updateDescription(true);
   }
