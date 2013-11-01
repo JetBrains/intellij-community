@@ -144,7 +144,7 @@ public class Foundation {
     return isPackageAtPath(file.getPath());
   }
 
-  public static ID nsString(String s) {
+  public static ID nsString(@NotNull String s) {
     // Use a byte[] rather than letting jna do the String -> char* marshalling itself.
     // Turns out about 10% quicker for long strings.
     try {
