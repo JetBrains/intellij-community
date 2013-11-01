@@ -138,10 +138,14 @@ public class TabLabel extends JPanel {
   public void setAlignmentToCenter(boolean toCenter) {
     if (myCentered == toCenter && myLabel.getParent() != null) return;
 
+    setLabel(toCenter, myLabel);
+  }
+
+  protected void setLabel(boolean toCenter, JComponent component) {
     myLabelPlaceholder.removeAll();
 
     if (toCenter) {
-      final Centerizer center = new Centerizer(myLabel);
+      final Centerizer center = new Centerizer(component);
       myLabelPlaceholder.setContent(center);
     } else {
       myLabelPlaceholder.setContent(myLabel);
