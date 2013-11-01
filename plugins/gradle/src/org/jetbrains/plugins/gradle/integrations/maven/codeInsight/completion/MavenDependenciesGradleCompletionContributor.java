@@ -54,11 +54,6 @@ public class MavenDependenciesGradleCompletionContributor extends AbstractGradle
     .inside(true, psiElement(GrMethodCallExpression.class).with(new PatternCondition<GrMethodCallExpression>("withInvokedExpressionText") {
       @Override
       public boolean accepts(@NotNull GrMethodCallExpression expression, ProcessingContext context) {
-        PsiFile file = expression.getContainingFile();
-        if (!file.getName().endsWith(".gradle")) {
-          return false;
-        }
-
         GrExpression grExpression = expression.getInvokedExpression();
         return grExpression != null && "dependencies".equals(grExpression.getText());
       }
