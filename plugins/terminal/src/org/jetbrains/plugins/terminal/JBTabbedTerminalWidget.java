@@ -257,8 +257,8 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
       private void renameTab() {
         new TabRenamer() {
           @Override
-          protected JTextField createTextField(@NotNull String text) {
-            return new JBTextField(text);
+          protected JTextField createTextField() {
+            return new JBTextField();
           }
         }.install(getSelectedIndex(), getInfo().getText(), myLabel, new TabRenamer.RenameCallBack() {
           @Override
