@@ -5,12 +5,15 @@ import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 public class PostfixLookupItem extends com.intellij.codeInsight.lookup.LookupElement {
+  @NotNull private final String myLookupString;
 
+  public PostfixLookupItem(@NotNull final String lookupString) {
+    this.myLookupString = lookupString;
+  }
 
-  @NotNull
-  @Override
+  @NotNull @Override
   public String getLookupString() {
-    return "POSTFIX";
+    return myLookupString;
   }
 
   @Override
@@ -23,9 +26,13 @@ public class PostfixLookupItem extends com.intellij.codeInsight.lookup.LookupEle
     context.getDocument().replaceString(startOffset, endOffset, "__");
     context.commitDocument();
 
+
+
     final PsiElement psiElement = context.getFile().findElementAt(startOffset);
 
     if (psiElement instanceof PsiIdentifier) {
+
+
       final PsiElement parent = psiElement.getParent();
       if (parent instanceof PsiReferenceExpression) {
         final PsiExpression qualifierExpression = ((PsiReferenceExpression) parent).getQualifierExpression();

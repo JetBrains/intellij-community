@@ -7,8 +7,6 @@ import org.jetbrains.postfixCompletion.Infrastructure.PostfixItemsCompletionProv
 
 public final class PostfixCompletionContributor extends CompletionContributor {
   public PostfixCompletionContributor() {
-    super();
-
     extend(CompletionType.BASIC,
       PlatformPatterns.psiElement(),
       PostfixItemsCompletionProvider.instance);

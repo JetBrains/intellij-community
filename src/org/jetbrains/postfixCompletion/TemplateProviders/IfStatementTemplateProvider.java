@@ -1,8 +1,12 @@
 package org.jetbrains.postfixCompletion.TemplateProviders;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplateAcceptanceContext;
+import org.jetbrains.postfixCompletion.Infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.Infrastructure.TemplateProvider;
+import org.jetbrains.postfixCompletion.LookupItems.PostfixLookupItem;
 
 import java.util.List;
 
@@ -11,9 +15,36 @@ import java.util.List;
   description = "Checks boolean expression to be 'true'",
   example = "if (expr)")
 public class IfStatementTemplateProvider extends TemplateProviderBase {
-  @Override
-  public void createItems(PostfixTemplateAcceptanceContext context, List<LookupElement> consumer) {
+  @Override public void createItems(
+    @NotNull final PostfixTemplateAcceptanceContext context,
+    @NotNull final List<LookupElement> consumer) {
 
+    // todo: handle Boolean?
+    // todo: handle force mode
+    // todo: handle unknown type?
+
+    for (final PrefixExpressionContext expressionContext : context.getExpressions()) {
+      final PsiType expressionType = expressionContext.expressionType;
+      if (expressionType != null) {
+        if (expressionType == PsiType.BOOLEAN) {
+          final IfLookupElement lookupElement = new IfLookupElement(expressionContext);
+          consumer.add(lookupElement);
+          break;
+        }
+      }
+    }
+  }
+
+  private static final class IfLookupElement extends PostfixLookupItem {
+
+
+
+    public IfLookupElement(@NotNull final PrefixExpressionContext context) {
+      super("if");
+
+
+      //context.expression
+    }
   }
 }
 
