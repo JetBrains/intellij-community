@@ -173,7 +173,7 @@ public class FontOptions extends JPanel implements OptionsPanel{
 
   private float getLineSpacingFromField() {
     try {
-       return (float)Math.min(30, Math.max(1, Float.parseFloat(myLineSpacingField.getText())));
+       return Math.min(30, Math.max(1, Float.parseFloat(myLineSpacingField.getText())));
     } catch (NumberFormatException e){
       return 1;
     }
@@ -245,8 +245,6 @@ public class FontOptions extends JPanel implements OptionsPanel{
     myUseSecondaryFontCheckbox.setEnabled(!readOnly);
 
     myIsInSchemeChange = false;
-
-    syncFontFamilies();
   }
 
   @NotNull
