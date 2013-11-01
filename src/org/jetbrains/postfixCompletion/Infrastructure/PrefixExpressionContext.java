@@ -1,28 +1,32 @@
 package org.jetbrains.postfixCompletion.Infrastructure;
 
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiExpressionStatement;
+import com.intellij.psi.PsiType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class PrefixExpressionContext {
-  @NotNull private final PostfixTemplateAcceptanceContext myParentContext;
-  @NotNull private final PsiExpression myExpression;
+  @NotNull public final PostfixTemplateAcceptanceContext parentContext;
+  @NotNull public final PsiExpression expression;
+  @Nullable public final PsiType expressionType;
+  public final boolean canBeStatement;
 
   public PrefixExpressionContext(@NotNull final PostfixTemplateAcceptanceContext parentContext,
                                  @NotNull final PsiExpression expression) {
-
-    myParentContext = parentContext;
-    myExpression = expression;
+    this.parentContext = parentContext;
+    this.expression = expression;
+    expressionType = expression.getType();
+    canBeStatement = calculateCanBeStatement(expression);
   }
 
-  @NotNull public final PostfixTemplateAcceptanceContext getParentContext() {
-    return myParentContext;
-  }
+  private final boolean calculateCanBeStatement(@NotNull final PsiExpression expression) {
+    // look for expression-statement parent
+    final PsiExpressionStatement expressionStatement =
+      PsiTreeUtil.getParentOfType(expression, PsiExpressionStatement.class);
+    if (expressionStatement != null) return true;
 
-  @NotNull public final PsiExpression getExpression() {
-    return myExpression;
-  }
-
-  public final boolean canBeStatement() {
-    return false; //TODO
+    return false;
   }
 }

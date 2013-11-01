@@ -1,11 +1,13 @@
 package org.jetbrains.postfixCompletion.Infrastructure;
 
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public final class PostfixTemplatesManager implements ApplicationComponent {
@@ -33,30 +35,33 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
     }
   }
 
-  public final boolean getAvailableActions(@NotNull final PsiElement positionElement) {
+  @NotNull public final List<LookupElement> getAvailableTemplates(
+    @NotNull final PsiElement positionElement, boolean forceMode) {
+
     if (positionElement instanceof PsiIdentifier) {
       final PsiReferenceExpression referenceExpression =
         PsiTreeUtil.getParentOfType(positionElement, PsiReferenceExpression.class);
-      if (referenceExpression == null) return false;
+      if (referenceExpression == null) return Collections.emptyList();
 
+      // easy case: 'expr.postfix'
       final PsiExpression qualifier = referenceExpression.getQualifierExpression();
       if (qualifier != null) {
-        doOtherWork(referenceExpression, qualifier);
-        return true;
+        return collectPostfixTemplates(referenceExpression, qualifier, forceMode);
       }
 
-      // hard case: x > 0.if (two expression statements, broken literal)
+      // hard case: 'x > 0.if' (two expression statements, broken literal)
       if (referenceExpression.getFirstChild() instanceof PsiReferenceParameterList &&
           referenceExpression.getLastChild() == referenceExpression) {
         final PsiExpressionStatement statement =
           PsiTreeUtil.getParentOfType(referenceExpression, PsiExpressionStatement.class);
-        if (statement == null) return false;
+        if (statement == null) return Collections.emptyList();
 
         // todo: will it handle 'a instanceof T.if' - ES;Error;ES;?
 
         final PsiStatement prevStatement =
           PsiTreeUtil.getPrevSiblingOfType(statement, PsiStatement.class);
-        if (!(prevStatement instanceof PsiExpressionStatement)) return false;
+        if (!(prevStatement instanceof PsiExpressionStatement))
+          return Collections.emptyList();
 
         final PsiElement lastErrorChild = prevStatement.getLastChild();
         if (lastErrorChild instanceof PsiErrorElement) {
@@ -84,27 +89,30 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
             } while (expression != null);
 
             if (brokenLiteral != null) {
-              doOtherWork(referenceExpression, brokenLiteral);
-              return true;
+              return collectPostfixTemplates(referenceExpression, brokenLiteral, forceMode);
             }
           }
         }
       }
     }
 
-    return false;
+    return Collections.emptyList();
   }
 
-  private final void doOtherWork(
-      @NotNull final PsiReferenceExpression reference,
-      @NotNull final PsiExpression expression) {
+  @NotNull private List<LookupElement> collectPostfixTemplates(
+    @NotNull final PsiReferenceExpression reference,
+    @NotNull final PsiExpression expression, final boolean forceMode) {
 
-    final PostfixTemplateAcceptanceContext acceptanceContext =
-      new PostfixTemplateAcceptanceContext(reference, expression, false /* TODO */);
+    final PostfixTemplateAcceptanceContext context =
+      new PostfixTemplateAcceptanceContext(reference, expression, forceMode);
+
+    final List<LookupElement> elements = new ArrayList<>();
 
     for (final TemplateProviderInfo providerInfo : myProviders) {
-      providerInfo.provider.createItems(acceptanceContext);
+      providerInfo.provider.createItems(context, elements);
     }
+
+    return elements;
   }
 
   @Override
