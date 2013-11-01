@@ -5,7 +5,6 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.PsiParser;
 import com.intellij.lexer.FlexAdapter;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
@@ -18,8 +17,9 @@ import org.jetbrains.annotations.NotNull;
 public class JsonParserDefinition implements ParserDefinition {
   public static final TokenSet WHITE_SPACES = TokenSet.create(TokenType.WHITE_SPACE);
   public static final TokenSet STRING_LITERALS = TokenSet.create(JsonParserTypes.STRING);
+  public static final IFileElementType FILE = new IFileElementType(JsonLanguage.INSTANCE);
+  public static final TokenSet CONTAINERS = TokenSet.create(JsonParserTypes.ARRAY, JsonParserTypes.OBJECT);
 
-  private static final IFileElementType FILE = new IFileElementType(JsonLanguage.INSTANCE);
 
   @NotNull
   @Override
@@ -29,7 +29,7 @@ public class JsonParserDefinition implements ParserDefinition {
 
   @Override
   public PsiParser createParser(Project project) {
-    return new Parser();
+    return new JsonParser();
   }
 
   @Override

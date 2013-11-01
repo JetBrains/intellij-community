@@ -26,5 +26,10 @@
     <fileTypeFactory implementation="com.jetbrains.json.JsonFileTypeFactory"/>
     <lang.parserDefinition language="JSON" implementationClass="com.jetbrains.json.JsonParserDefinition"/>
     <lang.syntaxHighlighterFactory key="JSON" implementationClass="com.jetbrains.json.JsonSyntaxHighlighterFactory"/>
+
+    <!-- Code style and formatting -->
+    <codeStyleSettingsProvider implementation="com.jetbrains.json.formatter.JsonCodeStyleSettingsProvider"/>
+    <langCodeStyleSettingsProvider implementation="com.jetbrains.json.formatter.JsonLanguageCodeStyleSettingsProvider"/>
+    <lang.formatter language="JSON" implementationClass="com.jetbrains.json.formatter.JsonFormattingBuilderModel"/>
   </extensions>
 </idea-plugin>

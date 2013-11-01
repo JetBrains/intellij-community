@@ -1,20 +1,21 @@
 // This is a generated file. Not intended for manual editing.
 package com.jetbrains.json;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
+import com.intellij.lang.PsiParser;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.tree.TokenSet;
+
 import static com.jetbrains.json.JsonParserTypes.*;
 import static com.jetbrains.json.JsonParserUtil.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.tree.TokenSet;
-import com.intellij.lang.PsiParser;
 
 @SuppressWarnings({"SimplifiableIfStatement", "UnusedAssignment"})
-public class Parser implements PsiParser {
+public class JsonParser implements PsiParser {
 
-  public static final Logger LOG_ = Logger.getInstance("com.jetbrains.json.Parser");
+  public static final Logger LOG_ = Logger.getInstance("com.jetbrains.json.JsonParser");
 
   public ASTNode parse(IElementType root_, PsiBuilder builder_) {
     int level_ = 0;
