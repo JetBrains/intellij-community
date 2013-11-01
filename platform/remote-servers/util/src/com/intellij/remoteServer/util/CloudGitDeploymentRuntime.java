@@ -41,7 +41,7 @@ import java.io.IOException;
  * Created by IntelliJ IDEA.
  * User: michael.golubev
  */
-public abstract class CloudGitDeploymentRuntime<DC extends CloudDeploymentContextConfiguration,
+public abstract class CloudGitDeploymentRuntime<DC extends CloudDeploymentNameConfiguration,
   AD extends CloudGitAgentDeployment,
   A extends CloudGitAgent<?, AD>> extends DeploymentRuntime {
 
@@ -113,9 +113,9 @@ public abstract class CloudGitDeploymentRuntime<DC extends CloudDeploymentContex
     myPresentableName = deploymentSource.getPresentableName();
 
     DC deploymentConfiguration = task.getConfiguration();
-    myApplicationName = deploymentConfiguration.isDefaultContextRoot()
+    myApplicationName = deploymentConfiguration.isDefaultDeploymentName()
                         ? deploymentNameProvider.getDeploymentName(deploymentSource)
-                        : deploymentConfiguration.getContextRoot();
+                        : deploymentConfiguration.getDeploymentName();
 
     myDeployment = agent.createDeployment(getApplicationName(), loggingHandler);
   }
