@@ -18,6 +18,7 @@ package org.zmlx.hg4idea.action;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -110,7 +111,8 @@ public class HgMerge extends HgAbstractGlobalAction {
 
     HgRevisionNumber otherHead = dialog.getOtherHead();
     if (otherHead != null) {
-      hgMergeCommand.setRevision(otherHead.getRevision());
+      String changeset = otherHead.getChangeset();
+      hgMergeCommand.setRevision(StringUtil.isEmptyOrSpaces(changeset) ? otherHead.getRevision() : changeset);
       incomingRevision = otherHead;
     }
 
