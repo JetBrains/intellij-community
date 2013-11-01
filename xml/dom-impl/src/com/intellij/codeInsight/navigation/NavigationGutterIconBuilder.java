@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,12 @@ import java.util.*;
  */
 public class NavigationGutterIconBuilder<T> {
   @NonNls private static final String PATTERN = "&nbsp;&nbsp;&nbsp;&nbsp;{0}";
+  private static final NotNullFunction<PsiElement,Collection<? extends PsiElement>> DEFAULT_PSI_CONVERTOR = new NotNullFunction<PsiElement, Collection<? extends PsiElement>>() {
+    @NotNull
+    public Collection<? extends PsiElement> fun(final PsiElement element) {
+      return ContainerUtil.createMaybeSingletonList(element);
+    }
+  };
 
   private final Icon myIcon;
   private final NotNullFunction<T,Collection<? extends PsiElement>> myConverter;
@@ -68,7 +74,6 @@ public class NavigationGutterIconBuilder<T> {
   private Computable<PsiElementListCellRenderer> myCellRenderer;
   private NullableFunction<T,String> myNamer = ElementPresentationManager.namer();
   private final NotNullFunction<T, Collection<? extends GotoRelatedItem>> myGotoRelatedItemProvider;
-
   public static final NotNullFunction<DomElement,Collection<? extends PsiElement>> DEFAULT_DOM_CONVERTOR = new NotNullFunction<DomElement, Collection<? extends PsiElement>>() {
     @NotNull
     public Collection<? extends PsiElement> fun(final DomElement o) {
@@ -83,13 +88,6 @@ public class NavigationGutterIconBuilder<T> {
         return Collections.singletonList(new DomGotoRelatedItem(dom));
       }
       return Collections.emptyList();
-    }
-  };
-
-  public static final NotNullFunction<PsiElement,Collection<? extends PsiElement>> DEFAULT_PSI_CONVERTOR = new NotNullFunction<PsiElement, Collection<? extends PsiElement>>() {
-    @NotNull
-    public Collection<? extends PsiElement> fun(final PsiElement element) {
-      return ContainerUtil.createMaybeSingletonList(element);
     }
   };
   public static final NotNullFunction<PsiElement, Collection<? extends GotoRelatedItem>> PSI_GOTO_RELATED_ITEM_PROVIDER = new NotNullFunction<PsiElement, Collection<? extends GotoRelatedItem>>() {
