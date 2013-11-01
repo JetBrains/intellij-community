@@ -7,6 +7,7 @@ import com.intellij.psi.PsiStatement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public final class PostfixTemplateAcceptanceContext {
@@ -19,8 +20,8 @@ public final class PostfixTemplateAcceptanceContext {
     boolean forceMode) {
 
     myForceMode = forceMode;
-    myExpressionContexts = new ArrayList<>();
 
+    final ArrayList<PrefixExpressionContext> contexts = new ArrayList<>();
     final int referenceEndRange = reference.getTextRange().getEndOffset();
 
     // build expression contexts
@@ -35,11 +36,13 @@ public final class PostfixTemplateAcceptanceContext {
         if (endOffset > referenceEndRange) break; // stop when 'a.var + b'
 
         final PrefixExpressionContext context = new PrefixExpressionContext(this, expr);
-        myExpressionContexts.add(context);
+        contexts.add(context);
 
-        if (context.canBeStatement()) break;
+        if (context.canBeStatement) break;
       }
     }
+
+    myExpressionContexts = Collections.unmodifiableList(contexts);
   }
 
   @NotNull public final List<PrefixExpressionContext> getExpressions() {

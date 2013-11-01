@@ -26,8 +26,6 @@ public class PostfixLookupItem extends com.intellij.codeInsight.lookup.LookupEle
     context.getDocument().replaceString(startOffset, endOffset, "__");
     context.commitDocument();
 
-
-
     final PsiElement psiElement = context.getFile().findElementAt(startOffset);
 
     if (psiElement instanceof PsiIdentifier) {

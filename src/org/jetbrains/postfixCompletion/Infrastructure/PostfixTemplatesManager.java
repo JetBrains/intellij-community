@@ -5,9 +5,9 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public final class PostfixTemplatesManager implements ApplicationComponent {
@@ -35,18 +35,18 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
     }
   }
 
-  @NotNull public final List<LookupElement> getAvailableTemplates(
+  @Nullable public final PostfixTemplateAcceptanceContext isAvailable(
     @NotNull final PsiElement positionElement, boolean forceMode) {
 
     if (positionElement instanceof PsiIdentifier) {
       final PsiReferenceExpression referenceExpression =
         PsiTreeUtil.getParentOfType(positionElement, PsiReferenceExpression.class);
-      if (referenceExpression == null) return Collections.emptyList();
+      if (referenceExpression == null) return null;
 
       // easy case: 'expr.postfix'
       final PsiExpression qualifier = referenceExpression.getQualifierExpression();
       if (qualifier != null) {
-        return collectPostfixTemplates(referenceExpression, qualifier, forceMode);
+        return new PostfixTemplateAcceptanceContext(referenceExpression, qualifier, forceMode);
       }
 
       // hard case: 'x > 0.if' (two expression statements, broken literal)
@@ -54,14 +54,13 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
           referenceExpression.getLastChild() == referenceExpression) {
         final PsiExpressionStatement statement =
           PsiTreeUtil.getParentOfType(referenceExpression, PsiExpressionStatement.class);
-        if (statement == null) return Collections.emptyList();
+        if (statement == null) return null;
 
         // todo: will it handle 'a instanceof T.if' - ES;Error;ES;?
 
         final PsiStatement prevStatement =
           PsiTreeUtil.getPrevSiblingOfType(statement, PsiStatement.class);
-        if (!(prevStatement instanceof PsiExpressionStatement))
-          return Collections.emptyList();
+        if (!(prevStatement instanceof PsiExpressionStatement)) return null;
 
         final PsiElement lastErrorChild = prevStatement.getLastChild();
         if (lastErrorChild instanceof PsiErrorElement) {
@@ -89,22 +88,19 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
             } while (expression != null);
 
             if (brokenLiteral != null) {
-              return collectPostfixTemplates(referenceExpression, brokenLiteral, forceMode);
+              return new PostfixTemplateAcceptanceContext(
+                referenceExpression, brokenLiteral, forceMode);
             }
           }
         }
       }
     }
 
-    return Collections.emptyList();
+    return null;
   }
 
-  @NotNull private List<LookupElement> collectPostfixTemplates(
-    @NotNull final PsiReferenceExpression reference,
-    @NotNull final PsiExpression expression, final boolean forceMode) {
-
-    final PostfixTemplateAcceptanceContext context =
-      new PostfixTemplateAcceptanceContext(reference, expression, forceMode);
+  @NotNull public List<LookupElement> collectTemplates(
+    @NotNull final PostfixTemplateAcceptanceContext context) {
 
     final List<LookupElement> elements = new ArrayList<>();
 

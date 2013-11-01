@@ -3,8 +3,10 @@
   <component name="ChangeListManager">
     <list default="true" id="5b978c1f-e03c-4c14-b72c-970392c23907" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/TemplateProviders/IfStatementTemplateProvider.java" afterPath="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/TemplateProviders/IfStatementTemplateProvider.java" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/PostfixCompletionContributor.java" afterPath="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/PostfixCompletionContributor.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixItemsCompletionProvider.java" afterPath="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixItemsCompletionProvider.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/LookupItems/PostfixLookupItem.java" afterPath="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/LookupItems/PostfixLookupItem.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixTemplateAcceptanceContext.java" afterPath="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixTemplateAcceptanceContext.java" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixTemplatesManager.java" afterPath="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixTemplatesManager.java" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="intellij-postfix.iws" />
@@ -70,14 +72,41 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="PostfixLookupItem.java" pinned="false" current="true" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/LookupItems/PostfixLookupItem.java">
+      <file leaf-file-name="IfStatementTemplateProvider.java" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/TemplateProviders/IfStatementTemplateProvider.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="19" column="14" selection-start="546" selection-end="546" vertical-scroll-proportion="0.4465335" vertical-offset="0" max-vertical-offset="1340">
+            <state line="56" column="8" selection-start="1906" selection-end="1906" vertical-scroll-proportion="0.6593674" vertical-offset="358" max-vertical-offset="1220">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="PostfixItemsCompletionProvider.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixItemsCompletionProvider.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="28" column="47" selection-start="1143" selection-end="1143" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="780">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="PostfixTemplatesManager.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixTemplatesManager.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="103" column="10" selection-start="4319" selection-end="4319" vertical-scroll-proportion="0.0" vertical-offset="1726" max-vertical-offset="2640">
               <folding>
                 <element signature="imports" expanded="true" />
-                <element signature="e#486#487#0" expanded="true" />
-                <element signature="e#517#518#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="PostfixLookupItem.java" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/LookupItems/PostfixLookupItem.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="10" column="29" selection-start="415" selection-end="415" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1260">
+              <folding>
+                <element signature="imports" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -111,14 +140,14 @@
         <option value="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/TemplateProvider.java" />
         <option value="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/TemplateProviders/IntroduceVariableTemplateProvider.java" />
         <option value="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixTemplateProvider.java" />
-        <option value="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixTemplateAcceptanceContext.java" />
         <option value="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/LookupItems/PostfixItem.java" />
-        <option value="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixTemplatesManager.java" />
-        <option value="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixItemsCompletionProvider.java" />
         <option value="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PrefixExpressionContext.java" />
         <option value="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/PostfixCompletionContributor.java" />
-        <option value="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/TemplateProviders/IfStatementTemplateProvider.java" />
+        <option value="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixTemplateAcceptanceContext.java" />
         <option value="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/LookupItems/PostfixLookupItem.java" />
+        <option value="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixTemplatesManager.java" />
+        <option value="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixItemsCompletionProvider.java" />
+        <option value="$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/TemplateProviders/IfStatementTemplateProvider.java" />
       </list>
     </option>
   </component>
@@ -305,7 +334,7 @@
     <property name="OverrideImplement.combined" value="true" />
     <property name="options.splitter.main.proportions" value="0.3" />
     <property name="recentsLimit" value="5" />
-    <property name="options.lastSelected" value="reference.settingsdialog.IDE.editor.colors.Java" />
+    <property name="options.lastSelected" value="editor.preferences.completion" />
     <property name="MemberChooser.sorted" value="false" />
     <property name="MemberChooser.copyJavadoc" value="false" />
     <property name="GoToClass.toSaveIncludeLibraries" value="false" />
@@ -316,6 +345,7 @@
     <property name="options.searchVisible" value="true" />
     <property name="options.splitter.details.proportions" value="0.2" />
     <property name="dynamic.classpath" value="false" />
+    <property name="OverrideImplement.overriding.sorted" value="false" />
   </component>
   <component name="RecentsManager">
     <key name="CreateClassDialog.RecentsKey">
@@ -588,7 +618,11 @@
       <created>1383341175298</created>
       <updated>1383341175298</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Even moar code">
+      <created>1383342612250</created>
+      <updated>1383342612250</updated>
+    </task>
+    <option name="localTasksCounter" value="10" />
     <servers />
   </component>
   <component name="TodoView" selected-index="4">
@@ -621,10 +655,11 @@
       <window_info id="Palette" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.39948782" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.39882353" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3290653" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32941177" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32941177" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -637,7 +672,6 @@
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3101737" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Kotlin" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
     </layout>
@@ -664,7 +698,8 @@
     <MESSAGE value="Bits of 'x &gt; 0.if'-like expressions support" />
     <MESSAGE value="'final' all the things, lol. PrefixExpressionContext building" />
     <MESSAGE value="Moar code" />
-    <option name="LAST_COMMIT_MESSAGE" value="Moar code" />
+    <MESSAGE value="Even moar code" />
+    <option name="LAST_COMMIT_MESSAGE" value="Even moar code" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
   </component>
   <component name="XDebuggerManager">
@@ -742,28 +777,10 @@
         <state line="6" column="64" selection-start="210" selection-end="210" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="0" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixTemplateAcceptanceContext.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="44" column="10" selection-start="1477" selection-end="1477" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="0">
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixTemplateProvider.java">
       <provider selected="true" editor-type-id="text-editor">
         <state line="5" column="74" selection-start="217" selection-end="217" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="0">
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixTemplatesManager.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="37" column="10" selection-start="1324" selection-end="1324" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="0">
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -776,23 +793,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixItemsCompletionProvider.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="36" column="7" selection-start="1467" selection-end="1467" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/PostfixCompletionContributor.java">
       <provider selected="true" editor-type-id="text-editor">
         <state line="13" column="1" selection-start="546" selection-end="546" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/TemplateProviders/IfStatementTemplateProvider.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="43" column="7" selection-start="1589" selection-end="1589" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="960">
           <folding />
         </state>
       </provider>
@@ -804,14 +807,48 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/LookupItems/PostfixLookupItem.java">
+    <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixTemplateAcceptanceContext.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="19" column="14" selection-start="546" selection-end="546" vertical-scroll-proportion="0.4465335" vertical-offset="0" max-vertical-offset="1340">
+        <state line="2" column="0" selection-start="57" selection-end="57" vertical-scroll-proportion="0.073800735" vertical-offset="0" max-vertical-offset="1200">
           <folding>
             <element signature="imports" expanded="true" />
-            <element signature="e#486#487#0" expanded="true" />
-            <element signature="e#517#518#0" expanded="true" />
+            <element signature="e#1651#1652#0" expanded="true" />
+            <element signature="e#1688#1689#0" expanded="true" />
+            <element signature="e#1728#1729#0" expanded="true" />
+            <element signature="e#1756#1757#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/LookupItems/PostfixLookupItem.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="10" column="29" selection-start="415" selection-end="415" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="1260">
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixTemplatesManager.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="103" column="10" selection-start="4319" selection-end="4319" vertical-scroll-proportion="0.0" vertical-offset="1726" max-vertical-offset="2640">
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/Infrastructure/PostfixItemsCompletionProvider.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="28" column="47" selection-start="1143" selection-end="1143" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="780">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/org/jetbrains/postfixCompletion/TemplateProviders/IfStatementTemplateProvider.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="56" column="8" selection-start="1906" selection-end="1906" vertical-scroll-proportion="0.6593674" vertical-offset="358" max-vertical-offset="1220">
+          <folding />
         </state>
       </provider>
     </entry>

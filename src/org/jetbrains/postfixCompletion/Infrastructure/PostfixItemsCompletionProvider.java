@@ -19,8 +19,9 @@ public final class PostfixItemsCompletionProvider
   private PostfixItemsCompletionProvider() { }
 
   public void addCompletions(
-    @NotNull CompletionParameters parameters, ProcessingContext context,
-    @NotNull CompletionResultSet resultSet) {
+    @NotNull final CompletionParameters parameters,
+    @NotNull final ProcessingContext context,
+    @NotNull final CompletionResultSet resultSet) {
 
     final PostfixTemplatesManager templatesManager =
       ApplicationManager.getApplication().getComponent(PostfixTemplatesManager.class);
@@ -28,11 +29,12 @@ public final class PostfixItemsCompletionProvider
     final PsiElement positionElement = parameters.getPosition();
     final boolean forceMode = !parameters.isAutoPopup();
 
-    final List<LookupElement> availableElements =
-      templatesManager.getAvailableTemplates(positionElement, forceMode);
+    final PostfixTemplateAcceptanceContext acceptanceContext =
+      templatesManager.isAvailable(positionElement, forceMode);
 
-    if (!availableElements.isEmpty()) {
-      for (LookupElement lookupElement : availableElements) {
+    if (acceptanceContext != null) {
+      final List<LookupElement> lookupElements = templatesManager.collectTemplates(acceptanceContext);
+      for (final LookupElement lookupElement : lookupElements) {
         resultSet.addElement(lookupElement);
       }
     }
