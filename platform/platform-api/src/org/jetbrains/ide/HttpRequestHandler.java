@@ -20,6 +20,7 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.QueryStringDecoder;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -33,4 +34,11 @@ public abstract class HttpRequestHandler {
 
   public abstract boolean process(QueryStringDecoder urlDecoder, FullHttpRequest request, ChannelHandlerContext context)
     throws IOException;
+
+  protected static boolean checkUuid(@NotNull String uri, @NotNull String uuid) {
+    return uri.length() > uuid.length() &&
+           uri.charAt(0) == '/' &&
+           uri.regionMatches(true, 1, uuid, 0, uuid.length()) &&
+           ((uri.length() - uuid.length()) == 1 || uri.charAt(uuid.length() + 1) == '?');
+  }
 }
