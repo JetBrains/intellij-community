@@ -16,7 +16,6 @@
 package com.intellij.compilerOutputIndex.api.indexer;
 
 import com.intellij.compilerOutputIndex.impl.MethodsUsageIndex;
-import com.intellij.compilerOutputIndex.impl.bigram.BigramMethodsUsageIndex;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,7 +30,7 @@ import java.util.Collections;
 @SuppressWarnings("unchecked")
 public enum CompilerOutputIndexFeature {
   METHOD_CHAINS_COMPLETION("completion.enable.relevant.method.chain.suggestions", ContainerUtil
-    .<Class<? extends CompilerOutputBaseIndex>>newArrayList(BigramMethodsUsageIndex.class, MethodsUsageIndex.class));
+    .<Class<? extends CompilerOutputBaseIndex>>newArrayList(MethodsUsageIndex.class));
 
   @NotNull
   private final String myKey;

@@ -5,7 +5,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.remoteServer.agent.RemoteAgentManager;
 import com.intellij.remoteServer.agent.util.*;
-import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.configuration.deployment.DeploymentSource;
 import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfiguration;
 import com.intellij.remoteServer.runtime.ServerConnector;
@@ -24,7 +23,7 @@ import java.util.List;
  */
 
 public abstract class CloudGitServerRuntimeInstanceBase<
-  DC extends DeploymentConfiguration,
+  DC extends CloudDeploymentNameConfiguration,
   AC extends CloudAgentConfigBase,
   A extends CloudGitAgent<AC, ?>,
   SC extends AC,

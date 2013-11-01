@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public abstract class CloudSupportConfigurableBase<
   SC extends CloudConfigurationBase,
-  DC extends CloudDeploymentContextConfiguration,
+  DC extends CloudDeploymentNameConfiguration,
   ST extends ServerType<SC>,
   SR extends CloudGitServerRuntimeInstanceBase<DC, ?, ?, ?, ?>>
   extends FrameworkSupportConfigurable {
