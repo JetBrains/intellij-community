@@ -159,6 +159,8 @@ public class MvcTargetDialogCompletionUtils {
     if (files == null) return;
 
     for (File file : files) {
+      if (file.getName().startsWith("IdeaPrintProjectSettings")) continue;
+
       if (isScriptFile(file)) {
         String name = file.getName();
         int idx = name.lastIndexOf('.');
