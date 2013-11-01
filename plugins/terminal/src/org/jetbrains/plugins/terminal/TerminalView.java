@@ -50,24 +50,7 @@ public class TerminalView {
     toolWindow.setToHideOnEmptyContent(true);
 
     if (terminalRunner != null) {
-      myTerminalWidget = terminalRunner.createTerminalWidget();
-      myTerminalWidget.addTabListener(new TabbedTerminalWidget.TabListener() {
-        @Override
-        public void tabClosed(JediTermWidget terminal) {
-          UIUtil.invokeLaterIfNeeded(new Runnable() {
-            @Override
-            public void run() {
-              if (myTerminalWidget != null) {
-                hideIfNoActiveSessions(toolWindow, myTerminalWidget);
-              }
-            }
-          });
-        }
-      });
-    }
-
-    if (myTerminalWidget != null) {
-      Content content = createToolWindowContentPanel(terminalRunner, myTerminalWidget, toolWindow);
+      Content content = createTerminalInContentPanel(terminalRunner, toolWindow);
 
       toolWindow.getContentManager().addContent(content);
 
@@ -100,9 +83,8 @@ public class TerminalView {
     }
   }
 
-  private Content createToolWindowContentPanel(@Nullable LocalTerminalDirectRunner terminalRunner,
-                                               @NotNull JBTabbedTerminalWidget terminalWidget,
-                                               @NotNull ToolWindow toolWindow) {
+  private Content createTerminalInContentPanel(@Nullable LocalTerminalDirectRunner terminalRunner,
+                                               final @NotNull ToolWindow toolWindow) {
     SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true) {
       @Override
       public Object getData(@NonNls String dataId) {
@@ -110,18 +92,35 @@ public class TerminalView {
       }
     };
 
-    panel.setContent(terminalWidget.getComponent());
+    final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
+    content.setCloseable(true);
+
+    myTerminalWidget = terminalRunner.createTerminalWidget(content);
+    myTerminalWidget.addTabListener(new TabbedTerminalWidget.TabListener() {
+      @Override
+      public void tabClosed(JediTermWidget terminal) {
+        UIUtil.invokeLaterIfNeeded(new Runnable() {
+          @Override
+          public void run() {
+            if (myTerminalWidget != null) {
+              hideIfNoActiveSessions(toolWindow, myTerminalWidget);
+            }
+          }
+        });
+      }
+    });
+
+    panel.setContent(myTerminalWidget.getComponent());
     panel.addFocusListener(createFocusListener());
 
-    ActionToolbar toolbar = createToolbar(terminalRunner, terminalWidget, toolWindow);
+    ActionToolbar toolbar = createToolbar(terminalRunner, myTerminalWidget, toolWindow);
     toolbar.getComponent().addFocusListener(createFocusListener());
     toolbar.setTargetComponent(panel);
     panel.setToolbar(toolbar.getComponent());
 
-    final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
-    content.setCloseable(true);
+    
 
-    content.setPreferredFocusableComponent(terminalWidget.getComponent());
+    content.setPreferredFocusableComponent(myTerminalWidget.getComponent());
 
     return content;
   }
@@ -152,11 +151,10 @@ public class TerminalView {
     openSession(terminal, terminalRunner);
   }
 
-  private void openSession(ToolWindow toolWindow, AbstractTerminalRunner terminalRunner) {
+  private void openSession(@NotNull ToolWindow toolWindow, @NotNull AbstractTerminalRunner terminalRunner) {
     if (myTerminalWidget == null) {
-      myTerminalWidget = terminalRunner.createTerminalWidget();
       toolWindow.getContentManager().removeAllContents(true);
-      final Content content = createToolWindowContentPanel(null, myTerminalWidget, toolWindow);
+      final Content content = createTerminalInContentPanel(null, toolWindow);
       toolWindow.getContentManager().addContent(content);
     }
     else {
