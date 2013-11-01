@@ -4,6 +4,7 @@ import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionProvider;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.completion.InsertionContext;
+import com.intellij.codeInsight.lookup.LookupItemUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.components.BaseComponent;
@@ -25,30 +26,14 @@ public final class PostfixItemsCompletionProvider
     @NotNull CompletionParameters parameters, ProcessingContext context,
     @NotNull CompletionResultSet resultSet) {
 
-    PostfixTemplatesManager templatesManager =
+    final PostfixTemplatesManager templatesManager =
       ApplicationManager.getApplication().getComponent(PostfixTemplatesManager.class);
 
-    
+    final PsiElement positionElement = parameters.getPosition();
 
-
-
-    final PsiElement element = parameters.getPosition();
-    if (element instanceof PsiIdentifier) {
-      final PsiElement parent = element.getParent();
-      if (parent instanceof PsiReferenceExpression) {
-        final PsiExpression qualifierExpression = ((PsiReferenceExpression) parent).getQualifierExpression();
-        if (qualifierExpression != null) {
-          PsiType type = qualifierExpression.getType();
-
-
-          resultSet.addElement(new Foo());
-        }
-      }
-
+    if (templatesManager.getAvailableActions(positionElement)) {
+      resultSet.addElement(new Foo());
     }
-
-
-    //resultSet.addElement(LookupElementBuilder.create("Hello"));
   }
 
   static class Foo extends com.intellij.codeInsight.lookup.LookupElement {
@@ -57,7 +42,7 @@ public final class PostfixItemsCompletionProvider
     @NotNull
     @Override
     public String getLookupString() {
-      return "if";
+      return "POSTFIX";
     }
 
     @Override

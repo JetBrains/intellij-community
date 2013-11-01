@@ -1,10 +1,9 @@
 package org.jetbrains.postfixCompletion.Infrastructure;
 
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
+import org.jetbrains.annotations.Nullable;
 
 public class PostfixTemplatesManager implements ApplicationComponent {
   @NotNull private final PostfixTemplateProvider[] myTemplateProviders;
@@ -13,10 +12,46 @@ public class PostfixTemplatesManager implements ApplicationComponent {
     myTemplateProviders = providers;
   }
 
-  public void getAvailableActions() {
-    for (PostfixTemplateProvider myTemplateProvider : myTemplateProviders) {
+
+
+  public boolean getAvailableActions(@NotNull PsiElement positionElement) {
+
+    // simple case: someExpression.postfix
+    if (positionElement instanceof PsiIdentifier) {
+      final PsiReferenceExpression referenceExpression =
+        match(positionElement.getParent(), PsiReferenceExpression.class);
+      if (referenceExpression != null) {
+        final PsiExpression qualifierExpression = referenceExpression.getQualifierExpression();
+        if (qualifierExpression != null) {
+          final PsiType type = qualifierExpression.getType();
+          final PsiPrimitiveType primitiveType = match(type, PsiPrimitiveType.class);
+          if (primitiveType != null) {
+            if (primitiveType == PsiType.BOOLEAN) {
+
+
+                return true;
+
+            }
+          }
+
+          //return true;
+        }
+      }
+    }
+
+
+
+    for (PostfixTemplateProvider templateProvider : myTemplateProviders) {
 
     }
+
+    return true;
+  }
+
+  @Nullable
+  private <T> T match(Object obj, Class<T> type) {
+    if (type.isInstance(obj)) return type.cast(obj);
+    return null;
   }
 
   @Override
