@@ -1,4 +1,6 @@
 <idea-plugin>
+  <depends optional="true" config-file="google-app-engine-maven-support.xml">org.jetbrains.idea.maven</depends>
+
   <extensionPoints>
     <extensionPoint name="forbiddenCodeHandler" interface="com.intellij.appengine.inspections.AppEngineForbiddenCodeHandler"/>
   </extensionPoints>

@@ -45,9 +45,11 @@ public abstract class AppEngineWebIntegration {
 
   public abstract void setupJpaSupport(@NotNull Module module, @NotNull VirtualFile persistenceXml);
 
-  public abstract void setupRunConfiguration(@NotNull ModifiableRootModel rootModel, @NotNull AppEngineSdk sdk, @Nullable Artifact artifact, @NotNull Project project);
+  public abstract void setupRunConfiguration(@NotNull AppEngineSdk sdk, @Nullable Artifact artifact, @NotNull Project project);
 
   public abstract void setupDevServer(@NotNull AppEngineSdk sdk);
+
+  public abstract void addDevServerToModuleDependencies(@NotNull ModifiableRootModel rootModel, @NotNull AppEngineSdk sdk);
 
   public abstract void addLibraryToArtifact(@NotNull Library library, @NotNull Artifact artifact, @NotNull Project project);
 
