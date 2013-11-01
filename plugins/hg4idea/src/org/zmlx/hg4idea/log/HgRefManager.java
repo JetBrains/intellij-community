@@ -38,11 +38,13 @@ public class HgRefManager implements VcsLogRefManager {
   private static final Color BRANCH_COLOR = new JBColor(new Color(0x75eec7), new Color(0x0D6D4F));
   private static final Color BOOKMARK_COLOR = new JBColor(new Color(0xbcbcfc), new Color(0xbcbcfc).darker().darker());
   private static final Color TAG_COLOR = JBColor.WHITE;
+  private static final Color LOCAL_TAG_COLOR = JBColor.CYAN;
 
   public static final VcsRefType HEAD = new SimpleRefType(true, HEAD_COLOR);
   public static final VcsRefType BRANCH = new SimpleRefType(true, BRANCH_COLOR);
   public static final VcsRefType BOOKMARK = new SimpleRefType(true, BOOKMARK_COLOR);
   public static final VcsRefType TAG = new SimpleRefType(false, TAG_COLOR);
+  public static final VcsRefType LOCAL_TAG = new SimpleRefType(false, LOCAL_TAG_COLOR);
 
   // first has the highest priority
   private static final List<VcsRefType> REF_TYPE_PRIORITIES = Arrays.asList(HEAD, BRANCH, BOOKMARK, TAG);
@@ -103,7 +105,6 @@ public class HgRefManager implements VcsLogRefManager {
   @NotNull
   @Override
   public List<RefGroup> group(Collection<VcsRef> refs) {
-    // TODO group non-tracking refs into remotes
     return ContainerUtil.map(sort(refs), new Function<VcsRef, RefGroup>() {
       @Override
       public RefGroup fun(final VcsRef ref) {

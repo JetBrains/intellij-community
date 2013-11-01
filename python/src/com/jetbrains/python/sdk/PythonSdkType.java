@@ -25,7 +25,6 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -556,16 +555,22 @@ public class PythonSdkType extends SdkType {
 
   @NotNull
   public static Notification createInvalidSdkNotification(@Nullable final Project project) {
+    String message = "Cannot run the project interpreter.";
+    if (project != null && !project.isDisposed()) {
+      message += " <a href=\"xxx\">Configure...</a>";
+    }
     return new Notification("xxx",
                             "Invalid Project Interpreter",
-                            "Cannot run the project interpreter. <a href=\"xxx\">Configure...</a>",
+                            message,
                             NotificationType.ERROR,
                             new NotificationListener() {
                               @Override
                               public void hyperlinkUpdate(@NotNull Notification notification,
                                                           @NotNull HyperlinkEvent event) {
-                                final ShowSettingsUtil settings = ShowSettingsUtil.getInstance();
-                                settings.showSettingsDialog(project, "Project Interpreter");
+                                if (project != null && !project.isDisposed()) {
+                                  final ShowSettingsUtil settings = ShowSettingsUtil.getInstance();
+                                  settings.showSettingsDialog(project, "Project Interpreter");
+                                }
                                 notification.expire();
                               }
                             });

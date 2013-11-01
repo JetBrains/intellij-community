@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
+interface PsiManager {
 
-import com.intellij.ui.components.JBCheckBox;
+}
+interface PsiElement {
+  PsiManager getManager();
+}
+interface PsiClass extends PsiElement {
+}
+interface PsiMethod extends PsiElement {
+  PsiClass getContainingClass();
+}
+interface PsiMethodCallExpression extends PsiElement {
+  PsiMethod resolveMethod();
+}
+public class TestCompletion {
 
-import javax.swing.*;
-
-/**
- * Created by Max Medvedev on 8/29/13
- */
-public class GrInplaceIntroduceConstantPanel {
-  private JBCheckBox myMoveToAnotherClassJBCheckBox;
-  private JPanel myRootPane;
-
-  public boolean isMoveToAnotherClass() {
-    return myMoveToAnotherClassJBCheckBox.isSelected();
-  }
-
-  public JComponent getRootPane() {
-    return myRootPane;
+  public void method() {
+    PsiManager m = <caret>
   }
 }

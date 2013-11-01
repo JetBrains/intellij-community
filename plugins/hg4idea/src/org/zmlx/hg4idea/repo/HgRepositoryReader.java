@@ -45,6 +45,8 @@ public class HgRepositoryReader {
   @NotNull private final File myCurrentBranch;    // .hg/branch
   @NotNull private final File myBookmarksFile; //.hg/bookmarks
   @NotNull private final File myCurrentBookmark; //.hg/bookmarks.current
+  @NotNull private final File myTagsFile; //.hgtags  - not in .hg directory!!!
+  @NotNull private final File myLocalTagsFile;  // .hg/localtags
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
 
   public HgRepositoryReader(@NotNull File hgDir) {
@@ -56,6 +58,8 @@ public class HgRepositoryReader {
     myCurrentBranch = new File(myHgDir, "branch");
     myBookmarksFile = new File(myHgDir, "bookmarks");
     myCurrentBookmark = new File(myHgDir, "bookmarks.current");
+    myLocalTagsFile = new File(myHgDir, "localtags");
+    myTagsFile = new File(myHgDir.getParentFile(), ".hgtags");
     myVcsObjectsFactory = ServiceManager.getService(VcsLogObjectsFactory.class);
   }
 
@@ -123,19 +127,34 @@ public class HgRepositoryReader {
 
   @NotNull
   public Collection<HgNameWithHashInfo> readBookmarks() {
-    // .hg/bookmarks contains hash + name, f.e. 25e44c95b2612e3cdf29a704dabf82c77066cb67 A_BookMark
-    Set<HgNameWithHashInfo> bookmarks = new HashSet<HgNameWithHashInfo>();
-    if (!myBookmarksFile.exists()) {
-      return bookmarks;
+    return readReference(myBookmarksFile);
+  }
+
+  @NotNull
+  public Collection<HgNameWithHashInfo> readTags() {
+    return readReference(myTagsFile);
+  }
+
+  @NotNull
+  public Collection<HgNameWithHashInfo> readLocalTags() {
+    return readReference(myLocalTagsFile);
+  }
+
+  @NotNull
+  private Collection<HgNameWithHashInfo> readReference(@NotNull File fileWithReferences) {
+    // files like .hg/bookmarks which contains hash + name, f.e. 25e44c95b2612e3cdf29a704dabf82c77066cb67 A_BookMark
+    Set<HgNameWithHashInfo> refs = new HashSet<HgNameWithHashInfo>();
+    if (!fileWithReferences.exists()) {
+      return refs;
     }
-    String[] bookmarksWithHeads = RepositoryUtil.tryLoadFile(myBookmarksFile).split("\n");
-    for (String str : bookmarksWithHeads) {
+    String[] namesWithHashes = RepositoryUtil.tryLoadFile(fileWithReferences).split("\n");
+    for (String str : namesWithHashes) {
       Matcher matcher = HASH_NAME.matcher(str);
       if (matcher.matches()) {
-        bookmarks.add(new HgNameWithHashInfo(matcher.group(2), myVcsObjectsFactory.createHash(matcher.group(1))));
+        refs.add(new HgNameWithHashInfo(matcher.group(2), myVcsObjectsFactory.createHash(matcher.group(1))));
       }
     }
-    return bookmarks;
+    return refs;
   }
 
   @Nullable

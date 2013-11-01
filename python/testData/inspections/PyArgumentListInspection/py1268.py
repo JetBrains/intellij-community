@@ -19,7 +19,7 @@ def f2(a, b, c=1, *d):
 f2(c=3, *(1,2))
 f2(1,2,3, *(1,2))
 f2(*(1,2), c=20)
-f2(*(1,2), <warning descr="Cannot appear past keyword arguments or *arg or **kwarg">20</warning>) # fail: positional past *
+f2(*(1,2), <error descr="Cannot appear past keyword arguments or *arg or **kwarg">20</error>) # fail: positional past *
 
 def f3(a=1, b=2, c=3, *d):
   return a,b,c,d

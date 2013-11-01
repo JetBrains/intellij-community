@@ -219,6 +219,9 @@ public class InferenceSession {
       }
     }
 
+    for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
+      inferenceVariable.ignoreInstantiation();
+    }
     mySiteSubstitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, true);
     
     for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {

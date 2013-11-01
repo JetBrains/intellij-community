@@ -324,7 +324,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   static boolean isIntersection(PsiTypeElement castTypeElement, PsiType castType) {
     if (castType instanceof PsiIntersectionType) return true;
-    return PsiTreeUtil.getChildrenOfType(castTypeElement, PsiTypeElement.class) != null;
+    return castType instanceof PsiClassType && PsiTreeUtil.getChildrenOfType(castTypeElement, PsiTypeElement.class) != null;
   }
   
   @Nullable
