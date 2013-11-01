@@ -35,10 +35,16 @@ public abstract class HttpRequestHandler {
   public abstract boolean process(QueryStringDecoder urlDecoder, FullHttpRequest request, ChannelHandlerContext context)
     throws IOException;
 
-  protected static boolean checkUuid(@NotNull String uri, @NotNull String uuid) {
-    return uri.length() > uuid.length() &&
-           uri.charAt(0) == '/' &&
-           uri.regionMatches(true, 1, uuid, 0, uuid.length()) &&
-           ((uri.length() - uuid.length()) == 1 || uri.charAt(uuid.length() + 1) == '?');
+  protected static boolean checkPrefix(@NotNull String uri, @NotNull String prefix) {
+    if (uri.length() > prefix.length() && uri.charAt(0) == '/' && uri.regionMatches(true, 1, prefix, 0, prefix.length())) {
+      if ((uri.length() - prefix.length()) == 1) {
+        return true;
+      }
+      else {
+        char c = uri.charAt(prefix.length() + 1);
+        return c == '/' || c == '?';
+      }
+    }
+    return false;
   }
 }
