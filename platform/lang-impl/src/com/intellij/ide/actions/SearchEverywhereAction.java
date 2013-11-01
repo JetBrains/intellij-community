@@ -902,26 +902,32 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         buildToolWindows(pattern);
         updatePopup();
 
-        AccessToken readLock = ApplicationManager.getApplication().acquireReadActionLock();
         if (!DumbServiceImpl.getInstance(project).isDumb()) {
-          try {
-            buildClasses(pattern, false);
-          } finally {readLock.finish();}
+          ApplicationManager.getApplication().runReadAction(new Runnable() {
+            public void run() {
+              buildClasses(pattern, false);
+            }
+          });
           updatePopup();
         }
 
-        readLock = ApplicationManager.getApplication().acquireReadActionLock();
-        try {
-          buildFiles(pattern);
-        } finally {readLock.finish();}
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            buildFiles(pattern);
+          }
+        });
 
         buildActionsAndSettings(pattern);
         updatePopup();
 
-        readLock = ApplicationManager.getApplication().acquireReadActionLock();
-        try {
-          buildSymbols(pattern);
-        } finally {readLock.finish();}
+
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            buildSymbols(pattern);
+          }
+        });
+
+
         updatePopup();
       }
       catch (Exception ignore) {
@@ -1511,7 +1517,10 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
       myPopup.setLocation(p);
     } else {
-      adjustPopup();
+      try {
+        adjustPopup();
+      }
+      catch (Exception ignore) {}
     }
   }
 
