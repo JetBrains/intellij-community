@@ -9,8 +9,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 public final class PostfixItemsCompletionProvider
   extends CompletionProvider<CompletionParameters> {
 
@@ -33,8 +31,8 @@ public final class PostfixItemsCompletionProvider
       templatesManager.isAvailable(positionElement, forceMode);
 
     if (acceptanceContext != null) {
-      final List<LookupElement> lookupElements = templatesManager.collectTemplates(acceptanceContext);
-      for (final LookupElement lookupElement : lookupElements) {
+      for (final LookupElement lookupElement
+          : templatesManager.collectTemplates(acceptanceContext)) {
         resultSet.addElement(lookupElement);
       }
     }
