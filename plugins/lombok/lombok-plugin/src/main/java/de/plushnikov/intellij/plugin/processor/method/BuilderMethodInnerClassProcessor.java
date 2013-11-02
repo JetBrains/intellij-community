@@ -36,7 +36,7 @@ public class BuilderMethodInnerClassProcessor extends AbstractMethodProcessor {
     super(Builder.class, PsiClass.class);
   }
 
-  protected BuilderMethodInnerClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class supportedClass) {
+  protected BuilderMethodInnerClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
     super(supportedAnnotationClass, supportedClass);
   }
 

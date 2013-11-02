@@ -22,6 +22,8 @@ public interface Processor {
 
   Class<? extends Annotation> getSupportedAnnotationClass();
 
+  Class<? extends PsiElement> getSupportedClass();
+
   Collection<LombokProblem> verifyAnnotation(@NotNull PsiAnnotation psiAnnotation);
 
 

@@ -36,7 +36,7 @@ public class GetterFieldProcessor extends AbstractFieldProcessor {
     super(Getter.class, PsiMethod.class);
   }
 
-  protected GetterFieldProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<?> supportedClass) {
+  protected GetterFieldProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
     super(supportedAnnotationClass, supportedClass);
   }
 

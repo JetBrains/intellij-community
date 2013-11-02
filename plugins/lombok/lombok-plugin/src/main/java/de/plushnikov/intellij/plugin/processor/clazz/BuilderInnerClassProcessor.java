@@ -36,7 +36,7 @@ public class BuilderInnerClassProcessor extends AbstractClassProcessor {
     super(Builder.class, PsiClass.class);
   }
 
-  protected BuilderInnerClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class supportedClass) {
+  protected BuilderInnerClassProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
     super(supportedAnnotationClass, supportedClass);
   }
 

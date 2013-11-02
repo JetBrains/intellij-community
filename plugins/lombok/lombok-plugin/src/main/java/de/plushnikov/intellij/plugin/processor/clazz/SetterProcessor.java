@@ -36,7 +36,7 @@ public class SetterProcessor extends AbstractClassProcessor {
     this(Setter.class, PsiMethod.class);
   }
 
-  protected SetterProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<?> supportedClass) {
+  protected SetterProcessor(@NotNull Class<? extends Annotation> supportedAnnotationClass, @NotNull Class<? extends PsiElement> supportedClass) {
     super(supportedAnnotationClass, supportedClass);
   }
 

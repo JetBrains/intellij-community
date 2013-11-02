@@ -4,7 +4,7 @@
   <name>Lombok Plugin</name>
   <vendor url="http://code.google.com/p/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov
   </vendor>
-  <version>0.7.1</version>
+  <version>0.7.2</version>
   <idea-version since-build="123.72"/>
 
   <description><![CDATA[
@@ -28,8 +28,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <annotator language="JAVA" implementationClass="de.plushnikov.intellij.plugin.provider.LombokAnnotator"/>
-
     <lang.psiAugmentProvider implementation="de.plushnikov.intellij.plugin.provider.LombokAugmentProvider"/>
     <implicitUsageProvider implementation="de.plushnikov.intellij.plugin.provider.LombokImplicitUsageProvider"/>
     <inspectionToolProvider implementation="de.plushnikov.intellij.plugin.provider.LombokInspectionProvider"/>
@@ -83,6 +81,11 @@
 
   <change-notes><![CDATA[
 		<ul>
+		<li>0.7.2
+				<ol>
+				    <li>Fix multiple stackoverflow exceptions</li>
+				</ol>
+			</li>
 		 <li>0.7.1
 				<ol>
 				    <li>Some performance optimizations</li>

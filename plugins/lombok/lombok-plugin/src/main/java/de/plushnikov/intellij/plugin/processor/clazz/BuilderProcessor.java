@@ -45,16 +45,17 @@ public class BuilderProcessor extends BuilderInnerClassProcessor {
     String innerClassName = BuilderUtil.createBuilderClassName(psiAnnotation, psiClass);
     PsiClass innerClassByName = PsiClassUtil.getInnerClassByName(psiClass, innerClassName);
     assert innerClassByName != null; // BuilderInnerClassProcessor should run first
-
-    final String builderMethodName = BuilderUtil.createBuilderMethodName(psiAnnotation);
-    if (!PsiMethodUtil.hasMethodByName(PsiClassUtil.collectClassMethodsIntern(psiClass), builderMethodName)) {
-      LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiClass.getManager(), builderMethodName)
-          .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(innerClassByName))
-          .withContainingClass(psiClass)
-          .withNavigationElement(psiAnnotation);
-      method.withModifier(PsiModifier.STATIC);
-      method.withModifier(PsiModifier.PUBLIC);
-      target.add(method);
+    if (null != innerClassByName) {
+      final String builderMethodName = BuilderUtil.createBuilderMethodName(psiAnnotation);
+      if (!PsiMethodUtil.hasMethodByName(PsiClassUtil.collectClassMethodsIntern(psiClass), builderMethodName)) {
+        LombokLightMethodBuilder method = new LombokLightMethodBuilder(psiClass.getManager(), builderMethodName)
+           .withMethodReturnType(PsiClassUtil.getTypeWithGenerics(innerClassByName))
+           .withContainingClass(psiClass)
+           .withNavigationElement(psiAnnotation);
+        method.withModifier(PsiModifier.STATIC);
+        method.withModifier(PsiModifier.PUBLIC);
+        target.add(method);
+      }
     }
   }
 }
