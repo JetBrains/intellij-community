@@ -51,7 +51,7 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
 
       // hard case: 'x > 0.if' (two expression statements, broken literal)
       if (referenceExpression.getFirstChild() instanceof PsiReferenceParameterList &&
-          referenceExpression.getLastChild() == referenceExpression) {
+          referenceExpression.getLastChild() == positionElement) {
         final PsiExpressionStatement statement =
           PsiTreeUtil.getParentOfType(referenceExpression, PsiExpressionStatement.class);
         if (statement == null) return null;

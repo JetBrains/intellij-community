@@ -1,9 +1,9 @@
 package org.jetbrains.postfixCompletion.Infrastructure;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiExpressionStatement;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,9 +23,8 @@ public final class PrefixExpressionContext {
 
   private final boolean calculateCanBeStatement(@NotNull final PsiExpression expression) {
     // look for expression-statement parent
-    final PsiExpressionStatement expressionStatement =
-      PsiTreeUtil.getParentOfType(expression, PsiExpressionStatement.class);
-    if (expressionStatement != null) return true;
+    final PsiElement parent = expression.getParent();
+    if (parent instanceof PsiExpressionStatement) return true;
 
     return false;
   }
