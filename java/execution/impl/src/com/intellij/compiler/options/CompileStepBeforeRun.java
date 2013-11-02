@@ -183,7 +183,7 @@ public class CompileStepBeforeRun extends BeforeRunTaskProvider<CompileStepBefor
   }
 
   public static class MakeBeforeRunTask extends BeforeRunTask<MakeBeforeRunTask> {
-    private MakeBeforeRunTask() {
+    public MakeBeforeRunTask() {
       super(ID);
       setEnabled(true);
     }

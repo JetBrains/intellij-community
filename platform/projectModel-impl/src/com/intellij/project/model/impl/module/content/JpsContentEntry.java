@@ -30,8 +30,8 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.project.model.impl.module.JpsRootModel;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -129,33 +129,38 @@ public class JpsContentEntry implements ContentEntry, Disposable {
   @NotNull
   @Override
   public ExcludeFolder[] getExcludeFolders() {
-    final ArrayList<ExcludeFolder> result = new ArrayList<ExcludeFolder>(myExcludeFolders);
-    for (DirectoryIndexExcludePolicy excludePolicy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME,
-                                                                              myRootModel.getProject())) {
-      final VirtualFilePointer[] files = excludePolicy.getExcludeRootsForModule(myRootModel);
-      for (VirtualFilePointer file : files) {
-        addExcludeForOutputPath(file, result);
-      }
-    }
-    if (myRootModel.isExcludeExplodedDirectory()) {
-      addExcludeForOutputPath(myRootModel.myExplodedDirectoryPointer, result);
-    }
-    return result.toArray(new ExcludeFolder[result.size()]);
+    return myExcludeFolders.toArray(new ExcludeFolder[myExcludeFolders.size()]);
   }
 
-  private void addExcludeForOutputPath(@Nullable final VirtualFilePointer outputPath, @NotNull ArrayList<ExcludeFolder> result) {
-    if (outputPath == null) return;
-    final VirtualFile outputPathFile = outputPath.getFile();
-    final VirtualFile file = myRoot.getFile();
-    if (outputPathFile != null && file != null && VfsUtilCore.isAncestor(file, outputPathFile, false)) {
-      result.add(new JpsExcludeOutputFolder(outputPath.getUrl(), this));
+  @NotNull
+  @Override
+  public List<String> getExcludeFolderUrls() {
+    List<String> excluded = new ArrayList<String>();
+    for (JpsExcludeFolder folder : myExcludeFolders) {
+      excluded.add(folder.getUrl());
     }
+    for (DirectoryIndexExcludePolicy excludePolicy : Extensions
+      .getExtensions(DirectoryIndexExcludePolicy.EP_NAME, myRootModel.getProject())) {
+      for (VirtualFilePointer pointer : excludePolicy.getExcludeRootsForModule(myRootModel)) {
+        excluded.add(pointer.getUrl());
+      }
+    }
+    return excluded;
   }
 
   @NotNull
   @Override
   public VirtualFile[] getExcludeFolderFiles() {
-    return getFiles(getExcludeFolders());
+    List<VirtualFile> excluded = new ArrayList<VirtualFile>();
+    for (JpsExcludeFolder folder : myExcludeFolders) {
+      ContainerUtil.addIfNotNull(excluded, folder.getFile());
+    }
+    for (DirectoryIndexExcludePolicy excludePolicy : Extensions.getExtensions(DirectoryIndexExcludePolicy.EP_NAME, myRootModel.getProject())) {
+      for (VirtualFilePointer pointer : excludePolicy.getExcludeRootsForModule(myRootModel)) {
+        ContainerUtil.addIfNotNull(excluded, pointer.getFile());
+      }
+    }
+    return VfsUtilCore.toVirtualFileArray(excluded);
   }
 
   @NotNull
@@ -253,6 +258,19 @@ public class JpsContentEntry implements ContentEntry, Disposable {
     myExcludeFolders.remove(folder);
     myModule.getExcludeRootsList().removeUrl(folder.getUrl());
     Disposer.dispose(folder);
+  }
+
+  @Override
+  public boolean removeExcludeFolder(@NotNull String url) {
+    for (JpsExcludeFolder folder : myExcludeFolders) {
+      if (folder.getUrl().equals(url)) {
+        myExcludeFolders.remove(folder);
+        myModule.getExcludeRootsList().removeUrl(url);
+        Disposer.dispose(folder);
+        return true;
+      }
+    }
+    return false;
   }
 
   @Override

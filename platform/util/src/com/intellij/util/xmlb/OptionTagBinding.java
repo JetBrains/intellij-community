@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 class OptionTagBinding implements Binding {
-  private final static Logger LOG = Logger.getInstance("#" + OptionTagBinding.class.getName());
+  private static final Logger LOG = Logger.getInstance("#" + OptionTagBinding.class.getName());
 
   private final Accessor accessor;
   private final String myName;
@@ -108,7 +108,7 @@ class OptionTagBinding implements Binding {
         children.add(child);
       }
 
-      if (children.size() > 0) {
+      if (!children.isEmpty()) {
         Object value = myBinding.deserialize(accessor.read(o), ArrayUtil.toObjectArray(children));
         accessor.write(o, value);
       }

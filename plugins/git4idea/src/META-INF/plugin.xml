@@ -75,7 +75,10 @@
       <separator/>
     </group>
 
-    <action id="Git.CherryPick" class="git4idea.cherrypick.GitCherryPickAction" text="Cherry-Pick" icon="Git4ideaIcons.CherryPick" anchor="First"/>
+    <action id="Git.CherryPick" class="git4idea.cherrypick.GitCherryPickAction" text="Cherry-Pick" icon="Git4ideaIcons.CherryPick" anchor="First">
+      <add-to-group group-id="Vcs.Log.ContextMenu" />
+      <add-to-group group-id="Vcs.Log.Toolbar" />
+    </action>
 
   </actions>
 
@@ -144,6 +147,8 @@
                     serviceImplementation="git4idea.roots.GitRootProblemNotifier"/>
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
+
+    <projectService serviceImplementation="git4idea.log.GitContentRevisionFactory" />
 
     <applicationService serviceImplementation="git4idea.history.wholeTree.GitCommitsSequentialIndex"
                         serviceInterface="git4idea.history.wholeTree.GitCommitsSequentially"/>

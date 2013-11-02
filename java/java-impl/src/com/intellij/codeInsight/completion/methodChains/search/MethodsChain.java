@@ -2,13 +2,14 @@ package com.intellij.codeInsight.completion.methodChains.search;
 
 import com.intellij.codeInsight.completion.methodChains.completion.context.ChainCompletionContext;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiParameter;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.util.containers.ContainerUtil.findAll;
 import static com.intellij.util.containers.ContainerUtil.reverse;
 
 /**
@@ -21,27 +22,41 @@ public class MethodsChain {
   // chain qualifier class could be different with method.getContainingClass()
   private final String myQualifierClassName;
 
+  private final Set<String> myExcludedQNames;
+
   public MethodsChain(final PsiMethod[] methods, final int weight, final String qualifierClassName) {
-    this(ContainerUtil.<PsiMethod[]>newArrayList(methods), weight, qualifierClassName);
+    this(Collections.singletonList(methods), weight, qualifierClassName, chooseParametersQNames(methods));
   }
 
-  public MethodsChain(final List<PsiMethod[]> revertedPath, final int weight, final String qualifierClassName) {
+  private MethodsChain(final List<PsiMethod[]> revertedPath,
+                       final int weight,
+                       final String qualifierClassName,
+                       final Set<String> excludedQNames) {
     myRevertedPath = revertedPath;
     myWeight = weight;
     myQualifierClassName = qualifierClassName;
+    myExcludedQNames = excludedQNames;
   }
 
   public int size() {
     return myRevertedPath.size();
   }
 
+  public Set<String> getExcludedQNames() {
+    return myExcludedQNames;
+  }
+
   public String getQualifierClassName() {
     return myQualifierClassName;
   }
 
-  @Nullable
-  public PsiMethod getOneOfFirst() {
-    return (myRevertedPath.isEmpty() || myRevertedPath.get(0).length == 0) ? null : myRevertedPath.get(myRevertedPath.size() - 1)[0];
+  public Iterator<PsiMethod[]> iterator() {
+    return myRevertedPath.iterator();
+  }
+
+  @NotNull
+  public PsiMethod[] getFirst() {
+    return myRevertedPath.get(0);
   }
 
   public List<PsiMethod[]> getPath() {
@@ -52,12 +67,17 @@ public class MethodsChain {
     return myWeight;
   }
 
+  @SuppressWarnings("unchecked")
   public MethodsChain addEdge(final PsiMethod[] psiMethods, final String newQualifierClassName, final int newWeight) {
     final List<PsiMethod[]> newRevertedPath = new ArrayList<PsiMethod[]>(myRevertedPath.size() + 1);
     newRevertedPath.addAll(myRevertedPath);
     newRevertedPath.add(psiMethods);
-    return new MethodsChain(newRevertedPath, newWeight, newQualifierClassName);
+    return new MethodsChain(newRevertedPath,
+                            newWeight,
+                            newQualifierClassName,
+                            joinSets(myExcludedQNames, chooseParametersQNames(psiMethods)));
   }
+
 
   @Override
   public String toString() {
@@ -81,8 +101,7 @@ public class MethodsChain {
       if (thisNext == null || thatNext == null) {
         throw new NullPointerException();
       }
-      if (((thisNext.isConstructor() != thatNext.isConstructor()))
-          || !thisNext.getName().equals(thatNext.getName())) {
+      if (((thisNext.isConstructor() != thatNext.isConstructor())) || !thisNext.getName().equals(thatNext.getName())) {
         return CompareResult.NOT_EQUAL;
       }
     }
@@ -94,21 +113,9 @@ public class MethodsChain {
     }
 
 
-    final PsiClass leftQualifier = JavaPsiFacade.getInstance(context.getProject()).findClass(left.getQualifierClassName(), context.getResolveScope());
-    final PsiClass rightQualifier = JavaPsiFacade.getInstance(context.getProject()).findClass(left.getQualifierClassName(), context.getResolveScope());
-    return hasBaseClass(leftQualifier, rightQualifier, PsiManager.getInstance(context.getProject())) ? CompareResult.EQUAL : CompareResult.NOT_EQUAL;
-  }
-
-  private static boolean hasBaseClass(final PsiClass left, final PsiClass right, final PsiManager psiManager) {
-    //todo so slow
-    final Set<PsiClass> leftSupers = InheritanceUtil.getSuperClasses(left);
-    final Set<PsiClass> rightSupers = InheritanceUtil.getSuperClasses(right);
-    for (final PsiClass leftSuper : leftSupers) {
-      if (!CommonClassNames.JAVA_LANG_OBJECT.equals(leftSuper.getQualifiedName()) && rightSupers.contains(leftSuper)) {
-        return true;
-      }
-    }
-    return false;
+    return hasBaseMethod(left.getPath().get(0), right.getPath().get(0), PsiManager.getInstance(context.getProject()))
+           ? CompareResult.EQUAL
+           : CompareResult.NOT_EQUAL;
   }
 
   public enum CompareResult {
@@ -117,4 +124,40 @@ public class MethodsChain {
     EQUAL,
     NOT_EQUAL
   }
+
+  private static boolean hasBaseMethod(final PsiMethod[] left, final PsiMethod[] right, final PsiManager psiManager) {
+    for (final PsiMethod rightMethod : right) {
+      final PsiMethod[] rightSupers = rightMethod.findDeepestSuperMethods();
+      if (rightSupers.length != 0) {
+        for (final PsiMethod leftMethod : left) {
+          final PsiMethod[] leftSupers = leftMethod.findDeepestSuperMethods();
+          if (leftSupers.length != 0) {
+            if (psiManager.areElementsEquivalent(leftSupers[0], rightSupers[0])) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private static Set<String> joinSets(final Set<String>... sets) {
+    final Set<String> result = new HashSet<String>();
+    for (final Set<String> set : sets) {
+      for (final String s : set) {
+        result.add(s);
+      }
+    }
+    return result;
+  }
+
+  private static Set<String> chooseParametersQNames(final PsiMethod[] methods) {
+    final Set<String> qNames = new HashSet<String>();
+    for (final PsiParameter methodParameter : methods[0].getParameterList().getParameters()) {
+      qNames.add(methodParameter.getType().getCanonicalText());
+    }
+    return qNames;
+  }
+
 }

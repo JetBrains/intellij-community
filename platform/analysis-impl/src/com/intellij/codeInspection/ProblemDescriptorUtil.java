@@ -23,9 +23,18 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 public class ProblemDescriptorUtil {
+  public static final int NONE               = 0x00000000;
+  public static final int APPEND_LINE_NUMBER = 0x00000001;
+  public static final int TRIM_AT_END        = 0x00000002;
+  public static final int TRIM_AT_TREE_END   = 0x00000004;
+
+  @MagicConstant(flags = {NONE, APPEND_LINE_NUMBER, TRIM_AT_END, TRIM_AT_TREE_END})
+  @interface FlagConstant {}
+
   public static String extractHighlightedText(@NotNull CommonProblemDescriptor descriptor, PsiElement psiElement) {
     if (psiElement == null || !psiElement.isValid()) return "";
     String ref = psiElement.getText();
@@ -46,13 +55,17 @@ public class ProblemDescriptorUtil {
 
   @NotNull
   public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, PsiElement element, boolean appendLineNumber) {
+    return renderDescriptionMessage(descriptor, element, appendLineNumber ? APPEND_LINE_NUMBER : NONE);
+  }
+
+  public static String renderDescriptionMessage(@NotNull CommonProblemDescriptor descriptor, PsiElement element, @FlagConstant int flags) {
     String message = descriptor.getDescriptionTemplate();
 
     // no message. Should not be the case if inspection correctly implemented.
     // noinspection ConstantConditions
     if (message == null) return "";
 
-    if (appendLineNumber && descriptor instanceof ProblemDescriptor && !message.contains("#ref") && message.contains("#loc")) {
+    if ((flags & APPEND_LINE_NUMBER) != 0 && descriptor instanceof ProblemDescriptor && !message.contains("#ref") && message.contains("#loc")) {
       final int lineNumber = ((ProblemDescriptor)descriptor).getLineNumber();
       if (lineNumber >= 0) {
         message = StringUtil.replace(message, "#loc", "(" + InspectionsBundle.message("inspection.export.results.at.line") + " " + lineNumber + ")");
@@ -68,10 +81,13 @@ public class ProblemDescriptorUtil {
       message = StringUtil.replace(message, "#ref", ref);
     }
 
-    final int endIndex = message.indexOf("#end");
+    final int endIndex = (flags & TRIM_AT_END) != 0 ? message.indexOf("#end") :
+                         (flags & TRIM_AT_TREE_END) != 0 ? message.indexOf("#treeend") : -1;
     if (endIndex > 0) {
       message = message.substring(0, endIndex);
     }
+    message = StringUtil.replace(message, "#end", "");
+    message = StringUtil.replace(message, "#treeend", "");
 
     message = StringUtil.unescapeXml(message).trim();
     return message;

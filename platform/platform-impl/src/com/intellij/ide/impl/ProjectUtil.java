@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,10 +94,11 @@ public class ProjectUtil {
    *         null otherwise
    */
   @Nullable
-  public static Project openOrImport(@NotNull final String path, final Project projectToClose, boolean forceOpenInNewFrame) {
-    final VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-
+  public static Project openOrImport(@NotNull String path, Project projectToClose, boolean forceOpenInNewFrame) {
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
     if (virtualFile == null) return null;
+    virtualFile.refresh(false, false);
+
     ProjectOpenProcessor strong = ProjectOpenProcessor.getStrongImportProvider(virtualFile);
     if (strong != null) {
       return strong.doOpenProject(virtualFile, projectToClose, forceOpenInNewFrame);
@@ -137,6 +138,7 @@ public class ProjectUtil {
 
       return project;
     }
+
     return null;
   }
 

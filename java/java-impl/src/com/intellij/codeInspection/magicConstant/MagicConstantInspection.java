@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -425,7 +425,9 @@ public class MagicConstantInspection extends BaseJavaLocalInspectionTool {
         PsiMethod setter = PropertyUtil.findPropertySetter(method.getContainingClass(), (String)val, false, false);
         if (setter == null) return null;
         // try the @beaninfo of the corresponding setter
-        method = (PsiMethod)setter.getNavigationElement();
+        PsiElement navigationElement = setter.getNavigationElement();
+        if (!(navigationElement instanceof PsiMethod)) return null;
+        method = (PsiMethod)navigationElement;
       }
     }
     else if (owner instanceof PsiMethod) {

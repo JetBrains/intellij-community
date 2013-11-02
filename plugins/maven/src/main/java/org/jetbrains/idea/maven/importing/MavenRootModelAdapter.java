@@ -171,10 +171,8 @@ public class MavenRootModelAdapter {
 
   public boolean isAlreadyExcluded(File f) {
     String url = toUrl(f.getPath()).getUrl();
-    for (ContentEntry eachEntry : myRootModel.getContentEntries()) {
-      for (ExcludeFolder eachFolder : eachEntry.getExcludeFolders()) {
-        if (VfsUtilCore.isEqualOrAncestor(eachFolder.getUrl(), url)) return true;
-      }
+    for (String excludedUrl : myRootModel.getExcludeRootUrls()) {
+      if (VfsUtilCore.isEqualOrAncestor(excludedUrl, url)) return true;
     }
     return false;
   }
@@ -206,17 +204,19 @@ public class MavenRootModelAdapter {
         }
       }
 
-      for (ExcludeFolder eachFolder : eachEntry.getExcludeFolders()) {
-        String ancestor = under ? url.getUrl() : eachFolder.getUrl();
-        String child = under ? eachFolder.getUrl() : url.getUrl();
+      for (String excludedUrl : eachEntry.getExcludeFolderUrls()) {
+        String ancestor = under ? url.getUrl() : excludedUrl;
+        String child = under ? excludedUrl : url.getUrl();
 
         if (VfsUtilCore.isEqualOrAncestor(ancestor, child)) {
-          if (eachFolder.isSynthetic()) {
-            getCompilerExtension().setExcludeOutput(false);
-          }
-          else {
-            eachEntry.removeExcludeFolder(eachFolder);
-          }
+          eachEntry.removeExcludeFolder(excludedUrl);
+        }
+      }
+      for (String outputUrl : getCompilerExtension().getOutputRootUrls(true)) {
+        String ancestor = under ? url.getUrl() : outputUrl;
+        String child = under ? outputUrl : url.getUrl();
+        if (VfsUtilCore.isEqualOrAncestor(ancestor, child)) {
+          getCompilerExtension().setExcludeOutput(false);
         }
       }
     }
@@ -234,11 +234,9 @@ public class MavenRootModelAdapter {
         }
       }
 
-      for (ExcludeFolder eachFolder : eachEntry.getExcludeFolders()) {
+      for (String excludeUrl : eachEntry.getExcludeFolderUrls()) {
         String ancestor = url.getUrl();
-        String child = eachFolder.getUrl();
-
-        if (VfsUtilCore.isEqualOrAncestor(ancestor, child) || VfsUtilCore.isEqualOrAncestor(child, ancestor)) {
+        if (VfsUtilCore.isEqualOrAncestor(ancestor, excludeUrl) || VfsUtilCore.isEqualOrAncestor(excludeUrl, ancestor)) {
           return true;
         }
       }

@@ -166,4 +166,10 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
       myPanel.restoreCanceledProgress();
     }
   }
+
+  @Nullable
+  @Override
+  public Icon getIcon(boolean expanded) {
+    return myIcon;
+  }
 }

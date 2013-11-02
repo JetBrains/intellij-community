@@ -83,10 +83,6 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
-  public void testKeywordAfterComment() {  // PY-697
-    doTest();
-  }
-
   public void testClassPrivate() {
     doTest();
   }
@@ -228,14 +224,6 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
-  public void testEmptyFile() {  // PY-1845
-    myFixture.configureByText(PythonFileType.INSTANCE, "");
-    myFixture.completeBasic();
-    final List<String> elements = myFixture.getLookupElementStrings();
-    assertNotNull(elements);
-    assertTrue(elements.contains("import"));
-  }
-
   public void testImportItself() {  // PY-1895
     myFixture.copyDirectoryToProject("completion/importItself/package1", "package1");
     myFixture.configureFromTempProjectFile("package1/submodule1.py");
@@ -275,14 +263,6 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
-  public void testNonlocal() {  // PY-2289
-    doTest3K();
-  }
-
-  public void testYield() {
-    doTest();
-  }
-
   private void doTest3K() {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
     try {
@@ -297,55 +277,6 @@ public class PythonCompletionTest extends PyTestCase {
     doTest();
   }
 
-  public void testElse() {
-    doTest();
-  }
-
-  public void testElseNotIndented() {
-    doTest();
-  }
-
-  public void testElseInTryNotIndented() {
-    doTest();
-  }
-
-  public void testElif() {
-    doTest();
-  }
-
-  public void testElifNotIndented() {
-    doTest();
-  }
-
-  public void testExcept() {
-    doTest();
-  }
-
-  public void testExceptNotIndented() {
-    doTest();
-  }
-
-  public void testFinallyInExcept() {
-    doTest();
-  }
-
-  public void testContinue() {
-    doTest();
-  }
-
-  public void testNoContinueInFinally() {
-    final String testName = "completion/" + getTestName(true);
-    myFixture.configureByFile(testName + ".py");
-    myFixture.completeBasic();
-    final List<String> lookupElementStrings = myFixture.getLookupElementStrings();
-    assertNotNull(lookupElementStrings);
-    assertFalse(lookupElementStrings.contains("continue"));
-  }
-
-  public void testElseInCondExpr() {  // PY-2397
-    doTest();
-  }
-
   public void testLocalVarInDictKey() {  // PY-2558
     doTest();
   }
@@ -356,10 +287,6 @@ public class PythonCompletionTest extends PyTestCase {
 
   public void testDictKeyPrefix2() {      //PY-3683
     doTest();
-  }
-
-  public void testFromDotImport() {  // PY-2772
-    doTest3K();
   }
 
   public void testNoIdentifiersInImport() {
@@ -398,10 +325,6 @@ public class PythonCompletionTest extends PyTestCase {
 
   public void testImportInMiddleOfHierarchy() {  // PY-3016
     doMultiFileTest();
-  }
-
-  public void testLambdaInExpression() {  // PY-3150
-    doTest();
   }
 
   public void testVeryPrivate() {  // PY-3246
@@ -467,10 +390,6 @@ public class PythonCompletionTest extends PyTestCase {
     myFixture.checkResultByFile("completion/identifiersInPlainDocstring.after.py");
   }
 
-  public void testNoneInArgList() {  // PY-3464
-    doTest3K();
-  }
-
   public void testPep328Completion() {  // PY-3409
     myFixture.copyDirectoryToProject("completion/pep328", "pep328");
     myFixture.configureByFile("pep328/package/subpackage1/moduleX.py");
@@ -525,11 +444,6 @@ public class PythonCompletionTest extends PyTestCase {
   }
 
   public void testSuperInit() {  // PY-5066
-    doTest();
-  }
-
-  // PY-5144
-  public void testImportKeyword() {
     doTest();
   }
 
@@ -622,24 +536,6 @@ public class PythonCompletionTest extends PyTestCase {
 
   public void testDunderClass() {  // PY-7327
     doTest();
-  }
-
-  public void testAsInWith() {  // PY-3701
-    setLanguageLevel(LanguageLevel.PYTHON27);
-    assertTrue(doTestByText("with open(foo) <caret>").contains("as"));
-  }
-
-  public void testAsInExcept() {  // PY-1846
-    setLanguageLevel(LanguageLevel.PYTHON27);
-    assertTrue(doTestByText("try:\n" +
-                            "    pass\n" +
-                            "except IOError <caret>").contains("as"));
-  }
-
-  public void testElseInFor() {  // PY-6755
-    assertTrue(doTestByText("for item in range(10):\n" +
-                            "    pass\n" +
-                            "el<caret>").contains("else"));
   }
 
   public void testArgs() {  // PY-7208

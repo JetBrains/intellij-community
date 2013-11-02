@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,12 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.impl.source.Constants;
+import com.intellij.psi.impl.source.tree.JavaElementType;
 import org.jetbrains.annotations.NotNull;
 
 public class PsiEmptyExpressionImpl extends ExpressionPsiElement implements PsiExpression{
   public PsiEmptyExpressionImpl() {
-    super(Constants.EMPTY_EXPRESSION);
+    super(JavaElementType.EMPTY_EXPRESSION);
   }
 
   @Override

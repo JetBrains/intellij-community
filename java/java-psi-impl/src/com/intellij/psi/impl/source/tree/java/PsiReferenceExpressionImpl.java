@@ -477,7 +477,7 @@ public class PsiReferenceExpressionImpl extends PsiReferenceExpressionBase imple
       @Override
       public boolean isAcceptable(Object element, @Nullable PsiElement context) {
         return LambdaUtil.isValidQualifier4InterfaceStaticMethodCall((PsiMethod)element, PsiReferenceExpressionImpl.this,
-                                                                     PsiUtil.getLanguageLevel(PsiReferenceExpressionImpl.this));
+                                                                     null, PsiUtil.getLanguageLevel(PsiReferenceExpressionImpl.this));
       }
 
       @Override

@@ -259,6 +259,7 @@ binding.setVariable("platformApiModules", [
   "vcs-api",
   "vcs-log-api",
   "xdebugger-api",
+  "xml-analysis-api",
   "xml-openapi",
   "xml-psi-api",
 ])
@@ -287,6 +288,7 @@ binding.setVariable("platformImplementationModules", [
   "spellchecker",
   "xdebugger-impl",
   "xml",
+  "xml-analysis-impl",
   "xml-psi-impl",
 ])
 

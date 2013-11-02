@@ -116,23 +116,30 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
   public Value getValue() {
     // the following code makes sense only if we do not use ObjectReference.enableCollection() / disableCollection()
     // to keep temporary objects
-    if (Patches.IBM_JDK_DISABLE_COLLECTION_BUG && myStoredEvaluationContext != null && !myStoredEvaluationContext.getSuspendContext().isResumed() &&
+    if (Patches.IBM_JDK_DISABLE_COLLECTION_BUG) {
+      final EvaluationContextImpl evalContext = myStoredEvaluationContext;
+      if (evalContext != null && !evalContext.getSuspendContext().isResumed() &&
         myValue instanceof ObjectReference && VirtualMachineProxyImpl.isCollected((ObjectReference)myValue)) {
 
-      final Semaphore semaphore = new Semaphore();
-      semaphore.down();
-      myStoredEvaluationContext.getDebugProcess().getManagerThread().invoke(new SuspendContextCommandImpl(myStoredEvaluationContext.getSuspendContext()) {
-        public void contextAction() throws Exception {
-          // re-setting the context will cause value recalculation
-          try {
-            setContext(myStoredEvaluationContext);
+        final Semaphore semaphore = new Semaphore();
+        semaphore.down();
+        evalContext.getDebugProcess().getManagerThread().invoke(new SuspendContextCommandImpl(evalContext.getSuspendContext()) {
+          public void contextAction() throws Exception {
+            // re-setting the context will cause value recalculation
+            try {
+              setContext(myStoredEvaluationContext);
+            }
+            finally {
+              semaphore.up();
+            }
           }
-          finally {
+
+          protected void commandCancelled() {
             semaphore.up();
           }
-        }
-      });
-      semaphore.waitFor();
+        });
+        semaphore.waitFor();
+      }
     }
     
     return myValue; 
@@ -264,30 +271,20 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   private String getCustomLabel(String label) {
     //translate only strings in quotes
-    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-    try {
-      final Value value = getValue();
-      if(isShowIdLabel()) {
-        Renderer lastRenderer = getLastRenderer();
-        final String idLabel = myStoredEvaluationContext != null && lastRenderer != null ?
-                               ((NodeRendererImpl)lastRenderer).getIdLabel(value, myStoredEvaluationContext.getDebugProcess()) :
-                               null;
-        if(idLabel != null && !label.startsWith(idLabel)) {
-          buf.append(idLabel);
-        }
+    String customLabel = null;
+    final Value value = getValue();
+    if(isShowIdLabel()) {
+      Renderer lastRenderer = getLastRenderer();
+      final EvaluationContextImpl evalContext = myStoredEvaluationContext;
+      final String idLabel = evalContext != null && lastRenderer != null && !evalContext.getSuspendContext().isResumed()?
+                             ((NodeRendererImpl)lastRenderer).getIdLabel(value, evalContext.getDebugProcess()) :
+                             null;
+      if(idLabel != null && !label.startsWith(idLabel)) {
+        customLabel = idLabel;
       }
-      if(label == null) {
-        //noinspection HardCodedStringLiteral
-        buf.append("null");
-      }
-      else {
-        buf.append(label);
-      }
-      return buf.toString();
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
-    }
+    final String originalLabel = label == null ? "null" : label;
+    return customLabel == null? originalLabel : customLabel + originalLabel;
   }
 
 

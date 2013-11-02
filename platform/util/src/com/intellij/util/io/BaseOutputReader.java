@@ -1,6 +1,5 @@
 /*
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +38,7 @@ public abstract class BaseOutputReader {
   private boolean skipLF = false;
 
   private Future<?> myFinishedFuture = null;
-  protected final @NotNull SleepingPolicy mySleepingPolicy;
+  @NotNull protected final SleepingPolicy mySleepingPolicy;
 
   public BaseOutputReader(@NotNull Reader reader) {
     this(reader, null);
@@ -53,6 +52,7 @@ public abstract class BaseOutputReader {
   protected void start() {
     if (myFinishedFuture == null) {
       myFinishedFuture = executeOnPooledThread(new Runnable() {
+        @Override
         public void run() {
           doRun();
         }
@@ -77,8 +77,8 @@ public abstract class BaseOutputReader {
   }
 
   public static class AdaptiveSleepingPolicy implements SleepingPolicy {
-    private final static int maxSleepTimeWhenIdle = 200;
-    private final static int maxIterationsWithCurrentSleepTime = 50;
+    private static final int maxSleepTimeWhenIdle = 200;
+    private static final int maxIterationsWithCurrentSleepTime = 50;
 
     private volatile int myIterationsWithCurrentTime;
     private volatile int myCurrentSleepTime = sleepTimeWhenIdle;

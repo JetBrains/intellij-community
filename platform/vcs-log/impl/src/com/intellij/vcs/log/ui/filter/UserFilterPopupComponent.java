@@ -24,27 +24,45 @@ import com.intellij.openapi.ui.popup.JBPopupAdapter;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.vcs.log.data.VcsLogFilter;
+import com.intellij.vcs.log.VcsLogFilter;
+import com.intellij.vcs.log.data.VcsLogDataHolder;
+import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.data.VcsLogUserFilter;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.List;
 
 /**
  * Show a popup to select a user or enter the user name.
  */
 class UserFilterPopupComponent extends FilterPopupComponent {
 
-  UserFilterPopupComponent(VcsLogClassicFilterUi filterUi) {
+  private static final String ME = "me";
+  private final VcsLogDataHolder myDataHolder;
+  private final VcsLogUiProperties myUiProperties;
+
+  UserFilterPopupComponent(VcsLogClassicFilterUi filterUi, VcsLogDataHolder dataHolder, VcsLogUiProperties uiProperties) {
     super(filterUi, "User");
+    myDataHolder = dataHolder;
+    myUiProperties = uiProperties;
   }
 
   @Override
   protected ActionGroup createActionGroup() {
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(createAllAction());
-    // TODO show recently selected users
+    group.add(new SetValueAction(ME, this));
+
+    List<String> recentlyFilteredUsers = myUiProperties.getRecentlyFilteredUsers();
+    if (!recentlyFilteredUsers.isEmpty()) {
+      group.addSeparator("Recently searched");
+      for (String recentUser : recentlyFilteredUsers) {
+        group.add(new SetValueAction(recentUser, this));
+      }
+    }
+    group.addSeparator();
     group.add(new SelectUserAction());
     return group;
   }
@@ -56,7 +74,11 @@ class UserFilterPopupComponent extends FilterPopupComponent {
     if (value == ALL) {
       return null;
     }
-    return new VcsLogUserFilter(value);
+    if (value == ME) {
+      return new VcsLogUserFilter.Me(myDataHolder.getCurrentUser());
+    }
+    myUiProperties.addRecentlyFilteredUser(value);
+    return new VcsLogUserFilter.ByName(value);
   }
 
   private class SelectUserAction extends DumbAwareAction {

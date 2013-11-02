@@ -406,7 +406,7 @@ public class UIUtil {
       int width = fontMetrics.stringWidth(s);
 
       if (width >= widthLimit - fontMetrics.charWidth('w')) {
-        if (currentLine.length() > 0) {
+        if (!currentLine.isEmpty()) {
           lines.add(currentLine);
           currentLine = "";
         }
@@ -418,7 +418,7 @@ public class UIUtil {
     }
 
     String s = currentLine + currentAtom.toString();
-    if (s.length() > 0) {
+    if (!s.isEmpty()) {
       lines.add(s);
     }
 
@@ -1615,6 +1615,7 @@ public class UIUtil {
     assert !SwingUtilities.isEventDispatchThread();
     final BlockingQueue<Object> queue = new LinkedBlockingQueue<Object>();
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         queue.offer(queue);
       }
@@ -1630,6 +1631,7 @@ public class UIUtil {
   public static void addAwtListener(final AWTEventListener listener, long mask, Disposable parent) {
     Toolkit.getDefaultToolkit().addAWTEventListener(listener, mask);
     Disposer.register(parent, new Disposable() {
+      @Override
       public void dispose() {
         Toolkit.getDefaultToolkit().removeAWTEventListener(listener);
       }
@@ -1728,7 +1730,7 @@ public class UIUtil {
       eachParent = eachParent.getParent();
     }
 
-    return eachParent;
+    return null;
   }
 
   @NonNls
@@ -1788,6 +1790,7 @@ public class UIUtil {
     }
     else {
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           c.requestFocus();
         }
@@ -1820,6 +1823,7 @@ public class UIUtil {
     if (!isUnderNativeMacLookAndFeel()) return;
 
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (isToDispose(progress)) {
           progress.getUI().uninstallUI(progress);
@@ -1931,6 +1935,7 @@ public class UIUtil {
 
   public static void removeScrollBorder(final Component c) {
     new AwtVisitor(c) {
+      @Override
       public boolean visit(final Component component) {
         if (component instanceof JScrollPane) {
           if (!hasNonPrimitiveParents(c, component)) {
@@ -2106,6 +2111,7 @@ public class UIUtil {
   public static void addKeyboardShortcut(final JComponent target, final AbstractButton button, final KeyStroke keyStroke) {
     target.registerKeyboardAction(
       new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           if (button.isEnabled()) {
             button.doClick();
@@ -2308,7 +2314,7 @@ public class UIUtil {
   }
 
   public static class TextPainter {
-    private List<Pair<String, LineInfo>> myLines = new ArrayList<Pair<String, LineInfo>>();
+    private final List<Pair<String, LineInfo>> myLines = new ArrayList<Pair<String, LineInfo>>();
     private boolean myDrawShadow;
     private Color myShadowColor;
     private float myLineSpacing;
@@ -2336,7 +2342,7 @@ public class UIUtil {
     }
 
     public TextPainter appendLine(final String text) {
-      if (text == null || text.length() == 0) return this;
+      if (text == null || text.isEmpty()) return this;
       myLines.add(Pair.create(text, new LineInfo()));
       return this;
     }
@@ -2617,6 +2623,7 @@ public class UIUtil {
     if (!newSize.equals(size)) {
       //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           if (window.isShowing()) {
             window.setSize(newSize);

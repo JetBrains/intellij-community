@@ -269,8 +269,7 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
     return result.get();
   }
 
-  private static void reloadModifiedClasses(final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses,
-                                            final HotSwapProgressImpl progress) {
+  private static void reloadModifiedClasses(final Map<DebuggerSession, Map<String, HotSwapFile>> modifiedClasses, final HotSwapProgressImpl progress) {
     ProgressManager.getInstance().runProcess(new Runnable() {
       public void run() {
         HotSwapManager.reloadModifiedClasses(modifiedClasses, progress);

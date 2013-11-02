@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -65,7 +80,7 @@ public class VersionComparatorUtil {
       }
 
       str = str.trim();
-      if (str.length() == 0) {
+      if (str.isEmpty()) {
         return _WS;
       }
 
@@ -166,15 +181,15 @@ public class VersionComparatorUtil {
 
   private static int compareNumbers(String n1, String n2) {
     // trim leading zeros
-    while(n1.length() > 0 && n2.length() > 0 && n1.charAt(0) == '0' && n2.charAt(0) == '0') {
+    while(!n1.isEmpty() && !n2.isEmpty() && n1.charAt(0) == '0' && n2.charAt(0) == '0') {
       n1 = n1.substring(1);
       n2 = n2.substring(1);
     }
 
     // starts with zero => less
-    if (n1.length() > 0 && n1.charAt(0) == '0') {
+    if (!n1.isEmpty() && n1.charAt(0) == '0') {
       return -1;
-    } else if (n2.length() > 0 && n2.charAt(0) == '0') {
+    } else if (!n2.isEmpty() && n2.charAt(0) == '0') {
       return 1;
     }
 

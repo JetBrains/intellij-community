@@ -23,12 +23,12 @@ import com.intellij.ide.IdeView;
 import com.intellij.ide.dnd.DnDActionInfo;
 import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDSupport;
+import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.ide.navigationToolbar.ui.NavBarUI;
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectRootsUtil;
-import com.intellij.ide.dnd.TransferableWrapper;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.util.DeleteHandler;
@@ -62,6 +62,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupOwner;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -773,9 +774,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     myUpdateQueue.rebuildUi();
     if (editor == null) {
       myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
-      getHintContainerShowPoint().doWhenDone(new AsyncResult.Handler<RelativePoint>() {
+      getHintContainerShowPoint().doWhenDone(new Consumer<RelativePoint>() {
         @Override
-        public void run(RelativePoint relativePoint) {
+        public void consume(RelativePoint relativePoint) {
           final Component owner = focusManager.getFocusOwner();
           final Component cmp = relativePoint.getComponent();
           if (cmp instanceof JComponent && cmp.isShowing()) {
@@ -788,9 +789,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
     else {
       myHintContainer = editor.getContentComponent();
-      getHintContainerShowPoint().doWhenDone(new AsyncResult.Handler<RelativePoint>() {
+      getHintContainerShowPoint().doWhenDone(new Consumer<RelativePoint>() {
         @Override
-        public void run(RelativePoint rp) {
+        public void consume(RelativePoint rp) {
           Point p = rp.getPointOn(myHintContainer).getPoint();
           final HintHint hintInfo = new HintHint(editor, p);
           HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editor, p, HintManager.HIDE_BY_ESCAPE, 0, true, hintInfo);
@@ -812,9 +813,9 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
         if (myContextComponent != null) {
           myLocationCache = JBPopupFactory.getInstance().guessBestPopupLocation(DataManager.getInstance().getDataContext(myContextComponent));
         } else {
-          DataManager.getInstance().getDataContextFromFocus().doWhenDone(new AsyncResult.Handler<DataContext>() {
+          DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
             @Override
-            public void run(DataContext dataContext) {
+            public void consume(DataContext dataContext) {
               myContextComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
               myLocationCache = JBPopupFactory.getInstance().guessBestPopupLocation(DataManager.getInstance().getDataContext(myContextComponent));
             }

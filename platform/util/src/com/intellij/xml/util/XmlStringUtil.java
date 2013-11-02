@@ -38,6 +38,10 @@ public class XmlStringUtil {
   }
 
   public static String escapeString(@Nullable String str, final boolean escapeWhiteSpace) {
+    return escapeString(str, escapeWhiteSpace, true);
+  }
+
+  public static String escapeString(@Nullable String str, final boolean escapeWhiteSpace, final boolean convertNoBreakSpace) {
     if (str == null) return null;
     StringBuilder buffer = null;
     for (int i = 0; i < str.length(); i++) {
@@ -53,20 +57,20 @@ public class XmlStringUtil {
         case '\t':
           entity = escapeWhiteSpace ? "&#9;" : null;
           break;
-        case'\"':
+        case '\"':
           entity = "&quot;";
           break;
-        case'<':
+        case '<':
           entity = "&lt;";
           break;
-        case'>':
+        case '>':
           entity = "&gt;";
           break;
-        case'&':
+        case '&':
           entity = "&amp;";
           break;
         case 160: // unicode char for &nbsp;
-          entity = "&nbsp;";
+          entity = convertNoBreakSpace ? "&nbsp;" : null;
           break;
         default:
           entity = null;

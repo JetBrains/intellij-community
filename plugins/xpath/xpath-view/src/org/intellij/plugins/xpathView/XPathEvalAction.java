@@ -21,7 +21,6 @@ import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -242,7 +241,7 @@ public class XPathEvalAction extends XPathAction {
                     }
                 } else {
                     return Messages.showOkCancelDialog(project, "Sorry, your expression did not return any result", "XPath Result",
-                                                       "OK", "Edit Expression", Messages.getInformationIcon()) == 1;
+                                                       "OK", "Edit Expression", Messages.getInformationIcon()) != Messages.OK;
                 }
             } else if (result instanceof String) {
                 Messages.showMessageDialog("'" + result.toString() + "'", "XPath result (String)", Messages.getInformationIcon());

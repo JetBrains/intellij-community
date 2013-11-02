@@ -766,7 +766,6 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return processPsiFileRootsAsync(files, totalSize, alreadyProcessedFiles, progress, new Processor<PsiFile>() {
       @Override
       public boolean process(final PsiFile psiRoot) {
-        TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
         final VirtualFile vfile = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile>() {
           @Override
           public VirtualFile compute() {
@@ -775,6 +774,7 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
         });
         for (final RequestWithProcessor singleRequest : candidateFiles.get(vfile)) {
           Processor<PsiElement> localProcessor = localProcessors.get(singleRequest);
+          TooManyUsagesStatus.getFrom(progress).pauseProcessingIfTooManyUsages();
           if (!localProcessor.process(psiRoot)) {
             return false;
           }

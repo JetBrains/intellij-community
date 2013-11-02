@@ -1,0 +1,197 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.jetbrains.python;
+
+import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
+
+import java.util.List;
+
+public class PythonKeywordCompletionTest extends PyTestCase {
+
+  private void doTest3K() {
+    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON30);
+    try {
+      doTest();
+    }
+    finally {
+      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
+    }
+  }
+
+  private void doTest() {
+    CamelHumpMatcher.forceStartMatching(getTestRootDisposable());
+    final String testName = "keywordCompletion/" + getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile(testName + ".after.py");
+  }
+
+  private List<String> doTestByText(String text) {
+    myFixture.configureByText(PythonFileType.INSTANCE, text);
+    myFixture.completeBasic();
+    return myFixture.getLookupElementStrings();
+  }
+
+  public void testKeywordAfterComment() {  // PY-697
+    doTest();
+  }
+
+  public void testEmptyFile() {  // PY-1845
+    myFixture.configureByText(PythonFileType.INSTANCE, "");
+    myFixture.completeBasic();
+    final List<String> elements = myFixture.getLookupElementStrings();
+    assertNotNull(elements);
+    assertTrue(elements.contains("import"));
+  }
+
+  public void testNonlocal() {  // PY-2289
+    doTest3K();
+  }
+
+  public void testYield() {
+    doTest();
+  }
+
+  public void testElse() {
+    doTest();
+  }
+
+  public void testElseNotIndented() {
+    doTest();
+  }
+
+  public void testElseInTryNotIndented() {
+    doTest();
+  }
+
+  public void testElif() {
+    doTest();
+  }
+
+  public void testElifNotIndented() {
+    doTest();
+  }
+
+  public void testExcept() {
+    doTest();
+  }
+
+  public void testExceptNotIndented() {
+    doTest();
+  }
+
+  public void testFinallyInExcept() {
+    doTest();
+  }
+
+  public void testContinue() {
+    doTest();
+  }
+
+  public void testNoContinueInFinally() {
+    final String testName = "keywordCompletion/" + getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasic();
+    final List<String> lookupElementStrings = myFixture.getLookupElementStrings();
+    assertNotNull(lookupElementStrings);
+    assertDoesntContain(lookupElementStrings, "continue");
+  }
+
+  public void testNoElifBeforeElse() {
+    final String testName = "keywordCompletion/" + getTestName(true);
+    myFixture.configureByFile(testName + ".py");
+    myFixture.completeBasic();
+    final List<String> lookupElementStrings = myFixture.getLookupElementStrings();
+    assertNotNull(lookupElementStrings);
+    assertDoesntContain(lookupElementStrings, "elif");
+  }
+
+  public void testNoElseBeforeExcept() {
+    final List<String> lookupElementStrings = doTestByText("try:\n" +
+                                              "  a = 1\n" +
+                                              "<caret>");
+    assertNotNull(lookupElementStrings);
+    assertDoesntContain(lookupElementStrings, "else");
+  }
+
+  public void testElseInCondExpr() {  // PY-2397
+    doTest();
+  }
+
+  public void testFromDotImport() {  // PY-2772
+    doTest3K();
+  }
+
+  public void testLambdaInExpression() {  // PY-3150
+    doTest();
+  }
+
+  public void testNoneInArgList() {  // PY-3464
+    doTest3K();
+  }
+
+  // PY-5144
+  public void testImportKeyword() {
+    doTest();
+  }
+
+  public void testAsInWith() {  // PY-3701
+    setLanguageLevel(LanguageLevel.PYTHON27);
+    assertTrue(doTestByText("with open(foo) <caret>").contains("as"));
+  }
+
+  public void testAsInExcept() {  // PY-1846
+    setLanguageLevel(LanguageLevel.PYTHON27);
+    assertTrue(doTestByText("try:\n" +
+                            "    pass\n" +
+                            "except IOError <caret>").contains("as"));
+  }
+
+  public void testElseInFor() {  // PY-6755
+    assertTrue(doTestByText("for item in range(10):\n" +
+                            "    pass\n" +
+                            "el<caret>").contains("else"));
+  }
+
+  public void testForInComprehension() {  // PY-3687
+    assertContainsElements(doTestByText("L = [x fo<caret>]"), "for");
+    assertContainsElements(doTestByText("L = [x <caret>]"), "for");
+    assertContainsElements(doTestByText("L = [x <caret> x in y]"), "for");
+
+    assertDoesntContain(doTestByText("L = [<caret>]"), "for");
+    assertDoesntContain(doTestByText("L = [x for x <caret>]"), "for");
+    assertDoesntContain(doTestByText("L = [x for x <caret> in y]"), "for");
+  }
+
+  public void testInInComprehension() {  // PY-3687
+    assertContainsElements(doTestByText("L = [x for x <caret>]"), "in");
+    assertContainsElements(doTestByText("L = [x for x i<caret>]"), "in");
+    assertContainsElements(doTestByText("L = [x for x i<caret>n y]"), "in");
+
+    assertDoesntContain(doTestByText("L = [<caret>]"), "in");
+    assertDoesntContain(doTestByText("L = [x <caret> for]"), "in");
+    assertDoesntContain(doTestByText("L = [x <caret>]"), "in");
+  }
+
+  public void testInInFor() {  // PY-10248
+    assertContainsElements(doTestByText("for x <caret>]"), "in");
+    assertContainsElements(doTestByText("for x i<caret>]"), "in");
+    assertContainsElements(doTestByText("for x i<caret>n y:\n  pass]"), "in");
+  }
+}

@@ -19,6 +19,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author max
@@ -26,7 +27,7 @@ import com.intellij.openapi.project.Project;
 public class ProjectConfigurablesGroup extends ConfigurablesGroupBase implements ConfigurableGroup {
   private final Project myProject;
 
-  public ProjectConfigurablesGroup(Project project) {
+  public ProjectConfigurablesGroup(@NotNull Project project) {
     super(project, Configurable.PROJECT_CONFIGURABLE, true);
     myProject = project;
   }

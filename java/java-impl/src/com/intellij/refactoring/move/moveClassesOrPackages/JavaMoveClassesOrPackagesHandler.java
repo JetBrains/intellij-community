@@ -43,6 +43,7 @@ import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -138,12 +139,19 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     if (targetContainer instanceof PsiDirectory) {
       if (CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(adjustedElements), true)) {
         if (!packageHasMultipleDirectoriesInModule(project, (PsiDirectory)targetContainer)) {
-          new MoveClassesOrPackagesToNewDirectoryDialog((PsiDirectory)targetContainer, adjustedElements, callback).show();
+          createMoveClassesOrPackagesToNewDirectoryDialog((PsiDirectory)targetContainer, adjustedElements, callback).show();
           return;
         }
       }
     }
-    MoveClassesOrPackagesImpl.doMove(project, adjustedElements, targetContainer, callback);
+    doMoveWithMoveClassesDialog(project, adjustedElements, targetContainer, callback);
+  }
+
+  protected void doMoveWithMoveClassesDialog(final Project project,
+                                             PsiElement[] adjustedElements,
+                                             PsiElement initialTargetElement,
+                                             final MoveCallback moveCallback) {
+    MoveClassesOrPackagesImpl.doMove(project, adjustedElements, initialTargetElement, moveCallback);
   }
 
   private static void moveDirectoriesLibrariesSafe(Project project,
@@ -171,6 +179,13 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
                                  Messages.getWarningIcon()) == DialogWrapper.OK_EXIT_CODE) {
       moveAsDirectory(project, targetContainer, callback, directories);
     }
+  }
+
+  @NotNull
+  protected DialogWrapper createMoveClassesOrPackagesToNewDirectoryDialog(@NotNull final PsiDirectory directory,
+                                                                       PsiElement[] elementsToMove,
+                                                                       final MoveCallback moveCallback) {
+    return new MoveClassesOrPackagesToNewDirectoryDialog(directory, elementsToMove, moveCallback);
   }
 
   private static void moveAsDirectory(Project project,
@@ -445,7 +460,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
       if (adjustedElements == null) {
         return true;
       }
-      MoveClassesOrPackagesImpl.doMove(project, adjustedElements, initialTargetElement, null);
+      doMoveWithMoveClassesDialog(project, adjustedElements, initialTargetElement, null);
       return true;
     }
     return false;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,11 +89,11 @@ public class HtmlTagImpl extends XmlTagImpl implements HtmlTag {
   public String getNamespace() {
     final String xmlNamespace = super.getNamespace();
 
-    if (getNamespacePrefix().length() > 0) {
+    if (!getNamespacePrefix().isEmpty()) {
       return xmlNamespace;
     }
 
-    if (xmlNamespace.length() == 0 || xmlNamespace.equals(XmlUtil.XHTML_URI)) {
+    if (xmlNamespace.isEmpty() || xmlNamespace.equals(XmlUtil.XHTML_URI)) {
       return XmlUtil.HTML_URI;
     }
 

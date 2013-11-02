@@ -38,7 +38,7 @@ public class OpenLocalTerminalAction extends AnAction implements DumbAware {
   public static void runLocalTerminal(final Project project) {
     ToolWindow terminal = ToolWindowManager.getInstance(project).getToolWindow("Terminal");
     if (terminal.isActive()) {
-      TerminalView.getInstance().openLocalSession(project, terminal);
+      TerminalView.getInstance(project).openLocalSession(project, terminal);
     }
     terminal.activate(new Runnable() {
       @Override

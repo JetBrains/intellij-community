@@ -1,5 +1,5 @@
 /*
- * Copyright 2010 Bas Leijdekkers
+ * Copyright 2010-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.siyeh.ipp.asserttoif;
 
 import com.intellij.psi.*;
+import com.siyeh.ig.psiutils.TypeUtils;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class IfStatementPredicate implements PsiElementPredicate {
@@ -38,41 +39,28 @@ class IfStatementPredicate implements PsiElementPredicate {
       return false;
     }
     final PsiStatement thenBranch = statement.getThenBranch();
-    return isThrowNewAssertionError(thenBranch);
+    return throwsException(thenBranch);
   }
 
-  private static boolean isThrowNewAssertionError(PsiElement element) {
+  private static boolean throwsException(PsiElement element) {
     if (element instanceof PsiThrowStatement) {
-      final PsiThrowStatement throwStatement =
-        (PsiThrowStatement)element;
+      final PsiThrowStatement throwStatement = (PsiThrowStatement)element;
       final PsiExpression exception = throwStatement.getException();
       if (!(exception instanceof PsiNewExpression)) {
         return false;
       }
       final PsiNewExpression newExpression = (PsiNewExpression)exception;
-      final PsiJavaCodeReferenceElement classReference =
-        newExpression.getClassReference();
-      if (classReference == null) {
-        return false;
-      }
-      final PsiElement target = classReference.resolve();
-      if (!(target instanceof PsiClass)) {
-        return false;
-      }
-      final PsiClass aClass = (PsiClass)target;
-      final String qualifiedName = aClass.getQualifiedName();
-      return CommonClassNames.JAVA_LANG_ASSERTION_ERROR.equals(qualifiedName);
+      return TypeUtils.expressionHasTypeOrSubtype(newExpression, CommonClassNames.JAVA_LANG_THROWABLE);
     }
     else if (element instanceof PsiBlockStatement) {
-      final PsiBlockStatement blockStatement =
-        (PsiBlockStatement)element;
+      final PsiBlockStatement blockStatement = (PsiBlockStatement)element;
       final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
       final PsiStatement[] statements = codeBlock.getStatements();
       if (statements.length != 1) {
         return false;
       }
       final PsiStatement statement = statements[0];
-      return isThrowNewAssertionError(statement);
+      return throwsException(statement);
     }
     return false;
   }

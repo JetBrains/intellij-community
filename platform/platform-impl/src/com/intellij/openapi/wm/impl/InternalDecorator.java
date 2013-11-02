@@ -200,6 +200,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     }
 
     myToolWindow.getContentUI().setType(myInfo.getContentUiType());
+    setBorder(new InnerPanelBorder(myToolWindow));
   }
 
   @Override
@@ -314,7 +315,6 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
 
     contentPane.add(inner, BorderLayout.CENTER);
     add(contentPane, BorderLayout.CENTER);
-    setBorder(new InnerPanelBorder(myToolWindow));
     if (SystemInfo.isMac) {
       setBackground(new JBColor(Gray._200, Gray._90));
     }
@@ -332,7 +332,7 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
     myHeader.setAdditionalTitleActions(actions);
   }
 
-  private static class InnerPanelBorder implements Border {
+  private class InnerPanelBorder implements Border {
 
     private final ToolWindow myWindow;
 
@@ -370,7 +370,13 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
 
     @Override
     public Insets getBorderInsets(final Component c) {
-      if (myWindow.getType() == ToolWindowType.FLOATING) return new Insets(0, 0, 0, 0);
+      if (myProject == null) return new Insets(0, 0, 0, 0);
+      ToolWindowManager toolWindowManager =  ToolWindowManager.getInstance(myProject);
+      if (!(toolWindowManager instanceof ToolWindowManagerImpl)
+          || !((ToolWindowManagerImpl)toolWindowManager).isToolWindowRegistered(myInfo.getId())
+          || myWindow.getType() == ToolWindowType.FLOATING) {
+        return new Insets(0, 0, 0, 0);
+      }
       ToolWindowAnchor anchor = myWindow.getAnchor();
       Component component = myWindow.getComponent();
       Container parent = component.getParent();

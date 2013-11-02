@@ -51,6 +51,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.internal.DumpLookupElementWeights;
 import com.intellij.lang.LanguageStructureViewBuilder;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -395,12 +396,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @Override
   public long checkHighlighting() {
-    return checkHighlighting(true, true, true);
+    return checkHighlighting(true, false, true);
   }
 
   @Override
   public long testHighlighting(final String... filePaths) {
-    return testHighlighting(true, true, true, filePaths);
+    return testHighlighting(true, false, true, filePaths);
   }
 
   @Override
@@ -512,8 +513,10 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     List<HighlightInfo> infos = doHighlighting();
     ArrayList<IntentionAction> actions = new ArrayList<IntentionAction>();
     for (HighlightInfo info : infos) {
-      for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-        actions.add(pair.getFirst().getAction());
+      if (info.quickFixActionRanges != null) {
+        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
+          actions.add(pair.getFirst().getAction());
+        }
       }
     }
     return actions;
@@ -1490,6 +1493,17 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @NotNull
+  @Override
+  public List<HighlightInfo> doHighlighting(final HighlightSeverity minimalSeverity) {
+    return ContainerUtil.filter(doHighlighting(), new Condition<HighlightInfo>() {
+      @Override
+      public boolean value(HighlightInfo info) {
+        return info.getSeverity().compareTo(minimalSeverity) >= 0;
+      }
+    });
+  }
+
+  @NotNull
   public static List<HighlightInfo> instantiateAndRun(@NotNull PsiFile file,
                                                       @NotNull Editor editor,
                                                       @NotNull int[] toIgnore,
@@ -1801,9 +1815,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return "(" + startLine + ", " + startCol + ")-(" + endLine + ", " + endCol + ")";
   }
 
-  private static String stripTrailingSpaces(String actualText) {
+  private String stripTrailingSpaces(String actualText) {
     final Document document = EditorFactory.getInstance().createDocument(actualText);
-    ((DocumentImpl)document).stripTrailingSpaces();
+    ((DocumentImpl)document).stripTrailingSpaces(getProject());
     actualText = document.getText();
     return actualText;
   }

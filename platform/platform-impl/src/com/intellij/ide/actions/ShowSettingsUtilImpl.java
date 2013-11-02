@@ -80,7 +80,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
     Project actualProject = project != null ? project  : ProjectManager.getInstance().getDefaultProject();
     Configurable config = findByClass(new IdeConfigurablesGroup().getConfigurables(), configurableClass);
-    if (config == null) {
+    if (config == null && project != null) {
       config = findByClass(new ProjectConfigurablesGroup(project).getConfigurables(), configurableClass);
     }
 
@@ -103,23 +103,24 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   public void showSettingsDialog(@Nullable final Project project, @NotNull final String nameToSelect) {
     ConfigurableGroup[] group;
     if (project == null) {
-      group = new ConfigurableGroup[] {new IdeConfigurablesGroup()};
-    } else {
-      group = new ConfigurableGroup[] {new ProjectConfigurablesGroup(project), new IdeConfigurablesGroup()};
+      group = new ConfigurableGroup[]{new IdeConfigurablesGroup()};
+    }
+    else {
+      group = new ConfigurableGroup[]{new ProjectConfigurablesGroup(project), new IdeConfigurablesGroup()};
     }
 
-    Project actualProject = project != null ? project  : ProjectManager.getInstance().getDefaultProject();
+    Project actualProject = project != null ? project : ProjectManager.getInstance().getDefaultProject();
 
     group = filterEmptyGroups(group);
 
     OptionsEditorDialog dialog;
     if (Registry.is("ide.perProjectModality")) {
       dialog = new OptionsEditorDialog(actualProject, group, nameToSelect, true);
-    } else {
+    }
+    else {
       dialog = new OptionsEditorDialog(actualProject, group, nameToSelect);
     }
     dialog.show();
-
   }
 
   public static void showSettingsDialog(@Nullable Project project, final String id2Select, final String filter) {

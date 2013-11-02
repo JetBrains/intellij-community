@@ -180,16 +180,15 @@ public class MavenJDOMUtil {
     int firstDot = subPath.indexOf('.');
 
     if (firstDot == -1) {
-      //noinspection unchecked
-      return (List<Element>)container.getChildren(subPath);
+      return container.getChildren(subPath);
     }
 
     String childName = subPath.substring(0, firstDot);
     String pathInChild = subPath.substring(firstDot + 1);
 
     List<Element> result = new ArrayList<Element>();
-    //noinspection unchecked
-    for (Element each : (Iterable<? extends Element>)container.getChildren(childName)) {
+
+    for (Element each : container.getChildren(childName)) {
       Element child = findChildByPath(each, pathInChild);
       if (child != null) result.add(child);
     }

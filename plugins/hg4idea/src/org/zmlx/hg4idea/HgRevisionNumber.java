@@ -25,6 +25,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   private final String commitMessage;
   private final String author;
   private final List<HgRevisionNumber> parents;
+  private final String mySubject;
 
   private final boolean isWorkingVersion;
 
@@ -48,7 +49,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   public static HgRevisionNumber getInstance(String revision, String changeset) {
     return new HgRevisionNumber(revision, changeset, "", "", Collections.<HgRevisionNumber>emptyList());
   }
-  
+
   public static HgRevisionNumber getInstance(String revision, String changeset, List<HgRevisionNumber> parents) {
     return new HgRevisionNumber(revision, changeset, "", "", parents);
   }
@@ -57,13 +58,15 @@ public class HgRevisionNumber implements VcsRevisionNumber {
     return new HgRevisionNumber(revision, "", "", "", Collections.<HgRevisionNumber>emptyList());
   }
 
-  private HgRevisionNumber(String revision, String changeset, String author, String commitMessage, List<HgRevisionNumber> parents) {
+  public HgRevisionNumber(String revision, String changeset, String author, String commitMessage, List<HgRevisionNumber> parents) {
     this.commitMessage = commitMessage;
     this.author = author;
     this.parents = parents;
     this.revision = revision.trim();
     this.changeset = changeset.trim();
     isWorkingVersion = changeset.endsWith("+");
+    int subjectIndex = commitMessage.indexOf('\n');
+    mySubject = subjectIndex == -1 ? commitMessage : commitMessage.substring(subjectIndex);
   }
 
   public String getChangeset() {
@@ -91,6 +94,9 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   }
 
   public String asString() {
+    if (revision.isEmpty()) {
+      return changeset;
+    }
     return revision + ":" + changeset;
   }
 
@@ -133,7 +139,7 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   }
 
   /**
-   * Returns the numeric part of the revision, i. e. the revision without trailing '+' if one exists. 
+   * Returns the numeric part of the revision, i. e. the revision without trailing '+' if one exists.
    */
   public String getRevisionNumber() {
     if (isWorkingVersion) {
@@ -162,5 +168,9 @@ public class HgRevisionNumber implements VcsRevisionNumber {
   @Override
   public String toString() {
     return asString();
+  }
+
+  public String getSubject() {
+    return mySubject;
   }
 }

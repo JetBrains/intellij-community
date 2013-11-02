@@ -144,7 +144,7 @@ public abstract class CreateConstructorFromThisOrSuperFix extends CreateFromUsag
     PsiMethod method = (PsiMethod) methodCall.getMethodExpression().resolve();
     PsiExpressionList argumentList = methodCall.getArgumentList();
     List<PsiClass> classes = getTargetClasses(element);
-    return classes.size() > 0 && !CreateFromUsageUtils.shouldCreateConstructor(classes.get(0), argumentList, method);
+    return !classes.isEmpty() && !CreateFromUsageUtils.shouldCreateConstructor(classes.get(0), argumentList, method);
   }
 
   @Override

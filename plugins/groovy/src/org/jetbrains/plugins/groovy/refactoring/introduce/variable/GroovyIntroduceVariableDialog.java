@@ -196,7 +196,7 @@ public class GroovyIntroduceVariableDialog extends DialogWrapper implements GrIn
   @NotNull
   @Override
   public LinkedHashSet<String> suggestNames() {
-    return new GrVariableNameSuggester(myContext, myValidator);
+    return new GrVariableNameSuggester(myContext, myValidator).suggestNames();
   }
 
   private static class MyGroovyIntroduceVariableSettings implements GroovyIntroduceVariableSettings {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import java.util.List;
 public class ScriptSupportUtil {
   private static final Key<CachedValue<XmlTag[]>> CachedScriptTagsKey = Key.create("script tags");
   private static final ThreadLocal<String> ProcessingDeclarationsFlag = new ThreadLocal<String>();
-  private static final @NonNls String SCRIPT_TAG = "script";
+  @NonNls private static final String SCRIPT_TAG = "script";
 
   private ScriptSupportUtil() {
   }

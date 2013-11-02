@@ -68,8 +68,7 @@ public class XMLCatalogManagerTest extends LightPlatformCodeInsightFixtureTestCa
     myFixture.configureByFile("policy.xml");
     try {
       ExternalResourceManagerEx.getInstanceEx().setCatalogPropertiesFile(getTestDataPath() + "catalog.properties");
-      List<HighlightInfo> infos = myFixture.doHighlighting();
-      assertEquals(infos.toString(), 0, infos.size());
+      myFixture.checkHighlighting();
     }
     finally {
       ExternalResourceManagerEx.getInstanceEx().setCatalogPropertiesFile(null);

@@ -419,6 +419,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
   protected void setupCursorAndSelection(final Editor editor) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         Document document = editor.getDocument();
         final String text = document.getText();
@@ -491,7 +492,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
       public void run() {
         getProject().getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
         if (stripTrailingSpaces) {
-          ((DocumentImpl)myEditor.getDocument()).stripTrailingSpaces();
+          ((DocumentImpl)myEditor.getDocument()).stripTrailingSpaces(getProject());
         }
 
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
@@ -533,7 +534,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
         String newFileText1 = newFileText;
         if (stripTrailingSpaces) {
           Document document1 = EditorFactory.getInstance().createDocument(newFileText);
-          ((DocumentImpl)document1).stripTrailingSpaces();
+          ((DocumentImpl)document1).stripTrailingSpaces(getProject());
           newFileText1 = document1.getText();
         }
 

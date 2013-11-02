@@ -107,14 +107,15 @@ public class BraceHighlightingHandler {
                                                          @NotNull final Alarm alarm,
                                                          @NotNull final Processor<BraceHighlightingHandler> processor) {
     ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
+    final Project project = editor.getProject();
+    if (project == null || project.isDisposed()) return;
     if (!PROCESSED_EDITORS.add(editor)) {
       // Skip processing if that is not really necessary.
       // Assuming to be in EDT here.
       return;
     }
-    final Project project = editor.getProject();
-    if (project == null) return;
     final int offset = editor.getCaretModel().getOffset();
+    final PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
     JobLauncher.getInstance().submitToJobThread(Job.DEFAULT_PRIORITY, new Runnable() {
       @Override
       public void run() {
@@ -123,9 +124,7 @@ public class BraceHighlightingHandler {
           public void run() {
             final PsiFile injected;
             try {
-              if (isReallyDisposed(editor, project)) return;
-              PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(editor, project);
-              injected = psiFile == null || psiFile instanceof PsiCompiledElement
+              injected = psiFile == null || psiFile instanceof PsiCompiledElement || isReallyDisposed(editor, project)
                      ? null : getInjectedFileIfAny(editor, project, offset, psiFile, alarm);
             }
             catch (RuntimeException e) {
@@ -205,6 +204,8 @@ public class BraceHighlightingHandler {
   }
 
   void updateBraces() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     if (myPsiFile == null || !myPsiFile.isValid()) return;
 
     clearBraceHighlighters();

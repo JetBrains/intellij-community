@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     Pass.UPDATE_ALL,
     Pass.POST_UPDATE_ALL,
     Pass.LOCAL_INSPECTIONS,
+    Pass.WHOLE_FILE_LOCAL_INSPECTIONS,
     Pass.EXTERNAL_TOOLS,
   };
 
@@ -51,6 +52,7 @@ public class TextEditorBackgroundHighlighter implements BackgroundEditorHighligh
     Pass.POST_UPDATE_ALL,
     Pass.UPDATE_OVERRIDEN_MARKERS,
     Pass.LOCAL_INSPECTIONS,
+    Pass.WHOLE_FILE_LOCAL_INSPECTIONS,
     Pass.EXTERNAL_TOOLS,
   };
 

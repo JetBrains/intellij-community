@@ -33,6 +33,7 @@ import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 public abstract class TokenSets {
 
   public static final TokenSet COMMENTS_TOKEN_SET = TokenSet.create(
+      mSH_COMMENT,
       mSL_COMMENT,
       mML_COMMENT,
       GROOVY_DOC_COMMENT

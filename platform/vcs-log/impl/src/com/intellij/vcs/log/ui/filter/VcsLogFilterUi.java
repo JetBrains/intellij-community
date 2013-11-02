@@ -1,6 +1,6 @@
 package com.intellij.vcs.log.ui.filter;
 
-import com.intellij.vcs.log.data.VcsLogFilter;
+import com.intellij.vcs.log.VcsLogFilter;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;

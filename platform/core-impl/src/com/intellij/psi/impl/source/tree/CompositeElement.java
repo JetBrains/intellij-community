@@ -118,24 +118,24 @@ public class CompositeElement extends TreeElement {
 
   public void assertThreading() {
     if (ASSERT_THREADING) {
-      boolean ok = ApplicationManager.getApplication().isWriteAccessAllowed() ||
-                   //Thread.holdsLock(START_OFFSET_LOCK) ||
-                   isNonPhysicalOrInjected();
+      boolean ok = ApplicationManager.getApplication().isWriteAccessAllowed() || isNonPhysicalOrInjected();
       if (!ok) {
-        FileElement fileElement;
-        PsiFile psiFile;
-        LOG.error("Threading assertion. " +
-                  " Under write: " + ApplicationManager.getApplication().isWriteAccessAllowed() +
-                  "; Thread.holdsLock(PsiLock.LOCK): " + Thread.holdsLock(PsiLock.LOCK) +
-                  "; wrapper: " + myWrapper +
-                  "; wrapper.isPhysical(): " + (myWrapper != null && myWrapper.isPhysical()) +
-                  "; fileElement: " +(fileElement = TreeUtil.getFileElement(this))+
-                  "; psiFile: " + (psiFile = fileElement == null ? null : (PsiFile)fileElement.getPsi()) +
-                  "; psiFile.getViewProvider(): " + (psiFile == null ? null : psiFile.getViewProvider()) +
-                  "; psiFile.isPhysical(): " + (psiFile != null && psiFile.isPhysical())
-        );
+        LOG.error("Threading assertion. " + getThreadingDiagnostics());
       }
     }
+  }
+
+  private String getThreadingDiagnostics() {
+    FileElement fileElement;PsiFile psiFile;
+    return " Under write: " + ApplicationManager.getApplication().isWriteAccessAllowed() +
+           "; Thread.holdsLock(PsiLock.LOCK): " + Thread.holdsLock(PsiLock.LOCK) +
+           "; wrapper: " + myWrapper +
+           "; wrapper.isPhysical(): " + (myWrapper != null && myWrapper.isPhysical()) +
+           "; fileElement: " + (fileElement = TreeUtil.getFileElement(this)) +
+           "; psiFile: " + (psiFile = fileElement == null ? null : (PsiFile)fileElement.getPsi()) +
+           "; psiFile.getViewProvider(): " + (psiFile == null ? null : psiFile.getViewProvider()) +
+           "; psiFile.isPhysical(): " + (psiFile != null && psiFile.isPhysical()) +
+           "; nonPhysicalOrInjected: " + isNonPhysicalOrInjected();
   }
 
   private boolean isNonPhysicalOrInjected() {
@@ -290,8 +290,8 @@ public class CompositeElement extends TreeElement {
         "; current:"+myModificationsCount+
         "; myHC:"+myHC+
         "; assertThreading:"+ASSERT_THREADING+
-        "; Thread.holdsLock(PSI_LOCK):"+Thread.holdsLock(PsiLock.LOCK)+
-        "; this: " + this);
+        "; this: " + this + 
+        "\n" + getThreadingDiagnostics());
     }
 
     char[] buffer = new char[len];

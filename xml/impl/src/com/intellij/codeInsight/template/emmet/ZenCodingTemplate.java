@@ -280,7 +280,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
     final TextFieldWithStoredHistory field = new TextFieldWithStoredHistory(EMMET_RECENT_WRAP_ABBREVIATIONS_KEY);
     field.setHistorySize(10);
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    final Balloon balloon = popupFactory.createDialogBalloonBuilder(field, XmlBundle.message("zen.coding.title"))
+    final Balloon balloon = popupFactory.createDialogBalloonBuilder(field, XmlBundle.message("emmet.title"))
       .setCloseButtonEnabled(false)
       .setAnimationCycle(0)
       .setHideOnClickOutside(true)
@@ -377,7 +377,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
 
   @NotNull
   public String getTitle() {
-    return XmlBundle.message("zen.coding.title");
+    return XmlBundle.message("emmet.title");
   }
 
   public char getShortcut() {

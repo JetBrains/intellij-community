@@ -1070,10 +1070,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
             place = ref;
           }
         }
-        if (PsiTreeUtil.isAncestor(aClass, place, false) && aClass.hasTypeParameters()) {
+        if (place != null && PsiTreeUtil.isAncestor(aClass, place, false) && aClass.hasTypeParameters()) {
           myHolder.add(HighlightClassUtil.checkCreateInnerClassFromStaticContext(ref, place, (PsiClass)resolved));
         }
-      } else if (resolved instanceof PsiTypeParameter) {
+      }
+      else if (resolved instanceof PsiTypeParameter) {
         final PsiTypeParameterListOwner owner = ((PsiTypeParameter)resolved).getOwner();
         if (owner instanceof PsiClass) {
           final PsiClass outerClass = (PsiClass)owner;
@@ -1335,6 +1336,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   public void visitTypeCastExpression(PsiTypeCastExpression typeCast) {
     super.visitTypeCastExpression(typeCast);
     try {
+      if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkIntersectionInTypeCast(typeCast));
       if (!myHolder.hasErrorResults()) myHolder.add(HighlightUtil.checkInconvertibleTypeCast(typeCast));
     }
     catch (IndexNotReadyException ignore) {

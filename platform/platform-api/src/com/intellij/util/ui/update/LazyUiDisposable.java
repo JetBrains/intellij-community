@@ -25,6 +25,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,8 +55,8 @@ public abstract class LazyUiDisposable<T extends Disposable> implements Activata
     if (myWasEverShown) return;
 
     try {
-      findParentDisposable().doWhenDone(new AsyncResult.Handler<Disposable>() {
-        public void run(Disposable parent) {
+      findParentDisposable().doWhenDone(new Consumer<Disposable>() {
+        public void consume(Disposable parent) {
           Project project = null;
           if (ApplicationManager.getApplication() != null) {
             project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
@@ -85,8 +86,8 @@ public abstract class LazyUiDisposable<T extends Disposable> implements Activata
     if (defaultValue == null) {
       if (ApplicationManager.getApplication() != null) {
         final AsyncResult<Disposable> result = new AsyncResult<Disposable>();
-        DataManager.getInstance().getDataContextFromFocus().doWhenDone(new AsyncResult.Handler<DataContext>() {
-          public void run(DataContext context) {
+        DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
+          public void consume(DataContext context) {
             Disposable disposable = key.getData(context);
             if (disposable == null) {
               disposable = Disposer.get("ui");

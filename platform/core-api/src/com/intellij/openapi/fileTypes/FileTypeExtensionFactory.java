@@ -20,12 +20,14 @@
 package com.intellij.openapi.fileTypes;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.KeyedFactoryEPBean;
 import com.intellij.openapi.util.KeyedExtensionFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public class FileTypeExtensionFactory<T> extends KeyedExtensionFactory<T, FileType> {
-  public FileTypeExtensionFactory(@NotNull final Class<T> interfaceClass, @NonNls @NotNull final String epName) {
+  public FileTypeExtensionFactory(@NotNull final Class<T> interfaceClass, @NonNls @NotNull final ExtensionPointName<KeyedFactoryEPBean> epName) {
     super(interfaceClass, epName, ApplicationManager.getApplication().getPicoContainer());
   }
 

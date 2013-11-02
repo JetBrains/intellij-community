@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.plugins.groovy.refactoring.introduce.variable;
 
 import com.intellij.openapi.editor.Editor;
@@ -21,12 +20,9 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiType;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
-import com.intellij.refactoring.util.CanonicalTypes;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
@@ -44,10 +40,8 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
 import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
 import org.jetbrains.plugins.groovy.refactoring.introduce.StringPartInfo;
 
-import java.util.List;
-
 /**
- * @author ilyas
+ * Created by Max Medvedev on 10/29/13
  */
 public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyIntroduceVariableSettings, GrControlFlowOwner> {
   public static final String DUMMY_NAME = "________________xxx_________________";
@@ -125,8 +119,7 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   public GrVariable runRefactoring(@NotNull final GrIntroduceContext context, @NotNull final GroovyIntroduceVariableSettings settings) {
     // Generating variable declaration
 
-    final GrVariableDeclaration varDecl = generateDeclaration(context, settings);
-    GrVariable insertedVar = processExpression(context, settings, varDecl);
+    GrVariable insertedVar = processExpression(context, settings, true);
 
     if (context.getEditor() != null && getPositionMarker() != null) {
       context.getEditor().getCaretModel().moveToOffset(getPositionMarker().getEndOffset());
@@ -136,57 +129,11 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   }
 
   @Override
-  protected GrInplaceVariableIntroducer getIntroducer(@NotNull GrVariable var,
-                                                      @NotNull GrIntroduceContext context,
-                                                      @NotNull GroovyIntroduceVariableSettings settings,
-                                                      @NotNull List<RangeMarker> occurrenceMarkers,
-                                                      RangeMarker varRangeMarker, RangeMarker expressionRangeMarker,
-                                                      RangeMarker stringPartRangeMarker) {
-    context.getEditor().getCaretModel().moveToOffset(var.getTextOffset());
-    return new GrInplaceVariableIntroducer(var, context.getEditor(), context.getProject(), REFACTORING_NAME, occurrenceMarkers, var);
-  }
-
-  @Override
-  protected GroovyIntroduceVariableSettings getSettingsForInplace(final GrIntroduceContext context, final OccurrencesChooser.ReplaceChoice choice) {
-    return new GroovyIntroduceVariableSettings() {
-      private final CanonicalTypes.Type myType;
-      private final String myName;
-
-
-      {
-        GrExpression expression = context.getExpression();
-        StringPartInfo stringPart = context.getStringPart();
-        GrVariable var = context.getVar();
-        PsiType type = expression != null ? expression.getType() :
-                       var != null ? var.getType() :
-                       stringPart != null ? stringPart.getLiteral().getType() :
-                       null;
-        myType = type != null ?CanonicalTypes.createTypeWrapper(type) : null;
-
-        myName = new GrVariableNameSuggester(context, new GroovyVariableValidator(context)).suggestNames().iterator().next();
-      }
-
-
+  protected GrInplaceVariableIntroducer getIntroducer(@NotNull GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
+    return new GrInplaceVariableIntroducer(getRefactoringName(), choice, context) {
       @Override
-      public boolean isDeclareFinal() {
-        return false;
-      }
-
-      @Nullable
-      @Override
-      public String getName() {
-        return myName;
-      }
-
-      @Override
-      public boolean replaceAllOccurrences() {
-        return choice == OccurrencesChooser.ReplaceChoice.ALL;
-      }
-
-      @Nullable
-      @Override
-      public PsiType getSelectedType() {
-        return myType != null ? myType.getType(context.getPlace(), context.getPlace().getManager()) : null;
+      protected GrVariable runRefactoring(GrIntroduceContext context, GroovyIntroduceVariableSettings settings, boolean processUsages) {
+        return processExpression(context, settings, processUsages);
       }
     };
   }
@@ -212,24 +159,31 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
   @NotNull
   private GrVariable processExpression(@NotNull GrIntroduceContext context,
                                        @NotNull GroovyIntroduceVariableSettings settings,
-                                       @NotNull GrVariableDeclaration varDecl) {
+                                       boolean processUsages) {
+    GrVariableDeclaration varDecl = generateDeclaration(context, settings);
+
     if (context.getStringPart() != null) {
       final GrExpression ref = processLiteral(DUMMY_NAME, context.getStringPart(), context.getProject());
-      return doProcessExpression(context, settings, varDecl, new PsiElement[]{ref}, ref);
+      return doProcessExpression(context, settings, varDecl, new PsiElement[]{ref}, ref, processUsages);
     }
     else {
       final GrExpression expression = context.getExpression();
       assert expression != null;
-      return doProcessExpression(context, settings, varDecl, context.getOccurrences(), expression);
+      return doProcessExpression(context, settings, varDecl, context.getOccurrences(), expression, processUsages);
     }
   }
 
-  private GrVariable doProcessExpression(@NotNull GrIntroduceContext context,
+  private GrVariable doProcessExpression(@NotNull final GrIntroduceContext context,
                                          @NotNull GroovyIntroduceVariableSettings settings,
                                          @NotNull GrVariableDeclaration varDecl,
                                          @NotNull PsiElement[] elements,
-                                         @NotNull GrExpression expression) {
-    return new GrIntroduceLocalVariableProcessor(context, settings, elements, expression, this).processExpression(varDecl);
+                                         @NotNull GrExpression expression, boolean processUsages) {
+    return new GrIntroduceLocalVariableProcessor(context, settings, elements, expression, processUsages) {
+      @Override
+      protected void refreshPositionMarker(PsiElement e) {
+        GrIntroduceVariableHandler.this.refreshPositionMarker(context.getEditor().getDocument().createRangeMarker(e.getTextRange()));
+      }
+    }.processExpression(varDecl);
   }
 
   @NotNull

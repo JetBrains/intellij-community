@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,7 @@ public class ClassPresentationProvider implements ItemPresentationProvider<PsiCl
         if (file instanceof PsiClassOwner) {
           PsiClassOwner classOwner = (PsiClassOwner)file;
           String packageName = classOwner.getPackageName();
-          if (packageName.length() == 0) return null;
+          if (packageName.isEmpty()) return null;
           return "(" + packageName + ")";
         }
         return null;

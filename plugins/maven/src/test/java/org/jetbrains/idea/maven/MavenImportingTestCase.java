@@ -45,6 +45,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
@@ -231,7 +232,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     assertModuleLibDepPath(lib, JavadocOrderRootType.getInstance(), javadocPaths);
   }
 
-  private void assertModuleLibDepPath(LibraryOrderEntry lib, OrderRootType type, List<String> paths) {
+  private static void assertModuleLibDepPath(LibraryOrderEntry lib, OrderRootType type, List<String> paths) {
     if (paths == null) return;
     assertUnorderedPathsAreEqual(Arrays.asList(lib.getRootUrls(type)), paths);
     // also check the library because it may contain slight different set of urls (e.g. with duplicates)
@@ -497,9 +498,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     final MavenArtifactDownloader.DownloadResult[] unresolved = new MavenArtifactDownloader.DownloadResult[1];
 
     AsyncResult<MavenArtifactDownloader.DownloadResult> result = new AsyncResult<MavenArtifactDownloader.DownloadResult>();
-    result.doWhenDone(new AsyncResult.Handler<MavenArtifactDownloader.DownloadResult>() {
+    result.doWhenDone(new Consumer<MavenArtifactDownloader.DownloadResult>() {
       @Override
-      public void run(MavenArtifactDownloader.DownloadResult unresolvedArtifacts) {
+      public void consume(MavenArtifactDownloader.DownloadResult unresolvedArtifacts) {
         unresolved[0] = unresolvedArtifacts;
       }
     });

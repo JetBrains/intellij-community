@@ -43,6 +43,7 @@ public class PersistentHashMapValueStorage {
   private static final int CACHE_PROBATIONAL_QUEUE_SIZE = 20;
 
   private static final FileAccessorCache<DataOutputStream> ourAppendersCache = new FileAccessorCache<DataOutputStream>(CACHE_PROTECTED_QUEUE_SIZE, CACHE_PROBATIONAL_QUEUE_SIZE) {
+    @Override
     @NotNull
     public CacheValue<DataOutputStream> createValue(String path) {
       try {
@@ -55,6 +56,7 @@ public class PersistentHashMapValueStorage {
   };
 
   private static final FileAccessorCache<RAReader> ourReadersCache = new FileAccessorCache<RAReader>(CACHE_PROTECTED_QUEUE_SIZE, CACHE_PROBATIONAL_QUEUE_SIZE) {
+    @Override
     @NotNull
     public CacheValue<RAReader> createValue(String path) {
       return new CachedReader(new FileReader(new File(path)));
@@ -154,7 +156,7 @@ public class PersistentHashMapValueStorage {
       final long readStartOffset = lastReadOffset - bytesRead;
       myCompactionModeReader.get(readStartOffset, buffer, 0, bytesRead); // buffer contains [readStartOffset, readStartOffset + bytesRead)
 
-      while(records.size() > 0) {
+      while(!records.isEmpty()) {
         final PersistentHashMap.CompactionRecordInfo info = records.peek();
         if (info.valueAddress >= readStartOffset) {
           if (info.valueAddress >= lastReadOffset) {
@@ -440,11 +442,13 @@ public class PersistentHashMapValueStorage {
       }
     }
 
+    @Override
     public void get(final long addr, final byte[] dst, final int off, final int len) throws IOException {
       myFile.seek(addr);
       myFile.read(dst, off, len);
     }
 
+    @Override
     public void dispose() {
       try {
         myFile.close();
@@ -455,12 +459,13 @@ public class PersistentHashMapValueStorage {
     }
   }
 
-  private static abstract class FileAccessorCache<T> extends SLRUCache<String, CacheValue<T>> {
+  private abstract static class FileAccessorCache<T> extends SLRUCache<String, CacheValue<T>> {
     private final Object myLock = new Object();
     private FileAccessorCache(int protectedQueueSize, int probationalQueueSize) {
       super(protectedQueueSize, probationalQueueSize);
     }
 
+    @Override
     @NotNull
     public final CacheValue<T> get(String key) {
       synchronized (myLock) {
@@ -481,12 +486,14 @@ public class PersistentHashMapValueStorage {
       }
     }
 
+    @Override
     public boolean remove(String key) {
       synchronized (myLock) {
         return super.remove(key);
       }
     }
 
+    @Override
     protected final void onDropFromCache(String key, CacheValue<T> value) {
       value.release();
     }
@@ -497,6 +504,7 @@ public class PersistentHashMapValueStorage {
       super(os);
     }
 
+    @Override
     protected void disposeAccessor(DataOutputStream os) {
       try {
         os.close();
@@ -512,6 +520,7 @@ public class PersistentHashMapValueStorage {
       super(reader);
     }
 
+    @Override
     protected void disposeAccessor(RAReader reader) {
       reader.dispose();
     }

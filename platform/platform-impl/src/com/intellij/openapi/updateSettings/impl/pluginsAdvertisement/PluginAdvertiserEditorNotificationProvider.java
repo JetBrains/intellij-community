@@ -29,13 +29,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * User: anna
@@ -63,16 +61,29 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
     if (file.getFileType() != PlainTextFileType.INSTANCE) return null;
 
     final String extension = file.getExtension();
-    if (extension == null) return null;
-    if (myEnabledExtensions.contains(extension) ||
-        UnknownFeaturesCollector.getInstance(myProject).isIgnored(createExtensionFeature(extension))) return null;
+    final String fileName = file.getName();
+    if (extension != null && isIgnored(extension) || isIgnored(fileName)) return null;
 
     final PluginsAdvertiser.KnownExtensions knownExtensions = PluginsAdvertiser.loadExtensions();
     if (knownExtensions != null) {
-      final Set<String> plugins = knownExtensions.find(extension);
-      if (plugins != null && !plugins.isEmpty()) {
-        return createPanel(extension, plugins); 
+      final EditorNotificationPanel panel = extension != null ? createPanel("*." + extension, knownExtensions) : null;
+      if (panel != null) {
+        return panel;
       }
+      return createPanel(fileName, knownExtensions);
+    }
+    return null;
+  }
+
+  private boolean isIgnored(String extension) {
+    return myEnabledExtensions.contains(extension) ||
+           UnknownFeaturesCollector.getInstance(myProject).isIgnored(createExtensionFeature(extension));
+  }
+
+  private EditorNotificationPanel createPanel(String extension, PluginsAdvertiser.KnownExtensions knownExtensions) {
+    Set<String> plugins = knownExtensions.find(extension);
+    if (plugins != null && !plugins.isEmpty()) {
+      return createPanel(extension, plugins);
     }
     return null;
   }
@@ -80,7 +91,7 @@ public class PluginAdvertiserEditorNotificationProvider extends EditorNotificati
   @NotNull
   private EditorNotificationPanel createPanel(final String extension, final Set<String> plugins) {
     final EditorNotificationPanel panel = new EditorNotificationPanel();
-    panel.setText("Plugins supporting files with *." + extension + " are found");
+    panel.setText("Plugins supporting files with " + extension + " are found");
     final IdeaPluginDescriptor disabledPlugin = getDisabledPlugin(plugins);
     if (disabledPlugin != null) {
       panel.createActionLabel("Enable " + disabledPlugin.getName() + " plugin", new Runnable() {

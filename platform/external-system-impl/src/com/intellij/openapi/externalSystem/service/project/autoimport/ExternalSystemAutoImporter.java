@@ -295,7 +295,7 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
   }
 
   private void refreshFilesIfNecessary() {
-    if (myFilesToRefresh.isEmpty()) {
+    if (myFilesToRefresh.isEmpty() || myProject.isDisposed()) {
       return;
     }
 

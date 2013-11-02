@@ -289,8 +289,47 @@ public class HighlightUtil extends HighlightUtilBase {
 
 
   @Nullable
+  static HighlightInfo checkIntersectionInTypeCast(@NotNull PsiTypeCastExpression expression) {
+    final PsiTypeElement castTypeElement = expression.getCastType();
+    if (castTypeElement == null) return null;
+    PsiType castType = castTypeElement.getType();
+    if (isIntersection(castTypeElement, castType)) {
+      if (PsiUtil.isLanguageLevel8OrHigher(expression)) {
+        final PsiTypeElement[] conjuncts = PsiTreeUtil.getChildrenOfType(castTypeElement, PsiTypeElement.class);
+        if (conjuncts != null) {
+          final List<PsiTypeElement> conjList = new ArrayList<PsiTypeElement>(Arrays.asList(conjuncts));
+          for (int i = 1; i < conjuncts.length; i++) {
+            final PsiTypeElement conjunct = conjuncts[i];
+            final PsiType conjType = conjunct.getType();
+            if (conjType instanceof PsiClassType) {
+              final PsiClass aClass = ((PsiClassType)conjType).resolve();
+              if (aClass != null && !aClass.isInterface()) {
+                final HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                  .range(conjunct)
+                  .descriptionAndTooltip(JavaErrorMessages.message("interface.expected")).create();
+                QuickFixAction.registerQuickFixAction(errorResult, new FlipIntersectionSidesFix(aClass.getName(), conjList, conjunct, castTypeElement), null);
+                return errorResult;
+              }
+            }
+          }
+        }
+      } else {
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .range(expression)
+          .descriptionAndTooltip("Intersection types in cast are not supported at this language level").create();
+      }
+    }
+    return null;
+  }
+
+  static boolean isIntersection(PsiTypeElement castTypeElement, PsiType castType) {
+    if (castType instanceof PsiIntersectionType) return true;
+    return castType instanceof PsiClassType && PsiTreeUtil.getChildrenOfType(castTypeElement, PsiTypeElement.class) != null;
+  }
+  
+  @Nullable
   static HighlightInfo checkInconvertibleTypeCast(@NotNull PsiTypeCastExpression expression) {
-    PsiTypeElement castTypeElement = expression.getCastType();
+    final PsiTypeElement castTypeElement = expression.getCastType();
     if (castTypeElement == null) return null;
     PsiType castType = castTypeElement.getType();
 
@@ -306,6 +345,7 @@ public class HighlightUtil extends HighlightUtilBase {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
     }
 
+    
     return null;
   }
 
@@ -1723,7 +1763,7 @@ public class HighlightUtil extends HighlightUtilBase {
     if (expression.getTextRange().getStartOffset() >= referencedField.getTextRange().getEndOffset()) return null;
     // only simple reference can be illegal
     if (expression.getQualifierExpression() != null) return null;
-    PsiField initField = findEnclosingFieldInitializer(expression);
+    PsiField initField = findEnclosingFieldInitializer(expression, true);
     PsiClassInitializer classInitializer = findParentClassInitializer(expression);
     if (initField == null && classInitializer == null) return null;
     // instance initializers may access static fields
@@ -1743,7 +1783,12 @@ public class HighlightUtil extends HighlightUtilBase {
    * @return field that has initializer with this element as subexpression or null if not found
    */
   @Nullable
-  static PsiField findEnclosingFieldInitializer(@Nullable PsiElement element) {
+  public static PsiField findEnclosingFieldInitializer(@Nullable PsiElement element) {
+    return findEnclosingFieldInitializer(element, false);
+  }
+
+  @Nullable
+  public static PsiField findEnclosingFieldInitializer(@Nullable PsiElement element, boolean stopAtLambda) {
     while (element != null) {
       PsiElement parent = element.getParent();
       if (parent instanceof PsiField) {
@@ -1751,7 +1796,7 @@ public class HighlightUtil extends HighlightUtilBase {
         if (element == field.getInitializer()) return field;
         if (field instanceof PsiEnumConstant && element == ((PsiEnumConstant)field).getArgumentList()) return field;
       }
-      if (element instanceof PsiClass || element instanceof PsiMethod || parent instanceof PsiLambdaExpression) return null;
+      if (element instanceof PsiClass || element instanceof PsiMethod || (stopAtLambda && parent instanceof PsiLambdaExpression)) return null;
       element = parent;
     }
     return null;

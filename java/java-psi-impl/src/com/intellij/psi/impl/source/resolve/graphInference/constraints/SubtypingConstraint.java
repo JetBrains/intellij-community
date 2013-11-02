@@ -29,7 +29,7 @@ import java.util.List;
 public class SubtypingConstraint implements ConstraintFormula {
   private PsiType myS;
   private PsiType myT;
-  private boolean myIsRefTypes;
+  private final boolean myIsRefTypes;
 
   public SubtypingConstraint(PsiType t, PsiType s, boolean isRefTypes) {
     myT = t;
@@ -148,13 +148,14 @@ public class SubtypingConstraint implements ConstraintFormula {
         if (myS instanceof PsiWildcardType) {
           return inferenceVariable != null && inferenceVariable.isCaptured();
         } else {
-          if (inferenceVariable != null) {
-            inferenceVariable.addBound(myS, InferenceBound.EQ);
+          final InferenceVariable inferenceVariableS = session.getInferenceVariable(myS);
+          if (inferenceVariableS != null) {
+            inferenceVariableS.addBound(myT, InferenceBound.EQ);
             return true;
           }
-          inferenceVariable = session.getInferenceVariable(myS);
+
           if (inferenceVariable != null) {
-            inferenceVariable.addBound(myT, InferenceBound.EQ);
+            inferenceVariable.addBound(myS, InferenceBound.EQ);
             return true;
           }
           constraints.add(new SubtypingConstraint(myT, myS, true));

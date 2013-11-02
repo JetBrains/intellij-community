@@ -38,7 +38,7 @@ public interface TestFramework {
 
   boolean isLibraryAttached(@NotNull Module module);
 
-  @NotNull
+  @Nullable
   String getLibraryPath();
 
   @Nullable

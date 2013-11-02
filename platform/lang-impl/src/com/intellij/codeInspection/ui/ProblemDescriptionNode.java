@@ -17,17 +17,20 @@
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.GlobalInspectionContextImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+
+import static com.intellij.codeInspection.ProblemDescriptorUtil.APPEND_LINE_NUMBER;
+import static com.intellij.codeInspection.ProblemDescriptorUtil.TRIM_AT_TREE_END;
 
 /**
  * @author max
@@ -136,6 +139,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
     if (descriptor == null) return "";
     PsiElement element = descriptor instanceof ProblemDescriptor ? ((ProblemDescriptor)descriptor).getPsiElement() : null;
 
-    return ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element, true)/*.replaceAll("<[^>]*>", "")*/;
+    return XmlStringUtil.stripHtml(ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element,
+                                                                                  APPEND_LINE_NUMBER | TRIM_AT_TREE_END));
   }
 }

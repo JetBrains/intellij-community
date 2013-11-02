@@ -21,6 +21,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.repo.HgRepositoryReader;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,6 +37,8 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
   @NotNull private File myHgDir;
   @NotNull private Collection<String> myBranches;
   @NotNull private Collection<String> myBookmarks;
+  @NotNull private Collection<String> myTags;
+  @NotNull private Collection<String> myLocalTags;
 
   @Override
   public void setUp() throws Exception {
@@ -51,14 +54,20 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
     File testBranchFile = new File(testHgDir, "branch");
     File testBookmarkFile = new File(testHgDir, "bookmarks");
     File testCurrentBookmarkFile = new File(testHgDir, "bookmarks.current");
+    File testTagFile = new File(testHgDir.getParentFile(), ".hgtags");
+    File testLocalTagFile = new File(testHgDir, "localtags");
     FileUtil.copyDir(cacheDir, new File(myHgDir, "cache"));
     FileUtil.copy(testBranchFile, new File(myHgDir, "branch"));
     FileUtil.copy(testBookmarkFile, new File(myHgDir, "bookmarks"));
     FileUtil.copy(testCurrentBookmarkFile, new File(myHgDir, "bookmarks.current"));
+    FileUtil.copy(testTagFile, new File(myHgDir.getParentFile(), ".hgtags"));
+    FileUtil.copy(testLocalTagFile, new File(myHgDir, "localtags"));
 
     myRepositoryReader = new HgRepositoryReader(myHgDir);
     myBranches = readBranches();
-    myBookmarks = readBookmarks();
+    myBookmarks = readRefs(testBookmarkFile);
+    myTags = readRefs(testTagFile);
+    myLocalTags = readRefs(testLocalTagFile);
   }
 
   public void testHEAD() {
@@ -71,13 +80,23 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
   }
 
   public void testBranches() {
-    Collection<String> branches = myRepositoryReader.readBranches();
+    Collection<String> branches = HgUtil.getNamesWithoutHashes(myRepositoryReader.readBranches());
     TestRepositoryUtil.assertEqualCollections(branches, myBranches);
   }
 
   public void testBookmarks() {
-    Collection<String> bookmarks = myRepositoryReader.readBookmarks();
+    Collection<String> bookmarks = HgUtil.getNamesWithoutHashes(myRepositoryReader.readBookmarks());
     TestRepositoryUtil.assertEqualCollections(bookmarks, myBookmarks);
+  }
+
+  public void testTags() {
+    Collection<String> tags = HgUtil.getNamesWithoutHashes(myRepositoryReader.readTags());
+    TestRepositoryUtil.assertEqualCollections(tags, myTags);
+  }
+
+  public void testLocalTags() {
+    Collection<String> localTags = HgUtil.getNamesWithoutHashes(myRepositoryReader.readLocalTags());
+    TestRepositoryUtil.assertEqualCollections(localTags, myLocalTags);
   }
 
   @NotNull
@@ -99,15 +118,14 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
   }
 
   @NotNull
-  private Collection<String> readBookmarks() throws IOException {
-    Collection<String> bookmarks = new HashSet<String>();
-    File bookmarksFile = new File(myHgDir, "bookmarks");
-    String[] bookmarksWithHashes = FileUtil.loadFile(bookmarksFile).split("\n");
-    for (String str : bookmarksWithHashes) {
+  private static Collection<String> readRefs(@NotNull File refFile) throws IOException {
+    Collection<String> refs = new HashSet<String>();
+    String[] refsWithHashes = FileUtil.loadFile(refFile).split("\n");
+    for (String str : refsWithHashes) {
       String[] refAndName = str.trim().split(" ");
       assertEquals(2, refAndName.length);
-      bookmarks.add(refAndName[1]);
+      refs.add(refAndName[1]);
     }
-    return bookmarks;
+    return refs;
   }
 }

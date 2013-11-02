@@ -18,11 +18,10 @@ package org.jetbrains.plugins.gradle.service.resolve;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
-import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.util.GradleLog;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -37,7 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 
-import java.util.Set;
+import java.util.Arrays;
 
 /**
  * @author Vladislav.Soroka
@@ -92,6 +91,12 @@ public class GradleResolverUtil {
     PsiClass closureClass =
       psiManager.findClassWithCache(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, place.getResolveScope());
     if (closureClass == null) return null;
+
+    if (closureClass.getTypeParameters().length != 1) {
+      GradleLog.LOG.debug(String.format("Unexpected type parameters found for closureClass(%s) : (%s)",
+                                        closureClass, Arrays.toString(closureClass.getTypeParameters())));
+      return null;
+    }
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(place.getManager().getProject());
 
@@ -150,19 +155,19 @@ public class GradleResolverUtil {
     int argsCount = getGrMethodArumentsCount(args);
     argsCount++; // Configuration name is delivered as an argument.
 
-    for (PsiMethod method : handlerClass.findMethodsByName(methodName, false)) {
-      if (method.getParameterList().getParametersCount() == argsCount) {
+    // handle setter's shortcut facilities
+    final String setter = GroovyPropertyUtils.getSetterName(methodName);
+    for (PsiMethod method : handlerClass.findMethodsByName(setter, false)) {
+      if (method.getParameterList().getParametersCount() == 1) {
         builder.setNavigationElement(method);
         return;
       }
     }
 
-    // handle setter's shortcut facilities
-    final String setter = GroovyPropertyUtils.getSetterName(methodName);
-    for (PsiMethod method : handlerClass.findMethodsByName(setter, false)) {
-      if (method.getParameterList().getParametersCount() == 1) {
-      builder.setNavigationElement(method);
-      return;
+    for (PsiMethod method : handlerClass.findMethodsByName(methodName, false)) {
+      if (method.getParameterList().getParametersCount() == argsCount) {
+        builder.setNavigationElement(method);
+        return;
       }
     }
 
@@ -181,10 +186,22 @@ public class GradleResolverUtil {
                                          @NotNull ResolveState state,
                                          @NotNull PsiElement place,
                                          @NotNull String... fqNames) {
+    processDeclarations(null, psiManager, processor, state, place, fqNames);
+  }
+
+  public static void processDeclarations(@Nullable String methodName,
+                                         @NotNull GroovyPsiManager psiManager,
+                                         @NotNull PsiScopeProcessor processor,
+                                         @NotNull ResolveState state,
+                                         @NotNull PsiElement place,
+                                         @NotNull String... fqNames) {
     for (String fqName : fqNames) {
       PsiClass psiClass = psiManager.findClassWithCache(fqName, place.getResolveScope());
       if (psiClass != null) {
         psiClass.processDeclarations(processor, state, null, place);
+        if (methodName != null) {
+          processMethod(methodName, psiClass, processor, state, place);
+        }
       }
     }
   }

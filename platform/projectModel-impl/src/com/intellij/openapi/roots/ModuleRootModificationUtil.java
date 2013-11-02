@@ -49,6 +49,14 @@ public class ModuleRootModificationUtil {
                                       final List<String> sourceRoots,
                                       final List<String> excludedRoots,
                                       final DependencyScope scope) {
+    addModuleLibrary(module, libName, classesRoots, sourceRoots, excludedRoots, scope, false);
+  }
+  public static void addModuleLibrary(final Module module, final String libName,
+                                      final List<String> classesRoots,
+                                      final List<String> sourceRoots,
+                                      final List<String> excludedRoots,
+                                      final DependencyScope scope, 
+                                      final boolean exported) {
     updateModel(module, new Consumer<ModifiableRootModel>() {
       @Override
       public void consume(final ModifiableRootModel model) {
@@ -68,6 +76,7 @@ public class ModuleRootModificationUtil {
         LibraryOrderEntry entry = model.findLibraryOrderEntry(library);
         assert entry != null : library;
         entry.setScope(scope);
+        entry.setExported(exported);
 
         doWriteAction(new Runnable() {
           @Override

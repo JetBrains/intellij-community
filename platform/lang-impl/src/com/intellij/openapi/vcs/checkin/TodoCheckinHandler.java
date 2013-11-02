@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -192,11 +192,11 @@ public class TodoCheckinHandler extends CheckinHandler {
     }
 
     final int answer = Messages.showOkCancelDialog(myCheckinProjectPanel.getComponent(), text, "TODO", buttons[0], buttons[1], UIUtil.getWarningIcon());
-    if (thereAreTodoFound && answer == 0) {
+    if (thereAreTodoFound && answer == Messages.OK) {
       showTodo(worker);
       return ReturnResult.CLOSE_WINDOW;
     }
-    else if (thereAreTodoFound && ((answer == 2 || answer == -1)) || (! thereAreTodoFound) && answer == 1) {
+    if (!thereAreTodoFound && answer != Messages.OK) {
       return ReturnResult.CANCEL;
     }
     else {

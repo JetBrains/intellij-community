@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.analysis.AnalysisScopeBundle;
 import com.intellij.lexer.Lexer;
+import com.intellij.psi.TokenType;
 import com.intellij.psi.search.scope.packageSet.lexer.ScopeTokenTypes;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +78,7 @@ public class FilePackageSetParserExtension implements PackageSetParserExtension 
         wasIdentifier = false;
         pattern.append(".");
       }
-      else if (lexer.getTokenType() == ScopeTokenTypes.WHITE_SPACE) {
+      else if (lexer.getTokenType() == TokenType.WHITE_SPACE) {
         wasIdentifier = false;
         pattern.append(" ");
       }

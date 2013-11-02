@@ -107,7 +107,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
     final ASTNode oldNameElement = getNameElement();
     if (oldNameElement != null) {
-      final ASTNode nameElement = PyElementGenerator.getInstance(getProject()).createNameIdentifier(name);
+      final ASTNode nameElement = PyUtil.createNewName(this, name);
       getNode().replaceChild(oldNameElement, nameElement);
     }
     return this;

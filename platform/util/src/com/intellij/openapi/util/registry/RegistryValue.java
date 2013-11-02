@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -146,7 +146,7 @@ public class RegistryValue {
 
   private String getBundleValue(String key, boolean mustExist) {
     try {
-      return myRegistry.getBundle().getString(key);
+      return Registry.getBundle().getString(key);
     }
     catch (MissingResourceException e) {
       if (mustExist) {
@@ -196,6 +196,7 @@ public class RegistryValue {
   public void addListener(@NotNull final RegistryValueListener listener, @NotNull Disposable parent) {
     myListeners.add(listener);
     Disposer.register(parent, new Disposable() {
+      @Override
       public void dispose() {
         myListeners.remove(listener);
       }

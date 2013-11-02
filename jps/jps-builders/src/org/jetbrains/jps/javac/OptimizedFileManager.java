@@ -22,7 +22,8 @@ import com.sun.tools.javac.util.List;
 import org.jetbrains.jps.incremental.Utils;
 
 import javax.lang.model.SourceVersion;
-import javax.tools.*;
+import javax.tools.FileObject;
+import javax.tools.JavaFileObject;
 import java.io.*;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;
@@ -115,15 +116,23 @@ class OptimizedFileManager extends DefaultFileManager {
       else {
         final File directory = relativePath.length() != 0 ? new File(root, relativePath) : root;
         if (recurse) {
-          collectFromDirectoryRecursively(directory, kinds, results, true, !location.isOutputLocation());
+          collectFromDirectoryRecursively(directory, kinds, results, true);
         }
         else {
-          collectFromDirectory(directory, kinds, results, !location.isOutputLocation());
+          collectFromDirectory(directory, kinds, results);
         }
       }
     }
 
     return results.toList();
+  }
+
+  // important! called via reflection, so avoid renaming or signature changing or rename carefully
+  public void fileGenerated(File file) {
+    final File parent = file.getParentFile();
+    if (parent != null) {
+      myDirectoryCache.remove(parent);
+    }
   }
 
   private boolean isFile(File root) {
@@ -168,8 +177,8 @@ class OptimizedFileManager extends DefaultFileManager {
     }
   }
 
-  private void collectFromDirectory(File directory, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> result, boolean canUseCache) {
-    final File[] children = listChildren(directory, canUseCache);
+  private void collectFromDirectory(File directory, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> result) {
+    final File[] children = listChildren(directory);
     if (children != null) {
       final boolean acceptUnknownFiles = fileKinds.contains(JavaFileObject.Kind.OTHER);
       for (File child : children) {
@@ -184,13 +193,13 @@ class OptimizedFileManager extends DefaultFileManager {
     }
   }
 
-  private void collectFromDirectoryRecursively(File file, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> result, boolean isRootCall, boolean canUseCache) {
-    final File[] children = listChildren(file, canUseCache);
+  private void collectFromDirectoryRecursively(File file, Set<JavaFileObject.Kind> fileKinds, ListBuffer<JavaFileObject> result, boolean isRootCall) {
+    final File[] children = listChildren(file);
     final String name = file.getName();
     if (children != null) { // is directory
       if (isRootCall || SourceVersion.isIdentifier(name)) {
         for (File child : children) {
-          collectFromDirectoryRecursively(child, fileKinds, result, false, canUseCache);
+          collectFromDirectoryRecursively(child, fileKinds, result, false);
         }
       }
     }
@@ -202,10 +211,7 @@ class OptimizedFileManager extends DefaultFileManager {
     }
   }
 
-  private File[] listChildren(File file, boolean canUseCache) {
-    if (!canUseCache) {
-      return file.listFiles();
-    }
+  private File[] listChildren(File file) {
     File[] cached = myDirectoryCache.get(file);
     if (cached == null) {
       cached = file.listFiles();

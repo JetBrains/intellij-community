@@ -108,7 +108,9 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   public static final Comparator<Usage> USAGE_COMPARATOR = new Comparator<Usage>() {
     @Override
     public int compare(final Usage o1, final Usage o2) {
-      if (o1 == NULL_NODE || o2 == NULL_NODE) return -1;
+      if (o1 == o2) return 0;
+      if (o1 == NULL_NODE) return -1;
+      if (o2 == NULL_NODE) return 1;
       if (o1 instanceof Comparable && o2 instanceof Comparable) {
         final int selfcompared = ((Comparable<Usage>)o1).compareTo(o2);
         if (selfcompared != 0) return selfcompared;
@@ -127,7 +129,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
         return 0;
       }
-      return -1;
+      return o1.toString().compareTo(o2.toString());
     }
   };
   @NonNls private static final String HELP_ID = "ideaInterface.find";
@@ -794,6 +796,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
           @Override
           public boolean process(final Usage usage) {
             if (searchHasBeenCancelled()) return false;
+            TooManyUsagesStatus.getFrom(indicator).pauseProcessingIfTooManyUsages();
 
             boolean incrementCounter = !com.intellij.usages.UsageViewManager.isSelfUsage(usage, myTargets);
 
@@ -806,6 +809,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
                 }
               }
               ApplicationManager.getApplication().runReadAction(new Runnable() {
+                @Override
                 public void run() {
                   appendUsage(usage);
                 }

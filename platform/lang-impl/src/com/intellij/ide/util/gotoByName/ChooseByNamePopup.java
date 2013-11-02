@@ -45,7 +45,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent {
-  private static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<ChooseByNamePopup>("ChooseByNamePopup");
+  public static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<ChooseByNamePopup>("ChooseByNamePopup");
   private Component myOldFocusOwner = null;
   private boolean myShowListForEmptyPattern = false;
   private final boolean myMayRequestCurrentWindow;
@@ -257,7 +257,9 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
     cleanupUI(isOk);
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    myActionListener.onClose();
+    if (myActionListener != null) {
+      myActionListener.onClose();
+    }
   }
 
   private void cleanupUI(boolean ok) {

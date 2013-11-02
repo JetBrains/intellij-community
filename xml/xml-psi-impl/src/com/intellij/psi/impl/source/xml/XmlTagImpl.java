@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   private volatile long myDescriptorModCount = -1;
   private volatile long myExtResourcesModCount = -1;
 
-  private volatile boolean myHaveNamespaceDeclarations = false;
+  private volatile boolean myHasNamespaceDeclarations = false;
   private volatile BidirectionalMap<String, String> myNamespaceMap = null;
   @NonNls private static final String XML_NS_PREFIX = "xml";
 
@@ -135,7 +135,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     myDescriptorModCount = -1;
     myAttributes = null;
     myAttributeValueMap = null;
-    myHaveNamespaceDeclarations = false;
+    myHasNamespaceDeclarations = false;
     myValue = null;
     myNSDescriptorsMap = null;
     super.clearCaches();
@@ -155,7 +155,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     if (startTagRef != null) {
       refs.add(startTagRef);
     }
-    if (prefix.length() > 0) {
+    if (!prefix.isEmpty()) {
       refs.add(createPrefixReference(startTagName, prefix, startTagRef));
     }
     if (endTagName != null) {
@@ -334,7 +334,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     return null;
   }
 
-  private Map<String, CachedValue<XmlNSDescriptor>> initializeSchema(final @NotNull String namespace,
+  private Map<String, CachedValue<XmlNSDescriptor>> initializeSchema(@NotNull final String namespace,
                                                                      @Nullable final String version,
                                                                      final String fileLocation,
                                                                      Map<String, CachedValue<XmlNSDescriptor>> map) {
@@ -422,7 +422,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   }
 
   @Nullable
-  private PsiMetaOwner retrieveOwner(final XmlFile file, final @NotNull String namespace) {
+  private PsiMetaOwner retrieveOwner(final XmlFile file, @NotNull final String namespace) {
     if (file == null) {
       return namespace.equals(XmlUtil.getTargetSchemaNsFromTag(this)) ? this : null;
     }
@@ -584,7 +584,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
           XmlAttribute attribute = (XmlAttribute)element;
           result.add(attribute);
           cacheOneAttributeValue(attribute.getName(), attribute.getValue(), attributesValueMap);
-          myHaveNamespaceDeclarations = myHaveNamespaceDeclarations || attribute.isNamespaceDeclaration();
+          myHasNamespaceDeclarations = myHasNamespaceDeclarations || attribute.isNamespaceDeclaration();
         }
         else if (element instanceof XmlToken && ((XmlToken)element).getTokenType() == XmlTokenType.XML_TAG_END) {
           return false;
@@ -634,7 +634,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
         if (keysByValue != null && !keysByValue.isEmpty()) {
 
           for (String prefix : keysByValue) {
-            if (prefix != null && prefix.length() > 0) {
+            if (prefix != null && !prefix.isEmpty()) {
               final String value = getAttributeValue(prefix + ":" + _name);
               if (value != null) return value;
             }
@@ -646,7 +646,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
       parent = parent.getParent();
     }
 
-    if (namespace.length() == 0 || getNamespace().equals(namespace)) {
+    if (namespace.isEmpty() || getNamespace().equals(namespace)) {
       return getAttributeValue(_name);
     }
     return null;
@@ -710,7 +710,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     }
 
     final String prefix = getPrefixByNamespace(namespace);
-    if (prefix == null || prefix.length() == 0) return null;
+    if (prefix == null || prefix.isEmpty()) return null;
     return getAttribute(prefix + ":" + name);
   }
 
@@ -778,7 +778,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     //The prefix 'xml' is by definition bound to the namespace name http://www.w3.org/XML/1998/namespace. It MAY, but need not, be declared
     if (XML_NS_PREFIX.equals(prefix)) return XmlUtil.XML_NAMESPACE_URI;
 
-    if (prefix.length() > 0 &&
+    if (!prefix.isEmpty() &&
         !hasNamespaceDeclarations() &&
         getNamespacePrefix().equals(prefix)) {
       // When there is no namespace declarations then qualified names should be just used in dtds
@@ -866,7 +866,8 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   @Nullable
   private BidirectionalMap<String, String> computeNamespaceMap(PsiElement parent) {
     BidirectionalMap<String, String> map = null;
-    if (hasNamespaceDeclarations()) {
+    boolean hasNamespaceDeclarations = hasNamespaceDeclarations();
+    if (hasNamespaceDeclarations) {
       map = new BidirectionalMap<String, String>();
       final XmlAttribute[] attributes = getAttributes();
 
@@ -891,12 +892,12 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
     if (parent instanceof XmlDocument) {
       final XmlExtension extension = XmlExtension.getExtensionByElement(parent);
       if (extension != null) {
-        final String[][] defaultNamespace = extension.getNamespacesFromDocument((XmlDocument)parent, map != null);
-        if (defaultNamespace != null) {
+        final String[][] namespacesFromDocument = extension.getNamespacesFromDocument((XmlDocument)parent, hasNamespaceDeclarations);
+        if (namespacesFromDocument != null) {
           if (map == null) {
             map = new BidirectionalMap<String, String>();
           }
-          for (final String[] prefix2ns : defaultNamespace) {
+          for (final String[] prefix2ns : namespacesFromDocument) {
             map.put(prefix2ns[0], getRealNs(prefix2ns[1]));
           }
         }
@@ -930,7 +931,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   @Override
   public boolean hasNamespaceDeclarations() {
     getAttributes();
-    return myHaveNamespaceDeclarations;
+    return myHasNamespaceDeclarations;
   }
 
   @Override
@@ -972,7 +973,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
   public XmlAttribute setAttribute(String name, String namespace, String value) throws IncorrectOperationException {
     if (!Comparing.equal(namespace, "")) {
       final String prefix = getPrefixByNamespace(namespace);
-      if (prefix != null && prefix.length() > 0) name = prefix + ":" + name;
+      if (prefix != null && !prefix.isEmpty()) name = prefix + ":" + name;
     }
     return setAttribute(name, value);
   }

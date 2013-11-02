@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import java.util.Enumeration;
 public class SmartExpander {
   public static void installOn(final JTree tree){
     tree.addTreeWillExpandListener(new TreeWillExpandListener() {
+      @Override
       public void treeWillCollapse(TreeExpansionEvent event) {
         TreePath path = event.getPath();
         Enumeration children = ((TreeNode)path.getLastPathComponent()).children();
@@ -40,14 +41,17 @@ public class SmartExpander {
         }
       }
 
+      @Override
       public void treeWillExpand(TreeExpansionEvent event) {
       }
     });
 
     tree.addTreeExpansionListener(new TreeExpansionListener() {
+      @Override
       public void treeCollapsed(TreeExpansionEvent event) {
       }
 
+      @Override
       public void treeExpanded(TreeExpansionEvent event) {
         TreePath path = event.getPath();
         TreeNode lastPathComponent = (TreeNode)path.getLastPathComponent();

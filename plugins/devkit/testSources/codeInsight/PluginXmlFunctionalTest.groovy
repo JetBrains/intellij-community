@@ -30,7 +30,7 @@ import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.TempDirTestFixture
 import com.intellij.usageView.UsageViewNodeTextLocation
 import com.intellij.usageView.UsageViewTypeLocation
-import com.intellij.util.xml.DeprecatedClassUsageInspection
+import com.intellij.codeInspection.xml.DeprecatedClassUsageInspection
 import org.jetbrains.idea.devkit.inspections.*
 
 /**

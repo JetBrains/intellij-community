@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,7 @@ public class InvalidateClassFileTest extends PsiTestCase {
 
     PsiClass clazz = getJavaFacade().findClass("Clazz", GlobalSearchScope.allScope(myProject));
     assertNotNull(clazz);
-    final boolean[] notified = new boolean[] {false};
+    final boolean[] notified = {false};
     final PsiTreeChangeAdapter listener = new PsiTreeChangeAdapter() {
       @Override
       public void childRemoved(@NotNull PsiTreeChangeEvent event) {

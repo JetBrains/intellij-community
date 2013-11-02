@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,8 @@
  */
 package com.intellij.util.text;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author max
  */
@@ -27,21 +29,25 @@ public class MergingCharSequence implements CharSequence {
     this.s2 = s2;
   }
 
+  @Override
   public int length() {
     return s1.length() + s2.length();
   }
 
+  @Override
   public char charAt(int index) {
     if (index < s1.length()) return s1.charAt(index);
     return s2.charAt(index - s1.length());
   }
 
+  @Override
   public CharSequence subSequence(int start, int end) {
     if (start < s1.length() && end < s1.length()) return s1.subSequence(start, end);
     if (start >= s1.length() && end >= s1.length()) return s2.subSequence(start - s1.length(), end - s1.length());
     return new MergingCharSequence(s1.subSequence(start, s1.length()), s2.subSequence(0, end - s1.length()));
   }
 
+  @NotNull
   public String toString() {
     return s1.toString() + s2.toString();
   }

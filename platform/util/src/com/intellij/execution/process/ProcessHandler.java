@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -103,6 +103,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
 
   public void destroyProcess() {
     myAfterStartNotifiedRunner.execute(new Runnable() {
+      @Override
       public void run() {
         if (myState.compareAndSet(STATE_RUNNING, STATE_TERMINATING)) {
           fireProcessWillTerminate(true);
@@ -114,6 +115,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
 
   public void detachProcess() {
     myAfterStartNotifiedRunner.execute(new Runnable() {
+      @Override
       public void run() {
         if (myState.compareAndSet(STATE_RUNNING, STATE_TERMINATING)) {
           fireProcessWillTerminate(false);
@@ -205,6 +207,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   private ProcessListener createEventMulticaster() {
     final Class<ProcessListener> listenerClass = ProcessListener.class;
     return (ProcessListener)Proxy.newProxyInstance(listenerClass.getClassLoader(), new Class[]{listenerClass}, new InvocationHandler() {
+      @Override
       public Object invoke(Object object, Method method, Object[] params) throws Throwable {
         for (ProcessListener listener : myListeners) {
           try {
@@ -232,6 +235,7 @@ public abstract class ProcessHandler extends UserDataHolderBase {
   private final class TasksRunner extends ProcessAdapter {
     private final List<Runnable> myPendingTasks = new ArrayList<Runnable>();
 
+    @Override
     public void startNotified(ProcessEvent event) {
       removeProcessListener(this);
       // at this point it is guaranteed that nothing will be added to myPendingTasks

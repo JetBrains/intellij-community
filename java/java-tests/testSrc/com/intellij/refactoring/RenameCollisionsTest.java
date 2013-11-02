@@ -217,6 +217,10 @@ public class RenameCollisionsTest extends LightRefactoringTestCase {
     doTest("gg");
   }
 
+  public void testRenameTypeParamToSuper() throws Exception {
+    doTest("T");
+  }
+
   private void doTest(final String newName) throws Exception {
     configureByFile(BASE_PATH + getTestName(false) + ".java");
     PsiElement element = TargetElementUtilBase

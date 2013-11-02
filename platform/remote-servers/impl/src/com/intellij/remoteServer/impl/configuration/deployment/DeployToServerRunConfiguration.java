@@ -52,12 +52,12 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
   @NonNls public static final String SETTINGS_ELEMENT = "settings";
   public static final SkipDefaultValuesSerializationFilters SERIALIZATION_FILTERS = new SkipDefaultValuesSerializationFilters();
   private final ServerType<S> myServerType;
-  private final DeploymentConfigurator<D> myDeploymentConfigurator;
+  private final DeploymentConfigurator<D, S> myDeploymentConfigurator;
   private String myServerName;
   private DeploymentSource myDeploymentSource;
   private D myDeploymentConfiguration;
 
-  public DeployToServerRunConfiguration(Project project, ConfigurationFactory factory, String name, ServerType<S> serverType, DeploymentConfigurator<D> deploymentConfigurator) {
+  public DeployToServerRunConfiguration(Project project, ConfigurationFactory factory, String name, ServerType<S> serverType, DeploymentConfigurator<D, S> deploymentConfigurator) {
     super(project, factory, name);
     myServerType = serverType;
     myDeploymentConfigurator = deploymentConfigurator;
@@ -73,7 +73,7 @@ public class DeployToServerRunConfiguration<S extends ServerConfiguration, D ext
   }
 
   @NotNull
-  public DeploymentConfigurator<D> getDeploymentConfigurator() {
+  public DeploymentConfigurator<D, S> getDeploymentConfigurator() {
     return myDeploymentConfigurator;
   }
 

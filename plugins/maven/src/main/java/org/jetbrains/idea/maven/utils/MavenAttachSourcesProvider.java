@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.psi.PsiFile;
+import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
@@ -73,26 +74,28 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
 
         final ActionCallback resultWrapper = new ActionCallback();
 
-        result.doWhenDone(new AsyncResult.Handler<MavenArtifactDownloader.DownloadResult>() {
-          public void run(MavenArtifactDownloader.DownloadResult downloadResult) {
+        result.doWhenDone(new Consumer<MavenArtifactDownloader.DownloadResult>() {
+          public void consume(MavenArtifactDownloader.DownloadResult downloadResult) {
             if (!downloadResult.unresolvedSources.isEmpty()) {
-              String message = "<html>Sources not found for:";
+              final StringBuilder message = new StringBuilder();
+
+              message.append("<html>Sources not found for:");
+
               int count = 0;
               for (MavenId each : downloadResult.unresolvedSources) {
                 if (count++ > 5) {
-                  message += "<br>and more...";
+                  message.append("<br>and more...");
                   break;
                 }
-                message += "<br>" + each.getDisplayString();
+                message.append("<br>").append(each.getDisplayString());
               }
-              message += "</html>";
+              message.append("</html>");
 
-              final String finalMessage = message;
               SwingUtilities.invokeLater(new Runnable() {
                 public void run() {
                   Notifications.Bus.notify(new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
                                                             "Cannot download sources",
-                                                            finalMessage,
+                                                            message.toString(),
                                                             NotificationType.WARNING),
                                            psiFile.getProject());
                 }

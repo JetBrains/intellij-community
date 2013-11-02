@@ -3,9 +3,13 @@ package com.intellij.codeInsight.completion.methodChains.search;
 import com.intellij.codeInsight.completion.methodChains.completion.context.ChainCompletionContext;
 import com.intellij.compilerOutputIndex.impl.MethodIncompleteSignature;
 import com.intellij.compilerOutputIndex.impl.UsageIndexValue;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Pair;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
@@ -16,7 +20,12 @@ import java.util.*;
 /**
  * @author Dmitry Batkovich
  */
-public class ChainsSearcher {
+public final class ChainsSearcher {
+  private ChainsSearcher() {
+  }
+
+  private static final Logger LOG = Logger.getInstance(ChainsSearcher.class);
+  private static final double NEXT_METHOD_IN_CHAIN_RATIO = 1.5;
 
   public static List<MethodsChain> search(final MethodChainsSearchService searchService,
                                           final String targetQName,
@@ -86,7 +95,6 @@ public class ChainsSearcher {
     }
 
     final ResultHolder result = new ResultHolder(context);
-
     while (!q.isEmpty()) {
       ProgressManager.checkCanceled();
       final WeightAware<Pair<MethodIncompleteSignature, MethodsChain>> currentVertex = q.poll();
@@ -100,13 +108,13 @@ public class ChainsSearcher {
         result.add(currentVertex.getUnderlying().getSecond());
         continue;
       }
-      final SortedSet<UsageIndexValue> bigrams = searchService.getBigram(currentVertexUnderlying.getFirst());
+      final SortedSet<UsageIndexValue> nextMethods = searchService.getMethods(currentVertexUnderlying.getFirst().getOwner());
       final MaxSizeTreeSet<WeightAware<MethodIncompleteSignature>> currentSignatures =
         new MaxSizeTreeSet<WeightAware<MethodIncompleteSignature>>(maxResultSize);
-      for (final UsageIndexValue indexValue : bigrams) {
+      for (final UsageIndexValue indexValue : nextMethods) {
         final MethodIncompleteSignature vertex = indexValue.getMethodIncompleteSignature();
         final int occurrences = indexValue.getOccurrences();
-        if (!vertex.getOwner().equals(targetQName)) {
+        if (vertex.isStatic() || !vertex.getOwner().equals(targetQName)) {
           final int vertexDistance = Math.min(currentVertexDistance, occurrences);
           final MethodsChain knownVertexMethodsChain = knownDistance.get(vertex);
           if ((knownVertexMethodsChain == null || knownVertexMethodsChain.getChainWeight() < vertexDistance)) {
@@ -124,6 +132,9 @@ public class ChainsSearcher {
               }
             }
           }
+          else {
+            break;
+          }
         }
       }
       boolean updated = false;
@@ -132,7 +143,7 @@ public class ChainsSearcher {
         for (final WeightAware<MethodIncompleteSignature> sign : currentSignatures) {
           final PsiMethod[] resolved = resolver.get(sign.getUnderlying());
           if (!isBreak) {
-            if (sign.getWeight() * maxResultSize > currentVertex.getWeight()) {
+            if (sign.getWeight() * NEXT_METHOD_IN_CHAIN_RATIO > currentVertex.getWeight()) {
               final boolean stopChain = sign.getUnderlying().isStatic() || toSet.contains(sign.getUnderlying().getOwner());
               if (stopChain) {
                 updated = true;
@@ -151,7 +162,8 @@ public class ChainsSearcher {
           }
           final MethodsChain methodsChain =
             currentVertexUnderlying.second.addEdge(resolved, sign.getUnderlying().getOwner(), sign.getWeight());
-          if (ParametersMatcher.matchParameters(methodsChain, context).noUnmatched()) {
+          final ParametersMatcher.MatchResult parametersMatchResult = ParametersMatcher.matchParameters(methodsChain, context);
+          if (parametersMatchResult.noUnmatchedAndHasMatched() && parametersMatchResult.hasTarget()) {
             updated = true;
             q.addFirst(new WeightAware<Pair<MethodIncompleteSignature, MethodsChain>>(
               new Pair<MethodIncompleteSignature, MethodsChain>(sign.getUnderlying(), methodsChain), sign.getWeight()));
@@ -171,8 +183,15 @@ public class ChainsSearcher {
     return result.getResult();
   }
 
-  private static class ResultHolder {
+  private static MethodsChain createChainFromFirstElement(final MethodsChain chain, final PsiClass newQualifierClass) {
+    final String qualifiedClassName = newQualifierClass.getQualifiedName();
+    if (qualifiedClassName == null) {
+      throw new IllegalArgumentException();
+    }
+    return new MethodsChain(chain.getFirst(), chain.getChainWeight(), qualifiedClassName);
+  }
 
+  private static class ResultHolder {
     private final List<MethodsChain> myResult;
     private final ChainCompletionContext myContext;
 
@@ -212,40 +231,67 @@ public class ChainsSearcher {
       }
     }
 
-    public List<MethodsChain> getResult() {
+    public List<MethodsChain> getRawResult() {
       return myResult;
+    }
+
+    public List<MethodsChain> getResult() {
+      return findSimilar(reduceChainsSize(myResult, PsiManager.getInstance(myContext.getProject())), myContext);
     }
 
     public int size() {
       return myResult.size();
     }
-  }
 
-  private static boolean doChoose(final SortedSet<UsageIndexValue> bigrams, final int currentWeight, final int maxResultSize) {
-    if (bigrams.size() == 1) {
-      return true;
+    private static List<MethodsChain> reduceChainsSize(final List<MethodsChain> chains, final PsiManager psiManager) {
+      return ContainerUtil.map(chains, new Function<MethodsChain, MethodsChain>() {
+        @Override
+        public MethodsChain fun(final MethodsChain chain) {
+          final Iterator<PsiMethod[]> chainIterator = chain.iterator();
+          if (!chainIterator.hasNext()) {
+            LOG.error("empty chain");
+            return chain;
+          }
+          final PsiMethod[] first = chainIterator.next();
+          while (chainIterator.hasNext()) {
+            final PsiMethod psiMethod = chainIterator.next()[0];
+            if (psiMethod.hasModifierProperty(PsiModifier.STATIC)) {
+              continue;
+            }
+            final PsiClass current = psiMethod.getContainingClass();
+            if (current == null) {
+              LOG.error("containing class must be not null");
+              return chain;
+            }
+            final PsiMethod[] currentMethods = current.findMethodsByName(first[0].getName(), true);
+            if (currentMethods.length != 0) {
+              for (final PsiMethod f : first) {
+                final PsiMethod[] fSupers = f.findDeepestSuperMethods();
+                final PsiMethod fSuper = fSupers.length == 0 ? first[0] : fSupers[0];
+                for (final PsiMethod currentMethod : currentMethods) {
+                  if (psiManager.areElementsEquivalent(currentMethod, fSuper)) {
+                    return createChainFromFirstElement(chain, currentMethod.getContainingClass());
+                  }
+                  for (final PsiMethod method : currentMethod.findDeepestSuperMethods()) {
+                    if (psiManager.areElementsEquivalent(method, fSuper)) {
+                      return createChainFromFirstElement(chain, method.getContainingClass());
+                    }
+                  }
+                }
+              }
+            }
+          }
+          return chain;
+        }
+      });
     }
-    int sumWeight = 0;
-    for (final UsageIndexValue bigram : bigrams) {
-      sumWeight += bigram.getOccurrences();
-    }
-    if (Math.abs(sumWeight - currentWeight) < currentWeight / maxResultSize) {
-      return true;
-    }
-    final List<UsageIndexValue> essentialValues = new ArrayList<UsageIndexValue>();
-    Integer max = null;
-    for (UsageIndexValue bigram : bigrams) {
-      if (max == null) {
-        max = bigram.getOccurrences();
+
+    private static List<MethodsChain> findSimilar(final List<MethodsChain> chains, final ChainCompletionContext context) {
+      final ResultHolder resultHolder = new ResultHolder(context);
+      for (final MethodsChain chain : chains) {
+        resultHolder.add(chain);
       }
-      if (max / bigram.getOccurrences() > maxResultSize) {
-        break;
-      }
-      essentialValues.add(bigram);
-      if (essentialValues.size() > maxResultSize) {
-        return false;
-      }
+      return resultHolder.getRawResult();
     }
-    return true;
   }
 }

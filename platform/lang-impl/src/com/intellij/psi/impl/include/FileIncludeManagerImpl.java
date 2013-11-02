@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,15 @@
 package com.intellij.psi.impl.include;
 
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiFileSystemItem;
@@ -32,7 +36,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
@@ -44,8 +47,6 @@ import java.util.*;
  * @author Dmitry Avdeev
  */
 public class FileIncludeManagerImpl extends FileIncludeManager {
-
-  private static final Key<CachedValue<Map<String, PsiFileSystemItem>>> RESOLVE_CACHE_KEY = Key.create("include resolve cache");
 
   private final Project myProject;
   private final PsiManager myPsiManager;
@@ -69,7 +70,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
         }
 
       });
-      return VfsUtil.toVirtualFileArray(files);
+      return VfsUtilCore.toVirtualFileArray(files);
     }
   };
 
@@ -94,7 +95,7 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
           return true;
         }
       });
-      return VfsUtil.toVirtualFileArray(files);
+      return VfsUtilCore.toVirtualFileArray(files);
     }
   };
 
@@ -150,25 +151,12 @@ public class FileIncludeManagerImpl extends FileIncludeManager {
 
   @Override
   public PsiFileSystemItem resolveFileInclude(final FileIncludeInfo info, final PsiFile context) {
-    if (true) return doResolve(info, context);
-    Map<String, PsiFileSystemItem> value = myCachedValuesManager.getCachedValue(context, RESOLVE_CACHE_KEY, new CachedValueProvider<Map<String, PsiFileSystemItem>>() {
-      @Override
-      public Result<Map<String, PsiFileSystemItem>> compute() {
-        Map<String, PsiFileSystemItem> map = new FactoryMap<String, PsiFileSystemItem>() {
-          @Override
-          protected PsiFileSystemItem create(String key) {
-            return doResolve(info, context);
-          }
-        };
-        return Result.create(map, context, VirtualFileManager.getInstance());
-      }
-    }, false);
-    return value.get(info.path);
+    return doResolve(info, context);
   }
 
   @Nullable
   private PsiFileSystemItem doResolve(FileIncludeInfo info, PsiFile context) {
-    PsiFileImpl psiFile = (PsiFileImpl)myPsiFileFactory.createFileFromText("dummy.txt", StdFileTypes.PLAIN_TEXT, info.path);
+    PsiFileImpl psiFile = (PsiFileImpl)myPsiFileFactory.createFileFromText("dummy.txt", FileTypes.PLAIN_TEXT, info.path);
     psiFile.setOriginalFile(context);
     return new FileReferenceSet(psiFile) {
       @Override

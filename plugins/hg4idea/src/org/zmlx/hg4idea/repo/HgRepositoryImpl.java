@@ -24,11 +24,11 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgNameWithHashInfo;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collection;
-import java.util.Collections;
 
 
 /**
@@ -39,23 +39,18 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
   @NotNull private final HgRepositoryReader myReader;
   @NotNull private final VirtualFile myHgDir;
+  @NotNull private volatile HgRepoInfo myInfo;
 
-  @NotNull private volatile String myCurrentBranch = DEFAULT_BRANCH;
-  @Nullable private volatile String myCurrentBookmark = null;
-  @NotNull private volatile Collection<String> myBranches = Collections.emptySet();
-  @NotNull private volatile Collection<String> myBookmarks = Collections.emptySet();
   @NotNull private volatile HgConfig myConfig;
   private boolean myIsFresh = true;
 
 
   @SuppressWarnings("ConstantConditions")
   private HgRepositoryImpl(@NotNull VirtualFile rootDir, @NotNull Project project,
-                             @NotNull Disposable parentDisposable) {
+                           @NotNull Disposable parentDisposable) {
     super(project, rootDir, parentDisposable);
     myHgDir = rootDir.findChild(HgUtil.DOT_HG);
     assert myHgDir != null : ".hg directory wasn't found under " + rootDir.getPresentableUrl();
-    myState = State.NORMAL;
-    myCurrentRevision = null;
     myReader = new HgRepositoryReader(VfsUtilCore.virtualToIoFile(myHgDir));
     myConfig = HgConfig.getInstance(project, rootDir);
     update();
@@ -80,29 +75,53 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
     return myHgDir;
   }
 
+
+  @NotNull
+  @Override
+  public State getState() {
+    return myInfo.getState();
+  }
+
   @Override
   @NotNull
   public String getCurrentBranch() {
-    return myCurrentBranch;
+    return myInfo.getCurrentBranch();
   }
 
+  @Override
+  @Nullable
+  public String getCurrentRevision() {
+    return myInfo.getCurrentRevision();
+  }
 
   @Override
   @NotNull
-  public Collection<String> getBranches() {
-    return myBranches;
+  public Collection<HgNameWithHashInfo> getBranches() {
+    return myInfo.getBranches();
   }
 
   @NotNull
   @Override
-  public Collection<String> getBookmarks() {
-    return myBookmarks;
+  public Collection<HgNameWithHashInfo> getBookmarks() {
+    return myInfo.getBookmarks();
   }
 
   @Nullable
   @Override
   public String getCurrentBookmark() {
-    return myCurrentBookmark;
+    return myInfo.getCurrentBookmark();
+  }
+
+  @NotNull
+  @Override
+  public Collection<HgNameWithHashInfo> getTags() {
+    return myInfo.getTags();
+  }
+
+  @NotNull
+  @Override
+  public Collection<HgNameWithHashInfo> getLocalTags() {
+    return myInfo.getLocalTags();
   }
 
   @NotNull
@@ -118,8 +137,11 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
 
   @Override
   public void update() {
-    readRepository();
-    if (!Disposer.isDisposed(getProject())) {
+    HgRepoInfo currentInfo = readRepoInfo(myInfo);
+    // update only if something changed!!!   if update every time - new log will be refreshed every time, too.
+    // Then blinking and do not work properly;
+    if (!Disposer.isDisposed(getProject()) && currentInfo != null && !currentInfo.equals(myInfo)) {
+      myInfo = currentInfo;
       getProject().getMessageBus().syncPublisher(HgVcs.STATUS_TOPIC).update(getProject(), getRoot());
     }
   }
@@ -127,23 +149,22 @@ public class HgRepositoryImpl extends RepositoryImpl implements HgRepository {
   @NotNull
   @Override
   public String toLogString() {
-    return String.format("HgRepository{myCurrentBranch=%s, myCurrentRevision='%s', myState=%s, myRootDir=%s}",
-                         myCurrentBranch, myCurrentRevision, myState, getRoot());
+    return String.format("HgRepository " + getRoot() + " : " + myInfo);
   }
 
-  private void readRepository() {
-    myIsFresh = myIsFresh && myReader.checkIsFresh(); //if repository not fresh  - it will be not fresh all time
-    if (!isFresh()) {
-      myState = myReader.readState();
-      myCurrentRevision = myReader.readCurrentRevision();
-      myCurrentBranch = myReader.readCurrentBranch();
-      myBranches = myReader.readBranches();
-      myBookmarks = myReader.readBookmarks();
-      myCurrentBookmark = myReader.readCurrentBookmark();
+  @Nullable
+  private HgRepoInfo readRepoInfo(@Nullable HgRepoInfo previousInfo) {
+    myIsFresh = myIsFresh && myReader.checkIsFresh();
+    if (isFresh()) {
+      return previousInfo;
     }
+    //in GitRepositoryImpl there are temporary state object for reader fields storing! Todo Check;
+    return
+      new HgRepoInfo(myReader.readCurrentBranch(), myReader.readCurrentRevision(), myReader.readState(), myReader.readBranches(),
+                     myReader.readBookmarks(), myReader.readCurrentBookmark(), myReader.readTags(), myReader.readLocalTags());
   }
 
-  public void updateConfig(){
-    myConfig = HgConfig.getInstance(getProject(),getRoot());
+  public void updateConfig() {
+    myConfig = HgConfig.getInstance(getProject(), getRoot());
   }
 }

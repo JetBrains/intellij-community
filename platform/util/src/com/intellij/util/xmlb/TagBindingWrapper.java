@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,13 +36,14 @@ class TagBindingWrapper implements Binding {
     myAttributeName = attributeName;
   }
 
+  @Override
   public Object serialize(Object o, Object context, SerializationFilter filter) {
     Element e = new Element(myTagName);
     Object n = binding.serialize(o, e, filter);
 
     final String value = ((Content)n).getValue();
 
-    if (myAttributeName.length() != 0) {
+    if (!myAttributeName.isEmpty()) {
       e.setAttribute(myAttributeName, value);
     }
     else {
@@ -52,12 +53,13 @@ class TagBindingWrapper implements Binding {
     return e;
   }
 
+  @Override
   public Object deserialize(Object context, @NotNull Object... nodes) {
     assert nodes.length == 1;
 
     Element e = (Element)nodes[0];
     final Object[] childNodes;
-    if (myAttributeName.length() != 0) {
+    if (!myAttributeName.isEmpty()) {
       childNodes = new Object[]{e.getAttribute(myAttributeName)};
     }
     else {
@@ -67,14 +69,17 @@ class TagBindingWrapper implements Binding {
     return binding.deserialize(context, childNodes);
   }
 
+  @Override
   public boolean isBoundTo(Object node) {
     return node instanceof Element && ((Element)node).getName().equals(myTagName);
   }
 
+  @Override
   public Class getBoundNodeType() {
     return Element.class;
   }
 
+  @Override
   public void init() {
   }
 }

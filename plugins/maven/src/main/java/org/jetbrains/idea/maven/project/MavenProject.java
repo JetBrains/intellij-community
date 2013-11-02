@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -463,7 +463,7 @@ public class MavenProject {
 
     Element compilerArguments = compilerConfig.getChild("compilerArguments");
     if (compilerArguments != null) {
-      for (Element e : (Collection<Element>)compilerArguments.getChildren()){
+      for (Element e : compilerArguments.getChildren()){
         String name = e.getName();
         if (name.startsWith("-")) {
           name = name.substring(1);
@@ -529,7 +529,7 @@ public class MavenProject {
 
     return null;
   }
-  
+
   @NotNull
   public String getOutputDirectory() {
     return myState.myOutputDirectory;
@@ -803,7 +803,7 @@ public class MavenProject {
   @NotNull
   public Set<String> getSupportedDependencyScopes() {
     Set<String> result = new THashSet<String>(Arrays.asList(MavenConstants.SCOPE_COMPILE,
-                                                            MavenConstants.SCOPE_PROVIDEED,
+                                                            MavenConstants.SCOPE_PROVIDED,
                                                             MavenConstants.SCOPE_RUNTIME,
                                                             MavenConstants.SCOPE_TEST,
                                                             MavenConstants.SCOPE_SYSTEM));

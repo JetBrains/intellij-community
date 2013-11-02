@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,6 +198,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
         return finalFields.put(psiVariable, Boolean.TRUE) == null;
       }
 
+      @NotNull
       @Override
       public Iterator<SmartPsiElementPointer<PsiField>> iterator() {
         return finalFields.keySet().iterator();

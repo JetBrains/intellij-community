@@ -38,18 +38,18 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class EditorFactoryImpl extends EditorFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.impl.EditorFactoryImpl");
   private final EditorEventMulticasterImpl myEditorEventMulticaster = new EditorEventMulticasterImpl();
   private final EventDispatcher<EditorFactoryListener> myEditorFactoryEventDispatcher = EventDispatcher.create(EditorFactoryListener.class);
-  private final List<Editor> myEditors = new ArrayList<Editor>();
+  private final List<Editor> myEditors = ContainerUtil.createLockFreeCopyOnWriteList();
 
   public EditorFactoryImpl(ProjectManager projectManager) {
     projectManager.addProjectManagerListener(new ProjectManagerAdapter() {
@@ -203,7 +203,6 @@ public class EditorFactoryImpl extends EditorFactory {
 
       if (LOG.isDebugEnabled()) {
         LOG.debug("number of Editor's:" + myEditors.size());
-        //Thread.dumpStack();
       }
     }
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ public class CDATAOnAnyEncodedPolicy extends DefaultXmlPsiPolicy{
   public ASTNode encodeXmlTextContents(String displayText, PsiElement text) {
     final ASTNode firstChild = text.getNode().getFirstChildNode();
     boolean textAlreadyHasCDATA = firstChild != null && firstChild.getElementType() == XmlElementType.XML_CDATA;
-    if ((textAlreadyHasCDATA || XmlUtil.toCode(displayText)) && displayText.length() > 0) {
+    if ((textAlreadyHasCDATA || XmlUtil.toCode(displayText)) && !displayText.isEmpty()) {
       final FileElement dummyParent = createCDATAElement(text.getManager(), SharedImplUtil.findCharTableByTree(text.getNode()), displayText);
       return dummyParent.getFirstChildNode();
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.XHtmlFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.ASTFactory;
@@ -99,11 +100,20 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
     return tag;
   }
 
+  @Override
+  @NotNull
+  public XmlTag createHTMLTagFromText(@NotNull String text) throws IncorrectOperationException {
+    final XmlDocument document = createXmlDocument(text, "dummy.html", HtmlFileType.INSTANCE);
+    final XmlTag tag = document.getRootTag();
+    assert tag != null;
+    return tag;
+  }
+
   private XmlDocument createXmlDocument(@NonNls final CharSequence text, @NonNls final String fileName, FileType fileType) {
     final XmlDocument document = ((XmlFile)PsiFileFactory.getInstance(myProject).createFileFromText(fileName, fileType, text)).getDocument();
     assert document != null;
     return document;
   }
 
-  private final static Logger LOG = Logger.getInstance(XmlElementFactoryImpl.class);
+  private static final Logger LOG = Logger.getInstance(XmlElementFactoryImpl.class);
 }

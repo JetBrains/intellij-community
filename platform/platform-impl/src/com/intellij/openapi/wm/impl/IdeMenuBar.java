@@ -16,6 +16,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
@@ -54,7 +55,7 @@ import java.util.List;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public class IdeMenuBar extends JMenuBar {
+public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatcher {
   private static final int COLLAPSED_HEIGHT = 2;
 
   private enum State {
@@ -91,7 +92,6 @@ public class IdeMenuBar extends JMenuBar {
 
     if (WindowManagerImpl.isFloatingMenuBarSupported()) {
       myAnimator = new MyAnimator();
-      Toolkit.getDefaultToolkit().addAWTEventListener(new MyAWTEventListener(), AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
       myActivationWatcher = new Timer(100, new MyActionListener());
       myClockPanel = new ClockPanel();
       add(myClockPanel);
@@ -267,6 +267,7 @@ public class IdeMenuBar extends JMenuBar {
     };
     UISettings.getInstance().addUISettingsListener(UISettingsListener, myDisposable);
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
+    IdeEventQueue.getInstance().addDispatcher(this, myDisposable);
   }
 
   @Override
@@ -278,6 +279,45 @@ public class IdeMenuBar extends JMenuBar {
       Disposer.dispose(myDisposable);
     }
     super.removeNotify();
+  }
+
+  @Override
+  public boolean dispatch(AWTEvent e) {
+    if (e instanceof MouseEvent) {
+      MouseEvent mouseEvent = (MouseEvent)e;
+      Component component = findActualComponent(mouseEvent);
+
+      if (myState != State.EXPANDED /*&& !myState.isInProgress()*/) {
+        boolean mouseInside = myActivated || isDescendingFrom(component, this);
+        if (e.getID() == MouseEvent.MOUSE_EXITED && e.getSource() == SwingUtilities.windowForComponent(this) && !myActivated) mouseInside = false;
+        if (mouseInside && myState == State.COLLAPSED) {
+          setState(State.EXPANDING);
+          restartAnimator();
+        }
+        else if (!mouseInside && myState != State.COLLAPSING && myState != State.COLLAPSED) {
+          setState(State.COLLAPSING);
+          restartAnimator();
+        }
+      }
+    }
+    return false;
+  }
+
+  private Component findActualComponent(MouseEvent mouseEvent) {
+    Component component = mouseEvent.getComponent();
+    Component deepestComponent;
+    if (myState != State.EXPANDED &&
+        !myState.isInProgress() &&
+        contains(SwingUtilities.convertPoint(component, mouseEvent.getPoint(), this))) {
+      deepestComponent = this;
+    }
+    else {
+      deepestComponent = SwingUtilities.getDeepestComponentAt(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+    }
+    if (deepestComponent != null) {
+      component = deepestComponent;
+    }
+    return component;
   }
 
   void updateMenuActions() {
@@ -472,43 +512,6 @@ public class IdeMenuBar extends JMenuBar {
       } else {
         repaint();
       }
-    }
-  }
-
-  private class MyAWTEventListener implements AWTEventListener {
-    @Override
-    public void eventDispatched(AWTEvent event) {
-      MouseEvent mouseEvent = (MouseEvent)event;
-      Component component = findActualComponent(mouseEvent);
-
-      if (myState != State.EXPANDED && !myState.isInProgress()) {
-        boolean mouseInside = myActivated || isDescendingFrom(component, IdeMenuBar.this);
-        if (mouseInside && myState == State.COLLAPSED) {
-          setState(State.EXPANDING);
-          restartAnimator();
-        }
-        else if (!mouseInside && myState != State.COLLAPSING && myState != State.COLLAPSED) {
-          setState(State.COLLAPSING);
-          restartAnimator();
-        }
-      }
-    }
-
-    private Component findActualComponent(MouseEvent mouseEvent) {
-      Component component = mouseEvent.getComponent();
-      Component deepestComponent;
-      if (myState != State.EXPANDED &&
-          !myState.isInProgress() &&
-          contains(SwingUtilities.convertPoint(component, mouseEvent.getPoint(), IdeMenuBar.this))) {
-        deepestComponent = IdeMenuBar.this;
-      }
-      else {
-        deepestComponent = SwingUtilities.getDeepestComponentAt(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
-      }
-      if (deepestComponent != null) {
-        component = deepestComponent;
-      }
-      return component;
     }
   }
 

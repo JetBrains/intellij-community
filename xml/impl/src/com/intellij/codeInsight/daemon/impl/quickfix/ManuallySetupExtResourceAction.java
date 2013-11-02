@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,12 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ManuallySetupExtResourceAction extends BaseExtResourceAction {
 
+  @Override
   protected String getQuickFixKeyId() {
     return "manually.setup.external.resource";
   }
 
+  @Override
   protected void doInvoke(@NotNull final PsiFile file, final int offset, @NotNull final String uri, final Editor editor) throws IncorrectOperationException {
     final MapExternalResourceDialog dialog = new MapExternalResourceDialog(uri, file.getProject(), file, null);
     dialog.show();
@@ -46,6 +48,7 @@ public class ManuallySetupExtResourceAction extends BaseExtResourceAction {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

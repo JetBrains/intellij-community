@@ -9,6 +9,16 @@ public interface DeploymentNode {
   @NotNull
   ServerNode getServerNode();
 
+  boolean isRedeployActionEnabled();
+  void redeploy();
+
   boolean isUndeployActionEnabled();
   void undeploy();
+
+  boolean isEditConfigurationActionEnabled();
+  void editConfiguration();
+
+  boolean isDeployed();
+
+  String getDeploymentName();
 }

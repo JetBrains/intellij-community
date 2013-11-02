@@ -28,7 +28,7 @@ public interface GraphModel {
    * Checks if the node of the given hash is visible, and returns it if so; otherwise return null.
    */
   @Nullable
-  Node getNodeIfVisible(@NotNull Hash hash);
+  boolean isNodeOfHashVisible(@NotNull Hash hash);
 
   @NotNull
   public FragmentManager getFragmentManager();

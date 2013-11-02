@@ -1,19 +1,33 @@
 package com.intellij.remoteServer.impl.runtime.ui.tree;
 
-import com.intellij.execution.Executor;
+import com.intellij.execution.*;
+import com.intellij.execution.configuration.ConfigurationFactoryEx;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.RunDialog;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructureBase;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.remoteServer.ServerType;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.RemoteServersManager;
+import com.intellij.remoteServer.configuration.ServerConfiguration;
 import com.intellij.remoteServer.impl.configuration.RemoteServerConfigurable;
+import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationType;
+import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerConfigurationTypesRegistrar;
+import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRunConfiguration;
+import com.intellij.remoteServer.impl.runtime.deployment.DeploymentTaskImpl;
 import com.intellij.remoteServer.impl.runtime.log.DeploymentLogManagerImpl;
 import com.intellij.remoteServer.impl.runtime.log.LoggingHandlerImpl;
 import com.intellij.remoteServer.impl.runtime.ui.RemoteServersViewContributor;
@@ -23,12 +37,15 @@ import com.intellij.remoteServer.runtime.ServerConnection;
 import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
+import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.awt.RelativePoint;
 import icons.RemoteServersIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.MouseEvent;
 import java.util.*;
 
 /**
@@ -153,6 +170,66 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     }
 
     @Override
+    public boolean isDeployActionEnabled() {
+      return true;
+    }
+
+    @Override
+    public void deploy(AnActionEvent e) {
+      final ServerType<? extends ServerConfiguration> serverType = getValue().getType();
+      final DeployToServerConfigurationType configurationType = DeployToServerConfigurationTypesRegistrar.getDeployConfigurationType(serverType);
+      List<RunnerAndConfigurationSettings> list = new ArrayList<RunnerAndConfigurationSettings>(RunManager.getInstance(doGetProject()).getConfigurationSettingsList(configurationType));
+      list.add(null);
+      ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<RunnerAndConfigurationSettings>("Deploy Configuration", list) {
+        @Override
+        public Icon getIconFor(RunnerAndConfigurationSettings value) {
+          return value != null ? serverType.getIcon() : null;
+        }
+
+        @NotNull
+        @Override
+        public String getTextFor(RunnerAndConfigurationSettings value) {
+          return value != null ? value.getName() : "Create...";
+        }
+
+        @Override
+        public PopupStep onChosen(final RunnerAndConfigurationSettings selectedValue, boolean finalChoice) {
+          return doFinalStep(new Runnable() {
+            @Override
+            public void run() {
+              if (selectedValue != null) {
+                ProgramRunnerUtil.executeConfiguration(doGetProject(), selectedValue, DefaultRunExecutor.getRunExecutorInstance());
+              }
+              else {
+                createNewConfiguration(configurationType);
+              }
+            }
+          });
+        }
+      });
+      if (e.getInputEvent() instanceof MouseEvent) {
+        popup.show(new RelativePoint((MouseEvent)e.getInputEvent()));
+      }
+      else {
+        popup.showInBestPositionFor(e.getDataContext());
+      }
+    }
+
+    private void createNewConfiguration(DeployToServerConfigurationType configurationType) {
+      RunManagerEx runManager = RunManagerEx.getInstanceEx(doGetProject());
+      ConfigurationFactoryEx factory = configurationType.getFactory();
+      RunnerAndConfigurationSettings settings = runManager.createRunConfiguration(configurationType.getDisplayName(), factory);
+      DeployToServerRunConfiguration<?, ?> runConfiguration = (DeployToServerRunConfiguration<?, ?>)settings.getConfiguration();
+      runConfiguration.setServerName(getValue().getName());
+      if (RunDialog.editConfiguration(doGetProject(), settings, "Create Deployment Configuration",
+                                      DefaultRunExecutor.getRunExecutorInstance())) {
+        runManager.addConfiguration(settings, runManager.isConfigurationShared(settings), runManager.getBeforeRunTasks(runConfiguration), false);
+        runManager.setSelectedConfiguration(settings);
+        ProgramRunnerUtil.executeConfiguration(doGetProject(), settings, DefaultRunExecutor.getRunExecutorInstance());
+      }
+    }
+
+    @Override
     public boolean isStopActionEnabled() {
       return isConnected();
     }
@@ -179,14 +256,12 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
 
     @Override
     public void startServer(@NotNull Executor executor) {
-      ServerConnection<?> connection = getConnection();
-      if (connection != null) {
-        connection.computeDeployments(EmptyRunnable.INSTANCE);
-      }
+      ServerConnection<?> connection = ServerConnectionManager.getInstance().getOrCreateConnection(getValue());
+      connection.computeDeployments(EmptyRunnable.INSTANCE);
     }
 
     @Override
-    public boolean isDeployAllEnabled() {
+    public boolean isDeployAllActionEnabled() {
       return false;
     }
 
@@ -231,6 +306,24 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
     }
 
     @Override
+    public boolean isRedeployActionEnabled() {
+      DeploymentTask<?> deploymentTask = getValue().getDeploymentTask();
+      return deploymentTask instanceof DeploymentTaskImpl<?> && ((DeploymentTaskImpl)deploymentTask).getExecutionEnvironment().getRunnerAndConfigurationSettings() != null;
+    }
+
+    @Override
+    public void redeploy() {
+      DeploymentTask<?> deploymentTask = getValue().getDeploymentTask();
+      if (deploymentTask != null) {
+        ExecutionEnvironment environment = ((DeploymentTaskImpl)deploymentTask).getExecutionEnvironment();
+        RunnerAndConfigurationSettings settings = environment.getRunnerAndConfigurationSettings();
+        if (settings != null) {
+          ProgramRunnerUtil.executeConfiguration(doGetProject(), settings, DefaultRunExecutor.getRunExecutorInstance());
+        }
+      }
+    }
+
+    @Override
     public boolean isUndeployActionEnabled() {
       DeploymentRuntime runtime = getValue().getRuntime();
       return runtime != null && runtime.isUndeploySupported();
@@ -242,6 +335,32 @@ public class ServersTreeStructure extends AbstractTreeStructureBase {
       if (runtime != null) {
         getConnection().undeploy(getValue(), runtime);
       }
+    }
+
+    @Override
+    public boolean isEditConfigurationActionEnabled() {
+      return getValue().getDeploymentTask() != null;
+    }
+
+    @Override
+    public void editConfiguration() {
+      DeploymentTask<?> task = getValue().getDeploymentTask();
+      if (task != null) {
+        RunnerAndConfigurationSettings settings = ((DeploymentTaskImpl)task).getExecutionEnvironment().getRunnerAndConfigurationSettings();
+        if (settings != null) {
+          RunDialog.editConfiguration(doGetProject(), settings, "Edit Deployment Configuration");
+        }
+      }
+    }
+
+    @Override
+    public boolean isDeployed() {
+      return getValue().getStatus() == DeploymentStatus.DEPLOYED;
+    }
+
+    @Override
+    public String getDeploymentName() {
+      return getValue().getName();
     }
 
     public ServerConnection<?> getConnection() {

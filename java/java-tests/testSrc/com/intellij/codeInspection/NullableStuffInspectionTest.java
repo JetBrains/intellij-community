@@ -44,6 +44,7 @@ public class NullableStuffInspectionTest extends InspectionTestCase {
   public void testProblems() throws Exception{ doTest(); }
   public void testProblems2() throws Exception{ doTest(); }
   public void testNullableFieldNotnullParam() throws Exception{ doTest(); }
+  public void testNotNullFieldNullableParam() throws Exception{ doTest(); }
   public void testJdk14() throws Exception{ doTest14(); }
 
   public void testGetterSetterProblems() throws Exception{ doTest(); }

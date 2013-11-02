@@ -2,6 +2,7 @@ package com.intellij.remoteServer.runtime;
 
 import com.intellij.remoteServer.runtime.deployment.DeploymentRuntime;
 import com.intellij.remoteServer.runtime.deployment.DeploymentStatus;
+import com.intellij.remoteServer.runtime.deployment.DeploymentTask;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,4 +21,7 @@ public interface Deployment {
 
   @Nullable
   DeploymentRuntime getRuntime();
+
+  @Nullable
+  DeploymentTask<?> getDeploymentTask();
 }

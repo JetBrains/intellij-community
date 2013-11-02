@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 public class XmlErrorQuickFixProvider implements ErrorQuickFixProvider {
   @NonNls private static final String AMP_ENTITY = "&amp;";
 
+  @Override
   public void registerErrorQuickFix(@NotNull final PsiErrorElement element, @NotNull final HighlightInfo highlightInfo) {
     if (PsiTreeUtil.getParentOfType(element, XmlTag.class) != null) {
       registerXmlErrorQuickFix(element,highlightInfo);
@@ -42,26 +43,31 @@ public class XmlErrorQuickFixProvider implements ErrorQuickFixProvider {
     final String text = element.getErrorDescription();
     if (text != null && text.startsWith(XmlErrorMessages.message("unescaped.ampersand"))) {
       QuickFixAction.registerQuickFixAction(highlightInfo, new IntentionAction() {
+        @Override
         @NotNull
         public String getText() {
           return XmlErrorMessages.message("escape.ampersand.quickfix");
         }
 
+        @Override
         @NotNull
         public String getFamilyName() {
           return getText();
         }
 
+        @Override
         public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
           return true;
         }
 
+        @Override
         public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
           if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
           final int textOffset = element.getTextOffset();
           editor.getDocument().replaceString(textOffset,textOffset + 1,AMP_ENTITY);
         }
 
+        @Override
         public boolean startInWriteAction() {
           return true;
         }

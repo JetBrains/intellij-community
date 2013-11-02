@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   private static final Logger LOG = Logger.getInstance("#com.intellij.debugger.ui.breakpoints.LineBreakpoint");
 
   @Nullable
-  private String myMethodName;
+  private OwnerMethod myOwnerMethod;
   public static final @NonNls Key<LineBreakpoint> CATEGORY = BreakpointCategory.lookup("line_breakpoints");
 
   protected LineBreakpoint(Project project) {
@@ -137,7 +137,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       final RangeHighlighter highlighter = getHighlighter();
       offset = highlighter != null? highlighter.getStartOffset() : -1;
     }
-    myMethodName = offset >=0 ? findMethodName(file, offset) : null;
+    myOwnerMethod = findOwnerMethod(file, offset);
   }
 
   @Override
@@ -210,6 +210,18 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
   }
 
   protected boolean acceptLocation(DebugProcessImpl debugProcess, ReferenceType classType, Location loc) {
+    final OwnerMethod owner = myOwnerMethod;
+    if (owner != null && owner.isJavaFile) {
+      // Additional filtering applicable to java files only.
+      // Consider:
+      //  proc(()->{System.out.println("Task 1");}, ()->{System.out.println("Task 2");});  <breakpoint at this line>
+      //
+      // there will be 3 locations for this line: one corresponding to calling method, and two locations from
+      // the lambda expression implementation methods.
+      // Without additional filtering, breakpoint request will be set on each location,
+      // while we do not need to stop in lambda expressions here
+      return owner.matches(loc);
+    }
     return true;
   }
 
@@ -374,7 +386,9 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
       final int lineNumber = (highlighter.getDocument().getLineNumber(highlighter.getStartOffset()) + 1);
       String className = getClassName();
       final boolean hasClassInfo = className != null && className.length() > 0;
-      final boolean hasMethodInfo = myMethodName != null && myMethodName.length() > 0;
+      final String methodName = getMethodName();
+      final String displayName = methodName != null? methodName + "()" : null;
+      final boolean hasMethodInfo = displayName != null && displayName.length() > 0;
       if (hasClassInfo || hasMethodInfo) {
         final StringBuilder info = StringBuilderSpinAllocator.alloc();
         try {
@@ -388,8 +402,8 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
             }
 
             if (totalTextLength != -1) {
-              if (className.length() + (hasMethodInfo ? myMethodName.length() : 0) > totalTextLength + 3) {
-                int offset = totalTextLength - (hasMethodInfo ? myMethodName.length() : 0);
+              if (className.length() + (hasMethodInfo ? displayName.length() : 0) > totalTextLength + 3) {
+                int offset = totalTextLength - (hasMethodInfo ? displayName.length() : 0);
                 if (offset > 0 && offset < className.length()) {
                   className = className.substring(className.length() - offset);
                   info.append("...");
@@ -406,7 +420,7 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
             else if (hasClassInfo) {
               info.append(".");
             }
-            info.append(myMethodName);
+            info.append(displayName);
           }
           if (showPackageInfo && packageName != null) {
             info.append(" (").append(packageName).append(")");
@@ -422,16 +436,17 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     return DebuggerBundle.message("status.breakpoint.invalid");
   }
 
-  private static @Nullable String findMethodName(final PsiFile file, final int offset) {
-    if (file instanceof JspFile) {
+  @Nullable
+  private static OwnerMethod findOwnerMethod(final PsiFile file, final int offset) {
+    if (offset < 0 || file instanceof JspFile) {
       return null;
     }
     if (file instanceof PsiClassOwner) {
-      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      return ApplicationManager.getApplication().runReadAction(new Computable<OwnerMethod>() {
         @Override
-        public String compute() {
+        public OwnerMethod compute() {
           final PsiMethod method = DebuggerUtilsEx.findPsiMethod(file, offset);
-          return method != null? method.getName() + "()" : null;
+          return method != null? new OwnerMethod(method, file instanceof PsiJavaFile) : null;
         }
       });
     }
@@ -559,7 +574,30 @@ public class LineBreakpoint extends BreakpointWithHighlighter {
     return canAdd[0];
   }
 
-  public @Nullable String getMethodName() {
-    return myMethodName;
+  @Nullable
+  public String getMethodName() {
+    final OwnerMethod owner = myOwnerMethod;
+    return owner != null? owner.name : null;
+  }
+
+  private static final class OwnerMethod {
+    @NotNull
+    final String name;
+    final boolean isConstructor;
+    final boolean isJavaFile;
+
+    OwnerMethod(@NotNull PsiMethod method, boolean isJavaFile) {
+      this(method.getName(), method.isConstructor(), isJavaFile);
+    }
+
+    OwnerMethod(@NotNull String name, boolean isConstructor, boolean isJavaFile) {
+      this.name = name;
+      this.isConstructor = isConstructor;
+      this.isJavaFile = isJavaFile;
+    }
+
+    boolean matches(Location loc) {
+      return isConstructor? loc.method().isConstructor() : name.equals(loc.method().name());
+    }
   }
 }

@@ -33,6 +33,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.sun.jdi.AbsentInformationException;
 import com.sun.jdi.Location;
+import com.sun.jdi.Method;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.ClassPrepareRequest;
 import org.jetbrains.annotations.NotNull;
@@ -285,10 +286,26 @@ public class PositionManagerImpl implements PositionManager {
           return null;
         }
 
+        final boolean canGetSynthetic = vmProxy.canGetSyntheticAttribute();
+        final boolean canReloadClasses = vmProxy.canRedefineClasses();
         int rangeBegin = Integer.MAX_VALUE;
         int rangeEnd = Integer.MIN_VALUE;
         for (Location location : fromClass.allLineLocations()) {
-          final int locationLine = location.lineNumber() - 1;
+          final int lnumber = location.lineNumber();
+          if (lnumber < 1) {
+            continue; // should be a native method, skipping
+          }
+          final Method method = location.method();
+          try {
+            if (method == null || (canGetSynthetic && method.isSynthetic()) || method.isBridge() || (canReloadClasses && method.isObsolete())) {
+              // do not take into account synthetic stuff
+              continue;
+            }
+          }
+          catch (Throwable ignored) {
+            LOG.info(ignored);
+          }
+          final int locationLine = lnumber - 1;
           rangeBegin = Math.min(rangeBegin,  locationLine);
           rangeEnd = Math.max(rangeEnd,  locationLine);
         }

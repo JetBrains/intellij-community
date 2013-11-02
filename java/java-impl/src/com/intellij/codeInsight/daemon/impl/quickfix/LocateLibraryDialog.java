@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public class LocateLibraryDialog extends DialogWrapper {
     return myResultingLibraryPath;
   }
 
-  public LocateLibraryDialog(Module module, String libraryPath, final @NonNls String libraryName, final String libraryDescription ) {
+  public LocateLibraryDialog(Module module, String libraryPath, @NonNls final String libraryName, final String libraryDescription ) {
     super (module.getProject(), true);
     setTitle ( QuickFixBundle.message("add.library.title.dialog"));
 
@@ -108,7 +108,7 @@ public class LocateLibraryDialog extends DialogWrapper {
     if ( copyEnabled ) {
       myCopyToDir.getTextField().requestFocusInWindow();
     }
-    setOKActionEnabled(! copyEnabled || myCopyToDir.getText().length() != 0 );
+    setOKActionEnabled(! copyEnabled || !myCopyToDir.getText().isEmpty());
   }
 
   @Override
@@ -147,7 +147,7 @@ public class LocateLibraryDialog extends DialogWrapper {
     }
 
     final String dstDir = myCopyToDir.getText();
-    if ( dstDir.length() == 0 ) {
+    if (dstDir.isEmpty()) {
       return null;
     }
     

@@ -23,6 +23,7 @@
   <depends>com.intellij.modules.lang</depends>
   <depends>org.intellij.groovy</depends>
   <depends optional="true" config-file="gradle-javaee-plugin.xml">com.intellij.javaee</depends>
+  <depends optional="true" config-file="gradle-maven-integration.xml">org.jetbrains.idea.maven</depends>
 
   <extensionPoints>
     <extensionPoint name="projectResolve" interface="org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension"/>
@@ -95,8 +96,11 @@
   </extensions>
 
   <actions>
-    <action id="Gradle.GenerateGroup" class="org.jetbrains.plugins.gradle.codeInsight.actions.GradleGenerateActionGroup" text="Generate">
+
+    <group id="Gradle.GenerateGroup">
+      <action id="AddGradleDslPluginAction" class="org.jetbrains.plugins.gradle.codeInsight.actions.AddGradleDslPluginAction"/>
       <add-to-group group-id="GenerateGroup" anchor="first"/>
-    </action>
+    </group>
+
   </actions>
 </idea-plugin>

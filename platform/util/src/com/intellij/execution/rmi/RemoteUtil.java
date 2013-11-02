@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.execution.rmi;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import gnu.trove.THashMap;
@@ -95,10 +94,13 @@ public class RemoteUtil {
 
   public static <T> T substituteClassLoader(final T remote, final ClassLoader classLoader) throws Exception {
     return executeWithClassLoader(new ThrowableComputable<T, Exception>() {
+      @Override
       public T compute() {
         Object proxy = Proxy.newProxyInstance(classLoader, remote.getClass().getInterfaces(), new InvocationHandler() {
+          @Override
           public Object invoke(Object proxy, final Method method, final Object[] args) throws Throwable {
             return executeWithClassLoader(new ThrowableComputable<Object, Exception>() {
+              @Override
               public Object compute() throws Exception {
                 try {
                   return handleRemoteResult(method.invoke(remote, args), method.getReturnType(), classLoader, true);
@@ -200,6 +202,7 @@ public class RemoteUtil {
       myLoader = loader;
     }
 
+    @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
       if (method.getDeclaringClass() == Object.class) {
         return method.invoke(myRemote, args);

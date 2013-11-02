@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class ReferenceInjector extends Injectable {
 
-  public final static ExtensionPointName<ReferenceInjector> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.referenceInjector");
+  public static final ExtensionPointName<ReferenceInjector> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.referenceInjector");
 
   @Override
   public final Language getLanguage() {

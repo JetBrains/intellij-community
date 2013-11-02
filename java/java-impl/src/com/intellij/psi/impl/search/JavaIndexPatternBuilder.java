@@ -32,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class JavaIndexPatternBuilder implements IndexPatternBuilder {
   public static final TokenSet XML_DATA_CHARS = TokenSet.create(XmlTokenType.XML_DATA_CHARACTERS);
-  public static final TokenSet XML_COMMENT_BIT_SET = TokenSet.create(XmlElementType.XML_COMMENT_CHARACTERS);
+  public static final TokenSet XML_COMMENT_BIT_SET = TokenSet.create(XmlTokenType.XML_COMMENT_CHARACTERS);
 
   @Override
   @Nullable

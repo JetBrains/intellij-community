@@ -49,8 +49,8 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     myProject = project;
   }
 
-  public ASTNode createNameIdentifier(String name) {
-    final PsiFile dummyFile = createDummyFile(LanguageLevel.getDefault(), name);
+  public ASTNode createNameIdentifier(String name, LanguageLevel languageLevel) {
+    final PsiFile dummyFile = createDummyFile(languageLevel, name);
     final PyExpressionStatement expressionStatement = (PyExpressionStatement)dummyFile.getFirstChild();
     final PyReferenceExpression refExpression = (PyReferenceExpression)expressionStatement.getFirstChild();
 

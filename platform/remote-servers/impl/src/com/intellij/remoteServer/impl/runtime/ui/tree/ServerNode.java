@@ -1,6 +1,7 @@
 package com.intellij.remoteServer.impl.runtime.ui.tree;
 
 import com.intellij.execution.Executor;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,7 +16,10 @@ public interface ServerNode {
   boolean isStartActionEnabled(@NotNull Executor executor);
   void startServer(@NotNull Executor executor);
 
-  boolean isDeployAllEnabled();
+  boolean isDeployActionEnabled();
+  void deploy(AnActionEvent e);
+
+  boolean isDeployAllActionEnabled();
   void deployAll();
 
   void editConfiguration();

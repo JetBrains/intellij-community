@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,9 +46,9 @@ public class LightMethodBuilder extends LightElement implements PsiMethod, Origi
   private final String myName;
   private Computable<PsiType> myReturnType;
   private final PsiModifierList myModifierList;
-  private PsiParameterList myParameterList;
-  private PsiTypeParameterList myTypeParameterList;
-  private PsiReferenceList myThrowsList;
+  private final PsiParameterList myParameterList;
+  private final PsiTypeParameterList myTypeParameterList;
+  private final PsiReferenceList myThrowsList;
   private Icon myBaseIcon;
   private PsiClass myContainingClass;
   private boolean myConstructor;

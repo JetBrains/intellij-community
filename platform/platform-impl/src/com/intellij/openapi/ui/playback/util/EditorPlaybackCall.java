@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
 
 public class EditorPlaybackCall {
@@ -76,9 +77,9 @@ public class EditorPlaybackCall {
     });
 
 
-    WindowSystemPlaybackCall.findProject().doWhenDone(new AsyncResult.Handler<Project>() {
+    WindowSystemPlaybackCall.findProject().doWhenDone(new Consumer<Project>() {
       @Override
-      public void run(Project project) {
+      public void consume(Project project) {
         final MessageBusConnection bus = project.getMessageBus().connect(connection);
         bus.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListenerAdapter() {
           @Override

@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.EventListener;
 import java.util.List;
 
@@ -36,8 +37,12 @@ public abstract class ClientLibraryManager {
     return ServiceManager.getService(ClientLibraryManager.class);
   }
 
-  public abstract boolean download(@NotNull ClientLibraryDescription description);
+  @NotNull
+  public abstract List<File> download(@NotNull ClientLibraryDescription libraryDescription) throws IOException;
 
+  /**
+   * @deprecated to be removed with obsolete cloud implementations
+   */
   @NotNull
   public abstract List<File> getLibraries(@NotNull ClientLibraryDescription description);
 

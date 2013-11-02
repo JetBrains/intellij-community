@@ -18,12 +18,16 @@ package com.intellij.lang.ant;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -104,24 +108,10 @@ public final class ReflectedProject {
     }
     catch (Throwable e) {
       // rethrow PCE if it was the cause
-      Throwable cause = e.getCause();
-      Set<Throwable> checked = null; // init lazily; in most cases the set will not be created
-      while (cause != null && (checked == null || !checked.contains(cause))) {
-        if (cause instanceof ProcessCanceledException) {
-          throw (ProcessCanceledException)cause;
-        }
-        final Throwable nextCause = cause.getCause();
-        if (nextCause == null) {
-          break;
-        }
-        if (checked == null) {
-          checked = new HashSet<Throwable>();
-          checked.add(e);
-        }
-        checked.add(cause);
-        cause = nextCause;
+      final Throwable cause = ExceptionUtil.getRootCause(e);
+      if (cause instanceof ProcessCanceledException) {
+        throw (ProcessCanceledException)cause;
       }
-
       LOG.info(e);
       project = null;
     }

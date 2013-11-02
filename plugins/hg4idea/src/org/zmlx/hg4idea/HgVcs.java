@@ -418,6 +418,11 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
   }
 
   @Override
+  public VcsType getType() {
+    return VcsType.distributed;
+  }
+
+  @Override
   public CheckoutProvider getCheckoutProvider() {
     return new HgCheckoutProvider();
   }

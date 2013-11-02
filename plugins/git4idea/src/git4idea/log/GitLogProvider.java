@@ -15,6 +15,7 @@
  */
 package git4idea.log;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,22 +23,32 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.VcsLogBranchFilter;
+import com.intellij.vcs.log.data.VcsLogUserFilter;
 import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsRefImpl;
+import com.intellij.vcs.log.ui.filter.VcsLogTextFilter;
 import git4idea.GitLocalBranch;
 import git4idea.GitRemoteBranch;
 import git4idea.GitVcs;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitSimpleHandler;
+import git4idea.config.GitConfigUtil;
 import git4idea.history.GitHistoryUtils;
 import git4idea.history.GitLogParser;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryChangeListener;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Kirill Likhodedov
@@ -49,11 +60,13 @@ public class GitLogProvider implements VcsLogProvider {
   @NotNull private final Project myProject;
   @NotNull private final GitRepositoryManager myRepositoryManager;
   @NotNull private final VcsLogRefManager myRefSorter;
+  @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
 
   public GitLogProvider(@NotNull Project project, @NotNull GitRepositoryManager repositoryManager) {
     myProject = project;
     myRepositoryManager = repositoryManager;
     myRefSorter = new GitRefManager(myRepositoryManager);
+    myVcsObjectsFactory = ServiceManager.getService(VcsLogObjectsFactory.class);
   }
 
   @NotNull
@@ -119,6 +132,7 @@ public class GitLogProvider implements VcsLogProvider {
   // TODO this is to be removed when tags will be supported by the GitRepositoryReader
   private Collection<? extends VcsRef> readTags(@NotNull VirtualFile root) throws VcsException {
     GitSimpleHandler tagHandler = new GitSimpleHandler(myProject, root, GitCommand.LOG);
+    tagHandler.setSilent(true);
     tagHandler.addParameters("--tags", "--no-walk", "--format=%H%d" + GitLogParser.RECORD_START_GIT, "--decorate=full");
     String out = tagHandler.run();
     Collection<VcsRef> refs = new ArrayList<VcsRef>();
@@ -153,5 +167,64 @@ public class GitLogProvider implements VcsLogProvider {
         }
       }
     });
+  }
+
+  @NotNull
+  @Override
+  public List<? extends VcsFullCommitDetails> getFilteredDetails(@NotNull final VirtualFile root,
+                                                                 @NotNull Collection<VcsLogFilter> filters) throws VcsException {
+    List<String> filterParameters = ContainerUtil.newArrayList();
+
+    List<VcsLogBranchFilter> branchFilters = ContainerUtil.findAll(filters, VcsLogBranchFilter.class);
+    if (!branchFilters.isEmpty()) {
+      String branchFilter = joinFilters(branchFilters, new Function<VcsLogBranchFilter, String>() {
+        @Override
+        public String fun(VcsLogBranchFilter filter) {
+          return filter.getBranchName();
+        }
+      });
+      filterParameters.add(prepareParameter("branches", branchFilter));
+    }
+    else {
+      filterParameters.add("--all");
+    }
+
+    List<VcsLogUserFilter> userFilters = ContainerUtil.findAll(filters, VcsLogUserFilter.class);
+    if (!userFilters.isEmpty()) {
+      String authorFilter = joinFilters(userFilters, new Function<VcsLogUserFilter, String>() {
+        @Override
+        public String fun(VcsLogUserFilter filter) {
+          return filter.getUserName(root);
+        }
+      });
+      filterParameters.add(prepareParameter("author", authorFilter));
+    }
+
+    List<VcsLogTextFilter> textFilters = ContainerUtil.findAll(filters, VcsLogTextFilter.class);
+    if (textFilters.size() > 1) {
+      LOG.warn("Expected only one text filter: " + textFilters);
+    }
+    else if (!textFilters.isEmpty()) {
+      String textFilter = textFilters.iterator().next().getText();
+      filterParameters.add(prepareParameter("grep", textFilter));
+    }
+
+    filterParameters.add("--regexp-ignore-case"); // affects case sensitivity of any filter
+    return GitHistoryUtils.getAllDetails(myProject, root, filterParameters);
+  }
+
+  @Nullable
+  @Override
+  public VcsUser getCurrentUser(@NotNull VirtualFile root) throws VcsException {
+    String userName = GitConfigUtil.getValue(myProject, root, GitConfigUtil.USER_NAME);
+    return userName == null ? null : myVcsObjectsFactory.createUser(userName);
+  }
+
+  private static String prepareParameter(String paramName, String value) {
+    return "--" + paramName + "=" + value; // no value escaping needed, because the parameter itself will be quoted by GeneralCommandLine
+  }
+
+  private static <T> String joinFilters(List<T> filters, Function<T, String> toString) {
+    return StringUtil.join(filters, toString, "\\|");
   }
 }

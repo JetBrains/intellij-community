@@ -53,7 +53,7 @@ public class ClassPath {
 
   private static PrintStream ourOrder;
   private static long ourOrderSize;
-  private final static Set<String> ourOrderedUrls = new HashSet<String>();
+  private static final Set<String> ourOrderedUrls = new HashSet<String>();
   private static final String HOME = FileUtil.toSystemIndependentName(PathManager.getHomePath());
 
   private final boolean myAcceptUnescapedUrls;
@@ -73,6 +73,7 @@ public class ClassPath {
         if (!FileUtil.ensureCanCreateFile(orderFile)) return;
         ourOrder = new PrintStream(new FileOutputStream(orderFile, true));
         ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+          @Override
           public void run() {
             ourOrder.close();
             System.out.println(ourOrderSize);
@@ -303,10 +304,12 @@ public class ClassPath {
       return false;
     }
 
+    @Override
     public boolean hasMoreElements() {
       return next();
     }
 
+    @Override
     public URL nextElement() {
       if (!next()) {
         throw new NoSuchElementException();
@@ -353,7 +356,7 @@ public class ClassPath {
   }
   private static final ResourceStringLoaderIterator checkedIterator = new ResourceStringLoaderIterator(true);
   private static final ResourceStringLoaderIterator uncheckedIterator = new ResourceStringLoaderIterator(false);
-  private final static LoaderCollector myLoaderCollector = new LoaderCollector();
+  private static final LoaderCollector myLoaderCollector = new LoaderCollector();
 
   private static class LoaderCollector extends ClasspathCache.LoaderIterator<Object, List<Loader>, Object> {
     @Override

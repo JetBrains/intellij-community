@@ -57,7 +57,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     void sourceFolderAdded(@NotNull ContentEntryEditor editor, SourceFolder folder);
     void sourceFolderRemoved(@NotNull ContentEntryEditor editor, VirtualFile file);
     void folderExcluded(@NotNull ContentEntryEditor editor, VirtualFile file);
-    void folderIncluded(@NotNull ContentEntryEditor editor, VirtualFile file);
+    void folderIncluded(@NotNull ContentEntryEditor editor, String fileUrl);
     void navigationRequested(@NotNull ContentEntryEditor editor, VirtualFile file);
     void sourceRootPropertiesChanged(@NotNull ContentEntryEditor editor, @NotNull SourceFolder folder);
   }
@@ -138,7 +138,7 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
       update();
     }
     else if (folder instanceof ExcludeFolder) {
-      removeExcludeFolder((ExcludeFolder)folder);
+      removeExcludeFolder(folder.getUrl());
       update();
     }
 
@@ -261,20 +261,20 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     return contentEntry != null ? contentEntry.addExcludeFolder(file) : null;
   }
 
-  public void removeExcludeFolder(@NotNull final ExcludeFolder excludeFolder) {
+  public void removeExcludeFolder(@NotNull final String excludeRootUrl) {
     try {
-      doRemoveExcludeFolder(excludeFolder);
+      doRemoveExcludeFolder(excludeRootUrl);
     }
     finally {
-      myEventDispatcher.getMulticaster().folderIncluded(this, excludeFolder.getFile());
+      myEventDispatcher.getMulticaster().folderIncluded(this, excludeRootUrl);
       update();
     }
   }
 
-  protected void doRemoveExcludeFolder(@NotNull final ExcludeFolder excludeFolder) {
-    if (!excludeFolder.isSynthetic()) {
-      final ContentEntry contentEntry = getContentEntry();
-      if (contentEntry != null) contentEntry.removeExcludeFolder(excludeFolder);
+  protected void doRemoveExcludeFolder(@NotNull final String excludeRootUrl) {
+    final ContentEntry contentEntry = getContentEntry();
+    if (contentEntry != null) {
+      contentEntry.removeExcludeFolder(excludeRootUrl);
     }
   }
 
@@ -284,45 +284,17 @@ public abstract class ContentEntryEditor implements ContentRootPanel.ActionCallb
     return folder != null ? folder.getRootType() : null;
   }
 
-  public boolean isExcluded(@NotNull final VirtualFile file) {
-    return getExcludeFolder(file) != null;
-  }
-
-  public boolean isUnderExcludedDirectory(@NotNull final VirtualFile file) {
+  public boolean isExcludedOrUnderExcludedDirectory(@NotNull final VirtualFile file) {
     final ContentEntry contentEntry = getContentEntry();
     if (contentEntry == null) {
       return false;
     }
-    final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
-    for (ExcludeFolder excludeFolder : excludeFolders) {
-      final VirtualFile excludedDir = excludeFolder.getFile();
-      if (excludedDir == null) {
-        continue;
-      }
-      if (VfsUtilCore.isAncestor(excludedDir, file, true)) {
+    for (VirtualFile excludedDir : contentEntry.getExcludeFolderFiles()) {
+      if (VfsUtilCore.isAncestor(excludedDir, file, false)) {
         return true;
       }
     }
     return false;
-  }
-
-  @Nullable
-  public ExcludeFolder getExcludeFolder(@NotNull final VirtualFile file) {
-    final ContentEntry contentEntry = getContentEntry();
-    if (contentEntry == null) {
-      return null;
-    }
-    final ExcludeFolder[] excludeFolders = contentEntry.getExcludeFolders();
-    for (final ExcludeFolder excludeFolder : excludeFolders) {
-      final VirtualFile f = excludeFolder.getFile();
-      if (f == null) {
-        continue;
-      }
-      if (f.equals(file)) {
-        return excludeFolder;
-      }
-    }
-    return null;
   }
 
   @Nullable

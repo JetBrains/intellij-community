@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 package com.intellij.util.containers;
+
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -79,6 +81,7 @@ public class FList<E> extends AbstractList<E> {
     return this;
   }
 
+  @NotNull
   @Override
   public Iterator<E> iterator() {
     return new Iterator<E>() {

@@ -63,7 +63,7 @@ public class ProjectRootsUtil {
   public static SourceFolder getModuleSourceRoot(@NotNull VirtualFile root, @NotNull Project project) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Module module = projectFileIndex.getModuleForFile(root);
-    return module != null ? findSourceFolder(module, root) : null;
+    return module != null && !module.isDisposed() ? findSourceFolder(module, root) : null;
   }
 
   public static boolean isLibraryRoot(final VirtualFile directoryFile, final Project project) {

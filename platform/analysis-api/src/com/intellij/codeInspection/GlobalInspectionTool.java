@@ -201,7 +201,7 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
    * In some cases we can do highlighting in annotator or high. visitor based on global inspection or use a shared local inspection tool
    */
   public boolean worksInBatchModeOnly() {
-    return getSharedLocalInspectionTool() != null;
+    return getSharedLocalInspectionTool() == null;
   }
 
   /**

@@ -84,6 +84,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   private volatile boolean myInitialized = false;
   private volatile boolean myDisposed = false;
   private final PackageSink mySink = new PackageSink();
+  private static final boolean ourUseRootIndex = false;
+  private volatile RootIndex myRootIndex = null;
 
   public DirectoryIndexImpl(@NotNull ManagingFS managingFS, @NotNull Project project, @NotNull StartupManager startupManager) {
     myPersistence = managingFS;
@@ -386,6 +388,11 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
     @Override
     public void after(@NotNull List<? extends VFileEvent> events) {
+      RootIndex rootIndex = myRootIndex;
+      if (rootIndex != null && !rootIndex.handleAfterEvent(events)) {
+        myRootIndex = null;
+      }
+
       if (myBatchChangePlanned) {
         myBatchChangePlanned = false;
         long started = System.currentTimeMillis();
@@ -455,12 +462,45 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   @Override
   @NotNull
   public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
-    return mySink.search(packageName, includeLibrarySources);
+    Query<VirtualFile> standardResult = mySink.search(packageName, includeLibrarySources);
+    
+    RootIndex rootIndex = getRootIndex();
+    if (rootIndex != null) {
+      Collection<VirtualFile> riResult = rootIndex.getDirectoriesByPackageName(packageName, includeLibrarySources);
+      Collection<VirtualFile> standard = standardResult.findAll();
+      if (!new HashSet<VirtualFile>(riResult).equals(new HashSet<VirtualFile>(standard))) {
+        for (VirtualFile file : standard) {
+          if (file.getPath().contains(".")) {
+            return standardResult; // standard and rootIndex return different results for directories with dot in name
+          }
+        }
+        assertConsistentResult(packageName, riResult, standard);
+      }
+    }
+
+    return standardResult;
+  }
+
+  @Nullable
+  private RootIndex getRootIndex() {
+    if (!ourUseRootIndex) {
+      return null;
+    }
+    RootIndex rootIndex = myRootIndex;
+    if (rootIndex == null) {
+      rootIndex = myRootIndex = new RootIndex(myProject);
+    }
+    return rootIndex;
   }
 
   @Override
   @TestOnly
   public void checkConsistency() {
+    RootIndex rootIndex = getRootIndex();
+    if (rootIndex != null) {
+      rootIndex.checkConsistency();
+    }
+
     doCheckConsistency(false);
     doCheckConsistency(true);
   }
@@ -515,6 +555,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   }
 
   private void doInitialize() {
+    myRootIndex = null;
+
     IndexState newState = new IndexState();
     newState.doInitialize(false);
     replaceState(newState);
@@ -547,14 +589,27 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     dispatchPendingEvents();
 
     if (!(dir instanceof NewVirtualFile)) return null;
-    return myState.getInfo(((NewVirtualFile)dir).getId());
+
+    RootIndex rootIndex = getRootIndex();
+    DirectoryInfo riInfo = rootIndex != null ? rootIndex.getInfoForDirectory(dir) : null;
+    return assertConsistentResult(dir, riInfo, myState.getInfo(((NewVirtualFile)dir).getId()));
+  }
+
+  private static <T> T assertConsistentResult(@NotNull Object arg, @Nullable T rootIndexResult, T standardResult) {
+    //noinspection ConstantConditions
+    if (ourUseRootIndex && !Comparing.equal(rootIndexResult, standardResult)) {
+      LOG.error("DirectoryIndex differs from RootIndex at " + arg + "\nriInfo=" + rootIndexResult + "\nstandardResult=" + standardResult);
+    }
+    return standardResult;
   }
 
   @Override
   @Nullable
   public JpsModuleSourceRootType<?> getSourceRootType(@NotNull DirectoryInfo info) {
     if (info.isInModuleSource()) {
-      return myState.getRootTypeById(info.getSourceRootTypeId());
+      RootIndex rootIndex = getRootIndex();
+      JpsModuleSourceRootType<?> riType = rootIndex != null ? rootIndex.getSourceRootType(info) : null;
+      return assertConsistentResult(info, riType, myState.getRootTypeById(info.getSourceRootTypeId()));
     }
     return null;
   }
@@ -562,7 +617,16 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   @Override
   public boolean isProjectExcludeRoot(@NotNull VirtualFile dir) {
     checkAvailability();
-    return dir instanceof NewVirtualFile && myState.myProjectExcludeRoots.contains(((NewVirtualFile)dir).getId());
+    if (!(dir instanceof NewVirtualFile)) return false;
+
+    //noinspection UnnecessaryLocalVariable
+    boolean standardResult = myState.myProjectExcludeRoots.contains(((NewVirtualFile)dir).getId());
+/* todo
+    RootIndex rootIndex = getRootIndex();
+    Boolean riResult = rootIndex != null ? rootIndex.isProjectExcludeRoot(dir) : null;
+    return assertConsistentResult(dir, riResult, standardResult);
+*/
+    return standardResult;
   }
 
   private VirtualFile findFileById(int dir) {
@@ -573,7 +637,10 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   public String getPackageName(@NotNull VirtualFile dir) {
     checkAvailability();
     if (!(dir instanceof NewVirtualFile)) return null;
-    return myState.getPackageNameForDirectory((NewVirtualFile)dir);
+
+    RootIndex rootIndex = getRootIndex();
+    String riResult = rootIndex != null ? rootIndex.getPackageName(dir) : null;
+    return assertConsistentResult(dir, riResult, myState.getPackageNameForDirectory((NewVirtualFile)dir));
   }
 
   private static String decodePackageName(@NotNull int[] interned) {
@@ -730,7 +797,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
             assert VfsUtilCore.isAncestor(contentRoot, file, false) : "File: "+file+"; Content root: "+contentRoot;
         }
       }
-      assert id > 0;
+      assert id > 0 : id;
       myDirToInfoMap.put(id, info);
     }
 
@@ -1362,20 +1429,20 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           VirtualFile contentRoot = contentEntry.getFile();
           if (!(contentRoot instanceof NewVirtualFile)) continue;
 
-          ExcludeFolder[] excludeRoots = contentEntry.getExcludeFolders();
-          for (ExcludeFolder excludeRoot : excludeRoots) {
+          for (VirtualFile excludeRoot : contentEntry.getExcludeFolderFiles()) {
             // Output paths should be excluded (if marked as such) regardless if they're under corresponding module's content root
-            VirtualFile excludeRootFile = excludeRoot.getFile();
-            if (excludeRootFile instanceof NewVirtualFile) {
+            if (excludeRoot instanceof NewVirtualFile) {
               if (!FileUtil.startsWith(contentRoot.getUrl(), excludeRoot.getUrl())) {
-                if (isExcludeRootForModule(module, excludeRootFile)) {
-                  putForFileAndAllAncestors((NewVirtualFile)excludeRootFile, excludeRoot.getUrl());
+                if (isExcludeRootForModule(module, excludeRoot)) {
+                  putForFileAndAllAncestors((NewVirtualFile)excludeRoot, excludeRoot.getUrl());
                 }
-                myProjectExcludeRoots.add(((NewVirtualFile)excludeRootFile).getId());
+                myProjectExcludeRoots.add(((NewVirtualFile)excludeRoot).getId());
               }
             }
 
-            putForFileAndAllAncestors((NewVirtualFile)contentRoot, excludeRoot.getUrl());
+          }
+          for (String url : contentEntry.getExcludeFolderUrls()) {
+            putForFileAndAllAncestors((NewVirtualFile)contentRoot, url);
           }
         }
       }

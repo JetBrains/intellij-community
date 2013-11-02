@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.lang.java.JavaLanguage;
@@ -79,7 +80,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
     if (pair == null) return;
     final PsiElement workElement = pair.first;
     final Handler handler = pair.second;
-
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(workElement)) return;
     final String newText = handler.processText(workElement);
     final PsiElement newElement = handler.createReplacement(workElement, newText);
     workElement.replace(newElement);
@@ -101,7 +102,7 @@ public class ConvertToBasicLatinAction extends PsiElementBaseIntentionAction {
     return Character.UnicodeBlock.of(ch) != Character.UnicodeBlock.BASIC_LATIN;
   }
 
-  private static abstract class Handler {
+  private abstract static class Handler {
     @Nullable
     public abstract PsiElement findApplicable(final PsiElement element);
 

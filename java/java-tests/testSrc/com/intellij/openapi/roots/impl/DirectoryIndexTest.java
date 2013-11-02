@@ -31,7 +31,6 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -41,7 +40,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 
 import static java.util.Collections.singletonList;
@@ -52,31 +50,20 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
   private DirectoryIndex myIndex;
 
-  private Module myModule2;
-  private Module myModule3;
+  private Module myModule2, myModule3;
   private VirtualFile myRootVFile;
-  private VirtualFile myModule1Dir;
-  private VirtualFile myModule2Dir;
-  private VirtualFile myModule3Dir;
-  private VirtualFile mySrcDir1;
-  private VirtualFile mySrcDir2;
+  private VirtualFile myModule1Dir, myModule2Dir, myModule3Dir;
+  private VirtualFile mySrcDir1, mySrcDir2;
   private VirtualFile myTestSrc1;
-  private VirtualFile myPack1Dir;
-  private VirtualFile myPack2Dir;
-  private VirtualFile myFileLibDir;
-  private VirtualFile myFileLibSrc;
-  private VirtualFile myFileLibCls;
-  private VirtualFile myLibDir;
-  private VirtualFile myLibSrcDir;
-  private VirtualFile myLibClsDir;
+  private VirtualFile myPack1Dir, myPack2Dir;
+  private VirtualFile myFileLibDir, myFileLibSrc, myFileLibCls;
+  private VirtualFile myLibDir, myLibSrcDir, myLibClsDir;
   private VirtualFile myCvsDir;
   private VirtualFile myExcludeDir;
   private VirtualFile myOutputDir;
   private VirtualFile myModule1OutputDir;
-  private VirtualFile myResDir;
-  private VirtualFile myTestResDir;
-  private VirtualFile myExcludedLibSrcDir;
-  private VirtualFile myExcludedLibClsDir;
+  private VirtualFile myResDir, myTestResDir;
+  private VirtualFile myExcludedLibSrcDir, myExcludedLibClsDir;
 
   @Override
   protected void setUp() throws Exception {
@@ -170,7 +157,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
             PsiTestUtil.addExcludedRoot(myModule2, myExcludeDir);
             ModuleRootModificationUtil.addModuleLibrary(myModule2, "lib",
                                                         singletonList(myLibClsDir.getUrl()), singletonList(myLibSrcDir.getUrl()),
-                                                        Arrays.asList(myExcludedLibClsDir.getUrl(), myExcludedLibSrcDir.getUrl()), DependencyScope.COMPILE);
+                                                        Arrays.asList(myExcludedLibClsDir.getUrl(), myExcludedLibSrcDir.getUrl()), DependencyScope.COMPILE, true);
           }
 
           // fill roots of module3
@@ -215,8 +202,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfo(myTestResDir, myModule, false, false, "", JavaResourceRootType.TEST_RESOURCE, myModule);
 
     checkInfo(myLibDir, myModule, false, false, null, null);
-    checkInfo(myLibSrcDir, myModule, false, true, "", null, myModule2);
-    checkInfo(myLibClsDir, myModule, true, false, "", null, myModule2);
+    checkInfo(myLibSrcDir, myModule, false, true, "", null, myModule2, myModule3);
+    checkInfo(myLibClsDir, myModule, true, false, "", null, myModule2, myModule3);
 
     checkInfo(myModule2Dir, myModule2, false, false, null, null);
     checkInfo(mySrcDir2, myModule2, false, false, "", JavaSourceRootType.SOURCE, myModule2, myModule3);
@@ -225,13 +212,18 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfoNull(myExcludedLibClsDir);
     checkInfoNull(myExcludedLibSrcDir);
 
+    assertEquals(myModule1Dir, checkInfoNotNull(myLibClsDir).getContentRoot());
+
     checkInfo(myModule3Dir, myModule3, false, false, null, null);
   }
 
   public void testDirsByPackageName() {
-    checkPackage("", myFileLibSrc, myFileLibCls, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myLibSrcDir, myLibClsDir, mySrcDir2);
-    checkPackage("pack1", myPack1Dir);
-    checkPackage("pack2", myPack2Dir);
+    checkPackage("", true, myFileLibSrc, myFileLibCls, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myLibSrcDir, myLibClsDir, mySrcDir2);
+    checkPackage("", false, myFileLibCls, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myLibClsDir, mySrcDir2);
+    checkPackage("pack1", true, myPack1Dir);
+    checkPackage("pack1", false, myPack1Dir);
+    checkPackage("pack2", true, myPack2Dir);
+    checkPackage("pack2", false, myPack2Dir);
   }
 
   public void testCreateDir() throws Exception {
@@ -414,6 +406,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfoNull(projectOutput);
     checkInfoNull(module2Output);
     checkInfoNull(module2TestOutput);
+    
+    assertTrue(myIndex.isProjectExcludeRoot(excluded));
 
     excluded.delete(this);
     projectOutput.delete(this);
@@ -431,6 +425,7 @@ public class DirectoryIndexTest extends IdeaTestCase {
     };
     VirtualFileManager.getInstance().addVirtualFileListener(l, getTestRootDisposable());
     excluded = myModule1Dir.createChildDirectory(this, excluded.getName());
+    //todo assertTrue(myIndex.isProjectExcludeRoot(excluded));
     projectOutput = myModule1Dir.createChildDirectory(this, projectOutput.getName());
     module2Output = myModule1Dir.createChildDirectory(this, module2Output.getName());
     module2TestOutput = myModule2Dir.createChildDirectory(this, module2TestOutput.getName());
@@ -441,6 +436,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
     checkInfoNull(module2TestOutput);
 
     assertEquals(created.toString(), 4, created.size());
+
+    assertTrue(myIndex.isProjectExcludeRoot(excluded));
   }
 
   public void testExcludesShouldBeRecognizedRightOnRefresh() throws Exception {
@@ -506,6 +503,16 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
     checkInfo(myModule1Dir, myModule, true, false, "", null, myModule);
     checkInfo(mySrcDir1, myModule, true, false, "", JavaSourceRootType.SOURCE, myModule);
+    
+    //todo this looks strange and inconsistent: the same library classes and sources have different order entries
+    checkInfo(myLibDir, myModule, true, false, "lib", null, myModule);
+    checkInfo(myLibClsDir, myModule, true, false, "", null, myModule2, myModule3);
+    checkInfo(myLibSrcDir, myModule, true, true, "", null, myModule, myModule3);
+    
+    checkInfo(myResDir, myModule, true, false, "", JavaResourceRootType.RESOURCE, myModule);
+
+    //todo uncomment or replace with another assertion about library-excluded dir inside module content 
+    //checkInfoNull(myExcludedLibSrcDir);
   }
 
 
@@ -520,7 +527,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
                          @Nullable Module module,
                          boolean isInLibrary,
                          boolean isInLibrarySource,
-                         @Nullable String packageName, final JpsModuleSourceRootType<?> moduleSourceRootType,
+                         @Nullable String packageName, 
+                         @Nullable final JpsModuleSourceRootType<?> moduleSourceRootType,
                          Module... modulesOfOrderEntries) {
     DirectoryInfo info = checkInfoNotNull(dir);
     assertEquals(module, info.getModule());
@@ -556,13 +564,9 @@ public class DirectoryIndexTest extends IdeaTestCase {
     return info;
   }
 
-  private void checkPackage(String packageName, VirtualFile... expectedDirs) {
-    VirtualFile[] actualDirs = myIndex.getDirectoriesByPackageName(packageName, true).toArray(VirtualFile.EMPTY_ARRAY);
+  private void checkPackage(String packageName, boolean includeLibrarySources, VirtualFile... expectedDirs) {
+    VirtualFile[] actualDirs = myIndex.getDirectoriesByPackageName(packageName, includeLibrarySources).toArray(VirtualFile.EMPTY_ARRAY);
     assertNotNull(actualDirs);
-    HashSet<VirtualFile> set1 = new HashSet<VirtualFile>();
-    ContainerUtil.addAll(set1, expectedDirs);
-    HashSet<VirtualFile> set2 = new HashSet<VirtualFile>();
-    ContainerUtil.addAll(set2, actualDirs);
-    assertEquals(set1, set2);
+    assertSameElements(actualDirs, expectedDirs);
   }
 }
