@@ -1,9 +1,6 @@
 package org.jetbrains.postfixCompletion.Infrastructure;
 
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionStatement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +25,8 @@ public final class PrefixExpressionContext {
 
     return false;
   }
+
+  @NotNull public final PsiStatement getContaining
 
   // todo: getStatement
 

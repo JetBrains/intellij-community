@@ -122,10 +122,16 @@ public class IfStatementTemplateProvider extends TemplateProviderBase {
           final PsiIfStatement psiStatement = (PsiIfStatement)
             psiElementFactory.createStatementFromText("if(expr){CARET;}", expr);
 
+
+
           PsiExpression condition = psiStatement.getCondition();
           assert condition != null;
 
-          condition.replace(expr);
+          final PrefixExpressionContext fixed = expression.fixUp();
+
+          condition.replace(fixed.expression);
+
+          fixed
 
           PsiIfStatement newSt = (PsiIfStatement) parent1.replace(psiStatement);
 

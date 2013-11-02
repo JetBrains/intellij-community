@@ -49,9 +49,8 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
         return new PostfixTemplateAcceptanceContext(
           referenceExpression, qualifier, forceMode) {
 
-          @Override @NotNull
-          public PrefixExpressionContext fixUpExpression(
-            final @NotNull PrefixExpressionContext context) {
+          @Override @NotNull public PrefixExpressionContext
+            fixUpExpression(final @NotNull PrefixExpressionContext context) {
 
             // replace 'expr.postfix' with 'expr'
             final PsiElement parent = context.expression.getParent();
@@ -104,11 +103,36 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
             } while (expression != null);
 
             if (brokenLiteral != null) {
-              return new PostfixTemplateAcceptanceContext(
-                referenceExpression, brokenLiteral, forceMode) {
 
-                @Override @NotNull
-                public PrefixExpressionContext fixUpExpression(@NotNull PrefixExpressionContext context) {
+
+              final PsiLiteralExpression finalBrokenLiteral = brokenLiteral;
+              return new PostfixTemplateAcceptanceContext(
+                referenceExpression, finalBrokenLiteral, forceMode) {
+
+                @Override @NotNull public PrefixExpressionContext
+                  fixUpExpression(@NotNull final PrefixExpressionContext context) {
+
+
+
+
+
+
+                  statement.delete();
+
+                  // EWWWWW
+
+                  final JavaPsiFacade facade = JavaPsiFacade.getInstance(context.expression.getProject());
+                  final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(context.expression.getProject());
+                  final String text = finalBrokenLiteral.getText();
+                  final PsiLiteralExpression fixedLiteral = (PsiLiteralExpression)
+                    elementFactory.createExpressionFromText(text.substring(0, text.length() - 1), null);
+
+                  finalBrokenLiteral.replace(fixedLiteral);
+
+
+                  //JavaTokenType.DOUBLE_LITERAL
+
+                  //facade.getElementFactory().cre
 
                   // todo: unbroke literal
                   // todo: remove separated expression statement
