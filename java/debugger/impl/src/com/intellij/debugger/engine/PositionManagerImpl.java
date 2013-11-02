@@ -268,18 +268,12 @@ public class PositionManagerImpl implements PositionManager {
   private ReferenceType findNested(final ReferenceType fromClass, final int currentDepth, final PsiClass classToFind, final int requiredDepth, final SourcePosition position) {
     final VirtualMachineProxyImpl vmProxy = myDebugProcess.getVirtualMachineProxy();
     if (fromClass.isPrepared()) {
-      
-
       try {
-        //final int lineNumber = position.getLine() + 1;
-
         if (currentDepth < requiredDepth) {
           final List<ReferenceType> nestedTypes = vmProxy.nestedTypes(fromClass);
           for (ReferenceType nested : nestedTypes) {
             final ReferenceType found = findNested(nested, currentDepth + 1, classToFind, requiredDepth, position);
             if (found != null) {
-              // check if enclosing class also has executable code at the same line, and if yes, prefer enclosing class
-              //return fromClass.locationsOfLine(lineNumber).isEmpty()? found : fromClass;
               return found;
             }
           }
@@ -287,7 +281,6 @@ public class PositionManagerImpl implements PositionManager {
         }
 
         final boolean canGetSynthetic = vmProxy.canGetSyntheticAttribute();
-        final boolean canReloadClasses = vmProxy.canRedefineClasses();
         int rangeBegin = Integer.MAX_VALUE;
         int rangeEnd = Integer.MIN_VALUE;
         for (Location location : fromClass.allLineLocations()) {
@@ -296,14 +289,9 @@ public class PositionManagerImpl implements PositionManager {
             continue; // should be a native method, skipping
           }
           final Method method = location.method();
-          try {
-            if (method == null || (canGetSynthetic && method.isSynthetic()) || method.isBridge() || (canReloadClasses && method.isObsolete())) {
-              // do not take into account synthetic stuff
-              continue;
-            }
-          }
-          catch (Throwable ignored) {
-            LOG.info(ignored);
+          if (method == null || (canGetSynthetic && method.isSynthetic()) || method.isBridge()) {
+            // do not take into account synthetic stuff
+            continue;
           }
           final int locationLine = lnumber - 1;
           rangeBegin = Math.min(rangeBegin,  locationLine);
