@@ -21,11 +21,17 @@ public final class PrefixExpressionContext {
     canBeStatement = calculateCanBeStatement(expression);
   }
 
-  private final boolean calculateCanBeStatement(@NotNull final PsiExpression expression) {
+  private boolean calculateCanBeStatement(@NotNull final PsiExpression expression) {
     // look for expression-statement parent
     final PsiElement parent = expression.getParent();
     if (parent instanceof PsiExpressionStatement) return true;
 
     return false;
+  }
+
+  // todo: getStatement
+
+  @NotNull public final PrefixExpressionContext fixUp() {
+    return parentContext.fixUpExpression(this);
   }
 }

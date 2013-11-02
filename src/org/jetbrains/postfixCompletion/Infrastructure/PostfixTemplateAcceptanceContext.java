@@ -10,16 +10,18 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public final class PostfixTemplateAcceptanceContext {
-  private final List<PrefixExpressionContext> myExpressionContexts;
-  private final boolean myForceMode;
+public abstract class PostfixTemplateAcceptanceContext {
+  @NotNull public final PsiReferenceExpression referenceExpression;
+  @NotNull public final List<PrefixExpressionContext> expressions;
+  public final boolean isForceMode;
 
   public PostfixTemplateAcceptanceContext(
     @NotNull final PsiReferenceExpression reference,
     @NotNull final PsiExpression expression,
     boolean forceMode) {
 
-    myForceMode = forceMode;
+    referenceExpression = reference;
+    isForceMode = forceMode;
 
     final ArrayList<PrefixExpressionContext> contexts = new ArrayList<>();
     final int referenceEndRange = reference.getTextRange().getEndOffset();
@@ -42,14 +44,9 @@ public final class PostfixTemplateAcceptanceContext {
       }
     }
 
-    myExpressionContexts = Collections.unmodifiableList(contexts);
+    expressions = Collections.unmodifiableList(contexts);
   }
 
-  @NotNull public final List<PrefixExpressionContext> getExpressions() {
-    return myExpressionContexts;
-  }
-
-  public final boolean isForceMode() {
-    return myForceMode;
-  }
+  @NotNull public abstract PrefixExpressionContext fixUpExpression(
+    @NotNull final PrefixExpressionContext context);
 }

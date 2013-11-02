@@ -46,7 +46,24 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
       // easy case: 'expr.postfix'
       final PsiExpression qualifier = referenceExpression.getQualifierExpression();
       if (qualifier != null) {
-        return new PostfixTemplateAcceptanceContext(referenceExpression, qualifier, forceMode);
+        return new PostfixTemplateAcceptanceContext(
+          referenceExpression, qualifier, forceMode) {
+
+          @Override @NotNull
+          public PrefixExpressionContext fixUpExpression(
+            final @NotNull PrefixExpressionContext context) {
+
+            // replace 'expr.postfix' with 'expr'
+            final PsiElement parent = context.expression.getParent();
+            if (parent instanceof PsiReferenceExpression && parent == this.referenceExpression) {
+              final PsiExpression newExpression =
+                (PsiExpression) this.referenceExpression.replace(context.expression);
+              return new PrefixExpressionContext(this, newExpression);
+            }
+
+            return context;
+          }
+        };
       }
 
       // hard case: 'x > 0.if' (two expression statements, broken literal)
@@ -57,7 +74,6 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
         if (statement == null) return null;
 
         // todo: will it handle 'a instanceof T.if' - ES;Error;ES;?
-
         final PsiStatement prevStatement =
           PsiTreeUtil.getPrevSiblingOfType(statement, PsiStatement.class);
         if (!(prevStatement instanceof PsiExpressionStatement)) return null;
@@ -89,7 +105,17 @@ public final class PostfixTemplatesManager implements ApplicationComponent {
 
             if (brokenLiteral != null) {
               return new PostfixTemplateAcceptanceContext(
-                referenceExpression, brokenLiteral, forceMode);
+                referenceExpression, brokenLiteral, forceMode) {
+
+                @Override @NotNull
+                public PrefixExpressionContext fixUpExpression(@NotNull PrefixExpressionContext context) {
+
+                  // todo: unbroke literal
+                  // todo: remove separated expression statement
+
+                  return context;
+                }
+              };
             }
           }
         }
