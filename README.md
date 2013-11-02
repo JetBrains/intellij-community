@@ -1,0 +1,1 @@
+Educational plugin for PyCharm
