@@ -52,7 +52,7 @@ public class VcsLogUI {
     myColorManager = manager;
     myUiProperties = uiProperties;
     myFilterer = new VcsLogFilterer(logDataHolder, this);
-    myMainFrame = new MainFrame(myLogDataHolder, this, project, uiProperties);
+    myMainFrame = new MainFrame(myLogDataHolder, this, project, settings, uiProperties);
     project.getMessageBus().connect(project).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new Runnable() {
       @Override
       public void run() {
@@ -245,6 +245,10 @@ public class VcsLogUI {
 
   public void runUnderModalProgress(@NotNull String task, @NotNull Runnable runnable) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, task, false, null, this.getMainFrame().getMainComponent());
+  }
+
+  public void setBranchesPanelVisible(boolean visible) {
+    myMainFrame.setBranchesPanelVisible(visible);
   }
 
 }

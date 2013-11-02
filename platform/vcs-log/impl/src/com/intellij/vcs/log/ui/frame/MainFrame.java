@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.SeparatorOrientation;
+import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogUI;
@@ -33,13 +34,13 @@ public class MainFrame {
   @NotNull private final VcsLogFilterUi myFilterUi;
 
   public MainFrame(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI vcsLogUI, @NotNull Project project,
-                   @NotNull VcsLogUiProperties uiProperties) {
+                   @NotNull VcsLogSettings settings, @NotNull VcsLogUiProperties uiProperties) {
     myLogDataHolder = logDataHolder;
     myUI = vcsLogUI;
     myProject = project;
     myUiProperties = uiProperties;
 
-    myActiveSurface = new ActiveSurface(logDataHolder, vcsLogUI, project);
+    myActiveSurface = new ActiveSurface(logDataHolder, vcsLogUI, settings, project);
     myActiveSurface.setupDetailsSplitter(myUiProperties.isShowDetails());
 
     JComponent toolbar = Box.createHorizontalBox();
@@ -133,6 +134,10 @@ public class MainFrame {
 
   public void refresh() {
     myActiveSurface.getBranchesPanel().rebuild();
+  }
+
+  public void setBranchesPanelVisible(boolean visible) {
+    myActiveSurface.getBranchesPanel().setVisible(visible);
   }
 
 }

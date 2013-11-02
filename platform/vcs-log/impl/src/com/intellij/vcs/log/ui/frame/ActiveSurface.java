@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
@@ -38,10 +39,16 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
   @NotNull private final Splitter myDetailsSplitter;
   @NotNull private final JBLoadingPanel myChangesLoadingPane;
 
-  ActiveSurface(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI vcsLogUI, @NotNull Project project) {
+  ActiveSurface(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI vcsLogUI,
+                @NotNull VcsLogSettings settings, @NotNull Project project) {
     myLogDataHolder = logDataHolder;
     myGraphTable = new VcsLogGraphTable(vcsLogUI, logDataHolder);
     myBranchesPanel = new BranchesPanel(logDataHolder, vcsLogUI);
+
+    if (!settings.isShowBranchesPanel()) {
+      myBranchesPanel.setVisible(false);
+    }
+
     myDetailsPanel = new DetailsPanel(logDataHolder, myGraphTable, vcsLogUI.getColorManager());
 
     final ChangesBrowser changesBrowser = new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, false, null,
