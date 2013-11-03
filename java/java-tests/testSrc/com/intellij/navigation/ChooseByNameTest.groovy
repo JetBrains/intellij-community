@@ -167,6 +167,13 @@ class Intf {
     assert getPopupElements(new GotoSymbolModel2(project), 'bar.goo.zzzZzz') == [method]
   }
 
+  public void "test line and column suffix"() {
+    def c = myFixture.addClass("package foo; class Bar {}")
+    assert getPopupElements(new GotoClassModel2(project), 'Bar') == [c]
+    assert getPopupElements(new GotoClassModel2(project), 'Bar:2') == [c]
+    assert getPopupElements(new GotoClassModel2(project), 'Bar:2:3') == [c]
+  }
+
   private List<Object> getPopupElements(ChooseByNameModel model, String text) {
     return getPopupElements(createPopup(model), text)
   }

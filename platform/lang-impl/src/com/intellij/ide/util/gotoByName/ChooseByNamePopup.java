@@ -332,7 +332,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     return newPopup;
   }
 
-  private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+)(?::|@|,)(\\d+)?(?:(?:\\D)(\\d+)?)?");
+  private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("([^:]+)(?::|@|,)(\\d+)?(?:(?:\\D)(\\d+)?)?");
   private static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$[\\d]+)*(\\$)?)");
   private static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
 
