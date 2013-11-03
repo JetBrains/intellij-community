@@ -70,13 +70,14 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     add(myMessagePanel, MESSAGE_LAYER);
 
     setBackground(UIUtil.getTableBackground());
+    showMessage("No commits selected");
   }
 
   @Override
   public void valueChanged(@Nullable ListSelectionEvent notUsed) {
     int[] rows = myGraphTable.getSelectedRows();
     if (rows.length < 1) {
-      showMessage("Nothing selected");
+      showMessage("No commits selected");
     }
     else if (rows.length > 1) {
       showMessage("Several commits selected");
