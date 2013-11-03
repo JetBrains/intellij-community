@@ -206,6 +206,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       super(new BorderLayout());
       myLabel = new JLabel();
       myLabel.setForeground(UIUtil.getInactiveTextColor());
+      myLabel.setHorizontalAlignment(SwingConstants.CENTER);
+      myLabel.setVerticalAlignment(SwingConstants.CENTER);
       add(myLabel);
     }
 
