@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -783,7 +783,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return getHelpID();
     }
-    if (PlatformDataKeys.PROJECT.is(dataId)) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
     return super.getData(dataId);

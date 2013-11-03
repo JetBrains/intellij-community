@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,7 @@ public class ShowModuleDependenciesAction extends AnAction{
   @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null){
       return;
     }
@@ -84,7 +84,7 @@ public class ShowModuleDependenciesAction extends AnAction{
   @Override
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     e.getPresentation().setEnabled(project != null);
   }
 
