@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
@@ -48,7 +48,7 @@ public abstract class EditorToggleDecorationAction extends ToggleAction implemen
 
   @Nullable
   private static Editor getEditor(AnActionEvent e) {
-    return e.getData(PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE);
+    return e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
   }
 
   @Override
