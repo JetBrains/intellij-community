@@ -190,6 +190,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
     void setRefs(@NotNull List<VcsRef> refs) {
       myRefs = refs;
+      setVisible(!myRefs.isEmpty());
       repaint();
     }
   }
