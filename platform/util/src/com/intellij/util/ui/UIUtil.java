@@ -715,6 +715,11 @@ public class UIUtil {
   }
 
   public static Color getListBackground() {
+    if (isUnderNimbusLookAndFeel()) {
+      final Color color = UIManager.getColor("List.background");
+      //noinspection UseJBColor
+      return new Color(color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
+    }
     // Under GTK+ L&F "Table.background" often has main panel color, which looks ugly
     return isUnderGTKLookAndFeel() ? getTreeTextBackground() : UIManager.getColor("List.background");
   }
