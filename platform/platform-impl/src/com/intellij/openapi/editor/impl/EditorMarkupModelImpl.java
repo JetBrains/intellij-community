@@ -213,7 +213,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
   }
 
   private int fitLineToEditor(int visualLine) {
-    return Math.min(myEditor.getVisibleLineCount() - 1, Math.max(0, visualLine));
+    return Math.max(0, Math.min(myEditor.getVisibleLineCount() - 1, visualLine));
   }
 
   private int getOffset(int visualLine, boolean startLine) {
