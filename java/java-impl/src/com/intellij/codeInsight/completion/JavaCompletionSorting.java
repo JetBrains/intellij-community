@@ -331,7 +331,11 @@ public class JavaCompletionSorting {
       if (type instanceof PsiClassType) {
         final PsiClass psiClass = ((PsiClassType)type).resolve();
         if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
-          return GenericsUtil.eliminateWildcards(type);
+          PsiClassType erased = (PsiClassType)GenericsUtil.eliminateWildcards(type);
+          PsiType[] parameters = erased.getParameters();
+          if (parameters.length == 1 && !parameters[0].equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+            return erased;
+          }
         }
       }
       return type;
