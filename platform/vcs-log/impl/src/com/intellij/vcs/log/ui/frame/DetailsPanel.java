@@ -85,7 +85,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       ((CardLayout)getLayout()).show(this, STANDARD_LAYER);
       Hash hash = ((AbstractVcsLogTableModel)myGraphTable.getModel()).getHashAtRow(rows[0]);
       if (hash == null) {
-        showMessage("Nothing selected");
+        showMessage("No commits selected");
         return;
       }
 
