@@ -458,6 +458,9 @@ public class CompletionLookupArranger extends LookupArranger {
   private boolean shouldSkip(CompletionPreselectSkipper[] skippers, LookupElement element) {
     for (final CompletionPreselectSkipper skipper : skippers) {
       if (skipper.skipElement(element, myLocation)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Skipped element " + element + " by " + skipper);
+        }
         return true;
       }
     }
