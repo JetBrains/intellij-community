@@ -17,6 +17,7 @@
   <actions>
     <action class="com.intellij.vcs.log.ui.VcsLogCopyHashAction" id="Vcs.Log.CopyHash"
             icon="AllIcons.Actions.Copy" text="Copy Hash" description="Copy hash value of the selected commit to clipboard" />
+    <action class="com.intellij.vcs.log.ui.VcsLogCreatePatchAction" id="Vcs.Log.CreatePatch" />
     <action class="com.intellij.vcs.log.ui.VcsLogQuickSettingsActions" id="Vcs.Log.QuickSettings"
             icon="AllIcons.General.Gear" text="Quick Settings" description="Quick Settings" />
     
@@ -26,6 +27,7 @@
     </group>
     <group id="Vcs.Log.ContextMenu">
       <reference id="Vcs.Log.CopyHash"/>
+      <reference id="Vcs.Log.CreatePatch"/>
     </group>
   </actions>
 
