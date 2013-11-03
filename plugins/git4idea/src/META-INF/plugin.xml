@@ -79,6 +79,10 @@
       <add-to-group group-id="Vcs.Log.ContextMenu" />
       <add-to-group group-id="Vcs.Log.Toolbar" />
     </action>
+    
+    <action class="git4idea.branch.GitCheckoutRevisionAction" id="Git.CheckoutRevision" text="Checkout Revision">
+      <add-to-group group-id="Vcs.Log.ContextMenu" />
+    </action>
 
   </actions>
 

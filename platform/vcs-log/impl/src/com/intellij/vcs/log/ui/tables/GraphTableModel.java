@@ -54,6 +54,13 @@ public class GraphTableModel extends AbstractVcsLogTableModel<GraphCommitCell> {
     return commitNode == null ? null : myDataHolder.getMiniDetailsGetter().getCommitData(commitNode);
   }
 
+  @Nullable
+  @Override
+  public VcsFullCommitDetails getFullCommitDetails(int row) {
+    Node node = myDataPack.getGraphModel().getGraph().getCommitNodeInRow(row);
+    return node == null ? null : myDataHolder.getCommitDetailsGetter().getCommitData(node);
+  }
+
   @Override
   public void requestToLoadMore() {
     myDataHolder.showFullLog(EmptyRunnable.INSTANCE);

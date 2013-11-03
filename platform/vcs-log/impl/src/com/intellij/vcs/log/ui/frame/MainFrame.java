@@ -8,6 +8,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SeparatorComponent;
 import com.intellij.ui.SeparatorOrientation;
+import com.intellij.vcs.log.VcsLog;
+import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.data.VcsLogUiProperties;
@@ -23,22 +25,23 @@ import java.awt.*;
 /**
  * @author erokhins
  */
-public class MainFrame {
+public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
   @NotNull private final VcsLogDataHolder myLogDataHolder;
   @NotNull private final VcsLogUI myUI;
   @NotNull private final Project myProject;
-  @NotNull private final JPanel myMainPanel;
   @NotNull private final ActiveSurface myActiveSurface;
   @NotNull private final VcsLogUiProperties myUiProperties;
+  @NotNull private final VcsLog myLog;
   @NotNull private final VcsLogFilterUi myFilterUi;
 
   public MainFrame(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI vcsLogUI, @NotNull Project project,
-                   @NotNull VcsLogSettings settings, @NotNull VcsLogUiProperties uiProperties) {
+                   @NotNull VcsLogSettings settings, @NotNull VcsLogUiProperties uiProperties, @NotNull VcsLog log) {
     myLogDataHolder = logDataHolder;
     myUI = vcsLogUI;
     myProject = project;
     myUiProperties = uiProperties;
+    myLog = log;
 
     myActiveSurface = new ActiveSurface(logDataHolder, vcsLogUI, settings, project);
     myActiveSurface.setupDetailsSplitter(myUiProperties.isShowDetails());
@@ -49,10 +52,9 @@ public class MainFrame {
     toolbar.add(new SeparatorComponent(JBColor.LIGHT_GRAY, SeparatorOrientation.VERTICAL));
     toolbar.add(createActionsToolbar());
 
-    myMainPanel = new JPanel();
-    myMainPanel.setLayout(new BorderLayout());
-    myMainPanel.add(toolbar, BorderLayout.NORTH);
-    myMainPanel.add(myActiveSurface, BorderLayout.CENTER);
+    setLayout(new BorderLayout());
+    add(toolbar, BorderLayout.NORTH);
+    add(myActiveSurface, BorderLayout.CENTER);
   }
 
   public VcsLogGraphTable getGraphTable() {
@@ -120,7 +122,7 @@ public class MainFrame {
       }
     };
 
-    refreshAction.registerShortcutOn(myMainPanel);
+    refreshAction.registerShortcutOn(this);
 
     DefaultActionGroup toolbarGroup = new DefaultActionGroup(hideBranchesAction, showBranchesAction, showFullPatchAction, refreshAction,
                                                              showDetailsAction);
@@ -129,7 +131,7 @@ public class MainFrame {
   }
 
   public JComponent getMainComponent() {
-    return myMainPanel;
+    return this;
   }
 
   public void refresh() {
@@ -140,4 +142,10 @@ public class MainFrame {
     myActiveSurface.getBranchesPanel().setVisible(visible);
   }
 
+  @Override
+  public void calcData(DataKey key, DataSink sink) {
+    if (VcsLogDataKeys.VSC_LOG == key) {
+      sink.put(key, myLog);
+    }
+  }
 }

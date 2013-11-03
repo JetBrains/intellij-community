@@ -12,7 +12,6 @@
     <projectService serviceInterface="com.intellij.vcs.log.impl.VcsLogManager" serviceImplementation="com.intellij.vcs.log.impl.VcsLogManager"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogSettings" serviceImplementation="com.intellij.vcs.log.impl.VcsLogSettingsImpl"/>
     <projectService serviceInterface="com.intellij.vcs.log.data.VcsLogUiProperties" serviceImplementation="com.intellij.vcs.log.data.VcsLogUiProperties"/>
-    <projectService serviceInterface="com.intellij.vcs.log.VcsLog" serviceImplementation="com.intellij.vcs.log.impl.VcsLogImpl" />
   </extensions>
 
   <actions>
