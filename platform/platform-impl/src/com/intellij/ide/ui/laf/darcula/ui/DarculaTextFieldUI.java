@@ -156,17 +156,26 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
       int radius = r.height-1;
       g.fillRoundRect(r.x, r.y, r.width, r.height-1, radius, radius);
       g.setColor(c.isEnabled() ? Gray._100 : new Color(0x535353));
-      if (c.hasFocus() && c.getClientProperty("JTextField.Search.noFocusRing") != Boolean.TRUE) {
-          DarculaUIUtil.paintSearchFocusRing(g, r);
-      } else {
-        g.drawRoundRect(r.x, r.y, r.width, r.height-1, radius, radius);
+      if (c.getClientProperty("JTextField.Search.noBorderRing") != Boolean.TRUE) {
+        if (c.hasFocus()) {
+            DarculaUIUtil.paintSearchFocusRing(g, r);
+        } else {
+          g.drawRoundRect(r.x, r.y, r.width, r.height-1, radius, radius);
+        }
       }
       Point p = getSearchIconCoord();
       Icon searchIcon = getComponent().getClientProperty("JTextField.Search.FindPopup") instanceof JPopupMenu ? UIManager.getIcon("TextField.darcula.searchWithHistory.icon") : UIManager.getIcon("TextField.darcula.search.icon");
+      if (searchIcon == null) {
+        searchIcon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/search.png", DarculaTextFieldUI.class, true);
+      }
       searchIcon.paintIcon(null, g, p.x, p.y);
       if (getComponent().hasFocus() && getComponent().getText().length() > 0) {
         p = getClearIconCoord();
-        UIManager.getIcon("TextField.darcula.clear.icon").paintIcon(null, g, p.x, p.y);
+        Icon clearIcon = UIManager.getIcon("TextField.darcula.clear.icon");
+        if (clearIcon == null) {
+          clearIcon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/clear.png", DarculaTextFieldUI.class, true);
+        }
+        clearIcon.paintIcon(null, g, p.x, p.y);
       }
     } else if (border instanceof DarculaTextBorder) {
       if (c.isEnabled() && c.isEditable()) {
