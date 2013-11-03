@@ -23,6 +23,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
@@ -411,7 +412,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
                                   }, new Condition<PluginId>() {
       @Override
       public boolean value(PluginId pluginId) {
-        if (PluginManager.CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
+        if (PluginManagerCore.CORE_PLUGIN_ID.equals(pluginId.getIdString())) {
           return true;
         }
         hasDependants.set(true);
@@ -1085,7 +1086,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         e.getModifiers()
       );
 
-      final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+      final Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project != null) {
         myAnalyze.actionPerformed(event);
         doOKAction();
