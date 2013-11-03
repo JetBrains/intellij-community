@@ -12,18 +12,22 @@
     <projectService serviceInterface="com.intellij.vcs.log.impl.VcsLogManager" serviceImplementation="com.intellij.vcs.log.impl.VcsLogManager"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogSettings" serviceImplementation="com.intellij.vcs.log.impl.VcsLogSettingsImpl"/>
     <projectService serviceInterface="com.intellij.vcs.log.data.VcsLogUiProperties" serviceImplementation="com.intellij.vcs.log.data.VcsLogUiProperties"/>
-    <projectService serviceInterface="com.intellij.vcs.log.VcsLog" serviceImplementation="com.intellij.vcs.log.impl.VcsLogImpl" />
   </extensions>
 
   <actions>
     <action class="com.intellij.vcs.log.ui.VcsLogCopyHashAction" id="Vcs.Log.CopyHash"
             icon="AllIcons.Actions.Copy" text="Copy Hash" description="Copy hash value of the selected commit to clipboard" />
-
+    <action class="com.intellij.vcs.log.ui.VcsLogCreatePatchAction" id="Vcs.Log.CreatePatch" />
+    <action class="com.intellij.vcs.log.ui.VcsLogQuickSettingsActions" id="Vcs.Log.QuickSettings"
+            icon="AllIcons.General.Gear" text="Quick Settings" description="Quick Settings" />
+    
     <group id="Vcs.Log.Toolbar">
       <reference id="Vcs.Log.CopyHash"/>
+      <reference id="Vcs.Log.QuickSettings" />
     </group>
     <group id="Vcs.Log.ContextMenu">
       <reference id="Vcs.Log.CopyHash"/>
+      <reference id="Vcs.Log.CreatePatch"/>
     </group>
   </actions>
 

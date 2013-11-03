@@ -33,6 +33,13 @@ public interface VcsLog {
   List<Hash> getSelectedCommits();
 
   /**
+   * Returns details of the selected commits if all of them have been loaded.
+   * To avoid data inconsistency, if at least one of the selected commits have no details loaded, empty list is returned.
+   */
+  @NotNull
+  List<VcsFullCommitDetails> getSelectedDetails();
+
+  /**
    * Returns details of the given commit, if they have been already loaded.
    * In most cases they are already in the cache, and will be returned.
    * Otherwise null is returned.

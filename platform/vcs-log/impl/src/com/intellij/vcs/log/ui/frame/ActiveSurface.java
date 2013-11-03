@@ -8,10 +8,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ArrayUtil;
+import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.data.VcsLogDataHolder;
 import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
@@ -38,14 +40,19 @@ public class ActiveSurface extends JPanel implements TypeSafeDataProvider {
   @NotNull private final Splitter myDetailsSplitter;
   @NotNull private final JBLoadingPanel myChangesLoadingPane;
 
-  ActiveSurface(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI vcsLogUI, @NotNull Project project) {
+  ActiveSurface(@NotNull VcsLogDataHolder logDataHolder, @NotNull VcsLogUI vcsLogUI,
+                @NotNull VcsLogSettings settings, @NotNull Project project) {
     myLogDataHolder = logDataHolder;
     myGraphTable = new VcsLogGraphTable(vcsLogUI, logDataHolder);
     myBranchesPanel = new BranchesPanel(logDataHolder, vcsLogUI);
+
+    if (!settings.isShowBranchesPanel()) {
+      myBranchesPanel.setVisible(false);
+    }
+
     myDetailsPanel = new DetailsPanel(logDataHolder, myGraphTable, vcsLogUI.getColorManager());
 
-    final ChangesBrowser changesBrowser = new ChangesBrowser(project, null, Collections.<Change>emptyList(), null, false, false, null,
-                                                       ChangesBrowser.MyUseCase.COMMITTED_CHANGES, null);
+    final ChangesBrowser changesBrowser = new RepositoryChangesBrowser(project, null, Collections.<Change>emptyList(), null);
     changesBrowser.getDiffAction().registerCustomShortcutSet(CommonShortcuts.getDiff(), myGraphTable);
     setDefaultEmptyText(changesBrowser);
 

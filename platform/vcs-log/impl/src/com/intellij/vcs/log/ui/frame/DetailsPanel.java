@@ -8,6 +8,7 @@ import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
@@ -159,10 +160,12 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       else {
         myHashLabel.setText(commit.getHash().toShortString());
         myCommitMessage.setText(commit.getFullMessage());
+        myCommitMessage.setCaretPosition(0);
 
-        String authorText = commit.getAuthorName();
+        String authorText = commit.getAuthorName() + " at " + DateFormatUtil.formatDateTime(commit.getAuthorTime());
         if (!commit.getAuthorName().equals(commit.getCommitterName()) || !commit.getAuthorEmail().equals(commit.getCommitterEmail())) {
-          authorText += " (committed by " + commit.getCommitterName() + ")";
+          authorText += " (committed by " + commit.getCommitterName() +
+                        " at " + DateFormatUtil.formatDateTime(commit.getCommitTime()) + ")";
         }
         myAuthor.setText(authorText);
       }
@@ -190,6 +193,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
     void setRefs(@NotNull List<VcsRef> refs) {
       myRefs = refs;
+      setVisible(!myRefs.isEmpty());
       repaint();
     }
   }

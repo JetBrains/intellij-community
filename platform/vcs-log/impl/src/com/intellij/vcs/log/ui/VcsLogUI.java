@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
+import com.intellij.vcs.log.VcsLog;
 import com.intellij.vcs.log.VcsLogFilter;
 import com.intellij.vcs.log.VcsLogSettings;
 import com.intellij.vcs.log.compressedlist.UpdateRequest;
@@ -16,6 +17,7 @@ import com.intellij.vcs.log.graph.elements.GraphElement;
 import com.intellij.vcs.log.graph.elements.Node;
 import com.intellij.vcs.log.graphmodel.FragmentManager;
 import com.intellij.vcs.log.graphmodel.GraphFragment;
+import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.printmodel.SelectController;
 import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.ui.frame.VcsLogGraphTable;
@@ -42,6 +44,7 @@ public class VcsLogUI {
   @NotNull private final VcsLogColorManager myColorManager;
   @NotNull private final VcsLogUiProperties myUiProperties;
   @NotNull private final VcsLogFilterer myFilterer;
+  @NotNull private final VcsLog myLog;
 
   @Nullable private GraphElement prevGraphElement;
 
@@ -52,7 +55,8 @@ public class VcsLogUI {
     myColorManager = manager;
     myUiProperties = uiProperties;
     myFilterer = new VcsLogFilterer(logDataHolder, this);
-    myMainFrame = new MainFrame(myLogDataHolder, this, project, uiProperties);
+    myLog = new VcsLogImpl(myLogDataHolder, this);
+    myMainFrame = new MainFrame(myLogDataHolder, this, project, settings, uiProperties, myLog);
     project.getMessageBus().connect(project).subscribe(VcsLogDataHolder.REFRESH_COMPLETED, new Runnable() {
       @Override
       public void run() {
@@ -245,6 +249,10 @@ public class VcsLogUI {
 
   public void runUnderModalProgress(@NotNull String task, @NotNull Runnable runnable) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, task, false, null, this.getMainFrame().getMainComponent());
+  }
+
+  public void setBranchesPanelVisible(boolean visible) {
+    myMainFrame.setBranchesPanelVisible(visible);
   }
 
 }

@@ -40,12 +40,6 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   }
 
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFixture.addClass("package org.jetbrains.annotations; public @interface Contract { String value(); }");
-  }
-
-  @Override
   protected String getTestDataPath() {
     return JavaTestUtil.getJavaTestDataPath() + "/inspection/dataFlow/fixture/";
   }

@@ -17,6 +17,7 @@ package com.intellij.debugger.engine;
 
 import com.intellij.debugger.SourcePosition;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLambdaExpression;
@@ -76,7 +77,8 @@ public class LambdaMethodFilter implements BreakpointStepMethodFilter{
   }
 
   public boolean locationMatches(DebugProcessImpl process, Location location) throws EvaluateException {
+    final VirtualMachineProxyImpl vm = process.getVirtualMachineProxy();
     final Method method = location.method();
-    return method.name().startsWith(LAMBDA_METHOD_PREFIX) && method.isSynthetic();
+    return method.name().startsWith(LAMBDA_METHOD_PREFIX) && (!vm.canGetSyntheticAttribute() || method.isSynthetic());
   }
 }

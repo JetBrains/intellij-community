@@ -111,13 +111,21 @@ public class DataFlowInspectionBase extends BaseJavaBatchLocalInspectionTool {
         if (method == null) return;
 
         String text = AnnotationUtil.getStringAttributeValue(annotation, null);
-        if (text == null) return;
+        if (StringUtil.isNotEmpty(text)) {
+          String error = checkContract(method, text);
+          if (error != null) {
+            PsiAnnotationMemberValue value = annotation.findAttributeValue(null);
+            assert value != null;
+            holder.registerProblem(value, error);
+            return;
+          }
+        }
 
-        String error = checkContract(method, text);
-        if (error != null) {
-          PsiAnnotationMemberValue value = annotation.findAttributeValue(null);
+        if (Boolean.TRUE.equals(AnnotationUtil.getBooleanAttributeValue(annotation, "pure")) && 
+            PsiType.VOID.equals(method.getReturnType())) {
+          PsiAnnotationMemberValue value = annotation.findDeclaredAttributeValue("pure");
           assert value != null;
-          holder.registerProblem(value, error);
+          holder.registerProblem(value, "Pure methods must return something, void is not allowed as a return type");
         }
       }
     };

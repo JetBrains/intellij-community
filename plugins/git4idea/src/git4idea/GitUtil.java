@@ -939,4 +939,16 @@ public class GitUtil {
     final String output = diff.run();
     return !output.trim().isEmpty();
   }
+
+  /**
+   * Report a warning that the given root has no associated GitRepositories.
+   */
+  public static void noRepositoryForRoot(@NotNull Logger log, @NotNull VirtualFile root, @NotNull Project project) {
+    GitRepositoryManager repositoryManager = getRepositoryManager(project);
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    List<VirtualFile> roots = Arrays.asList(vcsManager.getRootsUnderVcs(GitVcs.getInstance(project)));
+    log.warn(String.format("Repository not found for root: %s. All roots: %s, all repositories: %s", root, roots,
+                           repositoryManager.getRepositories()));
+  }
+
 }

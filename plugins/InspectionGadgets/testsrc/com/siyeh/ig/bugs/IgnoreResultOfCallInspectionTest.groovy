@@ -12,15 +12,15 @@ public class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
 
   @Override
   protected String[] getEnvironmentClasses() {
-    return new String[]{
+    return [
       "package java.util.regex; public class Pattern {" +
       "  public static Pattern compile(String regex) {return null;}" +
       "  public Matcher matcher(CharSequence input) {return null;}" +
       "}",
       "package java.util.regex; public class Matcher {" +
       "  public boolean find() {return true;}" +
-      "}",
-    };
+      "}"
+    ] as String[]
   }
 
   public void testObjectMethods() {
@@ -40,5 +40,22 @@ public class IgnoreResultOfCallInspectionTest extends LightInspectionTestCase {
            "    matcher.notify();\n" +
            "  }\n" +
            "}\n");
+  }
+
+  public void testPureMethod() {
+    doTest """
+import org.jetbrains.annotations.Contract;
+
+class Util {
+  @Contract(pure=true)
+  static Object util() { return null; }
+}
+
+class C {
+  {
+    Util./*Result of 'Util.util()' is ignored*/util/**/();
+  }
+}
+"""
   }
 }
