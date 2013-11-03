@@ -75,14 +75,27 @@
       <separator/>
     </group>
 
-    <action id="Git.CherryPick" class="git4idea.cherrypick.GitCherryPickAction" text="Cherry-Pick" icon="Git4ideaIcons.CherryPick" anchor="First">
+    <action id="Git.CherryPick" class="git4idea.cherrypick.GitCherryPickAction" text="Cherry-Pick" icon="Git4ideaIcons.CherryPick"/>
+    <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision" text="Checkout Revision"/>
+    <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="New Branch"
+            description="Create new branch starting from the selected commit"/>
+    <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="New Tag"
+            description="Create new tag pointing to this commit"/>
+
+    <group id="Git.Log.ContextMenu">
+      <separator/>
+      <reference id="Git.CherryPick" />
+      <reference id="Git.CheckoutRevision"/>
+      <reference id="Git.CreateNewBranch" />
+      <reference id="Git.CreateNewTag" />
       <add-to-group group-id="Vcs.Log.ContextMenu" />
+    </group>
+
+    <group id="Git.Log.Toolbar">
+      <reference id="Git.CherryPick"/>
       <add-to-group group-id="Vcs.Log.Toolbar" />
-    </action>
+    </group>
     
-    <action class="git4idea.branch.GitCheckoutRevisionAction" id="Git.CheckoutRevision" text="Checkout Revision">
-      <add-to-group group-id="Vcs.Log.ContextMenu" />
-    </action>
 
   </actions>
 

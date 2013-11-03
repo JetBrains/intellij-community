@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.branch;
+package git4idea.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -27,13 +27,18 @@ import com.intellij.vcs.log.VcsLogDataKeys;
 import git4idea.GitUtil;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
 import java.util.List;
 
-public class GitCheckoutRevisionAction extends DumbAwareAction {
+/**
+ * @author Kirill Likhodedov
+ */
+public abstract class GitLogSingleCommitAction extends DumbAwareAction {
 
-  private static final Logger LOG = Logger.getInstance(GitCheckoutRevisionAction.class);
+  private static final Logger LOG = Logger.getInstance(GitLogSingleCommitAction.class);
+
+  protected abstract void actionPerformed(@NotNull GitRepository repository, @NotNull VcsFullCommitDetails commit);
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -54,8 +59,8 @@ public class GitCheckoutRevisionAction extends DumbAwareAction {
       GitUtil.noRepositoryForRoot(LOG, commit.getRoot(), data.project);
       return;
     }
-    GitBrancher brancher = ServiceManager.getService(data.project, GitBrancher.class);
-    brancher.checkout(commit.getHash().asString(), Collections.singletonList(repository), null);
+    
+    actionPerformed(repository, commit);
   }
 
   @Override
