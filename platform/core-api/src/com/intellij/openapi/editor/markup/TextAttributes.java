@@ -24,6 +24,7 @@ import org.intellij.lang.annotations.JdkConstants;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.lang.reflect.Field;
@@ -166,7 +167,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
     this(null, null, null, EffectType.BOXED, Font.PLAIN);
   }
 
-  public TextAttributes(Color foregroundColor, Color backgroundColor, Color effectColor, EffectType effectType, @JdkConstants.FontStyle int fontType) {
+  public TextAttributes(@Nullable Color foregroundColor, @Nullable Color backgroundColor, @Nullable Color effectColor, EffectType effectType, @JdkConstants.FontStyle int fontType) {
     setAttributes(foregroundColor, backgroundColor, effectColor, null, effectType, fontType);
   }
 
