@@ -160,6 +160,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       else {
         myHashLabel.setText(commit.getHash().toShortString());
         myCommitMessage.setText(commit.getFullMessage());
+        myCommitMessage.setCaretPosition(0);
 
         String authorText = commit.getAuthorName() + " at " + DateFormatUtil.formatDateTime(commit.getAuthorTime());
         if (!commit.getAuthorName().equals(commit.getCommitterName()) || !commit.getAuthorEmail().equals(commit.getCommitterEmail())) {
