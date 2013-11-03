@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,7 +59,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     if (unversionedFiles.isEmpty()) {
       return;
     }
-    final ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(e.getData(PlatformDataKeys.PROJECT));
+    final ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(e.getData(CommonDataKeys.PROJECT));
     changeListManager.addUnversionedFiles(changeListManager.getDefaultChangeList(), unversionedFiles);
   }
 
@@ -69,7 +69,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
       return true;
     }
     VirtualFile[] files = getFromSelection(e);
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     if (files == null || project == null) {
       return false;
     }
@@ -91,7 +91,7 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
     }
 
     final VirtualFile[] files = getFromSelection(e);
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     if (files == null || project == null) {
       return Collections.emptyList();
     }

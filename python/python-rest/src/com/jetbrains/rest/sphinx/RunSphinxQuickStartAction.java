@@ -39,7 +39,7 @@ public class RunSphinxQuickStartAction extends AnAction implements DumbAware {
     final Presentation presentation = RestPythonUtil.updateSphinxQuickStartRequiredAction(e);
     assert presentation.isEnabled() &&  presentation.isVisible() : "Sphinx requirements for action are not satisfied";
 
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
 
     if (project == null) return;
 
