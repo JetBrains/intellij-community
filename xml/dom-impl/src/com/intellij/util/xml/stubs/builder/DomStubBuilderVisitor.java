@@ -15,63 +15,53 @@
  */
 package com.intellij.util.xml.stubs.builder;
 
-import com.intellij.util.xml.Stubbed;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.io.StringRef;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomElementVisitor;
-import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.Stubbed;
+import com.intellij.util.xml.impl.DomInvocationHandler;
+import com.intellij.util.xml.impl.DomManagerImpl;
 import com.intellij.util.xml.reflect.AbstractDomChildrenDescription;
 import com.intellij.util.xml.reflect.CustomDomChildrenDescription;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.util.xml.stubs.AttributeStub;
 import com.intellij.util.xml.stubs.ElementStub;
-import com.intellij.util.xml.stubs.FileStub;
-
-import java.util.List;
 
 /**
  * @author Dmitry Avdeev
  *         Date: 8/7/12
  */
-public class DomStubBuilderVisitor implements DomElementVisitor {
+class DomStubBuilderVisitor {
+  private final DomManagerImpl myManager;
 
-  private ElementStub myRoot;
-
-  public DomStubBuilderVisitor(FileStub fileStub) {
-    myRoot = fileStub;
+  DomStubBuilderVisitor(DomManagerImpl manager) {
+    myManager = manager;
   }
+  
+  void visitXmlElement(XmlElement element, ElementStub parent) {
+    DomInvocationHandler handler = myManager.getDomHandler(element);
+    if (handler == null || handler.getAnnotation(Stubbed.class) == null && !handler.getChildDescription().isStubbed()) return;
 
-  @Override
-  public void visitDomElement(DomElement element) {
-
-    if (element.getAnnotation(Stubbed.class) != null ||
-        element.getChildDescription().isStubbed()) {
-
-      XmlElement xmlElement = element.getXmlElement();
-      AbstractDomChildrenDescription description = element.getChildDescription();
-      String nsKey = description instanceof DomChildrenDescription ? ((DomChildrenDescription)description).getXmlName().getNamespaceKey() : "";
-      if (xmlElement instanceof XmlTag) {
-        ElementStub old = myRoot;
-        myRoot = new ElementStub(myRoot,
-                                 StringRef.fromString(((XmlTag)xmlElement).getName()),
-                                 StringRef.fromNullableString(nsKey),
-                                 description instanceof CustomDomChildrenDescription);
-        List<DomElement> children = DomUtil.getDefinedChildren(element, true, true);
-        for (DomElement child : children) {
-          visitDomElement(child);
-        }
-        if (old != null) {
-          myRoot = old;
-        }
+    AbstractDomChildrenDescription description = handler.getChildDescription();
+    String nsKey = description instanceof DomChildrenDescription ? ((DomChildrenDescription)description).getXmlName().getNamespaceKey() : "";
+    if (element instanceof XmlTag) {
+      XmlTag tag = (XmlTag)element;
+      ElementStub stub = new ElementStub(parent,
+                                         StringRef.fromString(tag.getName()),
+                                         StringRef.fromNullableString(nsKey),
+                                         description instanceof CustomDomChildrenDescription);
+      for (final XmlTag subTag : tag.getSubTags()) {
+        visitXmlElement(subTag, stub);
       }
-      else if (xmlElement instanceof XmlAttribute) {
-        new AttributeStub(myRoot, StringRef.fromString(((XmlAttribute)xmlElement).getLocalName()),
-                          StringRef.fromNullableString(nsKey),
-                          ((XmlAttribute)xmlElement).getValue());
+      for (XmlAttribute attribute : tag.getAttributes()) {
+        visitXmlElement(attribute, stub);
       }
+    } else if (element instanceof XmlAttribute) {
+      new AttributeStub(parent, StringRef.fromString(((XmlAttribute)element).getLocalName()), 
+                        StringRef.fromNullableString(nsKey), 
+                        ((XmlAttribute)element).getValue());
     }
   }
+
 }
