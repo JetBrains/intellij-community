@@ -292,12 +292,12 @@ public class VcsLogDataHolder implements Disposable {
           return;
         }
 
-        try {
-          myEntireLogLoadWaiter.await();
-        }
-        catch (InterruptedException e) {
-          throw new RuntimeException(e);
-        }
+//        try {
+//          myEntireLogLoadWaiter.await();
+//        }
+//        catch (InterruptedException e) {
+//          throw new RuntimeException(e);
+//        }
 
         List<TimedVcsCommit> compoundLog = myMultiRepoJoiner.join(myLogData.myLogsByRoot.values());
         DataPack fullDataPack = DataPack.build(compoundLog, myLogData.getAllRefs(), indicator);
