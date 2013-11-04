@@ -201,7 +201,7 @@ public class GrIntroduceFieldProcessor {
     }
     else {
       anchor = GrIntroduceHandlerBase.findAnchor(context.getOccurrences(), container);
-      GrIntroduceHandlerBase.assertStatement(anchor, context.getOccurrences(), context.getScope());
+      GrIntroduceHandlerBase.assertStatement(anchor, context.getScope());
     }
 
     generateAssignment(field, (GrStatement)anchor, container);

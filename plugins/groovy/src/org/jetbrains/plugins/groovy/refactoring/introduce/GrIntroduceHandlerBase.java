@@ -561,8 +561,7 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
 
     PsiElement candidate;
     if (occurrences.length == 1) {
-      candidate = occurrences[0];
-      candidate = findContainingStatement(candidate);
+      candidate = findContainingStatement(occurrences[0]);
     }
     else {
       candidate = occurrences[0];
@@ -599,21 +598,11 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
     return candidate;
   }
 
-  public static void assertStatement(PsiElement anchor, PsiElement[] occurrences, PsiElement scope) {
+  public static void assertStatement(@NotNull PsiElement anchor, @NotNull PsiElement scope) {
     if (!(anchor instanceof GrStatement)) {
-      StringBuilder error = new StringBuilder("scope:");
-      error.append(scope.getText());
-      error.append("\n---------------------------------------\n\n");
-      error.append("occurrences: ");
-      for (PsiElement occurrence : occurrences) {
-        error.append(occurrence.getText());
-        error.append("\n------------------\n");
-      }
-
-      LogMessageEx.error(LOG, "cannot find anchor for variable", error.toString());
+      LogMessageEx.error(LOG, "cannot find anchor for variable", scope.getText());
     }
   }
-
 
   @Nullable
   private static PsiElement findContainingStatement(@Nullable PsiElement candidate) {
@@ -726,6 +715,50 @@ public abstract class GrIntroduceHandlerBase<Settings extends GrIntroduceSetting
       }
     }
   }
+
+  @NotNull
+  public static GrExpression cutLiteral(final StringPartInfo stringPart, final Project project) {
+    Data data = new Data(stringPart);
+    String startQuote = data.getStartQuote();
+    TextRange range = data.getRange();
+    String literalText = data.getText();
+    String endQuote = data.getEndQuote();
+
+    String prefix = literalText.substring(0, range.getStartOffset()) ;
+    String suffix =  literalText.substring(range.getEndOffset());
+    String selected = literalText.substring(range.getStartOffset(), range.getEndOffset());
+
+    StringBuilder buffer = new StringBuilder();
+    if (!prefix.equals(startQuote)) {
+      buffer.append(prefix).append(endQuote).append('+');
+    }
+    buffer.append(startQuote).append(selected).append(endQuote);
+
+    if (!suffix.equals(endQuote)) {
+      buffer.append('+').append(startQuote).append(suffix);
+    }
+
+    final GrExpression concatenation = GroovyPsiElementFactory.getInstance(project).createExpressionFromText(buffer);
+
+    final GrExpression concat = stringPart.getLiteral().replaceWithExpression(concatenation, false);
+    if (concat instanceof GrReferenceExpression) {
+      return concat;
+    }
+    else {
+      assert concat instanceof GrBinaryExpression;
+      final GrExpression left = ((GrBinaryExpression)concat).getLeftOperand();
+      if (left instanceof GrReferenceExpression) {
+        return left;
+      }
+      else {
+        assert left instanceof GrBinaryExpression;
+        final GrExpression right = ((GrBinaryExpression)left).getRightOperand();
+        assert right != null;
+        return right;
+      }
+    }
+  }
+
 
   public interface Validator extends NameValidator {
     boolean isOK(GrIntroduceDialog dialog);
