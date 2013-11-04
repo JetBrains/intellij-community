@@ -265,7 +265,7 @@ public class VcsLogDataHolder implements Disposable {
           myEntireLogLoadWaiter.countDown();
         }
       }
-    }, "Loading entire log structure...");
+    }, "Loading log structure...");
   }
 
   /**
