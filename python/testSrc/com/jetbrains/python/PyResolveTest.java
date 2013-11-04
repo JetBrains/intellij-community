@@ -556,4 +556,9 @@ public class PyResolveTest extends PyResolveTestCase {
     UsefulTestCase.assertInstanceOf(owner, PyFunction.class);
     Assert.assertEquals("__new__", owner.getName());
   }
+
+  public void testPreferInitForAttributes() {  // PY-9228
+    PyTargetExpression xyzzy = assertResolvesTo(PyTargetExpression.class, "xyzzy");
+    assertEquals("__init__", PsiTreeUtil.getParentOfType(xyzzy, PyFunction.class).getName());
+  }
 }
