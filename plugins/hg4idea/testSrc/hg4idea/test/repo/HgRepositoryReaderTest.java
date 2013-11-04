@@ -85,18 +85,18 @@ public class HgRepositoryReaderTest extends HgPlatformTest {
   }
 
   public void testBookmarks() {
-    Collection<String> bookmarks = myRepositoryReader.readBookmarks();
+    Collection<String> bookmarks = HgUtil.getNamesWithoutHashes(myRepositoryReader.readBookmarks());
     VcsTestUtil.assertEqualCollections(bookmarks, myBookmarks);
   }
 
   public void testTags() {
     Collection<String> tags = HgUtil.getNamesWithoutHashes(myRepositoryReader.readTags());
-    TestRepositoryUtil.assertEqualCollections(tags, myTags);
+    VcsTestUtil.assertEqualCollections(tags, myTags);
   }
 
   public void testLocalTags() {
     Collection<String> localTags = HgUtil.getNamesWithoutHashes(myRepositoryReader.readLocalTags());
-    TestRepositoryUtil.assertEqualCollections(localTags, myLocalTags);
+    VcsTestUtil.assertEqualCollections(localTags, myLocalTags);
   }
 
   @NotNull
