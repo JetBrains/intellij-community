@@ -170,6 +170,7 @@ public class CommandRuntime {
 
   @NotNull
   private CommandExecutor newExecutor(@NotNull Command command) {
+    command.putIfNotPresent("--non-interactive");
     return new CommandExecutor(exePath, command);
   }
 
