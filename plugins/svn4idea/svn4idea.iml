@@ -76,6 +76,9 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" name="jna" level="project" />
+    <orderEntry type="library" name="pty4j" level="project" />
+    <orderEntry type="library" name="purejavacomm" level="project" />
   </component>
 </module>
 

@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -170,8 +171,19 @@ public class CommandRuntime {
 
   @NotNull
   private CommandExecutor newExecutor(@NotNull Command command) {
-    command.putIfNotPresent("--non-interactive");
-    return new CommandExecutor(exePath, command);
+    final CommandExecutor executor;
+
+    if (!Registry.is("svn.use.terminal")) {
+      command.putIfNotPresent("--non-interactive");
+      executor = new CommandExecutor(exePath, command);
+    }
+    else {
+      command.put("--force-interactive");
+      executor = new TerminalExecutor(exePath, command);
+      ((TerminalExecutor)executor).addInteractiveListener(new TerminalSshModule(executor, myAuthCallback));
+    }
+
+    return executor;
   }
 
   @NotNull

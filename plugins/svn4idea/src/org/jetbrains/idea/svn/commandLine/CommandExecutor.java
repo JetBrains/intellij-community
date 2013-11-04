@@ -136,6 +136,12 @@ public class CommandExecutor {
     return outputAdapter.getOutput().getStderr();
   }
 
+  // TODO: Carefully here - do not modify command from threads other than the one started command execution
+  @NotNull
+  public Command getCommand() {
+    return myCommand;
+  }
+
   /**
    * Wait for process termination
    * @param timeout
