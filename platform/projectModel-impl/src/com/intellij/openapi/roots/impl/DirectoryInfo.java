@@ -36,7 +36,6 @@ import java.util.Comparator;
 import java.util.List;
 
 public final class DirectoryInfo {
-  static final DirectoryInfo EMPTY = createNew();
   public static final int MAX_ROOT_TYPE_ID = (1 << (Byte.SIZE - 2)) - 1;
   private final Module module; // module to which content it belongs or null
   private final VirtualFile libraryClassRoot; // class root in library

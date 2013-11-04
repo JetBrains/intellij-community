@@ -41,6 +41,7 @@ import java.util.*;
 
 class RootIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootIndex");
+  private static final DirectoryInfo NULL_INFO = DirectoryInfo.createNew();
 
   private final Set<VirtualFile> myProjectExcludedRoots = ContainerUtil.newHashSet();
   private final Set<VirtualFile> myLibraryExcludedRoots = ContainerUtil.newHashSet();
@@ -322,7 +323,7 @@ class RootIndex {
       }
       DirectoryInfo info = myInfoCache.get(root);
       if (info != null) {
-        return info == DirectoryInfo.EMPTY ? null : info;
+        return info == NULL_INFO ? null : info;
       }
       
       info = myRoots.get(root);
@@ -332,12 +333,12 @@ class RootIndex {
       }
       
       if (isAnyExcludeRoot(root) || FileTypeManager.getInstance().isFileIgnored(root)) {
-        myInfoCache.put(dir, DirectoryInfo.EMPTY);
+        myInfoCache.put(dir, NULL_INFO);
         return null;
       }
     }
 
-    myInfoCache.put(dir, DirectoryInfo.EMPTY);
+    myInfoCache.put(dir, NULL_INFO);
     return null;
   }
 
