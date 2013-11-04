@@ -126,6 +126,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
     myClipboardHandler.resetContent();
   }
 
+
   private static class ClipboardHandler {
     public void init() {
     }
@@ -178,6 +179,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
     public void resetContent() {
     }
   }
+
 
   private static class MacClipboardHandler extends ClipboardHandler {
     private Pair<String,Transferable> myFullTransferable;
@@ -264,45 +266,46 @@ public class ClipboardSynchronizer implements ApplicationComponent {
 
       return result.get();
     }
+
+    @Nullable
+    private static Transferable getClipboardContentNatively() {
+      String plainText = "public.utf8-plain-text";
+
+      ID pasteboard = Foundation.invoke("NSPasteboard", "generalPasteboard");
+      ID types = Foundation.invoke(pasteboard, "types");
+      IntegerType count = Foundation.invoke(types, "count");
+
+      ID plainTextType = null;
+
+      for (int i = 0; i < count.intValue(); i++) {
+        ID each = Foundation.invoke(types, "objectAtIndex:", i);
+        String eachType = Foundation.toStringViaUTF8(each);
+        if (plainText.equals(eachType)) {
+          plainTextType = each;
+          break;
+        }
+      }
+
+      // will put string value even if we doesn't found java object. this is needed because java caches clipboard value internally and
+      // will reset it ONLY IF we'll put jvm-object into clipboard (see our setContent optimizations which avoids putting jvm-objects
+      // into clipboard)
+
+      Transferable result = null;
+      if (plainTextType != null) {
+        ID text = Foundation.invoke(pasteboard, "stringForType:", plainTextType);
+        String value = Foundation.toStringViaUTF8(text);
+        if (value == null) {
+          LOG.info(String.format("[Clipboard] Strange string value (null?) for type: %s", plainTextType));
+        }
+        else {
+          result = new StringSelection(value);
+        }
+      }
+
+      return result;
+    }
   }
 
-  @Nullable
-  private static Transferable getClipboardContentNatively() {
-    String plainText = "public.utf8-plain-text";
-
-    ID pasteboard = Foundation.invoke("NSPasteboard", "generalPasteboard");
-    ID types = Foundation.invoke(pasteboard, "types");
-    IntegerType count = Foundation.invoke(types, "count");
-
-    ID plainTextType = null;
-
-    for (int i = 0; i < count.intValue(); i++) {
-      ID each = Foundation.invoke(types, "objectAtIndex:", i);
-      String eachType = Foundation.toStringViaUTF8(each);
-      if (plainText.equals(eachType)) {
-        plainTextType = each;
-        break;
-      }
-    }
-
-    // will put string value even if we doesn't found java object. this is needed because java caches clipboard value internally and
-    // will reset it ONLY IF we'll put jvm-object into clipboard (see our setContent optimizations which avoids putting jvm-objects
-    // into clipboard)
-
-    Transferable result = null;
-    if (plainTextType != null) {
-      ID text = Foundation.invoke(pasteboard, "stringForType:", plainTextType);
-      String value = Foundation.toStringViaUTF8(text);
-      if (value == null) {
-        LOG.info(String.format("[Clipboard] Strange string value (null?) for type: %s", plainTextType));
-      }
-      else {
-        result = new StringSelection(value);
-      }
-    }
-
-    return result;
-  }
 
   private static class XWinClipboardHandler extends ClipboardHandler {
     private static final FlavorTable FLAVOR_MAP = (FlavorTable)SystemFlavorMap.getDefaultFlavorMap();
@@ -429,6 +432,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
       return null;
     }
   }
+
 
   private static class HeadlessClipboardHandler extends ClipboardHandler {
     private volatile Transferable myContent = null;
