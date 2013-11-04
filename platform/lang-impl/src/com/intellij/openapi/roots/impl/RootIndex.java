@@ -337,6 +337,7 @@ class RootIndex {
       }
     }
 
+    myInfoCache.put(dir, DirectoryInfo.EMPTY);
     return null;
   }
 
