@@ -36,8 +36,9 @@ import java.awt.datatransfer.*;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.*;
-import java.util.List;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * <p>This class is used to workaround the problem with getting clipboard contents (http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=4818143).
@@ -216,7 +217,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
           LOG.info(e);
         }
       }
-      
+
       myFullTransferable = null;
       return transferable;
     }
@@ -246,11 +247,11 @@ public class ClipboardSynchronizer implements ApplicationComponent {
         super.setContent(content, owner);
       }
     }
-    
+
     @Nullable
     public static Transferable getContentsSafe() {
       final Ref<Transferable> result = new Ref<Transferable>();
-      
+
       Foundation.executeOnMainThread(new Runnable() {
         @Override
         public void run() {
@@ -264,7 +265,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
       return result.get();
     }
   }
-  
+
   @Nullable
   private static Transferable getClipboardContentNatively() {
     String plainText = "public.utf8-plain-text";
@@ -285,9 +286,9 @@ public class ClipboardSynchronizer implements ApplicationComponent {
     }
 
     // will put string value even if we doesn't found java object. this is needed because java caches clipboard value internally and
-    // will reset it ONLY IF we'll put jvm-object into clipboard (see our setContent optimizations which avoids putting jvm-objects 
-    // into clipboard) 
-    
+    // will reset it ONLY IF we'll put jvm-object into clipboard (see our setContent optimizations which avoids putting jvm-objects
+    // into clipboard)
+
     Transferable result = null;
     if (plainTextType != null) {
       ID text = Foundation.invoke(pasteboard, "stringForType:", plainTextType);
@@ -299,7 +300,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
         result = new StringSelection(value);
       }
     }
-    
+
     return result;
   }
 
@@ -328,15 +329,19 @@ public class ClipboardSynchronizer implements ApplicationComponent {
       }
 
       try {
-        final Pair<long[], ? extends Collection<DataFlavor>> contents = checkContentsQuick();
+        final Collection<DataFlavor> contents = checkContentsQuick();
         if (contents != null) {
-          return contents.second.contains(dataFlavor);
+          return contents.contains(dataFlavor);
         }
 
         return super.isDataFlavorAvailable(dataFlavor);
       }
       catch (NullPointerException e) {
-        LOG.warn("Sun bug #6322854", e);
+        LOG.warn("Java bug #6322854", e);
+        return false;
+      }
+      catch (IllegalArgumentException e) {
+        LOG.warn("Java bug #7173464", e);
         return false;
       }
     }
@@ -349,49 +354,20 @@ public class ClipboardSynchronizer implements ApplicationComponent {
       }
 
       try {
-        final Pair<long[], ? extends Collection<DataFlavor>> contents = checkContentsQuick();
-        if (contents != null && contents.second.isEmpty()) {
+        final Collection<DataFlavor> contents = checkContentsQuick();
+        if (contents != null && contents.isEmpty()) {
           return null;
         }
 
-        try {
-          return super.getContents();
-        }
-        catch (IllegalArgumentException e) {
-          // todo[r.sh] to remove in IDEA 12.1
-          if (contents != null && "Comparison method violates its general contract!".equals(e.getMessage())) {
-            LOG.error("Cannot sort: " + contents.second + ", atoms: " + atomNames(contents.first), e);
-            return null;
-          }
-          throw e;
-        }
+        return super.getContents();
       }
       catch (NullPointerException e) {
-        LOG.warn("Sun bug #6322854", e);
+        LOG.warn("Java bug #6322854", e);
         return null;
       }
-    }
-
-    private static List<String> atomNames(long[] formats) {
-      try {
-        Class<?> toolkit = Class.forName("sun.awt.X11.XToolkit");
-        Method getDisplay = toolkit.getDeclaredMethod("getDisplay");
-        getDisplay.setAccessible(true);
-        long display = (Long)getDisplay.invoke(null);
-
-        Class<?> wrapper = Class.forName("sun.awt.X11.XlibWrapper");
-        Method getAtomName = wrapper.getDeclaredMethod("XGetAtomName", long.class, long.class);
-        getAtomName.setAccessible(true);
-
-        List<String> atoms = new ArrayList<String>();
-        for (long format : formats) {
-          String name = (String)getAtomName.invoke(null, display, format);
-          atoms.add(format + ":" + name);
-        }
-        return atoms;
-      }
-      catch (Throwable t) {
-        return Collections.emptyList();
+      catch (IllegalArgumentException e) {
+        LOG.warn("Java bug #7173464", e);
+        return null;
       }
     }
 
@@ -413,7 +389,7 @@ public class ClipboardSynchronizer implements ApplicationComponent {
      *         collection of available data flavors otherwise.
      */
     @Nullable
-    private static Pair<long[], ? extends Collection<DataFlavor>> checkContentsQuick() {
+    private static Collection<DataFlavor> checkContentsQuick() {
       final Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
       final Class<? extends Clipboard> aClass = clipboard.getClass();
       if (!"sun.awt.X11.XClipboard".equals(aClass.getName())) return null;
@@ -433,10 +409,10 @@ public class ClipboardSynchronizer implements ApplicationComponent {
       try {
         final long[] formats = (long[])getClipboardFormats.invoke(clipboard);
         if (formats == null || formats.length == 0) {
-          return Pair.create(formats, Collections.<DataFlavor>emptySet());
+          return Collections.emptySet();
         }
         @SuppressWarnings({"unchecked"}) final Set<DataFlavor> set = DataTransferer.getInstance().getFlavorsForFormats(formats, FLAVOR_MAP).keySet();
-        return Pair.create(formats, set);
+        return set;
       }
       catch (IllegalAccessException ignore) { }
       catch (IllegalArgumentException ignore) { }
