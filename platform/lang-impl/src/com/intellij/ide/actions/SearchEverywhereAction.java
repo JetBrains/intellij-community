@@ -336,7 +336,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   private void initSearchField(final MySearchTextField search) {
     final JTextField editor = search.getTextEditor();
-    onFocusLost();
+//    onFocusLost();
     editor.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
@@ -379,7 +379,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
       @Override
       public void focusLost(FocusEvent e) {
-        if ( myPopup instanceof AbstractPopup && myPopup.isVisible() && ((AbstractPopup)myPopup).getPopupWindow() == e.getOppositeComponent()) {
+        if ( myPopup instanceof AbstractPopup && myPopup.isVisible()
+             && ((myList == e.getOppositeComponent()) || ((AbstractPopup)myPopup).getPopupWindow() == e.getOppositeComponent())) {
           return;
         }
         onFocusLost();
@@ -491,7 +492,11 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
               option.setOptionState(!option.isOptionEnabled());
             }
             else {
-              GotoActionAction.openOptionOrPerformAction(value, pattern, project, comp, event);
+              Component c = comp;
+              if (c == null) {
+                c = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+              }
+              GotoActionAction.openOptionOrPerformAction(value, pattern, project, c, event);
             }
           }
         });
