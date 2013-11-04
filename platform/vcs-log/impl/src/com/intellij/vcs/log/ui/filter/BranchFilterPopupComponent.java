@@ -16,10 +16,9 @@
 package com.intellij.vcs.log.ui.filter;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogBranchFilter;
 import com.intellij.vcs.log.impl.VcsLogUtil;
@@ -27,10 +26,7 @@ import com.intellij.vcs.log.ui.VcsLogUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 class BranchFilterPopupComponent extends FilterPopupComponent {
 
@@ -47,47 +43,83 @@ class BranchFilterPopupComponent extends FilterPopupComponent {
 
     actionGroup.add(createAllAction());
 
+    Groups filteredGroups = new Groups();
     Collection<VcsRef> allRefs = myUi.getLogDataHolder().getDataPack().getRefsModel().getBranches();
     for (Map.Entry<VirtualFile, Collection<VcsRef>> entry : VcsLogUtil.groupRefsByRoot(allRefs).entrySet()) {
       VirtualFile root = entry.getKey();
       Collection<VcsRef> refs = entry.getValue();
       VcsLogProvider provider = myUi.getLogDataHolder().getLogProvider(root);
       VcsLogRefManager refManager = provider.getReferenceManager();
-      List<RefGroup> groups = refManager.group(refs);
+      List<RefGroup> refGroups = refManager.group(refs);
 
-      List<AnAction> orderedGroups = orderRefGroups(groups);
-      actionGroup.addAll(orderedGroups);
+      orderRefGroups(refGroups, filteredGroups);
+    }
+
+    actionGroup.add(getFilteredActionGroup(filteredGroups));
+    return actionGroup;
+  }
+
+  private DefaultActionGroup getFilteredActionGroup(Groups groups) {
+    DefaultActionGroup actionGroup = new DefaultActionGroup();
+    for (String single : groups.singletonGroups) {
+      actionGroup.add(new SetValueAction(single, this));
+    }
+    for (Map.Entry<String, TreeSet<String>> group : groups.expandedGroups.entrySet()) {
+      actionGroup.addSeparator(group.getKey());
+      for (String action : group.getValue()) {
+        actionGroup.add(new SetValueAction(action, this));
+      }
+    }
+    actionGroup.addSeparator();
+    for (Map.Entry<String, TreeSet<String>> group : groups.collapsedGroups.entrySet()) {
+      DefaultActionGroup popupGroup = new DefaultActionGroup(group.getKey(), true);
+      for (String action : group.getValue()) {
+        popupGroup.add(new SetValueAction(action, this));
+      }
+      actionGroup.add(popupGroup);
     }
     return actionGroup;
   }
 
-  private List<AnAction> orderRefGroups(List<RefGroup> groups) {
-    DefaultActionGroup singletonGroup = new DefaultActionGroup();
-    DefaultActionGroup expandedGroup = new DefaultActionGroup();
-    DefaultActionGroup collapsedGroup = new DefaultActionGroup();
-
-    for (RefGroup group : groups) {
-      if (group.getRefs().size() == 1) {
-        singletonGroup.add(new SetValueAction(group.getRefs().iterator().next().getName(), this));
-      }
-      else if (group.isExpanded()) {
-        expandedGroup.addSeparator(group.getName());
-        expandedGroup.add(createActionGroup(group, false));
-      }
-      else {
-        collapsedGroup.add(createActionGroup(group, true));
-      }
-    }
-
-    return Arrays.asList(singletonGroup, expandedGroup, Separator.getInstance(), collapsedGroup);
+  private static class Groups {
+    private final TreeSet<String> singletonGroups = ContainerUtil.newTreeSet();
+    private final TreeMap<String, TreeSet<String>> expandedGroups = ContainerUtil.newTreeMap();
+    private final TreeMap<String, TreeSet<String>> collapsedGroups = ContainerUtil.newTreeMap();
   }
 
-  private DefaultActionGroup createActionGroup(RefGroup group, boolean popup) {
-    DefaultActionGroup innerGroup = new DefaultActionGroup(group.getName(), popup);
-    for (VcsRef ref : group.getRefs()) {
-      innerGroup.add(new SetValueAction(ref.getName(), this));
+  private static void orderRefGroups(List<RefGroup> groups, Groups filteredGroups) {
+    for (final RefGroup group : groups) {
+      if (group.getRefs().size() == 1) {
+        String name = group.getRefs().iterator().next().getName();
+        if (!filteredGroups.singletonGroups.contains(name)) {
+          filteredGroups.singletonGroups.add(name);
+        }
+      }
+      else if (group.isExpanded()) {
+        addToGroup(group, filteredGroups.expandedGroups);
+      }
+      else {
+        addToGroup(group, filteredGroups.collapsedGroups);
+      }
     }
-    return innerGroup;
+  }
+
+  private static void addToGroup(final RefGroup group, TreeMap<String, TreeSet<String>> groupToAdd) {
+    TreeSet<String> existingGroup = groupToAdd.get(group.getName());
+
+    TreeSet<String> actions = new TreeSet<String>();
+    for (VcsRef ref : group.getRefs()) {
+      actions.add(ref.getName());
+    }
+
+    if (existingGroup == null) {
+      groupToAdd.put(group.getName(), actions);
+    }
+    else {
+      for (String action : actions) {
+        existingGroup.add(action);
+      }
+    }
   }
 
   @Nullable
