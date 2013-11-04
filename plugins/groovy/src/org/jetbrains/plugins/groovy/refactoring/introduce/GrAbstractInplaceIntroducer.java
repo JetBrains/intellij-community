@@ -164,7 +164,6 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
 
   @Override
   protected void performIntroduce() {
-    final List<RangeMarker> markers = getOccurrenceMarkers();
     GrIntroduceContext context = new GrIntroduceContext() {
       @NotNull
       @Override
@@ -198,13 +197,7 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
       @NotNull
       @Override
       public PsiElement[] getOccurrences() {
-        List<PsiElement> result = ContainerUtil.map(markers, new Function<RangeMarker, PsiElement>() {
-          @Override
-          public PsiElement fun(RangeMarker marker) {
-            return GroovyRefactoringUtil.findElementInRange(myFile, marker.getStartOffset(), marker.getEndOffset(), GrExpression.class);
-          }
-        });
-        return PsiUtilCore.toPsiElementArray(result);
+        return restoreOccurrences();
       }
 
       @Override
@@ -220,6 +213,17 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
       }
     };
     runRefactoring(context, getSettings(), true);
+  }
+
+  @NotNull
+  protected PsiElement[] restoreOccurrences() {
+    List<PsiElement> result = ContainerUtil.map(getOccurrenceMarkers(), new Function<RangeMarker, PsiElement>() {
+      @Override
+      public PsiElement fun(RangeMarker marker) {
+        return GroovyRefactoringUtil.findElementInRange(myFile, marker.getStartOffset(), marker.getEndOffset(), GrExpression.class);
+      }
+    });
+    return PsiUtilCore.toPsiElementArray(result);
   }
 
   @Nullable

@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
-import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -26,19 +25,15 @@ import com.intellij.refactoring.introduceField.IntroduceFieldHandler;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GrRefactoringError;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
 import org.jetbrains.plugins.groovy.refactoring.introduce.*;
 
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -112,29 +107,6 @@ public class GrIntroduceFieldHandler extends GrIntroduceFieldHandlerBase<GrIntro
     }
 
     return new GrInplaceFieldIntroducer(contextRef.get(), choice);
-  }
-
-  static EnumSet<GrIntroduceFieldSettings.Init> getApplicableInitPlaces(GrIntroduceContext context, boolean replaceAll) {
-    EnumSet<GrIntroduceFieldSettings.Init> result = EnumSet.of(GrIntroduceFieldSettings.Init.FIELD_DECLARATION);
-
-    if (!(context.getScope() instanceof GroovyScriptClass || context.getScope() instanceof GroovyFileBase)) {
-      result.add(GrIntroduceFieldSettings.Init.CONSTRUCTOR);
-    }
-
-    PsiElement scope = context.getScope();
-
-    if (replaceAll) {
-      PsiElement anchor = GrIntroduceHandlerBase.findAnchor(context.getOccurrences(), scope);
-      if (anchor != null) {
-        result.add(GrIntroduceFieldSettings.Init.CUR_METHOD);
-      }
-    }
-
-    if (scope instanceof GrTypeDefinition && TestFrameworks.getInstance().isTestClass((PsiClass)scope)) {
-      result.add(GrIntroduceFieldSettings.Init.SETUP_METHOD);
-    }
-
-    return result;
   }
 
   @NotNull
