@@ -240,3 +240,13 @@ class IDEA100237 {
         };
     }
 }
+
+class StaticInitializerUsedInAnotherStaticField {
+  private static final int ENUMERATION_CACHE_SIZE;
+
+  static {
+    ENUMERATION_CACHE_SIZE = 0;
+  }
+
+  private static final int ourEnumerationCacheConstant = ENUMERATION_CACHE_SIZE;
+}
