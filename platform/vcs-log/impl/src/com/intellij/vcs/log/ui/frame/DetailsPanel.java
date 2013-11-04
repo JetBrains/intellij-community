@@ -70,13 +70,14 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     add(myMessagePanel, MESSAGE_LAYER);
 
     setBackground(UIUtil.getTableBackground());
+    showMessage("No commits selected");
   }
 
   @Override
   public void valueChanged(@Nullable ListSelectionEvent notUsed) {
     int[] rows = myGraphTable.getSelectedRows();
     if (rows.length < 1) {
-      showMessage("Nothing selected");
+      showMessage("No commits selected");
     }
     else if (rows.length > 1) {
       showMessage("Several commits selected");
@@ -85,7 +86,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       ((CardLayout)getLayout()).show(this, STANDARD_LAYER);
       Hash hash = ((AbstractVcsLogTableModel)myGraphTable.getModel()).getHashAtRow(rows[0]);
       if (hash == null) {
-        showMessage("Nothing selected");
+        showMessage("No commits selected");
         return;
       }
 
@@ -206,6 +207,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       super(new BorderLayout());
       myLabel = new JLabel();
       myLabel.setForeground(UIUtil.getInactiveTextColor());
+      myLabel.setHorizontalAlignment(SwingConstants.CENTER);
+      myLabel.setVerticalAlignment(SwingConstants.CENTER);
       add(myLabel);
     }
 
