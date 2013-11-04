@@ -21,8 +21,9 @@ public class VcsLogColorManagerImpl implements VcsLogColorManager {
   private static final Color ROOT_INDICATOR_BORDER = JBColor.LIGHT_GRAY;
   private static final Logger LOG = Logger.getInstance(VcsLogColorManagerImpl.class);
 
-  // TODO select colors carefully
-  private static Color[] ROOT_COLORS = { Color.RED, Color.YELLOW, Color.LIGHT_GRAY, Color.BLUE, Color.MAGENTA };
+  private static Color[] ROOT_COLORS = {
+    JBColor.RED, JBColor.YELLOW, JBColor.LIGHT_GRAY, JBColor.BLUE, JBColor.MAGENTA,
+    JBColor.CYAN, JBColor.GREEN, JBColor.ORANGE, JBColor.PINK};
 
   @NotNull private final List<VirtualFile> myRoots;
 
