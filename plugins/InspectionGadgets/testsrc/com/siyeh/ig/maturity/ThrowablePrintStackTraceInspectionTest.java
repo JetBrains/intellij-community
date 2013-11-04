@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig;
+package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.maturity.ThrowablePrintStackTraceInspection;
+import com.siyeh.ig.LightInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
