@@ -36,7 +36,7 @@ public abstract class AbstractMethodProcessor extends AbstractProcessor implemen
   public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     List<? super PsiElement> result = new ArrayList<PsiElement>();
     for (PsiMethod psiMethod : PsiClassUtil.collectClassMethodsIntern(psiClass)) {
-      PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiMethod.getModifierList(), getSupportedAnnotation());
+      PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiMethod, getSupportedAnnotation());
       if (null != psiAnnotation) {
         process(psiMethod, psiAnnotation, result);
       }

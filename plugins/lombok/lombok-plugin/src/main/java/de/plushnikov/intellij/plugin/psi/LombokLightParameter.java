@@ -40,10 +40,6 @@ public class LombokLightParameter extends LightParameter {
 
   public LombokLightParameter setModifiers(String... modifiers) {
     LombokLightModifierList modifierList = new LombokLightModifierList(getManager(), getLanguage(), modifiers);
-// TODO Check it
-//    for (PsiAnnotation annotation : getAnnotations()) {
-//      modifierList.addAnnotation(annotation.getQualifiedName());
-//    }
     ReflectionUtil.setFinalFieldPerReflection(LightVariableBuilder.class, this, LightModifierList.class, modifierList);
     return this;
   }

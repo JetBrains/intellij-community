@@ -38,7 +38,7 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
   public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     List<? super PsiElement> result = new ArrayList<PsiElement>();
     for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
-      PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiField.getModifierList(), getSupportedAnnotation());
+      PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiField, getSupportedAnnotation());
       if (null != psiAnnotation) {
         process(psiField, psiAnnotation, result);
       }
