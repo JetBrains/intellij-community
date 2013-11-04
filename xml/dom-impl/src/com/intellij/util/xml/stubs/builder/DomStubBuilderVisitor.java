@@ -51,11 +51,11 @@ class DomStubBuilderVisitor {
                                          StringRef.fromString(tag.getName()),
                                          StringRef.fromNullableString(nsKey),
                                          description instanceof CustomDomChildrenDescription);
-      for (final XmlTag subTag : tag.getSubTags()) {
-        visitXmlElement(subTag, stub);
-      }
       for (XmlAttribute attribute : tag.getAttributes()) {
         visitXmlElement(attribute, stub);
+      }
+      for (final XmlTag subTag : tag.getSubTags()) {
+        visitXmlElement(subTag, stub);
       }
     } else if (element instanceof XmlAttribute) {
       new AttributeStub(parent, StringRef.fromString(((XmlAttribute)element).getLocalName()), 
