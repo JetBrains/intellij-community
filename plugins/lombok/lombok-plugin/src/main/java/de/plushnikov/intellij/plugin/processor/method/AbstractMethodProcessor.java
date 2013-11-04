@@ -4,13 +4,13 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,7 +36,7 @@ public abstract class AbstractMethodProcessor extends AbstractProcessor implemen
   public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     List<? super PsiElement> result = new ArrayList<PsiElement>();
     for (PsiMethod psiMethod : PsiClassUtil.collectClassMethodsIntern(psiClass)) {
-      PsiAnnotation psiAnnotation = PsiImplUtil.findAnnotation(psiMethod.getModifierList(), getSupportedAnnotation());
+      PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiMethod.getModifierList(), getSupportedAnnotation());
       if (null != psiAnnotation) {
         process(psiMethod, psiAnnotation, result);
       }

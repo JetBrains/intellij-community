@@ -7,7 +7,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
@@ -42,7 +41,7 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
   public List<? super PsiElement> process(@NotNull PsiClass psiClass) {
     List<? super PsiElement> result = Collections.emptyList();
 
-    PsiAnnotation psiAnnotation = PsiImplUtil.findAnnotation(psiClass.getModifierList(), getSupportedAnnotation());
+    PsiAnnotation psiAnnotation = PsiAnnotationUtil.findAnnotation(psiClass.getModifierList(), getSupportedAnnotation());
     if (null != psiAnnotation) {
       result = new ArrayList<PsiElement>();
       process(psiClass, psiAnnotation, result);

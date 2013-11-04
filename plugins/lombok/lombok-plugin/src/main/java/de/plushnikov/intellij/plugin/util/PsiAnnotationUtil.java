@@ -3,6 +3,7 @@ package de.plushnikov.intellij.plugin.util;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationMemberValue;
+import com.intellij.psi.PsiAnnotationOwner;
 import com.intellij.psi.PsiArrayInitializerMemberValue;
 import com.intellij.psi.PsiClassObjectAccessExpression;
 import com.intellij.psi.PsiElement;
@@ -15,6 +16,7 @@ import com.intellij.psi.PsiReferenceExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeElement;
 import com.intellij.psi.PsiVariable;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
@@ -33,6 +35,14 @@ import java.util.regex.Pattern;
  * @author Plushnikov Michail
  */
 public class PsiAnnotationUtil {
+
+  @Nullable
+  public static PsiAnnotation findAnnotation(@Nullable PsiAnnotationOwner modifierList, @NotNull String qualifiedName) {
+    if (null != modifierList) {
+      return PsiImplUtil.findAnnotation(modifierList, qualifiedName);
+    }
+    return null;
+  }
 
   public static boolean isNotAnnotatedWith(@NotNull PsiModifierListOwner psiModifierListOwner, @NotNull final Class<? extends Annotation>... annotationTypes) {
     return !isAnnotatedWith(psiModifierListOwner, annotationTypes);
