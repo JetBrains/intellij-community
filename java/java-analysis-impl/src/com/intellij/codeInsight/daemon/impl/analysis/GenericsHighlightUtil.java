@@ -510,20 +510,32 @@ public class GenericsHighlightUtil {
             final PsiClass superContainingClass = superMethod.getContainingClass();
             if (containingClass != null && superContainingClass != null && !InheritanceUtil
               .isInheritorOrSelf(containingClass, superContainingClass, true)) {
-              if (superMethod.hasModifierProperty(PsiModifier.DEFAULT)) {
-                final String inheritUnrelatedDefaultsMessage = HighlightUtil.formatClass(aClass) + " inherits unrelated defaults for " +
-                                                               JavaHighlightUtil.formatMethod(method) + " from types " + HighlightUtil.formatClass(containingClass) +
-                                                               " and " + HighlightUtil.formatClass(superContainingClass);
-                return HighlightInfo
-                  .newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier).descriptionAndTooltip(inheritUnrelatedDefaultsMessage).create();
-              }
-              if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+              final boolean isDefault = superMethod.hasModifierProperty(PsiModifier.DEFAULT);
+              if (!aClass.hasModifierProperty(PsiModifier.ABSTRACT) && !isDefault) {
                 final String message = JavaErrorMessages.message(
                   aClass instanceof PsiEnumConstantInitializer ? "enum.constant.should.implement.method" : "class.must.be.abstract",
                   HighlightUtil.formatClass(superContainingClass),
                   JavaHighlightUtil.formatMethod(superMethod),
                   HighlightUtil.formatClass(superContainingClass, false));
-                return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier).descriptionAndTooltip(message).create();
+                return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                  .range(classIdentifier).descriptionAndTooltip(message)
+                  .create();
+              }
+
+              if (isDefault || superMethod.hasModifierProperty(PsiModifier.ABSTRACT)) {
+                final String message = isDefault
+                                       ? " inherits unrelated defaults for "
+                                       : " inherits abstract and default for ";
+                final String inheritUnrelatedDefaultsMessage = HighlightUtil.formatClass(aClass) +
+                                                               message +
+                                                               JavaHighlightUtil.formatMethod(method) +
+                                                               " from types " +
+                                                               HighlightUtil.formatClass(containingClass) +
+                                                               " and " +
+                                                               HighlightUtil.formatClass(superContainingClass);
+                return HighlightInfo
+                  .newHighlightInfo(HighlightInfoType.ERROR).range(classIdentifier).descriptionAndTooltip(inheritUnrelatedDefaultsMessage)
+                  .create();
               }
             }
           }
