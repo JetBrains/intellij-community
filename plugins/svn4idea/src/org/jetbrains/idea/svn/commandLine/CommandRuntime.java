@@ -107,6 +107,9 @@ public class CommandRuntime {
         // no errors found in error stream => we treat null exitCode as successful, otherwise exception is thrown
         if (exitCode != null) {
           // here exitCode != null && exitCode != 0
+          LOG.info("Command - " + executor.getCommandText());
+          LOG.info("Command output - " + executor.getOutput());
+
           throw new SvnBindException("Svn process exited with error code: " + exitCode);
         }
       }
