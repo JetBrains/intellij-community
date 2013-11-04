@@ -1563,6 +1563,24 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
     );
   }
 
+  public void testDontRequireSpecialVarsForUnmatchedContent() {
+    String actualResult;
+
+    String s43 = "public @Deprecated class Foo implements Comparable<Foo> {\n  int x;\n  void m(){}\n }";
+    String s44 = "class 'Class implements 'Interface {}";
+    String s45 = "@MyAnnotation\n" +
+                 "class $Class$ implements $Interface$ {}";
+    String expectedResult16 = "@MyAnnotation public @Deprecated\n" +
+                              "class Foo implements Comparable<Foo> {int x; void m(){}}";
+
+    actualResult = replacer.testReplace(s43,s44,s45,options, true);
+    assertEquals(
+      "Preserving class modifiers and generic information in type during replacement",
+      expectedResult16,
+      actualResult
+    );
+  }
+
   public void _testClassReplacement2() {
     final String actualResult;
     String s40 = "class A {\n" +
@@ -1608,6 +1626,18 @@ public class StructuralReplaceTest extends StructuralReplaceTestCase {
       "Preserving var modifiers and generic information in type during replacement",
       expectedResult15,
       actualResult
+    );
+
+    String s46 = "class Foo { int xxx; void foo() { assert false; } void yyy() {}}";
+    String s47 = "class 'Class { void 'foo:[regex( foo )](); }";
+    String s48 = "class $Class$ { void $foo$(int a); }";
+    String expectedResult17 = "class Foo { int xxx; void foo(int a) { assert false; } void yyy() {}}";
+
+    String actualResult2 = replacer.testReplace(s46,s47,s48,options, true);
+    assertEquals(
+      "Preserving method bodies",
+      expectedResult17,
+      actualResult2
     );
   }
 

@@ -3,6 +3,8 @@ package com.intellij.structuralsearch.impl.matcher.compiler;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.structuralsearch.MatchOptions;
+import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.UnsupportedPatternException;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
@@ -322,19 +324,40 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   @Override
   public void visitClass(PsiClass psiClass) {
     super.visitClass(psiClass);
+
     CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
     final MatchingHandler handler = pattern.getHandler(psiClass);
 
     if (needsSupers(psiClass, handler)) {
       ((JavaCompiledPattern)pattern).setRequestsSuperInners(true);
     }
+    myCompilingVisitor.handleReferenceText(psiClass.getName());
 
     GlobalCompilingVisitor.setFilter(handler, ClassFilter.getInstance());
 
+    boolean hasSubsitutionHandler = false;
     for (PsiElement element = psiClass.getFirstChild(); element != null; element = element.getNextSibling()) {
       if (element instanceof PsiTypeElement && element.getNextSibling() instanceof PsiErrorElement) {
         // found match that
-        psiClass.putUserData(CompiledPattern.ALL_CLASS_CONTENT_VAR_KEY, element);
+        MatchingHandler unmatchedSubstitutionHandler = pattern.getHandler(element);
+        if (unmatchedSubstitutionHandler != null) {
+          psiClass.putUserData(JavaCompiledPattern.ALL_CLASS_CONTENT_VAR_NAME_KEY, pattern.getTypedVarString(element));
+          hasSubsitutionHandler = true;
+        }
+      }
+    }
+
+    if (!hasSubsitutionHandler) {
+      String name = JavaCompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME;
+      psiClass.putUserData(JavaCompiledPattern.ALL_CLASS_CONTENT_VAR_NAME_KEY, name);
+      MatchOptions options = myCompilingVisitor.getContext().getOptions();
+      if (options.getVariableConstraint(name) == null) {
+        pattern.createSubstitutionHandler(name, name, false, 0, Integer.MAX_VALUE, true);
+        MatchVariableConstraint constraint = new MatchVariableConstraint();
+        constraint.setName(name);
+        constraint.setMinCount(0);
+        constraint.setMaxCount(Integer.MAX_VALUE);
+        options.addVariableConstraint(constraint);
       }
     }
   }

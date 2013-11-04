@@ -393,20 +393,23 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
 
   private boolean compareClasses(final PsiClass clazz, final PsiClass clazz2) {
     PsiClass saveClazz = this.myClazz;
-    MatchContext.UnmatchedElementsListener listener = myMatchingVisitor.getMatchContext().getUnmatchedElementsListener();
+    MatchContext.UnmatchedElementsListener oldlistener = myMatchingVisitor.getMatchContext().getUnmatchedElementsListener();
 
     this.myClazz = clazz2;
-    final PsiElement allRemainingClassContentElement = clazz.getUserData(CompiledPattern.ALL_CLASS_CONTENT_VAR_KEY);
-    MatchContext.UnmatchedElementsListener mylistener = null;
-    boolean result = false;
 
     CompiledPattern pattern = myMatchingVisitor.getMatchContext().getPattern();
     assert pattern instanceof JavaCompiledPattern;
     final JavaCompiledPattern javaPattern = (JavaCompiledPattern)pattern;
+
+    String unmatchedHandlerName = clazz.getUserData(JavaCompiledPattern.ALL_CLASS_CONTENT_VAR_NAME_KEY);
+    final MatchingHandler allRemainingClassContentElementHandler = unmatchedHandlerName != null ? pattern.getHandler(unmatchedHandlerName) : null;
+    MatchContext.UnmatchedElementsListener newlistener = null;
+    boolean result = false;
+
     assert javaPattern instanceof JavaCompiledPattern;
-    if (allRemainingClassContentElement != null) {
+    if (allRemainingClassContentElementHandler != null) {
       myMatchingVisitor.getMatchContext().setUnmatchedElementsListener(
-        mylistener = new MatchContext.UnmatchedElementsListener() {
+        newlistener = new MatchContext.UnmatchedElementsListener() {
           private List<PsiElement> myUnmatchedList;
 
           public void matchedElements(List<PsiElement> elementList) {
@@ -421,8 +424,7 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
           }
 
           public void commitUnmatched() {
-            final SubstitutionHandler handler =
-              (SubstitutionHandler)javaPattern.getHandler(allRemainingClassContentElement);
+            final SubstitutionHandler handler = (SubstitutionHandler)allRemainingClassContentElementHandler;
 
             for (PsiElement el = clazz2.getFirstChild(); el != null; el = el.getNextSibling()) {
               if (el instanceof PsiMember && (myUnmatchedList == null || myUnmatchedList.indexOf(el) == -1)) {
@@ -515,9 +517,9 @@ public class JavaMatchingVisitor extends JavaElementVisitor {
       return result;
     }
     finally {
-      if (result && mylistener != null) mylistener.commitUnmatched();
+      if (result && newlistener != null) newlistener.commitUnmatched();
       this.myClazz = saveClazz;
-      myMatchingVisitor.getMatchContext().setUnmatchedElementsListener(listener);
+      myMatchingVisitor.getMatchContext().setUnmatchedElementsListener(oldlistener);
     }
   }
 

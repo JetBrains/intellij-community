@@ -8,10 +8,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.structuralsearch.MalformedPatternException;
 import com.intellij.structuralsearch.MatchResult;
+import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.StructuralSearchUtil;
-import com.intellij.structuralsearch.impl.matcher.MatchResultImpl;
-import com.intellij.structuralsearch.impl.matcher.MatcherImplUtil;
-import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
+import com.intellij.structuralsearch.impl.matcher.*;
+import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.util.IncorrectOperationException;
@@ -129,7 +129,7 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
     }
   }
 
-  private void fill(MatchResult r,Map<String,MatchResult> m) {
+  private static void fill(MatchResult r,Map<String,MatchResult> m) {
     if (r.getName()!=null) {
       if (m.get(r.getName()) == null) {
         m.put(r.getName(), r);
@@ -205,7 +205,7 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
     return scriptSupport.evaluate((MatchResultImpl)match, null);
   }
 
-  private int insertSubstitution(StringBuilder result, int offset, final ParameterInfo info, String image) {
+  private static int insertSubstitution(StringBuilder result, int offset, final ParameterInfo info, String image) {
     if (image.length() > 0) result.insert(offset+info.startIndex,image);
     offset += image.length();
     return offset;
@@ -294,7 +294,7 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
     return offset;
   }
 
-  private int removeExtraSemicolon(ParameterInfo info, int offset, StringBuilder result, MatchResult match) {
+  private static int removeExtraSemicolon(ParameterInfo info, int offset, StringBuilder result, MatchResult match) {
     if (info.statementContext) {
       int index = offset+info.startIndex;
       if (result.charAt(index)==';' &&
@@ -424,6 +424,22 @@ final class ReplacementBuilder extends JavaRecursiveElementWalkingVisitor {
         if (initInfo != null) {
           initInfo.variableInitialContext = true;
         }
+      }
+    }
+  }
+
+  @Override
+  public void visitClass(PsiClass aClass) {
+    super.visitClass(aClass);
+
+    if (parameterizations != null) {
+      MatchVariableConstraint constraint =
+        options.getMatchOptions().getVariableConstraint(JavaCompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME);
+      if (constraint != null && parameterizations != null) {
+        ParameterInfo e = new ParameterInfo();
+        e.name = JavaCompiledPattern.ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME;
+        e.startIndex = replacement.lastIndexOf('}');
+        parameterizations.add(e);
       }
     }
   }

@@ -44,8 +44,6 @@ public abstract class CompiledPattern {
     this.optionsHashStamp = optionsHashStamp;
   }
 
-  public static final Key<PsiElement> ALL_CLASS_CONTENT_VAR_KEY = Key.create("AllClassContent");
-  
   public static final Key<Object> HANDLER_KEY = Key.create("ss.handler");
 
   public MatchingStrategy getStrategy() {

@@ -1,5 +1,7 @@
 package com.intellij.structuralsearch.impl.matcher;
 
+import com.intellij.openapi.util.Key;
+
 /**
 * @author Eugene.Kudelevsky
 */
@@ -21,6 +23,9 @@ public class JavaCompiledPattern extends CompiledPattern {
       return str.startsWith(TYPED_VAR_PREFIX);
     }
   }
+
+  public static final Key<String> ALL_CLASS_CONTENT_VAR_NAME_KEY = Key.create("AllClassContent");
+  public static final String ALL_CLASS_UNMATCHED_CONTENT_VAR_ARTIFICIAL_NAME = "__class_unmatched__";
 
   public boolean isRequestsSuperFields() {
     return requestsSuperFields;
