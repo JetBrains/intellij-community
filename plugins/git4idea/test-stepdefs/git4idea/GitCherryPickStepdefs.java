@@ -43,7 +43,7 @@ import git4idea.log.GitContentRevisionFactory;
 
 import java.util.*;
 
-import static com.intellij.dvcs.test.Executor.echo;
+import static com.intellij.openapi.vcs.Executor.echo;
 import static git4idea.GitCucumberWorld.*;
 import static git4idea.test.GitExecutor.git;
 import static junit.framework.Assert.assertEquals;

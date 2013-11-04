@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.dvcs.test;
+package com.intellij.openapi.vcs;
 
 import com.intellij.execution.process.CapturingProcessHandler;
 import com.intellij.execution.process.ProcessOutput;

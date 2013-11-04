@@ -9,7 +9,7 @@ import org.jetbrains.plugins.github.util.GithubAuthData;
 
 import java.io.IOException;
 
-import static com.intellij.dvcs.test.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.cd;
 import static git4idea.test.GitExecutor.git;
 
 /**

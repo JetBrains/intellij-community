@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,35 +13,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.roots;
+package org.zmlx.hg4idea.roots;
 
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.VcsRootChecker;
-import git4idea.GitUtil;
-import git4idea.GitVcs;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgVcs;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
 
 /**
- * @author Kirill Likhodedov
+ * @author Nadya Zabrodina
  */
-public class GitRootChecker extends VcsRootChecker {
+public class HgRootChecker extends VcsRootChecker {
 
   @Override
   public boolean isRoot(@NotNull String path) {
-    return new File(path, GitUtil.DOT_GIT).exists();
+    return new File(path, HgUtil.DOT_HG).exists();
   }
 
   @Override
-  @NotNull
   public VcsKey getSupportedVcs() {
-    return GitVcs.getKey();
+    return HgVcs.getKey();
   }
 
   @Override
-  public boolean isVcsDir(@Nullable String path) {
-    return path != null && path.toLowerCase().endsWith(GitUtil.DOT_GIT);
+  public boolean isVcsDir(String path) {
+    return path != null && path.toLowerCase().endsWith(HgUtil.DOT_HG);
   }
 }
