@@ -28,12 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
-import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
-import javax.swing.table.TableColumn;
-import javax.swing.table.TableModel;
+import javax.swing.event.*;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
@@ -51,13 +47,15 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
   private static final int ROOT_INDICATOR_WIDTH = 5;
 
   @NotNull private final VcsLogUI myUI;
-  @NotNull private final GraphCellPainter myGraphPainter = new SimpleGraphCellPainter();
+  @NotNull private final GraphCellPainter myGraphPainter;
 
   private  volatile boolean myRepaintFreezed;
 
   public VcsLogGraphTable(@NotNull VcsLogUI UI, final VcsLogDataHolder logDataHolder) {
     super();
     myUI = UI;
+
+    myGraphPainter = new SimpleGraphCellPainter(logDataHolder.isMultiRoot());
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI));
     setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(myGraphPainter, logDataHolder, myUI.getColorManager()));
@@ -83,6 +81,31 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     addMouseListener(mouseAdapter);
 
     PopupHandler.installPopupHandler(this, VcsLogUI.POPUP_ACTION_GROUP, VcsLogUI.VCS_LOG_TABLE_PLACE);
+
+    getColumnModel().addColumnModelListener(new TableColumnModelListener() {
+      @Override
+      public void columnAdded(TableColumnModelEvent e) {
+        if (e.getToIndex() == AbstractVcsLogTableModel.ROOT_COLUMN) {
+          myGraphPainter.setRootColumn(getColumnModel().getColumn(AbstractVcsLogTableModel.ROOT_COLUMN));
+        }
+      }
+
+      @Override
+      public void columnRemoved(TableColumnModelEvent e) {
+      }
+
+      @Override
+      public void columnMoved(TableColumnModelEvent e) {
+      }
+
+      @Override
+      public void columnMarginChanged(ChangeEvent e) {
+      }
+
+      @Override
+      public void columnSelectionChanged(ListSelectionEvent e) {
+      }
+    });
   }
 
   @Override

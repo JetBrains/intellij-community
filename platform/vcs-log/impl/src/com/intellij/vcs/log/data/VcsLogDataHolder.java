@@ -465,6 +465,10 @@ public class VcsLogDataHolder implements Disposable {
     return myCurrentUser;
   }
 
+  public boolean isMultiRoot() {
+    return myLogProviders.size() > 1;
+  }
+
   private static class RecentCommitsInfo {
     List<TimedVcsCommit> firstBlockCommits;
     Collection<VcsRef> newRefs;
