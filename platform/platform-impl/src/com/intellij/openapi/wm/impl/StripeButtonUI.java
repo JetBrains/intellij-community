@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
@@ -25,6 +26,9 @@ import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.metal.MetalToggleButtonUI;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Area;
+import java.awt.geom.Ellipse2D;
+import java.awt.geom.Rectangle2D;
 
 /**
  * @author Vladimir Kondratyev
@@ -105,40 +109,16 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
     g2.setRenderingHint(RenderingHints.KEY_RENDERING,RenderingHints.VALUE_RENDER_QUALITY);
 
     final ButtonModel model=button.getModel();
-
     final Color background = button.getBackground();
-
-    final boolean dark = UIUtil.isUnderDarcula();
-
-    Color toBorder = model.isRollover() ? dark ? Gray._90 : new Color(0, 0, 0, 50) : null;
     final boolean vertical = anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT;
 
     if (anchor == ToolWindowAnchor.RIGHT) {
       g2.translate(1, 0);
     }
-
-    if (model.isArmed() && model.isPressed() || model.isSelected()) {
-      g2.setColor(dark ? Gray._85.withAlpha(85) : new Color(0, 0, 0, 30));
-      g2.fillRect(3, 3, button.getWidth() - (vertical ? 6 : 5), button.getHeight() - 6);
-      
-      g2.setColor(dark ? Gray._40 : new Color(0, 0, 0, 120));
-      g2.drawLine(2, 2, 3 + button.getWidth() - (vertical ? 7 : 6), 2);
-      g2.drawLine(2, 3, 2, 3 + button.getHeight() - 7);
-      
-      g2.setColor(dark ? Gray._65 : new Color(0, 0, 0, 40));
-      g2.drawRect(3, 3, button.getWidth() - (vertical ? 7 : 6), button.getHeight() - 7);
-      
-      g2.setColor(dark ? Gray._75 : new Color(255, 255, 255, 110));
-      g2.drawLine(3, button.getHeight() - 3, 3 + button.getWidth() - (vertical ? 6 : 5), button.getHeight() - 3);
-      g2.drawLine(3 + button.getWidth() - (vertical ? 6 : 5), 2, 3 + button.getWidth() - (vertical ? 6 : 5), 
-                  3 + button.getHeight() - 7);
-      
-      toBorder = null;
-    }
-
-    if (toBorder != null) {
-      g2.setColor(toBorder);
-      g2.drawRect(2, 2, button.getWidth() - (vertical ? 6 : 5), button.getHeight() - 6);
+    if (ApplicationManager.getApplication().isInternal()) {
+      paintNewDecoration(g2, button, model, vertical);
+    } else {
+      paintLegacyDecoration(g2, button, model, vertical);
     }
 
     if (anchor == ToolWindowAnchor.RIGHT) {
@@ -200,5 +180,68 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
     }
     
     g2.dispose();
+  }
+
+  private static void paintNewDecoration(Graphics2D g2, AnchoredButton button, ButtonModel model, boolean vertical) {
+    final boolean dark = UIUtil.isUnderDarcula();
+    Color toBorder = model.isRollover() ? dark ? Gray._90 : new Color(0, 0, 0, 50) : null;
+    Shape shape = getButtonRoundShape(button, vertical);
+    if (model.isArmed() && model.isPressed() || model.isSelected()) {
+      g2.setColor(dark ? Gray._85.withAlpha(85) : new Color(0, 0, 0, 30));
+      g2.fill(shape);
+      g2.setColor(dark ? Gray._40 : new Color(0, 0, 0, 120));
+      g2.draw(shape);
+      toBorder = null;
+    }
+    if (toBorder != null) {
+      g2.setColor(toBorder);
+      g2.draw(shape);
+    }
+  }
+
+  private static void paintLegacyDecoration(Graphics2D g2, AnchoredButton button, ButtonModel model, boolean vertical) {
+    final boolean dark = UIUtil.isUnderDarcula();
+    Color toBorder = model.isRollover() ? dark ? Gray._90 : new Color(0, 0, 0, 50) : null;
+    if (model.isArmed() && model.isPressed() || model.isSelected()) {
+      g2.setColor(dark ? Gray._85.withAlpha(85) : new Color(0, 0, 0, 30));
+      g2.fillRect(3, 3, button.getWidth() - (vertical ? 6 : 5), button.getHeight() - 6);
+
+      g2.setColor(dark ? Gray._40 : new Color(0, 0, 0, 120));
+      g2.drawLine(2, 2, 3 + button.getWidth() - (vertical ? 7 : 6), 2);
+      g2.drawLine(2, 3, 2, 3 + button.getHeight() - 7);
+
+      g2.setColor(dark ? Gray._65 : new Color(0, 0, 0, 40));
+      g2.drawRect(3, 3, button.getWidth() - (vertical ? 7 : 6), button.getHeight() - 7);
+
+      g2.setColor(dark ? Gray._75 : new Color(255, 255, 255, 110));
+      g2.drawLine(3, button.getHeight() - 3, 3 + button.getWidth() - (vertical ? 6 : 5), button.getHeight() - 3);
+      g2.drawLine(3 + button.getWidth() - (vertical ? 6 : 5), 2, 3 + button.getWidth() - (vertical ? 6 : 5),
+                  3 + button.getHeight() - 7);
+      toBorder = null;
+    }
+    if (toBorder != null) {
+      g2.setColor(toBorder);
+      g2.drawRect(2, 2, button.getWidth() - (vertical ? 6 : 5), button.getHeight() - 6);
+    }
+  }
+
+  private static Shape getButtonRoundShape(AnchoredButton button, boolean vertical) {
+    double gap = 2;
+    double r = (((vertical? button.getWidth() : button.getHeight()) - 2 * gap) - 1)/2;
+    Area area;
+    if (vertical) {
+      area = new Area(new Rectangle2D.Double(gap, r + gap, 2 * r, button.getHeight() - 2 * (gap + r)));
+    }
+    else {
+      area = new Area(new Rectangle2D.Double(r + gap, gap, button.getWidth() - 2 * (gap + r), 2 * r));
+    }
+    area.add(new Area(new Ellipse2D.Double(gap, gap, 2 * r, 2 * r)));
+    if (vertical) {
+      area.add(new Area(new Ellipse2D.Double(gap, button.getHeight() - gap - 2 * r, 2 * r, 2 * r)));
+    }
+    else {
+      area.add(new Area(new Ellipse2D.Double(button.getWidth() - gap - 2 * r, gap, 2 * r, 2 * r)));
+    }
+    return area;
   }
 }
