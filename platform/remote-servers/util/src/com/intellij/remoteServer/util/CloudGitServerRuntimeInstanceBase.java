@@ -28,7 +28,7 @@ public abstract class CloudGitServerRuntimeInstanceBase<
   A extends CloudGitAgent<AC, ?>,
   SC extends AC,
   DR extends CloudGitDeploymentRuntime>
-  extends ServerRuntimeInstance<DC>
+  extends CloudServerRuntimeInstance<DC>
   implements CloudDeploymentNameProvider {
 
   private static final Logger LOG = Logger.getInstance("#" + CloudGitServerRuntimeInstanceBase.class.getName());
@@ -159,7 +159,8 @@ public abstract class CloudGitServerRuntimeInstanceBase<
     });
   }
 
-  public ServerTaskExecutor getTasksExecutor() {
+  @Override
+  public ServerTaskExecutor getTaskExecutor() {
     return myTasksExecutor;
   }
 

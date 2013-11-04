@@ -107,9 +107,17 @@ public class PyImportOptimizer implements ImportOptimizer {
           prioritize(importStatement, toImport);
         }
       }
-      if (myMissorted) {
+      if (myMissorted || needBlankLinesBetweenGroups()) {
         applyResults();
       }
+    }
+
+    private boolean needBlankLinesBetweenGroups() {
+      int nonEmptyGroups = 0;
+      if (myBuiltinImports.size() > 0) nonEmptyGroups++;
+      if (myThirdPartyImports.size() > 0) nonEmptyGroups++;
+      if (myProjectImports.size() > 0) nonEmptyGroups++;
+      return nonEmptyGroups > 1;
     }
 
     private void prioritize(PyImportStatementBase importStatement, @Nullable PsiElement toImport) {
@@ -143,7 +151,10 @@ public class PyImportOptimizer implements ImportOptimizer {
       addImports(myThirdPartyImports);
       addImports(myProjectImports);
       PsiElement lastElement = myImportBlock.get(myImportBlock.size()-1);
-      myFile.deleteChildRange(findFirstNonFutureImport(), lastElement);
+      PyImportStatementBase firstNonFutureImport = findFirstNonFutureImport();
+      if (firstNonFutureImport != null) {
+        myFile.deleteChildRange(firstNonFutureImport, lastElement);
+      }
       for (PyImportStatementBase anImport : myBuiltinImports) {
         anImport.putCopyableUserData(PyBlock.IMPORT_GROUP_BEGIN, null);
       }
@@ -155,7 +166,7 @@ public class PyImportOptimizer implements ImportOptimizer {
           return importStatement;
         }
       }
-      return myImportBlock.get(0);
+      return null;
     }
 
     private static void markGroupBegin(List<PyImportStatementBase> imports) {

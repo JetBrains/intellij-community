@@ -73,12 +73,22 @@ public class PyClassNameCompletionContributor extends CompletionContributor {
                            parent instanceof PyStringLiteralExpression ? STRING_LITERAL_INSERT_HANDLER : IMPORTING_INSERT_HANDLER,
                            Conditions.<PyClass>alwaysTrue());
       addVariantsFromIndex(result, originalFile, PyFunctionNameIndex.KEY,
-                           parent instanceof PyStringLiteralExpression ? STRING_LITERAL_INSERT_HANDLER : FUNCTION_INSERT_HANDLER, IS_TOPLEVEL);
+                           getFunctionInsertHandler(parent), IS_TOPLEVEL);
       addVariantsFromIndex(result, originalFile, PyVariableNameIndex.KEY,
                            parent instanceof PyStringLiteralExpression ? STRING_LITERAL_INSERT_HANDLER : IMPORTING_INSERT_HANDLER,
                            IS_TOPLEVEL);
       addVariantsFromModules(result, originalFile, parent instanceof PyStringLiteralExpression);
     }
+  }
+
+  private static InsertHandler<LookupElement> getFunctionInsertHandler(PsiElement parent) {
+    if (parent instanceof PyStringLiteralExpression) {
+      return STRING_LITERAL_INSERT_HANDLER;
+    }
+    if (parent.getParent() instanceof PyDecorator) {
+      return IMPORTING_INSERT_HANDLER;
+    }
+    return FUNCTION_INSERT_HANDLER;
   }
 
   private static void addVariantsFromModules(CompletionResultSet result, PsiFile targetFile, boolean inStringLiteral) {

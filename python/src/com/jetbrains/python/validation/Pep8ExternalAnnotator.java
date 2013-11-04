@@ -49,6 +49,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.jetbrains.python.codeInsight.imports.OptimizeImportsQuickFix;
 import com.jetbrains.python.inspections.PyPep8Inspection;
 import com.jetbrains.python.inspections.quickfix.ReformatFix;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
@@ -249,7 +250,12 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         else {
           annotation = holder.createWeakWarningAnnotation(problemRange, message);
         }
-        annotation.registerUniversalFix(new ReformatFix(), null, null);
+        if (problem.myCode.equals("E401")) {
+          annotation.registerUniversalFix(new OptimizeImportsQuickFix(), null, null);
+        }
+        else {
+          annotation.registerUniversalFix(new ReformatFix(), null, null);
+        }
         annotation.registerFix(new IgnoreErrorFix(problem.myCode));
         annotation.registerFix(new CustomEditInspectionToolsSettingsAction(HighlightDisplayKey.find(PyPep8Inspection.INSPECTION_SHORT_NAME),
                                                                            new Computable<String>() {

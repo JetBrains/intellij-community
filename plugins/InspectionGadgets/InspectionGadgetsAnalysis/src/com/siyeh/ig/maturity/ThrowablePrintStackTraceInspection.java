@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,16 +15,23 @@
  */
 package com.siyeh.ig.maturity;
 
-import com.intellij.psi.PsiExpressionList;
-import com.intellij.psi.PsiMethodCallExpression;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.psi.*;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.TestUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 public class ThrowablePrintStackTraceInspection extends BaseInspection {
+
+  @SuppressWarnings("PublicField")
+  public boolean ignoreInTestCode = false;
 
   @Override
   @NotNull
@@ -35,15 +42,19 @@ public class ThrowablePrintStackTraceInspection extends BaseInspection {
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "printstacktrace.call.display.name");
+    return InspectionGadgetsBundle.message("printstacktrace.call.display.name");
   }
 
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "printstacktrace.call.problem.descriptor");
+    return InspectionGadgetsBundle.message("printstacktrace.call.problem.descriptor");
+  }
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("ignore.in.test.code"), this, "ignoreInTestCode");
   }
 
   @Override
@@ -51,20 +62,32 @@ public class ThrowablePrintStackTraceInspection extends BaseInspection {
     return new ThrowablePrintStackTraceVisitor();
   }
 
-  private static class ThrowablePrintStackTraceVisitor
-    extends BaseInspectionVisitor {
+  private class ThrowablePrintStackTraceVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitMethodCallExpression(
-      @NotNull PsiMethodCallExpression expression) {
+    public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final String methodName = MethodCallUtils.getMethodName(expression);
-      if (!HardcodedMethodConstants.PRINT_STACK_TRACE.equals(
-        methodName)) {
+      if (!HardcodedMethodConstants.PRINT_STACK_TRACE.equals(methodName)) {
         return;
       }
       final PsiExpressionList argumentList = expression.getArgumentList();
       if (argumentList.getExpressions().length != 0) {
+        return;
+      }
+      final PsiMethod method = expression.resolveMethod();
+      if (method == null) {
+        return;
+      }
+      final PsiClass containingClass = method.getContainingClass();
+      if (containingClass == null) {
+        return;
+      }
+      final String name = containingClass.getQualifiedName();
+      if (!CommonClassNames.JAVA_LANG_THROWABLE.equals(name)) {
+        return;
+      }
+      if (ignoreInTestCode && TestUtils.isInTestCode(expression)) {
         return;
       }
       registerMethodCallError(expression);

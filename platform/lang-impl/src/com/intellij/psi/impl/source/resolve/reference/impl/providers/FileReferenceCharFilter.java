@@ -19,6 +19,7 @@ import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.PsiReference;
 
 /**
  * @author peter
@@ -28,7 +29,10 @@ public class FileReferenceCharFilter extends CharFilter{
   public Result acceptChar(char c, int prefixLength, Lookup lookup) {
     final LookupElement item = lookup.getCurrentItem();
     if ('.' == c && item != null && item.getObject() instanceof PsiFileSystemItem) {
-      return Result.ADD_TO_PREFIX;
+      PsiReference referenceAtCaret = lookup.getPsiFile().findReferenceAt(lookup.getEditor().getCaretModel().getOffset() - 1);
+      if (referenceAtCaret != null && FileReference.findFileReference(referenceAtCaret) != null) {
+        return Result.ADD_TO_PREFIX;
+      }
     }
 
     return null;

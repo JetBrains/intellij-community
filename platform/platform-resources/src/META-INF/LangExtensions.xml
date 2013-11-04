@@ -858,6 +858,8 @@
     <elementPreviewProvider implementation="com.intellij.codeInsight.preview.ElementPreviewHintProvider"/>
 
     <actionPromoter implementation="com.intellij.ui.EditorTextFieldActionPromoter"/>
+
+    <stepsBeforeRunProvider implementation="com.intellij.execution.impl.RunConfigurationBeforeRunProvider"/>
   </extensions>
 </idea-plugin>
 

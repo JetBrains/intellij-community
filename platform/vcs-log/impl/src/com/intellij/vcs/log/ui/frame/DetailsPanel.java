@@ -165,8 +165,14 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
         String authorText = commit.getAuthorName() + " at " + DateFormatUtil.formatDateTime(commit.getAuthorTime());
         if (!commit.getAuthorName().equals(commit.getCommitterName()) || !commit.getAuthorEmail().equals(commit.getCommitterEmail())) {
-          authorText += " (committed by " + commit.getCommitterName() +
-                        " at " + DateFormatUtil.formatDateTime(commit.getCommitTime()) + ")";
+          String commitTime;
+          if (commit.getCommitTime() != commit.getAuthorTime()) {
+            commitTime = " at " + DateFormatUtil.formatDateTime(commit.getCommitTime());
+          }
+          else {
+            commitTime = "";
+          }
+          authorText += " (committed by " + commit.getCommitterName() + commitTime + ")";
         }
         myAuthor.setText(authorText);
       }
