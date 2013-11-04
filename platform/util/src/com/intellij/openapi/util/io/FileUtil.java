@@ -1200,7 +1200,7 @@ public class FileUtil extends FileUtilRt {
     return false;
   }
 
-  @Nullable
+  @Contract("null -> null")
   public static String getLocationRelativeToUserHome(@Nullable final String path) {
     if (path == null) return null;
 
