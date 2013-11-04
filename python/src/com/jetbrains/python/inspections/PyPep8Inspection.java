@@ -15,8 +15,14 @@
  */
 package com.jetbrains.python.inspections;
 
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.ListEditForm;
 import com.intellij.openapi.util.Key;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.jetbrains.python.validation.Pep8ExternalAnnotator;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -37,5 +43,19 @@ public class PyPep8Inspection extends PyInspection {
   public JComponent createOptionsPanel() {
     ListEditForm form = new ListEditForm("Ignore errors", ignoredErrors);
     return form.getContentPanel();
+  }
+
+  @NotNull
+  @Override
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,
+                                        boolean isOnTheFly,
+                                        @NotNull LocalInspectionToolSession session) {
+    return new ExternalAnnotatorInspectionVisitor(holder, new Pep8ExternalAnnotator(), isOnTheFly);
+  }
+
+  @Nullable
+  @Override
+  public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
+    return ExternalAnnotatorInspectionVisitor.checkFileWithExternalAnnotator(file, manager, isOnTheFly, new Pep8ExternalAnnotator());
   }
 }
