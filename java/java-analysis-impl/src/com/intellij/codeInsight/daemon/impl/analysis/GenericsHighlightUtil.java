@@ -464,10 +464,35 @@ public class GenericsHighlightUtil {
 
     final PsiIdentifier classIdentifier = aClass.getNameIdentifier();
     if (PsiUtil.isLanguageLevel8OrHigher(aClass) && classIdentifier != null) {
-      final HighlightInfo info = checkUnrelatedDefaultMethods(aClass, signaturesWithSupers, classIdentifier);
+      HighlightInfo info = checkUnrelatedDefaultMethods(aClass, signaturesWithSupers, classIdentifier);
+      if (info != null) return info;
+      info = checkDefaultMethodOverrideEquivalentToObjectNonPrivate(aClass, signaturesWithSupers);
       if (info != null) return info;
     }
 
+    return null;
+  }
+
+  private static HighlightInfo checkDefaultMethodOverrideEquivalentToObjectNonPrivate(PsiClass aClass,
+                                                                                      Collection<HierarchicalMethodSignature> withSupers) {
+    if (aClass.isInterface()) {
+      for (HierarchicalMethodSignature sig : withSupers) {
+        final PsiMethod method = sig.getMethod();
+        if (method.hasModifierProperty(PsiModifier.DEFAULT)) {
+          for (HierarchicalMethodSignature methodSignature : sig.getSuperSignatures()) {
+            final PsiClass containingClass = methodSignature.getMethod().getContainingClass();
+            if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+              final PsiIdentifier identifier = method.getNameIdentifier();
+              LOG.assertTrue(identifier != null);
+              return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                .descriptionAndTooltip("Default method " + sig.getName() + " overrides a member of java.lang.Object")
+                .range(identifier)
+                .create();
+            }
+          }
+        }
+      }
+    }
     return null;
   }
 
