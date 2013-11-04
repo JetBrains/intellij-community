@@ -320,7 +320,7 @@ public class VcsLogDataHolder implements Disposable {
    */
   private void smartRefresh(ProgressIndicator indicator, Consumer<DataPack> onSuccess) throws VcsException {
     if (myLogData == null || !myLogData.isFullLogReady()) {
-      LOG.error("The full log is not ready: ", new Attachment("log-data", myLogData.toString()));
+      LOG.error("The full log is not ready!");
     }
 
     Map<VirtualFile, List<TimedVcsCommit>> logsToBuild = ContainerUtil.newHashMap();
@@ -434,8 +434,14 @@ public class VcsLogDataHolder implements Disposable {
           public VcsFullCommitDetails fun(TimedVcsCommit commit) {
             VcsFullCommitDetails detail = allDetails.get(commit.getHash());
             if (detail == null) {
-              LOG.error("Details not stored for commit " + commit, new Attachment("filtered_details", allDetails.toString()),
-                        new Attachment("compound_log", compoundLog.toString()));
+              String message = "Details not stored for commit " + commit;
+              if (LOG.isDebugEnabled()) {
+                LOG.error(message, new Attachment("filtered_details", allDetails.toString()),
+                                   new Attachment("compound_log", compoundLog.toString()));
+              }
+              else {
+                LOG.error(message);
+              }
             }
             return detail;
           }
