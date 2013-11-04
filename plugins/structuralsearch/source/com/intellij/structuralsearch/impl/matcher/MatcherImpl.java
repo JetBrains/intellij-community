@@ -7,23 +7,22 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
@@ -37,12 +36,16 @@ import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PairProcessor;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.SoftReference;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * This class makes program structure tree matching:
@@ -168,14 +171,6 @@ public class MatcherImpl {
     visitor.matchContext(new ArrayBackedNodeIterator(new PsiElement[] {element}));
   }
 
-  public boolean processMatchesInFile(MatchContext context, Configuration configuration, PsiFile psiFile,
-                                      PairProcessor<MatchResult, Configuration> processor) {
-    configureOptions(context, configuration, psiFile, processor);
-    match(psiFile);
-
-    return true;
-  }
-
   public void clearContext() {
     matchContext.clear();
   }
@@ -243,20 +238,8 @@ public class MatcherImpl {
     return new CompiledOptions(contexts);
   }
 
-  MatchContext getMatchContext() {
-    return matchContext;
-  }
-
   Project getProject() {
     return project;
-  }
-
-  ProgressIndicator getProgress() {
-    return progress;
-  }
-
-  TaskScheduler getScheduler() {
-    return scheduler;
   }
 
   /**
@@ -331,67 +314,34 @@ public class MatcherImpl {
     if (!ourOptimizedScope) searchScope = options.getScope();
 
     if (searchScope instanceof GlobalSearchScope) {
-      final GlobalSearchScope scope = (GlobalSearchScope)searchScope;
+      GlobalSearchScope scope = (GlobalSearchScope)searchScope;
+      if (scope.isSearchInLibraries()) {
+        scope = new DelegatingGlobalSearchScope(scope) {
+          final ProjectFileIndex myProjectFileIndex = ProjectFileIndex.SERVICE.getInstance(project);
+          @Override
+          public boolean contains(@NotNull VirtualFile file) {
+            return super.contains(file) || myProjectFileIndex.isInLibrarySource(file);
+          }
+        };
+      }
+      final GlobalSearchScope finalScope = scope;
       final ContentIterator ci = new ContentIterator() {
-        public boolean processFile(VirtualFile fileOrDir) {
-          if (!fileOrDir.isDirectory()) {
-            final PsiFile file = PsiManager.getInstance(project).findFile(fileOrDir);
-            if (file == null) {
-              return true;
-            }
-
-            final FileViewProvider viewProvider = file.getViewProvider();
-
-            for(Language lang: viewProvider.getLanguages()) {
-              if (profile.isMyFile(file, lang, ourPatternLanguage, ourPatternLanguage2)) {
-                ++totalFilesToScan;
-                scheduler.addOneTask(new MatchOneFile(viewProvider.getPsi(lang)));
-              }
-            }
+        public boolean processFile(final VirtualFile fileOrDir) {
+          if (!fileOrDir.isDirectory() && finalScope.contains(fileOrDir) && fileOrDir.getFileType() != FileTypes.UNKNOWN) {
+            ++totalFilesToScan;
+            scheduler.addOneTask(new MatchOneVirtualFile(fileOrDir, profile, ourPatternLanguage, ourPatternLanguage2));
           }
           return true;
         }
       };
 
-      final ProjectRootManager instance = ProjectRootManager.getInstance(project);
-      final ProjectFileIndex projectFileIndex = instance.getFileIndex();
-
-      final VirtualFile[] rootFiles = ApplicationManager.getApplication().runReadAction(new Computable<VirtualFile[]>() {
-        public VirtualFile[] compute() {
-          // We search from content roots even for java files due to jsps
-          final VirtualFile[] contentRoots = instance.getContentRoots();
-          List<VirtualFile> result = new ArrayList<VirtualFile>(contentRoots.length);
-          ContainerUtil.addAll(result, contentRoots);
-
-          if (scope.isSearchInLibraries()) {
-            for (VirtualFile file : instance.orderEntries().sources().usingCache().getRoots()) {
-              if (projectFileIndex.isInLibrarySource(file)) {
-                result.add(file);
-              }
-            }
-          }
-          return VfsUtilCore.toVirtualFileArray(result);
+      ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
+        public void run() {
+          FileBasedIndex.getInstance().iterateIndexableFiles(ci, project, progress);
         }
       });
-
-      HashSet<VirtualFile> visited = new HashSet<VirtualFile>(rootFiles.length);
-      final VirtualFileFilter filter = new VirtualFileFilter() {
-        public boolean accept(VirtualFile file) {
-          return file.isDirectory() && !FileTypeManager.getInstance().isFileIgnored(file) || scope.contains(file);
-        }
-      };
-
-      for (final VirtualFile rootFile : rootFiles) {
-        if (visited.contains(rootFile)) continue;
-
-        ApplicationManager.getApplication().runReadAction(new Runnable() {
-          public void run() {
-            VfsUtilCore.iterateChildrenRecursively(rootFile, filter, ci);
-          }
-        });
-
-        visited.add(rootFile);
-      }
+      progress.setText2("");
     }
     else {
       final PsiElement[] elementsToScan = ((LocalSearchScope)searchScope).getScope();
@@ -406,7 +356,7 @@ public class MatcherImpl {
         PsiFile file = psiElement instanceof PsiFile ? (PsiFile)psiElement : psiElement.getContainingFile();
 
         if (profile.isMyFile(file, language, ourPatternLanguage, ourPatternLanguage2)) {
-          scheduler.addOneTask(new MatchOneFile(psiElement));
+          scheduler.addOneTask(new MatchOnePsiFile(psiElement));
         }
         if (ourOptimizedScope) elementsToScan[i] = null; // to prevent long PsiElement reference
       }
@@ -513,8 +463,9 @@ public class MatcherImpl {
       testFindMatches(sink, options);
     }
     catch (IncorrectOperationException e) {
-      e.printStackTrace();
-      throw new MalformedPatternException();
+      MalformedPatternException exception = new MalformedPatternException();
+      exception.initCause(e);
+      throw exception;
     }
 
     return sink.getMatches();
@@ -603,15 +554,34 @@ public class MatcherImpl {
 
   }
 
-  private class MatchOneFile implements Runnable {
+  private class MatchOnePsiFile extends MatchOneFile {
     private PsiElement file;
 
-    MatchOneFile(PsiElement file) {
+    MatchOnePsiFile(PsiElement file) {
       this.file = file;
     }
 
+    @Nullable
+    @Override
+    protected List<PsiElement> getPsiElementsToProcess() {
+      PsiElement file = this.file;
+      this.file = null;
+      return new SmartList<PsiElement>(file);
+    }
+  }
+
+  private abstract class MatchOneFile implements Runnable {
     public void run() {
-      final PsiFile psiFile = file.getContainingFile();
+      List<PsiElement> files = getPsiElementsToProcess();
+
+      if (progress!=null) {
+        progress.setFraction((double)scannedFilesCount/totalFilesToScan);
+      }
+
+      ++scannedFilesCount;
+
+      if (files == null || files.size() == 0) return;
+      final PsiFile psiFile = files.get(0).getContainingFile();
 
       if (psiFile!=null) {
         final Runnable action = new Runnable() {
@@ -620,7 +590,8 @@ public class MatcherImpl {
               public void run() {
                 if (project.isDisposed()) return;
                 final PsiDocumentManager manager = PsiDocumentManager.getInstance(project);
-                manager.commitDocument(manager.getDocument(psiFile));
+                Document document = manager.getDocument(psiFile);
+                if (document != null) manager.commitDocument(document);
               }
             });
           }
@@ -638,30 +609,30 @@ public class MatcherImpl {
 
       if (project.isDisposed()) return;
 
-      if (file instanceof PsiFile) {
-        matchContext.getSink().processFile((PsiFile)file);
-      }
-
-      if (progress!=null) {
-        progress.setFraction((double)scannedFilesCount/totalFilesToScan);
-      }
-
-      ++scannedFilesCount;
-      if (file instanceof PsiIdentifier) {
-        // Searching in previous results
-        file = file.getParent();
-      }
-
-      ApplicationManager.getApplication().runReadAction(
-        new Runnable() {
-          public void run() {
-            match(file);
-          }
+      for(PsiElement file:files) {
+        if (file instanceof PsiFile) {
+          matchContext.getSink().processFile((PsiFile)file);
         }
-      );
 
-      file = null;
+        final PsiElement finalFile = file;
+        ApplicationManager.getApplication().runReadAction(
+          new Runnable() {
+            public void run() {
+              PsiElement file = finalFile;
+              if (!file.isValid()) return;
+              if (file instanceof PsiIdentifier) {
+                // Searching in previous results
+                file = file.getParent();
+              }
+
+              match(file);
+            }
+          }
+        );
+      }
     }
+
+    protected abstract @Nullable List<PsiElement> getPsiElementsToProcess();
   }
 
   // Initiates the matching process for given element
@@ -762,5 +733,47 @@ public class MatcherImpl {
       }
     }
     return targetNode;
+  }
+
+  private class MatchOneVirtualFile extends MatchOneFile {
+    private final VirtualFile myFileOrDir;
+    private final StructuralSearchProfile myProfile;
+    private final Language myOurPatternLanguage;
+    private final Language myOurPatternLanguage2;
+
+    public MatchOneVirtualFile(VirtualFile fileOrDir,
+                               StructuralSearchProfile profile,
+                               Language ourPatternLanguage,
+                               Language ourPatternLanguage2) {
+      myFileOrDir = fileOrDir;
+      myProfile = profile;
+      myOurPatternLanguage = ourPatternLanguage;
+      myOurPatternLanguage2 = ourPatternLanguage2;
+    }
+
+    @Nullable
+    @Override
+    protected List<PsiElement> getPsiElementsToProcess() {
+      return ApplicationManager.getApplication().runReadAction(new Computable<List<PsiElement>>() {
+        @Override
+        public List<PsiElement> compute() {
+          PsiFile file = PsiManager.getInstance(project).findFile(myFileOrDir);
+          if (file == null) {
+            return null;
+          }
+
+          final FileViewProvider viewProvider = file.getViewProvider();
+          List<PsiElement> elementsToProcess = new SmartList<PsiElement>();
+
+          for(Language lang: viewProvider.getLanguages()) {
+            if (myProfile.isMyFile(file, lang, myOurPatternLanguage, myOurPatternLanguage2)) {
+              elementsToProcess.add(viewProvider.getPsi(lang));
+            }
+          }
+
+          return elementsToProcess;
+        }
+      });
+    }
   }
 }
