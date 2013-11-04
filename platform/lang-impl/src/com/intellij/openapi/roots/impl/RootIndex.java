@@ -44,12 +44,12 @@ class RootIndex {
 
   private final Set<VirtualFile> myProjectExcludedRoots = ContainerUtil.newHashSet();
   private final Set<VirtualFile> myLibraryExcludedRoots = ContainerUtil.newHashSet();
-  private final Map<VirtualFile, DirectoryInfo> myRoots = ContainerUtil.newHashMap();
+  private final Map<VirtualFile, DirectoryInfo> myRoots = ContainerUtil.newTroveMap();
   private final Map<String, HashSet<VirtualFile>> myPackagePrefixRoots = ContainerUtil.newHashMap();
 
   private final Map<String, List<VirtualFile>> myDirectoriesByPackageNameCache = ContainerUtil.newConcurrentMap();
   private final Map<String, List<VirtualFile>> myDirectoriesByPackageNameCacheWithLibSrc = ContainerUtil.newConcurrentMap();
-  private final Map<VirtualFile, Boolean> myIgnoredCache = ContainerUtil.newConcurrentMap();
+  private final Map<VirtualFile, DirectoryInfo> myInfoCache = ContainerUtil.newConcurrentMap();
   private final List<JpsModuleSourceRootType<?>> myRootTypes = ContainerUtil.newArrayList();
   private final TObjectIntHashMap<JpsModuleSourceRootType<?>> myRootTypeId = new TObjectIntHashMap<JpsModuleSourceRootType<?>>();
 
@@ -320,15 +320,19 @@ class RootIndex {
       if (++count > 1000) {
         throw new IllegalStateException("Possible loop in tree, started at " + dir.getName());
       }
-      final DirectoryInfo info = myRoots.get(root);
+      DirectoryInfo info = myInfoCache.get(root);
       if (info != null) {
+        return info == DirectoryInfo.EMPTY ? null : info;
+      }
+      
+      info = myRoots.get(root);
+      if (info != null) {
+        myInfoCache.put(dir, info);
         return info;
       }
-      Boolean ignored = myIgnoredCache.get(root);
-      if (ignored == null) {
-        myIgnoredCache.put(root, ignored = isAnyExcludeRoot(root) || FileTypeManager.getInstance().isFileIgnored(root));
-      }
-      if (ignored.booleanValue()) {
+      
+      if (isAnyExcludeRoot(root) || FileTypeManager.getInstance().isFileIgnored(root)) {
+        myInfoCache.put(dir, DirectoryInfo.EMPTY);
         return null;
       }
     }
