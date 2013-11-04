@@ -16,11 +16,17 @@
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
+import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
-import org.tmatesoft.svn.core.auth.ISVNAuthenticationManager;
-import org.tmatesoft.svn.core.auth.SVNAuthentication;
-import org.tmatesoft.svn.core.auth.SVNSSHAuthentication;
+import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
+import org.tmatesoft.svn.core.SVNURL;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -29,13 +35,16 @@ public class TerminalSshModule extends LineCommandAdapter implements CommandRunt
 
   private static final Logger LOG = Logger.getInstance(TerminalSshModule.class);
 
+  private static final Pattern PASSPHRASE_PROMPT = Pattern.compile("Enter passphrase for key \\'(.*)\\':\\s?");
+  private static final Pattern PASSWORD_PROMPT = Pattern.compile("(.*)\\'s password:\\s?");
+
+  @NotNull private final CommandRuntime myRuntime;
   @NotNull private final CommandExecutor myExecutor;
-  @NotNull private final AuthenticationCallback myAuthCallback;
 
   // TODO: Do not accept executor here and make it as command runtime module
-  public TerminalSshModule(@NotNull CommandExecutor executor, @NotNull AuthenticationCallback authCallback) {
+  public TerminalSshModule(@NotNull CommandRuntime runtime, @NotNull CommandExecutor executor) {
     myExecutor = executor;
-    myAuthCallback = authCallback;
+    myRuntime = runtime;
   }
 
   @Override
@@ -44,28 +53,57 @@ public class TerminalSshModule extends LineCommandAdapter implements CommandRunt
 
   @Override
   public boolean handlePrompt(String line, Key outputType) {
-    boolean result = false;
-
-    if (line.toLowerCase().contains("enter passphrase for key")) {
-      result = handlePassphrase();
-    }
-
-    return result;
+    return checkPassphrase(line) || checkPassword(line);
   }
 
-  private boolean handlePassphrase() {
-    SVNAuthentication authentication =
-      myAuthCallback.requestCredentials(myExecutor.getCommand().getRepositoryUrl(), ISVNAuthenticationManager.SSH);
+  private boolean checkPassphrase(@NotNull String line) {
+    Matcher matcher = PASSPHRASE_PROMPT.matcher(line);
 
-    if (authentication != null && authentication instanceof SVNSSHAuthentication) {
-      try {
-        myExecutor.write(String.format("%s\n", ((SVNSSHAuthentication)authentication).getPassphrase()));
-        return true;
+    return matcher.matches() && handleAuthPrompt(SimpleCredentialsDialog.Mode.SSH_PASSPHRASE, matcher.group(1));
+  }
+
+  private boolean checkPassword(@NotNull String line) {
+    Matcher matcher = PASSWORD_PROMPT.matcher(line);
+
+    return matcher.matches() && handleAuthPrompt(SimpleCredentialsDialog.Mode.SSH_PASSWORD, matcher.group(1));
+  }
+
+  private boolean handleAuthPrompt(@NotNull final SimpleCredentialsDialog.Mode mode, @NotNull final String key) {
+    @NotNull final SVNURL repositoryUrl = myExecutor.getCommand().getRepositoryUrl();
+    final Project project = myRuntime.getVcs().getProject();
+    final Ref<String> answer = new Ref<String>();
+
+    Runnable command = new Runnable() {
+      public void run() {
+        SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(project);
+        dialog.setup(mode, repositoryUrl.toDecodedString(), key, true);
+        dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
+        dialog.show();
+        if (dialog.isOK()) {
+          answer.set(dialog.getPassword());
+        }
+        // TODO: Correctly handle "cancel" - kill the process
+        // TODO: and perform "cleanup" on working copy
       }
-      catch (SvnBindException e) {
-        // TODO: handle this more carefully
-        LOG.info(e);
-      }
+    };
+
+    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command);
+
+    if (!answer.isNull()) {
+      sendAnswer(answer.get());
+    }
+
+    return !answer.isNull();
+  }
+
+  private boolean sendAnswer(@NotNull String answer) {
+    try {
+      myExecutor.write(answer + "\n");
+      return true;
+    }
+    catch (SvnBindException e) {
+      // TODO: handle this more carefully
+      LOG.info(e);
     }
     return false;
   }

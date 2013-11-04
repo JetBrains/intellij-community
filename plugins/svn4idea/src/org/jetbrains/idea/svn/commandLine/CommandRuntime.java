@@ -180,7 +180,7 @@ public class CommandRuntime {
     else {
       command.put("--force-interactive");
       executor = new TerminalExecutor(exePath, command);
-      ((TerminalExecutor)executor).addInteractiveListener(new TerminalSshModule(executor, myAuthCallback));
+      ((TerminalExecutor)executor).addInteractiveListener(new TerminalSshModule(this, executor));
     }
 
     return executor;
