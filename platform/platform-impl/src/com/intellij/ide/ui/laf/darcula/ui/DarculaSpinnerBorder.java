@@ -59,13 +59,10 @@ public class DarculaSpinnerBorder implements Border, UIResource {
       final Area rect = new Area(new RoundRectangle2D.Double(x1, y1, width1, height1, 5, 5));
       final Area blueRect = new Area(new Rectangle(off, y1, 22, height1));
       rect.intersect(blueRect);
-
+      ((Graphics2D)g).fill(rect);
       if (UIUtil.isUnderDarcula()) {
-        g.fillRect(off, y1, 22, height1);
         g.setColor(Gray._100);
-        g.drawLine(off, y1, off, height1+2);
-      } else {
-        ((Graphics2D)g).fill(rect);
+        g.drawLine(off, y1, off, height1 + 2);
       }
     }
 
@@ -74,7 +71,7 @@ public class DarculaSpinnerBorder implements Border, UIResource {
     }
 
     if (focused) {
-      DarculaUIUtil.paintFocusRing(g, x1+2, y1, width1-4, height1);
+      DarculaUIUtil.paintFocusRing(g, x1 + 2, y1, width1 - 3, height1);
     } else {
       g.setColor(new JBColor(Gray._149,Gray._100));
       g.drawRoundRect(x1, y1, width1, height1, 5, 5);
@@ -84,7 +81,7 @@ public class DarculaSpinnerBorder implements Border, UIResource {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return new InsetsUIResource(6, 7, 6, 7);
+    return new InsetsUIResource(5, 7, 5, 7);
   }
 
   @Override
