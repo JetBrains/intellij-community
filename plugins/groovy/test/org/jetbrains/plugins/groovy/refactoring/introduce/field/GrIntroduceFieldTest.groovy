@@ -307,6 +307,27 @@ class GroovyLightProjectDescriptor  {
 ''', false, false, false, CUR_METHOD)
   }
 
+  void testInitializeInMethodInThenBranch() {
+    doTest('''\
+class A {
+    def foo() {
+        if (abc) print <selection>2</selection>
+    }
+}
+''', '''\
+class A {
+    def f
+
+    def foo() {
+        if (abc) {
+            f = 2
+            print f
+        }
+    }
+}
+''', false, false, false, CUR_METHOD, false, null)
+  }
+
 
   private void doTest(final boolean isStatic,
                       final boolean removeLocal,

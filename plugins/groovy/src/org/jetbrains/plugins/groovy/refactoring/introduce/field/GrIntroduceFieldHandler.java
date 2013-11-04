@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
 import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifier;
@@ -103,7 +104,14 @@ public class GrIntroduceFieldHandler extends GrIntroduceFieldHandlerBase<GrIntro
   @Override
   protected GrAbstractInplaceIntroducer<GrIntroduceFieldSettings> getIntroducer(@NotNull GrIntroduceContext context,
                                                                                 OccurrencesChooser.ReplaceChoice choice) {
-    return new GrInplaceFieldIntroducer(context, choice);
+
+    final Ref<GrIntroduceContext> contextRef = Ref.create(context);
+
+    if (context.getStringPart() != null) {
+      extractStringPart(contextRef);
+    }
+
+    return new GrInplaceFieldIntroducer(contextRef.get(), choice);
   }
 
   static EnumSet<GrIntroduceFieldSettings.Init> getApplicableInitPlaces(GrIntroduceContext context, boolean replaceAll) {

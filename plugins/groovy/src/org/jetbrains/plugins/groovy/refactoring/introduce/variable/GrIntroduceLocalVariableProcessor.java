@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -34,7 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrDeclarationHolder;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
@@ -77,7 +75,7 @@ public abstract class GrIntroduceLocalVariableProcessor {
     int expressionIndex = ArrayUtilRt.find(myOccurrences, myExpression);
     final PsiElement[] replaced = myProcessUsages ? processOccurrences() : myOccurrences;
     PsiElement replacedExpression = replaced[expressionIndex];
-    GrStatement anchor = getAnchor(replaced, myContext.getScope());
+    GrStatement anchor = GrIntroduceHandlerBase.getAnchor(replaced, myContext.getScope());
 
     RefactoringUtil.highlightAllOccurrences(myContext.getProject(), replaced, myContext.getEditor());
 
@@ -192,36 +190,6 @@ public abstract class GrIntroduceLocalVariableProcessor {
     PsiElement parent = expression.getParent();
     return parent instanceof GrClosableBlock && parent.getParent() instanceof GrStringInjection;
   }
-
-  @NotNull
-  static GrStatement getAnchor(@NotNull PsiElement[] occurrences, @NotNull PsiElement scope) {
-    PsiElement parent = PsiTreeUtil.findCommonParent(occurrences);
-    PsiElement container = getEnclosingContainer(parent);
-    assert container != null;
-    PsiElement anchor = GrIntroduceHandlerBase.findAnchor(occurrences, container);
-
-    GrIntroduceHandlerBase.assertStatement(anchor, scope);
-    return (GrStatement)anchor;
-  }
-
-  @Nullable
-  public static PsiElement getEnclosingContainer(PsiElement place) {
-    PsiElement parent = place;
-    while (true) {
-      if (parent == null) {
-        return null;
-      }
-      if (parent instanceof GrDeclarationHolder && !(parent instanceof GrClosableBlock && parent.getParent() instanceof GrStringInjection)) {
-        return parent;
-      }
-      if (parent instanceof GrLoopStatement) {
-        return parent;
-      }
-
-      parent = parent.getParent();
-    }
-  }
-
 
   @Nullable
   private static String getFieldName(@Nullable PsiElement element) {
