@@ -30,6 +30,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ConcurrentWeakHashMap;
 import gnu.trove.THashMap;
@@ -204,9 +205,13 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     PsiUtil.setModifierProperty(newVariable, PsiModifier.FINAL, true);
     PsiElement statement = getStatementToInsertBefore();
     if (statement == null) return;
-    statement.getParent().addBefore(copyDecl, statement);
     PsiExpression newExpression = factory.createExpressionFromText(newName, myVariable);
     replaceReferences(myClass, myVariable, newExpression);
+    if (RefactoringUtil.isLoopOrIf(statement.getParent())) {
+      RefactoringUtil.putStatementInLoopBody(copyDecl, statement.getParent(), statement);
+    } else {
+      statement.getParent().addBefore(copyDecl, statement);
+    }
   }
 
   private PsiElement getStatementToInsertBefore() {
@@ -217,7 +222,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     PsiElement statement = myClass;
     nextInnerClass:
     do {
-      statement = PsiUtil.getEnclosingStatement(statement);
+      statement = RefactoringUtil.getParentStatement(statement, false);
 
       if (statement == null || statement.getParent() == null) {
         return null;
