@@ -85,6 +85,22 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     PopupHandler.installPopupHandler(this, VcsLogUI.POPUP_ACTION_GROUP, VcsLogUI.VCS_LOG_TABLE_PLACE);
   }
 
+  @Override
+  public String getToolTipText(@NotNull MouseEvent event) {
+    int row = rowAtPoint(event.getPoint());
+    int column = columnAtPoint(event.getPoint());
+    if (column < 0 || row < 0) {
+      return null;
+    }
+    if (column == AbstractVcsLogTableModel.ROOT_COLUMN) {
+      Object at = getValueAt(row, column);
+      if (at instanceof VirtualFile) {
+        return ((VirtualFile)at).getPresentableUrl();
+      }
+    }
+    return null;
+  }
+
   public void setPreferredColumnWidths() {
     TableColumn rootColumn = getColumnModel().getColumn(AbstractVcsLogTableModel.ROOT_COLUMN);
     int rootWidth = myUI.getColorManager().isMultipleRoots() ? ROOT_INDICATOR_WIDTH : 0;
