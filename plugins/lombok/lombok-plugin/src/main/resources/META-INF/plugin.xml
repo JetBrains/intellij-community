@@ -4,7 +4,7 @@
   <name>Lombok Plugin</name>
   <vendor url="http://code.google.com/p/lombok-intellij-plugin" email="lombokplugin@plushnikov.de">Michail Plushnikov
   </vendor>
-  <version>0.7.3</version>
+  <version>0.7.4</version>
   <idea-version since-build="123.72"/>
 
   <description><![CDATA[
@@ -81,6 +81,11 @@
 
   <change-notes><![CDATA[
 		<ul>
+		<li>0.7.4
+				<ol>
+				    <li>TODO...</li>
+				</ol>
+			</li>
 		<li>0.7.3
 				<ol>
 				    <li>Fix IllegalArgumentException when trying to expand method names on IntelliJ 11</li>
