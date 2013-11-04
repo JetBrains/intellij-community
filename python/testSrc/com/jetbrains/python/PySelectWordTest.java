@@ -50,6 +50,10 @@ public class PySelectWordTest extends PyTestCase {
     doTest();
   }
 
+  public void testInsideEscapeSequence() {  // PY-9014
+    doTest();
+  }
+
   private void doTest() {
     CodeInsightTestUtil.doWordSelectionTestOnDirectory(myFixture, "selectWord/" + getTestName(true), "py");
   }
