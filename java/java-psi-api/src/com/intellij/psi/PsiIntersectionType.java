@@ -15,8 +15,10 @@
  */
 package com.intellij.psi;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.Function;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
@@ -97,7 +99,12 @@ public class PsiIntersectionType extends PsiType {
 
   @Override
   public String getPresentableText() {
-    return myConjuncts[0].getPresentableText();
+    return StringUtil.join(myConjuncts, new Function<PsiType, String>() {
+      @Override
+      public String fun(PsiType psiType) {
+        return psiType.getPresentableText();
+      }
+    }, " & ");
   }
 
   @Override
