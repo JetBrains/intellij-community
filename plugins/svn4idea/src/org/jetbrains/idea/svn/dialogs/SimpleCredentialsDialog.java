@@ -160,7 +160,7 @@ public class SimpleCredentialsDialog extends DialogWrapper implements DocumentLi
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myUserNameText;
+    return myUserNameText.isEnabled() ? myUserNameText : myPasswordText;
   }
 
   public boolean shouldCloseOnCross() {
