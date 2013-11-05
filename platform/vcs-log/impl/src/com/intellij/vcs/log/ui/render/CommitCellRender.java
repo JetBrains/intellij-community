@@ -35,6 +35,9 @@ public class CommitCellRender extends AbstractPaddingCellRender {
   @NotNull
   @Override
   protected String getCellText(Object value) {
+    if (value == null) {
+      return "";
+    }
     CommitCell cell = getAssertCommitCell(value);
     return cell.getText();
   }

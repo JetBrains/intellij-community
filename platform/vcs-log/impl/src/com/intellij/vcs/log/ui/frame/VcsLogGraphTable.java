@@ -319,7 +319,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         myColor = myUi.getColorManager().getRootColor((VirtualFile)value);
       }
       else {
-        LOG.error("Incorrect value " + value + " specified in row #" + row + ", column #");
         myColor = UIUtil.getTableBackground(isSelected);
       }
       return this;
