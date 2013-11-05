@@ -129,7 +129,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return myComponent.getWholePanel();
   }
 
-  public final JComponent getValidationComponent() {
+  final JComponent getValidationComponent() {
     return myComponent.myValidationPanel;
   }
 
