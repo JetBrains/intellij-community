@@ -167,6 +167,22 @@ class Test {
     Collection<caret> c;
 }
 '''
+  } 
+
+  public void testUnresolvedAnnotatedQualifiedImport() {
+    myFixture.configureByText 'a.java', '''
+class Test {
+    @Nullable Collection<caret> c;
+}
+'''
+    importClass();
+    myFixture.checkResult '''import java.util.Collection;
+
+class Test {
+    @Nullable
+    Collection<caret> c;
+}
+'''
   }
 
   private def importClass() {

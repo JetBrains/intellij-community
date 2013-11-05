@@ -345,6 +345,7 @@ public class PsiImplUtil {
         if (annotationType instanceof PsiClass) {
           return findApplicableTarget((PsiClass)annotationType, types);
         }
+        if (annotationType == null) return null;
       }
     }
 
