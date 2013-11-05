@@ -38,12 +38,6 @@ public abstract class JavaResourceRootEditHandlerBase extends ModuleSourceRootEd
 
   @Nullable
   @Override
-  public String getMarkRootGroupName() {
-    return "Resources";
-  }
-
-  @Nullable
-  @Override
   public CustomShortcutSet getMarkRootShortcutSet() {
     return null;
   }
