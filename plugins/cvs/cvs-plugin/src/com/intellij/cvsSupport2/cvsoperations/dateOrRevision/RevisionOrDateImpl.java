@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,20 +19,28 @@ import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.config.DateOrRevisionSettings;
 import com.intellij.cvsSupport2.history.CvsRevisionNumber;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.command.Command;
-import org.jetbrains.annotations.NotNull;
+
+import java.text.ParseException;
+import java.util.Date;
 
 /**
- * author: lesya
+ * @author lesya
  */
 public class RevisionOrDateImpl implements RevisionOrDate {
-  private String myStickyTag;
-  private String myStickyDate;
+
+  private static final Logger LOG = Logger.getInstance(RevisionOrDateImpl.class);
+
+  @Nullable private String myStickyTag;
+  @Nullable private Date myStickyDate;
 
   public static RevisionOrDate createOn(@NotNull VirtualFile file) {
-    VirtualFile parent = file.getParent();
+    final VirtualFile parent = file.getParent();
     return new RevisionOrDateImpl(parent, CvsEntriesManager.getInstance().getEntryFor(parent, file.getName()));
   }
 
@@ -41,27 +49,25 @@ public class RevisionOrDateImpl implements RevisionOrDate {
   }
 
   public static RevisionOrDate createOn(VirtualFile parent, Entry entry, DateOrRevisionSettings config) {
-    RevisionOrDateImpl result = new RevisionOrDateImpl(parent, entry);
+    final RevisionOrDateImpl result = new RevisionOrDateImpl(parent, entry);
     updateOn(result, config);
     return result;
   }
 
   private static void updateOn(RevisionOrDateImpl result, DateOrRevisionSettings config) {
-    String stickyTagFromConfig = config.USE_BRANCH ? config.BRANCH : null;
-    String stickyDateFromConfig = config.USE_DATE ? config.getDate() : null;
+    final String stickyTagFromConfig = config.USE_BRANCH ? config.BRANCH : null;
+    final String stickyDateFromConfig = config.USE_DATE ? config.getDate() : null;
     result.setStickyInfo(stickyTagFromConfig, stickyDateFromConfig);
   }
 
   @NotNull
   public static RevisionOrDate createOn(DateOrRevisionSettings config) {
-    RevisionOrDateImpl result = new RevisionOrDateImpl();
+    final RevisionOrDateImpl result = new RevisionOrDateImpl();
     updateOn(result, config);
     return result;
   }
 
-  private RevisionOrDateImpl() {
-
-  }
+  private RevisionOrDateImpl() {}
 
   private RevisionOrDateImpl(VirtualFile parent, Entry entry) {
     if (entry == null) {
@@ -75,7 +81,7 @@ public class RevisionOrDateImpl implements RevisionOrDate {
         myStickyTag = entry.getStickyTag();
       }
       else if (entry.getStickyDateString() != null) {
-        myStickyDate = entry.getStickyDateString();
+        myStickyDate = entry.getStickyDate();
       }
       else {
         lookupDirectory(parent);
@@ -91,22 +97,35 @@ public class RevisionOrDateImpl implements RevisionOrDate {
     }
     else {
       myStickyTag = null;
-      myStickyDate = stickyDate;
+      try {
+        myStickyDate = Entry.getLastModifiedDateFormatter().parse(stickyDate);
+      }
+      catch (ParseException e) {
+        LOG.error(e);
+      }
     }
   }
 
   public void setForCommand(Command command) {
     CommandWrapper wrapper = new CommandWrapper(command);
-    wrapper.setUpdateByRevisionOrDate(myStickyTag, myStickyDate);
+    wrapper.setUpdateByRevisionOrDate(myStickyTag, myStickyDate == null ? null : Entry.getLastModifiedDateFormatter().format(myStickyDate));
   }
 
   private void lookupDirectory(VirtualFile directory) {
-    String stickyTag = CvsUtil.getStickyTagForDirectory(directory);
+    final String stickyTag = CvsUtil.getStickyTagForDirectory(directory);
     if (stickyTag != null) {
       myStickyTag = stickyTag;
       return;
     }
-    myStickyDate = CvsUtil.getStickyDateForDirectory(directory);
+    try {
+      final String stickyDateString = CvsUtil.getStickyDateForDirectory(directory);
+      if (stickyDateString != null) {
+        myStickyDate = Entry.STICKY_DATE_FORMAT.parse(stickyDateString);
+      }
+    }
+    catch (ParseException e) {
+      LOG.error(e);
+    }
   }
 
   public String getRevision() {
@@ -121,14 +140,15 @@ public class RevisionOrDateImpl implements RevisionOrDate {
     try {
       return new CvsRevisionNumber(myStickyTag);
     }
-    catch (NumberFormatException ex) {
+    catch (NumberFormatException e) {
+      LOG.error(e);
       return null;
     }
   }
 
   public String toString() {
     if (myStickyDate != null) {
-      return myStickyDate;
+      return Entry.getLastModifiedDateFormatter().format(myStickyDate);
     } else {
       return myStickyTag;
     }
