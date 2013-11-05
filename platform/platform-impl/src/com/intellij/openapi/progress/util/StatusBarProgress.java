@@ -29,6 +29,10 @@ public class StatusBarProgress extends ProgressIndicatorBase {
   // statusBar -> [textToRestore, MyPreviousText]
   private final HashMap<StatusBarEx, Pair<String, String>> myStatusBar2SavedText = new HashMap<StatusBarEx, Pair<String, String>>();
 
+  public StatusBarProgress() {
+    super(true);
+  }
+
   @Override
   public void start() {
     super.start();
@@ -73,11 +77,6 @@ public class StatusBarProgress extends ProgressIndicatorBase {
         }
       }
     );
-  }
-
-  @Override
-  protected boolean isReuseable() {
-    return true;
   }
 
   @Override
