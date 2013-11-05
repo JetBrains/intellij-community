@@ -10,10 +10,7 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.committed.RepositoryChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SeparatorComponent;
-import com.intellij.ui.SeparatorOrientation;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcs.log.VcsLog;
@@ -81,7 +78,7 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     updateWhenDetailsAreLoaded(selectionChangeListener);
 
     // layout
-    JComponent toolbar = createToolbar();
+    JComponent toolbar = createActionsToolbar();
 
     myDetailsSplitter = new Splitter(true, 0.7f);
     myDetailsSplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myGraphTable));
@@ -100,14 +97,6 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
 
     setLayout(new BorderLayout());
     add(changesBrowserSplitter);
-  }
-
-  private JComponent createToolbar() {
-    JComponent toolbar = Box.createHorizontalBox();
-    toolbar.add(myFilterUi.getRootComponent());
-    toolbar.add(new SeparatorComponent(JBColor.LIGHT_GRAY, SeparatorOrientation.VERTICAL));
-    toolbar.add(createActionsToolbar());
-    return toolbar;
   }
 
   private void updateWhenDetailsAreLoaded(final CommitSelectionListener selectionChangeListener) {
@@ -205,7 +194,12 @@ public class MainFrame extends JPanel implements TypeSafeDataProvider {
     DefaultActionGroup toolbarGroup = new DefaultActionGroup(hideBranchesAction, showBranchesAction, showFullPatchAction, refreshAction,
                                                              showDetailsAction);
     toolbarGroup.add(ActionManager.getInstance().getAction(VcsLogUI.TOOLBAR_ACTION_GROUP));
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarGroup, true).getComponent();
+
+    DefaultActionGroup mainGroup = new DefaultActionGroup();
+    mainGroup.add(myFilterUi.getFilterActionComponents());
+    mainGroup.addSeparator();
+    mainGroup.add(toolbarGroup);
+    return ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, mainGroup, true).getComponent();
   }
 
   public JComponent getMainComponent() {
