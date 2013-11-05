@@ -99,7 +99,7 @@ public class CommandRuntime {
       if (executor.getErrorOutput().length() > 0) {
         // handle authentication
         final String errText = executor.getErrorOutput().trim();
-        final AuthCallbackCase callback = createCallback(errText, command.getRepositoryUrl());
+        final AuthCallbackCase callback = executor instanceof TerminalExecutor ? null : createCallback(errText, command.getRepositoryUrl());
         if (callback != null) {
           if (callback.getCredentials(errText)) {
             if (myAuthCallback.getSpecialConfigDir() != null) {
