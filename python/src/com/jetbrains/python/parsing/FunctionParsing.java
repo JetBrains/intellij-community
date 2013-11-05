@@ -44,12 +44,7 @@ public class FunctionParsing extends Parsing {
 
   protected void parseFunctionInnards(PsiBuilder.Marker functionMarker) {
     myBuilder.advanceLexer();
-    if (myBuilder.getTokenType() == PyTokenTypes.IDENTIFIER) {
-      myBuilder.advanceLexer();
-    }
-    else {
-      myBuilder.error(message("PARSE.expected.func.name"));
-    }
+    checkMatchesOrSkip(PyTokenTypes.IDENTIFIER, message("PARSE.expected.func.name"));
     parseParameterList();
     parseReturnTypeAnnotation();
     checkMatches(PyTokenTypes.COLON, message("PARSE.expected.colon"));

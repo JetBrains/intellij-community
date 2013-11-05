@@ -777,7 +777,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   public void parseClassDeclaration(PsiBuilder.Marker classMarker, ParsingScope scope) {
     assertCurrentToken(PyTokenTypes.CLASS_KEYWORD);
     myBuilder.advanceLexer();
-    checkMatches(PyTokenTypes.IDENTIFIER, IDENTIFIER_EXPECTED);
+    checkMatchesOrSkip(PyTokenTypes.IDENTIFIER, IDENTIFIER_EXPECTED);
     if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
       getExpressionParser().parseArgumentList();
     }
