@@ -43,6 +43,7 @@ public class CommandExecutor {
 
   private boolean myIsDestroyed;
   private boolean myNeedsDestroy;
+  private volatile String myDestroyReason;
   protected final GeneralCommandLine myCommandLine;
   protected Process myProcess;
   protected OSProcessHandler myHandler;
@@ -88,6 +89,10 @@ public class CommandExecutor {
    */
   public boolean isManuallyDestroyed() {
     return myIsDestroyed;
+  }
+
+  public String getDestroyReason() {
+    return myDestroyReason;
   }
 
   public void start() {
@@ -200,6 +205,13 @@ public class CommandExecutor {
 
   public void destroyProcess() {
     synchronized (myLock) {
+      myNeedsDestroy = true;
+    }
+  }
+
+  public void destroyProcess(@Nullable String destroyReason) {
+    synchronized (myLock) {
+      myDestroyReason = destroyReason;
       myNeedsDestroy = true;
     }
   }

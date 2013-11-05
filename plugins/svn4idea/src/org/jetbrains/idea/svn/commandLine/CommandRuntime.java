@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -86,12 +87,20 @@ public class CommandRuntime {
     if (exitCode == null || exitCode != 0) {
       logNullExitCode(executor, exitCode);
 
+      if (executor.isManuallyDestroyed()) {
+        cleanup(executor, command.getWorkingDirectory());
+
+        String destroyReason = executor.getDestroyReason();
+        if (!StringUtil.isEmpty(destroyReason)) {
+          throw new SvnBindException(destroyReason);
+        }
+      }
+
       if (executor.getErrorOutput().length() > 0) {
         // handle authentication
         final String errText = executor.getErrorOutput().trim();
         final AuthCallbackCase callback = createCallback(errText, command.getRepositoryUrl());
         if (callback != null) {
-          cleanup(executor, command.getWorkingDirectory());
           if (callback.getCredentials(errText)) {
             if (myAuthCallback.getSpecialConfigDir() != null) {
               command.setConfigDir(myAuthCallback.getSpecialConfigDir());
@@ -152,7 +161,7 @@ public class CommandRuntime {
   }
 
   private void cleanup(@NotNull CommandExecutor executor, @NotNull File workingDirectory) throws SvnBindException {
-    if (executor.isManuallyDestroyed() && executor.getCommandName().isWriteable()) {
+    if (executor.getCommandName().isWriteable()) {
       File wcRoot = SvnUtil.getWorkingCopyRootNew(workingDirectory);
 
       // not all commands require cleanup - for instance, some commands operate only with repository - like "svn info <url>"

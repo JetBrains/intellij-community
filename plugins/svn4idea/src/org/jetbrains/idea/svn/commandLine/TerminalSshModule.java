@@ -91,6 +91,8 @@ public class TerminalSshModule extends LineCommandAdapter implements CommandRunt
 
     if (!answer.isNull()) {
       sendAnswer(answer.get());
+    } else {
+      myExecutor.destroyProcess("Authentication canceled for repository: " + repositoryUrl);
     }
 
     return !answer.isNull();
