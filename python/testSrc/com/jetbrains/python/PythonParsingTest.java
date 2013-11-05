@@ -406,6 +406,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testKeywordAsNamedParameter() {  // PY-8318
+    doTest();
+  }
+
   public void doTest(LanguageLevel languageLevel) {
     LanguageLevel prev = myLanguageLevel;
     myLanguageLevel = languageLevel;

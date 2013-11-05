@@ -225,7 +225,7 @@ public class FunctionParsing extends Parsing {
         nextToken();
       }
       invalidElements.error(message("PARSE.expected.formal.param.name"));
-      return false;
+      return atToken(endToken) || atToken(PyTokenTypes.COMMA);
     }
     return true;
   }
