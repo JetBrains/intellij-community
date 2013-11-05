@@ -58,7 +58,7 @@ public abstract class IdFilter {
     return new IdFilter() {
       @Override
       public boolean containsFileId(int id) {
-        return idSet.get(id);
+        return id >= 0 && idSet.get(id);
       }
     };
   }

@@ -103,7 +103,7 @@ public abstract class PsiElementListCellRenderer<T extends PsiElement> extends J
       if (value instanceof PsiElement) {
         T element = (T)value;
         String name = getElementText(element);
-        PsiFile psiFile = element.getContainingFile();
+        PsiFile psiFile = element.isValid() ? element.getContainingFile() : null;
         boolean isProblemFile = false;
 
         if (psiFile != null) {

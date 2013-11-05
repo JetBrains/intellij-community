@@ -45,6 +45,7 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
 
   public GraphCommitCellRender(@NotNull GraphCellPainter graphPainter, @NotNull VcsLogDataHolder logDataHolder,
                                @NotNull VcsLogColorManager colorManager) {
+    super(logDataHolder.getProject());
     this.graphPainter = graphPainter;
     myDataHolder = logDataHolder;
     refPainter = new RefPainter(colorManager, false);

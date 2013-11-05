@@ -25,9 +25,9 @@ import java.util.List;
  * @author nik
  */
 public class DownloadableLibraryDescriptionImpl implements DownloadableLibraryDescription {
-  private final List<? extends FrameworkLibraryVersion> myVersions;
+  private final List<FrameworkLibraryVersion> myVersions;
 
-  public DownloadableLibraryDescriptionImpl(List<? extends FrameworkLibraryVersion> versions) {
+  public DownloadableLibraryDescriptionImpl(List<FrameworkLibraryVersion> versions) {
     myVersions = versions;
   }
 
@@ -38,5 +38,11 @@ public class DownloadableLibraryDescriptionImpl implements DownloadableLibraryDe
   @Override
   public void fetchVersions(@NotNull FileSetVersionsCallback<FrameworkLibraryVersion> callback) {
     callback.onSuccess(myVersions);
+  }
+
+  @NotNull
+  @Override
+  public List<FrameworkLibraryVersion> fetchVersions() {
+    return myVersions;
   }
 }

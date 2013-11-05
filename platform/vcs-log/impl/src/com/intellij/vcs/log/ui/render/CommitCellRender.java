@@ -1,5 +1,6 @@
 package com.intellij.vcs.log.ui.render;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.vcs.log.graph.render.CommitCell;
 import com.intellij.vcs.log.ui.VcsLogColorManager;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +16,8 @@ public class CommitCellRender extends AbstractPaddingCellRender {
 
   @NotNull private final RefPainter refPainter;
 
-  public CommitCellRender(@NotNull VcsLogColorManager colorManager) {
+  public CommitCellRender(@NotNull VcsLogColorManager colorManager, Project project) {
+    super(project);
     refPainter = new RefPainter(colorManager, false);
   }
 
