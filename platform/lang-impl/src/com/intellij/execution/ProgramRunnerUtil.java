@@ -19,6 +19,7 @@ package com.intellij.execution;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
@@ -63,50 +64,85 @@ public class ProgramRunnerUtil {
                                           final boolean showSettings) {
     ProgramRunner runner = getRunner(executor.getId(), configuration);
     if (runner == null) {
-      LOG.error("Runner MUST not be null! Cannot find runner for " + executor.getId() + " and " + configuration.getConfiguration().getFactory().getName());
+      LOG.error("Runner MUST not be null! Cannot find runner for " +
+                executor.getId() +
+                " and " +
+                configuration.getConfiguration().getFactory().getName());
       return;
     }
-    if (ExecutorRegistry.getInstance().isStarting(project, executor.getId(), runner.getRunnerId())){
+    executeConfiguration(project, context, configuration, executor, target, contentToReuse, showSettings, runner, null, true);
+  }
+
+  public static void executeConfiguration(Project project,
+                                          DataContext context,
+                                          @Nullable RunnerAndConfigurationSettings configuration,
+                                          Executor executor,
+                                          ExecutionTarget target,
+                                          RunContentDescriptor contentToReuse,
+                                          boolean showSettings,
+                                          @NotNull ProgramRunner runner,
+                                          @Nullable RunProfile runProfile,
+                                          boolean assignNewId) {
+    if (ExecutorRegistry.getInstance().isStarting(project, executor.getId(), runner.getRunnerId())) {
       return;
     }
 
-    if (!ExecutionTargetManager.canRun(configuration, target)) {
+    if (configuration != null && !ExecutionTargetManager.canRun(configuration, target)) {
       ExecutionUtil.handleExecutionError(
         project, executor.getToolWindowId(), configuration.getConfiguration(),
         new ExecutionException(StringUtil.escapeXml("Cannot run '" + configuration.getName() + "' on '" + target.getDisplayName() + "'")));
       return;
     }
 
-    if (!RunManagerImpl.canRunConfiguration(configuration, executor) || (showSettings && configuration.isEditBeforeRun())) {
+    if (configuration != null &&
+        (!RunManagerImpl.canRunConfiguration(configuration, executor) || (showSettings && configuration.isEditBeforeRun()))) {
       if (!RunDialog.editConfiguration(project, configuration, "Edit configuration", executor)) {
         return;
       }
 
       while (!RunManagerImpl.canRunConfiguration(configuration, executor)) {
-        if (0 == Messages.showYesNoDialog(project, "Configuration is still incorrect. Do you want to edit it again?", "Change Configuration Settings",
-                                          "Edit", "Continue Anyway", Messages.getErrorIcon())) {
+        if (0 == Messages
+          .showYesNoDialog(project, "Configuration is still incorrect. Do you want to edit it again?", "Change Configuration Settings",
+                           "Edit", "Continue Anyway", Messages.getErrorIcon())) {
           if (!RunDialog.editConfiguration(project, configuration, "Edit configuration", executor)) {
             return;
           }
-        } else {
+        }
+        else {
           break;
         }
       }
     }
 
-    final ConfigurationType configurationType = configuration.getType();
+    final ConfigurationType configurationType = configuration != null ? configuration.getType() : null;
     if (configurationType != null) {
       UsageTrigger.trigger("execute." + ConvertUsagesUtil.ensureProperKey(configurationType.getId()) + "." + executor.getId());
     }
 
     try {
       ExecutionEnvironmentBuilder builder =
-        new ExecutionEnvironmentBuilder(project, executor).setRunnerAndSettings(runner, configuration).setTarget(target)
-          .setContentToReuse(contentToReuse).assignNewId().setDataContext(context);
+        new ExecutionEnvironmentBuilder(project, executor);
+      if (configuration != null) {
+        builder.setRunnerAndSettings(runner, configuration);
+      }
+      else {
+        builder.setRunnerId(runner.getRunnerId());
+      }
+      builder.setTarget(target).setContentToReuse(contentToReuse).setDataContext(context);
+      if (assignNewId) {
+        builder.assignNewId();
+      }
+      if (runProfile != null) {
+        builder.setRunProfile(runProfile);
+      }
       runner.execute(builder.build());
     }
     catch (ExecutionException e) {
-      ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), configuration.getConfiguration(), e);
+      String name = configuration != null ? configuration.getName() : null;
+      if (name == null && runProfile != null) name = runProfile.getName();
+      if (name == null && contentToReuse != null) name = contentToReuse.getDisplayName();
+      if (name == null) name = "<Unknown>";
+      ExecutionUtil.handleExecutionError(project, executor.getToolWindowId(), name, e);
     }
   }
 

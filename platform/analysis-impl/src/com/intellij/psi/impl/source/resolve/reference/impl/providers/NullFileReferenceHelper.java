@@ -55,7 +55,7 @@ public class NullFileReferenceHelper extends FileReferenceHelper {
 
   @Override
   @NotNull
-  public Collection<PsiFileSystemItem> getContexts(final Project project, final @NotNull VirtualFile file) {
+  public Collection<PsiFileSystemItem> getContexts(final Project project, @NotNull final VirtualFile file) {
     final PsiFileSystemItem item = getPsiFileSystemItem(project, file);
     if (item != null) {
       final PsiFileSystemItem parent = item.getParent();
@@ -67,7 +67,7 @@ public class NullFileReferenceHelper extends FileReferenceHelper {
   }
 
   @Override
-  public boolean isMine(final Project project, final @NotNull VirtualFile file) {
+  public boolean isMine(final Project project, @NotNull final VirtualFile file) {
     return ProjectRootManager.getInstance(project).getFileIndex().isInContent(file);
   }
 

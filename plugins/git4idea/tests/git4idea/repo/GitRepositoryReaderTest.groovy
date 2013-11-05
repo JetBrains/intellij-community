@@ -15,9 +15,9 @@
  */
 package git4idea.repo
 
-import com.intellij.dvcs.test.TestRepositoryUtil
 import com.intellij.openapi.application.PluginPathManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vcs.VcsTestUtil
 import com.intellij.util.Processor
 import git4idea.GitBranch
 import git4idea.branch.GitBranchesCollection
@@ -88,7 +88,7 @@ public class GitRepositoryReaderTest extends GitLightTest {
   }
 
   private static void assertBranches(Collection<GitBranch> actualBranches, Collection<GitTestBranch> expectedBranches) {
-    TestRepositoryUtil.assertEqualCollections(actualBranches, expectedBranches, new TestRepositoryUtil.EqualityChecker<GitBranch, GitTestBranch>() {
+    VcsTestUtil.assertEqualCollections(actualBranches, expectedBranches, new VcsTestUtil.EqualityChecker<GitBranch, GitTestBranch>() {
       @Override
       public boolean areEqual(@NotNull GitBranch actual, @NotNull GitTestBranch expected) {
         return branchesAreEqual(actual, expected);

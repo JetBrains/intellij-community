@@ -47,6 +47,7 @@ class PropertyAccessor implements Accessor {
     myGenericType = myReadMethod.getGenericReturnType();
   }
 
+  @Override
   public Object read(@NotNull Object o) {
     try {
       return myReadMethod.invoke(o);
@@ -59,6 +60,7 @@ class PropertyAccessor implements Accessor {
     }
   }
 
+  @Override
   public void write(Object o, Object value) {
     try {
       myWriteMethod.invoke(o, XmlSerializerImpl.convert(value, myType));
@@ -73,6 +75,7 @@ class PropertyAccessor implements Accessor {
 
   private Annotation[] myAnnotationCache;
 
+  @Override
   @NotNull
   public Annotation[] getAnnotations() {
     Annotation[] annotations = myAnnotationCache;
@@ -89,14 +92,17 @@ class PropertyAccessor implements Accessor {
     return result.toArray(new Annotation[result.size()]);
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public Class<?> getValueClass() {
     return myType;
   }
 
+  @Override
   public Type getGenericType() {
     return myGenericType;
   }

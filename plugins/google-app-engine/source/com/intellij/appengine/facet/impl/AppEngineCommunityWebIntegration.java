@@ -71,14 +71,17 @@ public class AppEngineCommunityWebIntegration extends AppEngineWebIntegration {
   }
 
   @Override
-  public void setupRunConfiguration(@NotNull ModifiableRootModel rootModel,
-                                    @NotNull AppEngineSdk sdk,
+  public void setupRunConfiguration(@NotNull AppEngineSdk sdk,
                                     @Nullable Artifact artifact,
                                     @NotNull Project project) {
   }
 
   @Override
   public void setupDevServer(@NotNull AppEngineSdk sdk) {
+  }
+
+  @Override
+  public void addDevServerToModuleDependencies(@NotNull ModifiableRootModel rootModel, @NotNull AppEngineSdk sdk) {
   }
 
   @Override

@@ -22,19 +22,20 @@ import com.intellij.icons.AllIcons;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PatternCondition;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.MavenArtifactSearchResult;
 import org.jetbrains.idea.maven.indices.MavenArtifactSearcher;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
 import org.jetbrains.idea.maven.model.MavenArtifactInfo;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.plugins.gradle.codeInsight.AbstractGradleCompletionContributor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
-import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 
 import java.util.List;
 
@@ -44,27 +45,31 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
  * @author Vladislav.Soroka
  * @since 10/31/13
  */
-public class MavenDependenciesGradleCompletionContributor extends CompletionContributor {
+public class MavenDependenciesGradleCompletionContributor extends AbstractGradleCompletionContributor {
   private static final String GROUP_LABEL = "group";
   private static final String NAME_LABEL = "name";
   private static final String VERSION_LABEL = "version";
 
-  private static final PatternCondition<GrMethodCallExpression> EXPRESSION_PATTERN_CONDITION =
-    new PatternCondition<GrMethodCallExpression>("withInvokedExpressionText") {
+  private static final ElementPattern<PsiElement> DEPENDENCIES_CALL_PATTERN = psiElement()
+    .inside(true, psiElement(GrMethodCallExpression.class).with(new PatternCondition<GrMethodCallExpression>("withInvokedExpressionText") {
       @Override
       public boolean accepts(@NotNull GrMethodCallExpression expression, ProcessingContext context) {
         GrExpression grExpression = expression.getInvokedExpression();
         return grExpression != null && "dependencies".equals(grExpression.getText());
       }
-    };
+    }));
 
-  private static final ElementPattern<PsiElement>
-    IN_BASIC_DEPENDENCY_NOTATION = psiElement().withSuperParent(
-    5, psiElement(GrMethodCallExpression.class).with(EXPRESSION_PATTERN_CONDITION));
+  private static final ElementPattern<PsiElement> IN_BASIC_DEPENDENCY_NOTATION = psiElement()
+    .and(GRADLE_FILE_PATTERN)
+    .withParent(GrLiteral.class)
+    .withSuperParent(2, psiElement(GrCommandArgumentList.class))
+    .and(DEPENDENCIES_CALL_PATTERN);
 
-  private static final ElementPattern<PsiElement>
-    IN_MAP_DEPENDENCY_NOTATION = psiElement().withSuperParent(
-    6, psiElement(GrMethodCallExpression.class).with(EXPRESSION_PATTERN_CONDITION));
+  private static final ElementPattern<PsiElement> IN_MAP_DEPENDENCY_NOTATION = psiElement()
+    .and(GRADLE_FILE_PATTERN)
+    .withParent(GrLiteral.class)
+    .withSuperParent(2, psiElement(GrNamedArgument.class))
+    .and(DEPENDENCIES_CALL_PATTERN);
 
 
   public MavenDependenciesGradleCompletionContributor() {
@@ -143,17 +148,5 @@ public class MavenDependenciesGradleCompletionContributor extends CompletionCont
         }
       }
     });
-  }
-
-  @Nullable
-  private static String findNamedArgumentValue(@Nullable GrCommandArgumentList argumentList, @NotNull String label) {
-    if (argumentList == null) return null;
-    GrNamedArgument namedArgument = argumentList.findNamedArgument(label);
-    if (namedArgument == null) return null;
-
-    GrExpression expression = namedArgument.getExpression();
-    if (!(expression instanceof GrLiteralImpl)) return null;
-    Object value = GrLiteralImpl.class.cast(expression).getValue();
-    return value == null ? null : String.valueOf(value);
   }
 }

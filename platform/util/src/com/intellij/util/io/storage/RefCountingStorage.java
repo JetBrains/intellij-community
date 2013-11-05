@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ public class RefCountingStorage extends AbstractStorage {
     super(path, capacityAllocationPolicy);
   }
 
+  @Override
   public DataInputStream readStream(int record) throws IOException {
     if (myDoNotZipCaches) return super.readStream(record);
     BufferExposingByteArrayOutputStream stream = internalReadStream(record);
@@ -224,7 +225,7 @@ public class RefCountingStorage extends AbstractStorage {
 
   @Override
   public boolean isDirty() {
-    return myPendingWriteRequests.size() > 0 || super.isDirty();
+    return !myPendingWriteRequests.isEmpty() || super.isDirty();
   }
 
   @Override

@@ -62,7 +62,7 @@ public class PsiDisjunctionType extends PsiType {
 
   @NotNull
   public static PsiType createDisjunction(@NotNull List<PsiType> types, @NotNull PsiManager psiManager) {
-    assert types.size() > 0;
+    assert !types.isEmpty();
     return types.size() == 1 ? types.get(0) : new PsiDisjunctionType(types, psiManager);
   }
 

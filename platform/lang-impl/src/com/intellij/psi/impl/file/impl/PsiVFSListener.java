@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiTreeChangeEventImpl;
 import com.intellij.psi.impl.smartPointers.SmartPointerManagerImpl;
 import com.intellij.util.FileContentUtil;
+import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -317,7 +318,7 @@ public class PsiVFSListener extends VirtualFileAdapter {
     VirtualFile parent = vFile.getParent();
     final PsiDirectory parentDir = getCachedDirectory(parent);
 
-    if (FileContentUtil.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor())) {
+    if (FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor())) {
       FileViewProvider viewProvider = myFileManager.createFileViewProvider(vFile, true);
       myFileManager.setViewProvider(vFile, viewProvider);
       PsiFile newPsiFile = myManager.findFile(vFile);

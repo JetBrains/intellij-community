@@ -31,7 +31,6 @@ import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
@@ -170,10 +169,14 @@ public class EditorsSplitters extends IdePanePanel {
 
       painter.appendLine("No files are open").underlined(new JBColor(isDarkBackground ? Gray._210 : Gray._150, Gray._100));
 
-      if (Registry.is("search.everywhere.enabled")) {
-        painter.appendLine("Search Everywhere with Double " + (SystemInfo.isMac ? MacKeymapUtil.SHIFT : "Shift"))
-          .smaller().withBullet();
+      final Shortcut[] shortcuts = KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE);
+      final String everywhere;
+      if (shortcuts.length == 0) {
+        everywhere = "Search Everywhere with Double " + (SystemInfo.isMac ? MacKeymapUtil.SHIFT : "Shift");
+      } else {
+        everywhere = "Search Everywhere " + KeymapUtil.getShortcutsText(shortcuts);
       }
+      painter.appendLine(everywhere).smaller().withBullet();
 
       if (!isProjectViewVisible()) {
         painter.appendLine("Open Project View with " + KeymapUtil.getShortcutText(new KeyboardShortcut(

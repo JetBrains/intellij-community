@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -44,6 +45,7 @@ import com.intellij.openapi.vcs.checkout.CompositeCheckoutListener;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.history.VcsHistoryCache;
 import com.intellij.openapi.vcs.impl.projectlevelman.*;
+import com.intellij.openapi.vcs.roots.VcsRootScanner;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -239,6 +241,12 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
         }
         else {
           myContentManager = ContentFactory.SERVICE.getInstance().createContentManager(true, myProject);
+        }
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          VcsRootChecker[] checkers = Extensions.getExtensions(VcsRootChecker.EXTENSION_POINT_NAME);
+          if (checkers.length != 0) {
+            VcsRootScanner.start(myProject, checkers);
+          }
         }
       }
     });

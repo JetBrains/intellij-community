@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -178,12 +178,12 @@ class MoverWrapper {
     int line1 = editor.offsetToLogicalPosition(range.getStartOffset()).line;
     int line2 = editor.offsetToLogicalPosition(range.getEndOffset()).line;
 
-    while (!lineContainsNonSpaces(document, line1) && line1 <= line2) line1++;
-    while (!lineContainsNonSpaces(document, line2) && line2 > line1) line2--;
+    while (!lineContainsNonSpaces(document, line1) && line1 < line2) line1++;
+    while (!lineContainsNonSpaces(document, line2) && line1 < line2) line2--;
 
-      final FileViewProvider provider = file.getViewProvider();
-      PsiFile rootToAdjustIndentIn = provider.getPsi(provider.getBaseLanguage());
-      codeStyleManager.adjustLineIndent(rootToAdjustIndentIn, new TextRange(document.getLineStartOffset(line1), document.getLineStartOffset(line2)));
+    final FileViewProvider provider = file.getViewProvider();
+    PsiFile rootToAdjustIndentIn = provider.getPsi(provider.getBaseLanguage());
+    codeStyleManager.adjustLineIndent(rootToAdjustIndentIn, new TextRange(document.getLineStartOffset(line1), document.getLineStartOffset(line2)));
   }
 
   private static boolean lineContainsNonSpaces(final Document document, final int line) {

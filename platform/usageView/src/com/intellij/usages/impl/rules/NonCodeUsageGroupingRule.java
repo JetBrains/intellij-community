@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
     @Override
     public boolean isValid() { return true; }
     @Override
-    public int compareTo(UsageGroup usageGroup) {
+    public int compareTo(@NotNull UsageGroup usageGroup) {
       if (usageGroup instanceof DynamicUsageGroup) {
         return -1;
       }
@@ -99,7 +99,7 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
     @Override
     public boolean isValid() { return true; }
     @Override
-    public int compareTo(UsageGroup usageGroup) { return usageGroup == this ? 0 : -1; }
+    public int compareTo(@NotNull UsageGroup usageGroup) { return usageGroup == this ? 0 : -1; }
     @Override
     public void navigate(boolean requestFocus) { }
     @Override
@@ -142,7 +142,7 @@ public class NonCodeUsageGroupingRule implements UsageGroupingRule {
     @Override
     public boolean isValid() { return true; }
     @Override
-    public int compareTo(UsageGroup usageGroup) { return usageGroup == this ? 0 : 1; }
+    public int compareTo(@NotNull UsageGroup usageGroup) { return usageGroup == this ? 0 : 1; }
     @Override
     public void navigate(boolean requestFocus) { }
     @Override

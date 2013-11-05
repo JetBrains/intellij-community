@@ -128,10 +128,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       lafList.add(new UIManager.LookAndFeelInfo("Default", UIManager.getSystemLookAndFeelClassName()));
     }
     else {
-      if (Registry.is("idea.4.5.laf.enabled")) {
-        lafList.add(new IdeaLookAndFeelInfo());
-      } else {
+      if (isIntelliJLafEnabled()) {
         lafList.add(new IntelliJLookAndFeelInfo());
+      } else {
+        lafList.add(new IdeaLookAndFeelInfo());
       }
       for (UIManager.LookAndFeelInfo laf : UIManager.getInstalledLookAndFeels()) {
         String name = laf.getName();
@@ -162,6 +162,10 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
     }
 
     myCurrentLaf = getDefaultLaf();
+  }
+
+  private static boolean isIntelliJLafEnabled() {
+    return !Registry.is("idea.4.5.laf.enabled") && SystemInfo.isWindows;
   }
 
   /**
@@ -309,7 +313,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
         return defaultLaf;
       }
     }
-    UIManager.LookAndFeelInfo ideaLaf = findLaf(IdeaLookAndFeelInfo.CLASS_NAME);
+    UIManager.LookAndFeelInfo ideaLaf = findLaf(isIntelliJLafEnabled() ? IntelliJLaf.class.getName() : IdeaLookAndFeelInfo.CLASS_NAME);
     if (ideaLaf != null) {
       return ideaLaf;
     }

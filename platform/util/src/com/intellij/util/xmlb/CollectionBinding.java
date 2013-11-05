@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ class CollectionBinding extends AbstractCollectionBinding  {
   }
 
 
+  @Override
   Object processResult(Collection result, Object target) {
     if (myAccessor == null) return result;
     
@@ -47,6 +48,7 @@ class CollectionBinding extends AbstractCollectionBinding  {
     return target;
   }
 
+  @Override
   Iterable getIterable(Object o) {
     if (o instanceof Set) {
       return new TreeSet((Set)o);
@@ -54,6 +56,7 @@ class CollectionBinding extends AbstractCollectionBinding  {
     return (Collection)o;
   }
 
+  @Override
   protected String getCollectionTagName(final Object target) {
     if (target instanceof Set) {
       return Constants.SET;
@@ -64,6 +67,7 @@ class CollectionBinding extends AbstractCollectionBinding  {
     return super.getCollectionTagName(target);
   }
 
+  @Override
   protected Collection createCollection(final String tagName) {
     if (tagName.equals(Constants.SET)) return new HashSet();
     if (tagName.equals(Constants.LIST)) return new ArrayList();

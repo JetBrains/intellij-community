@@ -6,6 +6,7 @@ import com.intellij.vcs.log.printmodel.SpecialPrintElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.table.TableColumn;
 import java.awt.*;
 
 /**
@@ -20,5 +21,7 @@ public interface GraphCellPainter {
 
   @Nullable
   SpecialPrintElement mouseOverArrow(@NotNull GraphPrintCell row, int x, int y);
+
+  void setRootColumn(TableColumn column);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import java.util.Iterator;
  * author: lesya
  */
 public class ComboBoxTableCellEditor extends AbstractTableCellEditor {
-  public final static ComboBoxTableCellEditor INSTANCE = new ComboBoxTableCellEditor();
+  public static final ComboBoxTableCellEditor INSTANCE = new ComboBoxTableCellEditor();
 
   private final JPanel myPanel = new JPanel(new GridBagLayout());
   private final JComboBox myComboBox = new JComboBox();
@@ -36,6 +36,7 @@ public class ComboBoxTableCellEditor extends AbstractTableCellEditor {
   private ComboBoxTableCellEditor() {
     myComboBox.setRenderer(new BasicComboBoxRenderer());
     myComboBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         stopCellEditing();
       }
@@ -45,6 +46,7 @@ public class ComboBoxTableCellEditor extends AbstractTableCellEditor {
                                        0));
   }
 
+  @Override
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
     final ListWithSelection options = (ListWithSelection)value;
     if (options.getSelection() == null) {
@@ -60,6 +62,7 @@ public class ComboBoxTableCellEditor extends AbstractTableCellEditor {
     return myPanel;
   }
 
+  @Override
   public Object getCellEditorValue() {
     return myComboBox.getSelectedItem();
   }

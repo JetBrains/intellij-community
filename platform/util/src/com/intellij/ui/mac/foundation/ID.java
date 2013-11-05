@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,6 @@ public class ID extends NativeLong {
     super(peer);
   }
   
-  public final static ID NIL = new ID(0);
+  public static final ID NIL = new ID(0);
 
 }

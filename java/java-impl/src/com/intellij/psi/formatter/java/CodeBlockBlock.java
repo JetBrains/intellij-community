@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,9 +36,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class CodeBlockBlock extends AbstractJavaBlock {
-  private final static int BEFORE_FIRST = 0;
-  private final static int BEFORE_LBRACE = 1;
-  private final static int INSIDE_BODY = 2;
+  private static final int BEFORE_FIRST = 0;
+  private static final int BEFORE_LBRACE = 1;
+  private static final int INSIDE_BODY = 2;
 
   private final int myChildrenIndent;
 

@@ -42,7 +42,7 @@ class GithubGistRaw implements DataConstructor {
 
   @Nullable public Map<String, GistFileRaw> files;
 
-  @Nullable public GithubUserRaw user;
+  @Nullable public GithubUserRaw owner;
 
   @Nullable public Date createdAt;
 
@@ -66,7 +66,7 @@ class GithubGistRaw implements DataConstructor {
   @SuppressWarnings("ConstantConditions")
   @NotNull
   public GithubGist createGist() {
-    GithubUser user = this.user == null ? null : this.user.createUser();
+    GithubUser user = this.owner == null ? null : this.owner.createUser();
 
     List<GithubGist.GistFile> files = new ArrayList<GithubGist.GistFile>();
     for (Map.Entry<String, GistFileRaw> entry : this.files.entrySet()) {

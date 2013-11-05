@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ public class MinusculeMatcher implements Matcher {
    * Need either an explicit uppercase letter or the same separator character in prefix
    */
   private static final String HARD_SEPARATORS = " ()";
-  private ThreadLocal<MatchingState> myMatchingState = new ThreadLocal<MatchingState>() {
+  private final ThreadLocal<MatchingState> myMatchingState = new ThreadLocal<MatchingState>() {
     @Override
     protected MatchingState initialValue() {
       return new MatchingState();

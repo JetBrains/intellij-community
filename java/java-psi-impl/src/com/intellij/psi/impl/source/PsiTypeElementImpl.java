@@ -138,14 +138,14 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
       if (PsiUtil.isJavaToken(child, JavaTokenType.AND)) {
         List<PsiType> types = collectTypes();
-        assert types.size() > 0 : this;
+        assert !types.isEmpty() : this;
         type = PsiIntersectionType.createIntersection(types);
         break;
       }
 
       if (PsiUtil.isJavaToken(child, JavaTokenType.OR)) {
         List<PsiType> types = collectTypes();
-        assert types.size() > 0 : this;
+        assert !types.isEmpty() : this;
         type = PsiDisjunctionType.createDisjunction(types, getManager());
         break;
       }
@@ -161,7 +161,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
       if (left instanceof PsiModifierList) {
         List<PsiAnnotation> annotations = PsiImplUtil.getTypeUseAnnotations((PsiModifierList)left);
-        if (annotations != null && annotations.size() > 0) {
+        if (annotations != null && !annotations.isEmpty()) {
           list.addAll(annotations);
         }
         break;

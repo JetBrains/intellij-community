@@ -27,7 +27,7 @@ import java.util.List;
  * User: anna
  */
 public class InferenceIncorporationPhase {
-  private InferenceSession mySession;
+  private final InferenceSession mySession;
 
   public InferenceIncorporationPhase(InferenceSession session) {
     mySession = session;

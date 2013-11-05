@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,10 +28,10 @@ import java.util.Collection;
  */
 public abstract class FileContextProvider {
 
-  public final static ExtensionPointName<FileContextProvider> EP_NAME = new ExtensionPointName<FileContextProvider>("com.intellij.fileContextProvider");
+  public static final ExtensionPointName<FileContextProvider> EP_NAME = new ExtensionPointName<FileContextProvider>("com.intellij.fileContextProvider");
 
   @Nullable
-  public static FileContextProvider getProvider(final @NotNull PsiFile file) {
+  public static FileContextProvider getProvider(@NotNull final PsiFile file) {
     for (FileContextProvider provider: Extensions.getExtensions(EP_NAME, file.getProject())) {
       if (provider.isAvailable(file)) {
         return provider;

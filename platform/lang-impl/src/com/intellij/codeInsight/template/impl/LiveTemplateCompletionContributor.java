@@ -133,7 +133,7 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
 
     @Override
     public boolean skipElement(LookupElement element, CompletionLocation location) {
-      return element instanceof LiveTemplateLookupElement && ((LiveTemplateLookupElement)element).sudden;
+      return element instanceof LiveTemplateLookupElement && ((LiveTemplateLookupElement)element).sudden && !Registry.is("ide.completion.autopopup.select.live.templates");
     }
   }
 

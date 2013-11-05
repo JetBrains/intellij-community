@@ -429,8 +429,13 @@ public class JavaCompletionData extends JavaAwareCompletionData {
     }
 
     if (SUPER_OR_THIS_PATTERN.accepts(position)) {
-      if (!AFTER_DOT.accepts(position) || isInsideQualifierClass(position)) {
-        result.addElement(createKeyword(position, PsiKeyword.THIS));
+      final boolean afterDot = AFTER_DOT.accepts(position);
+      final boolean insideQualifierClass = isInsideQualifierClass(position);
+      final boolean insideInheritorClass = PsiUtil.isLanguageLevel8OrHigher(position) && isInsideInheritorClass(position);
+      if (!afterDot || insideQualifierClass || insideInheritorClass) {
+        if (!afterDot || insideQualifierClass) {
+          result.addElement(createKeyword(position, PsiKeyword.THIS));
+        }
 
         final LookupItem superItem = (LookupItem)createKeyword(position, PsiKeyword.SUPER);
         if (psiElement().afterLeaf(psiElement().withText("{").withSuperParent(2, psiMethod().constructor(true))).accepts(position)) {
@@ -723,6 +728,25 @@ public class JavaCompletionData extends JavaAwareCompletionData {
           final PsiManager psiManager = position.getManager();
           while ((parent = PsiTreeUtil.getParentOfType(parent, PsiClass.class, true)) != null) {
             if (psiManager.areElementsEquivalent(parent, qualifierClass)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }
+
+  private static boolean isInsideInheritorClass(PsiElement position) {
+    if (position.getParent() instanceof PsiJavaCodeReferenceElement) {
+      final PsiElement qualifier = ((PsiJavaCodeReferenceElement)position.getParent()).getQualifier();
+      if (qualifier instanceof PsiJavaCodeReferenceElement) {
+        final PsiElement qualifierClass = ((PsiJavaCodeReferenceElement)qualifier).resolve();
+        if (qualifierClass instanceof PsiClass && ((PsiClass)qualifierClass).isInterface()) {
+          PsiElement parent = position;
+          while ((parent = PsiTreeUtil.getParentOfType(parent, PsiClass.class, true)) != null) {
+            if (PsiUtil.getEnclosingStaticElement(position, (PsiClass)parent) == null && 
+                ((PsiClass)parent).isInheritor((PsiClass)qualifierClass, true)) {
               return true;
             }
           }

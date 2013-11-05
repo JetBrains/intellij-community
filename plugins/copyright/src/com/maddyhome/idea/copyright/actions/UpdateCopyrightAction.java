@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public class UpdateCopyrightAction extends AnAction {
 
   private static boolean isEnabled(AnActionEvent event) {
     final DataContext context = event.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(context);
+    final Project project = CommonDataKeys.PROJECT.getData(context);
     if (project == null) {
       return false;
     }
@@ -96,7 +96,7 @@ public class UpdateCopyrightAction extends AnAction {
 
   public void actionPerformed(AnActionEvent event) {
     final DataContext context = event.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(context);
+    final Project project = CommonDataKeys.PROJECT.getData(context);
     assert project != null;
 
     final Module module = LangDataKeys.MODULE.getData(context);

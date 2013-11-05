@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,7 +120,7 @@ public class XmlElementDeclImpl extends XmlElementImpl implements XmlElementDecl
     XmlElement xmlElement = getNameElement();
     if (xmlElement != null) return xmlElement.getText();
 
-    return getNameFromEntityRef(this, XmlElementType.XML_ELEMENT_DECL_START);
+    return getNameFromEntityRef(this, XmlTokenType.XML_ELEMENT_DECL_START);
   }
 
   @Override

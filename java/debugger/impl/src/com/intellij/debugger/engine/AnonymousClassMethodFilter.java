@@ -28,10 +28,25 @@ import org.jetbrains.annotations.Nullable;
 public class AnonymousClassMethodFilter extends BasicStepMethodFilter implements BreakpointStepMethodFilter{
   @Nullable
   private final SourcePosition myBreakpointPosition;
+  private final int myLastStatementLine;
 
   public AnonymousClassMethodFilter(PsiMethod psiMethod) {
     super(psiMethod);
-    myBreakpointPosition = calcBreakpointPosition(psiMethod.getBody());
+    SourcePosition firstStatementPosition = null;
+    SourcePosition lastStatementPosition = null;
+    final PsiCodeBlock body = psiMethod.getBody();
+    if (body != null) {
+      final PsiStatement[] statements = body.getStatements();
+      if (statements.length > 0) {
+        firstStatementPosition = SourcePosition.createFromElement(statements[0]);
+        if (firstStatementPosition != null) {
+          final PsiStatement lastStatement = statements[statements.length - 1];
+          lastStatementPosition = SourcePosition.createFromOffset(firstStatementPosition.getFile(), lastStatement.getTextRange().getEndOffset());
+        }
+      }
+    }
+    myBreakpointPosition = firstStatementPosition;
+    myLastStatementLine = lastStatementPosition != null? lastStatementPosition.getLine() : -1;
   }
 
   @Nullable
@@ -39,16 +54,7 @@ public class AnonymousClassMethodFilter extends BasicStepMethodFilter implements
     return myBreakpointPosition;
   }
 
-  private static SourcePosition calcBreakpointPosition(final PsiCodeBlock body) {
-    if (body == null) {
-      return null;
-    }
-    final PsiStatement[] statements = body.getStatements();
-    if (statements.length == 0) {
-      return null;
-    }
-    final PsiStatement firstStatement = statements[0];
-    return SourcePosition.createFromElement(firstStatement);
+  public int getLastStatementLine() {
+    return myLastStatementLine;
   }
-
 }

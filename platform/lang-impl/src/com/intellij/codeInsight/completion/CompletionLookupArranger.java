@@ -223,15 +223,7 @@ public class CompletionLookupArranger extends LookupArranger {
     ensureItemAdded(items, model, byRelevance, relevantSelection);
     ensureEverythingVisibleAdded(lookup, model, byRelevance);
 
-    ArrayList<LookupElement> result = new ArrayList<LookupElement>(model);
-    if (result.size() > 1) {
-      LookupElement first = result.get(0);
-      if (isLiveTemplate(first) && isPrefixItem(lookup, first, true) && CompletionServiceImpl.isStartMatch(result.get(1), lookup)) {
-        ContainerUtil.swapElements(result, 0, 1);
-      }
-    }
-
-    return result;
+    return new ArrayList<LookupElement>(model);
   }
 
   private static void ensureEverythingVisibleAdded(LookupImpl lookup, final LinkedHashSet<LookupElement> model, Iterator<LookupElement> byRelevance) {
@@ -466,6 +458,9 @@ public class CompletionLookupArranger extends LookupArranger {
   private boolean shouldSkip(CompletionPreselectSkipper[] skippers, LookupElement element) {
     for (final CompletionPreselectSkipper skipper : skippers) {
       if (skipper.skipElement(element, myLocation)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Skipped element " + element + " by " + skipper);
+        }
         return true;
       }
     }

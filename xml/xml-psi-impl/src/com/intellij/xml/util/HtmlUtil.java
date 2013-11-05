@@ -415,6 +415,14 @@ public class HtmlUtil {
     return attributeName.startsWith(HTML5_DATA_ATTR_PREFIX);
   }
 
+  @Nullable
+  public static String getHrefBase(XmlFile file) {
+    final XmlTag root = file.getRootTag();
+    final XmlTag head = root != null ? root.findFirstSubTag("head") : null;
+    final XmlTag base = head != null ? head.findFirstSubTag("base") : null;
+    return base != null ? base.getAttributeValue("href") : null;
+  }
+
   private static class TerminateException extends RuntimeException {
     private static final TerminateException INSTANCE = new TerminateException();
   }

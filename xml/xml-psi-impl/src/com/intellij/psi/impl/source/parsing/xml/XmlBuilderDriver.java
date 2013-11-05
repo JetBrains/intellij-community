@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -111,14 +111,14 @@ public class XmlBuilderDriver {
       boolean afterSystem = false;
       for (int i = 0; i < tokenCount; i++) {
         LighterASTNode token = tokens.get()[i];
-        if (token.getTokenType() == XmlElementType.XML_DOCTYPE_PUBLIC) {
+        if (token.getTokenType() == XmlTokenType.XML_DOCTYPE_PUBLIC) {
           afterPublic = true;
         }
-        else if (token.getTokenType() == XmlElementType.XML_DOCTYPE_SYSTEM) {
+        else if (token.getTokenType() == XmlTokenType.XML_DOCTYPE_SYSTEM) {
           afterSystem = true;
         }
         else if (token.getTokenType() != TokenType.WHITE_SPACE && token.getTokenType() != XmlElementType.XML_COMMENT) {
-          if (token.getTokenType() == XmlElementType.XML_ATTRIBUTE_VALUE_TOKEN) {
+          if (token.getTokenType() == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN) {
             if (afterPublic) publicId = getTokenText(token);
             else if (afterSystem) systemId = getTokenText(token);
           }

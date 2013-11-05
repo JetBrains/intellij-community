@@ -49,7 +49,8 @@ public class LexerEditorHighlighterLexer extends LexerBase {
     myAlreadyInitializedHighlighter = alreadyInitializedHighlighter;
   }
 
-  public static @Nullable Lexer getLexerBasedOnLexerHighlighter(CharSequence text, VirtualFile virtualFile, Project project) {
+  @Nullable
+  public static Lexer getLexerBasedOnLexerHighlighter(CharSequence text, VirtualFile virtualFile, Project project) {
     EditorHighlighter highlighter = null;
 
     PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);

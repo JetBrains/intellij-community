@@ -362,7 +362,7 @@ public class LambdaUtil {
     }
     final PsiParameter[] lambdaParams = lambdaExpression.getParameterList().getParameters();
     if (lambdaParams.length != methodParameters.length) return false;
-    final boolean[] independent = new boolean[]{true};
+    final boolean[] independent = {true};
     final PsiMethod interfaceMethod = getFunctionalInterfaceMethod(functionalInterfaceType);
     if (interfaceMethod == null) return false;
     final TypeParamsChecker paramsChecker = new TypeParamsChecker(lambdaExpression);

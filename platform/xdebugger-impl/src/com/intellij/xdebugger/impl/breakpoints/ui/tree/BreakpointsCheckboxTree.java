@@ -16,8 +16,10 @@
 package com.intellij.xdebugger.impl.breakpoints.ui.tree;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 
 public class BreakpointsCheckboxTree extends CheckboxTree {
 
@@ -52,5 +54,16 @@ public class BreakpointsCheckboxTree extends CheckboxTree {
   public BreakpointsCheckboxTree(Project project, BreakpointItemsTreeController model) {
     super(new BreakpointsTreeCellRenderer.BreakpointsCheckboxTreeCellRenderer(project), model.getRoot());
     setHorizontalAutoScrollingEnabled(false);
+  }
+
+  public String convertValueToText(Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
+    if (value instanceof BreakpointItemNode) {
+      final BreakpointItem breakpointItem = ((BreakpointItemNode)value).getBreakpointItem();
+      final String displayText = breakpointItem != null? breakpointItem.getDisplayText() : null;
+      if (!StringUtil.isEmptyOrSpaces(displayText)) {
+        return displayText;
+      }
+    }
+    return super.convertValueToText(value, selected, expanded, leaf, row, hasFocus);
   }
 }

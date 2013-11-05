@@ -28,7 +28,9 @@ import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.execution.HgCommandException;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
+import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgEncodingUtil;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -87,6 +89,10 @@ public class HgCommitCommand {
         List<String> chunk = chunkedCommits.get(i);
         commitChunkFiles(chunk, amendCommit);
       }
+    }
+    if (!myProject.isDisposed()) {
+      HgRepositoryManager manager = HgUtil.getRepositoryManager(myProject);
+      manager.updateRepository(myRoot);
     }
     final MessageBus messageBus = myProject.getMessageBus();
     messageBus.syncPublisher(HgVcs.REMOTE_TOPIC).update(myProject, null);

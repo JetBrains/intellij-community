@@ -19,7 +19,7 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -163,9 +163,15 @@ public class TestNGUtil
 
   public static boolean isTestNGAnnotation(PsiAnnotation annotation) {
     String qName = annotation.getQualifiedName();
-    if (qName.equals(TEST_ANNOTATION_FQN)) return true;
-    for (String qn : CONFIG_ANNOTATIONS_FQN) {
-      if (qName.equals(qn)) return true;
+    if (qName != null) {
+      if (qName.equals(TEST_ANNOTATION_FQN)) return true;
+      for (String qn : CONFIG_ANNOTATIONS_FQN) {
+        if (qName.equals(qn)) return true;
+      }
+      if (qName.equals(TEST_ANNOTATION_FQN)) return true;
+      for (String qn : CONFIG_ANNOTATIONS_FQN) {
+        if (qName.equals(qn)) return true;
+      }
     }
     return false;
   }
@@ -476,7 +482,7 @@ public class TestNGUtil
           return false;
         }
       }
-      final Module module = ModuleUtil.findModuleForPsiElement(psiElement);
+      final Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
       if (module == null) return false;
       String url = VfsUtil.getUrlForLibraryRoot(new File(PathUtil.getJarPathForClass(Assert.class)));
       ModuleRootModificationUtil.addModuleLibrary(module, url);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +117,7 @@ public class ObjectCache<K,V> extends ObjectCacheBase implements Iterable<V> {
 
   // Some AbstractMap functions finished
 
-  final public void cacheObject(K key, V x) {
+  public final void cacheObject(K key, V x) {
     K deletedKey = null;
     V deletedValue = null;
 
@@ -154,7 +154,7 @@ public class ObjectCache<K,V> extends ObjectCacheBase implements Iterable<V> {
     }
   }
 
-  final public V tryKey(K key) {
+  public final V tryKey(K key) {
     ++myAttempts;
     int index = searchForCacheEntry(key);
     if (index == 0) {
@@ -181,7 +181,7 @@ public class ObjectCache<K,V> extends ObjectCacheBase implements Iterable<V> {
     return myCache[index].value;
   }
 
-  final public boolean isCached(K key) {
+  public final boolean isCached(K key) {
     return searchForCacheEntry(key) != 0;
   }
 
@@ -260,6 +260,7 @@ public class ObjectCache<K,V> extends ObjectCacheBase implements Iterable<V> {
 
   // start of Iterable implementation
 
+  @Override
   public Iterator<V> iterator() {
     return new ObjectCacheIterator<K, V>(this);
   }
@@ -274,14 +275,17 @@ public class ObjectCache<K,V> extends ObjectCacheBase implements Iterable<V> {
       cache.myCache[0].next = cache.myTop;
     }
 
+    @Override
     public boolean hasNext() {
       return (myCurrentEntry = myCache.myCache[myCurrentEntry].next) != 0;
     }
 
+    @Override
     public V next() {
       return myCache.myCache[myCurrentEntry].value;
     }
 
+    @Override
     public void remove() {
       myCache.remove((K)myCache.myCache[myCurrentEntry].key);
     }

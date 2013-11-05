@@ -41,7 +41,7 @@ public abstract class ServerType<C extends ServerConfiguration> {
   public abstract UnnamedConfigurable createConfigurable(@NotNull C configuration);
 
   @NotNull
-  public abstract DeploymentConfigurator<?> createDeploymentConfigurator(Project project);
+  public abstract DeploymentConfigurator<?, C> createDeploymentConfigurator(Project project);
 
   @NotNull
   public abstract ServerConnector<?> createConnector(@NotNull C configuration, @NotNull ServerTaskExecutor asyncTasksExecutor);

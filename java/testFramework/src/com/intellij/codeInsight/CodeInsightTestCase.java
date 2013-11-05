@@ -419,6 +419,7 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
 
   protected void setupCursorAndSelection(final Editor editor) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         Document document = editor.getDocument();
         final String text = document.getText();

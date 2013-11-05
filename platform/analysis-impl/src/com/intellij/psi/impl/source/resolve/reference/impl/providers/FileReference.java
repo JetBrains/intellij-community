@@ -31,6 +31,7 @@ import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
+import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
 import com.intellij.psi.search.PsiFileSystemItemProcessor;
 import com.intellij.refactoring.rename.BindablePsiReference;
 import com.intellij.util.ArrayUtil;
@@ -69,6 +70,26 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
 
   public FileReference(final FileReference original) {
     this(original.myFileReferenceSet, original.myRange, original.myIndex, original.myText);
+  }
+
+  @Nullable
+  public static FileReference findFileReference(@NotNull final PsiReference original) {
+    if (original instanceof PsiMultiReference) {
+      final PsiMultiReference multiReference = (PsiMultiReference)original;
+      for (PsiReference reference : multiReference.getReferences()) {
+        if (reference instanceof FileReference) {
+          return (FileReference)reference;
+        }
+      }
+    }
+    else if (original instanceof FileReferenceOwner) {
+      final PsiFileReference fileReference = ((FileReferenceOwner)original).getLastFileReference();
+      if (fileReference instanceof FileReference) {
+        return (FileReference)fileReference;
+      }
+    }
+
+    return null;
   }
 
   @NotNull
@@ -200,8 +221,8 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     return decode(getCanonicalText());
   }
 
-  public
   @Nullable
+  public
   String getNewFileTemplateName() {
     return null;
   }

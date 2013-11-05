@@ -27,9 +27,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NonNls;
 
 /**
- * Test actions that various inspections add.
- * User: dcheryasov
- * Date: Nov 29, 2008 12:47:08 AM
+ * @author dcheryasov
  */
 @TestDataPath("$CONTENT_ROOT/../testData/inspections/")
 public class PyQuickFixTest extends PyTestCase {
@@ -158,6 +156,11 @@ public class PyQuickFixTest extends PyTestCase {
 
   public void testFromFutureImportQuickFix() {
     doInspectionTest("MoveFromFutureImport.py", PyFromFutureImportInspection.class,
+                     PyBundle.message("QFIX.move.from.future.import"), true, true);
+  }
+
+  public void testFromFutureImportQuickFixDocString() {  // PY-10080
+    doInspectionTest("MoveFromFutureImportDocString.py", PyFromFutureImportInspection.class,
                      PyBundle.message("QFIX.move.from.future.import"), true, true);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -125,7 +125,7 @@ class DOMWriter {
 
               firstChild = false;
             }
-            else if (child.getNodeValue().trim().length() > 0){
+            else if (!child.getNodeValue().trim().isEmpty()){
               firstChild = false;
             }
 
@@ -175,7 +175,7 @@ class DOMWriter {
 
       case Node.TEXT_NODE: {
         final String nodeValue = node.getNodeValue();
-        if (nodeValue.trim().length() > 0) {
+        if (!nodeValue.trim().isEmpty()) {
           normalizeAndPrint(nodeValue.trim());
         }
         break;
@@ -185,7 +185,7 @@ class DOMWriter {
         myOut.print("<?");
         myOut.print(node.getNodeName());
         String data = node.getNodeValue();
-        if (data != null && data.length() > 0) {
+        if (data != null && !data.isEmpty()) {
           myOut.print(' ');
           myOut.print(data);
         }

@@ -8,6 +8,7 @@ import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
@@ -69,13 +70,14 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     add(myMessagePanel, MESSAGE_LAYER);
 
     setBackground(UIUtil.getTableBackground());
+    showMessage("No commits selected");
   }
 
   @Override
   public void valueChanged(@Nullable ListSelectionEvent notUsed) {
     int[] rows = myGraphTable.getSelectedRows();
     if (rows.length < 1) {
-      showMessage("Nothing selected");
+      showMessage("No commits selected");
     }
     else if (rows.length > 1) {
       showMessage("Several commits selected");
@@ -84,7 +86,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       ((CardLayout)getLayout()).show(this, STANDARD_LAYER);
       Hash hash = ((AbstractVcsLogTableModel)myGraphTable.getModel()).getHashAtRow(rows[0]);
       if (hash == null) {
-        showMessage("Nothing selected");
+        showMessage("No commits selected");
         return;
       }
 
@@ -159,10 +161,18 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       else {
         myHashLabel.setText(commit.getHash().toShortString());
         myCommitMessage.setText(commit.getFullMessage());
+        myCommitMessage.setCaretPosition(0);
 
-        String authorText = commit.getAuthorName();
+        String authorText = commit.getAuthorName() + " at " + DateFormatUtil.formatDateTime(commit.getAuthorTime());
         if (!commit.getAuthorName().equals(commit.getCommitterName()) || !commit.getAuthorEmail().equals(commit.getCommitterEmail())) {
-          authorText += " (committed by " + commit.getCommitterName() + ")";
+          String commitTime;
+          if (commit.getCommitTime() != commit.getAuthorTime()) {
+            commitTime = " at " + DateFormatUtil.formatDateTime(commit.getCommitTime());
+          }
+          else {
+            commitTime = "";
+          }
+          authorText += " (committed by " + commit.getCommitterName() + commitTime + ")";
         }
         myAuthor.setText(authorText);
       }
@@ -190,6 +200,7 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
 
     void setRefs(@NotNull List<VcsRef> refs) {
       myRefs = refs;
+      setVisible(!myRefs.isEmpty());
       repaint();
     }
   }
@@ -202,6 +213,8 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
       super(new BorderLayout());
       myLabel = new JLabel();
       myLabel.setForeground(UIUtil.getInactiveTextColor());
+      myLabel.setHorizontalAlignment(SwingConstants.CENTER);
+      myLabel.setVerticalAlignment(SwingConstants.CENTER);
       add(myLabel);
     }
 

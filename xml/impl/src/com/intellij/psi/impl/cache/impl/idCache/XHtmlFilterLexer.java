@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import com.intellij.psi.impl.cache.impl.OccurrenceConsumer;
 import com.intellij.psi.search.UsageSearchContext;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlElementType;
+import com.intellij.psi.xml.XmlTokenType;
 
 public class XHtmlFilterLexer extends BaseFilterLexer {
 
@@ -34,14 +35,15 @@ public class XHtmlFilterLexer extends BaseFilterLexer {
   public void advance() {
     final IElementType tokenType = myDelegate.getTokenType();
 
-    if (tokenType == XmlElementType.XML_COMMENT_CHARACTERS) {
+    if (tokenType == XmlTokenType.XML_COMMENT_CHARACTERS) {
       scanWordsInToken(UsageSearchContext.IN_COMMENTS, false, false);
       advanceTodoItemCountsInToken();
-    } else if (tokenType == XmlElementType.XML_ATTRIBUTE_VALUE_TOKEN ||
-        tokenType == XmlElementType.XML_NAME ||
-        tokenType == XmlElementType.XML_TAG_NAME
+    } else if (tokenType == XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN ||
+        tokenType == XmlTokenType.XML_NAME ||
+        tokenType == XmlTokenType.XML_TAG_NAME
        ) {
-      scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES, tokenType == XmlElementType.XML_ATTRIBUTE_VALUE_TOKEN,
+      scanWordsInToken(UsageSearchContext.IN_PLAIN_TEXT | UsageSearchContext.IN_FOREIGN_LANGUAGES, tokenType ==
+                                                                                                   XmlTokenType.XML_ATTRIBUTE_VALUE_TOKEN,
                        false);
     } else if (tokenType.getLanguage() != XMLLanguage.INSTANCE &&
       tokenType.getLanguage() != Language.ANY         

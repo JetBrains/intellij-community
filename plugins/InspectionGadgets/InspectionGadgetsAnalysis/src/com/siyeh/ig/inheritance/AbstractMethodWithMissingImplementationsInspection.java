@@ -67,7 +67,7 @@ public class AbstractMethodWithMissingImplementationsInspection
       if (containingClass == null) {
         return;
       }
-      if (!containingClass.isInterface() &&
+      if (!containingClass.isInterface() ||
           !method.hasModifierProperty(PsiModifier.ABSTRACT)) {
         return;
       }

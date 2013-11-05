@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,14 +75,14 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
   @Override
   public void update(AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
-    final Project project = event.getData(PlatformDataKeys.PROJECT);
+    final Project project = event.getData(CommonDataKeys.PROJECT);
     presentation.setEnabled(project != null);
     presentation.setVisible(ActionPlaces.MAIN_MENU.equals(event.getPlace()) && !PlatformUtils.isCidr());
   }
 
   @Override
   public void actionPerformed(AnActionEvent event) {
-    final Project project = event.getData(PlatformDataKeys.PROJECT);
+    final Project project = event.getData(CommonDataKeys.PROJECT);
 
     LOG.assertTrue(project != null);
 

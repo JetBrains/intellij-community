@@ -60,6 +60,10 @@ public class FieldPropertyTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testIntNonStaticConstantChange() throws Exception {
+    doTest();
+  }
+
   public void testLongConstantChange() throws Exception {
     doTest();
   }

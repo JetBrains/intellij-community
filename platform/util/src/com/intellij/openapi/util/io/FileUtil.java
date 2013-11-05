@@ -350,6 +350,7 @@ public class FileUtil extends FileUtilRt {
 
   private static Future<Void> startDeletionThread(@NotNull final File... tempFiles) {
     final RunnableFuture<Void> deleteFilesTask = new FutureTask<Void>(new Runnable() {
+      @Override
       public void run() {
         final Thread currentThread = Thread.currentThread();
         final int priority = currentThread.getPriority();
@@ -549,6 +550,7 @@ public class FileUtil extends FileUtilRt {
 
   public static void copyDir(@NotNull File fromDir, @NotNull File toDir, boolean copySystemFiles) throws IOException {
     copyDir(fromDir, toDir, copySystemFiles ? null : new FileFilter() {
+      @Override
       public boolean accept(File file) {
         return !StringUtil.startsWithChar(file.getName(), '.');
       }
@@ -1065,7 +1067,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static boolean processFilesRecursively(@NotNull File root, @NotNull Processor<File> processor,
-                                                final @Nullable Processor<File> directoryFilter) {
+                                                @Nullable final Processor<File> directoryFilter) {
     final LinkedList<File> queue = new LinkedList<File>();
     queue.add(root);
     while (!queue.isEmpty()) {
@@ -1198,7 +1200,7 @@ public class FileUtil extends FileUtilRt {
     return false;
   }
 
-  @Nullable
+  @Contract("null -> null")
   public static String getLocationRelativeToUserHome(@Nullable final String path) {
     if (path == null) return null;
 

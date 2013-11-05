@@ -12,6 +12,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
@@ -153,16 +154,19 @@ public class CompilerOutputIndexer extends AbstractProjectComponent {
   private void doEnable() {
     if (myInitialized.compareAndSet(false, true)) {
       initTimestampIndex();
-      File storageFile =
+      final File storageFile =
         IndexInfrastructure.getStorageFile(CompilerOutputIndexUtil.generateIndexId("compilerOutputIndexFileId.enum", myProject));
-      for (int i = 0; i < 2; i++) {
-        try {
-          myFileEnumerator = new PersistentEnumeratorDelegate<String>(storageFile, new EnumeratorStringDescriptor(), 2048);
-        }
-        catch (IOException e) {
-          if (i == 1) throw new RuntimeException(e);
-          IOUtil.deleteAllFilesStartingWith(storageFile);
-        }
+
+      try {
+        myFileEnumerator = IOUtil.openCleanOrResetBroken(new ThrowableComputable<PersistentEnumeratorDelegate<String>, IOException>() {
+          @Override
+          public PersistentEnumeratorDelegate<String> compute() throws IOException {
+            return new PersistentEnumeratorDelegate<String>(storageFile, new EnumeratorStringDescriptor(), 2048);
+          }
+        }, storageFile);
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
       }
       CompilerManager.getInstance(myProject).addCompilationStatusListener(new CompilationStatusAdapter() {
         @Override
@@ -184,29 +188,35 @@ public class CompilerOutputIndexer extends AbstractProjectComponent {
   }
 
   private void initTimestampIndex() {
-    for (int attempts = 0; attempts < 2; attempts++) {
-      try {
-        myFileTimestampsIndex = new PersistentHashMap<String, Long>(IndexInfrastructure.getStorageFile(getFileTimestampsIndexId()),
-                                                                    new EnumeratorStringDescriptor(), new DataExternalizer<Long>() {
+    final File storageFile = IndexInfrastructure.getStorageFile(getFileTimestampsIndexId());
+    try {
+      myFileTimestampsIndex = IOUtil.openCleanOrResetBroken(
+        new ThrowableComputable<PersistentHashMap<String, Long>, IOException>() {
           @Override
-          public void save(final DataOutput out, final Long value) throws IOException {
-            out.writeLong(value);
-          }
+          public PersistentHashMap<String, Long> compute() throws IOException {
+            return new PersistentHashMap<String, Long>(storageFile,
+                                                       new EnumeratorStringDescriptor(), new DataExternalizer<Long>() {
+              @Override
+              public void save(final DataOutput out, final Long value) throws IOException {
+                out.writeLong(value);
+              }
 
-          @Override
-          public Long read(final DataInput in) throws IOException {
-            return in.readLong();
+              @Override
+              public Long read(final DataInput in) throws IOException {
+                return in.readLong();
+              }
+            });
           }
-        });
-      }
-      catch (IOException e) {
-        FileUtil.delete(IndexInfrastructure.getIndexRootDir(getFileTimestampsIndexId()));
-      }
-      if (myFileTimestampsIndex != null) {
-        return;
-      }
+        },
+        new Runnable() {
+          public void run() {
+            FileUtil.delete(IndexInfrastructure.getIndexRootDir(getFileTimestampsIndexId()));
+          }
+        }
+      );
+    } catch (IOException ex) {
+      throw new RuntimeException("Timestamps index not initialized", ex);
     }
-    throw new RuntimeException("Timestamps index not initialized");
   }
 
   public void reindex(final FileVisitorService visitorService, final @NotNull ProgressIndicator indicator) {

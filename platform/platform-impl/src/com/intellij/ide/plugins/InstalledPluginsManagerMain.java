@@ -36,6 +36,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
@@ -83,49 +84,40 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
         };
         descriptor.setTitle("Choose Plugin File");
         descriptor.setDescription("JAR and ZIP archives are accepted");
-        FileChooser.chooseFiles(descriptor, null, myActionsPanel, null, new FileChooser.FileChooserConsumer() {
+        FileChooser.chooseFile(descriptor, null, myActionsPanel, null, new Consumer<VirtualFile>() {
           @Override
-          public void cancelled() {
-          }
-
-          @Override
-          public void consume(List<VirtualFile> files) {
-            if (files != null && files.size() == 1) {
-              VirtualFile virtualFile = files.get(0);
-              if (virtualFile != null) {
-                final File file = VfsUtilCore.virtualToIoFile(virtualFile);
-                try {
-                  final IdeaPluginDescriptorImpl pluginDescriptor = PluginDownloader.loadDescriptionFromJar(file);
-                  if (pluginDescriptor == null) {
-                    Messages.showErrorDialog("Fail to load plugin descriptor from file " + file.getName(), CommonBundle.getErrorTitle());
-                    return;
-                  }
-                  if (PluginManagerCore.isIncompatible(pluginDescriptor)) {
-                    Messages.showErrorDialog("Plugin " + pluginDescriptor.getName() + " is incompatible with current installation", CommonBundle.getErrorTitle());
-                    return;
-                  }
-                  final IdeaPluginDescriptor alreadyInstalledPlugin = PluginManager.getPlugin(pluginDescriptor.getPluginId());
-                  if (alreadyInstalledPlugin != null) {
-                    final File oldFile = alreadyInstalledPlugin.getPath();
-                    if (oldFile != null) {
-                      StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(oldFile));
-                    }
-                  }
-                  if (((InstalledPluginsTableModel)pluginsModel).appendOrUpdateDescriptor(pluginDescriptor)) {
-                    PluginDownloader.install(file, file.getName(), false);
-                    select(pluginDescriptor);
-                    checkInstalledPluginDependencies(pluginDescriptor);
-                    setRequireShutdown(true);
-                  }
-                  else {
-                    Messages.showInfoMessage(myActionsPanel, "Plugin " + pluginDescriptor.getName() + " was already installed",
-                                             CommonBundle.getWarningTitle());
-                  }
-                }
-                catch (IOException ex) {
-                  Messages.showErrorDialog(ex.getMessage(), CommonBundle.getErrorTitle());
+          public void consume(@NotNull VirtualFile virtualFile) {
+            final File file = VfsUtilCore.virtualToIoFile(virtualFile);
+            try {
+              final IdeaPluginDescriptorImpl pluginDescriptor = PluginDownloader.loadDescriptionFromJar(file);
+              if (pluginDescriptor == null) {
+                Messages.showErrorDialog("Fail to load plugin descriptor from file " + file.getName(), CommonBundle.getErrorTitle());
+                return;
+              }
+              if (PluginManagerCore.isIncompatible(pluginDescriptor)) {
+                Messages.showErrorDialog("Plugin " + pluginDescriptor.getName() + " is incompatible with current installation", CommonBundle.getErrorTitle());
+                return;
+              }
+              final IdeaPluginDescriptor alreadyInstalledPlugin = PluginManager.getPlugin(pluginDescriptor.getPluginId());
+              if (alreadyInstalledPlugin != null) {
+                final File oldFile = alreadyInstalledPlugin.getPath();
+                if (oldFile != null) {
+                  StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(oldFile));
                 }
               }
+              if (((InstalledPluginsTableModel)pluginsModel).appendOrUpdateDescriptor(pluginDescriptor)) {
+                PluginDownloader.install(file, file.getName(), false);
+                select(pluginDescriptor);
+                checkInstalledPluginDependencies(pluginDescriptor);
+                setRequireShutdown(true);
+              }
+              else {
+                Messages.showInfoMessage(myActionsPanel, "Plugin " + pluginDescriptor.getName() + " was already installed",
+                                         CommonBundle.getWarningTitle());
+              }
+            }
+            catch (IOException ex) {
+              Messages.showErrorDialog(ex.getMessage(), CommonBundle.getErrorTitle());
             }
           }
         });

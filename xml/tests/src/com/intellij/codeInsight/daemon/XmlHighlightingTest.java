@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.application.options.XmlSettings;
@@ -373,6 +388,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     try {
       doDoTest(true,true);
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           myEditor.getDocument().insertString(myEditor.getDocument().getCharsSequence().toString().indexOf("?>") + 2, "\n");
         }
@@ -532,6 +548,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       final XmlAttributeValue valueElement = attribute.getValueElement();
       final PsiReference nameReference = valueElement.getReferences()[0];
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           nameReference.handleElementRename("zzz");
         }
@@ -546,6 +563,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
   public void testExternalValidatorOnValidXmlWithNamespacesNotSetup() throws Exception {
     final ExternalResourceManagerEx instanceEx = ExternalResourceManagerEx.getInstanceEx();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         instanceEx.addIgnoredResource("http://xml.apache.org/axis/wsdd2/");
         instanceEx.addIgnoredResource("http://xml.apache.org/axis/wsdd2/providers/java");
@@ -561,6 +579,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     final ExternalResourceManagerEx instanceEx = ExternalResourceManagerEx.getInstanceEx();
     try {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           instanceEx.addIgnoredResource("");
         }
@@ -569,6 +588,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       doTest(getFullRelativeTestName(".xml"), true, false);
     } finally {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           instanceEx.removeIgnoredResource("");
         }
@@ -1045,6 +1065,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
   public void testIgnoredNamespaceHighlighting() throws Exception {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("http://ignored/uri");
       }
@@ -1052,6 +1073,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
     doTest();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ExternalResourceManagerEx.getInstanceEx().removeIgnoredResource("http://ignored/uri");
       }
@@ -1221,6 +1243,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
     final String text = myEditor.getDocument().getText();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         myEditor.getSelectionModel().setSelection(0, myEditor.getDocument().getTextLength());
       }
@@ -1397,6 +1420,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     final String text = schemaEditor.getDocument().getText();
     final String newText = text.replaceAll("xsd","xs");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         schemaEditor.getDocument().replaceString(0, text.length(), newText);
       }
@@ -1555,6 +1579,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     assertEquals(2, infos.size());
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         EditorModificationUtil.deleteSelectedText(myEditor);
       }
@@ -1565,6 +1590,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     assertEquals(11, infos.size());
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         EditorModificationUtil.insertStringAtCaret(myEditor, "<");
       }
@@ -1635,6 +1661,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
       BASE_PATH +testName +"TestSchema.xsd"
     );
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ExternalResourceManagerEx.getInstanceEx().addIgnoredResource("oxf:/apps/somefile.xml");
       }

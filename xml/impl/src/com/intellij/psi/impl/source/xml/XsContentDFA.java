@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -131,7 +131,7 @@ class XsContentDFA extends XmlContentDFA {
     return new QName(tag.getNamespacePrefix().intern(),
                      tag.getLocalName().intern(),
                      tag.getName().intern(),
-                     namespace.length() == 0 ? null : namespace.intern());
+                     namespace.isEmpty() ? null : namespace.intern());
   }
 
   @Nullable

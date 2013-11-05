@@ -27,6 +27,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.JavaRefactoringActionHandlerFactory;
 import com.intellij.refactoring.RefactoringActionHandler;
+import com.intellij.util.Consumer;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -62,9 +63,9 @@ public class PublicConstructorInspection extends PublicConstructorInspectionBase
     protected void doFix(final Project project, ProblemDescriptor descriptor) throws IncorrectOperationException {
       final PsiElement element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiClass.class, PsiMethod.class);
       final AsyncResult<DataContext> context = DataManager.getInstance().getDataContextFromFocus();
-      context.doWhenDone(new AsyncResult.Handler<DataContext>() {
+      context.doWhenDone(new Consumer<DataContext>() {
         @Override
-        public void run(DataContext dataContext) {
+        public void consume(DataContext dataContext) {
           final JavaRefactoringActionHandlerFactory factory = JavaRefactoringActionHandlerFactory.getInstance();
           final RefactoringActionHandler handler = factory.createReplaceConstructorWithFactoryHandler();
           handler.invoke(project, new PsiElement[]{element}, dataContext);

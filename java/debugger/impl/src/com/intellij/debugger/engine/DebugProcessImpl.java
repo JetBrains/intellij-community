@@ -424,8 +424,13 @@ public abstract class DebugProcessImpl implements DebugProcess {
       for (final StepRequest request : stepRequests) {
         ThreadReference threadReference = request.thread();
         // [jeka] on attempt to delete a request assigned to a thread with unknown status, a JDWP error occures
-        if (threadReference.status() != ThreadReference.THREAD_STATUS_UNKNOWN && (stepThread == null || stepThread.equals(threadReference))) {
-          toDelete.add(request);
+        try {
+          if (threadReference.status() != ThreadReference.THREAD_STATUS_UNKNOWN && (stepThread == null || stepThread.equals(threadReference))) {
+            toDelete.add(request);
+          }
+        }
+        catch (IllegalThreadStateException e) {
+          LOG.info(e); // undocumented by JDI: may be thrown when querying thread status
         }
       }
       requestManager.deleteEventRequests(toDelete);

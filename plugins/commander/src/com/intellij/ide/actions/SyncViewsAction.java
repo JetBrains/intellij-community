@@ -1,6 +1,6 @@
 
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,17 +17,14 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.commander.Commander;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 
 public class SyncViewsAction extends AnAction {
   public void actionPerformed(AnActionEvent e) {
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) {
       return;
     }
@@ -35,7 +32,7 @@ public class SyncViewsAction extends AnAction {
   }
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
-    Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
     if (project == null) {
       presentation.setEnabled(false);
       return;

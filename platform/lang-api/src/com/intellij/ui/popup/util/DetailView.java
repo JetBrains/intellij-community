@@ -89,6 +89,7 @@ public interface DetailView extends UserDataHolder {
       return myFile;
     }
 
+    @Nullable
     public LogicalPosition getNavigate() {
       return myNavigate;
     }
@@ -101,7 +102,7 @@ public interface DetailView extends UserDataHolder {
     private final LogicalPosition myNavigate;
     private final TextAttributes myAttributes;
 
-    public PreviewEditorState(VirtualFile file, LogicalPosition navigate, TextAttributes attributes) {
+    public PreviewEditorState(VirtualFile file, @Nullable LogicalPosition navigate, TextAttributes attributes) {
 
       myFile = file;
       myNavigate = navigate;

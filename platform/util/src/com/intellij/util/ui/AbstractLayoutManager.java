@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,30 +21,38 @@ import java.awt.*;
 public abstract class AbstractLayoutManager implements LayoutManager2 {
 
 
+  @Override
   public void addLayoutComponent(final Component comp, final Object constraints) {
   }
 
+  @Override
   public Dimension maximumLayoutSize(final Container target) {
     return new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE);
   }
 
+  @Override
   public float getLayoutAlignmentX(final Container target) {
     return 0;
   }
 
+  @Override
   public float getLayoutAlignmentY(final Container target) {
     return 0;
   }
 
+  @Override
   public void invalidateLayout(final Container target) {
   }
 
+  @Override
   public void addLayoutComponent(final String name, final Component comp) {
   }
 
+  @Override
   public void removeLayoutComponent(final Component comp) {
   }
 
+  @Override
   public Dimension minimumLayoutSize(final Container parent) {
     return new Dimension(0, 0);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,7 @@ public class ClassUtil {
     if (className == null){
       return null;
     }
-    if (qualifiedName == null || qualifiedName.length() == 0){
+    if (qualifiedName == null || qualifiedName.isEmpty()){
       return className;
     }
     return qualifiedName + "." + extractClassName(className);
@@ -120,7 +120,7 @@ public class ClassUtil {
   public static PsiClass findNonQualifiedClassByIndex(final String indexName, @NotNull final PsiClass containingClass,
                                                       final boolean jvmCompatible) {
     String prefix = getDigitPrefix(indexName);
-    final int idx = prefix.length() > 0 ? Integer.parseInt(prefix) : -1;
+    final int idx = !prefix.isEmpty() ? Integer.parseInt(prefix) : -1;
     final String name = prefix.length() < indexName.length() ? indexName.substring(prefix.length()) : null;
     final PsiClass[] result = new PsiClass[1];
     containingClass.accept(new JavaRecursiveElementVisitor() {

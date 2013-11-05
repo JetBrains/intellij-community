@@ -18,9 +18,9 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlElementDecl;
 import com.intellij.psi.xml.XmlComment;
+import com.intellij.psi.xml.XmlElementDecl;
+import com.intellij.psi.xml.XmlTag;
 
 /**
  * @author yole

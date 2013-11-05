@@ -66,6 +66,10 @@ public class MethodChainsCompletionTest extends AbstractCompilerAwareTest {
     assertAdvisorLookupElementEquals("p.getBaseDir", 0, 8, 1, 0, assertOneElement(doCompletion()));
   }
 
+  public void testOneChainContainsOther2() {
+    assertLookupElementStringEquals(assertOneElement(doCompletion()), "getManager");
+  }
+
   public void testTwoVariablesWithOneTypeOrSuperType() {
     assertAdvisorLookupElementEquals("c.getProject", 0, 4, 1, 0, assertOneElement(doCompletion()));
   }

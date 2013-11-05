@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.intellij.openapi.keymap.impl.ui;
 
 
 import com.intellij.ide.DataManager;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ex.QuickList;
@@ -57,7 +58,7 @@ public class KeyboardShortcutDialog extends DialogWrapper {
     super(component, true);
     setTitle(KeyMapBundle.message("keyboard.shortcut.dialog.title"));
     myActionId = actionId;
-    final Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(component));
+    final Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(component));
     myMainGroup = ActionsTreeUtil.createMainGroup(project, myKeymap, quickLists, null, false, null); //without current filter
     myEnableSecondKeystroke = new JCheckBox();
     UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myEnableSecondKeystroke);

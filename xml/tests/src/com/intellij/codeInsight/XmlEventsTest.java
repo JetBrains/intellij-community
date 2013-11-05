@@ -1,3 +1,18 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,6 +47,7 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     model.addModelListener(listener);
     final XmlTag tagFromText = XmlElementFactory.getInstance(getProject()).createTagFromText("<a/>");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         tagFromText.setAttribute("a", "b");
       }
@@ -48,6 +64,7 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     final XmlTag otherTag = XmlElementFactory.getInstance(getProject()).createTagFromText("<a/>");
     final XmlText xmlText = tagFromText.getValue().getTextElements()[0];
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         xmlText.insertAtOffset(otherTag, 2);
       }
@@ -63,6 +80,7 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     final XmlTag tagFromText = XmlElementFactory.getInstance(getProject()).createTagFromText("<a>aaa</a>");
     final XmlText xmlText = tagFromText.getValue().getTextElements()[0];
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         xmlText.insertText("bb", 2);
       }
@@ -77,6 +95,7 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     model.addModelListener(listener);
     final XmlTag tagFromText = XmlElementFactory.getInstance(getProject()).createTagFromText("<a>a </a>");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         tagFromText.addAfter(tagFromText.getValue().getTextElements()[0], tagFromText.getValue().getTextElements()[0]);
       }
@@ -91,6 +110,7 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     model.addModelListener(listener);
     final XmlTag tagFromText = XmlElementFactory.getInstance(getProject()).createTagFromText("<a>aaa</a>");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         tagFromText.delete();
       }
@@ -152,6 +172,7 @@ public class XmlEventsTest extends LightCodeInsightTestCase {
     final XmlAttribute attribute = tag.getAttribute("name", null);
     assert attribute != null;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         attribute.setValue("new");
       }

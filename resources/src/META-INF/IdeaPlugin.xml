@@ -1461,7 +1461,6 @@
     <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoLambdaParameterHandler"/>
 
     <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.MethodsUsageIndex"/>
-    <java.compilerOutputIndex implementation="com.intellij.compilerOutputIndex.impl.bigram.BigramMethodsUsageIndex"/>
     <completion.contributor language="JAVA" id="methodsChainsCompletionContributor" order="first"
                             implementationClass="com.intellij.codeInsight.completion.methodChains.completion.MethodsChainsCompletionContributor"/>
     <weigher order="first" key="completion" id="methodsChains"

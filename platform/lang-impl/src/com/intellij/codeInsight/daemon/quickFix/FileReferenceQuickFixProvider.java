@@ -60,7 +60,7 @@ public class FileReferenceQuickFixProvider {
     final String newFileName = reference.getFileNameToCreate();
 
     // check if we could create file
-    if (newFileName.length() == 0 ||
+    if (newFileName.isEmpty() ||
         newFileName.indexOf('\\') != -1 ||
         newFileName.indexOf('*') != -1 ||
         newFileName.indexOf('?') != -1 ||

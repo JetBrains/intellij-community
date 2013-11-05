@@ -78,6 +78,7 @@ public class LowMemoryWatcher {
       }
     }
     ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).addNotificationListener(new NotificationListener() {
+      @Override
       public void handleNotification(Notification n, Object hb) {
         if (MemoryNotificationInfo.MEMORY_THRESHOLD_EXCEEDED.equals(n.getType()) || MemoryNotificationInfo.MEMORY_COLLECTION_THRESHOLD_EXCEEDED.equals(n.getType())) {
           synchronized (ourJanitor) {

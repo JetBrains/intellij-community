@@ -17,8 +17,8 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -39,7 +39,7 @@ public class EscapeHandler extends EditorActionHandler {
   public void execute(Editor editor, DataContext dataContext){
     editor.setHeaderComponent(null);
 
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
       HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(project);
       if (highlightManager != null && highlightManager.hideHighlights(editor, HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_ANY_KEY)) {
@@ -68,7 +68,7 @@ public class EscapeHandler extends EditorActionHandler {
   @Override
   public boolean isEnabled(Editor editor, DataContext dataContext) {
     if (editor.hasHeaderComponent()) return true;
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
 
     if (project != null) {
       HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(project);

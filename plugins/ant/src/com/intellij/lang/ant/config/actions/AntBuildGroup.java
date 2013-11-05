@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import java.util.Set;
 public final class AntBuildGroup extends ActionGroup implements DumbAware {
 
   public void update(AnActionEvent event) {
-    Project project = PlatformDataKeys.PROJECT.getData(event.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(event.getDataContext());
     Presentation presentation = event.getPresentation();
     presentation.setEnabled(project != null);
     presentation.setVisible(project != null);
@@ -40,7 +40,7 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return AnAction.EMPTY_ARRAY;
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Project project = CommonDataKeys.PROJECT.getData(e.getDataContext());
     if (project == null) return AnAction.EMPTY_ARRAY;
 
     final List<AnAction> children = new ArrayList<AnAction>();

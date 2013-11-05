@@ -58,10 +58,8 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
       protected void addCompletions(final @NotNull CompletionParameters parameters,
                                     final ProcessingContext context,
                                     final @NotNull CompletionResultSet result) {
-
         final ChainCompletionContext completionContext = extractContext(parameters);
         if (completionContext == null) return;
-
 
         final String targetClassQName = completionContext.getTargetQName();
         final Set<String> contextTypesKeysSet = completionContext.getContextTypes();
@@ -73,9 +71,7 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
         }
         contextRelevantTypes.remove(targetClassQName);
 
-        //final boolean useBigrams = ApplicationManager.getApplication().isUnitTestMode() || parameters.getInvocationCount() == 3;
-        final boolean useBigrams = true;
-        final List<LookupElement> foundElements = searchForLookups(targetClassQName, contextRelevantTypes, completionContext, useBigrams);
+        final List<LookupElement> foundElements = searchForLookups(targetClassQName, contextRelevantTypes, completionContext);
         result.addAllElements(foundElements);
       }
     });
@@ -83,9 +79,8 @@ public class MethodsChainsCompletionContributor extends CompletionContributor {
 
   private static List<LookupElement> searchForLookups(final String targetClassQName,
                                                       final Set<String> contextRelevantTypes,
-                                                      final ChainCompletionContext completionContext,
-                                                      final boolean useBigrams) {
-    final MethodChainsSearchService searchService = new MethodChainsSearchService(completionContext.getProject(), useBigrams);
+                                                      final ChainCompletionContext completionContext) {
+    final MethodChainsSearchService searchService = new MethodChainsSearchService(completionContext.getProject());
     final List<MethodsChain> searchResult =
       searchChains(targetClassQName, contextRelevantTypes, MAX_SEARCH_RESULT_SIZE, MAX_CHAIN_SIZE, completionContext, searchService);
     if (searchResult.size() < MAX_SEARCH_RESULT_SIZE) {

@@ -195,7 +195,7 @@ class BeanBinding implements Binding {
 
   private static String getTagName(Class<?> aClass) {
     Tag tag = aClass.getAnnotation(Tag.class);
-    if (tag != null && tag.value().length() != 0) return tag.value();
+    if (tag != null && !tag.value().isEmpty()) return tag.value();
     return aClass.getSimpleName();
   }
 
@@ -268,7 +268,7 @@ class BeanBinding implements Binding {
       part = methodName.substring(3, methodName.length());
       isSetter = true;
     }
-    return part.length() > 0 ? Pair.create(Introspector.decapitalize(part), isSetter) : null;
+    return !part.isEmpty() ? Pair.create(Introspector.decapitalize(part), isSetter) : null;
   }
 
   public String toString() {
@@ -298,7 +298,7 @@ class BeanBinding implements Binding {
     }
 
     if (tag != null) {
-      if (tag.value().length() > 0) return new TagBinding(accessor, tag);
+      if (!tag.value().isEmpty()) return new TagBinding(accessor, tag);
     }
 
     boolean surroundWithTag = true;

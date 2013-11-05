@@ -42,7 +42,7 @@ import static com.intellij.codeInsight.ConditionChecker.Type.*;
 import static com.intellij.codeInspection.dataFlow.MethodContract.ValueConstraint;
 import static com.intellij.psi.CommonClassNames.*;
 
-class ControlFlowAnalyzer extends JavaElementVisitor {
+public class ControlFlowAnalyzer extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer");
   public static final String ORG_JETBRAINS_ANNOTATIONS_CONTRACT = Contract.class.getName();
   private boolean myIgnoreAssertions;
