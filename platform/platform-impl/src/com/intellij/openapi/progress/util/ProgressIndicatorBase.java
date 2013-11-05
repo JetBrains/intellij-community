@@ -30,6 +30,7 @@ import java.util.List;
 
 public class ProgressIndicatorBase extends AbstractProgressIndicatorBase implements ProgressIndicatorEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorBase");
+  private final boolean myReusable;
 
   private volatile boolean myModalityEntered;
 
@@ -86,6 +87,11 @@ public class ProgressIndicatorBase extends AbstractProgressIndicatorBase impleme
       each.finishNonCancelableSection();
     }
   };
+
+  public ProgressIndicatorBase() { this(false); }
+  public ProgressIndicatorBase(boolean reusable) {
+    myReusable = reusable;
+  }
 
   @Override
   public void start() {
@@ -262,6 +268,11 @@ public class ProgressIndicatorBase extends AbstractProgressIndicatorBase impleme
     super.finishNonCancelableSection();
 
     delegateProgressChange(FINISHNC_ACTION);
+  }
+
+  @Override
+  protected boolean isReuseable() {
+    return myReusable;
   }
 
   @Override

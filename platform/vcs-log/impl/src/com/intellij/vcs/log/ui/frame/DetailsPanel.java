@@ -1,15 +1,13 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.changes.issueLinks.IssueLinkHtmlRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLoadingPanel;
-import com.intellij.ui.components.JBTextField;
-import com.intellij.ui.components.labels.LinkLabel;
-import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -27,7 +25,6 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
-import java.awt.datatransfer.StringSelection;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -56,15 +53,16 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     myGraphTable = graphTable;
 
     myRefsPanel = new RefsPanel(colorManager);
-    myDataPanel = new DataPanel();
+    myDataPanel = new DataPanel(logDataHolder.getProject());
     myMessagePanel = new MessagePanel();
 
-    Box box = Box.createVerticalBox();
-    box.add(myRefsPanel);
-    box.add(myDataPanel);
+    Box content = Box.createVerticalBox();
+    content.add(myRefsPanel);
+    content.add(myDataPanel);
+    content.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
 
     myLoadingPanel = new JBLoadingPanel(new BorderLayout(), logDataHolder);
-    myLoadingPanel.add(ScrollPaneFactory.createScrollPane(box));
+    myLoadingPanel.add(ScrollPaneFactory.createScrollPane(content));
 
     add(myLoadingPanel, STANDARD_LAYER);
     add(myMessagePanel, MESSAGE_LAYER);
@@ -116,67 +114,51 @@ class DetailsPanel extends JPanel implements ListSelectionListener {
     return myLogDataHolder.getLogProvider(root).getReferenceManager().sort(refs);
   }
 
-  private static class DataPanel extends JPanel {
+  private static class DataPanel extends JEditorPane {
 
-    @NotNull private final JLabel myHashLabel;
-    @NotNull private final JTextField myAuthor;
-    @NotNull private final JTextArea myCommitMessage;
+    @NotNull private final Project myProject;
 
-    DataPanel() {
-      super();
-      myHashLabel = new LinkLabel("", null, new LinkListener() {
-        @Override
-        public void linkSelected(LinkLabel aSource, Object aLinkData) {
-          CopyPasteManager.getInstance().setContents(new StringSelection(myHashLabel.getText()));
-        }
-      });
-
-      myAuthor = new JBTextField();
-      myAuthor.setEditable(false);
-      myAuthor.setBorder(null);
-
-      myCommitMessage = new JTextArea();
-      myCommitMessage.setEditable(false);
-      myCommitMessage.setBorder(null);
-
-      setLayout(new GridBagLayout());
-      GridBag g = new GridBag()
-        .setDefaultAnchor(GridBagConstraints.NORTHWEST)
-        .setDefaultFill(GridBagConstraints.HORIZONTAL)
-        .setDefaultWeightX(1.0);
-      add(myHashLabel, g.nextLine().next());
-      add(myAuthor, g.nextLine().next());
-      add(myCommitMessage, g.nextLine().next());
-      add(Box.createVerticalGlue(), g.nextLine().next().weighty(1.0).fillCell());
-
-      setOpaque(false);
+    DataPanel(@NotNull Project project) {
+      super(UIUtil.HTML_MIME, "");
+      setEditable(false);
+      myProject = project;
+      addHyperlinkListener(new BrowserHyperlinkListener());
     }
 
     void setData(@Nullable VcsFullCommitDetails commit) {
       if (commit == null) {
-        myHashLabel.setText("");
-        myCommitMessage.setText("");
-        myAuthor.setText("");
+        setText("");
       }
       else {
-        myHashLabel.setText(commit.getHash().toShortString());
-        myCommitMessage.setText(commit.getFullMessage());
-        myCommitMessage.setCaretPosition(0);
-
-        String authorText = commit.getAuthorName() + " at " + DateFormatUtil.formatDateTime(commit.getAuthorTime());
-        if (!commit.getAuthorName().equals(commit.getCommitterName()) || !commit.getAuthorEmail().equals(commit.getCommitterEmail())) {
-          String commitTime;
-          if (commit.getCommitTime() != commit.getAuthorTime()) {
-            commitTime = " at " + DateFormatUtil.formatDateTime(commit.getCommitTime());
-          }
-          else {
-            commitTime = "";
-          }
-          authorText += " (committed by " + commit.getCommitterName() + commitTime + ")";
-        }
-        myAuthor.setText(authorText);
+        String body = getHashText(commit) + "<br/>" + getAuthorText(commit) + "<p>" + getMessageText(commit) + "</p>";
+        setText("<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" + body + "</body></html>");
       }
-      repaint();
+    }
+
+    private String getMessageText(VcsFullCommitDetails commit) {
+      String subject = commit.getSubject();
+      String description = subject.length() < commit.getFullMessage().length() ? commit.getFullMessage().substring(subject.length()) : "";
+      return "<b>" + IssueLinkHtmlRenderer.formatTextWithLinks(myProject, subject) + "</b>" +
+             IssueLinkHtmlRenderer.formatTextWithLinks(myProject, description);
+    }
+
+    private static String getHashText(VcsFullCommitDetails commit) {
+      return commit.getHash().asString();
+    }
+
+    private static String getAuthorText(VcsFullCommitDetails commit) {
+      String authorText = commit.getAuthorName() + " at " + DateFormatUtil.formatDateTime(commit.getAuthorTime());
+      if (!commit.getAuthorName().equals(commit.getCommitterName()) || !commit.getAuthorEmail().equals(commit.getCommitterEmail())) {
+        String commitTime;
+        if (commit.getCommitTime() != commit.getAuthorTime()) {
+          commitTime = " at " + DateFormatUtil.formatDateTime(commit.getCommitTime());
+        }
+        else {
+          commitTime = "";
+        }
+        authorText += " (committed by " + commit.getCommitterName() + commitTime + ")";
+      }
+      return authorText;
     }
   }
 

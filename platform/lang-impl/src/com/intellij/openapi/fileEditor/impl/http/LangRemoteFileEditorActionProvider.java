@@ -20,10 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author nik
- */
-public class LangRemoteFileEditorActionProvider extends RemoteFileEditorActionProvider {
+final class LangRemoteFileEditorActionProvider extends RemoteFileEditorActionProvider {
   @NotNull
   @Override
   public AnAction[] createToolbarActions(@NotNull Project project, @NotNull HttpVirtualFile file) {

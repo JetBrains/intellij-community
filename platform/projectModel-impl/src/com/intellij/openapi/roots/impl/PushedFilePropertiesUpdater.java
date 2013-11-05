@@ -27,6 +27,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
@@ -146,7 +148,16 @@ public class PushedFilePropertiesUpdater {
   }
 
   public void pushAll(final FilePropertyPusher... pushers) {
-    for (final Module module : ModuleManager.getInstance(myProject).getModules()) {
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator != null) {
+      indicator.setText("Updating file properties...");
+    }
+    Module[] modules = ModuleManager.getInstance(myProject).getModules();
+    for (int i1 = 0; i1 < modules.length; i1++) {
+      if (indicator != null) {
+        indicator.setFraction((double) i1 / modules.length);
+      }
+      Module module = modules[i1];
       final Object[] moduleValues = new Object[pushers.length];
       for (int i = 0; i < moduleValues.length; i++) {
         moduleValues[i] = pushers[i].getImmediateValue(module);
@@ -163,6 +174,10 @@ public class PushedFilePropertiesUpdater {
         });
       }
     }
+    if (indicator != null) {
+      indicator.setText("");
+    }
+
   }
 
   private void applyPushersToFile(VirtualFile fileOrDir, FilePropertyPusher[] pushers, Object[] moduleValues) {

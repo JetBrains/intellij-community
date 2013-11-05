@@ -18,14 +18,18 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.SourceFolderImpl;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
+import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.io.File;
+import java.io.IOException;
 
 public class MavenFoldersImporterTest extends MavenImportingTestCase {
   public void testUpdatingExternallyCreatedFolders() throws Exception {
@@ -40,7 +44,7 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     updateProjectFolders();
 
     assertExcludes("project", "target/foo");
-    assertSources("project", "target/generated-sources/xxx");
+    assertGeneratedSources("project", "target/generated-sources/xxx");
     
     assertNull(myProjectRoot.findChild("target"));
   }
@@ -220,6 +224,29 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
     updateProjectFolders();
 
     assertEquals(1, count[0]);
+  }
+
+  public void testMarkSourcesAsGeneratedOnReImport() throws IOException {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+    new File(myProjectRoot.getPath(), "target/generated-sources/xxx/z").mkdirs();
+    updateProjectFolders();
+
+    assertGeneratedSources("project", "target/generated-sources/xxx");
+
+    ModuleRootModificationUtil.updateModel(getModule("project"), new Consumer<ModifiableRootModel>() {
+      @Override
+      public void consume(ModifiableRootModel model) {
+        for (SourceFolder folder : model.getContentEntries()[0].getSourceFolders()) {
+          ((JavaSourceRootProperties)((SourceFolderImpl)folder).getJpsElement().getProperties()).setForGeneratedSources(false);
+        }
+      }
+    });
+    assertGeneratedSources("project");
+
+    importProject();
+    assertGeneratedSources("project", "target/generated-sources/xxx");
   }
 
   private void updateProjectFolders() {
