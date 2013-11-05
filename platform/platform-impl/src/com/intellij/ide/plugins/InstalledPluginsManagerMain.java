@@ -21,7 +21,6 @@ import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.openapi.fileChooser.ChooseFileHandler;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
@@ -37,6 +36,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
@@ -84,7 +84,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
         };
         descriptor.setTitle("Choose Plugin File");
         descriptor.setDescription("JAR and ZIP archives are accepted");
-        FileChooser.chooseFile(descriptor, null, myActionsPanel, null, new ChooseFileHandler() {
+        FileChooser.chooseFile(descriptor, null, myActionsPanel, null, new Consumer<VirtualFile>() {
           @Override
           public void consume(@NotNull VirtualFile virtualFile) {
             final File file = VfsUtilCore.virtualToIoFile(virtualFile);

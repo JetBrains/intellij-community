@@ -245,7 +245,7 @@ public class FileChooser {
    * @param descriptor file chooser descriptor
    * @param project    project
    * @param toSelect   file to preselect
-   * @param callback   callback will be invoked after user have closed dialog, see {@link com.intellij.openapi.fileChooser.ChooseFileHandler}
+   * @param callback   callback will be invoked after user have selected file
    * @since 13
    */
   public static void chooseFile(@NotNull final FileChooserDescriptor descriptor,
@@ -263,7 +263,7 @@ public class FileChooser {
    * @param project    project
    * @param parent     parent component
    * @param toSelect   file to preselect
-   * @param callback   callback will be invoked after user have closed dialog, see {@link com.intellij.openapi.fileChooser.ChooseFileHandler}
+   * @param callback   callback will be invoked after user have selected file
    * @since 13
    */
   public static void chooseFile(@NotNull final FileChooserDescriptor descriptor,
@@ -275,15 +275,7 @@ public class FileChooser {
     chooseFiles(descriptor, project, parent, toSelect, new Consumer<List<VirtualFile>>() {
       @Override
       public void consume(List<VirtualFile> files) {
-        if (files.isEmpty()) {
-          if (callback instanceof ChooseFileHandler) {
-            ((ChooseFileHandler)callback).cancelled();
-          }
-          else {
-            callback.consume(null);
-          }
-        }
-        else {
+        if (!files.isEmpty()) {
           callback.consume(files.get(0));
         }
       }
