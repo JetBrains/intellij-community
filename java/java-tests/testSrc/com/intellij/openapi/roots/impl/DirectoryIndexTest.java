@@ -516,8 +516,8 @@ public class DirectoryIndexTest extends IdeaTestCase {
     
     checkInfo(myResDir, myModule, true, false, "", JavaResourceRootType.RESOURCE, myModule);
 
-    //todo uncomment or replace with another assertion about library-excluded dir inside module content 
-    //checkInfoNull(myExcludedLibSrcDir);
+    checkInfo(myExcludedLibSrcDir, null, true, false, "lib.src.exc", null, myModule3, myModule);
+    checkInfo(myExcludedLibClsDir, null, true, false, "lib.cls.exc", null, myModule3);
   }
 
 
@@ -552,10 +552,10 @@ public class DirectoryIndexTest extends IdeaTestCase {
       assertEquals(packageName, fileIndex.getPackageNameByDirectory(dir));
     }
 
-    assertEquals(modulesOfOrderEntries.length, info.getOrderEntries().length);
+    assertEquals(Arrays.toString(info.getOrderEntries()), modulesOfOrderEntries.length, info.getOrderEntries().length);
     for (Module aModule : modulesOfOrderEntries) {
       OrderEntry found = info.findOrderEntryWithOwnerModule(aModule);
-      assertNotNull(found);
+      assertNotNull("not found: " + aModule, found);
     }
   }
 
