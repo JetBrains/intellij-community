@@ -353,7 +353,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       MatchOptions options = myCompilingVisitor.getContext().getOptions();
       if (options.getVariableConstraint(name) == null) {
         pattern.createSubstitutionHandler(name, name, false, 0, Integer.MAX_VALUE, true);
-        MatchVariableConstraint constraint = new MatchVariableConstraint();
+        MatchVariableConstraint constraint = new MatchVariableConstraint(true);
         constraint.setName(name);
         constraint.setMinCount(0);
         constraint.setMaxCount(Integer.MAX_VALUE);

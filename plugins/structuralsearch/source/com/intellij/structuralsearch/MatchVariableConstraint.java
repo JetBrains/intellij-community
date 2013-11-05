@@ -39,8 +39,8 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
   private String containsConstraint = "";
   private boolean invertContainsConstraint;
   private boolean invertWithinConstraint;
+  private final boolean artificial;
 
-  @NonNls private static final String NAME = "name";
   @NonNls private static final String NAME_OF_REFEENCE_VAR = "nameOfReferenceVar";
   @NonNls private static final String NAME_OF_EXPRTYPE = "nameOfExprType";
   @NonNls private static final String NAME_OF_FORMALTYPE = "nameOfFormalType";
@@ -67,6 +67,9 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
 
   @NonNls private static final String WHOLE_WORDS_ONLY = "wholeWordsOnly";
   @NonNls private static final String TRUE = Boolean.TRUE.toString();
+
+  public MatchVariableConstraint() { this(false); }
+  public MatchVariableConstraint(boolean _artificial) { artificial = _artificial; }
 
   public boolean isGreedy() {
     return greedy;
@@ -547,5 +550,9 @@ public class MatchVariableConstraint extends NamedScriptableDefinition {
 
   public void setInvertWithinConstraint(final boolean invertWithinConstraint) {
     this.invertWithinConstraint = invertWithinConstraint;
+  }
+
+  public boolean isArtificial() {
+    return artificial;
   }
 }

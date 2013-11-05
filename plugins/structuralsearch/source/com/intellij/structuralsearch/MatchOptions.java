@@ -193,6 +193,7 @@ public class MatchOptions implements JDOMExternalizable, Cloneable {
 
     if (variableConstraints!=null) {
       for (final MatchVariableConstraint matchVariableConstraint : variableConstraints.values()) {
+        if (matchVariableConstraint.isArtificial()) continue;
         final Element infoElement = new Element(CONSTRAINT_TAG_NAME);
         element.addContent(infoElement);
         matchVariableConstraint.writeExternal(infoElement);
