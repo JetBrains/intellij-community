@@ -25,10 +25,7 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.metal.MetalToggleButtonUI;
 import java.awt.*;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Area;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Rectangle2D;
+import java.awt.geom.*;
 
 /**
  * @author Vladimir Kondratyev
@@ -112,18 +109,18 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
     final Color background = button.getBackground();
     final boolean vertical = anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT;
 
-    if (anchor == ToolWindowAnchor.RIGHT) {
-      g2.translate(1, 0);
-    }
     if (ApplicationManager.getApplication().isInternal()) {
+      if (anchor == ToolWindowAnchor.LEFT) g2.translate(-1, 0);
+      if (anchor.isHorizontal()) g2.translate(0, -1);
       paintNewDecoration(g2, button, model, vertical);
+      if (anchor == ToolWindowAnchor.LEFT) g2.translate(1, 0);
+      if (anchor.isHorizontal()) g2.translate(0, 1);
     } else {
+      if (anchor == ToolWindowAnchor.RIGHT) g2.translate(1, 0);
       paintLegacyDecoration(g2, button, model, vertical);
+      if (anchor == ToolWindowAnchor.RIGHT) g2.translate(-1, 0);
     }
 
-    if (anchor == ToolWindowAnchor.RIGHT) {
-      g2.translate(-1, 0);
-    }
 
     AffineTransform tr=null;
     if(ToolWindowAnchor.RIGHT==anchor||ToolWindowAnchor.LEFT==anchor){
@@ -185,7 +182,10 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
   private static void paintNewDecoration(Graphics2D g2, AnchoredButton button, ButtonModel model, boolean vertical) {
     final boolean dark = UIUtil.isUnderDarcula();
     Color toBorder = model.isRollover() ? dark ? Gray._90 : new Color(0, 0, 0, 50) : null;
-    Shape shape = getButtonRoundShape(button, vertical);
+    double gap = 2;
+    double r = (((vertical? button.getWidth() : button.getHeight()) - 2 * gap) - 1)/4;
+    Shape shape = new RoundRectangle2D.Double(gap, gap, button.getWidth() - 2 * gap, button.getHeight() - 2 * gap, r, r);
+
     if (model.isArmed() && model.isPressed() || model.isSelected()) {
       g2.setColor(dark ? Gray._85.withAlpha(85) : new Color(0, 0, 0, 30));
       g2.fill(shape);
@@ -223,25 +223,5 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
       g2.setColor(toBorder);
       g2.drawRect(2, 2, button.getWidth() - (vertical ? 6 : 5), button.getHeight() - 6);
     }
-  }
-
-  private static Shape getButtonRoundShape(AnchoredButton button, boolean vertical) {
-    double gap = 2;
-    double r = (((vertical? button.getWidth() : button.getHeight()) - 2 * gap) - 1)/2;
-    Area area;
-    if (vertical) {
-      area = new Area(new Rectangle2D.Double(gap, r + gap, 2 * r, button.getHeight() - 2 * (gap + r)));
-    }
-    else {
-      area = new Area(new Rectangle2D.Double(r + gap, gap, button.getWidth() - 2 * (gap + r), 2 * r));
-    }
-    area.add(new Area(new Ellipse2D.Double(gap, gap, 2 * r, 2 * r)));
-    if (vertical) {
-      area.add(new Area(new Ellipse2D.Double(gap, button.getHeight() - gap - 2 * r, 2 * r, 2 * r)));
-    }
-    else {
-      area.add(new Area(new Ellipse2D.Double(button.getWidth() - gap - 2 * r, gap, 2 * r, 2 * r)));
-    }
-    return area;
   }
 }
