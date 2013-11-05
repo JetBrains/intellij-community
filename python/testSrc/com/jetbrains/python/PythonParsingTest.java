@@ -402,6 +402,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testCommentAfterDecorator() {  // PY-5912
+    doTest();
+  }
+
   public void doTest(LanguageLevel languageLevel) {
     LanguageLevel prev = myLanguageLevel;
     myLanguageLevel = languageLevel;

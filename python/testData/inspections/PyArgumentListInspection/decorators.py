@@ -19,7 +19,7 @@ def f9():
 
 def deco2(p1, p2): pass
 
-<warning descr="Parameter 'p2' unfilled">@deco2 # fail: missing p2</warning>
+<warning descr="Parameter 'p2' unfilled">@deco2</warning> # fail: missing p2
 def f10():
   pass
 
@@ -61,7 +61,7 @@ class Dec2:
 def f17():
   pass
 
-<warning descr="Parameter 'p2' unfilled">@Dec2 # fail: no p2</warning>
+<warning descr="Parameter 'p2' unfilled">@Dec2</warning> # fail: no p2
 def f18():
   pass
 

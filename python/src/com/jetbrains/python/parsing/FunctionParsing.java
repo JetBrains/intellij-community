@@ -85,10 +85,18 @@ public class FunctionParsing extends Parsing {
         getExpressionParser().parseArgumentList();
       }
       else { // empty arglist node, so we always have it
-        myBuilder.mark().done(PyElementTypes.ARGUMENT_LIST);
+        PsiBuilder.Marker argListMarker = myBuilder.mark();
+        argListMarker.setCustomEdgeTokenBinders(LeftBiasedWhitespaceBinder.INSTANCE, null);
+        argListMarker.done(PyElementTypes.ARGUMENT_LIST);
       }
-      checkMatches(PyTokenTypes.STATEMENT_BREAK, message("PARSE.expected.statement.break"));
-      decoratorMarker.done(PyElementTypes.DECORATOR_CALL);
+      if (atToken(PyTokenTypes.STATEMENT_BREAK)) {
+        decoratorMarker.done(PyElementTypes.DECORATOR_CALL);
+        nextToken();
+      }
+      else {
+        myBuilder.error(message("PARSE.expected.statement.break"));
+        decoratorMarker.done(PyElementTypes.DECORATOR_CALL);
+      }
       decorated = true;
     }
     if (decorated) decoListMarker.done(PyElementTypes.DECORATOR_LIST);
