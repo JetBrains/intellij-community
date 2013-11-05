@@ -52,6 +52,11 @@ public class TerminalProcessHandler extends OSProcessHandler {
   }
 
   @Override
+  protected boolean processHasSeparateErrorStream() {
+    return false;
+  }
+
+  @Override
   public void notifyTextAvailable(String text, Key outputType) {
     terminalOutputCapturer.onTextAvailable(new ProcessEvent(this, text), outputType);
 
