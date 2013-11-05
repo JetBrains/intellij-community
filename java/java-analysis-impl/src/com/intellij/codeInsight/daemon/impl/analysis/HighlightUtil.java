@@ -1462,7 +1462,7 @@ public class HighlightUtil extends HighlightUtilBase {
     final PsiType superType = expr.getType();
     if (!(superType instanceof PsiClassType)) return false;
     final PsiClass superClass = ((PsiClassType)superType).resolve();
-    return superClass != null && aClass.equals(superClass);
+    return superClass != null && aClass.equals(superClass) && PsiUtil.getEnclosingStaticElement(expr, PsiTreeUtil.getParentOfType(expr, PsiClass.class)) == null;
   }
 
   @NotNull
