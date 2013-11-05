@@ -15,8 +15,11 @@
  */
 package com.intellij.ide.ui.laf;
 
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
+import com.intellij.openapi.util.SystemInfo;
 
+import javax.swing.*;
 import javax.swing.plaf.metal.DefaultMetalTheme;
 
 /**
@@ -31,6 +34,19 @@ public class IntelliJLaf extends DarculaLaf {
   @Override
   protected String getPrefix() {
     return "intellijlaf";
+  }
+
+  @Override
+  public UIDefaults getDefaults() {
+    UIDefaults defaults = super.getDefaults();
+    if (SystemInfo.isLinux) {
+      try {
+        LafManagerImpl.initFontDefaults(defaults, "Dialog", 12);
+      }
+      catch (Exception ignore) {
+      }
+    }
+    return defaults;
   }
 
   @Override
