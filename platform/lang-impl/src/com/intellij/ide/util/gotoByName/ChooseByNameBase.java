@@ -793,18 +793,6 @@ public abstract class ChooseByNameBase {
     String[] cached = getNamesSync(checkboxState);
     if (cached != null) return cached;
 
-    Window window = (Window)SwingUtilities.getAncestorOfClass(Window.class, myTextField);
-    //LOG.assertTrue (myTextField != null);
-    //LOG.assertTrue (window != null);
-    Window ownerWindow = null;
-    if (window != null) {
-      window.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-      ownerWindow = window.getOwner();
-      if (ownerWindow != null) {
-        ownerWindow.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-      }
-    }
-
     if (checkboxState &&
         myModel instanceof ContributorsBasedGotoByModel &&
         ((ContributorsBasedGotoByModel)myModel).sameNamesForProjectAndLibraries() &&
@@ -820,12 +808,6 @@ public abstract class ChooseByNameBase {
     assert result != null : "Model "+myModel+ "("+myModel.getClass()+") returned null names";
     setNamesSync(checkboxState, result);
 
-    if (window != null) {
-      window.setCursor(Cursor.getDefaultCursor());
-      if (ownerWindow != null) {
-        ownerWindow.setCursor(Cursor.getDefaultCursor());
-      }
-    }
     return result;
   }
 
