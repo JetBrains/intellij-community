@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,13 +19,13 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.Consumer;
 import com.intellij.util.messages.MessageBusConnection;
 
 public class EditorPlaybackCall {
@@ -37,7 +37,7 @@ public class EditorPlaybackCall {
       public void run() {
         Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContextFromFocus().getResult());
         if (editor == null) {
-          editor = PlatformDataKeys.EDITOR_EVEN_IF_INACTIVE.getData(DataManager.getInstance().getDataContextFromFocus().getResult());
+          editor = CommonDataKeys.EDITOR_EVEN_IF_INACTIVE.getData(DataManager.getInstance().getDataContextFromFocus().getResult());
         }
 
         if (editor == null) {
@@ -76,9 +76,9 @@ public class EditorPlaybackCall {
     });
 
 
-    WindowSystemPlaybackCall.findProject().doWhenDone(new AsyncResult.Handler<Project>() {
+    WindowSystemPlaybackCall.findProject().doWhenDone(new Consumer<Project>() {
       @Override
-      public void run(Project project) {
+      public void consume(Project project) {
         final MessageBusConnection bus = project.getMessageBus().connect(connection);
         bus.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListenerAdapter() {
           @Override

@@ -59,13 +59,13 @@ public class GradleTaskContributor implements GradleMethodContextContributor {
         processTaskAddition(methodCallInfo.get(0), GradleCommonClassNames.GRADLE_API_TASK_CONTAINER, processor, state, place);
       }
       else {
-        processTaskTypeParameter(processor, state, place);
+        processTaskTypeParameter(methodCallInfo.get(0), processor, state, place);
       }
 
       GradleImplicitContributor.processImplicitDeclarations(processor, state, place);
     }
     else if (methodCallInfo.size() >= 3) {
-      processTaskTypeParameter(processor, state, place);
+      processTaskTypeParameter(methodCallInfo.get(0), processor, state, place);
 
       GradleImplicitContributor.processImplicitDeclarations(processor, state, place);
 
@@ -76,7 +76,7 @@ public class GradleTaskContributor implements GradleMethodContextContributor {
     }
   }
 
-  private static void processTaskTypeParameter(@NotNull PsiScopeProcessor processor,
+  private static void processTaskTypeParameter(@NotNull String methodCall, @NotNull PsiScopeProcessor processor,
                                                @NotNull ResolveState state,
                                                @NotNull PsiElement place) {
     final int taskTypeParameterLevel = 3;
@@ -98,7 +98,7 @@ public class GradleTaskContributor implements GradleMethodContextContributor {
               PsiImmediateClassType immediateClassType = (PsiImmediateClassType)psiType;
               for (PsiType type : immediateClassType.getParameters()) {
                 GroovyPsiManager psiManager = GroovyPsiManager.getInstance(place.getProject());
-                GradleResolverUtil.processDeclarations(psiManager, processor, state, place, type.getCanonicalText());
+                GradleResolverUtil.processDeclarations(methodCall, psiManager, processor, state, place, type.getCanonicalText());
               }
             }
           }

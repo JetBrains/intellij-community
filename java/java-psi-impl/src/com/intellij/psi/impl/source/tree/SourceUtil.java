@@ -47,7 +47,7 @@ public class SourceUtil {
       public void visitLeaf(LeafElement leaf) {
         if (!REF_FILTER.contains(leaf.getElementType())) {
           String leafText = leaf.getText();
-          if (buffer.length() > 0 && leafText.length() > 0 && Character.isJavaIdentifierPart(leafText.charAt(0))) {
+          if (buffer.length() > 0 && !leafText.isEmpty() && Character.isJavaIdentifierPart(leafText.charAt(0))) {
             char lastInBuffer = buffer.charAt(buffer.length() - 1);
             if (lastInBuffer == '?' || Character.isJavaIdentifierPart(lastInBuffer)) {
               buffer.append(" ");

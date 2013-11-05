@@ -24,7 +24,7 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.AsyncResult;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -62,8 +62,8 @@ public class QuickActionManager implements ProjectComponent {
   }
 
   private void showActionsPopup() {
-    DataManager.getInstance().getDataContextFromFocus().doWhenDone(new AsyncResult.Handler<DataContext>() {
-      public void run(DataContext context) {
+    DataManager.getInstance().getDataContextFromFocus().doWhenDone(new Consumer<DataContext>() {
+      public void consume(DataContext context) {
         QuickActionProvider provider = QuickActionProvider.KEY.getData(context);
         if (provider == null) return;
 

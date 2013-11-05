@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -144,11 +144,11 @@ public class Foundation {
     return isPackageAtPath(file.getPath());
   }
 
-  public static ID nsString(String s) {
+  public static ID nsString(@NotNull String s) {
     // Use a byte[] rather than letting jna do the String -> char* marshalling itself.
     // Turns out about 10% quicker for long strings.
     try {
-      if (s.length() == 0) {
+      if (s.isEmpty()) {
         return invoke("NSString", "string");
       }
 
@@ -382,6 +382,7 @@ public class Foundation {
       value = d;
     }
 
+    @Override
     public Object fromNative(Object o, FromNativeContext fromNativeContext) {
       switch (Native.LONG_SIZE) {
         case 4:
@@ -392,6 +393,7 @@ public class Foundation {
       throw new IllegalStateException();
     }
 
+    @Override
     public Object toNative() {
       switch (Native.LONG_SIZE) {
         case 4:
@@ -402,6 +404,7 @@ public class Foundation {
       throw new IllegalStateException();
     }
 
+    @Override
     public Class<?> nativeType() {
       switch (Native.LONG_SIZE) {
         case 4:

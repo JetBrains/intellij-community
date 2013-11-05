@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,6 +76,7 @@ import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.*;
 import java.util.ArrayList;
@@ -152,11 +153,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
 
     copyUrlAction = new CopyUrlAction();
     copyUrlAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT,
-                                                              KeyEvent.CTRL_MASK|KeyEvent.CTRL_DOWN_MASK|
-                                                              KeyEvent.ALT_MASK|KeyEvent.ALT_DOWN_MASK)), browser);
+                                                              InputEvent.CTRL_MASK | InputEvent.CTRL_DOWN_MASK |
+                                                              InputEvent.ALT_MASK | InputEvent.ALT_DOWN_MASK)), browser);
     mkDirAction = new MkDirAction(browser);
     mkDirAction.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT,
-                                                              KeyEvent.ALT_MASK|KeyEvent.ALT_DOWN_MASK)), browser);
+                                                              InputEvent.ALT_MASK | InputEvent.ALT_DOWN_MASK)), browser);
 
     AnAction action = CommonActionsManager.getInstance().createCollapseAllAction(new TreeExpander() {
       public void expandAll() {
@@ -890,7 +891,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       if (dir == null) {
         return;
       }
-      Project p = e.getData(PlatformDataKeys.PROJECT);
+      Project p = e.getData(CommonDataKeys.PROJECT);
       ExportOptionsDialog dialog = new ExportOptionsDialog(p, url, dir);
       dialog.show();
       if (dialog.isOK()) {
@@ -1218,7 +1219,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
   private class CloseToolWindowAction extends AnAction {
     public void actionPerformed(AnActionEvent e) {
       disposeRepositoryBrowser();
-      Project p = e.getData(PlatformDataKeys.PROJECT);
+      Project p = e.getData(CommonDataKeys.PROJECT);
       ToolWindowManager.getInstance(p).unregisterToolWindow(BrowseRepositoryAction.REPOSITORY_BROWSER_TOOLWINDOW);
 
     }

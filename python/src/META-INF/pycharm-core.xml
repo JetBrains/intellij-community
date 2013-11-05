@@ -72,6 +72,9 @@
     <bundledColorScheme path="/colorSchemes/monokai"/>
     <bundledColorScheme path="/colorSchemes/twilight"/>
     <bundledColorScheme path="/colorSchemes/WarmNeon"/>
+
+    <renameHandler implementation="com.intellij.platform.renameProject.RenameProjectHandler"/>
+    <renameHandler implementation="com.intellij.platform.renameProject.ProjectFolderRenameHandler"/>
   </extensions>
 
   <actions>

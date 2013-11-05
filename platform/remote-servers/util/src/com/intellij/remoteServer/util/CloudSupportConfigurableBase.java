@@ -7,14 +7,10 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Progressive;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
@@ -27,7 +23,6 @@ import com.intellij.remoteServer.impl.configuration.deployment.DeployToServerRun
 import com.intellij.remoteServer.impl.configuration.deployment.ModuleDeploymentSourceImpl;
 import com.intellij.remoteServer.runtime.Deployment;
 import com.intellij.remoteServer.runtime.ServerConnection;
-import com.intellij.remoteServer.runtime.ServerConnectionManager;
 import com.intellij.remoteServer.runtime.ServerConnector;
 import com.intellij.remoteServer.runtime.deployment.ServerRuntimeInstance;
 import com.intellij.util.concurrency.Semaphore;
@@ -46,12 +41,10 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public abstract class CloudSupportConfigurableBase<
   SC extends CloudConfigurationBase,
-  DC extends CloudDeploymentContextConfiguration,
+  DC extends CloudDeploymentNameConfiguration,
   ST extends ServerType<SC>,
   SR extends CloudGitServerRuntimeInstanceBase<DC, ?, ?, ?, ?>>
   extends FrameworkSupportConfigurable {
-
-  private static final Logger LOG = Logger.getInstance("#" + CloudSupportConfigurableBase.class.getName());
 
   private final String myNotificationDisplayId;
 
@@ -276,106 +269,20 @@ public abstract class CloudSupportConfigurableBase<
     }
   }
 
-  protected abstract class ConnectionTask<T> {
-
-    private final String myTitle;
-    private final boolean myModal;
-    private final boolean myCancellable;
+  protected abstract class ConnectionTask<T> extends CloudConnectionTask<T, SC, DC, SR> {
 
     public ConnectionTask(String title, boolean modal, boolean cancellable) {
-      myTitle = title;
-      myModal = modal;
-      myCancellable = cancellable;
+      super(title, modal, cancellable);
     }
 
-    public T perform() {
-      RemoteServer<SC> server = getServer();
-      if (server == null) {
-        return null;
-      }
-
-      ServerConnection<DC> connection = ServerConnectionManager.getInstance().getOrCreateConnection(server);
-
-      final Semaphore semaphore = new Semaphore();
-      semaphore.down();
-
-      final Progressive progressive = new Progressive() {
-
-        @Override
-        public void run(@NotNull ProgressIndicator indicator) {
-          indicator.setIndeterminate(true);
-          while (!indicator.isCanceled()) {
-            if (semaphore.waitFor(500)) {
-              break;
-            }
-          }
-        }
-      };
-
-      Project project = getProject();
-      Task task;
-      if (myModal) {
-        task = new Task.Modal(project, myTitle, myCancellable) {
-
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            progressive.run(indicator);
-          }
-        };
-      }
-      else {
-        task = new Task.Backgroundable(project, myTitle, myCancellable) {
-
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            progressive.run(indicator);
-          }
-        };
-      }
-
-      AtomicReference<T> result = new AtomicReference<T>();
-      run(connection, semaphore, result);
-
-      task.queue();
-
-      return result.get();
+    @Override
+    protected RemoteServer<SC> getServer() {
+      return CloudSupportConfigurableBase.this.getServer();
     }
 
-    protected void run(final ServerConnection<DC> connection, final Semaphore semaphore, final AtomicReference<T> result) {
-      connection.connectIfNeeded(new ServerConnector.ConnectionCallback<DC>() {
-
-        @Override
-        public void connected(@NotNull ServerRuntimeInstance<DC> serverRuntimeInstance) {
-          final SR serverRuntime = (SR)serverRuntimeInstance;
-          serverRuntime.getTasksExecutor().submit(new Runnable() {
-
-            @Override
-            public void run() {
-              try {
-                result.set(ConnectionTask.this.run(serverRuntime));
-              }
-              catch (ServerRuntimeException e) {
-                runtimeErrorOccurred(e.getMessage());
-              }
-              finally {
-                semaphore.up();
-              }
-            }
-          });
-        }
-
-        @Override
-        public void errorOccurred(@NotNull String errorMessage) {
-          runtimeErrorOccurred(errorMessage);
-          semaphore.up();
-        }
-      });
+    @Override
+    protected Project getProject() {
+      return CloudSupportConfigurableBase.this.getProject();
     }
-
-    protected void runtimeErrorOccurred(@NotNull String errorMessage) {
-      LOG.info(errorMessage);
-    }
-
-    protected abstract T run(SR serverRuntime) throws ServerRuntimeException;
   }
 }

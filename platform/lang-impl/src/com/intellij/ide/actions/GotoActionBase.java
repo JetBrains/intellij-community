@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ public abstract class GotoActionBase extends AnAction {
   public void update(final AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
-    final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
+    final Project project = CommonDataKeys.PROJECT.getData(dataContext);
     presentation.setEnabled(!getClass().equals (myInAction) && (!requiresProject() || project != null) && hasContributors(dataContext));
     presentation.setVisible(hasContributors(dataContext));
   }
@@ -89,7 +89,7 @@ public abstract class GotoActionBase extends AnAction {
   public static PsiElement getPsiContext(final AnActionEvent e) {
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     if (file != null) return file;
-    Project project = e.getData(PlatformDataKeys.PROJECT);
+    Project project = e.getData(CommonDataKeys.PROJECT);
     return getPsiContext(project);
   }
 
@@ -174,7 +174,7 @@ public abstract class GotoActionBase extends AnAction {
                                          @Nullable final String findUsagesTitle,
                                          boolean useSelectionFromEditor,
                                          final boolean allowMultipleSelection) {
-    final Project project = e.getData(PlatformDataKeys.PROJECT);
+    final Project project = e.getData(CommonDataKeys.PROJECT);
     boolean mayRequestOpenInCurrentWindow = model.willOpenEditor() && FileEditorManagerEx.getInstanceEx(project).hasSplitOrUndockedWindows();
     Pair<String, Integer> start = getInitialText(useSelectionFromEditor, e);
     showNavigationPopup(callback, findUsagesTitle,

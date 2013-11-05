@@ -2,11 +2,13 @@ package com.intellij.compilerOutputIndex.api.fs;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.asm4.Opcodes;
 import org.jetbrains.asm4.Type;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author Dmitry Batkovich <dmitry.batkovich@jetbrains.com>
@@ -51,5 +53,33 @@ public final class AsmUtil implements Opcodes {
 
   private static String asJavaInnerClassQName(final String byteCodeClassQName) {
     return StringUtil.replaceChar(byteCodeClassQName, '$', '.');
+  }
+
+  //char
+  //double
+  //float
+  //int
+  //long
+  //short
+  //boolean
+  //byte
+  //void
+  //Object
+  //String
+  //Class
+  private static final Set<String> ASM_PRIMITIVE_TYPES = ContainerUtil.newHashSet("C", "D", "F", "I", "J", "S", "Z", "B", "V",
+                                                                                  "Ljava/lang/Object;",
+                                                                                  "Ljava/lang/String;",
+                                                                                  "Ljava/lang/Class;");
+
+  public static boolean isPrimitive(final String asmType) {
+    return ASM_PRIMITIVE_TYPES.contains(asmType);
+  }
+
+  public static boolean isPrimitiveOrArray(final String asmType) {
+    if (asmType.startsWith("[")) {
+      return true;
+    }
+    return isPrimitive(asmType);
   }
 }

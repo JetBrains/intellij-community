@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ public class NullableDataExternalizer<T> implements DataExternalizer<T> {
     myNotNullExternalizer = externalizer;
   }
 
+  @Override
   public void save(DataOutput out, T value) throws IOException {
     if (value == null) {
       out.writeBoolean(false);
@@ -40,6 +41,7 @@ public class NullableDataExternalizer<T> implements DataExternalizer<T> {
     }
   }
 
+  @Override
   @Nullable
   public T read(DataInput in) throws IOException {
     final boolean isDefined = in.readBoolean();

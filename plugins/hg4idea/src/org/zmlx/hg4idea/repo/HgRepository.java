@@ -44,6 +44,12 @@ public interface HgRepository extends Repository {
   @NotNull
   Collection<HgNameWithHashInfo> getBookmarks();
 
+  @NotNull
+  Collection<HgNameWithHashInfo> getTags();
+
+  @NotNull
+  Collection<HgNameWithHashInfo> getLocalTags();
+
   @Nullable
   String getCurrentBookmark();
 

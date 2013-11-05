@@ -37,7 +37,7 @@ import java.util.*;
 public class InferenceSession {
   private static final Logger LOG = Logger.getInstance("#" + InferenceSession.class.getName());
 
-  private Map<PsiTypeParameter, InferenceVariable> myInferenceVariables = new LinkedHashMap<PsiTypeParameter, InferenceVariable>();
+  private final Map<PsiTypeParameter, InferenceVariable> myInferenceVariables = new LinkedHashMap<PsiTypeParameter, InferenceVariable>();
   private final List<ConstraintFormula> myConstraints = new ArrayList<ConstraintFormula>();
 
   private PsiSubstitutor mySiteSubstitutor;
@@ -219,6 +219,9 @@ public class InferenceSession {
       }
     }
 
+    for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
+      inferenceVariable.ignoreInstantiation();
+    }
     mySiteSubstitutor = resolveBounds(myInferenceVariables.values(), mySiteSubstitutor, true);
     
     for (InferenceVariable inferenceVariable : myInferenceVariables.values()) {
@@ -445,14 +448,18 @@ public class InferenceSession {
             }
             else if (acceptObject || upperBounds.size() > 1 || !upperBounds.get(0).equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
               PsiType glb = null;
-              for (PsiType upperBound : upperBounds) {
-                upperBound = acceptBoundsWithRecursiveDependencies(typeParameter, upperBound, substitutor);
-                if (isProperType(upperBound, false)) {
-                  if (glb == null) {
-                    glb = upperBound;
-                  }
-                  else {
-                    glb = GenericsUtil.getGreatestLowerBound(glb, upperBound);
+              if (isThrowable(upperBounds)) {
+                glb = PsiType.getJavaLangRuntimeException(myManager, GlobalSearchScope.allScope(myManager.getProject()));
+              } else {
+                for (PsiType upperBound : upperBounds) {
+                  upperBound = acceptBoundsWithRecursiveDependencies(typeParameter, upperBound, substitutor);
+                  if (isProperType(upperBound, false)) {
+                    if (glb == null) {
+                      glb = upperBound;
+                    }
+                    else {
+                      glb = GenericsUtil.getGreatestLowerBound(glb, upperBound);
+                    }
                   }
                 }
               }
@@ -471,6 +478,20 @@ public class InferenceSession {
       }
     }
     return substitutor;
+  }
+
+  private static boolean isThrowable(List<PsiType> upperBounds) {
+    boolean commonThrowable = false;
+    for (PsiType upperBound : upperBounds) {
+      if (upperBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) continue;
+      if (upperBound.equalsToText(CommonClassNames.JAVA_LANG_EXCEPTION) ||
+          upperBound.equalsToText(CommonClassNames.JAVA_LANG_THROWABLE)) {
+        commonThrowable = true;
+      } else {
+        return false;
+      }
+    }
+    return commonThrowable;
   }
 
   private PsiType acceptBoundsWithRecursiveDependencies(PsiTypeParameter typeParameter, PsiType bound, PsiSubstitutor substitutor) {

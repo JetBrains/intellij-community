@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -178,7 +178,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
     if (isProgressRunning()) {
       final int answer = Messages.showOkCancelDialog(getComponent(), myPromptStopSearch,
                                              IdeBundle.message("title.question"), IdeBundle.message("action.continue.searching"), IdeBundle.message("action.stop.searching"), Messages.getWarningIcon());
-      if (answer == 1) { // terminate
+      if (answer != Messages.OK) { // terminate
         cancelSearch();
       }
       return false;

@@ -226,7 +226,7 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
 
     for (Iterator<PsiVariable> iterator = result.iterator(); iterator.hasNext(); ) {
       final PsiVariable variable = iterator.next();
-      if (shouldBeIgnored(variable) || !variable.isPhysical()) {
+      if (shouldBeIgnored(variable)) {
         iterator.remove();
       }
     }

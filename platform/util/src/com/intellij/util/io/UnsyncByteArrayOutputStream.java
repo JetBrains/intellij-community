@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ public class UnsyncByteArrayOutputStream extends OutputStream {
     myBuffer = new byte[size];
   }
 
+  @Override
   public void write(int b) {
     int newcount = myCount + 1;
     if (newcount > myBuffer.length) {
@@ -40,6 +41,7 @@ public class UnsyncByteArrayOutputStream extends OutputStream {
     myCount = newcount;
   }
 
+  @Override
   public void write(byte b[], int off, int len) {
     if ((off < 0) || (off > b.length) || (len < 0) ||
         ((off + len) > b.length) || ((off + len) < 0)) {

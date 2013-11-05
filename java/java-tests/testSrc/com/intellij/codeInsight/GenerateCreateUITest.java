@@ -17,7 +17,6 @@ package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.generation.actions.GenerateCreateUIAction;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 

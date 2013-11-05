@@ -16,7 +16,7 @@
 package hg4idea.test.repo;
 
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.dvcs.test.TestRepositoryUtil;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import hg4idea.test.HgPlatformTest;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.repo.HgRepositoryReader;
@@ -25,7 +25,7 @@ import org.zmlx.hg4idea.util.HgUtil;
 import java.io.File;
 import java.util.Arrays;
 
-import static com.intellij.dvcs.test.Executor.*;
+import static com.intellij.openapi.vcs.Executor.*;
 import static hg4idea.test.HgExecutor.hg;
 
 /**
@@ -40,7 +40,7 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
     super.setUp();
     File hgDir = new File(myRepository.getPath(), ".hg");
     assertTrue(hgDir.exists());
-    createBranches();
+    createBranchesAndTags();
     myRepositoryReader = new HgRepositoryReader(hgDir);
   }
 
@@ -58,8 +58,18 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
   }
 
   public void testBranches() {
-    TestRepositoryUtil.assertEqualCollections(HgUtil.getNamesWithoutHashes(myRepositoryReader.readBranches()),
+    VcsTestUtil.assertEqualCollections(HgUtil.getNamesWithoutHashes(myRepositoryReader.readBranches()),
                                               Arrays.asList("default", "branchA", "branchB"));
+  }
+
+  public void testTags() {
+    VcsTestUtil.assertEqualCollections(HgUtil.getNamesWithoutHashes(myRepositoryReader.readTags()),
+                                              Arrays.asList("tag1", "tag2"));
+  }
+
+  public void testLocalTags() {
+    VcsTestUtil.assertEqualCollections(HgUtil.getNamesWithoutHashes(myRepositoryReader.readLocalTags()),
+                                              Arrays.asList("localTag"));
   }
 
   public void testCurrentBookmark() {
@@ -68,23 +78,26 @@ public class HgRealRepositoryReaderTest extends HgPlatformTest {
   }
 
   public void testBookmarks() {
-    TestRepositoryUtil.assertEqualCollections(HgUtil.getNamesWithoutHashes(myRepositoryReader.readBookmarks()),
+    VcsTestUtil.assertEqualCollections(HgUtil.getNamesWithoutHashes(myRepositoryReader.readBookmarks()),
                                               Arrays.asList("A_BookMark", "B_BookMark", "C_BookMark"));
   }
 
-  private void createBranches() {
+  private void createBranchesAndTags() {
     cd(myRepository);
     hg("bookmark A_BookMark");
+    hg("tag tag1");
     String aFile = "A.txt";
     touch(aFile, "base");
     hg("add " + aFile);
     hg("commit -m 'create file'");
     hg("bookmark B_BookMark");
     hg("branch branchA");
+    hg("tag tag2");
     echo(aFile, " modify with a");
     hg("commit -m 'create branchA'");
     hg("up default");
     hg("branch branchB");
+    hg("tag -l localTag");
     echo(aFile, " modify with b");
     hg("commit -m 'modify file in branchB'");
     hg("bookmark C_BookMark");

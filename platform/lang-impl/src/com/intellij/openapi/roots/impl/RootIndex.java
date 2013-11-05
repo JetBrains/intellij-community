@@ -41,15 +41,16 @@ import java.util.*;
 
 class RootIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.RootIndex");
+  private static final DirectoryInfo NULL_INFO = DirectoryInfo.createNew();
 
   private final Set<VirtualFile> myProjectExcludedRoots = ContainerUtil.newHashSet();
   private final Set<VirtualFile> myLibraryExcludedRoots = ContainerUtil.newHashSet();
-  private final Map<VirtualFile, DirectoryInfo> myRoots = ContainerUtil.newHashMap();
+  private final Map<VirtualFile, DirectoryInfo> myRoots = ContainerUtil.newTroveMap();
   private final Map<String, HashSet<VirtualFile>> myPackagePrefixRoots = ContainerUtil.newHashMap();
 
   private final Map<String, List<VirtualFile>> myDirectoriesByPackageNameCache = ContainerUtil.newConcurrentMap();
   private final Map<String, List<VirtualFile>> myDirectoriesByPackageNameCacheWithLibSrc = ContainerUtil.newConcurrentMap();
-  private final Map<VirtualFile, Boolean> myIgnoredCache = ContainerUtil.newConcurrentMap();
+  private final Map<VirtualFile, DirectoryInfo> myInfoCache = ContainerUtil.newConcurrentMap();
   private final List<JpsModuleSourceRootType<?>> myRootTypes = ContainerUtil.newArrayList();
   private final TObjectIntHashMap<JpsModuleSourceRootType<?>> myRootTypeId = new TObjectIntHashMap<JpsModuleSourceRootType<?>>();
 
@@ -320,19 +321,24 @@ class RootIndex {
       if (++count > 1000) {
         throw new IllegalStateException("Possible loop in tree, started at " + dir.getName());
       }
-      final DirectoryInfo info = myRoots.get(root);
+      DirectoryInfo info = myInfoCache.get(root);
       if (info != null) {
+        return info == NULL_INFO ? null : info;
+      }
+      
+      info = myRoots.get(root);
+      if (info != null) {
+        myInfoCache.put(dir, info);
         return info;
       }
-      Boolean ignored = myIgnoredCache.get(root);
-      if (ignored == null) {
-        myIgnoredCache.put(root, ignored = isAnyExcludeRoot(root) || FileTypeManager.getInstance().isFileIgnored(root));
-      }
-      if (ignored.booleanValue()) {
+      
+      if (isAnyExcludeRoot(root) || FileTypeManager.getInstance().isFileIgnored(root)) {
+        myInfoCache.put(dir, NULL_INFO);
         return null;
       }
     }
 
+    myInfoCache.put(dir, NULL_INFO);
     return null;
   }
 
@@ -367,10 +373,12 @@ class RootIndex {
     if (StringUtil.isNotEmpty(packageName)) {
       String parentPackage = StringUtil.getPackageName(packageName);
       String shortName = StringUtil.getShortName(packageName);
-      for (VirtualFile parentDir : getDirectoriesByPackageName(parentPackage, includeLibrarySources)) {
-        VirtualFile child = parentDir.findChild(shortName);
-        if (isValidPackageDirectory(includeLibrarySources, child)) {
-          result.add(child);
+      if (StringUtil.isNotEmpty(parentPackage) || parentPackage.equals(shortName)) {
+        for (VirtualFile parentDir : getDirectoriesByPackageName(parentPackage, includeLibrarySources)) {
+          VirtualFile child = parentDir.findChild(shortName);
+          if (isValidPackageDirectory(includeLibrarySources, child)) {
+            result.add(child);
+          }
         }
       }
     }

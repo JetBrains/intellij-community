@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PythonCommenter implements CodeDocumentationAwareCommenter, IndentedCommenter {
   public String getLineCommentPrefix() {
-    return "#";
+    return "# ";
   }
 
   public String getBlockCommentPrefix() {

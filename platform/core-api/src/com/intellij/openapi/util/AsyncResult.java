@@ -61,8 +61,9 @@ public class AsyncResult<T> extends ActionCallback {
   }
 
   @NotNull
+  @Deprecated
   /**
-   * Please use {@link #doWhenDone(com.intellij.util.Consumer)}
+   * @deprecated Please use {@link #doWhenDone(com.intellij.util.Consumer)}
    */
   public AsyncResult<T> doWhenDone(@NotNull final Handler<T> handler) {
     doWhenDone(new Runnable() {

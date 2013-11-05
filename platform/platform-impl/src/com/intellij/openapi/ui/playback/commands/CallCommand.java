@@ -93,9 +93,9 @@ public class CallCommand extends AbstractCommand {
         return new ActionCallback.Rejected();
       }
 
-      result.doWhenDone(new AsyncResult.Handler<String>() {
+      result.doWhenDone(new Consumer<String>() {
         @Override
-        public void run(String s) {
+        public void consume(String s) {
           if (s != null) {
             context.message(s, getLine());
           }

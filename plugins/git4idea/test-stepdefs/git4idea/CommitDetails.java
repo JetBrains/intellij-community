@@ -23,8 +23,8 @@ import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.dvcs.test.Executor.echo;
-import static com.intellij.dvcs.test.Executor.touch;
+import static com.intellij.openapi.vcs.Executor.echo;
+import static com.intellij.openapi.vcs.Executor.touch;
 import static git4idea.GitCucumberWorld.virtualCommits;
 import static git4idea.test.GitExecutor.git;
 import static org.junit.Assert.assertTrue;

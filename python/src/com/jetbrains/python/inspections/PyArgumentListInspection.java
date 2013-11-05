@@ -16,6 +16,7 @@
 package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElementVisitor;
@@ -138,7 +139,7 @@ public class PyArgumentListInspection extends PyInspection {
           holder.registerProblem(arg, PyBundle.message("INSP.duplicate.star.arg"));
         }
         if (flags.contains(CallArgumentsMapping.ArgFlag.IS_POS_PAST_KWD)) {
-          holder.registerProblem(arg, PyBundle.message("INSP.cannot.appear.past.keyword.arg"));
+          holder.registerProblem(arg, PyBundle.message("INSP.cannot.appear.past.keyword.arg"), ProblemHighlightType.ERROR);
         }
         if (flags.contains(CallArgumentsMapping.ArgFlag.IS_UNMAPPED)) {
           holder.registerProblem(arg, PyBundle.message("INSP.unexpected.arg"));

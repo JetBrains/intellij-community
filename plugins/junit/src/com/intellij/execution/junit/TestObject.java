@@ -366,12 +366,7 @@ public abstract class TestObject implements JavaCommandLine {
   }
 
   private ExecutionResult useSmRunner(Executor executor, JUnitProcessHandler handler) {
-    TestConsoleProperties testConsoleProperties = new SMTRunnerConsoleProperties(
-      new RuntimeConfigurationProducer.DelegatingRuntimeConfiguration<JUnitConfiguration>(
-        (JUnitConfiguration)myEnvironment.getRunProfile()),
-      JUNIT_TEST_FRAMEWORK_NAME,
-      executor
-    );
+    TestConsoleProperties testConsoleProperties = new SMTRunnerConsoleProperties(myConfiguration, JUNIT_TEST_FRAMEWORK_NAME, executor);
 
     testConsoleProperties.setIfUndefined(TestConsoleProperties.HIDE_PASSED_TESTS, false);
 

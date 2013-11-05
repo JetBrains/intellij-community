@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,14 +52,17 @@ public abstract class ComparisonPolicy {
   }
 
   public static final ComparisonPolicy DEFAULT = new ComparisonPolicy(CommonBundle.message("comparison.policy.default.name")) {
+    @Override
     protected Object[] getWrappers(String[] strings) {
       return strings;
     }
 
+    @Override
     protected Object[] getLineWrappers(String[] lines) {
       return lines;
     }
 
+    @Override
     public DiffFragment createFragment(Word word1, Word word2) {
       return createFragment(word1.getText(), word2.getText());
     }
@@ -71,10 +74,12 @@ public abstract class ComparisonPolicy {
   };
 
   public static final ComparisonPolicy TRIM_SPACE = new ComparisonPolicy(CommonBundle.message("comparison.policy.trim.space.name")) {
+    @Override
     protected Object[] getLineWrappers(String[] lines) {
       return trimStrings(lines);
     }
 
+    @Override
     public DiffFragment createFragment(Word word1, Word word2) {
       String text1 = word1.getText();
       String text2 = word2.getText();
@@ -85,6 +90,7 @@ public abstract class ComparisonPolicy {
       return createFragment(text1, text2);
     }
 
+    @Override
     protected Object[] getWrappers(String[] strings) {
       Object[] result = new Object[strings.length];
       boolean atBeginning = true;
@@ -142,7 +148,7 @@ public abstract class ComparisonPolicy {
   }
 
   private String toNull(String text1) {
-    return text1 == null || text1.length() == 0 ? null : text1;
+    return text1 == null || text1.isEmpty() ? null : text1;
   }
 
   private Object getWrapper(String text) {
@@ -176,6 +182,7 @@ public abstract class ComparisonPolicy {
       super(CommonBundle.message("comparison.policy.ignore.spaces.name"));
     }
 
+    @Override
     protected Object[] getLineWrappers(String[] lines) {
       Object[] result = new Object[lines.length];
       for (int i = 0; i < lines.length; i++) {
@@ -185,6 +192,7 @@ public abstract class ComparisonPolicy {
       return result;
     }
 
+    @Override
     public DiffFragment[] buildFragments(String[] strings1, String[] strings2) throws FilesTooBigForDiffException {
       DiffFragment[] fragments = super.buildFragments(strings1, strings2);
       DiffCorrection.FragmentsCollector collector = new DiffCorrection.FragmentsCollector();
@@ -207,6 +215,7 @@ public abstract class ComparisonPolicy {
       return new String(result, 0, resultLength);
     }
 
+    @Override
     public DiffFragment createFragment(Word word1, Word word2) {
       String text1 = word1.getText();
       String text2 = word2.getText();
@@ -215,6 +224,7 @@ public abstract class ComparisonPolicy {
              createFragment(text1, text2);
     }
 
+    @Override
     public DiffFragment createFragment(String text1, String text2) {
       String toCompare1 = toNotNull(text1);
       String toCompare2 = toNotNull(text2);
@@ -224,6 +234,7 @@ public abstract class ComparisonPolicy {
       return new DiffFragment(text1, text2);
     }
 
+    @Override
     protected Object[] getWrappers(String[] strings) {
       return trimStrings(strings);
     }
@@ -233,6 +244,7 @@ public abstract class ComparisonPolicy {
       return "IGNORE";
     }
 
+    @Override
     public void process(DiffFragment fragment, DiffCorrection.FragmentsCollector collector) {
       if (fragment.isEqual()) {
         collector.add(fragment);
@@ -242,7 +254,7 @@ public abstract class ComparisonPolicy {
         FragmentSide side = FragmentSide.chooseSide(fragment);
         String text = side.getText(fragment);
         String trimed = text.trim();
-        if (trimed.length() == 0) {
+        if (trimed.isEmpty()) {
           collector.add(side.createFragment(text, "", false));
           return;
         }

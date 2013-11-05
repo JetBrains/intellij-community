@@ -70,6 +70,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
 
   private final MouseListener mySelectionListener = new MouseAdapter() {
     boolean handled = false;
+    @Override
     public void mousePressed(@NotNull final MouseEvent e) {
       handled = false;
       if (!isSelected(e)) {
@@ -205,6 +206,7 @@ public class WideSelectionTreeUI extends BasicTreeUI {
     }
 
     actionMap.put("collapse_or_move_up", new TreeUIAction() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         final Object source = e.getSource();
         if (source instanceof JTree) {

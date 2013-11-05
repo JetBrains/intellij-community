@@ -317,6 +317,9 @@ public class SmartTypeCompletionOrderingTest extends CompletionSortingTestCase {
   public void testGetWildcardLogger() {
     checkPreferredItems 0, 'Foo.class', 'forName'
   }
+  public void testPreferLocalWildcardClassOverObject() {
+    checkPreferredItems 0, 'type', 'Object.class'
+  }
 
   @Override
   protected String getBasePath() {

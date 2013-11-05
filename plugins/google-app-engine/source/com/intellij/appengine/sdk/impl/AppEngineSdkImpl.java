@@ -19,6 +19,7 @@ import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.roots.libraries.JarVersionDetectionUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -29,10 +30,12 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.appengine.model.impl.JpsAppEngineModuleExtensionImpl;
 
 import java.io.*;
 import java.util.*;
+import java.util.jar.Attributes;
 
 /**
  * @author nik
@@ -124,6 +127,17 @@ public class AppEngineSdkImpl implements AppEngineSdk {
     final String name = StringUtil.getShortName(className);
     final Set<String> classes = myClassesWhiteList.get(packageName);
     return classes != null && classes.contains(name);
+  }
+
+  @Override
+  @Nullable
+  public String getVersion() {
+    try {
+      return JarVersionDetectionUtil.getJarAttributeVersion(getToolsApiJarFile(), Attributes.Name.SPECIFICATION_VERSION, "com/google/appengine/tools/info/");
+    }
+    catch (IOException e) {
+      return null;
+    }
   }
 
   private File getCachedWhiteListFile() {

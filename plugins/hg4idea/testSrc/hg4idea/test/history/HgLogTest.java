@@ -11,8 +11,8 @@ import org.zmlx.hg4idea.execution.HgCommandException;
 
 import java.util.List;
 
-import static com.intellij.dvcs.test.Executor.cd;
-import static com.intellij.dvcs.test.Executor.touch;
+import static com.intellij.openapi.vcs.Executor.cd;
+import static com.intellij.openapi.vcs.Executor.touch;
 import static hg4idea.test.HgExecutor.hg;
 
 /**

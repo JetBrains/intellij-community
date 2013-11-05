@@ -24,14 +24,12 @@ import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.ListSpeedSearch;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -165,6 +163,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
       this.myImportStatic = importStatic;
     }
 
+    @Override
     public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       if (!myImportStatic && reference.getText().equals(reference.getQualifiedName())) {
@@ -283,6 +282,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
 
   static class PsiMemberComparator implements Comparator<PsiMember> {
 
+    @Override
     public int compare(PsiMember member1, PsiMember member2) {
       final String name1 = member1.getName();
       if (name1 == null) {

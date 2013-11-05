@@ -113,6 +113,7 @@ public final class Urls {
   }
 
   // java.net.URI.create cannot parse "file:///Test Stuff" - but you don't need to worry about it - this method is aware
+  @Nullable
   public static Url newFromIdea(@NotNull String url) {
     return URLUtil.containsScheme(url) ? parseUrl(VfsUtil.toIdeaUrl(url), false) : new LocalFileUrl(url);
   }

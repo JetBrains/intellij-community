@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.usages.impl.rules;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataSink;
-import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
@@ -42,6 +41,7 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
     super(project);
   }
 
+  @Override
   protected UsageGroup getGroupForFile(final VirtualFile dir) {
     PsiDirectory psiDirectory = PsiManager.getInstance(myProject).findDirectory(dir);
     if (psiDirectory != null) {
@@ -60,44 +60,53 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
       update();
     }
 
+    @Override
     public void update() {
       if (isValid()) {
         myIcon = myPackage.getIcon(0);
       }
     }
 
+    @Override
     public Icon getIcon(boolean isOpen) {
       return myIcon;
     }
 
+    @Override
     @NotNull
     public String getText(UsageView view) {
       return myPackage.getQualifiedName();
     }
 
+    @Override
     public FileStatus getFileStatus() {
       if (!isValid()) return null;
       PsiDirectory[] dirs = myPackage.getDirectories();
       return dirs.length == 1 ? FileStatusManager.getInstance(myProject).getStatus(dirs[0].getVirtualFile()) : null;
     }
 
+    @Override
     public boolean isValid() {
       return myPackage.isValid();
     }
 
+    @Override
     public void navigate(boolean focus) throws UnsupportedOperationException {
       myPackage.navigate(focus);
     }
 
+    @Override
     public boolean canNavigate() {
       return myPackage.canNavigate();
     }
 
+    @Override
     public boolean canNavigateToSource() {
       return false;
     }
 
-    public int compareTo(UsageGroup usageGroup) {
+    @Override
+    public int compareTo(@NotNull UsageGroup usageGroup) {
       return getText(null).compareToIgnoreCase(usageGroup.getText(null));
     }
 
@@ -112,6 +121,7 @@ public class PackageGroupingRule extends DirectoryGroupingRule {
       return myPackage.hashCode();
     }
 
+    @Override
     public void calcData(final DataKey key, final DataSink sink) {
       if (!isValid()) return;
       if (CommonDataKeys.PSI_ELEMENT == key) {

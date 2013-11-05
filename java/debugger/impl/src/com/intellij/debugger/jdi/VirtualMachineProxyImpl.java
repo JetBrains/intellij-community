@@ -68,6 +68,8 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     canWatchFieldModification();
     canPopFrames();
 
+    virtualMachine.allClasses();  // this will cache classes inside JDI and enable faster search of classes later
+
     List<ThreadGroupReference> groups = virtualMachine.topLevelThreadGroups();
     for (ThreadGroupReference threadGroupReference : groups) {
       threadGroupCreated(threadGroupReference);
@@ -120,10 +122,11 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
   }
 
   public List<ReferenceType> allClasses() {
-    if (myAllClasses == null) {
-      myAllClasses = myVirtualMachine.allClasses();
+    List<ReferenceType> allClasses = myAllClasses;
+    if (allClasses == null) {
+      myAllClasses = allClasses = myVirtualMachine.allClasses();
     }
-    return myAllClasses;
+    return allClasses;
   }
 
   public String toString() {

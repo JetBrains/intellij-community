@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,10 +51,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.actions.CollapseAllAction;
 import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeStructure;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.OpenSourceUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.UIUtil;
@@ -512,9 +509,9 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     myAbstractTreeBuilder.getReady(this).doWhenDone(new Runnable() {
       @Override
       public void run() {
-        expandPathToElement(element).doWhenDone(new AsyncResult.Handler<AbstractTreeNode>() {
+        expandPathToElement(element).doWhenDone(new Consumer<AbstractTreeNode>() {
           @Override
-          public void run(AbstractTreeNode abstractTreeNode) {
+          public void consume(AbstractTreeNode abstractTreeNode) {
             myAbstractTreeBuilder.select(abstractTreeNode, new Runnable() {
               @Override
               public void run() {
@@ -786,7 +783,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return getHelpID();
     }
-    if (PlatformDataKeys.PROJECT.is(dataId)) {
+    if (CommonDataKeys.PROJECT.is(dataId)) {
       return myProject;
     }
     return super.getData(dataId);

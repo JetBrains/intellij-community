@@ -4,7 +4,7 @@ asm4-all.jar
 automaton.jar
 cglib-2.2.2.jar
 cli-parser-1.1.jar
-commons-codec-1.3.jar
+commons-codec-1.8.jar
 commons-httpclient-3.1-patched.jar
 commons-logging-1.1.1.jar
 commons-net-3.1.jar
@@ -21,7 +21,6 @@ jgoodies-forms.jar
 jgoodies-looks-2.4.2.jar
 jh.jar
 jna-utils.jar
-jna-platform.jar
 jna.jar
 jsch-0.1.50.jar
 jsr166e.jar

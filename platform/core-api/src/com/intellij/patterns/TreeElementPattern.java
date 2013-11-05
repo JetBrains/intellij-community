@@ -118,7 +118,7 @@ public abstract class TreeElementPattern<ParentType, T extends ParentType, Self 
                                    PairProcessor<ParentType, ProcessingContext> processor) {
         ParentType parent = t;
         for (int i = 0; i < level; i++) {
-          if (parent == null) return false;
+          if (parent == null) return true;
           parent = getParent(parent);
         }
         return processor.process(parent, context);

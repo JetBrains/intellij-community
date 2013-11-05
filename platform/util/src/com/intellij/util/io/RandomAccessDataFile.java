@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ import java.nio.ByteBuffer;
 public class RandomAccessDataFile implements Forceable, Closeable {
   protected static final Logger LOG = Logger.getInstance("#com.intellij.util.io.RandomAccessDataFile");
 
-  private final static OpenChannelsCache ourCache = new OpenChannelsCache(150, "rw");
+  private static final OpenChannelsCache ourCache = new OpenChannelsCache(150, "rw");
   private static int ourFilesCount = 0;
 
   private final int myCount = ourFilesCount++;
@@ -196,10 +196,12 @@ public class RandomAccessDataFile implements Forceable, Closeable {
     myIsDisposed = true;
   }
 
+  @Override
   public void close() {
     dispose();
   }
 
+  @Override
   public void force() {
     assertNotDisposed();
     if (isDirty()) {
@@ -215,6 +217,7 @@ public class RandomAccessDataFile implements Forceable, Closeable {
     }
   }
 
+  @Override
   public boolean isDirty() {
     assertNotDisposed();
     return myIsDirty;

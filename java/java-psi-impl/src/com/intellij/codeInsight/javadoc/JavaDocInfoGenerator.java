@@ -1661,7 +1661,7 @@ public class JavaDocInfoGenerator {
       return length;
     }
 
-    if (type instanceof PsiDisjunctionType) {
+    if (type instanceof PsiDisjunctionType || type instanceof PsiIntersectionType) {
       if (!generateLink) {
         final String text = StringUtil.escapeXml(type.getCanonicalText());
         buffer.append(text);
@@ -1669,9 +1669,17 @@ public class JavaDocInfoGenerator {
       }
       else {
         int length = 0;
-        for (PsiType psiType : ((PsiDisjunctionType)type).getDisjunctions()) {
+        final String separator = type instanceof PsiDisjunctionType ? " | " : " & ";
+        final List<PsiType> componentTypes;
+        if (type instanceof PsiIntersectionType) {
+          componentTypes = Arrays.asList(((PsiIntersectionType)type).getConjuncts());
+        }
+        else {
+          componentTypes = ((PsiDisjunctionType)type).getDisjunctions();
+        }
+        for (PsiType psiType : componentTypes) {
           if (length > 0) {
-            buffer.append(" | ");
+            buffer.append(separator);
             length += 3;
           }
           length += generateType(buffer, psiType, context, generateLink);

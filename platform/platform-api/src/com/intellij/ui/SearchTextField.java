@@ -101,7 +101,7 @@ public class SearchTextField extends JPanel {
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-          if (hasNativeLeopardSearchControl() && myNativeSearchPopup != null) {
+          if (isSearchControlUISupported() && myNativeSearchPopup != null) {
             myNativeSearchPopup.show(myTextField, 5, myTextField.getHeight());
           } else if (myPopup == null || !myPopup.isVisible()) {
             showPopup();
@@ -110,10 +110,10 @@ public class SearchTextField extends JPanel {
       }
     });
 
-    if (hasNativeLeopardSearchControl() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
+    if (isSearchControlUISupported() || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       myTextField.putClientProperty("JTextField.variant", "search");
     }
-    if (hasNativeLeopardSearchControl()) {
+    if (isSearchControlUISupported()) {
       if (historyEnabled) {
         myNativeSearchPopup = new JBPopupMenu();
         myNoItems = new JBMenuItem("No recent searches");
@@ -203,11 +203,11 @@ public class SearchTextField extends JPanel {
     }
   }
 
-  private static boolean hasNativeLeopardSearchControl() {
+  protected boolean isSearchControlUISupported() {
     return (SystemInfo.isMacOSLeopard && UIUtil.isUnderAquaLookAndFeel()) || UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF();
   }
 
-  private static boolean hasIconsOutsideOfTextField() {
+  protected boolean hasIconsOutsideOfTextField() {
     return UIUtil.isUnderGTKLookAndFeel() || UIUtil.isUnderNimbusLookAndFeel();
   }
 
@@ -419,7 +419,7 @@ public class SearchTextField extends JPanel {
   }
   
   public void setSearchIcon(final Icon icon) {
-    if (! hasNativeLeopardSearchControl()) {
+    if (! isSearchControlUISupported()) {
       myToggleHistoryLabel.setIcon(icon);
     }
   }

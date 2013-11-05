@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ class FieldAccessor implements Accessor {
     this.myField = myField;
   }
 
+  @Override
   public Object read(Object o) {
     assert myField.getDeclaringClass().isInstance(o) : "Wrong class: " + o.getClass() + " should be: " + myField.getDeclaringClass();
     try {
@@ -39,6 +40,7 @@ class FieldAccessor implements Accessor {
     }
   }
 
+  @Override
   public void write(Object o, Object value) {
     assert myField.getDeclaringClass().isInstance(o) : "Wrong class: " + o.getClass() + " should be: " + myField.getDeclaringClass();
     try {
@@ -49,18 +51,22 @@ class FieldAccessor implements Accessor {
     }
   }
 
+  @Override
   public Annotation[] getAnnotations() {
     return myField.getAnnotations();
   }
 
+  @Override
   public String getName() {
     return myField.getName();
   }
 
+  @Override
   public Class<?> getValueClass() {
     return myField.getType();
   }
 
+  @Override
   public Type getGenericType() {
     return myField.getGenericType();
   }

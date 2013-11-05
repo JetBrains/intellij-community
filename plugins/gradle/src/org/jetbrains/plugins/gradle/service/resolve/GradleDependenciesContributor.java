@@ -25,18 +25,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Denis Zhdanov
  * @since 8/14/13 12:58 PM
  */
 public class GradleDependenciesContributor implements GradleMethodContextContributor {
-  private final static Set<String> BUILD_SCRIPT_BLOCKS = ContainerUtil.newHashSet(
-    "subprojects",
-    "allprojects",
-    "buildscript"
-  );
 
   @Override
   public void process(@NotNull List<String> methodCallInfo,
@@ -47,11 +41,6 @@ public class GradleDependenciesContributor implements GradleMethodContextContrib
 
     String methodCall = ContainerUtil.getLastItem(methodCallInfo);
     if (methodCall == null) return;
-
-    if (methodCallInfo.size() > 1 && BUILD_SCRIPT_BLOCKS.contains(methodCall)) {
-      methodCallInfo.remove(methodCallInfo.size() - 1);
-      methodCall = ContainerUtil.getLastItem(methodCallInfo);
-    }
 
     if (!StringUtil.equals(methodCall, "dependencies")) return;
 

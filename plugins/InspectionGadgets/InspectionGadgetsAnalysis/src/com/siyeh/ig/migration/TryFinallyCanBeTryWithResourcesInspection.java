@@ -96,7 +96,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       }
       final PsiElement[] tryBlockChildren = tryBlock.getChildren();
       final Set<PsiLocalVariable> variables = new HashSet();
-      for (PsiLocalVariable variable : collectVariables(tryStatement)) {
+      for (final PsiLocalVariable variable : collectVariables(tryStatement)) {
         if (!isVariableUsedOutsideContext(variable, tryBlock)) {
           variables.add(variable);
         }
@@ -105,7 +105,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       @NonNls final StringBuilder newTryStatementText = new StringBuilder("try (");
       final Set<Integer> unwantedChildren = new HashSet(2);
       boolean separator = false;
-      for (PsiLocalVariable variable : variables) {
+      for (final PsiLocalVariable variable : variables) {
         final boolean hasInitializer;
         final PsiExpression initializer = variable.getInitializer();
         if (initializer == null) {
@@ -152,7 +152,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       }
       newTryStatementText.append('}');
       final PsiCatchSection[] catchSections = tryStatement.getCatchSections();
-      for (PsiCatchSection catchSection : catchSections) {
+      for (final PsiCatchSection catchSection : catchSections) {
         newTryStatementText.append(catchSection.getText());
       }
       final PsiElement[] finallyChildren = finallyBlock.getChildren();
@@ -166,15 +166,20 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
         }
         if (!appended) {
           if (child instanceof PsiComment) {
+            final PsiComment comment = (PsiComment)child;
             final PsiElement prevSibling = child.getPrevSibling();
-            if (prevSibling instanceof PsiWhiteSpace) {
+            if (prevSibling instanceof PsiWhiteSpace && savedComments.isEmpty()) {
               savedComments.add(prevSibling);
             }
-            savedComments.add(child);
+            savedComments.add(comment);
+            final PsiElement nextSibling = child.getNextSibling();
+            if (nextSibling instanceof PsiWhiteSpace) {
+              savedComments.add(nextSibling);
+            }
           }
           else if (!(child instanceof PsiWhiteSpace)) {
             newTryStatementText.append(" finally {");
-            for (PsiElement savedComment : savedComments) {
+            for (final PsiElement savedComment : savedComments) {
               newTryStatementText.append(savedComment.getText());
             }
             newTryStatementText.append(child.getText());
@@ -188,7 +193,7 @@ public class TryFinallyCanBeTryWithResourcesInspection extends BaseInspection {
       if (appended) {
         newTryStatementText.append('}');
       }
-      for (PsiLocalVariable variable : variables) {
+      for (final PsiLocalVariable variable : variables) {
         variable.delete();
       }
       if (!appended) {

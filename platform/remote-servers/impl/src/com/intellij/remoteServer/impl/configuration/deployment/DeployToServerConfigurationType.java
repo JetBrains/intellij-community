@@ -66,7 +66,7 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
 
     @Override
     public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {
-      DeployToServerRunConfiguration deployConfiguration = (DeployToServerRunConfiguration)configuration;
+      DeployToServerRunConfiguration<?,?> deployConfiguration = (DeployToServerRunConfiguration<?,?>)configuration;
       if (deployConfiguration.getServerName() == null) {
         RemoteServer<?> server = ContainerUtil.getFirstItem(RemoteServersManager.getInstance().getServers(myServerType));
         if (server != null) {
@@ -87,7 +87,7 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
 
     @Override
     public RunConfiguration createTemplateConfiguration(Project project) {
-      DeploymentConfigurator<?> deploymentConfigurator = myServerType.createDeploymentConfigurator(project);
+      DeploymentConfigurator<?, ?> deploymentConfigurator = myServerType.createDeploymentConfigurator(project);
       return new DeployToServerRunConfiguration(project, this, "", myServerType, deploymentConfigurator);
     }
   }

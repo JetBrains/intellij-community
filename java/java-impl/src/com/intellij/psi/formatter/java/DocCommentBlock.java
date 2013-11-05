@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class DocCommentBlock extends AbstractJavaBlock{
     while (child != null) {
       if (child.getElementType() == JavaDocTokenType.DOC_COMMENT_START) {
         result.add(createJavaBlock(child, mySettings, Indent.getNoneIndent(), null, AlignmentStrategy.getNullStrategy()));
-      } else if (!FormatterUtil.containsWhiteSpacesOnly(child) && child.getText().trim().length() > 0){
+      } else if (!FormatterUtil.containsWhiteSpacesOnly(child) && !child.getText().trim().isEmpty()){
         result.add(createJavaBlock(child, mySettings, Indent.getSpaceIndent(1), null, AlignmentStrategy.getNullStrategy()));
       }
       child = child.getTreeNext();

@@ -908,10 +908,11 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (initMethod != null) {
       collectInstanceAttributes(initMethod, result);
     }
+    Set<String> namesInInit = new HashSet<String>(result.keySet());
     final PyFunction[] methods = getMethods();
     for (PyFunction method : methods) {
       if (!PyNames.INIT.equals(method.getName())) {
-        collectInstanceAttributes(method, result);
+        collectInstanceAttributes(method, result, namesInInit);
       }
     }
 
@@ -929,12 +930,18 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   public static void collectInstanceAttributes(@NotNull PyFunction method, @NotNull final Map<String, PyTargetExpression> result) {
+    collectInstanceAttributes(method, result, null);
+  }
+
+  public static void collectInstanceAttributes(@NotNull PyFunction method,
+                                               @NotNull final Map<String, PyTargetExpression> result,
+                                               Set<String> existing) {
     final PyParameter[] params = method.getParameterList().getParameters();
     if (params.length == 0) {
       return;
     }
     for (PyTargetExpression target : getTargetExpressions(method)) {
-      if (PyUtil.isInstanceAttribute(target)) {
+      if (PyUtil.isInstanceAttribute(target) && (existing == null || !existing.contains(target.getName()))) {
         result.put(target.getName(), target);
       }
     }

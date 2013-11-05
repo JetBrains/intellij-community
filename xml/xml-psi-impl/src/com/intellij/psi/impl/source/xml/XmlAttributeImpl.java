@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,7 +117,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
     final String name = getName();
     final String prefixByQualifiedName = XmlUtil.findPrefixByQualifiedName(name);
     // The namespace name for an unprefixed attribute name always has no value. Namespace recommendation section 6.2, third paragraph
-    if (prefixByQualifiedName.length() == 0) return XmlUtil.EMPTY_URI;
+    if (prefixByQualifiedName.isEmpty()) return XmlUtil.EMPTY_URI;
     return getParent().getNamespaceByPrefix(prefixByQualifiedName);
   }
 
@@ -325,12 +325,12 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute {
       final String localName = getLocalName();
       final String prefix = XmlUtil.findPrefixByQualifiedName(getName());
       final TextRange range =
-        prefix.length() == 0 ? TextRange.from(getName().length(), 0) : TextRange.from(prefix.length() + 1, localName.length());
+        prefix.isEmpty() ? TextRange.from(getName().length(), 0) : TextRange.from(prefix.length() + 1, localName.length());
       refs[0] = new SchemaPrefixReference(this, range, localName, null);
     }
     else {
       final String prefix = getNamespacePrefix();
-      if (prefix.length() > 0 && getLocalName().length() > 0) {
+      if (!prefix.isEmpty() && !getLocalName().isEmpty()) {
         refs = new PsiReference[referencesFromProviders.length + 2];
         refs[0] = new SchemaPrefixReference(this, TextRange.from(0, prefix.length()), prefix, null);
         refs[1] = new XmlAttributeReference(this);

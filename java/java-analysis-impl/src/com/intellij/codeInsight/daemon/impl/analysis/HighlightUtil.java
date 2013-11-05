@@ -289,8 +289,47 @@ public class HighlightUtil extends HighlightUtilBase {
 
 
   @Nullable
+  static HighlightInfo checkIntersectionInTypeCast(@NotNull PsiTypeCastExpression expression) {
+    final PsiTypeElement castTypeElement = expression.getCastType();
+    if (castTypeElement == null) return null;
+    PsiType castType = castTypeElement.getType();
+    if (isIntersection(castTypeElement, castType)) {
+      if (PsiUtil.isLanguageLevel8OrHigher(expression)) {
+        final PsiTypeElement[] conjuncts = PsiTreeUtil.getChildrenOfType(castTypeElement, PsiTypeElement.class);
+        if (conjuncts != null) {
+          final List<PsiTypeElement> conjList = new ArrayList<PsiTypeElement>(Arrays.asList(conjuncts));
+          for (int i = 1; i < conjuncts.length; i++) {
+            final PsiTypeElement conjunct = conjuncts[i];
+            final PsiType conjType = conjunct.getType();
+            if (conjType instanceof PsiClassType) {
+              final PsiClass aClass = ((PsiClassType)conjType).resolve();
+              if (aClass != null && !aClass.isInterface()) {
+                final HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                  .range(conjunct)
+                  .descriptionAndTooltip(JavaErrorMessages.message("interface.expected")).create();
+                QuickFixAction.registerQuickFixAction(errorResult, new FlipIntersectionSidesFix(aClass.getName(), conjList, conjunct, castTypeElement), null);
+                return errorResult;
+              }
+            }
+          }
+        }
+      } else {
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .range(expression)
+          .descriptionAndTooltip("Intersection types in cast are not supported at this language level").create();
+      }
+    }
+    return null;
+  }
+
+  static boolean isIntersection(PsiTypeElement castTypeElement, PsiType castType) {
+    if (castType instanceof PsiIntersectionType) return true;
+    return castType instanceof PsiClassType && PsiTreeUtil.getChildrenOfType(castTypeElement, PsiTypeElement.class) != null;
+  }
+  
+  @Nullable
   static HighlightInfo checkInconvertibleTypeCast(@NotNull PsiTypeCastExpression expression) {
-    PsiTypeElement castTypeElement = expression.getCastType();
+    final PsiTypeElement castTypeElement = expression.getCastType();
     if (castTypeElement == null) return null;
     PsiType castType = castTypeElement.getType();
 
@@ -306,6 +345,7 @@ public class HighlightUtil extends HighlightUtilBase {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
     }
 
+    
     return null;
   }
 
@@ -1358,9 +1398,11 @@ public class HighlightUtil extends HighlightUtilBase {
       if (PsiUtil.isLanguageLevel8OrHigher(expr)) {
         final PsiMethod method = PsiTreeUtil.getParentOfType(expr, PsiMethod.class);
         if (method != null && method.hasModifierProperty(PsiModifier.DEFAULT) && qualifier == null) {
-          //todo[r.sh] "Add qualifier" quick fix
-          String description = JavaErrorMessages.message("unqualified.super.disallowed");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parent).descriptionAndTooltip(description).create();
+          final String description = JavaErrorMessages.message("unqualified.super.disallowed");
+          final HighlightInfo highlightInfo =
+            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parent).descriptionAndTooltip(description).create();
+          QualifySuperArgumentFix.registerQuickFixAction((PsiSuperExpression)expr, highlightInfo);
+          return highlightInfo;
         }
       }
     }
@@ -1420,7 +1462,7 @@ public class HighlightUtil extends HighlightUtilBase {
     final PsiType superType = expr.getType();
     if (!(superType instanceof PsiClassType)) return false;
     final PsiClass superClass = ((PsiClassType)superType).resolve();
-    return superClass != null && aClass.equals(superClass);
+    return superClass != null && aClass.equals(superClass) && PsiUtil.getEnclosingStaticElement(expr, PsiTreeUtil.getParentOfType(expr, PsiClass.class)) == null;
   }
 
   @NotNull

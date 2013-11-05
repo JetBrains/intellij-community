@@ -39,7 +39,7 @@ import java.util.Set;
 /**
  * @author Kirill Likhodedov
  */
-public class VcsLogManager {
+public class VcsLogManager implements Disposable {
 
   public static final ExtensionPointName<VcsLogProvider> LOG_PROVIDER_EP = ExtensionPointName.create("com.intellij.logProvider");
 
@@ -61,6 +61,7 @@ public class VcsLogManager {
     myLogObjectsFactory = logObjectsFactory;
     mySettings = settings;
     myUiProperties = uiProperties;
+    Disposer.register(myProject, this);
   }
 
   @NotNull
@@ -71,6 +72,7 @@ public class VcsLogManager {
     VcsLogDataHolder.init(myProject, myLogObjectsFactory, logProviders, mySettings, new Consumer<VcsLogDataHolder>() {
       @Override
       public void consume(VcsLogDataHolder vcsLogDataHolder) {
+        Disposer.register(VcsLogManager.this, vcsLogDataHolder);
         VcsLogUI logUI = new VcsLogUI(vcsLogDataHolder, myProject, mySettings,
                                       new VcsLogColorManagerImpl(logProviders.keySet()), myUiProperties);
         myLogDataHolder = vcsLogDataHolder;
@@ -117,6 +119,10 @@ public class VcsLogManager {
 
   public VcsLogUI getLogUi() {
     return myUi;
+  }
+
+  @Override
+  public void dispose() {
   }
 
   private static class VcsLogContainer extends JPanel {

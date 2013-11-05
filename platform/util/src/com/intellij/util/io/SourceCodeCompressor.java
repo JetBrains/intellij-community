@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,11 +30,11 @@ import java.util.zip.Inflater;
 import java.util.zip.InflaterInputStream;
 
 public class SourceCodeCompressor {
-  private final static VaultOutputStream OUTPUT;
-  private final static byte[] PRESET_BUF;
-  private final static Deflater DEFLATER;
-  private final static Inflater INFLATER;
-  private final static byte[] INFLATE_BUFFER;
+  private static final VaultOutputStream OUTPUT;
+  private static final byte[] PRESET_BUF;
+  private static final Deflater DEFLATER;
+  private static final Inflater INFLATER;
+  private static final byte[] INFLATE_BUFFER;
 
   private SourceCodeCompressor() {
   }
@@ -133,6 +133,7 @@ public class SourceCodeCompressor {
       MIN_BUFFER = buf;
     }
 
+    @Override
     @SuppressWarnings({"NonSynchronizedMethodOverridesSynchronizedMethod"})
     public void reset() {
       count = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -630,7 +630,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     LOG.info("Loaded mappings:"+(System.currentTimeMillis() - started) + "ms, keys:"+infos.size());
     started = System.currentTimeMillis();
     long fragments = 0;
-    if (infos.size() > 0) {
+    if (!infos.isEmpty()) {
       try {
         fragments = myValueStorage.compactValues(infos, newStorage);
       } catch (Throwable t) {

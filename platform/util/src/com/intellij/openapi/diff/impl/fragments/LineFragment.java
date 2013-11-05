@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,12 +52,14 @@ public class LineFragment extends LineBlock implements Fragment {
   }
 
 
+  @Override
   public TextRange getRange(FragmentSide side) {
     if (side == FragmentSide.SIDE1) return myRange1;
     if (side == FragmentSide.SIDE2) return myRange2;
     throw new IllegalArgumentException(String.valueOf(side));
   }
 
+  @Override
   public Fragment shift(TextRange range1, TextRange range2, int startingLine1, int startingLine2) {
     return new LineFragment(startingLine1 + getStartingLine1(), getModifiedLines1(),
                             startingLine2 + getStartingLine2(), getModifiedLines2(),
@@ -121,6 +123,7 @@ public class LineFragment extends LineBlock implements Fragment {
     return new TextRange(newStart, newEnd);
   }
 
+  @Override
   public void highlight(FragmentHighlighter fragmentHighlighter) {
     fragmentHighlighter.highlightLine(this);
   }
@@ -133,6 +136,7 @@ public class LineFragment extends LineBlock implements Fragment {
     return getType() == null;
   }
 
+  @Override
   public Fragment getSubfragmentAt(int offset, FragmentSide side, Condition<Fragment> condition) {
     Fragment childFragment = myChildren.getFragmentAt(offset, side, condition);
     return childFragment != null ? childFragment : this;
@@ -165,7 +169,7 @@ public class LineFragment extends LineBlock implements Fragment {
     LOG.assertTrue(myChildren == FragmentList.EMPTY);
     ArrayList<Fragment> shifted =
         FragmentListImpl.shift(fragments, myRange1, myRange2, getStartingLine1(), getStartingLine2());
-    if (shifted.size() == 0) return;
+    if (shifted.isEmpty()) return;
     Fragment firstChild = shifted.get(0);
     if (shifted.size() == 1 && isSameRanges(firstChild)) {
       if (!(firstChild instanceof LineFragment)) return;

@@ -199,12 +199,12 @@ public class GitContentRevision implements ContentRevision {
   }
 
   public static ContentRevision createRevision(@NotNull final VirtualFile file, @Nullable final VcsRevisionNumber revisionNumber,
-                                               @NotNull final Project project) throws VcsException {
+                                               @NotNull final Project project) {
     return createRevision(file, revisionNumber, project, null);
   }
 
   public static ContentRevision createRevision(@NotNull final VirtualFile file, @Nullable final VcsRevisionNumber revisionNumber,
-                                               @NotNull final Project project, @Nullable final Charset charset) throws VcsException {
+                                               @NotNull final Project project, @Nullable final Charset charset) {
     final FilePathImpl filePath = new FilePathImpl(file);
     return createRevision(filePath, revisionNumber, project, charset);
   }

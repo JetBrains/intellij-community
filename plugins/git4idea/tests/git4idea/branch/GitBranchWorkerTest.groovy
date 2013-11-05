@@ -42,7 +42,7 @@ import org.junit.Test
 
 import java.util.regex.Matcher
 
-import static com.intellij.dvcs.test.Executor.*
+import static com.intellij.openapi.vcs.Executor.*
 import static git4idea.test.GitExecutor.cd
 import static git4idea.test.GitExecutor.git
 import static git4idea.test.GitScenarios.*

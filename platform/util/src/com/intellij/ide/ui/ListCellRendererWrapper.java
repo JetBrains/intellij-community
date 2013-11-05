@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
     myOriginalRenderer = listCellRenderer;
   }
 
+  @Override
   public final Component getListCellRendererComponent(final JList list,
                                                       final Object value,
                                                       final int index,
@@ -85,7 +86,7 @@ public abstract class ListCellRendererWrapper<T> implements ListCellRenderer {
    */
   public abstract void customize(final JList list, final T value, final int index, final boolean selected, final boolean hasFocus);
 
-  public final void setIcon(final @Nullable Icon icon) {
+  public final void setIcon(@Nullable final Icon icon) {
     myIcon = icon;
   }
 

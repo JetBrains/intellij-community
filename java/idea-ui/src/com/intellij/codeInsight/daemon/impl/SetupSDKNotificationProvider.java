@@ -49,6 +49,7 @@ public class SetupSDKNotificationProvider extends EditorNotifications.Provider<E
   public SetupSDKNotificationProvider(Project project, final EditorNotifications notifications) {
     myProject = project;
     myProject.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+      @Override
       public void rootsChanged(ModuleRootEvent event) {
         notifications.updateAllNotifications();
       }
@@ -81,7 +82,7 @@ public class SetupSDKNotificationProvider extends EditorNotifications.Provider<E
   }
 
   @NotNull
-  private static EditorNotificationPanel createPanel(final @NotNull Project project, final @NotNull PsiFile file) {
+  private static EditorNotificationPanel createPanel(@NotNull final Project project, @NotNull final PsiFile file) {
     final EditorNotificationPanel panel = new EditorNotificationPanel();
     panel.setText(ProjectBundle.message("project.sdk.not.defined"));
     panel.createActionLabel(ProjectBundle.message("project.sdk.setup"), new Runnable() {

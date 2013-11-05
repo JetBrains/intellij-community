@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ public abstract class ComboBoxCellEditor extends DefaultCellEditor {
     return result;
   }
 
+  @Override
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
     String currentValue = (String)value;
     final JComboBox component = (JComboBox)super.getTableCellEditorComponent(table, value, isSelected, row, column);

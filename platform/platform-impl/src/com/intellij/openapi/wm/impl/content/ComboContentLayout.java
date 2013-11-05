@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -109,7 +109,7 @@ class ComboContentLayout extends ContentLayout {
       g2d.dispose();
     }
     
-    g.drawImage(myImage, isIdVisible() ? r.x : r.x - 2, r.y, null);
+    UIUtil.drawImage(g, myImage, isIdVisible() ? r.x : r.x - 2, r.y, null);
   }
 
   @Override

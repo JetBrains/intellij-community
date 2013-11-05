@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 package com.intellij.util.containers;
 
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.HashSet;
 
 import static com.intellij.util.ObjectUtils.NULL;
 
@@ -43,6 +43,7 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     return myMap;
   }
   
+  @Override
   public V get(Object key) {
     final Map<K, V> map = getMap();
     V value = map.get(getKey(key));
@@ -57,21 +58,26 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     return key == null ? (K)NULL : key;
   }
 
+  @Override
   public final boolean containsKey(Object key) {
     return myMap != null && myMap.containsKey(getKey(key));
   }
 
+  @Override
   public V put(K key, V value) {
     V v = getMap().put(getKey(key), value == null ? (V)NULL : value);
     return v == NULL ? null : v;
   }
 
+  @Override
   public V remove(Object key) {
     if (myMap == null) return null;
     V v = myMap.remove(key);
     return v == NULL ? null : v;
   }
 
+  @NotNull
+  @Override
   public Set<K> keySet() {
     if (myMap == null) return Collections.emptySet();
     final Set<K> ts = myMap.keySet();
@@ -95,36 +101,45 @@ public abstract class FactoryMap<K,V> implements Map<K, V> {
     return values;
   }
 
+  @Override
   public void clear() {
     if (myMap != null) {
       myMap.clear();
     }
   }
 
+  @Override
   public int size() {
     if (myMap == null) return 0;
     return myMap.size();
   }
 
+  @Override
   public boolean isEmpty() {
     return myMap == null || myMap.isEmpty();
   }
 
+  @Override
   public boolean containsValue(final Object value) {
     return myMap != null && myMap.containsValue(value);
   }
 
-  public void putAll(final Map<? extends K, ? extends V> m) {
+  @Override
+  public void putAll(@NotNull final Map<? extends K, ? extends V> m) {
     for (Entry<? extends K, ? extends V> entry : m.entrySet()) {
       put(entry.getKey(), entry.getValue());
     }
   }
 
+  @NotNull
+  @Override
   public Collection<V> values() {
     if (myMap == null) return Collections.emptyList();
     return myMap.values();
   }
 
+  @NotNull
+  @Override
   public Set<Entry<K, V>> entrySet() {
     if (myMap == null) return Collections.emptySet();
     return myMap.entrySet();
