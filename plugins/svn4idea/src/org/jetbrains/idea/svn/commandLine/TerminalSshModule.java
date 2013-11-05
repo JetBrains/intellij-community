@@ -22,8 +22,10 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.util.WaitForProgressToShow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnBundle;
+import org.jetbrains.idea.svn.dialogs.ServerSSHDialog;
 import org.jetbrains.idea.svn.dialogs.SimpleCredentialsDialog;
 import org.tmatesoft.svn.core.SVNURL;
+import org.tmatesoft.svn.core.auth.ISVNAuthenticationProvider;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -38,8 +40,17 @@ public class TerminalSshModule extends LineCommandAdapter implements CommandRunt
   private static final Pattern PASSPHRASE_PROMPT = Pattern.compile("Enter passphrase for key \\'(.*)\\':\\s?");
   private static final Pattern PASSWORD_PROMPT = Pattern.compile("(.*)\\'s password:\\s?");
 
+  private static final Pattern UNKNOWN_HOST_MESSAGE =
+    Pattern.compile("The authenticity of host \\'((.*) \\((.*)\\))\\' can\\'t be established\\.\\s?");
+  private static final Pattern HOST_FINGERPRINT_MESSAGE = Pattern.compile("(\\w+) key fingerprint is (.*)\\.\\s?");
+  private static final Pattern ACCEPT_HOST_PROMPT = Pattern.compile("Are you sure you want to continue connecting \\(yes/no\\)\\?\\s?");
+
   @NotNull private final CommandRuntime myRuntime;
   @NotNull private final CommandExecutor myExecutor;
+
+  private String unknownHost;
+  private String fingerprintAlgorithm;
+  private String hostFingerprint;
 
   // TODO: Do not accept executor here and make it as command runtime module
   public TerminalSshModule(@NotNull CommandRuntime runtime, @NotNull CommandExecutor executor) {
@@ -53,7 +64,7 @@ public class TerminalSshModule extends LineCommandAdapter implements CommandRunt
 
   @Override
   public boolean handlePrompt(String line, Key outputType) {
-    return checkPassphrase(line) || checkPassword(line);
+    return checkPassphrase(line) || checkPassword(line) || checkUnknownHost(line);
   }
 
   private boolean checkPassphrase(@NotNull String line) {
@@ -66,6 +77,47 @@ public class TerminalSshModule extends LineCommandAdapter implements CommandRunt
     Matcher matcher = PASSWORD_PROMPT.matcher(line);
 
     return matcher.matches() && handleAuthPrompt(SimpleCredentialsDialog.Mode.SSH_PASSWORD, matcher.group(1));
+  }
+
+  private boolean checkUnknownHost(@NotNull String line) {
+    Matcher unknownHostMatcher = UNKNOWN_HOST_MESSAGE.matcher(line);
+    Matcher hostFingerPrintMatcher = HOST_FINGERPRINT_MESSAGE.matcher(line);
+    Matcher acceptHostMatcher = ACCEPT_HOST_PROMPT.matcher(line);
+
+    if (unknownHostMatcher.matches()) {
+      unknownHost = unknownHostMatcher.group(1);
+    }
+    else if (hostFingerPrintMatcher.matches()) {
+      fingerprintAlgorithm = hostFingerPrintMatcher.group(1);
+      hostFingerprint = hostFingerPrintMatcher.group(2);
+    }
+    else if (acceptHostMatcher.matches()) {
+      handleUnknownHost();
+    }
+
+    return unknownHostMatcher.matches() || hostFingerPrintMatcher.matches() || acceptHostMatcher.matches();
+  }
+
+  private void handleUnknownHost() {
+    final Project project = myRuntime.getVcs().getProject();
+    final Ref<Integer> answer = new Ref<Integer>();
+
+    Runnable command = new Runnable() {
+      @Override
+      public void run() {
+        final ServerSSHDialog dialog = new ServerSSHDialog(project, true, unknownHost, fingerprintAlgorithm, hostFingerprint);
+        dialog.show();
+        answer.set(dialog.getResult());
+      }
+    };
+
+    WaitForProgressToShow.runOrInvokeAndWaitAboveProgress(command);
+
+    unknownHost = null;
+    fingerprintAlgorithm = null;
+    hostFingerprint = null;
+
+    sendAnswer(answer.get() == ISVNAuthenticationProvider.REJECTED ? "no" : "yes");
   }
 
   private boolean handleAuthPrompt(@NotNull final SimpleCredentialsDialog.Mode mode, @NotNull final String key) {
