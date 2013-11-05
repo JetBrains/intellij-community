@@ -1,4 +1,4 @@
-package com.siyeh.igtest.migration.unnecessary_unboxing;
+package com.siyeh.igtest.migration.unnecessary_superfluous_unboxing;
 
 
 
@@ -35,8 +35,7 @@ public class UnnecessaryUnboxing {
         new UnnecessaryUnboxing(l.longValue());
     }
 
-    void casting(Byte b) {
-        System.out.println((byte)b.byteValue());
+    Integer boxcutter(Integer i) {
+      return i.intValue();
     }
-
 }
