@@ -165,7 +165,7 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
   }
 
   private static boolean isIntelliJLafEnabled() {
-    return !Registry.is("idea.4.5.laf.enabled") && SystemInfo.isWindows;
+    return !Registry.is("idea.4.5.laf.enabled");
   }
 
   /**
