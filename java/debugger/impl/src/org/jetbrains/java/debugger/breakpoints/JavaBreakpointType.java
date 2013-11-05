@@ -57,7 +57,8 @@ public class JavaBreakpointType extends XLineBreakpointTypeBase {
 
   @Contract("null -> false")
   public static boolean doCanPutAt(@Nullable PsiFile psiFile) {
-    if (psiFile == null) {
+    // JSPX supports jvm debugging, but not in XHTML files
+    if (psiFile == null || psiFile.getVirtualFile().getFileType() == StdFileTypes.XHTML) {
       return false;
     }
 
