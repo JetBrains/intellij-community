@@ -42,6 +42,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -81,13 +82,43 @@ public class GradleExecutionHelper {
     return result;
   }
 
+  @SuppressWarnings({"MethodMayBeStatic", "UnusedDeclaration"})
+  @NotNull
+  public BuildLauncher getBuildLauncher(@NotNull final ExternalSystemTaskId id,
+                                        @NotNull ProjectConnection connection,
+                                        @Nullable GradleExecutionSettings settings,
+                                        @NotNull ExternalSystemTaskNotificationListener listener,
+                                        @Nullable final String vmOptions,
+                                        @NotNull final OutputStream standardOutput,
+                                        @NotNull final OutputStream standardError)
+  {
+    BuildLauncher result = connection.newBuild();
+    List<String> extraJvmArgs = vmOptions == null ? ContainerUtil.<String>emptyList() : ContainerUtil.newArrayList(vmOptions.trim());
+    prepare(result, id, settings, listener, extraJvmArgs, connection, standardOutput, standardError);
+    return result;
+  }
+
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void prepare(@NotNull LongRunningOperation operation,
                              @NotNull final ExternalSystemTaskId id,
                              @Nullable GradleExecutionSettings settings,
                              @NotNull final ExternalSystemTaskNotificationListener listener,
                              @NotNull List<String> extraJvmArgs,
-                             @NotNull ProjectConnection connection)
+                             @NotNull ProjectConnection connection) {
+    prepare(operation, id, settings, listener, extraJvmArgs, connection,
+            new OutputWrapper(listener, id, true), new OutputWrapper(listener, id, false));
+  }
+
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  public static void prepare(@NotNull LongRunningOperation operation,
+                             @NotNull final ExternalSystemTaskId id,
+                             @Nullable GradleExecutionSettings settings,
+                             @NotNull final ExternalSystemTaskNotificationListener listener,
+                             @NotNull List<String> extraJvmArgs,
+                             @NotNull ProjectConnection connection,
+                             @NotNull final OutputStream standardOutput,
+                             @NotNull final OutputStream standardError)
   {
     if (settings == null) {
       return;
@@ -125,8 +156,8 @@ public class GradleExecutionHelper {
         listener.onStatusChange(new ExternalSystemTaskNotificationEvent(id, event.getDescription()));
       }
     });
-    operation.setStandardOutput(new OutputWrapper(listener, id, true));
-    operation.setStandardError(new OutputWrapper(listener, id, false));
+    operation.setStandardOutput(standardOutput);
+    operation.setStandardError(standardError);
   }
 
   public <T> T execute(@NotNull String projectPath, @Nullable GradleExecutionSettings settings, @NotNull Function<ProjectConnection, T> f) {

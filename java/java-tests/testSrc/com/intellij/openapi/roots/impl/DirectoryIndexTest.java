@@ -508,10 +508,11 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
     checkInfo(myModule1Dir, myModule, true, false, "", null, myModule);
     checkInfo(mySrcDir1, myModule, true, false, "", JavaSourceRootType.SOURCE, myModule);
-    
-    //todo this looks strange and inconsistent: the same library classes and sources have different order entries
+
     checkInfo(myLibDir, myModule, true, false, "lib", null, myModule);
     checkInfo(myLibClsDir, myModule, true, false, "", null, myModule2, myModule3);
+
+    //myModule is included into order entries instead of myModule2 because classes root for libraries dominates on source roots
     checkInfo(myLibSrcDir, myModule, true, true, "", null, myModule, myModule3);
     
     checkInfo(myResDir, myModule, true, false, "", JavaResourceRootType.RESOURCE, myModule);

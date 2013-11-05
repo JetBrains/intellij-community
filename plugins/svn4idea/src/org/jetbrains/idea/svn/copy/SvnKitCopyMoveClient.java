@@ -45,7 +45,7 @@ public class SvnKitCopyMoveClient extends BaseSvnClient implements CopyMoveClien
       throw new IllegalArgumentException("Only urls are supported as destination " + destination);
     }
 
-    final SVNCopySource copySource = new SVNCopySource(source.getPegRevision(), revision, source.getURL());
+    final SVNCopySource copySource = createCopySource(source, revision);
     SVNCopyClient client = myVcs.createCopyClient();
     client.setEventHandler(handler);
 
@@ -58,5 +58,12 @@ public class SvnKitCopyMoveClient extends BaseSvnClient implements CopyMoveClien
     }
 
     return info != null ? info.getNewRevision() : INVALID_REVISION;
+  }
+
+  @NotNull
+  private static SVNCopySource createCopySource(@NotNull SvnTarget source, @Nullable SVNRevision revision) {
+    return source.isFile()
+           ? new SVNCopySource(source.getPegRevision(), revision, source.getFile())
+           : new SVNCopySource(source.getPegRevision(), revision, source.getURL());
   }
 }

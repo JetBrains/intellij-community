@@ -53,6 +53,10 @@ public abstract class AbstractPaddingCellRender implements TableCellRenderer {
 
     public Component getTableCellRendererComponent(JTable table, Object value,
                                                    boolean isSelected, boolean hasFocus, int row, int column) {
+      if (value == null) {
+        return this;
+      }
+
       myValue = value;
       super.getTableCellRendererComponent(table, getCellText(value), isSelected, hasFocus, row, column);
       setBackground(isSelected ? table.getSelectionBackground() : JBColor.WHITE);

@@ -21,6 +21,12 @@ public final class LocalFileFinder {
   }
 
   @Nullable
+  /**
+   Behavior is not predictable and result is not guaranteed:
+   1) result of check cached, but cache entry invalidated on timeout (5 min after write), not on actual change of drive status.
+   2) even if drive exists, it could be not used due to 10 ms threshold.
+   Method is not generic and is not suitable for all.
+   */
   public static VirtualFile findFile(@NotNull String path) {
     if (!SystemInfo.isWindows || windowsDriveExists(path)) {
       return LocalFileSystem.getInstance().findFileByPath(path);

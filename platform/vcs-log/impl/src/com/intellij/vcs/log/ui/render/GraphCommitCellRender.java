@@ -71,7 +71,7 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
   protected String getCellText(@Nullable Object value) {
     GraphCommitCell cell = (GraphCommitCell)value;
     if (cell == null) {
-      return "!!! No cell for value: " + value;
+      return "";
     }
     else {
       return cell.getText();
