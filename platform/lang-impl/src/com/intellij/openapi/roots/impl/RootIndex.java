@@ -373,7 +373,7 @@ class RootIndex {
     if (StringUtil.isNotEmpty(packageName)) {
       String parentPackage = StringUtil.getPackageName(packageName);
       String shortName = StringUtil.getShortName(packageName);
-      if (StringUtil.isNotEmpty(parentPackage) || parentPackage.equals(shortName)) {
+      if (StringUtil.isNotEmpty(parentPackage) || packageName.equals(shortName)) {
         for (VirtualFile parentDir : getDirectoriesByPackageName(parentPackage, includeLibrarySources)) {
           VirtualFile child = parentDir.findChild(shortName);
           if (isValidPackageDirectory(includeLibrarySources, child)) {
