@@ -42,12 +42,14 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.PairFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
+import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.util.JpsPathUtil;
@@ -306,10 +308,10 @@ public class HotSwapUIImpl extends HotSwapUI implements ProjectComponent {
 
     private final AtomicReference<Map<String, List<String>>>
       myGeneratedPaths = new AtomicReference<Map<String, List<String>>>(new HashMap<String, List<String>>());
-    private final Set<File> myOutputRoots;
+    private final THashSet<File> myOutputRoots;
 
     private MyCompilationStatusListener() {
-      myOutputRoots = new HashSet<File>();
+      myOutputRoots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
       for (final String path : CompilerPathsEx.getOutputPaths(ModuleManager.getInstance(myProject).getModules())) {
         myOutputRoots.add(new File(path));
       }

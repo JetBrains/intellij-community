@@ -323,6 +323,9 @@ class RootIndex {
       }
       DirectoryInfo info = myInfoCache.get(root);
       if (info != null) {
+        if (dir != root) {
+          myInfoCache.put(dir, info);
+        }
         return info == NULL_INFO ? null : info;
       }
       
@@ -370,15 +373,13 @@ class RootIndex {
       }
     }
 
-    if (StringUtil.isNotEmpty(packageName)) {
+    if (StringUtil.isNotEmpty(packageName) && !packageName.startsWith(".")) {
       String parentPackage = StringUtil.getPackageName(packageName);
       String shortName = StringUtil.getShortName(packageName);
-      if (StringUtil.isNotEmpty(parentPackage) || parentPackage.equals(shortName)) {
-        for (VirtualFile parentDir : getDirectoriesByPackageName(parentPackage, includeLibrarySources)) {
-          VirtualFile child = parentDir.findChild(shortName);
-          if (isValidPackageDirectory(includeLibrarySources, child)) {
-            result.add(child);
-          }
+      for (VirtualFile parentDir : getDirectoriesByPackageName(parentPackage, includeLibrarySources)) {
+        VirtualFile child = parentDir.findChild(shortName);
+        if (isValidPackageDirectory(includeLibrarySources, child) && child.isDirectory()) {
+          result.add(child);
         }
       }
     }
@@ -390,7 +391,7 @@ class RootIndex {
   }
 
   private boolean isValidPackageDirectory(boolean includeLibrarySources, @Nullable VirtualFile file) {
-    if (file != null && file.isDirectory()) {
+    if (file != null) {
       DirectoryInfo info = getInfoForDirectory(file);
       if (info != null) {
         if (includeLibrarySources || !info.isInLibrarySource() || info.isInModuleSource() || info.hasLibraryClassRoot()) {
