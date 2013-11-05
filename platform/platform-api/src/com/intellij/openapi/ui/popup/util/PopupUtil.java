@@ -201,7 +201,7 @@ public class PopupUtil {
 
   public static boolean isComboPopupKeyEvent(@NotNull ComponentEvent event, @NotNull JComboBox comboBox) {
     final Component component = event.getComponent();
-    if(!comboBox.isPopupVisible()) return false;
+    if(!comboBox.isPopupVisible() || component == null) return false;
     ComboPopup popup = ReflectionUtil.getField(comboBox.getUI().getClass(), comboBox.getUI(), ComboPopup.class, "popup");
     return popup != null && SwingUtilities.isDescendingFrom(popup.getList(), component);
   }
