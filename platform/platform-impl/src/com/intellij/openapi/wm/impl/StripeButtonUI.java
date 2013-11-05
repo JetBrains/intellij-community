@@ -110,6 +110,8 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
     final boolean vertical = anchor == ToolWindowAnchor.LEFT || anchor == ToolWindowAnchor.RIGHT;
 
     if (ApplicationManager.getApplication().isInternal()) {
+      ourIconRect.x-=2;
+      ourTextRect.x-=2;
       if (anchor == ToolWindowAnchor.LEFT) g2.translate(-1, 0);
       if (anchor.isHorizontal()) g2.translate(0, -1);
       paintNewDecoration(g2, button, model, vertical);
