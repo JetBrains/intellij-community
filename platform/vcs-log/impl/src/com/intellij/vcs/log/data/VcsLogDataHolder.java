@@ -469,6 +469,11 @@ public class VcsLogDataHolder implements Disposable {
     return myLogProviders.size() > 1;
   }
 
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
   private static class RecentCommitsInfo {
     List<TimedVcsCommit> firstBlockCommits;
     Collection<VcsRef> newRefs;

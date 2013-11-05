@@ -37,6 +37,8 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.util.*;
 import java.util.List;
 
@@ -83,9 +85,9 @@ public class MavenArchetypesPanel implements Disposable {
     ((CardLayout)myArchetypesPanel.getLayout()).show(myArchetypesPanel, "archetypes");
 
 
-    myUseArchetypeCheckBox.addActionListener(new ActionListener() {
+    myUseArchetypeCheckBox.addItemListener(new ItemListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
+      public void itemStateChanged(ItemEvent e) {
         updateComponents();
         archetypeMayBeChanged();
       }

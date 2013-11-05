@@ -13,33 +13,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.siyeh.ig;
+package com.siyeh.ig.maturity;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
-import com.siyeh.ig.maturity.ThrowablePrintStackTraceInspection;
+import com.siyeh.ig.LightInspectionTestCase;
 
 /**
  * @author Bas Leijdekkers
  */
-public class ThrowablePrintStackTraceInspectionTest extends LightInspectionTestCase {
+public class SystemOutErrInspectionTest extends LightInspectionTestCase {
 
   public void testSimple() {
-    doStatementTest("new Throwable()./*Call to 'printStackTrace()' should probably be replaced with more robust logging*/printStackTrace/**/();");
+    doStatementTest("/*Uses of 'System.out' should probably be replaced with more robust logging*/System.out/**/.println(\"debugging\");");
   }
 
-  public void testInTestCode() {
+  public void testInTest() {
     addEnvironmentClass("package org.junit;" +
                         "@Retention(RetentionPolicy.RUNTIME) " +
                         "@Target({ElementType.METHOD}) " +
                         "public @interface Test {}");
     doMemberTest("@org.junit.Test public void testSomething() {" +
-                 "  new RuntimeException().printStackTrace();" +
+                 "  System.out.println(\"debugger\");" +
+                 "}");
+  }
+
+  public void testMultiple() {
+    doMemberTest("public void foo() {" +
+                 "  /*Uses of 'System.out' should probably be replaced with more robust logging*/System.out/**/.println(0);" +
+                 "  /*Uses of 'System.err' should probably be replaced with more robust logging*/System.err/**/.println(0);" +
+                 "  final java.io.PrintStream out = /*Uses of 'System.out' should probably be replaced with more robust logging*/System.out/**/;" +
+                 "  final java.io.PrintStream err = /*Uses of 'System.err' should probably be replaced with more robust logging*/System.err/**/;" +
                  "}");
   }
 
   @Override
   protected InspectionProfileEntry getInspection() {
-    final ThrowablePrintStackTraceInspection inspection = new ThrowablePrintStackTraceInspection();
+    final SystemOutErrInspection inspection = new SystemOutErrInspection();
     inspection.ignoreInTestCode = true;
     return inspection;
   }

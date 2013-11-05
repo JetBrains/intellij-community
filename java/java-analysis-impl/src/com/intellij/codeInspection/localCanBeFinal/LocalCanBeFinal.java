@@ -221,12 +221,14 @@ public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
 
     if (body.getParent() instanceof PsiMethod && isReportParameters()) {
       final PsiMethod method = (PsiMethod)body.getParent();
-      Collections.addAll(result, method.getParameterList().getParameters());
+      if (!(method instanceof SyntheticElement)) { // e.g. JspHolderMethod
+        Collections.addAll(result, method.getParameterList().getParameters());
+      }
     }
 
     for (Iterator<PsiVariable> iterator = result.iterator(); iterator.hasNext(); ) {
       final PsiVariable variable = iterator.next();
-      if (shouldBeIgnored(variable) || !variable.isPhysical()) {
+      if (shouldBeIgnored(variable)) {
         iterator.remove();
       }
     }

@@ -60,8 +60,11 @@ public class VcsRootErrorsFinder {
   private Collection<VcsRootError> findExtraMappings(@NotNull List<VcsDirectoryMapping> mappings, boolean isEmptyVcsRoots) {
     Collection<VcsRootError> errors = new ArrayList<VcsRootError>();
     for (VcsDirectoryMapping mapping : mappings) {
+      if (!hasVcsChecker(mapping.getVcs())) {
+        continue;
+      }
       if (mapping.isDefaultMapping()) {
-        if (isEmptyVcsRoots && !StringUtil.isEmptyOrSpaces(mapping.getVcs())) {
+        if (isEmptyVcsRoots) {
           errors.add(new VcsRootError(VcsRootError.Type.EXTRA_MAPPING, VcsDirectoryMapping.PROJECT_CONSTANT, mapping.getVcs()));
         }
       }
@@ -73,6 +76,19 @@ public class VcsRootErrorsFinder {
       }
     }
     return errors;
+  }
+
+  private static boolean hasVcsChecker(String vcs) {
+    if (StringUtil.isEmptyOrSpaces(vcs)) {
+      return false;
+    }
+    VcsRootChecker[] checkers = Extensions.getExtensions(VcsRootChecker.EXTENSION_POINT_NAME);
+    for (VcsRootChecker checker : checkers) {
+      if (vcs.equalsIgnoreCase(checker.getSupportedVcs().getName())) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull

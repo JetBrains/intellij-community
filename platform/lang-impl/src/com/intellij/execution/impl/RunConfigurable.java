@@ -395,6 +395,9 @@ class RunConfigurable extends BaseConfigurable {
     final JBScrollPane scrollPane = new JBScrollPane(configurable.createComponent());
     scrollPane.setBorder(null);
     myRightPanel.add(scrollPane, BorderLayout.CENTER);
+    if (configurable instanceof SingleConfigurationConfigurable) {
+      myRightPanel.add(((SingleConfigurationConfigurable)configurable).getValidationComponent(), BorderLayout.SOUTH);
+    }
 
     if (configurable instanceof SingleConfigurationConfigurable) {
       RunManagerEx.getInstanceEx(myProject)

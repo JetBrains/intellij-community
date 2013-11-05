@@ -1398,9 +1398,11 @@ public class HighlightUtil extends HighlightUtilBase {
       if (PsiUtil.isLanguageLevel8OrHigher(expr)) {
         final PsiMethod method = PsiTreeUtil.getParentOfType(expr, PsiMethod.class);
         if (method != null && method.hasModifierProperty(PsiModifier.DEFAULT) && qualifier == null) {
-          //todo[r.sh] "Add qualifier" quick fix
-          String description = JavaErrorMessages.message("unqualified.super.disallowed");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parent).descriptionAndTooltip(description).create();
+          final String description = JavaErrorMessages.message("unqualified.super.disallowed");
+          final HighlightInfo highlightInfo =
+            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parent).descriptionAndTooltip(description).create();
+          QualifySuperArgumentFix.registerQuickFixAction((PsiSuperExpression)expr, highlightInfo);
+          return highlightInfo;
         }
       }
     }
@@ -1460,7 +1462,7 @@ public class HighlightUtil extends HighlightUtilBase {
     final PsiType superType = expr.getType();
     if (!(superType instanceof PsiClassType)) return false;
     final PsiClass superClass = ((PsiClassType)superType).resolve();
-    return superClass != null && aClass.equals(superClass);
+    return superClass != null && aClass.equals(superClass) && PsiUtil.getEnclosingStaticElement(expr, PsiTreeUtil.getParentOfType(expr, PsiClass.class)) == null;
   }
 
   @NotNull

@@ -106,7 +106,7 @@ public class RegistryValue {
   }
 
   public boolean isChangedFromDefault() {
-    return !getBundleValue(myKey, true).equals(asString());
+    return !asString().equals(getBundleValue(myKey, false));
   }
 
   private String get(String key, String defaultValue, boolean isValue) {

@@ -35,6 +35,7 @@ public class NewProjectWizard extends AbstractProjectWizard {
     super("New Project", project, defaultPath);
 //    addStep();
 //    addStep(new ProjectSummaryStep(myWizardContext));
+    myWizardContext.setNewWizard(true);
     mySequence = new StepSequence();
     mySequence.addCommonStep(new ProjectTypeStep(myWizardContext, this, modulesProvider));
     mySequence.addCommonFinishingStep(new ProjectSettingsStep(myWizardContext), null);

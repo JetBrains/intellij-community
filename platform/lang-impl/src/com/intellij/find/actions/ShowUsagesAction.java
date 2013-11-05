@@ -533,7 +533,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
     dialog.show();
     if (dialog.isOK()) {
       dialog.calcFindUsagesOptions();
-      showElementUsages(handler, editor, popupPosition, maxUsages, getDefaultOptions(handler));
+      FindUsagesOptions options = handler.getFindUsagesOptions(DataManager.getInstance().getDataContext());
+      showElementUsages(handler, editor, popupPosition, maxUsages, options);
     }
   }
 
@@ -588,7 +589,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
           if (value instanceof UsageNode) {
             Usage usage = ((UsageNode)value).getUsage();
             if (usage == MORE_USAGES_SEPARATOR) {
-              appendMoreUsages(editor, popupPosition, handler, maxUsages);
+              appendMoreUsages(editor, popupPosition, handler, maxUsages, options);
               return;
             }
             navigateAndHint(usage, null, handler, popupPosition, maxUsages, options);
@@ -990,8 +991,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction {
 
   }
 
-  private void appendMoreUsages(Editor editor, @NotNull RelativePoint popupPosition, @NotNull FindUsagesHandler handler, int maxUsages) {
-    showElementUsages(handler, editor, popupPosition, maxUsages+USAGES_PAGE_SIZE, getDefaultOptions(handler));
+  private void appendMoreUsages(Editor editor,
+                                @NotNull RelativePoint popupPosition,
+                                @NotNull FindUsagesHandler handler,
+                                int maxUsages, final FindUsagesOptions options) {
+    showElementUsages(handler, editor, popupPosition, maxUsages+USAGES_PAGE_SIZE, options);
   }
 
   private static void addUsageNodes(@NotNull GroupNode root, @NotNull final UsageViewImpl usageView, @NotNull List<UsageNode> outNodes) {

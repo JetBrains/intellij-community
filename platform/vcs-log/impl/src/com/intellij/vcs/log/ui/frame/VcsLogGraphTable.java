@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.issueLinks.TableLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
@@ -29,7 +30,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.*;
-import javax.swing.table.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseAdapter;
@@ -59,7 +63,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
 
     setDefaultRenderer(VirtualFile.class, new RootCellRenderer(myUI));
     setDefaultRenderer(GraphCommitCell.class, new GraphCommitCellRender(myGraphPainter, logDataHolder, myUI.getColorManager()));
-    setDefaultRenderer(CommitCell.class, new CommitCellRender(myUI.getColorManager()));
+    setDefaultRenderer(CommitCell.class, new CommitCellRender(myUI.getColorManager(), logDataHolder.getProject()));
     setDefaultRenderer(String.class, new StringCellRenderer());
 
     setRowHeight(HEIGHT_CELL);
@@ -81,6 +85,7 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
     addMouseListener(mouseAdapter);
 
     PopupHandler.installPopupHandler(this, VcsLogUI.POPUP_ACTION_GROUP, VcsLogUI.VCS_LOG_TABLE_PLACE);
+    new TableLinkMouseListener().installOn(this);
 
     getColumnModel().addColumnModelListener(new TableColumnModelListener() {
       @Override
@@ -319,7 +324,6 @@ public class VcsLogGraphTable extends JBTable implements TypeSafeDataProvider, C
         myColor = myUi.getColorManager().getRootColor((VirtualFile)value);
       }
       else {
-        LOG.error("Incorrect value " + value + " specified in row #" + row + ", column #");
         myColor = UIUtil.getTableBackground(isSelected);
       }
       return this;

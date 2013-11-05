@@ -28,6 +28,8 @@ import com.intellij.codeInsight.template.emmet.tokens.TextToken;
 import com.intellij.codeInsight.template.emmet.tokens.ZenCodingToken;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
@@ -37,21 +39,23 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.LightColors;
-import com.intellij.ui.TextFieldWithHistory;
-import com.intellij.ui.TextFieldWithStoredHistory;
+import com.intellij.ui.*;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.DocumentEvent;
+import java.awt.*;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -64,6 +68,7 @@ import java.util.List;
 public class ZenCodingTemplate implements CustomLiveTemplate {
   public static final char MARKER = '\0';
   private static final String EMMET_RECENT_WRAP_ABBREVIATIONS_KEY = "emmet.recent.wrap.abbreviations";
+  private static final String EMMET_LAST_WRAP_ABBREVIATIONS_KEY = "emmet.last.wrap.abbreviations";
 
   @Nullable
   public static ZenCodingGenerator findApplicableDefaultGenerator(@NotNull PsiElement context, boolean wrapping) {
@@ -278,12 +283,14 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
 
   public void wrap(@NotNull final String selection, @NotNull final CustomTemplateCallback callback) {
     final TextFieldWithStoredHistory field = new TextFieldWithStoredHistory(EMMET_RECENT_WRAP_ABBREVIATIONS_KEY);
+    final Dimension fieldPreferredSize = field.getPreferredSize();
+    field.setPreferredSize(new Dimension(Math.max(160, fieldPreferredSize.width), fieldPreferredSize.height));
     field.setHistorySize(10);
     final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    final Balloon balloon = popupFactory.createDialogBalloonBuilder(field, XmlBundle.message("emmet.title"))
+    final BalloonImpl balloon = (BalloonImpl)popupFactory.createDialogBalloonBuilder(field, XmlBundle.message("emmet.title"))
       .setCloseButtonEnabled(false)
+      .setBlockClicksThroughBalloon(true)
       .setAnimationCycle(0)
-      .setHideOnClickOutside(true)
       .setHideOnKeyOutside(true)
       .createBalloon();
     
@@ -302,6 +309,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
               final String abbreviation = field.getText();
               if (validateTemplateKey(field, balloon, abbreviation, callback)) {
                 doWrap(selection, abbreviation, callback);
+                PropertiesComponent.getInstance().setValue(EMMET_LAST_WRAP_ABBREVIATIONS_KEY, abbreviation);
                 field.addCurrentTextToHistory();
                 balloon.hide(true);
               }
@@ -314,13 +322,35 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
       }
     });
 
+    IdeEventQueue.getInstance().addDispatcher(new IdeEventQueue.EventDispatcher() {
+      @Override
+      public boolean dispatch(AWTEvent e) {
+        if (e instanceof MouseEvent) {
+          if (e.getID() == MouseEvent.MOUSE_PRESSED) {
+            if (!balloon.isInsideBalloon((MouseEvent)e) && !PopupUtil.isComboPopupKeyEvent((ComponentEvent)e, field)) {
+              balloon.hide();
+            }
+          }
+        }
+        return false;
+      }
+    }, balloon);
+
     balloon.addListener(new JBPopupListener.Adapter() {
       @Override
       public void beforeShown(LightweightWindowEvent event) {
-        field.requestFocus();
+        field.setText(PropertiesComponent.getInstance().getValue(EMMET_LAST_WRAP_ABBREVIATIONS_KEY, ""));
       }
     });
     balloon.show(popupFactory.guessBestPopupLocation(callback.getEditor()), Balloon.Position.below);
+
+    final IdeFocusManager focusManager = IdeFocusManager.getInstance(callback.getProject());
+    focusManager.doWhenFocusSettlesDown(new Runnable() {
+      @Override
+      public void run() {
+        focusManager.requestFocus(field, true);
+      }
+    });
   }
 
   private static boolean validateTemplateKey(@NotNull TextFieldWithHistory field,
@@ -329,7 +359,7 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
                                              @NotNull CustomTemplateCallback callback) {
     final boolean correct = checkTemplateKey(abbreviation, callback);
     field.getTextEditor().setBackground(correct ? LightColors.SLIGHTLY_GREEN : LightColors.RED);
-    if (balloon != null && balloon.isDisposed()) {
+    if (balloon != null && !balloon.isDisposed()) {
       balloon.revalidate();
     }
     return correct;

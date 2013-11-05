@@ -37,6 +37,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.util.Processor;
@@ -78,6 +79,8 @@ public class ShowByteCodeAction extends AnAction {
 
     final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
     if (virtualFile == null) return;
+
+    final RelativePoint bestPopupLocation = JBPopupFactory.getInstance().guessBestPopupLocation(dataContext);
 
     final SmartPsiElementPointer element = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiElement);
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Searching byte code...") {
@@ -145,7 +148,11 @@ public class ShowByteCodeAction extends AnAction {
             .createPopup();
           Disposer.register(popup, component);
 
-          PopupPositionManager.positionPopupInBestPosition(popup, editor, dataContext);
+          if (editor != null) {
+            popup.showInBestPositionFor(editor);
+          } else {
+            popup.show(bestPopupLocation);
+          }
         }
       }
     });

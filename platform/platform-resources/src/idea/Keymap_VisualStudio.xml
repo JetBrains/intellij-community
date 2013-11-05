@@ -164,7 +164,6 @@
     </action>
     <action id="QuickJavaDoc">
       <keyboard-shortcut first-keystroke="control Q"/>
-      <keyboard-shortcut first-keystroke="shift F1"/>
     </action>
     <action id="ShowBookmarks">
       <keyboard-shortcut first-keystroke="alt F2"/>

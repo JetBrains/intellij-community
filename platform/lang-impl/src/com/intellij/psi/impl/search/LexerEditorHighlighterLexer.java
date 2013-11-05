@@ -53,7 +53,7 @@ public class LexerEditorHighlighterLexer extends LexerBase {
   public static Lexer getLexerBasedOnLexerHighlighter(CharSequence text, VirtualFile virtualFile, Project project) {
     EditorHighlighter highlighter = null;
 
-    PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
+    PsiFile psiFile = virtualFile != null ? PsiManager.getInstance(project).findFile(virtualFile) : null;
     final Document document = psiFile != null ? PsiDocumentManager.getInstance(project).getDocument(psiFile) : null;
     final EditorHighlighter cachedEditorHighlighter;
     boolean alreadyInitializedHighlighter = false;

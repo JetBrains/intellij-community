@@ -220,10 +220,15 @@ public class DirectoryIndexTest extends IdeaTestCase {
   public void testDirsByPackageName() {
     checkPackage("", true, myFileLibSrc, myFileLibCls, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myLibSrcDir, myLibClsDir, mySrcDir2);
     checkPackage("", false, myFileLibCls, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myLibClsDir, mySrcDir2);
+    
     checkPackage("pack1", true, myPack1Dir);
     checkPackage("pack1", false, myPack1Dir);
+    
     checkPackage("pack2", true, myPack2Dir);
     checkPackage("pack2", false, myPack2Dir);
+    
+    checkPackage(".pack2", false);
+    checkPackage(".pack2", true);
   }
 
   public void testCreateDir() throws Exception {
@@ -503,16 +508,17 @@ public class DirectoryIndexTest extends IdeaTestCase {
 
     checkInfo(myModule1Dir, myModule, true, false, "", null, myModule);
     checkInfo(mySrcDir1, myModule, true, false, "", JavaSourceRootType.SOURCE, myModule);
-    
-    //todo this looks strange and inconsistent: the same library classes and sources have different order entries
+
     checkInfo(myLibDir, myModule, true, false, "lib", null, myModule);
     checkInfo(myLibClsDir, myModule, true, false, "", null, myModule2, myModule3);
+
+    //myModule is included into order entries instead of myModule2 because classes root for libraries dominates on source roots
     checkInfo(myLibSrcDir, myModule, true, true, "", null, myModule, myModule3);
     
     checkInfo(myResDir, myModule, true, false, "", JavaResourceRootType.RESOURCE, myModule);
 
-    //todo uncomment or replace with another assertion about library-excluded dir inside module content 
-    //checkInfoNull(myExcludedLibSrcDir);
+    checkInfo(myExcludedLibSrcDir, null, true, false, "lib.src.exc", null, myModule3, myModule);
+    checkInfo(myExcludedLibClsDir, null, true, false, "lib.cls.exc", null, myModule3);
   }
 
 
@@ -547,10 +553,10 @@ public class DirectoryIndexTest extends IdeaTestCase {
       assertEquals(packageName, fileIndex.getPackageNameByDirectory(dir));
     }
 
-    assertEquals(modulesOfOrderEntries.length, info.getOrderEntries().length);
+    assertEquals(Arrays.toString(info.getOrderEntries()), modulesOfOrderEntries.length, info.getOrderEntries().length);
     for (Module aModule : modulesOfOrderEntries) {
       OrderEntry found = info.findOrderEntryWithOwnerModule(aModule);
-      assertNotNull(found);
+      assertNotNull("not found: " + aModule, found);
     }
   }
 

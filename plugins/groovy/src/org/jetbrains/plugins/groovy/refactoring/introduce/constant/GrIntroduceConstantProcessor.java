@@ -73,7 +73,7 @@ public class GrIntroduceConstantProcessor {
     final GrField field = (GrField)declaration.getVariables()[0];
 
     if (context.getVar() != null) {
-      deleteLocalVar(context);
+      deleteLocalVar(context.getVar());
     }
 
     if (context.getStringPart() != null) {

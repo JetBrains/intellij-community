@@ -45,6 +45,7 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
 
   public GraphCommitCellRender(@NotNull GraphCellPainter graphPainter, @NotNull VcsLogDataHolder logDataHolder,
                                @NotNull VcsLogColorManager colorManager) {
+    super(logDataHolder.getProject());
     this.graphPainter = graphPainter;
     myDataHolder = logDataHolder;
     refPainter = new RefPainter(colorManager, false);
@@ -71,7 +72,7 @@ public class GraphCommitCellRender extends AbstractPaddingCellRender {
   protected String getCellText(@Nullable Object value) {
     GraphCommitCell cell = (GraphCommitCell)value;
     if (cell == null) {
-      return "!!! No cell for value: " + value;
+      return "";
     }
     else {
       return cell.getText();

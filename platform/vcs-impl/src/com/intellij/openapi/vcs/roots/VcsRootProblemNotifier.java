@@ -131,8 +131,14 @@ public class VcsRootProblemNotifier {
       if (invalidRoots.size() == 1) {
         VcsRootError rootError = invalidRoots.iterator().next();
         description
-          .append("The directory " + rootToDisplayableString.fun(rootError) + " is registered as a " + rootError.getVcsKey() + " root, " +
-                  "but no " + rootError.getVcsKey() + " repositories were found there.");
+          .append("The directory " +
+                  rootToDisplayableString.fun(rootError) +
+                  " is registered as a " +
+                  rootError.getVcsKey().getName() +
+                  " root, " +
+                  "but no " +
+                  rootError.getVcsKey().getName() +
+                  " repositories were found there.");
       }
       else {
         description.append("The following directories are registered as Vcs roots, but they are not: <br/>" +
@@ -145,7 +151,11 @@ public class VcsRootProblemNotifier {
       if (unregisteredRoots.size() == 1) {
         VcsRootError unregisteredRoot = unregisteredRoots.iterator().next();
         description
-          .append("The directory " + rootToDisplayableString.fun(unregisteredRoot) + " is under " + unregisteredRoot.getVcsKey() + ", " +
+          .append("The directory " +
+                  rootToDisplayableString.fun(unregisteredRoot) +
+                  " is under " +
+                  unregisteredRoot.getVcsKey().getName() +
+                  ", " +
                   "but is not registered in the Settings.");
       }
       else {

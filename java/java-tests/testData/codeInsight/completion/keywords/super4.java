@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2013 JetBrains s.r.o.
+ * Copyright 2000-2012 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.fileChooser;
+interface Super
+{
+    default void method() {}
+}
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import org.jetbrains.annotations.NotNull;
-
-/**
- * You can use {@link Consumer<VirtualFile>}, but this class allows you to avoid null-check of passed file ({@link #cancelled()}) will be called in this case.
- */
-public abstract class ChooseFileHandler implements Consumer<VirtualFile> {
-  protected void cancelled() {
-  }
-
-  @Override
-  public abstract void consume(@NotNull VirtualFile file);
+interface Sub extends Super {
+    static void foo() {
+          Super.<caret>
+    }
 }
