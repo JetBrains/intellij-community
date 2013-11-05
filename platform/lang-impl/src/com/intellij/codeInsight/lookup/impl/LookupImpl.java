@@ -737,6 +737,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
     return lookupString;
   }
 
+  @Override
   public int getLookupStart() {
     return myOffsets.getLookupStart(disposeTrace);
   }
