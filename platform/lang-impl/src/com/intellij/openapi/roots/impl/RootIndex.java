@@ -323,6 +323,9 @@ class RootIndex {
       }
       DirectoryInfo info = myInfoCache.get(root);
       if (info != null) {
+        if (dir != root) {
+          myInfoCache.put(dir, info);
+        }
         return info == NULL_INFO ? null : info;
       }
       
