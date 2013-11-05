@@ -483,7 +483,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       Collection<VirtualFile> standard = standardResult.findAll();
       if (!new HashSet<VirtualFile>(riResult).equals(new HashSet<VirtualFile>(standard))) {
         for (VirtualFile file : standard) {
-          if (file.getPath().contains(".")) {
+          String path = file.getPath();
+          if (path.substring(path.length() - packageName.length()).contains(".")) {
             return standardResult; // standard and rootIndex return different results for directories with dot in name
           }
         }
