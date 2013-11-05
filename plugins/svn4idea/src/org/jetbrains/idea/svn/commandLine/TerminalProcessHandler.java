@@ -23,8 +23,10 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.svn.SvnUtil;
 
 import java.util.List;
+import java.util.regex.Matcher;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -85,7 +87,7 @@ public class TerminalProcessHandler extends OSProcessHandler {
     // text is not more than one line - either one line or part of the line
     if (StringUtil.endsWith(text, "\n")) {
       // we have full line - notify listeners
-      super.notifyTextAvailable(text, outputType);
+      super.notifyTextAvailable(text, resolveOutputType(text, outputType));
     }
     else {
       // save line part to lastLine
@@ -106,6 +108,19 @@ public class TerminalProcessHandler extends OSProcessHandler {
     }
 
     return line;
+  }
+
+  private static Key resolveOutputType(@NotNull String line, @NotNull Key outputType) {
+    Key result = outputType;
+
+    if (!ProcessOutputTypes.SYSTEM.equals(outputType)) {
+      Matcher errorMatcher = SvnUtil.ERROR_PATTERN.matcher(line);
+      Matcher warningMatcher = SvnUtil.WARNING_PATTERN.matcher(line);
+
+      result = errorMatcher.find() || warningMatcher.find() ? ProcessOutputTypes.STDERR : ProcessOutputTypes.STDOUT;
+    }
+
+    return result;
   }
 
   @NotNull
