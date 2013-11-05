@@ -587,12 +587,18 @@ public class PythonCompletionTest extends PyTestCase {
 
   public void testOverwriteEqualsSign() {  // PY-1337
     doTestByText("def foo(school=None, kiga=None): pass\n" +
-                 "\n" +
                  "foo(<caret>school=None)");
     myFixture.type("sch");
     myFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR);
     myFixture.checkResult("def foo(school=None, kiga=None): pass\n" +
-                          "\n" +
                           "foo(school=None)");
+  }
+
+  public void testOverwriteBracket() {  // PY-6095
+    doTestByText("bar = {'a': '1'}\n" +
+                 "print ba<caret>['a']");
+    myFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR);
+    myFixture.checkResult("bar = {'a': '1'}\n" +
+                          "print bar<caret>['a']");
   }
 }
