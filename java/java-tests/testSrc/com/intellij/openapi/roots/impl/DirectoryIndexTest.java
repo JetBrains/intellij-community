@@ -220,10 +220,15 @@ public class DirectoryIndexTest extends IdeaTestCase {
   public void testDirsByPackageName() {
     checkPackage("", true, myFileLibSrc, myFileLibCls, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myLibSrcDir, myLibClsDir, mySrcDir2);
     checkPackage("", false, myFileLibCls, mySrcDir1, myTestSrc1, myResDir, myTestResDir, myLibClsDir, mySrcDir2);
+    
     checkPackage("pack1", true, myPack1Dir);
     checkPackage("pack1", false, myPack1Dir);
+    
     checkPackage("pack2", true, myPack2Dir);
     checkPackage("pack2", false, myPack2Dir);
+    
+    checkPackage(".pack2", false);
+    checkPackage(".pack2", true);
   }
 
   public void testCreateDir() throws Exception {
