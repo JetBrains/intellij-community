@@ -72,7 +72,8 @@ public class HgHistoryUtil {
                                                                     @NotNull final VirtualFile root, int limit, boolean withFiles,
                                                                     String... parameters) {
     HgFile hgFile = new HgFile(root, VcsUtil.getFilePath(root.getPath()));
-    List<String> args = Arrays.asList(parameters);
+    List<String> args = ContainerUtil.newArrayList(parameters);
+    args.add("--debug");
     List<HgCommittedChangeList> result = new LinkedList<HgCommittedChangeList>();
     final List<HgFileRevision> localRevisions;
     HgLogCommand hgLogCommand = new HgLogCommand(project);
@@ -81,7 +82,7 @@ public class HgHistoryUtil {
     HgVcs hgvcs = HgVcs.getInstance(project);
     assert hgvcs != null;
     try {
-      localRevisions = hgLogCommand.getFullHistory(hgFile, limit, withFiles, args);
+      localRevisions = hgLogCommand.execute(hgFile, limit, withFiles, args);
     }
     catch (HgCommandException e) {
       new HgCommandResultNotifier(project).notifyError(null, HgVcsMessages.message("hg4idea.error.log.command.execution"), e.getMessage());
