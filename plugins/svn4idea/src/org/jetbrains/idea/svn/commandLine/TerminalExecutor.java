@@ -85,6 +85,13 @@ public class TerminalExecutor extends CommandExecutor {
     }
   }
 
+  @Override
+  public void logCommand() {
+    super.logCommand();
+
+    LOG.info("Terminal output " + ((TerminalProcessHandler) myHandler).getTerminalOutput());
+  }
+
   private static List<String> escapeArguments(List<String> collection) {
     // TODO: Add additional checks like in java.lang.ProcessImpl constructor
     return ContainerUtil.map(collection, new Function<String, String>() {

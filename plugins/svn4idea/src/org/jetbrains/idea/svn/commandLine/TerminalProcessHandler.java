@@ -135,4 +135,8 @@ public class TerminalProcessHandler extends OSProcessHandler {
       throw new IllegalArgumentException("Unknown process output type " + outputType);
     }
   }
+
+  public String getTerminalOutput() {
+    return terminalOutputCapturer.getOutput().getStdout();
+  }
 }

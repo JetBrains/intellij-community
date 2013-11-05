@@ -310,6 +310,11 @@ public class CommandExecutor {
     }
   }
 
+  public void logCommand() {
+    LOG.info("Command text " + getCommandText());
+    LOG.info("Command output " + getOutput());
+  }
+
   private class CommandCancelTracker extends LineCommandAdapter {
     @Override
     public void onLineAvailable(String line, Key outputType) {
