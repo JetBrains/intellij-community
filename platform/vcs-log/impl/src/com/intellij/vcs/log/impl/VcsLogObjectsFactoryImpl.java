@@ -61,7 +61,7 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
   @NotNull
   @Override
   public VcsUser createUser(@NotNull String name, @NotNull String email) {
-    return new VcsUserImpl(name, email);
+    return myLogManager.getDataHolder().getUserRegistry().createUser(name, email);
   }
 
 }

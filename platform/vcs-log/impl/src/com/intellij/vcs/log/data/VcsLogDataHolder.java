@@ -154,6 +154,7 @@ public class VcsLogDataHolder implements Disposable {
    * It is reinitialized on full refresh.
    */
   private CountDownLatch myEntireLogLoadWaiter;
+  private final VcsUserRegistry myUserRegistry;
 
   public VcsLogDataHolder(@NotNull Project project,
                           @NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull VcsLogSettings settings) {
@@ -166,6 +167,7 @@ public class VcsLogDataHolder implements Disposable {
     myMultiRepoJoiner = new VcsLogMultiRepoJoiner();
     myFactory = ServiceManager.getService(myProject, VcsLogObjectsFactory.class);
     mySettings = settings;
+    myUserRegistry = new VcsUserRegistry();
   }
 
   /**
@@ -473,6 +475,10 @@ public class VcsLogDataHolder implements Disposable {
   @NotNull
   public Project getProject() {
     return myProject;
+  }
+
+  public VcsUserRegistry getUserRegistry() {
+    return myUserRegistry;
   }
 
   private static class RecentCommitsInfo {

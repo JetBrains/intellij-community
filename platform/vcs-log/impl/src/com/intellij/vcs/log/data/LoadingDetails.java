@@ -22,10 +22,12 @@ import java.util.Collections;
  */
 public class LoadingDetails extends VcsFullCommitDetailsImpl {
 
+  private static final VcsUserImpl STUB_USER = new VcsUserImpl("", "");
+
   private final long myLoadingTaskIndex;
 
   public LoadingDetails(@NotNull Hash hash, long loadingTaskIndex, @NotNull VirtualFile root) {
-    super(hash, Collections.<Hash>emptyList(), -1, root, "Loading...", new VcsUserImpl("", ""), "", new VcsUserImpl("", ""), -1,
+    super(hash, Collections.<Hash>emptyList(), -1, root, "Loading...", STUB_USER, "", STUB_USER, -1,
           Collections.<Change>emptyList(), new ContentRevisionFactory() {
             @NotNull
             @Override
