@@ -45,8 +45,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.config.StorageAccessors;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.EmptyIcon;
@@ -68,6 +67,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.*;
+import java.util.HashSet;
 import java.util.List;
 
 import static com.intellij.execution.impl.RunConfigurable.NodeKind.*;
@@ -1089,11 +1089,30 @@ class RunConfigurable extends BaseConfigurable {
 
     private void showAddPopup() {
       final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-      final ConfigurationType[] configurationTypes = getRunManager().getConfigurationFactories(false);
+      final Map<ConfigurationType, List<ConfigurationFactory>> applicableFactories = new HashMap<ConfigurationType, List<ConfigurationFactory>>();
+      for (ConfigurationType type : getRunManager().getConfigurationFactories(false)) {
+        List<ConfigurationFactory> factories = new ArrayList<ConfigurationFactory>();
+        for (ConfigurationFactory factory : type.getConfigurationFactories()) {
+          if (factory.isApplicable(myProject)) {
+            factories.add(factory);
+          }
+        }
+        if (!factories.isEmpty()) {
+          Collections.sort(factories, new Comparator<ConfigurationFactory>() {
+            @Override
+            public int compare(final ConfigurationFactory factory1, final ConfigurationFactory factory2) {
+              return factory1.getName().compareToIgnoreCase(factory2.getName());
+            }
+          });
+          applicableFactories.put(type, factories);
+        }
+      }
+
+      final ConfigurationType[] configurationTypes = applicableFactories.keySet().toArray(new ConfigurationType[applicableFactories.keySet().size()]);
       Arrays.sort(configurationTypes, new Comparator<ConfigurationType>() {
         @Override
         public int compare(final ConfigurationType type1, final ConfigurationType type2) {
-          return type1.getDisplayName().compareTo(type2.getDisplayName());
+          return type1.getDisplayName().compareToIgnoreCase(type2.getDisplayName());
         }
       });
       final ListPopup popup =
@@ -1126,9 +1145,9 @@ class RunConfigurable extends BaseConfigurable {
             if (hasSubstep(type)) {
               return getSupStep(type);
             }
-            final ConfigurationFactory[] factories = type.getConfigurationFactories();
-            if (factories.length > 0) {
-              createNewConfiguration(factories[0]);
+            final List<ConfigurationFactory> factories = applicableFactories.get(type);
+            if (factories.size() > 0) {
+              createNewConfiguration(factories.get(0));
             }
             return FINAL_CHOICE;
           }
@@ -1140,13 +1159,7 @@ class RunConfigurable extends BaseConfigurable {
           }
 
           private ListPopupStep getSupStep(final ConfigurationType type) {
-            final ConfigurationFactory[] factories = type.getConfigurationFactories();
-            Arrays.sort(factories, new Comparator<ConfigurationFactory>() {
-              @Override
-              public int compare(final ConfigurationFactory factory1, final ConfigurationFactory factory2) {
-                return factory1.getName().compareTo(factory2.getName());
-              }
-            });
+            final List<ConfigurationFactory> factories = applicableFactories.get(type);
             return new BaseListPopupStep<ConfigurationFactory>(
               ExecutionBundle.message("add.new.run.configuration.action.name", type.getDisplayName()), factories) {
 
@@ -1172,7 +1185,7 @@ class RunConfigurable extends BaseConfigurable {
 
           @Override
           public boolean hasSubstep(final ConfigurationType type) {
-            return type.getConfigurationFactories().length > 1;
+            return applicableFactories.get(type).size() > 1;
           }
 
         });
