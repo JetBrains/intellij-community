@@ -120,12 +120,23 @@ public final class Urls {
 
   // must not be used in NodeJS
   public static Url newFromVirtualFile(@NotNull VirtualFile file) {
-    String path = file.getPath();
     if (file.isInLocalFileSystem()) {
-      return new UrlImpl(file.getFileSystem().getProtocol(), null, path);
+      return new UrlImpl(file.getFileSystem().getProtocol(), null, file.getPath());
     }
     else {
       return parseUrl(file.getUrl(), false);
     }
+  }
+
+  public static boolean equalsIgnoreParameters(@NotNull Url url, @NotNull VirtualFile file) {
+    if (file.isInLocalFileSystem()) {
+      return url.isInLocalFileSystem() && url.getPath().equals(file.getPath());
+    }
+    else if (url.isInLocalFileSystem()) {
+      return false;
+    }
+
+    Url fileUrl = parseUrl(file.getUrl(), false);
+    return fileUrl != null && fileUrl.equalsIgnoreParameters(url);
   }
 }
