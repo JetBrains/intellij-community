@@ -12,6 +12,12 @@ import java.util.List;
  */
 public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
 
+  @NotNull private final VcsLogManager myLogManager;
+
+  public VcsLogObjectsFactoryImpl(@NotNull VcsLogManager logManager) {
+    myLogManager = logManager;
+  }
+
   @NotNull
   @Override
   public Hash createHash(@NotNull String stringHash) {

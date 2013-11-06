@@ -535,7 +535,7 @@ public class GitHistoryUtils {
   }
 
   @NotNull
-  public static List<TimedVcsCommit> readAllHashes(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
+  public static List<TimedVcsCommit> readAllHashes(@NotNull final Project project, @NotNull VirtualFile root) throws VcsException {
     final int COMMIT_BUFFER = 1000;
 
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.LOG);
@@ -571,7 +571,7 @@ public class GitHistoryUtils {
             afterParseRemainder = line.substring(recordEnd + 1);
           }
           if (afterParseRemainder != null && records.incrementAndGet() > COMMIT_BUFFER) { // null means can't parse now
-            commits.addAll(parseCommit(parser, record));
+            commits.addAll(parseCommit(project, parser, record));
             record.setLength(0);
             record.append(afterParseRemainder);
           }
@@ -584,7 +584,7 @@ public class GitHistoryUtils {
       @Override
       public void processTerminated(int exitCode) {
         try {
-          commits.addAll(parseCommit(parser, record));
+          commits.addAll(parseCommit(project, parser, record));
         }
         catch (Exception e) {
           ex.set(new VcsException(e));
@@ -603,19 +603,19 @@ public class GitHistoryUtils {
     return commits;
   }
 
-  private static List<TimedVcsCommit> parseCommit(GitLogParser parser, StringBuilder record) {
+  private static List<TimedVcsCommit> parseCommit(final Project project, GitLogParser parser, StringBuilder record) {
     List<GitLogRecord> rec = parser.parse(record.toString());
     return ContainerUtil.mapNotNull(rec, new Function<GitLogRecord, TimedVcsCommit>() {
       @Override
       public TimedVcsCommit fun(GitLogRecord record) {
-        return record == null ? null : convert(record);
+        return (record == null) ? null : convert(project, record);
       }
     });
   }
 
   @NotNull
-  private static TimedVcsCommit convert(GitLogRecord rec) {
-    VcsLogObjectsFactory factory = ServiceManager.getService(VcsLogObjectsFactory.class);
+  private static TimedVcsCommit convert(Project project, GitLogRecord rec) {
+    VcsLogObjectsFactory factory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
     List<Hash> parents = ContainerUtil.map(rec.getParentsHashes(), new Function<String, Hash>() {
       @Override
       public Hash fun(String s) {

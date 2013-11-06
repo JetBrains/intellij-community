@@ -16,6 +16,7 @@
 package com.intellij.vcs.log.data;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.BackgroundTaskQueue;
@@ -154,7 +155,7 @@ public class VcsLogDataHolder implements Disposable {
    */
   private CountDownLatch myEntireLogLoadWaiter;
 
-  public VcsLogDataHolder(@NotNull Project project, @NotNull VcsLogObjectsFactory logObjectsFactory,
+  public VcsLogDataHolder(@NotNull Project project,
                           @NotNull Map<VirtualFile, VcsLogProvider> logProviders, @NotNull VcsLogSettings settings) {
     myProject = project;
     myLogProviders = logProviders;
@@ -163,7 +164,7 @@ public class VcsLogDataHolder implements Disposable {
     myDetailsGetter = new CommitDetailsGetter(this, logProviders);
     myLogJoiner = new VcsLogJoiner();
     myMultiRepoJoiner = new VcsLogMultiRepoJoiner();
-    myFactory = logObjectsFactory;
+    myFactory = ServiceManager.getService(myProject, VcsLogObjectsFactory.class);
     mySettings = settings;
   }
 
@@ -178,10 +179,10 @@ public class VcsLogDataHolder implements Disposable {
    * @param settings
    * @param onInitialized This is called when the holder is initialized with the initial data received from the VCS.
    */
-  public static void init(@NotNull final Project project, @NotNull VcsLogObjectsFactory logObjectsFactory,
+  public static void init(@NotNull final Project project,
                           @NotNull Map<VirtualFile, VcsLogProvider> logProviders,
                           @NotNull VcsLogSettings settings, @NotNull final Consumer<VcsLogDataHolder> onInitialized) {
-    final VcsLogDataHolder dataHolder = new VcsLogDataHolder(project, logObjectsFactory, logProviders, settings);
+    final VcsLogDataHolder dataHolder = new VcsLogDataHolder(project, logProviders, settings);
     dataHolder.initialize(onInitialized);
   }
 

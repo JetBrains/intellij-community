@@ -62,7 +62,7 @@ public class HgLogProvider implements VcsLogProvider {
     myProject = project;
     myRepositoryManager = repositoryManager;
     myRefSorter = new HgRefManager();
-    myVcsObjectsFactory = ServiceManager.getService(VcsLogObjectsFactory.class);
+    myVcsObjectsFactory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
   }
 
   @NotNull

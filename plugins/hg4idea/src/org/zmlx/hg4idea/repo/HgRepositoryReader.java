@@ -19,6 +19,7 @@ import com.intellij.dvcs.repo.RepoStateException;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.RepositoryUtil;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.vcs.log.VcsLogObjectsFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +50,7 @@ public class HgRepositoryReader {
   @NotNull private final File myLocalTagsFile;  // .hg/localtags
   @NotNull private final VcsLogObjectsFactory myVcsObjectsFactory;
 
-  public HgRepositoryReader(@NotNull File hgDir) {
+  public HgRepositoryReader(@NotNull Project project, @NotNull File hgDir) {
     myHgDir = hgDir;
     RepositoryUtil.assertFileExists(myHgDir, ".hg directory not found in " + myHgDir);
     File branchesFile = new File(new File(myHgDir, "cache"), "branchheads-served");  //branchheads-served exist after mercurial 2.5,
@@ -60,7 +61,7 @@ public class HgRepositoryReader {
     myCurrentBookmark = new File(myHgDir, "bookmarks.current");
     myLocalTagsFile = new File(myHgDir, "localtags");
     myTagsFile = new File(myHgDir.getParentFile(), ".hgtags");
-    myVcsObjectsFactory = ServiceManager.getService(VcsLogObjectsFactory.class);
+    myVcsObjectsFactory = ServiceManager.getService(project, VcsLogObjectsFactory.class);
   }
 
   /**

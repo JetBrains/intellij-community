@@ -8,7 +8,7 @@
     <changesViewContent tabName="Log" className="com.intellij.vcs.log.impl.VcsLogContentProvider"
                         predicateClassName="com.intellij.vcs.log.impl.VcsLogContentProvider"/>
 
-    <applicationService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory" serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl" />
+    <projectService serviceInterface="com.intellij.vcs.log.VcsLogObjectsFactory" serviceImplementation="com.intellij.vcs.log.impl.VcsLogObjectsFactoryImpl" />
     <projectService serviceInterface="com.intellij.vcs.log.impl.VcsLogManager" serviceImplementation="com.intellij.vcs.log.impl.VcsLogManager"/>
     <projectService serviceInterface="com.intellij.vcs.log.VcsLogSettings" serviceImplementation="com.intellij.vcs.log.impl.VcsLogSettingsImpl"/>
     <projectService serviceInterface="com.intellij.vcs.log.data.VcsLogUiProperties" serviceImplementation="com.intellij.vcs.log.data.VcsLogUiProperties"/>
