@@ -21,8 +21,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 class WrapImpl extends Wrap {
-  private LeafBlockWrapper myFirstEntry = null;
-  private int myFirstPosition = -1;
+  /**
+   * The block where the wrap needs to happen if the CHOP wrap mode is used and the chain of blocks exceeds the right margin.
+   */
+  private LeafBlockWrapper myChopStartBlock = null;
+  private int myWrapOffset = -1;
   private int myFlags;
   private static int ourId = 0;
 
@@ -74,14 +77,14 @@ class WrapImpl extends Wrap {
   /**
    * Resets the following state of the current wrap object:
    * <ul>
-   *   <li>'{@link #getFirstEntry() firstEntry}' property value is set to <code>null</code>;</li>
-   *   <li>'{@link #getFirstPosition() firstPosition}' property value is set to <code>'-1'</code>;</li>
-   *   <li>'{@link #isIsActive() isActive}' property value is set to <code>'false'</code>;</li>
+   *   <li>'{@link #getChopStartBlock() firstEntry}' property value is set to <code>null</code>;</li>
+   *   <li>'{@link #getWrapOffset() firstPosition}' property value is set to <code>'-1'</code>;</li>
+   *   <li>'{@link #isActive() isActive}' property value is set to <code>'false'</code>;</li>
    * </ul>
    */
   public void reset() {
-    myFirstEntry = null;
-    myFirstPosition = -1;
+    myChopStartBlock = null;
+    myWrapOffset = -1;
     myFlags &=~ ACTIVE_MASK;
   }
 
@@ -121,58 +124,44 @@ class WrapImpl extends Wrap {
     myIgnoredWraps.get(wrap).add(currentBlock);
   }
 
-  /**
-   * Allows to check if given block is used as a '{@link #getFirstEntry() firstEntry}' property value of the current wrap object.
-   * <p/>
-   * <b>Note:</b> object identity (<code>'=='</code> operator) is used during checking given block against the current
-   * '{@link #getFirstEntry() firstEntry}' property value.
-   *
-   * @param currentBlock    block to check
-   * @return                <code>true</code> if '{@link #getFirstEntry() firstEntry}' property value is defined
-   *                        (not <code>null</code>) and is the same as the given block; <code>false</code> otherwise
-   */
-  public boolean isFirstWrapped(final LeafBlockWrapper currentBlock) {
-    return myFirstEntry != null && myFirstEntry == currentBlock;
-  }
-
   enum Type{
     DO_NOT_WRAP, WRAP_AS_NEEDED, CHOP_IF_NEEDED, WRAP_ALWAYS
   }
 
-  LeafBlockWrapper getFirstEntry() {
-    return myFirstEntry;
+  LeafBlockWrapper getChopStartBlock() {
+    return myChopStartBlock;
   }
 
   /**
    * Performs the following changes at wrap object state:
    * <ul>
-   *   <li>'{@link #getFirstEntry() firstEntry}' property value is dropped (set to <code>null</code>)</li>
-   *   <li>'{@link #isIsActive() isActive}' property value is set (to <code>true</code>)</li>
+   *   <li>'{@link #getChopStartBlock() firstEntry}' property value is dropped (set to <code>null</code>)</li>
+   *   <li>'{@link #isActive() isActive}' property value is set (to <code>true</code>)</li>
    * </ul>
    */
-  void markAsUsed() {
-    myFirstEntry = null;
+  void setActive() {
+    myChopStartBlock = null;
     myFlags |= ACTIVE_MASK;
   }
 
   /**
-   * Applies given value to the '{@link #getFirstPosition() firstPosition}' property value if it's value is undefined at the moment
+   * Applies given value to the '{@link #getWrapOffset() firstPosition}' property value if it's value is undefined at the moment
    * (has negative value).
    *
-   * @param startOffset   new '{@link #getFirstPosition() firstPosition}' property value to use if current value is undefined (negative)
+   * @param startOffset   new '{@link #getWrapOffset() firstPosition}' property value to use if current value is undefined (negative)
    */
-  void processNextEntry(final int startOffset) {
-    if (myFirstPosition < 0) {
-      myFirstPosition = startOffset;
+  void setWrapOffset(final int startOffset) {
+    if (myWrapOffset < 0) {
+      myWrapOffset = startOffset;
     }
   }
 
   /**
-   * @return    '{@link #getFirstPosition() firstPosition}' property value defined previously via {@link #processNextEntry(int)} if any;
+   * @return    '{@link #getWrapOffset() firstPosition}' property value defined previously via {@link #setWrapOffset(int)} if any;
    *            <code>'-1'</code> otherwise
    */
-  int getFirstPosition() {
-    return myFirstPosition;
+  int getWrapOffset() {
+    return myWrapOffset;
   }
 
   public WrapImpl(WrapType type, boolean wrapFirstElement) {
@@ -205,22 +194,13 @@ class WrapImpl extends Wrap {
     return (myFlags & WRAP_FIRST_ELEMENT_MASK) != 0;
   }
 
-  /**
-   * Allows to define given block as a <code>'first entry'</code> of the current wrap object. I.e. given block is returned on
-   * subsequent {@link #getFirstEntry()} calls.
-   * <p/>
-   * <b>Note:</b> given block is applied only if '{@link #getFirstEntry() firstEntry}' property is undefined,
-   * i.e. has a <code>null</code> value.
-   *
-   * @param current     block to remember as a first entry of the current wrap object
-   */
-  void saveFirstEntry(LeafBlockWrapper current) {
-    if (myFirstEntry  == null) {
-      myFirstEntry = current;
+  void saveChopBlock(LeafBlockWrapper current) {
+    if (myChopStartBlock == null) {
+      myChopStartBlock = current;
     }
   }
 
-  final boolean isIsActive() {
+  final boolean isActive() {
     return (myFlags & ACTIVE_MASK) != 0;
   }
 

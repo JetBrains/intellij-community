@@ -90,7 +90,7 @@ public class CoreFormatterUtil {
    * @param block target wrapped block to be used at a boundary during counting non-line feed symbols to the left of it
    * @return non-line feed symbols to the left of the given wrapped block
    */
-  public static int getOffsetBefore(@Nullable LeafBlockWrapper block) {
+  public static int getStartColumn(@Nullable LeafBlockWrapper block) {
     if (block != null) {
       int result = 0;
       while (true) {
