@@ -217,7 +217,8 @@ public class GitLogProvider implements VcsLogProvider {
   @Override
   public VcsUser getCurrentUser(@NotNull VirtualFile root) throws VcsException {
     String userName = GitConfigUtil.getValue(myProject, root, GitConfigUtil.USER_NAME);
-    return userName == null ? null : myVcsObjectsFactory.createUser(userName);
+    String userEmail = StringUtil.notNullize(GitConfigUtil.getValue(myProject, root, GitConfigUtil.USER_EMAIL));
+    return userName == null ? null : myVcsObjectsFactory.createUser(userName, userEmail);
   }
 
   private static String prepareParameter(String paramName, String value) {

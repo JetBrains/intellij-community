@@ -132,7 +132,7 @@ public class HgHistoryUtil {
                                  }
                                  return factory.createShortDetails(factory.createHash(revNumber.getChangeset()), parents,
                                                                    record.getCommitDate().getTime(), root,
-                                                                   revNumber.getSubject(), revNumber.getAuthor());
+                                                                   revNumber.getSubject(), revNumber.getAuthor(), "");
                                }
                              });
   }

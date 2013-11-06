@@ -24,7 +24,7 @@ public interface VcsLogObjectsFactory {
 
   @NotNull
   VcsShortCommitDetails createShortDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp,
-                                           VirtualFile root, @NotNull String subject, @NotNull String authorName);
+                                           VirtualFile root, @NotNull String subject, @NotNull String authorName, String authorEmail);
 
   @NotNull
   VcsFullCommitDetails createFullDetails(@NotNull Hash hash, @NotNull List<Hash> parents, long authorTime, VirtualFile root,
@@ -35,6 +35,5 @@ public interface VcsLogObjectsFactory {
                                          @NotNull ContentRevisionFactory contentRevisionFactory);
 
   @NotNull
-  VcsUser createUser(@NotNull String name);
-
+  VcsUser createUser(@NotNull String name, @NotNull String email);
 }

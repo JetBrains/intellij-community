@@ -202,7 +202,7 @@ public class GitCommitListPanel extends JPanel implements TypeSafeDataProvider {
   }
 
   private static String getAuthor(GitCommit commit) {
-    return commit.getAuthorName();
+    return commit.getAuthor().getName();
   }
 
   private static String getTime(GitCommit commit) {

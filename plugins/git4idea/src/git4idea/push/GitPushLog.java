@@ -96,7 +96,7 @@ class GitPushLog extends JPanel implements TypeSafeDataProvider {
         Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
         if (userObject instanceof GitCommit) {
           GitCommit commit = (GitCommit)userObject;
-          return getHashString(commit) + "  " + getDateString(commit) + "  by " + commit.getAuthorName() + "\n\n" +
+          return getHashString(commit) + "  " + getDateString(commit) + "  by " + commit.getAuthor().getName() + "\n\n" +
                  IssueLinkHtmlRenderer.formatTextWithLinks(myProject, commit.getFullMessage());
         }
         return "";

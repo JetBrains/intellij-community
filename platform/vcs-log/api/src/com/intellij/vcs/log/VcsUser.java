@@ -25,4 +25,7 @@ public interface VcsUser {
   @NotNull
   String getName();
 
+  @NotNull
+  String getEmail();
+
 }

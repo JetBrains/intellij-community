@@ -4,6 +4,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.TimedVcsCommit;
 import com.intellij.vcs.log.VcsShortCommitDetails;
+import com.intellij.vcs.log.VcsUser;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -15,15 +16,15 @@ public class VcsShortCommitDetailsImpl implements VcsShortCommitDetails {
 
   @NotNull private final TimedVcsCommit myTimeCommitParents;
   @NotNull private final String mySubject;
-  @NotNull private final String myAuthorName;
+  @NotNull private final VcsUser myAuthor;
   @NotNull private final VirtualFile myRoot;
 
   public VcsShortCommitDetailsImpl(@NotNull Hash hash, @NotNull List<Hash> parents, long timeStamp, @NotNull VirtualFile root,
-                                   @NotNull String subject, @NotNull String authorName) {
+                                   @NotNull String subject, @NotNull VcsUser author) {
     myTimeCommitParents = new TimedVcsCommitImpl(hash, parents, timeStamp);
     myRoot = root;
     mySubject = subject;
-    myAuthorName = authorName;
+    myAuthor = author;
   }
 
   @NotNull
@@ -57,8 +58,8 @@ public class VcsShortCommitDetailsImpl implements VcsShortCommitDetails {
 
   @Override
   @NotNull
-  public final String getAuthorName() {
-    return myAuthorName;
+  public final VcsUser getAuthor() {
+    return myAuthor;
   }
 
   @Override

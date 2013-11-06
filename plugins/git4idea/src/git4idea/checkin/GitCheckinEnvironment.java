@@ -821,7 +821,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       Object data = list.getData();
       if (data instanceof VcsFullCommitDetails) {
         VcsFullCommitDetails commit = (VcsFullCommitDetails)data;
-        String author = String.format("%s <%s>", commit.getAuthorName(), commit.getAuthorEmail());
+        String author = String.format("%s <%s>", commit.getAuthor().getName(), commit.getAuthor().getEmail());
         myAuthor.getEditor().setItem(author);
         myAuthorDate = new Date(commit.getAuthorTime());
       }

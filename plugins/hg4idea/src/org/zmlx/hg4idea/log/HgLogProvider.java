@@ -206,7 +206,7 @@ public class HgLogProvider implements VcsLogProvider {
     if (userName == null) {
       userName = System.getenv("HGUSER");
     }
-    return userName == null ? null : myVcsObjectsFactory.createUser(userName);
+    return userName == null ? null : myVcsObjectsFactory.createUser(userName, "");
   }
 
   private static String prepareParameter(String paramName, String value) {

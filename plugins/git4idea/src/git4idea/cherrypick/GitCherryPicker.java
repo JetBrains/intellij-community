@@ -113,7 +113,7 @@ public class GitCherryPicker {
       }
       else if (conflictDetector.hasHappened()) {
         boolean mergeCompleted = new CherryPickConflictResolver(myProject, myGit, myPlatformFacade, repository.getRoot(),
-                                                                commit.getHash().asString(), commit.getAuthorName(),
+                                                                commit.getHash().asString(), commit.getAuthor().getName(),
                                                                 commit.getSubject()).merge();
 
         if (mergeCompleted) {
@@ -177,7 +177,7 @@ public class GitCherryPicker {
                                      @NotNull List<GitCommitWrapper> successfulCommits) {
     NotificationListener resolveLinkListener = new ResolveLinkListener(myProject, myGit, myPlatformFacade, repository.getRoot(),
                                                                        commit.getCommit().getHash().toShortString(),
-                                                                       commit.getCommit().getAuthorName(),
+                                                                       commit.getCommit().getAuthor().getName(),
                                                                        commit.getSubject());
     String description = commitDetails(commit)
                          + "<br/>Unresolved conflicts remain in the working tree. <a href='resolve'>Resolve them.<a/>";
