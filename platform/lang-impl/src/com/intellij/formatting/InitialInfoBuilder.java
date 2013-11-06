@@ -17,12 +17,8 @@
 package com.intellij.formatting;
 
 import com.intellij.diagnostic.LogMessageEx;
-import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -38,7 +34,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 /**
  * Allows to build {@link AbstractBlockWrapper formatting block wrappers} for the target {@link Block formatting blocks}.
@@ -54,13 +49,11 @@ class InitialInfoBuilder {
   private final int                                   myPositionOfInterest;
   @NotNull
   private final FormattingProgressCallback            myProgressCallback;
+  private final FormatterTagHandler                   myFormatterTagHandler;
+
   private final CommonCodeStyleSettings.IndentOptions myOptions;
-  private final CodeStyleSettings                     mySettings;
 
   private final Stack<State> myStates = new Stack<State>();
-
-  private enum FormatterTag {ON, OFF, NONE}
-
   private WhiteSpace                       myCurrentWhiteSpace;
   private CompositeBlockWrapper            myRootBlockWrapper;
   private LeafBlockWrapper                 myPreviousBlock;
@@ -86,7 +79,7 @@ class InitialInfoBuilder {
     myOptions = options;
     myPositionOfInterest = positionOfInterest;
     myReadOnlyMode = false;
-    mySettings = settings;
+    myFormatterTagHandler = new FormatterTagHandler(settings);
   }
 
   public static InitialInfoBuilder prepareToBuildBlocksSequentially(Block root,
@@ -297,7 +290,7 @@ class InitialInfoBuilder {
       info.arrangeParentTextRange();
     }
 
-    switch (getFormatterTag(rootBlock)) {
+    switch (myFormatterTagHandler.getFormatterTag(rootBlock)) {
       case ON:
         myReadOnlyMode = false;
         break;
@@ -414,42 +407,6 @@ class InitialInfoBuilder {
     }
 
     LogMessageEx.error(LOG, messageBuffer.toString(), buffer.toString());
-  }
-
-  private FormatterTag getFormatterTag(Block block) {
-    if (mySettings.FORMATTER_TAGS_ENABLED &&
-        !StringUtil.isEmpty(mySettings.FORMATTER_ON_TAG) &&
-        !StringUtil.isEmpty(mySettings.FORMATTER_OFF_TAG) &&
-        block instanceof ASTBlock) {
-      ASTNode node = ((ASTBlock)block).getNode();
-      PsiElement element = node.getPsi();
-      if (element != null && element instanceof PsiComment) {
-        CharSequence nodeChars = node.getChars();
-        if (mySettings.FORMATTER_TAGS_ACCEPT_REGEXP) {
-          Pattern onPattern = mySettings.getFormatterOnPattern();
-          Pattern offPattern = mySettings.getFormatterOffPattern();
-          if (onPattern != null && onPattern.matcher(nodeChars).find()) return FormatterTag.ON;
-          if (offPattern != null && offPattern.matcher(nodeChars).find()) return FormatterTag.OFF;
-        }
-        else {
-          for (int i = 0; i < nodeChars.length(); i++) {
-            if (isFormatterTagAt(nodeChars, i, mySettings.FORMATTER_ON_TAG)) return FormatterTag.ON;
-            if (isFormatterTagAt(nodeChars, i, mySettings.FORMATTER_OFF_TAG)) return FormatterTag.OFF;
-          }
-        }
-      }
-    }
-    return FormatterTag.NONE;
-  }
-
-  private static boolean isFormatterTagAt(@NotNull CharSequence s, int pos, @NotNull String tagName) {
-    if (!tagName.isEmpty() && tagName.charAt(0) == s.charAt(pos)) {
-      int end = pos + tagName.length();
-      if (end <= s.length()) {
-        return StringUtil.equalsIgnoreCase(s.subSequence(pos, end), tagName);
-      }
-    }
-    return false;
   }
 
   /**
