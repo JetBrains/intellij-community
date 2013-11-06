@@ -118,7 +118,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
           else {
             returnType = callSubstitutor.substitute(returnType);
           }
-          constraints.add(new TypeCompatibilityConstraint(GenericsUtil.eliminateWildcards(myT, false), returnType));
+          if (!TypeConversionUtil.isAssignable(myT, returnType)) {
+            constraints.add(new TypeCompatibilityConstraint(GenericsUtil.eliminateWildcards(myT, false), returnType));
+          }
         }
       }
       return true;
