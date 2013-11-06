@@ -39,6 +39,6 @@ class MyTest1 {
     static void foo(I3 i) {}
 
     static {
-        foo(Foo::new);
+        foo<error descr="Cannot resolve method 'foo(<method reference>)'">(Foo::new)</error>;
     }
 }

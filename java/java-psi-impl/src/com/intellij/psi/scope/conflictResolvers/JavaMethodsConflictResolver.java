@@ -394,7 +394,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       for (Iterator<CandidateInfo> iterator = conflicts.iterator(); iterator.hasNext();) {
         ProgressManager.checkCanceled();
         CandidateInfo info = iterator.next();
-        final int level = preferVarargs(info);
+        final int level = preferVarargs((MethodCandidateInfo)info);
         if (level < maxApplicabilityLevel) {
           iterator.remove();
         }
@@ -404,10 +404,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     return maxApplicabilityLevel;
   }
 
-  private static int preferVarargs(CandidateInfo info) {
-    final int level = ((MethodCandidateInfo)info).getApplicabilityLevel();
+  private static int preferVarargs(MethodCandidateInfo info) {
+    final int level = info.getPertinentApplicabilityLevel();
     if (level == MethodCandidateInfo.ApplicabilityLevel.FIXED_ARITY) {
-      final PsiMethod psiMethod = (PsiMethod)info.getElement();
+      final PsiMethod psiMethod = info.getElement();
       if (psiMethod != null && psiMethod.isVarArgs() && JavaVersionService.getInstance().isAtLeast(psiMethod, JavaSdkVersion.JDK_1_7)) {
         return level + 1;
       }
