@@ -1079,42 +1079,45 @@ class RunConfigurable extends BaseConfigurable {
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      showAddPopup();
+      showAddPopup(true);
     }
 
     @Override
     public void run(AnActionButton button) {
-      showAddPopup();
+      showAddPopup(true);
     }
 
-    private void showAddPopup() {
+    private void showAddPopup(final boolean showApplicableTypesOnly) {
       final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-      final Map<ConfigurationType, List<ConfigurationFactory>> applicableFactories = new HashMap<ConfigurationType, List<ConfigurationFactory>>();
-      for (ConfigurationType type : getRunManager().getConfigurationFactories(false)) {
-        List<ConfigurationFactory> factories = new ArrayList<ConfigurationFactory>();
-        for (ConfigurationFactory factory : type.getConfigurationFactories()) {
-          if (factory.isApplicable(myProject)) {
-            factories.add(factory);
+      final List<ConfigurationType> configurationTypes;
+      int hiddenCount = 0;
+      if (showApplicableTypesOnly) {
+        List<ConfigurationType> applicableTypes = new ArrayList<ConfigurationType>();
+        for (ConfigurationType type : getRunManager().getConfigurationFactories(false)) {
+          if (isApplicable(type)) {
+            applicableTypes.add(type);
+          }
+          else {
+            hiddenCount++;
           }
         }
-        if (!factories.isEmpty()) {
-          Collections.sort(factories, new Comparator<ConfigurationFactory>() {
-            @Override
-            public int compare(final ConfigurationFactory factory1, final ConfigurationFactory factory2) {
-              return factory1.getName().compareToIgnoreCase(factory2.getName());
-            }
-          });
-          applicableFactories.put(type, factories);
-        }
+        configurationTypes = applicableTypes;
+      }
+      else {
+        configurationTypes = new ArrayList<ConfigurationType>(Arrays.asList(getRunManager().getConfigurationFactories(false)));
       }
 
-      final ConfigurationType[] configurationTypes = applicableFactories.keySet().toArray(new ConfigurationType[applicableFactories.keySet().size()]);
-      Arrays.sort(configurationTypes, new Comparator<ConfigurationType>() {
+      Collections.sort(configurationTypes, new Comparator<ConfigurationType>() {
         @Override
         public int compare(final ConfigurationType type1, final ConfigurationType type2) {
           return type1.getDisplayName().compareToIgnoreCase(type2.getDisplayName());
         }
       });
+      if (hiddenCount > 0) {
+        configurationTypes.add(null);
+      }
+
+      final int finalHiddenCount = hiddenCount;
       final ListPopup popup =
         popupFactory.createListPopup(new BaseListPopupStep<ConfigurationType>(
           ExecutionBundle.message("add.new.run.configuration.acrtion.name"), configurationTypes) {
@@ -1122,7 +1125,7 @@ class RunConfigurable extends BaseConfigurable {
           @Override
           @NotNull
           public String getTextFor(final ConfigurationType type) {
-            return type.getDisplayName();
+            return type != null ? type.getDisplayName() : "(" + finalHiddenCount + " more items)";
           }
 
           @Override
@@ -1137,7 +1140,7 @@ class RunConfigurable extends BaseConfigurable {
 
           @Override
           public Icon getIconFor(final ConfigurationType type) {
-            return type.getIcon();
+            return type != null ? type.getIcon() : EmptyIcon.ICON_16;
           }
 
           @Override
@@ -1145,9 +1148,18 @@ class RunConfigurable extends BaseConfigurable {
             if (hasSubstep(type)) {
               return getSupStep(type);
             }
-            final List<ConfigurationFactory> factories = applicableFactories.get(type);
-            if (factories.size() > 0) {
-              createNewConfiguration(factories.get(0));
+            if (type == null) {
+              return doFinalStep(new Runnable() {
+                @Override
+                public void run() {
+                  showAddPopup(false);
+                }
+              });
+            }
+
+            final ConfigurationFactory[] factories = type.getConfigurationFactories();
+            if (factories.length > 0) {
+              createNewConfiguration(factories[0]);
             }
             return FINAL_CHOICE;
           }
@@ -1155,11 +1167,17 @@ class RunConfigurable extends BaseConfigurable {
           @Override
           public int getDefaultOptionIndex() {
             ConfigurationType type = getSelectedConfigurationType();
-            return type != null ? ArrayUtilRt.find(configurationTypes, type) : super.getDefaultOptionIndex();
+            return type != null ? configurationTypes.indexOf(type) : super.getDefaultOptionIndex();
           }
 
           private ListPopupStep getSupStep(final ConfigurationType type) {
-            final List<ConfigurationFactory> factories = applicableFactories.get(type);
+            final ConfigurationFactory[] factories = type.getConfigurationFactories();
+            Arrays.sort(factories, new Comparator<ConfigurationFactory>() {
+              @Override
+              public int compare(final ConfigurationFactory factory1, final ConfigurationFactory factory2) {
+                return factory1.getName().compareToIgnoreCase(factory2.getName());
+              }
+            });
             return new BaseListPopupStep<ConfigurationFactory>(
               ExecutionBundle.message("add.new.run.configuration.action.name", type.getDisplayName()), factories) {
 
@@ -1185,12 +1203,21 @@ class RunConfigurable extends BaseConfigurable {
 
           @Override
           public boolean hasSubstep(final ConfigurationType type) {
-            return applicableFactories.get(type).size() > 1;
+            return type != null && type.getConfigurationFactories().length > 1;
           }
 
         });
       //new TreeSpeedSearch(myTree);
       popup.showUnderneathOf(myToolbarDecorator.getActionsPanel());
+    }
+
+    private boolean isApplicable(ConfigurationType type) {
+      for (ConfigurationFactory factory : type.getConfigurationFactories()) {
+        if (factory.isApplicable(myProject)) {
+          return true;
+        }
+      }
+      return false;
     }
   }
 
