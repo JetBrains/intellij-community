@@ -260,7 +260,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
         new TabRenamer() {
           @Override
           protected JTextField createTextField() {
-            return new JBTextField() {
+            JBTextField textField = new JBTextField() {
               private int myMinimalWidth;
 
               @Override
@@ -269,21 +269,23 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
                 if (size.width > myMinimalWidth) {
                   myMinimalWidth = size.width;
                 }
-                else {
-                  size.width = myMinimalWidth;
-                }
-                return wider(size);
+
+                return wider(size, myMinimalWidth);
               }
 
-              private Dimension wider(Dimension size) {
-                return new Dimension(size.width + 10, size.height);
+              private Dimension wider(Dimension size, int minimalWidth) {
+                return new Dimension(minimalWidth + 10, size.height);
               }
             };
+            textField.setOpaque(true);
+            return textField;
           }
         }.install(getSelectedIndex(), getInfo().getText(), myLabel, new TabRenamer.RenameCallBack() {
           @Override
           public void setComponent(Component c) {
-            setLabel(true, (JComponent)c);
+            myTabs.setTabDraggingEnabled(!(c instanceof JBTextField));
+              
+            setPlaceholderContent(true, (JComponent)c);
           }
 
           @Override
