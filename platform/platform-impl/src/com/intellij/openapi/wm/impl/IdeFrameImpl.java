@@ -75,6 +75,8 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
 
   private static boolean myUpdatingTitle;
 
+  private static String xdgCurrentDesktop = System.getenv("XDG_CURRENT_DESKTOP");
+
   private String myTitle;
   private String myFileTitle;
   private File myCurrentFile;
@@ -135,7 +137,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
         updateBorder();
       }
     });
-    if (SystemInfo.isLinux && Registry.is("linux.native.menu")) {
+    if (xdgCurrentDesktop != null && xdgCurrentDesktop.contains("Unity") && Registry.is("linux.native.menu")) {
       SwingUtilities.invokeLater(new Runnable() {
         public void run() {
           ApplicationMenu.tryInstall(IdeFrameImpl.this);
