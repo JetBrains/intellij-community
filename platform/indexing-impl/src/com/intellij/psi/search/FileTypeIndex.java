@@ -103,4 +103,13 @@ public class FileTypeIndex extends ScalarIndexExtension<FileType>
   public Map<FileType, Void> map(FileContent inputData) {
     return Collections.singletonMap(inputData.getFileType(), null);
   }
+
+  public static boolean containsFileOfType(@NotNull FileType type, @NotNull GlobalSearchScope scope) {
+    return !FileBasedIndex.getInstance().processValues(NAME, type, null, new FileBasedIndex.ValueProcessor<Void>() {
+      @Override
+      public boolean process(VirtualFile file, Void value) {
+        return false;
+      }
+    }, scope);
+  }
 }

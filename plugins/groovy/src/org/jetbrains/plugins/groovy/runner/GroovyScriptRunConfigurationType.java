@@ -21,9 +21,12 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.ConfigurationTypeUtil;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.search.FileTypeIndex;
+import com.intellij.psi.search.GlobalSearchScope;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyFileType;
 
 import javax.swing.*;
 
@@ -63,6 +66,11 @@ public class GroovyScriptRunConfigurationType implements ConfigurationType {
   private static class GroovyFactory extends ConfigurationFactory {
     public GroovyFactory(ConfigurationType type) {
       super(type);
+    }
+
+    @Override
+    public boolean isApplicable(@NotNull Project project) {
+      return FileTypeIndex.containsFileOfType(GroovyFileType.GROOVY_FILE_TYPE, GlobalSearchScope.allScope(project));
     }
 
     public RunConfiguration createTemplateConfiguration(Project project) {
