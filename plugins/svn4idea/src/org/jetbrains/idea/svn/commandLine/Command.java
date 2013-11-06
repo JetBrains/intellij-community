@@ -41,6 +41,12 @@ public class Command {
     myParameters.addAll(parameters);
   }
 
+  public void putIfNotPresent(@NotNull String parameter) {
+    if (!myParameters.contains(parameter)) {
+      myParameters.add(parameter);
+    }
+  }
+
   @Nullable
   public File getConfigDir() {
     return myConfigDir;
