@@ -36,6 +36,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
@@ -1179,8 +1180,9 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 placeToShow.x += R * 3 / 2;
                 placeToShow.y -= myCacheStartLine * myEditor.getLineHeight();
 
+                Font font = myEditor.getColorsScheme().getFont(EditorFontType.PLAIN);
+                g2d.setFont(font.deriveFont(font.getSize() *.8F));
                 int w = g2d.getFontMetrics().stringWidth(s);
-                int a = g2d.getFontMetrics().getAscent();
 
                 int rightEdge = rightEdges.get(logicalPosition.line);
                 placeToShow.x = Math.max(placeToShow.x, rightEdge);
@@ -1192,7 +1194,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 g2d.setColor(new JBColor(JBColor.GRAY, Gray._200));
                 g2d.drawRoundRect(placeToShow.x, placeToShow.y, w + 2 * R, h, R, R);
                 g2d.setColor(JBColor.foreground());
-                g2d.drawString(s, placeToShow.x + R, placeToShow.y - g2d.getFontMetrics().getDescent() + R/2 + a);
+                g2d.drawString(s, placeToShow.x + R, placeToShow.y + h - g2d.getFontMetrics(g2d.getFont()).getDescent()/2 - 2);
               }
               isDirty = false;
             }
