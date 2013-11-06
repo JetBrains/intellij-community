@@ -2388,6 +2388,10 @@
                      key="size.replaceable.by.isempty.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.style.SizeReplaceableByIsEmptyInspection"/>
+    <localInspection language="JAVA" shortName="ProblematicWhitespace" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="problematic.whitespace.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.style.ProblematicWhitespaceInspection"/>
 
     <!--group.names.threading.issues-->
     <localInspection language="JAVA" suppressId="AccessToNonThreadSafeStaticField" shortName="AccessToNonThreadSafeStaticFieldFromInstance"
