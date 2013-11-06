@@ -57,6 +57,12 @@ public class TerminalProcessHandler extends OSProcessHandler {
   }
 
   @Override
+  protected void destroyProcessImpl() {
+    final Process process = getProcess();
+    process.destroy();
+  }
+
+  @Override
   public void notifyTextAvailable(String text, Key outputType) {
     terminalOutputCapturer.onTextAvailable(new ProcessEvent(this, text), outputType);
 
