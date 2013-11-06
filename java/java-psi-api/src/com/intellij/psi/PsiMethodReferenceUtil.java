@@ -18,6 +18,7 @@ package com.intellij.psi;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
 import com.intellij.util.Function;
 import com.sun.tools.javac.code.Kinds;
@@ -163,6 +164,10 @@ public class PsiMethodReferenceUtil {
 
   public static boolean isAcceptable(@Nullable final PsiMethodReferenceExpression methodReferenceExpression, PsiType left) {
     if (methodReferenceExpression == null) return false;
+    final PsiElement argsList = PsiTreeUtil.getParentOfType(methodReferenceExpression, PsiExpressionList.class);
+    if (MethodCandidateInfo.ourOverloadGuard.currentStack().contains(argsList)) {
+      if (!methodReferenceExpression.isExact()) return true;
+    }
     if (left instanceof PsiIntersectionType) {
       for (PsiType conjunct : ((PsiIntersectionType)left).getConjuncts()) {
         if (isAcceptable(methodReferenceExpression, conjunct)) return true;
