@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn.commandLine;
 
+import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,6 +26,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -40,9 +43,11 @@ public class CommandExecutor {
 
   private boolean myIsDestroyed;
   private boolean myNeedsDestroy;
+  private volatile String myDestroyReason;
   protected final GeneralCommandLine myCommandLine;
-  private Process myProcess;
-  private OSProcessHandler myHandler;
+  protected Process myProcess;
+  protected OSProcessHandler myHandler;
+  private OutputStreamWriter myProcessWriter;
   // TODO: Try to implement commands in a way that they manually indicate if they need full output - to prevent situations
   // TODO: when large amount of data needs to be stored instead of just sequential processing.
   private CapturingProcessAdapter outputAdapter;
@@ -86,16 +91,21 @@ public class CommandExecutor {
     return myIsDestroyed;
   }
 
+  public String getDestroyReason() {
+    return myDestroyReason;
+  }
+
   public void start() {
     synchronized (myLock) {
       checkNotStarted();
 
       try {
-        myProcess = myCommandLine.createProcess();
+        myProcess = createProcess();
         if (LOG.isDebugEnabled()) {
           LOG.debug(myCommandLine.toString());
         }
-        myHandler = new OSProcessHandler(myProcess, myCommandLine.getCommandLineString());
+        myHandler = createProcessHandler();
+        myProcessWriter = new OutputStreamWriter(myHandler.getProcessInput());
         startHandlingStreams();
       } catch (Throwable t) {
         listeners().startFailed(t);
@@ -104,7 +114,17 @@ public class CommandExecutor {
     }
   }
 
-  private void startHandlingStreams() {
+  @NotNull
+  protected OSProcessHandler createProcessHandler() {
+    return new OSProcessHandler(myProcess, myCommandLine.getCommandLineString());
+  }
+
+  @NotNull
+  protected Process createProcess() throws ExecutionException {
+    return myCommandLine.createProcess();
+  }
+
+  protected void startHandlingStreams() {
     outputAdapter = new CapturingProcessAdapter();
     myHandler.addProcessListener(outputAdapter);
     myHandler.addProcessListener(new ProcessTracker());
@@ -119,6 +139,12 @@ public class CommandExecutor {
 
   public String getErrorOutput() {
     return outputAdapter.getOutput().getStderr();
+  }
+
+  // TODO: Carefully here - do not modify command from threads other than the one started command execution
+  @NotNull
+  public Command getCommand() {
+    return myCommand;
   }
 
   /**
@@ -179,6 +205,13 @@ public class CommandExecutor {
 
   public void destroyProcess() {
     synchronized (myLock) {
+      myNeedsDestroy = true;
+    }
+  }
+
+  public void destroyProcess(@Nullable String destroyReason) {
+    synchronized (myLock) {
+      myDestroyReason = destroyReason;
       myNeedsDestroy = true;
     }
   }
@@ -263,6 +296,23 @@ public class CommandExecutor {
     if (error != null) {
       throw new SvnBindException(error);
     }
+  }
+
+  public void write(String value) throws SvnBindException {
+    try {
+      synchronized (myLock) {
+        myProcessWriter.write(value);
+        myProcessWriter.flush();
+      }
+    }
+    catch (IOException e) {
+      throw new SvnBindException(e);
+    }
+  }
+
+  public void logCommand() {
+    LOG.info("Command text " + getCommandText());
+    LOG.info("Command output " + getOutput());
   }
 
   private class CommandCancelTracker extends LineCommandAdapter {

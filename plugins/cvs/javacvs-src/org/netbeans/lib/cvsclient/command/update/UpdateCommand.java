@@ -285,7 +285,7 @@ public final class UpdateCommand extends AbstractCommand
 		}
 		if (getKeywordSubst() != null) {
 			cvsArguments.append("-k");
-			cvsArguments.append(getKeywordSubst().toString());
+			cvsArguments.append(getKeywordSubst());
 			cvsArguments.append(' ');
 		}
 		if (getUpdateByRevision() != null) {
@@ -310,5 +310,10 @@ public final class UpdateCommand extends AbstractCommand
 			}
 		}
 		return cvsArguments.toString();
+	}
+
+	public void setUpdateByRevisionOrDate(String revision, final String date) {
+		setUpdateByRevisionOrTag(revision);
+		setUpdateByDate(date);
 	}
 }

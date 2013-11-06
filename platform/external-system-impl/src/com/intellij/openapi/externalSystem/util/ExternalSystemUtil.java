@@ -33,16 +33,13 @@ import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExe
 import com.intellij.openapi.externalSystem.model.execution.ExternalTaskExecutionInfo;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.service.ImportCanceledException;
 import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSystemTaskConfigurationType;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemIdeNotificationManager;
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemNotificationExtension;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService;
@@ -76,7 +73,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -211,9 +207,9 @@ public class ExternalSystemUtil {
         for (DataNode<ModuleData> node : moduleNodes) {
           myExternalModulePaths.add(node.getData().getLinkedExternalProjectPath());
         }
-        ExternalSystemApiUtil.executeProjectChangeAction(true, new Runnable() {
+        ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(project) {
           @Override
-          public void run() {
+          public void execute() {
             ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
               @Override
               public void run() {
@@ -449,6 +445,7 @@ public class ExternalSystemUtil {
           if (stamp > 0) {
             ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
             assert manager != null;
+            if(project.isDisposed()) return;
             manager.getLocalSettingsProvider().fun(project).getExternalConfigModificationStamps().put(externalProjectPath, stamp);
           }
           DataNode<ProjectData> externalProject = task.getExternalProject();
@@ -697,9 +694,9 @@ public class ExternalSystemUtil {
         projects.add(projectSettings);
         systemSettings.setLinkedProjectsSettings(projects);
         ensureToolWindowInitialized(project, externalSystemId);
-        ExternalSystemApiUtil.executeProjectChangeAction(new Runnable() {
+        ExternalSystemApiUtil.executeProjectChangeAction(new DisposeAwareProjectChange(project) {
           @Override
-          public void run() {
+          public void execute() {
             ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
               @Override
               public void run() {

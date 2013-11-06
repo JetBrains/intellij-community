@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
+import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -74,9 +75,9 @@ public class RefreshExternalProjectAction extends AnAction implements DumbAware,
           if (externalProject == null) {
             return;
           }
-          ExternalSystemApiUtil.executeProjectChangeAction(true, new Runnable() {
+          ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(project) {
             @Override
-            public void run() {
+            public void execute() {
               ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
                 @Override
                 public void run() {

@@ -43,7 +43,6 @@ public class PyAnnotatingVisitor implements Annotator {
     BreakContinueAnnotator.class,
     GlobalAnnotator.class,
     ImportAnnotator.class,
-    StringLiteralQuotesAnnotator.class,
     PyBuiltinAnnotator.class,
    UnsupportedFeatures.class
   };
