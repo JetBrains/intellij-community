@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.projectWizard;
 
+import com.intellij.CommonBundle;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkRole;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
@@ -25,13 +26,16 @@ import com.intellij.ide.util.newProjectWizard.modes.CreateFromTemplateMode;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -81,6 +85,7 @@ public class ProjectTypeStep extends ModuleWizardStep {
 
   private final AddSupportForFrameworksPanel myFrameworksPanel;
   private final ModuleBuilder.ModuleConfigurationUpdater myConfigurationUpdater;
+  private boolean myCommitted;
 
   public ProjectTypeStep(WizardContext context, NewProjectWizard wizard, ModulesProvider modulesProvider) {
     myContext = context;
@@ -229,6 +234,22 @@ public class ProjectTypeStep extends ModuleWizardStep {
   @Override
   public void onStepLeaving() {
     myList.saveSelection();
+  }
+
+  @Override
+  public void onWizardFinished() throws CommitStepException {
+    if (!myCommitted) {
+      boolean ok = myFrameworksPanel.downloadLibraries();
+      if (!ok) {
+        int answer = Messages.showYesNoDialog(getComponent(),
+                                              ProjectBundle.message("warning.message.some.required.libraries.wasn.t.downloaded"),
+                                              CommonBundle.getWarningTitle(), Messages.getWarningIcon());
+        if (answer != 0) {
+          throw new CommitStepException(null);
+        }
+      }
+      myCommitted = true;
+    }
   }
 
   @Override
