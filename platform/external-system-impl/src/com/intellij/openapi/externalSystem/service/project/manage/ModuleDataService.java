@@ -10,6 +10,7 @@ import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceTyp
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
+import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
@@ -72,9 +73,9 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
       myAlarm.addRequest(new ImportModulesTask(project, toImport, synchronous), PROJECT_INITIALISATION_DELAY_MS);
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
       @Override
-      public void run() {
+      public void execute() {
         final Collection<DataNode<ModuleData>> toCreate = filterExistingModules(toImport, project);
         if (!toCreate.isEmpty()) {
           createModules(toCreate, project);
@@ -90,7 +91,7 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
   }
 
   private void createModules(@NotNull final Collection<DataNode<ModuleData>> toCreate, @NotNull final Project project) {
-    removeExistingModulesConfigs(toCreate);
+    removeExistingModulesConfigs(toCreate, project);
     Application application = ApplicationManager.getApplication();
     final Map<DataNode<ModuleData>, Module> moduleMappings = ContainerUtilRt.newHashMap();
     application.runWriteAction(new Runnable() {
@@ -162,13 +163,13 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
     return result;
   }
 
-  private void removeExistingModulesConfigs(@NotNull final Collection<DataNode<ModuleData>> nodes) {
+  private void removeExistingModulesConfigs(@NotNull final Collection<DataNode<ModuleData>> nodes, @NotNull final Project project) {
     if (nodes.isEmpty()) {
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(true, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(true, new DisposeAwareProjectChange(project) {
       @Override
-      public void run() {
+      public void execute() {
         LocalFileSystem fileSystem = LocalFileSystem.getInstance();
         for (DataNode<ModuleData> node : nodes) {
           // Remove existing '*.iml' file if necessary.
@@ -218,9 +219,9 @@ public class ModuleDataService implements ProjectDataService<ModuleData, Module>
     if (modules.isEmpty()) {
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
       @Override
-      public void run() {
+      public void execute() {
         for (Module module : modules) {
           ModuleManager moduleManager = ModuleManager.getInstance(module.getProject());
           String path = module.getModuleFilePath();
