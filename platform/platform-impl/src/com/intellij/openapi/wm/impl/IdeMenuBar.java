@@ -126,7 +126,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       return new EmptyBorder(0, 0, 1, 0);
     }
 
-    return super.getBorder();
+    return UISettings.getInstance().SHOW_MAIN_TOOLBAR || UISettings.getInstance().SHOW_NAVIGATION_BAR ? super.getBorder() : null;
   }
 
   @Override
