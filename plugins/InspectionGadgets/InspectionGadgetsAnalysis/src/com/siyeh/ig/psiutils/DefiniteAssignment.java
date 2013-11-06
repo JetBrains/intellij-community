@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * (c) 2013 Desert Island BV
- * created: 03 09 2013
- */
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
@@ -31,7 +26,7 @@ import java.util.Map;
 /**
 * @author Bas Leijdekkers
 */
-public class DefiniteAssignment {
+class DefiniteAssignment {
 
   @NotNull
   private final PsiVariable variable;

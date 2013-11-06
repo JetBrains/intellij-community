@@ -865,10 +865,10 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Nullable
   public VirtualFileSystemEntry findRoot(@NotNull String basePath, @NotNull NewVirtualFileSystem fs) {
     String rootUrl = normalizeRootUrl(basePath, fs);
-
     boolean isFakeRoot = basePath.isEmpty();
-    myRootsLock.readLock().lock();
     VirtualFileSystemEntry root;
+
+    myRootsLock.readLock().lock();
     try {
       root = isFakeRoot ? mySuperRoot : myRoots.get(rootUrl);
       if (root != null) return root;
@@ -888,34 +888,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
       if (isFakeRoot) {
         // fake super-root
-        root = new VirtualDirectoryImpl("", null, fs, rootId, 0) {
-          @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
-          @Override
-          @NotNull
-          public VirtualFile[] getChildren() {
-            return getRoots(getFileSystem());
-          }
-
-          @Override
-          public VirtualFileSystemEntry findChild(@NotNull String name) {
-            if (name.isEmpty()) return null;
-            return findRoot(name, getFileSystem());
-          }
-
-          @Override
-          protected char[] appendPathOnFileSystem(int pathLength, int[] position) {
-            // getPath() for super-root should never be called.
-            // however, when new FakeVirtualFile(superRoot, "name") is constructed,
-            // return garbage to make sure they won't find anything by the name returned
-            String fakeName = "@&^%$#*/\\(";
-            int rootPathLength = pathLength + fakeName.length();
-            char[] chars = new char[rootPathLength];
-
-            position[0] = copyString(chars, position[0], fakeName);
-
-            return chars;
-          }
-        };
+        root = new FakeRoot(fs, rootId);
       }
       else if (fs instanceof JarFileSystem) {
         // optimization: for jar roots do not store base path in the myName field, use local FS file's getPath()
@@ -1315,11 +1288,66 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
 
-  private static class JarRoot extends VirtualDirectoryImpl {
+  private abstract static class AbstractRoot extends VirtualDirectoryImpl {
+    protected AbstractRoot(@NotNull NewVirtualFileSystem fs, int id) {
+      super(FS_ROOT_FAKE_NAME, null, fs, id, 0);
+    }
+
+    @NotNull
+    @Override
+    public abstract String getName();
+
+    @Override
+    protected abstract char[] appendPathOnFileSystem(int accumulatedPathLength, int[] positionRef);
+
+    @Override
+    public final void setParent(@NotNull VirtualFile newParent) {
+      throw new IncorrectOperationException();
+    }
+  }
+
+  private class FakeRoot extends AbstractRoot {
+    private FakeRoot(@NotNull NewVirtualFileSystem fs, int rootId) {
+      super(fs, rootId);
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return FS_ROOT_FAKE_NAME;
+    }
+
+    @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
+    @Override
+    @NotNull
+    public VirtualFile[] getChildren() {
+      return getRoots(getFileSystem());
+    }
+
+    @Override
+    public VirtualFileSystemEntry findChild(@NotNull String name) {
+      if (name.isEmpty()) return null;
+      return findRoot(name, getFileSystem());
+    }
+
+    @Override
+    protected char[] appendPathOnFileSystem(int pathLength, int[] position) {
+      // getPath() for super-root should never be called.
+      // however, when new FakeVirtualFile(superRoot, "name") is constructed,
+      // return garbage to make sure they won't find anything by the name returned
+      String fakeName = "@&^%$#*/\\(";
+      int rootPathLength = pathLength + fakeName.length();
+      char[] chars = new char[rootPathLength];
+      position[0] = copyString(chars, position[0], fakeName);
+      return chars;
+    }
+  }
+
+  private static class JarRoot extends AbstractRoot {
     private final VirtualFile myParentLocalFile;
 
     private JarRoot(@NotNull NewVirtualFileSystem fs, int rootId, @NotNull VirtualFile parentLocalFile) {
-      super(FS_ROOT_FAKE_NAME, null, fs, rootId, 0);
+      super(fs, rootId);
       myParentLocalFile = parentLocalFile;
     }
 
@@ -1337,19 +1365,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       positionRef[0] = copyString(chars, positionRef[0], JarFileSystem.JAR_SEPARATOR);
       return chars;
     }
-
-    @Override
-    public void setParent(@NotNull VirtualFile newParent) {
-      throw new IncorrectOperationException();
-    }
   }
 
-
-  private static class FsRoot extends VirtualDirectoryImpl {
+  private static class FsRoot extends AbstractRoot {
     private final String myName;
 
     private FsRoot(@NotNull NewVirtualFileSystem fs, int rootId, @NotNull String basePath) {
-      super(FS_ROOT_FAKE_NAME, null, fs, rootId, 0);
+      super(fs, rootId);
       myName = FileUtil.toSystemIndependentName(basePath);
     }
 
@@ -1378,11 +1400,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       }
 
       return chars;
-    }
-
-    @Override
-    public void setParent(@NotNull VirtualFile newParent) {
-      throw new IncorrectOperationException();
     }
   }
 }

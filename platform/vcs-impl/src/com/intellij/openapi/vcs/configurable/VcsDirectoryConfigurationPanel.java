@@ -419,7 +419,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
     Collection<VcsRootError> myErrors = VcsRootErrorsFinder.getInstance(myProject).find();
     for (final VcsRootError root : myErrors) {
-      if (!root.getType().equals(VcsRootError.Type.UNREGISTERED_ROOT)) {
+      if (!VcsRootError.Type.UNREGISTERED_ROOT.equals(root.getType())) {
         continue;
       }
       final VcsKey vcsKey = root.getVcsKey();

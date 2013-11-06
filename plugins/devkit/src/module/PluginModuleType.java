@@ -17,7 +17,6 @@ package org.jetbrains.idea.devkit.module;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.module.*;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.IconLoader;
@@ -122,16 +121,5 @@ public class PluginModuleType extends ModuleType<PluginModuleBuilder> {
   @Override
   public boolean isValidSdk(@NotNull final Module module, final Sdk projectSdk) {
     return JavaModuleType.isValidJavaSdk(module);
-  }
-
-  public static Module[] getAllPluginModules(final Project project) {
-    List<Module> modules = new ArrayList<Module>();
-    Module[] allModules = ModuleManager.getInstance(project).getModules();
-    for (Module module : allModules) {
-      if (get(module) == getInstance()) {
-        modules.add(module);
-      }
-    }
-    return modules.toArray(new Module[modules.size()]);
   }
 }

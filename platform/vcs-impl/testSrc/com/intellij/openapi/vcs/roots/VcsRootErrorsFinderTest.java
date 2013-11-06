@@ -151,6 +151,7 @@ public class VcsRootErrorsFinderTest extends VcsPlatformTest {
     map.put("content_roots", Arrays.asList("content_root"));
     Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
     errorsMap.put("unreg", Arrays.asList("content_root"));
+    errorsMap.put("extra", Arrays.asList(PROJECT));
     doTest(map, errorsMap);
   }
 
@@ -162,12 +163,11 @@ public class VcsRootErrorsFinderTest extends VcsPlatformTest {
     map.put("content_roots", Arrays.asList("."));
     Map<String, Collection<String>> errorsMap = new HashMap<String, Collection<String>>();
     errorsMap.put("unreg", Arrays.asList("community"));
+    errorsMap.put("extra", Arrays.asList(PROJECT));
     doTest(map, errorsMap);
   }
 
-  public void testProjectRootGitForFullProjectContentRootLinkedSourceFolderBelowProjectThenErrors() throws IOException
-
-  {
+  public void testProjectRootGitForFullProjectContentRootLinkedSourceFolderBelowProjectThenErrors() throws IOException {
     Map<String, Collection<String>> map = new HashMap<String, Collection<String>>();
     map.put("git", Arrays.asList(".", "content_root", "../linked_source_root", "folder"));
     map.put("roots", Arrays.asList(PROJECT));

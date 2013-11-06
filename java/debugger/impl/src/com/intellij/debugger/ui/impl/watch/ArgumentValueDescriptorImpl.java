@@ -30,6 +30,8 @@ import com.intellij.util.IncorrectOperationException;
 import com.sun.jdi.PrimitiveValue;
 import com.sun.jdi.Value;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Stack;
 
 public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
@@ -110,6 +112,7 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
   private class LocalVariableNameFinder extends JavaRecursiveElementVisitor {
     private final int myStartSlot;
     private final StringBuilder myNameBuilder;
+    private final Set<String> myVisitedNames = new HashSet<String>();
     private int myCurrentSlotIndex;
     private final Stack<Integer> myIndexStack;
 
@@ -122,14 +125,24 @@ public class ArgumentValueDescriptorImpl extends ValueDescriptorImpl{
 
     @Override
     public void visitLocalVariable(PsiLocalVariable variable) {
-      if (myCurrentSlotIndex == myIndex) {
+      appendName(variable.getName());
+      final PsiType varType = variable.getType();
+      myCurrentSlotIndex += (varType == PsiType.DOUBLE || varType == PsiType.LONG)? 2 : 1;
+    }
+
+    public void visitSynchronizedStatement(PsiSynchronizedStatement statement) {
+      appendName("<monitor>");
+      myCurrentSlotIndex++;
+      super.visitSynchronizedStatement(statement);
+    }
+
+    private void appendName(String varName) {
+      if (myCurrentSlotIndex == myIndex && myVisitedNames.add(varName)) {
         if (myNameBuilder.length() != 0) {
           myNameBuilder.append(" | ");
         }
-        myNameBuilder.append(variable.getName());
+        myNameBuilder.append(varName);
       }
-      final PsiType varType = variable.getType();
-      myCurrentSlotIndex += (varType == PsiType.DOUBLE || varType == PsiType.LONG)? 2 : 1;
     }
 
     @Override

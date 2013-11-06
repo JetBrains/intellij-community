@@ -13,11 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/**
- * (c) 2013 Desert Island BV
- * created: 23 09 2013
- */
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInspection.LocalInspectionTool;

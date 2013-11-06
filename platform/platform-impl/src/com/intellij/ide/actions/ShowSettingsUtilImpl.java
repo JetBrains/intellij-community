@@ -48,7 +48,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   private AtomicBoolean myShown = new AtomicBoolean(false);
 
   @Override
-  public void showSettingsDialog(Project project, ConfigurableGroup[] group) {
+  public void showSettingsDialog(@NotNull Project project, @NotNull ConfigurableGroup[] group) {
     try {
       myShown.set(true);
       _showSettingsDialog(project, group, null);
@@ -61,7 +61,7 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     }
   }
 
-  private static void _showSettingsDialog(final Project project, ConfigurableGroup[] group, @Nullable Configurable toSelect) {
+  private static void _showSettingsDialog(@NotNull final Project project, @NotNull ConfigurableGroup[] group, @Nullable Configurable toSelect) {
     group = filterEmptyGroups(group);
     if (Registry.is("ide.perProjectModality")) {
       new OptionsEditorDialog(project, group, toSelect, true).show();
@@ -78,15 +78,24 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   public void showSettingsDialog(@Nullable final Project project, final Class configurableClass) {
     assert Configurable.class.isAssignableFrom(configurableClass) : "Not a configurable: " + configurableClass.getName();
 
-    Project actualProject = project != null ? project  : ProjectManager.getInstance().getDefaultProject();
-    Configurable config = findByClass(new IdeConfigurablesGroup().getConfigurables(), configurableClass);
-    if (config == null && project != null) {
-      config = findByClass(new ProjectConfigurablesGroup(project).getConfigurables(), configurableClass);
+    ConfigurableGroup[] groups;
+    IdeConfigurablesGroup commonGroup = new IdeConfigurablesGroup();
+    ProjectConfigurablesGroup projectGroup = project == null ? null : new ProjectConfigurablesGroup(project);
+    if (projectGroup == null) {
+      groups = new ConfigurableGroup[] {commonGroup};
+    } else {
+      groups = new ConfigurableGroup[] {projectGroup, commonGroup};
+    }
+
+    Configurable config = findByClass(commonGroup.getConfigurables(), configurableClass);
+    if (config == null && projectGroup != null) {
+      config = findByClass(projectGroup.getConfigurables(), configurableClass);
     }
 
     assert config != null : "Cannot find configurable: " + configurableClass.getName();
 
-    showSettingsDialog(actualProject, config);
+    @NotNull Project nnProject = project != null ? project : ProjectManager.getInstance().getDefaultProject();
+    _showSettingsDialog(nnProject, groups, config);
   }
 
   @Nullable
@@ -188,7 +197,8 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     }, toSelect);
   }
 
-  private static ConfigurableGroup[] filterEmptyGroups(final ConfigurableGroup[] group) {
+  @NotNull
+  private static ConfigurableGroup[] filterEmptyGroups(@NotNull final ConfigurableGroup[] group) {
     List<ConfigurableGroup> groups = new ArrayList<ConfigurableGroup>();
     for (ConfigurableGroup g : group) {
       if (g.getConfigurables().length > 0) {

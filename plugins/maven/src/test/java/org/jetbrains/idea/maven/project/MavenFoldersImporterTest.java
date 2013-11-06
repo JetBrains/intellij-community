@@ -18,13 +18,13 @@ package org.jetbrains.idea.maven.project;
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.SourceFolderImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 
@@ -239,7 +239,9 @@ public class MavenFoldersImporterTest extends MavenImportingTestCase {
       @Override
       public void consume(ModifiableRootModel model) {
         for (SourceFolder folder : model.getContentEntries()[0].getSourceFolders()) {
-          ((JavaSourceRootProperties)((SourceFolderImpl)folder).getJpsElement().getProperties()).setForGeneratedSources(false);
+          JavaSourceRootProperties properties = folder.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
+          assertNotNull(properties);
+          properties.setForGeneratedSources(false);
         }
       }
     });

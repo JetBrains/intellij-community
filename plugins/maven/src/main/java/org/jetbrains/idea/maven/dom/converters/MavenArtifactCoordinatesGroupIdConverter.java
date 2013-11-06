@@ -4,6 +4,7 @@ import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -77,6 +78,10 @@ public class MavenArtifactCoordinatesGroupIdConverter extends MavenArtifactCoord
 
     @Override
     public void handleInsert(final InsertionContext context, LookupElement item) {
+      if (TemplateManager.getInstance(context.getProject()).getActiveTemplate(context.getEditor()) != null) {
+        return; // Don't brake the template.
+      }
+
       context.commitDocument();
 
       XmlFile xmlFile = (XmlFile)context.getFile();
