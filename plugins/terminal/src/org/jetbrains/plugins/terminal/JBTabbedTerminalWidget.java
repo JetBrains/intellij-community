@@ -119,6 +119,11 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
     }
 
     @Override
+    public void setSelectedIndex(int index) {
+      myTabs.select(myTabs.getTabAt(index), true);
+    }
+
+    @Override
     public void setTabComponentAt(int index, Component component) {
       //nop
     }
