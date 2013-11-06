@@ -18,7 +18,6 @@ package com.intellij.psi.impl.search;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -39,10 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class LowLevelSearchUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.search.LowLevelSearchUtil");
-
-  private LowLevelSearchUtil() {
-  }
 
   // TRUE/FALSE -> injected psi has been discovered and processor returned true/false;
   // null -> there were nothing injected found
@@ -95,7 +90,7 @@ public class LowLevelSearchUtil {
       start = offset - leafElement.getTextRange().getStartOffset() + scopeStartOffset;
     }
     if (start < 0) {
-      LOG.error("offset=" + offset + " scopeStartOffset=" + scopeStartOffset + " leafElement=" + leafElement + "  scope=" + scope);
+      throw new AssertionError("offset=" + offset + " scopeStartOffset=" + scopeStartOffset + " leafElement=" + leafElement + "  scope=" + scope);
     }
     boolean contains = false;
     PsiElement prev = null;
@@ -159,7 +154,7 @@ public class LowLevelSearchUtil {
     int startOffset = scopeStart;
     int endOffset = range.getEndOffset();
     if (endOffset > buffer.length()) {
-      LOG.error("Range for element: '"+scope+"' = "+range+" is out of file '" + file + "' range: " + file.getTextLength());
+      throw new AssertionError("Range for element: '"+scope+"' = "+range+" is out of file '" + file + "' range: " + file.getTextLength());
     }
 
     final char[] bufferArray = CharArrayUtil.fromSequenceWithoutCopying(buffer);
@@ -194,7 +189,9 @@ public class LowLevelSearchUtil {
                                int endOffset,
                                @NotNull StringSearcher searcher,
                                @Nullable ProgressIndicator progress) {
-    LOG.assertTrue(endOffset <= text.length());
+    if (endOffset > text.length()) {
+      throw new AssertionError("end>length");
+    }
 
     for (int index = startOffset; index < endOffset; index++) {
       if (progress != null) progress.checkCanceled();
