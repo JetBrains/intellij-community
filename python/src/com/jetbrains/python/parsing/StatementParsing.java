@@ -766,7 +766,10 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       setExpectAsKeyword(true);
       if (myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
         myBuilder.advanceLexer();
-        getExpressionParser().parseSingleExpression(true); // 'as' is followed by a target
+        if (!getExpressionParser().parseSingleExpression(true)) {
+          myBuilder.error("identifier expected");
+          // 'as' is followed by a target
+        }
       }
       withItem.done(PyElementTypes.WITH_ITEM);
       if (!matchToken(PyTokenTypes.COMMA)) {

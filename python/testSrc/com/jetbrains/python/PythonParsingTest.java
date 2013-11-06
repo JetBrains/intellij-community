@@ -422,6 +422,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest();
   }
 
+  public void testWithMissingID() {  // PY-9853
+    doTest(LanguageLevel.PYTHON27);
+  }
+
   public void doTest(LanguageLevel languageLevel) {
     LanguageLevel prev = myLanguageLevel;
     myLanguageLevel = languageLevel;
