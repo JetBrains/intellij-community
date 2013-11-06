@@ -114,6 +114,11 @@ public class SubtypingConstraint implements ConstraintFormula {
           if (tBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
             return true;
           }
+
+          if (myS instanceof PsiCapturedWildcardType) {
+            myS = ((PsiCapturedWildcardType)myS).getWildcard();
+          }
+
           if (myS instanceof PsiWildcardType) {
             final PsiType sBound = ((PsiWildcardType)myS).getBound();
             if (sBound != null && ((PsiWildcardType)myS).isExtends()) {
