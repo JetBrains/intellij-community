@@ -43,7 +43,7 @@ public class PythonConfigurationType implements ConfigurationType {
     return null;
   }
 
-  private static class PythonConfigurationFactory extends ConfigurationFactory {
+  private static class PythonConfigurationFactory extends PythonConfigurationFactoryBase {
     protected PythonConfigurationFactory(ConfigurationType configurationType) {
       super(configurationType);
     }

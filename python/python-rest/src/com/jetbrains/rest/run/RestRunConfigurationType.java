@@ -15,8 +15,12 @@
  */
 package com.jetbrains.rest.run;
 
-import com.intellij.execution.configurations.*;
+import com.intellij.execution.configurations.ConfigurationFactory;
+import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.ConfigurationTypeUtil;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.project.Project;
+import com.jetbrains.python.run.PythonConfigurationFactoryBase;
 import com.jetbrains.rest.RestBundle;
 import com.jetbrains.rest.RestFileType;
 import com.jetbrains.rest.run.docutils.DocutilsRunConfiguration;
@@ -59,7 +63,7 @@ public class RestRunConfigurationType implements ConfigurationType {
     return new ConfigurationFactory[] {DOCUTILS_FACTORY, SPHINX_FACTORY};
   }
 
-  private static abstract class RestConfigurationFactory extends ConfigurationFactory {
+  private static abstract class RestConfigurationFactory extends PythonConfigurationFactoryBase {
     private final String myName;
 
     public RestConfigurationFactory(@NotNull final ConfigurationType type, @NotNull String name) {
