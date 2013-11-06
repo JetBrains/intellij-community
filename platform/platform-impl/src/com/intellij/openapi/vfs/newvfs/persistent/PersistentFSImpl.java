@@ -1319,7 +1319,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     private final VirtualFile myParentLocalFile;
 
     private JarRoot(@NotNull NewVirtualFileSystem fs, int rootId, @NotNull VirtualFile parentLocalFile) {
-      super("", null, fs, rootId, 0);
+      super(FS_ROOT_FAKE_NAME, null, fs, rootId, 0);
       myParentLocalFile = parentLocalFile;
     }
 
@@ -1346,8 +1346,17 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
 
   private static class FsRoot extends VirtualDirectoryImpl {
+    private final String myName;
+
     private FsRoot(@NotNull NewVirtualFileSystem fs, int rootId, @NotNull String basePath) {
-      super(basePath, null, fs, rootId, 0);
+      super(FS_ROOT_FAKE_NAME, null, fs, rootId, 0);
+      myName = FileUtil.toSystemIndependentName(basePath);
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return myName;
     }
 
     @Override
@@ -1369,6 +1378,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       }
 
       return chars;
+    }
+
+    @Override
+    public void setParent(@NotNull VirtualFile newParent) {
+      throw new IncorrectOperationException();
     }
   }
 }
