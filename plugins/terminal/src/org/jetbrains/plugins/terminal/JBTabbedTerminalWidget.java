@@ -103,6 +103,8 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
           fireChanged(new ChangeEvent(myTabs));
         }
       });
+
+      myTabs.setTabDraggingEnabled(true);
     }
 
     private void fireChanged(ChangeEvent event) {
@@ -258,7 +260,25 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget {
         new TabRenamer() {
           @Override
           protected JTextField createTextField() {
-            return new JBTextField();
+            return new JBTextField() {
+              private int myMinimalWidth;
+
+              @Override
+              public Dimension getPreferredSize() {
+                Dimension size = super.getPreferredSize();
+                if (size.width > myMinimalWidth) {
+                  myMinimalWidth = size.width;
+                }
+                else {
+                  size.width = myMinimalWidth;
+                }
+                return wider(size);
+              }
+
+              private Dimension wider(Dimension size) {
+                return new Dimension(size.width + 10, size.height);
+              }
+            };
           }
         }.install(getSelectedIndex(), getInfo().getText(), myLabel, new TabRenamer.RenameCallBack() {
           @Override
