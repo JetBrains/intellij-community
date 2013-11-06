@@ -440,12 +440,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   @Override
-  public VirtualFile copyFile(final Object requestor, @NotNull final VirtualFile file, @NotNull final VirtualFile newParent, @NotNull final String copyName)
-    throws IOException {
-    getDelegate(file).copyFile(requestor, file, newParent, copyName);
-    processEvent(new VFileCopyEvent(requestor, file, newParent, copyName));
+  public VirtualFile copyFile(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile parent, @NotNull String name) throws IOException {
+    getDelegate(file).copyFile(requestor, file, parent, name);
+    processEvent(new VFileCopyEvent(requestor, file, parent, name));
 
-    final VirtualFile child = newParent.findChild(copyName);
+    final VirtualFile child = parent.findChild(name);
     if (child == null) {
       throw new IOException("Cannot create child");
     }
@@ -453,7 +452,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   @Override
-  public VirtualFile createChildDirectory(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String dir) throws IOException {
+  public VirtualFile createChildDirectory(Object requestor, @NotNull VirtualFile parent, @NotNull String dir) throws IOException {
     getDelegate(parent).createChildDirectory(requestor, parent, dir);
     processEvent(new VFileCreateEvent(requestor, parent, dir, true, false));
 
@@ -465,7 +464,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   @Override
-  public VirtualFile createChildFile(final Object requestor, @NotNull final VirtualFile parent, @NotNull final String file) throws IOException {
+  public VirtualFile createChildFile(Object requestor, @NotNull VirtualFile parent, @NotNull String file) throws IOException {
     getDelegate(parent).createChildFile(requestor, parent, file);
     processEvent(new VFileCreateEvent(requestor, parent, file, false, false));
 
@@ -588,8 +587,10 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     return len;
   }
 
-  private InputStream createReplicator(@NotNull final VirtualFile file, final InputStream nativeStream, final long fileLength, final boolean readOnly)
-    throws IOException {
+  private InputStream createReplicator(@NotNull final VirtualFile file,
+                                       final InputStream nativeStream,
+                                       final long fileLength,
+                                       final boolean readOnly) throws IOException {
     if (nativeStream instanceof BufferExposingByteArrayInputStream) {
       // optimization
       BufferExposingByteArrayInputStream  byteStream = (BufferExposingByteArrayInputStream )nativeStream;
@@ -931,29 +932,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         root = new JarRoot(fs, rootId, parentLocalFile);
       }
       else {
-        root = new VirtualDirectoryImpl(basePath, null, fs, rootId, 0){
-          @Override
-          protected char[] appendPathOnFileSystem(int pathLength, int[] position) {
-            // do not call super method since we know it's the root
-            String name = getName();
-            int nameLength = name.length();
-            boolean appendSlash = SystemInfo.isWindows && nameLength == 2 && name.charAt(1) == ':'
-                                  && pathLength == 0 // otherwise we called this as a part of longer file path calculation and slash will be added anyway
-              ;
-
-            int rootPathLength = pathLength + nameLength;
-            if (appendSlash) ++rootPathLength;
-            char[] chars = new char[rootPathLength];
-
-            position[0] = copyString(chars, position[0], name);
-
-            if (appendSlash) {
-              chars[position[0]++] = '/';
-            }
-
-            return chars;
-          }
-        };
+        root = new FsRoot(fs, rootId, basePath);
       }
 
       if (isFakeRoot) {
@@ -1037,7 +1016,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       }
     }
     else {
-      VirtualFileSystemEntry parentFile = findFileById(parentId, cachedOnly, visited, mask |= id);
+      VirtualFileSystemEntry parentFile = findFileById(parentId, cachedOnly, visited, mask | id);
       if (parentFile instanceof VirtualDirectoryImpl) {
         result = ((VirtualDirectoryImpl)parentFile).findChildById(id, cachedOnly);
       }
@@ -1335,11 +1314,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
   }
 
-  public static class JarRoot extends VirtualDirectoryImpl {
+
+  private static class JarRoot extends VirtualDirectoryImpl {
     private final VirtualFile myParentLocalFile;
 
     private JarRoot(@NotNull NewVirtualFileSystem fs, int rootId, @NotNull VirtualFile parentLocalFile) {
-      super("", null, fs, rootId, 0);
+      super(FS_ROOT_FAKE_NAME, null, fs, rootId, 0);
       myParentLocalFile = parentLocalFile;
     }
 
@@ -1362,10 +1342,47 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     public void setParent(@NotNull VirtualFile newParent) {
       throw new IncorrectOperationException();
     }
+  }
+
+
+  private static class FsRoot extends VirtualDirectoryImpl {
+    private final String myName;
+
+    private FsRoot(@NotNull NewVirtualFileSystem fs, int rootId, @NotNull String basePath) {
+      super(FS_ROOT_FAKE_NAME, null, fs, rootId, 0);
+      myName = FileUtil.toSystemIndependentName(basePath);
+    }
 
     @NotNull
-    public VirtualFile getParentLocalFile() {
-      return myParentLocalFile;
+    @Override
+    public String getName() {
+      return myName;
+    }
+
+    @Override
+    protected char[] appendPathOnFileSystem(int pathLength, int[] position) {
+      String name = getName();
+      int nameLength = name.length();
+      int rootPathLength = pathLength + nameLength;
+
+      // otherwise we called this as a part of longer file path calculation and slash will be added anyway
+      boolean appendSlash = SystemInfo.isWindows && nameLength == 2 && name.charAt(1) == ':' && pathLength == 0;
+
+      if (appendSlash) ++rootPathLength;
+      char[] chars = new char[rootPathLength];
+
+      position[0] = copyString(chars, position[0], name);
+
+      if (appendSlash) {
+        chars[position[0]++] = '/';
+      }
+
+      return chars;
+    }
+
+    @Override
+    public void setParent(@NotNull VirtualFile newParent) {
+      throw new IncorrectOperationException();
     }
   }
 }

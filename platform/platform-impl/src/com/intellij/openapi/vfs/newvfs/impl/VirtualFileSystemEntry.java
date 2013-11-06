@@ -48,6 +48,7 @@ import java.nio.charset.Charset;
 public abstract class VirtualFileSystemEntry extends NewVirtualFile {
   public static final VirtualFileSystemEntry[] EMPTY_ARRAY = new VirtualFileSystemEntry[0];
 
+  @NonNls protected static final String FS_ROOT_FAKE_NAME = "";
   protected static final PersistentFS ourPersistence = PersistentFS.getInstance();
 
   private static final Key<String> SYMLINK_TARGET = Key.create("local.vfs.symlink.target");
@@ -73,7 +74,9 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     myParent = parent;
     myId = id;
 
-    storeName(name);
+    if (name != FS_ROOT_FAKE_NAME) {
+      storeName(name);
+    }
 
     if (parent != null && parent != VirtualDirectoryImpl.NULL_VIRTUAL_FILE) {
       setFlagInt(IS_SYMLINK_FLAG, PersistentFS.isSymLink(attributes));
