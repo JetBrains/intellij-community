@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ContentFolder;
 import com.intellij.openapi.roots.ExcludeFolder;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.roots.impl.SourceFolderImpl;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -49,8 +48,10 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -208,8 +209,7 @@ public abstract class ContentRootPanel extends JPanel {
   private <P extends JpsElement> JComponent createFolderComponent(final ContentFolder folder, Color foreground, ModuleSourceRootEditHandler<P> editor) {
     final VirtualFile folderFile = folder.getFile();
     final VirtualFile contentEntryFile = getContentEntry().getFile();
-    final String properties = folder instanceof SourceFolderImpl? StringUtil.notNullize(
-      editor.getPropertiesString((P)((SourceFolderImpl)folder).getJpsElement().getProperties())) : "";
+    final String properties = folder instanceof SourceFolder? StringUtil.notNullize(editor.getPropertiesString((P)((SourceFolder)folder).getJpsElement().getProperties())) : "";
     if (folderFile != null && contentEntryFile != null) {
       String path = folderFile.equals(contentEntryFile)? "." : VfsUtilCore.getRelativePath(folderFile, contentEntryFile, File.separatorChar);
       HoverHyperlinkLabel hyperlinkLabel = new HoverHyperlinkLabel(path + properties, foreground);

@@ -15,13 +15,12 @@ import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.roots.impl.SourceFolderImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -184,10 +183,10 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
     }
     LOG.info(String.format("Importing source root '%s' for content root '%s' of module '%s'", path, entry.getUrl(), moduleName));
     SourceFolder sourceFolder = entry.addSourceFolder(toVfsUrl(path), sourceRootType);
-    if (generated && sourceFolder instanceof SourceFolderImpl) {
-      JpsElement properties = ((SourceFolderImpl)sourceFolder).getJpsElement().getProperties();
-      if(properties instanceof JavaSourceRootProperties) {
-        JavaSourceRootProperties.class.cast(properties).setForGeneratedSources(true);
+    if (generated) {
+      JavaSourceRootProperties properties = sourceFolder.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
+      if(properties != null) {
+        properties.setForGeneratedSources(true);
       }
     }
   }

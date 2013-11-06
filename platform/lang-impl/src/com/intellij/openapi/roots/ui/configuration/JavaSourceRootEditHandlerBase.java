@@ -18,14 +18,13 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.SourceFolder;
-import com.intellij.openapi.roots.impl.SourceFolderImpl;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.roots.IconActionComponent;
 import com.intellij.util.ui.FormBuilder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.JpsElement;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
@@ -64,8 +63,9 @@ public abstract class JavaSourceRootEditHandlerBase extends ModuleSourceRootEdit
                                                                       ProjectBundle.message("module.paths.edit.properties.tooltip"), new Runnable() {
       @Override
       public void run() {
-        JpsElement properties = ((SourceFolderImpl)folder).getJpsElement().getProperties();
-        SourceRootPropertiesDialog dialog = new SourceRootPropertiesDialog(parentComponent, (JavaSourceRootProperties)properties);
+        JavaSourceRootProperties properties = folder.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
+        assert properties != null;
+        SourceRootPropertiesDialog dialog = new SourceRootPropertiesDialog(parentComponent, properties);
         dialog.show();
         if (dialog.isOK()) {
           callback.onSourceRootPropertiesChanged(folder);

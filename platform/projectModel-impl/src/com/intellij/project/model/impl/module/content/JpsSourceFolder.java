@@ -75,4 +75,10 @@ public class JpsSourceFolder extends JpsContentFolderBase implements SourceFolde
   public JpsModuleSourceRootType<?> getRootType() {
     return mySourceRoot.getRootType();
   }
+
+  @NotNull
+  @Override
+  public JpsModuleSourceRoot getJpsElement() {
+    return mySourceRoot;
+  }
 }

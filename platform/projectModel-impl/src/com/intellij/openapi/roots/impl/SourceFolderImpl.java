@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsElementFactory;
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes;
 import org.jetbrains.jps.model.java.JavaResourceRootType;
 import org.jetbrains.jps.model.java.JavaSourceRootProperties;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -82,13 +83,7 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
 
   @Nullable
   private JavaSourceRootProperties getJavaProperties() {
-    if (myJpsElement.getRootType() == JavaSourceRootType.SOURCE) {
-      return myJpsElement.getProperties(JavaSourceRootType.SOURCE);
-    }
-    if (myJpsElement.getRootType() == JavaSourceRootType.TEST_SOURCE) {
-      return myJpsElement.getProperties(JavaSourceRootType.TEST_SOURCE);
-    }
-    return null;
+    return myJpsElement.getProperties(JavaModuleSourceRootTypes.SOURCES);
   }
 
   @Override
@@ -112,6 +107,7 @@ public class SourceFolderImpl extends ContentFolderBaseImpl implements SourceFol
     return new SourceFolderImpl(this, (ContentEntryImpl)contentEntry);
   }
 
+  @NotNull
   public JpsModuleSourceRoot getJpsElement() {
     return myJpsElement;
   }

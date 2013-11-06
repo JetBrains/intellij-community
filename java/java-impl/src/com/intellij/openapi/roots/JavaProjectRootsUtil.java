@@ -3,7 +3,6 @@ package com.intellij.openapi.roots;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.SourceFolderImpl;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiFile;
@@ -39,8 +38,8 @@ public class JavaProjectRootsUtil {
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       for (ContentEntry entry : ModuleRootManager.getInstance(module).getContentEntries()) {
         for (SourceFolder sourceFolder : entry.getSourceFolders(JavaModuleSourceRootTypes.SOURCES)) {
-          JavaSourceRootProperties properties = (JavaSourceRootProperties)((SourceFolderImpl)sourceFolder).getJpsElement().getProperties();
-          if (!properties.isForGeneratedSources()) {
+          JavaSourceRootProperties properties = sourceFolder.getJpsElement().getProperties(JavaModuleSourceRootTypes.SOURCES);
+          if (properties != null && !properties.isForGeneratedSources()) {
             ContainerUtil.addIfNotNull(roots, sourceFolder.getFile());
           }
         }
