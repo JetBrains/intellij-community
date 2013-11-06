@@ -6,13 +6,14 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dennis.Ushakov
  */
 public class PlatformModifiableModelsProvider implements ModifiableModelsProvider {
   @Override
-  public ModifiableRootModel getModuleModifiableModel(final Module module) {
+  public ModifiableRootModel getModuleModifiableModel(@NotNull final Module module) {
     return ModuleRootManager.getInstance(module).getModifiableModel();
   }
 
