@@ -52,6 +52,16 @@ class JBTerminalSystemSettingsProvider extends DefaultTabbedSettingsProvider {
   }
 
   @Override
+  public KeyStroke[] getNextTabKeyStrokes() {
+    return getKeyStrokesByActionId("NextTab");
+  }
+
+  @Override
+  public KeyStroke[] getPreviousTabKeyStrokes() {
+    return getKeyStrokesByActionId("PreviousTab");
+  }
+
+  @Override
   public ColorPalette getTerminalColorPalette() {
     return new JBTerminalSchemeColorPalette(myColorScheme);
   }
