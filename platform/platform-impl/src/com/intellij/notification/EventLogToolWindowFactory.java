@@ -15,8 +15,6 @@
  */
 package com.intellij.notification;
 
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.ui.ConsoleView;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.notification.impl.NotificationsConfigurable;
@@ -36,6 +34,7 @@ import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
+import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.event.AncestorEvent;
@@ -46,7 +45,17 @@ import javax.swing.event.AncestorEvent;
 public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
   @Override
   public void createToolWindowContent(final Project project, ToolWindow toolWindow) {
-    EventLogConsole console = EventLog.getProjectComponent(project).getConsole();
+    EventLog.getProjectComponent(project).initDefaultContent();
+  }
+
+  static void createContent(Project project, ToolWindow toolWindow, EventLogConsole console, String title) {
+    // update default Event Log tab title
+    ContentManager contentManager = toolWindow.getContentManager();
+    Content generalContent = contentManager.getContent(0);
+    if (generalContent != null && contentManager.getContentCount() == 1) {
+      generalContent.setDisplayName("General");
+    }
+
     final Editor editor = console.getConsoleEditor();
 
     SimpleToolWindowPanel panel = new SimpleToolWindowPanel(false, true) {
@@ -62,8 +71,9 @@ public class EventLogToolWindowFactory implements ToolWindowFactory, DumbAware {
     toolbar.setTargetComponent(editor.getContentComponent());
     panel.setToolbar(toolbar.getComponent());
 
-    final Content content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false);
-    toolWindow.getContentManager().addContent(content);
+    Content content = ContentFactory.SERVICE.getInstance().createContent(panel, title, false);
+    contentManager.addContent(content);
+    contentManager.setSelectedContent(content);
   }
 
   private static ActionToolbar createToolbar(Project project, Editor editor, EventLogConsole console) {
