@@ -13,7 +13,9 @@ import org.jetbrains.postfixCompletion.Infrastructure.PrefixExpressionContext;
 import org.jetbrains.postfixCompletion.Infrastructure.TemplateProvider;
 import org.jetbrains.postfixCompletion.LookupItems.PostfixLookupItem;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @TemplateProvider(
   templateName = "if",
@@ -87,6 +89,21 @@ public class IfStatementTemplateProvider extends TemplateProviderBase {
     }
 
     @Override
+    public boolean isWorthShowingInAutoPopup() {
+      final boolean worthShowingInAutoPopup = super.isWorthShowingInAutoPopup();
+      return true;
+    }
+
+    @Override
+    public Set<String> getAllLookupStrings() {
+      final Set<String> xs = new HashSet<>();
+      xs.add("if");
+      xs.add("if ");
+      xs.add("if{");
+      return xs;
+    }
+
+    @Override
     public void handleInsert(InsertionContext context) {
 
 
@@ -131,9 +148,23 @@ public class IfStatementTemplateProvider extends TemplateProviderBase {
 
           condition.replace(fixed.expression);
 
-          fixed
+          final PsiStatement parent1 = fixed.getContainingStatement();
+          assert parent1 != null : "impossible?";
 
           PsiIfStatement newSt = (PsiIfStatement) parent1.replace(psiStatement);
+
+
+          final PsiStatement thenBranch = newSt.getThenBranch();
+          if (thenBranch instanceof PsiBlockStatement) {
+            final PsiStatement caret = ((PsiBlockStatement) thenBranch)
+              .getCodeBlock().getStatements()[0];
+
+
+            final TextRange textRange = caret.getTextRange();
+            context.getEditor().getCaretModel().moveToOffset(caret.getTextOffset());
+            context.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
+            //caret.delete();
+          }
 
           // do magic
           break;

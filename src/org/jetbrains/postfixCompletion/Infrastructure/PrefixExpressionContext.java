@@ -15,20 +15,17 @@ public final class PrefixExpressionContext {
     this.parentContext = parentContext;
     this.expression = expression;
     expressionType = expression.getType();
-    canBeStatement = calculateCanBeStatement(expression);
+    canBeStatement = getContainingStatement() != null;
   }
 
-  private boolean calculateCanBeStatement(@NotNull final PsiExpression expression) {
+  @Nullable public final PsiStatement getContainingStatement() {
     // look for expression-statement parent
     final PsiElement parent = expression.getParent();
-    if (parent instanceof PsiExpressionStatement) return true;
+    if (parent instanceof PsiExpressionStatement)
+      return (PsiStatement) parent;
 
-    return false;
+    return null;
   }
-
-  @NotNull public final PsiStatement getContaining
-
-  // todo: getStatement
 
   @NotNull public final PrefixExpressionContext fixUp() {
     return parentContext.fixUpExpression(this);
