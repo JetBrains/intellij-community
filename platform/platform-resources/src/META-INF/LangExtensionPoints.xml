@@ -206,8 +206,6 @@
       <with attribute="implementationClass" implements="com.intellij.lang.TokenSeparatorGenerator"/>
     </extensionPoint>
 
-    <extensionPoint name="lang.psiAugmentProvider" interface="com.intellij.psi.augment.PsiAugmentProvider"/>
-
     <extensionPoint name="lang.fileViewProviderFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.psi.FileViewProviderFactory"/>
     </extensionPoint>
