@@ -152,7 +152,7 @@ public class PyBlock implements ASTBlock {
     if (ourListElementTypes.contains(parentType)) {
       // wrapping in non-parenthesized tuple expression is not allowed (PY-1792)
       if ((parentType != PyElementTypes.TUPLE_EXPRESSION || grandparentType == PyElementTypes.PARENTHESIZED_EXPRESSION) &&
-          !ourBrackets.contains(childType) && childType != PyTokenTypes.COMMA && !isSliceOperand(child)) {
+          !ourBrackets.contains(childType) && childType != PyTokenTypes.COMMA && !isSliceOperand(child) /*&& !isSubscriptionOperand(child)*/) {
         wrap = Wrap.createWrap(WrapType.NORMAL, true);
       }
       if (needListAlignment(child) && !isEmptyList(_node.getPsi())) {
@@ -255,6 +255,11 @@ public class PyBlock implements ASTBlock {
     }
 
     return new PyBlock(this, child, childAlignment, childIndent, wrap, myContext);
+  }
+
+  private static boolean isSubscriptionOperand(ASTNode child) {
+    return child.getTreeParent().getElementType() == PyElementTypes.SUBSCRIPTION_EXPRESSION &&
+           child.getPsi() == ((PySubscriptionExpression) child.getTreeParent().getPsi()).getOperand();
   }
 
   private boolean isInControlStatement() {
