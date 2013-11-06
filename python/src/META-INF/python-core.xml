@@ -550,6 +550,7 @@
     <dumbAnnotator implementation="com.jetbrains.python.validation.PyDefinitionsAnnotator"/>
     <dumbAnnotator implementation="com.jetbrains.python.validation.GeneratorInArgumentListAnnotator"/>
     <dumbAnnotator implementation="com.jetbrains.python.validation.StarAnnotator"/>
+    <dumbAnnotator implementation="com.jetbrains.python.validation.StringLiteralQuotesAnnotator"/>
 
     <customTargetExpressionStubType implementation="com.jetbrains.python.psi.impl.stubs.PropertyStubType"/>
     <dialectsTokenSetContributor implementation="com.jetbrains.python.PythonTokenSetContributor"/>

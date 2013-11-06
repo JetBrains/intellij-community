@@ -29,7 +29,7 @@ public class FileReferenceCharFilter extends CharFilter{
   public Result acceptChar(char c, int prefixLength, Lookup lookup) {
     final LookupElement item = lookup.getCurrentItem();
     if ('.' == c && item != null && item.getObject() instanceof PsiFileSystemItem) {
-      PsiReference referenceAtCaret = lookup.getPsiFile().findReferenceAt(lookup.getEditor().getCaretModel().getOffset() - 1);
+      PsiReference referenceAtCaret = lookup.getPsiFile().findReferenceAt(lookup.getLookupStart());
       if (referenceAtCaret != null && FileReference.findFileReference(referenceAtCaret) != null) {
         return Result.ADD_TO_PREFIX;
       }

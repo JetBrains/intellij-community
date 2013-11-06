@@ -16,6 +16,7 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.completion.impl.CamelHumpMatcher;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -582,5 +583,22 @@ public class PythonCompletionTest extends PyTestCase {
                                               "\n" +
                                               "f('foo').<caret>\n");
     assertTrue(results.contains("lower"));
+  }
+
+  public void testOverwriteEqualsSign() {  // PY-1337
+    doTestByText("def foo(school=None, kiga=None): pass\n" +
+                 "foo(<caret>school=None)");
+    myFixture.type("sch");
+    myFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR);
+    myFixture.checkResult("def foo(school=None, kiga=None): pass\n" +
+                          "foo(school=None)");
+  }
+
+  public void testOverwriteBracket() {  // PY-6095
+    doTestByText("bar = {'a': '1'}\n" +
+                 "print ba<caret>['a']");
+    myFixture.finishLookup(Lookup.REPLACE_SELECT_CHAR);
+    myFixture.checkResult("bar = {'a': '1'}\n" +
+                          "print bar<caret>['a']");
   }
 }

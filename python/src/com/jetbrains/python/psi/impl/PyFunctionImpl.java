@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.StubBasedPsiElement;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
@@ -158,12 +159,9 @@ public class PyFunctionImpl extends PyPresentableElementImpl<PyFunctionStub> imp
       return null;
     }
 
-    final PsiElement parent = getParent();
-    if (parent instanceof PyStatementList) {
-      PsiElement pparent = parent.getParent();
-      if (pparent instanceof PyClass) {
-        return (PyClass)pparent;
-      }
+    final PsiElement parent = PsiTreeUtil.getParentOfType(this, StubBasedPsiElement.class);
+    if (parent instanceof PyClass) {
+      return (PyClass)parent;
     }
     return null;
   }

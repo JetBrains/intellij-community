@@ -972,7 +972,9 @@ public class AllIcons {
     public static final Icon Bea = IconLoader.getIcon("/providers/bea.png"); // 16x16
     public static final Icon Cvs = IconLoader.getIcon("/providers/cvs.png"); // 16x16
     public static final Icon Eclipse = IconLoader.getIcon("/providers/eclipse.png"); // 16x16
+    public static final Icon H2 = IconLoader.getIcon("/providers/h2.png"); // 16x16
     public static final Icon Hibernate = IconLoader.getIcon("/providers/hibernate.png"); // 16x16
+    public static final Icon Hsqldb = IconLoader.getIcon("/providers/hsqldb.png"); // 16x16
     public static final Icon Ibm = IconLoader.getIcon("/providers/ibm.png"); // 16x16
     public static final Icon Microsoft = IconLoader.getIcon("/providers/microsoft.png"); // 16x16
     public static final Icon Mysql = IconLoader.getIcon("/providers/mysql.png"); // 16x16
@@ -980,6 +982,7 @@ public class AllIcons {
     public static final Icon Postgresql = IconLoader.getIcon("/providers/postgresql.png"); // 16x16
     public static final Icon Sqlite = IconLoader.getIcon("/providers/sqlite.png"); // 16x16
     public static final Icon Sun = IconLoader.getIcon("/providers/sun.png"); // 16x16
+    public static final Icon Sybase = IconLoader.getIcon("/providers/sybase.png"); // 16x16
 
   }
   

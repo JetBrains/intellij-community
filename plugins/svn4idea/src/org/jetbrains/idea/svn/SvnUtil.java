@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.svn;
 
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
@@ -25,11 +26,13 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -57,6 +60,7 @@ import org.tmatesoft.svn.core.wc2.SvnOperationFactory;
 import org.tmatesoft.svn.core.wc2.SvnTarget;
 
 import java.io.File;
+import java.nio.channels.NonWritableChannelException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -369,30 +373,34 @@ public class SvnUtil {
    */
   @NotNull
   public static WorkingCopyFormat getFormat(final File path) {
-    int format = 0;
+    WorkingCopyFormat result = null;
     File dbFile = resolveDatabase(path);
 
     if (dbFile != null) {
-      SqlJetDb db = null;
-      try {
-        db = SqlJetDb.open(dbFile, false);
-        format = db.getOptions().getUserVersion();
-      }
-      catch (SqlJetException e) {
-        LOG.error(e);
-      } finally {
-        if (db != null) {
-          try {
-            db.close();
-          }
-          catch (SqlJetException e) {
-            LOG.error(e);
-          }
-        }
+      result = FileUtilRt.doIOOperation(new WorkingCopyFormatOperation(dbFile));
+
+      if (result == null) {
+        notifyDatabaseError();
       }
     }
 
-    return WorkingCopyFormat.getInstance(format);
+    return result != null ? result : WorkingCopyFormat.UNKNOWN;
+  }
+
+  private static void close(@Nullable SqlJetDb db) {
+    if (db != null) {
+      try {
+        db.close();
+      }
+      catch (SqlJetException e) {
+        notifyDatabaseError();
+      }
+    }
+  }
+
+  private static void notifyDatabaseError() {
+    VcsBalloonProblemNotifier.NOTIFICATION_GROUP
+      .createNotification("Some errors occurred while accessing svn working copy database.", NotificationType.ERROR).notify(null);
   }
 
   private static File resolveDatabase(final File path) {
@@ -802,5 +810,41 @@ public class SvnUtil {
            SVNErrorCode.WC_NOT_WORKING_COPY.equals(code) ||
            // thrown when getting info from repository for non-existent item - like HEAD revision for deleted file
            SVNErrorCode.ILLEGAL_TARGET.equals(code);
+  }
+
+  private static class WorkingCopyFormatOperation implements FileUtilRt.RepeatableIOOperation<WorkingCopyFormat, RuntimeException> {
+    @NotNull private final File myDbFile;
+
+    public WorkingCopyFormatOperation(@NotNull File dbFile) {
+      myDbFile = dbFile;
+    }
+
+    @Nullable
+    @Override
+    public WorkingCopyFormat execute(boolean lastAttempt) {
+      // TODO: rewrite it using sqlite jdbc driver
+      SqlJetDb db = null;
+      WorkingCopyFormat result = null;
+      try {
+        // "write" access is requested here for now as workaround - see some details
+        // in https://code.google.com/p/sqljet/issues/detail?id=25 and http://issues.tmatesoft.com/issue/SVNKIT-418.
+        // BUSY error is currently handled same way as others.
+        db = SqlJetDb.open(myDbFile, true);
+        result = WorkingCopyFormat.getInstance(db.getOptions().getUserVersion());
+      }
+      catch (NonWritableChannelException e) {
+        // Such exceptions could be thrown when db is opened in "read" mode, but the db file is readonly (for instance, locked
+        // by other process). See links above for some details.
+        // handle this exception type separately - not to break execution flow
+        LOG.info(e);
+      }
+      catch (SqlJetException e) {
+        LOG.info(e);
+      }
+      finally {
+        close(db);
+      }
+      return result;
+    }
   }
 }

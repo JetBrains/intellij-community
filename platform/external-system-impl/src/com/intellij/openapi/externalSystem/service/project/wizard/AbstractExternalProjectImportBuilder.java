@@ -7,15 +7,14 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -135,9 +134,9 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
 
         if (externalProjectNode != null) {
           ExternalSystemUtil.ensureToolWindowInitialized(project, myExternalSystemId);
-          ExternalSystemApiUtil.executeProjectChangeAction(new Runnable() {
+          ExternalSystemApiUtil.executeProjectChangeAction(new DisposeAwareProjectChange(project) {
             @Override
-            public void run() {
+            public void execute() {
               ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
                 @Override
                 public void run() {
@@ -210,9 +209,9 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
    *                                      dependencies information available at the given gradle project
    */
   private void setupLibraries(@NotNull final DataNode<ProjectData> projectWithResolvedLibraries, final Project project) {
-    ExternalSystemApiUtil.executeProjectChangeAction(new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(new DisposeAwareProjectChange(project) {
       @Override
-      public void run() {
+      public void execute() {
         ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
           @Override
           public void run() {

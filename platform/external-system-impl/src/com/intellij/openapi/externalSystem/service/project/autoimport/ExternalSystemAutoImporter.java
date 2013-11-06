@@ -29,6 +29,7 @@ import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefres
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.externalSystem.util.DisposeAwareProjectChange;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -87,9 +88,9 @@ public class ExternalSystemAutoImporter implements BulkFileListener, DocumentLis
     @Override
     public void onSuccess(@Nullable final DataNode<ProjectData> externalProject) {
       if (externalProject != null) {
-        ExternalSystemApiUtil.executeProjectChangeAction(new Runnable() {
+        ExternalSystemApiUtil.executeProjectChangeAction(new DisposeAwareProjectChange(myProject) {
           @Override
-          public void run() {
+          public void execute() {
             ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(new Runnable() {
               @Override
               public void run() {
