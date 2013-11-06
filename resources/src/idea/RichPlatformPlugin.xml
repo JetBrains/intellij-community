@@ -1,4 +1,5 @@
 <idea-plugin version="2" xmlns:xi="http://www.w3.org/2001/XInclude">
+  <!-- former Flex IDE foundation, todo: integrate into IdeaPlugin.xml -->
 
   <module value="com.intellij.modules.platform"/>
   <module value="com.intellij.modules.lang"/>
