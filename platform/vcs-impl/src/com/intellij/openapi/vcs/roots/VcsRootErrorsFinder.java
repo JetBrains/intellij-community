@@ -64,7 +64,7 @@ public class VcsRootErrorsFinder {
         continue;
       }
       if (mapping.isDefaultMapping()) {
-        if (isEmptyVcsRoots) {
+        if (!isRoot(mapping)) {
           errors.add(new VcsRootError(VcsRootError.Type.EXTRA_MAPPING, VcsDirectoryMapping.PROJECT_CONSTANT, mapping.getVcs()));
         }
       }
