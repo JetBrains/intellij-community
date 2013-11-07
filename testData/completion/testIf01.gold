@@ -1,6 +1,6 @@
 public class Foo {
     void m() {
-        if (bar()) 
+        if (bar())
     }
 
     boolean bar() {

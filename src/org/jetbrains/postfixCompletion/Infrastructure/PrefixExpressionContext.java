@@ -1,8 +1,7 @@
 package org.jetbrains.postfixCompletion.Infrastructure;
 
 import com.intellij.psi.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 public final class PrefixExpressionContext {
   @NotNull public final PostfixTemplateAcceptanceContext parentContext;
@@ -20,9 +19,16 @@ public final class PrefixExpressionContext {
 
   @Nullable public final PsiStatement getContainingStatement() {
     // look for expression-statement parent
-    final PsiElement parent = expression.getParent();
-    if (parent instanceof PsiExpressionStatement)
+    PsiElement parent = expression.getParent();
+
+    // escape from '.postfix' reference-expression
+    if (parent == parentContext.referenceExpression) {
+      parent = parent.getParent();
+    }
+
+    if (parent instanceof PsiExpressionStatement) {
       return (PsiStatement) parent;
+    }
 
     return null;
   }

@@ -1,17 +1,15 @@
 package org.jetbrains.postfixCompletion.LookupItems;
 
-import com.intellij.codeInsight.completion.InsertionContext;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.lookup.*;
+import com.intellij.openapi.application.*;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplateAcceptanceContext;
-import org.jetbrains.postfixCompletion.Infrastructure.PostfixTemplatesManager;
-import org.jetbrains.postfixCompletion.Infrastructure.PrefixExpressionContext;
+import org.jetbrains.annotations.*;
+import org.jetbrains.postfixCompletion.Infrastructure.*;
 
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public abstract class StatementPostfixLookupElement<TStatement extends PsiStatement>
   extends LookupElement {
@@ -27,15 +25,15 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
     myExpressionRange = context.expression.getTextRange();
   }
 
-  @NotNull @Override public String getLookupString() {
+  @NotNull @Override public final String getLookupString() {
     return myLookupString;
   }
 
-  @Override public boolean isWorthShowingInAutoPopup() {
+  @Override public final boolean isWorthShowingInAutoPopup() {
     return true; // thx IDEA folks for implementing this!
   }
 
-  @Override public Set<String> getAllLookupStrings() {
+  @Override public final Set<String> getAllLookupStrings() {
     final HashSet<String> set = new HashSet<>();
 
     // this hack prevents completion list from closing
@@ -58,7 +56,7 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
     if (psiElement == null) return; // shit happens?
 
     final PostfixTemplatesManager manager =
-      context.getProject().getComponent(PostfixTemplatesManager.class);
+      ApplicationManager.getApplication().getComponent(PostfixTemplatesManager.class);
     final PostfixTemplateAcceptanceContext acceptanceContext = manager.isAvailable(psiElement, true);
     if (acceptanceContext == null) return; // yes, shit happens
 
@@ -80,7 +78,7 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
         final PsiExpression exprCopy = (PsiExpression) fixedContext.expression.copy();
         final TStatement newStatement = createNewStatement(psiElementFactory, exprCopy, file);
 
-        PsiIfStatement newSt = (PsiIfStatement) targetStatement.replace(newStatement);
+        TStatement newSt = (TStatement) targetStatement.replace(newStatement);
 
         final PsiDocumentManager documentManager =
           PsiDocumentManager.getInstance(context.getProject());
@@ -89,11 +87,17 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
         final int offset = newSt.getTextRange().getEndOffset();
         context.getEditor().getCaretModel().moveToOffset(offset);
 
+        postProcess(context, newSt);
+
         // todo: custom caret pos?
 
         break; // ewww
       }
     }
+  }
+
+  protected void postProcess(InsertionContext context, TStatement statement) {
+
   }
 
   @NotNull protected abstract TStatement createNewStatement(
