@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.execution.configurations.CommandLineTokenizer;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -42,6 +44,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.util.List;
@@ -53,6 +56,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class GradleExecutionHelper {
 
+  private static final Logger LOG = Logger.getInstance(GradleExecutionHelper.class);
 
   @SuppressWarnings("MethodMayBeStatic")
   @NotNull
@@ -61,8 +65,7 @@ public class GradleExecutionHelper {
                                              @Nullable GradleExecutionSettings settings,
                                              @NotNull ProjectConnection connection,
                                              @NotNull ExternalSystemTaskNotificationListener listener,
-                                             @NotNull List<String> extraJvmArgs)
-  {
+                                             @NotNull List<String> extraJvmArgs) {
     ModelBuilder<T> result = connection.model(modelType);
     prepare(result, id, settings, listener, extraJvmArgs, connection);
     return result;
@@ -74,8 +77,7 @@ public class GradleExecutionHelper {
                                         @NotNull ProjectConnection connection,
                                         @Nullable GradleExecutionSettings settings,
                                         @NotNull ExternalSystemTaskNotificationListener listener,
-                                        @Nullable final String vmOptions)
-  {
+                                        @Nullable final String vmOptions) {
     BuildLauncher result = connection.newBuild();
     List<String> extraJvmArgs = vmOptions == null ? ContainerUtil.<String>emptyList() : ContainerUtil.newArrayList(vmOptions.trim());
     prepare(result, id, settings, listener, extraJvmArgs, connection);
@@ -90,8 +92,7 @@ public class GradleExecutionHelper {
                                         @NotNull ExternalSystemTaskNotificationListener listener,
                                         @Nullable final String vmOptions,
                                         @NotNull final OutputStream standardOutput,
-                                        @NotNull final OutputStream standardError)
-  {
+                                        @NotNull final OutputStream standardError) {
     BuildLauncher result = connection.newBuild();
     List<String> extraJvmArgs = vmOptions == null ? ContainerUtil.<String>emptyList() : ContainerUtil.newArrayList(vmOptions.trim());
     prepare(result, id, settings, listener, extraJvmArgs, connection, standardOutput, standardError);
@@ -118,8 +119,7 @@ public class GradleExecutionHelper {
                              @NotNull List<String> extraJvmArgs,
                              @NotNull ProjectConnection connection,
                              @NotNull final OutputStream standardOutput,
-                             @NotNull final OutputStream standardError)
-  {
+                             @NotNull final OutputStream standardError) {
     if (settings == null) {
       return;
     }
@@ -129,7 +129,7 @@ public class GradleExecutionHelper {
     String vmOptions = settings.getDaemonVmOptions();
     if (!StringUtil.isEmpty(vmOptions)) {
       CommandLineTokenizer tokenizer = new CommandLineTokenizer(vmOptions);
-      while(tokenizer.hasMoreTokens()) {
+      while (tokenizer.hasMoreTokens()) {
         String vmOption = tokenizer.nextToken();
         if (!StringUtil.isEmpty(vmOption)) {
           jvmArgs.add(vmOption);
@@ -167,14 +167,15 @@ public class GradleExecutionHelper {
     if (projectPathFile.isFile() && projectPath.endsWith(GradleConstants.EXTENSION)
         && projectPathFile.getParent() != null) {
       projectDir = projectPathFile.getParent();
-    } else {
+    }
+    else {
       projectDir = projectPath;
     }
 
     // This is a workaround to get right base dir in case of 'PROJECT' setting used in case custom wrapper property file location
     // see org.gradle.wrapper.PathAssembler#getBaseDir for details
     String userDir = null;
-    if(settings != null && settings.getDistributionType() == DistributionType.WRAPPED) {
+    if (settings != null && settings.getDistributionType() == DistributionType.WRAPPED) {
       try {
         userDir = System.getProperty("user.dir");
         System.setProperty("user.dir", projectDir);
@@ -227,7 +228,9 @@ public class GradleExecutionHelper {
           "gradle.taskGraph.afterTask { Task task ->",
           "    if (task instanceof Wrapper) {",
           "        def wrapperPropertyFileLocation = task.jarFile.getCanonicalPath() - '.jar' + '.properties'",
-          "        new File('" + StringUtil.escapeBackSlashes(wrapperPropertyFileLocation.getCanonicalPath()) + "').write wrapperPropertyFileLocation",
+          "        new File('" +
+          StringUtil.escapeBackSlashes(wrapperPropertyFileLocation.getCanonicalPath()) +
+          "').write wrapperPropertyFileLocation",
           "}}",
         };
         FileUtil.writeToFile(tempFile, StringUtil.join(lines, SystemProperties.getLineSeparator()));
@@ -263,21 +266,20 @@ public class GradleExecutionHelper {
   /**
    * Allows to retrieve gradle api connection to use for the given project.
    *
-   * @param projectPath            target project path
-   * @param settings               execution settings to use
+   * @param projectPath target project path
+   * @param settings    execution settings to use
    * @return connection to use
    * @throws IllegalStateException if it's not possible to create the connection
    */
   @NotNull
   private static ProjectConnection getConnection(@NotNull String projectPath,
                                                  @Nullable GradleExecutionSettings settings)
-    throws IllegalStateException
-  {
+    throws IllegalStateException {
     File projectDir = new File(projectPath);
     GradleConnector connector = GradleConnector.newConnector();
     int ttl = -1;
 
-    if(settings != null) {
+    if (settings != null) {
       //noinspection EnumSwitchStatementWhichMissesCases
       switch (settings.getDistributionType()) {
         case LOCAL:
@@ -356,5 +358,25 @@ public class GradleExecutionHelper {
     field.setAccessible(true);
     field.set(obj, fieldValue);
     field.setAccessible(isAccessible);
+  }
+
+  @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
+  public static void setInitScript(LongRunningOperation longRunningOperation) {
+    try {
+      InputStream stream = GradleProjectResolver.class.getResourceAsStream("/org/jetbrains/plugins/gradle/model/internal/init.gradle");
+      if (stream == null) return;
+
+      String jarPath = PathUtil.getCanonicalPath(PathUtil.getJarPathForClass(GradleProjectResolver.class));
+      String s = FileUtil.loadTextAndClose(stream).replace("${JAR_PATH}", jarPath);
+
+      final File tempFile = FileUtil.createTempFile("ijinit", '.' + GradleConstants.EXTENSION, true);
+      FileUtil.writeToFile(tempFile, s);
+
+      String[] buildExecutorArgs = new String[]{"--init-script", tempFile.getAbsolutePath()};
+      longRunningOperation.withArguments(buildExecutorArgs);
+    }
+    catch (Exception e) {
+      LOG.warn("Can't use IJ gradle init script", e);
+    }
   }
 }

@@ -56,6 +56,7 @@ public class GradleImplicitContributor implements GradleMethodContextContributor
     new Pair<String, String>("buildNeeded", GRADLE_API_DEFAULT_TASK),
     new Pair<String, String>("clean", GRADLE_API_TASKS_DELETE),
     new Pair<String, String>("jar", GRADLE_API_TASKS_BUNDLING_JAR),
+    new Pair<String, String>("war", GRADLE_API_TASKS_BUNDLING_WAR),
     new Pair<String, String>("classes", GRADLE_API_DEFAULT_TASK),
     new Pair<String, String>("compileJava", GRADLE_API_TASKS_COMPILE_JAVA_COMPILE),
     new Pair<String, String>("compileTestJava", GRADLE_API_DEFAULT_TASK),

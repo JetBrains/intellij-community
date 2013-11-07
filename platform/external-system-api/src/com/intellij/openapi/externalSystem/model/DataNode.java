@@ -56,6 +56,11 @@ public class DataNode<T> implements Serializable {
     myParent = parent;
   }
 
+  @Nullable
+  public DataNode<?> getParent() {
+    return myParent;
+  }
+
   @NotNull
   public <T> DataNode<T> createChild(@NotNull Key<T> key, @NotNull T data) {
     DataNode<T> result = new DataNode<T>(key, data, this);
