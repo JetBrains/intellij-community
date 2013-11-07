@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
+import org.jetbrains.idea.svn.SvnProgressCanceller;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.tmatesoft.svn.core.SVNURL;
@@ -71,6 +72,10 @@ public class CommandRuntime {
   }
 
   private void onStart(@NotNull Command command) throws SvnBindException {
+    // TODO: Actually command handler should be used as canceller, but currently all handlers use same cancel logic -
+    // TODO: - just check progress indicator
+    command.setCanceller(new SvnProgressCanceller());
+
     for (CommandRuntimeModule module : myModules) {
       module.onStart(command);
     }
