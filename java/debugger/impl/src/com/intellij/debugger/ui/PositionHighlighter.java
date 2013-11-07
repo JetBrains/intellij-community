@@ -15,7 +15,6 @@
  */
 package com.intellij.debugger.ui;
 
-import com.intellij.codeInsight.daemon.impl.DaemonListeners;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.debugger.DebuggerInvocationUtil;
 import com.intellij.debugger.SourcePosition;
@@ -131,9 +130,9 @@ public class PositionHighlighter {
 
     private static void adjustCounter(@NotNull Editor editor, int increment) {
       JComponent component = editor.getComponent();
-      Object o = component.getClientProperty(DaemonListeners.IGNORE_MOUSE_TRACKING);
+      Object o = component.getClientProperty(Editor.IGNORE_MOUSE_TRACKING);
       Integer value = ((o instanceof Integer) ? (Integer)o : 0) + increment;
-      component.putClientProperty(DaemonListeners.IGNORE_MOUSE_TRACKING, value > 0 ? value : null);
+      component.putClientProperty(Editor.IGNORE_MOUSE_TRACKING, value > 0 ? value : null);
     }
 
     public void remove() {
