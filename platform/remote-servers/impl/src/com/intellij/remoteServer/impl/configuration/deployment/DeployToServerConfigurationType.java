@@ -65,6 +65,11 @@ public class DeployToServerConfigurationType extends ConfigurationTypeBase {
     }
 
     @Override
+    public boolean isApplicable(@NotNull Project project) {
+      return !RemoteServersManager.getInstance().getServers(myServerType).isEmpty();
+    }
+
+    @Override
     public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {
       DeployToServerRunConfiguration<?,?> deployConfiguration = (DeployToServerRunConfiguration<?,?>)configuration;
       if (deployConfiguration.getServerName() == null) {
