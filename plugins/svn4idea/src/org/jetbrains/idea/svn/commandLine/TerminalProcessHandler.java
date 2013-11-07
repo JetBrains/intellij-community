@@ -67,25 +67,14 @@ public class TerminalProcessHandler extends OSProcessHandler {
   public void notifyTextAvailable(String text, Key outputType) {
     terminalOutputCapturer.onTextAvailable(new ProcessEvent(this, text), outputType);
 
-    if (SystemInfo.isWindows) {
-      // filter terminal escape codes - they are presented in the output for windows platform
-      text = text.replaceAll(CSI_ESCAPE_CODE, "").replaceAll(NON_CSI_ESCAPE_CODE, "");
-      // trim leading '\r' symbols - as they break xml parsing logic
-      text = StringUtil.trimLeading(text, '\r');
-    }
+    text = filterText(text);
 
     if (!StringUtil.isEmpty(text)) {
       StringBuilder lastLine = getLastLineFor(outputType);
       String currentLine = lastLine.append(text).toString();
       lastLine.setLength(0);
 
-      // for windows platform output is assumed in format suitable for terminal emulator
-      // for instance, same text could be returned twice with '\r' symbol in between (so in emulator output we'll still see correct
-      // text without duplication)
-      // because of this we manually process '\r' occurrences to get correct output
-      if (SystemInfo.isWindows) {
-        currentLine = removeAllBeforeCaretReturn(currentLine);
-      }
+      currentLine = filterCombinedText(currentLine);
 
       // check if current line presents some interactive output
       boolean handled = false;
@@ -97,6 +86,27 @@ public class TerminalProcessHandler extends OSProcessHandler {
         notify(currentLine, outputType, lastLine);
       }
     }
+  }
+
+  private static String filterCombinedText(@NotNull String currentLine) {
+    // for windows platform output is assumed in format suitable for terminal emulator
+    // for instance, same text could be returned twice with '\r' symbol in between (so in emulator output we'll still see correct
+    // text without duplication)
+    // because of this we manually process '\r' occurrences to get correct output
+    if (SystemInfo.isWindows) {
+      currentLine = removeAllBeforeCaretReturn(currentLine);
+    }
+    return currentLine;
+  }
+
+  private static String filterText(@NotNull String text) {
+    if (SystemInfo.isWindows) {
+      // filter terminal escape codes - they are presented in the output for windows platform
+      text = text.replaceAll(CSI_ESCAPE_CODE, "").replaceAll(NON_CSI_ESCAPE_CODE, "");
+      // trim leading '\r' symbols - as they break xml parsing logic
+      text = StringUtil.trimLeading(text, '\r');
+    }
+    return text;
   }
 
   private void notify(@NotNull String text, @NotNull Key outputType, @NotNull StringBuilder lastLine) {
