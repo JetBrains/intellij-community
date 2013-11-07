@@ -312,6 +312,14 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         }
       }
     }
+    else if (parent instanceof PsiTryStatement) {
+      PsiResourceList list = ((PsiTryStatement)parent).getResourceList();
+      if (list != null) {
+        for (PsiResourceVariable variable : list.getResourceVariables()) {
+          myCurrentFlow.removeVariable(variable);
+        }
+      }
+    }
   }
 
   @Override public void visitBlockStatement(PsiBlockStatement statement) {
