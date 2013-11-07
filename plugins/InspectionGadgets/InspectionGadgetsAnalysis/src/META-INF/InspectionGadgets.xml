@@ -760,6 +760,10 @@
     <localInspection language="JAVA" shortName="LawOfDemeter" bundle="com.siyeh.InspectionGadgetsBundle" key="law.of.demeter.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.data.flow.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.dataflow.LawOfDemeterInspection"/>
+    <localInspection language="JAVA" shortName="NegativelyNamedBooleanVariable" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="negatively.named.boolean.variable.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.data.flow.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.dataflow.NegativelyNamedBooleanVariableInspection"/>
     <localInspection language="JAVA" shortName="OrredNotEqualExpression" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="orred.not.equal.expression.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.data.flow.issues" enabledByDefault="true" level="WARNING"
