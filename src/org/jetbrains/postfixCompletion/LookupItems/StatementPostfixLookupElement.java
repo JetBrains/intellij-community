@@ -22,7 +22,7 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
                                        @NotNull final PrefixExpressionContext context) {
     myLookupString = lookupString;
     myExpressionType = context.expression.getClass();
-    myExpressionRange = context.expression.getTextRange();
+    myExpressionRange = context.expressionRange;
   }
 
   @NotNull @Override public final String getLookupString() {
@@ -44,7 +44,7 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
     return set;
   }
 
-  @Override public void handleInsert(final InsertionContext context) {
+  @Override public void handleInsert(@NotNull final InsertionContext context) {
     // note: use 'postfix' string, to break expression like '0.postfix'
     final Document document = context.getDocument();
     final int startOffset = context.getStartOffset();
@@ -62,7 +62,8 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
 
     for (final PrefixExpressionContext expression : acceptanceContext.expressions) {
       final PsiExpression expr = expression.expression;
-      if (myExpressionType.isInstance(expr) && expr.getTextRange().equals(myExpressionRange)) {
+      if (myExpressionType.isInstance(expr) &&
+          expression.expressionRange.equals(myExpressionRange)) {
 
         // get facade and factory while all elements are physical and valid
         final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(expr.getProject());
@@ -78,6 +79,7 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
         final PsiExpression exprCopy = (PsiExpression) fixedContext.expression.copy();
         final TStatement newStatement = createNewStatement(psiElementFactory, exprCopy, file);
 
+        //noinspection unchecked
         TStatement newSt = (TStatement) targetStatement.replace(newStatement);
 
         final PsiDocumentManager documentManager =
@@ -88,20 +90,18 @@ public abstract class StatementPostfixLookupElement<TStatement extends PsiStatem
         context.getEditor().getCaretModel().moveToOffset(offset);
 
         postProcess(context, newSt);
-
-        // todo: custom caret pos?
-
-        break; // ewww
+        break;
       }
     }
-  }
-
-  protected void postProcess(InsertionContext context, TStatement statement) {
-
   }
 
   @NotNull protected abstract TStatement createNewStatement(
     @NotNull final PsiElementFactory factory,
     @NotNull final PsiExpression expression,
     @NotNull final PsiFile context);
+
+  protected void postProcess(@NotNull final InsertionContext context,
+                             @NotNull final TStatement statement) {
+    // do nothing
+  }
 }

@@ -1,7 +1,7 @@
 import com.intellij.testFramework.fixtures.*;
 import org.jetbrains.annotations.*;
 
-public class PostfixCompletionTestBase extends LightCodeInsightFixtureTestCase {
+public class PostfixCompletionTest extends LightCodeInsightFixtureTestCase {
   @Override protected String getTestDataPath() {
     return PostfixTestUtils.BASE_TEST_DATA_PATH + "/completion";
   }
@@ -14,7 +14,7 @@ public class PostfixCompletionTestBase extends LightCodeInsightFixtureTestCase {
   }
 
   public void testIf01() { test("if\n"); }
-  public void testIf02() { test("f\n"); }
+  public void testIf02() { test(""); }
   public void testIf03() { test("if\n"); }
 }
 

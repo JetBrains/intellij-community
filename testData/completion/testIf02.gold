@@ -1,12 +1,9 @@
-package completion;
-
 public class Foo {
     void m() {
-        bar().if
-
+        if (bar())
     }
 
-    Boolean bar() {
+    boolean bar() {
         return true;
     }
 }

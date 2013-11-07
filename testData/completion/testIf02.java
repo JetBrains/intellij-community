@@ -1,11 +1,9 @@
-import java.lang.*;
-
 public class Foo {
     void m() {
-        bar().i<caret>
+        bar().if<caret>
     }
 
-    java.lang.Boolean bar() {
+    boolean bar() {
         return true;
     }
 }
