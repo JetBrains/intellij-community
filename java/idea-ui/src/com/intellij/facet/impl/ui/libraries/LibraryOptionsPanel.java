@@ -346,7 +346,7 @@ public class LibraryOptionsPanel implements Disposable {
   }
 
   private void doCreate() {
-    final NewLibraryConfiguration libraryConfiguration = myLibraryDescription.createNewLibrary(myPanel, getBaseDirectory());
+    final NewLibraryConfiguration libraryConfiguration = myLibraryDescription.createNewLibrary(myCreateButton, getBaseDirectory());
     if (libraryConfiguration != null) {
       final NewLibraryEditor libraryEditor = new NewLibraryEditor(libraryConfiguration.getLibraryType(), libraryConfiguration.getProperties());
       libraryEditor.setName(myLibrariesContainer.suggestUniqueLibraryName(libraryConfiguration.getDefaultLibraryName()));
