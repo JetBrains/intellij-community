@@ -1178,7 +1178,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
                 Point placeToShow = myEditor.logicalPositionToXY(logicalPosition);
                 logicalPosition = myEditor.xyToLogicalPosition(placeToShow);//wraps&foldings workaround
                 placeToShow.x += R * 3 / 2;
-                placeToShow.y -= myCacheStartLine * myEditor.getLineHeight();
+                placeToShow.y -= myCacheStartLine * myEditor.getLineHeight() - 1;
 
                 Font font = myEditor.getColorsScheme().getFont(EditorFontType.PLAIN);
                 g2d.setFont(font.deriveFont(font.getSize() *.8F));
