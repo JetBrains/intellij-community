@@ -121,14 +121,17 @@ public class TerminalSshModule extends LineCommandAdapter implements CommandRunt
   }
 
   private boolean handleAuthPrompt(@NotNull final SimpleCredentialsDialog.Mode mode, @NotNull final String key) {
-    @NotNull final SVNURL repositoryUrl = myExecutor.getCommand().getRepositoryUrl();
+    final SVNURL repositoryUrl = myExecutor.getCommand().getRepositoryUrl();
     final Project project = myRuntime.getVcs().getProject();
     final Ref<String> answer = new Ref<String>();
 
     Runnable command = new Runnable() {
       public void run() {
         SimpleCredentialsDialog dialog = new SimpleCredentialsDialog(project);
-        dialog.setup(mode, repositoryUrl.toDecodedString(), key, true);
+        // TODO: repositoryUrl could be null for some cases, for instance for info command for file is invoked that requires
+        // TODO: authentication (like "svn info <file> -r HEAD"), if it is invoked before all working copy roots are resolved.
+        // TODO: resolving repositoryUrl logic should be updated so that repositoryUrl is not null here.
+        dialog.setup(mode, repositoryUrl != null ? repositoryUrl.toDecodedString() : "", key, true);
         dialog.setTitle(SvnBundle.message("dialog.title.authentication.required"));
         dialog.show();
         if (dialog.isOK()) {
