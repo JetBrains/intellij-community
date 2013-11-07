@@ -770,6 +770,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       VirtualFile changedParent = null;
       if (event instanceof VFileCreateEvent) {
         changedParent = ((VFileCreateEvent)event).getParent();
+        ((VFileCreateEvent)event).resetCache();
       }
       else if (event instanceof VFileDeleteEvent) {
         changedParent = ((VFileDeleteEvent)event).getFile().getParent();
