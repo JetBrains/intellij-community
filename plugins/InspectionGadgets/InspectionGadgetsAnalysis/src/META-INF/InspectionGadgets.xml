@@ -1014,6 +1014,10 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="non.protected.constructor.in.abstract.class.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.inheritance.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.inheritance.NonProtectedConstructorInAbstractClassInspection"/>
+    <localInspection language="JAVA" shortName="ProblematicVarargsMethodOverride" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="problematic.varargs.method.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.inheritance.ProblematicVarargsMethodOverrideInspection"/>
     <localInspection language="JAVA" shortName="RedundantMethodOverride" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="redundant.method.override.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.inheritance.issues" enabledByDefault="false" level="WARNING"
