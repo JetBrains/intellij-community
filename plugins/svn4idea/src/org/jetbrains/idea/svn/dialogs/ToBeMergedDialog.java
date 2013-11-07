@@ -296,7 +296,7 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
     myRevisionsList.setShowGrid(false);
     final AbstractBaseTagMouseListener mouseListener = new AbstractBaseTagMouseListener() {
       @Override
-      protected Object getTagAt(MouseEvent e) {
+      public Object getTagAt(MouseEvent e) {
         Object tag = null;
         JTable table = (JTable)e.getSource();
         int row = table.rowAtPoint(e.getPoint());
