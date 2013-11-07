@@ -770,9 +770,14 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     BulkFileListener publisher = myEventsBus.syncPublisher(VirtualFileManager.VFS_CHANGES);
     publisher.before(validated);
+
     for (VFileEvent event : validated) {
+      if (event instanceof VFileCreateEvent) {
+        ((VFileCreateEvent)event).resetCache();
+      }
       applyEvent(event);
     }
+
     publisher.after(validated);
   }
 
