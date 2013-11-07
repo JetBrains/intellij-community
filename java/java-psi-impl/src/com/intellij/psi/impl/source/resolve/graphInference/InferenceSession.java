@@ -69,16 +69,15 @@ public class InferenceSession {
   }
   
   public InferenceSession(PsiTypeParameter[] typeParams,
-                          PsiParameter[] parameters, 
-                          PsiExpression[] args,
                           PsiSubstitutor siteSubstitutor,
-                          PsiElement parent,
                           PsiManager manager) {
     myManager = manager;
     mySiteSubstitutor = siteSubstitutor;
 
     initBounds(typeParams);
+  }
 
+  public void initExpressionConstraints(PsiParameter[] parameters, PsiExpression[] args, PsiElement parent) {
     final Pair<PsiMethod, PsiCallExpression> pair = getPair(parent);
     if (parameters.length > 0) {
       for (int i = 0; i < args.length; i++) {

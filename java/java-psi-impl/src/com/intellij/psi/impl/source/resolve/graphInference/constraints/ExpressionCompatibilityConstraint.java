@@ -83,11 +83,9 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
         InferenceSession callSession = null;
         if (method != null && !method.isConstructor()) {
           returnType = method.getReturnType();
-          final PsiParameter[] parameters = method.getParameterList().getParameters();
           if (returnType != null) {
-            callSession = new InferenceSession(method.getTypeParameters(), parameters,
-                                               argumentList.getExpressions(),
-                                               PsiSubstitutor.EMPTY, null, myExpression.getManager());
+            callSession = new InferenceSession(method.getTypeParameters(),
+                                               PsiSubstitutor.EMPTY, myExpression.getManager());
             
           }
         } else if (myExpression instanceof PsiNewExpression) {  //default constructor
@@ -97,9 +95,7 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
             if (psiClass instanceof PsiClass) {
               returnType = JavaPsiFacade.getElementFactory(argumentList.getProject()).createType((PsiClass)psiClass, PsiSubstitutor.EMPTY);
               callSession = new InferenceSession(((PsiClass)psiClass).getTypeParameters(),
-                                                 PsiParameter.EMPTY_ARRAY,
-                                                 argumentList.getExpressions(),
-                                                 PsiSubstitutor.EMPTY, null, myExpression.getManager());
+                                                 PsiSubstitutor.EMPTY, myExpression.getManager());
             }
           }
         }
