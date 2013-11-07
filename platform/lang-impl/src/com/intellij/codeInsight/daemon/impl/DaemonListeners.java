@@ -92,7 +92,6 @@ import java.util.List;
  */
 public class DaemonListeners implements Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.DaemonListeners");
-  @NonNls public static final Object IGNORE_MOUSE_TRACKING = "ignore_mouse_tracking";
 
   private final Project myProject;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
@@ -582,7 +581,7 @@ public class DaemonListeners implements Disposable {
     public void mouseMoved(EditorMouseEvent e) {
       Editor editor = e.getEditor();
       if (myProject != editor.getProject()) return;
-      if (editor.getComponent().getClientProperty(IGNORE_MOUSE_TRACKING) != null) return;
+      if (editor.getComponent().getClientProperty(Editor.IGNORE_MOUSE_TRACKING) != null) return;
 
       boolean shown = false;
       try {
