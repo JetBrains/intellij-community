@@ -87,7 +87,7 @@ public class DebuggerTreeNodeImpl extends TreeBuilderNode implements DebuggerTre
     final NodeDescriptorImpl descriptor = getDescriptor();
     myIcon = DebuggerTreeRenderer.getDescriptorIcon(descriptor);
     final DebuggerContextImpl context = getTree().getDebuggerContext();
-    myText = DebuggerTreeRenderer.getDescriptorText(context, descriptor, false);
+    myText = DebuggerTreeRenderer.getDescriptorText(context, descriptor, DebuggerTreeRenderer.getColorScheme(myTree), false);
     if (descriptor instanceof ValueDescriptor) {
       final ValueMarkup markup = ((ValueDescriptor)descriptor).getMarkup(context.getDebugProcess());
       myMarkupTooltipText = markup != null? markup.getToolTipText() : null;
