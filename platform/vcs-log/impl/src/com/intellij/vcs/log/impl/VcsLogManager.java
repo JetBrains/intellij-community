@@ -111,7 +111,6 @@ public class VcsLogManager implements Disposable {
     return logProviders;
   }
 
-  @NotNull
   public VcsLogDataHolder getDataHolder() {
     return myLogDataHolder;
   }

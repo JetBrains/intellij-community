@@ -3,6 +3,7 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.*;
+import com.intellij.vcs.log.data.VcsLogDataHolder;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -61,7 +62,11 @@ public class VcsLogObjectsFactoryImpl implements VcsLogObjectsFactory {
   @NotNull
   @Override
   public VcsUser createUser(@NotNull String name, @NotNull String email) {
-    return myLogManager.getDataHolder().getUserRegistry().createUser(name, email);
+    VcsLogDataHolder dataHolder = myLogManager.getDataHolder();
+    if (dataHolder == null) {
+      return new VcsUserImpl(name, email);
+    }
+    return dataHolder.getUserRegistry().createUser(name, email);
   }
 
 }
