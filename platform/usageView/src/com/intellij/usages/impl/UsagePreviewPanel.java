@@ -189,7 +189,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase {
     if (infos == null) {
       releaseEditor();
       removeAll();
-      JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview"));
+      JComponent titleComp = new JLabel(UsageViewBundle.message("select.the.usage.to.preview"), SwingConstants.CENTER);
       add(titleComp, BorderLayout.CENTER);
       revalidate();
     }

@@ -18,8 +18,6 @@ package org.jetbrains.plugins.groovy.config;
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.SettingsStep;
-import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,11 +45,6 @@ public class GroovyAwareModuleBuilder extends JavaModuleBuilder {
     myPresentableName = presentableName;
     myDescription = description;
     myBigIcon = bigIcon;
-  }
-
-  @Override
-  public ModuleWizardStep[] createWizardSteps(@NotNull WizardContext wizardContext, @NotNull ModulesProvider modulesProvider) {
-    return new ModuleWizardStep[]{new GroovySdkForNewModuleWizardStep(this, wizardContext, getFramework(), null)};
   }
 
   @Nullable

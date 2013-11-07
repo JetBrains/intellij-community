@@ -337,12 +337,27 @@ public class PyFormatterTest extends PyTestCase {
     doTest();
   }
 
+  public void _testWrapBeforeElse() {  // PY-10319
+    doTest(true);
+  }
+
   private void doTest() {
+    doTest(false);
+  }
+
+  private void doTest(final boolean reformatText) {
     myFixture.configureByFile("formatter/" + getTestName(true) + ".py");
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {
-        CodeStyleManager.getInstance(myFixture.getProject()).reformat(myFixture.getFile());
+        CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myFixture.getProject());
+        PsiFile file = myFixture.getFile();
+        if (reformatText) {
+          codeStyleManager.reformatText(file, 0, file.getTextLength());
+        }
+        else {
+          codeStyleManager.reformat(file);
+        }
       }
     });
     myFixture.checkResultByFile("formatter/" + getTestName(true) + "_after.py");

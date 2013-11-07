@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.util;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
@@ -24,6 +25,7 @@ import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.Nullable;
 
 public class MoveRenameUsageInfo extends UsageInfo{
+  private static final Logger LOG = Logger.getInstance("#" + MoveRenameUsageInfo.class.getName());
   private SmartPsiElementPointer myReferencedElementPointer = null;
   private PsiElement myReferencedElement;
 
@@ -63,9 +65,11 @@ public class MoveRenameUsageInfo extends UsageInfo{
     if (reference != null) {
       Document document = PsiDocumentManager.getInstance(project).getDocument(containingFile);
       if (document != null) {
-        int elementStart = reference.getElement().getTextRange().getStartOffset();
-        myReferenceRangeMarker = document.createRangeMarker(elementStart + reference.getRangeInElement().getStartOffset(),
-                                                            elementStart + reference.getRangeInElement().getEndOffset());
+        final int elementStart = reference.getElement().getTextRange().getStartOffset();
+        final TextRange rangeInElement = reference.getRangeInElement();
+        LOG.assertTrue(elementStart + rangeInElement.getEndOffset() <= document.getTextLength(), reference);
+        myReferenceRangeMarker = document.createRangeMarker(elementStart + rangeInElement.getStartOffset(),
+                                                            elementStart + rangeInElement.getEndOffset());
       }
       myDynamicUsage = reference.resolve() == null;
     }

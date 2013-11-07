@@ -578,7 +578,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     }
   }
 
-  private void printHyperlink(String s, ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
+  private void printHyperlink(@NotNull String s, @NotNull ConsoleViewContentType contentType, @Nullable HyperlinkInfo info) {
     synchronized (LOCK) {
       Pair<String, Integer> pair = myBuffer.print(s, contentType, info);
       s = pair.first;
@@ -607,7 +607,7 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     ConsoleUtil.addToken(length, info, contentType, myTokens);
   }
 
-  private ModalityState getStateForUpdate() {
+  private static ModalityState getStateForUpdate() {
     return null;//myStateForUpdate != null ? myStateForUpdate.compute() : ModalityState.stateForComponent(this);
   }
 
@@ -1140,8 +1140,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
       if (oStart > 0) oStart--;
       int oEnd = CharArrayUtil.shiftBackward(chars, document.getLineEndOffset(lEnd) - 1, " \t") + 1;
 
-      FoldRegion region =
-        myEditor.getFoldingModel().createFoldRegion(oStart, oEnd, prevFolding.getPlaceholderText(toFold), null, false);
+      String placeholder = prevFolding.getPlaceholderText(toFold);
+      FoldRegion region = placeholder == null ? null : myEditor.getFoldingModel().createFoldRegion(oStart, oEnd, placeholder, null, false);
       if (region != null) {
         toAdd.add(region);
       }
@@ -1710,8 +1710,8 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
   /**
    * delete text
    *
-   * @param offset relativly to all document text
-   * @param length lenght of deleted text
+   * @param offset relatively to all document text
+   * @param length length of deleted text
    */
   private void deleteUserText(int offset, int length) {
     ConsoleViewImpl consoleView = this;

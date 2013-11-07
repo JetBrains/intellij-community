@@ -169,6 +169,9 @@ public final class UrlImpl implements Url {
       return true;
     }
     if (!(o instanceof UrlImpl)) {
+      if (o instanceof LocalFileUrl && isInLocalFileSystem()) {
+        return o.getPath().equals(path);
+      }
       return false;
     }
 

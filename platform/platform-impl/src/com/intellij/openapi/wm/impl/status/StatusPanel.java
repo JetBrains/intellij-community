@@ -27,7 +27,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -51,7 +50,7 @@ import java.awt.event.MouseEvent;
  */
 class StatusPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.status.StatusPanel");
-  private boolean myLogMode;
+  private Notification myCurrentNotification;
   private int myTimeStart;
   private boolean myDirty;
   private boolean myAfterClick;
@@ -101,8 +100,8 @@ class StatusPanel extends JPanel {
     new ClickListener() {
       @Override
       public boolean onClick(MouseEvent e, int clickCount) {
-        if (myLogMode || myAfterClick) {
-          EventLog.toggleLog(getActiveProject());
+        if (myCurrentNotification != null || myAfterClick) {
+          EventLog.toggleLog(getActiveProject(), myCurrentNotification);
           myAfterClick = true;
           myTextPanel.setExplicitSize(myTextPanel.getSize());
           myTextPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
@@ -118,7 +117,7 @@ class StatusPanel extends JPanel {
         myTextPanel.setExplicitSize(null);
         myTextPanel.revalidate();
         myAfterClick = false;
-        if (!myLogMode) {
+        if (myCurrentNotification == null) {
           myTextPanel.setCursor(Cursor.getDefaultCursor());
         }
       }
@@ -198,13 +197,13 @@ class StatusPanel extends JPanel {
     final Project project = getActiveProject();
     final Trinity<Notification, String, Long> statusMessage = EventLog.getStatusMessage(project);
     final Alarm alarm = getAlarm();
-    myLogMode = StringUtil.isEmpty(nonLogText) && statusMessage != null && alarm != null;
+    myCurrentNotification = StringUtil.isEmpty(nonLogText) && statusMessage != null && alarm != null ? statusMessage.first : null;
 
     if (alarm != null) {
       alarm.cancelAllRequests();
     }
 
-    if (myLogMode) {
+    if (myCurrentNotification != null) {
       myTextPanel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       new Runnable() {
         @Override
@@ -229,7 +228,7 @@ class StatusPanel extends JPanel {
       setStatusText(nonLogText);
     }
 
-    return myLogMode;
+    return myCurrentNotification != null;
   }
 
   private void setStatusText(String text) {

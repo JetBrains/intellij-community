@@ -139,36 +139,41 @@ public abstract class CodeInsightTestCase extends PsiTestCase {
     return configureByFile(vFile, projectFile);
   }
 
-  protected PsiFile configureByText(@NotNull FileType fileType, @NonNls final String text) throws Exception {
+  protected PsiFile configureByText(@NotNull FileType fileType, @NonNls final String text) {
     return configureByText(fileType, text, null);
   }
 
-  protected PsiFile configureByText(@NotNull final FileType fileType, @NonNls final String text, @Nullable String _extension) throws Exception {
-    final String extension = _extension == null ? fileType.getDefaultExtension():_extension;
+  protected PsiFile configureByText(@NotNull final FileType fileType, @NonNls final String text, @Nullable String _extension) {
+    try {
+      final String extension = _extension == null ? fileType.getDefaultExtension():_extension;
 
-    File dir = createTempDirectory();
-    final File tempFile = FileUtil.createTempFile(dir, "aaa", "." + extension, true);
-    final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
-    if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
-      new WriteCommandAction(getProject()) {
-        @Override
-        protected void run(Result result) throws Exception {
-          fileTypeManager.associateExtension(fileType, extension);
-        }
-      }.execute();
+      File dir = createTempDirectory();
+      final File tempFile = FileUtil.createTempFile(dir, "aaa", "." + extension, true);
+      final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+      if (fileTypeManager.getFileTypeByExtension(extension) != fileType) {
+        new WriteCommandAction(getProject()) {
+          @Override
+          protected void run(Result result) throws Exception {
+            fileTypeManager.associateExtension(fileType, extension);
+          }
+        }.execute();
+      }
+      final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
+      assert vFile != null;
+      VfsUtil.saveText(vFile, text);
+
+      final VirtualFile vdir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
+
+      PsiTestUtil.addSourceRoot(myModule, vdir);
+
+      configureByExistingFile(vFile);
+
+      assertEquals(fileType, myFile.getVirtualFile().getFileType());
+      return myFile;
     }
-    final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempFile);
-    assert vFile != null;
-    VfsUtil.saveText(vFile, text);
-
-    final VirtualFile vdir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(dir);
-
-    PsiTestUtil.addSourceRoot(myModule, vdir);
-
-    configureByExistingFile(vFile);
-
-    assertEquals(fileType, myFile.getVirtualFile().getFileType());
-    return myFile;
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
 

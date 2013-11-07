@@ -33,7 +33,6 @@ import com.intellij.debugger.ui.DebuggerSessionTab;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -298,12 +297,30 @@ public class ThreadDumpAction extends AnAction implements AnAction.TransparentUp
     catch (Throwable e) {
       sourceName = "Unknown Source";
     }
-    return DebuggerBundle.message(
-        "export.threads.stackframe.format",
-        location.declaringType().name() + "." + location.method().name(),
-        sourceName,
-        location.lineNumber()
-    );
+
+    final StringBuilder methodName = new StringBuilder();
+    try {
+      methodName.append(location.declaringType().name());
+    }
+    catch (Throwable e) {
+      methodName.append(e.getMessage());
+    }
+    methodName.append(".");
+    try {
+      methodName.append(location.method().name());
+    }
+    catch (Throwable e) {
+      methodName.append(e.getMessage());
+    }
+
+    int lineNumber;
+    try {
+      lineNumber = location.lineNumber();
+    }
+    catch (Throwable e) {
+      lineNumber = -1;
+    }
+    return DebuggerBundle.message("export.threads.stackframe.format", methodName.toString(), sourceName, lineNumber);
   }
 
   private static String threadName(ThreadReference threadReference) {

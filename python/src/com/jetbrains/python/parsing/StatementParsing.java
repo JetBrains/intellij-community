@@ -598,13 +598,17 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     final PsiBuilder.Marker ifStatement = myBuilder.mark();
     final PsiBuilder.Marker ifPart = myBuilder.mark();
     myBuilder.advanceLexer();
-    getExpressionParser().parseExpression();
+    if (!getExpressionParser().parseSingleExpression(false)) {
+      myBuilder.error("expression expected");
+    }
     parseColonAndSuite(scope);
     ifPart.done(PyElementTypes.IF_PART_IF);
     PsiBuilder.Marker elifPart = myBuilder.mark();
     while (myBuilder.getTokenType() == elifKeyword) {
       myBuilder.advanceLexer();
-      getExpressionParser().parseExpression();
+      if (!getExpressionParser().parseSingleExpression(false)) {
+        myBuilder.error("expression expected");
+      }
       parseColonAndSuite(scope);
       elifPart.done(PyElementTypes.IF_PART_ELIF);
       elifPart = myBuilder.mark();
@@ -628,11 +632,15 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       return true;
     }
     final PsiBuilder.Marker marker = myBuilder.mark();
-    if (myBuilder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
+    while (!atAnyOfTokens(null, PyTokenTypes.DEDENT, PyTokenTypes.STATEMENT_BREAK, PyTokenTypes.COLON)) {
+      myBuilder.advanceLexer();
+    }
+    boolean result =  matchToken(PyTokenTypes.COLON);
+    if (!result && atToken(PyTokenTypes.STATEMENT_BREAK)) {
       myBuilder.advanceLexer();
     }
     marker.error("Colon expected");
-    return false;
+    return result;
   }
 
   private void parseForStatement(ParsingScope scope) {
@@ -758,7 +766,10 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       setExpectAsKeyword(true);
       if (myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
         myBuilder.advanceLexer();
-        getExpressionParser().parseSingleExpression(true); // 'as' is followed by a target
+        if (!getExpressionParser().parseSingleExpression(true)) {
+          myBuilder.error("identifier expected");
+          // 'as' is followed by a target
+        }
       }
       withItem.done(PyElementTypes.WITH_ITEM);
       if (!matchToken(PyTokenTypes.COMMA)) {

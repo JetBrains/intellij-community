@@ -81,6 +81,12 @@ public abstract class AbstractBlockWrapper {
     return myWhiteSpace;
   }
 
+  /**
+   * Returns the list of wraps for this block and its parent blocks that start at the same offset. The returned list is ordered from top
+   * to bottom (higher-level wraps go first). Stops if the wrap for a block is marked as "ignore parent wraps".
+   *
+   * @return the list of wraps.
+   */
   public ArrayList<WrapImpl> getWraps() {
     final ArrayList<WrapImpl> result = new ArrayList<WrapImpl>(3);
     AbstractBlockWrapper current = this;
@@ -342,7 +348,7 @@ public abstract class AbstractBlockWrapper {
 
     IndentData indent = getIndent(indentOption, index, childIndent);
     if (childIndent.isRelativeToDirectParent()) {
-      return new IndentData(indent.getIndentSpaces() + CoreFormatterUtil.getOffsetBefore(CoreFormatterUtil.getFirstLeaf(this)),
+      return new IndentData(indent.getIndentSpaces() + CoreFormatterUtil.getStartColumn(CoreFormatterUtil.getFirstLeaf(this)),
                             indent.getSpaces());
     }
     if (myParent == null || (myFlags & CAN_USE_FIRST_CHILD_INDENT_AS_BLOCK_INDENT) != 0 && getWhiteSpace().containsLineFeeds()) {

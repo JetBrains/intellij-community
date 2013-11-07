@@ -2,17 +2,13 @@ package com.intellij.remoteServer.impl.runtime.clientLibrary;
 
 import com.intellij.execution.configurations.RuntimeConfigurationError;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -20,11 +16,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.remoteServer.runtime.clientLibrary.ClientLibraryDescription;
 import com.intellij.remoteServer.runtime.clientLibrary.ClientLibraryManager;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.download.DownloadableFileDescription;
-import com.intellij.util.download.DownloadableFileService;
-import com.intellij.util.download.DownloadableFileSetDescription;
-import com.intellij.util.download.DownloadableFileSetVersions;
+import com.intellij.util.download.*;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
@@ -163,71 +155,23 @@ public class ClientLibraryManagerImpl extends ClientLibraryManager implements Pe
 
     final DownloadableFileService downloadService = DownloadableFileService.getInstance();
 
-    final Ref<DownloadableFileSetDescription> descriptionRef = new Ref<DownloadableFileSetDescription>();
     URL versionsUrl = libraryDescription.getDescriptionUrl();
     final DownloadableFileSetVersions<DownloadableFileSetDescription> versions = downloadService.createFileSetVersions(null, versionsUrl);
 
-    final Semaphore semaphore = new Semaphore();
-    semaphore.down();
-    versions.fetchVersions(new DownloadableFileSetVersions.FileSetVersionsCallback<DownloadableFileSetDescription>() {
-      @Override
-      public void onSuccess(@NotNull List<? extends DownloadableFileSetDescription> versions) {
-        if (!versions.isEmpty()) {
-          descriptionRef.set(versions.get(0));
-        }
-        semaphore.up();
-      }
-
-      @Override
-      public void onError(@NotNull String errorMessage) {
-        LOG.error(errorMessage);
-        semaphore.up();
-      }
-    });
-    semaphore.waitFor();
-
-    final DownloadableFileSetDescription description = descriptionRef.get();
-    if (description == null) {
+    List<DownloadableFileSetDescription> descriptions = versions.fetchVersions();
+    if (descriptions.isEmpty()) {
       throw new IOException("No client library versions loaded");
     }
 
-    final Ref<List<Pair<File,DownloadableFileDescription>>> downloaded = Ref.create(null);
-    final Ref<IOException> exception = Ref.create(null);
-    semaphore.down();
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        new Task.Backgroundable(null, "Downloading Client Libraries", true, PerformInBackgroundOption.ALWAYS_BACKGROUND) {
-          @Override
-          public void run(@NotNull ProgressIndicator indicator) {
-            try {
-              downloaded.set(downloadService.createDownloader(description).download(getStoreDirectory(libraryDescription)));
-            }
-            catch (IOException e) {
-              exception.set(e);
-            }
-            finally {
-              semaphore.up();
-            }
-          }
-        }.queue();
-      }
-    });
-    semaphore.waitFor();
-
-    if (!exception.isNull()) {
-      throw exception.get();
-    }
-    if (downloaded.isNull()) {
-      throw new IOException("Downloading client libraries cancelled");
-    }
+    FileDownloader downloader = downloadService.createDownloader(descriptions.get(0));
+    List<Pair<File, DownloadableFileDescription>> downloaded = downloader.download(getStoreDirectory(libraryDescription));
 
     List<File> files = myFiles.get(libraryDescription.getId());
     if (files == null) {
       files = new ArrayList<File>();
       myFiles.put(libraryDescription.getId(), files);
     }
-    for (Pair<File, DownloadableFileDescription> pair : downloaded.get()) {
+    for (Pair<File, DownloadableFileDescription> pair : downloaded) {
       files.add(pair.getFirst());
     }
 

@@ -20,23 +20,17 @@ import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 public class AddImportActionTest extends LightCodeInsightFixtureTestCase {
-  @Override
-  protected void tearDown() {
-    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.HIGHEST)
-    super.tearDown()
-  }
-
   public void testMap15() {
-    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_5)
-    myFixture.configureByText 'a.java', '''\
+    IdeaTestUtil.withLevel(myModule, LanguageLevel.JDK_1_5, {
+      myFixture.configureByText 'a.java', '''\
 public class Foo {
     void foo() {
         Ma<caret>p<> l;
     }
 }
 '''
-    importClass()
-    myFixture.checkResult '''import java.util.Map;
+      importClass()
+      myFixture.checkResult '''import java.util.Map;
 
 public class Foo {
     void foo() {
@@ -44,6 +38,7 @@ public class Foo {
     }
 }
 '''
+    })
   }
 
   public void testMapLatestLanguageLevel() {
@@ -118,7 +113,6 @@ public class Foo extends goo.Super {
     public void foo(Log<caret> log) {}
 }
 '''
-
   }
 
   public void testAnnotatedImport() {
@@ -167,9 +161,9 @@ class Test {
     Collection<caret> c;
 }
 '''
-  } 
+  }
 
-  public void testUnresolvedAnnotatedQualifiedImport() {
+  public void testUnresolvedAnnotatedImport() {
     myFixture.configureByText 'a.java', '''
 class Test {
     @Nullable Collection<caret> c;

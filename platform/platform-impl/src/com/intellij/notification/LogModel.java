@@ -88,7 +88,7 @@ public class LogModel implements Disposable {
     StatusBar.Info.set("", myProject, EventLog.LOG_REQUESTOR);
   }
 
-  @Nullable 
+  @Nullable
   Trinity<Notification, String, Long> getStatusMessage() {
     synchronized (myNotifications) {
       return myStatusMessage;
@@ -142,8 +142,9 @@ public class LogModel implements Disposable {
       }
     });
     if (message == null) {
-      setStatusMessage(message, 0);
-    } else {
+      setStatusMessage(null, 0);
+    }
+    else {
       Long notificationTime = getNotificationTime(message);
       assert notificationTime != null;
       setStatusMessage(message, notificationTime);
