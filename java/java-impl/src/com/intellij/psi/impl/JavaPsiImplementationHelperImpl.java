@@ -40,10 +40,12 @@ import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -115,19 +117,20 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
 
     final VirtualFile vFile = clsFile.getContainingFile().getVirtualFile();
     ProjectFileIndex projectFileIndex = ProjectFileIndex.SERVICE.getInstance(clsFile.getProject());
-    final List<OrderEntry> orderEntries = projectFileIndex.getOrderEntriesForFile(vFile);
-    for (OrderEntry orderEntry : orderEntries) {
-      VirtualFile[] files = orderEntry.getFiles(OrderRootType.SOURCES);
-      for (VirtualFile file : files) {
-        VirtualFile source = file.findFileByRelativePath(relativeFilePath);
-        if (source != null) {
-          PsiFile psiSource = clsFile.getManager().findFile(source);
-          if (psiSource instanceof PsiClassOwner) {
-            return psiSource;
-          }
+    final Set<VirtualFile> sourceRoots = ContainerUtil.newLinkedHashSet();
+    for (OrderEntry orderEntry : projectFileIndex.getOrderEntriesForFile(vFile)) {
+      Collections.addAll(sourceRoots, orderEntry.getFiles(OrderRootType.SOURCES));
+    }
+    for (VirtualFile root : sourceRoots) {
+      VirtualFile source = root.findFileByRelativePath(relativeFilePath);
+      if (source != null) {
+        PsiFile psiSource = clsFile.getManager().findFile(source);
+        if (psiSource instanceof PsiClassOwner) {
+          return psiSource;
         }
       }
     }
+
     return clsFile;
   }
 
