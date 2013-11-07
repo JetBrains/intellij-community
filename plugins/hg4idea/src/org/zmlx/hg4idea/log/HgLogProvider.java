@@ -42,10 +42,7 @@ import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgHistoryUtil;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Nadya Zabrodina
@@ -70,11 +67,7 @@ public class HgLogProvider implements VcsLogProvider {
   @Override
   public List<? extends VcsFullCommitDetails> readFirstBlock(@NotNull VirtualFile root,
                                                              boolean ordered, int commitCount) throws VcsException {
-    String[] params = {"--encoding=UTF-8"};
-    if (!ordered) {
-      params = ArrayUtil.append(params, "-r");
-      params = ArrayUtil.append(params, "0:tip");
-    }
+    String[] params = ordered ? ArrayUtil.EMPTY_STRING_ARRAY : new String[]{"-r", "0:tip"};
     return HgHistoryUtil.history(myProject, root, commitCount, params);
   }
 
