@@ -17,6 +17,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.ToolWindowAnchor;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
 
@@ -25,7 +26,8 @@ import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.metal.MetalToggleButtonUI;
 import java.awt.*;
-import java.awt.geom.*;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.RoundRectangle2D;
 
 /**
  * @author Vladimir Kondratyev
@@ -189,7 +191,7 @@ public final class StripeButtonUI extends MetalToggleButtonUI{
     Shape shape = new RoundRectangle2D.Double(gap, gap, button.getWidth() - 2 * gap, button.getHeight() - 2 * gap, r, r);
 
     if (model.isArmed() && model.isPressed() || model.isSelected()) {
-      g2.setColor(dark ? Gray._85.withAlpha(85) : new Color(0, 0, 0, 30));
+      g2.setColor(ColorUtil.mix(dark ? Gray._85.withAlpha(85) : new Color(0, 0, 0, 30), new Color(100, 150, 230, 50), .5));
       g2.fill(shape);
       g2.setColor(dark ? Gray._40 : new Color(0, 0, 0, 120));
       g2.draw(shape);
