@@ -157,7 +157,8 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
           final XmlElementDescriptor descriptor = rootTag.getDescriptor();
 
             if (descriptor != null && !(descriptor instanceof AnyXmlElementDescriptor)) {
-              PsiElement element = descriptor.getDeclaration();
+              PsiElement element = !HtmlUtil.isHtml5Context(rootTag) ? descriptor.getDeclaration() :
+                                   XmlUtil.findXmlFile((XmlFile)targetElement, Html5SchemaProvider.getCharsDtdLocation());
               final PsiFile containingFile = element != null ? element.getContainingFile():null;
               final XmlFile descriptorFile = containingFile instanceof XmlFile ? (XmlFile)containingFile:null;
 
@@ -181,7 +182,7 @@ public class XmlEntityRefImpl extends XmlElementImpl implements XmlEntityRef {
     }
   }
 
-  public static String getDtdForEntity(XmlDoctype xmlDoctype) {
+  private static String getDtdForEntity(XmlDoctype xmlDoctype) {
     return HtmlUtil.isHtml5Doctype(xmlDoctype) ? Html5SchemaProvider.getCharsDtdLocation() : XmlUtil.getDtdUri(xmlDoctype);
   }
 
