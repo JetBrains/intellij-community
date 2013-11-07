@@ -79,6 +79,14 @@ public class TerminalProcessHandler extends OSProcessHandler {
       String currentLine = lastLine.append(text).toString();
       lastLine.setLength(0);
 
+      // for windows platform output is assumed in format suitable for terminal emulator
+      // for instance, same text could be returned twice with '\r' symbol in between (so in emulator output we'll still see correct
+      // text without duplication)
+      // because of this we manually process '\r' occurrences to get correct output
+      if (SystemInfo.isWindows) {
+        currentLine = removeAllBeforeCaretReturn(currentLine);
+      }
+
       // check if current line presents some interactive output
       boolean handled = false;
       for (InteractiveCommandListener listener : myInteractiveListeners) {
@@ -92,14 +100,6 @@ public class TerminalProcessHandler extends OSProcessHandler {
   }
 
   private void notify(@NotNull String text, @NotNull Key outputType, @NotNull StringBuilder lastLine) {
-    // for windows platform output is assumed in format suitable for terminal emulator
-    // for instance, same text could be returned twice with '\r' symbol in between (so in emulator output we'll still see correct
-    // text without duplication)
-    // because of this we manually process '\r' occurrences to get correct output
-    if (SystemInfo.isWindows) {
-      text = removeAllBeforeCaretReturn(text);
-    }
-
     // text is not more than one line - either one line or part of the line
     if (StringUtil.endsWith(text, "\n")) {
       // we have full line - notify listeners
