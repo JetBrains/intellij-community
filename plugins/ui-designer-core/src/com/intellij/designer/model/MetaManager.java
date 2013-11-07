@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -92,8 +93,9 @@ public abstract class MetaManager extends ModelLoader {
     }
   }
 
+  @NotNull
   @SuppressWarnings("unchecked")
-  private void loadModel(ClassLoader classLoader, Element element, Map<MetaModel, List<String>> modelToMorphing) throws Exception {
+  protected MetaModel loadModel(ClassLoader classLoader, Element element, Map<MetaModel, List<String>> modelToMorphing) throws Exception {
     String modelValue = element.getAttributeValue("model");
     Class<RadComponent> model = modelValue == null ? null : (Class<RadComponent>)classLoader.loadClass(modelValue);
     String target = element.getAttributeValue("class");
@@ -145,14 +147,28 @@ public abstract class MetaManager extends ModelLoader {
     if (target != null) {
       myTarget2Model.put(target, meta);
     }
+
+    return meta;
   }
 
+  @NotNull
   protected MetaModel createModel(Class<RadComponent> model, String target, String tag) throws Exception {
     return new MetaModel(model, target, tag);
   }
 
+  @NotNull
   protected DefaultPaletteItem createPaletteItem(Element palette) {
     return new DefaultPaletteItem(palette);
+  }
+
+  @NotNull
+  protected VariationPaletteItem createVariationPaletteItem(PaletteItem paletteItem, MetaModel model, Element itemElement) {
+    return new VariationPaletteItem(paletteItem, model, itemElement);
+  }
+
+  @NotNull
+  protected PaletteGroup createPaletteGroup(String name) {
+    return new PaletteGroup(name);
   }
 
   protected void loadProperties(MetaModel meta, Element properties) throws Exception {
@@ -190,8 +206,9 @@ public abstract class MetaManager extends ModelLoader {
   protected void loadOther(MetaModel meta, Element element) throws Exception {
   }
 
-  private void loadGroup(Element element) throws Exception {
-    PaletteGroup group = new PaletteGroup(element.getAttributeValue(NAME));
+  @NotNull
+  protected PaletteGroup loadGroup(Element element) throws Exception {
+    PaletteGroup group = createPaletteGroup(element.getAttributeValue(NAME));
 
     for (Object child : element.getChildren(ITEM)) {
       Element itemElement = (Element)child;
@@ -209,12 +226,12 @@ public abstract class MetaManager extends ModelLoader {
         // this such that the {@link MetaModel} can hold multiple {@link PaletteItem}
         // instances, and perform attribute matching.
         if (itemElement.getAttribute("title") != null) {
-          paletteItem = new VariationPaletteItem(paletteItem, model, itemElement);
+          paletteItem = createVariationPaletteItem(paletteItem, model, itemElement);
         }
         group.addItem(paletteItem);
 
         for (Object grandChild : itemElement.getChildren(ITEM)) {
-          group.addItem(new VariationPaletteItem(paletteItem, model, (Element)grandChild));
+          group.addItem(createVariationPaletteItem(paletteItem, model, (Element)grandChild));
         }
       }
       else {
@@ -223,6 +240,8 @@ public abstract class MetaManager extends ModelLoader {
     }
 
     myPaletteGroups.add(group);
+
+    return group;
   }
 
   @SuppressWarnings("unchecked")
