@@ -22,6 +22,8 @@ import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeInsight.template.CustomLiveTemplate;
+import com.intellij.codeInsight.template.CustomTemplateCallback;
 import com.intellij.codeInsight.template.impl.*;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -110,8 +112,21 @@ public abstract class ChooseItemAction extends EditorAction {
 
     final LiveTemplateLookupElement liveTemplateLookup = ContainerUtil.findInstance(lookup.getItems(), LiveTemplateLookupElement.class);
     if (liveTemplateLookup == null) {
-      // Lookup doesn't contain live templates. It means that there are no any live template or completion provider worked too long.
-      // Anyway in this case we should find live template with appropriate prefix (custom live templates should not participate in this action).
+      // Lookup doesn't contain live templates. It means that 
+      // - there are no any live template:
+      //    in this case we should find live template with appropriate prefix (custom live templates doesn't participate in this action). 
+      // - completion provider worked too long:
+      //    in this case we should check custom templates that provides completion lookup.
+      
+      final CustomTemplateCallback callback = new CustomTemplateCallback(editor, file, false);
+      for (CustomLiveTemplate customLiveTemplate : CustomLiveTemplate.EP_NAME.getExtensions()) {
+        final int offset = editor.getCaretModel().getOffset();
+        if (customLiveTemplate.getShortcut() == shortcutChar && customLiveTemplate.hasCompletionItem(file, offset)) {
+          return customLiveTemplate.computeTemplateKey(callback) != null;
+        }
+      }
+
+
       final int end = editor.getCaretModel().getOffset();
       final int start = lookup.getLookupStart();
       final String prefix = !lookup.getItems().isEmpty()
