@@ -69,7 +69,7 @@ public class TerminalProcessHandler extends OSProcessHandler {
     // filter terminal escape codes - they are presented in the output for windows platform
     String filteredText = text.replaceAll(CSI_ESCAPE_CODE, "").replaceAll(NON_CSI_ESCAPE_CODE, "");
     // trim leading '\r' symbols - as they break xml parsing logic
-    filteredText = StringUtil.trimLeading(filteredText);
+    filteredText = StringUtil.trimLeading(filteredText, '\r');
 
     if (!StringUtil.isEmpty(filteredText)) {
       StringBuilder lastLine = getLastLineFor(outputType);
